@@ -1,7 +1,6 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { panelRepo, gitEnv } from './support/panel.mjs';
 import { openSettings } from './support/settings.mjs';
 import { agentsPage, agentsBox, agentRows, rowNamed, buttonIn, keyInputOf, AGENTS_FOUND, YOURS_VIEW, settingsWithAgents } from './support/your-agents.mjs';
@@ -82,13 +81,4 @@ test('0408 AC3: a provider removed with its key kept is still offered with Add, 
   const p = await openAdd(view);
   assert.deepEqual(offered(p), ['Cursor', 'DeepSeek']);
   assert.ok(buttonIn(p, rowNamed(p, 'DeepSeek', true), 'Add'));
-});
-
-test('0408 AC2: the README\'s Add an agent names the form and speck keys set as the ways to add a provider', () => {
-  const readme = fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8');
-  const para = readme.split('\n').find(l => l.includes('**Add an agent** offers'));
-  assert.ok(para);
-  assert.match(para, /\*\*Add an API provider\*\*/);
-  assert.match(para, /`speck keys set`/);
-  assert.doesNotMatch(para, /each model provider with a field for its key/, 'no longer offered that way');
 });

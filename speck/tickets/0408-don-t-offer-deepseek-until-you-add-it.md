@@ -1,7 +1,7 @@
 ---
 id: "0408"
 title: "Don't offer DeepSeek until you add it"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-dont-offer-deepseek-until-you-add-it.md"   
 after: []                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T12:51:23.306Z"
+blocked_at: "2026-10-23T12:57:36.870Z"
 
 ---
 # 0408 · Don't offer DeepSeek until you add it
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 Add an agent still offers DeepSeek with a key field even when this machine has never set a DeepSeek key. Beside the Add an API provider form from 0401, that row looks like speck expects an account you do not have.
@@ -43,16 +44,95 @@ Add an agent does not offer DeepSeek, or any other known API provider, until you
 - Failing before this build: none
 - Existing tests changed: besides 0393's check that DeepSeek with no key is offered with its key field (now checking AC1), five other checks relied on the removed offer: 0399 AC2 (offers listed TestCo with its key field), 0399 AC3's page part (pasting TestCo's key in its offer row; now pasted in its own row once yours), 0399 AC4 in a browser (counted two offers; now one), 0393 AC2's two page checks (DeepSeek's key field under Add an agent; now in its row as one of yours) and 0393 AC4's page part (TestCo offered with no key; now not offered). Each keeps its intent where the behaviour still exists.
 - The form refuses the name DeepSeek, as speck already knows it, so the built-in DeepSeek is added by setting its key (`speck keys set deepseek`, or keeping it when removed), after which Add an agent offers it with Add. The README says so.
-- Self-check: README's Add an agent sentence still said each provider is offered with a key field; changed it and added a facts check.
+- Self-check: README's Add an agent sentence still said each provider is offered with a key field; changed it. (A README check added then was removed in review round 1 as a wording check.)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+With the DeepSeek row gone, someone new to DeepSeek can't add it from Settings: the Add an API provider form refuses the name DeepSeek because speck already knows it, and changing the form is out of scope here, so today the only way is `speck keys set deepseek` on the command line. Should I (a) widen this ticket so that entering DeepSeek in the form saves its key and adds speck's own DeepSeek (its built-in address and models, ignoring what was typed for them), or (b) keep it as built, with built-in providers added by their key from the command line, as the README now says? I recommend (a): the point of the ticket is that providers are added through the form, and a new user shouldn't need the command line for the one provider speck tests.
+Recommended: (a) let the form add the built-in DeepSeek
+Changes what you'd notice: yes
+Clear winner: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · escalate</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "706f1731327e2176c11f46b5fb1f255448958c2e",
+    "session": "fresh",
+    "thread_id": "01a168d5-ba6c-7fb0-93b3-2bb960bac18c",
+    "builder_response": "- Tests run: test/settings-agents-0408.test.mjs test/settings-agents-0399.test.mjs test/settings-provider-0393.test.mjs (plus the commands.checks files speck adds). Before that, 0401, 0404, 0389 and 0398's files also passed.\n- AC3 note: the ticket expected one existing check to change. Five more checks relied on the removed offer; each is listed in the ticket's Notes (\"Existing tests changed\") and keeps its intent where the behaviour still exists (key fields are now tested in a provider's own row as one of yours). No other test was changed.\n- The README's Add an agent sentence said each provider is offered with a key field; it now says a provider is offered only once this machine has its key, and that other providers are added with Add an API provider. The form refuses the name DeepSeek (built in, out of scope to change), so the built-in DeepSeek comes back by its key (`speck keys set deepseek`, or removed with its key kept).\n- Pictures: Settings' Your agents with Add an agent open on this machine (no DeepSeek key), light and dark.\n",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 99753,
+      "cached_input_tokens": 59392,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 985,
+      "reasoning_output_tokens": 91
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T12:57:19.056Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "escalate",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html addRows filters out providers without key_set. Passing 0408 AC1 tests exercise DeepSeek, another provider and the settingsAnswer response."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The passing 0408 AC2 page test verifies CLI offers and form fields, but does not add DeepSeek through the form. scripts/custom-providers.mjs checkedProvider rejects built-in provider names, including DeepSeek. README instead directs users to speck keys set, conflicting with the form-only criterion."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "agentRow retains providers' key fields and Remove buttons. Passing 0408 AC3 tests cover existing providers with and without keys, and re-adding a provider whose key was kept. Reported targeted run: 138 passed, zero failed, three skipped. Existing test changes follow the removed offer behaviour."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/custom-providers.mjs",
+        "issue": "A new DeepSeek user cannot add it through Add an API provider: checkedProvider rejects its built-in name. Criterion 2 requires the form, but the ticket also prohibits changing that form. The builder's added note substitutes a command-line route without resolving this conflict.",
+        "suggested_fix": "Obtain the owner's decision on whether built-in providers must be addable through the form or are explicitly exempt, then align the criterion, implementation and behavioural tests.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/settings-agents-0408.test.mjs",
+        "issue": "The README test depends on exact prose: it locates '**Add an agent** offers' and forbids 'each model provider with a field for its key'. These are wording checks, expressly prohibited by the review rules, and can fail after harmless editorial changes.",
+        "suggested_fix": "Remove the prose-dependent assertions. Retain only checks of factual names or commands that do not depend on sentence wording.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "Must a new DeepSeek user be able to add it through Add an API provider, allowing the necessary form change, or should built-in providers explicitly remain an exception added through speck keys set?",
+    "summary": "Unconfigured providers are hidden, and existing providers remain available. The targeted tests pass. However, adding DeepSeek now requires the command line, which conflicts with the form-only requirement and needs your decision. A brittle documentation test also needs fixing."
+  }
+}
+```
+
+</details>
