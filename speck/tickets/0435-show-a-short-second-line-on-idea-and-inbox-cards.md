@@ -42,6 +42,7 @@ A collapsed idea or inbox card is its title and one short line saying when it wa
 - The user asked for this on 2026-10-23, from a phone screenshot of Plan's Ideas list.
 - Today: `ideaItem` and `inboxItem` in `templates/panel.html`. A note's first lines read `Captured: <YYYY-MM-DD> · Status: <status>`, and an inbox note has a `From ticket:` line (`fromTicket`).
 - Waits for 0434: both change Plan's cards in `templates/panel.html`. 0430 waits for it too, as 0430 moves every style.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
