@@ -43,6 +43,7 @@ After 0430 to 0432, `templates/panel.html` still holds about 2,000 lines of the 
 - Install and update copy the whole `templates/` folder (`place` in `scripts/`), so a new file there reaches projects with no change.
 - The page's stamp (`stampOf` in `scripts/panel.mjs`) is worked out from `panel.html` alone today. `/lcd.js` and `/fonts/Doto.ttf` show how the server names each file it serves.
 - Waits for 0432: both change `templates/panel.html`, `scripts/panel.mjs` and `test/support/panel.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
