@@ -3,7 +3,8 @@
 // speck run starts with its own command are given it as -m <value> (codex-build.mjs), and Cursor builds as --model
 // <value> (cursor-build.mjs).
 
-import { PROVIDERS, findProvider } from './providers.mjs';
+import { findProvider } from './providers.mjs';
+import { knownProviders } from './custom-providers.mjs';
 
 // The build_command that starts Claude Code builds, as speck/config.yml has it when speck sets it up.
 export const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
@@ -28,7 +29,7 @@ export const cursorBuilds = cfg => cfg?.builder === 'cursor' && typeof cfg.build
 
 // 0391: the model provider speck run builds with, through Claude Code with the provider's own command: builder names
 // one, such as deepseek, and build_command is set blank. null otherwise.
-export const providerBuilds = (cfg, providers = PROVIDERS) => {
+export const providerBuilds = (cfg, providers = knownProviders()) => {
   const p = typeof cfg?.builder === 'string' ? findProvider(cfg.builder, providers) : null;
   return p && p.name === cfg.builder && typeof cfg.build_command === 'string' && !cfg.build_command.trim() ? p : null;
 };

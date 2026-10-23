@@ -20,7 +20,7 @@ import { fixingOf } from './foreman.mjs';
 import { statusData } from './speck.mjs';
 import { askKey, dealtWith, readReplies, cmdForemanReply } from './foreman-answer.mjs';
 import { cursorCli, CURSOR_HEADLESS } from './cursor-build.mjs';
-import { PROVIDERS } from './providers.mjs';
+import { knownProviders, cantRun } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { PROVIDER_SCRIPT, CLAUDE_FLAGS, FOREMAN_MODE } from './provider-build.mjs';
 import { onPath } from './install.mjs';
@@ -45,18 +45,19 @@ const RECENT = 5; // how many of its actions the status detail shows
 
 // The agent the Foreman runs on: foreman when it's set, otherwise the builder when that's Codex or Cursor (0333),
 // otherwise Claude Code. 0392: or a model provider in `providers`, such as deepseek, set as foreman or as the builder.
-export const foremanAgentOf = (cfg, providers = PROVIDERS) => (FOREMAN_AGENTS.includes(cfg?.foreman) || providerNamed(cfg?.foreman, providers) ? cfg.foreman
+export const foremanAgentOf = (cfg, providers = knownProviders()) => (FOREMAN_AGENTS.includes(cfg?.foreman) || providerNamed(cfg?.foreman, providers) ? cfg.foreman
   : ['codex', 'cursor'].includes(cfg?.builder) || providerNamed(cfg?.builder, providers) ? cfg.builder : 'claude');
 // 0392: the model provider the Foreman runs on, or null.
-export const foremanProvider = (cfg, providers = PROVIDERS) => providerNamed(foremanAgentOf(cfg, providers), providers);
+export const foremanProvider = (cfg, providers = knownProviders()) => providerNamed(foremanAgentOf(cfg, providers), providers);
 // 0392: the agent the Foreman runs on as speck run names it: a provider by its label, such as DeepSeek.
-const agentLabel = (cfg, providers = PROVIDERS) => foremanProvider(cfg, providers)?.label ?? foremanAgentOf(cfg, providers);
+const agentLabel = (cfg, providers = knownProviders()) => foremanProvider(cfg, providers)?.label ?? foremanAgentOf(cfg, providers);
 
 // 0392: why the Foreman can't start on a model provider now, in a sentence, or '' when it can or isn't on one.
 // `installed` says whether a command is on the PATH, so tests can stand in.
-export function foremanCantStart(repo, cfg, { providers = PROVIDERS, installed = onPath } = {}) {
+export function foremanCantStart(repo, cfg, { providers = knownProviders(repo), installed = onPath } = {}) {
   const p = foremanProvider(cfg, providers);
   if (!p) return '';
+  if (cantRun(p, 'run the Foreman')) return cantRun(p, 'run the Foreman'); // 0401
   if (!installed('claude')) return `the ${p.label} Foreman needs Claude Code installed, as speck runs ${p.label}'s models through it (claude isn't on the PATH). Install Claude Code (https://claude.com/claude-code), or set foreman to another agent.`;
   let key = '';
   try { key = providerKey(repo, p.name, { providers }); } catch (e) { return e.message; }
@@ -95,7 +96,7 @@ export function foremanBrief({ id, what, log, tail, agent = 'claude' }) {
 // Foreman runs Claude Code's, --bare and without foreman_effort, on foreman_model or else the provider's default model,
 // through provider-build.mjs, which reads this machine's key for it and gives Claude Code only what it needs to run and
 // the provider's address and key (providerForemanEnv).
-export function foremanArgv(cfg, brief, cli, providers = PROVIDERS) {
+export function foremanArgv(cfg, brief, cli, providers = knownProviders()) {
   const agent = foremanAgentOf(cfg, providers), model = textOf(cfg?.foreman_model), effort = textOf(cfg?.foreman_effort);
   const p = providerNamed(agent, providers);
   if (p) return [process.execPath, PROVIDER_SCRIPT, FOREMAN_MODE, p.name, p.address, ...claudeArgv(brief, model || p.defaultModel, '', ['--bare', ...CLAUDE_FLAGS])];
@@ -219,7 +220,7 @@ function spawnAgent(argv, cwd, log, env) {
 // the model providers speck knows, and `cantStart(cfg)` says why the Foreman can't start on one now.
 export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, running, startBuild, ships,
   start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState,
-  withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`), providers = PROVIDERS, cantStart = c => foremanCantStart(repo, c, { providers }) }) {
+  withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`), providers = null, cantStart = c => foremanCantStart(repo, c, providers ? { providers } : {}) }) {
   let child = null; // the agent this speck run started: { token, exited }. While it runs, no other starts, whatever the record says
   const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const carried = new Set(); // 0318: the same for your answers to its questions
@@ -252,9 +253,10 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
   };
 
   const launch = (s, c, next) => {
-    const token = crypto.randomUUID(), agent = foremanAgentOf(c, providers), label = agentLabel(c, providers);
+    const known = providers ?? knownProviders(repo); // 0401: read on each start, so a provider added since counts
+    const token = crypto.randomUUID(), agent = foremanAgentOf(c, known), label = agentLabel(c, known);
     const brief = foremanBrief({ id: next.id, what: next.what, log: next.log ? path.relative(repo, next.log) : 'its log', tail: next.log ? logTail(next.log) : '', agent });
-    const argv = foremanArgv(c, brief, undefined, providers);
+    const argv = foremanArgv(c, brief, undefined, known);
     // Reserved in the record before it starts, so a record that can't be saved starts nothing, and the agent's token is
     // there for `speck foreman` to check.
     s.queue = s.queue.slice(1);
