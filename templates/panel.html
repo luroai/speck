@@ -24,11 +24,21 @@
   // 0160: the home-screen app's status bar: black-translucent (light text) on the dark look, default (dark text) on the
   // light one. iOS reads it as the app opens.
   const bar = look => { const m = document.getElementById?.('status-bar'); if (m) m.content = look === 'dark' ? 'black-translucent' : 'default'; };
-  // 0372: Settings' look, while it's open, shows the one the page has (0396: its switch, drawn by the page's drawLook).
+  // 0372: Settings' look, while it's open, shows the one the page has (0396: drawn by the page's drawLook).
   const set = look => { root.dataset.theme = look; bar(look); if (typeof globalThis.drawLook === 'function') globalThis.drawLook(); };
-  set(saved() || (system.matches ? 'dark' : 'light'));
-  system.addEventListener('change', e => { if (!saved()) set(e.matches ? 'dark' : 'light'); });
+  // 0412: System, Light or Dark: the one picked in this page, or else the one kept in this browser, or else System,
+  // which follows the computer's setting.
+  let picked = null;
+  const choice = () => picked || saved() || 'system';
+  set(choice() === 'system' ? (system.matches ? 'dark' : 'light') : choice());
+  system.addEventListener('change', e => { if (choice() === 'system') set(e.matches ? 'dark' : 'light'); });
   globalThis.setLook = set; // for Settings' look
+  globalThis.lookChoice = choice;
+  globalThis.pickLook = c => {
+    if (c !== 'system' && c !== 'light' && c !== 'dark') return;
+    picked = c;
+    set(c === 'system' ? (system.matches ? 'dark' : 'light') : c);
+  };
 })();
 </script>
 <style>
@@ -316,6 +326,13 @@
   #settings [role="switch"]:hover .track { border-color: var(--text); }
   #settings [role="switch"] .state { white-space: nowrap; }
   @media (prefers-reduced-motion: reduce) { #settings [role="switch"] .knob { transition: none; } }
+  /* 0412: Appearance's System, Light and Dark, side by side in one box, the chosen one filled */
+  #settings .looks { display: inline-flex; flex: none; border: .5px solid var(--line); }
+  #settings .looks [role="radio"] { min-height: 26px; padding: 0 6px; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); background: none; border: 0; cursor: pointer; white-space: nowrap; }
+  #settings .looks [role="radio"] + [role="radio"] { border-left: .5px solid var(--line); }
+  #settings .looks [role="radio"]:hover { color: var(--text); }
+  #settings .looks [role="radio"][aria-checked="true"] { color: var(--panel); background: var(--text); }
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .looks, #settings .looks [role="radio"] + [role="radio"] { border-width: 1px; } }
   #settings .switch-row p.bad { margin: 4px 0 0; color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
   #settings .switch-row p.bad[hidden] { display: none; }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -592,6 +609,7 @@
     .run-state .fixing { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; } /* "Fixing on" gives way too, inside the button */
     .settings-open { width: 44px; height: 44px; }
     #settings .switch-row .info::after, #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
+    #settings .looks [role="radio"] { padding: 0 2px; } /* 0412: System, Light and Dark on one line in the control's half of the row, down to 320 px */
     #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .run-error, .offline, .restart { padding: 6px 16px; }
 
@@ -1969,12 +1987,22 @@ function holdPage(on) {
 }
 // A click on the backdrop closes the pane and nothing else. A drag from the pane to the backdrop clicks a node above both.
 // 0136: a look chosen switches the page and is remembered in this browser (the <head> script applies it on load). 0372:
-// chosen in Settings, not the header.
+// chosen in Settings, not the header. 0412: System, Light or Dark; System is kept as no choice, so it follows the computer.
+const LOOKS = [['system', 'System'], ['light', 'Light'], ['dark', 'Dark']];
+let lookPicked = null; // without the <head> script's pickLook
+const systemLook = () => (typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const lookNow = () => (typeof lookChoice === 'function' ? lookChoice() : lookPicked || 'system');
 function chooseLook(look) {
-  const root = document.documentElement;
-  if (look !== 'light' && look !== 'dark') return;
-  if (typeof setLook === 'function') setLook(look); else root.dataset.theme = look;
-  try { localStorage.setItem('speck-theme', root.dataset.theme); } catch { /* storage refused: the look still switches, until a reload */ }
+  if (!LOOKS.some(([l]) => l === look)) return;
+  try {
+    if (look === 'system') localStorage.removeItem('speck-theme'); else localStorage.setItem('speck-theme', look);
+  } catch { /* storage refused: the look still switches, until a reload */ }
+  if (typeof pickLook === 'function') pickLook(look);
+  else {
+    lookPicked = look;
+    const root = document.documentElement, shown = look === 'system' ? systemLook() : look;
+    if (typeof setLook === 'function') setLook(shown); else if (root?.dataset) root.dataset.theme = shown;
+  }
   drawLook();
 }
 // 0160: the header stays at the top of the screen. --head is its height on screen, so a ticket scrolled to sits below
@@ -2238,24 +2266,47 @@ function drawToggle(b, on, word) {
   b.setAttribute('aria-checked', String(on));
   b.replaceChildren(el('span', 'track', null, el('span', 'knob')), el('span', 'state', word));
 }
-// 0372: light or dark, kept in this browser rather than speck/config.yml, so it switches the page as it's pressed and
-// Save neither sends it nor counts it as a change. 0396: a switch, on for dark.
-const lookSwitch = toggleSwitch('look', 'Dark appearance');
-lookSwitch.addEventListener('click', () => chooseLook(document.documentElement?.dataset?.theme === 'dark' ? 'light' : 'dark'));
+// 0372: kept in this browser rather than speck/config.yml, so it switches the page as it's pressed and Save neither
+// sends it nor counts it as a change. 0412: System, Light and Dark, as radio buttons in one group: Tab reaches the one
+// chosen, and the arrow keys, Home and End choose another, kept between redraws so it keeps focus.
+const lookButtons = LOOKS.map(([look, word]) => {
+  const b = el('button', null, word);
+  b.type = 'button';
+  b.id = `look-${look}`;
+  b.setAttribute('role', 'radio');
+  b.addEventListener('click', () => chooseLook(look));
+  return b;
+});
+const lookGroup = el('div', 'looks', null, ...lookButtons);
+lookGroup.id = 'look';
+lookGroup.setAttribute('role', 'radiogroup');
+lookGroup.setAttribute('aria-label', 'Appearance');
+lookGroup.addEventListener('keydown', e => {
+  const at = LOOKS.findIndex(([l]) => l === lookNow()), last = LOOKS.length - 1;
+  const to = { ArrowRight: at + 1, ArrowDown: at + 1, ArrowLeft: at - 1, ArrowUp: at - 1, Home: 0, End: last }[e.key];
+  if (to === undefined) return;
+  e.preventDefault?.();
+  const i = (to + LOOKS.length) % LOOKS.length;
+  chooseLook(LOOKS[i][0]);
+  lookButtons[i].focus?.();
+});
 function drawLook() {
-  const dark = document.documentElement?.dataset?.theme === 'dark';
-  drawToggle(lookSwitch, dark, dark ? 'Dark' : 'Light');
+  const chosen = lookNow();
+  LOOKS.forEach(([look], i) => {
+    lookButtons[i].setAttribute('aria-checked', String(look === chosen));
+    lookButtons[i].tabIndex = look === chosen ? 0 : -1;
+  });
 }
 // 0396: Appearance, then Auto-build, each a row of its name and its switch, above the other groups.
 function toggleGroup() {
   drawLook();
   drawRunSwitch();
   // An info button, as every setting has, so the rows line up with the others (0277).
-  const [lookInfo, lookTip] = settingInfo({ key: 'Appearance', explain: 'Light or dark, for the panel in this browser. It\'s kept here, not in speck/config.yml.' }, settingTips.size);
+  const [lookInfo, lookTip] = settingInfo({ key: 'Appearance', explain: 'System follows your computer\'s setting; Light and Dark stay as they are. It\'s kept in this browser, not in speck/config.yml.' }, settingTips.size);
   const [runInfo, runTip] = settingInfo({ key: 'Auto-build', explain: 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.' }, settingTips.size);
   const row = (name, info, sw, ...after) => el('div', 'switch-row', null,
     el('div', 'row', null, el('span', 'label', null, el('span', 'name', name), info), el('div', 'control', null, sw)), ...after);
-  return el('section', 'switches', null, row('Appearance', lookInfo, lookSwitch, lookTip), row('Auto-build', runInfo, runSwitchButton, runSwitchSaid, runTip));
+  return el('section', 'switches', null, row('Appearance', lookInfo, lookGroup, lookTip), row('Auto-build', runInfo, runSwitchButton, runSwitchSaid, runTip));
 }
 // 0381: each agent's model, drawn in the agent's row: key → the agent's key.
 const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', foreman_model: 'foreman' };

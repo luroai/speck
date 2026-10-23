@@ -32,7 +32,8 @@ async function opened({ theme = 'light', saves = [], storage, withSetLook = true
 const pane = p => p.byId('settings');
 // The switches' box, then each group of settings.
 const groupsOf = p => pane(p).children.filter(n => /\b(sgroup|switches)\b/.test(n.className || ''));
-const lookSwitch = p => p.all(pane(p)).find(n => n.id === 'look');
+const lookSwitch = p => p.all(pane(p)).find(n => n.id === 'look'); // 0412: System, Light and Dark, no longer a switch
+const lookChoice = (p, look) => lookSwitch(p).children.find(b => b.id === `look-${look}`);
 const runSwitch = p => p.all(pane(p)).find(n => n.id === 'run-switch');
 const rowOfSwitch = (p, sw) => { let n = sw; while (n && !/\bswitch-row\b/.test(n.className || '')) n = n.parentNode; return n; };
 const nameOf = (p, row) => p.all(row).find(n => /\bname\b/.test(n.className || ''))?.textContent;
@@ -68,35 +69,33 @@ test('0396 AC1: the two rows come first when the settings fail to load', async (
   assert.equal(pane(p).children.indexOf(first), 1, 'just under the view\'s top line');
 });
 
-test('0396 AC2: Appearance\'s switch shows the look the page has, and a press switches it both ways, through setLook', async () => {
+// 0412: a choice of System, Light and Dark rather than a switch; its own tests check what it shows.
+test('0396 AC2: Appearance switches the look both ways, through setLook', async () => {
   for (const [from, to] of [['light', 'dark'], ['dark', 'light']]) {
     const { p, root, looks, stored } = await opened({ theme: from });
-    const sw = lookSwitch(p);
-    assert.equal(sw.attrs['aria-checked'], String(from === 'dark'));
-    assert.match(sw.textContent, from === 'dark' ? /Dark/ : /Light/);
-    p.press(sw);
+    const c = lookSwitch(p);
+    p.press(lookChoice(p, to));
     assert.deepEqual(looks, [to]);
     assert.equal(root.dataset.theme, to);
-    assert.equal(lookSwitch(p), sw, 'the same switch, so it keeps the focus');
-    assert.equal(sw.attrs['aria-checked'], String(to === 'dark'), 'it shows the new look');
-    assert.match(sw.textContent, to === 'dark' ? /Dark/ : /Light/);
+    assert.equal(lookSwitch(p), c, 'the same control, so it keeps the focus');
+    assert.equal(lookChoice(p, to).attrs['aria-checked'], 'true', 'it shows the new look');
     assert.deepEqual(stored, [['speck-theme', to]], 'kept in this browser, as 0372');
   }
   // Without the <head> script's setLook, it still switches and shows it.
   const { p, root } = await opened({ withSetLook: false });
-  p.press(lookSwitch(p));
+  p.press(lookChoice(p, 'dark'));
   assert.equal(root.dataset.theme, 'dark');
-  assert.equal(lookSwitch(p).attrs['aria-checked'], 'true');
+  assert.equal(lookChoice(p, 'dark').attrs['aria-checked'], 'true');
 });
 
 test('0396 AC2: the look is not sent to the server and Save stays off; storage the browser refuses still switches it', async () => {
   const { p } = await opened();
-  p.press(lookSwitch(p));
+  p.press(lookChoice(p, 'dark'));
   await p.settle();
   assert.deepEqual(posted(p), []);
   assert.ok(!p.settingsCalls.some(c => /look|theme/.test(c.url)));
   const refused = await opened({ storage: { getItem: () => null, setItem() { throw new Error('SecurityError'); } } });
-  refused.p.press(lookSwitch(refused.p));
+  refused.p.press(lookChoice(refused.p, 'dark'));
   assert.equal(refused.root.dataset.theme, 'dark');
 });
 
@@ -161,9 +160,10 @@ test('0396 AC3: a refused switch shows speck run\'s message beside it, as 0368',
   assert.equal(sw.attrs['aria-checked'], 'false', 'still off');
 });
 
-test('0396 AC4: both are buttons a key presses, with the switch role and a name a screen reader reads', async () => {
+// 0412: Appearance is a radio group now, checked in its own tests.
+test('0396 AC4: Auto-build is a button a key presses, with the switch role and a name a screen reader reads', async () => {
   const { p } = await opened();
-  for (const [sw, name] of [[lookSwitch(p), /Appearance/i], [runSwitch(p), /^Auto-build$/]]) {
+  for (const [sw, name] of [[runSwitch(p), /^Auto-build$/]]) {
     assert.equal(sw.tagName, 'button');
     assert.equal(sw.type, 'button');
     assert.equal(sw.attrs.role, 'switch');
@@ -171,7 +171,6 @@ test('0396 AC4: both are buttons a key presses, with the switch role and a name 
     assert.equal(sw.attrs['aria-pressed'], undefined, 'a switch says it\'s on with aria-checked alone');
     assert.match(sw.attrs['aria-label'], name);
   }
-  assert.match(lookSwitch(p).attrs['aria-label'], /dark/i, 'on means dark');
 });
 
 // ---------- in a real browser ----------
@@ -200,11 +199,11 @@ test('0396 AC4: at 320 px each switch is on one row with its name, and Space swi
       assert.ok(r.swRight <= r.rowRight + 0.5 && r.rowRight <= r.paneRight + 0.5, `${r.id}: inside the row: ${JSON.stringify(r)}`);
       assert.ok(r.rowH < 64, `${r.id}: one row, ${r.rowH} px`);
     }
-    await b.js(`document.getElementById('look').focus(); true`);
+    await b.js(`document.getElementById('look-dark').focus(); true`); // 0412: Appearance's Dark
     await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: ' ', code: 'Space', windowsVirtualKeyCode: 32, text: ' ' });
     await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32 });
-    await b.until(`document.documentElement.dataset.theme === 'dark' && document.getElementById('look').getAttribute('aria-checked') === 'true'`, 'Space to switch to dark');
-    assert.equal(await b.js(`document.activeElement === document.getElementById('look')`), true, 'it keeps the focus');
+    await b.until(`document.documentElement.dataset.theme === 'dark' && document.getElementById('look-dark').getAttribute('aria-checked') === 'true'`, 'Space to switch to dark');
+    assert.equal(await b.js(`document.activeElement === document.getElementById('look-dark')`), true, 'it keeps the focus');
   } finally {
     await b.js(`localStorage.removeItem('speck-theme'); true`).catch(() => {});
     await b.close();

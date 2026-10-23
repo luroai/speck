@@ -114,9 +114,9 @@ const LIGHT_BG = 'rgb(250, 249, 245)';
 const DARK_BG = 'rgb(24, 24, 24)';
 // 0372: the look Settings' list shows, opening Settings if it's closed, and a look picked there.
 const LOOK = `(async () => { if (!document.getElementById('look')) document.getElementById('settings-open').click(); for (let i = 0; i < 100 && !document.getElementById('look'); i++) await new Promise(r => setTimeout(r, 20)); return document.getElementById('look'); })()`;
-// 0396: Appearance's switch, on for dark, pressed when it shows the other look.
-const shown = `${LOOK}.then(l => l.getAttribute('aria-checked') === 'true' ? 'dark' : 'light')`;
-const pick = look => `${LOOK}.then(l => { if ((l.getAttribute('aria-checked') === 'true' ? 'dark' : 'light') !== ${JSON.stringify(look)}) l.click(); return true; })`;
+// 0412: Appearance's System, Light and Dark: the one chosen, and one picked.
+const shown = `${LOOK}.then(l => l.querySelector('[aria-checked="true"]').id.replace('look-', ''))`;
+const pick = look => `${LOOK}.then(l => { l.querySelector('#look-${look}').click(); return true; })`;
 
 async function withPanel(fn, { scheme } = {}) {
   const r = panelRepo();
@@ -142,7 +142,7 @@ async function withPanel(fn, { scheme } = {}) {
 test('0136 AC1-AC2 (0372): in a browser, Settings\' list switches the look both ways and shows the one chosen', skip, async () => {
   await withPanel(async b => {
     assert.equal(await b.js(bodyBg), LIGHT_BG);
-    assert.equal(await b.js(shown), 'light');
+    assert.equal(await b.js(shown), 'system', '0412: nothing chosen yet');
     await b.js(pick('dark'));
     await b.until(`getComputedStyle(document.body).backgroundColor === '${DARK_BG}'`, 'the dark look');
     assert.equal(await b.js(shown), 'dark');
@@ -167,7 +167,7 @@ test('0136 AC4: in a browser, the look chosen is kept through a reload, whatever
 test('0136 AC5: in a browser, before any choice, the panel follows the computer\'s setting', skip, async () => {
   await withPanel(async (b, open) => {
     assert.equal(await b.js(bodyBg), DARK_BG);
-    assert.equal(await b.js(shown), 'dark');
+    assert.equal(await b.js(shown), 'system', '0412: System, showing the computer\'s dark');
     await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
     await b.until(`getComputedStyle(document.body).backgroundColor === '${LIGHT_BG}'`, 'the light look once the computer is light');
     await open();
