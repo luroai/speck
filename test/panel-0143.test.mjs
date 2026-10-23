@@ -51,7 +51,7 @@ test('0143 AC1: the pane shows priority, size and risk under the title, whicheve
     openFrom(p, where, id);
     assert.deepEqual(paneTags(p), want, `${where}: the tags`);
     const kids = paneTop(p).children.map(n => n.className);
-    assert.deepEqual(kids, ['id', 'title', 'close', 'tags'], `${where}: id, title and Close stay as they were, the tags after them`);
+    assert.deepEqual(kids, ['id', 'state', 'close', 'title', 'tags'], `${where}: id, status and Close, then the title (0424), the tags after them`);
   }
 });
 
@@ -107,7 +107,7 @@ test('0143 AC3: a field the ticket doesn\'t have shows no tag, and a ticket with
     await p.settle();
     openFrom(p, 'shipped', id);
     assert.equal(paneTags(p), null, `${id}: no tags`);
-    assert.deepEqual(paneTop(p).children.map(n => n.className), ['id', 'title', 'close'], `${id}: the top row as before`);
+    assert.deepEqual(paneTop(p).children.map(n => n.className), ['id', 'state', 'close', 'title'], `${id}: the top row as before (0424: with its status)`);
   }
 });
 
@@ -116,7 +116,7 @@ test('0143 AC3: the rest of the pane is unchanged', async () => {
   await p.settle();
   openFrom(p, 'shipped', '0009');
   assert.equal(pane(p).children.length, 2, 'the top row and the body');
-  assert.equal(paneTop(p).children[1].textContent, 'Ticket 0009');
+  assert.equal(paneTop(p).children.find(n => n.className === 'title').textContent, 'Ticket 0009');
   assert.equal(pane(p).children[1].children[0].tagName, 'h4', 'the body starts with its first section');
 });
 

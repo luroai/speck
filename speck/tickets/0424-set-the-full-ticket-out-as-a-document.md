@@ -42,6 +42,8 @@ The full ticket and a review pack read as a hierarchical document: a title, sect
 - Today: the full ticket's Markdown is drawn by `markdown()` in `templates/panel.html` (0132, 0158).
 - Waits for 0423: both change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: the status above the title now follows a change to the ticket in place (it was only drawn when the pane was built), and a review pack's Close stays on the id's line rather than dropping under its title (found in the pictures).
+- Changed existing tests: 0143 and 0063 asserted the full ticket's top line as id, title, Close; it is now id, status, Close, title (this ticket's AC1).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
