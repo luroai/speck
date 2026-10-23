@@ -44,6 +44,9 @@ speck run builds with Claude Code, Codex or Cursor. There's no way to build with
 - Start from `DEFAULT_BUILD_COMMAND` in `scripts/build-model.mjs` and the per-builder plans in `scripts/ticket-builder.mjs` (0312), adding `--bare`. `--bare` skips CLAUDE.md discovery, so the build has to be given AGENTS.md (or CLAUDE.md) itself, for example with `--append-system-prompt-file`.
 - Waits for 0390.
 - Failing before this build: none
+- Checked 2026-10-23, correcting the note above: with the real Claude Code 2.1.301 in `-p` mode, `--bare` doesn't expand `/speck-build` (the model got the bare text) and offers only the Bash, Edit and Read tools. So builds don't use `--bare`: they run with `--setting-sources=project --strict-mcp-config`, their own `CLAUDE_CONFIG_DIR` and the provider's key in `ANTHROPIC_API_KEY`. Against a local stand-in for DeepSeek's API, with a logging proxy for everything else: the skill expanded, the tools were the full set, Claude Code reported `apiKeySource: ANTHROPIC_API_KEY`, every request went to the given address with only the key (no Authorization header), nothing went through the proxy, and `--resume` continued the same session. Without `--bare`, Claude Code reads the repo's CLAUDE.md (which speck's install makes import AGENTS.md), so nothing is appended.
+- Self-check: the launcher took `claude` as the model when `--model` was missing, and ran with missing arguments; both fixed, with a test.
+- Pictures: none, because the only change on screen is the builder's name in one sentence on a card, which a fake-page test checks.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
