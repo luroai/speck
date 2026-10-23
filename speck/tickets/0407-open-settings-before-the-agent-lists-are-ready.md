@@ -42,6 +42,8 @@ Settings opens from this machine's and the project's config straight away, and t
 - Checked 2026-10-23: `openSettings` / `loadSettings` in `templates/panel.html` fetch `/api/settings` once and only then draw the ok view. `settingsAnswer` in `scripts/settings.mjs` awaits `findAgentsAsync` (sign-in checks) and `yourModels` (Codex and Cursor model lists for your agents) before returning.
 - Prefetching when the panel starts, or caching the last lists, is fine as how, so long as criteria 1–3 hold.
 - Failing before this build: none
+- Self-check: Your agents changed by an add or a removal while the lists are read again after a Save now stays as changed, rather than being overwritten by the older answer (test added).
+- AC4: no existing test checked that Settings stays on loading until every agent answers, so none was changed. The 39 existing test files that open Settings or read /api/settings pass with the change.
 - Waits for 0406: both change Settings loading and grouping (`templates/panel.html`, `scripts/settings.mjs`, `scripts/panel.mjs`).
 
 ## In plain words
