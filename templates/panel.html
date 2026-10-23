@@ -96,18 +96,21 @@
   body { display: flex; flex-direction: column; height: 100dvh; }
   header, .offline, .restart, .run-error, .tabs { flex: none; }
   header, .offline, .restart, .run-error, .tabs, main { box-sizing: border-box; width: 100%; max-width: 720px; margin-left: auto; margin-right: auto; }
-  .tabs { display: flex; gap: 2px; padding: 8px 16px 0; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .tab { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; column-gap: 8px; min-width: 0; margin-bottom: -.5px; padding: 6px 10px; font: inherit; color: var(--muted); background: transparent; border: .5px solid transparent; border-bottom-color: var(--line); cursor: pointer; text-align: left; }
+  /* 0425: the three tabs share the row equally, each its name on one line (and Build's needs-you number) */
+  .tabs { display: flex; padding: 8px 16px 0; border-bottom: .5px solid var(--line); background: var(--bg); }
+  .tab { flex: 1 1 0; display: flex; align-items: baseline; justify-content: flex-start; column-gap: 6px; min-width: 0; margin-bottom: -.5px; padding: 6px 8px; font: inherit; color: var(--muted); background: transparent; border: .5px solid transparent; border-bottom-color: var(--line); cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; }
   .tab:hover { color: var(--text); }
   .tab[aria-selected="true"] { color: var(--text); background: var(--panel); border-color: var(--line); border-bottom-color: var(--panel); }
-  .tab .tab-name { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
-  .tab .n, .tab .needs { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
+  .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
+  .tab .needs { flex: none; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
   .tab .needs { color: var(--bad); }
   .tab .needs:empty { display: none; }
   main { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0 0 env(safe-area-inset-bottom); }
   section { background: var(--panel); border: .5px solid var(--line); }
   main > section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; border: 0; }
   main > section[hidden] { display: none; }
+  /* 0425: Build's and Shipped's counts, the first line of their lane */
+  .lane-n { flex: none; padding: 6px 16px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); }
   .lane-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .sh { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-bottom: .5px solid var(--line); }
   .sh h2 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
@@ -718,8 +721,8 @@
 
 <nav class="tabs" id="tabs" role="tablist" aria-label="Lanes">
   <button class="tab" id="tab-plan" type="button" role="tab" aria-selected="false" aria-controls="shaping-section"><span class="tab-name">Plan</span></button>
-  <button class="tab" id="tab-build" type="button" role="tab" aria-selected="true" aria-controls="build-section"><span class="tab-name">Build</span><span class="n" id="queue-n"></span><span class="needs" id="build-needs"></span></button>
-  <button class="tab" id="tab-shipped" type="button" role="tab" aria-selected="false" aria-controls="shipped-section"><span class="tab-name">Shipped</span><span class="n" id="shipped-n"></span></button>
+  <button class="tab" id="tab-build" type="button" role="tab" aria-selected="true" aria-controls="build-section"><span class="tab-name">Build</span><span class="needs" id="build-needs"></span></button>
+  <button class="tab" id="tab-shipped" type="button" role="tab" aria-selected="false" aria-controls="shipped-section"><span class="tab-name">Shipped</span></button>
 </nav>
 <main>
   <section id="shaping-section" class="shaping tickets" role="tabpanel" aria-labelledby="tab-plan" tabindex="-1" hidden>
@@ -727,9 +730,11 @@
     <div id="shaping" class="lane-list"></div>
   </section>
   <section id="build-section" role="tabpanel" aria-labelledby="tab-build" tabindex="-1">
+    <div class="lane-n" id="queue-n"></div>
     <div id="queue" class="lane-list"></div>
   </section>
   <section id="shipped-section" class="shipped" role="tabpanel" aria-labelledby="tab-shipped" tabindex="-1" hidden>
+    <div class="lane-n" id="shipped-n"></div>
     <div class="lane-list" id="shipped-list">
       <div class="stats-line" id="shipped-stats-line" hidden><div id="shipped-stats" hidden></div><button class="full-open more-stats" id="more-stats" type="button" aria-expanded="false" aria-controls="shipped-more" hidden></button></div>
       <div class="stats" id="shipped-more" hidden></div>
@@ -3888,7 +3893,9 @@ function drawTabs() {
   }
   // While Build's tab is closed, it says how many things need you, as the Foreman's status does
   const needs = openLane === 'build' ? null : /^Needs you (\d+)$/.exec(foremanOf(state).word);
-  setText($('build-needs'), needs ? `${needs[1]} needs you` : '');
+  // 0425: the number alone, so the tabs fit a third of a narrow pane; its accessible name says what it is
+  setText($('build-needs'), needs ? needs[1] : '');
+  $('tab-build').setAttribute('aria-label', needs ? `Build, ${needs[1]} needs you` : 'Build');
 }
 for (const [i, l] of TAB_ORDER.entries()) {
   const tab = $(LANES[l][0]);
