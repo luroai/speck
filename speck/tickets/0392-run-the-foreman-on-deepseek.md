@@ -1,7 +1,7 @@
 ---
 id: "0392"
 title: "Run the Foreman on DeepSeek"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T08:05:16.858Z"
 ---
 # 0392 · Run the Foreman on DeepSeek
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The Foreman runs on Claude Code, Codex or Cursor. Someone building with DeepSeek can't run the Foreman on it too.
@@ -57,3 +57,89 @@ The Foreman runs on Claude Code, Codex or Cursor. Someone building with DeepSeek
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fd85bfd45b4d00255ca6a0e531a79b9a98861b30",
+    "session": "fresh",
+    "thread_id": "01a167ce-efff-7382-82b3-1a98e3fd5d27",
+    "builder_response": "- Tests run: test/foreman-provider-0392.test.mjs test/readme-0250.test.mjs test/brief-0225.test.mjs test/review-0280.test.mjs test/run-cursor-0290.test.mjs test/run-codex-0289.test.mjs test/foreman-cursor-0333.test.mjs test/foreman-agent-0287.test.mjs test/settings-foreman-0348.test.mjs test/run-provider-0391.test.mjs (plus the commands.checks files speck test adds)\n- Round 1. A provider's Foreman starts through provider-build.mjs (0391's launcher, which reads the key and builds the environment), with Claude Code's own Foreman words plus --bare, --setting-sources=project and --strict-mcp-config. speck run checks Claude Code and the key before starting it. Settings is out of scope (0393): its Foreman list still offers only claude, codex and cursor.\n",
+    "seconds": 42,
+    "usage": {
+      "input_tokens": 112716,
+      "cached_input_tokens": 68352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 957,
+      "reasoning_output_tokens": 135
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T08:10:19.159Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "foremanArgv and foremanAgentQueue in scripts/foreman-agent.mjs select the provider model, omit effort and preserve the existing brief and action handling. The two AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The command preserves Claude Foreman permissions, but providerBuildEnv in scripts/provider-build.mjs inherits all environment variables except its SIGN_IN blacklist. Other credentials remain available; the AC2 test checks only selected Anthropic credentials."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanCantStart checks installation and the machine key; queue launch refuses to start and reports the reason. foremanAgentOf inherits a DeepSeek builder. The corresponding AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The AC4 test supplies an independent Acme provider, exercises model selection, key lookup, launcher execution and queue naming, and passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported targeted run passed 200 tests, with three skipped and no failures. Existing Foreman and provider test files were included."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/foreman-provider-0392.test.mjs",
+        "issue": "The final documentation test requires exact prose, including \"It runs on\" and \"or a model provider's name, such as deepseek\", and a particular ordering of agent names. Harmless documentation edits would fail it, contrary to the review rules.",
+        "suggested_fix": "Check the documented setting and provider names without requiring surrounding wording or list order.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/provider-build.mjs",
+        "issue": "The new Foreman route uses providerBuildEnv, which retains credentials such as AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, GOOGLE_APPLICATION_CREDENTIALS and GH_TOKEN. This violates the requirement to give it no other means of signing in. --bare does not remove these variables from the process environment.",
+        "suggested_fix": "Give provider Foremen an environment containing only necessary runtime variables, the provider credentials and the Foreman token. Add a test seeding other credentials and verifying they are absent. Preserve the existing builder environment behaviour.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "DeepSeek model selection, startup checks and generic provider support work in the reported tests. Approval is held because the Foreman inherits unrelated credentials and a documentation test locks down exact wording."
+  }
+}
+```
+
+</details>
