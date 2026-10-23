@@ -42,6 +42,7 @@ The three tabs are the same size and share the row, and each lane's counts are a
 - Changes 0410's tab row: criterion 2 replaces 0410's `<n> needs you` text on the Build tab with the number alone, so the tabs fit a third of 320 px.
 - Today: `.tabs`, `.tab`, `#queue-n`, `#shipped-n` and `#build-needs` in `templates/panel.html`.
 - Waits for 0420, which also changes the Shipped count. Builds alongside 0421 to 0424 (the user, 2026-10-23), which change other parts of `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
