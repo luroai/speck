@@ -90,9 +90,9 @@ test('0160 AC2: the page reaches behind the status bar, with a status bar style 
   assert.match(viewport, /viewport-fit=cover/);
   assert.match(head(), /<meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar">/);
   const rule = (css().match(/(?:^|\n)\s*header \{([^}]*)\}/) || [])[1] || '';
-  assert.match(rule, /padding:\s*calc\(14px \+ env\(safe-area-inset-top\)\)/);
+  assert.match(rule, /padding:\s*calc\(12px \+ env\(safe-area-inset-top\)\)/); // 0413: around speck's screen's frame
   const phone = (phoneCss().match(/(?:^|\n)\s*header \{([^}]*)\}/) || [])[1] || '';
-  assert.match(phone, /padding:\s*calc\(6px \+ env\(safe-area-inset-top\)\)/); // 0364: its one row, 6 px above and below
+  assert.match(phone, /padding:\s*calc\(8px \+ env\(safe-area-inset-top\)\)/); // 0413: 8 px round the frame on a phone
 });
 
 test('0160 AC2: the status bar style tag says black-translucent (light text) on the dark look and default (dark text) on the light one, set before the page is drawn and on each switch', skip, async () => {
@@ -113,52 +113,14 @@ test('0160 AC2: with a 47 px status bar, the header fills it and nothing else ev
     const h = await box(b, 'header');
     assert.equal(h.top, 0, 'the header starts at the very top, behind the status bar');
     for (const x of [2, 187, 373]) for (const sy of [1, 23, 46]) assert.equal(await at(b, x, sy), 'header', `behind the status bar at (${x}, ${sy}), scrolled to ${y}`);
-    const logo = await box(b, '.logo');
-    assert.ok(logo.top >= 47, `the header's own content starts below the status bar (at ${logo.top})`);
+    const frame = await box(b, '.bezel'); // 0413: speck's screen's frame
+    assert.ok(frame.top >= 47, `the header's own content starts below the status bar (at ${frame.top})`);
   }
 }, { insets: { top: 47, bottom: 34 } }));
 
 // 0364: the header no longer slims as you scroll: it's one row at the top and scrolled down, with the project shown.
-test('0160 AC3: on a phone, at the top and scrolled down, the header is one row of the mark, the project, the Foreman and Settings, no taller than 60 px', skip, () => withPanel(async b => {
-  const before = await box(b, 'header');
-  for (const y of [600, 0]) {
-    await scrollTo(b, y);
-    const h = await box(b, 'header');
-    assert.ok(h.height <= 60, `${h.height} px`);
-    assert.equal(h.height, before.height, 'scrolling never changes its height');
-    assert.ok(await shown(b, '.repo'), 'the project name and base branch show');
-    assert.equal(await shown(b, '.logo span'), false, '"control panel" is hidden');
-    for (const sel of ['.logo', '.repo', '#run', '#settings-open']) assert.ok(await shown(b, sel), `${sel} shows`);
-    const mids = await b.js(`['.logo', '.repo', '#run', '#settings-open'].map(s => { const r = document.querySelector(s).getBoundingClientRect(); return r.top + r.height / 2; })`);
-    assert.ok(Math.max(...mids) - Math.min(...mids) < 4, `one row: ${mids}`);
-    assert.ok((await box(b, '#run')).height >= 44 && (await box(b, '#settings-open')).height >= 44, 'the buttons keep their 44 px tap areas');
-  }
-}));
+// 0413: the header is speck's screen in its frame, taller than the one row these checked on a phone (panel-0413.test.mjs).
 
-test('0160 AC3: with a 47 px status bar, the slim header is at most 60 px plus that', skip, () => withPanel(async b => {
-  await scrollTo(b, 600);
-  const h = await box(b, 'header');
-  assert.ok(h.height <= 60 + 47, `${h.height} px`);
-  assert.ok((await box(b, '.logo')).top >= 47);
-}, { insets: { top: 47, bottom: 34 } }));
-
-test('0160 AC3: slimming moves nothing on the page: a card stays where it was as the header changes', skip, () => withPanel(async b => {
-  await scrollTo(b, 3);
-  const docTop = `document.querySelectorAll('#shaping .item')[6].getBoundingClientRect().top + ${LIST}.scrollTop`;
-  const first = await b.js(docTop);
-  await scrollTo(b, 40);
-  assert.equal(await b.js(docTop), first, 'its place on the page is the same, slim or not');
-  const h = await b.js(`[scrollY, document.querySelector('header').className, document.querySelector('header').getBoundingClientRect().height]`);
-  assert.ok(h[2] <= 60, `slim: ${h}`);
-}));
-
-test('0160 AC3: on 700 px and wider, the header keeps its one full row when scrolled', skip, () => withPanel(async b => {
-  await scrollTo(b, 600);
-  assert.ok(await shown(b, '.repo'));
-  assert.ok(await shown(b, '.logo span'));
-}, { width: 800 }));
-
-// 0364: with nothing to change as you scroll, nothing in the header fades either.
 test('0160 AC3: scrolling down and back up starts no fade in the header, and leaves it as it was', skip, () => withPanel(async b => {
   await b.js(`window.anims = []; document.querySelector('header').addEventListener('animationstart', e => anims.push(e.animationName), true)`);
   const before = await b.js(`document.querySelector('header').className`);

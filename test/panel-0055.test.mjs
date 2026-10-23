@@ -96,7 +96,7 @@ function repoWithBoard() {
 }
 // Each refresh puts a new label in the Foreman's button (0150; 0303: its builder stays), so a label that isn't the one
 // marked is a refresh since.
-const refreshed = async (b, what) => { await b.js(`window.seen = document.getElementById('run').lastChild`); await b.until(`document.getElementById('run').lastChild !== window.seen`, what); };
+const refreshed = async (b, what) => { await b.js(`window.seen = window.drawn || 0; if (!window.drawWatch) (window.drawWatch = new MutationObserver(() => { window.drawn = (window.drawn || 0) + 1; })).observe(document.getElementById('bezel'), { attributes: true }); true`); await b.until(`(window.drawn || 0) > window.seen`, what); }; // 0413: each redraw sets the frame of speck's screen, which stays between them
 const row = id => `[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}')`;
 // The page point at a character offset in the text of the element an expression finds.
 const charIn = (expr, offset) => `(() => { const n = ${expr}.firstChild, r = document.createRange(); r.setStart(n, ${offset}); r.setEnd(n, ${offset} + 1);
