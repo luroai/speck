@@ -1,7 +1,7 @@
 ---
 id: "0437"
 title: "Run the tests a change affects before its first review"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T21:55:26.036Z"
 ---
 # 0437 · Run the tests a change affects before its first review
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A build runs only its own test files before review, and the whole suite runs only at ship. So a change that breaks an existing test is caught at ship, after the reviewer approved: speck run hands the ticket back, and the build re-tests, fixes and gets another review round. 0427, a font change, lost about 8 of its 25 minutes this way, to layout tests it hadn't run.
@@ -56,3 +56,76 @@ Before its first review round, a build also runs the existing tests that cover t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a8a4a58b950a9342420b1dd0531144755216e837",
+    "session": "fresh",
+    "thread_id": "01a16acc-6640-7250-a778-29da42260f9c",
+    "builder_response": "- Tests run: `speck test --related test/related-0437.test.mjs` (this ticket's new step: the ticket's own test file plus every related test file it chose, 374 files here, and commands.checks, in one run). Its output starts with the list of chosen files and what brought each in.\n- Self-check: no changes. One related test (test/recorded-0238.test.mjs) failed on the first --related run because I'd reworded the usage message; I kept the message's old start instead of changing that test, and the run above passes.\n- Note: the related set is nearly the whole suite for this branch, because test/support modules name scripts/speck.mjs (the CLI), which this change touches. That's what AC1 asks for; I'll list narrowing it as a follow-up.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 112033,
+      "cached_input_tokens": 68608,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 756,
+      "reasoning_output_tokens": 71
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T22:06:05.596Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/related.mjs: changedFiles and relatedTests select tests by changed path or basename and direct support-module imports, excluding speck/. Four passing AC1 tests cover these selections and the branch point."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs: cmdTest prints relatedReport before running the combined files through the existing runner with commands.checks. Passing AC2 tests cover reporting, combined selection, checks and the empty result."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md step 5 specifies --related with the round's files, captures its output for the first reviewer, and preserves the prohibition on fixing previously failing tests. The passing AC3 test checks the command and rule, although its prose assertions need correction."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md's speck test row documents --related and selection through changed-file names and test/support imports. The passing AC4 test checks the command and support-directory references."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/related-0437.test.mjs:138",
+        "issue": "The new AC3 test locates the skill step by its exact opening wording and asserts exact prose sentences at lines 141–142. These are document wording checks explicitly prohibited by the review rules; harmless editorial changes would break the suite.",
+        "suggested_fix": "Remove the exact prose and step-opening assertions. Retain checks of concrete facts such as the --related command, output file and tee invocation without depending on surrounding wording or step position.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change selects related tests, explains its choices and adds them to the first review run. The reported run passed. One new test must be revised because it locks documentation to exact wording, making routine edits break the tests."
+  }
+}
+```
+
+</details>
