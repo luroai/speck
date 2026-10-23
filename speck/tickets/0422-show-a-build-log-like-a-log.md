@@ -1,7 +1,7 @@
 ---
 id: "0422"
 title: "Show a build log like a log"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: [] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T17:53:56.021Z"
+approved: "2026-10-23T18:03:55.902Z"
 
 ---
 # 0422 · Show a build log like a log
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The build log is how you see that a build is really moving, like watching the model work. But it's one block of plain monospace text: times, tool calls, the agent's messages and failures all look the same, and a long line that wraps starts again at the left edge, so it reads as a new entry.
@@ -55,9 +56,15 @@ Worth a look: output that isn't from the agent (a stray line a tool printed) has
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 setLogText removes and replaces the final row whenever that line grows.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 373,073
+- Elapsed since build started: 10 min
+- Changed lines: 72 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, none to the inbox):
   - Known limit: a line with no time that isn't a tool call or a failure (an agent message's later lines, the final result, or raw output from the build process) is shown as a message. A log with no times at all would show every line past an empty time column.
