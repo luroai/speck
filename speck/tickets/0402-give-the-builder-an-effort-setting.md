@@ -41,6 +41,7 @@ The builder has an effort setting, offered and passed the same way as the review
 - Asked for 2026-10-23 from the builder row ("Opus High/Max/Ultra"). Reviewer and Foreman already show effort for agents that take one (0400); the builder row deliberately has none (`builder_effort` is absent from `EDITABLE` in `scripts/settings.mjs`).
 - Checked 2026-10-23: Claude Code's reviewer path uses `--effort {effort}` (`scripts/reviewers.mjs`). Codex Foreman uses `-c model_reasoning_effort=…` (`scripts/foreman-agent.mjs`). Claude Code builds get `--model` from `withBuilderModel` in `scripts/build-model.mjs` and no effort today.
 - Waits for 0401: both change Settings in `templates/panel.html` and `scripts/settings.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
