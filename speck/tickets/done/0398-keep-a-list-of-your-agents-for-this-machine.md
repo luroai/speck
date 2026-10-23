@@ -1,7 +1,7 @@
 ---
 id: "0398"
 title: "Keep a list of your agents for this machine"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T10:00:15.944Z"
 approved: "2026-10-23T10:07:19.648Z"
+finished: "2026-10-23T10:10:10.400Z"
 
 ---
 # 0398 · Keep a list of your agents for this machine
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Settings offers every agent speck knows, whether or not it's set up here. DeepSeek appears as a choice before any API key is added, and Claude Code, Codex and Cursor appear whether or not they're installed.
