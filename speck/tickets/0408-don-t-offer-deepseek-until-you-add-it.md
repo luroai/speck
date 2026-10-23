@@ -49,7 +49,7 @@ Add an agent does not offer DeepSeek, or any other known API provider, until you
 - Went with the recommendation: (a) let the form add the built-in DeepSeek (chosen by the user in the panel, 2026-10-23 13:08 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Settings' Add an agent no longer lists DeepSeek with an empty key box when you've never set up DeepSeek. Claude Code, Codex and Cursor are still offered as before. To add DeepSeek, use the Add an API provider form: type DeepSeek as the name and paste your key, and speck fills in the rest itself. To see it, open Settings on a machine without a DeepSeek key and press Add an agent. If you already use DeepSeek, nothing changes for you. Worth a look: the "Every agent speck knows is one of yours" line can show even though DeepSeek isn't yours (saved as an idea).
 
 ## Blocked question
 With the DeepSeek row gone, someone new to DeepSeek can't add it from Settings: the Add an API provider form refuses the name DeepSeek because speck already knows it, and changing the form is out of scope here, so today the only way is `speck keys set deepseek` on the command line. Should I (a) widen this ticket so that entering DeepSeek in the form saves its key and adds speck's own DeepSeek (its built-in address and models, ignoring what was typed for them), or (b) keep it as built, with built-in providers added by their key from the command line, as the README now says? I recommend (a): the point of the ticket is that providers are added through the form, and a new user shouldn't need the command line for the one provider speck tests.
@@ -62,6 +62,10 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Idea: speck/ideas/2026-10-23-say-what-add-an-agent-leaves-out.md (the "every agent is yours" line shows while DeepSeek isn't).
+- Idea: speck/ideas/2026-10-23-tell-the-form-a-known-provider-needs-only-its-key.md (the form still asks for an address and models it ignores for DeepSeek).
+- Tidy-up: keyLine's "Save key and add" label is no longer reached, since an offered provider always has its key.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -133,6 +137,79 @@ Clear winner: yes
     ],
     "escalation_question": "Must a new DeepSeek user be able to add it through Add an API provider, allowing the necessary form change, or should built-in providers explicitly remain an exception added through speck keys set?",
     "summary": "Unconfigured providers are hidden, and existing providers remain available. The targeted tests pass. However, adding DeepSeek now requires the command line, which conflicts with the form-only requirement and needs your decision. A brittle documentation test also needs fixing."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "33db89c6e7e5140b07fee201d6ce61dc1e0544c0",
+    "session": "continued",
+    "thread_id": "01a168d5-ba6c-7fb0-93b3-2bb960bac18c",
+    "builder_response": "- Tests run: test/settings-agents-0408.test.mjs test/settings-agents-0399.test.mjs test/settings-provider-0393.test.mjs test/providers-0401.test.mjs (plus the commands.checks files speck adds).\n- F1: fixed, with the user's answer (recorded in the ticket's Notes: option (a), let the form add the built-in DeepSeek, which widens the out-of-scope line about the form). scripts/provider-form.mjs panelProviderAddRequest: a name that is one of speck's own providers (providerId matches PROVIDERS) now goes to addOwnProvider, which refuses one already yours, then saves only the key and adds it to your agents through panelKeyAddRequest, using speck's own address and models and ignoring what was typed for them; the answer's `said` says so. checkedProvider still refuses built-in names, so providers.json can't override DeepSeek. New tests: 0408 AC2 DeepSeek added through the form (key saved, yours, not saved as a custom provider, address unchanged, no commit, key never sent back; name and key alone suffice), refusals (bad or empty key, already yours, Claude still refused), and the page posting the form with name DeepSeek. 0401 AC2's list entry expecting the name DeepSeek to be refused was removed, as the user's answer changes that behaviour. README says a known provider needs only its name and key in the form.\n- F2: fixed. Removed the README test that matched prose; no new prose-dependent test was added.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 198651,
+      "cached_input_tokens": 105856,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1637,
+      "reasoning_output_tokens": 91
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T13:10:59.561Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html addRows excludes providers without a saved key. Passing 0408 AC1 tests cover DeepSeek, another known provider and the settingsAnswer response."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/provider-form.mjs now adds built-in DeepSeek through addOwnProvider, using its built-in configuration and saving its key through panelKeyAddRequest. Passing tests exercise server persistence, invalid keys, duplicate refusal and page submission. CLI offers remain covered. The recorded owner decision authorises this form change."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "agentRow retains existing providers with key fields and Remove. Passing AC3 tests cover providers with and without keys and re-adding one whose key was kept. The targeted run reports 151 passed, zero failed and three skipped; changed legacy tests preserve coverage of the remaining behaviour."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/provider-form.mjs",
+        "issue": "DeepSeek previously could not be added through the provider form.",
+        "suggested_fix": "Implemented: the form accepts built-in DeepSeek using its existing address and models, following the owner's recorded decision.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/settings-agents-0408.test.mjs",
+        "issue": "The README test depended on exact prose.",
+        "suggested_fix": "Implemented: the prose-dependent test was removed and replaced with behavioural coverage of provider addition.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Unconfigured providers are hidden, and DeepSeek can now be added through the provider form. Existing agents and saved keys remain available. Both earlier findings are resolved, and the targeted tests pass."
   }
 }
 ```
