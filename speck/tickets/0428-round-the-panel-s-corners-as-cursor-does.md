@@ -46,13 +46,13 @@ The panel's controls, cards and pop-ups have rounded corners like Cursor's.
 - Criterion 3: 0421 left the open card's buttons with only an underline, which the user noticed on 2026-10-23. Plan's first toggle loses its left edge to `margin-left: -.5px` on `.toggle` since the lane's own border went (0418).
 - Waits for 0427: both change `templates/panel.html`.
 - Failing before this build: none
-- Self-check: rounded the tag tip and Settings' explanations 8 px too, as small pop-ups, so none stays square beside the rest. Buttons left without a box of their own, each inside a box or not drawn as a button: the tabs, speck's screen, the switches, Appearance's three choices, the priority menu's numbers and the linked ids.
+- Self-check: rounded the tag tip and Settings' explanations 8 px too, as small pop-ups, so none stays square beside the rest. In review, the tabs, Appearance's three choices and the priority menu's numbers were boxed too; only speck's screen, the switches and the linked ids have no box of their own.
 - Went with the recommendation: A, keep the window-filling pop-ups square (chosen by the user in the panel, 2026-10-23 19:43 UTC).
 
 ## In plain words
-The panel's corners are rounded now, to sit better beside Cursor: buttons, boxes, menus and tags are slightly rounded, and ticket cards, the build log, the stats, Settings' groups and the big pop-ups more so. Every button now has a thin outline all round, including the small Full ticket, Review pack and Stop build buttons on an open ticket, and Plan's first toggle no longer loses its left edge. speck's screen and its dark frame stay square.
+The panel's corners are rounded now, to sit better beside Cursor: buttons, boxes, menus and tags are slightly rounded, and ticket cards, the build log, the stats, Settings' groups and Settings' question about unsaved changes more so. The full ticket, a document and the pipeline log fill the window, so they stay square, as you chose. Every button now has a thin outline all round, including the small Full ticket, Review pack and Stop build buttons on an open ticket, and Plan's first toggle no longer loses its left edge. speck's screen and its dark frame stay square.
 
-To see it, open the panel: the Plan, Build and Shipped tabs are now three outlined tabs, the open one with a darker outline, and Settings' System, Light and Dark are three separate rounded buttons.
+To see it, open the panel: the Plan, Build and Shipped tabs are now outlined side by side, sharing the line between them, the open one with a darker outline, and Settings' System, Light and Dark are three separate rounded buttons.
 
 Worth a look: the tabs no longer open into the list under them, which the reviewer asked for so every button has an outline on all four sides. On a very narrow phone, Settings' System, Light and Dark buttons sit close together to fit on one line.
 
@@ -300,6 +300,90 @@ Follow-ups (Delivery log only, none to the inbox):
     ],
     "escalation_question": "",
     "summary": "The panel now has the requested rounded controls, cards and pop-ups, with visible button borders. The screen and frame keep their square corners, and switches stay round. All five criteria pass; the reported tests have no failures. Ready for owner review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "498127b1c605872da24d0a3cfb401864bd21328d",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16a3e-50df-7e71-bd5d-9c1118385dc4",
+    "builder_response": "- Tests run: test/panel-0428.test.mjs test/pack-0362.test.mjs test/panel-0160.test.mjs test/panel-0425.test.mjs test/panel-0423.test.mjs test/panel.test.mjs test/panel-0421.test.mjs test/panel-0161.test.mjs test/panel-0417.test.mjs test/panel-0140.test.mjs test/panel-0426.test.mjs test/panel-0418.test.mjs test/panel-0135.test.mjs test/settings-0412.test.mjs (plus the commands.checks files)\n- Why: speck ship ran the whole suite on the approved branch (main had no newer commits; merging main was already up to date) and three tests failed because of this ticket's change:\n  - 0425 AC1 (each tab a third of the row): the 4px gap between the boxed tabs made each tab 2.67px narrower than a third. Fixed: no gap; `.tab + .tab { margin-left: -.5px }` so two tabs share the edge between them, and the open tab is `position: relative; z-index: 1` so its --text edge shows over its neighbours'. Every tab still has a border on all four sides (AC3). The 0428 test now checks no gap, the shared edge and the z-index instead of the gap.\n  - 0362 AC1 (one rule names #doc-view): the 12px rule listed #doc-view as a second rule.\n  - 0160 AC2 (nothing but the full ticket's margin or top line behind the status bar): the full ticket fills the window, so its rounded corners showed the backdrop at the window's corners. This contradicted AC2's \"pop-ups (the full ticket, a document, the pipeline log …)\". The ticket was blocked and the user chose A: keep the window-filling pop-ups square (recorded in the ticket's Notes). So #full-ticket, #doc-view and #foreman have no radius (which also resolves 0362); Settings' question box keeps 12px. The 0428 AC2 test now checks those three stay square instead of 12px.\n- Pictures retaken.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 474491,
+      "cached_input_tokens": 353024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2579,
+      "reasoning_output_tokens": 106
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T19:45:58.616Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains 8px control radii and 8px tab top corners. Both passing AC1 tests cover these rules; tab widths are also covered by the reported passing 0425 tests."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Cards, logs, stats, Settings groups and the question box retain 12px radii. Window-filling pop-ups stay square under the owner's decision recorded in the ticket Notes. Both AC2 tests pass and cover that clarified requirement."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Tabs retain four coloured borders, sharing adjacent edges; the selected tab's z-index preserves its contrasting edge. Passing AC3 tests cover borders, open-ticket buttons, Plan toggles and focus outlines."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The screen, frame and shade retain explicit zero radii in templates/panel.html; the AC4 test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "No universal corner-radius override remains. Switch tracks retain 9px radii and knobs 50%; the AC5 test passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html; test/panel-0428.test.mjs",
+        "issue": "The previously missing button borders and radius coverage remain fixed, including both tab states.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "speck/tickets/0428-round-the-panel-s-corners-as-cursor-does.md",
+        "issue": "The owner-facing summary still says the big pop-ups are rounded, and the Self-check still lists buttons as unboxed that are now boxed. These passages describe an earlier implementation.",
+        "suggested_fix": "Update the summary and Self-check to reflect the final button borders and the owner's decision to keep window-filling pop-ups square.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change meets the requirements as clarified by the owner: controls and cards are rounded, while window-filling pop-ups remain square. Shared tab borders preserve equal tab widths. The reported tests pass. Only stale wording in the ticket summary needs tidying."
   }
 }
 ```
