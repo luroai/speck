@@ -44,6 +44,7 @@ The top of the panel is speck's LCD screen in its frame, with speck on it, in pl
 - The screen is drawn with `templates/lcd.js` (`SpeckLCD.Screen` and `render`), which the panel already loads.
 - Removes the notice board (`boardText`, `drawBoard`: 0365, 0374) and the header row (0364, 0373). The Settings button moves from the header (0372, 0396).
 - Waits for 0410, 0411 and 0412: all change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
