@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 import { fakePage, page, T, PAGE, panelRepo, cliCopy, startPanel, stop, freePort, request, findChrome, browserPage } from './support/panel.mjs';
 import { openStream } from './support/stream.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
-import { runLogTail, runLogStamp, RUN_LOG_LINES, RUN_LOG_MAX } from '../scripts/run-log.mjs';
+import { runLogTail, runLogStamp, RUN_LOG_LINES } from '../scripts/run-log.mjs';
 
 const ON = { on: true, pid: 4242 };
 const rec = (o = {}) => ({ lock: 4242, max: 2, building: [], switching: null, ready: [], ship: { running: null, hold: null, refused: [] }, ...o });
@@ -231,15 +231,26 @@ test('0415 AC2: 200 long lines, together far over one read, are all shown, and t
   assert.equal(out[199], lines[1]);
 });
 
-test('0415 AC2: a line longer than the most the panel reads is shown cut off, starting with an ellipsis', () => {
-  const runs = runsDir(), fd = fs.openSync(path.join(runs, 'run.log'), 'w');
-  fs.writeSync(fd, 'old\n');
-  fs.writeSync(fd, Buffer.alloc(RUN_LOG_MAX, 'z'));
-  fs.writeSync(fd, ' end\n');
+test('0415 AC2: 200 lines that together pass 16 MiB are all shown, whole', () => {
+  const runs = runsDir(), fd = fs.openSync(path.join(runs, 'run.log'), 'w'), body = 'w'.repeat(90 * 1024);
+  fs.writeSync(fd, 'the line before\n');
+  for (let i = 1; i <= 200; i++) fs.writeSync(fd, `${i} ${body}\n`);
+  fs.writeSync(fd, '\n\n');
   fs.closeSync(fd);
+  assert.ok(fs.statSync(path.join(runs, 'run.log')).size > 16 * 1024 * 1024);
   const out = runLogTail(runs).lines;
-  assert.equal(out.length, 1);
-  assert.ok(out[0].startsWith('…z') && out[0].endsWith('z end'), 'its end, cut off at the start');
+  assert.equal(out.length, 200);
+  assert.equal(out[0], `200 ${body}`);
+  assert.equal(out[199], `1 ${body}`);
+});
+
+test('0415 AC2: blank lines at the end of run.log don\'t take the place of the latest lines', () => {
+  const runs = runsDir();
+  fs.writeFileSync(path.join(runs, 'run.log'), `${Array.from({ length: 300 }, (_, i) => `line ${i + 1}`).join('\n')}\n${'\n'.repeat(500)}`);
+  const out = runLogTail(runs).lines;
+  assert.equal(out.length, 200);
+  assert.equal(out[0], 'line 300');
+  assert.equal(out[199], 'line 101');
 });
 
 // ---------- AC3: Close, Escape and a click outside close it, with the focus back on the screen ----------
