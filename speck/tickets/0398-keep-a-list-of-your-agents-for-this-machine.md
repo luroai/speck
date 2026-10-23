@@ -42,6 +42,7 @@ speck keeps a list of the agents you've set up on this machine, and setup fills 
 - Keep the list beside this machine's settings from 0386.
 - Folds in `speck/ideas/done/2026-10-18-find-the-agents-and-models-on-this-machine.md`, as the user chose on 2026-10-23.
 - Failing before this build: none
+- Self-check: `speck agents add` now always keeps a list, even for an agent that already counted as yours; init reports an unreadable list instead of stopping; init writes no list when nothing is ready, so an agent set up later still counts as yours.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
