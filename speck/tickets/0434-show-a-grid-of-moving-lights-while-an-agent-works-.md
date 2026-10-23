@@ -46,6 +46,7 @@ Every collapsed ticket is two single lines: its title, then a short status line.
 - Waits for 0428: both change `templates/panel.html`. 0430 waits for it too, as 0430 moves every style.
 - Failing before this build: none
 - Self-check: kept a closed Build card's bug, fix and document tags, as AC3 names only its priority, size and risk; made the phone rule for a closed Shipped title win over the general one, so its tap area stays 44 px wide; switched the grid's dim dots from see-through to a colour, as no text or mark may be faded (0161).
+- Round 1 F1 (an open Build card's priority should open a menu): to dispute in round 2. "Still opens its menu" means as today, and today a Build card's priority shows its tip (0165 AC4); the server only sets a draft's priority (`scripts/panel.mjs`, panelSetPriority), so a menu there would be a new feature.
 - Built as: while the reviewer is reviewing, the stage names the round being reviewed (`Review 2` while round 2 runs), as the sentence that named it is now only the grid's name; 0223's test changes to match. A blocked, paused or stopped card's question, hint or message still sits under its two lines (0419 AC4), so AC5's two rows are its title line and status line; its status line is one line, cut off with an ellipsis on a phone when its words don't fit.
 
 ## In plain words
