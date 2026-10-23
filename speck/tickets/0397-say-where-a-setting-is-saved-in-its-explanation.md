@@ -1,7 +1,7 @@
 ---
 id: "0397"
 title: "Say where a setting is saved in its explanation"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-rehash-the-settings-screen.md"             
 after: ["0396"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T10:24:22.591Z"
+approved: "2026-10-23T10:31:30.898Z"
 
 ---
 # 0397 · Say where a setting is saved in its explanation
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings marks rows "repo", "repo default", "default" and "this machine", and opens with a paragraph starting "What speck uses now…". The marks and the paragraph confuse more than they explain.
@@ -51,9 +52,14 @@ Settings is quieter. The small "repo", "default" and "this machine" labels besid
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 131,921
+- Elapsed since build started: 7 min
+- Changed lines: 84 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - Pressing Clear or Keep in an explanation redraws Settings, so the keyboard focus doesn't stay on the button. The explanation stays open to show the result.
