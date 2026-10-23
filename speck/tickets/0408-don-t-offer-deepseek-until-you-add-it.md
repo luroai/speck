@@ -40,6 +40,7 @@ Add an agent does not offer DeepSeek, or any other known API provider, until you
 - Asked for 2026-10-23 after 0401 shipped the form but left the DeepSeek offer in `addRows` (`templates/panel.html`). 0401's criterion 1 only required that DeepSeek not be the only way to add a provider.
 - Checked 2026-10-23: `addRows` maps every agent that is not yours, including `kind === 'provider'` from `PROVIDERS` (DeepSeek), and shows a key field when `key_set` is false.
 - A provider removed from Your agents with its key still kept may still be offered with Add and no paste, as 0399 left it: that is someone who already configured it.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
