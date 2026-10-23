@@ -41,6 +41,7 @@ Appearance and Auto-build are toggles at the top of Settings.
 - Checked 2026-10-23: Settings in `templates/panel.html` shows the Foreman group's "speck run" row with an "Auto-build on" button and a description, and a "Look" group at the end with a light/dark list and "For the panel in this browser…" (0150, 0372).
 - The user chose the name Auto-build on 2026-10-23.
 - Waits for 0395: both change Settings in `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
