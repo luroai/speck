@@ -1,7 +1,7 @@
 ---
 id: "0409"
 title: "Drop the full-view Settings loading state"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0408"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T13:14:24.426Z"
 approved: "2026-10-23T13:19:08.908Z"
+finished: "2026-10-23T13:22:07.558Z"
 
 ---
 # 0409 · Drop the full-view Settings loading state
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Opening Settings still shows "Loading the settings…" over the whole view, then "Loading your agents…" once the config has arrived. 0407 was meant to end the first wait; two loading phases are left.
