@@ -46,17 +46,18 @@
     /* 0426: Cursor Light's colours. The greys are its text grey, #141414, at an alpha: --text and --muted-large are
        Cursor's own, while --muted (text under 14 px), --faint and --line are the nearest alphas that reach 0161's 7:1 and
        3:1 on every surface. The state colours are Cursor's, each at the nearest shade that reaches 0161's contrast for the
-       text it colours; --blue, --cyan, --yellow and --green are Cursor's own, for edges and the focus ring. */
+       text it colours; --blue, --yellow and --green are Cursor's own, for edges and the focus ring, as --inbox, its cyan, is.
+       The bug tag is in Cursor Light's orange (charts.orange, #DB704B), at the shade 7:1 needs, so it isn't the red of --bad. */
     --bg: #f3f3f3; --panel: #fcfcfc; --raise: #f3f3f3; --input: #fcfcfc; --line: #14141476; --line-soft: #14141413;
     --text: #141414EB; --muted: #141414BA; --muted-large: #141414AD; --faint: #141414BA;
     --accent: #cf2d56; --ok: #145a42; --warn: #6d4700; --bad: #96213f; --run: #285372; --idea: #833063;
-    --blue: #3c7cab; --cyan: #4c7f8c; --yellow: #a16900; --green: #1f8a65;
+    --blue: #3c7cab; --yellow: #a16900; --green: #1f8a65;
     /* 0302: the LCD screen, from the design (docs/design/lcd/), lighter since 0308: speck's screen since 0413 */
     --lcd-bg: #e6e9db; --lcd-off: #dde1cf; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .14);
     --bezel: #262722; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1; /* 0413: the screen's dark frame, from the design's console */
     --dot: #b0412e; /* 0303: the speck in the header's mark */
     --inbox: #4c7f8c; /* the inbox's own colour: Cursor's cyan */
-    --bug: #96213f; /* the bug tag's own colour: Cursor's red, as --bad */
+    --bug: #86371b; /* the bug tag's own colour: Cursor's orange */
     --fix: #6d4700; /* the fix tag's own colour: Cursor's yellow, as --warn */
   }
   /* The zen look: a serif for headings and ticket titles, a light sans for body text and a monospace for labels. Each
@@ -402,7 +403,7 @@
   /* 0171: a ticket an agent is at work on has a 2px border in its stage's colour, and its fill stays as it is, as only a
      ticket that needs you is filled. It keeps it whether it's open or highlighted. */
   .q.at-build { border-color: var(--blue); border-width: 2px; }
-  .q.at-check { border-color: var(--cyan); border-width: 2px; }
+  .q.at-check { border-color: var(--inbox); border-width: 2px; }
   .q.at-review { border-color: var(--yellow); border-width: 2px; }
   .q.at-ship { border-color: var(--green); border-width: 2px; }
   /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
@@ -632,8 +633,8 @@
     --bg: #141414; --panel: #181818; --raise: #1c1c1c; --input: #1c1c1c; --line: #E4E4E462; --line-soft: #E4E4E413;
     --text: #E4E4E4EB; --muted: #E4E4E4B8; --muted-large: #E4E4E48D; --faint: #E4E4E4B8;
     --accent: #e34671; --ok: #7fbc95; --warn: #d9a65e; --bad: #ef95ad; --run: #97b2cc; --idea: #c4a6be;
-    --blue: #81a1c1; --cyan: #88c0d0; --yellow: #d2943e; --green: #70b489;
-    --inbox: #88c0d0; --bug: #ef95ad; --fix: #d9a65e;
+    --blue: #81a1c1; --yellow: #d2943e; --green: #70b489;
+    --inbox: #88c0d0; --bug: #e69d83; --fix: #d9a65e;
     --accent-bg: #27221b; --idea-bg: #242124; --inbox-bg: #212527; --bad-bg: #281c1f;
     --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
     --bezel: #080907; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1;
