@@ -1,0 +1,104 @@
+// 0423: the full ticket, and a review pack, open over the whole panel, as Settings does, rather than in a 480 px pane at
+// the side.
+import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { fakePage, page, full, click, items, top, queueRows } from './support/panel.mjs';
+
+// The declarations of each CSS rule whose selector list holds exactly `sel`, in the page's style, media queries included.
+const rules = sel => {
+  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].replace(/^[^{]*\{/, '').split(',').map(x => x.trim()).includes(sel)).map(m => m[2]);
+};
+const clone = s => JSON.parse(JSON.stringify(s));
+const board = () => ({ tickets: [full('0001', { title: 'A draft' }), full('0002', { title: 'Approved one', status: 'approved' })], ideas: [] });
+// A fake page where each node can take the focus, and `p.focused()` is the node holding it.
+function livePage() {
+  let focused = null;
+  const focusable = n => { n.focus = () => { focused = n; p.document.activeElement = n; }; return n; };
+  const p = fakePage([], {
+    fetch: async url => ({ ok: true, status: 200, json: async () => (/\/pack$/.test(url) ? { pack: '# Pack', pictures: [], documents: [] } : /\/log$/.test(url) ? { text: '', truncated: false } : clone(board())) }),
+  }, { made: focusable });
+  for (const id of ['full-ticket', 'shaping-section', 'build-section']) focusable(p.byId(id));
+  p.focused = () => focused;
+  return p;
+}
+const pane = p => p.byId('full-ticket');
+const paneOpen = p => !pane(p).hidden && pane(p).children.length > 0;
+const itemOf = (p, id) => items(p).find(n => n.textContent.startsWith(id));
+const named = (p, node, text) => node && p.all(node).find(n => n.tagName === 'button' && n.textContent === text);
+
+// ---------- AC1: over the whole window, as Settings is ----------
+
+test('0423 AC1: the full ticket fills the window, as Settings does, rather than a 480 px pane at the side', () => {
+  const [base] = rules('#full-ticket');
+  assert.match(base, /position: fixed/);
+  assert.match(base, /inset: 0/);
+  assert.match(base, /background: var\(--panel\)/);
+  assert.match(base, /overflow-y: auto/);
+  assert.doesNotMatch(base, /480px|right: 0|width:|border-left|box-shadow/, 'not a pane down the right');
+  assert.ok(!rules(':root[data-theme="dark"] #full-ticket').length, 'no side pane\'s shadow in the dark look');
+});
+
+test('0423 AC1: Full ticket and Review pack both open in it', async () => {
+  const p = livePage();
+  await p.settle();
+  click(top(itemOf(p, '0001')));
+  await p.settle();
+  click(named(p, itemOf(p, '0001'), 'Full ticket'));
+  assert.ok(paneOpen(p), 'Full ticket opens it');
+  assert.equal(p.all(pane(p)).find(n => n.className === 'title').textContent, 'A draft');
+  p.key('Escape');
+  assert.ok(!paneOpen(p));
+  const row = () => queueRows(p).find(r => r.textContent.includes('0002'));
+  p.press(row().children.find(n => n.className === 'top'));
+  await p.settle();
+  const pack = p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
+  assert.ok(pack, 'the approved ticket has a Review pack button');
+  p.press(pack);
+  await p.settle();
+  assert.ok(paneOpen(p), 'Review pack opens it');
+  assert.ok(p.all(pane(p)).some(n => n.className === 'title' && n.textContent === 'Review pack'));
+});
+
+// ---------- AC2: the title row stays at the top; Close and Escape close it ----------
+
+test('0423 AC2: its title row and Close stay at the top while the ticket scrolls, as Settings\' do', () => {
+  const sticky = rules('#full-ticket .top').filter(r => /position: sticky/.test(r));
+  assert.equal(sticky.length, 1, 'one sticky rule for its top line');
+  assert.ok(rules('#settings .top').includes(sticky[0]), 'the same rule as Settings\'');
+  assert.match(sticky[0], /top: 0/);
+  assert.match(sticky[0], /background: var\(--panel\)/);
+  assert.match(sticky[0], /padding-top: calc\(12px \+ env\(safe-area-inset-top\)\)/, 'the notch\'s room is in the line');
+  assert.doesNotMatch(rules('#full-ticket')[0], /padding: 0? ?env\(safe-area-inset-top\)|top: env/, 'not above the line');
+});
+
+for (const how of ['Close', 'Escape']) {
+  test(`0423 AC2: ${how} closes it, and the focus goes back to the Full ticket button`, async () => {
+    const p = livePage();
+    await p.settle();
+    click(top(itemOf(p, '0001')));
+    await p.settle();
+    click(named(p, itemOf(p, '0001'), 'Full ticket'));
+    assert.equal(p.focused(), pane(p), 'the focus is in it');
+    if (how === 'Close') click(named(p, pane(p), 'Close'));
+    else p.key('Escape');
+    assert.ok(!paneOpen(p), 'it closes');
+    assert.equal(p.focused(), named(p, itemOf(p, '0001'), 'Full ticket'), 'the focus is back on its button');
+  });
+}
+
+// ---------- AC3: a centred column at most 720 px wide ----------
+
+test('0423 AC3: on a wide window its text is a centred column at most 720 px wide', () => {
+  const [base] = rules('#full-ticket');
+  // The room beside the column, half on each side, rounded down to a whole pixel (0281), and at least 16 px.
+  const half = 'round(down, calc((100% - 720px) / 2), 1px)';
+  for (const side of ['left', 'right']) {
+    const all = [...base.matchAll(new RegExp(`padding-${side}: ([^;]+);`, 'g'))].map(m => m[1]);
+    assert.ok(all.length, `a padding-${side}`);
+    const last = all[all.length - 1];
+    assert.ok(last.includes(half), `padding-${side} leaves half the room beside a 720 px column: ${last}`);
+    assert.match(last, /^max\(16px, env\(safe-area-inset-/, `at least 16 px on a narrow window: ${last}`);
+  }
+});

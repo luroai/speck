@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, click, items, top, findChrome, browserPage, charAt } from './support/panel.mjs';
 
 // ---------- 0060: the full ticket pane holds the page still, and a click outside it closes it ----------
+// 0423: the pane is over the whole window, so in a real browser there's no outside left to click.
 
 const pane = p => p.byId('full-ticket');
 const backdrop = p => p.byId('full-backdrop');
@@ -85,7 +86,7 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     await b.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 });
     await b.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1 });
   };
-  const inPane = [1100, 450], outside = [400, 450]; // 0418: in the 720 px column, from 280 to 1000 px, left of the pane
+  const inPane = [1100, 450], outside = [400, 450]; // 0418: in the 720 px column, from 280 to 1000 px. 0423: both in the pane while it's open
   try {
     await b.until(`document.querySelectorAll('${item}').length === 39`, 'the drafts');
     await b.js(`document.getElementById('tab-plan').click()`); // 0410
@@ -160,28 +161,22 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     assert.ok(!(await isHidden()), 'the refresh keeps it open');
     await still(300, 'the refresh keeps the page still');
 
-    // AC3 and AC2: a click outside closes it and does nothing else, and the page is where it was.
+    // AC3 and AC2: 0423 put the pane over the whole window, so there's no outside to click: a ticket row behind it is
+    // under the pane. Closing it does nothing else, and the page is where it was.
     const before = await openStates();
-    // A ticket row on screen behind the pane (since 0151 the cards are taller, so the seventh can be below the fold).
     const behind = await b.js(`[...document.querySelectorAll('${item}')].map(n => (r => [r.left + 30, r.top + r.height / 2])(n.querySelector('.head').getBoundingClientRect()))
       .find(([, y]) => y > 0 && y < 900) || [0, -1]`);
-    assert.ok(behind[0] < 700 && behind[1] > 0 && behind[1] < 900, 'a ticket row lies under the backdrop');
+    assert.ok(behind[1] > 0, 'a ticket row lies behind the pane');
+    assert.ok(await b.js(`!!document.elementFromPoint(${behind[0]}, ${behind[1]}).closest('#full-ticket')`), 'the pane covers it');
     await press(behind);
-    assert.ok(await isHidden(), 'a click outside closes the pane');
+    assert.ok(!(await isHidden()), 'a click there is a click in the pane, which stays open');
+    await b.js(`document.querySelector('#full-ticket .close').click()`);
+    assert.ok(await isHidden(), 'Close closes the pane');
     assert.deepEqual(await openStates(), before, 'no ticket opened or closed');
     assert.equal(await scrollY(), 300, 'AC2: the page is where it was');
     await b.until(`(l => l.scrollHeight > l.clientHeight + 600)(document.getElementById('shaping'))`, 'the list still long');
     await wheel(...outside, 200);
     await b.until(`document.getElementById('shaping').scrollTop !== 300`, 'the list to scroll again once the pane is closed');
-
-    // A click outside over a button: the list toggle stays on Tickets.
-    await scrollTo(0);
-    await openPane();
-    const toggle = await b.js(`(r => [r.left + r.width / 2, r.top + r.height / 2])(document.querySelectorAll('#shaping-toggle button')[1].getBoundingClientRect())`);
-    assert.ok(toggle[0] < 700, 'the Ideas toggle lies under the backdrop');
-    await press(toggle);
-    assert.ok(await isHidden(), 'the click closes the pane');
-    assert.ok(await b.js(`!!document.querySelector('${item}.ticket')`), 'and the Tickets list still shows');
 
     // AC2 and AC5: Close and Escape close it and leave the page where it was.
     await scrollTo(250);
