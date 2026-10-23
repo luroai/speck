@@ -149,13 +149,13 @@ test('0160 AC4: the full ticket pane\'s close button and first line sit below th
   await b.js(`document.querySelector('#shaping .item.open .full-open').click()`);
   await b.until(`!document.querySelector('#full-ticket').hidden`, 'the full ticket');
   const close = await box(b, '#full-ticket .close');
-  const top = await box(b, '#full-ticket .top');
+  const top = await box(b, '#full-ticket .top .id'); // 0423: the line itself runs up behind the status bar, as Settings' does
   assert.ok(close.top >= 47, `the close button is at ${close.top}`);
   assert.ok(top.top >= 47, `the first line is at ${top.top}`);
   assert.equal(await at(b, close.left + 4, close.top + 4), 'pane', 'and nothing covers it');
 }, { insets: { top: 47, bottom: 34 } }));
 
-test('0160 AC2: scrolled to its end, the full ticket shows nothing behind the status bar, not even its border', skip, () => withPanel(async b => {
+test('0160 AC2: scrolled to its end, the full ticket shows none of its text behind the status bar', skip, () => withPanel(async b => {
   await b.js(`(() => { const n = [...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === '0001'); n.querySelector('.head').click(); })()`);
   await b.until(`!!document.querySelector('#shaping .item.open .full-open')`, 'the ticket to open');
   await b.js(`document.querySelector('#shaping .item.open .full-open').click()`);
@@ -163,9 +163,13 @@ test('0160 AC2: scrolled to its end, the full ticket shows nothing behind the st
   await b.js(`document.querySelector('#full-ticket').scrollTop = 100000`);
   await new Promise(r => setTimeout(r, 100));
   assert.ok(await b.js(`document.querySelector('#full-ticket').scrollTop`) > 500, 'the pane scrolled');
+  // 0423: the pane is over the whole window, and its top line, which stays at the top, fills the room behind the
+  // status bar, so none of the ticket's text scrolls into view there: only the pane's empty margin beside it.
   const pane = await box(b, '#full-ticket');
-  assert.ok(pane.top >= 47, `the pane, border and all, starts below the status bar (at ${pane.top})`);
-  for (const x of [pane.left, pane.left + 1, pane.left + 20, 374]) for (const y of [1, 23, 46]) assert.notEqual(await at(b, x, y), 'pane', `(${x}, ${y})`);
+  for (const x of [pane.left, pane.left + 1, pane.left + 20, 374]) for (const y of [1, 23, 46]) {
+    const there = await b.js(`(n => n.id === 'full-ticket' ? 'margin' : n.closest('#full-ticket .top') ? 'top line' : n.tagName)(document.elementFromPoint(${x}, ${y}))`);
+    assert.ok(['margin', 'top line'].includes(there), `(${x}, ${y}) is the pane's empty margin or its top line, not ${there}`);
+  }
 }, { insets: { top: 47, bottom: 34 } }));
 
 for (const insets of [null, { top: 47, bottom: 34 }]) {
