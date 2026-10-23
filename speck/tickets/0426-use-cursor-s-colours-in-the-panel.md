@@ -51,6 +51,7 @@ The panel uses Cursor's own light and dark theme colours, so it looks like part 
 - The stage edges are `.q.at-build`, `.at-check`, `.at-review` and `.at-ship` (0171). The user asked on 2026-10-23 for them to take Cursor's colours too, after seeing the old gold review edge beside Cursor.
 - Colour tokens are in `:root` and `:root[data-theme="dark"]` in `templates/panel.html`.
 - Waits for 0421, 0422, 0424 and 0425: this changes styles across the whole of `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
