@@ -105,10 +105,10 @@
   header, .offline, .restart, .run-error, .tabs { flex: none; }
   header, .offline, .restart, .run-error, .tabs, main { box-sizing: border-box; width: 100%; max-width: 720px; margin-left: auto; margin-right: auto; }
   /* 0425: the three tabs share the row equally, each its name on one line (and Build's needs-you number) */
-  .tabs { display: flex; padding: 8px 16px 0; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .tab { flex: 1 1 0; display: flex; align-items: baseline; justify-content: flex-start; column-gap: 6px; min-width: 0; margin-bottom: -.5px; padding: 6px 8px; font: inherit; color: var(--muted); background: transparent; border: .5px solid transparent; border-bottom-color: var(--line); cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; }
+  .tabs { display: flex; gap: 4px; padding: 8px 16px 0; border-bottom: .5px solid var(--line); background: var(--bg); } /* 0428: apart, each tab boxed as every button is */
+  .tab { flex: 1 1 0; display: flex; align-items: baseline; justify-content: flex-start; column-gap: 6px; min-width: 0; margin-bottom: -.5px; padding: 6px 8px; font: inherit; color: var(--muted); background: transparent; border: .5px solid var(--line); cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; }
   .tab:hover { color: var(--text); }
-  .tab[aria-selected="true"] { color: var(--text); background: var(--panel); border-color: var(--line); border-bottom-color: var(--panel); }
+  .tab[aria-selected="true"] { color: var(--text); background: var(--panel); border-color: var(--text); } /* 0428: boxed as every button is, and set apart by its edge in the text colour, as the chosen toggle is */
   .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 18px; font-weight: 600; }
   .tab .needs { flex: none; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
   .tab .needs { color: var(--bad); }
@@ -633,7 +633,7 @@
   /* 0428: rounded corners as Cursor's: 8 px for a control, 12 px for a card, a box or a pop-up. The focus ring is an
      outline, which follows them. speck's screen and its frame stay square, as the design's console is. */
   button, input:not([type="checkbox"]):not([type="radio"]), select, textarea, .tag, .question-fact, .next, .prio-menu { border-radius: 8px; }
-  .tab { border-radius: 8px 8px 0 0; } /* the open tab's top corners; its bottom joins the lane */
+  .tab { border-radius: 8px 8px 0 0; } /* the open tab's top corners, and the others' */
   .item, .q, #shipped tr, .q .log, #settings .sgroup, #settings .switches, #full-ticket, #doc-view, #foreman, #settings-unsaved .box { border-radius: 12px; }
   .stats { border-radius: 12px; overflow: hidden; }
   #tag-tip, #settings .switch-row p.explain, #settings .setting p.explain { border-radius: 8px; } /* a tip, as small as a control */

@@ -1,7 +1,7 @@
 ---
 id: "0428"
 title: "Round the panel's corners as Cursor does"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T19:24:44.728Z"
 ---
 # 0428 · Round the panel's corners as Cursor does
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Every corner in the panel is square: `* { border-radius: 0 !important; }` in `templates/panel.html`. Beside Cursor's rounded controls and panels, it looks like a different product.
@@ -56,3 +56,156 @@ The panel's controls, cards and pop-ups have rounded corners like Cursor's.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2405f185c3d7459ec760ed390c089a1376616201",
+    "session": "fresh",
+    "thread_id": "01a16a3e-50df-7e71-bd5d-9c1118385dc4",
+    "builder_response": "- Tests run: test/panel-0428.test.mjs test/panel.test.mjs test/panel-0421.test.mjs test/panel-0161.test.mjs test/panel-0420.test.mjs test/panel-0417.test.mjs test/panel-0140.test.mjs test/panel-0155.test.mjs test/panel-0167.test.mjs test/panel-0427.test.mjs test/panel-0162.test.mjs (plus the commands.checks files)\n- Changed existing tests: test/panel.test.mjs (0031 asserted the forced square corners, which AC5 removes) and test/panel-0421.test.mjs (its browser test asserted the open card's buttons had no box, which AC3 reverses).\n- AC3 scope: \"every button\" is read as every button drawn as a button. Left without a box of their own, as each sits inside a box or isn't drawn as a button: the tabs (the open one has its edge on three sides, as a tab), speck's screen (AC4), the switches (their track is the control), Appearance's three choices and the priority menu's numbers (each inside a bordered box) and the linked ids (words). The Settings button in the screen's frame is a button, so it is rounded and boxed; the frame and the screen themselves stay square.\n- Beyond the listed pop-ups, the tag tip and Settings' explanations are rounded 8 px (small pop-ups), so none stays square.\n- Pictures of Plan, Build, Shipped and Settings in both looks are kept for the review pack.\n",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 106571,
+      "cached_input_tokens": 71168,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 865,
+      "reasoning_output_tokens": 106
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T19:31:05.579Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel.html rounds ordinary controls to 8px, but #settings .looks [role=\"radio\"] explicitly sets button corners to 0 or 7.5px. The AC1 test excludes these buttons from its button inventory and checks only their container."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html assigns 12px to cards, logs, stats, Settings groups and the specified pop-ups. The passing 0428 AC2 test checks these selectors and stats clipping."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The named open-ticket buttons are boxed and .toggle no longer has a negative margin. However, .prio-menu button and Settings' Appearance buttons remain borderless, and .tab retains transparent edges. The passing AC3 test explicitly omits these controls."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html explicitly preserves square corners on .bezel, .bezel .glass and its shade; the passing 0428 AC4 test covers these rules."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The universal forced radius is removed. Existing switch track and knob radii remain 9px and 50%; the passing 0428 AC5 test checks all three facts."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html; test/panel-0428.test.mjs",
+        "issue": "The implementation narrows 'every button' to a hand-picked inventory without authorisation in the acceptance criteria. Appearance choices and priority-menu buttons remain borderless, tabs lack four visible edges, and Appearance buttons also lack the required 8px corners. The tests exclude these cases, so their passing results do not establish AC1 or AC3. The screen has an explicit exception in AC4; the other exclusions do not.",
+        "suggested_fix": "Apply the required rounding and visible borders to the remaining buttons, preserving AC4's screen exception and AC1's specified tab corners. Extend the tests to cover those controls. If the grouped controls and tabs should instead be exceptions, obtain an explicit ticket clarification from the owner.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The main controls, cards and pop-ups are rounded, and the small ticket buttons and Plan toggle borders are fixed. However, several buttons were excluded from the agreed requirements and from the tests. Those gaps need fixing or explicit owner agreement before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bcac2d61d0425e07afdf2764dfd042d4f1795f96",
+    "session": "continued",
+    "thread_id": "01a16a3e-50df-7e71-bd5d-9c1118385dc4",
+    "builder_response": "- Tests run: test/panel-0428.test.mjs test/panel.test.mjs test/panel-0421.test.mjs test/panel-0161.test.mjs test/panel-0420.test.mjs test/panel-0417.test.mjs test/panel-0140.test.mjs test/panel-0155.test.mjs test/panel-0167.test.mjs test/panel-0427.test.mjs test/panel-0162.test.mjs test/settings-0412.test.mjs test/panel-0426.test.mjs test/panel-0273.test.mjs test/panel-0385.test.mjs (plus the commands.checks files)\n- F1: fixed in part, disputed in part.\n  - Appearance's choices: fixed. Each of System, Light and Dark is now its own button with a .5px --line border on all four sides (1px below 2 dppx, as before) and the 8px radius from the generic button rule; the chosen one's border is --text, its fill. The shared box and the separators are gone, with a 4px gap between them (2px under 700px, and 1px side padding there so the row still fits at 320px: settings-0412's 320px browser test passes). The 0/7.5px overrides are removed.\n  - The priority menu's numbers: fixed. Each is boxed (.5px --line border, --text when hovered or chosen) with the 8px radius, the menu padded 2px with 2px gaps.\n  - Both are added to the test's button inventory (AC1 radius and AC3 four sides), so test/panel-0428.test.mjs now covers them.\n  - The tabs: disputed. AC1 gives the tabs their own shape, \"the open tab's top corners have an 8 px corner radius\": a tab whose bottom corners stay square because its bottom joins the lane under it. A border on all four sides would cut the open tab off from its lane, which is what makes it read as the open tab, and contradict AC1's own wording. The open tab has its --line edge on top, left and right and a --panel bottom joining the lane; the AC1 tab test now checks exactly that. The closed tabs are the tab row's labels over the lane's line, as they were. The other exclusions left are speck's screen (AC4), the switches (their round track is the control, AC5) and the linked ids (inline words in a sentence).\n- Pictures retaken, with Settings at 320px added.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 214736,
+      "cached_input_tokens": 170368,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1453,
+      "reasoning_output_tokens": 106
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T19:34:20.492Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html now gives Appearance and priority-menu buttons the generic 8px radius without overrides. The passing AC1 tests cover both inventories and the tabs' 8px top corners."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The 12px rules for cards, build log, stats, Settings groups and specified pop-ups remain intact; the passing AC2 test covers these selectors."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Appearance and priority-menu buttons now have four visible borders and are tested. However, .tab still sets transparent edges, and the selected tab hides its bottom edge with --panel. The AC3 test excludes tabs; its new AC1 assertions explicitly preserve the missing bottom edge."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Explicit zero radii preserve .bezel, .bezel .glass and its shade. The AC4 test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The universal radius override remains removed, with switch tracks at 9px and knobs at 50%. The AC5 test passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html; test/panel-0428.test.mjs",
+        "issue": "The Appearance and priority-menu portions are fixed, but the tab exception remains unsupported. AC1 specifies corner radii; square bottom corners do not prevent a visible bottom border. It therefore does not contradict AC3's requirement for four visible edges. Closed tabs also retain transparent edges. The test still excludes tabs from AC3.",
+        "suggested_fix": "Give tabs the four visible edges required by AC3 while retaining AC1's top corner radii, and test their selected and unselected states. Alternatively, obtain an explicit owner clarification exempting tabs from AC3.",
+        "state": "dispute_rejected"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Appearance choices and priority buttons now meet the rounding and border requirements. The remaining issue is the tabs: their borders still do not meet the requirement for four visible edges. The reported tests pass, but explicitly exclude tabs from that check."
+  }
+}
+```
+
+</details>
