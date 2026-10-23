@@ -43,6 +43,7 @@ The Foreman runs on Claude Code, Codex or Cursor. Someone building with DeepSeek
 - Checked 2026-10-23: `claude --help` (2.1.301) says `--bare` takes Anthropic auth strictly from `ANTHROPIC_API_KEY` or an apiKeyHelper, and never reads OAuth or the keychain. It also skips hooks, plugins and CLAUDE.md discovery, but skills still resolve by `/skill-name`.
 - Start from `foremanArgv` in `scripts/foreman-agent.mjs`, whose Claude Code command already limits the Foreman to reading and to speck and read-only git commands, adding `--bare`.
 - Waits for 0391.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
