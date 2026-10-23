@@ -31,12 +31,12 @@ test('0293 AC1: builder offers the builders that are installed and signed in, an
   const r = panelRepo();
   const row = builderRow(panelSettings(r.dir, { agents: FOUND({ cursor: false }) }));
   assert.equal(row.editable, true);
-  assert.deepEqual(row.choices, ['claude', 'codex']);
+  assert.deepEqual(row.choices, ['claude', 'codex', 'deepseek']); // 0393: and each model provider
   assert.match(row.missing, /cursor \(cursor isn't signed in/);
   // The one set now stays, ready or not.
-  assert.deepEqual(builderRow(panelSettings(r.dir, { agents: FOUND({ claude: false }) })).choices, ['claude', 'codex', 'cursor']);
+  assert.deepEqual(builderRow(panelSettings(r.dir, { agents: FOUND({ claude: false }) })).choices, ['claude', 'codex', 'cursor', 'deepseek']);
   // Without the agents found, every builder speck starts by itself.
-  assert.deepEqual(builderRow(panelSettings(r.dir)).choices, ['claude', 'codex', 'cursor']);
+  assert.deepEqual(builderRow(panelSettings(r.dir)).choices, ['claude', 'codex', 'cursor', 'deepseek']);
 });
 
 test('0293 AC1: saving a builder sets build_command to its own, blank for Codex and Cursor, in the same save', () => {
