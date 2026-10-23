@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fm, panelRepo, freePort, startPanel, stop, page, fakePage, full, idea, click, toggles, items, top, button, findChrome, browserPage, charAt } from './support/panel.mjs';
+import { fm, panelRepo, freePort, startPanel, stop, page, fakePage, full, idea, click, toggles, items, top, button, findChrome, browserPage, charAt, openLane } from './support/panel.mjs';
 
 // ---------- 0039: an open item closes only from its top row ----------
 
@@ -132,6 +132,7 @@ test('0039 AC4: in a real browser, dragging to select text in a ticket\'s detail
   try {
     const item = '#shaping .item';
     await b.until(`!!document.querySelector('${item} .title')`, 'the draft');
+    await b.js(openLane('plan')); // 0410
     await b.js(`document.querySelector('${item} .title').click()`);
     await b.until(`!!document.querySelector('${item}.open .detail')`, 'the draft to open');
     // Within one section, then across sections into the readiness list.

@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, click, toggles, items, top, findChrome, browserPage, charAt, page } from './support/panel.mjs';
+import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, click, toggles, items, top, findChrome, browserPage, charAt, page, openLane } from './support/panel.mjs';
 
 const clone = s => JSON.parse(JSON.stringify(s));
 const tags = (p, n, tag) => p.all(n).filter(x => x.tagName === tag);
@@ -201,6 +201,7 @@ test('0142 AC4: in a browser, a selection in an opened draft\'s and idea\'s form
   try {
     const item = '#shaping .item';
     await b.until(`!!document.querySelector('${item} .title')`, 'the draft');
+    await b.js(openLane('plan')); // 0410
     await b.js(`document.querySelector('${item} .title').click()`);
     await b.until(`!!document.querySelector('${item}.open .detail strong')`, 'the draft to open, formatted');
     await b.drag(await b.js(charAt(`${item} .detail strong`, 0)), await b.js(charAt(`${item} .detail strong`, 6)));

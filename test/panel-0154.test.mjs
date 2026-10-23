@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, full, items, top, toggles, queueRows, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, fakePage, full, items, top, toggles, queueRows, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
 
 // ---------- 0154: go to a linked ticket by tapping its id ----------
 
@@ -200,7 +200,12 @@ async function withBoard(fn, { width = 1280 } = {}) {
 }
 
 test('0154 AC4: on a 375 px screen every id button is at least 44 px high and named for its ticket', skip, () => withBoard(async b => {
-  const sizes = await b.js(`[...document.querySelectorAll('.goto')].map(n => [n.getAttribute('aria-label'), n.textContent, Math.round(n.getBoundingClientRect().height)])`);
+  // 0410: each lane's in turn, as only the open one shows
+  const sizes = [];
+  for (const [lane, list] of [['plan', 'shaping'], ['build', 'queue']]) {
+    await b.js(openLane(lane));
+    sizes.push(...await b.js(`[...document.querySelectorAll('#${list} .goto')].map(n => [n.getAttribute('aria-label'), n.textContent, Math.round(n.getBoundingClientRect().height)])`));
+  }
   assert.ok(sizes.length >= 4, `found the id buttons: ${JSON.stringify(sizes)}`);
   for (const [label, text, h] of sizes) {
     assert.equal(label, `Go to ticket ${text}`);
