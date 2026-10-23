@@ -242,7 +242,7 @@ export async function foremanModels(repo, read = codexModelsAsync, readCursor = 
 // (0279) and the Foreman agent (0348) offer, read now, asking Codex once and Cursor once (0347) when more than one runs on
 // it, and which agents are installed and signed in (0288), read at the same time. Throws when speck/config.yml can't be read.
 // 0393: and each model provider in `providers`.
-export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCursorModels = () => agentModelsAsync('cursor'), find = findAgentsAsync, providers = knownProviders(repo)) {
+export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCursorModels = () => agentModelsAsync('cursor', { defaults: true }), find = findAgentsAsync, providers = knownProviders(repo)) {
   let asked = null, cursorAsked = null;
   const read = () => (asked ??= readCodex()), readCursor = () => (cursorAsked ??= readCursorModels());
   const found = Promise.resolve().then(() => find({ models: false })).catch(() => undefined);
@@ -271,9 +271,20 @@ async function yourModels(yours, read, readCursor, providers) {
     }
     const models = Array.isArray(got?.models) ? got.models.filter(m => m && typeof m.slug === 'string' && m.slug) : [];
     const why = !models.length ? untyped(typeof got?.why === 'string' && got.why ? got.why : `${a.name} lists no models.`) : null;
-    out.push({ id: a.id, name: a.name, efforts: a.id === 'claude' || a.id === 'codex', models, ...(why ? { why } : {}) });
+    const byDefault = defaultModelOf(a.id, p, got, models);
+    out.push({ id: a.id, name: a.name, efforts: a.id === 'claude' || a.id === 'codex', models, ...(byDefault ? { default_model: byDefault } : {}), ...(why ? { why } : {}) });
   }
   return out;
+}
+// 0403: the model an agent runs when its model is left blank, or null when that can't be told: a provider's default,
+// Sonnet for Claude Code (its own default with no --model), the one Cursor marks (default), and the first Codex lists,
+// as it lists its models in its own order with the one it picks first.
+function defaultModelOf(id, provider, got, models) {
+  if (provider) return provider.defaultModel || null;
+  if (id === 'claude') return 'sonnet';
+  if (id === 'cursor') return typeof got?.default_model === 'string' && got.default_model ? got.default_model : null;
+  if (id === 'codex') return models.length ? models[0].slug : null;
+  return null;
 }
 // A provider's model by the name its list shows, without the provider's own: "V4 Pro" for deepseek-v4-pro.
 const providerModelName = (p, slug) => slug.replace(new RegExp(`^${p.name}-`), '').split('-').map(w => w && `${w[0].toUpperCase()}${w.slice(1)}`).join(' ');
