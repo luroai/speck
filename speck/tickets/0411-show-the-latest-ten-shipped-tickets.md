@@ -1,7 +1,7 @@
 ---
 id: "0411"
 title: "Show the latest ten shipped tickets"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0410"]         # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T13:59:01.373Z"
+approved: "2026-10-23T14:03:13.779Z"
 
 ---
 # 0411 · Show the latest ten shipped tickets
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Shipped lists only the latest five tickets, which is less than a day's work on a busy day, so you can't look back over what shipped without opening the tickets' files.
@@ -50,9 +51,14 @@ The Shipped tab now lists the last ten tickets that shipped, not five, so a busy
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 134,359
+- Elapsed since build started: 4 min
+- Changed lines: 12 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
