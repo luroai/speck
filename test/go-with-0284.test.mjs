@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { panelRepo, T, fakePage, queueRows, startPanel, stop, freePort, request, post, tokenOf, gitEnv } from './support/panel.mjs';
+import { panelRepo, T, fakePage, queueRows, startPanel, stop, freePort, request, post, tokenOf, gitEnv, openQueueRows } from './support/panel.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { OPTION, ENDED, blockedRepo } from './support/blocked.mjs';
 import { goWith, goWithMessage, goWithQueue } from '../scripts/go-with.mjs';
@@ -36,6 +36,7 @@ const BLOCKED = (id, o = {}) => T(id, 'blocked', { blocked_question: 'A or B?', 
 test('0284 AC1: a blocked ticket with a recommendation shows a Go with the recommendation button on its question; one without shows none', async () => {
   const p = page([BLOCKED('0001'), BLOCKED('0002', { blocked_recommendation: null })]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const b = goButton(p, '0001');
   assert.ok(b, 'a button');
   const q = p.all(rowOf(p, '0001')).find(n => n.className === 'question');
@@ -53,6 +54,7 @@ test('0284 AC2: pressing it asks first, then sends the choice with the token, an
   const asked = [];
   const p = page([BLOCKED('0001')], { asked, answer: async () => ({ ok: false, status: 409, json: async () => ({ error: 'Its build is running.' }) }) });
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   p.press(goButton(p, '0001'));
   await p.settle();
   assert.equal(asked.length, 1);
@@ -61,6 +63,7 @@ test('0284 AC2: pressing it asks first, then sends the choice with the token, an
   assert.match(rowOf(p, '0001').textContent, /Its build is running\./);
   const no = page([BLOCKED('0001')], { yes: () => false });
   await no.settle();
+  await openQueueRows(no); // 0434: what's under a Build card's two lines shows while it's open
   no.press(goButton(no, '0001'));
   await no.settle();
   assert.equal(no.sent.length, 0, 'cancelling sends nothing');
@@ -144,6 +147,7 @@ test('0284 AC4: with no run record, or one with no session, there is no button a
   assert.equal(shown(blockedRepo({ buildCommand: 'claude -p hello' })).blocked_resumable, false, 'nor with a build_command speck run can\'t resume a session with');
   const p = page([BLOCKED('0001', { blocked_resumable: false, session: null })]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   assert.equal(goButton(p, '0001'), null);
   assert.match(rowOf(p, '0001').textContent, /Answer the question, then run \/speck-build 0001/);
 });

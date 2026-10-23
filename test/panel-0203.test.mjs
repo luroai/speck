@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, round, panelModel } from './support/panel.mjs';
+import { T, fakePage, queueRows, round, panelModel, boardPage, openQueueRows } from './support/panel.mjs';
 
 // ---------- 0203: say when an approved ticket waits for Auto-build to ship it ----------
 
@@ -18,7 +18,7 @@ const TICKETS = [
   T('0707', 'approved', approved({ build_exit: { at: ago(30), code: 0 } })), // from an older speck status, with no auto_ship field
 ];
 const state = (run, tickets = TICKETS) => ({ tickets, ideas: [], resume_command: '', ...(run ? { run } : {}) });
-const fake = async (run, tickets) => { const p = fakePage([state(run, tickets)]); await p.settle(); return p; };
+const fake = async (run, tickets) => { const p = boardPage([state(run, tickets)]); await p.settle(); return p; };
 
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
@@ -88,6 +88,8 @@ test('0203 AC3: a ticket that\'s shipping, by anyone, shows as shipping whether 
 
 test('0203 AC4: an approved ticket auto-ship doesn\'t cover looks the same whether speck run is on or off', async () => {
   const off = await fake(null), on = await fake(RUN);
+  await openQueueRows(off); // 0434: what's under a Build card's two lines shows while it's open
+  await openQueueRows(on);
   for (const id of ['0705', '0706', '0707']) {
     assert.deepEqual(shows(off, id), shows(on, id), id);
     assert.equal(shows(off, id).say, 'Approved · waiting for you to ship it', id);

@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { T, fakePage, queueRows, click, page as html, post } from './support/panel.mjs';
+import { T, fakePage, queueRows, click, page as html, post, openQueueRows } from './support/panel.mjs';
 import { buildPanel, runs, psState, cli } from './support/build-panel.mjs';
 
 // ---------- 0145: no pause or play icon on the Build queue's rows ----------
@@ -49,6 +49,7 @@ test('0145 AC2: a paused build still says "Paused", with the command that carrie
   const s = state();
   const p = page(s);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const paused = rowOf(p, '0002');
   assert.match(p.all(topOf(paused)).find(n => n.className === 'sub').textContent, /^Paused · 01:0\d$/);
   assert.ok(p.all(paused).some(n => n._text && n._text.includes('speck play 0002')), 'it shows speck play 0002');

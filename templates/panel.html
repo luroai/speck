@@ -3416,9 +3416,15 @@ function queueItem(t) {
     }
     return q;
   }
+  const ask = foremanAskOf(id); // 0318
+  // 0434: a closed card is its two lines, with only the Foreman's question under them, as its status line gives no sign
+  // of it. A blocked question, a paused build's hint, a message and the rest show once it's open.
+  if (!isOpen) {
+    if (ask) q.appendChild(foremanAskBox(id, ask.question, 'card'));
+    return q;
+  }
   const facts = t.status === 'blocked' ? questionFacts(t) : null;
   if (t.status === 'blocked' && (t.blocked_question || facts)) q.appendChild(el('div', 'question', t.blocked_question, facts, goWithButton(t), goWithRefusal(t)));
-  const ask = foremanAskOf(id); // 0318
   if (ask) q.appendChild(foremanAskBox(id, ask.question, 'card'));
   if (t.resume) q.appendChild(resumeLine(t));
   if (t.paused) q.appendChild(el('div', 'act', `Paused · carry it on with speck play ${t.id}`));
@@ -3428,22 +3434,20 @@ function queueItem(t) {
     if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message));
   }
   if (t.ship_hint) q.appendChild(el('div', 'act', t.ship_hint));
-  if (t.doc_finished && !isOpen) q.appendChild(packButton(t)); // 0361: the document is in its review pack
+  const pack = t.status === 'approved' || t.shipping || t.doc_finished; // 0361: a finished document is in its review pack
   // 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
   // build carries on with a recommendation says who went with it, until it moves on
   if (t.status === 'blocked' && t.foreman_will === true) q.appendChild(el('div', 'act foreman-will', `The Foreman will take its recommendation: ${t.blocked_recommendation}`));
   else if (t.status === 'blocked') q.appendChild(el('div', 'act', `Waiting for you. Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
   const went = wentWithOf(t);
   if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? 'The Foreman went with the recommendation' : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
-  if (isOpen) {
-    q.appendChild(fullButton(t, 'queue'));
-    if (t.status === 'approved' || t.shipping) q.appendChild(packButton(t));
-    if (t.pausable) {
-      q.appendChild(stopButton(t));
-      if (stopRefused.has(id)) q.appendChild(el('div', 'stop-refused', stopRefused.get(id)));
-    }
-    q.appendChild(logBox(id));
+  q.appendChild(fullButton(t, 'queue'));
+  if (pack) q.appendChild(packButton(t));
+  if (t.pausable) {
+    q.appendChild(stopButton(t));
+    if (stopRefused.has(id)) q.appendChild(el('div', 'stop-refused', stopRefused.get(id)));
   }
+  q.appendChild(logBox(id));
   return q;
 }
 // 0168: an in-flight ticket's progress, under its title: what it's doing in a sentence and the current stage's name, in

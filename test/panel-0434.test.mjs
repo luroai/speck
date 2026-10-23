@@ -144,13 +144,32 @@ test('0434 AC4: a closed ticket\'s title is one line, cut off with an ellipsis, 
   assert.match(shippedRows(p).find(r => idOf(p, r) === '0911').className, /\bopen\b/);
 });
 
+test('0434 AC5: a closed Build card shows nothing under its two lines but the Foreman\'s question; open, it shows the rest', async () => {
+  const s = board();
+  s.tickets.find(t => t.id === '0906').blocked_recommendation = 'A';
+  s.tickets.find(t => t.id === '0907').build_exit.message = 'Approved, not shipped.';
+  s.tickets.find(t => t.id === '0909').build_exit.message = 'It ended.';
+  s.foreman = { agent: { asks: [{ id: '0910', question: 'Start it again?' }] } };
+  const p = page(s);
+  await p.settle();
+  for (const t of s.tickets.filter(x => x.status !== 'draft' && x.id !== '0910')) assert.deepEqual(card(p, t.id).children.map(n => n.className), ['top'], `${t.id}: its two lines only`);
+  const asked = card(p, '0910');
+  assert.equal(asked.children.length, 2, 'the Foreman\'s question stays under a closed card');
+  assert.ok(asked.children[1].textContent.includes('Start it again?'));
+  // open, each shows what it has under its two lines, as before
+  const under = { '0906': /A or B\?/, '0907': /Approved, not shipped\./, '0908': /carry it on with speck play 0908/, '0909': /It ended\./ };
+  for (const [id, re] of Object.entries(under)) {
+    click(topOf(card(p, id)));
+    await p.settle();
+    assert.match(card(p, id).children.slice(1).map(n => n.textContent).join(' | '), re, `${id}: open, it shows it`);
+  }
+});
+
 // ---------- in a real browser: a 390 px phone, with a touch screen and with a mouse ----------
 
 const PHONE = board();
 PHONE.tickets.push(T('0912', 'reviewing', { title: 'Under review by a model with a long name', started: ago(472), build_running: true, self_check: 'no changes', review_running: 2, rounds: [{ round: 1, verdict: 'request_changes' }], reviewer: 'codex', review_model: 'a-reviewer-model-with-a-long-name-6.1' }));
 PHONE.tickets.push(T('0913', 'ready', { title: 'Waiting on many', after: ['0901', '0902', '0903', '0904', '0905', '0906', '0907', '0908'], waiting_on: ['0901', '0902', '0903', '0904', '0905', '0906', '0907', '0908'] }));
-// a question, a paused build's hint or a message from a build that ended sits under the two lines (0419 AC4)
-PHONE.tickets = PHONE.tickets.filter(t => !['0906', '0907', '0908', '0909'].includes(t.id));
 const stub = `(() => {
   const STATE = ${JSON.stringify(PHONE)};
   const real = window.fetch.bind(window);

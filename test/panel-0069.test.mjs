@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, round, fakePage, queueRows, click, exitOf } from './support/panel.mjs';
+import { T, round, fakePage, queueRows, click, exitOf, openQueueRows } from './support/panel.mjs';
 
 // ---------- 0069: drop the status word under an in-flight queue ticket's bar ----------
 
@@ -56,12 +56,13 @@ test('0069 AC1: a build exit message still shows, with no status line after it',
   const s = { tickets: [T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf('Ship refused.') }), T('0002', 'building', exitOf('Stopped here.'))], ideas: [] };
   const p = fakePage([s]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const [a, b] = queueRows(p);
-  assert.deepEqual(shape(a), ['top', 'act to-ship', 'question exit to-ship']); // purple since 0138
+  assert.deepEqual(shape(a).slice(0, 3), ['top', 'act to-ship', 'question exit to-ship']); // purple since 0138 (0434: then its buttons and log, as it's open)
   assert.equal(a.children[1].textContent, 'Build finished without shipping');
   assert.equal(a.children[2].textContent, 'Ship refused.');
   assert.ok(!a.textContent.includes('approved'));
-  assert.deepEqual(shape(b), ['top', 'act bad', 'question exit']);
+  assert.deepEqual(shape(b).slice(0, 3), ['top', 'act bad', 'question exit']);
   assert.equal(b.children[1].textContent, 'Build stopped before finishing');
   assert.ok(!b.textContent.includes('building'));
 });
@@ -69,22 +70,24 @@ test('0069 AC1: a build exit message still shows, with no status line after it',
 test('0069 AC2: a blocked ticket says "Answer the question, then run /speck-build <id>" under its question and resume command', async () => {
   const p = queuePage();
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const row = rowOf(p, '0004');
-  assert.deepEqual(shape(row), ['top', 'question', 'resume', 'act']);
+  assert.deepEqual(shape(row).slice(0, 4), ['top', 'question', 'resume', 'act']);
   assert.equal(row.children[1].textContent, 'A or B?');
   assert.match(row.children[2].textContent, /^cd \/tmp\/x && claude --resume abc/);
   assert.equal(row.children[3].textContent, 'Waiting for you. Answer the question, then run /speck-build 0004');
   assert.ok(!row.textContent.includes('blocked'), 'no status word');
-  await open(p, '0004');
   assert.deepEqual(shape(rowOf(p, '0004')), ['top', 'question', 'resume', 'act', 'full-open', 'log'], 'open: the rest as before');
-  assert.equal(rowOf(p, '0004').children[3].textContent, 'Waiting for you. Answer the question, then run /speck-build 0004');
+  await open(p, '0004');
+  assert.deepEqual(shape(rowOf(p, '0004')), ['top'], '0434: closed, its two lines only');
 });
 
 test('0069 AC2: a blocked ticket with no question or session still gets the line, with its own id', async () => {
   const p = fakePage([{ tickets: [T('0042', 'blocked')], ideas: [] }]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const [row] = queueRows(p);
-  assert.deepEqual(shape(row), ['top', 'act']);
+  assert.deepEqual(shape(row).slice(0, 2), ['top', 'act']);
   assert.equal(row.children[1].textContent, 'Waiting for you. Answer the question, then run /speck-build 0042');
 });
 

@@ -266,6 +266,13 @@ export const items = p => p.byId('shaping').children.filter(n => /\bitem\b/.test
 export const top = item => item.children.find(n => /\bhead\b/.test(n.className)); // an item's top row, which opens and closes it (0039)
 
 export const queueRows = p => p.byId('queue').children.filter(n => /\bq\b/.test(n.className));
+// 0434: a fake page whose boards come in turn, as fakePage's responses do, with each log request answered apart, so
+// opening a Build card, which asks for its log, doesn't take the next board. The last board stays.
+export function boardPage(boards, globals = {}) {
+  const left = [...boards];
+  const body = url => (/\/log$/.test(url) ? { text: '', truncated: false } : left.length > 1 ? left.shift() : left[0]);
+  return fakePage([], { fetch: async url => { const b = JSON.parse(JSON.stringify(body(String(url)))); return { ok: true, status: 200, json: async () => b }; }, ...globals });
+}
 // 0434: opens each Build card that's closed, as a Build card shows its priority, size and risk only while it's open.
 export async function openQueueRows(p) {
   const idOf = r => p.all(r).find(n => n.className === 'id')._text;
