@@ -1,12 +1,12 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, full, items, top, toggles, queueRows, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, fakePage, full, items, top, toggles, queueRows, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0154: go to a linked ticket by tapping its id ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 
 // 0001 (a draft) unlocks 0002 (ready) and 0003 (a draft); 0004 (ready) waits on 0001 and on 0009, which has shipped;
 // 0005 is building and unlocks 0006, a ready ticket waiting on it.

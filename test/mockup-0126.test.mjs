@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { ROOT, page, PALETTE, paletteProblems } from './support/panel.mjs';
+import { ROOT, page, PALETTE, paletteProblems, styles } from './support/panel.mjs';
 
 // ---------- 0126: remove the panel mockup from the repo ----------
 
@@ -23,11 +23,11 @@ test('0126 AC2: the agreed colour block is written in the test support, not read
 });
 
 test('0126 AC2: the panel page has every agreed colour', () => {
-  assert.deepEqual(paletteProblems(page()), []);
+  assert.deepEqual(paletteProblems(styles()), []);
 });
 
 test('0126 AC2: the colour check fails when a value is changed or missing', () => {
-  const html = page();
+  const html = styles();
   const changed = html.replace('--accent: #cf2d56;', '--accent: #b0412f;');
   assert.notEqual(changed, html);
   assert.deepEqual(paletteProblems(changed), ['--accent should be #cf2d56']);

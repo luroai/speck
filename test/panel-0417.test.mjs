@@ -1,12 +1,12 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, round, openLane } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, round, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0417: finger-sized controls on touch screens only ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 
 // Each top-level block of the stylesheet: its prelude ('' for a plain rule, or the @media query) and its body.
 function blocks(text) {

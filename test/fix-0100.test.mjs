@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseTicket, lintTicket } from '../scripts/speck.mjs';
-import { ROOT, T, fm, good, page, fakePage, items, queueRows, shippedRows, panelRepo } from './support/panel.mjs';
+import { ROOT, T, fm, good, page, fakePage, items, queueRows, shippedRows, panelRepo, styles } from './support/panel.mjs';
 import { runRepo } from './support/run.mjs';
 import { ORDER_CASES, runUntilLaunched } from './support/quick-run.mjs';
 
@@ -130,7 +130,7 @@ test('0100 AC4: the panel shows a fix tag beside a fix ticket\'s id in Shaping, 
     assert.equal(tag._text, 'fix');
     assert.ok(!anyFix(other), `${where}: no fix tag on another ticket`);
   }
-  assert.match(page(), /\.tag\.fix\s*\{[^}]*color:/, 'the fix tag has a colour');
+  assert.match(styles(), /\.tag\.fix\s*\{[^}]*color:/, 'the fix tag has a colour');
 });
 
 test('0100: the ticket template and /speck-ticket mention fix tickets', () => {
