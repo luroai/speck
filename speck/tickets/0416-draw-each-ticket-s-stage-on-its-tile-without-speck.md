@@ -1,7 +1,7 @@
 ---
 id: "0416"
 title: "Show each ticket's stage in words only"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0415"] # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T15:38:42.935Z"
 
 ---
 # 0416 · Show each ticket's stage in words only
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Each in-flight ticket's card has a 56 px tile showing speck at the laptop, with the reviewer or pushing the boat. speck is the Foreman on the screen at the top (0413), the builders and reviewers are other models, and a moving tile on every card competes with that one screen.
