@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, SETTINGS, settingsScript, page, fakePage, panelRepo, freePort, startPanel, stop, request, cliCopy } from './support/panel.mjs';
+import { ROOT, SETTINGS, settingsScript, pageScript, page, fakePage, panelRepo, freePort, startPanel, stop, request, cliCopy } from './support/panel.mjs';
 
 // ---------- 0432: the Settings view's script in a file of its own ----------
 
@@ -23,10 +23,10 @@ test('0432 AC1: the Settings script is in templates/panel-settings.js, which the
   }
   assert.doesNotMatch(html, /\$\('settings-open'\)\.addEventListener/, 'its button is wired up in its own file');
   const scripts = [...html.matchAll(/<script\b[^>]*>/g)].map(m => m[0]);
-  assert.deepEqual(scripts, ['<script id="theme-start">', '<script src="/panel-model.js">', '<script src="/lcd.js">', '<script>',
-    '<script src="/panel-settings.js">', '<script>'], 'after the page\'s own script, which it uses, and before the page starts');
-  const start = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)][1][1];
-  assert.match(start, /^connect\(\);$/m, 'the page starts only once Settings is in');
+  assert.deepEqual(scripts, ['<script id="theme-start">', '<script src="/panel-model.js">', '<script src="/lcd.js">', '<script src="/panel.js" data-page="{{page}}" data-token="{{token}}">',
+    '<script src="/panel-settings.js">'], 'after the page\'s own script, which it uses (0433: which it loads from /panel.js)');
+  // 0433: the page starts once it has all loaded, Settings included.
+  assert.match(pageScript(), /document\.addEventListener\('DOMContentLoaded', \(\) => \{[\s\S]*connect\(\);\n\}\);\n$/, 'the page starts only once Settings is in');
 });
 
 test('0432 AC1: the fake page runs Settings from its own file: it opens, draws its groups and closes', async () => {
@@ -52,7 +52,7 @@ test('0432 AC2: the server answers /panel-settings.js with the file as text/java
     assert.match(String(res.headers['content-type']), /^text\/javascript\b/);
     assert.equal(res.headers['cache-control'], 'no-store');
     assert.equal(res.body, fs.readFileSync(copy.settings, 'utf8'));
-    const sent = (await request(p.port, { pathName: '/' })).body.match(/const PAGE = '([0-9a-f]{16})';/)[1];
+    const sent = (await request(p.port, { pathName: '/' })).body.match(/data-page="([0-9a-f]{16})"/)[1];
     const now = async () => JSON.parse((await request(p.port, { pathName: '/api/state' })).body).page;
     assert.equal(await now(), sent, 'not out of date before the change');
     fs.appendFileSync(copy.settings, '\n// changed\n');

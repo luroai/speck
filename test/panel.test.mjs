@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage, styles } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage, styles } from './support/panel.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -80,7 +80,7 @@ test('0031 AC2: / is the page, /api/state matches speck status --json, other pat
     assert.equal(home.status, 200);
     assert.match(home.headers['content-type'], /text\/html/);
     assert.match(home.body, /speck/);
-    assert.match(home.body, /\/api\/state/);
+    assert.match((await request(port, { pathName: '/panel.js' })).body, /\/api\/state/, 'its script, which it loads from /panel.js (0433)');
     const api = await request(port, { pathName: '/api/state' });
     assert.equal(api.status, 200);
     assert.match(api.headers['content-type'], /application\/json/);
@@ -142,7 +142,7 @@ test('0031 AC4: a status change in this checkout or in another worktree shows in
 });
 
 test('0031 AC4: the page gets /api/state when the panel says the board changed, not on a timer (0187), says when it is disconnected and recovers', () => {
-  const html = page();
+  const html = pageScript();
   assert.match(html, /fetch\(['"]\/api\/state['"]/);
   assert.match(html, /new EventSource\('\/api\/events'\)/);
   assert.doesNotMatch(html, /POLL_MS|setTimeout\(poll/, 'no poll on a timer');
@@ -218,7 +218,7 @@ test('0031 AC3: Shipped shows the latest finished done tickets, newest first, wi
 });
 
 test('0031 AC3: the page has the mockup\'s areas, groups and dark style, without the sample banner or "later" buttons', () => {
-  const html = page();
+  const html = page() + pageScript();
   for (const text of ['<span class="tab-name">Plan</span>', '<span class="tab-name">Build</span>', '<span class="tab-name">Shipped</span>', 'waiting on ']) // 0410: the areas are tabs
     assert.ok(html.includes(text), text);
   assert.deepEqual(paletteProblems(styles()), [], 'the agreed colour palette');
@@ -228,8 +228,7 @@ test('0031 AC3: the page has the mockup\'s areas, groups and dark style, without
 });
 
 test('0031 AC5: ticket and idea text is shown as text, never as HTML', () => {
-  const html = page();
-  const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  const script = pageScript();
   assert.doesNotMatch(script, /innerHTML|outerHTML|insertAdjacentHTML|document\.write|DOMParser|createContextualFragment/);
   assert.match(script, /textContent/);
 });
@@ -490,7 +489,7 @@ test('0034 AC1: the queue is one list, in-flight tickets first, then ready ones,
   const state = { tickets: [T('0001', 'ready'), T('0002', 'approved'), T('0003', 'draft'), T('0004', 'building'), T('0005', 'ready'), T('0006', 'blocked'),
     T('0007', 'reviewing', { rounds: [round(1, 1)] }), T('0008', 'done'), T('0009', 'cancelled')], ideas: [] };
   assert.deepEqual(model(state).queue.map(t => t.id), ['0002', '0004', '0006', '0007', '0001', '0005']);
-  const html = page();
+  const html = page() + pageScript(); // 0433: the script is in /panel.js
   // 0410: a heading would be text in the markup or a string in the script; the script does read the Foreman's "Needs you <n>".
   for (const h of ['Needs you', 'Running', 'Up next']) assert.ok(!new RegExp(`>${h}<|['"\`]${h}['"\`]`).test(html), `no ${h} heading`);
   assert.ok(!/id="(needs|running|next)(-h)?"/.test(html), 'no group containers');
