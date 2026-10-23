@@ -7,6 +7,7 @@ import { appendRounds, cacheDir } from './review.mjs';
 import { splitCommand } from './reviewers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { providerKey } from './keys.mjs';
+import { fillLine } from './your-agents.mjs';
 
 // ---------- install and doctor ----------
 
@@ -348,6 +349,8 @@ ${AGENTS_SECTION.trimEnd().split('\n').map(l => l && `        ${l}`).join('\n')}
   if (!args.includes('--skip-checks')) {
     console.log('\nChecking what speck needs:');
     ready = printChecks(doctorChecks(repo, cfg, platform));
+    // 0398: a list that can't be read, or a key file that can't, is reported and left alone, so it can't stop an update.
+    try { console.log(fillLine(repo)); } catch (e) { if (!(e instanceof SpeckError)) throw e; console.log(`skipped your agents on this machine: ${e.message}`); }
   }
   console.log(`
 ${ready ? 'speck is installed.' : 'speck is installed, but fix the ✗ items above before building a ticket. Run `node .speck/scripts/speck.mjs doctor` to check again.'}
