@@ -1,7 +1,7 @@
 ---
 id: "0423"
 title: "Open the full ticket over the whole panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: [] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T17:53:56.145Z"
+approved: "2026-10-23T18:03:08.396Z"
 
 ---
 # 0423 · Open the full ticket over the whole panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full ticket opens in a 480 px pane at the side of the panel. In a narrow side pane it covers the page anyway, and on a wider window it squeezes a long document into a strip.
@@ -51,9 +52,15 @@ To see it, open any ticket's Full ticket, or an approved ticket's Review pack. C
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The text column exceeds the required 720 px maximum at odd window widths: 1281 − 280 − 280 = 721 px.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 376,944
+- Elapsed since build started: 9 min
+- Changed lines: 11 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - A review pack's acceptance criteria table squeezes its Result column to one letter wide (seen in this build's pictures, and there before it): speck/ideas/2026-10-23-keep-the-review-pack-s-result-column-readable.md
