@@ -86,9 +86,9 @@ test('0049 AC4: a bug ticket shows a bug tag beside its id in Shaping, the queue
   await p.settle();
   const idOf = row => p.all(row).find(n => n.className === 'id')._text;
   // 0151, 0155, 0157: in Plan, the queue and Shipped the bug tag comes last in the row under the title, after any
-  // priority, size and risk tags.
+  // priority, size and risk tags. 0419: in Plan and the queue, in the details line under the title.
   const lastTag = row => {
-    const tags = p.all(row).find(n => /\btag-row\b/.test(n.className || '')).children.filter(n => /\btag\b/.test(n.className || ''));
+    const tags = p.all(row).find(n => /\b(tag-row|checks|progress|act)\b/.test(n.className || '')).children.filter(n => /\btag\b/.test(n.className || ''));
     return /\bbug\b/.test(tags.at(-1)?.className || '') ? tags.at(-1) : null;
   };
   const anyBug = row => p.all(row).some(n => /\bbug\b/.test(n.className || ''));

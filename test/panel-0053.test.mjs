@@ -92,16 +92,16 @@ test('0053 AC4: everything else in the row stays where it is', async () => {
   const shape = row => row.children.map(n => n.className);
   const a = rowOf(p, '0001');
   assert.deepEqual(shape(a), ['top'], 'the top row, with the progress in it since 0156 (0069: no status line under it)');
-  assert.match(topOf(a).children.find(n => n.className === 'sub').textContent, /^03:0\d$/, 'the time since started, in the top row (MM:SS since 0058)');
+  assert.match(p.all(topOf(a)).find(n => n.className === 'sub').textContent, /^03:0\d$/, 'the time since started, in the top row (MM:SS since 0058)');
   const c = rowOf(p, '0003');
   assert.deepEqual(shape(c), ['top', 'question', 'act']);
   assert.equal(c.children[2].textContent, 'Waiting for you. Answer the question, then run /speck-build 0003'); // 0069, 0317
   const waiting = rowOf(p, '0004');
-  assert.deepEqual(shape(waiting), ['top', 'act']);
-  assert.equal(waiting.children[1].textContent, 'Queued · waiting on 0005');
+  assert.deepEqual(shape(waiting), ['top']); // 0419: the Queued line is the top row's details line
+  assert.equal(topOf(waiting).children[1].textContent, 'Queued · waiting on 0005 · P2 · S · low');
   assert.ok(p.all(topOf(waiting)).some(n => n.className === 'lock'), 'the padlock in the top row');
   const chain = rowOf(p, '0005');
-  assert.equal(chain.children[1].textContent, 'Queued · unlocks 0004');
+  assert.equal(topOf(chain).children[1].textContent, 'Queued · unlocks 0004 · P2 · S · low');
   assert.ok(p.all(topOf(chain)).some(n => n.className === 'chain'), 'the chain icon in the top row');
   // Opened, the path goes between the bar and the log, and the rest keeps its place.
   await open(p, '0001');

@@ -8,29 +8,29 @@ import { STATE, onPhone } from './support/queue-phone.mjs';
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
-// For each queued ticket: its tags, the points of each tag's 44 by 44 px tap area that don't reach it, and how far
-// below the tags its Queued line starts.
+// For each queued ticket: its tags, the points of each tag's 44 by 44 px tap area that don't reach it, and whether
+// each tag is in its Queued line (0419: the tags follow "Queued" in that line, under the title).
 const ROWS = `[...document.querySelectorAll('#queue .q')].map(q => {
   q.scrollIntoView({ block: 'center' });
-  const act = q.querySelector(':scope > .act');
+  const act = q.querySelector('.top .act');
   const tags = [...q.querySelectorAll('.tag')].map(n => {
     const r = n.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     const points = [[cx - 21.5, cy - 21.5], [cx + 21.5, cy - 21.5], [cx - 21.5, cy + 21.5], [cx + 21.5, cy + 21.5], [cx, cy - 21.5], [cx, cy + 21.5], [cx - 21.5, cy], [cx + 21.5, cy]];
-    return { text: n.textContent, reach: cy + 22,
+    return { text: n.textContent, inLine: act.contains(n),
       misses: points.filter(([x, y]) => { const hit = document.elementFromPoint(x, y); return !(hit === n || n.contains(hit)); }) };
   });
-  return { id: q.querySelector('.id').textContent, line: act.textContent, lineTop: act.getBoundingClientRect().top, tags };
+  return { id: q.querySelector('.id').textContent, line: act.textContent, tags };
 })`;
 
-test('0190 AC1: at 375 px, every point of each queued ticket\'s tags\' 44 by 44 px tap areas reaches its tag, above its Queued line', skip, async () => {
+test('0190 AC1: at 375 px, every point of each queued ticket\'s tags\' 44 by 44 px tap areas reaches its tag, in its Queued line', skip, async () => {
   await onPhone(async b => {
     const rows = await b.js(ROWS);
-    assert.deepEqual(rows.map(r => [r.id, r.line]), [['0204', 'Queued'], ['0205', 'Queued']]);
+    assert.deepEqual(rows.map(r => [r.id, r.line]), [['0204', 'Queued · P0 · M · low · bug'], ['0205', 'Queued · P1 · S · high · fix']]);
     for (const row of rows) {
       assert.equal(row.tags.length, 4, `${row.id}: its four tags`);
       for (const t of row.tags) {
         assert.deepEqual(t.misses, [], `${row.id} ${t.text}: these points of its 44 px tap area miss it`);
-        assert.ok(row.lineTop >= t.reach, `${row.id} ${t.text}: its tap area reaches ${t.reach} px, into the Queued line at ${row.lineTop} px`);
+        assert.ok(t.inLine, `${row.id} ${t.text}: in its Queued line`);
       }
     }
   });
