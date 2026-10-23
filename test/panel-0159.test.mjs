@@ -86,7 +86,7 @@ test('0159 AC3: b.js() and b.until() give up in their time limits, naming what t
   try {
     const err = await within(2500, b.js('new Promise(() => {})', 1000).then(() => null, e => e));
     assert.match(err?.message || '', /^Chrome didn't answer Runtime\.evaluate within 1 s: new Promise\(\(\) => \{\}\)$/);
-    const late = await within(15000, b.until('false', 'a thing that never happens').then(() => null, e => e));
+    const late = await within(2500, b.until('false', 'a thing that never happens', 1000).then(() => null, e => e)); // 0429: a limit of its own, as b.js() has
     assert.match(late?.message || '', /^timed out waiting for a thing that never happens$/);
   } finally { await b.close(); }
 });
@@ -96,7 +96,7 @@ test('0159 AC3: b.loaded() gives up when the page never arrives, naming the page
   const url = `http://127.0.0.1:${s.port}/`;
   const b = await browserPage(url);
   try {
-    const err = await within(20000, b.loaded().then(() => null, e => e));
+    const err = await within(2500, b.loaded(1000).then(() => null, e => e)); // 0429: a limit of its own
     assert.equal(err?.message, `timed out waiting for ${url} to load`);
   } finally { await b.close(); s.close(); }
 });
