@@ -64,7 +64,7 @@ export function resumeFor(words, cfg, id, rec, message, providers = knownProvide
     return argv ? { argv } : { argv: null, why: 'its run record has no session' };
   }
   if (rec?.agent === 'codex') {
-    const own = configBuilder(cfg) === 'codex' ? cfg : { ...cfg, builder_model: '' };
+    const own = configBuilder(cfg) === 'codex' ? cfg : { ...cfg, builder_model: '', builder_effort: '' }; // 0402
     const argv = codexResumeArgv(own, session, message ?? resumeMessage(id, '$speck-build'));
     return argv ? { argv } : { argv: null, why: 'no session id has been read from its log yet, as Codex stopped before writing one' };
   }

@@ -17,7 +17,7 @@ import { DEFAULT_BUILD_COMMAND } from '../scripts/build-model.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OWN = ['builder', 'builder_model', 'build_command', 'resume_command', 'reviewer', 'reviewer_model', 'reviewer_effort',
   'allow_same_model_review', 'auto_ship', 'auto_ship_risk', 'foreman', 'foreman_model', 'foreman_effort', 'foreman_fixing',
-  'max_parallel_builds', 'max_parallel_tests'];
+  'max_parallel_builds', 'max_parallel_tests', 'builder_effort']; // 0402: and the builder's effort
 const CONFIG = `base_branch: main
 builder: claude
 build_command: '${DEFAULT_BUILD_COMMAND}'
@@ -60,9 +60,10 @@ const VALUES = {
   builder: 'cursor', builder_model: 'gpt-5', build_command: 'my-agent "/speck-build {id}" --id {session}', resume_command: "my-agent --resume '{session}'",
   reviewer: 'claude', reviewer_model: 'opus', reviewer_effort: 'max', allow_same_model_review: 'true', auto_ship: 'true', auto_ship_risk: 'low,high',
   foreman: 'codex', foreman_model: 'gpt-5.5', foreman_effort: 'low', foreman_fixing: 'fix', max_parallel_builds: '3', max_parallel_tests: '4',
+  builder_effort: 'high', // 0402
 };
 
-test('0386 AC1: your own settings are the sixteen the ticket lists', () => {
+test('0386 AC1: your own settings are the sixteen the ticket lists, and 0402\'s builder_effort', () => {
   assert.deepEqual([...MACHINE_SETTINGS].sort(), [...OWN].sort());
 });
 

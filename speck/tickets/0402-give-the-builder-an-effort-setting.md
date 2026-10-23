@@ -42,6 +42,8 @@ The builder has an effort setting, offered and passed the same way as the review
 - Checked 2026-10-23: Claude Code's reviewer path uses `--effort {effort}` (`scripts/reviewers.mjs`). Codex Foreman uses `-c model_reasoning_effort=…` (`scripts/foreman-agent.mjs`). Claude Code builds get `--model` from `withBuilderModel` in `scripts/build-model.mjs` and no effort today.
 - Waits for 0401: both change Settings in `templates/panel.html` and `scripts/settings.mjs`.
 - Failing before this build: none
+- Self-check: the brief and README gained a fact about builder_effort, so a test now checks them. Kept as for the reviewer: an effort saved for one builder that the next doesn't offer (Codex's ultra, then Claude Code) stays saved, shown as "(not offered)", and is still passed.
+- Existing tests changed: 0400's "the builder has no effort" check now checks criterion 1, and 0257, 0258 and 0386's pinned lists of settings now include builder_effort.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
