@@ -1,7 +1,7 @@
 ---
 id: "0429"
 title: "Halve the time of the suite's slowest tests"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0424"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T18:33:20.667Z"
+blocked_at: "2026-10-23T19:01:28.422Z"
 
 ---
 # 0429 · Halve the time of the suite's slowest tests
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 Builds that change the panel run its browser tests again and again, 1.5 to 2.5 minutes a time, and every ship runs the whole suite. A few tests take far longer than the rest, so every build and ship waits on them.
@@ -53,10 +54,81 @@ The suite's ten slowest tests take half as long, still checking the same things.
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+Criterion 1 can only be measured in a full run of the test suite, but builds may never run the whole suite (only shipping does), and the reviewer won't pass it on my measurements: the ten tests run on their own took 54 s, down from 122 s, and crowded together with other builds' tests they took 84 s. Should I (a) run the whole suite once in this build to measure the ten, as an exception to the rule, or (b) leave criterion 1 to be checked in the ship's own run, with the reviewer told so? I recommend (a): it's one run of about 3 minutes, and it gives the reviewer the number the criterion asks for. With (b), a ship that comes in over 82 s would go out anyway.
+Recommended: run the whole suite once to measure
+Changes what you'd notice: no
+Clear winner: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d154a48281a5a2553f7c9663dff37e02097b2b0e",
+    "session": "fresh",
+    "thread_id": "01a16a23-0997-7932-b5bf-d7115fa4a2e7",
+    "builder_response": "- Tests run: test/panel-0050.test.mjs test/build-log-0176.test.mjs test/panel-0060.test.mjs test/docs-0267.test.mjs test/panel-0177.test.mjs test/panel-0257.test.mjs test/cancel.test.mjs test/panel-0040.test.mjs test/stop-0072.test.mjs test/panel-0159.test.mjs test/slow-tests-0429.test.mjs test/panel-0079.test.mjs test/panel-0206.test.mjs test/panel-0182.test.mjs test/flaky-0207.test.mjs (plus commands.checks, which speck test --files runs). These are the ten slow tests' files, this ticket's own file, and the other files that use the helpers it changed (test/support/panel.mjs, test/support/slow-panel.mjs).\n- AC1 is about a full `npm test` run, which only `speck ship` makes during a build, so no test checks it. My measurements are in the ticket's Notes: the ten, each file run on its own, 122.5 s before and 54.0 s after (44%). In the test run attached, the ten files run together with five others while other builds were testing on this machine, they took 84.3 s, against 163 s in 0418's whole-suite run.\n- AC2: no assertion was removed or loosened. 0159's two until()/loaded() checks now pass a 1-second limit and assert it gives up within 2.5 s, where before they used the 10-second default and allowed 15 or 20 s. The default is kept as UNTIL_MS (10 s) and test/slow-tests-0429.test.mjs checks it. Every browser, panel and process test still uses the real thing.\n- Left alone on purpose: 0176 (half-second check spacing would let a check slowed by load count as two, loosening the 5% check) and 0072 (four of its tests at once timed out a build's start under load). 0177 keeps its 5-second reading. Only the reading after the write, which nothing is asked during, is no longer slowed.\n- No visual change, so there are no pictures.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 114453,
+      "cached_input_tokens": 68480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 779,
+      "reasoning_output_tokens": 95
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T19:01:14.629Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "unclear",
+        "evidence": "The ticket's Notes report 54.0 seconds from separate file runs and 84.3 seconds from a partial-suite run. Neither measures the required full npm test run, and the latter exceeds 82 seconds. The supplied /tmp/speck-0429-tests.txt covers selected files only."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The diff preserves the existing assertions and real browser, panel and process coverage. The refresh tests change keep-alive frequency; cancel preserves every awkward reason in isolated repositories; docs-0267 retains both inner runs; panel-0159 exercises explicit time limits; panel-0177 retains the first five-second reading. The supplied test output confirms these tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The supplied run reports 227 passes, zero failures and three skips across the selected files and repository checks. The helper defaults preserve existing behaviour for other callers. Whole-suite regression verification remains part of shipping."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0429-halve-the-time-of-the-suite-s-slowest-tests.md",
+        "issue": "The central performance target has not been demonstrated. Separate-file measurements cannot establish the combined duration under whole-suite load, and the reported partial-suite measurement is already above the 82-second limit.",
+        "suggested_fix": "Obtain the ten named tests' combined duration from an authorised full npm test run on this machine and retain the output and calculation. If it exceeds 82 seconds, optimise further while preserving coverage. Coordinate this verification with the ship workflow, since the review skill prohibits whole-suite runs during the build.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The changes substantially reduce waiting while preserving the checks, and all tests run passed. Approval is held because the required combined time of at most 82 seconds in a whole-suite run has not yet been demonstrated."
+  }
+}
+```
+
+</details>
