@@ -39,6 +39,7 @@ The full ticket, and a review pack, open over the whole panel, as Settings does.
 - The user asked for this on 2026-10-23.
 - Today: `#full-ticket` in `templates/panel.html`. Settings' full view is `#settings` (0409).
 - Builds alongside 0420, 0421 and 0422 (the user, 2026-10-23): each changes a different part of `templates/panel.html`. This one changes the full-ticket pane.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
