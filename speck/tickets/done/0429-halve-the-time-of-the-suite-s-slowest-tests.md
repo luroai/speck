@@ -1,7 +1,7 @@
 ---
 id: "0429"
 title: "Halve the time of the suite's slowest tests"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-10-23T18:33:20.667Z"
 blocked_at: ""
 waited_seconds: 13
 approved: "2026-10-23T19:08:11.871Z"
+finished: "2026-10-23T19:11:08.892Z"
 
 ---
 # 0429 · Halve the time of the suite's slowest tests
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Builds that change the panel run its browser tests again and again, 1.5 to 2.5 minutes a time, and every ship runs the whole suite. A few tests take far longer than the rest, so every build and ship waits on them.
