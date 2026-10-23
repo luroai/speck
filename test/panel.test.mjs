@@ -222,7 +222,7 @@ test('0031 AC3: the page has the mockup\'s areas, groups and dark style, without
   for (const text of ['<span class="tab-name">Plan</span>', '<span class="tab-name">Build</span>', '<span class="tab-name">Shipped</span>', 'waiting on ']) // 0410: the areas are tabs
     assert.ok(html.includes(text), text);
   assert.deepEqual(paletteProblems(html), [], 'the agreed colour palette');
-  assert.match(html, /border-radius: 0 !important/, 'square corners');
+  assert.doesNotMatch(html, /border-radius: 0 !important/, 'no square corners forced (0428)');
   assert.doesNotMatch(html, /class="sample"/);
   assert.doesNotMatch(html, /· later/);
 });
