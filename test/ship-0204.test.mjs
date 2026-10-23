@@ -108,14 +108,14 @@ test('0204 AC2: once speck says it has been pushed, the card shows as plainly sh
   assert.ok(!said.includes('Merged, but not pushed') && !said.includes(MESSAGE), said.join(' | '));
 });
 
-test('0204 AC1: an unpushed ticket older than the latest five still shows in Shipped, whole', () => {
-  const tickets = [doneT('0900', 9000, { ship: unpushed }), ...[1, 2, 3, 4, 5].map(n => doneT(`090${n}`, n * 10))];
+test('0204 AC1: an unpushed ticket older than the latest ten (five before 0411) still shows in Shipped, whole', () => {
+  const tickets = [doneT('0900', 9000, { ship: unpushed }), ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => doneT(`09${String(n).padStart(2, '0')}`, n * 10))];
   const board = panelBoard(state(tickets));
   const old = board.tickets.find(t => t.id === '0900');
   assert.equal(old.ship?.message, MESSAGE, 'the server keeps it whole');
   const m = panelModel()(board);
   assert.ok(m.shipped.some(t => t.id === '0900'), m.shipped.map(t => t.id).join(' '));
-  assert.equal(m.shippedTotal, 6);
+  assert.equal(m.shippedTotal, 11);
 });
 
 test('0204 AC4: a ticket with no unpushed ship has no such line', async () => {

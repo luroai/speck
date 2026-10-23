@@ -1,5 +1,5 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
-// 0178: the full board the panel sends keeps each finished ticket outside the Shipped list's latest five small.
+// 0178: the full board the panel sends keeps each finished ticket outside the Shipped list's latest ten (five before 0411) small.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -24,17 +24,17 @@ const board = n => ({
   resume_command: 'claude --resume {session}',
 });
 const size = v => Buffer.byteLength(JSON.stringify(v));
-const latestFive = b => b.tickets.filter(t => t.status === 'done').sort((x, y) => Date.parse(y.finished) - Date.parse(x.finished)).slice(0, 5).map(t => t.id);
+const latestTen = b => b.tickets.filter(t => t.status === 'done').sort((x, y) => Date.parse(y.finished) - Date.parse(x.finished)).slice(0, 10).map(t => t.id);
 
-// ---------- AC1: each finished ticket other than the latest five takes up no more than 500 bytes ----------
+// ---------- AC1: each finished ticket other than the latest ten takes up no more than 500 bytes ----------
 
-test('0178 AC1: each finished ticket outside the latest five is no more than 500 bytes, however long its text and log', () => {
+test('0178 AC1: each finished ticket outside the latest ten is no more than 500 bytes, however long its text and log', () => {
   for (const repeat of [1, 50]) {
     const b = board(30);
     for (const t of b.tickets) if (t.status === 'done') { t.rounds = Array.from({ length: 2 * repeat }, (_, i) => round(i + 1, 123456789)); t.notes = t.notes.repeat(repeat); t.build_exit.message = t.build_exit.message.repeat(repeat); t.title = words('a title', 20 * repeat); }
-    const out = panelBoard(b), keep = latestFive(b);
+    const out = panelBoard(b), keep = latestTen(b);
     for (const t of out.tickets.filter(t => t.status === 'done' && !keep.includes(t.id))) assert.ok(size(t) <= 500, `${t.id} is ${size(t)} bytes`);
-    assert.deepEqual(out.tickets.filter(t => keep.includes(t.id)), b.tickets.filter(t => keep.includes(t.id)), 'the latest five whole');
+    assert.deepEqual(out.tickets.filter(t => keep.includes(t.id)), b.tickets.filter(t => keep.includes(t.id)), 'the latest ten whole');
   }
 });
 
@@ -47,11 +47,11 @@ test('0178 AC1: a ticket still shipping and a cancelled one are no more than 500
   assert.ok(size(out.tickets.find(t => t.id === '0951')) <= 500);
 });
 
-test('0178 AC1: the panel sends the board with each finished ticket outside the latest five cut down', async () => {
+test('0178 AC1: the panel sends the board with each finished ticket outside the latest ten cut down', async () => {
   const r = panelRepo();
   const runs = path.join(r.dir, 'speck', '.cache', 'runs');
   fs.mkdirSync(runs, { recursive: true });
-  for (let n = 2; n <= 9; n++) {
+  for (let n = 2; n <= 14; n++) {
     const id = String(n).padStart(4, '0');
     r.write(`${id}-t.md`, `id: "${id}"\ntitle: Ticket ${n}\nstatus: done\nsize: S\nrisk: low\nbuilder: claude\nreviewer: codex\nstarted: "${iso(n)}"\nfinished: "${iso(n).replace('T10', 'T12')}"`,
       `## Problem\n${words('a problem', 100)}\n## Outcome\nDone.\n## Acceptance criteria\n1. ${words('a criterion', 100)}\n## Out of scope\n- None\n## Notes\n- ${words('notes', 200)}\n`, 'speck/tickets/done');
@@ -68,7 +68,7 @@ test('0178 AC1: the panel sends the board with each finished ticket outside the 
     const done = JSON.parse(body).tickets.filter(t => t.status === 'done');
     const small = done.filter(t => size(t) <= 500).map(t => t.id).sort(), whole = done.filter(t => typeof t.notes === 'string').map(t => t.id).sort();
     assert.deepEqual(small, ['0002', '0003', '0004']);
-    assert.deepEqual(whole, ['0005', '0006', '0007', '0008', '0009']);
+    assert.deepEqual(whole, ['0005', '0006', '0007', '0008', '0009', '0010', '0011', '0012', '0013', '0014']);
     // AC2: against the board speck status --json gives for the same tickets.
     const before = spawnSync(process.execPath, [CLI, 'status', '--json'], { cwd: r.dir, encoding: 'utf8', env }).stdout;
     assert.ok(Buffer.byteLength(body) < Buffer.byteLength(JSON.stringify(JSON.parse(before))), 'smaller than before');
@@ -78,7 +78,7 @@ test('0178 AC1: the panel sends the board with each finished ticket outside the 
 // ---------- AC2: the full board is less than a third of the size it was ----------
 
 test('0178 AC2: for the same tickets, the full board is less than a third of the size it was', () => {
-  for (const n of [30, 150]) {
+  for (const n of [60, 150]) { // 0411: with ten kept whole, 30 finished is too few for a third
     const b = board(n), before = size(b), after = size(panelBoard(b));
     assert.ok(after * 3 < before, `${n} finished: ${after} bytes against ${before}`);
   }
@@ -102,14 +102,14 @@ test('0178 AC3: the panel works out the same queue, Plan, Shipped list and figur
     assert.deepEqual(fromCut, fromWhole);
     assert.ok(size(cut) * 3 < size(whole));
   }
-  // With fewer than five finished, nothing is cut.
+  // With fewer than ten finished, nothing is cut.
   const few = board(4);
   assert.deepEqual(panelBoard(few), few);
 });
 
 test("0178 AC3: each finished ticket the page can open has its full text", () => {
   const model = panelModel(), b = board(30), m = model(panelBoard(b));
-  assert.equal(m.shipped.length, 5);
+  assert.equal(m.shipped.length, 10);
   const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes];
   for (const t of m.shipped) assert.deepEqual(fullText(t), fullText(b.tickets.find(x => x.id === t.id)));
 });
