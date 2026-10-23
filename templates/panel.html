@@ -2201,9 +2201,10 @@ function redrawSettings(keys, kept = null) {
   for (const key of keys) {
     const drawn = settingRowsDrawn.get(key), x = settingRows().find(r => r.key === key);
     if (!drawn || !x || !drawn.row.parentNode) continue;
-    const had = settingControls.get(key);
+    const had = settingControls.get(key), hadInfo = settingInfos.get(key);
     const row = settingRow(x, drawn.n), made = settingControls.get(key);
     if (key === kept && had && made && made.tagName === had.tagName) {
+      if (hadInfo) settingInfos.set(key, hadInfo); // 0395: its name, and its info button with it, stay as they were
       for (const c of [...drawn.row.children].slice(1)) drawn.row.removeChild(c);
       for (const c of [...row.children].slice(1)) drawn.row.appendChild(c);
       if (String(had.tagName).toLowerCase() === 'select') { // what it offers can change with what's picked
