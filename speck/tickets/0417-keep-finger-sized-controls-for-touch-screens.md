@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0416"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T15:53:47.802Z"
-approved: "2026-10-23T16:00:04.696Z"
+approved: "2026-10-23T16:04:29.962Z"
 
 ---
 # 0417 · Keep finger-sized controls for touch screens
@@ -54,12 +54,13 @@ To see it, make the panel's window narrower than 700 px with a mouse: the tabs, 
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 107,610
-- Elapsed since build started: 6 min
+- Reviewer tokens: 308,455
+- Elapsed since build started: 11 min
 - Changed lines: 71 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. Known limit: headless Chromium can't emulate a fine pointer, so the browser test for a mouse runs with no pointer at all, and the stylesheet test covers the fine-pointer case.
@@ -117,6 +118,63 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Touch controls retain their finger-sized targets at any window width, while mouse users get compact controls in narrow panes. Other narrow-window layouts remain intact. The tests exercise the change without weakening existing assertions, and the recorded run has no failures."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f3285574a248d40e13ef7d685cc115c2104294a4",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1697d-2478-7af1-8f3c-a34cdec360f6",
+    "builder_response": "- Tests run: test/panel-0190.test.mjs test/panel-0224.test.mjs test/panel-0417.test.mjs\n- Why ship failed: four tests of 0190 and 0224 check the 44 by 44 px tag tap areas at 375 px. Their phone setup is in the shared `test/support/queue-phone.mjs`, which I missed in round 1 (I only searched `test/*.test.mjs` for viewport setups). With the tap areas now only on touch screens, that setup's headless Chromium (no touch screen) got the compact tags.\n- What changed: `onPhone` in `test/support/queue-phone.mjs` turns on touch emulation after setting the 375 px viewport, as the round 1 change did for the other phone tests. No assertion changed. main had no new commits to merge (already up to date).\n- Checked that no other test narrows the window another way: the only other viewport setups are in the `.test.mjs` files changed in round 1.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 199777,
+      "cached_input_tokens": 151680,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1068,
+      "reasoning_output_tokens": 37
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T16:04:26.406Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html still confines all 44px control sizes to @media (pointer: coarse). Passing panel-0417 tests check the stylesheet at all widths and computed minimums in a narrow non-touch browser."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The width-independent coarse-pointer block preserves the previous touch sizes. panel-0417 tests pass at 375px and 1280px. The shared onPhone helper now enables touch emulation; the unchanged 0190 and 0224 assertions verify tag tap areas and linked-id interactions."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The narrow-window layout rules remain unchanged since round 1. Passing panel-0417 tests check their stylesheet placement and computed tab layout and padding below 700px."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change remains ready to merge. The shared phone test setup now correctly emulates touch, preserving its existing tap-area checks without weakening assertions. All six ticket tests pass, and the latest run reports no failures."
   }
 }
 ```
