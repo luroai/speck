@@ -3631,16 +3631,24 @@ function showLog(id, toBottom) {
 // `more`: another line follows, so the row ends with its newline, keeping the log's text as it was. `plain`: one of
 // the box's own notes, such as No log yet., which isn't a log line.
 const LOG_PLAIN = new Set(['Loading the log…', "Couldn't load the log yet. Trying again in a few seconds…", 'No log yet.']);
-function logRow(line, more, plain) {
+function logParts(line, plain) {
   const m = plain ? null : line.match(/^(\d\d:\d\d:\d\d )([\s\S]*)$/), text = m ? m[2] : line, t = text.trimStart();
   const kind = plain ? 'plain' : line === TRUNCATED ? 'note' : line === '' ? 'gap' : t.startsWith('✗') || text.startsWith('Build ended:') ? 'fail'
     : t.startsWith('→') ? 'tool' : 'msg';
-  return el('span', `ln ${kind}${m ? ' timed' : ''}`, null, m ? el('span', 'at', m[1]) : null, document.createTextNode(text), more ? document.createTextNode('\n') : null);
+  return { cls: `ln ${kind}${m ? ' timed' : ''}`, at: m ? m[1] : '', text };
+}
+const logTextOf = new WeakMap(); // row → the text node with its text
+function logRow(line, more, plain) {
+  const p = logParts(line, plain), t = document.createTextNode(p.text);
+  const row = el('span', p.cls, null, p.at ? el('span', 'at', p.at) : null, t, more ? document.createTextNode('\n') : null);
+  logTextOf.set(row, t);
+  return row;
 }
 // Puts a newer log in its box, a row a line. New lines after the old are added at the bottom. When the old lines run on
 // into the new ones once the oldest have dropped out of the tail, only the fewest rows that makes them fit are taken
 // out at the top and the rest added at the bottom, so text selected in the rows that stay stays selected. The last old
-// line may have grown, and only its row is made again. Anything else makes every row afresh.
+// line may have grown: its new text is added to its row's, or, when that changes its time or its kind, its row alone is
+// made again. Anything else makes every row afresh.
 const logLinesOf = new WeakMap(); // box → the lines its rows show
 function setLogText(box, text) {
   const next = text.split('\n'), plain = LOG_PLAIN.has(text), cur = logLinesOf.get(box);
@@ -3652,9 +3660,13 @@ function setLogText(box, text) {
       const kept = cur.slice(k), last = kept.length - 1;
       if (kept.length > next.length - head || !kept.every((l, i) => (i < last ? l === next[head + i] : next[head + i].startsWith(l)))) continue;
       for (const r of rows.slice(head, k)) box.removeChild(r);
-      const at = head + last, more = at < next.length - 1;
-      if (next[at] !== kept[last]) { box.insertBefore(logRow(next[at], more, false), rows[k + last]); box.removeChild(rows[k + last]); }
-      else if (more) rows[k + last].appendChild(document.createTextNode('\n'));
+      const at = head + last, more = at < next.length - 1, row = rows[k + last];
+      const was = logParts(kept[last], false), now = logParts(next[at], false);
+      if (was.cls !== now.cls || was.at !== now.at || !logTextOf.has(row)) { box.insertBefore(logRow(next[at], more, false), row); box.removeChild(row); }
+      else {
+        if (now.text !== was.text) logTextOf.get(row).appendData(now.text.slice(was.text.length));
+        if (more) row.appendChild(document.createTextNode('\n'));
+      }
       for (let i = at + 1; i < next.length; i++) box.appendChild(logRow(next[i], i < next.length - 1, false));
       return;
     }

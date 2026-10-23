@@ -91,7 +91,7 @@ const writeLog = (dir, text) => {
 const said = (text, at) => `${JSON.stringify({ type: 'assistant', timestamp: at, message: { content: [{ type: 'text', text }] } })}\n`;
 const ran = (command, at) => `${JSON.stringify({ type: 'assistant', timestamp: at, message: { content: [{ type: 'tool_use', name: 'Bash', input: { command } }] } })}\n`;
 
-test('0422 AC1, AC3, AC4: in a real browser, text starts past the times, wrapped and later lines line up under it, and selecting, copying and scrolling work as before', chrome, async () => {
+test('0422 AC1, AC3, AC4: in a real browser, text starts past the times, wrapped and later lines line up under it, and selecting, copying and scrolling work as before (with review round 1, F1)', chrome, async () => {
   const r = panelRepo();
   const long = 'word '.repeat(80).trim();
   writeLog(r.dir, said(`First message.\nIts second line, ${long}`, '2026-10-23T09:00:01Z') + said(`Second message, ${long}`, '2026-10-23T09:00:02Z')
@@ -141,6 +141,17 @@ test('0422 AC1, AC3, AC4: in a real browser, text starts past the times, wrapped
     assert.equal(await b.js(`${box}.scrollTop`), 20, 'the scroll place stays');
     assert.equal(await b.js('getSelection().toString()'), 'echo 30', 'the selection stays');
     assert.match(await b.js(`${box}.textContent`), /echo 59\n\d\d:\d\d:\d\d → Bash: echo more$/, 'the new line is on a line of its own');
+
+    // Review round 1, F1: a selection in the last line stays when that line grows, as the page's setLogText puts a
+    // newer log in the box.
+    await b.js(`(() => { const row = ${box}.lastElementChild, t = [...row.childNodes].find(c => c.nodeType === 3 && c.data.includes('echo more')), at = t.data.indexOf('echo more'), r = document.createRange();
+      r.setStart(t, at); r.setEnd(t, at + 'echo more'.length); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
+    await b.js(`setLogText(${box}, ${box}.textContent + ' and on')`);
+    assert.match(await b.js(`${box}.textContent`), /→ Bash: echo more and on$/);
+    assert.equal(await b.js('getSelection().toString()'), 'echo more', 'the selection in the grown line stays');
+    await b.js(`setLogText(${box}, ${box}.textContent + '\\n12:00:09 next')`);
+    assert.equal(await b.js('getSelection().toString()'), 'echo more', 'and stays when a line is added after it');
+    assert.match(await b.js(`${box}.textContent`), /echo more and on\n12:00:09 next$/);
   } finally {
     await b.close();
     await stop(panel);
