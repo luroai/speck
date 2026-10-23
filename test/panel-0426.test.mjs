@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, page, styles } from './support/panel.mjs';
+import { ROOT, page, styles, pageScript } from './support/panel.mjs';
 
 // ---------- 0426: use Cursor's colours in the panel ----------
 
@@ -143,7 +143,7 @@ test('0426 AC3: every link is blue, visited or not, including the pull request l
   uses('a', 'color', '--run');
   assert.doesNotMatch(css(), /:(visited|link)\b/, 'nothing gives a visited link another colour');
   // the pull request link is a plain <a> in the pack's ship line
-  assert.match(page(), /const a = el\('a', null, pr\.url\);/);
+  assert.match(pageScript(), /const a = el\('a', null, pr\.url\);/);
   for (const sel of ['#full-ticket .ship-said, #doc-view .ship-said', '#full-ticket .ship-said.bad, #doc-view .ship-said.bad'])
     assert.doesNotMatch(css(), new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' a\\b'), `${sel} doesn't recolour its link`);
 });
