@@ -1,7 +1,7 @@
 ---
 id: "0437"
 title: "Run the tests a change affects before its first review"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: [] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T21:55:26.036Z"
 approved: "2026-10-23T22:07:38.378Z"
+finished: "2026-10-23T22:10:48.943Z"
 
 ---
 # 0437 · Run the tests a change affects before its first review
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A build runs only its own test files before review, and the whole suite runs only at ship. So a change that breaks an existing test is caught at ship, after the reviewer approved: speck run hands the ticket back, and the build re-tests, fixes and gets another review round. 0427, a font change, lost about 8 of its 25 minutes this way, to layout tests it hadn't run.
