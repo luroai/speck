@@ -43,6 +43,7 @@ The page's model is in a file of its own, which tests load directly.
 - Install and update copy the whole `templates/` folder (`place` in `scripts/`), so a new file there reaches projects with no change.
 - The page's stamp (`stampOf` in `scripts/panel.mjs`) is worked out from `panel.html` alone today. `/lcd.js` and `/fonts/Doto.ttf` show how the server names each file it serves.
 - Failing before this build: none
+- Self-check: no changes. The model file is checked for having no DOM use, a missing file gets a plain message, and the fake page runs the model and the page script in one context, as a browser shares them across scripts.
 - Waits for 0430: both change `templates/panel.html`, `scripts/panel.mjs` and `test/support/panel.mjs`.
 
 ## In plain words
