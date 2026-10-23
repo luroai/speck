@@ -148,7 +148,7 @@ test('0417 AC1, AC3: in a 375 px window with no touch screen, no control has a 4
   assert.deepEqual(gear, [30, 30], 'Settings keeps its compact 30 px button');
   // AC3: the narrow layout itself, which isn't about a control's size
   await b.js(openLane('build'));
-  assert.equal(await b.js(`getComputedStyle(document.getElementById('tab-build')).flexDirection`), 'column', 'each tab\'s count under its name');
+  assert.equal(await b.js(`getComputedStyle(document.getElementById('tab-build')).flexDirection`), 'row', 'each tab\'s name on one line (0425)');
   assert.equal(await b.js(`getComputedStyle(document.getElementById('queue')).paddingLeft`), '16px'); // 0418: the lane's list, as main has none
 }));
 

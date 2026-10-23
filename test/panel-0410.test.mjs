@@ -64,13 +64,12 @@ test('0410 AC1: pressing a tab opens its lane, and only its lane', async () => {
   }
 });
 
+// 0425: the counts are the first line of their lane now, not in the tabs.
 test('0410 AC1: Build and Shipped show the counts their headings did; Plan shows none', async () => {
   const nav = staticHtml().match(/<nav [^>]*role="tablist"[^>]*>([\s\S]*?)<\/nav>/)[1];
   const tab = id => nav.match(new RegExp(`<button [^>]*id="${id}"[^>]*>([\\s\\S]*?)</button>`))[1];
   assert.equal(tab('tab-plan'), '<span class="tab-name">Plan</span>', 'Plan\'s tab is its name alone');
-  assert.match(tab('tab-build'), /<span class="tab-name">Build<\/span><span class="n" id="queue-n"><\/span>/, 'Build\'s count is in its tab');
-  assert.match(tab('tab-shipped'), /<span class="tab-name">Shipped<\/span><span class="n" id="shipped-n"><\/span>/, 'Shipped\'s count is in its tab');
-  assert.doesNotMatch(staticHtml().split('</nav>')[1], /id="(queue-n|shipped-n)"/, 'and nowhere else');
+  assert.doesNotMatch(nav, /id="(queue-n|shipped-n)"/, 'the counts aren\'t in the tabs (0425)');
   const p = livePage(board());
   await p.settle();
   assert.equal(p.byId('queue-n').textContent, '0 in flight · 2 queued');
@@ -197,15 +196,15 @@ test('0410 AC3: in a real browser, the open lane\'s list keeps its scroll positi
 
 // ---------- AC4 ----------
 
-test('0410 AC4: with Plan or Shipped open and the Foreman reading "Needs you <n>", the Build tab says "<n> needs you"', async () => {
+test('0410 AC4: with Plan or Shipped open and the Foreman reading "Needs you <n>", the Build tab says "<n>" (0425)', async () => {
   const needs = { word: 'Needs you 2', tone: 'bad' };
   const p = livePage(board({ foreman: needs }));
   await p.settle();
   assert.equal(p.byId('build-needs').textContent, '', 'Build open: nothing extra');
   click(p.byId(TAB.plan));
-  assert.equal(p.byId('build-needs').textContent, '2 needs you', 'Plan open');
+  assert.equal(p.byId('build-needs').textContent, '2', 'Plan open'); // 0425: the number alone
   click(p.byId(TAB.shipped));
-  assert.equal(p.byId('build-needs').textContent, '2 needs you', 'Shipped open');
+  assert.equal(p.byId('build-needs').textContent, '2', 'Shipped open');
   for (const word of ['Building', 'Idle', 'Off', 'Needs you', 'Needs you soon', 'Blocked 2']) {
     p.set(board({ foreman: { word, tone: 'idle' } }));
     await refresh(p);
@@ -213,18 +212,18 @@ test('0410 AC4: with Plan or Shipped open and the Foreman reading "Needs you <n>
   }
   p.set(board({ foreman: { word: 'Needs you 11', tone: 'bad' } }));
   await refresh(p);
-  assert.equal(p.byId('build-needs').textContent, '11 needs you', 'and it follows the count');
+  assert.equal(p.byId('build-needs').textContent, '11', 'and it follows the count');
   click(p.byId(TAB.build));
   assert.equal(p.byId('build-needs').textContent, '', 'gone once Build opens');
 });
 
-test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back there, puts "<n> needs you" on Build straight away', async () => {
+test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back there, puts "<n>" on Build straight away', async () => {
   const p = livePage(board({ foreman: { word: 'Needs you 2', tone: 'bad' } }));
   await p.settle();
   const waiting = queueRows(p).find(n => idOf(p, n) === '0002');
   p.press(gotoIn(p, waiting, '0001'));
   openIs(p, 'plan', 'after going to a Plan ticket');
-  assert.equal(p.byId('build-needs').textContent, '2 needs you', 'before any refresh');
+  assert.equal(p.byId('build-needs').textContent, '2', 'before any refresh');
   // Back to Build through a link, then opened from Build and closed once it's back in Plan.
   p.press(gotoIn(p, items(p).find(n => idOf(p, n) === '0001'), '0002'));
   assert.equal(p.byId('build-needs').textContent, '', 'Build open again');
@@ -238,7 +237,7 @@ test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back t
   await p.settle();
   p.key('Escape');
   openIs(p, 'plan', 'after the focus went back to Plan');
-  assert.equal(p.byId('build-needs').textContent, '2 needs you');
+  assert.equal(p.byId('build-needs').textContent, '2');
 });
 
 // ---------- AC5 ----------
