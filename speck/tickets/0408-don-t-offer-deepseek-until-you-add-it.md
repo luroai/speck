@@ -1,7 +1,7 @@
 ---
 id: "0408"
 title: "Don't offer DeepSeek until you add it"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: "speck/ideas/done/2026-10-23-dont-offer-deepseek-until-you-add-it.md"   
 after: []                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T12:51:23.306Z"
-blocked_at: "2026-10-23T12:57:36.870Z"
+blocked_at: ""
+waited_seconds: 673
 
 ---
 # 0408 · Don't offer DeepSeek until you add it
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 Add an agent still offers DeepSeek with a key field even when this machine has never set a DeepSeek key. Beside the Add an API provider form from 0401, that row looks like speck expects an account you do not have.
@@ -45,6 +46,7 @@ Add an agent does not offer DeepSeek, or any other known API provider, until you
 - Existing tests changed: besides 0393's check that DeepSeek with no key is offered with its key field (now checking AC1), five other checks relied on the removed offer: 0399 AC2 (offers listed TestCo with its key field), 0399 AC3's page part (pasting TestCo's key in its offer row; now pasted in its own row once yours), 0399 AC4 in a browser (counted two offers; now one), 0393 AC2's two page checks (DeepSeek's key field under Add an agent; now in its row as one of yours) and 0393 AC4's page part (TestCo offered with no key; now not offered). Each keeps its intent where the behaviour still exists.
 - The form refuses the name DeepSeek, as speck already knows it, so the built-in DeepSeek is added by setting its key (`speck keys set deepseek`, or keeping it when removed), after which Add an agent offers it with Add. The README says so.
 - Self-check: README's Add an agent sentence still said each provider is offered with a key field; changed it. (A README check added then was removed in review round 1 as a wording check.)
+- Went with the recommendation: (a) let the form add the built-in DeepSeek (chosen by the user in the panel, 2026-10-23 13:08 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
