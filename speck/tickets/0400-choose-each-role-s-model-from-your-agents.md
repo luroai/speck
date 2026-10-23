@@ -41,6 +41,7 @@ Each role picks one model from your agents' models.
 - Checked 2026-10-23: Settings shows foreman, builder and reviewer as their own lists, each with a model list under it filled for the chosen agent (0369, 0381), and DeepSeek among them whether or not its key is set.
 - The user chose on 2026-10-23 to keep the Claude subagent reviewer as an entry under Claude Code.
 - Waits for 0399.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
