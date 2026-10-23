@@ -1,7 +1,7 @@
 ---
 id: "0431"
 title: "Move the panel's model into a file of its own"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0430"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T22:39:34.526Z"
+approved: "2026-10-23T22:47:45.910Z"
 
 ---
 # 0431 · Move the panel's model into a file of its own
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The page's model, the code that turns the board into what the page shows without touching the page, sits inside `templates/panel.html` between `---- model` and `---- end model`. Tests that run it on its own have to cut it out of the page first.
@@ -53,9 +54,14 @@ Nothing looks or works differently in the panel. The part of the panel's page th
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 229,846
+- Elapsed since build started: 8 min
+- Changed lines: 1004 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. A timing flake in test/run-switch-0301.test.mjs ("0301 AC3 self-check: a build that ends while the new code fails to start…") failed once in a related run and passed alone twice. It isn't changed by this ticket.
 
