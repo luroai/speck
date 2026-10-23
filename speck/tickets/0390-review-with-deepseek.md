@@ -42,7 +42,7 @@ speck's reviewers are Codex, Claude Code and Cursor. There's no way to review wi
 - Checked 2026-10-23: DeepSeek's API accepts Anthropic's message format at `https://api.deepseek.com/anthropic`, with the key in `ANTHROPIC_API_KEY`, and its guide names `deepseek-v4-pro` and `deepseek-v4-flash` (https://api-docs.deepseek.com/guides/anthropic_api).
 - Checked 2026-10-23: `claude --help` (2.1.301) says `--bare` takes Anthropic auth strictly from `ANTHROPIC_API_KEY` or an apiKeyHelper, and never reads OAuth or the keychain. It also skips hooks, plugins and CLAUDE.md discovery, but skills still resolve by `/skill-name`.
 - Start from the Claude reviewer's command, `CLAUDE_ARGS` in `scripts/reviewers.mjs`, adding `--bare`. The key goes into the reviewer's own environment only.
-- Unverified: whether DeepSeek's endpoint keeps a Claude Code session for `--resume`, which is local to Claude Code, so it should. If not, later rounds send the full history as command reviewers do.
+- Checked 2026-10-23: `claude --help` (2.1.301) says sessions are saved to disk unless `--no-session-persistence` is given, so `--resume` is local to Claude Code and works whichever endpoint it's pointed at.
 - Waits for 0389 for the key, and for 0388, which changes how a ticket's reviewer is chosen (`scripts/review.mjs`, `scripts/same-model.mjs`).
 
 ## In plain words
