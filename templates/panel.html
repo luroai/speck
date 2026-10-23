@@ -4082,7 +4082,7 @@ const speckPoses = () => ({ ...LCD.STATES, watch: watchPose, ask: LCD.PANEL.bad,
 // 0414: what speck does, from what the page has seen of the pipeline. Each board is compared with the one before it
 // (noteBoard): what changed queues an event, played one after another, or starts the laptop while drafts are written.
 // Between them speck follows the Foreman's word (speckRests). Nothing is timed but the events, the writing, and the nap.
-const SPECK = { push: 3200, event: 6000, writing: 30000, nap: 15 * 60000, queue: 8 };
+const SPECK = { push: 3200, event: 6000, writing: 30000, nap: 15 * 60000 };
 const IDLE_MOODS = [['eating', 'TEA, WHILE IT IS QUIET'], ['playing', 'NOTHING READY. CHESS?'], ['messy', 'CRUMBS IN THE WORKTREE'], ['cleaning', 'SWEEPING OLD BRANCHES']];
 const speckDo = { seen: null, queue: [], playing: null, writing: null, word: null, idle: null, woke: false, n: 0 };
 const byId = (a, b) => a.localeCompare(b, 'en', { numeric: true });
@@ -4102,8 +4102,7 @@ function noteBoard(st, f, word) {
   const was = d.seen;
   d.seen = seen;
   if (!was) return; // what happened before the page loaded doesn't play
-  // A page that wasn't drawn for a while (a hidden tab) plays only the latest events it saw, not every one since.
-  const caps = new Set(), play = (pose, cap, ms) => { if (!caps.has(cap)) { caps.add(cap); d.queue.push({ pose, cap, ms, key: `e${++d.n}` }); if (d.queue.length > SPECK.queue) d.queue.shift(); } };
+  const play = (pose, cap, ms) => { d.queue.push({ pose, cap, ms, key: `e${++d.n}` }); };
   const became = (id, status) => was.tickets.has(id) && was.tickets.get(id).status !== status && tickets.get(id).status === status;
   const runOn = !!(st.run && st.run.on);
   for (const id of ids) if (became(id, 'done')) play('celebrating', `${id} SHIPPED`, SPECK.event);

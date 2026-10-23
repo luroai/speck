@@ -222,11 +222,17 @@ test('0414 AC5: with reduced motion each animation is one still frame, and the c
   shows(p, 'watch', 'WATCHING 1 BUILD', 9000, false);
 });
 
-test('0414 AC4: a page not drawn for a while plays only the latest 8 events waiting, not every one since', async () => {
+test('0414 AC4: every event seen plays, however many, including a ticket blocked and the Foreman asking about it at once', async () => {
   const ids = Array.from({ length: 10 }, (_, i) => String(500 + i).padStart(4, '0'));
-  const p = speckPage([board(ids.map(id => T(id, 'building')), { word: 'Building 10' }), board(ids.map(id => T(id, 'done')), { word: 'Idle' })], { random: 0 });
+  const ask = { running: null, waiting: [], did: [], asks: [{ id: '0510', question: 'Q', at: '2026-10-23T12:00:00Z' }] };
+  const p = speckPage([board([...ids.map(id => T(id, 'building')), T('0510', 'building')], { word: 'Building 11' }),
+    board([...ids.map(id => T(id, 'done')), T('0510', 'blocked')], { word: 'Needs you 2', agent: ask })]);
   await p.settle();
   await p.next();
-  for (const id of ids.slice(2)) { shows(p, 'celebrating', `${id} SHIPPED`); p.go(6100); }
-  shows(p, 'eating', 'TEA, WHILE IT IS QUIET');
+  for (const id of ids) { shows(p, 'celebrating', `${id} SHIPPED`); p.go(6100); }
+  shows(p, 'ask', '0510 HAS A QUESTION');
+  p.go(6100);
+  shows(p, 'ask', '0510 HAS A QUESTION');
+  p.go(6100);
+  shows(p, 'ask', '2 NEEDS YOU');
 });
