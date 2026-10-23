@@ -12,6 +12,7 @@ import { PROVIDERS, findProvider } from './providers.mjs';
 import { keysStatus } from './keys.mjs';
 import { findAgents, agentLines } from './agents.mjs';
 import { foremanAgentOf } from './foreman-agent.mjs';
+import { installHint } from './install.mjs';
 
 export const yourAgentsFile = repo => path.join(path.dirname(machineConfigFile(repo)), 'agents.json');
 
@@ -114,6 +115,19 @@ export function removeAgent(repo, name, cfg, opts = {}) {
   if (!list.includes(id)) return `${label} isn't one of your agents on this machine, so there was nothing to remove.`;
   writeYourAgents(repo, list.filter(x => x !== id), providers);
   return `Removed ${label} from your agents on this machine.`;
+}
+
+// 0399: the Settings view's "Your agents": every agent speck knows, read from `found` (as findAgentsAsync finds them,
+// without their models), each with whether it's yours, whether it's ready, how to install one that isn't, and the
+// roles in `cfg` that use it. Never a key: only whether a provider has one.
+export function yourAgentsView(repo, found, cfg, opts = {}) {
+  const providers = opts.providers ?? PROVIDERS;
+  const report = agentsReport(repo, { ...opts, providers, models: false, find: () => found });
+  const row = (a, kind) => ({ id: a.id, name: a.name, kind, yours: a.yours === true, ready: a.ready === true,
+    ...(kind === 'agent' ? { installed: a.installed === true, signed_in: a.signed_in === true } : { key_set: a.key_set === true }),
+    ...(a.why ? { why: String(a.why) } : {}), ...(kind === 'agent' && !a.installed && installHint(a.id) ? { install: installHint(a.id) } : {}),
+    roles: rolesUsing(a.id, cfg, providers) });
+  return { list: report.list, agents: [...report.agents.map(a => row(a, 'agent')), ...report.providers.map(p => row(p, 'provider'))] };
 }
 
 // `speck agents` as plain lines: each agent, then each provider, with whether it's yours.
