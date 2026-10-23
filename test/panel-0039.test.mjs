@@ -60,14 +60,14 @@ test('0039 AC2: clicking anywhere in an open ticket\'s sections or readiness lis
   assert.ok(isOpen(items(p)[0]), 'Set ready leaves it open');
 });
 
-test('0039 AC3: an idea opens and closes from its top row (title, status, path), and clicks in its note leave it open', async () => {
+test('0039 AC3: an idea opens and closes from its top row (title, then its capture date since 0435), and clicks in its note leave it open', async () => {
   const state = { tickets: [], ideas: [idea('Fresh', 'idea', 'Line one.\nLine two.\n')] };
   const p = fakePage([state]);
   await p.settle();
   click(toggles(p)[1]);
   const head = top(items(p)[0]);
   assert.ok(head, 'the idea has a top row');
-  for (const s of ['Fresh', 'idea', 'speck/ideas/Fresh.md']) assert.ok(p.all(head).some(n => n.textContent === s), `the top row holds ${s}`);
+  for (const s of ['Fresh', 'No capture date']) assert.ok(p.all(head).some(n => n.textContent === s), `the top row holds ${s}`);
   for (const i of p.all(head).keys()) {
     press(p.all(top(items(p)[0]))[i]);
     assert.ok(isOpen(items(p)[0]), `opens from top-row node ${i}`);
