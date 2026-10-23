@@ -184,7 +184,8 @@
     font: 12px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
   .q.wait { background: var(--raise); } /* 0161: set back by its fill, not faded, so its text keeps its contrast */
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
-  .q .stop-build { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  /* 0421: an open card's Full ticket, Review pack and Stop build are small text buttons on one line, underlined rather than boxed */
+  .q .stop-build { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 16px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px; padding: 2px 0; background: transparent; color: var(--muted); border: 0; border-bottom: .5px solid var(--line); cursor: pointer; }
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
   /* An open ready ticket's Back to Plan button, beside Full ticket, and why the server refused it */
@@ -360,7 +361,6 @@
   .q.open { background: var(--raise); border-color: var(--text); }
   .note { margin: 0; color: var(--text); }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
-  .path { overflow-wrap: anywhere; }
 
   /* Chains through after:: a chain icon on a ticket that unlocks others, a padlock on one that waits */
   .chain, .lock { display: inline-block; position: relative; width: 12px; height: 10px; vertical-align: -1px; cursor: help; }
@@ -396,7 +396,8 @@
   #full-backdrop[hidden] { display: none; }
   .full-open { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
-  .q .full-open { margin: 6px 0 2px; padding: 1px 10px; font-size: 12px; }
+  .q .full-open { margin: 6px 16px 2px 0; padding: 2px 0; font-size: 12px; line-height: 16px; border: 0; border-bottom: .5px solid var(--line); }
+  .q .full-open:hover { border-color: var(--text); }
   td.full-cell { width: 1%; padding-left: 0; }
   td .title-link { color: var(--text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
   td .title-link:hover { text-decoration-thickness: 2px; }
@@ -3351,7 +3352,6 @@ function queueItem(t) {
   const went = wentWithOf(t);
   if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? 'The Foreman went with the recommendation' : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
   if (isOpen) {
-    if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t, 'queue'));
     if (t.status === 'approved' || t.shipping) q.appendChild(packButton(t));
     if (t.pausable) {

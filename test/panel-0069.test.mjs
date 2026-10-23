@@ -40,17 +40,16 @@ test('0069 AC1: a building, reviewing or approved ticket has no status line unde
   }
 });
 
-test('0069 AC1: the rest of the row shows as before: bar, counter, worktree path and log', async () => {
+test('0069 AC1: the rest of the row shows as before: bar, counter and log (the worktree path went in 0421)', async () => {
   const p = queuePage();
   await p.settle();
   const a = rowOf(p, '0001');
   assert.ok(topOf(a).children.some(n => n.className === 'progress'), 'the progress, in the top row since 0156: in words only since 0416');
   assert.match(p.all(topOf(a)).find(n => n.className === 'sub').textContent, /^01:0\d$/, 'the counter in the top row');
   await open(p, '0001');
-  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'act path', 'full-open', 'log']);
-  assert.ok(rowOf(p, '0001').textContent.includes(`worktree ${WT}`));
+  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'full-open', 'log'], 'no path line since 0421');
   await open(p, '0002');
-  assert.deepEqual(shape(rowOf(p, '0002')), ['top', 'full-open', 'log'], 'no worktree: no path line');
+  assert.deepEqual(shape(rowOf(p, '0002')), ['top', 'full-open', 'log']);
 });
 
 test('0069 AC1: a build exit message still shows, with no status line after it', async () => {
