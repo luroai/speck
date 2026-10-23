@@ -1,6 +1,6 @@
 {
   "name": "speck-dev",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "Ship code you can't read, and still trust it. A repo-native workflow for building software with AI coding agents.",
   "repository": "github:luroai/speck",
   "private": true,
