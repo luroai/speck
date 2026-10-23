@@ -1,7 +1,7 @@
 ---
 id: "0410"
 title: "Show Plan, Build and Shipped as tabs"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []               # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T13:30:04.514Z"
 
 ---
 # 0410 · Show Plan, Build and Shipped as tabs
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel stacks Plan and Build side by side with Shipped under them, so the page scrolls as a whole and a long list in one lane pushes the others out of view. On a narrow pane you scroll past one lane to reach the next.
