@@ -1,6 +1,6 @@
 # Use a model provider through your own API key
 
-Captured: 2026-10-18 · Status: idea
+Captured: 2026-10-18 · Status: ticketed (0389, 0390, 0391, 0392, 0393)
 
 ## What
 Let someone add an API key for a model provider, such as DeepSeek, and build or review with that provider's models, as cptr lets you add a DeepSeek API token.
