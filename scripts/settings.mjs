@@ -18,6 +18,7 @@ import { buildsEachTicket } from './build-model.mjs';
 import { PROVIDERS } from './providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { keysStatus, saveProviderKey } from './keys.mjs';
+import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs';
 
 export const SETTING_GROUPS = [
   // 0286: the panel shows this group's settings in its own Foreman group, under the speck run switch.
@@ -245,7 +246,15 @@ export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCur
   try { models = await reviewerModels(repo, read, readCursor, providers); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
   try { built = await builderModels(repo, read, readCursor, providers); } catch (e) { built = { builder: '', why: `Couldn't read the builder's models (${e.message}), so type the model's name.` }; }
   try { foreman = await foremanModels(repo, read, readCursor, providers); } catch (e) { foreman = { foreman: '', why: `Couldn't read the Foreman agent's models (${e.message}), so type the model's name.` }; }
-  return panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents: await found, providers });
+  const agents = await found;
+  return { ...panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents, providers }), your_agents: yourAgentsShown(repo, agents, providers) };
+}
+
+// 0399: yourAgentsView for the Settings view, from the agents `found`, or { why } in one line when it can't be read,
+// such as when this machine's list can't be read.
+function yourAgentsShown(repo, found, providers) {
+  try { return yourAgentsView(repo, found ?? { agents: [] }, loadConfig(repo), { providers }); }
+  catch (e) { return { why: e instanceof SpeckError ? e.message : `Couldn't read your agents: ${String(e?.message ?? e).split('\n')[0]}.` }; }
 }
 
 // 0369: the models `agent` offers, read now, for the Settings view while it's chosen as the reviewer, builder or
@@ -501,4 +510,39 @@ export function panelKeyRequest(repo, rawName, body, { providers = PROVIDERS } =
     return { status: 500, body: { error: `Couldn't save the ${p.label} API key, so nothing was saved: ${e?.code ?? 'an error'} writing this machine's keys file.` } };
   }
   return { status: 200, body: { ok: true, provider: p.name, key_set: true } };
+}
+
+// 0399: the panel's POST /api/agents/<agent>/add and /remove, the Settings view's "Your agents". Each changes only this
+// machine's list, with no commit, and answers with what it did in `said` and the group as it is now in `your_agents`.
+// A refusal, such as removing the reviewer's agent, says why in `error`, with the group as it is.
+export async function panelAgentRequest(repo, rawName, action, { find = findAgentsAsync, providers = PROVIDERS } = {}) {
+  let name;
+  try { name = decodeURIComponent(String(rawName ?? '')); } catch { name = ''; }
+  if (action !== 'add' && action !== 'remove') return { status: 404, body: { error: 'speck can only add or remove an agent here. Reload the panel, then try again.' } };
+  let found;
+  try { found = await find({ models: false }); } catch { found = { agents: [] }; }
+  const opts = { providers, find: () => found };
+  try {
+    const said = action === 'add' ? addAgent(repo, name, opts) : removeAgent(repo, name, loadConfig(repo), opts);
+    return { status: 200, body: { ok: true, said, your_agents: yourAgentsShown(repo, found, providers) } };
+  } catch (e) {
+    if (!(e instanceof SpeckError)) return { status: 500, body: { error: `Couldn't change your agents, so nothing changed: ${e?.code ?? 'an error'} writing this machine's list.` } };
+    return { status: /doesn't know an agent/.test(e.message) ? 404 : 422, body: { error: e.message, your_agents: yourAgentsShown(repo, found, providers) } };
+  }
+}
+
+// 0399: the panel's POST /api/keys/<provider>: saves the key as panelKeyRequest does, then adds the provider to this
+// machine's list of your agents, so a provider joins it once its key is saved. Still no commit, and the key isn't sent back.
+export async function panelKeyAddRequest(repo, rawName, body, { find = findAgentsAsync, providers = PROVIDERS } = {}) {
+  const out = panelKeyRequest(repo, rawName, body, { providers });
+  if (out.status !== 200) return out;
+  let found;
+  try { found = await find({ models: false }); } catch { found = { agents: [] }; }
+  try {
+    const said = addAgent(repo, out.body.provider, { providers, find: () => found });
+    return { status: 200, body: { ...out.body, said, your_agents: yourAgentsShown(repo, found, providers) } };
+  } catch (e) {
+    const why = e instanceof SpeckError ? e.message : `${e?.code ?? 'an error'} writing this machine's list`;
+    return { status: 422, body: { ...out.body, error: `Saved the key, but couldn't add it to your agents: ${why}`, your_agents: yourAgentsShown(repo, found, providers) } };
+  }
 }
