@@ -46,7 +46,11 @@ The panel's controls, cards and pop-ups have rounded corners like Cursor's.
 - Self-check: rounded the tag tip and Settings' explanations 8 px too, as small pop-ups, so none stays square beside the rest. Buttons left without a box of their own, each inside a box or not drawn as a button: the tabs, speck's screen, the switches, Appearance's three choices, the priority menu's numbers and the linked ids.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel's corners are rounded now, to sit better beside Cursor: buttons, boxes, menus and tags are slightly rounded, and ticket cards, the build log, the stats, Settings' groups and the big pop-ups more so. Every button now has a thin outline all round, including the small Full ticket, Review pack and Stop build buttons on an open ticket, and Plan's first toggle no longer loses its left edge. speck's screen and its dark frame stay square.
+
+To see it, open the panel: the Plan, Build and Shipped tabs are now three outlined tabs, the open one with a darker outline, and Settings' System, Light and Dark are three separate rounded buttons.
+
+Worth a look: the tabs no longer open into the list under them, which the reviewer asked for so every button has an outline on all four sides. On a very narrow phone, Settings' System, Light and Dark buttons sit close together to fit on one line.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,7 +59,9 @@ The panel's controls, cards and pop-ups have rounded corners like Cursor's.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none to the inbox):
+- Known limit: at 320 px wide, Appearance's three choices have 1 px side padding to stay on one line with their own borders.
+- Beyond the listed pop-ups, the tag tip and Settings' explanations are rounded 8 px, as small pop-ups.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -204,6 +210,81 @@ The panel's controls, cards and pop-ups have rounded corners like Cursor's.
     ],
     "escalation_question": "",
     "summary": "Appearance choices and priority buttons now meet the rounding and border requirements. The remaining issue is the tabs: their borders still do not meet the requirement for four visible edges. The reported tests pass, but explicitly exclude tabs from that check."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b48c3206d5aa8c954e39a7c4d8e5394d14bc6e7e",
+    "session": "continued",
+    "thread_id": "01a16a3e-50df-7e71-bd5d-9c1118385dc4",
+    "builder_response": "- Tests run: test/panel-0428.test.mjs test/panel.test.mjs test/panel-0421.test.mjs test/panel-0161.test.mjs test/panel-0420.test.mjs test/panel-0417.test.mjs test/panel-0140.test.mjs test/panel-0155.test.mjs test/panel-0167.test.mjs test/panel-0427.test.mjs test/panel-0162.test.mjs test/settings-0412.test.mjs test/panel-0426.test.mjs test/panel-0273.test.mjs test/panel-0385.test.mjs test/panel-0418.test.mjs test/panel-0135.test.mjs test/panel-0134.test.mjs (plus the commands.checks files)\n- F1: fixed. Every tab now has a .5px --line border on all four sides (no transparent edges, no --panel bottom), with 8px 8px 0 0 corners and a 4px gap between tabs so each shows its own edges. The open tab keeps its --panel fill and text colour, and its border is --text, as Plan's chosen toggle's is, so it still stands out once it no longer joins the lane (in the dark look the fill alone was too close to the page). Both tab states are in the test's button inventory: AC1 checks their radius (8px 8px 0 0) and AC3 their four borders and colours, and a test checks the gap. The remaining exclusions are speck's screen (AC4), the switches (their round track, AC5) and the linked ids.\n- Pictures retaken.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 337438,
+      "cached_input_tokens": 285824,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1949,
+      "reasoning_output_tokens": 106
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T19:37:32.837Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html gives controls 8px radii and tabs 8px top corners. Passing AC1 tests cover Appearance choices, priority buttons and both tab states."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The specified cards, logs, stats, Settings groups and pop-ups have 12px radii in templates/panel.html. The passing AC2 test checks each selector and stats clipping."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Tabs now have four visible borders, with --line for closed tabs and --text for the selected tab. Both states join the passing AC3 border inventory. Tests also cover boxed ticket buttons, separated Plan toggles and the rounded focus outline."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Explicit zero radii preserve the screen, frame and screen shade. The AC4 test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The universal forced square corners are removed; switch tracks retain 9px radii and knobs retain 50%. The AC5 test passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html; test/panel-0428.test.mjs",
+        "issue": "Previously excluded Appearance choices, priority buttons and tabs now have the required corners and visible borders, with test coverage.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel now has the requested rounded controls, cards and pop-ups, with visible button borders. The screen and frame keep their square corners, and switches stay round. All five criteria pass; the reported tests have no failures. Ready for owner review."
   }
 }
 ```
