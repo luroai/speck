@@ -27,7 +27,7 @@ import { recordedRun, keepsLock } from './run-lock.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
 export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
-import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket, readyOnBase, markStillReady, readyAgain } from './build-records.mjs';
+import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket, readyOnBase, markStillReady, readyAgain, readyAfterStop, heldByStop } from './build-records.mjs';
 export { DEFAULT_RESUME_COMMAND, resumeHint, resumeCommandOf, buildKilled, buildTicket } from './build-records.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
@@ -393,13 +393,16 @@ function runOn(worker) {
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
     if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
-    if (launched.has(t.id) && readyAgain(repo, runsDir(repo), t)) launched.delete(t.id); // 0327: committed since its build ended still ready
-    if (launched.has(t.id)) return { kind: 'unstarted', why: 'its build ended without starting it: set it ready again and commit it to build it' };
-    if (heldByStop(repo, t)) {
+    const runs = runsDir(repo);
+    // 0327: committed since its build ended still ready. 0376: or committed ready since `speck stop` ended its build.
+    if (launched.has(t.id) && (readyAgain(repo, runs, t) || readyAfterStop(repo, runs, t))) launched.delete(t.id);
+    if (heldByStop(repo, runs, t) || (launched.has(t.id) && stoppedBySpeck(path.join(runs, `${t.id}.json`)))) {
       if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
       held.add(t.id);
       return { kind: 'stopped', why: 'ended by speck stop: set it ready again and commit it to build it' };
     }
+    held.delete(t.id); // 0376: stopped again later, it's said again
+    if (launched.has(t.id)) return { kind: 'unstarted', why: 'its build ended without starting it: set it ready again and commit it to build it' };
     if (!readyOnBase(repo, cfg.base_branch, t.path)) {
       if (!uncommitted.has(t.id)) console.log(`${t.id} is ready but not committed as ready on ${cfg.base_branch}, so speck run is waiting for it to be committed before launching it.`);
       uncommitted.add(t.id);
@@ -536,16 +539,6 @@ export function playBuild(repo, args) {
 export function cmdPlay(args) { console.log(playBuild(findRepoRoot(), args)); }
 
 // ---------- stop (end a build speck run launched for good, and block its ticket) ----------
-
-// True for a ticket whose last build `speck stop` ended, until the ticket has a commit other than the one it had when
-// it was stopped (set ready again, for example). A ticket still ready because blocking it failed isn't launched again.
-function heldByStop(repo, t) {
-  const file = path.join(runsDir(repo), `${t.id}.json`);
-  if (!stoppedBySpeck(file)) return false;
-  let mark = null;
-  try { mark = JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.stopped'), 'utf8')); } catch { /* unreadable: held */ }
-  return typeof mark?.ticket_commit !== 'string' || mark.ticket_commit === lastTicketCommit(t.worktree || repo, t.path);
-}
 
 // Ends the build, then blocks its ticket and commits that where the build keeps it. A <id>.stopped mark is left first,
 // so speck run knows the build ended because of this rather than reporting it as a build that stopped or failed.
