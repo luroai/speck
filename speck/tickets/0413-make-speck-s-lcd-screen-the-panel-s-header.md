@@ -45,6 +45,8 @@ The top of the panel is speck's LCD screen in its frame, with speck on it, in pl
 - Removes the notice board (`boardText`, `drawBoard`: 0365, 0374) and the header row (0364, 0373). The Settings button moves from the header (0372, 0396).
 - Waits for 0410, 0411 and 0412: all change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: added tests for a Foreman word too wide for the screen's top row (it scrolls after a pause, or stays cut short with reduced motion) and for "FIXING ON" at the row's right (0317's "Fixing on", which sat beside the old board); raised the frame's small grey text to 7:1 contrast and gave the screen a visible edge in the dark look; dropped a red dot before "speck" so the speck red stays the speck's own (0167).
+- Old tests: the notice board's (0365, 0374) and the header row's (0309, 0373) test files are removed, and tests elsewhere that measured the header row, its mark or the board are retired or pointed at the screen. The 0161 contrast checks now check what sits in the frame against the frame's colour.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

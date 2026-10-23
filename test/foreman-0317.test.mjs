@@ -40,9 +40,10 @@ test('0317 AC1: with Fixing fix, the header says "Fixing on" beside the status w
   for (const [fixing, on] of [['fix', true], ['tell', false], ['off', false]]) {
     const p = fakePage([state(view([], { fixing }))]);
     await p.settle();
-    const spans = header(p).children.filter(n => n.tagName === 'span');
-    assert.equal(spans[0].textContent, 'Idle', 'the status word is as it was');
-    assert.equal(spans.some(n => n.textContent === 'Fixing on'), on, `with ${fixing}`);
+    // 0413: "FIXING ON" is drawn at the right of speck's screen's top row, and its name says so
+    const name = header(p).attrs['aria-label'];
+    assert.match(name, /^The Foreman: Idle/, 'the status word is as it was');
+    assert.equal(/, fixing on$/.test(name), on, `with ${fixing}`);
   }
 });
 

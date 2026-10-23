@@ -222,7 +222,7 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
     assert.match(await cls('#shaping .item:nth-child(1)'), /\bhl\b/);
     await new Promise(res => setTimeout(res, 2500)); // through a refresh
     assert.match(await cls('#queue .q'), /\bhl\b/);
-    await b.move(await centre('header .logo'));
+    await b.move(await centre('header .name')); // 0413: speck's name, in the title row of its screen's frame
     await b.until(`!document.querySelector('.hl, .dim')`, 'the highlight to end');
   } finally {
     await b.close();

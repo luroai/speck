@@ -3,7 +3,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { page, findChrome, browserPage, full, T } from './support/panel.mjs';
-import { LONG } from './support/board.mjs';
 import fs from 'node:fs';
 import { sharedPanel } from './support/shared-panel.mjs';
 import { settingsPage, openSettings, saveButton, posted } from './support/settings.mjs';
@@ -36,14 +35,14 @@ const shows = c => c.children.find(b => b.attrs['aria-checked'] === 'true').id.r
 // A look picked.
 const pick = (p, look) => p.press(lookList(p).children.find(b => b.id === `look-${look}`));
 
-test('0372 AC1: the header has no light/dark button, and Settings and the notice board stay', () => {
+test('0372 AC1: the header has no light/dark button, and Settings and the Foreman (0413: speck\'s screen) stay', () => {
   const h = header();
   assert.doesNotMatch(h, /id="theme"/);
   assert.doesNotMatch(h, /class="theme"/);
   assert.doesNotMatch(h, /light and dark/i);
   assert.doesNotMatch(h, /class="(moon|sun)"/);
   assert.match(h, /<button class="settings-open" id="settings-open"/);
-  assert.match(h, /<button class="run-state" id="run"/);
+  assert.match(h, /<button class="glass" id="run"/);
   // Nothing in the stylesheet brings it back at any width.
   assert.doesNotMatch(css(), /\.theme\b/);
 });
@@ -140,7 +139,7 @@ test('0372 AC3: the look is not sent to the server, Save stays off, and Close as
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
-const STATE = { tickets: [full('0001'), ...['0362', '0363'].map(id => T(id, 'building')), T('0358', 'blocked')], ideas: [], run: { on: true, pid: 1 }, foreman: LONG };
+const STATE = { tickets: [full('0001'), ...['0362', '0363'].map(id => T(id, 'building')), T('0358', 'blocked')], ideas: [], run: { on: true, pid: 1 }, foreman: { word: 'Building 2', tone: 'ok' } };
 async function withPanel(fn, width) {
   const panel = await sharedPanel();
   const b = await browserPage('about:blank');
@@ -152,47 +151,12 @@ async function withPanel(fn, width) {
       window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? new Response(JSON.stringify(STATE), { status: 200, headers: { 'content-type': 'application/json' } }) : real(url, opts);
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run svg.board') && !document.querySelector('#run').hidden`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run canvas')`, 'the panel');
     await b.js('document.fonts.ready.then(() => true)');
     await fn(b);
   } finally { await b.close(); }
 }
-const PARTS = ['.logo .mark', '.repo', '#run', '#settings-open'];
-const measure = b => b.js(`(() => {
-  const box = s => { const r = document.querySelector(s).getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, height: r.height, width: r.width, mid: r.top + r.height / 2 }; };
-  const board = document.querySelector('#run .board');
-  return { parts: ${JSON.stringify(PARTS)}.map(box), board: box('#run .board'), full: Number(board.getAttribute('width')), header: box('header'), page: document.documentElement.scrollWidth, width: innerWidth };
-})()`);
-// The old button put back after Settings, as it was: 34 px, 44 px under 700 px, 6 px closer to Settings above 700 px.
-const putBack = b => b.js(`(() => {
-  const n = document.createElement('button'), narrow = innerWidth < 700, s = getComputedStyle(document.querySelector('#settings-open'));
-  n.id = 'old-theme';
-  Object.assign(n.style, { flexShrink: '0', width: narrow ? '44px' : '34px', height: narrow ? '44px' : '34px', padding: '0', border: s.border, marginLeft: narrow ? '0' : '-6px' });
-  document.querySelector('header').appendChild(n);
-  return getComputedStyle(document.querySelector('header')).columnGap;
-})()`);
-
-for (const width of [320, 375, 500, 699, 700, 1200]) {
-  test(`0372 AC4: at ${width} px, the notice board has the button's room, in one row with nothing overlapping${width < 700 ? ', each button at least 44 px tall' : ''}`, skip, () => withPanel(async b => {
-    const now = await measure(b);
-    assert.ok(now.page <= now.width, `no sideways scroll: ${now.page} > ${now.width}`);
-    for (let i = 1; i < now.parts.length; i++) assert.ok(now.parts[i].left >= now.parts[i - 1].right - 0.5, `${PARTS[i]} comes after ${PARTS[i - 1]}`);
-    const mids = now.parts.map(x => x.mid);
-    assert.ok(Math.max(...mids) - Math.min(...mids) < 4, `one row: ${mids}`);
-    if (width < 700) for (const k of ['#run', '#settings-open']) assert.ok(now.parts[PARTS.indexOf(k)].height >= 44, `${k}: ${now.parts[PARTS.indexOf(k)].height} px`);
-    // With the old button back, a board cut short would be narrower by the button and the gap before it. One shown in
-    // full has no more to show, then and now.
-    const gap = parseFloat(await putBack(b));
-    const was = await measure(b);
-    const room = (width < 700 ? 44 : 34) + gap + (width < 700 ? 0 : -6), gained = now.board.width - was.board.width;
-    // 0373: with speck's word back, at 320 px the old button would squeeze the Foreman's button to its 44 px least, so
-    // the board can't lose all of the button's room there: it gains what it had to give up.
-    const floored = was.parts[PARTS.indexOf('#run')].width <= 44.5;
-    if (floored) assert.ok(gained > 0 && now.board.width > was.board.width, `the board gained ${gained} px, with the Foreman's button at its least`);
-    else if (was.board.width < was.full - 0.5) assert.ok(Math.abs(gained - room) <= 1 || Math.abs(now.board.width - now.full) <= 0.5, `the board gained ${gained} px, the button's ${room} px`);
-    else assert.ok(Math.abs(now.board.width - now.full) <= 0.5 && Math.abs(gained) <= 0.5, `shown in full both ways: ${now.board.width} of ${now.full}`);
-  }, width));
-}
+// 0413: the notice board, and the room it had in the header row, are speck's screen in its frame now (panel-0413.test.mjs).
 
 test('0372 AC2: in a real browser, choosing dark in Settings switches the page, and it stays dark after a reload', skip, () => withPanel(async b => {
   const bg = `getComputedStyle(document.body).backgroundColor`;

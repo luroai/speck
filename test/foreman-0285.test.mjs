@@ -18,7 +18,7 @@ const rec = (o = {}) => ({ lock: 4242, max: 2, building: [], switching: null, re
 const view = (o, tickets = [], run = ON) => foremanView({ run, record: rec(o), tickets });
 const state = (foreman, o = {}) => ({ tickets: [], ideas: [], resume_command: '', run: ON, foreman, ...o });
 const header = p => p.byId('run');
-const label = p => header(p).children.find(n => n.className === 'board-text').textContent; // 0365: the notice board's whole text
+const label = p => header(p).attrs['aria-label'].replace(/^The Foreman: /, '').replace(/, fixing on$/, ''); // 0413: the word on speck's screen, in its name
 const detail = p => p.byId('foreman');
 
 test('0285 AC1: the status is one or two words: Off, Idle, Building <n>, Shipping <id>, Waiting with its reason, or Needs you <n>', () => {
@@ -43,13 +43,13 @@ test('0285 AC1: a record left by an earlier speck run, or none, isn\'t read as t
 test('0285 AC1: the header shows the Foreman\'s status and colour in place of the speck run switch', async () => {
   const p = fakePage([state(view({ building: ['0001', '0002'] }))]);
   await p.settle();
-  assert.equal(label(p), 'Building 2 · 0001 building · 0002 building'); // 0365: and what each ticket in flight is doing
-  assert.match(header(p).className, /\bfm-ok\b/);
-  assert.doesNotMatch(header(p).textContent, /Auto-build/);
+  assert.equal(label(p), 'Building 2'); // 0413: the word alone, on speck's screen, whose frame shows only "Needs you" in colour
+  assert.equal(p.byId('bezel').className, 'bezel');
+  assert.doesNotMatch(header(p).attrs['aria-label'], /Auto-build/);
   click(header(p));
   await p.settle();
   assert.ok(!p.calls.some(c => /\/api\/run\//.test(c.url)), 'pressing it doesn\'t turn speck run on or off');
-  assert.match(page().match(/<header>([\s\S]*?)<\/header>/)[1], /<button class="run-state" id="run" type="button" aria-expanded="false" aria-controls="foreman"/);
+  assert.match(page().match(/<header>([\s\S]*?)<\/header>/)[1], /<button class="glass" id="run" type="button" aria-label="The Foreman" aria-expanded="false" aria-controls="foreman"/);
 });
 
 test('0285 AC2: pressing the status opens its detail: ready tickets with why, shipping\'s state and blocked tickets with their questions', async () => {
@@ -170,7 +170,6 @@ test('0285 AC4: when the server\'s code is newer than the page\'s, the status sa
   const p = fakePage([state(view({}), { page: 'newer' })], { location: { reload: () => { reloaded++; } } });
   await p.settle();
   assert.equal(label(p), 'Reload page');
-  assert.match(header(p).className, /\bfm-warn\b/);
   click(header(p));
   await p.settle();
   assert.match(detail(p).textContent, /The panel is running newer code than this page shows\./);

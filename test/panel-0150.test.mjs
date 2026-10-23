@@ -40,7 +40,7 @@ test('0150 AC1: when the panel can\'t reach its server, the banner under the hea
 
 test('0150 AC2: Auto-build is one button in the header, with no separate Pause or Start button or small print', async () => {
   const h = header();
-  assert.match(h, /<button class="run-state" id="run" type="button"/);
+  assert.match(h, /<button class="glass" id="run" type="button"/); // 0413: speck's screen
   assert.doesNotMatch(h, /id="run-switch"/);
   for (const run of [null, { on: true, pid: 7 }]) {
     const p = switchPage([state(run)]);
@@ -140,23 +140,10 @@ async function withPage(run, width, fn) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(run) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && document.querySelector('#run .board')`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run canvas')`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
-const box = sel => `(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height, mid: r.top + r.height / 2 }; })()`;
-const LINES = sel => `(() => {
-  const n = document.querySelector(${JSON.stringify(sel)}), range = document.createRange();
-  range.selectNodeContents(n);
-  const rects = [...range.getClientRects()].filter(r => r.width && r.height).sort((a, b) => a.top - b.top);
-  let lines = 0, bottom = -Infinity;
-  for (const r of rects) if (r.top >= bottom - 1) { lines++; bottom = r.bottom; } else bottom = Math.max(bottom, r.bottom);
-  return lines;
-})()`;
-// 0372: Settings ends the header now that light and dark are chosen in Settings, so it takes Settings's place here.
-// 0373: "base <branch>" is inside the title, just after the word speck, so it's measured against the word.
-const PARTS = { logo: 'header .logo', name: 'header .logo .name', repo: 'header .repo', run: '#run', settings: '#settings-open' };
-const boxes = async b => Object.fromEntries(await Promise.all(Object.entries(PARTS).map(async ([k, sel]) => [k, await b.js(box(sel))])));
 const press = async (b, key, code, keyCode) => {
   await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode: keyCode, ...(key === 'Enter' ? { text: '\r' } : { text: ' ' }) });
   await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: keyCode });
@@ -169,8 +156,8 @@ test('0150 AC2: pressing Enter or Space on the focused button starts or pauses s
     await b.until(`document.getElementById('run-switch') && !/Loading the settings/.test(document.getElementById('settings').textContent)`, 'the Settings view');
     await b.js(`document.getElementById('run-switch').focus()`);
     // Two refreshes later it's still the focused element, so a key press reaches it.
-    await b.js(`window.seen = document.getElementById('run').lastChild`);
-    await b.until(`document.getElementById('run').lastChild !== window.seen`, 'a refresh');
+    await b.js(`window.drawn = 0; new MutationObserver(() => window.drawn++).observe(document.getElementById('bezel'), { attributes: true }); true`); // 0413: each redraw sets speck's screen's frame
+    await b.until(`window.drawn > 0`, 'a refresh');
     assert.equal(await b.js(`document.activeElement === document.getElementById('run-switch')`), true, 'still focused after a refresh');
     await press(b, 'Enter', 'Enter', 13);
     await b.until(`window.runCalls.length === 1 && document.getElementById('run-switch').textContent === 'On'`, 'Enter to start it');
@@ -184,68 +171,5 @@ test('0150 AC2: pressing Enter or Space on the focused button starts or pauses s
   });
 });
 
-// 0163: the builder took the square's place, and the label alone says whether it's on or off. 0364: the builder has gone too.
-// 0365: the label is the Foreman's notice board.
-test('0150 AC2: on or off, the button shows its word, with no square or builder', skip, async () => {
-  const shown = `!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`;
-  await withPage({ on: true, pid: 7 }, 1280, async b => assert.equal(await b.js(shown), true));
-  await withPage(null, 1280, async b => assert.equal(await b.js(shown), true));
-});
-
-for (const width of [700, 1280]) {
-  test(`0150 AC3: at ${width} px, the header is one row, centred vertically: speck and its base branch on the left, Auto-build and Settings on the right`, skip, async () => {
-    await withPage(null, width, async b => {
-      const x = await boxes(b);
-      const h = await b.js(box('header'));
-      for (const k of ['repo', 'run', 'settings']) assert.ok(Math.abs(x[k].mid - x.logo.mid) <= 1, `${k} is centred on the same line as speck: ${JSON.stringify(x)}`);
-      assert.ok(x.name.right <= x.repo.left && x.logo.right < x.run.left && x.run.right < x.settings.left, `in order, left to right: ${JSON.stringify(x)}`);
-      assert.ok(x.run.left - x.logo.right > 40, 'Auto-build sits on the right, away from speck');
-      assert.ok(h.right - x.settings.right <= 32, 'Settings is at the right edge');
-      for (const k of Object.keys(PARTS)) assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);
-    });
-  });
-}
-
-for (const run of [null, { on: true, pid: 7 }]) {
-  // 0364: one row, as it is wider: the mark, the project, the Foreman (Auto-build here) and Settings
-  test(`0150 AC4: at 375 px with Auto-build ${run ? 'on' : 'off'}, the header is one row: speck's mark, speck and its base branch, then Auto-build and Settings`, skip, async () => {
-    await withPage(run, 375, async b => {
-      const x = await boxes(b);
-      const W = await b.js('document.documentElement.clientWidth');
-      for (const k of ['repo', 'run', 'settings']) assert.ok(Math.abs(x[k].mid - x.logo.mid) <= 1, `${k} is on speck's row: ${JSON.stringify(x)}`);
-      assert.ok(x.name.right <= x.repo.left && x.repo.right <= x.run.left && x.run.right <= x.settings.left, `in order, left to right: ${JSON.stringify(x)}`);
-      for (const k of Object.keys(PARTS)) {
-        assert.ok(x[k].left >= 0 && x[k].right <= W + 0.5, `${k} is on screen`);
-        if (k !== 'settings') assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);
-      }
-      assert.ok(await b.js('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'nothing overflows the screen');
-      assert.ok(x.run.height >= 44 && x.settings.height >= 44, `every header button is at least 44 px tall: ${JSON.stringify(x)}`);
-    });
-  });
-}
-
-for (const width of [375, 699, 700, 1000, 1280]) {
-  test(`0150 AC5: at ${width} px, Auto-build and Settings are the same height with their tops lined up`, skip, async () => {
-    await withPage(null, width, async b => {
-      const x = await boxes(b);
-      assert.ok(Math.abs(x.run.height - x.settings.height) <= 0.5, `the same height: ${x.run.height} and ${x.settings.height}`);
-      assert.ok(Math.abs(x.run.top - x.settings.top) <= 0.5, `tops line up: ${x.run.top} and ${x.settings.top}`);
-    });
-  });
-}
-
-for (const width of [375, 700]) {
-  test(`0150 AC3-AC4: at ${width} px, a long project name is cut short on one line rather than wrapping or pushing the buttons off screen`, skip, async () => {
-    await withPage(null, width, async b => {
-      await b.js(`document.querySelector('header .repo code').textContent = 'a-very-long-project-folder-name-that-goes-on-and-on-and-on-and-on'`);
-      const x = await boxes(b);
-      const W = await b.js('document.documentElement.clientWidth');
-      for (const k of Object.keys(PARTS)) {
-        assert.ok(x[k].left >= 0 && x[k].right <= W + 0.5, `${k} is on screen: ${JSON.stringify(x)}`);
-        if (k !== 'settings') assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);
-      }
-      assert.ok(Math.abs(x.repo.mid - x.logo.mid) <= 1, 'the project stays on the first row');
-      assert.ok(await b.js('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'nothing overflows the screen');
-    });
-  });
-}
+// 0413: the header row these checked, with the Foreman's word beside Settings, is now speck's screen in its frame
+// (panel-0413.test.mjs).
