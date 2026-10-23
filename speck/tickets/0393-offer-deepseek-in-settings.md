@@ -44,6 +44,7 @@ Settings offers DeepSeek like any other agent, with its models and a field for i
 - Builds on 0387's Save for your own settings and 0369's model lists (`agentModels` in `scripts/settings.mjs`).
 - Waits for 0392, and for 0387, which also changes Settings in `templates/panel.html`.
 - Failing before this build: none
+- Self-check: a provider already chosen while Claude Code isn't installed is still offered but now says it can't run; the check uses this machine's own value as the one set now, as Settings shows it; existing tests that pinned the builder, reviewer and Foreman lists (0258, 0287, 0293) now include deepseek.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

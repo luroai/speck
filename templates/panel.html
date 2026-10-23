@@ -386,6 +386,7 @@
      outline: only the keyboard's focus ring sets one, 0161.) */
   #settings .sgroup { margin-top: 16px; border: 0; box-shadow: 0 0 0 .5px var(--line); }
   #settings .sgroup .sh { padding: 8px 12px; }
+  #settings .sgroup.keys[hidden] { display: none; } /* 0393: only while a model provider is chosen */
   #settings .sgroup h4 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
   #settings .setting { position: relative; padding: 8px 12px; border-bottom: .5px solid var(--line-soft); } /* 0371: relative, for its explanation */
   #settings .setting:last-child { border-bottom: 0; }
@@ -1193,7 +1194,7 @@ const WAIT_MS = 15000; // how long the page waits for its request for the board 
 const RETRY_MS = 1000; // how soon the page starts again a stream the browser has given up on
 const LOG_LINES = 200; // how many of a log's last lines are shown, as the server first sends them (0189)
 const PAGE = '{{page}}'; // 0285: the stamp of the code this page was sent with, which /api/state gives as it is now
-const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, Go with the recommendation, ship, the speck run switch and each setting saved
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, Go with the recommendation, ship, the speck run switch, each setting saved and each API key saved (0393)
 const $ = id => document.getElementById(id);
 // 0283: what a blocked question's build says about its options, as speck status --json gives it. Nothing for an unknown.
 function questionFacts(t) {
@@ -1956,6 +1957,10 @@ let settingAgentModels = new Map(); // 0369: each agent chosen since the view op
 let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'loading' | 'error' | 'ok', … }
 let settingTyped = new Map(), settingRefused = new Map(); // key → what was typed, and why the server refused it, until the view closes
 let settingClear = new Set(); // 0261: keys whose machine value is cleared on Save
+// 0393: each model provider's API key field: name → { typed, saving, said, refused }, until the view closes. A key is
+// only ever sent, never read back: the server says only whether this machine has it.
+let settingKeys = new Map();
+let settingKeysBox = null; // the view's box of key fields, as drawn
 let settingsFailed = null; // 0274: why the last Save failed, when it wasn't one setting's fault
 let settingsSaid = null; // 0311: what the last Save changed that you didn't, such as builder_model cleared
 let settingsBar = null;
@@ -2005,7 +2010,8 @@ async function loadSettings() {
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
     next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups, reviewer_models: body.reviewer_models ?? null,
-      claude_models: body.claude_models ?? null, builder_models: body.builder_models ?? null, foreman_models: body.foreman_models ?? null }
+      claude_models: body.claude_models ?? null, builder_models: body.builder_models ?? null, foreman_models: body.foreman_models ?? null,
+      providers: Array.isArray(body.providers) ? body.providers.filter(x => x && typeof x.name === 'string' && typeof x.label === 'string') : [] } // 0393
       : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
   } catch { next = { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
@@ -2065,6 +2071,7 @@ function closeSettings() {
   settingTyped = new Map();
   settingRefused = new Map();
   settingClear = new Set();
+  settingKeys = new Map();
   settingsFailed = settingsSaid = null;
   renderSettings();
   const back = $('settings-open');
@@ -2081,6 +2088,7 @@ function renderSettings() {
   settingControls = new Map();
   settingRowsDrawn = new Map();
   settingsBar = null;
+  settingKeysBox = null;
   // Drawn afresh, its buttons are new, so no pointer is over one and none has focus: only a kept explanation stays.
   settingHover = settingFocus = null;
   if (!settingTipKept) settingTip = null;
@@ -2102,6 +2110,9 @@ function renderSettings() {
       // 0273: a box like the panel's sections, with a heading bar
       kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
     }
+    settingKeysBox = el('section', 'sgroup keys');
+    kids.push(settingKeysBox);
+    drawKeys();
   }
   kids.push(lookGroup());
   if (settingsView.state === 'ok' && settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
@@ -2161,7 +2172,7 @@ function settingRow(x, n) {
       : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
     mine ? machineLine(x) : null,
     x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null,
-    (x.key === 'reviewer' || x.key === 'builder') && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293
+    ['reviewer', 'builder', 'foreman'].includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393
     x.key === 'builder' ? builderSwitchLine(x) : null,
     x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
     x.key === 'builder_model' && builderModelsWhy() !== null ? el('p', null, builderModelsWhy()) : null,
@@ -2263,6 +2274,7 @@ function settingEditor(x) {
     // those, keeping this control.
     if (x.key === 'reviewer' || x.key === 'builder' || x.key === 'foreman' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) { // 0348: and foreman
       redrawSettings(SETTING_AFFECTS[x.key], x.key);
+      if (x.key !== 'reviewer_model') drawKeys(); // 0393: the key fields of the providers now chosen
     } else refreshSettings();
   };
   if (settingClear.has(x.key)) { // 0261: this machine's value goes on Save, leaving the repo's
@@ -2297,7 +2309,9 @@ function settingEditor(x) {
       const list = x.key === 'reviewer_model' ? reviewerModelList() : x.key === 'builder_model' ? builderModelList() : x.key === 'foreman_model' ? foremanModelList() : null;
       const m = off.includes(c) ? null : (list || []).find(x => x.slug === c); // 0288: with its display name and description
       const named = m && m.display_name && m.display_name !== c ? ` (${m.display_name})` : '';
-      const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${c} (not offered)` : `${c}${named}${m && m.description ? `: ${m.description}` : ''}`);
+      // 0393: a model provider is offered by its own name, such as DeepSeek.
+      const agent = ['builder', 'reviewer', 'foreman'].includes(x.key) && settingProvider(c) !== null ? settingProvider(c).label : c;
+      const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${agent} (not offered)` : `${agent}${named}${m && m.description ? `: ${m.description}` : ''}`);
       o.value = c;
       if (off.includes(c)) o.disabled = true;
       input.appendChild(o);
@@ -2348,13 +2362,20 @@ function settingChosen(key) {
 // 0369: or those of codex or cursor chosen but not yet saved, read when it's chosen.
 function reviewerModelList() {
   const m = settingsView !== null ? settingsView.reviewer_models : null, chosen = settingChosen('reviewer'), claude = ['claude', 'claude-subagent'].includes(chosen);
-  const read = claude ? null : modelsRead(m, 'reviewer', chosen);
-  const list = claude && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
+  const provider = settingProvider(chosen); // 0393: a model provider's, from speck's list
+  const read = claude || provider ? null : modelsRead(m, 'reviewer', chosen);
+  const list = provider ? providerModelList(provider) : claude && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
     : read && Array.isArray(read.models) ? read.models : null;
   if (list === null) return null;
   return list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug,
-    efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : claude || chosen === 'cursor' ? null : [], ...modelWords(x) }));
+    efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : claude || provider || chosen === 'cursor' ? null : [], ...modelWords(x) }));
 }
+// 0393: the model provider called `name` exactly, as the server listed it, or null.
+function settingProvider(name) {
+  const list = settingsView !== null && Array.isArray(settingsView.providers) ? settingsView.providers : [];
+  return list.find(p => p.name === name) ?? null;
+}
+const providerModelList = p => Array.isArray(p.models) ? p.models : [];
 // 0369: the models `agent` offers for the setting `of` (reviewer, builder or foreman), whose models the server read as
 // `m`: those when it read them for `agent`, otherwise, for codex or cursor, the ones read since it was chosen, asking
 // for them the first time. { models } or { why }, { reading: true } while they're read, or null: none to read. With no
@@ -2399,23 +2420,25 @@ const readingWhy = (read, agent) => read && read.reading ? `Reading ${agent}'s m
 // them. 0369: for a builder chosen but not yet saved, Claude's model names for claude, or those read for codex or cursor.
 function builderModelList() {
   const m = settingsView !== null ? settingsView.builder_models : null, chosen = settingChosen('builder');
+  if (settingProvider(chosen) !== null) return providerModelList(settingProvider(chosen)).filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) })); // 0393
   const read = modelsRead(m, 'builder', chosen);
   const list = read && Array.isArray(read.models) ? read.models
     : read === null && m && typeof m === 'object' && chosen === 'claude' && Array.isArray(settingsView.claude_models) ? settingsView.claude_models : null;
   return list === null ? null : list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
 }
 // 0348: the agent the Foreman runs on as chosen in the view, as foremanAgentOf in foreman-agent.mjs reads it: foreman
-// when it's set, otherwise the builder when that's Codex or Cursor, otherwise Claude Code.
+// when it's set, otherwise the builder when that's Codex or Cursor, otherwise Claude Code. 0393: or a model provider.
 function foremanAgentChosen() {
   const foreman = settingChosen('foreman'), builder = settingChosen('builder');
-  return ['claude', 'codex', 'cursor'].includes(foreman) ? foreman : ['codex', 'cursor'].includes(builder) ? builder : 'claude';
+  return ['claude', 'codex', 'cursor'].includes(foreman) || settingProvider(foreman) !== null ? foreman
+    : ['codex', 'cursor'].includes(builder) || settingProvider(builder) !== null ? builder : 'claude';
 }
 // 0348: the models of that agent: Claude's model names for claude, otherwise the ones the server read, while it read
 // them for that agent; null when there are none to offer.
 function foremanModelList() {
-  const m = settingsView !== null ? settingsView.foreman_models : null, agent = foremanAgentChosen();
-  const read = agent === 'claude' ? null : modelsRead(m, 'foreman', agent); // 0369: or those read since it was chosen
-  const list = agent === 'claude' && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
+  const m = settingsView !== null ? settingsView.foreman_models : null, agent = foremanAgentChosen(), provider = settingProvider(agent);
+  const read = agent === 'claude' || provider ? null : modelsRead(m, 'foreman', agent); // 0369: or those read since it was chosen
+  const list = provider ? providerModelList(provider) : agent === 'claude' && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
     : read && Array.isArray(read.models) ? read.models : null;
   return list === null ? null : list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
 }
@@ -2451,10 +2474,11 @@ function modelsWhy() {
 }
 // 0293: what switching the builder does, said while a new one is picked, and the build_command it sets.
 const BUILDER_NAMES = { claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' };
+const builderName = b => BUILDER_NAMES[b] || settingProvider(b)?.label || b; // 0393: a model provider by its own name
 function builderCommandWords(x, builder) {
   const own = x.build_command && x.build_command.own && typeof x.build_command.own === 'object' && Object.hasOwn(x.build_command.own, builder) ? x.build_command.own[builder] : null;
   if (typeof own !== 'string') return null;
-  return own === '' ? `blank, so speck run starts each build with ${BUILDER_NAMES[builder] || builder}'s own command` : `${BUILDER_NAMES[builder] || builder}'s own command`;
+  return own === '' ? `blank, so speck run starts each build with ${builderName(builder)}'s own command` : `${builderName(builder)}'s own command`;
 }
 // 0324: while the builder isn't being switched, a build_command you've written yourself builds every ticket, whichever
 // builder it was made with, so the view says so.
@@ -2463,7 +2487,7 @@ function builderSwitchLine(x) {
   if (picked === settingNow(x)) {
     const b = x.build_command;
     if (!b || b.each_ticket !== false) return null;
-    return el('p', null, `build_command is one you've written yourself, '${typeof b.value === 'string' ? b.value : ''}', so speck run builds every ticket with it, whichever builder the ticket was made with. Set it to ${BUILDER_NAMES[settingNow(x)] || settingNow(x)}'s own command to build each ticket with its own builder.`);
+    return el('p', null, `build_command is one you've written yourself, '${typeof b.value === 'string' ? b.value : ''}', so speck run builds every ticket with it, whichever builder the ticket was made with. Set it to ${builderName(settingNow(x))}'s own command to build each ticket with its own builder.`);
   }
   const sets = builderCommandWords(x, picked);
   // 0388: a ticket that leaves its builder blank is built with the settings' one when its build starts.
@@ -2480,6 +2504,67 @@ function replacesCommand(changes) {
 }
 // A setting's value as its control writes it: "low,high" for a list.
 const settingNow = x => x.value === null || x.value === undefined ? '' : Array.isArray(x.value) ? x.value.join(',') : String(x.value);
+// 0393: the model providers chosen in the view as builder, reviewer or the Foreman's agent, each once.
+function providersChosen() {
+  return [...new Set([settingChosen('builder'), settingChosen('reviewer'), foremanAgentChosen()])].map(settingProvider).filter(p => p !== null);
+}
+// 0393: a field for each chosen provider's API key, saying whether this machine has one. It's never filled in with a
+// saved key, and its own button saves only the key, for this machine, apart from the view's Save.
+function drawKeys() {
+  const box = settingKeysBox;
+  if (box === null) return;
+  const chosen = providersChosen();
+  box.hidden = !chosen.length;
+  if (!chosen.length) { box.replaceChildren(); return; }
+  box.replaceChildren(el('div', 'sh', null, el('h4', null, 'API keys')), ...chosen.map(keyRow));
+}
+function keyRow(p) {
+  const st = settingKeys.get(p.name) ?? { typed: '', saving: false, said: null, refused: null };
+  settingKeys.set(p.name, st);
+  const input = el('input', 'edit');
+  input.type = 'password';
+  input.autocomplete = 'off';
+  input.value = st.typed;
+  input.placeholder = p.key_set ? 'Paste a new key to replace it' : 'Paste the key';
+  input.setAttribute('aria-label', `${p.label} API key`);
+  input.setAttribute('data-provider', p.name);
+  input.addEventListener('input', () => { st.typed = String(input.value ?? ''); });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { st.typed = String(input.value ?? ''); saveKey(p); } });
+  const save = el('button', 'save', st.saving ? 'Saving…' : p.key_set ? 'Replace key' : 'Save key');
+  save.type = 'button';
+  save.disabled = st.saving;
+  save.setAttribute('data-provider', p.name);
+  save.addEventListener('click', () => { st.typed = String(input.value ?? ''); saveKey(p); });
+  const has = p.key_set ? `This machine has a ${p.label} API key.` : `This machine has no ${p.label} API key. ${p.label} can't run until you enter one.`;
+  return el('div', 'setting', null,
+    el('div', 'row', null, el('span', 'label', null, el('code', 'name', `${p.label} API key`)), el('div', 'control', null, input, save)),
+    el('p', null, has),
+    typeof p.key_why === 'string' && p.key_why ? el('p', 'bad', p.key_why) : null,
+    st.said !== null ? el('p', 'said', st.said) : null,
+    st.refused !== null ? el('p', 'bad', st.refused) : null);
+}
+// Sends the typed key to be saved for this machine. Once saved it's forgotten here, and the field is empty again.
+async function saveKey(p) {
+  const st = settingKeys.get(p.name), mine = settingsSeq;
+  if (!st || st.saving) return;
+  if (!st.typed.trim()) { st.refused = `Paste the ${p.label} API key first.`; st.said = null; drawKeys(); return; }
+  st.saving = true;
+  st.said = st.refused = null;
+  drawKeys();
+  let ok = false, why = null;
+  try {
+    const res = await fetch(`/api/keys/${encodeURIComponent(p.name)}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ key: st.typed }) });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    ok = res.ok && body !== null && body.key_set === true;
+    if (!ok) why = body && typeof body.error === 'string' && body.error ? body.error : `Couldn't save the ${p.label} API key (${res.status}).`;
+  } catch { why = `Couldn't reach speck panel to save the ${p.label} API key. Try again.`; }
+  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  st.saving = false;
+  if (ok) { p.key_set = true; st.typed = ''; st.said = `Saved the ${p.label} API key for this machine only.`; }
+  else st.refused = why;
+  drawKeys();
+}
 // 0261: under a setting that uses this machine's own value, the repo's value and a button to clear this machine's on Save.
 function machineLine(x) {
   const clear = el('button', 'save', 'Clear this machine\'s value');
