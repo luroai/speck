@@ -45,6 +45,8 @@ This machine keeps an API key for each model provider speck knows, safely, and s
 - Keep the key next to this machine's settings from 0386, in the main checkout's `speck/.cache/machine/`, in a file of its own with mode 0600.
 - For 0.14.0: waits for 0380 (0.13.1), which waits for 0375 and 0386.
 - Failing before this build: none
+- Keys are kept in one file, `speck/.cache/machine/keys.json`, mode 0600, written through a 0600 temporary file and renamed. In a terminal, a `sh` reads the line with `stty -echo` and a trap that turns echo back on however it ends, so the key comes back on its output and never on a command line.
+- Self-check: a closed input now gives "No key was given" rather than a stack trace, and a failed write removes its temporary file so no copy of a key is left behind.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
