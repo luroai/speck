@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { page, findChrome, browserPage, deferred } from './support/panel.mjs';
+import { page, findChrome, browserPage } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 import { settingsPage, openSettings, posted } from './support/settings.mjs';
 
@@ -56,17 +56,16 @@ test('0396 AC1: Settings opens with Appearance, then Auto-build, above every oth
   assert.ok(!p.all(pane(p)).some(n => n.tagName === 'select' && n.id === 'look'), 'no list of looks');
 });
 
-test('0396 AC1: the two rows come first while the settings load and when they fail to load', async () => {
-  for (const view of [deferred(), { status: 500, body: { error: 'no' } }]) {
-    const p = settingsPage([view], [], { scrollX: 0, scrollY: 0, scrollTo() {} });
-    p.document.documentElement = { dataset: { theme: 'light' }, classList: { toggle() {} } };
-    p.document.querySelectorAll = () => [];
-    await p.settle();
-    await openSettings(p);
-    const first = groupsOf(p)[0];
-    assert.ok(first && p.all(first).some(n => n.id === 'look') && p.all(first).some(n => n.id === 'run-switch'));
-    assert.equal(pane(p).children.indexOf(first), 1, 'just under the view\'s top line');
-  }
+// 0409: while the settings load the view isn't open yet, so it's only when they fail to load.
+test('0396 AC1: the two rows come first when the settings fail to load', async () => {
+  const p = settingsPage([{ status: 500, body: { error: 'no' } }], [], { scrollX: 0, scrollY: 0, scrollTo() {} });
+  p.document.documentElement = { dataset: { theme: 'light' }, classList: { toggle() {} } };
+  p.document.querySelectorAll = () => [];
+  await p.settle();
+  await openSettings(p);
+  const first = groupsOf(p)[0];
+  assert.ok(first && p.all(first).some(n => n.id === 'look') && p.all(first).some(n => n.id === 'run-switch'));
+  assert.equal(pane(p).children.indexOf(first), 1, 'just under the view\'s top line');
 });
 
 test('0396 AC2: Appearance\'s switch shows the look the page has, and a press switches it both ways, through setLook', async () => {
