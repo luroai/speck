@@ -124,7 +124,7 @@ test('0401 AC2: a form that isn\'t complete or sound saves nothing, and says wha
     [{ ...ACME, models: ' , ' }, /at least one model name/],
     [{ ...ACME, name: '  ' }, /Give the provider a name/],
     [{ ...ACME, name: 'Claude' }, /already has an agent called claude/],
-    [{ ...ACME, name: 'DeepSeek' }, /already has an agent called deepseek/],
+    // 0408: DeepSeek, speck's own provider, is no longer refused here: the form adds it (settings-agents-0408).
     [{ ...ACME, address: 'ftp://x' }, /base URL/],
     [{ ...ACME, address: 'http://api.acme.test/anthropic' }, /must start with https:\/\//],
     [{ ...ACME, address: 'https://api.acme.test/v1?key=abc' }, /no user name, password, \? or #/],

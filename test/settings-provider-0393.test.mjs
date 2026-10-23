@@ -50,7 +50,8 @@ const EFFORTS = ['', 'low', 'medium', 'high', 'xhigh', 'max'];
 const providerRow = (p, o = {}) => ({ name: p.name, label: p.label, models: p.models.map(slug => ({ slug, display_name: null, description: slug === p.defaultModel ? `${p.label}'s default` : null })),
   default_model: p.defaultModel, key_set: false, ...o });
 // 0399: Your agents for `providers`: each provider, yours when its key is set.
-const yoursFor = providers => ({ list: false, agents: [...providers.map(p => ({ id: p.name, name: p.label, kind: 'provider', yours: p.key_set, ready: p.key_set, key_set: p.key_set, roles: [],
+// A row given `yours` is one of yours whatever its key (0408: a provider with no key that isn't yours isn't offered).
+const yoursFor = providers => ({ list: false, agents: [...providers.map(p => ({ id: p.name, name: p.label, kind: 'provider', yours: p.yours ?? p.key_set, ready: p.key_set, key_set: p.key_set, roles: [],
     ...(p.key_set ? {} : { why: `${p.label} has no API key on this machine: set one with speck keys set ${p.name}.` }) }))] });
 // A view as the server gives it, with DeepSeek offered, and `providers` as given.
 const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', providers = [providerRow(PROVIDERS[0])] } = {}) => {
@@ -126,11 +127,9 @@ test('0393 AC1: switching the builder to DeepSeek from the panel builds with Dee
 });
 
 test('0393 AC2 (0399 AC3): Settings says whether this machine has DeepSeek\'s key, with an empty field to enter or replace it', async () => {
-  const p = keysPage(view());
+  const p = keysPage(view({ providers: [providerRow(PROVIDERS[0], { yours: true })] }));
   await openSettings(p);
-  openAdd(p);
   assert.match(keyWords(p), /DeepSeekNo key/);
-  assert.match(keyWords(p), /Paste your DeepSeek API key to add it/);
   assert.equal(keyInput(p, 'deepseek').type, 'password');
   assert.equal(keyInput(p, 'deepseek').value, '');
   const set = keysPage(view({ reviewer: 'deepseek', providers: [providerRow(PROVIDERS[0], { key_set: true })] }));
@@ -140,9 +139,8 @@ test('0393 AC2 (0399 AC3): Settings says whether this machine has DeepSeek\'s ke
 });
 
 test('0393 AC2 (0399 AC3): saving a key in Settings sends it once, in the body, and the page clears it and says it\'s saved', async () => {
-  const p = keysPage(view({ builder: 'deepseek' }), [{ ok: true, provider: 'deepseek', key_set: true }]);
+  const p = keysPage(view({ builder: 'deepseek', providers: [providerRow(PROVIDERS[0], { yours: true })] }), [{ ok: true, provider: 'deepseek', key_set: true }]);
   await openSettings(p);
-  openAdd(p);
   const input = keyInput(p, 'deepseek');
   input.value = KEY;
   input.listeners.input?.({ target: input });
@@ -187,12 +185,13 @@ test('0393 AC2: the server saves a key for this machine only, with no commit, an
   assert.equal(providerKey(r.dir, 'deepseek'), KEY);
 });
 
-test('0393 AC3 (0399 AC3): DeepSeek with no key is offered with its key field, saying it has none', async () => {
+// 0408 AC1: changed from checking that DeepSeek with no key is offered with its key field.
+test('0393 AC3 (0408 AC1): DeepSeek with no key that isn\'t yours is not offered under Add an agent', async () => {
   const p = keysPage(view());
   await openSettings(p);
   openAdd(p);
-  assert.match(keyWords(p), /DeepSeekNo keyPaste your DeepSeek API key to add it/);
-  assert.ok(keyButton(p, 'deepseek'), 'a button to save it');
+  assert.doesNotMatch(keyWords(p), /DeepSeek/);
+  assert.equal(keyButton(p, 'deepseek'), undefined, 'no key field to save it');
 });
 
 test('0393 AC3: the panel\'s checks say when Claude Code isn\'t installed, as speck doctor\'s do', async () => {
@@ -241,8 +240,8 @@ test('0393 AC4: any provider in speck\'s list appears in Settings the same way',
   await p.settle();
   assert.deepEqual(options(p, 'reviewer_model').map(o => o.value), ['', 'tc-big', 'tc-small']);
   openAdd(p);
-  assert.match(keyWords(p), /TestCoNo keyPaste your TestCo API key to add it/);
-  assert.equal(keyInput(p, 'testco').value, '');
+  assert.doesNotMatch(keyWords(p), /TestCo/, '0408: with no key and not yours, not offered, as DeepSeek isn\'t');
+  assert.equal(keyInput(p, 'testco'), undefined);
 });
 
 test('0393 AC2 (0399 AC3): the key field is in the provider\'s row in Your agents, one of the view\'s groups', async () => {
