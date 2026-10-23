@@ -118,7 +118,7 @@ test('0063 AC2: a ticket that isn\'t a draft shows the same id, title and sectio
     if (from === 'queue') { click(topOf(rowOf(p, id))); await p.settle(); press(fullOf(p, rowOf(p, id))); } else press(titleOf(p, shipOf(p, id)));
     assert.equal(paneId(p), id);
     const [head] = pane(p).children;
-    assert.equal(head.children[1].textContent, s.tickets.find(t => t.id === id).title, `${id}: its title`);
+    assert.equal(head.children.find(n => n.className === 'title').textContent, s.tickets.find(t => t.id === id).title, `${id}: its title`);
     assert.deepEqual(headings(p, pane(p)), draftHeadings.slice(1), `${id}: the same sections, with no readiness list`);
     assert.deepEqual(sections(pane(p)).map(t => t.replaceAll(id, 'X')), draftSections.map(t => t.replaceAll('0001', 'X')), `${id}: shown the same way`);
     assert.equal(p.all(pane(p)).find(n => /\bset-ready\b/.test(n.className || '')), undefined, `${id}: no Set ready`);
