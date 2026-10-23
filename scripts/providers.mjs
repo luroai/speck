@@ -4,7 +4,7 @@
 const provider = p => Object.freeze({ ...p, models: Object.freeze([...p.models]) });
 
 export const PROVIDERS = Object.freeze([
-  provider({ name: 'deepseek', label: 'DeepSeek', address: 'https://api.deepseek.com/anthropic', models: ['deepseek-v4-pro', 'deepseek-v4-flash'], defaultModel: 'deepseek-v4-pro' }),
+  provider({ name: 'deepseek', label: 'DeepSeek', type: 'anthropic', address: 'https://api.deepseek.com/anthropic', models: ['deepseek-v4-pro', 'deepseek-v4-flash'], defaultModel: 'deepseek-v4-pro' }),
 ]);
 
 // The provider called `name` in `providers`, or null.
