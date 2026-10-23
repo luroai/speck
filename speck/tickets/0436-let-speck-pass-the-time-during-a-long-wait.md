@@ -43,6 +43,8 @@ Between events, speck shows the pipeline's state, and during a long wait it pass
 - Changes 0414's criterion 3 for `Building`, `Shipping`, `Waiting` and `Idle`. 0414's tests for those change to match.
 - Waits for 0435: both change `templates/panel.html`. 0430 waits for it too, as the split moves the screen's code.
 - Failing before this build: none
+- Self-check: removed a no-op step and a meaningless assertion from the new tests; checked that a clock going back, a hidden tab skipping turns and a draft being written during a build keep the rhythm sane (the elapsed time is clamped, a skipped turn picks one new pastime, writing restarts the rhythm like an event).
+- Pictures: none, because the change is only when existing poses show (a pastime appears 2 minutes into a build), which a panel started here shows as Off; every pose and caption it uses is already drawn by 0414.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
