@@ -1,7 +1,7 @@
 ---
 id: "0393"
 title: "Offer DeepSeek in Settings"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-18-use-a-model-provider-through-your-own-api-k
 after: ["0392","0387"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T08:16:16.005Z"
+approved: "2026-10-23T08:26:49.886Z"
 
 ---
 # 0393 · Offer DeepSeek in Settings
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 DeepSeek can be set as builder, reviewer or Foreman from the command line, but Settings doesn't offer it, and there's nowhere in the panel to give its API key.
@@ -57,9 +58,14 @@ Worth keeping an eye on: if Claude Code isn't installed, DeepSeek isn't offered 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 194,018
+- Elapsed since build started: 11 min
+- Changed lines: 249 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - speck doctor checks a DeepSeek builder or reviewer but not a DeepSeek Foreman: saved to the inbox as `speck/ideas/2026-10-23-check-the-foreman-s-model-provider-in-speck-doctor.md`.
