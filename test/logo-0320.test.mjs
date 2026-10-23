@@ -6,7 +6,6 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
-import { rule, get } from './support/css.mjs';
 import { ICONS, PNGS, logo, draw, png, readPng, shapes } from './support/icons.mjs';
 
 // ---------- 0320: the design's new logo in the header and the app icons ----------
@@ -16,10 +15,6 @@ const sha = b => crypto.createHash('sha256').update(b).digest('hex');
 const DESIGN = path.join(ROOT, 'docs', 'design', 'lcd');
 const read = (...p) => fs.readFileSync(path.join(...p));
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-// The header's mark as the page writes it.
-const ATTRS = 'class="mark" id="mark" aria-hidden="true"';
-// 0373: the title holds the base branch's own <div>, so it ends at "control panel".
-const logoDiv = () => (page().match(/<div class="logo">([\s\S]*?<\/span>)<\/div>/) || [])[1] || '';
 
 test('0320 AC1: the design\'s new renderer is in docs/design/lcd/ and templates/, byte for byte', () => {
   assert.equal(sha(read(DESIGN, 'lcd.js')), SHA, 'docs/design/lcd/lcd.js');
@@ -42,22 +37,7 @@ test('0320 AC1: the tests that pin the renderer pin the new one', () => {
   }
 });
 
-test('0320 AC2: the header\'s mark is the renderer\'s markSVG(), written into the page before "speck"', () => {
-  const svg = logo().markSVG({ attrs: ATTRS });
-  assert.equal(logoDiv(), `${svg}<b class="name">speck</b><div class="repo">base <code>{{base}}</code></div><span>control panel</span>`);
-  // In the text colour, with the speck from --speck, on a 16 × 16 grid with crisp edges.
-  assert.match(svg, /viewBox="0 0 16 16" shape-rendering="crispEdges"/);
-  assert.match(svg, /<path fill="currentColor" d="[^"]+"\/><path fill="var\(--speck, #c4402a\)" d="[^"]+"\/>/);
-  assert.doesNotMatch(page(), /LCD\.tile\(\$\('mark'\)/, 'the old canvas mark isn\'t drawn any more');
-});
-
-test('0320 AC2: the mark is 32 px, two screen pixels to each of its 16, with the speck in the panel\'s --dot', () => {
-  const r = rule('.logo .mark');
-  assert.equal(get(r, 'width'), '32px');
-  assert.equal(get(r, 'height'), '32px');
-  assert.equal(get(r, '--speck'), 'var(--dot)');
-  assert.equal(get(r, 'color'), undefined, 'the header\'s own text colour');
-});
+// 0413: the header's mark went with the header row; speck's screen is the top of the panel now (panel-0413.test.mjs).
 
 test('0320 AC3: icon.svg is the renderer\'s faviconSVG(), which follows the browser\'s light or dark look', () => {
   const svg = read(ICONS, 'icon.svg').toString();
@@ -116,27 +96,12 @@ test('0320 AC5: the new renderer draws the badges and the Foreman\'s builder wit
 
 // ---------- in a real browser ----------
 
-test('0320 AC2 and AC3: in a real browser, the mark is in the text colour with the speck in --dot, in both looks, and icon.svg loads', skip, async () => {
+test('0320 AC3: in a real browser, icon.svg loads (0413: the header\'s mark, checked here too, went with the header row)', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
-    await b.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`document.readyState === 'complete' && !!document.querySelector('.logo .mark')`, 'the panel');
-    for (const look of ['light', 'dark']) {
-      if ((await b.js('document.documentElement.dataset.theme')) !== look) await b.js(`setLook(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')`);
-      await b.until(`document.documentElement.dataset.theme === '${look}'`, `the ${look} look`);
-      const x = await b.js(`(() => {
-        const m = document.getElementById('mark'), [ink, speck] = m.querySelectorAll('path'), r = m.getBoundingClientRect();
-        const probe = v => { const s = document.createElement('i'); s.style.color = v; document.body.append(s); const c = getComputedStyle(s).color; s.remove(); return c; };
-        return { ink: getComputedStyle(ink).fill, speck: getComputedStyle(speck).fill, text: getComputedStyle(document.querySelector('header .logo')).color,
-          dot: probe('var(--dot)'), crisp: getComputedStyle(m).shapeRendering, size: [r.width, r.height] };
-      })()`);
-      assert.equal(x.ink, x.text, `${look}: the mark is in the header's text colour`);
-      assert.equal(x.speck, x.dot, `${look}: the speck is the panel's --dot`);
-      assert.equal(x.crisp, 'crispedges', `${look}: crisp edges`);
-      assert.deepEqual(x.size, [32, 32], `${look}: 32 px`);
-    }
+    await b.until(`document.readyState === 'complete'`, 'the panel');
     const icon = await b.js(`new Promise(ok => { const i = new Image(); i.onload = () => ok(i.naturalWidth); i.onerror = () => ok('failed'); i.src = '/icon.svg'; })`);
     assert.notEqual(icon, 'failed', 'icon.svg loads');
   } finally { try { await b.close(); } finally { await stop(panel); } }

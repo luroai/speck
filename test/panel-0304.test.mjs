@@ -10,16 +10,15 @@ import { rules, rule, get } from './support/css.mjs';
 
 const FONT = path.join(ROOT, 'templates', 'fonts', 'Doto.ttf');
 const face = () => rules().find(r => r.sel === '@font-face' && /"Doto"/.test(get(r, 'font-family') || ''));
-const name = () => rule('.logo .name');
+const name = () => rule('.bezel .name'); // 0413: in the title row of speck's screen's frame
 
-test('0304 AC1: the header\'s "speck" is its own element, set in Doto at weight 900, at 26 px since 0309', () => {
-  // 0320: the mark is the design's logo, an svg.
-  assert.match(page(), /<div class="logo"><svg [^>]*class="mark"[^>]*>[\s\S]*?<\/svg><b class="name">speck<\/b><div class="repo">base <code>\{\{base\}\}<\/code><\/div><span>control panel<\/span><\/div>/); // 0373: the base branch between
+test('0304 AC1: the header\'s "speck" is its own element, set in Doto at weight 900, at 20 px since 0413', () => {
+  assert.match(page(), /<div class="print"><b class="name">speck<\/b><span class="repo">/); // 0413: first in the title row of speck's screen's frame
   const r = name();
   assert.ok(r, 'a rule for the name');
   assert.match(get(r, 'font-family'), /^"Doto",/, 'Doto first');
   assert.equal(get(r, 'font-weight'), '900');
-  assert.equal(get(r, 'font-size'), '26px', 'the size 0309 sets speck at');
+  assert.equal(get(r, 'font-size'), '20px', 'the size 0413 sets speck at, in the frame\'s title row');
   assert.equal(get(r, 'line-height'), '1', 'no taller a line than its size, so the header keeps its height');
 });
 
@@ -50,9 +49,9 @@ const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_C
 // The header and the title, measured as they are, then with the title back in the old serif.
 const MEASURE = `(async () => {
   await document.fonts.ready;
-  const n = document.querySelector('.logo .name'), h = () => document.querySelector('header').getBoundingClientRect().height;
+  const n = document.querySelector('.bezel .name'), h = () => document.querySelector('header').getBoundingClientRect().height;
   const box = e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, right: r.right, mid: r.top + r.height / 2 }; };
-  const now = { header: h(), name: box(n), label: box(document.querySelector('.logo span')), mark: box(document.querySelector('.logo .mark')), font: getComputedStyle(n).fontFamily,
+  const now = { header: h(), name: box(n), font: getComputedStyle(n).fontFamily,
     loaded: document.fonts.check('900 18px Doto'), width: document.documentElement.scrollWidth, view: innerWidth };
   n.style.font = '600 18px "Shippori Mincho", "Noto Serif JP", Georgia, serif';
   const serif = h();
@@ -67,19 +66,15 @@ test('0304 AC1, AC2 and AC4: in a real browser, Doto loads from the panel and th
     for (const width of [1280, 320]) {
       await b.send('Emulation.setDeviceMetricsOverride', { width, height: 800, deviceScaleFactor: 1, mobile: width < 700 });
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-      await b.until(`document.readyState === 'complete' && !!document.querySelector('.logo .name')`, 'the panel');
+      await b.until(`document.readyState === 'complete' && !!document.querySelector('.bezel .name')`, 'the panel');
       for (const look of ['light', 'dark']) {
         if ((await b.js('document.documentElement.dataset.theme')) !== look) await b.js(`setLook(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')`);
         await b.until(`document.documentElement.dataset.theme === '${look}'`, `the ${look} look`);
         const m = await b.js(MEASURE);
         const at = `${width} px, ${look}: ${JSON.stringify(m)}`;
-        // 0364: under 700 px the "speck" word is hidden, so nothing there needs Doto, and nothing sits beside the mark
-        const phone = width < 700;
-        if (!phone) assert.ok(m.loaded, `Doto loaded, from the panel: ${at}`);
+        assert.ok(m.loaded, `Doto loaded, from the panel: ${at}`); // 0413: "speck" shows at every width
         assert.match(m.font, /^Doto,/, at);
         assert.equal(m.header, m.serif, `the header is as tall as with the old serif title: ${at}`);
-        if (!phone) assert.ok(Math.abs(m.name.mid - m.mark.mid) <= 1.5, `speck is centred on the mark, as the design sets them: ${at}`);
-        if (width >= 700) assert.ok(m.name.top < m.label.bottom && m.label.top < m.name.bottom, `speck is on the line beside "control panel": ${at}`); // 0309: a phone has no "control panel"
         assert.ok(m.width <= m.view, `nothing past the right edge: ${at}`);
       }
     }
