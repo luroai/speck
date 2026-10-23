@@ -114,8 +114,9 @@ const LIGHT_BG = 'rgb(250, 249, 245)';
 const DARK_BG = 'rgb(24, 24, 24)';
 // 0372: the look Settings' list shows, opening Settings if it's closed, and a look picked there.
 const LOOK = `(async () => { if (!document.getElementById('look')) document.getElementById('settings-open').click(); for (let i = 0; i < 100 && !document.getElementById('look'); i++) await new Promise(r => setTimeout(r, 20)); return document.getElementById('look'); })()`;
-const shown = `${LOOK}.then(l => l.value)`;
-const pick = look => `${LOOK}.then(l => { l.value = ${JSON.stringify(look)}; l.dispatchEvent(new Event('change')); return true; })`;
+// 0396: Appearance's switch, on for dark, pressed when it shows the other look.
+const shown = `${LOOK}.then(l => l.getAttribute('aria-checked') === 'true' ? 'dark' : 'light')`;
+const pick = look => `${LOOK}.then(l => { if ((l.getAttribute('aria-checked') === 'true' ? 'dark' : 'light') !== ${JSON.stringify(look)}) l.click(); return true; })`;
 
 async function withPanel(fn, { scheme } = {}) {
   const r = panelRepo();

@@ -35,7 +35,7 @@ const shows = async (tickets, run = RUN) => { const p = switchPage([state(ticket
 test('0163 AC1: while Auto-build is on and a ticket is building, reviewing or shipping, the button reads "Auto-build on" (0199)', async () => {
   for (const t of [BUILDING, CHECKING, REVIEWING, PAUSED, SHIPPING]) {
     const p = await shows([READY, t]);
-    assert.equal(runOf(p).textContent, 'Auto-build on', t.id);
+    assert.equal(runOf(p).textContent, 'On', t.id);
     assert.equal(labelIn(p).textContent, 'Idle', `${t.id}: the header's own label, which can be shortened, is the Foreman's (0285)`);
     assert.match(runOf(p).className, /\brun-on\b/);
     assert.doesNotMatch(runOf(p).className, /\brun-(bad|wait)\b/, `${t.id}: in the button's usual colour`);
@@ -48,24 +48,24 @@ test('0163 AC1: the Build card still names the stage, and the button doesn\'t (0
   const p = await shows([REVIEWING]);
   const card = p.all(p.byId('queue')).find(n => /^stage\b/.test(n.className || ''));
   assert.equal(card.textContent, 'Review 2', 'the card counts the round');
-  assert.equal(runOf(p).textContent, 'Auto-build on');
+  assert.equal(runOf(p).textContent, 'On');
 });
 
 test('0163 AC1: with more than one in flight, it names none of them (0199)', async () => {
-  assert.equal(runOf(await shows([READY, CHECKING, BUILDING])).textContent, 'Auto-build on');
-  assert.equal(runOf(await shows([BLOCKED, BUILDING])).textContent, 'Auto-build on');
-  assert.equal(runOf(await shows([AUTO, BUILDING])).textContent, 'Auto-build on');
+  assert.equal(runOf(await shows([READY, CHECKING, BUILDING])).textContent, 'On');
+  assert.equal(runOf(await shows([BLOCKED, BUILDING])).textContent, 'On');
+  assert.equal(runOf(await shows([AUTO, BUILDING])).textContent, 'On');
 });
 
 test('0163 AC2: on with nothing in flight it reads "Auto-build on"; off, "Auto-build off", whatever is building', async () => {
   for (const tickets of [[], [READY], [AUTO]]) {
     const p = await shows(tickets);
-    assert.equal(runOf(p).textContent, 'Auto-build on');
+    assert.equal(runOf(p).textContent, 'On');
     assert.equal(runOf(p).title, ON);
   }
   for (const tickets of [[], [BUILDING], [BLOCKED], [TO_SHIP]]) {
     const p = await shows(tickets, null);
-    assert.equal(runOf(p).textContent, 'Auto-build off');
+    assert.equal(runOf(p).textContent, 'Off');
     assert.equal(runOf(p).title, OFF);
     assert.match(runOf(p).className, /\brun-off\b/);
     assert.doesNotMatch(runOf(p).className, /\brun-(bad|wait)\b/);
@@ -75,7 +75,7 @@ test('0163 AC2: on with nothing in flight it reads "Auto-build on"; off, "Auto-b
 test('0163 AC2: when a build waits for you it still reads "Auto-build on", in the button\'s usual colour (0199)', async () => {
   for (const t of [TO_SHIP, NOT_AUTO, BLOCKED, STOPPED]) {
     const p = await shows([t]);
-    assert.equal(runOf(p).textContent, 'Auto-build on', t.id);
+    assert.equal(runOf(p).textContent, 'On', t.id);
     assert.doesNotMatch(runOf(p).className, /\brun-(bad|wait)\b/, t.id);
   }
   assert.doesNotMatch(page(), /\.run-state\.run-(wait|bad)\b/);
@@ -100,17 +100,17 @@ test('0163 AC4: clicking still starts or pauses Auto-build, and the tooltip says
   const p = switchPage([state([BUILDING]), { ok: true, run: { on: false, pid: null } }, { ok: true, run: { on: true, pid: 9 } }]);
   await p.settle();
   assert.equal(runOf(p).title, ON);
-  assert.equal(runOf(p).attrs['aria-pressed'], 'true');
+  assert.equal(runOf(p).attrs['aria-checked'], 'true');
   p.press(runOf(p));
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/off');
   assert.equal(p.calls.at(-1).opts.method, 'POST');
-  assert.equal(runOf(p).textContent, 'Auto-build off');
+  assert.equal(runOf(p).textContent, 'Off');
   assert.equal(runOf(p).title, OFF);
   p.press(runOf(p));
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/on');
-  assert.equal(runOf(p).attrs['aria-pressed'], 'true');
+  assert.equal(runOf(p).attrs['aria-checked'], 'true');
   const q = await shows([BLOCKED]);
   assert.equal(q.runSwitch().title, ON);
 });

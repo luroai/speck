@@ -33,8 +33,8 @@ const ids = tickets => tickets.map(t => t.id).join(' ') || 'none';
 
 test('0199 AC1: on, the button says "Auto-build on", and off, "Auto-build off", whatever the tickets are doing', async () => {
   for (const tickets of SETS) {
-    assert.equal(runOf(await shows(tickets)).textContent, 'Auto-build on', `on: ${ids(tickets)}`);
-    assert.equal(runOf(await shows(tickets, null)).textContent, 'Auto-build off', `off: ${ids(tickets)}`);
+    assert.equal(runOf(await shows(tickets)).textContent, 'On', `on: ${ids(tickets)}`);
+    assert.equal(runOf(await shows(tickets, null)).textContent, 'Off', `off: ${ids(tickets)}`);
   }
 });
 
@@ -94,7 +94,7 @@ test('0199 AC3: a ship started from the panel and not yet answered counts as a s
   p.press(buttons(p.byId('full-ticket'), /^Ship$/)[0]);
   await p.settle();
   assert.equal(builderIn(p), undefined);
-  assert.equal(runOf(p).textContent, 'Auto-build on');
+  assert.equal(runOf(p).textContent, 'On');
 });
 
 test('0199 AC4: the tooltip says only what a click does, and a click switches Auto-build in place, keeping focus', async () => {
@@ -105,19 +105,19 @@ test('0199 AC4: the tooltip says only what a click does, and a click switches Au
   const p = switchPage([state([BUILDING, BLOCKED]), { ok: true, run: { on: false, pid: null } }, { ok: true, run: { on: true, pid: 9 } }]);
   await p.settle();
   const button = runOf(p);
-  assert.equal(button.attrs['aria-pressed'], 'true');
+  assert.equal(button.attrs['aria-checked'], 'true');
   p.press(button);
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/off');
   assert.equal(p.calls.at(-1).opts.method, 'POST');
   assert.equal(runOf(p), button, 'the same button, so it keeps focus');
-  assert.equal(button.textContent, 'Auto-build off');
+  assert.equal(button.textContent, 'Off');
   assert.equal(button.title, OFF);
-  assert.equal(button.attrs['aria-pressed'], 'false');
+  assert.equal(button.attrs['aria-checked'], 'false');
   p.press(button);
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/on');
   assert.equal(runOf(p), button);
-  assert.equal(button.textContent, 'Auto-build on');
+  assert.equal(button.textContent, 'On');
   assert.equal(button.title, ON);
 });

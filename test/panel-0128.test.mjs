@@ -206,7 +206,7 @@ test('0128 AC1: while speck run is off, the page has a button to turn it on, whi
   await p.settle();
   const b = switchOf(p);
   assert.ok(b, 'the speck run pill is a button');
-  assert.equal(b.textContent, 'Auto-build off');
+  assert.equal(b.textContent, 'Off');
   p.press(b);
   assert.equal(switchOf(p).disabled, true);
   assert.match(switchOf(p).textContent, /Starting…/);
@@ -215,18 +215,18 @@ test('0128 AC1: while speck run is off, the page has a button to turn it on, whi
   assert.equal(sent.url, '/api/run/on');
   assert.equal(sent.opts.method, 'POST');
   assert.equal(sent.opts.headers['X-Speck-Token'], '{{token}}');
-  assert.equal(pillText(p), 'Auto-build on');
+  assert.equal(pillText(p), 'On');
   assert.equal(switchOf(p).disabled, false);
 });
 
 test('0128 AC3: while speck run is on, the page has a button to turn it off, which then shows it off', async () => {
   const p = switchPage([state({ on: true, pid: 77 }), { ok: true, run: { on: false, pid: null } }]);
   await p.settle();
-  assert.equal(switchOf(p).textContent, 'Auto-build on');
+  assert.equal(switchOf(p).textContent, 'On');
   p.press(switchOf(p));
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/off');
-  assert.equal(pillText(p), 'Auto-build off');
+  assert.equal(pillText(p), 'Off');
 });
 
 test('0128 AC4: a refusal shows speck run\'s own message and leaves it off, until the next click', async () => {
@@ -237,7 +237,7 @@ test('0128 AC4: a refusal shows speck run\'s own message and leaves it off, unti
   await p.settle();
   assert.equal(p.byId('run-error').hidden, false);
   assert.equal(p.byId('run-error').textContent, msg);
-  assert.equal(pillText(p), 'Auto-build off');
+  assert.equal(pillText(p), 'Off');
   assert.equal(switchOf(p).disabled, false);
   // A poll keeps the message.
   p.timers.shift()(); await p.settle();
@@ -249,7 +249,7 @@ test('0128 AC4: a refusal shows speck run\'s own message and leaves it off, unti
   p.press(switchOf(p));
   await p.settle();
   assert.equal(p.byId('run-error').hidden, true);
-  assert.equal(pillText(p), 'Auto-build on');
+  assert.equal(pillText(p), 'On');
 });
 
 test('0128 AC1: the button sits in the header, as the speck run pill itself (0150)', async () => {

@@ -127,27 +127,31 @@ test('0285 AC1, AC2: a ship started outside speck run\'s queue, from the panel\'
   } finally { killAll([p.pid]); }
 });
 
+// 0396: the Foreman group shows once the settings have loaded.
 test('0285 AC3: Settings has a Foreman group, first, with the speck run switch, which turns speck run on and off as the header\'s did', async () => {
-  const p = fakePage([state(view({}), { run: undefined }), deferred(), { ok: true, run: { on: true, pid: 7 } }, { ok: true, run: { on: false, pid: null } }]);
+  const p = fakePage([state(view({}), { run: undefined }), { groups: [{ title: 'Foreman', settings: [] }] }, { ok: true, run: { on: true, pid: 7 } }, { ok: true, run: { on: false, pid: null } }]);
   await p.settle();
   click(p.byId('settings-open'));
   await p.settle();
   const groups = p.byId('settings').children.filter(n => n.className === 'sgroup');
   assert.equal(groups[0].textContent.startsWith('Foreman'), true, 'the Foreman group comes first');
-  const sw = p.all(groups[0]).find(n => n.id === 'run-switch');
-  assert.equal(sw.textContent, 'Auto-build off');
-  assert.equal(sw.attrs['aria-pressed'], 'false');
+  // 0396: the switch is Auto-build's, in the box above the groups.
+  const box = p.byId('settings').children.find(n => n.className === 'switches');
+  assert.ok(p.byId('settings').children.indexOf(box) < p.byId('settings').children.indexOf(groups[0]), 'Auto-build above it');
+  const sw = p.all(box).find(n => n.id === 'run-switch');
+  assert.equal(sw.textContent, 'Off');
+  assert.equal(sw.attrs['aria-checked'], 'false');
   assert.equal(sw.title, 'Start Auto-build: build ready tickets');
   click(sw);
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/on');
   assert.equal(p.calls.at(-1).opts.method, 'POST');
-  assert.equal(sw.textContent, 'Auto-build on');
+  assert.equal(sw.textContent, 'On');
   assert.equal(sw.title, 'Pause Auto-build: ready tickets wait');
   click(sw);
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/off');
-  assert.equal(sw.textContent, 'Auto-build off');
+  assert.equal(sw.textContent, 'Off');
 });
 
 test('0285 AC3: a refused switch shows speck run\'s own message, as before', async () => {
