@@ -16,7 +16,9 @@ const byKey = v => Object.fromEntries(v.groups.flatMap(g => g.settings).map(s =>
 const cfgOf = r => path.join(r.dir, 'speck', 'config.yml');
 const snapshot = r => ({ text: fs.readFileSync(cfgOf(r), 'utf8'), head: headOf(r), status: r.g('status', '--porcelain') });
 const posts = p => p.settingsCalls.filter(c => c.method === 'POST');
+// 0397: no row carries a mark; this machine's own value is said in its explanation instead.
 const tagsOf = (p, key) => p.all(rowOf(p, key)).filter(n => /\bdefault\b/.test(n.className || '')).map(n => n.textContent);
+const ownValue = (p, key) => /your machine's own value/.test(rowOf(p, key).textContent);
 const buttonOf = (p, key, label) => p.all(rowOf(p, key)).find(n => n.tagName === 'button' && n.textContent === label);
 
 // A Settings view as the server sends it, with max_parallel_builds from this machine (`machine` set) or the repo.
@@ -49,18 +51,16 @@ test('0261 AC1: the view says whose value each is, with the repo\'s value beside
   await p.settle();
   await openSettings(p);
   const row = rowOf(p, 'max_parallel_builds').textContent;
-  assert.match(row, /this machine/i);
-  assert.match(row, /repo's value: 2/i);
+  assert.match(row, /your machine's own value, used over the project's: 2/i);
   assert.equal(controlOf(p, 'max_parallel_builds').value, '3', 'the value speck uses');
 
   const q = settingsPage([view(undefined, 2)]);
   await q.settle();
   await openSettings(q);
   const row2 = rowOf(q, 'max_parallel_builds').textContent;
-  assert.match(row2, /repo/i);
-  assert.doesNotMatch(row2, /this machine/i);
+  assert.doesNotMatch(row2, /this machine|own value/i);
   assert.equal(controlOf(q, 'max_parallel_builds').value, '2');
-  assert.doesNotMatch(rowOf(q, 'reviewer_model').textContent, /this machine|repo's value/i);
+  assert.doesNotMatch(rowOf(q, 'reviewer_model').textContent, /this machine|own value/i);
 });
 
 test('0261 AC2: a change is saved for this machine, without asking where it goes (0387)', async () => {
@@ -76,7 +76,8 @@ test('0261 AC2: a change is saved for this machine, without asking where it goes
   assert.deepEqual(posts(p).map(c => c.url), ['/api/settings/save?machine%3Amax_parallel_builds=4']);
   assert.ok(posts(p)[0].headers['X-Speck-Token']);
   assert.equal(controlOf(p, 'max_parallel_builds').value, '4');
-  assert.deepEqual(tagsOf(p, 'max_parallel_builds'), ['this machine']);
+  assert.deepEqual(tagsOf(p, 'max_parallel_builds'), []);
+  assert.ok(ownValue(p, 'max_parallel_builds'));
 
   // Putting the value back leaves nothing to save; a setting no machine can hold is sent for the repo.
   const c = settingsPage([view(undefined, 2), view(undefined, 2)], [{ ok: true, changed: ['reviewer_model'] }]);
@@ -135,7 +136,8 @@ test('0261 AC3: clearing this machine\'s value goes back to the repo\'s, and the
   assert.deepEqual(posts(p).map(c => c.url), ['/api/settings/save?machine%3Amax_parallel_builds=']);
   assert.equal(controlOf(p, 'max_parallel_builds').value, '2');
   assert.equal(buttonOf(p, 'max_parallel_builds', 'Clear this machine\'s value'), undefined);
-  assert.deepEqual(tagsOf(p, 'max_parallel_builds'), ['repo']);
+  assert.deepEqual(tagsOf(p, 'max_parallel_builds'), []);
+  assert.ok(!ownValue(p, 'max_parallel_builds'));
 });
 
 test('0261 AC4: a machine change is saved off the base branch and with config.yml changed; a bad one is refused and changes nothing', () => {

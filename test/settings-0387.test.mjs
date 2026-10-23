@@ -171,16 +171,12 @@ test('0387 AC4: each of your own settings says whose value it is, and this machi
   assert.equal(byKey(panelSettings(r.dir)).builder.build_command.value, DEFAULT_BUILD_COMMAND);
 });
 
-test('0387 AC4: the view marks whose each value is, offers to clear this machine\'s, and its top line says which settings saving commits', async () => {
+test('0387 AC4: the view says whose each value is and offers to clear this machine\'s (0397: in the explanation, with no top line)', async () => {
   const p = settingsPage([view({ reviewer_model: 'gpt-y', from: 'machine' }), view()], [{ ok: true, changed: ['reviewer_model'] }]);
   await p.settle();
   await openSettings(p);
-  assert.match(rowOf(p, 'reviewer_model').textContent, /this machine/);
-  assert.match(rowOf(p, 'reviewer_model').textContent, /repo's value: gpt-x/);
-  const top = p.all(p.byId('settings')).find(n => n.tagName === 'p' && /commits speck\/config\.yml/.test(n.textContent));
-  assert.ok(top, 'the top line');
-  assert.match(top.textContent, /Saving limits\.max_review_rounds, ship_mode commits speck\/config\.yml/);
-  assert.match(top.textContent, /your own settings.*without a commit/i);
+  assert.match(rowOf(p, 'reviewer_model').textContent, /your machine's own value, used over the project's: gpt-x/);
+  assert.ok(!p.all(p.byId('settings')).some(n => n.tagName === 'p' && /commits speck\/config\.yml/.test(n.textContent)), 'no top line');
   const clear = p.all(rowOf(p, 'reviewer_model')).find(n => n.tagName === 'button' && n.textContent === 'Clear this machine\'s value');
   p.press(clear);
   p.press(saveButton(p));

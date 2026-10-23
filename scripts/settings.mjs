@@ -135,10 +135,20 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
       hand_set: handSetBuildCommand(used), each_ticket: buildsEachTicket(used.build_command ?? ''), own: OWN_BUILD_COMMANDS } };
     const machine = !MACHINE_SETTINGS.includes(s.key) ? {}
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
-    return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
+    return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s),
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
   }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
     ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS, providers: providersShown(repo, providers) };
+}
+
+// 0397: a setting's explanation, ending with what speck uses when it isn't set, unless the explanation already says what
+// blank does, and then where a change to it is saved.
+export function explainFully(s) {
+  const unset = s.default === '' ? '' : ` When it isn't set, speck uses ${Array.isArray(s.default) ? s.default.join(' and ') : String(s.default)}.`;
+  const saved = !EDITABLE.includes(s.key) ? ' It\'s changed in speck/config.yml rather than here, and saved there for the project, with a commit.'
+    : MACHINE_SETTINGS.includes(s.key) ? ' A change here is saved for your machine only, without a commit.'
+      : ' A change here is saved for the project in speck/config.yml, with a commit.';
+  return `${s.explain}${unset}${saved}`;
 }
 
 // 0393: a provider's models as the Settings view lists them, its default model said as such.
@@ -276,11 +286,13 @@ export function cmdConfigShow(args) {
   const json = args.length === 1 && args[0] === '--json';
   if (args.length && !json) throw new SpeckError('Usage: speck config show [--json]');
   const defaults = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, s.default]));
+  // 0397: the explanation without the panel's own ending, which says where a change made there is saved.
+  const explains = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, s.explain]));
   // 0386: a value this machine holds is shown as speck uses it, marked this_machine, with speck/config.yml's in repo_value.
   const repo = findRepoRoot(), mine = machineConfig(repo);
   const groups = panelSettings(repo).groups.map(g => ({ title: g.title, settings: g.settings.map(s => {
     const repoValue = s.repo_value ?? s.value, machine = Object.hasOwn(mine, s.key), value = machine ? mine[s.key] : repoValue;
-    return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: s.explain,
+    return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: explains[s.key],
       ...(machine ? { this_machine: true, repo_value: repoValue } : {}) };
   }) }));
   // build_command and resume_command aren't in the Settings view, so one this machine holds is shown with the builder's.
