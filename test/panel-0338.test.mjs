@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { statusData } from '../scripts/speck.mjs';
-import { fakePage, T, round, queueRows, panelModel, isRed, findText, panelRepo } from './support/panel.mjs';
+import { fakePage, T, round, queueRows, panelModel, isRed, findText, panelRepo, boardPage, openQueueRows } from './support/panel.mjs';
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 const MESSAGE = 'Tests failed on the approved branch, so nothing was shipped.';
@@ -23,8 +23,9 @@ const state = (tickets, on = true) => ({ tickets, ideas: [], run: { on } });
 
 const row = p => queueRows(p).find(r => r.textContent.includes('0001'));
 async function shown(s) {
-  const p = fakePage([s]);
+  const p = boardPage([s]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const r = row(p);
   return { p, r, red: [r, ...p.all(r)].some(isRed), has: text => !!findText(p, r, text) };
 }

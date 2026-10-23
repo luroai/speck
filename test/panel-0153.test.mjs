@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, T, round, queueRows, panelModel, exitOf, isRed, stageOf, sayOf, findText } from './support/panel.mjs';
+import { fakePage, T, round, queueRows, panelModel, exitOf, isRed, stageOf, sayOf, findText, openQueueRows } from './support/panel.mjs';
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 const PACK = '## 0001 · Ticket 0001\n**Verdict:** ✅ Approved by reviewer\n';
@@ -103,6 +103,7 @@ test('0153 AC3: an auto-ship that ended without shipping says so, with speck shi
   assert.equal(m.queue[0].shipping, false);
   const p = page(state);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const r = row(p), all = texts(p, r);
   const at = l => all.indexOf(l);
   assert.ok(at("Auto-ship didn't finish") >= 0, all.join(' | '));
@@ -117,6 +118,7 @@ test('0153 AC3: an auto-ship that ended without shipping says so, with speck shi
 test('0153 AC3: with no message (a killed auto-ship), it says so without one', async () => {
   const p = page({ tickets: [approved(failedShip({ message: null, ended: null }))], ideas: [] });
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const all = texts(p, row(p));
   assert.ok(all.includes("Auto-ship didn't finish"));
   assert.ok(all.includes(SHIP_IT));
@@ -139,6 +141,7 @@ test('0153 AC4: an approved ticket auto-ship doesn\'t cover shows none of these,
   assert.equal(m.queue[0].to_ship, true);
   const p = page(state);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const all = texts(p, row(p));
   for (const l of LABELS) assert.ok(!all.includes(l), l);
   assert.ok(all.includes('Build finished without shipping'));
@@ -146,6 +149,7 @@ test('0153 AC4: an approved ticket auto-ship doesn\'t cover shows none of these,
   // And with no build exit at all, nothing either.
   const q = page({ tickets: [approved()], ideas: [] });
   await q.settle();
+  await openQueueRows(q); // 0434: what's under a Build card's two lines shows while it's open
   for (const l of LABELS) assert.ok(!texts(q, row(q)).includes(l), l);
 });
 
