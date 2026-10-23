@@ -150,8 +150,9 @@ test('0161 AC3: no text is smaller than 12 px, and nothing is lighter than weigh
   assert.match(get(rules().find(r => r.sel === 'body' && get(r, 'font')), 'font'), /^400 13px/, 'running text is 400');
 });
 
-// 0419: a Plan or Build card's tags are words in its details line, not boxes.
-const IN_LINE = /\.(checks|progress|act) \.tag$/;
+// 0419: a Plan or Build card's tags are words in its details line, not boxes. 0420: a shipped ticket's tag is a small
+// box in its title's line, as tall as its details line.
+const IN_LINE = /\.(checks|progress|act|tags) \.tag$/;
 test('0161 AC3: the tags are 14 px text in boxes at least 28 px tall, and only the one rule sizes them', () => {
   const rs = rules();
   const tag = rs.find(r => r.sel === '.tag');
@@ -288,8 +289,9 @@ const EDGES = `(() => { ${LIB}
   }
   return out;
 })()`;
-// 0419: the boxed tags, apart from a Plan or Build card's, which are words in its details line
-const TAGS = `[...document.querySelectorAll('.tag:not(:is(.checks, .progress, .act) .tag)')].filter(el => el.getClientRects().length).map(el => ({
+// 0419: the boxed tags, apart from a Plan or Build card's, which are words in its details line, and (0420) a shipped
+// ticket's, in its title's line
+const TAGS = `[...document.querySelectorAll('.tag:not(:is(.checks, .progress, .act, #shipped .tags) .tag)')].filter(el => el.getClientRects().length).map(el => ({
   where: el.closest('#full-ticket') ? 'pane' : el.closest('#queue') ? 'build' : el.closest('#shaping') ? 'plan' : el.closest('#shipped') ? 'shipped' : 'other',
   text: el.textContent, size: parseFloat(getComputedStyle(el).fontSize), height: el.getBoundingClientRect().height }))`;
 
@@ -339,7 +341,8 @@ async function everyView(b, theme) {
   checkTexts(await b.js(TEXTS), `${theme}, the full ticket`);
   checkEdges(await b.js(EDGES), `${theme}, the full ticket`);
   tags.push(...(await b.js(TAGS)).filter(t => t.where === 'pane'));
-  for (const where of ['pane', 'shipped']) assert.ok(tags.some(t => t.where === where), `${theme}: tags in ${where}`);
+  // 0420: a shipped ticket's tag is a small box in its title's line, so the full ticket's are the boxed ones left to check
+  assert.ok(tags.some(t => t.where === 'pane'), `${theme}: tags in pane`);
   for (const t of tags) {
     assert.equal(t.size, 14, `${theme}: the ${t.text} tag in ${t.where} is 14 px`);
     assert.ok(t.height >= 28, `${theme}: the ${t.text} tag in ${t.where} is ${t.height} px tall`);
