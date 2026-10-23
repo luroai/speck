@@ -1,7 +1,7 @@
 ---
 id: "0408"
 title: "Don't offer DeepSeek until you add it"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-23-dont-offer-deepseek-until-you-add-it.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T12:51:23.306Z"
 
 ---
 # 0408 · Don't offer DeepSeek until you add it
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Add an agent still offers DeepSeek with a key field even when this machine has never set a DeepSeek key. Beside the Add an API provider form from 0401, that row looks like speck expects an account you do not have.
