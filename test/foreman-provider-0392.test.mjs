@@ -52,7 +52,8 @@ test('0392 AC1: with foreman deepseek, the Foreman runs Claude Code through Deep
   assert.equal(after(claude, '--model'), 'deepseek-v4-pro');
   assert.equal(after(claudeOf(foremanArgv({ foreman: 'deepseek', foreman_model: 'deepseek-v4-flash' }, 'B')), '--model'), 'deepseek-v4-flash');
   const effort = foremanArgv({ foreman: 'deepseek', foreman_effort: 'high' }, 'B');
-  assert.ok(!effort.some(w => /effort/.test(w)), 'foreman_effort isn\'t passed');
+  // 0402: the effort flags, not any word with "effort" in it, such as a worktree's folder in the script's path.
+  assert.ok(!effort.some(w => w === '--effort' || w.startsWith('--effort=') || /model_reasoning_effort/.test(w)), 'foreman_effort isn\'t passed');
   assert.ok(!effort.includes('high'));
 });
 
