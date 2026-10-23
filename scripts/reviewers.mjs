@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { TEMPLATES, SpeckError, sh, git, reviewerSettings, settingsMeta, posix } from './core.mjs';
 import { cacheDir, reviewDiff, validateVerdict, saveRound, reviewerPrompt, verdictInProse } from './review.mjs';
 import { cursorCli } from './cursor-build.mjs';
+import { PROVIDERS } from './providers.mjs';
+import { providerNamed, providerReady, providerEnv } from './provider-review.mjs';
 
 const LIMIT_SCRIPT = fileURLToPath(new URL('./limit.mjs', import.meta.url));
 
@@ -28,8 +30,8 @@ export function tookTooLong(name, ms) {
 
 // Runs a reviewer with the prompt on stdin, ending it and every process it started after `ms`. Returns the process
 // result, with `timedOut` set if it was ended for that, or `error` ({ code, message }) if it couldn't start.
-export function runLimited(cmd, args, { cwd, input, ms }) {
-  const r = sh(process.execPath, [LIMIT_SCRIPT, String(ms), cmd, ...args], { cwd, input, stdio: ['pipe', 'pipe', 'pipe', 'pipe'] });
+export function runLimited(cmd, args, { cwd, input, ms, env }) {
+  const r = sh(process.execPath, [LIMIT_SCRIPT, String(ms), cmd, ...args], { cwd, input, stdio: ['pipe', 'pipe', 'pipe', 'pipe'], ...(env ? { env } : {}) });
   const said = r.output[3] || '';
   if (said === 'timeout') return { ...r, timedOut: true };
   const m = said.match(/^error (\S*) ([\s\S]*)$/);
@@ -75,7 +77,12 @@ export function commandArgs(cmd, values) {
 // file-writing tools taken away. It loads no user, project or local settings, so no allow rule there can pre-approve a
 // command that writes. 0314: --strict-mcp-config with no --mcp-config loads no MCP servers or claude.ai connectors.
 // A reviewer_options entry with a command of its own is used instead.
-const CLAUDE_ARGS = '-p --permission-mode dontAsk --setting-sources= --strict-mcp-config --disallowedTools "Edit Write NotebookEdit" --output-format json --model {model} --effort {effort}';
+const CLAUDE_READ_ONLY = '-p --permission-mode dontAsk --setting-sources= --strict-mcp-config --disallowedTools "Edit Write NotebookEdit" --output-format json --model {model}';
+const CLAUDE_ARGS = `${CLAUDE_READ_ONLY} --effort {effort}`;
+// 0390: a model provider's reviewer is the Claude reviewer with --bare, which takes its sign-in only from
+// ANTHROPIC_API_KEY, never OAuth or the keychain, and skips hooks, plugins and CLAUDE.md discovery. Its address, key and
+// environment come from provider-review.mjs. The provider's models take no effort, so reviewer_effort isn't passed.
+const PROVIDER_ARGS = `--bare ${CLAUDE_READ_ONLY}`;
 // 0332: Cursor's CLI (`agent`, or `cursor-agent` when only that is installed) runs without a person in ask mode, which
 // is read-only. --trust gets past the Workspace Trust prompt that would otherwise stop it in a folder Cursor hasn't been
 // told to trust. Not --sandbox enabled: it won't start where the OS doesn't support Cursor's sandbox.
@@ -86,11 +93,14 @@ const BUILT_IN = Object.freeze({
 });
 
 // The options a reviewer runs with: its own under reviewer_options when they give a command, or speck's built-in ones.
-export function reviewerOptions(cfg, name) {
+// 0390: a provider in `providers` is built in too, with `provider` saying which.
+export function reviewerOptions(cfg, name, providers = PROVIDERS) {
   const own = cfg.reviewer_options?.[name];
   const mine = own && typeof own === 'object' ? own : {};
   if (typeof mine.command === 'string' && mine.command.trim()) return mine;
-  return Object.hasOwn(BUILT_IN, name) ? BUILT_IN[name]() : mine;
+  if (Object.hasOwn(BUILT_IN, name)) return BUILT_IN[name]();
+  const p = providerNamed(name, providers);
+  return p ? { command: `claude ${PROVIDER_ARGS}`, resume_command: `claude --resume {session} ${PROVIDER_ARGS}`, session_id_path: 'session_id', provider: p } : mine;
 }
 
 // A JSON object from text that is JSON, or holds a ```json fenced block, or else the last verdict object among its prose.
@@ -167,10 +177,10 @@ export function historyPrompt(repo, s, id) {
 
 // Runs one reviewer command with the prompt on stdin. Returns the process result, or { error } if it couldn't start.
 // One that runs past `ms` fails the round (0180).
-function runReviewer(repo, name, command, values, prompt, ms) {
+function runReviewer(repo, name, command, values, prompt, ms, env) {
   const [cmd, ...args] = commandArgs(command, values);
   if (!cmd) return { cmd: '', error: 'the command is empty' };
-  const r = runLimited(cmd, args, { cwd: repo, input: prompt, ms });
+  const r = runLimited(cmd, args, { cwd: repo, input: prompt, ms, env });
   if (r.timedOut) throw new SpeckError(tookTooLong(name, ms));
   if (r.error) return { cmd, error: r.error.code === 'ENOENT' ? `\`${cmd}\` isn't installed or isn't on your PATH` : `\`${cmd}\` failed (${r.error.message})` };
   return { ...r, cmd };
@@ -185,10 +195,18 @@ function atPath(obj, dotted) {
 // Runs a reviewer set up in config as a command. speck reads the verdict from its output, so the builder never handles it.
 // If the reviewer can resume a session (session_id_path and resume_command), later rounds continue it with only the new
 // round's prompt. Otherwise, or if resuming fails, a fresh run gets the full history.
-export function runCommandReview(repo, id, name, command, s) {
-  const options = reviewerOptions(s.cfg, name);
+export function runCommandReview(repo, id, name, command, s, providers = PROVIDERS) {
+  const options = reviewerOptions(s.cfg, name, providers);
   const settings = reviewerSettings(s.ticket.fm, s.cfg);
   const values = { model: settings.model, effort: settings.effort };
+  // 0390: a provider's reviewer runs on its default model when reviewer_model is blank, with no effort.
+  let env;
+  if (options.provider) {
+    const key = providerReady(repo, options.provider, providers);
+    values.model = settings.model || options.provider.defaultModel;
+    values.effort = '';
+    env = providerEnv(repo, options.provider, key, values.model);
+  }
   // Only the latest round's session has seen every round so far. An older one would miss the rounds since.
   const last = s.round > 1 ? resumableSession(s.prior, name, settings) : {};
   const lastThread = last.thread;
@@ -201,7 +219,7 @@ export function runCommandReview(repo, id, name, command, s) {
     if (!resume) why = 'no resume_command with {session} is set for it';
     else if (!lastThread) why = last.why;
     else {
-      const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }), ms);
+      const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }), ms, env);
       if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;
       else if (tried.status !== 0) why = `resuming session ${lastThread} exited ${tried.status}`;
       else { r = tried; session = 'continued'; }
@@ -211,9 +229,9 @@ export function runCommandReview(repo, id, name, command, s) {
   if (!r) {
     const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests, s.response) : historyPrompt(repo, s, id);
     if (s.round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
-    r = runReviewer(repo, name, command, values, prompt, ms);
+    r = runReviewer(repo, name, command, values, prompt, ms, env);
   }
-  if (r.error) throw new SpeckError(`Couldn't run the ${name} reviewer: ${r.error}. Check reviewer_options.${name} in speck/config.yml.`);
+  if (r.error) throw new SpeckError(`Couldn't run the ${name} reviewer: ${r.error}. ${options.provider ? `${options.provider.label} reviews need Claude Code installed.` : `Check reviewer_options.${name} in speck/config.yml.`}`);
   const tail = r.stderr.trim().split('\n').slice(-5).join('\n');
   const stderrNote = tail ? `\nLast lines of its error output:\n${tail}` : '';
   if (r.status !== 0) throw new SpeckError(`The ${name} reviewer (${r.cmd}) exited ${r.status}, so no round was recorded.${stderrNote}`);
