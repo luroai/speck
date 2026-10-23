@@ -1,7 +1,7 @@
 ---
 id: "0420"
 title: "Fit each shipped ticket on two lines"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0419"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T17:34:40.875Z"
 approved: "2026-10-23T18:00:34.699Z"
+finished: "2026-10-23T18:04:12.951Z"
 
 ---
 # 0420 · Fit each shipped ticket on two lines
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A shipped ticket takes five rows: its title, its bug tag, when it shipped, its figures, then a Details button. Above the list, three stat tiles and a More stats button take another 150 px. With ten shipped tickets (0411), Shipped is mostly empty space.
