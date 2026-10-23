@@ -1,7 +1,7 @@
 ---
 id: "0389"
 title: "Keep a model provider's API key for this machine"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-18-use-a-model-provider-through-your-own-api-k
 after: ["0380"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T07:26:14.303Z"
+approved: "2026-10-23T07:32:07.612Z"
 
 ---
 # 0389 · Keep a model provider's API key for this machine
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 To build or review with a model provider such as DeepSeek, speck needs the provider's API key. A key is a secret: it must never be committed, shown, logged or seen by other processes.
@@ -55,9 +56,15 @@ speck can now keep an API key for a model provider, starting with DeepSeek, on y
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The secret-entry prompt appears before terminal echo is disabled.; F2 The README test requires the exact prose “tested with speck so far: DeepSeek”.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 299,310
+- Elapsed since build started: 6 min
+- Changed lines: 149 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no ticket needed):
 - A keys file owned by another user can't be made private again, and gives a raw error rather than a plain message. Unlikely on one person's machine.
