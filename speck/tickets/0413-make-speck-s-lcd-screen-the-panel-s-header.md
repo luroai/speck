@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0410", "0411", "0412"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T14:25:17.773Z"
-approved: "2026-10-23T14:59:47.350Z"
+approved: "2026-10-23T15:06:18.431Z"
 
 ---
 # 0413 · Make speck's LCD screen the panel's header
@@ -63,12 +63,13 @@ Worth keeping an eye on: the screen is much taller than the old row, so lists st
 Round 1 (codex): approve.
 Round 2 (codex, merge round): approve.
 Round 3 (codex, merge round): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3, 2 of them merge rounds
+- Review rounds: 4, 3 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 1,491,540
-- Elapsed since build started: 34 min
+- Reviewer tokens: 2,427,738
+- Elapsed since build started: 41 min
 - Changed lines: 223 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
@@ -300,6 +301,82 @@ Round 3 (codex, merge round): approve.
     ],
     "escalation_question": "",
     "summary": "The LCD header meets all five criteria. The Settings test now waits for initial loading to finish and retains its focus and keyboard assertions. The latest run passed 375 tests, with three skipped and no failures. No open findings remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3ed6cb105dd6d2edbead54266627b516dbc1e1ea",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1693a-b949-7492-b5f4-1ffc48637172",
+    "builder_response": "- Tests run: test/panel-0040.test.mjs test/panel-0050.test.mjs test/panel-0051.test.mjs test/panel-0054.test.mjs test/panel-0055.test.mjs test/panel-0060.test.mjs test/panel-0061.test.mjs test/panel-0134.test.mjs test/panel-0154.test.mjs test/panel-0164.test.mjs test/panel-0413.test.mjs\n- Ship found these tests failing on the ticket as it would land. main hadn't moved (the merge said \"Already up to date\"), so all ten were broken by this ticket's change, in files I hadn't run during the build. What failed, why and what I changed (tests only, no product code):\n  - 0040, 0050, 0051, 0054, 0055, 0060, 0061: each waited for a page refresh by watching #run's last child change. #run is speck's screen now: its last child is the canvas, which never changes, and returning it to the test failed (\"Object reference chain is too long\", as the renderer keeps a reference back to itself on the canvas). The probe now counts attribute changes on the screen's frame (#bezel), which every redraw sets, as 0150's did in round 3. 0040 also read the Foreman's word from #run's text; it now reads it from the screen's accessible name.\n  - 0134 AC4: its list of the page's visible static text named the old header (\"base\", \"control panel\"). It now lists the title row: \"speck\", \"{{repo}} ·\", \"{{base}}\".\n  - 0154 AC1 and 0164 AC3: both tap a card in a 500 px tall window, and the taller header pushed the card below the fold. Each now scrolls the card into view before measuring where to tap. The tap behaviour they check is unchanged.\n- I also searched every test file for the old header's markers (.logo, run-state, the board, #run's text or children) and found nothing else that relies on them.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 933479,
+      "cached_input_tokens": 822784,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2719,
+      "reasoning_output_tokens": 135
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T15:06:16.014Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains the framed LCD, dot-matrix title and ellipsised project/base text. Passing panel-0413 tests verify removal of the old header and stationary positioning during lane scrolling."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawScreen and screenFrame retain the status row and idle animation. Passing panel-0413 tests verify status pixels, needs-you border transitions and absence of extra text or buttons."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The title-row Settings button retains openSettings. The passing 0413 AC3 test verifies placement, the settings request and the opened view."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing panel-0413 tests cover screen activation, Enter and Space in a browser, and Reload page status with its detail button."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing 320 px browser test verifies viewport fit without sideways scrolling. Accessible-name tests verify inclusion of the Foreman's status."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "templates/panel.html",
+        "issue": "The resolution-change handler previously omitted resizing the header LCD.",
+        "suggested_fix": "Completed: zoomed() calls screen.lcd.size() when present, with a passing resolution-listener test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The LCD header meets all five criteria. The additional test updates adapt refresh detection and tap positions to the new header while preserving their behavioural checks. No product code changed this round. The reported run passed 220 tests, with three skipped and no failures. No open findings remain."
   }
 }
 ```
