@@ -165,7 +165,8 @@ describe('0176: the board stays quick to read however many tickets are built', {
       spawnSync('sync');
       const timed = set => {
         fs.renameSync(sets[set], runs);
-        try { statusMs(dir, 1); return statusMs(dir, 3); } finally { fs.renameSync(runs, sets[set]); }
+        // 0429: no run before them to throw away, as the least of the three leaves out the slower first one anyway.
+        try { return statusMs(dir, 3); } finally { fs.renameSync(runs, sets[set]); }
       };
       // Alternated, so a slow patch on the machine falls on both sizes alike.
       let fast = Infinity, slow = Infinity;
