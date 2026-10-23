@@ -3,7 +3,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { heldTimeouts } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo } from './support/settings.mjs';
 
 const KEYS = ['auto_ship', 'reviewer', 'max_parallel_builds'];
 const S = (key, more = {}) => ({ key, value: 1, default: false, explain: `What ${key} does.`, editable: true, ...more });
@@ -108,6 +108,20 @@ test('0395 AC3: a click or tap inside the explanation leaves it open, and its in
   assert.deepEqual(shown(p), [], 'its info button closes it');
   tap(p, info);
   assert.deepEqual(shown(p), ['auto_ship'], 'and opens it again');
+});
+
+test('0395 AC3: after a change to a setting whose row is drawn again, its info button still opens and closes it', async () => {
+  const p = await opened();
+  changeTo(p, 'reviewer', 'claude');
+  const info = infoOf(p, 'reviewer');
+  tap(p, info);
+  assert.deepEqual(shown(p), ['reviewer'], 'opens');
+  tap(p, info);
+  assert.deepEqual(shown(p), [], 'and closes again');
+  tap(p, info);
+  changeTo(p, 'reviewer', 'codex');
+  tap(p, controlOf(p, 'reviewer'));
+  assert.deepEqual(shown(p), [], 'a tap on its control, outside it, closes it');
 });
 
 test('0395 AC3: Escape still closes the explanation without closing Settings', async () => {
