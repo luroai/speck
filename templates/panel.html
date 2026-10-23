@@ -2202,9 +2202,11 @@ function pairSettings(rows) {
 function settingRow(x, n) {
   const role = yourModels() !== null && Object.hasOwn(ROLES, x.key) ? x.key : null; // 0400: a role's one list
   const edit = x.editable === true ? (role !== null ? roleEditor(x) : settingEditor(x)) : null;
-  const mine = x.for_machine === true && x.from === 'machine' && !settingClear.has(x.key);
+  // 0400: a role's list holds its model too, so it's this machine's own when either is.
+  const own = withRoleModel(x.key).filter(k => settingRows().some(r => r.key === k && r.for_machine === true && r.from === 'machine'));
+  const cleared = own.length > 0 && own.every(k => settingClear.has(k)), mine = own.length > 0 && !cleared;
   // 0397: where a change is saved, and this machine's own value with its button, are said in the explanation, not marked.
-  const [info, tip] = settingInfo(x, n, mine ? machineLine(x) : x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null);
+  const [info, tip] = settingInfo(x, n, mine ? machineLine(x) : cleared ? clearLine(x) : null);
   const shown = edit ? edit : [el('code', 'value', settingValue(x.value))];
   const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown);
   const row = el('div', model ? 'setting model' : 'setting', null,
@@ -2589,8 +2591,13 @@ const knownAgent = id => {
   return all.find(a => a && a.id === agentOfRole(id)) ?? null;
 };
 const agentLabel = id => yourAgent(id)?.name ?? knownAgent(id)?.name ?? builderName(id);
-const withRoleModel = key => yourModels() !== null && Object.hasOwn(ROLES, key) && settingRows().some(r => r.key === ROLES[key].model && r.for_machine === true && r.from === 'machine')
-  ? [key, ROLES[key].model] : [key];
+// A setting's key, with its model's when it's a role whose list holds both.
+const withRoleModel = key => yourModels() !== null && Object.hasOwn(ROLES, key) ? [key, ROLES[key].model] : [key];
+const fromMachine = key => settingRows().some(r => r.key === key && r.for_machine === true && r.from === 'machine');
+// Whether Save clears this machine's values for `role`, leaving the project's.
+const roleCleared = role => { const own = withRoleModel(role).filter(fromMachine); return own.length > 0 && own.every(k => settingClear.has(k)); };
+// The project's value of `key`, under this machine's own.
+const projectValue = key => { const r = settingRows().find(x => x.key === key); return !r ? '' : r.for_machine === true && r.from === 'machine' ? settingNow({ value: r.repo_value }) : settingNow(r); };
 // The agent the Foreman runs on when it's left to the builder's, as foremanAgentChosen reads it.
 const buildersAgent = () => { const b = settingChosen('builder'); return ['codex', 'cursor'].includes(b) || settingProvider(b) !== null ? b : 'claude'; };
 // `role`'s entries: { group, value, label }, each value "<agent>|<model>", a blank model being the agent's own default.
@@ -2612,8 +2619,16 @@ function roleWords(role, value) {
   return `${who} · ${model === '' ? 'default' : m ? modelLabel(m) : model}`;
 }
 function roleEditor(x) {
-  if (settingClear.has(x.key)) return settingEditor(x); // 0261: this machine's value goes on Save
-  const role = x.key, entries = roleEntries(role), picked = roleValue(role, settingChosen);
+  const role = x.key;
+  if (roleCleared(role)) { // 0261: this machine's value goes on Save, leaving the project's
+    const shown = el('input', 'edit');
+    shown.type = 'text';
+    shown.value = roleWords(role, roleValue(role, projectValue));
+    shown.disabled = true;
+    shown.setAttribute('aria-label', role);
+    return [shown];
+  }
+  const entries = roleEntries(role), picked = roleValue(role, settingChosen);
   const select = el('select', 'edit');
   for (const v of [...new Set([roleValue(role, settingSaved), picked])].filter(v => !entries.some(e => e.value === v))) {
     const o = el('option', null, `${roleWords(role, v)} (not offered)`);
@@ -2832,17 +2847,20 @@ function machineLine(x) {
   const clear = el('button', 'save', 'Clear this machine\'s value');
   clear.type = 'button';
   clear.addEventListener('click', () => {
-    for (const k of withRoleModel(x.key)) { settingClear.add(k); settingTyped.delete(k); settingRefused.delete(k); }
+    for (const k of withRoleModel(x.key).filter(fromMachine)) settingClear.add(k);
+    for (const k of withRoleModel(x.key)) { settingTyped.delete(k); settingRefused.delete(k); }
     keepSettingTip(x.key);
     renderSettings();
   });
-  return el('span', 'line', null, el('span', null, `This is your machine's own value, used over the project's: ${settingValue(x.repo_value)}${x.default ? ', speck\'s default' : ''}.`), clear);
+  const project = withRoleModel(x.key).length > 1 ? roleWords(x.key, roleValue(x.key, projectValue)) : `${settingValue(x.repo_value)}${x.default ? ', speck\'s default' : ''}`; // 0400
+  return el('span', 'line', null, el('span', null, `This is your machine's own value, used over the project's: ${project}.`), clear);
 }
 function clearLine(x) {
   const keep = el('button', 'save', 'Keep this machine\'s value');
   keep.type = 'button';
   keep.addEventListener('click', () => { for (const k of withRoleModel(x.key)) { settingClear.delete(k); settingRefused.delete(k); } keepSettingTip(x.key); renderSettings(); });
-  return el('span', 'line', null, el('span', null, `This machine's value, ${settingValue(x.value)}, is cleared when you save.`), keep);
+  const value = withRoleModel(x.key).length > 1 ? roleWords(x.key, roleValue(x.key, settingSaved)) : settingValue(x.value); // 0400
+  return el('span', 'line', null, el('span', null, `This machine's value, ${value}, is cleared when you save.`), keep);
 }
 const keepSettingTip = key => { settingTip = key; settingTipKept = true; };
 const settingRows = () => settingsView !== null && Array.isArray(settingsView.groups)
@@ -2927,7 +2945,7 @@ async function sendSettings() {
   }
   const replacing = replacesCommand(changes);
   if (replacing !== null && (typeof confirm !== 'function' || !confirm(replacing.ask))) { // 0293: cancelled: the builder goes back as it was
-    settingTyped.delete('builder');
+    for (const k of withRoleModel('builder')) settingTyped.delete(k); // 0400: and the model chosen with it
     settingRefused.delete('builder');
     renderSettings();
     return;

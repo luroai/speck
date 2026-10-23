@@ -228,3 +228,33 @@ test('0400 AC2 self-check: clearing this machine\'s value for a role clears its 
   assert.equal(q.get('machine:reviewer'), '');
   assert.equal(q.get('machine:reviewer_model'), '');
 });
+
+test('0400 AC2 F1: declining to replace a hand-set build_command puts the builder\'s agent and model back together', async () => {
+  const v = view({ builder: 'claude', builder_model: 'sonnet' });
+  Object.assign(v.groups[1].settings.find(s => s.key === 'builder'), { build_command: { value: 'my-build {id}', hand_set: true, own: { claude: '', codex: '', cursor: '' }, each_ticket: false } });
+  const p = settingsPage([v], [], { confirm: () => false });
+  await openSettings(p);
+  changeTo(p, 'builder', 'codex|gpt-6.1-sol');
+  p.press(saveButton(p));
+  await p.settle();
+  assert.equal(posted(p).length, 0, 'nothing saved');
+  assert.equal(controlOf(p, 'builder').value, 'claude|sonnet', 'back as it was, model and all');
+  assert.equal(saveButton(p).disabled, true, 'nothing left to save');
+});
+
+test('0400 AC2 F2: a role whose model alone is this machine\'s own can still be cleared, back to the project\'s', async () => {
+  const v = view({ reviewer: 'codex', reviewer_model: 'gpt-6.1-sol' });
+  Object.assign(v.groups[1].settings.find(s => s.key === 'reviewer_model'), { from: 'machine', repo_value: '' });
+  const p = settingsPage([v], [{ ok: true, changed: ['reviewer_model'] }]);
+  await openSettings(p);
+  const tip = () => rowOf(p, 'reviewer').children.find(n => n.tagName === 'p' && /\bexplain\b/.test(n.className || '')); // its own, not its effort's
+  assert.match(tip().textContent, /used over the project's: Codex · default/);
+  p.press(p.all(rowOf(p, 'reviewer')).find(n => n.tagName === 'button' && n.textContent === 'Clear this machine\'s value'));
+  assert.equal(controlOf(p, 'reviewer').value, 'Codex · default', 'shows the project\'s, which Save leaves');
+  assert.match(tip().textContent, /This machine's value, Codex · GPT-6\.1 Sol, is cleared when you save/);
+  p.press(saveButton(p));
+  await p.settle();
+  const q = saveQuery(p);
+  assert.equal(q.get('machine:reviewer_model'), '');
+  assert.equal(q.has('machine:reviewer'), false, 'the agent was the project\'s already');
+});
