@@ -196,7 +196,7 @@ for (const width of [700, 1280]) {
       for (const [i, x] of boxes.entries()) assert.ok(Math.abs(x.left - main.left) < 1 && Math.abs(x.right - main.right) < 1, `${heads[i]} spans main's width`);
       await openAll(b);
       await openPrio(b);
-      // Everything holds still to be compared, the builder badges too (0168): dropping rules restarts an animation.
+      // Everything holds still to be compared, speck's screen too: dropping rules restarts an animation.
       await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
       await b.until(`document.getAnimations().length === 0`, 'nothing moving');
       const withRules = await b.js(SNAPSHOT);

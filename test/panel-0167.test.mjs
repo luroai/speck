@@ -37,7 +37,7 @@ test('0167 AC2: a ticket waiting for you is purple, a blocked or stopped one cri
 });
 
 test('0167 AC2: the speck red is used only for the speck itself', () => {
-  // Since 0168 the speck is the builder badge's eye, drawn on its canvas, so no rule uses the speck red.
+  // From 0168 the speck was the builder badge's eye, drawn on its canvas, and the badge went in 0416, so no rule uses the speck red.
   const users = plain().filter(r => r.decls.some(([, v]) => tokens(v).some(t => t === '--accent' || t === '--accent-bg'))).map(r => r.sel);
   assert.deepEqual(users, []);
   // 0303: the builders are drawn on the LCD screen, whose speck is its own red. 0413: the header's mark, whose speck was

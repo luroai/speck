@@ -141,18 +141,18 @@ const LAYOUT = id => `(() => {
     if (same) { same.left = Math.min(same.left, r.left); same.right = Math.max(same.right, r.right); }
     else lines.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
   }
-  const sub = card.querySelector('.top .sub'), badge = card.querySelector('.top .badge');
+  const sub = card.querySelector('.top .sub'), progress = card.querySelector('.top .progress');
   const under = [...card.children].filter(n => !n.classList.contains('top'));
   return { left, right, idSize: getComputedStyle(idN).fontSize, titleSize: ts.fontSize, id: rect(idN), lines,
     cut: t.scrollWidth > t.clientWidth + 0.5 || t.scrollHeight > t.clientHeight + 0.5 || ts.textOverflow === 'ellipsis' || lines.some(l => l.left < box.left || l.right > box.right + 0.5),
-    sub: sub.textContent ? rect(sub) : null, badge: badge ? rect(badge) : null, line: rect(card.querySelector('.top .line')),
+    sub: sub.textContent ? rect(sub) : null, progress: progress ? rect(progress) : null, line: rect(card.querySelector('.top .line')),
     tags: [...card.querySelectorAll('.top .tag')].map(n => ({ text: n.textContent, ...rect(n) })),
     under: under.map(n => ({ what: n.className, button: n.tagName === 'BUTTON', first: n === under.find(x => x.tagName === 'BUTTON'), ...rect(n) })),
     firstButton: (() => { const bs = under.filter(n => n.tagName === 'BUTTON'); return bs.length ? rect(bs[0]) : null; })() };
 })()`;
 
 for (const width of [375, 699, 700, 1000, 1280]) {
-  test(`0155 AC3: at ${width} px, a card has its id (14 px) and title (17 px) on one row, its tags on a row of their own, then the rest (since 0168 the badge, with the timer at the right of its row), all from its left padding`, skip, async () => {
+  test(`0155 AC3: at ${width} px, a card has its id (14 px) and title (17 px) on one row, its tags on a row of their own, then the rest (since 0168 its progress, in words only since 0416, with the timer at the right of its row), all from its left padding`, skip, async () => {
     await withPanel(async b => {
       for (const id of Object.keys(STATES)) await open(b, id);
       for (const id of Object.keys(STATES)) {
@@ -169,14 +169,15 @@ for (const width of [375, 699, 700, 1000, 1280]) {
           assert.ok(line.left >= l.id.right, `${id}: a title line starts under the id`);
         }
         const titleBottom = Math.max(...l.lines.map(x => x.bottom)), titleRight = Math.max(...l.lines.map(x => x.right));
-        // A ticket in flight has its builder badge under the tags (0168), from the card's left padding, with the timer at
-        // the right of the badge's row, at the card's right padding; a ready one has neither. The title has the full width.
+        // A ticket in flight has its progress under the tags (0168), from the card's left padding (where its builder badge
+        // was until 0416), with the timer at the right of its row, at the card's right padding; a ready one has neither.
+        // The title has the full width.
         assert.ok(Math.abs(l.line.right - l.right) < 1, `${id}: the title's row ends at ${l.line.right}, not the card's right padding at ${l.right}`);
-        if (STATES[id] === 'ready') assert.ok(l.sub === null && l.badge === null, `${id}: a ready ticket has no timer`);
+        if (STATES[id] === 'ready') assert.ok(l.sub === null && l.progress === null, `${id}: a ready ticket has no timer`);
         else {
-          assert.ok(l.sub && l.badge, `${id}: no timer`);
-          assert.ok(Math.abs(l.badge.left - l.left) < 0.5, `${id}: the badge starts at ${l.badge.left}, not the card's left padding at ${l.left}`);
-          assert.ok(l.sub.top < l.badge.bottom && l.sub.bottom > l.badge.top, `${id}: the timer is on the badge's row`);
+          assert.ok(l.sub && l.progress, `${id}: no timer`);
+          assert.ok(Math.abs(l.progress.left - l.left) < 0.5, `${id}: the progress starts at ${l.progress.left}, not the card's left padding at ${l.left}`);
+          assert.ok(l.sub.top < l.progress.bottom && l.sub.bottom > l.progress.top, `${id}: the timer is on the progress's row`);
           assert.ok(Math.abs(l.sub.right - l.right) < 1, `${id}: the timer ends at ${l.sub.right}, not the card's right padding at ${l.right}`);
         }
         // The tags: on a row of their own under the title, all the same height, the first at the left padding.
@@ -189,7 +190,7 @@ for (const width of [375, 699, 700, 1000, 1280]) {
         }
         // Then everything under the top row (the bar went into it in 0156), starting at the left padding: no empty column on the left.
         const tagsBottom = Math.max(...l.tags.map(t => t.bottom));
-        if (l.badge) assert.ok(l.badge.top >= tagsBottom - 0.5 && l.under[0].top >= l.badge.bottom - 0.5, `${id}: the badge is between the tags and the rest`);
+        if (l.progress) assert.ok(l.progress.top >= tagsBottom - 0.5 && l.under[0].top >= l.progress.bottom - 0.5, `${id}: the progress is between the tags and the rest`);
         assert.ok(l.under[0].top >= tagsBottom - 0.5, `${id}: ${l.under[0].what} is not under the tags`);
         for (const u of l.under) {
           if (u.button && !u.first) continue; // beside the first button
@@ -202,7 +203,7 @@ for (const width of [375, 699, 700, 1000, 1280]) {
 }
 
 // The same widths as 0151's AC1 tests. A ready ticket has no timer, so its title wraps as a Plan ticket's does. Since
-// 0168 so does a ticket in flight's, whose timer is on its badge's row (from 0156 its ensō was beside its title).
+// 0168 so does a ticket in flight's, whose timer is on its progress's row (from 0156 its ensō was beside its title).
 for (const [width, most] of [[375, 2], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
   test(`0155 AC3: at ${width} px, the longest title wraps as in Plan, on at most ${most} ${most === 1 ? 'line' : 'lines'}, in flight or not`, skip, async () => {
     await withPanel(async b => {

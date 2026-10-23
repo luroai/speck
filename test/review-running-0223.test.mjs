@@ -168,7 +168,6 @@ test('0223 AC1: the card of a building ticket whose first round a subagent is ru
   const p = fake([{ ...t, started: ago(65), build_running: true, self_check: 'no changes' }]);
   await p.settle();
   assert.equal(say(p, '0001'), 'Claude-subagent is reviewing · round 1');
-  assert.equal(find(p, rowOf(p, '0001'), /^badge\b/)[0].attrs['aria-label'], 'The builder is with the reviewer');
 });
 
 test('0223 AC3: a subagent\'s round given up on, or whose build has gone, stops counting; a long one that is still going keeps counting', async () => {

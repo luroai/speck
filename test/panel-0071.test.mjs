@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { CLI, env, T, fakePage, queueRows, exitOf, badgeOf } from './support/panel.mjs';
+import { CLI, env, T, fakePage, queueRows, exitOf, sayOf } from './support/panel.mjs';
 import { buildPanel, runs } from './support/build-panel.mjs';
 
 // ---------- 0071: a paused build on its queue row (its pause and play icon went in 0145) ----------
@@ -29,12 +29,12 @@ function page(s = state()) {
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 
-test('0071 AC4: a paused build\'s badge stands still (its dot until 0168) and it says "Paused" beside its counter', async () => {
+test('0071 AC4: a paused build says it\'s paused (its dot stood still until 0168, its badge until 0416) and "Paused" beside its counter', async () => {
   const p = page();
   await p.settle();
   const paused = rowOf(p, '0002'), running = rowOf(p, '0001');
-  assert.equal(badgeOf(paused).className, 'badge still', 'paused: the builder stands still');
-  assert.equal(badgeOf(running).className, 'badge type', 'running: the builder is at work');
+  assert.equal(sayOf(paused).textContent, 'Paused');
+  assert.equal(sayOf(running).textContent, 'Writing tests and code', 'running: the builder is at work');
   const sub = topOf(paused).children.find(n => n.className === 'sub');
   assert.match(sub.textContent, /^Paused · 01:0\d$/);
   assert.match(topOf(running).children.find(n => n.className === 'sub').textContent, /^01:0\d$/);
@@ -43,7 +43,7 @@ test('0071 AC4: a paused build\'s badge stands still (its dot until 0168) and it
   assert.match(sub.textContent, /^Paused · 01:0\d$/);
 });
 
-test('0071 AC4: played again, the badge moves (its dot until 0168) and "Paused" goes', async () => {
+test('0071 AC4: played again, it says what it\'s doing (its dot moved until 0168, its badge until 0416) and "Paused" goes', async () => {
   const s = state();
   const p = page(s);
   await p.settle();
@@ -51,7 +51,7 @@ test('0071 AC4: played again, the badge moves (its dot until 0168) and "Paused" 
   p.timers.shift()();
   await p.settle();
   const row = rowOf(p, '0002');
-  assert.equal(badgeOf(row).className, 'badge review', 'at work with the reviewer (0169)');
+  assert.match(sayOf(row).textContent, /is (reviewing|fixing)/, 'at work with the reviewer');
   assert.match(topOf(row).children.find(n => n.className === 'sub').textContent, /^01:0\d$/);
 });
 
