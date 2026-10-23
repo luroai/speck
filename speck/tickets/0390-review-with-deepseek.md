@@ -1,7 +1,7 @@
 ---
 id: "0390"
 title: "Review with DeepSeek"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T07:35:14.552Z"
 ---
 # 0390 · Review with DeepSeek
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck's reviewers are Codex, Claude Code and Cursor. There's no way to review with a model from a provider you have an API key for, such as DeepSeek, which may be cheaper or quicker.
@@ -48,7 +48,9 @@ speck's reviewers are Codex, Claude Code and Cursor. There's no way to review wi
 - Self-check: no changes. Also ran the real Claude Code (2.1.301) with the reviewer's exact flags and environment against a local stand-in for DeepSeek's API: its one request went to the given address with only the DeepSeek key (no Authorization header), and `--resume` continued the same session. No DeepSeek key is set on this machine, so no round has run against DeepSeek itself.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+DeepSeek can now review your tickets. Save your DeepSeek key once with `speck keys set deepseek`, set the reviewer to `deepseek`, and each review round runs on DeepSeek's model (its pro model unless you pick another). It works whatever builds the ticket. Claude Code has to be installed, as speck uses it to talk to DeepSeek, but the reviewer only ever gets DeepSeek's address and your DeepSeek key: it doesn't use your Claude account, settings or connectors, and sends nothing to Anthropic. If the key or Claude Code is missing, the round stops straight away and says what to do, and `speck doctor` checks both.
+
+Worth keeping an eye on: no key is set on this machine, so the first round against DeepSeek itself will be the first real one. Choosing DeepSeek in the Settings view comes with a later ticket.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,4 +59,76 @@ speck's reviewers are Codex, Claude Code and Cursor. There's no way to review wi
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (no inbox notes: none needs its own ticket, and the Settings view is 0393):
+- No round has run against DeepSeek's real API yet, as this machine has no DeepSeek key. The flags and environment were checked against the real Claude Code and a local stand-in API. Run one round once a key is set.
+- Known limit: a `command` of your own under `reviewer_options.deepseek` replaces the built-in reviewer, as for the other built-in reviewers, and then gets neither the key nor the shut-off environment.
+- Claude Code prints an `unrecognized_model` warning for DeepSeek's model names on its error output. It's harmless, and only shows if a round fails.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "75771b7e91857667b1a653c9114fde0ba4142c70",
+    "session": "fresh",
+    "thread_id": "01a167b5-9ffd-7e53-b619-468970ec994d",
+    "builder_response": "- Tests run: test/review-provider-0390.test.mjs (and the commands.checks files, which speck test --files adds)\n- Round 1. A provider reviewer is the Claude reviewer's read-only flags plus `--bare`, without `--effort` (scripts/reviewers.mjs), with an environment built from an allowlist in scripts/provider-review.mjs: the provider's address and key, every model variable set to the provider's model, Anthropic's non-essential traffic off, and HOME / CLAUDE_CONFIG_DIR in the repo's ignored speck/.cache/provider-<name>/ (0700), so it can't read the user's Claude sign-in, settings or connectors and its sessions persist for --resume.\n- Checked by hand, beyond the tests (which use a stand-in `claude`): the real Claude Code 2.1.301, run with these exact flags and env against a local stand-in Anthropic-format API, sent its single request to the given address with x-api-key only (no Authorization header) and `--resume` continued the same session. No DeepSeek key is set on this machine, so no round has run against DeepSeek itself.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 113334,
+      "cached_input_tokens": 67840,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 892,
+      "reasoning_output_tokens": 115
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T07:42:23.116Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/reviewers.mjs selects the provider's default or configured model, applies Claude's read-only flags plus --bare, omits --effort, resumes sessions and records reviewer deepseek. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/provider-review.mjs builds an allowlisted environment with the provider endpoint and key, isolated HOME and Claude configuration, provider model overrides and disabled non-essential traffic. reviewerOptions adds --bare, --setting-sources= and --strict-mcp-config. The AC2 environment and flag test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdReview calls providerReady before starting a round; it gives actionable errors for missing Claude Code or keys. doctorChecks checks both dependencies. All three AC3 tests passed, including checks that failed attempts leave the ticket unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "core.mjs modelFamily treats provider names as independent families. reviewerOptions and provider helpers use the provider registry generically. Both AC4 tests passed, including a separate Acme provider."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief's reviewer table includes provider reviewers, and README states 'DeepSeek is tested' with setup instructions. Added document tests check commands and names rather than prose wording. The recorded test run reports 118 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "DeepSeek reviews now support model selection, read-only operation and continued review sessions, with isolated credentials and clear setup errors. The relevant tests passed. A live DeepSeek round has not been tested; the builder reports checking the real Claude CLI against a local API stand-in. No blocking issues found."
+  }
+}
+```
+
+</details>
