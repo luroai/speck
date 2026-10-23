@@ -1,7 +1,7 @@
 ---
 id: "0419"
 title: "Fit a closed Plan or Build ticket on two lines"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-10-23
 started: "2026-10-23T16:20:29.027Z"
 blocked_at: ""
 waited_seconds: 2046
+approved: "2026-10-23T17:31:40.959Z"
 
 ---
 # 0419 · Fit a closed Plan or Build ticket on two lines
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 A closed ticket in Plan or Build takes three or four rows: its title, a row of boxed tags, then its criteria and lint result, then what it waits on. In a narrow side pane that's 110–175 px per ticket, so only a few fit on screen.
@@ -63,9 +64,16 @@ Changes what you'd notice: yes
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The height test bypasses a known failure of AC5.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 901,172
+- Elapsed since build started: 71 min
+- Changed lines: 127 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - On a touch screen the details line is 44 px a line with wide gaps, so cards are tall there: speck/ideas/2026-10-23-tighten-a-card-s-details-line-on-a-touch-screen.md.
