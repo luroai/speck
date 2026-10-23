@@ -246,9 +246,35 @@ export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCur
   try { models = await reviewerModels(repo, read, readCursor, providers); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
   try { built = await builderModels(repo, read, readCursor, providers); } catch (e) { built = { builder: '', why: `Couldn't read the builder's models (${e.message}), so type the model's name.` }; }
   try { foreman = await foremanModels(repo, read, readCursor, providers); } catch (e) { foreman = { foreman: '', why: `Couldn't read the Foreman agent's models (${e.message}), so type the model's name.` }; }
-  const agents = await found;
-  return { ...panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents, providers }), your_agents: yourAgentsShown(repo, agents, providers) };
+  const agents = await found, yours = yourAgentsShown(repo, agents, providers);
+  const listed = yours.why ? null : await yourModels(yours, read, readCursor, providers);
+  return { ...panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents, providers }), your_agents: yours, ...(listed ? { agent_models: listed } : {}) };
 }
+
+// 0400: the models of each of your agents in `yours` (yourAgentsView), in its order, for the Settings view's one list
+// for each role: { id, name, efforts, models }, `efforts` true for an agent that takes one (Claude Code and Codex), and
+// `why` in one line when its models can't be read, so only its own default is offered. Cursor and Codex are asked
+// through `readCursor` and `read`, only when they're yours.
+async function yourModels(yours, read, readCursor, providers) {
+  const out = [];
+  for (const a of (Array.isArray(yours.agents) ? yours.agents : []).filter(a => a.yours === true)) {
+    const p = providerNamed(a.id, providers);
+    let got;
+    if (p) got = { models: p.models.map(slug => ({ slug, display_name: providerModelName(p, slug), description: slug === p.defaultModel ? `${p.label}'s default` : null })) };
+    else if (a.id === 'claude') got = { models: CLAUDE_MODELS.map(m => ({ ...m })) };
+    else {
+      try { got = await (a.id === 'cursor' ? readCursor() : read()); } catch (e) { got = { why: `Couldn't read ${a.name}'s models (${String(e?.message ?? e).split('\n')[0]}).` }; }
+    }
+    const models = Array.isArray(got?.models) ? got.models.filter(m => m && typeof m.slug === 'string' && m.slug) : [];
+    const why = !models.length ? untyped(typeof got?.why === 'string' && got.why ? got.why : `${a.name} lists no models.`) : null;
+    out.push({ id: a.id, name: a.name, efforts: a.id === 'claude' || a.id === 'codex', models, ...(why ? { why } : {}) });
+  }
+  return out;
+}
+// A provider's model by the name its list shows, without the provider's own: "V4 Pro" for deepseek-v4-pro.
+const providerModelName = (p, slug) => slug.replace(new RegExp(`^${p.name}-`), '').split('-').map(w => w && `${w[0].toUpperCase()}${w.slice(1)}`).join(' ');
+// Why an agent's models can't be read, without telling you to type a model's name: its list has no box for one.
+const untyped = why => why.replace(/(?:,? (?:so|or) |: )type the model's name[^.]*\./i, '.').replace(/\s*Type the model's name instead\./i, '').trim();
 
 // 0399: yourAgentsView for the Settings view, from the agents `found`, or { why } in one line when it can't be read,
 // such as when this machine's list can't be read.
