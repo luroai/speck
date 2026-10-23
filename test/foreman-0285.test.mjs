@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { fakePage, deferred, page, T, click, panelRepo, startPanel, stop, request, cliCopy, freePort } from './support/panel.mjs';
+import { fakePage, page, T, click, panelRepo, startPanel, stop, request, cliCopy, freePort } from './support/panel.mjs';
 import { runRepo, startRun, stopRun, until, killAll, env as runEnv, CLI } from './support/run.mjs';
 import { shipRepo } from './support/ship.mjs';
 import { shipQueue } from '../scripts/ship-queue.mjs';
@@ -155,7 +155,7 @@ test('0285 AC3: Settings has a Foreman group, first, with the speck run switch, 
 });
 
 test('0285 AC3: a refused switch shows speck run\'s own message, as before', async () => {
-  const p = fakePage([state(view({}), { run: undefined }), deferred(), { status: 409, body: { error: 'speck run won\'t start: no build_command.' } }]);
+  const p = fakePage([state(view({}), { run: undefined }), { groups: [] }, { status: 409, body: { error: 'speck run won\'t start: no build_command.' } }]);
   await p.settle();
   click(p.byId('settings-open'));
   await p.settle();
