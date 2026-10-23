@@ -39,11 +39,14 @@ const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p
 
 // The backgrounds text and controls sit on: the page, the sections, raised rows and the open items' tints.
 const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--idea-bg', '--inbox-bg', '--bad-bg'];
+// 0413: what sits in speck's screen's dark frame (its rules start ".bezel") sits on the frame's colour, not the surfaces.
+const onFrame = sel => sel.split(',').every(s => /^\.bezel\b/.test(s.trim()));
+const behind = sel => (onFrame(sel) ? ['--bezel'] : SURFACES);
 // Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
 // stage dots and the ensō's speck went in 0168.)
 const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats'];
 // Every control and card with an edge of its own, by its main rule.
-const EDGED = ['.tag', '.toggle', '.settings-open', '.run-state', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
+const EDGED = ['.tag', '.toggle', '.bezel .settings-open', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
   '#full-ticket .close', '#full-ticket .ship', '.prio-menu', '.item', '.q', '#shipped tr', 'section'];
 const CONTROL = /(?:^|[^\w-])(?:\.(?:tag|toggle|settings-open|run-state|set-ready|full-open|stop-build|back-to-plan|copy|close|ship|prio-menu|item|q)|section)(?![\w-])/;
 const lastCompound = s => s.trim().split(/\s+|>|\+|~/).filter(Boolean).pop() || '';
@@ -65,7 +68,7 @@ test('0161 AC1: every text colour meets 4.5:1 on each background it can sit on, 
       assert.equal(fg.length, 1, `${r.sel}: its colour ${colour} is one of the panel's tokens`);
       const bgDecl = get(r, 'background') || get(r, 'background-color');
       const own = tokens(bgDecl).filter(t => !SURFACES.includes(t));
-      const under = own.length ? own : SURFACES;
+      const under = own.length ? own : behind(r.sel);
       const need = (size(r) || 13) >= 14 ? 4.5 : 7;
       for (const b of under) {
         const ratio = contrast(look[fg[0]], look[b]);
@@ -116,7 +119,7 @@ test('0161 AC2: the edge of every control and card meets 3:1 against each backgr
       const edge = r.decls.filter(([k]) => /^border/.test(k)).flatMap(([, v]) => tokens(v));
       const fill = tokens(get(r, 'background')).filter(t => !SURFACES.includes(t)); // a filled button's edge is its fill
       for (const t of [...edge, ...fill]) {
-        for (const b of SURFACES) {
+        for (const b of behind(r.sel)) {
           const ratio = contrast(look[t], look[b]);
           assert.ok(ratio >= 3, `${name}: ${r.sel}'s edge ${t} ${look[t]} on ${b} ${look[b]} is ${ratio.toFixed(2)}:1`);
           checked++;

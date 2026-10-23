@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, fakePage, page } from './support/panel.mjs';
 
 // ---------- 0303: the header's mark and the Foreman's builder on the LCD screen ----------
 
@@ -40,27 +40,13 @@ const rule = sel => (page().match(new RegExp(`\\n\\s*${sel.replace(/[.*+?^${}()|
 
 // 0320: the mark is the design's logo now, an svg written into the page (checked in logo-0320.test.mjs), in place of
 // 0303's canvas drawn with the renderer's tile().
-test('0303 AC1: the header\'s mark comes before "speck", hidden from screen readers', () => {
-  const logo = (page().match(/<div class="logo">([\s\S]*?<\/span>)<\/div>/) || [])[1] || ''; // 0373: it holds the base branch's own <div>
-  assert.match(logo, /^<svg [^>]*class="mark" id="mark" aria-hidden="true">[\s\S]*?<\/svg><b class="name">speck<\/b><div class="repo">base <code>\{\{base\}\}<\/code><\/div><span>control panel<\/span>$/, 'with speck in its own element since 0304, then the base branch since 0373');
-});
+// 0413: the header's mark went with the header row, and the Foreman's button is speck's screen, which draws speck (panel-0413.test.mjs).
 
 test('0303 AC1: since 0320 the page draws no tile for the mark', async () => {
   const { p, tiles } = fake(() => [READY]);
   await p.settle();
   await refresh(p);
   assert.equal(tiles.length, 0);
-});
-
-test('0303 AC1: at 32 px since 0309, the ink the text colour and the speck --dot (since 0320, as the logo\'s --speck)', () => {
-  const css = rule('.logo .mark');
-  for (const d of ['width: 32px', 'height: 32px', '--speck: var(--dot)']) {
-    assert.ok(css.includes(d), `${d} in .logo .mark { ${css} }`);
-  }
-  const root = (page().match(/:root \{([\s\S]*?)\}/) || [])[1] || '', dark = (page().match(/:root\[data-theme="dark"\] \{([\s\S]*?)\}/) || [])[1] || '';
-  assert.match(root, /--dot: #b0412e;/, 'the design\'s --dot, light');
-  assert.match(dark, /--dot: #d4664e;/, 'the design\'s --dot, dark');
-  assert.doesNotMatch(page(), /\.mark \.dot\b/, 'the old drawing\'s dot rules are gone');
 });
 
 test('0303 AC1: without the renderer (it didn\'t load), the header still shows (0364: with no builder in the Foreman\'s button)', async () => {
@@ -78,7 +64,6 @@ test('0303 AC2: the Foreman\'s button makes no mini builder, as builds start and
   for (const next of [[BUILDING, READY], [READY], [BUILDING]]) {
     assert.equal(minis.length, 0);
     assert.equal(builderIn(p), undefined);
-    assert.match((p.byId('run').children[0].attrs || {}).class, /^board\b/, 'its notice board (0365)');
     tickets = next;
     await refresh(p);
   }
@@ -93,29 +78,4 @@ test('0303 AC2: a change to reduced motion makes no builder in the button', asyn
   for (const fn of changes) fn({ matches: false });
   assert.equal(minis.length, 0);
   assert.equal(builderIn(p), undefined);
-});
-
-// ---------- in a real browser ----------
-
-const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-// The colours each canvas shows, as hex, most common first, ignoring transparent pixels.
-// 0320: the mark is an svg in the page's own colours now, checked in a real browser in logo-0320.test.mjs. 0364: the
-// Foreman's button has no builder, so there is none to follow the look.
-test('0303 AC3: in a real browser, the Foreman\'s button draws no builder, in either look', skip, async () => {
-  const r = panelRepo();
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
-  try {
-    for (const look of ['light', 'dark']) {
-      const b = await browserPage('about:blank');
-      try {
-        await b.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
-        await b.send('Page.enable');
-        await b.send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('speck-theme', '${look}');` });
-        await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-        await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run .board')`, 'the panel');
-        assert.equal(await b.js(`document.documentElement.dataset.theme`), look);
-        assert.equal(await b.js(`document.querySelectorAll('#run canvas').length`), 0, look);
-      } finally { await b.close(); }
-    }
-  } finally { await stop(panel); }
 });
