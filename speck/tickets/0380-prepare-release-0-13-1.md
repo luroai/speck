@@ -1,7 +1,7 @@
 ---
 id: "0380"
 title: "Prepare release 0.13.1"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T00:04:00.884Z"
 ---
 # 0380 · Prepare release 0.13.1
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 0376 launches a stopped ticket again without restarting speck run, 0377 stops a chance failure handing a ticket back, 0378 makes doctor check a Cursor reviewer, and 0379 keeps a pop-up's Close button in view. Anyone following the setup prompt, or updating speck on another machine, gets 0.13.0 without them.
@@ -50,7 +50,7 @@ speck is ready to be released as 0.13.1.
 - Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.13.1, a bug-fix release with the four fixes made since 0.13.0: a stopped build starts again without restarting speck run, a test that fails once by chance no longer sends a ticket back, the setup check looks for Cursor's tool when Cursor reviews, and a pop-up's Close button stays in view. The changelog, the release notes and the version shown everywhere now say 0.13.1, and the "Built with speck" figures in the README are up to date. Once it ships, check that the 0.13.1 release page appears on GitHub; if it doesn't, the ticket's notes say how to publish it by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,4 +59,74 @@ speck is ready to be released as 0.13.1.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+- Follow-ups: none.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "11664584bbd8c736aabfede202d3790b3b0ccddc",
+    "session": "fresh",
+    "thread_id": "01a16614-0f06-72f3-a33a-852d283d77ab",
+    "builder_response": "- Tests run: test/release-0380.test.mjs test/release-0375.test.mjs test/release-0346.test.mjs (plus the configured checks)\n- Round 1. Covers every ticket shipped since v0.13.0: 0376, 0377, 0378 and 0379 (git diff v0.13.0..HEAD -- speck/tickets/done lists only these).\n- test/release-0375.test.mjs: its checks that named 0.13.0 as the current version now follow package.json, and its README figures check now checks only the figures 0.13.0 was built from, the same way 0360 changed release-0346 for 0.10.3.\n- README figures recomputed with test/support/figures.mjs at the build's base commit: 371 shipped, 16 cancelled, 12 min median, 1 review round median, 186 first-round approvals.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 198177,
+      "cached_input_tokens": 161536,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 969,
+      "reasoning_output_tokens": 49
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T00:06:25.670Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.13.1. scripts/install.mjs reads that version and prints it during init; both 0380 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.13.1 above 0.13.0 and accurately describes shipped tickets 0376–0379. Git confirms these are the only done tickets added since v0.13.0, and the older changelog sections are unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say 0.13.1, a public preview. The README setup prompt retains the quoted semver:* install command. Both 0380 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.13.1.md includes a short introduction, all four fixes and their benefits, per-project update instructions, upgrade implications and the correct changelog link. Its claims match the shipped tickets and it contains no person's name. AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent recomputation from the current done tickets matches the README: 371 shipped, 16 cancelled, 12 minutes median, 1 review round median and 186 first-round approvals. AC5 tests passed. The recorded targeted run reports 141 passed, 3 skipped and no failures; changes to historical release tests appropriately preserve their historical checks."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Release 0.13.1 is ready for the owner's merge decision. The version, release notes and status lines agree, all four shipped fixes are accurately described, and the README figures match the ticket records. The targeted tests passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
