@@ -12,7 +12,7 @@ import { codexStartWords } from './codex-build.mjs';
 import { cursorStartWords, cursorCli, createChat } from './cursor-build.mjs';
 import { onPath } from './install.mjs';
 import { providerKey } from './keys.mjs';
-import { PROVIDERS } from './providers.mjs';
+import { knownProviders, cantRun } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { providerStartWords } from './provider-build.mjs';
 
@@ -34,7 +34,7 @@ export const claudeStartWords = cfg => withBuilderModel(splitCommand(DEFAULT_BUI
 // the ticket and its session, or { why } saying in a few words why it isn't started. `installed` says whether a command
 // is on the PATH, so tests can stand in. 0391: `providers` are the model providers speck knows, and a provider's key
 // is checked in `repo`'s when it's given.
-export function buildPlan(cfg, t, installed = onPath, { repo = null, providers = PROVIDERS } = {}) {
+export function buildPlan(cfg, t, installed = onPath, { repo = null, providers = knownProviders(repo ?? undefined) } = {}) {
   const builder = ticketBuilder(t, cfg);
   const p = Object.hasOwn(LABELS, builder) ? null : providerNamed(builder, providers);
   if (p) return providerPlan(cfg, p, installed, repo, providers);
@@ -48,6 +48,7 @@ export function buildPlan(cfg, t, installed = onPath, { repo = null, providers =
 
 // 0391: how speck run starts a build with provider `p`, as buildPlan says it.
 function providerPlan(cfg, p, installed, repo, providers) {
+  if (cantRun(p, 'build')) return { why: `its builder, ${cantRun(p, 'build').replace(/\. Pick another agent for it in Settings\.$/, '')}. Set the ticket's builder to another` }; // 0401
   if (!installed('claude')) return { why: `its builder, ${p.label}, needs Claude Code installed, as speck runs ${p.label}'s models through it (claude isn't on the PATH). Install Claude Code (https://claude.com/claude-code), or set the ticket's builder to another` };
   let key = '';
   try { key = repo ? providerKey(repo, p.name, { providers }) : 'not checked'; } catch (e) { return { why: e.message.replace(/\.$/, '') }; }

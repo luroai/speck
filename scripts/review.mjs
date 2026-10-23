@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, ticketAgents, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
 import { providerReady } from './provider-review.mjs';
-import { PROVIDERS } from './providers.mjs';
+import { knownProviders } from './custom-providers.mjs';
 import { fullPrompt, historyPrompt, reviewerChanged, roundOneFile, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong, reviewerOptions } from './reviewers.mjs';
 import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
@@ -392,7 +392,7 @@ export function cmdReview(args) {
 }
 
 function unsupported(id, reviewer) {
-  throw new SpeckError(`speck review runs the codex, claude and cursor reviewers, a model provider's (${PROVIDERS.map(p => p.name).join(', ')}), or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
+  throw new SpeckError(`speck review runs the codex, claude and cursor reviewers, a model provider's (${knownProviders().map(p => p.name).join(', ')}), or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
 }
 
 // Where the JSON value starting at the brace at `from` ends, skipping braces inside strings, or -1 if it never closes.

@@ -15,10 +15,11 @@ import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync, offeredModels, offeredModelsAsync, findAgentsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
 import { buildsEachTicket } from './build-model.mjs';
-import { PROVIDERS } from './providers.mjs';
+import { knownProviders } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { keysStatus, saveProviderKey } from './keys.mjs';
 import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs';
+export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
 
 export const SETTING_GROUPS = [
   // 0286: the panel shows this group's settings in its own Foreman group, under the speck run switch.
@@ -85,7 +86,7 @@ const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
 // 0393: the builder, reviewer and Foreman lists offer each model provider in `providers` too.
-function choicesOf(key, file, providers = PROVIDERS) {
+function choicesOf(key, file, providers = knownProviders()) {
   const named = providers.map(p => p.name);
   if (key === 'reviewer') {
     const options = file.reviewer_options !== null && typeof file.reviewer_options === 'object' ? Object.keys(file.reviewer_options) : [];
@@ -120,7 +121,7 @@ function valueIn(text, repo, key) {
 // and the current value, with why the others are left out in `missing`, one line.
 // 0393: each model provider in `providers`, given back in `providers` with its label, its models and whether this
 // machine has its key (never the key), is offered as builder, reviewer and Foreman while Claude Code is installed.
-export function panelSettings(repo, { models, builderModels, foremanModels, agents, providers = PROVIDERS } = {}) {
+export function panelSettings(repo, { models, builderModels, foremanModels, agents, providers = knownProviders(repo) } = {}) {
   const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
     const { value, inFile } = valueIn(text, repo, s.key), all = choicesOf(s.key, file, providers);
@@ -133,7 +134,7 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
     // 0387: as speck uses it, this machine's over speck/config.yml's, as switching the builder saves it for this machine.
     const used = { ...file, ...mine };
     const build = s.key !== 'builder' ? {} : { build_command: { value: used.build_command === undefined || used.build_command === null ? null : String(used.build_command),
-      hand_set: handSetBuildCommand(used), each_ticket: buildsEachTicket(used.build_command ?? ''), own: OWN_BUILD_COMMANDS } };
+      hand_set: handSetBuildCommand(used), each_ticket: buildsEachTicket(used.build_command ?? ''), own: { ...OWN_BUILD_COMMANDS, ...Object.fromEntries(providers.map(p => [p.name, ''])) } } }; // 0401: and yours
     const machine = !MACHINE_SETTINGS.includes(s.key) ? {}
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s),
@@ -177,7 +178,7 @@ export const CLAUDE_MODELS = Object.freeze(['fable', 'opus', 'sonnet', 'haiku'].
 // 0393: `key` is the setting, builder, reviewer or foreman. The Foreman's list leaves out only providers. A provider in
 // `providers` runs through Claude Code, so it needs Claude Code installed, though not signed in.
 const REVIEWER_AGENTS = { codex: 'codex', claude: 'claude', 'claude-subagent': 'claude', cursor: 'cursor' };
-function readyReviewers(choices, { agents }, current, key, providers = PROVIDERS) {
+function readyReviewers(choices, { agents }, current, key, providers = knownProviders()) {
   const byId = new Map((Array.isArray(agents) ? agents : []).map(a => [a.id, a]));
   const left = [], cant = [];
   const kept = choices.filter(c => {
@@ -204,7 +205,7 @@ function readyReviewers(choices, { agents }, current, key, providers = PROVIDERS
 // efforts }] } when it can list them (Codex, or Claude's names from 0278), or { reviewer, why } in one line when it can't.
 // 0347: and the models Cursor lists for cursor, as builderModels reads them.
 // 0393: and a model provider's, from speck's list.
-export async function reviewerModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = PROVIDERS) {
+export async function reviewerModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = knownProviders(repo)) {
   const reviewer = String(loadConfig(repo).reviewer ?? '');
   if (reviewer === 'claude' || reviewer === 'claude-subagent') return { reviewer, models: CLAUDE_MODELS };
   if (providerNamed(reviewer, providers)) return { reviewer, models: providerModels(providerNamed(reviewer, providers)) };
@@ -216,7 +217,7 @@ export async function reviewerModels(repo, read = codexModelsAsync, readCursor =
 // 0279: the models the configured builder offers, read now, for the Settings view: { builder, models } with Claude's
 // model names for claude and the models Codex lists for codex, or { builder, why } in one line when it can't list them.
 // 0288: and the models Cursor lists for cursor.
-export async function builderModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = PROVIDERS) {
+export async function builderModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = knownProviders(repo)) {
   const builder = String(loadConfig(repo).builder ?? '');
   if (builder === 'claude') return { builder, models: CLAUDE_MODELS };
   if (providerNamed(builder, providers)) return { builder, models: providerModels(providerNamed(builder, providers)) }; // 0393
@@ -227,7 +228,7 @@ export async function builderModels(repo, read = codexModelsAsync, readCursor = 
 
 // 0348: the models of the agent the Foreman runs on (foremanAgentOf), read now, for the Settings view: { foreman, models }
 // with Claude's model names for claude and the models Codex or Cursor lists, or { foreman, why } in one line when it can't.
-export async function foremanModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = PROVIDERS) {
+export async function foremanModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = knownProviders(repo)) {
   const foreman = foremanAgentOf(loadConfig(repo), providers);
   if (foreman === 'claude') return { foreman, models: CLAUDE_MODELS };
   if (providerNamed(foreman, providers)) return { foreman, models: providerModels(providerNamed(foreman, providers)) }; // 0393
@@ -238,7 +239,7 @@ export async function foremanModels(repo, read = codexModelsAsync, readCursor = 
 // (0279) and the Foreman agent (0348) offer, read now, asking Codex once and Cursor once (0347) when more than one runs on
 // it, and which agents are installed and signed in (0288), read at the same time. Throws when speck/config.yml can't be read.
 // 0393: and each model provider in `providers`.
-export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCursorModels = () => agentModelsAsync('cursor'), find = findAgentsAsync, providers = PROVIDERS) {
+export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCursorModels = () => agentModelsAsync('cursor'), find = findAgentsAsync, providers = knownProviders(repo)) {
   let asked = null, cursorAsked = null;
   const read = () => (asked ??= readCodex()), readCursor = () => (cursorAsked ??= readCursorModels());
   const found = Promise.resolve().then(() => find({ models: false })).catch(() => undefined);
@@ -287,7 +288,7 @@ function yourAgentsShown(repo, found, providers) {
 // Foreman agent but not yet saved: { agent, models } as reviewerModels reads them, or { agent, why } in one line, even
 // when reading them fails.
 // 0393: and a model provider's, from speck's list.
-export async function agentModels(agent, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = PROVIDERS) {
+export async function agentModels(agent, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = knownProviders()) {
   if (agent === 'claude' || agent === 'claude-subagent') return { agent, models: CLAUDE_MODELS };
   if (providerNamed(agent, providers)) return { agent, models: providerModels(providerNamed(agent, providers)) };
   try {
@@ -356,12 +357,12 @@ function checkChange(repo, text, cfg, { key, value, machine, blank }) {
   if (own && machine && !blank && value === '')
     return { own, clear: true, want: undefined, after: repoValue, same: !Object.hasOwn(mine, key) };
   let want;
-  try { want = checkConfigValue(key, value); }
+  try { want = checkConfigValue(key, value, knownProviders(repo)); }
   catch (e) { if (e instanceof SpeckError) return { status: 422, error: e.message }; throw e; }
   if (key === 'reviewer_model' && /[\x00-\x1f\x7f]/.test(value))
     return { status: 422, error: 'reviewer_model must be on one line, with no tabs or other control characters.' };
   // 0276: reviewer_effort is checked as speck config set checks it, which accepts an effort Codex lists, such as ultra.
-  const choices = key === 'reviewer_effort' ? undefined : choicesOf(key, parseYaml(text));
+  const choices = key === 'reviewer_effort' ? undefined : choicesOf(key, parseYaml(text), knownProviders(repo));
   if (choices && ![].concat(want).every(w => choices.includes(w)))
     return { status: 422, error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` };
   const now = own && Object.hasOwn(mine, key) ? mine[key] : repoValue;
@@ -395,7 +396,7 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
   const switched = checked.find(c => c.key === 'builder' && !c.same), cleared = {};
   if (switched && !switched.clear) {
     const to = String(switched.want), given = checked.find(c => c.key === 'builder_model');
-    const why = clearsBuilderModel(given ? given.after : cfg.builder_model, to, () => offered?.builder === to ? offered.models : providerNamed(to) ? providerNamed(to).models : offeredModels(to)); // 0393
+    const why = clearsBuilderModel(given ? given.after : cfg.builder_model, to, () => offered?.builder === to ? offered.models : providerNamed(to, knownProviders(repo)) ? providerNamed(to, knownProviders(repo)).models : offeredModels(to)); // 0393
     if (why !== null) {
       if (given) Object.assign(given, { clear: false, want: '', after: '', same: Object.hasOwn(mine, 'builder_model') && mine.builder_model === '' });
       else checked.push({ key: 'builder_model', own: true, want: '', after: '', same: false });
@@ -406,7 +407,7 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
   const will = { ...cfg, ...Object.fromEntries(checked.map(c => [c.key, c.after])) };
   // 0293: switching the builder sets build_command to its own, for this machine (0387), asking first for one set by
   // hand. Clearing this machine's builder also clears the build_command switching to it saved, as `speck config set` does.
-  const own = switched && !switched.clear ? ownBuildCommand(String(switched.want)) : null;
+  const own = switched && !switched.clear ? ownBuildCommand(String(switched.want), knownProviders(repo)) : null;
   if (own !== null) will.build_command = own;
   if (switched?.clear && Object.hasOwn(mine, 'build_command') && mine.build_command === ownBuildCommand(mine.builder)) {
     checked.push({ key: 'build_command', own: true, clear: true, want: undefined, same: false });
@@ -513,7 +514,7 @@ export async function panelSaveRequestAsync(repo, query, find) {
     // 0387: the builder and its model as given in any of the ways the Save gives them, over the ones speck uses now.
     const q = new URLSearchParams(query), given = key => ['machine', 'blank', 'repo'].map(w => q.get(`${w}:${key}`)).find(v => v !== null) ?? null;
     const cfg = loadConfig(repo), to = given('builder'), model = given('builder_model') ?? cfg.builder_model;
-    if (to && to !== String(cfg.builder ?? 'claude') && !providerNamed(to) && clearsBuilderModel(model, to, () => []) !== null) // 0393: a provider's are speck's own
+    if (to && to !== String(cfg.builder ?? 'claude') && !providerNamed(to, knownProviders(repo)) && clearsBuilderModel(model, to, () => []) !== null) // 0393: a provider's are speck's own
       offered = { builder: to, models: await offeredModelsAsync(to, find) };
   } catch { /* panelSaveRequest says what's wrong */ }
   return panelSaveRequest(repo, query, { offered });
@@ -522,7 +523,7 @@ export async function panelSaveRequestAsync(repo, query, find) {
 // 0393: the panel's POST /api/keys/<provider>, the Settings view's field for a model provider's API key. `body` is the
 // request's JSON, { key }. The key is saved for this machine only (keys.mjs), with no commit, and never sent back:
 // the answer says only whether this machine has the provider's key. Every failure is an answer that doesn't show it.
-export function panelKeyRequest(repo, rawName, body, { providers = PROVIDERS } = {}) {
+export function panelKeyRequest(repo, rawName, body, { providers = knownProviders(repo) } = {}) {
   let name;
   try { name = decodeURIComponent(String(rawName ?? '')); } catch { name = ''; }
   const p = providerNamed(name, providers);
@@ -541,7 +542,7 @@ export function panelKeyRequest(repo, rawName, body, { providers = PROVIDERS } =
 // 0399: the panel's POST /api/agents/<agent>/add and /remove, the Settings view's "Your agents". Each changes only this
 // machine's list, with no commit, and answers with what it did in `said` and the group as it is now in `your_agents`.
 // A refusal, such as removing the reviewer's agent, says why in `error`, with the group as it is.
-export async function panelAgentRequest(repo, rawName, action, { find = findAgentsAsync, providers = PROVIDERS } = {}) {
+export async function panelAgentRequest(repo, rawName, action, { find = findAgentsAsync, providers = knownProviders(repo) } = {}) {
   let name;
   try { name = decodeURIComponent(String(rawName ?? '')); } catch { name = ''; }
   if (action !== 'add' && action !== 'remove') return { status: 404, body: { error: 'speck can only add or remove an agent here. Reload the panel, then try again.' } };
@@ -559,7 +560,7 @@ export async function panelAgentRequest(repo, rawName, action, { find = findAgen
 
 // 0399: the panel's POST /api/keys/<provider>: saves the key as panelKeyRequest does, then adds the provider to this
 // machine's list of your agents, so a provider joins it once its key is saved. Still no commit, and the key isn't sent back.
-export async function panelKeyAddRequest(repo, rawName, body, { find = findAgentsAsync, providers = PROVIDERS } = {}) {
+export async function panelKeyAddRequest(repo, rawName, body, { find = findAgentsAsync, providers = knownProviders(repo) } = {}) {
   const out = panelKeyRequest(repo, rawName, body, { providers });
   if (out.status !== 200) return out;
   let found;

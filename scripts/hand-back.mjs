@@ -10,7 +10,7 @@ import { claudeStartWords, configBuilder } from './ticket-builder.mjs';
 import { buildTicket } from './build-records.mjs';
 import { ticketRounds } from './core.mjs';
 import { changesPending } from './changes-asked.mjs';
-import { PROVIDERS } from './providers.mjs';
+import { knownProviders } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { providerStartWords } from './provider-build.mjs';
 
@@ -57,7 +57,7 @@ export const resumedRecord = ({ seen: _, ...rec }) => rec;
 // --resume`; a Claude Code build speck run started with its own command (0312) with that command; any other with
 // build_command (resumeArgv). 0312: builder_model is passed only when the build's agent is the configured builder.
 // 0391: a model provider's build (`providers`), with the provider's own command, through the provider again.
-export function resumeFor(words, cfg, id, rec, message, providers = PROVIDERS) {
+export function resumeFor(words, cfg, id, rec, message, providers = knownProviders()) {
   const session = typeof rec?.session === 'string' && rec.session ? rec.session : null;
   if (rec?.agent === 'cursor') {
     const argv = cursorResumeArgv(session, message ?? resumeMessage(id));
