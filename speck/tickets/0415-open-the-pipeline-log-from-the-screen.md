@@ -42,6 +42,7 @@ Pressing speck's screen opens the pipeline log, which takes the place of the For
 - Design: the Pipeline sheet in console.html in https://claude.ai/artifact/R5CQDZJfMZ2rYcTmZK1B8z.
 - The Foreman's detail is `renderForeman` (0285, 0287, 0317, 0318, 0328, 0366). `run.log` is written by `scripts/panel-run.mjs` (0220).
 - Waits for 0414: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
