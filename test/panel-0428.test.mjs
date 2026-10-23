@@ -36,8 +36,8 @@ function sides(sels, rs = RS) {
   return side;
 }
 
-// Every button with a box of its own: its selectors, the generic `button` first. Left out: the tabs, whose shape AC1
-// gives (below), speck's screen (AC4), the switches, whose track is the control, and the linked ids, which are words.
+// Every button with a box of its own: its selectors, the generic `button` first. Left out: speck's screen (AC4), the
+// switches, whose track is the control, and the linked ids, which are words.
 const BUTTONS = {
   'Full ticket / Review pack on an open card': ['button', '.full-open', '.q .full-open'],
   'Stop build': ['button', '.q .stop-build'],
@@ -61,10 +61,12 @@ const BUTTONS = {
   'Settings in the frame': ['button', '.bezel .settings-open'],
   'Appearance\'s choices': ['button', '#settings .looks [role="radio"]'],
   'the priority menu\'s numbers': ['button', '.prio-menu button'],
+  'a closed tab': ['button', '.tab'],
+  'the open tab': ['button', '.tab', '.tab[aria-selected="true"]'],
 };
 
 test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu have an 8 px corner radius', () => {
-  for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], '8px', what);
+  for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], / tab$/.test(what) ? '8px 8px 0 0' : '8px', what); // a tab's bottom sits on the lane's line
   for (const sel of ['select', 'textarea', '.tag', '.prio-menu', '.toggle'])
     assert.equal(resolve(['button', sel])['border-radius'], '8px', sel);
   for (const sel of ['input:not([type="checkbox"]):not([type="radio"])', 'textarea', 'select'])
@@ -74,12 +76,9 @@ test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu ha
   assert.equal(resolve(['textarea', '#full-ticket .changes-note'])['border-radius'], '8px', 'the note for changes');
 });
 
-test('0428 AC1: the open tab\'s top corners are rounded 8 px and its bottom corners stay square', () => {
-  const r = resolve(['button', '.tab', '.tab[aria-selected="true"]'])['border-radius'];
-  assert.equal(r, '8px 8px 0 0');
-  const edge = sides(['.tab', '.tab[aria-selected="true"]']);
-  for (const d of ['top', 'left', 'right']) assert.equal(edge[d].colour, '--line', `the open tab's ${d} edge`);
-  assert.equal(edge.bottom.colour, '--panel', 'its bottom joins the lane under it');
+test('0428 AC1: the open tab\'s top corners are rounded 8 px', () => {
+  assert.equal(resolve(['button', '.tab', '.tab[aria-selected="true"]'])['border-radius'], '8px 8px 0 0');
+  assert.ok(parseFloat(resolve(['.tabs']).gap) > 0, 'the tabs have a gap between them, so each shows its own edges');
 });
 
 test('0428 AC2: cards, the build log, the stats, Settings\' groups and the pop-ups have a 12 px corner radius', () => {
