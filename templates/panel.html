@@ -1972,6 +1972,7 @@ let settingTip = null, settingTipKept = false, settingHover = null, settingFocus
 let settingHoverWait = 0; // 0371: counts the pointer's moves onto and off info buttons, so a pause that's been cut short shows nothing
 const SETTING_TIP_PAUSE = 500;
 let settingTips = new Map(); // key → its explanation, in the view as it's drawn
+let settingInfos = new Map(); // 0395: key → its info button, in the view as it's drawn
 // 0275: closing the view with changes not saved asks first. null, or the question being asked, as { saving }.
 let settingsLeaving = null;
 $('settings-open').addEventListener('click', openSettings);
@@ -1992,6 +1993,16 @@ function besideColumn(e) {
   const r = col.getBoundingClientRect();
   return e.clientX < r.left || e.clientX >= r.right;
 }
+// 0395: the pointer going down anywhere but on the open explanation or its info button closes it, and the click still
+// reaches what it lands on. Beside the column, it closes only the explanation, not Settings. On the way up, after the
+// pop-up's own listener, so that one's "beside" is taken back. A press inside it, such as one selecting its text, keeps it.
+document.addEventListener('pointerdown', e => {
+  if (settingsView === null || settingTip === null) return;
+  if (within(e.target, settingTips.get(settingTip)) || within(e.target, settingInfos.get(settingTip))) return;
+  settingHoverWait++; // 0371: no pause left to show it again
+  showSettingTip(null, false);
+  settingsDownBeside = false;
+});
 renderSettings(); // closed
 renderLeaving(); // not asking
 function openSettings() {
@@ -2085,6 +2096,7 @@ function renderSettings() {
   holdPage(pageHeld());
   holdPane();
   settingTips = new Map();
+  settingInfos = new Map();
   settingControls = new Map();
   settingRowsDrawn = new Map();
   settingsBar = null;
@@ -2189,9 +2201,10 @@ function redrawSettings(keys, kept = null) {
   for (const key of keys) {
     const drawn = settingRowsDrawn.get(key), x = settingRows().find(r => r.key === key);
     if (!drawn || !x || !drawn.row.parentNode) continue;
-    const had = settingControls.get(key);
+    const had = settingControls.get(key), hadInfo = settingInfos.get(key);
     const row = settingRow(x, drawn.n), made = settingControls.get(key);
     if (key === kept && had && made && made.tagName === had.tagName) {
+      if (hadInfo) settingInfos.set(key, hadInfo); // 0395: its name, and its info button with it, stay as they were
       for (const c of [...drawn.row.children].slice(1)) drawn.row.removeChild(c);
       for (const c of [...row.children].slice(1)) drawn.row.appendChild(c);
       if (String(had.tagName).toLowerCase() === 'select') { // what it offers can change with what's picked
@@ -2246,6 +2259,7 @@ function settingInfo(x, n) {
   // 0371: a click or focus settles it, so a pause still running from the pointer shows nothing when it ends.
   info.addEventListener('click', () => { settingHoverWait++; if (settingTip === key && settingTipKept) showSettingTip(null, false); else showSettingTip(key, true); });
   settingTips.set(key, tip);
+  settingInfos.set(key, info);
   return [info, tip];
 }
 function showSettingTip(key, kept) {
