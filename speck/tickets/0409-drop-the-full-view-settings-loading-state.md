@@ -1,7 +1,7 @@
 ---
 id: "0409"
 title: "Drop the full-view Settings loading state"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-drop-the-full-view-settings-loading-state.m
 after: ["0408"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T13:14:24.426Z"
+approved: "2026-10-23T13:19:08.908Z"
 
 ---
 # 0409 · Drop the full-view Settings loading state
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Opening Settings still shows "Loading the settings…" over the whole view, then "Loading your agents…" once the config has arrived. 0407 was meant to end the first wait; two loading phases are left.
@@ -52,9 +53,14 @@ Settings no longer flashes a "Loading the settings…" screen. When you press Se
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 139,328
+- Elapsed since build started: 5 min
+- Changed lines: 21 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none to the inbox. Known limit: while the quick config read is out, the only sign of the press is `aria-busy` on the Settings button; a slow or hung panel would make the press look ignored.
 
