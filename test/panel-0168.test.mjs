@@ -43,6 +43,7 @@ function fake(tickets = TICKETS) {
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 const classes = n => (n.className || '').split(' ');
+const WORKING = ['0401', '0402', '0403']; // 0434: an agent is at work on them
 
 test('0168 AC1: each in-flight card has a row under its title with the sentence and the stage\'s name (with no badge since 0416)', async () => {
   const p = fake();
@@ -53,10 +54,12 @@ test('0168 AC1: each in-flight card has a row under its title with the sentence 
     assert.ok(top.children.indexOf(rows[0]) > top.children.findIndex(n => n.className === 'line'), `${id}: under the title`);
     const text = rows[0];
     assert.equal(text.className, stage ? 'progress' : 'progress ship-line');
-    const shown = text.children.filter(n => n.className && n.className !== 'sep').map(n => [n.className.split(' ')[0], n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
-    assert.deepEqual(shown.slice(0, 2), [['say', sentence], stage ? ['stage', stage] : ['ship-at', 'MM:SS']], `${id}: the sentence and the stage, or the ship's time (0201)`);
-    // 0419: then the timer and the tags, on the same line
-    assert.deepEqual(shown.slice(2).map(([c]) => c), ['sub', 'tag', 'tag', 'tag'], `${id}: the timer, then the tags`);
+    // 0434: while its builder or reviewer is at work, a grid of lights named for the sentence stands in for it
+    const shown = text.children.filter(n => n.className && n.className !== 'sep').map(n => [n.className.split(' ')[0], n.className === 'lights' ? n.attrs['aria-label'] : n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
+    const say = WORKING.includes(id) ? 'lights' : 'say';
+    assert.deepEqual(shown.slice(0, 2), [[say, sentence], stage ? ['stage', stage] : ['sub', 'MM:SS']], `${id}: the sentence and the stage, or (0434) a shipping card's one time`);
+    // 0419: then the timer, on the same line (0434: after the reviewer's name while it reviews, and no tags while it's closed)
+    assert.deepEqual(shown.slice(2).map(([c]) => c), id === '0403' ? ['by', 'sub'] : stage ? ['sub'] : [], `${id}: the timer`);
     assert.equal(p.all(top).filter(n => /\b(enso|orbit|speck|dots|dot)\b/.test(n.className || '')).length, 0, `${id}: no ensō, speck or stage dots`);
   }
   assert.doesNotMatch(page(), /\.enso\b|\.orbit\b|\.dot\.now|@keyframes orbit/, 'the ensō and the dots are gone from the page');

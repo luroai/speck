@@ -23,7 +23,7 @@ const stub = state => `(() => {
   };
 })();`;
 
-// Runs fn with a real panel showing state in a 375 px wide phone browser.
+// Runs fn with a real panel showing state in a 375 px wide phone browser, with each card open.
 export async function onPhone(fn, state = STATE()) {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
@@ -35,6 +35,9 @@ export async function onPhone(fn, state = STATE()) {
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(state) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelectorAll('#queue .q .act').length === 2`, 'the panel');
+    // 0434: a Build card shows its priority, size and risk only while it's open
+    await b.js(`[...document.querySelectorAll('#queue .q .top')].forEach(t => t.click())`);
+    await b.until(`document.querySelectorAll('#queue .q.open').length === 2`, 'both cards to open');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }

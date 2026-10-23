@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fakePage, T, full, click, top, items, queueRows, findChrome, browserPage } from './support/panel.mjs';
+import { page, fakePage, T, full, click, top, items, queueRows, openQueueRows, findChrome, browserPage } from './support/panel.mjs';
 
 const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
 const rule = sel => (css().match(new RegExp(`\\n\\s*${sel.replace(/[.:#]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[1] || '';
@@ -23,6 +23,7 @@ const openPane = (p, id) => {
 test('0213 AC1: a P0 tag gets the p0 class in Plan, the Build queue and the full ticket pane', async () => {
   const p = fakePage([STATE(), STATE(), STATE()]);
   await p.settle();
+  await openQueueRows(p); // 0434: a Build card's tags show while it's open
   for (const [where, rows] of [['Plan', items(p)], ['the Build queue', queueRows(p)]]) {
     const tags = rows.flatMap(r => prioTags(p, r)).filter(t => t.text === 'P0');
     assert.equal(tags.length, 1, `one P0 tag in ${where}`);
@@ -48,6 +49,7 @@ test('0213 AC2: a P1 tag stays in --text and P2 to P5 tags stay plain grey tags'
   const s = () => ({ ideas: [], tickets: [1, 2, 3, 4, 5].map(n => T(`000${n}`, 'ready', { priority: n })) });
   const p = fakePage([s(), s(), s()]);
   await p.settle();
+  await openQueueRows(p); // 0434: a Build card's tags show while it's open
   const tags = queueRows(p).flatMap(r => prioTags(p, r));
   assert.deepEqual(tags.map(t => [t.text, t.cls]), [['P1', ['tag', 'p1']], ...[2, 3, 4, 5].map(n => [`P${n}`, ['tag']])]);
 });
@@ -55,6 +57,7 @@ test('0213 AC2: a P1 tag stays in --text and P2 to P5 tags stay plain grey tags'
 test('0213 AC3: a P0 tag\'s tip, screen-reader wording and tab stop are as before, and its rule changes only colours', async () => {
   const p = fakePage([STATE(), STATE(), STATE()]);
   await p.settle();
+  await openQueueRows(p); // 0434: a Build card's tags show while it's open
   const want = { text: 'P0', tip: 'Priority 0: built before any other ticket', label: 'Priority 0: built before any other ticket', tab: 0 };
   const queue = queueRows(p).flatMap(r => prioTags(p, r)).find(t => t.text === 'P0');
   const { cls, ...rest } = queue;

@@ -266,12 +266,29 @@ export const items = p => p.byId('shaping').children.filter(n => /\bitem\b/.test
 export const top = item => item.children.find(n => /\bhead\b/.test(n.className)); // an item's top row, which opens and closes it (0039)
 
 export const queueRows = p => p.byId('queue').children.filter(n => /\bq\b/.test(n.className));
+// 0434: a fake page whose boards come in turn, as fakePage's responses do, with each log request answered apart, so
+// opening a Build card, which asks for its log, doesn't take the next board. The last board stays.
+export function boardPage(boards, globals = {}) {
+  const left = [...boards];
+  const body = url => (/\/log$/.test(url) ? { text: '', truncated: false } : left.length > 1 ? left.shift() : left[0]);
+  return fakePage([], { fetch: async url => { const b = JSON.parse(JSON.stringify(body(String(url)))); return { ok: true, status: 200, json: async () => b }; }, ...globals });
+}
+// 0434: opens each Build card that's closed, as a Build card shows its priority, size and risk only while it's open.
+export async function openQueueRows(p) {
+  const idOf = r => p.all(r).find(n => n.className === 'id')._text;
+  for (const id of queueRows(p).map(idOf)) {
+    const row = queueRows(p).find(r => idOf(r) === id);
+    if (!/\bopen\b/.test(row.className)) { row.children[0].listeners.click({ stopPropagation() {} }); await p.settle(); }
+  }
+}
 // A queue row's node with this class, searched for through the whole row, or null.
 const inRow = (row, re) => (function find(n) { if (re.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 // An in-flight queue row's sentence saying what it's doing (0156; beside the builder badge from 0168 until 0416), and
 // the current stage's name. Both null on a ready ticket.
 export const sayOf = row => inRow(row, /^say\b/);
 export const stageOf = row => inRow(row, /^stage\b/);
+// 0434: the sentence itself: the words, or, while an agent is at work, the name of the grid of lights in its place.
+export const sentenceOf = row => { const n = inRow(row, /^(say|lights)\b/); return !n ? null : n.className === 'lights' ? n.attrs['aria-label'] : n.textContent; };
 export const steps = t => t.steps.map(s => s.state || '');
 
 // `body`, when given, is sent as the request's body (0318).

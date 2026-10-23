@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, round, panelModel } from './support/panel.mjs';
+import { T, fakePage, queueRows, round, panelModel, openQueueRows } from './support/panel.mjs';
 
 // ---------- 0196: show an auto-shipping ticket as shipping from approval until it ships ----------
 
@@ -70,6 +70,7 @@ test('0196 AC2: an approved ticket being shipped shows as shipping in the Build 
 test('0196 AC4: one auto-ship doesn\'t cover, or whose last auto-ship didn\'t finish, shows as before', async () => {
   const p = fake();
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   for (const id of ['0603', '0605']) {
     const s = shows(p, id);
     assert.equal(s.say, 'Approved · waiting for you to ship it', id);

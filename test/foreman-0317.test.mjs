@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fakePage, T, click, gitEnv, ROOT } from './support/panel.mjs';
+import { fakePage, T, click, gitEnv, ROOT, openQueueRows } from './support/panel.mjs';
 import { OPTION, blockedRepo } from './support/blocked.mjs';
 import { statusData, loadConfig } from '../scripts/speck.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
@@ -81,6 +81,7 @@ test('0317 AC2: the board says the Foreman will take a recommendation only with 
 test('0317 AC2: a blocked card says the Foreman will take its recommendation, and any other says it\'s waiting for you', async () => {
   const p = fakePage([state(view(), [BLOCKED('0001', { foreman_will: true }), BLOCKED('0002', { foreman_will: false }), BLOCKED('0003')])]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const one = rowOf(p, '0001').textContent;
   assert.ok(one.includes(`The Foreman will take its recommendation: ${OPTION}`), one);
   assert.doesNotMatch(one, /Waiting for you|Answer the question, then run|question for you/);
@@ -121,6 +122,7 @@ test('0317 AC3: once the Foreman goes with it, the board, card and speck status 
   assert.equal(t.foreman_will, false);
   const p = fakePage([state(view(), [t])]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   assert.ok(rowOf(p, '0001').textContent.includes(`The Foreman went with the recommendation: ${OPTION} · ${time}`), rowOf(p, '0001').textContent);
   const out = r.run('status').stdout;
   assert.ok(out.includes(`        ✓ The Foreman went with the recommendation: ${OPTION} (${time})\n`), out);
@@ -159,6 +161,7 @@ test('0317 AC4: the Foreman\'s choice is recorded as the Foreman\'s, the button\
   assert.deepEqual(t.foreman_took, [], 'not counted as the Foreman\'s');
   const p = fakePage([state(view(), [t])]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   assert.match(rowOf(p, '0001').textContent, /You went with the recommendation: /);
   assert.doesNotMatch(rowOf(p, '0001').textContent, /The Foreman went/);
   assert.match(u.run('status').stdout, /✓ You went with the recommendation: /);
