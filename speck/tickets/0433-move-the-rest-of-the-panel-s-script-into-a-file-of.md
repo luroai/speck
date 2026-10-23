@@ -44,6 +44,8 @@ After 0430 to 0432, `templates/panel.html` still holds about 2,000 lines of the 
 - The page's stamp (`stampOf` in `scripts/panel.mjs`) is worked out from `panel.html` alone today. `/lcd.js` and `/fonts/Doto.ttf` show how the server names each file it serves.
 - Waits for 0432: both change `templates/panel.html`, `scripts/panel.mjs` and `test/support/panel.mjs`.
 - Failing before this build: none
+- Self-check: tests that checked the page has no innerHTML, poll, heading strings, old buttons or pinch blockers read only `panel.html`, so they would have passed without looking at the moved script; they now read `panel.js` too (0145, 0161, 0362, 0034 in `panel.test.mjs`).
+- The page's stamp and token, which the server fills in, are on the tag that loads `/panel.js` (`data-page`, `data-token`), as the file is served as it is. The page starts on `DOMContentLoaded`, so it starts after `/panel-settings.js` has run, as 0432 needs.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

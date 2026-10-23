@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { CLI, env, runRepo } from './support/run.mjs';
-import { T, fakePage, queueRows, panelModel, page, ROOT, openQueueRows } from './support/panel.mjs';
+import { T, fakePage, queueRows, panelModel, page, ROOT, openQueueRows, pageScript } from './support/panel.mjs';
 
 // ---------- 0044: show how to resume a blocked build's session ----------
 
@@ -189,8 +189,8 @@ test('0044 AC5: a blocked ticket with no session, and tickets that aren\'t block
 });
 
 test('0044: the page uses the Clipboard API and builds the command with textContent only', () => {
-  assert.match(page(), /navigator\.clipboard\.writeText\(/);
-  assert.doesNotMatch(page(), /innerHTML/);
+  assert.match(pageScript(), /navigator\.clipboard\.writeText\(/);
+  assert.doesNotMatch(pageScript(), /innerHTML/);
 });
 
 test('0050: the Copy label changes on the kept row, so text selected in it stays through the label reset and the next refresh', async () => {
