@@ -143,10 +143,10 @@
   #tag-tip { position: fixed; top: 0; left: 0; z-index: 11; max-width: min(300px, calc(100vw - 16px)); padding: 6px 10px; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--panel); border: .5px solid var(--line); box-shadow: 0 4px 12px rgba(20, 20, 19, .12); }
   #tag-tip[hidden] { display: none; }
   .tag[role="button"]:not(.pick) { cursor: help; }
-  .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; background: var(--panel); border: .5px solid var(--line); }
-  .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted-large); border: 0; cursor: pointer; }
-  .prio-menu button:hover { color: var(--text); }
-  .prio-menu button.on { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+  .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; gap: 2px; padding: 2px; background: var(--panel); border: .5px solid var(--line); }
+  .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted-large); border: .5px solid var(--line); cursor: pointer; } /* 0428: boxed, as every button is */
+  .prio-menu button:hover { color: var(--text); border-color: var(--text); }
+  .prio-menu button.on { color: var(--text); border-color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
   .item .prio-refused { margin-top: 6px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-weight: 600; font-size: 14px; color: var(--text); }
@@ -355,13 +355,12 @@
   #settings [role="switch"]:hover .track { border-color: var(--text); }
   #settings [role="switch"] .state { white-space: nowrap; }
   @media (prefers-reduced-motion: reduce) { #settings [role="switch"] .knob { transition: none; } }
-  /* 0412: Appearance's System, Light and Dark, side by side in one box, the chosen one filled */
-  #settings .looks { display: inline-flex; flex: none; border: .5px solid var(--line); }
-  #settings .looks [role="radio"] { min-height: 26px; padding: 0 6px; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: 0; cursor: pointer; white-space: nowrap; }
-  #settings .looks [role="radio"] + [role="radio"] { border-left: .5px solid var(--line); }
+  /* 0412: Appearance's System, Light and Dark, side by side, the chosen one filled. 0428: each a box of its own, as every button is */
+  #settings .looks { display: inline-flex; flex: none; gap: 4px; }
+  #settings .looks [role="radio"] { min-height: 26px; padding: 0 6px; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); cursor: pointer; white-space: nowrap; }
   #settings .looks [role="radio"]:hover { color: var(--text); }
-  #settings .looks [role="radio"][aria-checked="true"] { color: var(--panel); background: var(--text); }
-  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .looks, #settings .looks [role="radio"] + [role="radio"] { border-width: 1px; } }
+  #settings .looks [role="radio"][aria-checked="true"] { color: var(--panel); background: var(--text); border-color: var(--text); }
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .looks [role="radio"] { border-width: 1px; } }
   #settings .switch-row p.bad { margin: 4px 0 0; color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
   #settings .switch-row p.bad[hidden] { display: none; }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 16px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -635,10 +634,6 @@
      outline, which follows them. speck's screen and its frame stay square, as the design's console is. */
   button, input:not([type="checkbox"]):not([type="radio"]), select, textarea, .tag, .question-fact, .next, .prio-menu { border-radius: 8px; }
   .tab { border-radius: 8px 8px 0 0; } /* the open tab's top corners; its bottom joins the lane */
-  #settings .looks { border-radius: 8px; }
-  #settings .looks [role="radio"] { border-radius: 0; }
-  #settings .looks [role="radio"]:first-child { border-radius: 7.5px 0 0 7.5px; }
-  #settings .looks [role="radio"]:last-child { border-radius: 0 7.5px 7.5px 0; }
   .item, .q, #shipped tr, .q .log, #settings .sgroup, #settings .switches, #full-ticket, #doc-view, #foreman, #settings-unsaved .box { border-radius: 12px; }
   .stats { border-radius: 12px; overflow: hidden; }
   #tag-tip, #settings .switch-row p.explain, #settings .setting p.explain { border-radius: 8px; } /* a tip, as small as a control */
@@ -668,7 +663,8 @@
      ticket only, and for anything outside the lanes that shares a lane's class names. */
   @media (max-width: 699.98px) {
     #settings .switch-row .info::after, #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
-    #settings .looks [role="radio"] { padding: 0 2px; } /* 0412: System, Light and Dark on one line in the control's half of the row, down to 320 px */
+    #settings .looks [role="radio"] { padding: 0 1px; } /* 0412: System, Light and Dark on one line in the control's half of the row, down to 320 px. 0428: 1 px, for their own borders */
+    #settings .looks { gap: 2px; }
     #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .sh { flex-wrap: wrap; align-items: center; }
     .detail { grid-template-columns: minmax(0, 1fr); }

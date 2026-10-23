@@ -36,9 +36,8 @@ function sides(sels, rs = RS) {
   return side;
 }
 
-// Every button with a box of its own: its selectors, the generic `button` first. Left out: the tabs (the open one has
-// its own edge on three sides, as a tab), speck's screen, the switches, Appearance's three choices and the priority
-// menu's numbers (each inside a box of its own) and the linked ids, which are words.
+// Every button with a box of its own: its selectors, the generic `button` first. Left out: the tabs, whose shape AC1
+// gives (below), speck's screen (AC4), the switches, whose track is the control, and the linked ids, which are words.
 const BUTTONS = {
   'Full ticket / Review pack on an open card': ['button', '.full-open', '.q .full-open'],
   'Stop build': ['button', '.q .stop-build'],
@@ -60,6 +59,8 @@ const BUTTONS = {
   'Ask for changes': ['button', '#full-ticket .ask-changes', '#doc-view .ask-changes'],
   'A document\'s button': ['button', '#full-ticket .pack-document'],
   'Settings in the frame': ['button', '.bezel .settings-open'],
+  'Appearance\'s choices': ['button', '#settings .looks [role="radio"]'],
+  'the priority menu\'s numbers': ['button', '.prio-menu button'],
 };
 
 test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu have an 8 px corner radius', () => {
@@ -71,13 +72,14 @@ test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu ha
   assert.equal(resolve(['#settings .setting .edit', 'input:not([type="checkbox"]):not([type="radio"])'])['border-radius'], '8px', 'Settings\' text boxes');
   assert.equal(resolve(['textarea', '.foreman-ask .ask-answer'])['border-radius'], '8px', 'the Answer box');
   assert.equal(resolve(['textarea', '#full-ticket .changes-note'])['border-radius'], '8px', 'the note for changes');
-  // Appearance's three choices, one box rounded as a control, its first and last choice following its corners
-  assert.equal(resolve(['#settings .looks'])['border-radius'], '8px', 'Appearance\'s box');
 });
 
 test('0428 AC1: the open tab\'s top corners are rounded 8 px and its bottom corners stay square', () => {
   const r = resolve(['button', '.tab', '.tab[aria-selected="true"]'])['border-radius'];
   assert.equal(r, '8px 8px 0 0');
+  const edge = sides(['.tab', '.tab[aria-selected="true"]']);
+  for (const d of ['top', 'left', 'right']) assert.equal(edge[d].colour, '--line', `the open tab's ${d} edge`);
+  assert.equal(edge.bottom.colour, '--panel', 'its bottom joins the lane under it');
 });
 
 test('0428 AC2: cards, the build log, the stats, Settings\' groups and the pop-ups have a 12 px corner radius', () => {
