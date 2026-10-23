@@ -1,7 +1,7 @@
 ---
 id: "0433"
 title: "Move the rest of the panel's script into a file of its own"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0432"] # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T23:02:08.128Z"
 
 ---
 # 0433 · Move the rest of the panel's script into a file of its own
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 After 0430 to 0432, `templates/panel.html` still holds about 2,000 lines of the page's script: drawing the lanes, the cards, the full ticket, the logs and speck's screen.
