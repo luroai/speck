@@ -184,7 +184,8 @@
     font: 12px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
   .q.wait { background: var(--raise); } /* 0161: set back by its fill, not faded, so its text keeps its contrast */
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
-  .q .stop-build { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  /* 0421: an open card's Full ticket, Review pack and Stop build are small text buttons on one line, underlined rather than boxed */
+  .q .stop-build { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 16px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px; padding: 2px 0; background: transparent; color: var(--muted); border: 0; border-bottom: .5px solid var(--line); cursor: pointer; }
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
   /* An open ready ticket's Back to Plan button, beside Full ticket, and why the server refused it */
@@ -257,22 +258,36 @@
   .stat .label { font-size: 13px; line-height: 1.4; color: var(--muted); }
   .stat .count { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--faint); }
   .stats[hidden] { display: none; }
-  /* 0162: More stats under the tiles, and a card's figures on one line beside its Details button */
-  .full-open.more-stats { display: block; margin: 10px 10px 0 auto; }
+  /* 0420: the three stats one line of smaller type, with More stats at its end; the other three still tiles under it.
+     Each stat stays whole, so in a pane too narrow for the line, such as a phone's, it wraps between them. */
+  .stats-line { display: flex; align-items: flex-end; gap: 8px; padding: 6px 16px; border-bottom: .5px solid var(--line-soft); }
+  .stats-line[hidden] { display: none; }
+  #shipped-stats { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
+  #shipped-stats .part { white-space: nowrap; }
+  #shipped-stats .num { font-weight: 600; color: var(--text); }
+  #shipped-stats .sep { letter-spacing: -3px; }
+  #shipped-stats[hidden] { display: none; }
+  .full-open.more-stats, #shipped .details { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; text-transform: none; letter-spacing: 0; }
   .more-stats[hidden] { display: none; }
-  #shipped .sum { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-  #shipped .figline { flex: 1 1 auto; min-width: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #shipped .details { flex: none; margin-left: auto; }
+  /* 0420: a shipped ticket is its title line, with any bug or fix tag after the title, and one line of smaller type:
+     when it shipped and its figures, separated by " · ", with a small Details button at its end. Details and More
+     stats are plain words in a thin box, so these lines fit on one line in a 420 px pane with a scroll bar. */
+  #shipped .sum { display: flex; align-items: flex-end; gap: 6px; margin-top: 2px; }
+  #shipped .meta { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
+  #shipped .meta > * { white-space: nowrap; } /* whole, so a line too long for a phone wraps between its time and figures */
+  #shipped .meta .sep { letter-spacing: -3px; }
+  #shipped .details { margin-left: auto; }
   section.shipped table { display: block; }
   #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
   #shipped .empty { padding: 0 4px; }
-  #shipped tr { display: block; padding: 10px 14px; border: 1px solid var(--line); }
+  #shipped tr { display: block; padding: 6px 8px; border: 1px solid var(--line); }
   #shipped td { display: block; padding: 0; border: 0; }
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
-  #shipped .line .id { flex: none; font-size: 14px; }
-  #shipped .line .title-link { flex: 1 1 auto; min-width: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 17px; overflow-wrap: anywhere; }
-  #shipped .tag-row { margin-top: 4px; }
-  #shipped .when { margin-top: 4px; color: var(--muted); }
+  #shipped .line .id { flex: none; font-size: 14px; line-height: 14px; }
+  #shipped .line .title-link { flex: 0 1 auto; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 17px; line-height: 22px; overflow-wrap: anywhere; }
+  /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the card taller */
+  #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
+  #shipped .line .tags .tag { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; line-height: 16px; padding: 0 5px; }
   /* 0204: a ticket merged but not pushed, in crimson, with speck ship's message */
   #shipped td.unpushed { margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--bad); }
   #shipped .unpushed-head { color: var(--bad); font-weight: 600; }
@@ -346,7 +361,6 @@
   .q.open { background: var(--raise); border-color: var(--text); }
   .note { margin: 0; color: var(--text); }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
-  .path { overflow-wrap: anywhere; }
 
   /* Chains through after:: a chain icon on a ticket that unlocks others, a padlock on one that waits */
   .chain, .lock { display: inline-block; position: relative; width: 12px; height: 10px; vertical-align: -1px; cursor: help; }
@@ -381,7 +395,8 @@
   #full-backdrop[hidden] { display: none; }
   .full-open { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
-  .q .full-open { margin: 6px 0 2px; padding: 1px 10px; font-size: 12px; }
+  .q .full-open { margin: 6px 16px 2px 0; padding: 2px 0; font-size: 12px; line-height: 16px; border: 0; border-bottom: .5px solid var(--line); }
+  .q .full-open:hover { border-color: var(--text); }
   td.full-cell { width: 1%; padding-left: 0; }
   td .title-link { color: var(--text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
   td .title-link:hover { text-decoration-thickness: 2px; }
@@ -706,9 +721,8 @@
   </section>
   <section id="shipped-section" class="shipped" role="tabpanel" aria-labelledby="tab-shipped" tabindex="-1" hidden>
     <div class="lane-list" id="shipped-list">
-      <div class="stats" id="shipped-stats" hidden></div>
+      <div class="stats-line" id="shipped-stats-line" hidden><div id="shipped-stats" hidden></div><button class="full-open more-stats" id="more-stats" type="button" aria-expanded="false" aria-controls="shipped-more" hidden></button></div>
       <div class="stats" id="shipped-more" hidden></div>
-      <button class="full-open more-stats" id="more-stats" type="button" aria-expanded="false" aria-controls="shipped-more" hidden></button>
       <table><tbody id="shipped"></tbody></table>
     </div>
   </section>
@@ -3339,7 +3353,6 @@ function queueItem(t) {
   const went = wentWithOf(t);
   if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? 'The Foreman went with the recommendation' : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
   if (isOpen) {
-    if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t, 'queue'));
     if (t.status === 'approved' || t.shipping) q.appendChild(packButton(t));
     if (t.pausable) {
@@ -3898,10 +3911,14 @@ function render() {
   const flying = m.queue.filter(t => t.inFlight).length;
   $('queue-n').textContent = m.queue.length ? `${flying} in flight · ${m.queue.length - flying} queued` : 'Nothing in flight or ready';
 
-  // 0157: each shipped ticket is a card: its id and title (and a bug or fix tag), when it shipped, then (0162) one line
-  // of figures and a Details button, which shows its figures as label and value pairs, leaving out any it doesn't have,
-  // and Review pack. The shipped time turns from the time alone to date and time after midnight, so it is put right on
-  // a kept card.
+  // 0157: each shipped ticket is a card. 0420: its id and title, with a bug or fix tag after the title, then one line:
+  // when it shipped (the time, or the day before today) and (0162) its figures, separated by " · ", and a Details button, which shows its figures as label
+  // and value pairs, leaving out any it doesn't have, and Review pack. The shipped time turns from the time alone to
+  // date and time after midnight, so it is put right on a kept card.
+  // In the line, a ticket shipped before today shows its day alone ("20 Oct"), so the line fits a 420 px pane; its
+  // tooltip says when it shipped, with the time, and its figures.
+  const day = when => when.replace(/,.*$/, '');
+  const metaTip = (t, figs) => [t.end !== null ? `Shipped ${t.when}` : null, figs || null].filter(Boolean).join(' · ');
   for (const id of openShipped) if (!m.shipped.some(t => String(t.id) === id)) openShipped.delete(id);
   fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), t => openShipped.has(String(t.id)), t => {
     const id = String(t.id), isOpen = openShipped.has(id);
@@ -3916,26 +3933,50 @@ function render() {
     details.setAttribute('aria-expanded', String(isOpen));
     details.addEventListener('click', e => { e.stopPropagation(); flip(openShipped, id); });
     const tags = [typeTag(t), taskTag(t)].filter(Boolean);
-    const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), fullLink(t)), tags.length ? el('div', 'row tag-row', null, ...tags) : null);
+    const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), fullLink(t), tags.length ? el('span', 'tags tag-row', null, ...tags) : null));
+    const parts = [t.end !== null ? el('span', 'when', day(t.when)) : null, line ? el('span', 'figline', line) : null].filter(Boolean);
     // 0204: merged, but the push of the base branch failed: what speck ship said, which says how to fix it.
     const unpushed = t.unpushed ? el('td', 'unpushed', null, el('div', 'unpushed-head', 'Merged, but not pushed'), t.unpushed_message ? el('div', 'unpushed-said', t.unpushed_message) : null) : null;
-    return el('tr', null, null, name, t.end !== null ? el('td', 'when', `Shipped ${t.when}`) : null, unpushed, el('td', 'sum', null, line ? el('span', 'figline', line) : null, details),
+    const meta = parts.length ? detailsLine('meta', parts) : null;
+    if (meta) meta.title = metaTip(t, line);
+    return el('tr', null, null, name, el('td', 'sum', null, meta, details), unpushed,
       isOpen && figs.length ? el('td', 'figs', null, ...figs) : null, isOpen ? el('td', 'full-cell', null, packButton(t)) : null);
-  }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => { const w = child(tr, 'when'); if (w) setText(w, `Shipped ${t.when}`); } }), 'Nothing shipped yet.');
+  }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => {
+    const meta = child(child(tr, 'sum') || tr, 'meta'), w = meta && child(meta, 'when');
+    if (w) { setText(w, day(t.when)); meta.title = metaTip(t, child(meta, 'figline')?.textContent); }
+  } }), 'Nothing shipped yet.');
   // 0162: three stats, and More stats shows the other three. A stat over 9,999 is shortened as a card's figures are,
-  // with the exact number as its tooltip.
-  const stat = (n, label, s, money = false) => {
+  // with the exact number as its tooltip. 0420: the three are one line, "24 today · median 10 min, $1.77", short enough
+  // to fit beside More stats or Fewer stats in a 420 px pane, each saying what it is, and the tickets a median covers,
+  // as its tooltip; the other three stay tiles.
+  const num = (n, money = false) => {
     const exact = n === null ? '–' : money ? `$${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : n.toLocaleString('en-GB');
-    const short = n === null ? null : shortened(n), num = el('b', 'num', short === null ? exact : `${money ? '$' : ''}${short}`);
-    if (short !== null) num.title = exact;
-    return el('div', 'stat', null, num, el('span', 'label', label), s ? el('span', 'count', plural(s.count, 'ticket')) : null);
+    const short = n === null ? null : shortened(n), b = el('b', 'num', short === null ? exact : `${money ? '$' : ''}${short}`);
+    if (short !== null) b.title = exact;
+    return b;
+  };
+  const stat = (n, label, s, money = false) => el('div', 'stat', null, num(n, money), el('span', 'label', label), s ? el('span', 'count', plural(s.count, 'ticket')) : null);
+  const part = (tip, ...parts) => {
+    const p = el('span', 'part', null, ...parts.map(x => typeof x === 'string' ? document.createTextNode(x) : x));
+    p.title = tip;
+    return p;
   };
   const tiles = (box, list) => { $(box).replaceChildren(...(m.shippedTotal ? list : [])); };
-  tiles('shipped-stats', [stat(m.stats.today, 'shipped today'), stat(m.stats.minutes.median, 'median minutes', m.stats.minutes),
-    stat(m.stats.builderCost.median, 'median builder cost', m.stats.builderCost, true)]);
+  const line = $('shipped-stats');
+  line.replaceChildren();
+  if (m.shippedTotal) {
+    const { today, minutes, builderCost } = m.stats;
+    line.appendChild(part('Tickets shipped today', num(today), ' today'));
+    line.appendChild(el('span', 'sep', ' ·'));
+    line.appendChild(document.createTextNode(' '));
+    line.appendChild(part(`Median time to build, over ${plural(minutes.count, 'ticket')}`, 'median ', num(minutes.median), ' min'));
+    line.appendChild(document.createTextNode(', '));
+    line.appendChild(part(`Median builder cost, over ${plural(builderCost.count, 'ticket')}`, num(builderCost.median, true)));
+  }
   tiles('shipped-more', [stat(m.stats.rounds.median, 'median review rounds', m.stats.rounds), stat(m.stats.tokens.median, 'median reviewer tokens', m.stats.tokens),
     stat(m.stats.builderTokens.median, 'median builder tokens', m.stats.builderTokens)]);
   $('shipped-stats').hidden = m.shippedTotal === 0;
+  $('shipped-stats-line').hidden = m.shippedTotal === 0;
   $('shipped-more').hidden = m.shippedTotal === 0 || !moreStats;
   const more = $('more-stats');
   more.hidden = m.shippedTotal === 0;

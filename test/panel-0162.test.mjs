@@ -69,10 +69,11 @@ test('0162 AC2: a ticket in flight also brings the full layout back', async () =
 
 // ---------- AC3 ----------
 
-test('0162 AC3: Shipped shows three stat tiles, and More stats shows and hides the other three', async () => {
+// 0420: the first three are one line of stats, not tiles.
+test('0162 AC3: Shipped shows three stats, and More stats shows and hides the other three', async () => {
   const p = fakePage([STATE(), STATE()]);
   await p.settle();
-  assert.deepEqual(tiles(p, 'shipped-stats').map(t => t[1]), ['shipped today', 'median minutes', 'median builder cost']);
+  assert.match(p.byId('shipped-stats').textContent, /^\d+ today · median \d+ min, \$[\d.]+$/);
   const more = p.byId('more-stats');
   assert.equal(more.hidden, false);
   assert.equal(more.textContent, 'More stats');
@@ -98,10 +99,11 @@ test('0162 AC3: every stat over 9,999 is shortened as the cards\' figures are, w
   // Reviewer tokens 108,234 and 500, builder tokens 2,412,345 alone.
   assert.deepEqual(tiles(p, 'shipped-more'), [['1.5', 'median review rounds', null], ['54k', 'median reviewer tokens', '54,367'],
     ['2.4M', 'median builder tokens', '2,412,345']]);
-  assert.deepEqual(tiles(p, 'shipped-stats').slice(1), [['23', 'median minutes', null], ['$2.91', 'median builder cost', null]]);
+  const line = q => [q.byId('shipped-stats').textContent.replace(/^\d+ today · /, ''), byClass(q, q.byId('shipped-stats'), 'num').slice(1).map(n => n.title || null)]; // one line since 0420
+  assert.deepEqual(line(p), ['median 23 min, $2.91', [null, null]]);
   const big = fakePage([{ tickets: [T('0011', 'done', { started: ago(20000 * 60), finished: ago(0), builder_cost_usd: 12345.678 })], ideas: [] }]);
   await big.settle();
-  assert.deepEqual(tiles(big, 'shipped-stats').slice(1), [['20k', 'median minutes', '20,000'], ['$12k', 'median builder cost', '$12,345.68']]);
+  assert.deepEqual(line(big), ['median 20k min, $12k', ['20,000', '$12,345.68']]);
 });
 
 test('0162 AC3: with nothing shipped there are no stats and no More stats button', async () => {
@@ -118,7 +120,7 @@ test('0162 AC4: a shipped card shows its id and title, its ship time and one lin
   const p = fakePage([STATE()]);
   await p.settle();
   const a = cardOf(p, '0401');
-  assert.deepEqual(a.children.map(n => n.className), ['name', 'when', 'sum']);
+  assert.deepEqual(a.children.map(n => n.className), ['name', 'sum'], 'the ship time in the line of figures since 0420');
   assert.deepEqual(byClass(p, a, 'line')[0].children.map(n => n.textContent), ['0401', 'Every figure']);
   assert.equal(byClass(p, a, 'figline')[0].textContent, '15 min · 2 rounds · $2.91');
   assert.equal(byClass(p, cardOf(p, '0402'), 'figline')[0].textContent, '30 min · 1 round');
@@ -140,14 +142,14 @@ test('0162 AC4: Details shows the labelled figures and the Review pack button, a
   p.press(byClass(p, cardOf(p, '0401'), 'details')[0]);
   await p.settle();
   let a = cardOf(p, '0401');
-  assert.deepEqual(a.children.map(n => n.className), ['name', 'when', 'sum', 'figs', 'full-cell']);
+  assert.deepEqual(a.children.map(n => n.className), ['name', 'sum', 'figs', 'full-cell']);
   assert.deepEqual(byClass(p, a, 'fig').map(f => [byClass(p, f, 'k')[0].textContent, byClass(p, f, 'v')[0].textContent]),
     [['Time', '15 min'], ['Review rounds', '2'], ['Reviewer tokens', '108k'], ['Builder tokens', '2.4M'], ['Builder cost', '$2.91']]);
   assert.equal(byClass(p, a, 'details')[0].attrs['aria-expanded'], 'true');
-  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'when', 'sum'], 'only the card tapped opens');
+  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'sum'], 'only the card tapped opens');
   await refresh(p);
   a = cardOf(p, '0401');
-  assert.deepEqual(a.children.map(n => n.className), ['name', 'when', 'sum', 'figs', 'full-cell'], 'still open after the next poll');
+  assert.deepEqual(a.children.map(n => n.className), ['name', 'sum', 'figs', 'full-cell'], 'still open after the next poll');
   const pack = p.all(a).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
   p.press(pack);
   await p.settle();
@@ -155,7 +157,7 @@ test('0162 AC4: Details shows the labelled figures and the Review pack button, a
   assert.ok(p.byId('full-ticket').textContent.includes('All good.'));
   p.press(byClass(p, cardOf(p, '0401'), 'details')[0]);
   await p.settle();
-  assert.deepEqual(cardOf(p, '0401').children.map(n => n.className), ['name', 'when', 'sum'], 'Details again hides them');
+  assert.deepEqual(cardOf(p, '0401').children.map(n => n.className), ['name', 'sum'], 'Details again hides them');
 });
 
 test('0162 AC4: a card with no figures still has Details, which shows Review pack', async () => {
@@ -173,7 +175,7 @@ test('0162 AC4: tapping the title still opens the full ticket, and doesn\'t open
   await p.settle();
   assert.equal(p.byId('full-ticket').hidden, false);
   assert.ok(p.byId('full-ticket').textContent.includes('0402'));
-  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'when', 'sum']);
+  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'sum']);
 });
 
 // ---------- in a real browser ----------
@@ -231,20 +233,23 @@ for (const width of [375, 1280]) {
     }, { width, state: STATE({ queue: false }) });
   });
 
-  test(`0162 AC3: at ${width} px three stat tiles show in one row, More stats under them shows the other three`, skip, async () => {
+  // 0420: the three are one line, with More stats at its end, and the other three are tiles in one row under it.
+  test(`0162 AC3: at ${width} px three stats show in one line, and More stats shows the other three in one row`, skip, async () => {
     await withPanel(async b => {
       await b.js(openLane('shipped')); // 0410
       const shown = () => b.js(`[...document.querySelectorAll('section.shipped .stat')].filter(n => n.getBoundingClientRect().height > 0).map(n => { const r = n.getBoundingClientRect(); return { top: Math.round(r.top), bottom: r.bottom, label: n.querySelector('.label').textContent }; })`);
-      const before = await shown();
-      assert.deepEqual(before.map(t => t.label), ['shipped today', 'median minutes', 'median builder cost']);
-      assert.equal(new Set(before.map(t => t.top)).size, 1, 'one row');
-      const more = await b.js(`(() => { const r = document.getElementById('more-stats').getBoundingClientRect(); return { top: r.top, height: r.height, text: document.getElementById('more-stats').innerText }; })()`);
-      assert.ok(more.top >= before[0].bottom - 0.5, 'More stats is under the tiles');
+      assert.deepEqual(await shown(), [], 'no tiles until More stats');
+      const line = await b.js(`(() => { const r = document.getElementById('shipped-stats').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, right: r.right, text: document.getElementById('shipped-stats').innerText }; })()`);
+      assert.match(line.text, /^\d+ today · median \d+ min, \$[\d.]+$/);
+      const more = await b.js(`(() => { const r = document.getElementById('more-stats').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, height: r.height, text: document.getElementById('more-stats').innerText }; })()`);
+      assert.ok(more.left >= line.right - 0.5 && more.top < line.bottom && more.bottom > line.top, 'More stats at the end of the line');
       assert.equal(more.text.toLowerCase(), 'more stats');
       if (width < 700) assert.ok(more.height >= 43.5, `More stats is ${more.height} px high`);
       await b.js(`document.getElementById('more-stats').click()`);
       await settle(b);
-      assert.deepEqual((await shown()).map(t => t.label), ['shipped today', 'median minutes', 'median builder cost', 'median review rounds', 'median reviewer tokens', 'median builder tokens']);
+      const after = await shown();
+      assert.deepEqual(after.map(t => t.label), ['median review rounds', 'median reviewer tokens', 'median builder tokens']);
+      assert.equal(new Set(after.map(t => t.top)).size, 1, 'one row');
       assert.deepEqual(await b.js(`[...document.querySelectorAll('section.shipped .stat .num')].filter(n => n.title).map(n => [n.textContent, n.title])`), [['54k', '54,367'], ['2.4M', '2,412,345']]);
     }, { width });
   });
