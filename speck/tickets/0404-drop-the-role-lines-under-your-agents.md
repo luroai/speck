@@ -39,6 +39,7 @@ Your agents no longer says which roles use each agent.
 - Asked for 2026-10-23 from the Your agents rows. The lines come from `agentRow` in `templates/panel.html` (`The ${ROLE_WORDS(roles)} use(s) it.`), fed by `roles` on each agent from `yourAgentsShown` in `scripts/your-agents.mjs`.
 - Waits for 0403: both change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: no changes. The server still sends each agent's roles, as 0399's Remove refusal and its AC1 test use them; only the panel stops showing them, and the now unused ROLE_WORDS went with it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
