@@ -45,6 +45,7 @@ speck's reviewers are Codex, Claude Code and Cursor. There's no way to review wi
 - Checked 2026-10-23: `claude --help` (2.1.301) says sessions are saved to disk unless `--no-session-persistence` is given, so `--resume` is local to Claude Code and works whichever endpoint it's pointed at.
 - Waits for 0389 for the key, and for 0388, which changes how a ticket's reviewer is chosen (`scripts/review.mjs`, `scripts/same-model.mjs`).
 - Failing before this build: none
+- Self-check: no changes. Also ran the real Claude Code (2.1.301) with the reviewer's exact flags and environment against a local stand-in for DeepSeek's API: its one request went to the given address with only the DeepSeek key (no Authorization header), and `--resume` continued the same session. No DeepSeek key is set on this machine, so no round has run against DeepSeek itself.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
