@@ -1,7 +1,7 @@
 ---
 id: "0434"
 title: Show each collapsed ticket as two single lines                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-10-23T19:48:52.766Z"
 blocked_at: ""
 waited_seconds: 1637
 approved: "2026-10-23T20:56:16.426Z"
+finished: "2026-10-23T20:59:05.637Z"
 
 ---
 # 0434 · Show each collapsed ticket as two single lines
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Collapsed tickets are taller and busier than they need to be. A ticket being built starts its details line with a stage sentence such as `Writing tests and code`, then its stage, its time, its priority, size and risk. On a phone each item is a finger-sized box, so the line wraps over three rows. A shipping ticket shows two unlabelled times (`Shipping · 01:08 · 20:12`), and a long title wraps over two lines.
