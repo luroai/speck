@@ -63,7 +63,11 @@ speck, the Foreman, plays an animation for each thing that happens in the pipeli
 - 0413's test that speck idles whatever the word now checks only that speck is cast: 0414 replaces that behaviour.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The screen at the top of the panel now acts out what the pipeline is doing. speck, the Foreman, plays a short animation with a caption when a ticket starts shipping, ships, gets a question or is ready for you to ship, and when the Foreman agent asks you something or starts looking into a ticket. While new tickets are being written it sits at its laptop. The rest of the time it matches the Foreman's word: asleep when speck run is off, watching with a clipboard while builds run, grumpy while waiting, and a random pastime when idle, falling asleep after 15 minutes of quiet.
+
+To see it, open the panel while speck run is working, or make a new ticket and watch speck start writing. With reduced motion turned on, speck holds still, but its caption still changes.
+
+Worth keeping an eye on: if the panel sits in a hidden tab for a long time, speck replays every event it saw when you come back, one after another.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -73,6 +77,8 @@ speck, the Foreman, plays an animation for each thing that happens in the pipeli
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - A panel left in a hidden tab replays every event it saw on return: speck/ideas/2026-10-23-skip-speck-s-events-from-while-the-panel-was-hidden.md.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -146,6 +152,81 @@ speck, the Foreman, plays an animation for each thing that happens in the pipeli
     ],
     "escalation_question": "",
     "summary": "The animations, captions, status poses and reduced-motion behaviour are covered by passing tests. However, the implementation silently skips some events instead of showing each in turn. Fix event delivery before presenting this for merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "474d32fbdf7224188d302df604a229872341b7eb",
+    "session": "continued",
+    "thread_id": "01a16955-b6b5-7782-9f1b-4aec72a0ccc5",
+    "builder_response": "- Tests run: test/panel-0414.test.mjs test/panel-0413.test.mjs\n- F1: fixed. noteBoard (templates/panel.html) no longer truncates the queue or de-duplicates by caption: every event it sees is queued and plays in turn. The dropping test is replaced by \"0414 AC4: every event seen plays, however many, including a ticket blocked and the Foreman asking about it at once\", which plays ten ships, then the blocked question and the Foreman's question for the same ticket, then the word's pose.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 336862,
+      "cached_input_tokens": 279168,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1516,
+      "reasoning_output_tokens": 210
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T15:18:15.876Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: noteBoard detects new or edited drafts and speckNow applies the 30-second writing window. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "noteBoard queues the required event poses and captions; speckNow applies the specified durations. All AC2 tests passed, including the single shipping loop."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "speckRests implements the status poses, fixed idle choices and 15-minute nap. AC3 tests passed for status persistence, waking, build-stage independence and no model requests."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "noteBoard now preserves every observed event without truncation or caption deduplication. Passing AC4 tests cover sequential playback, initial-load suppression, ten shipping completions and two simultaneous questions about the same ticket."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "screenFrame draws fixed captions within the screen; reduced motion holds the cast still while captions update. Both AC5 tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Observed events were discarded by queue truncation and caption deduplication. Both behaviours have been removed.",
+        "suggested_fix": "Completed: every observed event is queued separately, with regression coverage for more than eight events and identical question captions.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The screen now shows pipeline events in sequence, with captions, status poses and reduced-motion support. The skipped-event problem is fixed and covered by a passing regression test. All five criteria pass; this is ready for the product owner's merge decision."
   }
 }
 ```
