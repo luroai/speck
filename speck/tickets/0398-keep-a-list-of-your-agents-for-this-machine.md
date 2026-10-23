@@ -45,7 +45,11 @@ speck keeps a list of the agents you've set up on this machine, and setup fills 
 - Self-check: `speck agents add` now always keeps a list, even for an agent that already counted as yours; init reports an unreadable list instead of stopping; init writes no list when nothing is ready, so an agent set up later still counts as yours.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck now remembers which agents you've set up on this computer: Claude Code, Codex, Cursor and DeepSeek. Setting speck up fills the list with whichever are installed and signed in, or have a key saved, and tells you which it added. An existing list is never touched.
+
+To see it, run `speck agents`: each agent now says whether it's yours, and DeepSeek appears with whether its key is set. You can add or take one off the list yourself; speck won't add one that isn't installed or has no key, and won't take off the one doing your building, reviewing or Foreman work.
+
+Nothing changes yet in the Settings view: that comes with the next two tickets. If you never make a list, everything that's ready counts as yours, as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,7 +58,10 @@ speck keeps a list of the agents you've set up on this machine, and setup fills 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (no inbox notes; known limits only):
+  - `speck init --skip-checks` doesn't make the list, as it skips the other checks; setup fills it from `speck agents --json` instead.
+  - An agent that's installed but signed out can be added, with a note on how to sign in: the criteria refuse only agents that aren't installed.
+  - The list isn't used anywhere yet: Settings takes it up in 0399 and 0400.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -136,6 +143,89 @@ speck keeps a list of the agents you've set up on this machine, and setup fills 
     ],
     "escalation_question": "",
     "summary": "The list, commands and initial discovery are implemented and the reported tests pass. Two setup gaps remain: an existing installation does not save its first list, and listing agents before installation now fails."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "03340279eccf99ffc632093f7a94d4e0fb775cd2",
+    "session": "continued",
+    "thread_id": "01a16838-d62a-73f0-9e39-4fafdf6dc498",
+    "builder_response": "- Tests run: test/agents-0398.test.mjs test/agents-0288.test.mjs test/agents-0388.test.mjs test/agents-0123.test.mjs test/keys-0389.test.mjs test/detect-0086.test.mjs test/windows-0091.test.mjs test/setup-0088.test.mjs (plus the commands.checks files)\n- F1: fixed. skills/speck-setup/SKILL.md section 5 now has setup read `list` from `speck agents --json` once speck is installed; when it's false, as in a project that already had speck, it runs `speck agents add <id>` for each entry whose `yours` is true and tells the user which it added, and leaves an existing list alone. New test \"0398 AC3 F1\" checks the skill names these and that running those adds saves every ready agent and keyed provider.\n- F2: fixed. cmdAgents only needs a speck project for add and remove. Listing outside one reports every agent with no list (`list: false`) and no provider keys, so `npx … agents --json` before install works as before. New test \"0398 AC1 F2\" lists from a folder without speck/config.yml, and checks add there gives speck's usual \"run speck init first\" message.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 335476,
+      "cached_input_tokens": 275584,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1588,
+      "reasoning_output_tokens": 63
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T10:07:09.286Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/your-agents.mjs persists membership beside machine settings and reports readiness, membership and models. Passing AC1 tests cover reporting, ignored storage and listing before installation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "addAgent, removeAgent and rolesUsing implement membership changes and required refusals. Passing AC2 tests cover missing installations, missing provider keys and builder, reviewer and Foreman protection."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdInit calls fillLine to discover and save ready agents while preserving existing lists. Setup section 5 now explicitly saves ready entries when list is false. Passing AC3 tests cover initialisation, providers, existing lists and the setup command sequence."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "yourAgents and agentsReport use readyIds when no list exists. The passing AC4 test verifies fallback discovery without writing a list, including agents becoming available later."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README's 'Your agents' paragraph describes discovery, membership, storage and add/remove commands. Reported checks passed: 209 tests, zero failures and three skips. Documentation tests assert command and file names rather than prose wording."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-setup/SKILL.md",
+        "issue": "Setup previously omitted initialising a missing list in an existing installation.",
+        "suggested_fix": "Implemented: section 5 now adds every entry marked yours when list is false, reports the additions and preserves existing lists. The new AC3 F1 test exercises those commands.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/your-agents.mjs",
+        "issue": "Listing agents previously required an initialised speck project.",
+        "suggested_fix": "Implemented: listing accepts a null repository and reports discovery without saved membership or keys; add/remove still require a project. The new AC1 F2 test covers both paths.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both setup gaps are fixed. speck now keeps and manages this machine's agent list, setup saves discovered agents, and discovery still works before installation. All criteria pass, with no remaining blocking findings."
   }
 }
 ```
