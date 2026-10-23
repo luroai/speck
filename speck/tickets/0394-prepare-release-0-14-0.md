@@ -1,7 +1,7 @@
 ---
 id: "0394"
 title: "Prepare release 0.14.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-23-prepare-release-0-14-0.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0389","0390","0391","0392","0393"]                # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T08:36:02.999Z"
 
 ---
 # 0394 · Prepare release 0.14.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 0389 to 0393 let you build, review and run the Foreman with DeepSeek's models through your own API key, kept safely for your machine and set in Settings. Anyone following the setup prompt, or updating speck on another machine, gets 0.13.1 without them.
