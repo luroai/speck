@@ -1,7 +1,7 @@
 ---
 id: "0419"
 title: "Fit a closed Plan or Build ticket on two lines"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-10-23T16:20:29.027Z"
 blocked_at: ""
 waited_seconds: 2046
 approved: "2026-10-23T17:31:40.959Z"
+finished: "2026-10-23T17:34:29.628Z"
 
 ---
 # 0419 · Fit a closed Plan or Build ticket on two lines
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A closed ticket in Plan or Build takes three or four rows: its title, a row of boxed tags, then its criteria and lint result, then what it waits on. In a narrow side pane that's 110–175 px per ticket, so only a few fit on screen.
