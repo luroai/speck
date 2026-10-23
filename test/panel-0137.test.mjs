@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, shippedRows, queueRows, findChrome, browserPage, openDetails, openLane } from './support/panel.mjs';
+import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, shippedRows, queueRows, findChrome, browserPage, openDetails, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0137: open a shipped ticket by clicking its title ----------
 
@@ -16,7 +16,7 @@ const paneId = p => (pane(p).hidden || !pane(p).children.length ? null : pane(p)
 const rowOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const linkOf = (p, row) => p.all(row).find(n => n.className === 'title-link'); // a link until 0141
 const buttonsOf = (p, row) => p.all(row).filter(n => n.tagName === 'button');
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
 test('0137 AC1: each Shipped row\'s title is a link that opens that ticket in the full ticket pane, and nothing else', async () => {

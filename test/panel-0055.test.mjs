@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, good, page, panelRepo, freePort, startPanel, stop, fakePage, round, exitOf, queueRows, findChrome, browserPage } from './support/panel.mjs';
+import { T, fm, good, page, panelRepo, freePort, startPanel, stop, fakePage, round, exitOf, queueRows, findChrome, browserPage, styles } from './support/panel.mjs';
 
 // ---------- 0055: a moving dot of light on the current step of a ticket being built or reviewed ----------
 // Since 0168 the builder badge plays its laptop loop while an agent is at work (test/panel-0168.test.mjs); from 0156 until
@@ -54,7 +54,7 @@ test('0055 AC2: no ready, blocked, approved or red building or reviewing ticket 
 });
 
 test('0055 AC3: no motion is drawn on a card, whatever the browser asks for (0416)', () => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const css = styles();
   const at = css.indexOf('@media (prefers-reduced-motion: no-preference)');
   assert.ok(at >= 0, 'there is a no-preference block');
   // The block's body, up to its matching brace.

@@ -4,13 +4,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseTicket, lintTicket } from '../scripts/speck.mjs';
-import { ROOT, T, fm, good, page, fakePage, items, queueRows, shippedRows, panelRepo } from './support/panel.mjs';
+import { ROOT, T, fm, good, page, fakePage, items, queueRows, shippedRows, panelRepo, styles } from './support/panel.mjs';
 
 // ---------- 0049: bug tickets ----------
 
 const cfg = { allow_same_model_review: false, limits: { max_acceptance_criteria: 5, max_ticket_body_lines: 40, max_review_rounds: 3, escalate_after_repeat_disputes: 2 } };
 const lint = o => lintTicket(parseTicket(`---\n${fm(o)}\n---\n${good}`), cfg).errors;
-const css = () => page().match(/<style>([\s\S]*?)<\/style>/)[1];
+const css = () => styles();
 const rule = sel => (css().match(new RegExp(`(^|\\n)\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[2] || '';
 const colour = name => (css().match(new RegExp(`--${name}:\\s*([^;]+);`)) || [])[1]?.trim();
 

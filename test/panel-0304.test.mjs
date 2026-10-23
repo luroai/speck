@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, page, panelRepo, freePort, startPanel, stop, raw, findChrome, browserPage } from './support/panel.mjs';
+import { ROOT, page, panelRepo, freePort, startPanel, stop, raw, findChrome, browserPage, styles } from './support/panel.mjs';
 import { rules, rule, get } from './support/css.mjs';
 
 // ---------- 0304: the panel's title in the LCD design's dot-matrix lettering, Doto ----------
@@ -29,7 +29,7 @@ test('0304 AC2: the panel serves Doto itself, from the repo\'s own copy, with it
   const f = face();
   assert.ok(f, 'an @font-face for Doto');
   assert.match(get(f, 'src'), /^url\("\/fonts\/Doto\.ttf"\) format\("truetype"\)$/, 'loaded from the panel, not the internet');
-  assert.doesNotMatch(page(), /fonts\.(googleapis|gstatic)\.com/, 'nothing fetched from Google Fonts');
+  assert.doesNotMatch((page() + styles()), /fonts\.(googleapis|gstatic)\.com/, 'nothing fetched from Google Fonts');
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   try {
     const res = await raw(panel.port, '/fonts/Doto.ttf');

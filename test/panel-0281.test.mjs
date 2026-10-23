@@ -71,7 +71,7 @@ test('0281 AC1 AC2: at every width and pixel ratio, the controls sit on whole pi
 // Every rule using what this ticket brings in is one of the Settings view's. 0423: or the full ticket's own rule, whose
 // centred column is rounded to whole pixels the same way.
 test('0281 AC3: the change is limited to the Settings view', () => {
-  const css = fs.readFileSync(new URL('../templates/panel.html', import.meta.url), 'utf8').split('</style>')[0];
+  const css = fs.readFileSync(new URL('../templates/panel.css', import.meta.url), 'utf8');
   const rules = css.split("\n").filter(l => l.includes("{") && /round\(|--gap|box-shadow: 0 0 0|max-resolution/.test(l));
   assert.ok(rules.length >= 5, `the ticket's rules: ${rules.length}`);
   for (const l of rules) {

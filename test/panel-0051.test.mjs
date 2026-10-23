@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { T, panelRepo, freePort, startPanel, stop, request, post, fakePage, page, queueRows, click, exitOf, findChrome, browserPage, charAt } from './support/panel.mjs';
+import { T, panelRepo, freePort, startPanel, stop, request, post, fakePage, page, queueRows, click, exitOf, findChrome, browserPage, charAt, styles } from './support/panel.mjs';
 
 // ---------- 0051: expand a queue ticket to read its build log ----------
 
@@ -191,7 +191,7 @@ test('0051 AC3: the log shows as text with ANSI escapes removed, blank runs as o
   assert.match(text, /^Earlier lines aren't shown/, 'truncated: a line saying so first');
   assert.equal(text.split('\n').slice(1).join('\n'), 'bold start\n\ngreen\n\nend', 'each run of blank lines shows as one');
   assert.equal(logOf(p, rowOf(p, '0002')).textContent, 'No log yet.');
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const css = styles();
   const rule = css.match(/\.log\s*\{([^}]*)\}/);
   assert.ok(rule, 'a .log rule');
   assert.match(rule[1], /max-height:/);

@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, exitOf, round, page } from './support/panel.mjs';
+import { T, fakePage, queueRows, exitOf, round, page, styles } from './support/panel.mjs';
 
 // ---------- 0168: the builder badge on each in-flight ticket's Build card ----------
 // 0416: the badge has gone, so only the words beside it are checked here: test/panel-0416.test.mjs checks no card has a picture.
@@ -62,5 +62,5 @@ test('0168 AC1: each in-flight card has a row under its title with the sentence 
     assert.deepEqual(shown.slice(2).map(([c]) => c), id === '0403' ? ['by', 'sub'] : stage ? ['sub'] : [], `${id}: the timer`);
     assert.equal(p.all(top).filter(n => /\b(enso|orbit|speck|dots|dot)\b/.test(n.className || '')).length, 0, `${id}: no ensō, speck or stage dots`);
   }
-  assert.doesNotMatch(page(), /\.enso\b|\.orbit\b|\.dot\.now|@keyframes orbit/, 'the ensō and the dots are gone from the page');
+  assert.doesNotMatch((page() + styles()), /\.enso\b|\.orbit\b|\.dot\.now|@keyframes orbit/, 'the ensō and the dots are gone from the page');
 });

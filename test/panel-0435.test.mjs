@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, idea, click, toggles, items, top, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html } from './support/panel.mjs';
+import { fakePage, idea, click, toggles, items, top, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles } from './support/panel.mjs';
 
 // ---------- 0435: a collapsed idea or inbox card is its title and one short line saying when it was captured ----------
 
@@ -39,7 +39,7 @@ test('0435 AC1: an idea card is its title with no label, then when it was captur
   assert.equal(secondOf(c[0]), 'Captured 8 Oct');
   assert.equal(secondOf(c[2]), 'Captured 8 Oct 2025', 'the year, when it isn\'t this year');
   assert.equal(secondOf(c[3]), 'Captured 8 Oct · shaped', 'a status other than idea');
-  const style = /<style>([\s\S]*?)<\/style>/.exec(html())[1];
+  const style = styles();
   assert.match(/\.item \.checks \{([^}]*)\}/.exec(style)[1], /font-size: 12px;/, 'smaller than the 17 px title');
 });
 

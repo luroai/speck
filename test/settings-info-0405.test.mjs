@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { heldTimeouts, page } from './support/panel.mjs';
+import { heldTimeouts, page, styles } from './support/panel.mjs';
 import { settingsPage, openSettings, rowOf, changeTo } from './support/settings.mjs';
 import { CLAUDE_MODELS } from '../scripts/settings.mjs';
 
@@ -129,7 +129,7 @@ test('0405 AC2: an effort with no explanation of its own leaves the role\'s as i
 });
 
 test('0405 AC2: an explanation taller than a narrow view scrolls inside it rather than running off it', () => {
-  const css = page();
+  const css = styles();
   const rules = [...css.matchAll(/#settings \.setting p\.explain \{([^}]*)\}/g)].map(m => m[1]).join(';');
   assert.match(rules, /max-height: 60vh/);
   assert.match(rules, /overflow-y: auto/);

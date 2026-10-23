@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, charAt, fakePage, full, click, items, top, toggles, queueRows, page, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, fm, charAt, fakePage, full, click, items, top, toggles, queueRows, page, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0041: tickets that start a dependency chain, and tickets waiting on others ----------
 
@@ -17,7 +17,7 @@ const iconOf = (p, row) => {
   const r = idRow(p, row);
   return r.children[1] && /\b(chain|lock)\b/.test(r.children[1].className) ? r.children[1] : null;
 };
-const css = () => page().match(/<style>([\s\S]*?)<\/style>/)[1];
+const css = () => styles();
 const rule = sel => (css().match(new RegExp(`(^|\\n)\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[2] || '';
 
 // 0001 (draft) starts a chain that 0002 (ready) and 0003 (draft) wait on; a done and a cancelled ticket also list it.

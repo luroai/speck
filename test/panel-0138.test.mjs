@@ -2,11 +2,11 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelModel, T, round, fakePage, queueRows, exitOf, isRed, stageOf, sayOf, findText, boardPage, openQueueRows } from './support/panel.mjs';
+import { page, panelModel, T, round, fakePage, queueRows, exitOf, isRed, stageOf, sayOf, findText, boardPage, openQueueRows, styles } from './support/panel.mjs';
 
 const MESSAGE = 'speck ship refused: tests failed.';
 const purple = n => /\bto-ship\b/.test(n.className || '');
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 const light = () => vars((css().match(/:root \{([\s\S]*?)\}/) || [])[1] || '');
 const lightTints = () => vars([...css().matchAll(/:root \{ (--accent-bg[^}]*)\}/g)].map(m => m[1]).join(' '));

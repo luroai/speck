@@ -3,11 +3,11 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, page, full, click, items, top, queueRows } from './support/panel.mjs';
+import { fakePage, page, full, click, items, top, queueRows, styles } from './support/panel.mjs';
 
 // The declarations of each CSS rule whose selector list holds exactly `sel`, in the page's style, media queries included.
 const rules = sel => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = styles().replace(/\/\*[\s\S]*?\*\//g, '');
   return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].replace(/^[^{]*\{/, '').split(',').map(x => x.trim()).includes(sel)).map(m => m[2]);
 };
 const clone = s => JSON.parse(JSON.stringify(s));

@@ -1,12 +1,12 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, idea, round, openLane } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, idea, round, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0161: make the panel readable for low vision ----------
 
 // The page's stylesheet as a list of rules: each rule's selector, its declarations and the at-rules it sits in.
-const css = (html = page()) => (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles(); // 0430: from their own file
 function rules(text = css()) {
   const out = [], stack = [];
   let buf = '';
@@ -202,7 +202,7 @@ test('0161 AC4: the page can be zoomed', () => {
     const t = get(r, 'touch-action');
     if (t !== undefined) assert.match(t, /^(auto|pinch-zoom|.*\bpinch-zoom\b.*)$/, `${r.sel}: touch-action ${t} stops a pinch`);
   }
-  const script = html.slice(html.indexOf('</style>'));
+  const script = html; // 0430: the page has no styles of its own
   assert.doesNotMatch(script, /gesture(start|change)|['"]wheel['"]|['"]touchmove['"]/, 'no script stops a pinch or Ctrl and the wheel');
 });
 

@@ -19,6 +19,7 @@ import { copied } from './copy.mjs';
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
 export const PAGE = path.join(ROOT, 'templates', 'panel.html');
+export const STYLES = path.join(ROOT, 'templates', 'panel.css'); // 0430: the page's styles, which it loads from /panel.css
 export const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
 export const env = { ...process.env, ...gitEnv };
 export const good = `## Problem\nUsers cannot export.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n`;
@@ -128,11 +129,13 @@ export function cliCopy() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-cli-'));
   fs.cpSync(path.join(ROOT, 'scripts'), path.join(dir, 'scripts'), { recursive: true });
   fs.cpSync(path.join(ROOT, 'templates'), path.join(dir, 'templates'), { recursive: true });
-  return { cli: path.join(dir, 'scripts', 'speck.mjs'), page: path.join(dir, 'templates', 'panel.html') };
+  return { cli: path.join(dir, 'scripts', 'speck.mjs'), page: path.join(dir, 'templates', 'panel.html'), styles: path.join(dir, 'templates', 'panel.css') };
 }
 
 // The page's pure model function, run outside the browser.
 export const page = () => fs.readFileSync(PAGE, 'utf8');
+// 0430: the page's styles, from their own file.
+export const styles = () => fs.readFileSync(STYLES, 'utf8');
 
 // 0126: the panel's agreed colours. 0134 changed them to the zen look's, 0147 to the landing page's.
 export const PALETTE = '--bg: #f3f3f3; --panel: #fcfcfc; --raise: #f3f3f3; --line: #14141476; --line-soft: #14141413; --text: #141414EB; --muted: #141414BA; --faint: #141414BA; --accent: #cf2d56; --ok: #145a42; --warn: #6d4700; --bad: #96213f; --run: #285372; --idea: #833063';
@@ -505,7 +508,7 @@ export function heldTimeouts() {
 // 0424: the declarations of each CSS rule whose selector list holds exactly `sel`, in the page's style, media queries
 // included, and one declaration's value from them, or undefined.
 export const cssRules = sel => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = styles().replace(/\/\*[\s\S]*?\*\//g, '');
   return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].replace(/^[^{]*\{/, '').split(',').map(x => x.trim()).includes(sel)).map(m => m[2]);
 };
 export const cssValue = (decls, prop) => {

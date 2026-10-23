@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { ROOT, page, PALETTE, paletteProblems } from './support/panel.mjs';
+import { ROOT, page, PALETTE, paletteProblems, styles } from './support/panel.mjs';
 
 // ---------- 0147: style the panel like the landing page ----------
 
@@ -14,32 +14,32 @@ const DARK = parse('--bg: #141414; --panel: #181818; --raise: #1c1c1c; --line: #
 const FONTS = ['-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif', '"SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace']; // 0427: Cursor's fonts
 
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
-const css = html => (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles(); // 0430: from their own file
 // Every variable set by a plain `:root {` block (the first one and the one with the -bg tints).
-const lightVars = html => vars([...css(html).matchAll(/:root \{([^}]*)\}/g)].map(m => m[1]).join(' '));
-const darkVars = html => vars([...css(html).matchAll(/:root\[data-theme="dark"\] \{([^}]*)\}/g)].map(m => m[1]).join(' '));
+const lightVars = () => vars([...css().matchAll(/:root \{([^}]*)\}/g)].map(m => m[1]).join(' '));
+const darkVars = () => vars([...css().matchAll(/:root\[data-theme="dark"\] \{([^}]*)\}/g)].map(m => m[1]).join(' '));
 // Each comma-separated font list in a stylesheet, its spaces tidied.
 const fontLists = s => [...s.matchAll(/(?:(?:"[^"]*"|[\w-]+),\s*)+(?:sans-serif|serif|monospace)\b/g)].map(m => m[0].replace(/,\s*/g, ', '));
 
 test('0147 AC1: the light look sets the landing page\'s colours exactly', () => {
-  const v = lightVars(page());
+  const v = lightVars();
   for (const [k, want] of Object.entries(LIGHT)) assert.equal(v.get(k), want, k);
   // The first :root block holds the colours, the later one only the tints.
-  const first = vars((css(page()).match(/:root \{([^}]*)\}/) || [])[1] || '');
+  const first = vars((css().match(/:root \{([^}]*)\}/) || [])[1] || '');
   for (const k of Object.keys(LIGHT).filter(k => !k.endsWith('-bg'))) assert.equal(first.get(k), LIGHT[k], `${k} in the first :root block`);
 });
 
 test('0147 AC2: the dark look sets the landing page\'s colours exactly', () => {
-  const v = darkVars(page());
+  const v = darkVars();
   for (const [k, want] of Object.entries(DARK)) assert.equal(v.get(k), want, k);
 });
 
 test('0147 AC3: the colour tests check the new values and fail when one changes', () => {
   for (const d of PALETTE.split('; ')) { const [k, v] = d.split(': '); assert.equal(v, LIGHT[k], `PALETTE ${k}`); }
-  assert.deepEqual(paletteProblems(page()), []);
+  assert.deepEqual(paletteProblems(styles()), []);
   for (const [k, v] of Object.entries(parse(PALETTE))) {
-    const changed = page().replace(`${k}: ${v};`, `${k}: #000001;`);
-    assert.notEqual(changed, page(), `${k} is in the page`);
+    const changed = styles().replace(`${k}: ${v};`, `${k}: #000001;`);
+    assert.notEqual(changed, styles(), `${k} is in the page`);
     assert.deepEqual(paletteProblems(changed), [`${k} should be ${v}`]);
   }
   const src = f => fs.readFileSync(path.join(ROOT, 'test', f), 'utf8');
@@ -58,13 +58,13 @@ test('0147 AC3: the colour tests check the new values and fail when one changes'
 });
 
 test('0147 AC3: the full-ticket pane\'s backdrop is rgba(20, 20, 19, .2) in light and unchanged in dark', () => {
-  const s = css(page());
+  const s = css();
   assert.match(s, /\n {2}#full-backdrop \{[^}]*background: rgba\(20, 20, 19, \.2\);/);
   assert.match(s, /:root\[data-theme="dark"\] #full-backdrop \{ background: rgba\(0, 0, 0, \.45\); \}/);
 });
 
 test('0147 AC4: every font list in the stylesheet is one of the landing page\'s three, in its order', () => {
-  const lists = fontLists(css(page()));
+  const lists = fontLists(css());
   assert.ok(lists.length > 20, `the stylesheet's font lists are found (${lists.length})`);
   // 0304: and the design's Doto for speck's name in the header, with a monospace fall-back
   for (const l of lists) assert.ok(FONTS.includes(l) || l === '"Doto", ui-monospace, monospace', `unexpected font list: ${l}`);
@@ -75,9 +75,9 @@ test('0147 AC4: every font list in the stylesheet is one of the landing page\'s 
 test('0147 AC4: no font is loaded from another host', () => {
   const html = page();
   assert.doesNotMatch(html, /<link\b[^>]*https?:\/\//i);
-  assert.doesNotMatch(css(html), /@import/i);
+  assert.doesNotMatch(css(), /@import/i);
   // 0304: the one font loaded is Doto, from the panel itself
-  assert.deepEqual([...css(html).matchAll(/url\(([^)]*)\)/gi)].map(m => m[1]), ['"/fonts/Doto.ttf"']);
+  assert.deepEqual([...css().matchAll(/url\(([^)]*)\)/gi)].map(m => m[1]), ['"/fonts/Doto.ttf"']);
 });
 
 // AC5: each commit this ticket made (and, on its own branch, the uncommitted work) against the one before it.

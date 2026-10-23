@@ -3,7 +3,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, T, queueRows, deferred, page as html } from './support/panel.mjs';
+import { fakePage, T, queueRows, deferred, page as html, styles } from './support/panel.mjs';
 import { PACK, DOCS } from './support/documents.mjs';
 
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
@@ -222,7 +222,7 @@ test('0363 AC4: the pack\'s own Ship and Ask for changes work as before, with th
 });
 
 test('0363 AC1: the pop-up\'s Ship and Ask for changes look as the pack\'s do, in the document\'s centred column', () => {
-  const css = html().match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = styles().replace(/\/\*[\s\S]*?\*\//g, '');
   const sels = [...css.matchAll(/([^{}]+)\{[^{}]*\}/g)].map(m => m[1].replace(/^[^{]*\{/, '').split(',').map(x => x.trim()));
   for (const s of ['.ship', '.ship:disabled', '.ship-said', '.ship-said.bad', '.changes-note', '.pack-buttons', '.ask-changes', '.ask-changes:disabled'])
     assert.ok(sels.some(l => l.includes(`#full-ticket ${s}`) && l.includes(`#doc-view ${s}`)), `${s} shared`);
