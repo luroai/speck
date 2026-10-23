@@ -162,6 +162,6 @@ test('0392 AC3: the README, the brief and the config template name deepseek as a
   const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
   const mentions = (text, setting) => text.split(/\n\s*\n|\n\|/).filter(part => part.includes(setting)).some(part => /\bdeepseek\b/.test(part));
   assert.ok(mentions(read('README.md'), '`foreman_model`'), 'README');
-  assert.ok(mentions(read('docs/brief.md'), '`foreman_fixing` of'), 'brief');
+  assert.ok(mentions(read('docs/brief.md'), '`foreman_model`'), 'brief');
   assert.match(read('templates/config.yml'), /^foreman: .*\bdeepseek\b/m);
 });
