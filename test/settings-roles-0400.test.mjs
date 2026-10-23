@@ -85,7 +85,7 @@ test('0400 AC1: Builder, Reviewer and Foreman each have one list of your agents\
     assert.equal(labelOf(p, role, 'codex|gpt-6.1-sol'), 'Codex · GPT-6.1 Sol');
     assert.equal(labelOf(p, role, 'deepseek|deepseek-v4-pro'), 'DeepSeek · V4 Pro');
     assert.equal(labelOf(p, role, 'codex|gpt-small'), 'Codex · gpt-small', 'a model without a display name by its own');
-    assert.match(labelOf(p, role, 'codex|'), /^Codex · default/);
+    assert.equal(labelOf(p, role, 'codex|'), 'Codex (default)', '0403: no entry labelled only "default"; Codex\'s default isn\'t named here');
     assert.ok(!offered(p, role).some(v => v.startsWith('cursor|')), `${role}: no Cursor`);
   }
   assert.equal(controlOf(p, 'reviewer').value, 'codex|', 'the reviewer as saved: Codex on its default');
@@ -248,9 +248,9 @@ test('0400 AC2 F2: a role whose model alone is this machine\'s own can still be 
   const p = settingsPage([v], [{ ok: true, changed: ['reviewer_model'] }]);
   await openSettings(p);
   const tip = () => rowOf(p, 'reviewer').children.find(n => n.tagName === 'p' && /\bexplain\b/.test(n.className || '')); // its own, not its effort's
-  assert.match(tip().textContent, /used over the project's: Codex · default/);
+  assert.match(tip().textContent, /used over the project's: Codex \(default\)/);
   p.press(p.all(rowOf(p, 'reviewer')).find(n => n.tagName === 'button' && n.textContent === 'Clear this machine\'s value'));
-  assert.equal(controlOf(p, 'reviewer').value, 'Codex · default', 'shows the project\'s, which Save leaves');
+  assert.equal(controlOf(p, 'reviewer').value, 'Codex (default)', 'shows the project\'s, which Save leaves');
   assert.match(tip().textContent, /This machine's value, Codex · GPT-6\.1 Sol, is cleared when you save/);
   p.press(saveButton(p));
   await p.settle();
