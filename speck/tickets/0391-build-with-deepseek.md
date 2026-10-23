@@ -1,7 +1,7 @@
 ---
 id: "0391"
 title: "Build with DeepSeek"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-18-use-a-model-provider-through-your-own-api-k
 after: ["0390"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T07:46:10.236Z"
+approved: "2026-10-23T08:02:13.066Z"
 
 ---
 # 0391 · Build with DeepSeek
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck run builds with Claude Code, Codex or Cursor. There's no way to build with a model from a provider you have an API key for, such as DeepSeek.
@@ -57,9 +58,15 @@ Worth keeping an eye on: no key is set on this machine, so the first build again
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 providerResumeCommand constructs a shell command with .join(' ') without quoting PROVIDER_SCRIPT.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 633,180
+- Elapsed since build started: 16 min
+- Changed lines: 230 (limit 5000)
 Follow-ups:
 - Inbox: speck/ideas/2026-10-23-name-deepseek-properly-when-it-reviews.md (the panel says "Deepseek is reviewing").
 - Inbox: speck/ideas/2026-10-23-same-model-check-knows-a-provider-build-s-model.md.
