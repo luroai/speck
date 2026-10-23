@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, good, panelRepo, freePort, startPanel, stop, fakePage, full, round, exitOf, queueRows, stageOf, shippedRows, startOfToday, findChrome, browserPage, charAt, openLane } from './support/panel.mjs';
+import { T, fm, good, panelRepo, freePort, startPanel, stop, fakePage, full, round, exitOf, queueRows, stageOf, shippedRows, startOfToday, findChrome, browserPage, charAt, openLane, QUICK_PINGS } from './support/panel.mjs';
 
 // ---------- 0050: selected text and scroll in queue and Shipped rows survive the refresh ----------
 
@@ -212,7 +212,7 @@ test('0050 AC1-AC5: in a real browser, selections and the build message scroll s
   fs.mkdirSync(runs, { recursive: true });
   fs.writeFileSync(path.join(runs, '0003.json'), JSON.stringify({ id: '0003', session: 's', started: ago(6), exited: ago(1), exit_code: 1 }));
   fs.writeFileSync(path.join(runs, '0003.log'), Array.from({ length: 50 }, (_, i) => `build output line ${i + 1}`).join('\n'));
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())], undefined, QUICK_PINGS); // 0429: a refresh every half a second
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
