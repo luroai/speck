@@ -10,7 +10,8 @@ const staticHtml = () => page().replace(/<script>[\s\S]*?<\/script>/g, '').repla
 // What each section header held before 0134: its heading, then its live count (or the Plan toggles) and its hint, which
 // 0162 removed.
 // 0410: the headings are the tabs' names now, Build's and Shipped's counts beside them, and Build's "<n> needs you".
-const BEFORE = [['Plan', ['H2']], ['Build', ['H2', 'n', 'needs']], ['Shipped', ['H2', 'n']]];
+// 0425: the counts are the first line of their lane, so Build's tab holds its needs-you number alone.
+const BEFORE = [['Plan', ['H2']], ['Build', ['H2', 'needs']], ['Shipped', ['H2']]];
 
 test('0135 AC1-AC2: in a real browser, each section header starts with its heading and shows only what it did before 0134', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
