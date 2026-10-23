@@ -1,7 +1,7 @@
 ---
 id: "0393"
 title: "Offer DeepSeek in Settings"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T08:16:16.005Z"
 ---
 # 0393 · Offer DeepSeek in Settings
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 DeepSeek can be set as builder, reviewer or Foreman from the command line, but Settings doesn't offer it, and there's nowhere in the panel to give its API key.
@@ -47,7 +47,11 @@ Settings offers DeepSeek like any other agent, with its models and a field for i
 - Self-check: a provider already chosen while Claude Code isn't installed is still offered but now says it can't run; the check uses this machine's own value as the one set now, as Settings shows it; existing tests that pinned the builder, reviewer and Foreman lists (0258, 0287, 0293) now include deepseek.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Settings now offers DeepSeek as the builder, the reviewer and the Foreman, listed by its own name, with DeepSeek's two models to pick from. While DeepSeek is chosen anywhere, a new API keys box says whether this computer has a DeepSeek key and lets you paste one in or replace it. The box never shows a saved key, and saving it keeps the key on this computer only, without a commit.
+
+To see it, open Settings, pick DeepSeek as the reviewer, and the API keys box appears at the bottom. With no key saved, it says DeepSeek can't run until you enter one.
+
+Worth keeping an eye on: if Claude Code isn't installed, DeepSeek isn't offered and Settings says why, because speck runs DeepSeek through it. Switching the builder to DeepSeek from the command line now also sets the build command DeepSeek needs, as the panel does.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +61,75 @@ Settings offers DeepSeek like any other agent, with its models and a field for i
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- speck doctor checks a DeepSeek builder or reviewer but not a DeepSeek Foreman: saved to the inbox as `speck/ideas/2026-10-23-check-the-foreman-s-model-provider-in-speck-doctor.md`.
+- Known limit: with a model provider as the reviewer, `reviewer_effort` still offers speck's efforts, though a provider's reviewer isn't given one. Tidy-up only, no idea note.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "27c1aefff79de31ff0407eff680802f53bf5ba40",
+    "session": "fresh",
+    "thread_id": "01a167dd-a7d4-78f2-ba00-a05d316c3865",
+    "builder_response": "- Tests run: test/settings-provider-0393.test.mjs test/panel-0258.test.mjs test/foreman-agent-0287.test.mjs test/builder-switch-0293.test.mjs test/settings-models-0369.test.mjs (plus the commands.checks files speck test adds)\n- Existing tests changed: 0258, 0287 and 0293 pinned the exact reviewer, Foreman and builder lists; each now also expects deepseek, which AC1 adds. No assertion was removed.\n- A wider run of every test file touching Settings, config, keys, providers and the panel's page (48 files, 629 tests) passed apart from those three, now fixed.\n- Pictures taken of Settings with DeepSeek as reviewer, light and dark, from a throwaway repo.\n",
+    "seconds": 45,
+    "usage": {
+      "input_tokens": 193247,
+      "cached_input_tokens": 84992,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 771,
+      "reasoning_output_tokens": 84
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T08:26:27.239Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs offers providers for all three roles and supplies their registered models. templates/panel.html uses provider labels and model lists. Three passing 0393 AC1 tests cover choices, labels, models and saving the builder."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelKeyRequest saves through the existing machine-only key store and returns status without the key. The HTTP route checks origin and token. Passing 0393 AC2 tests cover empty password fields, replacement status, request bodies, clearing after saving, no commit and no key in responses."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "keyRow warns that a missing key prevents running. readyReviewers checks Claude Code installation and preserves an already selected provider with an explanation. Both 0393 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Provider choices, labels, models and key fields derive from the provider registry. The passing 0393 AC4 test supplies TestCo and exercises server output and page behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded run reports 162 passed, zero failed and three skipped across 165 tests. Existing list assertions were updated to include DeepSeek without removing checks. No unrelated regression is evident in the change."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Settings now offers DeepSeek for building, reviewing and Foreman work, with its models and a machine-only API key field. Key saving keeps secrets out of responses and commits. Missing keys and required software are explained. The relevant tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
