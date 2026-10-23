@@ -1,7 +1,7 @@
 ---
 id: "0414"
 title: "Show the pipeline through speck's animations on the screen"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0413"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T15:09:04.633Z"
 approved: "2026-10-23T15:18:30.707Z"
+finished: "2026-10-23T15:21:23.956Z"
 
 ---
 # 0414 · Show the pipeline through speck's animations on the screen
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 After 0413, speck sits on the screen in the same idle animation whatever the pipeline is doing. A new ticket, a ship or a question looks the same as nothing happening.
