@@ -1,7 +1,7 @@
 ---
 id: "0438"
 title: "Round speck's screen to match the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0436"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T22:14:37.602Z"
+approved: "2026-10-23T22:21:40.659Z"
 
 ---
 # 0438 · Round speck's screen to match the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0428, the panel's controls and cards have rounded corners, but speck's screen and its dark frame are still square. On a wide window, the frame is also narrower than the tabs and lanes under it (520 px against 720 px), so its edges don't line up with anything.
@@ -56,9 +57,14 @@ On a wide window the frame is wider than before, with dark space either side of 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 99,893
+- Elapsed since build started: 7 min
+- Changed lines: 18 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
