@@ -183,7 +183,7 @@ test('0031 AC3: the model sorts tickets into Shaping, the Queue and Shipped, and
   assert.ok(!shown.some(t => t.id === '0008'), 'cancelled is not shown');
 });
 
-test('0031 AC3: Shipped shows the 5 latest finished done tickets, newest first, with rounds, tokens and minutes', () => {
+test('0031 AC3: Shipped shows the latest finished done tickets, newest first, with rounds, tokens and minutes', () => {
   const model = panelModel();
   const done = (id, started, finished, rounds = []) => T(id, 'done', { started, finished, rounds });
   const state = {
@@ -201,7 +201,7 @@ test('0031 AC3: Shipped shows the 5 latest finished done tickets, newest first, 
     ideas: [],
   };
   const m = model(state);
-  assert.deepEqual(m.shipped.map(t => t.id), ['0016', '0015', '0014', '0013', '0012'], 'the 5 with the latest finished time, newest first');
+  assert.deepEqual(m.shipped.map(t => t.id), ['0016', '0015', '0014', '0013', '0012', '0011', '0017', '0018'], 'newest first, then those with no finished time (the latest ten since 0411)');
   assert.equal(m.shippedTotal, 8, 'every done ticket, not cancelled');
   const row = id => m.shipped.find(t => t.id === id);
   assert.equal(row('0016').minutes, 3);
@@ -210,7 +210,7 @@ test('0031 AC3: Shipped shows the 5 latest finished done tickets, newest first, 
   assert.equal(row('0013').roundCount, 1);
   assert.equal(row('0013').tokens, 7);
 
-  // With fewer than 5 finished, done tickets with no finished time come after them.
+  // With fewer than 10 finished, done tickets with no finished time come after them.
   const few = model({ tickets: [done('0011', '2026-10-01T10:00:00Z', '2026-10-01T10:04:00Z', [round(1, 100), round(2, 50)]), done('0017', '2026-10-07T10:00:00Z', undefined), done('0018', undefined, 'not a date')], ideas: [] });
   assert.deepEqual(few.shipped.map(t => t.id), ['0011', '0017', '0018']);
   assert.deepEqual([few.shipped[0].roundCount, few.shipped[0].tokens, few.shipped[0].minutes], [2, 150, 4]);
