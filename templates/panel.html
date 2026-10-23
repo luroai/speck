@@ -24,8 +24,8 @@
   // 0160: the home-screen app's status bar: black-translucent (light text) on the dark look, default (dark text) on the
   // light one. iOS reads it as the app opens.
   const bar = look => { const m = document.getElementById?.('status-bar'); if (m) m.content = look === 'dark' ? 'black-translucent' : 'default'; };
-  // 0372: Settings' list of looks, while it's open, shows the one the page has.
-  const set = look => { root.dataset.theme = look; bar(look); const c = document.getElementById?.('look'); if (c) c.value = look; };
+  // 0372: Settings' look, while it's open, shows the one the page has (0396: its switch, drawn by the page's drawLook).
+  const set = look => { root.dataset.theme = look; bar(look); if (typeof globalThis.drawLook === 'function') globalThis.drawLook(); };
   set(saved() || (system.matches ? 'dark' : 'light'));
   system.addEventListener('change', e => { if (!saved()) set(e.matches ? 'dark' : 'light'); });
   globalThis.setLook = set; // for Settings' look
@@ -294,14 +294,19 @@
   .foreman-ask .ask-reply:hover { border-color: var(--text); }
   .foreman-ask .ask-reply:disabled { cursor: default; opacity: .6; }
   .foreman-ask .ask-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
-  .foreman .reload, #settings .run-switch { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
-  #settings .run-switch:disabled { cursor: default; opacity: .6; }
-  #settings .run-row, #settings .look-row { padding: 8px 12px; }
-  #settings .run-row .row, #settings .look-row .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
-  #settings .run-row .label, #settings .look-row .label { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); }
-  #settings .run-row p, #settings .look-row p { margin: 4px 0 0; color: var(--muted); }
-  #settings .run-row p.bad { color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
-  #settings .run-row p.bad[hidden] { display: none; }
+  .foreman .reload { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
+  /* 0396: Appearance's and Auto-build's switches: a track whose knob slides right when it's on, and its state beside it */
+  #settings [role="switch"] { display: inline-flex; align-items: center; gap: 8px; min-height: 26px; padding: 0; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: none; border: 0; cursor: pointer; }
+  #settings [role="switch"]:disabled { cursor: default; opacity: .6; }
+  #settings [role="switch"] .track { position: relative; flex: none; box-sizing: border-box; width: 34px; height: 18px; border: 1px solid var(--line); border-radius: 9px; background: var(--raise); }
+  #settings [role="switch"] .knob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; color: var(--panel); background: var(--muted); transition: left .15s; }
+  #settings [role="switch"][aria-checked="true"] .track { border-color: var(--text); color: var(--panel); background: var(--text); }
+  #settings [role="switch"][aria-checked="true"] .knob { left: 18px; background: var(--panel); }
+  #settings [role="switch"]:hover .track { border-color: var(--text); }
+  #settings [role="switch"] .state { white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { #settings [role="switch"] .knob { transition: none; } }
+  #settings .switch-row p.bad { margin: 4px 0 0; color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
+  #settings .switch-row p.bad[hidden] { display: none; }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
   .run-error[hidden] { display: none; }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
@@ -384,19 +389,19 @@
   /* 0281: the box's line drawn just outside it as a shadow, taking no room, so what's in the box starts on a whole
      pixel. A half-pixel border shifted it half a pixel, and a phone could then drop a control's left border. (Not an
      outline: only the keyboard's focus ring sets one, 0161.) */
-  #settings .sgroup { margin-top: 16px; border: 0; box-shadow: 0 0 0 .5px var(--line); }
+  #settings .sgroup, #settings .switches { margin-top: 16px; border: 0; box-shadow: 0 0 0 .5px var(--line); } /* 0396: the switches' box has no heading */
   #settings .sgroup .sh { padding: 8px 12px; }
   #settings .keys[hidden] { display: none; } /* 0393: only while a model provider is chosen */
   #settings .sgroup h4 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
-  #settings .setting { position: relative; padding: 8px 12px; border-bottom: .5px solid var(--line-soft); } /* 0371: relative, for its explanation */
-  #settings .setting:last-child { border-bottom: 0; }
+  #settings .switch-row, #settings .setting { position: relative; padding: 8px 12px; border-bottom: .5px solid var(--line-soft); } /* 0371: relative, for its explanation */
+  #settings .switch-row:last-child, #settings .setting:last-child { border-bottom: 0; }
   /* 0281: the left half a whole number of pixels wide, so the info buttons and controls each side of the gap start on a
      whole pixel when the row's width is odd. Without round(), two equal halves as before. */
-  #settings .setting .row { --gap: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-columns: round(down, calc((100% - var(--gap)) / 2), 1px) minmax(0, 1fr); align-items: center; gap: var(--gap); }
+  #settings .switch-row .row, #settings .setting .row { --gap: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-columns: round(down, calc((100% - var(--gap)) / 2), 1px) minmax(0, 1fr); align-items: center; gap: var(--gap); }
   /* 0277: the name, then the info button at the end of the row's left half, so a group's info buttons line up in one
      column, a row's gap clear of the values, whatever the name's length */
-  #settings .setting .label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
-  #settings .setting .control { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+  #settings .switch-row .label, #settings .setting .label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
+  #settings .switch-row .control, #settings .setting .control { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
   #settings .setting .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
   /* 0381: an agent's model, a setting of its own drawn beside the agent's list in its row, its explanation floating from
      the row. Its name is the list's and the info button's label, so only the agent's shows. */
@@ -406,13 +411,13 @@
   #settings .setting .setting .list .info { flex: none; }
   #settings .setting .setting .name { display: none; }
   #settings .setting .setting > p:not(.explain) { flex: 1 1 100%; margin: 0; }
-  #settings .setting .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); } /* 0277: broken only where settingName allows */
+  #settings .switch-row .name, #settings .setting .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); } /* 0277: broken only where settingName allows */
   #settings .setting .value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
   #settings .setting .default { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
   #settings .setting p { margin: 4px 0 0; color: var(--muted); }
   #settings .setting p.bad { color: var(--bad); }
   /* 0258: a setting the panel can change: its control and Save button */
-  #settings .setting .edit, #settings .look-row .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
+  #settings .setting .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
   /* 0281: the boxes a whole number of pixels wide, borders and padding included, so their right edges fall on a whole
      pixel. 0273: the text box in the row's right half. */
   #settings .setting input.edit[type="number"] { box-sizing: border-box; width: calc(8ch + 14px); width: round(up, calc(8ch + 14px), 1px); }
@@ -429,19 +434,19 @@
   #settings .save-all:disabled { color: var(--faint); border-color: var(--line); background: none; cursor: default; }
   /* 0268: the info button beside a setting's name, and its explanation under the setting's line while it's open */
   /* 0277: no taller than the controls beside it, and its ::after makes the target bigger than the box */
-  #settings .setting .info { position: relative; display: inline-grid; place-items: center; align-self: center; width: 18px; height: 18px; padding: 0; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 1; color: var(--muted); background: none; border: .5px solid var(--line); cursor: help; }
+  #settings .switch-row .info, #settings .setting .info { position: relative; display: inline-grid; place-items: center; align-self: center; width: 18px; height: 18px; padding: 0; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 1; color: var(--muted); background: none; border: .5px solid var(--line); cursor: help; }
   /* 0281: under 2 device pixels to a CSS pixel, half a pixel is less than a device pixel, which a browser may not draw,
      so there these borders are a whole pixel. From 2 up, half a pixel is a device pixel or more. */
-  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .setting .edit, #settings .look-row .edit, #settings .setting .info { border-width: 1px; } }
-  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .sgroup { box-shadow: 0 0 0 1px var(--line); } }
-  #settings .setting .info:hover, #settings .setting .info:focus-visible { color: var(--text); border-color: var(--text); }
-  #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
-  #settings .setting .info::after { content: ""; position: absolute; inset: -4px; } /* 0277: a 26 by 26 px target */
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .switch-row .info, #settings .setting .edit, #settings .setting .info { border-width: 1px; } }
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .sgroup, #settings .switches { box-shadow: 0 0 0 1px var(--line); } }
+  #settings .switch-row .info:hover, #settings .switch-row .info:focus-visible, #settings .setting .info:hover, #settings .setting .info:focus-visible { color: var(--text); border-color: var(--text); }
+  #settings .switch-row .info::before, #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
+  #settings .switch-row .info::after, #settings .setting .info::after { content: ""; position: absolute; inset: -4px; } /* 0277: a 26 by 26 px target */
   /* 0371: floated just above its setting's row, over what's there, so showing it moves nothing. Below the row instead
      when there's no room above it in the view. The row is what it's placed from. */
-  #settings .setting p.explain { position: absolute; left: 12px; right: 12px; bottom: calc(100% - 4px); z-index: 2; margin: 0; padding: 6px 10px; color: var(--text); background: var(--raise); border: .5px solid var(--line); box-shadow: 0 4px 12px rgba(20, 20, 19, .12); overflow-wrap: anywhere; }
-  #settings .setting p.explain.below { bottom: auto; top: calc(100% - 4px); }
-  #settings .setting p.explain[hidden] { display: none; }
+  #settings .switch-row p.explain, #settings .setting p.explain { position: absolute; left: 12px; right: 12px; bottom: calc(100% - 4px); z-index: 2; margin: 0; padding: 6px 10px; color: var(--text); background: var(--raise); border: .5px solid var(--line); box-shadow: 0 4px 12px rgba(20, 20, 19, .12); overflow-wrap: anywhere; }
+  #settings .switch-row p.explain.below, #settings .setting p.explain.below { bottom: auto; top: calc(100% - 4px); }
+  #settings .switch-row p.explain[hidden], #settings .setting p.explain[hidden] { display: none; }
   /* 0275: asked on closing the view with changes not saved, over the view and its backdrop */
   #settings-unsaved { position: fixed; inset: 0; z-index: 11; display: grid; place-items: center; padding: 16px; background: rgba(20, 20, 19, .2); }
   #settings-unsaved[hidden] { display: none; }
@@ -562,8 +567,8 @@
     .run-state { flex-shrink: 1; height: 44px; min-width: 44px; overflow: hidden; }
     .run-state .fixing { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; } /* "Fixing on" gives way too, inside the button */
     .settings-open { width: 44px; height: 44px; }
-    #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
-    #settings .setting .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
+    #settings .switch-row .info::after, #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
+    #settings .switch-row .row, #settings .setting .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .run-error, .offline, .restart { padding: 6px 16px; }
 
     main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
@@ -1938,6 +1943,7 @@ function chooseLook(look) {
   if (look !== 'light' && look !== 'dark') return;
   if (typeof setLook === 'function') setLook(look); else root.dataset.theme = look;
   try { localStorage.setItem('speck-theme', root.dataset.theme); } catch { /* storage refused: the look still switches, until a reload */ }
+  drawLook();
 }
 // 0160: the header stays at the top of the screen. --head is its height on screen, so a ticket scrolled to sits below
 // it. 0364: it's one row at every width, the same at the top and scrolled, and the base branch (0373: no longer the
@@ -2126,25 +2132,44 @@ function renderSettings() {
     kids.push(settingKeysBox);
     drawKeys();
   }
-  kids.push(lookGroup());
   if (settingsView.state === 'ok' && settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
-  kids.splice(1, 0, foremanGroup(foremanRows)); // 0285: the Foreman first
+  // 0396: Appearance and Auto-build first, then the Foreman (0285) once the settings have loaded
+  kids.splice(1, 0, toggleGroup(), ...(settingsView.state === 'ok' ? [foremanGroup(foremanRows)] : []));
   pane.replaceChildren(...kids);
   refreshSettings();
   showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
 }
-// 0372: light or dark, kept in this browser rather than speck/config.yml, so it switches the page as it's picked and
-// Save neither sends it nor counts it as a change. A row of its own, as speck run's is, not one of the file's settings.
-function lookGroup() {
-  const list = el('select', 'edit');
-  list.id = 'look';
-  for (const look of ['light', 'dark']) { const o = el('option', null, look); o.value = look; list.appendChild(o); }
-  list.value = document.documentElement?.dataset?.theme === 'dark' ? 'dark' : 'light';
-  list.setAttribute('aria-label', 'Light or dark');
-  list.addEventListener('change', () => chooseLook(String(list.value ?? '')));
-  return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Look')),
-    el('div', 'look-row', null, el('div', 'row', null, el('span', 'label', 'light or dark'), list),
-      el('p', null, 'For the panel in this browser. It switches as you pick it, and is kept here, not in speck/config.yml.')));
+// 0396: a switch, a button kept between redraws so it keeps focus, showing its state beside a sliding knob.
+function toggleSwitch(id, label) {
+  const b = el('button', 'switch');
+  b.type = 'button';
+  b.id = id;
+  b.setAttribute('role', 'switch');
+  b.setAttribute('aria-label', label);
+  return b;
+}
+function drawToggle(b, on, word) {
+  b.setAttribute('aria-checked', String(on));
+  b.replaceChildren(el('span', 'track', null, el('span', 'knob')), el('span', 'state', word));
+}
+// 0372: light or dark, kept in this browser rather than speck/config.yml, so it switches the page as it's pressed and
+// Save neither sends it nor counts it as a change. 0396: a switch, on for dark.
+const lookSwitch = toggleSwitch('look', 'Dark appearance');
+lookSwitch.addEventListener('click', () => chooseLook(document.documentElement?.dataset?.theme === 'dark' ? 'light' : 'dark'));
+function drawLook() {
+  const dark = document.documentElement?.dataset?.theme === 'dark';
+  drawToggle(lookSwitch, dark, dark ? 'Dark' : 'Light');
+}
+// 0396: Appearance, then Auto-build, each a row of its name and its switch, above the other groups.
+function toggleGroup() {
+  drawLook();
+  drawRunSwitch();
+  // An info button, as every setting has, so the rows line up with the others (0277).
+  const [lookInfo, lookTip] = settingInfo({ key: 'Appearance', explain: 'Light or dark, for the panel in this browser. It\'s kept here, not in speck/config.yml.' }, settingTips.size);
+  const [runInfo, runTip] = settingInfo({ key: 'Auto-build', explain: 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.' }, settingTips.size);
+  const row = (name, info, sw, ...after) => el('div', 'switch-row', null,
+    el('div', 'row', null, el('span', 'label', null, el('span', 'name', name), info), el('div', 'control', null, sw)), ...after);
+  return el('section', 'switches', null, row('Appearance', lookInfo, lookSwitch, lookTip), row('Auto-build', runInfo, runSwitchButton, runSwitchSaid, runTip));
 }
 // 0381: each agent's model, drawn in the agent's row: key → the agent's key.
 const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', foreman_model: 'foreman' };
@@ -3622,11 +3647,9 @@ function renderForeman(f, stale) {
   if (!was) box.scrollTop = 0;
   if ((!was || had) && box.focus) box.focus({ preventScroll: true }); // into it, or back into it when what had it was drawn again
 }
-// 0285: the speck run switch, in the Settings view's Foreman group. One button, kept between redraws so it keeps focus,
-// working as the header's did (0150): it reads Auto-build on or off, and a press turns speck run off or on.
-const runSwitchButton = el('button', 'run-switch');
-runSwitchButton.type = 'button';
-runSwitchButton.id = 'run-switch';
+// 0285: the speck run switch, working as the header's did (0150): a press turns speck run off or on. 0396: Auto-build's
+// switch, at the top of Settings.
+const runSwitchButton = toggleSwitch('run-switch', 'Auto-build');
 runSwitchButton.addEventListener('click', e => {
   e.stopPropagation();
   if (state && !runSwitchButton.disabled) switchRun(state.run && state.run.on ? 'off' : 'on');
@@ -3634,8 +3657,7 @@ runSwitchButton.addEventListener('click', e => {
 function drawRunSwitch() {
   const on = !!(state && state.run && state.run.on);
   runSwitchButton.className = `run-switch ${on ? 'run-on' : 'run-off'}`;
-  runSwitchButton.textContent = runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : on ? 'Auto-build on' : 'Auto-build off';
-  runSwitchButton.setAttribute('aria-pressed', String(on));
+  drawToggle(runSwitchButton, on, runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : on ? 'On' : 'Off');
   runSwitchButton.disabled = !!runSwitching || !state;
   runSwitchButton.title = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets';
 }
@@ -3643,10 +3665,7 @@ function drawRunSwitch() {
 const runSwitchSaid = el('p', 'bad');
 runSwitchSaid.hidden = true;
 function foremanGroup(rows = []) {
-  drawRunSwitch();
-  return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Foreman')),
-    el('div', 'run-row', null, el('div', 'row', null, el('span', 'label', 'speck run'), runSwitchButton),
-      el('p', null, 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.'), runSwitchSaid), ...rows);
+  return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Foreman')), ...rows);
 }
 // 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the button shows
 // that at once. A refusal shows speck run's own message under the header until the next click on the switch.
