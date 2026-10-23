@@ -403,6 +403,7 @@
   #settings .switch-row .label, #settings .setting .label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
   #settings .switch-row .control, #settings .setting .control { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
   #settings .setting .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+  #settings .setting p.explain .line { margin-top: 6px; } /* 0397: this machine's own value, under the explanation */
   /* 0381: an agent's model, a setting of its own drawn beside the agent's list in its row, its explanation floating from
      the row. Its name is the list's and the info button's label, so only the agent's shows. */
   #settings .setting .setting { position: static; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; flex: 1 1 14ch; min-width: 0; max-width: 100%; }
@@ -413,7 +414,6 @@
   #settings .setting .setting > p:not(.explain) { flex: 1 1 100%; margin: 0; }
   #settings .switch-row .name, #settings .setting .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); } /* 0277: broken only where settingName allows */
   #settings .setting .value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
-  #settings .setting .default { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
   #settings .setting p { margin: 4px 0 0; color: var(--muted); }
   #settings .setting p.bad { color: var(--bad); }
   /* 0258: a setting the panel can change: its control and Save button */
@@ -2119,7 +2119,6 @@ function renderSettings() {
   if (settingsView.state === 'loading') kids.push(el('p', null, 'Loading the settings…'));
   else if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
   else {
-    kids.push(el('p', null, settingsLine()));
     for (const g of settingsView.groups) {
       const rows = [];
       for (const x of Array.isArray(g.settings) ? g.settings : []) rows.push(settingRow(x, settingTips.size));
@@ -2189,26 +2188,17 @@ function pairSettings(rows) {
     host.control.appendChild(model.row);
   }
 }
-// 0387: a mark beside a setting's value, a whole number of pixels wide from its monospaced letters, so an agent's model
-// list drawn after it in the row still starts on a whole pixel (0281).
-function settingMark(text) {
-  const mark = el('span', 'default', text);
-  mark.setAttribute('style', `display: inline-block; white-space: nowrap; width: round(up, calc(${text.length} * (1ch + .08em)), 1px)`);
-  return mark;
-}
 // A setting's row, whose explanation is the view's `n`th. 0381: an agent's model's is drawn to sit in the agent's row.
 function settingRow(x, n) {
   const edit = x.editable === true ? settingEditor(x) : null;
   const mine = x.for_machine === true && x.from === 'machine' && !settingClear.has(x.key);
-  const [info, tip] = settingInfo(x, n);
+  // 0397: where a change is saved, and this machine's own value with its button, are said in the explanation, not marked.
+  const [info, tip] = settingInfo(x, n, mine ? machineLine(x) : x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null);
   const shown = edit ? edit : [el('code', 'value', settingValue(x.value))];
-  const marks = [x.for_machine === true ? settingMark(mine ? 'this machine' : 'repo') : null, x.default && !mine ? settingMark('default') : null];
-  const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown, ...marks);
+  const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown);
   const row = el('div', model ? 'setting model' : 'setting', null,
-    model ? el('span', 'pick', null, settingName(x.key), el('span', 'list', null, ...shown, info), ...marks)
+    model ? el('span', 'pick', null, settingName(x.key), el('span', 'list', null, ...shown, info))
       : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
-    mine ? machineLine(x) : null,
-    x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null,
     ['reviewer', 'builder', 'foreman'].includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393
     x.key === 'builder' ? builderSwitchLine(x) : null,
     x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
@@ -2263,9 +2253,13 @@ function settingName(key) {
   const parts = String(key).match(/[^._]+[._]?|[._]/g) || [];
   return el('code', 'name', null, ...parts.flatMap((part, i) => [i > 0 ? el('wbr') : null, el('span', null, part)]));
 }
-// 0268: a setting's info button and its explanation, which a screen reader reads with the button.
-function settingInfo(x, n) {
-  const key = x.key, tip = el('p', 'explain', x.explain);
+// 0268: a setting's info button and its explanation, which a screen reader reads with the button. 0397: `line`, this
+// machine's own value and its button, goes at the end of it, and the pointer or the focus can move into it from the
+// button without it closing.
+function settingInfo(x, n, line = null) {
+  const key = x.key, tip = el('p', 'explain', null, el('span', null, x.explain), line);
+  const inTip = node => line !== null && node != null && typeof tip.contains === 'function' && tip.contains(node);
+  const hide = () => { if (settingTip === key && !settingTipKept && settingFocus !== key && settingHover !== key) showSettingTip(null, false); };
   tip.id = `setting-explain-${n}`;
   const info = el('button', 'info');
   info.type = 'button';
@@ -2278,9 +2272,23 @@ function settingInfo(x, n) {
     const wait = ++settingHoverWait;
     if (settingTip !== key) setTimeout(() => { if (wait === settingHoverWait && settingHover === key && settingTip !== key) showSettingTip(key, false); }, SETTING_TIP_PAUSE);
   });
-  info.addEventListener('mouseleave', () => { settingHoverWait++; if (settingHover === key) settingHover = null; if (settingTip === key && !settingTipKept && settingFocus !== key) showSettingTip(null, false); });
+  // 0397: with a button in it, the pointer has a moment to cross to it before it closes.
+  const leave = e => {
+    settingHoverWait++;
+    if (inTip(e?.relatedTarget)) return;
+    if (settingHover === key) settingHover = null;
+    if (line === null) hide(); else setTimeout(hide, SETTING_TIP_PAUSE);
+  };
+  info.addEventListener('mouseleave', leave);
   info.addEventListener('focus', () => { settingFocus = key; settingHoverWait++; if (settingTip !== key) showSettingTip(key, false); });
-  info.addEventListener('blur', () => { if (settingFocus === key) settingFocus = null; if (settingTip === key && !settingTipKept && settingHover !== key) showSettingTip(null, false); });
+  const blur = e => { if (inTip(e?.relatedTarget) || e?.relatedTarget === info) return; if (settingFocus === key) settingFocus = null; hide(); };
+  info.addEventListener('blur', blur);
+  if (line !== null) {
+    tip.addEventListener('mouseenter', () => { settingHover = key; });
+    tip.addEventListener('mouseleave', e => { if (e?.relatedTarget !== info) leave(e); });
+    tip.addEventListener('focusin', () => { settingFocus = key; });
+    tip.addEventListener('focusout', blur);
+  }
   // 0371: a click or focus settles it, so a pause still running from the pointer shows nothing when it ends.
   info.addEventListener('click', () => { settingHoverWait++; if (settingTip === key && settingTipKept) showSettingTip(null, false); else showSettingTip(key, true); });
   settingTips.set(key, tip);
@@ -2609,27 +2617,23 @@ async function saveKey(p) {
   else st.refused = why;
   drawKeys();
 }
-// 0261: under a setting that uses this machine's own value, the repo's value and a button to clear this machine's on Save.
+// 0261: in the explanation of a setting that uses this machine's own value (0397), the project's value and a button to
+// clear this machine's on Save. Pressing it keeps the explanation open, to show what it did.
 function machineLine(x) {
   const clear = el('button', 'save', 'Clear this machine\'s value');
   clear.type = 'button';
-  clear.addEventListener('click', () => { settingClear.add(x.key); settingTyped.delete(x.key); settingRefused.delete(x.key); renderSettings(); });
-  return el('p', 'line', null, el('span', null, `The repo's value: ${settingValue(x.repo_value)}${x.default ? ' (default)' : ''}`), clear);
+  clear.addEventListener('click', () => { settingClear.add(x.key); settingTyped.delete(x.key); settingRefused.delete(x.key); keepSettingTip(x.key); renderSettings(); });
+  return el('span', 'line', null, el('span', null, `This is your machine's own value, used over the project's: ${settingValue(x.repo_value)}${x.default ? ', speck\'s default' : ''}.`), clear);
 }
 function clearLine(x) {
   const keep = el('button', 'save', 'Keep this machine\'s value');
   keep.type = 'button';
-  keep.addEventListener('click', () => { settingClear.delete(x.key); settingRefused.delete(x.key); renderSettings(); });
-  return el('p', 'line', null, el('span', null, `This machine's value, ${settingValue(x.value)}, is cleared when you save.`), keep);
+  keep.addEventListener('click', () => { settingClear.delete(x.key); settingRefused.delete(x.key); keepSettingTip(x.key); renderSettings(); });
+  return el('span', 'line', null, el('span', null, `This machine's value, ${settingValue(x.value)}, is cleared when you save.`), keep);
 }
+const keepSettingTip = key => { settingTip = key; settingTipKept = true; };
 const settingRows = () => settingsView !== null && Array.isArray(settingsView.groups)
   ? settingsView.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []) : [];
-// 0387: the line at the top of Settings: your own settings are saved for this machine, and which others saving commits.
-function settingsLine() {
-  const commits = settingRows().filter(x => x.editable === true && x.for_machine !== true).map(x => x.key);
-  return 'What speck uses now. Your own settings, marked this machine or repo, are saved for this machine only, without a commit.'
-    + (commits.length ? ` Saving ${commits.join(', ')} commits speck/config.yml to the base branch.` : '') + ' Change the rest in the file.';
-}
 // 0274: each setting whose value differs from the one the view read, as { key, value, machine }: what Save sends.
 function settingChanges() {
   const out = [];

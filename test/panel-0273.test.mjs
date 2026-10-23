@@ -20,20 +20,17 @@ test('0273 AC3: a setting for this machine only, or one changed only in the file
   const p = settingsPage([VIEW]);
   await p.settle();
   await openSettings(p);
-  // This machine's own value, and the repo's, each say so, with the repo's value and a way to clear this machine's.
-  assert.deepEqual(textOf(p, 'max_parallel_builds', 'default'), ['this machine']);
-  assert.ok(p.all(rowOf(p, 'max_parallel_builds')).some(n => n.textContent === 'The repo\'s value: 1'), 'the repo\'s value under it');
-  assert.ok(p.all(rowOf(p, 'max_parallel_builds')).some(n => n.tagName === 'button' && n.textContent === 'Clear this machine\'s value'));
-  assert.deepEqual(textOf(p, 'max_parallel_tests', 'default'), ['repo', 'default']);
+  // 0397: this machine's own value says so in its explanation, with the project's value and a way to clear this
+  // machine's, and no row carries a mark.
+  const tip = p.all(rowOf(p, 'max_parallel_builds')).find(n => n.tagName === 'p' && cls(n, 'explain'));
+  assert.ok(p.all(tip).some(n => n.textContent === 'This is your machine\'s own value, used over the project\'s: 1.'), 'the project\'s value in it');
+  assert.ok(p.all(tip).some(n => n.tagName === 'button' && n.textContent === 'Clear this machine\'s value'));
+  assert.deepEqual(textOf(p, 'max_parallel_builds', 'default'), []);
+  assert.deepEqual(textOf(p, 'max_parallel_tests', 'default'), []);
   // One changed only in the file shows its value, with nothing to change it with.
   assert.deepEqual(textOf(p, 'builder', 'value'), ['claude']);
   assert.ok(!p.all(rowOf(p, 'builder')).some(n => ['input', 'select'].includes(n.tagName) || (n.tagName === 'button' && cls(n, 'save'))), 'builder has no control');
   assert.ok(p.all(rowOf(p, 'reviewer')).some(n => n.tagName === 'select'), 'reviewer has its control');
-  // Each tag is on the setting's own row, beside its value.
-  for (const key of ['max_parallel_builds', 'max_parallel_tests']) {
-    const tag = p.all(rowOf(p, key)).find(n => cls(n, 'default'));
-    assert.ok(cls(tag.parentNode, 'control'), `${key}'s tag is with its control`);
-  }
 });
 
 test('0273 AC3: a dotted name still reads as the setting, whole', async () => {
