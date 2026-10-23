@@ -153,7 +153,9 @@ const press = async (b, key, code, keyCode) => {
 test('0150 AC2: pressing Enter or Space on the focused button starts or pauses speck run, and it keeps focus through refreshes', skip, async () => {
   await withPage(null, 1280, async b => {
     await b.js(`document.getElementById('settings-open').click()`);
-    await b.until(`document.getElementById('run-switch') && !/Loading the settings/.test(document.getElementById('settings').textContent)`, 'the Settings view');
+    // 0413: and its agents' lists, read after the rest (0407): drawing them redraws the view, which moves the focus to the
+    // view itself, so a refresh soon after focusing the switch, as can come on a busy machine, would find it there
+    await b.until(`document.getElementById('run-switch') && !/Loading the settings|Loading your agents/.test(document.getElementById('settings').textContent)`, 'the Settings view');
     await b.js(`document.getElementById('run-switch').focus()`);
     // Two refreshes later it's still the focused element, so a key press reaches it.
     await b.js(`window.drawn = 0; new MutationObserver(() => window.drawn++).observe(document.getElementById('bezel'), { attributes: true }); true`); // 0413: each redraw sets speck's screen's frame
