@@ -40,6 +40,8 @@ An open explanation closes when you click or tap anywhere outside it.
 ## Notes
 - Checked 2026-10-23: `settingInfo`, `showSettingTip` and `settingTip` in `templates/panel.html` (0268, 0371) open an explanation on a click, on focus or after the pointer rests on the info button for half a second. A second click, Escape or the pointer leaving closes it. `besideColumn` closes Settings on a click beside the column (0368).
 - Failing before this build: none
+- Self-check: no changes. A missing explanation or button for the open key closes it, and a partial redraw replaces its entry. A touch that starts a scroll also counts as a tap outside and closes it.
+- Pictures: none, because nothing looks different: only when an explanation closes changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
