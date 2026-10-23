@@ -23,15 +23,16 @@ const fake = async (run, tickets) => { const p = fakePage([state(run, tickets)])
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 const classes = n => (n.className || '').split(/\s+/).filter(Boolean);
-// What a card shows: its classes, its sentence and the sentence's classes, its badge's pose and name, and its labels.
+// What a card shows: its classes, its sentence and the sentence's classes, the stage its border shows (0171), or null,
+// and its labels. 0416: the builder badge's pose went with the badge; the border still shows the stage.
 function shows(p, id) {
-  const row = rowOf(p, id), [badge, text] = topOf(row).children.find(n => n.className === 'badgerow').children;
+  const row = rowOf(p, id), text = topOf(row).children.find(n => classes(n)[0] === 'progress');
   const say = text.children.find(n => /\bsay\b/.test(n.className));
-  return { card: classes(row), say: say.textContent, sayClass: classes(say), pose: classes(badge)[1], label: badge.attrs['aria-label'],
+  return { card: classes(row), say: say.textContent, sayClass: classes(say), stage: (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null,
     acts: p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent) };
 }
 
-test('0203 AC1: with speck run off, an approved ticket auto-ship covers says to turn on Auto-build, in purple, with its badge still', async () => {
+test('0203 AC1: with speck run off, an approved ticket auto-ship covers says to turn on Auto-build, in purple, with no stage border', async () => {
   const p = await fake(null);
   for (const id of ['0701', '0702']) {
     const s = shows(p, id);
@@ -39,7 +40,6 @@ test('0203 AC1: with speck run off, an approved ticket auto-ship covers says to 
     assert.deepEqual(s.sayClass, ['say', 'to-ship'], `${id}: purple`);
     assert.ok(s.card.includes('to-ship'), `${id}: a purple card: ${s.card}`);
     assert.ok(!s.card.some(c => c.startsWith('at-')), `${id}: no stage border: ${s.card}`);
-    assert.equal(s.pose, 'wait', `${id}: the badge waits for you rather than moving`);
     assert.deepEqual(s.acts, [], `${id}: no "Build finished without shipping"`);
   }
   const m = panelModel()(state(null)).queue.find(t => t.id === '0701');
@@ -52,14 +52,13 @@ test('0203 AC1: the Auto-build button\'s builder isn\'t at work for it (0364: th
   assert.equal(builder, undefined);
 });
 
-test('0203 AC2: with speck run on, the same ticket waits to ship in the normal colour with its badge moving', async () => {
+test('0203 AC2: with speck run on, the same ticket waits to ship in the normal colour, its border at the ship stage', async () => {
   const p = await fake(RUN);
   const s = shows(p, '0701');
   assert.equal(s.say, 'Approved · waiting to ship');
   assert.deepEqual(s.sayClass, ['say'], 'the normal text colour');
   assert.ok(!s.card.includes('to-ship') && !s.card.includes('blocked'), s.card.join(' '));
-  assert.equal(s.pose, 'ship', 'the badge moves as 0196 set out');
-  assert.ok(s.card.includes('at-ship'));
+  assert.equal(s.stage, 'ship', 'as 0196 set out');
   const closing = shows(p, '0702');
   assert.equal(closing.say, 'Approved · waiting to ship');
   assert.deepEqual(closing.sayClass, ['say']);
@@ -72,7 +71,7 @@ test('0203 AC2: turning speck run on again changes the card back', async () => {
   p.timers.shift()(); await p.settle();
   const s = shows(p, '0701');
   assert.equal(s.say, 'Approved · waiting to ship');
-  assert.equal(s.pose, 'ship');
+  assert.equal(s.stage, 'ship');
 });
 
 test('0203 AC3: a ticket that\'s shipping, by anyone, shows as shipping whether speck run is on or off', async () => {
@@ -82,8 +81,7 @@ test('0203 AC3: a ticket that\'s shipping, by anyone, shows as shipping whether 
       const s = shows(p, id), where = `${id}, ${run ? 'on' : 'off'}`;
       assert.equal(s.say, 'Shipping', where);
       assert.deepEqual(s.sayClass, ['say'], where);
-      assert.equal(s.pose, 'ship', where);
-      assert.ok(s.card.includes('at-ship'), where);
+      assert.equal(s.stage, 'ship', where);
     }
   }
 });

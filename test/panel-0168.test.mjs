@@ -1,9 +1,10 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, fakePage, queueRows, exitOf, round, page } from './support/panel.mjs';
 
 // ---------- 0168: the builder badge on each in-flight ticket's Build card ----------
+// 0416: the badge has gone, so only the words beside it are checked here: test/panel-0416.test.mjs checks no card has a picture.
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 // One ticket in each state an in-flight card can be in, and two ready ones.
@@ -21,18 +22,17 @@ const TICKETS = [
   T('0409', 'ready', { title: 'Ready' }),
   T('0410', 'ready', { title: 'Ready too', after: ['0409'], waiting_on: ['0409'] }),
 ];
-// Each in-flight ticket's pose, its badge's accessible name, its sentence and its stage's name.
+// Each in-flight ticket's sentence and its stage's name.
 const SHOWS = {
-  '0401': ['type', 'The builder is writing code', 'Writing tests and code', 'Build'],
-  '0402': ['check', 'The builder is checking its own work', 'Checking its own work', 'Self-check'], // its own loops since 0169
-  '0403': ['review', 'The builder is with the reviewer', 'Codex is reviewing · round 2', 'Review 2'],
-  '0404': ['still', 'The builder is paused', 'Paused', 'Review'],
-  '0405': ['wait', 'The builder is waiting for you', 'Approved · waiting for you to ship it', 'Ship'],
-  '0406': ['bad', 'The builder needs you', 'Blocked · it has a question for you', 'Build'],
-  '0407': ['bad', 'The builder needs you', 'The build stopped', 'Build'],
-  '0408': ['ship', 'The builder is shipping', 'Shipping', null], // its own loop since 0172; no stage's name since 0201
+  '0401': ['Writing tests and code', 'Build'],
+  '0402': ['Checking its own work', 'Self-check'],
+  '0403': ['Codex is reviewing · round 2', 'Review 2'],
+  '0404': ['Paused', 'Review'],
+  '0405': ['Approved · waiting for you to ship it', 'Ship'],
+  '0406': ['Blocked · it has a question for you', 'Build'],
+  '0407': ['The build stopped', 'Build'],
+  '0408': ['Shipping', null], // no stage's name since 0201
 };
-const FLIGHT = Object.keys(SHOWS);
 
 // speck run is on, as its ship queue ships the approved tickets auto-ship covers (0203: with it off, they wait for you).
 function fake(tickets = TICKETS) {
@@ -44,17 +44,15 @@ const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className =
 const topOf = row => row.children.find(n => n.className === 'top');
 const classes = n => (n.className || '').split(' ');
 
-test('0168 AC1: each in-flight card has a badge row under its title: the badge, then the sentence and the stage\'s name', async () => {
+test('0168 AC1: each in-flight card has a row under its title with the sentence and the stage\'s name (with no badge since 0416)', async () => {
   const p = fake();
   await p.settle();
-  for (const [id, [pose, , sentence, stage]] of Object.entries(SHOWS)) {
-    const top = topOf(rowOf(p, id)), rows = top.children.filter(n => n.className === 'badgerow');
-    assert.equal(rows.length, 1, `${id}: one badge row`);
+  for (const [id, [sentence, stage]] of Object.entries(SHOWS)) {
+    const top = topOf(rowOf(p, id)), rows = top.children.filter(n => classes(n)[0] === 'progress');
+    assert.equal(rows.length, 1, `${id}: one progress row`);
     assert.ok(top.children.indexOf(rows[0]) > top.children.findIndex(n => n.className === 'line'), `${id}: under the title`);
-    const [badge, text] = rows[0].children;
-    assert.equal(badge.tagName, 'canvas', `${id}: the badge is drawn`);
-    assert.deepEqual(classes(badge), ['badge', pose], `${id}: its pose`);
-    assert.equal(text.className, stage ? 'badgetext' : 'badgetext ship-line');
+    const text = rows[0];
+    assert.equal(text.className, stage ? 'progress' : 'progress ship-line');
     const shown = text.children.map(n => [n.className.split(' ')[0], n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
     assert.deepEqual(shown, [['say', sentence], stage ? ['stage', stage] : ['ship-at', ' · MM:SS']], `${id}: the sentence and the stage, or the ship's time (0201)`);
     assert.equal(top.children[top.children.length - 1].className, 'sub', `${id}: the timer is still last in the top row`);
@@ -62,153 +60,3 @@ test('0168 AC1: each in-flight card has a badge row under its title: the badge, 
   }
   assert.doesNotMatch(page(), /\.enso\b|\.orbit\b|\.dot\.now|@keyframes orbit/, 'the ensō and the dots are gone from the page');
 });
-
-test('0168 AC2: the badge plays the laptop loop while an agent is at work, from the design reference', async () => {
-  const p = fake();
-  await p.settle();
-  const at = FLIGHT.filter(id => SHOWS[id][0] === 'type');
-  assert.deepEqual(at, ['0401'], 'building (self-check and review too until 0169, shipping until 0172)');
-  // Since 0302 the laptop loop is the design's renderer's, which test/panel-0302.test.mjs checks the badge is drawn with.
-});
-
-test('0168 AC3: waiting for you, the builder waves a flag; blocked or stopped, a "?"; paused, it stands still', async () => {
-  const p = fake();
-  await p.settle();
-  const pose = id => classes(topOf(rowOf(p, id)).children.find(n => n.className === 'badgerow').children[0])[1];
-  assert.equal(pose('0405'), 'wait');
-  assert.equal(pose('0406'), 'bad');
-  assert.equal(pose('0407'), 'bad');
-  assert.equal(pose('0404'), 'still');
-  // Since 0302 the poses are drawn by the design's renderer (test/panel-0302.test.mjs), its frame purple or crimson.
-});
-
-test('0168 AC3: an approved ticket auto-ship will ship isn\'t waiting for you, and one whose auto-ship failed needs you', async () => {
-  const p = fake([
-    T('0501', 'approved', { started: ago(900), approved: ago(60), rounds: [round(1, 10)], auto_ship: true, build_running: true }),
-    T('0502', 'approved', { started: ago(900), approved: ago(60), rounds: [round(1, 10)], ship: { running: false, auto: true, started: ago(30), ended: ago(20), message: 'No.' } }),
-    T('0503', 'approved', { started: ago(900), approved: ago(60), rounds: [round(1, 10)], auto_ship: false }),
-  ]);
-  await p.settle();
-  const badge = id => topOf(rowOf(p, id)).children.find(n => n.className === 'badgerow').children[0];
-  assert.equal(classes(badge('0501'))[1], 'still');
-  assert.equal(badge('0501').attrs['aria-label'], 'The builder is waiting');
-  assert.equal(classes(badge('0502'))[1], 'bad');
-  assert.equal(classes(badge('0503'))[1], 'wait');
-});
-
-test('0168 AC4: the badge is an image named for what it shows, and ready tickets have none', async () => {
-  const p = fake();
-  await p.settle();
-  for (const [id, [, label]] of Object.entries(SHOWS)) {
-    const badge = topOf(rowOf(p, id)).children.find(n => n.className === 'badgerow').children[0];
-    assert.equal(badge.attrs.role, 'img', id);
-    assert.equal(badge.attrs['aria-label'], label, id);
-  }
-  for (const id of ['0409', '0410']) assert.equal(p.all(rowOf(p, id)).filter(n => /\b(badge|badgerow|say|stage)\b/.test(n.className || '')).length, 0, `${id}: no badge`);
-});
-
-// 0168 AC5's colours: since 0302 the badge is drawn in the LCD screen's tokens (test/panel-0302.test.mjs).
-
-// ---------- in a real browser ----------
-
-const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const stub = theme => `(() => {
-  try { localStorage.setItem('speck-theme', ${JSON.stringify(theme)}); } catch {}
-  const STATE = ${JSON.stringify({ run: { on: true }, tickets: TICKETS, ideas: [] })};
-  const real = window.fetch.bind(window);
-  const json = b => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } });
-  window.fetch = async (url, opts = {}) => {
-    const u = String(url);
-    if (u === '/api/state') return json(STATE);
-    if (/\\/log$/.test(u)) return json({ text: '' });
-    return real(url, opts);
-  };
-})();`;
-async function withPanel(fn, { width = 1280, height = 900, theme = 'light', motion = 'no-preference', scale = 1 } = {}) {
-  const r = panelRepo();
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
-  const b = await browserPage('about:blank');
-  try {
-    await b.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: width < 700 });
-    await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: motion }] });
-    await b.send('Page.enable');
-    await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(theme) });
-    await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelectorAll('#queue .q').length === ${TICKETS.length}`, 'the panel');
-    await fn(b);
-  } finally { await b.close(); await stop(panel); }
-}
-const CARD = id => `[...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === ${JSON.stringify(id)})`;
-const LOOK = id => `(() => {
-  const card = ${CARD(id)}, rect = n => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
-  const cs = getComputedStyle(card);
-  return { card: rect(card), padRight: parseFloat(cs.paddingRight) + parseFloat(cs.borderRightWidth), padLeft: parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth),
-    line: rect(card.querySelector('.top .line')), title: rect(card.querySelector('.top .title')), badge: rect(card.querySelector('.badge')),
-    say: rect(card.querySelector('.say')), stage: rect(card.querySelector('.stage') || card.querySelector('.ship-at')), sub: rect(card.querySelector('.top .sub')) };
-})()`;
-const FRAME = id => `${CARD(id)}.querySelector('canvas.badge').toDataURL()`;
-
-for (const theme of ['light', 'dark']) {
-  for (const width of [375, 1280]) {
-    test(`0168 AC1 and AC5: at ${width} px in the ${theme} look, the badge row sits under a full-width title, with nothing overflowing`, skip, async () => {
-      await withPanel(async b => {
-        for (const id of FLIGHT) {
-          const l = await b.js(LOOK(id));
-          assert.ok(Math.abs(l.badge.width - 56) < 0.5 && Math.abs(l.badge.height - 56) < 0.5, `${id}: the badge is ${l.badge.width}×${l.badge.height}`);
-          assert.ok(Math.abs(l.badge.left - (l.card.left + l.padLeft)) < 1, `${id}: at the left of its row`);
-          assert.ok(l.badge.top >= l.title.bottom - 0.5, `${id}: below the title`);
-          assert.ok(Math.abs(l.line.right - (l.card.right - l.padRight)) < 1, `${id}: the title's row keeps the card's full width`);
-          // Beside the badge: a sentence that wraps on a phone makes the row taller, with the badge in its middle.
-          for (const k of ['say', 'stage']) assert.ok(l[k].left >= l.badge.right, `${id}: its ${k} is right of the badge`);
-          const mid = (l.badge.top + l.badge.bottom) / 2;
-          assert.ok(l.say.top < mid && l.stage.bottom > mid, `${id}: the sentence and the stage's name are beside the badge`);
-          // 0201: a shipping card has no stage's name; how long its ship has run follows "Shipping" on the same line.
-          if (id === '0408') assert.ok(Math.abs(l.stage.top - l.say.top) < 2 && l.stage.left >= l.say.right - 0.5, `${id}: the ship's time on the sentence's line`);
-          else assert.ok(l.stage.top >= l.say.bottom - 0.5, `${id}: the stage's name under the sentence`);
-          assert.ok(l.sub.left >= l.say.right && l.sub.top < mid && l.sub.bottom > mid, `${id}: the timer at the right of the badge's row`);
-          for (const k of ['badge', 'say', 'stage', 'sub', 'line']) assert.ok(l[k].left >= l.card.left - 0.5 && l[k].right <= l.card.right + 0.5, `${id}: its ${k} overflows the card`);
-        }
-        assert.equal(await b.js(`document.documentElement.scrollWidth <= innerWidth`), true, 'the page doesn\'t scroll sideways');
-        // AC5's colours: since 0302, the LCD screen's (test/panel-0302.test.mjs).
-      }, { width, theme, scale: 2, motion: 'reduce' });
-    });
-  }
-}
-
-test('0168 AC2 to AC4: in a real browser, a badge moves unless its build is paused, and nothing moves with reduced motion', skip, async () => {
-  const frames = async b => Object.fromEntries(await Promise.all(FLIGHT.map(async id => [id, await b.js(FRAME(id))])));
-  await withPanel(async b => {
-    const first = await frames(b);
-    await new Promise(r => setTimeout(r, 450));
-    const then = await frames(b);
-    for (const id of FLIGHT) assert.equal(first[id] !== then[id], id !== '0404', `${id}: ${id === '0404' ? 'still' : 'moves'}`);
-  }, { height: 2400 }); // 0302: every badge in view, as the renderer draws only those
-  await withPanel(async b => {
-    const first = await frames(b);
-    const blank = await b.js(`(() => { const c = document.createElement('canvas'); c.width = c.height = 56; return c.toDataURL(); })()`);
-    for (const id of FLIGHT) assert.notEqual(first[id], blank, `${id}: a still pose is drawn`);
-    await new Promise(r => setTimeout(r, 450));
-    const then = await frames(b);
-    for (const id of FLIGHT) assert.equal(then[id], first[id], `${id}: nothing moves with reduced motion`);
-  }, { motion: 'reduce' });
-});
-
-test('0168 AC4: in a real browser, the badge is an image with its name, and a change of look redraws a still one', skip, async () => {
-  await withPanel(async b => {
-    assert.equal(await b.js(`${CARD('0401')}.querySelector('canvas.badge').getAttribute('aria-label')`), 'The builder is writing code');
-    const before = await b.js(FRAME('0404'));
-    await b.js(`document.querySelector('.theme') ? document.querySelector('.theme').click() : setLook('dark')`);
-    await b.until(`${FRAME('0404')} !== ${JSON.stringify(before)}`, 'the paused badge in the new look');
-  }, { height: 2400 }); // 0302: every badge in view, as the renderer draws only those
-});
-
-test('0168 AC5: in a real browser, a zoom draws a badge that holds still again at the new size, so it stays sharp', skip, async () => {
-  await withPanel(async b => {
-    const width = id => b.js(`${CARD(id)}.querySelector('canvas.badge').width`);
-    assert.equal(await width('0404'), 56);
-    // A browser's zoom to 200%: twice the pixels per CSS pixel, and half the CSS width.
-    await b.send('Emulation.setDeviceMetricsOverride', { width: 640, height: 450, deviceScaleFactor: 2, mobile: false });
-    await b.until(`${CARD('0404')}.querySelector('canvas.badge').width === 112 && ${CARD('0406')}.querySelector('canvas.badge').width === 112`, 'the still badges at twice the pixels');
-  }, { motion: 'reduce' });
-});
-

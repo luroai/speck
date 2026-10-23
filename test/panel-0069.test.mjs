@@ -44,7 +44,7 @@ test('0069 AC1: the rest of the row shows as before: bar, counter, worktree path
   const p = queuePage();
   await p.settle();
   const a = rowOf(p, '0001');
-  assert.ok(topOf(a).children.some(n => n.className === 'badgerow'), 'the progress, in the top row since 0156: the builder badge since 0168');
+  assert.ok(topOf(a).children.some(n => n.className === 'progress'), 'the progress, in the top row since 0156: in words only since 0416');
   assert.match(topOf(a).children.find(n => n.className === 'sub').textContent, /^01:0\d$/, 'the counter in the top row');
   await open(p, '0001');
   assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'act path', 'full-open', 'log']);

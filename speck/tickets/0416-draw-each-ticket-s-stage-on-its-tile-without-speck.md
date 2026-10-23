@@ -41,6 +41,7 @@ A ticket's card says its stage in words only, and speck's screen is the only par
 - The user decided on 2026-10-23 that the status text is enough.
 - Waits for 0415: both change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: no changes to the panel; an old 0156 check expected a stage border on a ticket waiting for you to ship it, which it never had, and its "Shipping" sentence check already covers it, so that line went.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
