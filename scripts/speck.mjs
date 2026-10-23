@@ -18,6 +18,7 @@ import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
 import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
+import { cmdKeys } from './keys.mjs';
 import { cmdAgents } from './agents.mjs';
 import { cmdConfig } from './config.mjs';
 import { cmdConfigShow } from './settings.mjs';
@@ -532,6 +533,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
   speck config set --repo <key> <value>     change speck/config.yml's value instead; --machine <key> "" removes this machine's own value
   speck config show [--json]          the main settings by group, with each one's value, whether it's the default and
                                       what it does, as the panel's Settings view explains them
+  speck keys [set|remove <provider>]  which model providers have an API key on this machine; set saves one, read unseen from the input, remove deletes it
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
@@ -574,7 +576,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
                                       dismiss it)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, foreman: cmdForeman };
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
