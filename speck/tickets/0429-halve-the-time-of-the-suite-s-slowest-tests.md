@@ -1,7 +1,7 @@
 ---
 id: "0429"
 title: "Halve the time of the suite's slowest tests"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0424"] # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T18:33:20.667Z"
 
 ---
 # 0429 · Halve the time of the suite's slowest tests
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Builds that change the panel run its browser tests again and again, 1.5 to 2.5 minutes a time, and every ship runs the whole suite. A few tests take far longer than the rest, so every build and ship waits on them.
