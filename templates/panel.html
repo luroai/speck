@@ -2033,25 +2033,74 @@ function openSettings() {
   if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
   loadSettings();
 }
+// 0407: the settings from the config first, at once, then the agents' lists, filled in where they show.
 async function loadSettings() {
   const mine = ++settingsSeq;
   settingAgentModels = new Map();
-  let next;
+  // The lists read last time, shown while they're read again after a Save.
+  const had = settingsView !== null && settingsView.state === 'ok' && settingsView.catalogues === undefined ? settingsView : null;
+  const next = await readSettings('/api/settings?quick=1');
+  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  const quick = next.state === 'ok' && next.loading === true;
+  if (quick && had !== null) for (const f of CATALOGUES) next[f] = had[f];
+  if (quick && had !== null) keepChoices(next, had);
+  if (quick && had === null) Object.assign(next, { catalogues: 'loading', agent_models: [] }); // a list for each role, saying it's loading
+  settingsView = next;
+  renderSettings();
+  if (!quick) return;
+  const asked = settingsView.your_agents, full = await readSettings('/api/settings');
+  if (mine !== settingsSeq || settingsView === null) return;
+  fillCatalogues(full, asked);
+}
+// What the server answers at `url`, as the view takes it: { state: 'ok', … } or { state: 'error', text }.
+async function readSettings(url) {
   try {
-    const res = await fetch('/api/settings', { cache: 'no-store' });
+    const res = await fetch(url, { cache: 'no-store' });
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
-    next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups, reviewer_models: body.reviewer_models ?? null,
+    return res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups, reviewer_models: body.reviewer_models ?? null,
       claude_models: body.claude_models ?? null, builder_models: body.builder_models ?? null, foreman_models: body.foreman_models ?? null,
       providers: Array.isArray(body.providers) ? body.providers.filter(x => x && typeof x.name === 'string' && typeof x.label === 'string') : [], // 0393
       your_agents: body.your_agents !== null && typeof body.your_agents === 'object' ? body.your_agents : null, // 0399
-      agent_models: Array.isArray(body.agent_models) ? body.agent_models : null } // 0400
+      agent_models: Array.isArray(body.agent_models) ? body.agent_models : null, // 0400
+      ...(body.loading === true ? { loading: true } : {}) } // 0407
       : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
-  } catch { next = { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
-  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
-  settingsView = next;
-  renderSettings();
+  } catch { return { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
 }
+// 0407: what the agents' checks and lists give the view, which the config alone doesn't.
+const CATALOGUES = ['reviewer_models', 'builder_models', 'foreman_models', 'your_agents', 'agent_models'];
+const AGENT_KEYS = ['builder', 'reviewer', 'foreman'];
+// The choices of each role's agent, and why some are left out, from `from`'s rows into `into`'s.
+function keepChoices(into, from) {
+  const rows = v => v.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []);
+  for (const key of AGENT_KEYS) {
+    const to = rows(into).find(x => x.key === key), was = rows(from).find(x => x.key === key);
+    if (!to || !was) continue;
+    for (const f of ['choices', 'missing']) { if (Object.hasOwn(was, f)) to[f] = was[f]; else delete to[f]; }
+  }
+}
+// 0407: the agents' lists, once read, drawn in place: each role's list and Your agents, keeping what's typed or picked,
+// how far the view is scrolled and where the keyboard focus is. `full` is the whole answer, or why it couldn't be read.
+// Your agents as an add or a removal since `asked` gave them is newer than the answer, so it stays.
+function fillCatalogues(full, asked) {
+  const view = settingsView, before = yourModels() !== null;
+  if (full.state === 'ok') {
+    for (const f of CATALOGUES) if (f !== 'your_agents' || view.your_agents === asked) view[f] = full[f];
+    keepChoices(view, full);
+    delete view.catalogues;
+  } else view.catalogues = { why: full.text };
+  if ((yourModels() !== null) !== before) { // each role's lists are laid out another way: the view drawn again, as far down
+    const pane = $('settings'), top = pane.scrollTop;
+    renderSettings();
+    pane.scrollTop = top;
+    return;
+  }
+  for (const key of [...AGENT_KEYS, ...Object.keys(ROLE_PAIRS), ...Object.keys(SETTING_PAIRS)]) redrawSettings([key], key);
+  drawAgents();
+}
+// 0407: whether the agents' lists are still being read, and why they couldn't be, or null.
+const cataloguesLoading = () => settingsView !== null && settingsView.catalogues === 'loading';
+const cataloguesWhy = () => settingsView !== null && settingsView.catalogues !== null && typeof settingsView.catalogues === 'object' ? settingsView.catalogues.why : null;
 // 0275: Close, Escape and a click outside the view: at once with nothing to save, otherwise after asking.
 function leaveSettings() {
   if (settingsLeaving !== null) return;
@@ -2225,6 +2274,7 @@ function settingRow(x, n) {
       : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
     role === null && ['reviewer', 'builder', 'foreman'].includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393
     role !== null ? notYoursLine(role) : null, role !== null ? unlistedLine(role) : null, role !== null ? needsClaudeLine() : null, // 0400
+    role !== null && cataloguesWhy() !== null ? el('p', 'bad', `Couldn't read your agents' models. ${cataloguesWhy()}`) : null, // 0407
     x.key === 'builder' ? builderSwitchLine(x) : null,
     x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
     x.key === 'builder_model' && builderModelsWhy() !== null ? el('p', null, builderModelsWhy()) : null,
@@ -2262,6 +2312,7 @@ function redrawSettings(keys, kept = null) {
     const row = settingRow(x, drawn.n), made = settingControls.get(key);
     if (key === kept && had && made && made.tagName === had.tagName) {
       if (hadInfo) settingInfos.set(key, hadInfo); // 0395: its name, and its info button with it, stay as they were
+      drawn.row.hidden = row.hidden; // 0407: an effort, shown only for an agent that takes one
       for (const c of [...drawn.row.children].slice(1)) drawn.row.removeChild(c);
       for (const c of [...row.children].slice(1)) drawn.row.appendChild(c);
       if (String(had.tagName).toLowerCase() === 'select') { // what it offers can change with what's picked
@@ -2679,7 +2730,8 @@ function roleEditor(x) {
   const entries = roleEntries(role), picked = asEntry(roleValue(role, settingChosen));
   const select = el('select', 'edit');
   for (const v of [...new Set([asEntry(roleValue(role, settingSaved)), picked])].filter(v => !entries.some(e => e.value === v))) {
-    const o = el('option', null, `${roleWords(role, v)} (not offered)`);
+    // 0407: while the lists are read, or when they couldn't be, the one chosen is all there is to show
+    const o = el('option', null, `${roleWords(role, v)} (${cataloguesLoading() ? 'loading the list…' : cataloguesWhy() !== null ? 'the list couldn\'t be read' : 'not offered'})`);
     o.value = v;
     o.disabled = true;
     select.appendChild(o);
@@ -2694,6 +2746,12 @@ function roleEditor(x) {
     const o = el('option', null, e.label);
     o.value = e.value;
     into.appendChild(o);
+  }
+  if (cataloguesLoading()) { // 0407: every role's list says so, even with what's picked among its entries
+    const o = el('option', null, 'Loading your agents\' models…');
+    o.value = '';
+    o.disabled = true;
+    select.appendChild(o);
   }
   select.value = picked;
   select.setAttribute('aria-label', role);
@@ -2761,7 +2819,9 @@ function drawAgents(after = null) {
   const was = had && within(had, box) && typeof had.getAttribute === 'function' ? had.getAttribute('data-focus') : null;
   const view = settingsView !== null ? settingsView.your_agents : null;
   const kids = [el('div', 'sh', null, el('h4', null, 'Your agents'))];
-  if (view === null || view === undefined) kids.push(el('div', 'arow note', null, el('p', null, 'speck panel didn\'t say which agents are yours. Close Settings and open it again.')));
+  if (cataloguesLoading()) kids.push(el('div', 'arow note', null, el('p', 'loading', 'Loading your agents…'))); // 0407
+  else if (cataloguesWhy() !== null) kids.push(el('div', 'arow note', null, el('p', 'bad', `Couldn't read your agents. ${cataloguesWhy()}`)));
+  else if (view === null || view === undefined) kids.push(el('div', 'arow note', null, el('p', null, 'speck panel didn\'t say which agents are yours. Close Settings and open it again.')));
   else if (typeof view.why === 'string' && view.why) kids.push(el('div', 'arow note', null, el('p', 'bad', view.why)));
   else {
     const all = Array.isArray(view.agents) ? view.agents.filter(a => a && typeof a.id === 'string' && typeof a.name === 'string') : [];
