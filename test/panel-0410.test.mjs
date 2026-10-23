@@ -218,6 +218,29 @@ test('0410 AC4: with Plan or Shipped open and the Foreman reading "Needs you <n>
   assert.equal(p.byId('build-needs').textContent, '', 'gone once Build opens');
 });
 
+test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back there, puts "<n> needs you" on Build straight away', async () => {
+  const p = livePage(board({ foreman: { word: 'Needs you 2', tone: 'bad' } }));
+  await p.settle();
+  const waiting = queueRows(p).find(n => idOf(p, n) === '0002');
+  p.press(gotoIn(p, waiting, '0001'));
+  openIs(p, 'plan', 'after going to a Plan ticket');
+  assert.equal(p.byId('build-needs').textContent, '2 needs you', 'before any refresh');
+  // Back to Build through a link, then opened from Build and closed once it's back in Plan.
+  p.press(gotoIn(p, items(p).find(n => idOf(p, n) === '0001'), '0002'));
+  assert.equal(p.byId('build-needs').textContent, '', 'Build open again');
+  const row = queueRows(p).find(n => idOf(p, n) === '0003');
+  click(row.children.find(n => n.className === 'top'));
+  await p.settle();
+  click(p.all(queueRows(p).find(n => idOf(p, n) === '0003')).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
+  p.set(board({ '0003': { status: 'draft' }, foreman: { word: 'Needs you 2', tone: 'bad' } }));
+  await refresh(p);
+  click(top(items(p).find(n => idOf(p, n) === '0003')));
+  await p.settle();
+  p.key('Escape');
+  openIs(p, 'plan', 'after the focus went back to Plan');
+  assert.equal(p.byId('build-needs').textContent, '2 needs you');
+});
+
 // ---------- AC5 ----------
 
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')._text;
