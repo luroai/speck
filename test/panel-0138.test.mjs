@@ -84,9 +84,11 @@ test('0138 AC2: the purple reads clearly in light and dark, and is visibly diffe
     for (const [name, back] of [['--bg', bg], ['--panel', panel], ['--idea-bg', tint]])
       assert.ok(contrast(purpleHex, back) >= 3, `${look}: --idea (${purpleHex}) on ${name} (${back}) is at least 3:1 (${contrast(purpleHex, back).toFixed(2)})`);
     assert.ok(contrast(v.get('--text'), tint) >= 4.5, `${look}: text on the open tint is at least 4.5:1`);
-    for (const other of ['--bad', '--warn'])
-      assert.ok(hueGap(purpleHex, v.get(other)) >= 60, `${look}: --idea (${purpleHex}) is at least 60° of hue from ${other} (${v.get(other)}): ${hueGap(purpleHex, v.get(other)).toFixed(0)}°`);
-    assert.ok(hueGap(tint, tints.get('--bad-bg')) >= 60, `${look}: the open tint is a different hue from the red tint`);
+    // 0426: Cursor's magenta and red are about 20° of hue apart, so --idea keeps at least 20° from --bad, and 60° from
+    // --warn, and the open tint at least 15° from the red tint
+    for (const [other, gap] of [['--bad', 20], ['--warn', 60]])
+      assert.ok(hueGap(purpleHex, v.get(other)) >= gap, `${look}: --idea (${purpleHex}) is at least ${gap}° of hue from ${other} (${v.get(other)}): ${hueGap(purpleHex, v.get(other)).toFixed(0)}°`);
+    assert.ok(hueGap(tint, tints.get('--bad-bg')) >= 15, `${look}: the open tint is a different hue from the red tint`);
   }
 });
 
