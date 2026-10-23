@@ -49,7 +49,7 @@ The panel's text uses the fonts Cursor's own interface uses, and its labels read
 - Pictures: taken on a box whose only fonts are Liberation Sans, Serif and Mono, with Liberation Sans standing in for the system font; on a Mac, Windows or Ubuntu machine the panel shows that system's own font.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel now uses the same fonts as Cursor: your computer's own interface font for text, headings and buttons, and Cursor's monospace for ticket numbers, the build log, code and figures. Headings and ticket titles are bold rather than in a serif, buttons and labels read in normal sentence case ("Full ticket", "More stats") instead of spaced capitals, and body text is a little bigger, at 14 px. To see it, open the panel beside Cursor: the lettering should match. Worth a look: the dots between the parts of a ticket's details line sit very close to the words beside them in the new font, which is saved as a follow-up.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +59,8 @@ The panel's text uses the fonts Cursor's own interface uses, and its labels read
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (to the inbox): speck/ideas/2026-10-23-give-the-dots-in-a-details-line-their-gaps-back.md (the dots' gaps close in a proportional font); speck/ideas/2026-10-23-measure-the-panel-s-layout-in-a-proportional-font.md (the build machine's Chrome shows `system-ui` as Liberation Mono, so the layout tests measure a monospaced panel).
+- Known limit: the selects in Settings (an agent and its model, a setting's value) stay in the monospace, as a setting's values.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -132,6 +134,81 @@ The panel's text uses the fonts Cursor's own interface uses, and its labels read
     ],
     "escalation_question": "",
     "summary": "The requested fonts, heading weights and sentence-case controls are implemented, and the reported tests pass. One explicit requirement remains unmet: the ticket's stage sentence is still 12 px instead of 14 px. Fix that size and test the rendered sentence before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3e284f8199cefe618c6c450734ee92e1791381ea",
+    "session": "continued",
+    "thread_id": "01a16a2b-b1fa-7910-b3c5-323213966dd5",
+    "builder_response": "- Tests run: test/panel-0427.test.mjs test/panel-0161.test.mjs test/panel-0158.test.mjs test/panel-0134.test.mjs test/panel-0135.test.mjs test/panel-0147.test.mjs test/panel-0273.test.mjs test/panel-0424.test.mjs test/panel-0419.test.mjs test/panel-0420.test.mjs test/panel-0164.test.mjs test/panel-0304.test.mjs test/panel-0413.test.mjs test/panel-0426.test.mjs test/panel-0422.test.mjs test/panel-0421.test.mjs\n- F1: fixed. `.q .top .say` (the stage sentence, from progressOf()) is now 14 px, with a 12 px line height so the details line stays the height 0419 sets (a card with details on two lines stays within 64 px). New real-browser test \"0427 AC1: in a real browser, a ticket's stage sentence and a question are 14 px, in the interface font\" reads the rendered size and font of every stage sentence and an open question; it fails without the fix.\n- Consequence in 0419's browser test: on this machine Chrome takes `system-ui` to be Liberation Mono, so a building ticket's 14 px \"Writing tests and code · Build · 01:05 · P3 · M · low\" no longer fits one line at 420 px, as the reviewing ticket's already didn't. The test now measures whether the interface font is a monospace (an \"iiii\" as wide as an \"mmmm\") and, only then, expects 0703's details on two lines, as it already did for 0704. The 64 px height limit still applies to both.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 509856,
+      "cached_input_tokens": 434560,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1671,
+      "reasoning_output_tokens": 71
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T19:13:36.531Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html uses the requested interface stack and 14 px body text; .q .top .say now explicitly sets 14 px. The new 0427 AC1 browser test passed, checking computed sizes and fonts of stage sentences and an open question."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Code, ids, build logs and figures retain the requested monospace stack. The 0427 AC2 test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Heading, tab-name and ticket-title rules use the interface stack at weight 600, and the old font names are absent. The 0427 AC3 and updated 0134 browser tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Buttons and labels use the interface font with sentence-case text; uppercase transforms and positive letter spacing were removed. The 0427 AC4 test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The stylesheet retains text sizes of at least 12 px and weights of at least 400. The 0427 AC5 and existing 0161 tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:232",
+        "issue": "The stage sentence previously inherited 12 px instead of the required 14 px. It now explicitly uses 14 px, and a browser test verifies the rendered size.",
+        "suggested_fix": "Completed: the stage sentence is 14 px and covered by the new browser test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel now uses the requested interface and monospace fonts, stronger headings and sentence-case controls. The stage-sentence size is fixed and verified in a browser. All criteria pass; the reported run has 233 passing tests, no failures and three skips."
   }
 }
 ```
