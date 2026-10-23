@@ -1,7 +1,7 @@
 ---
 id: "0424"
 title: "Set the full ticket out as a document"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0423"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T18:19:05.570Z"
+approved: "2026-10-23T18:30:15.118Z"
 
 ---
 # 0424 · Set the full ticket out as a document
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full ticket's text runs together: section headings, paragraphs and lists are close in size and spacing, so it doesn't read as a document with a clear order of parts.
@@ -56,9 +57,15 @@ Worth a look: the bigger text makes a review pack's tables wider, so on a narrow
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Explicit overrides leave code blocks at 12 px and Markdown tables at 13 px.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 289,937
+- Elapsed since build started: 11 min
+- Changed lines: 36 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The document pop-up (a document task's document) keeps its old type sizes: saved to the inbox as speck/ideas/2026-10-23-set-a-document-task-s-document-out-the-same-way.md.
