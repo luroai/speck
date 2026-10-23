@@ -31,11 +31,19 @@ function looks(rs = rules()) {
   const light = vars(':root');
   return { light, dark: { ...light, ...vars(':root[data-theme="dark"]') } };
 }
-const luminance = hex => {
-  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+// 0426: a colour can have an alpha (#rrggbbaa), as Cursor's greys do: it's laid over what's under it before it's measured.
+const rgba = hex => [1, 3, 5, 7].map(i => (hex.length > i ? parseInt(hex.slice(i, i + 2), 16) : 255) / 255);
+const over = (top, under) => [0, 1, 2].map(i => top[i] * top[3] + under[i] * (1 - top[3])).concat(1);
+const luminance = c => {
+  const [r, g, b] = c.slice(0, 3).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
-const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+// The contrast of `a` laid over `b`, itself laid over `base` (white when not given).
+const contrast = (a, b, base = '#ffffff') => {
+  const back = over(rgba(b), rgba(base)), front = over(rgba(a), back);
+  const [x, y] = [luminance(front), luminance(back)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+};
 
 // The backgrounds text and controls sit on: the page, the sections, raised rows and the open items' tints.
 const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--idea-bg', '--inbox-bg', '--bad-bg'];
@@ -68,11 +76,12 @@ test('0161 AC1: every text colour meets 4.5:1 on each background it can sit on, 
       assert.equal(fg.length, 1, `${r.sel}: its colour ${colour} is one of the panel's tokens`);
       const bgDecl = get(r, 'background') || get(r, 'background-color');
       const own = tokens(bgDecl).filter(t => !SURFACES.includes(t));
-      const under = own.length ? own : behind(r.sel);
+      // its own fill, laid over each surface it can sit on, or those surfaces
+      const under = own.length ? own.flatMap(o => behind(r.sel).map(s => [o, s])) : behind(r.sel).map(s => [s, s]);
       const need = (size(r) || 13) >= 14 ? 4.5 : 7;
-      for (const b of under) {
-        const ratio = contrast(look[fg[0]], look[b]);
-        assert.ok(ratio >= need, `${name}: ${r.sel} (${fg[0]} ${look[fg[0]]}) on ${b} ${look[b]} is ${ratio.toFixed(2)}:1, under ${need}:1`);
+      for (const [b, s] of under) {
+        const ratio = contrast(look[fg[0]], look[b], look[s]);
+        assert.ok(ratio >= need, `${name}: ${r.sel} (${fg[0]} ${look[fg[0]]}) on ${b} ${look[b]} (over ${s}) is ${ratio.toFixed(2)}:1, under ${need}:1`);
         checked++;
       }
     }
@@ -98,7 +107,7 @@ test('0161 AC1: no text is faded: only a disabled button is see-through', () => 
 });
 
 test('0161 AC1: the check fails when a pair falls short', () => {
-  const faint = css().replace(/--faint: #[0-9a-f]{6};/, '--faint: #999999;');
+  const faint = css().replace(/--faint: #[0-9a-fA-F]{6,8};/, '--faint: #999999;');
   const rs = rules(faint), { light } = looks(rs);
   const r = rs.find(x => x.sel === '.empty');
   assert.ok(contrast(light[tokens(get(r, 'color'))[0]], light['--raise']) < 7, 'a lighter --faint is caught');

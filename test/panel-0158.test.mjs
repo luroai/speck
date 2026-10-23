@@ -136,11 +136,11 @@ const TABLES = `[...document.querySelectorAll('#full-ticket .md table, .shaping 
     }),
   };
 })`;
-const MUTED = `getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()`;
-const rgb = hex => `rgb(${[1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
+// 0426: as the browser computes it, as --muted has an alpha
+const MUTED = `(() => { const s = document.createElement('span'); s.style.color = 'var(--muted)'; document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c; })()`;
 
 test('0158 AC1: at 375 px, each row of every table in the pane and in an opened note is a block of labelled cells, one to a line', skip, () => withPack(375, async b => {
-  const tables = await b.js(TABLES), muted = rgb(await b.js(MUTED));
+  const tables = await b.js(TABLES), muted = await b.js(MUTED);
   assert.deepEqual(tables.map(t => t.where), ['note', 'pane', 'pane']);
   for (const t of tables) {
     assert.ok(t.head.height <= 1 && t.head.width <= 1, `${t.where}: the heading row is hidden, its headings shown on the cells instead`);

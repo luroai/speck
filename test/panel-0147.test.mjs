@@ -9,8 +9,8 @@ import { ROOT, page, PALETTE, paletteProblems } from './support/panel.mjs';
 // ---------- 0147: style the panel like the landing page ----------
 
 const parse = s => Object.fromEntries(s.split('; ').map(d => d.split(': ')));
-const LIGHT = parse('--bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #87847d; --line-soft: #e8e7e3; --text: #141413; --muted: #3d3d3a; --faint: #4d4c48; --accent: #853123; --bad: #921f2d; --ok: #3f522e; --warn: #67460b; --run: #304f6d; --idea: #623f6c; --inbox: #22544c; --bug: #7a3553; --fix: #584c0e; --accent-bg: #f7ebe6; --idea-bg: #f2ecf3; --inbox-bg: #e9f2f0; --bad-bg: #fae6e8');
-const DARK = parse('--bg: #181818; --panel: #1f1f1f; --raise: #222222; --line: #737373; --line-soft: #262626; --text: #e4e4e4; --muted: #c4c4c4; --faint: #b4b4b4; --accent: #e5a495; --bad: #f39ba5; --ok: #a5bb8e; --warn: #daac5d; --run: #97b7d8; --idea: #c3abd1; --inbox: #82bfb5; --bug: #e0a2bf; --fix: #c9b65c; --accent-bg: #2e2320; --idea-bg: #2a2430; --inbox-bg: #1d2a28; --bad-bg: #341d21');
+const LIGHT = parse('--bg: #f3f3f3; --panel: #fcfcfc; --raise: #f3f3f3; --line: #14141476; --line-soft: #14141413; --text: #141414EB; --muted: #141414BA; --faint: #141414BA; --accent: #cf2d56; --bad: #96213f; --ok: #145a42; --warn: #6d4700; --run: #285372; --idea: #833063; --inbox: #4c7f8c; --bug: #96213f; --fix: #6d4700; --accent-bg: #f5f0e8; --idea-bg: #f7edf3; --inbox-bg: #eef2f3; --bad-bg: #f8ebef');
+const DARK = parse('--bg: #141414; --panel: #181818; --raise: #1c1c1c; --line: #E4E4E462; --line-soft: #E4E4E413; --text: #E4E4E4EB; --muted: #E4E4E4B8; --faint: #E4E4E4B8; --accent: #e34671; --bad: #ef95ad; --ok: #7fbc95; --warn: #d9a65e; --run: #97b2cc; --idea: #c4a6be; --inbox: #88c0d0; --bug: #ef95ad; --fix: #d9a65e; --accent-bg: #27221b; --idea-bg: #242124; --inbox-bg: #212527; --bad-bg: #281c1f');
 const FONTS = ['"Shippori Mincho", "Noto Serif JP", Georgia, serif', '"Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif', '"IBM Plex Mono", ui-monospace, monospace'];
 
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));

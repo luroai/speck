@@ -18,7 +18,7 @@ test('0126 AC1: the panel mockup is not on disk and not tracked by git', () => {
 });
 
 test('0126 AC2: the agreed colour block is written in the test support, not read from the mockup', () => {
-  assert.equal(PALETTE, '--bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #87847d; --line-soft: #e8e7e3; --text: #141413; --muted: #3d3d3a; --faint: #4d4c48; --accent: #853123; --ok: #3f522e; --warn: #67460b; --bad: #921f2d; --run: #304f6d; --idea: #623f6c');
+  assert.equal(PALETTE, '--bg: #f3f3f3; --panel: #fcfcfc; --raise: #f3f3f3; --line: #14141476; --line-soft: #14141413; --text: #141414EB; --muted: #141414BA; --faint: #141414BA; --accent: #cf2d56; --ok: #145a42; --warn: #6d4700; --bad: #96213f; --run: #285372; --idea: #833063');
   assert.doesNotMatch(read('test/panel.test.mjs'), /panel-mockup/);
 });
 
@@ -28,12 +28,12 @@ test('0126 AC2: the panel page has every agreed colour', () => {
 
 test('0126 AC2: the colour check fails when a value is changed or missing', () => {
   const html = page();
-  const changed = html.replace('--accent: #853123;', '--accent: #b0412f;');
+  const changed = html.replace('--accent: #cf2d56;', '--accent: #b0412f;');
   assert.notEqual(changed, html);
-  assert.deepEqual(paletteProblems(changed), ['--accent should be #853123']);
-  const missing = html.replace('--idea: #623f6c;', '');
+  assert.deepEqual(paletteProblems(changed), ['--accent should be #cf2d56']);
+  const missing = html.replace('--idea: #833063;', '');
   assert.notEqual(missing, html);
-  assert.deepEqual(paletteProblems(missing), ['--idea should be #623f6c']);
+  assert.deepEqual(paletteProblems(missing), ['--idea should be #833063']);
   assert.equal(paletteProblems('<style>body {}</style>').length, 14, 'no :root block at all');
 });
 

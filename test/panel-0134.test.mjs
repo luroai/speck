@@ -11,9 +11,11 @@ const rootVars = html => {
   const root = (html.match(/:root \{([\s\S]*?)\}/) || [])[1] || '';
   return new Map([...root.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 };
-const ZEN = { '--bg': '#faf9f5', '--panel': '#ffffff', '--raise': '#f0eee6', '--line': '#87847d', '--line-soft': '#e8e7e3',
-  '--text': '#141413', '--muted': '#3d3d3a', '--faint': '#4d4c48', '--accent': '#853123', '--bad': '#921f2d' };
+const ZEN = { '--bg': '#f3f3f3', '--panel': '#fcfcfc', '--raise': '#f3f3f3', '--line': '#14141476', '--line-soft': '#14141413',
+  '--text': '#141414EB', '--muted': '#141414BA', '--faint': '#141414BA', '--accent': '#cf2d56', '--bad': '#96213f' };
 const OWN = ['--ok', '--warn', '--run', '--idea', '--inbox', '--bug', '--fix'];
+// 0426: the bug tag is in Cursor's red, as --bad is, and the fix tag in its yellow, as --warn is
+const SHARED = new Set(['--bug --bad', '--fix --warn', '--warn --fix']);
 const luminance = hex => {
   const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -34,7 +36,7 @@ test('0134 AC1: each of the panel\'s own colours is a distinct 6-digit hex that 
     const v = vars.get(k);
     assert.match(v || '', /^#[0-9a-f]{6}$/i, `${k} is a 6-digit hex colour in the first :root block`);
     assert.ok(contrast(v, bg) >= 3, `${k} (${v}) has a contrast of at least 3:1 against --bg (${contrast(v, bg).toFixed(2)})`);
-    for (const o of [...OWN.filter(x => x !== k), '--accent', '--bad']) assert.notEqual(v.toLowerCase(), (vars.get(o) || '').toLowerCase(), `${k} differs from ${o}`);
+    for (const o of [...OWN.filter(x => x !== k), '--accent', '--bad'].filter(o => !SHARED.has(`${k} ${o}`))) assert.notEqual(v.toLowerCase(), (vars.get(o) || '').toLowerCase(), `${k} differs from ${o}`);
   }
   // No later :root block sets any of them again.
   const later = [...css().matchAll(/:root \{([^}]*)\}/g)].slice(1).map(m => m[1]).join(' ');
@@ -47,9 +49,9 @@ test('0134 AC1: PALETTE lists the new values for the same 14 names, and the colo
   const vars = rootVars(page());
   for (const d of PALETTE.split('; ')) { const [k, v] = d.split(': '); if (ZEN[k]) assert.equal(v, ZEN[k], k); else assert.equal(v, vars.get(k), k); }
   assert.deepEqual(paletteProblems(page()), []);
-  const changed = page().replace('--accent: #853123;', '--accent: #b0412f;');
+  const changed = page().replace('--accent: #cf2d56;', '--accent: #b0412f;');
   assert.notEqual(changed, page());
-  assert.deepEqual(paletteProblems(changed), ['--accent should be #853123']);
+  assert.deepEqual(paletteProblems(changed), ['--accent should be #cf2d56']);
   const src = fs.readFileSync(path.join(ROOT, 'test', 'mockup-0126.test.mjs'), 'utf8');
   assert.ok(src.includes(`assert.equal(PALETTE, '${PALETTE}')`), 'the 0126 AC2 literal lists the new values');
 });
