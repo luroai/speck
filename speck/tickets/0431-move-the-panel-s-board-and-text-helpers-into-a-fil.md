@@ -42,6 +42,7 @@ The page's model is in a file of its own, which tests load directly.
 - Part of splitting `templates/panel.html` (4,414 lines, 315 KB on 2026-10-23) into files by area, so panel tickets in different areas can build side by side and agents work with smaller files: 0430 styles, 0431 the model, 0432 Settings, 0433 the rest. No change to what the panel does or how it looks.
 - Install and update copy the whole `templates/` folder (`place` in `scripts/`), so a new file there reaches projects with no change.
 - The page's stamp (`stampOf` in `scripts/panel.mjs`) is worked out from `panel.html` alone today. `/lcd.js` and `/fonts/Doto.ttf` show how the server names each file it serves.
+- Failing before this build: none
 - Waits for 0430: both change `templates/panel.html`, `scripts/panel.mjs` and `test/support/panel.mjs`.
 
 ## In plain words
