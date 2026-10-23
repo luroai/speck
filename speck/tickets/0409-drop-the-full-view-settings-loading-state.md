@@ -41,6 +41,9 @@ Settings never shows the full-view "Loading the settings…" message. Only the i
 - Prefetching the quick answer when the panel starts is fine as how, so long as criterion 1 holds.
 - Waits for 0408: both change Settings in `templates/panel.html`.
 - Failing before this build: none
+- How: a press on Settings now opens it once the quick config answer is back (the button is `aria-busy` meanwhile), so its first paint has the groups; a second press while it's opening is ignored. The `loading` state and its line are gone. Three older checks opened Settings into that state (0257's self-check, 0285 AC3, 0396 AC1) and are changed to check the new opening, as criterion 3 allows.
+- Self-check: no changes (Escape and clicks outside are already ignored while Settings is opening; a failed read opens onto why).
+- Pictures: none, because the open view looks as before: only the loading frame before it is gone, which a picture can't show.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
