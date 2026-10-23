@@ -1,7 +1,7 @@
 ---
 id: "0402"
 title: "Give the builder an effort setting"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0401"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T11:39:09.124Z"
 approved: "2026-10-23T11:51:41.139Z"
+finished: "2026-10-23T11:54:16.051Z"
 
 ---
 # 0402 · Give the builder an effort setting
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Settings offers how hard the reviewer and the Foreman think. The builder has no effort control, so a Claude Code or Codex build can't be set to high, max or another effort from the panel.
