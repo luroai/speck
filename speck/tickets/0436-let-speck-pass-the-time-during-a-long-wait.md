@@ -42,6 +42,7 @@ Between events, speck shows the pipeline's state, and during a long wait it pass
 - The user asked for this on 2026-10-23: on a long build, speck only watched the build. Agreed: 2 minutes watching, 1-minute pastimes, and Needs you stays as the question mark.
 - Changes 0414's criterion 3 for `Building`, `Shipping`, `Waiting` and `Idle`. 0414's tests for those change to match.
 - Waits for 0435: both change `templates/panel.html`. 0430 waits for it too, as the split moves the screen's code.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
