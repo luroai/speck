@@ -43,6 +43,8 @@ Pressing speck's screen opens the pipeline log, which takes the place of the For
 - The Foreman's detail is `renderForeman` (0285, 0287, 0317, 0318, 0328, 0366). `run.log` is written by `scripts/panel-run.mjs` (0220).
 - Waits for 0414: both change `templates/panel.html`.
 - Failing before this build: none
+- Design: the linked artifact isn't shared with this account, so the build follows the criteria. The pop-up keeps today's full-panel shape, and "a click outside it" is a click beside its centred column, as with Settings (0368).
+- Self-check: a failed request for the log was sent again at once, in a loop; it now waits for the next redraw (test added). The page-wide `section` style drew a border round the two parts, so they're plain blocks.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

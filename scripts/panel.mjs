@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
 import { stopBuild } from './run.mjs';
-import { panelShip, panelChanges, requestBody, panelRunOn, panelRunOff, panelRunState } from './panel-run.mjs';
+import { panelShip, panelChanges, requestBody, panelRunOn, panelRunOff, panelRunState, runLogPart, runLogAnswer } from './panel-run.mjs';
 export { panelRunOn } from './panel-run.mjs';
 import { boardReader } from './panel-board.mjs';
 import { panelPack } from './pack.mjs';
@@ -292,7 +292,7 @@ export async function panelServer() {
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
       const run = panelRunState(repo, runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets) });
-      const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...pageNow() });
+      const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...runLogPart(runs), ...pageNow() }); // 0415: run_log
       return { status: 200, body: snap.body, snap };
     }
     catch (e) { return { status: 500, body: JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) }) }; }
@@ -485,6 +485,7 @@ export async function panelServer() {
       const told = String(req.headers['x-speck-board'] ?? '');
       return askState(res, /^\d{1,15}$/.test(told) ? Number(told) : null, String(req.headers['x-speck-have'] ?? ''));
     }
+    if (where === '/api/run-log') { const out = runLogAnswer(runs); return send(res, out.status, 'application/json', JSON.stringify(out.body)); } // 0415: always run.log
     const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log(\/close)?$/);
     if (log) {
       try { return send(res, 200, 'application/json', JSON.stringify(logs.answer(req.headers, padId(log[1]), !!log[2]))); }
