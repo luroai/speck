@@ -46,7 +46,7 @@
     --bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #87847d; --line-soft: #e8e7e3;
     --text: #141413; --muted: #3d3d3a; --faint: #4d4c48;
     --accent: #853123; --ok: #3f522e; --warn: #67460b; --bad: #921f2d; --run: #304f6d; --idea: #623f6c;
-    /* 0302: the builder badge's LCD screen, from the design (docs/design/lcd/), lighter since 0308 */
+    /* 0302: the LCD screen, from the design (docs/design/lcd/), lighter since 0308: speck's screen since 0413 */
     --lcd-bg: #e6e9db; --lcd-off: #dde1cf; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .14);
     --bezel: #262722; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1; /* 0413: the screen's dark frame, from the design's console */
     --dot: #b0412e; /* 0303: the speck in the header's mark */
@@ -207,18 +207,14 @@
   .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
   .act.to-ship { color: var(--idea); }
-  /* 0168: an in-flight ticket's progress, under its title and tags, which keep the card's full width: the builder badge,
-     then a sentence saying what's happening and the current stage's name, with the timer at the right of that row. 0302:
-     the badge is the design's LCD screen, drawn by its renderer (lcd.js), framed purple waiting for you and crimson blocked. */
-  .q .top:has(> .badgerow) .line { grid-area: 1 / 1 / 2 / 3; }
-  .q .top .badgerow { grid-area: 3 / 1; display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 12px; align-items: center; margin-top: 8px; }
-  .q .top:has(> .badgerow) .sub { grid-area: 3 / 2; align-self: center; }
-  .q .top .badge { display: block; width: 56px; height: 56px; image-rendering: pixelated; outline: 1px solid var(--line); outline-offset: -1px; }
-  .q .top .badge.wait { outline-color: var(--idea); }
-  .q .top .badge.bad { outline-color: var(--bad); }
-  .q .top .badgetext { display: grid; gap: 2px; min-width: 0; }
+  /* 0168: an in-flight ticket's progress, under its title and tags, which keep the card's full width: a sentence saying
+     what's happening and the current stage's name, with the timer at the right of that row. 0416: in words only, from
+     the card's left edge, with no builder badge. */
+  .q .top:has(> .progress) .line { grid-area: 1 / 1 / 2 / 3; }
+  .q .top .progress { grid-area: 3 / 1; display: grid; gap: 2px; min-width: 0; align-self: center; margin-top: 8px; }
+  .q .top:has(> .progress) .sub { grid-area: 3 / 2; align-self: center; }
   .q .top .say { font-size: 13px; color: var(--text); }
-  .q .top .badgetext.ship-line { display: block; } /* 0201: "Shipping · 00:04" on one line */
+  .q .top .progress.ship-line { display: block; } /* 0201: "Shipping · 00:04" on one line */
   .q .top .ship-at { font-size: 13px; color: var(--text); font-variant-numeric: tabular-nums; }
   .q .top + .act { margin-top: 6px; } /* a ready ticket's Queued line, with no bar above it now */
   .q .top .say.bad { color: var(--bad); }
@@ -729,8 +725,8 @@ function progress(t) {
   return labels.map((label, i) => ({ label, state: t.status === 'ready' ? '' : done[i] ? 'done' : i === current ? 'now' : '' }));
 }
 // 0156: what an in-flight queue ticket is doing, as its card says it: a plain sentence, the card's state colour for it
-// ('bad', 'to-ship' or '' for the normal text colour), and whether an agent is at work on it, which puts its builder
-// badge to work (0168).
+// ('bad', 'to-ship' or '' for the normal text colour), and whether an agent is at work on it, which gives its card the
+// border of its stage (0171).
 // `shipping` is true while a ship of it is running, whoever started it.
 // An approved ticket that isn't shipping waits for you, in purple, whether or not its build has exited yet. One that is
 // shipping is at work, in the normal text colour. 0196: so is one auto-ship will ship once its build has ended, and
@@ -770,26 +766,8 @@ function doing(t, shipping) {
   }
   return { sentence, tone, moving: t.status === 'building' || t.status === 'reviewing' };
 }
-// 0168: what an in-flight ticket's builder badge shows, from what it's doing (`d`, from doing): its pose and the badge's
-// accessible name. While an agent is at work: checking a cloud of code during self-check, going through one with the
-// reviewer during review (0169), pushing the finished block off on a paper boat while it ships or waits to ship (0172), otherwise at the
-// laptop. With a "?" when it's blocked or stopped (the card's crimson);
-// with a flag while it waits for your decision (the card's purple); otherwise still, facing front.
-function badgeOf(t, d) {
-  if (d.moving) {
-    const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
-    if (d.sentence === 'Shipping') return { pose: 'ship', label: 'The builder is shipping' };
-    if (t.ship_waiting) return { pose: 'ship', label: 'The builder is about to ship' };
-    if (t.status === 'reviewing' || roundUnderReview(t) !== null) return { pose: 'review', label: 'The builder is with the reviewer' };
-    if (now === 1) return { pose: 'check', label: 'The builder is checking its own work' };
-    return { pose: 'type', label: 'The builder is writing code' };
-  }
-  if (d.tone === 'bad') return { pose: 'bad', label: 'The builder needs you' };
-  if (t.to_ship) return { pose: 'wait', label: 'The builder is waiting for you' };
-  return { pose: 'still', label: t.paused ? 'The builder is paused' : 'The builder is waiting' };
-}
 // 0171: the stage a ticket an agent is at work on has reached, for its card's border: 'build', 'check', 'review' or
-// 'ship', from what it's doing (`d`, from doing), as its badge shows it. Null when no agent is at work on it.
+// 'ship', from what it's doing (`d`, from doing). Null when no agent is at work on it.
 function stageOf(t, d) {
   if (!d.moving) return null;
   if (d.sentence === 'Shipping' || t.ship_waiting) return 'ship';
@@ -3349,55 +3327,31 @@ function queueItem(t) {
   }
   return q;
 }
-// 0168: an in-flight ticket's progress, under its title: the builder badge, then what it's doing in a sentence and the
-// current stage's name. The timer stays last in the top row (0058); the grid puts it at the right of the badge's row.
+// 0168: an in-flight ticket's progress, under its title: what it's doing in a sentence and the current stage's name, in
+// words only since 0416. The timer stays last in the top row (0058); the grid puts it at the right of that row.
 // 0201: a shipping ticket says so once, followed on the same line by how long its ship has been running (0153), with no
 // stage's name.
 function progressOf(top, t, d) {
   const tone = d.tone ? ` ${d.tone}` : '', now = t.steps.find(s => s.state === 'now');
-  const badge = badgeFor(String(t.id), badgeOf(t, d));
   const ships = d.sentence === 'Shipping';
-  top.insertBefore(el('div', 'badgerow', null, badge, el('div', ships ? 'badgetext ship-line' : 'badgetext', null, el('span', `say${tone}`, d.sentence),
+  top.insertBefore(el('div', ships ? 'progress ship-line' : 'progress', null, el('span', `say${tone}`, d.sentence),
     ships ? (t.ship_counter !== null ? el('span', 'ship-at', ' · ', el('span', 'ship-time', t.ship_counter)) : null)
-      : now ? el('span', `stage${tone}`, now.label) : null)), child(top, 'sub'));
+      : now ? el('span', `stage${tone}`, now.label) : null), child(top, 'sub'));
 }
-// 0302: each in-flight ticket's builder badge, by its id: its canvas, the design's LCD renderer drawing on it
-// (SpeckLCD.badge, from lcd.js) and the pose it shows. A card made again keeps its ticket's badge, so a refresh leaves it
-// running as it was, and a new pose blends in with the badge's own set(pose). Without the renderer (lcd.js didn't load)
-// the badge stays blank, and its name still says what it shows.
-const badges = new Map();
-function badgeFor(id, b) {
-  let kept = badges.get(id);
-  if (!kept) badges.set(id, kept = { canvas: el('canvas'), lcd: null, pose: b.pose });
-  else if (kept.pose !== b.pose) { kept.pose = b.pose; if (kept.lcd) kept.lcd.set(b.pose); }
-  kept.canvas.className = `badge ${b.pose}`;
-  kept.canvas.setAttribute('role', 'img');
-  kept.canvas.setAttribute('aria-label', b.label);
-  return kept.canvas;
-}
-// After the queue is drawn: a ticket out of flight, or whose card has gone, loses its badge, and each new one starts
-// drawing, now that its canvas is on the page and has the look's colours.
-function startBadges(inFlight) {
-  for (const [id, b] of badges) if (!inFlight.has(id) || b.canvas.isConnected === false) badges.delete(id);
-  const still = reducedMotion();
-  if (LCD) for (const b of badges.values()) if (!b.lcd) b.lcd = LCD.badge(b.canvas, b.pose, { still });
-}
-// The design's LCD renderer, for the builder badges and, since 0413, speck's screen at the top of the panel.
+// The design's LCD renderer, for speck's screen at the top of the panel (0413). 0416: the cards have no builder badges.
 const LCD = globalThis.SpeckLCD;
 function reducedMotion() { return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches; }
-// The renderer reads the reduced-motion setting once, as the page loads, so each new badge is given it as it is now,
-// and a change to it holds the badges already drawn still or lets them move again.
+// The renderer reads the reduced-motion setting once, as the page loads, so a change to it holds speck's screen still
+// or lets it move again.
 if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
-  for (const b of badges.values()) if (b.lcd) { b.lcd.cast.still = b.lcd.scr.still = e.matches; b.lcd.scr.dirty = true; }
-  if (screen.lcd) { screen.cast.still = screen.still = e.matches; screen.lcd.dirty = true; } // 0413: speck's screen too (0414: its poses and word)
+  if (screen.lcd) { screen.cast.still = screen.still = e.matches; screen.lcd.dirty = true; } // 0413: speck's screen (0414: its poses and word)
 });
 // A change of the screen's pixels per CSS pixel (a zoom, or another screen) gives each screen its new size, which its
 // renderer doesn't see, as the screen's size on the page stays the same. Its look it follows itself.
 if (typeof matchMedia === 'function') {
   (function zoomed() {
     matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`).addEventListener('change', () => {
-      for (const b of badges.values()) if (b.lcd) b.lcd.scr.size();
-      if (screen.lcd) screen.lcd.size(); // 0413: speck's screen too
+      if (screen.lcd) screen.lcd.size(); // 0413: speck's screen
       zoomed();
     }, { once: true });
   })();
@@ -3684,7 +3638,7 @@ const child = (node, cls) => [...node.children].find(n => n.className === cls); 
 // What a kept queue row shows from the clock or from other tickets, put right on its node: the counter, and for a
 // ready ticket its chain icon and Queued line. Only the parts that change are replaced.
 // A shipping row's time since its ship started (0153), beside its "Shipping" since 0201.
-const shipTime = q => child(child(child(child(child(q, 'top'), 'badgerow'), 'badgetext ship-line'), 'ship-at'), 'ship-time');
+const shipTime = q => child(child(child(child(q, 'top'), 'progress ship-line'), 'ship-at'), 'ship-time');
 function queueUpdate(q, t) {
   const sub = child(child(q, 'top'), 'sub');
   setText(sub, queueCounter(t));
@@ -3905,7 +3859,6 @@ function render() {
     foremanAskOf(t.id)?.question ?? null, askPending.get(String(t.id)) ?? null, askRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.ship_counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
-  startBadges(new Set(m.queue.filter(t => t.inFlight).map(t => String(t.id))));
   startCounters(m.queue.flatMap((t, i) => [...(t.counter !== null && t.held_at === null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : []),
     ...(t.ship_counter !== null ? [[shipTime(rows[i]), t.ship_since, false]] : [])]));
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
