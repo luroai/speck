@@ -162,9 +162,12 @@ test('0058 AC5: the Shipped rows and the median stat keep whole minutes', async 
   const rows = shippedRows(p).map(r => r.textContent);
   assert.ok(rows.some(t => t.includes('10 min')), 'a Shipped row shows whole minutes');
   assert.ok(rows.some(t => t.includes('14 min')));
-  assert.ok(!rows.some(t => /\d\d:\d\d ·|\d+:\d\d min/.test(t)), 'no MM:SS in Shipped');
+  // 0420: a row's details line starts with its ship time, HH:MM, so only its figures are checked for MM:SS
+  const figs = shippedRows(p).flatMap(r => p.all(r).filter(n => n.className === 'figline').map(n => n.textContent));
+  assert.equal(figs.length, 2);
+  assert.ok(!figs.some(t => /\d\d:\d\d|\d+:\d\d min/.test(t)), 'no MM:SS in Shipped');
   const stats = p.byId('shipped-stats').textContent;
-  assert.ok(stats.includes('12median minutes'), `the median is whole minutes: ${stats}`);
+  assert.ok(stats.includes('median 12 min'), `the median is whole minutes: ${stats}`); // one line since 0420
 });
 
 // ---------- in a real browser ----------

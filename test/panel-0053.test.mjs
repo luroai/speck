@@ -38,40 +38,20 @@ test('0053 AC1: a closed queue row shows nothing about the worktree', async () =
   }
 });
 
-test('0053 AC2: opening the ticket shows its worktree path in full, as text, in the details\' monospace style; opening it again closes it', async () => {
+// 0421: the open ticket's card has no worktree line now, so 0053 AC2's path line is gone. Opening and closing work as before.
+test('0053 AC2 (since 0421): opening the ticket shows no worktree path; opening it again closes it', async () => {
   const p = queuePage();
   await p.settle();
   await open(p, '0001');
   const row = rowOf(p, '0001');
   assert.ok(isOpen(row));
-  const line = pathOf(p, row);
-  assert.ok(line, 'a path line');
-  assert.ok(line.textContent.includes(WT), 'the full path, not shortened');
-  assert.ok(!line.textContent.includes('…') && !line.textContent.includes('~'));
-  assert.ok(line._text.includes(WT), 'put in as text, not as elements');
-  assert.match(line.className, /(^| )act( |$)/, 'the same .act monospace style as the lines under the bar');
-  assert.match(page().match(/<style>([\s\S]*?)<\/style>/)[1].match(/\.act\s*\{([^}]*)\}/)[1], /monospace/);
-  // It sits in the open details, after the bar (0069: no status line under it now) and before the log.
-  const kids = row.children, at = kids.indexOf(line);
-  assert.ok(at > kids.findIndex(n => n.className === 'top'), 'after the top row, with the progress in it since 0156');
-  assert.ok(at < kids.findIndex(n => /(^| )log( |$)/.test(n.className)), 'before the log');
+  assert.equal(pathOf(p, row), undefined, 'no path line');
+  assert.ok(!row.textContent.includes(WT), 'no path');
   await open(p, '0003');
-  assert.ok(pathOf(p, rowOf(p, '0003')).textContent.includes('/tmp/wt/0003'), 'a blocked ticket too');
+  assert.ok(!rowOf(p, '0003').textContent.includes('/tmp/wt/0003'), 'a blocked ticket neither');
   await open(p, '0001');
   assert.ok(!isOpen(rowOf(p, '0001')), 'closed again');
-  assert.equal(pathOf(p, rowOf(p, '0001')), undefined, 'and the path with it');
   assert.ok(isOpen(rowOf(p, '0003')), 'the other stays open');
-});
-
-test('0053 AC2: the path is never put in as HTML', async () => {
-  const s = state();
-  s.tickets[0].worktree = '/tmp/<img src=x onerror="alert(1)">';
-  const p = queuePage(s);
-  await p.settle();
-  await open(p, '0001');
-  const row = rowOf(p, '0001');
-  assert.ok(pathOf(p, row).textContent.includes('<img src=x onerror="alert(1)">'));
-  assert.ok(!p.all(row).some(n => n.tagName === 'img'));
 });
 
 test('0053 AC3: a ticket whose worktree is null shows nothing about it, open or closed', async () => {
@@ -103,7 +83,7 @@ test('0053 AC4: everything else in the row stays where it is', async () => {
   const chain = rowOf(p, '0005');
   assert.equal(topOf(chain).children[1].textContent, 'Queued · unlocks 0004 · P2 · S · low');
   assert.ok(p.all(topOf(chain)).some(n => n.className === 'chain'), 'the chain icon in the top row');
-  // Opened, the path goes between the bar and the log, and the rest keeps its place.
+  // Opened, the rest keeps its place (0421: with no path line).
   await open(p, '0001');
-  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'act path', 'full-open', 'log']); // Full ticket: 0063
+  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'full-open', 'log']); // Full ticket: 0063
 });
