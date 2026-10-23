@@ -32,7 +32,7 @@ const MEASURE = `(() => {
         borders: ['Top', 'Right', 'Bottom', 'Left'].map(side => declared(n, side)) };
     });
 })()`;
-// Outside the view, a section keeps its own border, with no outline or shadow.
+// Outside the view, a section keeps its own look, with no outline or shadow: since 0418, no border.
 const OUTSIDE = `(() => { const cs = getComputedStyle(document.getElementById('shaping-section'));
   return { style: cs.borderLeftStyle, width: cs.borderLeftWidth, outline: cs.outlineStyle, shadow: cs.boxShadow }; })()`;
 const whole = x => Math.abs(x - Math.round(x)) < 1e-6;
@@ -63,7 +63,7 @@ test('0281 AC1 AC2: at every width and pixel ratio, the controls sit on whole pi
         }
       }
       // AC3
-      assert.deepEqual(await b.js(OUTSIDE), { style: 'solid', width: '1px', outline: 'none', shadow: 'none' }, `${at}: the Plan section's border`);
+      assert.deepEqual(await b.js(OUTSIDE), { style: 'none', width: '0px', outline: 'none', shadow: 'none' }, `${at}: the Plan section's border`);
     }
   } finally { await b.close(); await stop(panel); }
 });
