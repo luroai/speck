@@ -2857,19 +2857,19 @@ function agentRow(a) {
     a.kind === 'provider' ? keyLine(a) : null);
 }
 // Add an agent: a button, or once it's pressed, each agent speck knows that isn't yours. One that's installed can be
-// added, one that isn't says how to install it, and a provider asks for its key.
-function addRows(others) {
+// added and one that isn't says how to install it. An API provider is added with the form below, so one is offered only
+// when its key was kept after you removed it (0408).
+function addRows(all) {
+  const others = all.filter(a => a.kind !== 'provider' || a.key_set === true);
   const toggle = agentButton(agentsAdding ? 'Done' : 'Add an agent', 'adding', () => { agentsAdding = !agentsAdding; agentsSaid = null; drawAgents(); });
   toggle.setAttribute('aria-expanded', String(agentsAdding));
   const head = el('div', 'arow add', null, el('div', 'row', null, el('span', 'label', null, el('span', 'name', 'Add an agent')), el('div', 'control', null, toggle)));
   if (!agentsAdding) return [head];
   return [head, ...(others.length ? [] : [el('div', 'arow note', null, el('p', null, 'Every agent speck knows is one of yours.'))]), ...others.map(a => {
     const st = agentState(a.id);
-    const add = a.kind === 'provider' ? (a.key_set === true ? agentButton(st.busy === 'add' ? 'Adding…' : 'Add', `add:${a.id}`, () => agentAction(a, 'add')) : null) // its key kept since it was removed
-      : a.installed !== true ? null : agentButton(st.busy === 'add' ? 'Adding…' : 'Add', `add:${a.id}`, () => agentAction(a, 'add'));
+    const add = a.kind !== 'provider' && a.installed !== true ? null : agentButton(st.busy === 'add' ? 'Adding…' : 'Add', `add:${a.id}`, () => agentAction(a, 'add'));
     if (add) add.setAttribute('aria-label', `Add ${a.name}`);
-    const install = a.kind === 'provider' ? (a.key_set === true ? null : `Paste your ${a.name} API key to add it.`)
-      : a.installed !== true ? (typeof a.install === 'string' && a.install ? a.install : `Install ${a.name}, sign in, then add it here.`) : null;
+    const install = a.kind !== 'provider' && a.installed !== true ? (typeof a.install === 'string' && a.install ? a.install : `Install ${a.name}, sign in, then add it here.`) : null;
     return el('div', 'arow agent offer', null,
       el('div', 'row', null, el('span', 'label', null, el('span', 'name', a.name)), el('div', 'control', null, el('span', 'state', agentWords(a)), add)),
       install !== null ? el('p', null, install) : null,

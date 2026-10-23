@@ -108,10 +108,11 @@ test('0399 AC2: Add an agent offers each agent that is not yours: an installed o
   p.press(buttonIn(p, agentsBox(p), 'Add an agent'));
   await p.settle();
   const offered = p.all(agentsBox(p)).filter(n => /\boffer\b/.test(n.className || ''));
-  assert.deepEqual(offered.map(n => p.all(n).find(x => /\bname\b/.test(x.className || '')).textContent), ['Cursor', 'TestCo']);
+  // 0408: TestCo, a provider with no key, isn't offered: it's added with Add an API provider.
+  assert.deepEqual(offered.map(n => p.all(n).find(x => /\bname\b/.test(x.className || '')).textContent), ['Cursor']);
   assert.ok(!buttonIn(p, rowNamed(p, 'Cursor', true), 'Add'), 'not installed: nothing to add');
   assert.match(rowNamed(p, 'Cursor', true).textContent, /Install the Cursor CLI/);
-  assert.ok(keyInputOf(p, 'testco'), 'a provider is offered with its key field');
+  assert.equal(keyInputOf(p, 'testco'), undefined, '0408: a provider with no key is not offered');
 });
 
 test('0399 AC2: adding an installed agent from the page adds it to the list', async () => {
@@ -142,20 +143,23 @@ test('0399 AC3: adding a provider asks for its key in an empty password field, a
   assert.equal(bad.status, 422);
   assert.equal(providerKey(r.dir, 'deepseek'), KEY, 'a refused key changes nothing');
 
-  const p = agentsPage(settingsWithAgents(YOURS_VIEW()), { '/api/keys/testco': { ok: true, provider: 'testco', key_set: true, your_agents: YOURS_VIEW({ testco: true }) } });
+  // 0408: on the page, a provider with no key isn't offered under Add an agent, so its key is pasted in its own row
+  // once it's one of yours.
+  const view = YOURS_VIEW({ testco: true });
+  Object.assign(view.agents.find(a => a.id === 'testco'), { ready: false, key_set: false });
+  const p = agentsPage(settingsWithAgents(view), { '/api/keys/testco': { ok: true, provider: 'testco', key_set: true, your_agents: YOURS_VIEW({ testco: true }) } });
   await openSettings(p);
-  p.press(buttonIn(p, agentsBox(p), 'Add an agent'));
   const input = keyInputOf(p, 'testco');
   assert.equal(input.type, 'password');
   assert.equal(input.value, '');
   typeKey(p, 'testco', KEY);
-  p.press(buttonIn(p, rowNamed(p, 'TestCo', true), 'Save key and add'));
+  p.press(buttonIn(p, rowNamed(p, 'TestCo'), 'Save key'));
   await p.settle();
   const posts = p.posts();
   assert.deepEqual(posts.map(c => c.url), ['/api/keys/testco']);
   assert.equal(JSON.parse(posts[0].body).key, KEY);
   assert.ok(!posts[0].url.includes(KEY));
-  assert.ok(buttonIn(p, rowNamed(p, 'TestCo'), 'Remove'), 'now one of yours');
+  assert.ok(buttonIn(p, rowNamed(p, 'TestCo'), 'Remove'), 'one of yours');
   assert.equal(keyInputOf(p, 'testco').value, '', 'the field is empty again');
   assert.doesNotMatch(agentsBox(p).textContent, new RegExp(KEY));
 });
@@ -241,7 +245,7 @@ test('0399 AC4: at 320 px the group fits the window, with every agent and the ke
       document.getElementById('settings-open').click(); return true; })()`);
     await b.until(`!!document.querySelector('#settings .agents .add button')`, 'Your agents');
     await b.js(`document.querySelector('#settings .agents .add button').click(); true`);
-    await b.until(`document.querySelectorAll('#settings .agents .offer').length === 2`, 'the offers');
+    await b.until(`document.querySelectorAll('#settings .agents .offer').length === 1`, 'the offers');
     await b.js('document.fonts.ready.then(() => true)');
     const out = await b.js(`(() => {
       const pane = document.getElementById('settings'), box = pane.querySelector('.agents'), r = box.getBoundingClientRect();
