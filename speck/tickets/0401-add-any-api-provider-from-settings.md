@@ -46,6 +46,8 @@ Settings lets you add any API provider by name, base URL, API type and key, and 
 - Checked 2026-10-23: `PROVIDERS` in `scripts/providers.mjs` holds only DeepSeek. `addRows` in `templates/panel.html` offers each known provider that isn't yours with a key field (0399). `providerVars` in `scripts/provider-review.mjs` only sets Anthropic variables.
 - Risk is high: it stores API keys, as 0389 did.
 - Failing before this build: none
+- Built the code before its tests this time, so the new tests weren't seen failing first; each was checked against the change instead.
+- Self-check: saving or removing one provider's key now keeps every other key in the file, even one the provider list doesn't know; a base URL must use https unless it's on this machine, so the key is never sent in the clear; a base URL with a user name, password, ? or # is refused, as it goes on a build's command line.
 - Changes `templates/panel.html` and the provider/key scripts (`scripts/providers.mjs`, `scripts/keys.mjs`, `scripts/settings.mjs`, `scripts/your-agents.mjs`, `scripts/provider-review.mjs`). No open ticket changes those.
 
 ## In plain words

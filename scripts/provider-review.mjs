@@ -10,7 +10,8 @@ import { SpeckError } from './core.mjs';
 import { onPath } from './install.mjs';
 import { providerKey } from './keys.mjs';
 import { sharedCacheDir } from './turns.mjs';
-import { PROVIDERS, findProvider } from './providers.mjs';
+import { findProvider } from './providers.mjs';
+import { knownProviders, cantRun } from './custom-providers.mjs';
 
 // The only variables passed on from speck's own environment: what a program needs to run, and a proxy to reach the
 // provider through. Nothing that signs in to Anthropic, a cloud or Claude Code.
@@ -18,14 +19,15 @@ export const KEEP = ['PATH', 'LANG', 'LANGUAGE', 'TERM', 'TZ', 'TMPDIR', 'SHELL'
   'HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy', 'NODE_EXTRA_CA_CERTS', 'SSL_CERT_FILE', 'SSL_CERT_DIR'];
 
 // The provider called `name`, when it is one: matched exactly, as a reviewer name is.
-export function providerNamed(name, providers = PROVIDERS) {
+export function providerNamed(name, providers = knownProviders()) {
   const p = findProvider(name, providers);
   return p && p.name === name ? p : null;
 }
 
 // The key for provider `p`, after checking Claude Code is installed and the key is set: a plain error saying what to
 // do otherwise, before anything runs.
-export function providerReady(repo, p, providers = PROVIDERS) {
+export function providerReady(repo, p, providers = knownProviders(repo)) {
+  if (cantRun(p, 'review')) throw new SpeckError(`${cantRun(p, 'review')} No round was recorded.`); // 0401
   if (!onPath('claude')) throw new SpeckError(`${p.label} reviews need Claude Code installed, as speck runs ${p.label}'s models through it. Install Claude Code so \`claude\` is on your PATH (https://claude.com/claude-code), then run this again. No round was recorded.`);
   const key = providerKey(repo, p.name, { providers });
   if (!key) throw new SpeckError(`This machine has no ${p.label} API key, so the ${p.label} reviewer can't run. Set one with \`speck keys set ${p.name}\`, then run this again. No round was recorded.`);

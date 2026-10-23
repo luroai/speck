@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { findRepoRoot } from './core.mjs';
 import { providerKey } from './keys.mjs';
 import { findProvider } from './providers.mjs';
+import { knownProviders, cantRun } from './custom-providers.mjs';
 import { providerVars, providerDir, KEEP } from './provider-review.mjs';
 import { DEFAULT_BUILD_COMMAND, modelOf } from './build-model.mjs';
 import { splitCommand } from './reviewers.mjs';
@@ -81,9 +82,10 @@ function main(args) {
   const foreman = args[0] === FOREMAN_MODE, [name, address, ...words] = foreman ? args.slice(1) : args;
   const stop = message => { process.stderr.write(`${message}\n`); process.exit(2); };
   if (!name || !/^https?:\/\//.test(address ?? '') || !words.length) stop('speck run starts this with a model provider\'s name, its address and the command that runs Claude Code. Build the ticket with speck run, or resume it with the command speck run gives.');
-  const known = findProvider(name);
+  let repo, key = '', known = null;
+  try { known = findProvider(name, knownProviders()); } catch { /* read below */ }
   const p = { ...known, name, address, label: known?.label ?? name };
-  let repo, key = '';
+  if (cantRun(p, foreman ? 'run the Foreman' : 'build')) stop(cantRun(p, foreman ? 'run the Foreman' : 'build')); // 0401
   try {
     repo = findRepoRoot();
     key = providerKey(repo, name, { providers: [p] });
