@@ -1,7 +1,7 @@
 ---
 id: "0423"
 title: "Open the full ticket over the whole panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: [] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T17:53:56.145Z"
 approved: "2026-10-23T18:12:11.229Z"
+finished: "2026-10-23T18:18:54.972Z"
 
 ---
 # 0423 · Open the full ticket over the whole panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full ticket opens in a 480 px pane at the side of the panel. In a narrow side pane it covers the page anyway, and on a wider window it squeezes a long document into a strip.
