@@ -54,6 +54,7 @@ async function withPhone(fn, { width = 375, theme = 'light' } = {}) {
   const b = await browserPage('about:blank');
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width, height: 800, deviceScaleFactor: 1, mobile: width < 700 });
+    await b.send('Emulation.setTouchEmulationEnabled', width < 700 ? { enabled: true, maxTouchPoints: 1 } : { enabled: false }); // 0417: a phone's touch screen, where controls are finger-sized
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(theme) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
