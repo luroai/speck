@@ -202,16 +202,21 @@ test('0257 AC4-AC5: the panel serves the settings afresh on a GET, and refuses a
   } finally { await stop(p); }
 });
 
-test('0257 self-check: an answer for a view closed and opened again since is dropped, and an odd value still reads plainly', async () => {
+// 0409: the view opens once its answer has come back, so there's no view to close while it's read: a second press
+// waits for the same answer, and the answer is the one drawn, with no loading line before it.
+test('0257 self-check: a press while the view is opening reads the settings once, and an odd value still reads plainly', async () => {
   const slow = deferred();
-  const p = settingsPage([slow, view({ auto_ship: { on: true } })]);
+  const p = settingsPage([slow, view({ max_parallel_builds: 9 })]);
   await p.settle();
   await open(p);
+  assert.equal(pane(p).hidden, true, 'not open until the settings have come back');
   p.key('Escape');
   await p.settle();
   await open(p);
-  slow.resolve(view({ max_parallel_builds: 9 }));
+  slow.resolve(view({ auto_ship: { on: true } }));
   await p.settle();
-  assert.doesNotMatch(pane(p).textContent, /max_parallel_builds9/, 'the stale answer is dropped');
+  assert.equal(pane(p).hidden, false);
+  assert.doesNotMatch(pane(p).textContent, /Loading the settings|max_parallel_builds9/, 'one read, drawn as it came');
   assert.match(pane(p).textContent, /auto_ship\{"on":true\}/);
+  assert.equal(p.settingsCalls.filter(c => c.url.startsWith('/api/settings')).length, 1);
 });

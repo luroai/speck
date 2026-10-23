@@ -1973,7 +1973,8 @@ $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render
 // 0258: the ones the server marks editable can be changed in place. 0274: the view's one Save sends every change at
 // once, and the server saves them all or none.
 let settingAgentModels = new Map(); // 0369: each agent chosen since the view opened: { reading } | { models } | { why }
-let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'loading' | 'error' | 'ok', … }
+let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'error' | 'ok', … }
+let settingsOpening = false; // 0409: whether a press on Settings is waiting for the config, to open it
 let settingTyped = new Map(), settingRefused = new Map(); // key → what was typed, and why the server refused it, until the view closes
 let settingClear = new Set(); // 0261: keys whose machine value is cleared on Save
 // 0399: "Your agents", after Auto-build, drawn in place in a box kept while the view is open, so a change to it moves
@@ -2026,11 +2027,11 @@ document.addEventListener('pointerdown', e => {
 });
 renderSettings(); // closed
 renderLeaving(); // not asking
+// 0409: it opens once the config has come back, onto its groups and their values, with no loading line in their place.
 function openSettings() {
-  settingsView = { state: 'loading' };
-  renderSettings();
-  const pane = $('settings');
-  if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
+  if (settingsView !== null || settingsOpening) return;
+  settingsOpening = true;
+  $('settings-open').setAttribute('aria-busy', 'true');
   loadSettings();
 }
 // 0407: the settings from the config first, at once, then the agents' lists, filled in where they show.
@@ -2039,14 +2040,17 @@ async function loadSettings() {
   settingAgentModels = new Map();
   // The lists read last time, shown while they're read again after a Save.
   const had = settingsView !== null && settingsView.state === 'ok' && settingsView.catalogues === undefined ? settingsView : null;
-  const next = await readSettings('/api/settings?quick=1');
-  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  const opening = settingsOpening, next = await readSettings('/api/settings?quick=1');
+  if (opening) { settingsOpening = false; $('settings-open').setAttribute('aria-busy', 'false'); }
+  if (mine !== settingsSeq || (settingsView === null && !opening)) return; // closed, or opened again, since
   const quick = next.state === 'ok' && next.loading === true;
   if (quick && had !== null) for (const f of CATALOGUES) next[f] = had[f];
   if (quick && had !== null) keepChoices(next, had);
   if (quick && had === null) Object.assign(next, { catalogues: 'loading', agent_models: [] }); // a list for each role, saying it's loading
   settingsView = next;
   renderSettings();
+  const pane = $('settings');
+  if (opening && pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
   if (!quick) return;
   const asked = settingsView.your_agents, full = await readSettings('/api/settings');
   if (mine !== settingsSeq || settingsView === null) return;
@@ -2184,8 +2188,7 @@ function renderSettings() {
   close.addEventListener('click', leaveSettings);
   const kids = [el('div', 'top', null, el('h3', null, 'Settings'), close)];
   let foremanRows = []; // 0286: the server's Foreman settings, shown in the Foreman group
-  if (settingsView.state === 'loading') kids.push(el('p', null, 'Loading the settings…'));
-  else if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
+  if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
   else {
     for (const g of settingsView.groups) {
       const rows = [];
