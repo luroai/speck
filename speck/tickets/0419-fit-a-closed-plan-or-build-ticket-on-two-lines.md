@@ -1,7 +1,7 @@
 ---
 id: "0419"
 title: "Fit a closed Plan or Build ticket on two lines"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0418"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T16:20:29.027Z"
-blocked_at: "2026-10-23T16:55:19.542Z"
+blocked_at: ""
+waited_seconds: 2046
 
 ---
 # 0419 · Fit a closed Plan or Build ticket on two lines
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 A closed ticket in Plan or Build takes three or four rows: its title, a row of boxed tags, then its criteria and lint result, then what it waits on. In a narrow side pane that's 110–175 px per ticket, so only a few fit on screen.
@@ -47,6 +48,7 @@ A closed Plan or Build ticket is a title line and one line of details.
 - Self-check: a ticket missing its priority, size or risk, or its timer, leaves them out of its line with no empty part (new test); a wrapped line ends with its dot rather than starting with one, and breaks only between parts, a list of linked ids wrapping between its ids; removed two rules for the old tag row.
 - Built: the bug, fix and document tags and the chain icon stay. The tags follow the risk in the details line, as words; the icon follows the id. Tags in the line are inline text with a mouse, and keep their 44 px boxes on a touch screen (0417).
 - Known limit: at 420 px a details line longer than about 50 characters of 12 px text, such as a reviewing ticket's "Codex is reviewing · round 2 · Review 2 · 01:07 · P2 · S · low", wraps onto a second line, as AC1 and AC2 allow. The card's padding and line heights leave room for that within 64 px. A details line on three lines, such as a long list of linked ids, makes the card taller.
+- Went with the recommendation: A, the 64 px limit covers details on up to two lines (chosen by the user in the panel, 2026-10-23 17:29 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
