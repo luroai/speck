@@ -87,7 +87,7 @@
   .bezel :focus-visible { outline-color: var(--bezel-ink); }
   .bezel .glass { position: relative; display: block; width: 100%; padding: 0; color: var(--lcd-ink); background: var(--lcd-bg); border: .5px solid var(--bezel-muted); cursor: pointer; }
   .bezel .glass::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 8px rgba(0, 0, 0, .3); pointer-events: none; }
-  .bezel .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 64; image-rendering: pixelated; }
+  .bezel .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 72; image-rendering: pixelated; }
 
   /* 0410: the page is the height of the screen and never scrolls. Under the header, Plan, Build and Shipped are tabs,
      one lane open at a time, and only the open lane's list scrolls. */
@@ -3384,7 +3384,7 @@ function reducedMotion() { return typeof matchMedia === 'function' && matchMedia
 // and a change to it holds the badges already drawn still or lets them move again.
 if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
   for (const b of badges.values()) if (b.lcd) { b.lcd.cast.still = b.lcd.scr.still = e.matches; b.lcd.scr.dirty = true; }
-  if (screen.lcd) { screen.cast.still = screen.lcd.still = e.matches; screen.lcd.dirty = true; } // 0413: speck's screen too
+  if (screen.lcd) { screen.cast.still = screen.still = e.matches; screen.lcd.dirty = true; } // 0413: speck's screen too (0414: its poses and word)
 });
 // A change of the screen's pixels per CSS pixel (a zoom, or another screen) gives each screen its new size, which its
 // renderer doesn't see, as the screen's size on the page stays the same. Its look it follows itself.
@@ -3962,6 +3962,7 @@ function render() {
   // is "Needs you <n>". The button stays put and only what the screen shows changes, so it keeps the focus.
   const f = foremanOf(state), stale = pageStale(state);
   const run = $('run'), word = stale ? 'Reload page' : f.word, fixing = !stale && f.fixing === 'fix'; // 0317
+  noteBoard(state, f, word); // 0414
   drawScreen(word, fixing);
   $('bezel').className = NEEDS_YOU.test(word) ? 'bezel needs' : 'bezel';
   run.setAttribute('aria-label', `The Foreman: ${word}${fixing ? ', fixing on' : ''}`);
@@ -4003,44 +4004,139 @@ function foremanOf(st) {
     fixing: f && typeof f.fixing === 'string' ? f.fixing : null, fixing_says: f && typeof f.fixing_says === 'string' ? f.fixing_says : '', took: list(f && f.took) }; // 0317
 }
 // 0413: speck's screen, the top of the panel, drawn by the design's LCD renderer (SpeckLCD.Screen and render, from
-// lcd.js) on 160 × 64 dots. Its top row is the Foreman's word in the 5 × 7 font, in capitals, with "FIXING ON" at its
+// lcd.js) on 160 × 72 dots. Its top row is the Foreman's word in the 5 × 7 font, in capitals, with "FIXING ON" at its
 // right while foreman_fixing is fix (0317). A word too wide for the row scrolls from right to left, 16 dots a second
-// after a pause, and loops round, or with reduced motion stays still, cut short. Under a dotted line speck stays in its
-// idle animation. The screen is made once, when the renderer and a canvas are there, and kept between redraws.
-const SCREEN = { cols: 160, rows: 64, top: 11, speed: 16, pause: 1800 };
+// after a pause, and loops round, or with reduced motion stays still, cut short. The screen is made once, when the
+// renderer and a canvas are there, and kept between redraws. 0414: under a dotted line speck shows the pipeline
+// (speckNow), with a caption, centred, under a second dotted line. The Screen draws every frame, even with reduced
+// motion, so speck changes as soon as the pipeline does; reduced motion holds the poses and the word still.
+const SCREEN = { cols: 160, rows: 72, top: 11, floor: 61, line: 63, cap: 65, speed: 16, pause: 1800 };
 const NEEDS_YOU = /^Needs you \d+$/;
-let screen = { word: '', fixing: false, since: null, lcd: null, cast: null };
+let screen = { word: '', fixing: false, since: null, lcd: null, cast: null, still: false, shown: null };
 function drawScreen(word, fixing) {
   const up = String(word).toUpperCase();
   if (up !== screen.word) screen.since = null; // a new word starts again from the left
   Object.assign(screen, { word: up, fixing });
   const canvas = $('screen');
   if (!screen.lcd && LCD && typeof LCD.Screen === 'function' && typeof canvas.getContext === 'function') {
-    const still = reducedMotion();
-    screen.cast = new LCD.Cast(LCD.STATES, 'idle', { still, at: LCD.STATE_AT });
-    screen.lcd = new LCD.Screen(canvas, { cols: SCREEN.cols, rows: SCREEN.rows, still, draw: screenFrame });
+    screen.still = reducedMotion();
+    screen.cast = new LCD.Cast(speckPoses(), 'idle', { still: screen.still, at: { ...LCD.STATE_AT, watch: 1000, ask: 1000, flag: 1000, ship: 1100 } });
+    screen.lcd = new LCD.Screen(canvas, { cols: SCREEN.cols, rows: SCREEN.rows, still: false, crisp: [SCREEN.line + 1], draw: screenFrame });
   }
   if (screen.lcd) screen.lcd.dirty = true;
 }
 // One frame of the screen at time `t`, onto the screen `s` (its pen() draws on its dots).
 function screenFrame(s, t) {
-  const p = s.pen(), { F5, INK, FAINT } = LCD, cols = SCREEN.cols;
+  const p = s.pen(), { F5, INK, FAINT } = LCD, cols = SCREEN.cols, still = s.still || screen.still;
   let right = cols - 4;
   if (screen.fixing) { const b = p.textBox('FIXING ON', cols - 4, 2, { font: F5, align: 'right', valign: 'top' }); p.textAt('FIXING ON', b, FAINT); right = b.left - 6; }
   const W = screen.word.length * 6 - 1, room = right - 4;
   let x = 4;
-  if (W > room && !s.still) {
+  if (W > room && !still) {
     if (screen.since === null) screen.since = t;
     const C = W + room + 8, u = Math.floor(Math.max(0, t - screen.since - SCREEN.pause) * SCREEN.speed / 1000) % C;
     x = 4 - u;
     if (x < 4 - W) x += C;
   }
   p.clip = [0, 0, right + 1, SCREEN.top]; p.text(screen.word, x, 2, { font: F5, align: 'left', valign: 'top' }); p.clip = null;
-  for (let i = 1; i < cols; i += 2) p.put(i, SCREEN.top, FAINT);
-  for (let i = 22; i < cols - 21; i += 3) p.put(i, SCREEN.rows - 3, FAINT); // the floor speck stands on
-  const sp = s.pen(.75, cols / 2, SCREEN.rows - 4);
-  sp.clip = [0, SCREEN.top + 1, cols, SCREEN.rows];
+  for (let i = 1; i < cols; i += 2) { p.put(i, SCREEN.top, FAINT); p.put(i, SCREEN.line, FAINT); }
+  for (let i = 22; i < cols - 21; i += 3) p.put(i, SCREEN.floor, FAINT); // the floor speck stands on
+  // 0414: what speck does now. A new event starts its pose from the start, even when it's the pose already showing.
+  const now = speckNow(Date.now()), key = now.key || `${now.pose} ${now.cap}`;
+  if (screen.cast && key !== screen.shown) {
+    screen.shown = key;
+    if (!screen.cast.set(now.pose, t) && now.key) screen.cast.cs = t;
+  }
+  const sp = s.pen(.75, cols / 2, SCREEN.floor - 1);
+  sp.clip = [0, SCREEN.top + 1, cols, SCREEN.floor + 1];
   LCD.render(sp, screen.cast ? screen.cast.frame(t) : { B: { t }, props: [] });
+  const CW = now.cap.length * 6 - 1;
+  p.clip = [4, SCREEN.line + 1, cols - 4, SCREEN.rows];
+  p.text(now.cap, Math.max(4, Math.round(cols / 2 - CW / 2)), SCREEN.cap, { font: F5, align: 'left', valign: 'top' });
+  p.clip = null;
+}
+// 0414: speck's poses: the landing page's states (its `building` is the laptop), three of the panel's, and the
+// console mock's clipboard, `watch`.
+const rim = a => ({ x: 20 * Math.cos(a), y: -24 + 20 * Math.sin(a) });
+const ease = k => -(Math.cos(Math.PI * Math.max(0, Math.min(1, k))) - 1) / 2;
+// Watching the floor: a clipboard in one hand, glancing about, now and then reading it and ticking a line off.
+function watchPose(t) {
+  const { INK, FAINT, OFF } = LCD;
+  const p = (t % 7200) / 7200, reading = p > .58 && p < .86;
+  const G = [-.6, 0, .55, 0], gi = Math.floor(t / 1500), gk = ease(((t % 1500) / 1500) / .25);
+  let lookX = G[(gi + 3) % 4] + (G[gi % 4] - G[(gi + 3) % 4]) * gk, lookY = .05;
+  if (reading) { const k = ease(Math.min((p - .58) / .05, (.86 - p) / .05)); lookX = lookX + (.85 - lookX) * k; lookY = .05 + .45 * k; }
+  const ticks = Math.floor(t / 7200) % 4 + (p > .74 ? 1 : 0);
+  return { B: { t, x: -7, lookX, lookY, sy: 1 + .015 * Math.sin(t / 640), arms: [{ s: rim(.4), h: { x: 25, y: -19 } }] }, props: [{ key: 'clip', draw(pen) {
+    const x = 17, y = -36, w = 15, h = 22, q = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+    pen.lw = 1.4; pen.fillPoly(q, OFF); pen.poly(q, INK);
+    pen.fillPoly([[x + 4.5, y - 3], [x + w - 4.5, y - 3], [x + w - 4.5, y + 2], [x + 4.5, y + 2]], INK);
+    for (let i = 0; i < 4; i++) {
+      const ly = y + 6 + i * 4.2;
+      pen.line(x + 6, ly, x + w - 3, ly, i < ticks ? INK : FAINT);
+      if (i < ticks) pen.dotAt(x + 3.2, ly, INK);
+    }
+  } }] };
+}
+const speckPoses = () => ({ ...LCD.STATES, watch: watchPose, ask: LCD.PANEL.bad, flag: LCD.PANEL.wait, ship: LCD.PANEL.ship });
+// 0414: what speck does, from what the page has seen of the pipeline. Each board is compared with the one before it
+// (noteBoard): what changed queues an event, played one after another, or starts the laptop while drafts are written.
+// Between them speck follows the Foreman's word (speckRests). Nothing is timed but the events, the writing, and the nap.
+const SPECK = { push: 3200, event: 6000, writing: 30000, nap: 15 * 60000 };
+const IDLE_MOODS = [['eating', 'TEA, WHILE IT IS QUIET'], ['playing', 'NOTHING READY. CHESS?'], ['messy', 'CRUMBS IN THE WORKTREE'], ['cleaning', 'SWEEPING OLD BRANCHES']];
+const speckDo = { seen: null, queue: [], playing: null, writing: null, word: null, idle: null, woke: false, n: 0 };
+const byId = (a, b) => a.localeCompare(b, 'en', { numeric: true });
+// A draft's text, to tell when it changes.
+const draftText = t => JSON.stringify([t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes, t.priority, t.size, t.risk, t.task, t.type, t.after]);
+function noteBoard(st, f, word) {
+  const d = speckDo, now = Date.now();
+  if (word !== d.word) { d.word = word; d.woke = false; d.idle = word === 'Idle' ? { mood: IDLE_MOODS[Math.min(IDLE_MOODS.length - 1, Math.floor(Math.random() * IDLE_MOODS.length))], since: now } : null; }
+  if (!st || !Array.isArray(st.tickets)) return;
+  const tickets = new Map(st.tickets.filter(t => t && typeof t === 'object' && t.id != null).map(t => [String(t.id), t]));
+  const ids = [...tickets.keys()].sort(byId), ag = f.agent && typeof f.agent === 'object' ? f.agent : {};
+  const asks = (Array.isArray(ag.asks) ? ag.asks : []).filter(a => a && a.id != null).map(a => ({ id: String(a.id), key: `${a.id} ${a.at}` }));
+  const shipping = new Set(ids.filter(id => tickets.get(id).ship && tickets.get(id).ship.running === true));
+  if (f.ship && typeof f.ship.running === 'string') shipping.add(f.ship.running);
+  const seen = { tickets: new Map(ids.map(id => [id, { status: tickets.get(id).status, text: draftText(tickets.get(id)) }])), asks: new Set(asks.map(a => a.key)),
+    running: ag.running && ag.running.id != null ? String(ag.running.id) : null, shipping };
+  const was = d.seen;
+  d.seen = seen;
+  if (!was) return; // what happened before the page loaded doesn't play
+  const play = (pose, cap, ms) => { d.queue.push({ pose, cap, ms, key: `e${++d.n}` }); };
+  const became = (id, status) => was.tickets.has(id) && was.tickets.get(id).status !== status && tickets.get(id).status === status;
+  const runOn = !!(st.run && st.run.on);
+  for (const id of ids) if (became(id, 'done')) play('celebrating', `${id} SHIPPED`, SPECK.event);
+  for (const id of [...shipping].sort(byId)) if (!was.shipping.has(id)) play('ship', `SHIPPING ${id}`, SPECK.push);
+  for (const id of ids) if (became(id, 'blocked')) play('ask', `${id} HAS A QUESTION`, SPECK.event);
+  for (const a of asks) if (!was.asks.has(a.key)) play('ask', `${a.id} HAS A QUESTION`, SPECK.event);
+  for (const id of ids) if (became(id, 'approved') && !(tickets.get(id).auto_ship === true && runOn)) play('flag', `${id} IS READY TO SHIP`, SPECK.event);
+  if (seen.running && seen.running !== was.running) play('confused', `LOOKING INTO ${seen.running}`, SPECK.event);
+  const drafts = ids.filter(id => tickets.get(id).status === 'draft' && (!was.tickets.has(id) || (was.tickets.get(id).status === 'draft' && was.tickets.get(id).text !== seen.tickets.get(id).text)));
+  if (drafts.length) d.writing = { id: drafts[drafts.length - 1], until: now + SPECK.writing };
+}
+// What speck does at `now`: { pose, cap }, with a `key` of its own for each event.
+function speckNow(now) {
+  const d = speckDo;
+  if (d.playing && now >= d.playing.until) d.playing = null;
+  if (!d.playing && d.queue.length) { const e = d.queue.shift(); d.playing = { ...e, until: now + e.ms }; }
+  if (d.playing) { d.woke = true; return d.playing; }
+  if (d.writing && now < d.writing.until) { d.woke = true; return { pose: 'building', cap: `WRITING ${d.writing.id}` }; }
+  return speckRests(now);
+}
+// What speck does between events, by the Foreman's word. An event or writing wakes it from a nap, for another 15 minutes.
+function speckRests(now) {
+  const d = speckDo, w = d.word || '';
+  let m;
+  if (w === 'Off') return { pose: 'sleeping', cap: 'SPECK RUN IS OFF' };
+  if ((m = /^Building (\d+)$/.exec(w))) return { pose: 'watch', cap: m[1] === '1' ? 'WATCHING 1 BUILD' : `WATCHING ${m[1]} BUILDS` };
+  if (/^Shipping\b/.test(w)) return { pose: 'watch', cap: 'WATCHING THE SHIP' };
+  if ((m = /^Needs you (\d+)$/.exec(w))) return { pose: 'ask', cap: `${m[1]} NEEDS YOU` };
+  if (/^Waiting\b/.test(w)) return { pose: 'grumpy', cap: 'WAITING' };
+  if (d.idle) {
+    if (d.woke) { d.woke = false; if (now - d.idle.since >= SPECK.nap) d.idle.since = now; }
+    return now - d.idle.since >= SPECK.nap ? { pose: 'sleeping', cap: 'NAPPING' } : { pose: d.idle.mood[0], cap: d.idle.mood[1] };
+  }
+  return { pose: 'idle', cap: w === 'Reload page' ? 'RELOAD THE PAGE' : '' };
 }
 // 0285: true when the server's code is newer than the code this page was sent with.
 const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.page !== PAGE);
