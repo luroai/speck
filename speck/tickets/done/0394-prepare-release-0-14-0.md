@@ -1,7 +1,7 @@
 ---
 id: "0394"
 title: "Prepare release 0.14.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0389","0390","0391","0392","0393"]                # ticket ids that mus
 created: 2026-10-23
 started: "2026-10-23T08:36:02.999Z"
 approved: "2026-10-23T08:39:30.937Z"
+finished: "2026-10-23T08:42:27.247Z"
 
 ---
 # 0394 · Prepare release 0.14.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 0389 to 0393 let you build, review and run the Foreman with DeepSeek's models through your own API key, kept safely for your machine and set in Settings. Anyone following the setup prompt, or updating speck on another machine, gets 0.13.1 without them.
