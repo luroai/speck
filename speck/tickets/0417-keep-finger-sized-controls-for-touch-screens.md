@@ -1,7 +1,7 @@
 ---
 id: "0417"
 title: "Keep finger-sized controls for touch screens"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0416"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T15:53:47.802Z"
+approved: "2026-10-23T16:00:04.696Z"
 
 ---
 # 0417 · Keep finger-sized controls for touch screens
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Below 700 px wide, every tag, toggle and button on the panel is at least 44 × 44 px (0140), a size meant for fingers. The panel is used mostly in a narrow side pane with a mouse, where those sizes make every card much taller than it needs to be.
@@ -52,9 +53,14 @@ To see it, make the panel's window narrower than 700 px with a mouse: the tabs, 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 107,610
+- Elapsed since build started: 6 min
+- Changed lines: 71 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. Known limit: headless Chromium can't emulate a fine pointer, so the browser test for a mouse runs with no pointer at all, and the stylesheet test covers the fine-pointer case.
 
