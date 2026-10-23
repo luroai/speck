@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, click, items, top, findChrome, browserPage, charAt } from './support/panel.mjs';
+import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, click, items, top, findChrome, browserPage, charAt, QUICK_PINGS } from './support/panel.mjs';
 
 // ---------- 0060: the full ticket pane holds the page still, and a click outside it closes it ----------
 // 0423: the pane is over the whole window, so in a real browser there's no outside left to click.
@@ -62,7 +62,7 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     `## Problem\nA long ticket to scroll through.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n${criteria}\n## Out of scope\n- PDF export\n`);
   long('draft');
   for (let i = 3; i <= 40; i++) { const id = String(i).padStart(4, '0'); r.write(`${id}-d.md`, fm({ id: `"${id}"`, title: `Draft ${id}`, status: 'draft' })); }
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())], undefined, QUICK_PINGS); // 0429: a refresh every half a second
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const wait = ms => new Promise(res => setTimeout(res, ms));
@@ -80,7 +80,7 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
   const wheel = (x, y, deltaY) => b.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x, y, deltaX: 0, deltaY });
   const key = (k, code, vk, text) => b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, ...(text ? { text } : {}) })
     .then(() => b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk }));
-  const swipe = (x, y, yDistance) => b.send('Input.synthesizeScrollGesture', { x, y, yDistance, gestureSourceType: 'touch', speed: 2000 });
+  const swipe = (x, y, yDistance) => b.send('Input.synthesizeScrollGesture', { x, y, yDistance, gestureSourceType: 'touch', speed: 8000 }); // 0429: a quick flick (2000 px a second until then)
   const press = async ([x, y]) => {
     await b.move([x, y]);
     await b.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 });
