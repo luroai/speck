@@ -40,6 +40,7 @@ Settings has a "Your agents" group where you see, add and remove your agents.
 ## Notes
 - Builds on 0398's list and commands, 0389's keys and 0393's key field.
 - Waits for 0397, which changes Settings in `templates/panel.html`, and for 0398.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
