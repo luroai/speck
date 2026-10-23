@@ -1,7 +1,7 @@
 ---
 id: "0422"
 title: "Show a build log like a log"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T17:53:56.021Z"
 ---
 # 0422 · Show a build log like a log
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The build log is how you see that a build is really moving, like watching the model work. But it's one block of plain monospace text: times, tool calls, the agent's messages and failures all look the same, and a long line that wraps starts again at the left edge, so it reads as a new entry.
@@ -55,3 +55,76 @@ The build log reads like a log: times in a column of their own, each kind of ent
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "21cb4f1e7675d84c3b3bba5de16c8eb33519a69b",
+    "session": "fresh",
+    "thread_id": "01a169ec-49ce-7253-86cc-e73cd9f99cb0",
+    "builder_response": "- Tests run: test/panel-0422.test.mjs test/panel-0052.test.mjs test/panel-0361.test.mjs\n- The log box now holds one block row per line (`logRow`), its time in a `.at` span and its text in a text node, with each row but the last ending in its newline, so the box's text is the log's plain text as before. `setLogText` works by lines: it adds new rows at the bottom, takes the fewest rows out at the top when the tail moves on, and makes only the last row again when that line grew, so a selection in other rows stays.\n- Two existing tests changed only to find the text they select or count, now that the text isn't one text node: test/panel-0052.test.mjs (two real-browser selections) and test/panel-0361.test.mjs (counting the node that holds the log's text). What they check is unchanged.\n- `.q .log` has `overflow-anchor: none`, so taking rows out at the top keeps the box's scroll place as it did with one text node (0052's real-browser test checks it).\n- Pictures of the open log in the light and dark looks are in the review pack.\n",
+    "seconds": 49,
+    "usage": {
+      "input_tokens": 140272,
+      "cached_input_tokens": 100352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1185,
+      "reasoning_output_tokens": 200
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T18:01:43.608Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html logRow and .at styles separate and mute timestamps. Passing 0422 browser test checks their position."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "logRow assigns distinct tool, msg, fail and note classes. Passing 0422 tests check classification and at least 4.5:1 contrast in both themes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0422 browser test measures wrapped text, message continuation alignment and a single blank-line gap."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Copying and scroll preservation are tested, but setLogText replaces the final row when its text grows, destroying a selection in that row. The browser test selects an earlier, unchanged row."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "setLogText removes and replaces the final row whenever that line grows. Selecting text in the latest line therefore loses the selection on refresh, even when the selected characters remain unchanged. Previously, appendData preserved that text node and selection. A read-only reproduction confirmed that updating '12:00:01 working' to '12:00:01 working more' removes the original row and text node.",
+        "suggested_fix": "Update the existing final row's text node in place when its text grows. Add a browser regression test that selects existing characters in the final line, extends that line, and verifies the selection remains.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The timestamps, colours and wrapping meet the requirements, and the reported tests pass. One refresh regression needs fixing: selected text in the latest line loses its selection when that line grows, which can interrupt copying."
+  }
+}
+```
+
+</details>
