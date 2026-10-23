@@ -195,3 +195,17 @@ test('0413 AC2: with foreman_fixing fix, "FIXING ON" sits at the right of the to
   await q.settle();
   assert.deepEqual(wordDots(q.draw()), expected('IDLE', 4, 2), 'only the word without it');
 });
+
+test('0413 AC1: a change of the screen\'s pixels per CSS pixel gives speck\'s screen its new size, as it does the badges', async () => {
+  const changes = [];
+  const matchMedia = q => ({ matches: false, addEventListener(type, fn) { if (/resolution/.test(q)) changes.push(fn); } });
+  const p = screenPage([state(foreman())], { matchMedia, devicePixelRatio: 1 });
+  await p.settle();
+  let sized = 0;
+  const before = changes.length;
+  assert.ok(before > 0, 'it listens for a change of resolution');
+  // The Screen the page made counts its resizes.
+  p.lcd().size = () => { sized++; };
+  changes[before - 1]();
+  assert.equal(sized, 1);
+});
