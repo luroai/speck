@@ -49,7 +49,7 @@ test('0038 AC2: Inbox lists every inbox idea in JSON order, with title, path and
   click(toggles(p)[2]);
   const list = items(p);
   assert.deepEqual(list.map(titleOf).map(t => t.replace(/^inbox/, '')), ['Follow B', 'Follow A', 'Follow C'], 'JSON order');
-  assert.ok(list[0].textContent.includes('speck/ideas/Follow B.md'), 'the path');
+  assert.ok(!list[0].textContent.includes('speck/ideas/Follow B.md'), 'no path while it\'s closed (0435)');
   assert.ok(list[0].textContent.includes('0031'), 'the From ticket id');
   assert.ok(list[2].textContent.includes('0036'));
   assert.ok(!/from/i.test(top(list[1]).textContent), 'no From ticket line: left out');

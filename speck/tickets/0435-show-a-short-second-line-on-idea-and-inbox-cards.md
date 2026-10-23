@@ -43,6 +43,9 @@ A collapsed idea or inbox card is its title and one short line saying when it wa
 - Today: `ideaItem` and `inboxItem` in `templates/panel.html`. A note's first lines read `Captured: <YYYY-MM-DD> · Status: <status>`, and an inbox note has a `From ticket:` line (`fromTicket`).
 - Waits for 0434: both change Plan's cards in `templates/panel.html`. 0430 waits for it too, as 0430 moves every style.
 - Failing before this build: none
+- Built: a note whose `Captured:` line is missing or unreadable shows `No capture date` in place of the whole `Captured <date>` (or `captured <date>`) part, as in `No capture date · parked` and `From 0140 · No capture date`. An idea with no status shows only its date, as the status line shows a status only when it isn't `idea`.
+- Built: the open card's path is 12 px, the panel's smallest type, as 0161 allows nothing smaller.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
