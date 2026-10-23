@@ -1,7 +1,7 @@
 ---
 id: "0406"
 title: Put the building Settings groups in one box                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-fold-parallel-and-limits-into-building-and-
 after: ["0405"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T12:20:10.230Z"
+approved: "2026-10-23T12:22:38.951Z"
 
 ---
 # 0406 · Put the building Settings groups in one box
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings splits building into three boxes: "Building and reviewing", "How much runs at once" and "Ticket size limits". Those belong together, so the view is longer than it needs to be.
@@ -49,9 +50,14 @@ Settings is shorter: how many builds and test runs go at once, and the ticket si
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 86,523
+- Elapsed since build started: 2 min
+- Changed lines: 5 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
