@@ -50,7 +50,7 @@ test('0145 AC2: a paused build still says "Paused", with the command that carrie
   const p = page(s);
   await p.settle();
   const paused = rowOf(p, '0002');
-  assert.match(topOf(paused).children.find(n => n.className === 'sub').textContent, /^Paused · 01:0\d$/);
+  assert.match(p.all(topOf(paused)).find(n => n.className === 'sub').textContent, /^Paused · 01:0\d$/);
   assert.ok(p.all(paused).some(n => n._text && n._text.includes('speck play 0002')), 'it shows speck play 0002');
   const running = rowOf(p, '0001');
   assert.ok(!p.all(running).some(n => n._text && /speck play|Paused/.test(n._text)), 'a running build shows neither');

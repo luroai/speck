@@ -35,9 +35,9 @@ test('0071 AC4: a paused build says it\'s paused (its dot stood still until 0168
   const paused = rowOf(p, '0002'), running = rowOf(p, '0001');
   assert.equal(sayOf(paused).textContent, 'Paused');
   assert.equal(sayOf(running).textContent, 'Writing tests and code', 'running: the builder is at work');
-  const sub = topOf(paused).children.find(n => n.className === 'sub');
+  const sub = p.all(topOf(paused)).find(n => n.className === 'sub');
   assert.match(sub.textContent, /^Paused · 01:0\d$/);
-  assert.match(topOf(running).children.find(n => n.className === 'sub').textContent, /^01:0\d$/);
+  assert.match(p.all(topOf(running)).find(n => n.className === 'sub').textContent, /^01:0\d$/);
   // The counter's own timer keeps "Paused" in place.
   for (const { fn } of p.intervals.values()) fn();
   assert.match(sub.textContent, /^Paused · 01:0\d$/);
@@ -52,7 +52,7 @@ test('0071 AC4: played again, it says what it\'s doing (its dot moved until 0168
   await p.settle();
   const row = rowOf(p, '0002');
   assert.match(sayOf(row).textContent, /is (reviewing|fixing)/, 'at work with the reviewer');
-  assert.match(topOf(row).children.find(n => n.className === 'sub').textContent, /^01:0\d$/);
+  assert.match(p.all(topOf(row)).find(n => n.className === 'sub').textContent, /^01:0\d$/);
 });
 
 // ---------- the server ----------

@@ -112,7 +112,8 @@ const BOXES = sel => `${laneFor(sel)} [...document.querySelectorAll(${JSON.strin
 })`;
 
 for (const width of [375, 1280]) {
-  test(`0165 AC1: at ${width} px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps${width < 700 ? ', with a 44 by 44 px tap area each' : ''}`, skip, async () => {
+  // 0419: a Plan or Build card's tags are words in its details line, so they match each other, and the pane's match each other.
+  test(`0165 AC1: at ${width} px, every tag in Plan and the Build queue, and every tag in the full ticket pane, has the same visible size and even gaps${width < 700 ? ', with a 44 by 44 px tap area each' : ''}`, skip, async () => {
     await withPanel(async b => {
       const all = [];
       for (const where of ['plan', 'queue']) all.push(...(await b.js(BOXES(WHERE[where]))).map(t => ({ ...t, where })));
@@ -121,9 +122,10 @@ for (const width of [375, 1280]) {
       assert.deepEqual(all.map(t => `${t.where} ${t.text}`), ['plan P1', 'plan M', 'plan high', 'plan bug', 'plan P3', 'plan S', 'plan low', 'plan fix',
         'queue P0', 'queue M', 'queue low', 'queue bug', 'pane bug', 'pane P0', 'pane M', 'pane low']);
       for (const t of all) {
-        assert.ok(Math.abs(t.height - all[0].height) < 0.5, `${t.where} ${t.text} is ${t.height} px high, not ${all[0].height}`);
-        assert.equal(t.font, all[0].font, `${t.where} ${t.text}: text size`);
-        assert.equal(t.padding, all[0].padding, `${t.where} ${t.text}: padding`);
+        const first = all.find(x => (x.where === 'pane') === (t.where === 'pane'));
+        assert.ok(Math.abs(t.height - first.height) < 0.5, `${t.where} ${t.text} is ${t.height} px high, not ${first.height}`);
+        assert.equal(t.font, first.font, `${t.where} ${t.text}: text size`);
+        assert.equal(t.padding, first.padding, `${t.where} ${t.text}: padding`);
         if (width < 700) assert.deepEqual(t.misses, [], `${t.where} ${t.text}: these points of its 44 px tap area miss it`);
       }
       // The gaps between the tags in each row are equal, in every part of the page.
@@ -135,7 +137,8 @@ for (const width of [375, 1280]) {
         gaps.push(...row.slice(1).map((t, i) => [`${k} ${row[i].text}–${t.text}`, t.left - row[i].right]));
       }
       for (const [k, row] of rows) if (k.startsWith('pane')) gaps.push(...row.slice(1).map((t, i) => [`${k} ${row[i].text}–${t.text}`, t.left - row[i].right]));
-      for (const [k, g] of gaps) assert.ok(Math.abs(g - gaps[0][1]) < 0.5, `${k}: a gap of ${g.toFixed(1)} px, not ${gaps[0][1].toFixed(1)}`);
+      const firstGap = k => gaps.find(([x]) => x.startsWith('pane') === k.startsWith('pane'))[1];
+      for (const [k, g] of gaps) assert.ok(Math.abs(g - firstGap(k)) < 0.5, `${k}: a gap of ${g.toFixed(1)} px, not ${firstGap(k).toFixed(1)}`);
     }, { width });
   });
 }
