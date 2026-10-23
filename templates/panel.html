@@ -3821,6 +3821,9 @@ function drawTabs() {
     $(tab).setAttribute('aria-selected', String(on));
     $(section).hidden = !on;
   }
+  // While Build's tab is closed, it says how many things need you, as the Foreman's status does
+  const needs = openLane === 'build' ? null : /^Needs you (\d+)$/.exec(foremanOf(state).word);
+  setText($('build-needs'), needs ? `${needs[1]} needs you` : '');
 }
 for (const [i, l] of TAB_ORDER.entries()) {
   const tab = $(LANES[l][0]);
@@ -3837,9 +3840,8 @@ for (const [i, l] of TAB_ORDER.entries()) {
     if (to.focus) to.focus();
   });
 }
-drawTabs();
-
 let state = null;
+drawTabs();
 function render() {
   if (!state) return;
   const m = panelModel(state);
@@ -3943,9 +3945,7 @@ function render() {
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
   renderForeman(f, stale);
-  // 0410: while Build's tab is closed, it says how many things need you, as the Foreman's status does
-  const needs = openLane === 'build' ? null : /^Needs you (\d+)$/.exec(f.word);
-  setText($('build-needs'), needs ? `${needs[1]} needs you` : '');
+  drawTabs(); // 0410: and Build's "<n> needs you"
   drawRunSwitch();
   const again = typing && typing.isConnected === false ? askBoxes.get(typing.askKey) : null; // 0318
   if (again && again !== typing) {
