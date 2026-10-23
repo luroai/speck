@@ -1,7 +1,7 @@
 ---
 id: "0421"
 title: "Trim an open ticket's card"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: [] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T17:53:55.291Z"
 approved: "2026-10-23T18:00:57.524Z"
+finished: "2026-10-23T18:07:02.309Z"
 
 ---
 # 0421 · Trim an open ticket's card
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 An open ticket's card shows its worktree's full path, which nobody uses, and its Full ticket, Review pack and Stop build buttons are big boxed buttons that take a row of their own above the build log.
