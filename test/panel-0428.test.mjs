@@ -78,7 +78,9 @@ test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu ha
 
 test('0428 AC1: the open tab\'s top corners are rounded 8 px', () => {
   assert.equal(resolve(['button', '.tab', '.tab[aria-selected="true"]'])['border-radius'], '8px 8px 0 0');
-  assert.ok(parseFloat(resolve(['.tabs']).gap) > 0, 'the tabs have a gap between them, so each shows its own edges');
+  assert.ok(!(parseFloat(resolve(['.tabs']).gap) > 0), 'no gap, so each tab is still a third of the row (0425)');
+  assert.equal(resolve(['.tab + .tab'])['margin-left'], '-.5px', 'two tabs share the edge between them, so it shows once');
+  assert.equal(resolve(['.tab[aria-selected="true"]'])['z-index'], '1', 'the open tab\'s edge is drawn over its neighbours\'');
 });
 
 test('0428 AC2: cards, the build log, the stats, Settings\' groups and the pop-ups have a 12 px corner radius', () => {

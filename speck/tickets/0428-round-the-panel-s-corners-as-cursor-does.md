@@ -1,7 +1,7 @@
 ---
 id: "0428"
 title: "Round the panel's corners as Cursor does"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0427"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T19:24:44.728Z"
 approved: "2026-10-23T19:37:46.175Z"
+blocked_at: "2026-10-23T19:42:40.751Z"
 
 ---
 # 0428 · Round the panel's corners as Cursor does
 
-**Status:** 👍 approved
+**Status:** ⛔ blocked
 
 ## Problem
 Every corner in the panel is square: `* { border-radius: 0 !important; }` in `templates/panel.html`. Beside Cursor's rounded controls and panels, it looks like a different product.
@@ -54,7 +55,11 @@ To see it, open the panel: the Plan, Build and Shipped tabs are now three outlin
 Worth a look: the tabs no longer open into the list under them, which the reviewer asked for so every button has an outline on all four sides. On a very narrow phone, Settings' System, Light and Dark buttons sit close together to fit on one line.
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+The full ticket, a document and the pipeline log each cover the whole window, edge to edge. This ticket asks for their corners to be rounded 12 px. An earlier ticket (0160) asks that, on a phone's home-screen app, nothing but the full ticket's own empty margin or top line shows behind the status bar. Rounding the full ticket's corners leaves a small sliver of the dimmed page behind showing at each corner of the window, top corners included, so both can't hold. Should these three window-filling pop-ups (A) stay square, with the rest of the rounding as built (Settings' question and the tips stay rounded, as they float over the panel), or (B) be rounded anyway, dropping that part of 0160? I recommend A: their edges are the window's own edges, so rounding them only shows slivers of the page behind and doesn't make them look more like Cursor.
+
+Recommended: A, keep the window-filling pop-ups square
+Changes what you'd notice: yes
+Clear winner: yes
 
 ## Review log
 Round 1 (codex): changes requested: F1 The implementation narrows 'every button' to a hand-picked inventory without authorisation in the acceptance criteria.
