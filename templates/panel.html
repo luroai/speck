@@ -281,7 +281,11 @@
 
   /* Live panel additions */
   /* 0285: the Foreman's detail, in a pop-up over the whole panel (0366) */
-  .foreman { font-size: 13px; }
+  .foreman { font-size: 13px; overflow-anchor: none; } /* 0415: the page keeps a reader's place in the log itself */
+  .foreman h3 { margin: 14px 0 4px; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 14px; font-weight: 600; color: var(--text); }
+  .foreman .fm-now > h3:first-child { margin-top: 4px; }
+  .foreman ol.run-log { margin: 0; padding: 0; list-style: none; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
+  .foreman ol.run-log li { padding: 1px 0; border-bottom: .5px solid var(--line-soft); white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
   .foreman h4 { margin: 8px 0 2px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   .foreman ul { margin: 0; padding-left: 18px; }
   .foreman p { margin: 2px 0; }
@@ -700,7 +704,7 @@
 <div id="full-backdrop" hidden></div>
 <aside id="full-ticket" tabindex="-1" hidden></aside>
 <div id="doc-view" tabindex="-1" role="dialog" aria-modal="true" aria-label="Document" hidden></div>
-<div class="foreman" id="foreman" tabindex="-1" role="dialog" aria-modal="true" aria-label="The Foreman" hidden></div>
+<div class="foreman" id="foreman" tabindex="-1" role="dialog" aria-modal="true" aria-label="Pipeline" hidden></div>
 <div id="settings-backdrop" hidden></div>
 <div id="settings" tabindex="-1" role="dialog" aria-modal="true" aria-label="Settings" hidden></div>
 <div id="settings-unsaved" hidden></div>
@@ -1363,6 +1367,7 @@ let fullId = null; // the id of the ticket in the side pane, or null
 let fullFrom = null; // 0326: { id, list } of the Full ticket button that opened the pane, or null when something else did
 let focusBack = false; // 0326: the pane has closed, so the next render puts the focus back
 let foremanOpen = false; // 0285: whether the Foreman's detail is open. 0366: declared early, as holdPage reads it
+let runLog = null, runLogFor = null, runLogAsking = false, runLogShown, runLogDrawn = null; // 0415: runLogShown: the log's lines as drawn (runLogDrawn), joined, undefined when not drawn
 let packOf = null; // while the side pane shows a review pack instead: { id, state: 'loading' | 'ok' | 'none' | 'error', text }
 let shippingId = null; // the id whose Ship request hasn't been answered yet: one ship at a time
 let runSwitching = null; // 'on' or 'off' while the speck run switch's request hasn't been answered yet
@@ -2026,9 +2031,9 @@ $('settings-backdrop').addEventListener('click', e => { if (e.target === $('sett
 let settingsDownBeside = false;
 $('settings').addEventListener('pointerdown', e => { settingsDownBeside = e.target === $('settings') && besideColumn(e); });
 $('settings').addEventListener('click', e => { if (settingsDownBeside && e.target === $('settings') && besideColumn(e)) leaveSettings(); });
-// Not on its scroll bar, which sits beside the column too: a click there scrolls.
-function besideColumn(e) {
-  const pane = $('settings'), col = pane.children[0];
+// Not on its scroll bar, which sits beside the column too: a click there scrolls. 0415: the Pipeline pop-up's too.
+function besideColumn(e, pane = $('settings')) {
+  const col = pane.children[0];
   if (!col || typeof col.getBoundingClientRect !== 'function' || typeof e.clientX !== 'number') return false;
   if (typeof pane.getBoundingClientRect === 'function' && typeof pane.clientWidth === 'number') {
     const p = pane.getBoundingClientRect(), inside = p.left + (pane.clientLeft || 0);
@@ -3967,7 +3972,7 @@ function render() {
   $('bezel').className = NEEDS_YOU.test(word) ? 'bezel needs' : 'bezel';
   run.setAttribute('aria-label', `The Foreman: ${word}${fixing ? ', fixing on' : ''}`);
   run.setAttribute('aria-expanded', String(foremanOpen));
-  run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
+  run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: what speck run is doing, what is waiting, and its log';
   renderForeman(f, stale);
   drawTabs(); // 0410: and Build's "<n> needs you"
   drawRunSwitch();
@@ -3979,6 +3984,10 @@ function render() {
   if (tipTag !== null && tipTag.isConnected === false) closeTip(); // 0165: its tag has left the page, so it goes too
   if (focusBack && fullId === null) returnFocus(); // 0326
 }
+// 0415: a click beside the Pipeline pop-up's column is a click outside it, as with Settings (0368).
+let foremanDownBeside = false;
+$('foreman').addEventListener('pointerdown', e => { foremanDownBeside = e.target === $('foreman') && besideColumn(e, $('foreman')); });
+$('foreman').addEventListener('click', e => { if (foremanOpen && foremanDownBeside && e.target === $('foreman') && besideColumn(e, $('foreman'))) closeForeman(); });
 $('run').addEventListener('click', e => {
   e.stopPropagation();
   if (foremanOpen) { closeForeman(); return; }
@@ -4143,6 +4152,7 @@ const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.pa
 // 0366: the detail, in the pop-up over the whole panel that a document opens in (0362). Its top, with Close, is kept
 // while it's open and only the detail under it is drawn again, so the focus stays in the pop-up through a refresh.
 // While it's open the page behind is held (holdPage), so only the pop-up can be clicked, scrolled or reached with Tab.
+// 0415: the Pipeline pop-up. The detail is its Right now section, and speck run's output is its Log section under it.
 function renderForeman(f, stale) {
   const box = $('foreman'), was = !box.hidden && box.children.length > 0;
   box.hidden = !foremanOpen;
@@ -4153,10 +4163,12 @@ function renderForeman(f, stale) {
     const close = el('button', 'close', 'Close');
     close.type = 'button';
     close.addEventListener('click', e => { e.stopPropagation(); closeForeman(); });
-    body = el('div', 'fm-body');
-    box.replaceChildren(el('div', 'top', null, el('span', 'title', 'The Foreman'), close), body);
+    body = el('div', 'fm-body', null, el('div', 'fm-now'), el('div', 'fm-log', null, el('h3', null, 'Log')));
+    box.replaceChildren(el('div', 'top', null, el('span', 'title', 'Pipeline'), close), body);
+    runLogShown = undefined; runLogDrawn = null;
   }
-  const had = within(document.activeElement, body);
+  const now = body.children[0];
+  const had = within(document.activeElement, now);
   const kids = [];
   if (stale) {
     const reload = el('button', 'reload', 'Reload page');
@@ -4188,9 +4200,62 @@ function renderForeman(f, stale) {
   for (const d of list(a && a.did)) looked.push(item(String(d.id), `The Foreman ${String(d.did || d.action || '')}${d.text ? `: ${String(d.text)}` : ''}.`, d.why ? `Why: ${String(d.why)}` : '',
     ...(typeof d.outcome === 'string' && d.outcome ? [el('p', 'outcome', d.outcome)] : []))); // 0328: what became of a question, as the server says it
   kids.push(...section('Looked into', looked, 'The Foreman hasn\'t had to look into anything.'));
-  body.replaceChildren(...kids);
+  now.replaceChildren(el('h3', null, 'Right now'), ...kids);
+  wantRunLog();
+  drawRunLog();
   if (!was) box.scrollTop = 0;
   if ((!was || had) && box.focus) box.focus({ preventScroll: true }); // into it, or back into it when what had it was drawn again
+}
+// 0415: speck run's output, from run.log, newest line first. The board's run_log changes with each write to it, and
+// while the pop-up is open the page asks for the log again (GET /api/run-log) each time it does, one request at a time.
+// A board without run_log has no run.log. runLog is the last answer, for the run_log it was asked for (runLogFor),
+// declared with foremanOpen.
+function wantRunLog() {
+  const stamp = state && typeof state.run_log === 'string' && state.run_log ? state.run_log : null;
+  if (!foremanOpen || stamp === null || runLogAsking || stamp === runLogFor) return;
+  runLogAsking = true;
+  let got = false;
+  fetch('/api/run-log', { cache: 'no-store' })
+    .then(res => (res.ok ? res.json() : null))
+    .then(body => { if (body && (body.lines === null || Array.isArray(body.lines))) { runLog = body.lines; runLogFor = stamp; got = true; } })
+    .catch(() => { /* asked again at the next board or ping */ })
+    // Once it has the log, it asks again at once if run_log changed meanwhile. One that failed waits for the next redraw.
+    .finally(() => { runLogAsking = false; if (foremanOpen) { drawRunLog(); if (got) wantRunLog(); } });
+}
+function drawRunLog() {
+  const box = $('foreman'), sec = !box.hidden && box.children[1] ? box.children[1].children[1] : null;
+  if (!sec) return;
+  const stamp = state && typeof state.run_log === 'string' && state.run_log ? state.run_log : null;
+  const lines = stamp === null ? null : runLogFor === null ? [] : runLog;
+  const key = lines === null ? null : lines.join('\n');
+  if (key === runLogShown) return;
+  runLogShown = key;
+  // A reader scrolled into the log stays where they are as new lines come in above them: the first line they can see
+  // is found again among the new lines, and the pop-up scrolled so it's where it was.
+  const top = box.children[0], list = sec.children[1], rect = n => (n && typeof n.getBoundingClientRect === 'function' ? n.getBoundingClientRect() : null);
+  let anchor = null;
+  if (list && /\brun-log\b/.test(list.className || '') && box.scrollTop > 0 && rect(top) && rect(list) && rect(list).top < rect(top).bottom && Array.isArray(runLogDrawn) && lines && lines.length) {
+    const below = rect(top).bottom, seen = Array.from(list.children).findIndex(li => rect(li) && rect(li).bottom > below);
+    const k = seen < 0 ? null : runLogShift(runLogDrawn, lines);
+    if (k !== null && seen + k < lines.length) anchor = { at: seen + k, top: rect(list.children[seen]).top };
+  }
+  runLogDrawn = lines;
+  const shown = lines === null ? el('p', 'none', 'speck run hasn\'t written anything yet.')
+    : !lines.length ? el('p', 'none', runLogFor === null ? 'Reading speck run\'s log…' : 'speck run hasn\'t written anything yet.')
+    : el('ol', 'run-log', null, ...lines.map(l => el('li', null, String(l))));
+  sec.replaceChildren(sec.children[0], shown);
+  const again = anchor && rect(shown.children[anchor.at]);
+  if (again) box.scrollTop += again.top - anchor.top;
+}
+// How many lines came in above the log as drawn (was) to make it now: the fewest k for which now, from line k on,
+// starts with was's lines, or null when it doesn't at any k, as when speck run's log was started afresh.
+function runLogShift(was, now) {
+  for (let k = 0; k < now.length; k++) {
+    let same = was.length > 0;
+    for (let j = 0; same && j < was.length && k + j < now.length; j++) same = now[k + j] === was[j];
+    if (same) return k;
+  }
+  return null;
 }
 // 0285: the speck run switch, working as the header's did (0150): a press turns speck run off or on. 0396: Auto-build's
 // switch, at the top of Settings.
