@@ -35,7 +35,7 @@ const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_mo
     S('foreman_effort', '', { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] })] },
   { title: 'Building and reviewing', settings: [
     S('builder', builder, { choices: ['claude', 'codex', 'cursor', 'deepseek'], build_command: { value: '', own: { claude: '', codex: '', cursor: '' }, each_ticket: true } }),
-    S('builder_model', builder_model), S('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor', 'deepseek'] }),
+    S('builder_model', builder_model), S('builder_effort', '', { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] }), S('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor', 'deepseek'] }),
     S('reviewer_model', reviewer_model), S('reviewer_effort', '', { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] })] }],
   builder_models: { builder, models: [] }, reviewer_models: { reviewer, models: [] }, foreman_models: { foreman: foreman || builder, models: [] },
   claude_models: CLAUDE_MODELS, providers: [{ name: 'deepseek', label: 'DeepSeek', models: [], default_model: 'deepseek-v4-pro', key_set: true }],
@@ -125,7 +125,7 @@ test('0400 AC2: the server saves an agent and its model for this machine, with n
 test('0400 AC2: effort is offered beside the list only for an agent that takes one', async () => {
   const p = settingsPage([view({ cursor: true })]);
   await openSettings(p);
-  assert.equal(rowOf(p, 'builder_effort'), undefined, 'the builder has no effort');
+  assert.ok(p.all(rowOf(p, 'builder')).includes(effortRow(p, 'builder_effort')), '0402: the builder\'s effort sits in its row');
   const reviewer = rowOf(p, 'reviewer'), effort = effortRow(p, 'reviewer_effort');
   assert.ok(p.all(reviewer).includes(effort), 'reviewer_effort sits in the reviewer\'s row');
   assert.ok(shown(p, effort), 'Codex takes an effort');

@@ -25,7 +25,8 @@ export { configBuilder };
 export const ticketBuilder = (t, cfg) => name(t?.builder) || configBuilder(cfg);
 
 // speck/config.yml as a build with `builder` reads it: without builder_model when `builder` isn't the one it names.
-const configFor = (cfg, builder) => (builder === configBuilder(cfg) ? { ...cfg, builder } : { ...cfg, builder, builder_model: '' });
+// 0402: and without builder_effort.
+const configFor = (cfg, builder) => (builder === configBuilder(cfg) ? { ...cfg, builder } : { ...cfg, builder, builder_model: '', builder_effort: '' });
 
 // The words that start a Claude Code build, with --model when builder_model is set and claude is the configured builder.
 export const claudeStartWords = cfg => withBuilderModel(splitCommand(DEFAULT_BUILD_COMMAND), configFor(cfg, 'claude'));

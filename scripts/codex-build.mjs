@@ -5,11 +5,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { modelOf, codexBuilds } from './build-model.mjs';
+import { modelOf, effortOf, codexBuilds } from './build-model.mjs';
 export { codexBuilds };
 
 const BYPASS = ['--json', '--dangerously-bypass-approvals-and-sandbox'];
-const model = cfg => (m => (m ? ['-m', m] : []))(modelOf(cfg));
+// 0402: and builder_effort as Codex takes it, as the Foreman's is (foreman-agent.mjs).
+const model = cfg => [...(m => (m ? ['-m', m] : []))(modelOf(cfg)), ...(e => (e ? ['-c', `model_reasoning_effort="${e}"`] : []))(effortOf(cfg))];
 
 // The command the panel and speck's hints show to resume a Codex build by hand. {id} is its ticket.
 export const CODEX_RESUME_COMMAND = "codex exec resume {session} --json --dangerously-bypass-approvals-and-sandbox '$speck-build {id}: carry on from where you left off.'";

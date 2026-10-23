@@ -48,6 +48,9 @@ export const SETTING_GROUPS = [
       explain: 'The agent that builds each ticket, writing its tests and code: claude, codex, cursor or a model provider, such as DeepSeek, with your own API key for it, offered when it\'s installed and signed in. A ticket that doesn\'t name its own builder takes it from here when its build starts, so changing it changes who builds those tickets, sets build_command to the new builder\'s own, asking first when that was set by hand, and clears builder_model when the new builder doesn\'t offer it or its models can\'t be read.' },
     { key: 'builder_model', default: '',
       explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given to Claude Code builds, to Codex builds when build_command is blank, and to Cursor builds when it is blank too. Blank leaves it to the builder\'s own default.' },
+    // 0402
+    { key: 'builder_effort', default: '',
+      explain: 'How hard the builder thinks: low, medium, high, xhigh or max, any other effort Codex offers for its model, or blank for the builder\'s own default. It\'s given to Claude Code builds and to Codex builds when build_command is blank, but not to Cursor, whose model names carry the effort, or a model provider.' },
     { key: 'reviewer', default: 'codex',
       explain: 'The agent that reviews each build and decides whether it is approved: codex, claude (Claude Code, run by speck, for any builder), claude-subagent (a Claude Code subagent the builder starts, for Claude Code builders), cursor, a model provider, such as DeepSeek, with your own API key for it, or a command you have set up. A ticket that doesn\'t name its own reviewer takes it from here when each review round starts, so changing it changes who reviews those tickets from their next round.' },
     { key: 'reviewer_model', default: '',
@@ -80,7 +83,7 @@ const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] :
 // 0258: the settings the panel can change, and 0259's auto_ship and auto_ship_risk, which it changes only once you've
 // confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: allow_same_model_review
 // weakens the independent review. 0279: and builder_model. 0293: and builder, which sets build_command with it.
-export const EDITABLE = Object.freeze(['builder', 'builder_model', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
+export const EDITABLE = Object.freeze(['builder', 'builder_model', 'builder_effort', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
   'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']);
 const RISKS = ['low', 'high'];
 
@@ -93,7 +96,7 @@ function choicesOf(key, file, providers = knownProviders()) {
     return [...new Set(['codex', 'claude', 'claude-subagent', 'cursor', ...named, ...options])]; // 0347: and cursor
   }
   if (key === 'builder') return [...new Set([...Object.keys(OWN_BUILD_COMMANDS), ...named])]; // 0293: the builders speck starts by itself
-  if (key === 'reviewer_effort') return ['', ...EFFORTS];
+  if (key === 'reviewer_effort' || key === 'builder_effort') return ['', ...EFFORTS]; // 0402: and the builder's
   if (key === 'auto_ship') return [true, false];
   if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
   if (key === 'foreman_fixing') return [...FIXING]; // 0286
@@ -362,7 +365,8 @@ function checkChange(repo, text, cfg, { key, value, machine, blank }) {
   if (key === 'reviewer_model' && /[\x00-\x1f\x7f]/.test(value))
     return { status: 422, error: 'reviewer_model must be on one line, with no tabs or other control characters.' };
   // 0276: reviewer_effort is checked as speck config set checks it, which accepts an effort Codex lists, such as ultra.
-  const choices = key === 'reviewer_effort' ? undefined : choicesOf(key, parseYaml(text), knownProviders(repo));
+  // 0402: and builder_effort.
+  const choices = key === 'reviewer_effort' || key === 'builder_effort' ? undefined : choicesOf(key, parseYaml(text), knownProviders(repo));
   if (choices && ![].concat(want).every(w => choices.includes(w)))
     return { status: 422, error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` };
   const now = own && Object.hasOwn(mine, key) ? mine[key] : repoValue;
