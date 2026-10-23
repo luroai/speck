@@ -1,7 +1,7 @@
 ---
 id: "0399"
 title: "Set up your agents in Settings"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-18-find-the-agents-and-models-on-this-machine.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0397","0398"]                # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T10:34:29.683Z"
 
 ---
 # 0399 · Set up your agents in Settings
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 There's nowhere in Settings to see which agents you have, add one, or give an API provider its key, apart from the DeepSeek key field 0393 added.
