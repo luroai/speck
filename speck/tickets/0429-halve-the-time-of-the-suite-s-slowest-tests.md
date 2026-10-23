@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0428"] # ticket ids that must be done first
+after: ["0424"] # ticket ids that must be done first
 created: 2026-10-23
 
 ---
@@ -40,7 +40,7 @@ The suite's ten slowest tests take half as long, still checking the same things.
 - The ten slowest tests in 0418's ship run (`speck/.cache/runs/0418.ship.log`), with their times: `0050 AC1-AC5: in a real browser, selections and the build message scroll stay through refreshes` (26.4 s, test/panel-0050.test.mjs); `0176: the board stays quick to read however many tickets are built` (23.5 s, test/build-log-0176.test.mjs); `0060 AC1-AC5: in a real browser, the pane holds the page still…` (22.7 s, test/panel-0060.test.mjs); `0267 AC1, AC3: rewording and reordering the README, the brief, the changelog…` (17.9 s, test/docs-0267.test.mjs); `0177 AC3: answers within 1 second while a reading takes 5 seconds` (12.9 s, test/panel-0177.test.mjs); `0257 AC4-AC5: the panel serves the settings afresh on a GET…` (12.4 s, test/panel-0257.test.mjs); `AC1/AC4: a reason reads back exactly as typed…` (12.2 s, test/cancel.test.mjs); `0040 AC1-AC5: in a real browser, selected text stays selected…` (11.8 s, test/panel-0040.test.mjs); `0072: stop a running build from the CLI` (11.7 s, test/stop-0072.test.mjs); `0159 AC3: b.js() and b.until() give up in their time limits…` (11.6 s, test/panel-0159.test.mjs).
 - Some time is in the test's own subject (0177 waits on a reading that takes 5 seconds), so not each one can halve: criterion 1 is the ten together.
 - Times vary with load, so measure the ten in one full `npm test` run, as ship runs it.
-- Waits for 0428, as 0421 to 0428 may change some of these test files.
+- Waits for 0424, as 0423 and 0424 change the full-ticket pane that `test/panel-0060.test.mjs` checks. Builds alongside 0426 to 0428 (the user, 2026-10-23), which restyle the page and are unlikely to change these ten tests. If one does, the second to ship needs a merge round.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
