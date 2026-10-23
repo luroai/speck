@@ -422,6 +422,11 @@
   #settings .agent .state { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
   #settings .agent .keyline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; min-width: 0; }
   #settings .agent .keyline input.edit { box-sizing: border-box; flex: 1 1 16ch; width: auto; min-width: 0; }
+  /* 0401: Add an API provider's form: a label above each field, two to a line where there's room */
+  #settings .provider-form .pfields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18ch), 1fr)); gap: 6px 12px; margin-top: 6px; }
+  #settings .provider-form .pfield { display: grid; gap: 2px; min-width: 0; color: var(--muted); }
+  #settings .provider-form .pfield .edit { box-sizing: border-box; width: 100%; }
+  #settings .provider-form .keyline { display: flex; justify-content: flex-end; margin-top: 6px; }
   /* 0258: a setting the panel can change: its control and Save button */
   #settings .setting .edit, #settings .arow .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
   /* 0281: the boxes a whole number of pixels wide, borders and padding included, so their right edges fall on a whole
@@ -1974,6 +1979,7 @@ let settingClear = new Set(); // 0261: keys whose machine value is cleared on Sa
 // key is only ever sent, never read back, as the server says only whether this machine has it (0393).
 let agentsBox = null, agentsAdding = false, agentsSaid = null; // the box; whether "Add an agent" is open; the last change's { text, bad }
 let agentStates = new Map();
+let providerForm = null; // 0401: the Add an API provider form's { name, address, type, key, models, busy } until the view closes
 let settingsFailed = null; // 0274: why the last Save failed, when it wasn't one setting's fault
 let settingsSaid = null; // 0311: what the last Save changed that you didn't, such as builder_model cleared
 let settingsBar = null;
@@ -2100,6 +2106,7 @@ function closeSettings() {
   agentsBox = agentsSaid = null;
   agentsAdding = false;
   agentStates = new Map();
+  providerForm = null;
   settingsFailed = settingsSaid = null;
   renderSettings();
   const back = $('settings-open');
@@ -2753,12 +2760,11 @@ function agentRow(a) {
 // Add an agent: a button, or once it's pressed, each agent speck knows that isn't yours. One that's installed can be
 // added, one that isn't says how to install it, and a provider asks for its key.
 function addRows(others) {
-  if (!others.length) return [el('div', 'arow note', null, el('p', null, 'Every agent speck knows is one of yours.'))];
   const toggle = agentButton(agentsAdding ? 'Done' : 'Add an agent', 'adding', () => { agentsAdding = !agentsAdding; agentsSaid = null; drawAgents(); });
   toggle.setAttribute('aria-expanded', String(agentsAdding));
   const head = el('div', 'arow add', null, el('div', 'row', null, el('span', 'label', null, el('span', 'name', 'Add an agent')), el('div', 'control', null, toggle)));
   if (!agentsAdding) return [head];
-  return [head, ...others.map(a => {
+  return [head, ...(others.length ? [] : [el('div', 'arow note', null, el('p', null, 'Every agent speck knows is one of yours.'))]), ...others.map(a => {
     const st = agentState(a.id);
     const add = a.kind === 'provider' ? (a.key_set === true ? agentButton(st.busy === 'add' ? 'Adding…' : 'Add', `add:${a.id}`, () => agentAction(a, 'add')) : null) // its key kept since it was removed
       : a.installed !== true ? null : agentButton(st.busy === 'add' ? 'Adding…' : 'Add', `add:${a.id}`, () => agentAction(a, 'add'));
@@ -2769,7 +2775,62 @@ function addRows(others) {
       el('div', 'row', null, el('span', 'label', null, el('span', 'name', a.name)), el('div', 'control', null, el('span', 'state', agentWords(a)), add)),
       install !== null ? el('p', null, install) : null,
       a.kind === 'provider' ? keyLine(a) : null);
-  })];
+  }), providerFormRow()];
+}
+// 0401: Add an API provider: any provider with an OpenAI- or Anthropic-compatible API, by its name, base URL, API type,
+// key and the names of its models, the first being the one speck uses unless you pick another. Saved for this machine
+// only, with no commit. The key field is never filled in with a saved key, and is emptied once it's saved.
+function providerFormRow() {
+  const f = providerForm ??= { name: '', address: '', type: 'anthropic', key: '', models: '', busy: false };
+  const field = (prop, label, placeholder, type = 'text') => {
+    const input = focusable(el('input', 'edit'), `provider:${prop}`);
+    input.type = type;
+    input.autocomplete = 'off';
+    input.value = f[prop];
+    input.placeholder = placeholder;
+    input.setAttribute('aria-label', label);
+    input.setAttribute('data-provider-field', prop);
+    input.addEventListener('input', () => { f[prop] = String(input.value ?? ''); });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { f[prop] = String(input.value ?? ''); saveProvider(); } });
+    return el('label', 'pfield', null, el('span', null, label), input);
+  };
+  const type = focusable(el('select', 'edit'), 'provider:type');
+  for (const [v, words] of [['openai', 'OpenAI'], ['anthropic', 'Anthropic']]) {
+    const o = el('option', null, words);
+    o.value = v;
+    type.appendChild(o);
+  }
+  type.value = f.type;
+  type.setAttribute('aria-label', 'API type');
+  type.setAttribute('data-provider-field', 'type');
+  type.addEventListener('change', () => { f.type = String(type.value ?? ''); });
+  const save = agentButton(f.busy ? 'Saving…' : 'Save provider and add', 'provider:save', () => saveProvider());
+  return el('div', 'arow provider-form', null,
+    el('div', 'row', null, el('span', 'label', null, el('span', 'name', 'Add an API provider'))),
+    el('p', null, 'Any provider with an OpenAI- or Anthropic-compatible API. speck runs Anthropic-type ones so far. The key and the provider are kept on this machine only, never in git.'),
+    el('div', 'pfields', null, field('name', 'Name', 'Moonshot'), field('address', 'Base URL', 'https://api.example.com/anthropic', 'url'),
+      el('label', 'pfield', null, el('span', null, 'API type'), type), field('key', 'API key', 'Paste the key', 'password'),
+      field('models', 'Models', 'model-one, model-two')),
+    el('div', 'keyline', null, save));
+}
+// 0401: sends the form to be saved for this machine. Once it's saved, the form is emptied, and the view is read again,
+// so the new provider is in Your agents and in each role's list.
+async function saveProvider() {
+  const f = providerForm, mine = settingsSeq;
+  if (f === null || f.busy) return;
+  f.busy = true;
+  agentsSaid = null;
+  drawAgents();
+  const out = await agentPost('/api/providers', { headers: { 'X-Speck-Token': TOKEN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: f.name, address: f.address, type: f.type, key: f.key, models: f.models }) });
+  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  f.busy = false;
+  const saved = out !== null && out.ok && out.body !== null && typeof out.body === 'object' && out.body.ok === true;
+  if (saved) providerForm = null;
+  agentsTook(out === null ? null : { ...out, ok: saved, said: typeof out.body?.said === 'string' ? out.body.said : `Saved ${f.name.trim()}.` },
+    'Couldn\'t reach speck panel to save the provider. Try again.');
+  drawAgents(saved ? null : 'provider:save');
+  if (saved) loadSettings();
 }
 // 0393's key field, in a provider's row: never filled in with a saved key. Saving it saves only the key, for this
 // machine, apart from the view's Save, and adds the provider to your agents.
