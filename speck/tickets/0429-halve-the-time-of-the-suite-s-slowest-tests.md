@@ -1,7 +1,7 @@
 ---
 id: "0429"
 title: "Halve the time of the suite's slowest tests"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0424"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T18:33:20.667Z"
-blocked_at: "2026-10-23T19:01:28.422Z"
+blocked_at: ""
+waited_seconds: 13
 
 ---
 # 0429 · Halve the time of the suite's slowest tests
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 Builds that change the panel run its browser tests again and again, 1.5 to 2.5 minutes a time, and every ship runs the whole suite. A few tests take far longer than the rest, so every build and ship waits on them.
@@ -49,6 +50,7 @@ The suite's ten slowest tests take half as long, still checking the same things.
 - Left as they were: 0176 (halving speck run's check spacing would let a check slowed by load count as more than one, loosening the 5% check) and 0072 (four of its tests at once timed out a build's start under load).
 - Self-check: reverted two speed-ups that loosened a check or made a test flaky under load (0176's check spacing, 0072 running four tests at once), and checked that 0060's faster swipe sees the same as the old one.
 - Pictures: none, because nothing anyone sees changes.
+- Went with the recommendation: run the whole suite once to measure (chosen by the Foreman, as foreman_fixing is fix, 2026-10-23 19:01 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
