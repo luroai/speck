@@ -4258,16 +4258,25 @@ function watchPose(t) {
 const speckPoses = () => ({ ...LCD.STATES, watch: watchPose, ask: LCD.PANEL.bad, flag: LCD.PANEL.wait, ship: LCD.PANEL.ship });
 // 0414: what speck does, from what the page has seen of the pipeline. Each board is compared with the one before it
 // (noteBoard): what changed queues an event, played one after another, or starts the laptop while drafts are written.
-// Between them speck follows the Foreman's word (speckRests). Nothing is timed but the events, the writing, and the nap.
-const SPECK = { push: 3200, event: 6000, writing: 30000, nap: 15 * 60000 };
+// Between them speck follows the Foreman's word (speckRests). 0436: and passes the time during a long wait.
+const SPECK = { push: 3200, event: 6000, writing: 30000, nap: 15 * 60000, watch: 2 * 60000, pastime: 60000, turn: 3 * 60000 };
+// 0436: the pastimes, tea, chess, messy and sweeping, with their captions while Idle and while waiting on the pipeline.
 const IDLE_MOODS = [['eating', 'TEA, WHILE IT IS QUIET'], ['playing', 'NOTHING READY. CHESS?'], ['messy', 'CRUMBS IN THE WORKTREE'], ['cleaning', 'SWEEPING OLD BRANCHES']];
-const speckDo = { seen: null, queue: [], playing: null, writing: null, word: null, idle: null, woke: false, n: 0 };
+const PASTIMES = [['eating', 'A CUP OF TEA'], ['playing', 'A QUICK GAME OF CHESS'], ['messy', 'CRUMBS ON THE CLIPBOARD'], ['cleaning', 'A QUICK SWEEP']];
+// rest: when the word's rhythm started, which of its turns has picked a pastime, and which one (0436).
+const speckDo = { seen: null, queue: [], playing: null, writing: null, word: null, rest: null, last: null, woke: false, n: 0 };
+// 0436: a pastime at random, never the one before.
+function pickPastime(d) {
+  const all = IDLE_MOODS.map((_, i) => i).filter(i => i !== d.last);
+  d.last = all[Math.max(0, Math.min(all.length - 1, Math.floor(Math.random() * all.length)))];
+  return d.last;
+}
 const byId = (a, b) => a.localeCompare(b, 'en', { numeric: true });
 // A draft's text, to tell when it changes.
 const draftText = t => JSON.stringify([t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes, t.priority, t.size, t.risk, t.task, t.type, t.after]);
 function noteBoard(st, f, word) {
   const d = speckDo, now = Date.now();
-  if (word !== d.word) { d.word = word; d.woke = false; d.idle = word === 'Idle' ? { mood: IDLE_MOODS[Math.min(IDLE_MOODS.length - 1, Math.floor(Math.random() * IDLE_MOODS.length))], since: now } : null; }
+  if (word !== d.word) { d.word = word; d.woke = false; d.rest = { since: now, turn: -1, i: null }; }
   if (!st || !Array.isArray(st.tickets)) return;
   const tickets = new Map(st.tickets.filter(t => t && typeof t === 'object' && t.id != null).map(t => [String(t.id), t]));
   const ids = [...tickets.keys()].sort(byId), ag = f.agent && typeof f.agent === 'object' ? f.agent : {};
@@ -4300,18 +4309,30 @@ function speckNow(now) {
   if (d.writing && now < d.writing.until) { d.woke = true; return { pose: 'building', cap: `WRITING ${d.writing.id}` }; }
   return speckRests(now);
 }
-// What speck does between events, by the Foreman's word. An event or writing wakes it from a nap, for another 15 minutes.
+// What speck does between events, by the Foreman's word. 0436: while it's Building, Shipping or Waiting, speck
+// watches (or is grumpy) for 2 minutes, then passes the time for 1, and so on; while it's Idle it changes pastime every
+// 3 minutes and naps after 15. An event or writing starts the rhythm again, and wakes it from a nap.
 function speckRests(now) {
-  const d = speckDo, w = d.word || '';
-  let m;
+  const d = speckDo, w = d.word || '', r = d.rest || (d.rest = { since: now, turn: -1, i: null });
+  if (d.woke) { d.woke = false; r.since = now; r.turn = w === 'Idle' && r.i !== null ? 0 : -1; }
+  const el = Math.max(0, now - r.since);
+  let m, own = null;
   if (w === 'Off') return { pose: 'sleeping', cap: 'SPECK RUN IS OFF' };
-  if ((m = /^Building (\d+)$/.exec(w))) return { pose: 'watch', cap: m[1] === '1' ? 'WATCHING 1 BUILD' : `WATCHING ${m[1]} BUILDS` };
-  if (/^Shipping\b/.test(w)) return { pose: 'watch', cap: 'WATCHING THE SHIP' };
   if ((m = /^Needs you (\d+)$/.exec(w))) return { pose: 'ask', cap: `${m[1]} NEEDS YOU` };
-  if (/^Waiting\b/.test(w)) return { pose: 'grumpy', cap: 'WAITING' };
-  if (d.idle) {
-    if (d.woke) { d.woke = false; if (now - d.idle.since >= SPECK.nap) d.idle.since = now; }
-    return now - d.idle.since >= SPECK.nap ? { pose: 'sleeping', cap: 'NAPPING' } : { pose: d.idle.mood[0], cap: d.idle.mood[1] };
+  if ((m = /^Building (\d+)$/.exec(w))) own = { pose: 'watch', cap: m[1] === '1' ? 'WATCHING 1 BUILD' : `WATCHING ${m[1]} BUILDS` };
+  else if (/^Shipping\b/.test(w)) own = { pose: 'watch', cap: 'WATCHING THE SHIP' };
+  else if (/^Waiting\b/.test(w)) own = { pose: 'grumpy', cap: 'WAITING' };
+  if (own) {
+    const every = SPECK.watch + SPECK.pastime, turn = Math.floor(el / every);
+    if (el - turn * every < SPECK.watch) return own;
+    if (r.turn !== turn) { r.turn = turn; r.i = pickPastime(d); }
+    return { pose: PASTIMES[r.i][0], cap: PASTIMES[r.i][1] };
+  }
+  if (w === 'Idle') {
+    if (el >= SPECK.nap) return { pose: 'sleeping', cap: 'NAPPING' };
+    const turn = Math.floor(el / SPECK.turn);
+    if (r.turn !== turn) { r.turn = turn; r.i = pickPastime(d); }
+    return { pose: IDLE_MOODS[r.i][0], cap: IDLE_MOODS[r.i][1] };
   }
   return { pose: 'idle', cap: w === 'Reload page' ? 'RELOAD THE PAGE' : '' };
 }

@@ -2,38 +2,10 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T } from './support/panel.mjs';
-import { screenPage, foreman, state, expected, LCD } from './support/screen.mjs';
+import { MIN, building, board, speckPage, capDots, shows } from './support/screen-speck.mjs';
+import { LCD } from './support/screen.mjs';
 
 // ---------- 0414: speck shows the pipeline through its animations on the screen ----------
-
-// A clock the test moves, for the page's Date.
-const clock = () => {
-  let at = Date.parse('2026-10-23T12:00:00Z');
-  const D = class extends Date { constructor(...a) { super(...(a.length ? a : [at])); } static now() { return at; } };
-  return { D, go: ms => { at += ms; } };
-};
-const MIN = 60000;
-const building = () => [T('0362', 'building'), T('0363', 'building')];
-const board = (tickets, f = {}, o = {}) => state(foreman(f), { tickets, ...o });
-// The page with its boards, a clock and, when given, Math.random's answer and reduced motion.
-function speckPage(boards, { random = null, reduced = false } = {}) {
-  const c = clock(), globals = { Date: c.D };
-  if (random !== null) globals.Math = Object.assign(Object.create(Math), { random: () => random });
-  if (reduced) Object.assign(globals, { matchMedia: q => ({ matches: /reduced-motion/.test(q), addEventListener() {} }), devicePixelRatio: 1 });
-  const p = screenPage(boards, globals);
-  p.go = c.go;
-  p.next = async () => { p.timers.shift()(); await p.settle(); }; // the next board
-  return p;
-}
-// The caption's lit dots, under the screen's lower dotted line, and those `text` lights centred there.
-const capDots = dots => new Set(dots.filter(([, r]) => r >= 64).map(([c, r]) => `${c},${r}`));
-const capOf = text => { const W = text.length * 6 - 1; return expected(text, Math.round(80 - W / 2), 65); };
-// What speck shows now: its pose, and whether the caption is `text`.
-function shows(p, pose, text, t = 1000, still = true) {
-  const dots = p.draw(t, still);
-  assert.equal(p.cast().cur, pose, `the pose for ${text}`);
-  assert.deepEqual(capDots(dots), capOf(text), `the caption ${text}`);
-}
 
 test('0414 AC1: a new draft or a draft\'s changed text puts speck at the laptop, WRITING <id>, until 30 seconds after the last change', async () => {
   const d0500 = T('0500', 'draft', { problem: 'One.' });
@@ -120,7 +92,7 @@ for (const [word, pose, cap] of WORDS) {
     const p = speckPage([board(building(), { word })]);
     await p.settle();
     shows(p, pose, cap);
-    p.go(60 * MIN);
+    p.go(/^(Off|Needs you)/.test(word) ? 60 * MIN : 2 * MIN - 1000); // 0436: the others pass the time after 2 minutes
     shows(p, pose, cap);
   });
 }
@@ -135,11 +107,11 @@ for (const [random, pose] of IDLE) {
     assert.equal(p.cast().cur, pose);
     const cap = capDots(p.draw());
     assert.ok(cap.size > 0, 'it has a caption');
-    p.go(14 * MIN);
+    p.go(3 * MIN - 1000);
     await p.next();
-    assert.equal(p.cast().cur, pose, 'the same until the word changes');
+    assert.equal(p.cast().cur, pose, 'the same for its first 3 minutes (0436)');
     assert.deepEqual(capDots(p.draw()), cap, 'the same caption');
-    p.go(MIN + 1000);
+    p.go(12 * MIN + 2000);
     shows(p, 'sleeping', 'NAPPING');
     p.go(60 * MIN);
     shows(p, 'sleeping', 'NAPPING');
@@ -147,7 +119,7 @@ for (const [random, pose] of IDLE) {
     shows(p, 'celebrating', '0362 SHIPPED');
     p.go(6100);
     p.draw();
-    assert.equal(p.cast().cur, pose, 'awake again after the event');
+    assert.notEqual(p.cast().cur, 'sleeping', 'awake again after the event');
   });
 }
 
