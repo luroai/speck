@@ -44,6 +44,7 @@ This machine keeps an API key for each model provider speck knows, safely, and s
 - Checked 2026-10-23: `claude --help` (2.1.301) says `--bare` takes Anthropic auth strictly from `ANTHROPIC_API_KEY` or an apiKeyHelper, and never reads OAuth or the keychain. It also skips hooks, plugins and CLAUDE.md discovery, but skills still resolve by `/skill-name`.
 - Keep the key next to this machine's settings from 0386, in the main checkout's `speck/.cache/machine/`, in a file of its own with mode 0600.
 - For 0.14.0: waits for 0380 (0.13.1), which waits for 0375 and 0386.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
