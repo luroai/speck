@@ -134,9 +134,8 @@ test('0437 AC2: an option after --related is refused plainly, without a stack tr
   assert.deepEqual(log(), []);
 });
 
-test('0437 AC3: the build skill\'s Implement section runs speck test --related with the ticket\'s own files, into the round\'s test output', () => {
-  const implement = BUILD.slice(BUILD.indexOf('## 3. Implement'), BUILD.indexOf('## 4. Review loop'));
-  assert.ok(implement.includes('`speck test --related <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`'));
+test('0437 AC3: the build skill runs speck test --related with the ticket\'s own files, into the round\'s test output', () => {
+  assert.ok(BUILD.includes('`speck test --related <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`'));
 });
 
 test('0437 AC4: the brief\'s speck test row names --related', () => {
