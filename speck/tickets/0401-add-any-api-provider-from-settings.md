@@ -51,7 +51,7 @@ Settings lets you add any API provider by name, base URL, API type and key, and 
 - Changes `templates/panel.html` and the provider/key scripts (`scripts/providers.mjs`, `scripts/keys.mjs`, `scripts/settings.mjs`, `scripts/your-agents.mjs`, `scripts/provider-review.mjs`). No open ticket changes those.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In Settings, "Add an agent" now has an "Add an API provider" form. You give a provider's name, its web address, whether its API is OpenAI- or Anthropic-style, your key and the names of its models. Once saved, it shows up in Your agents and in the builder, reviewer and Foreman lists under the name you gave it. The provider and its key stay on your machine and never go into the project's history. Anthropic-style providers build, review and run the Foreman just as DeepSeek does. OpenAI-style ones are saved and listed, but speck says it can't run them yet. To see it, open Settings, press Add an agent, and fill in the form at the bottom. Worth watching: an OpenAI-style provider can still be picked for a role, and you only find out it can't run when work starts.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,6 +61,7 @@ Settings lets you add any API provider by name, base URL, API type and key, and 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: run OpenAI-type providers (speck/ideas/2026-10-23-run-openai-type-providers.md); flag OpenAI-type providers in the role lists (speck/ideas/2026-10-23-flag-openai-type-providers-in-the-role-lists.md).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -134,6 +135,81 @@ Settings lets you add any API provider by name, base URL, API type and key, and 
     ],
     "escalation_question": "",
     "summary": "The form, machine-only storage and provider execution paths are covered by passing tests. One issue blocks approval: adding a provider with an existing name silently changes its settings, including where its key is sent. Require removal before replacement and preserve the existing settings if saving fails."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c30d508701c1dec513843844e3affdb8f61a63e1",
+    "session": "continued",
+    "thread_id": "01a16889-f3d4-7c53-aac8-bbe749b0b2f0",
+    "builder_response": "- Tests run: test/providers-0401.test.mjs test/settings-agents-0399.test.mjs test/settings-provider-0393.test.mjs test/settings-roles-0400.test.mjs test/keys-0389.test.mjs (plus the repo checks)\n- F1: fixed. scripts/provider-form.mjs panelProviderAddRequest now refuses, before writing anything, a provider whose name is already one of your agents (\"remove it from Your agents, then add it again\"). Once removed, adding it again replaces it. The key is now saved first, then the provider; if saving the provider fails, the old key is put back (or the new one removed when there was none), so a key is never left with an address it wasn't saved for. The provider is then added through panelAgentRequest. New tests: \"a provider that is one of your agents isn't replaced…\" and \"when the provider can't be saved, its key is put back…\".\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 346722,
+      "cached_input_tokens": 278400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1656,
+      "reasoning_output_tokens": 179
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T11:35:46.191Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html providerFormRow supplies name, base URL, API type, key and models. Both AC1 form tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelProviderAddRequest saves machine-local provider details and keys, then adds the agent. Passing AC2 tests cover ignored storage, no commit, hidden keys, role lists, duplicate refusal and rollback after provider-save failure."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC3 test exercises the build wrapper with fake Claude and checks review and Foreman arguments and environments. The existing provider paths supply the key through environment variables."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cantRun guards buildPlan, providerReady, foremanCantStart and the provider wrapper. The passing AC4 test verifies saving and listing work while execution is refused with the required message."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing AC5 test verifies DeepSeek's key and build address remain intact alongside custom providers. Supplied test runs report no failures; whole-suite verification remains the shipping gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/provider-form.mjs",
+        "issue": "Previously, adding an existing provider name silently replaced its settings before saving the new key.",
+        "suggested_fix": "Implemented: refuse replacement while the provider is in Your agents, save the key before provider details, and restore the previous key if saving those details fails. Both regression tests passed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Settings now supports custom API providers, keeps their keys on this machine and runs Anthropic-compatible providers. OpenAI-compatible providers can be saved but cannot run yet. The replacement issue is fixed, all five criteria pass, and the change is ready for the owner's merge decision."
   }
 }
 ```
