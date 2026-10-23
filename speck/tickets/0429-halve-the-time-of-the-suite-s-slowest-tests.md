@@ -1,7 +1,7 @@
 ---
 id: "0429"
 title: "Halve the time of the suite's slowest tests"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-10-23
 started: "2026-10-23T18:33:20.667Z"
 blocked_at: ""
 waited_seconds: 13
+approved: "2026-10-23T19:08:11.871Z"
 
 ---
 # 0429 · Halve the time of the suite's slowest tests
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 Builds that change the panel run its browser tests again and again, 1.5 to 2.5 minutes a time, and every ship runs the whole suite. A few tests take far longer than the rest, so every build and ship waits on them.
@@ -64,9 +65,15 @@ Changes what you'd notice: no
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The central performance target has not been demonstrated.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 386,349
+- Elapsed since build started: 35 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - 0060's touch swipes scroll nothing, even where the pane could scroll, so its touch checks pass whatever the page does: speck/ideas/2026-10-23-make-0060-s-touch-swipes-scroll-something.md.
