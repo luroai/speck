@@ -526,7 +526,14 @@
   #full-ticket .close, #doc-view .close, #foreman .close, #settings .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover, #settings .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
-  #full-ticket h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
+  /* 0424: the full ticket and a review pack set out as a document: the id and status in small type, the title the
+     largest text with its tags under it, then each section's heading, smaller than the title and larger than the text,
+     with more room above it than between the section's paragraphs. A review pack's text (the pane's own .md, where a
+     ticket's sections are each inside its body) has its own headings as its sections. */
+  #full-ticket .top .id, #full-ticket .top .state { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 16px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  #full-ticket .top .title { order: 1; flex-basis: 100%; font-size: 26px; line-height: 1.25; font-weight: 600; } /* under the id and Close, which a review pack has after it */
+  #full-ticket .top .tags { order: 2; }
+  #full-ticket h4, #full-ticket > .md .md-h1, #full-ticket > .md .md-h2, #full-ticket > .md .md-h3 { margin: 28px 0 8px; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
   /* 0362: a document task's Markdown file, over the whole panel, its path and Close above its text in a centred column.
      0366: the Foreman's detail opens in the same pop-up. */
@@ -539,23 +546,33 @@
      padding, the room for a phone's notch, is in the line instead, so nothing shows through above it. Above a setting's
      explanation (z-index 2), which scrolls under it too. */
   #full-ticket .top, #doc-view .top, #foreman .top, #settings .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
-  #full-ticket ol.criteria { padding-left: 18px; }
-  #full-ticket ol.criteria > li { margin-bottom: 4px; }
+  #full-ticket ol.criteria > li { margin-bottom: 6px; }
   /* Each section's Markdown. Its headings rank below the section's own (h4) and are no taller than body text. */
   #full-ticket .md p, #full-ticket .criteria p, #doc-view .md p { margin: 0 0 8px; }
   #full-ticket .md > :last-child, #full-ticket li > :last-child, #doc-view .md > :last-child, #doc-view li > :last-child { margin-bottom: 0; }
   #full-ticket .md ul, #full-ticket .md ol, #full-ticket .criteria ul, #full-ticket .criteria ol, #doc-view .md ul, #doc-view .md ol { margin: 0 0 8px; padding-left: 20px; }
   #full-ticket li ul, #full-ticket li ol, #doc-view li ul, #doc-view li ol { margin: 2px 0 0; }
   #full-ticket h5, #full-ticket h6, #doc-view h5, #doc-view h6 { margin: 10px 0 4px; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; color: var(--text); font-weight: 600; }
-  #full-ticket .md-h1, #doc-view .md-h1 { font-size: 13px; }
-  #full-ticket .md-h2, #doc-view .md-h2 { font-size: 12px; }
-  #full-ticket .md-h3, #doc-view .md-h3 { font-size: 12px; color: var(--muted); }
+  #doc-view .md-h1 { font-size: 13px; }
+  #doc-view .md-h2 { font-size: 12px; }
+  #doc-view .md-h3 { font-size: 12px; color: var(--muted); }
+  /* 0424: the text, a heading in it smaller at each level and all smaller than a section's, and lists with their numbers
+     and bullets hanging to the left of the text, a nested list indented under its item. */
+  #full-ticket .md, #full-ticket ol.criteria { font-size: 15px; line-height: 1.6; }
+  #full-ticket .md p, #full-ticket .criteria p { margin: 0 0 10px; }
+  #full-ticket .md-h1 { font-size: 18px; }
+  #full-ticket .md-h2 { font-size: 16px; }
+  #full-ticket .md-h3 { font-size: 15px; color: var(--muted); }
+  #full-ticket .md ul, #full-ticket .md ol, #full-ticket ol.criteria, #full-ticket .criteria ul, #full-ticket .criteria ol { margin: 0 0 10px; padding-left: 1.6em; list-style-position: outside; }
+  #full-ticket li ul, #full-ticket li ol { margin: 4px 0 0; }
+  #full-ticket h4:first-child, #full-ticket .md > :first-child { margin-top: 0; }
   #full-ticket code.md-code, #doc-view code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
   #full-ticket pre, #doc-view pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   #full-ticket pre code, #doc-view pre code { font-size: 12px; }
   /* 0132: a review pack's table, and its findings, which fold away */
   #full-ticket .md table, #doc-view .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 13px; }
   #full-ticket .md th, #full-ticket .md td, #doc-view .md th, #doc-view .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
+  #full-ticket .md table, #full-ticket pre code { font-size: 15px; } /* 0424: a table's and a code block's text is the ticket's text size too */
   #full-ticket .md th, #doc-view .md th { font-weight: 600; background: var(--raise); }
   #full-ticket .md details, #doc-view .md details { margin: 0 0 8px; }
   #full-ticket .md summary, #doc-view .md summary { cursor: pointer; color: var(--muted); }
@@ -1873,7 +1890,8 @@ function fullTicket(t, draft) {
   }
   mdPart(body, 'Out of scope', t.out_of_scope);
   mdPart(body, 'Notes', t.notes);
-  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', t.title), close, paneTags(t)), body];
+  // 0424: its id and status above its title, and its tags under it.
+  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'state', String(t.status ?? '')), close, el('span', 'title', t.title), paneTags(t)), body];
 }
 // The pane's tags under the title, or nothing when the ticket has none.
 function paneTags(t) {
@@ -1930,7 +1948,7 @@ const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false);
 // and what the tags show.
 const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes];
 const readyData = t => [ownData(t), settingReady.has(t.id), refused.get(t.id) ?? null];
-const tagData = t => [t.type, t.priority, t.size, t.risk, t.auto_ship === true]; // 0165: auto_ship changes the risk tag's tip
+const tagData = t => [t.type, t.priority, t.size, t.risk, t.auto_ship === true, t.status]; // 0165: auto_ship changes the risk tag's tip
 // Shows the ticket whose id is in fullId wherever it shows: in the Tickets list, the queue or the Shipped list, the
 // first one in that order when ids repeat. It closes the pane when the ticket shows in none of them. The pane keeps
 // its nodes while what they show is unchanged, so text selected in it survives the refresh. When only a draft's
@@ -1968,6 +1986,8 @@ function renderFull(m) {
   if (tagsSig !== tagsBuilt) {
     tagsBuilt = tagsSig;
     const head = pane.children[0], old = [...head.children].find(n => n.className === 'tags'), now = paneTags(t);
+    const state = [...head.children].find(n => n.className === 'state');
+    if (state) state.textContent = String(t.status ?? ''); // 0424
     if (old) head.removeChild(old);
     if (now) head.appendChild(now);
   }
