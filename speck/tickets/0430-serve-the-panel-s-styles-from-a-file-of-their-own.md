@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0428", "0429", "0434"] # ticket ids that must be done first
+after: ["0428", "0429", "0434", "0435"] # ticket ids that must be done first
 created: 2026-10-23
 
 ---
@@ -40,7 +40,7 @@ The panel's styles are in a file of their own.
 - Part of splitting `templates/panel.html` (4,414 lines, 315 KB on 2026-10-23) into files by area, so panel tickets in different areas can build side by side and agents work with smaller files: 0430 styles, 0431 the model, 0432 Settings, 0433 the rest. No change to what the panel does or how it looks.
 - Install and update copy the whole `templates/` folder (`place` in `scripts/`), so a new file there reaches projects with no change.
 - The page's stamp (`stampOf` in `scripts/panel.mjs`) is worked out from `panel.html` alone today. `/lcd.js` and `/fonts/Doto.ttf` show how the server names each file it serves.
-- Waits for 0428, as 0426 to 0428 restyle the whole page and this moves every style, and for 0429, as both may change the same test files. Also waits for 0434, which adds styles for the working grid.
+- Waits for 0428, as 0426 to 0428 restyle the whole page and this moves every style, and for 0429, as both may change the same test files. Also waits for 0434 and 0435, which change the cards' styles.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
