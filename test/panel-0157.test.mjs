@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, round, shippedRows, startOfToday, openDetails } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, round, shippedRows, startOfToday, openDetails, openLane } from './support/panel.mjs';
 
 // ---------- 0157: a tidy Shipped section ----------
 
@@ -134,6 +134,7 @@ async function withPanel(fn, { width = 1280, theme = 'light' } = {}) {
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(theme) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelectorAll('#shipped tr').length === 5`, 'the panel');
+    await b.js(openLane('shipped')); // 0410
     assert.equal(await b.js(`document.documentElement.dataset.theme`), theme);
     await fn(b);
   } finally { await b.close(); await stop(panel); }

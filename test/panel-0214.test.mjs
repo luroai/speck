@@ -1,14 +1,15 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, full, idea, click, toggles, items, top } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, full, idea, click, toggles, items, top, openLane } from './support/panel.mjs';
 
 // ---------- 0214: Plan's idea and inbox cards get a ticket card's larger title ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
-// A title long enough to wrap even at 1,280 px, and a short one.
-const LONG = 'Let the panel say which of the reviewer findings were fixed, which were disputed and which are still open after the last round, so nobody has to read the log';
+// A title long enough to wrap even at 1,280 px, and a short one. 0410: Plan is the full width there now, so it's longer.
+const LONG = 'Let the panel say which of the reviewer findings were fixed, which were disputed and which are still open after the last round, so nobody has to read the log, '
+  + 'and say it again in the review pack, with each finding\'s round and the reviewer who raised it';
 const STATE = {
   run: { on: false },
   tickets: [full('0201', { title: 'A ticket' })],
@@ -102,6 +103,7 @@ test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox labels are 14 px a
       await b.send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 700 });
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
       await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#shaping .item.ticket')`, 'the panel');
+      await b.js(openLane('plan')); // 0410
       const [ticket] = await b.js(CARDS);
       assert.deepEqual([ticket.idSize, ticket.titleSize], ['14px', '17px'], `${width} px: the ticket`);
       for (const [view, , label] of VIEWS) {
