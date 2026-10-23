@@ -43,7 +43,9 @@ The full ticket, and a review pack, open over the whole panel, as Settings does.
 - Self-check: the top line's room for a phone's notch now comes from its sticky padding, as Settings' does, so four older tests of the side pane (0060's click outside, 0136's dark shadow, 0160's border below the status bar) were changed to the whole-panel layout; no other changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The full ticket and a review pack now open over the whole panel, just as Settings does, rather than in a narrow strip down the right. On a wide window the text sits in a centred column no wider than 720 px, so long lines stay easy to read. The line with the ticket's title and Close stays at the top as you scroll. Close and Escape work as before, and you're put back on the button you opened it from.
+
+To see it, open any ticket's Full ticket, or an approved ticket's Review pack. Clicking where the page used to show beside the pane no longer closes it, as the ticket now covers the whole window: use Close or Escape.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,6 +55,9 @@ The full ticket, and a review pack, open over the whole panel, as Settings does.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - A review pack's acceptance criteria table squeezes its Result column to one letter wide (seen in this build's pictures, and there before it): speck/ideas/2026-10-23-keep-the-review-pack-s-result-column-readable.md
+  - Tidy-up: the full ticket's backdrop is now always hidden behind the pane, so a click on it can't happen in a real browser. It's left in place, as the page's hold and inert handling still use it.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -116,6 +121,71 @@ The full ticket, and a review pack, open over the whole panel, as Settings does.
     ],
     "escalation_question": "",
     "summary": "Full tickets and review packs now cover the panel, with a sticky title row and working close controls. The reported tests pass, but the width calculation allows the text column to exceed its specified maximum by one pixel at odd window widths. Fix that calculation before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4d9210c7facee478bcb5458b378e245a6b776d4a",
+    "session": "continued",
+    "thread_id": "01a169eb-6655-77a2-9e75-fa99c9a81182",
+    "builder_response": "- Tests run: test/panel-0423.test.mjs test/panel-0053.test.mjs test/panel-0051.test.mjs test/pack-0362.test.mjs test/pack-0363.test.mjs test/panel-0054.test.mjs test/panel-0137.test.mjs test/panel-0073.test.mjs test/panel-0147.test.mjs test/panel-0138.test.mjs test/panel-0141.test.mjs test/panel-0162.test.mjs test/panel-0160.test.mjs test/panel-0140.test.mjs test/panel-0142.test.mjs test/panel-0153.test.mjs test/panel-0213.test.mjs test/panel-0155.test.mjs test/panel-0062.test.mjs test/panel-0165.test.mjs test/panel-0133.test.mjs test/panel-0366.test.mjs test/panel-0063.test.mjs test/panel-0158.test.mjs test/panel-0361.test.mjs test/panel-focus-0326.test.mjs test/panel-0417.test.mjs test/panel-0368.test.mjs test/panel-0134.test.mjs test/panel-0136.test.mjs test/panel-0201.test.mjs test/panel-0060.test.mjs test/panel.test.mjs test/panel-0161.test.mjs test/panel-0411.test.mjs test/release-0367.test.mjs test/panel-0061.test.mjs test/panel-0143.test.mjs test/panel-0132.test.mjs test/panel-0357.test.mjs test/panel-0156.test.mjs test/panel-0157.test.mjs test/panel-0199.test.mjs test/panel-0410.test.mjs test/panel-0151.test.mjs test/pictures-0294.test.mjs test/pull-request-0295.test.mjs \n- F1: fixed. templates/panel.html #full-ticket: the right padding now rounds up (round(up, …)) while the left rounds down, so the two always add up to at least the window's width less 720 px and the column is never wider than 720 px. The AC3 test in test/panel-0423.test.mjs now checks both formulas exactly, and works out the column at even and odd widths (761, 800, 1024, 1279, 1280, 1281, 1920, 2561 px): at most 720 px, the full 720 px from 752 px up, and centred to within a pixel. Checked in headless Chromium at 1281 x 800: paddings 280 px and 281 px, top line 720 px wide from x = 280.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 234788,
+      "cached_input_tokens": 197888,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1353,
+      "reasoning_output_tokens": 141
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T18:02:50.518Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html sets #full-ticket to position: fixed; inset: 0. Passing panel-0423 AC1 tests check the full-window styles and exercise both Full ticket and Review pack opening."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html includes #full-ticket .top in the shared sticky header rule. Passing panel-0423 AC2 tests check its positioning and exercise Close, Escape and focus restoration."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html:392 now rounds left padding down and right padding up, keeping the column within 720 px. The passing panel-0423 AC3 test verifies those formulas and their results at even and odd window widths."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:392",
+        "issue": "The previous padding calculation allowed a 721 px text column at odd window widths.",
+        "suggested_fix": "Addressed by rounding right padding up and extending the width test to cover even and odd window widths.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Full tickets and review packs cover the whole panel, with a sticky title row and working close controls. The width issue is fixed. All acceptance criteria pass, and the reported test run has no failures."
   }
 }
 ```
