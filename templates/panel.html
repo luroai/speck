@@ -458,6 +458,8 @@
   #settings .switch-row p.explain, #settings .setting p.explain { position: absolute; left: 12px; right: 12px; bottom: calc(100% - 4px); z-index: 2; margin: 0; padding: 6px 10px; color: var(--text); background: var(--raise); border: .5px solid var(--line); box-shadow: 0 4px 12px rgba(20, 20, 19, .12); overflow-wrap: anywhere; }
   #settings .switch-row p.explain.below, #settings .setting p.explain.below { bottom: auto; top: calc(100% - 4px); }
   #settings .switch-row p.explain[hidden], #settings .setting p.explain[hidden] { display: none; }
+  /* 0405: a role's, which explains its effort too, can be taller than a narrow view: it scrolls rather than run off it */
+  #settings .setting p.explain { max-height: 60vh; overflow-y: auto; }
   /* 0275: asked on closing the view with changes not saved, over the view and its backdrop */
   #settings-unsaved { position: fixed; inset: 0; z-index: 11; display: grid; place-items: center; padding: 16px; background: rgba(20, 20, 19, .2); }
   #settings-unsaved[hidden] { display: none; }
@@ -2209,11 +2211,13 @@ function pairSettings(rows) {
 function settingRow(x, n) {
   const role = yourModels() !== null && Object.hasOwn(ROLES, x.key) ? x.key : null; // 0400: a role's one list
   const edit = x.editable === true ? (role !== null ? roleEditor(x) : settingEditor(x)) : null;
-  // 0400: a role's list holds its model too, so it's this machine's own when either is.
-  const own = withRoleModel(x.key).filter(k => settingRows().some(r => r.key === k && r.for_machine === true && r.from === 'machine'));
-  const cleared = own.length > 0 && own.every(k => settingClear.has(k)), mine = own.length > 0 && !cleared;
+  // 0405: a role's effort, drawn in its row, is explained with the role, under the role's one info button.
+  const effortKey = role !== null ? Object.keys(ROLE_PAIRS).find(k => ROLE_PAIRS[k] === role) : undefined;
+  const effort = effortKey !== undefined && pairedWith(effortKey) !== null && takesEffort(role) ? settingRows().find(r => r.key === effortKey) : undefined;
+  const nested = yourModels() !== null && Object.hasOwn(ROLE_PAIRS, x.key) && pairedWith(x.key) !== null;
   // 0397: where a change is saved, and this machine's own value with its button, are said in the explanation, not marked.
-  const [info, tip] = settingInfo(x, n, mine ? machineLine(x) : cleared ? clearLine(x) : null);
+  const [info, tip] = nested ? [null, null] : effort === undefined ? settingInfo(x, n, ownLine(x))
+    : settingInfo({ key: x.key, explain: sharedEnd(String(x.explain ?? ''), String(effort.explain ?? '')) }, n, [ownLine(x), ownLine(effort, x.key)], typeof effort.explain === 'string' && effort.explain ? effort.explain : null);
   const shown = edit ? edit : [el('code', 'value', settingValue(x.value))];
   const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown);
   const row = el('div', model ? 'setting model' : 'setting', null,
@@ -2232,6 +2236,20 @@ function settingRow(x, n) {
   if (yourModels() !== null && Object.hasOwn(ROLE_PAIRS, x.key) && !takesEffort(ROLE_PAIRS[x.key])) row.hidden = true; // 0400
   settingRowsDrawn.set(x.key, { row, n, control });
   return row;
+}
+// 0397: this machine's own value of `x`, with its button, or that it's cleared on Save, for its explanation; null when
+// it has none. 0405: `tip`, the explanation it's in, kept open by its button.
+function ownLine(x, tip = x.key) {
+  // 0400: a role's list holds its model too, so it's this machine's own when either is.
+  const own = withRoleModel(x.key).filter(k => settingRows().some(r => r.key === k && r.for_machine === true && r.from === 'machine'));
+  const cleared = own.length > 0 && own.every(k => settingClear.has(k));
+  return own.length === 0 ? null : cleared ? clearLine(x, tip) : machineLine(x, tip);
+}
+// 0405: `a` without the sentences it ends with that `b` ends with too, such as where a change is saved, so the two read
+// as one explanation that says them once.
+function sharedEnd(a, b) {
+  for (let i = a.indexOf('. '); i !== -1; i = a.indexOf('. ', i + 1)) if (b.endsWith(` ${a.slice(i + 2)}`)) return a.slice(0, i + 1);
+  return a;
 }
 // 0370: the rows of `keys` drawn again in their places, leaving the rest of the view, and how far it's scrolled, as it
 // was. `kept`, the setting just changed, keeps its name and control, never taken out, so it keeps the focus: only the
@@ -2280,8 +2298,10 @@ function settingName(key) {
 // 0268: a setting's info button and its explanation, which a screen reader reads with the button. 0397: `line`, this
 // machine's own value and its button, goes at the end of it, and the pointer or the focus can move into it from the
 // button without it closing.
-function settingInfo(x, n, line = null) {
-  const key = x.key, tip = el('p', 'explain', null, el('span', null, x.explain), line);
+function settingInfo(x, n, lines = null, also = null) {
+  const key = x.key, more = (Array.isArray(lines) ? lines : [lines]).filter(l => l !== null);
+  const line = more.length > 0 ? more : null;
+  const tip = el('p', 'explain', null, el('span', null, x.explain), also !== null ? el('span', null, ` ${also}`) : null, ...more);
   const inTip = node => line !== null && node != null && typeof tip.contains === 'function' && tip.contains(node);
   const hide = () => { if (settingTip === key && !settingTipKept && settingFocus !== key && settingHover !== key) showSettingTip(null, false); };
   tip.id = `setting-explain-${n}`;
@@ -2923,22 +2943,22 @@ async function saveKey(a) {
 }
 // 0261: in the explanation of a setting that uses this machine's own value (0397), the project's value and a button to
 // clear this machine's on Save. Pressing it keeps the explanation open, to show what it did.
-function machineLine(x) {
+function machineLine(x, tip = x.key) {
   const clear = el('button', 'save', 'Clear this machine\'s value');
   clear.type = 'button';
   clear.addEventListener('click', () => {
     for (const k of withRoleModel(x.key).filter(fromMachine)) settingClear.add(k);
     for (const k of withRoleModel(x.key)) { settingTyped.delete(k); settingRefused.delete(k); }
-    keepSettingTip(x.key);
+    keepSettingTip(tip);
     renderSettings();
   });
   const project = withRoleModel(x.key).length > 1 ? roleWords(x.key, roleValue(x.key, projectValue)) : `${settingValue(x.repo_value)}${x.default ? ', speck\'s default' : ''}`; // 0400
   return el('span', 'line', null, el('span', null, `This is your machine's own value, used over the project's: ${project}.`), clear);
 }
-function clearLine(x) {
+function clearLine(x, tip = x.key) {
   const keep = el('button', 'save', 'Keep this machine\'s value');
   keep.type = 'button';
-  keep.addEventListener('click', () => { for (const k of withRoleModel(x.key)) { settingClear.delete(k); settingRefused.delete(k); } keepSettingTip(x.key); renderSettings(); });
+  keep.addEventListener('click', () => { for (const k of withRoleModel(x.key)) { settingClear.delete(k); settingRefused.delete(k); } keepSettingTip(tip); renderSettings(); });
   const value = withRoleModel(x.key).length > 1 ? roleWords(x.key, roleValue(x.key, settingSaved)) : settingValue(x.value); // 0400
   return el('span', 'line', null, el('span', null, `This machine's value, ${value}, is cleared when you save.`), keep);
 }
