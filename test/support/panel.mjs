@@ -22,6 +22,7 @@ export const PAGE = path.join(ROOT, 'templates', 'panel.html');
 export const STYLES = path.join(ROOT, 'templates', 'panel.css'); // 0430: the page's styles, which it loads from /panel.css
 export const MODEL = path.join(ROOT, 'templates', 'panel-model.js'); // 0431: the page's model, which it loads from /panel-model.js
 export const SETTINGS = path.join(ROOT, 'templates', 'panel-settings.js'); // 0432: the Settings view's script, which it loads from /panel-settings.js
+export const SCRIPT = path.join(ROOT, 'templates', 'panel.js'); // 0433: the rest of the page's script, which it loads from /panel.js
 export const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
 export const env = { ...process.env, ...gitEnv };
 export const good = `## Problem\nUsers cannot export.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n`;
@@ -132,7 +133,8 @@ export function cliCopy() {
   fs.cpSync(path.join(ROOT, 'scripts'), path.join(dir, 'scripts'), { recursive: true });
   fs.cpSync(path.join(ROOT, 'templates'), path.join(dir, 'templates'), { recursive: true });
   return { cli: path.join(dir, 'scripts', 'speck.mjs'), page: path.join(dir, 'templates', 'panel.html'), styles: path.join(dir, 'templates', 'panel.css'),
-    model: path.join(dir, 'templates', 'panel-model.js'), settings: path.join(dir, 'templates', 'panel-settings.js') };
+    model: path.join(dir, 'templates', 'panel-model.js'), settings: path.join(dir, 'templates', 'panel-settings.js'),
+    script: path.join(dir, 'templates', 'panel.js') };
 }
 
 // The page's pure model function, run outside the browser.
@@ -143,6 +145,8 @@ export const styles = () => fs.readFileSync(STYLES, 'utf8');
 export const model = () => fs.readFileSync(MODEL, 'utf8');
 // 0432: the Settings view's script, from its own file.
 export const settingsScript = () => fs.readFileSync(SETTINGS, 'utf8');
+// 0433: the rest of the page's script, from its own file.
+export const pageScript = () => fs.readFileSync(SCRIPT, 'utf8');
 
 // 0126: the panel's agreed colours. 0134 changed them to the zen look's, 0147 to the landing page's.
 export const PALETTE = '--bg: #f3f3f3; --panel: #fcfcfc; --raise: #f3f3f3; --line: #14141476; --line-soft: #14141413; --text: #141414EB; --muted: #141414BA; --faint: #141414BA; --accent: #cf2d56; --ok: #145a42; --warn: #6d4700; --bad: #96213f; --run: #285372; --idea: #833063';
@@ -228,14 +232,17 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
     if (next && next.status) return { ok: false, status: next.status, json: async () => next.body };
     return { ok: true, status: 200, json: async () => next };
   };
-  const [script, start] = [...page().matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]); // 0432: the page's script, then its start
+  // 0433: what the server puts on the page's <script src="/panel.js"> tag, which the script reads as it runs.
+  const dataset = Object.fromEntries([...(page().match(/<script src="\/panel\.js"([^>]*)>/) || ['', ''])[1].matchAll(/data-(\w+)="([^"]*)"/g)].map(m => [m[1], m[2]]));
   const ctx = { document, fetch, setTimeout: pageTimeout, clearTimeout: pageClearTimeout, setInterval, clearInterval, AbortController, Date, Math, JSON, String, Number, Array, Set, console, ...globals };
   if (!Object.hasOwn(globals, 'EventSource')) ctx.EventSource = tickingSource(ctx); // 0187: the board's changes, as the poll's timer was
   vm.createContext(ctx);
   vm.runInContext(model(), ctx); // 0431: the model first, as the page loads it from /panel-model.js
-  vm.runInContext(script, ctx);
+  document.currentScript = { dataset };
+  vm.runInContext(pageScript(), ctx); // 0433: then the page's script, as the page loads it from /panel.js
+  document.currentScript = null;
   vm.runInContext(settingsScript(), ctx); // 0432: then Settings, as the page loads it from /panel-settings.js
-  vm.runInContext(start, ctx);
+  document.listeners.DOMContentLoaded(); // 0433: and the page starts once it has all loaded
   const all = (n, out = []) => { out.push(n); for (const c of n.children || []) all(c, out); return out; };
   const settle = () => new Promise(r => setTimeout(r, 20));
   // Runs the page's waits of `ms` (10000: no board for 10 seconds; 15000: a request for the board given up), as the
@@ -319,7 +326,7 @@ export function post(port, pathName, { origin = `http://127.0.0.1:${port}`, toke
     req.end(sent);
   });
 }
-export const tokenOf = html => (html.match(/const TOKEN = '([0-9a-f]+)';/) || [])[1];
+export const tokenOf = html => (html.match(/data-token="([0-9a-f]+)"/) || [])[1]; // 0433: on the tag that loads /panel.js
 export const readyPath = id => `/api/tickets/${id}/ready`;
 
 // A panel repo with a draft 0002 that passes lint (untracked, as a fresh draft is), served on a free port.

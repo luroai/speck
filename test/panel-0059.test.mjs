@@ -27,7 +27,7 @@ test('0059 AC1: editing panel.html while the panel runs shows on the next reques
     assert.match(after.headers['content-type'], /text\/html/);
     assert.match(after.body, /EDITED-0059/);
     assert.ok(after.body.includes(`<span class="repo">${path.basename(r.dir)} · <code>main</code></span>`), 'the project and base branch (0413)');
-    assert.match(after.body, /const TOKEN = '[0-9a-f]{64}';/);
+    assert.match(after.body, /data-token="[0-9a-f]{64}"/);
     assert.doesNotMatch(after.body, /\{\{(repo|base|token)\}\}/);
   } finally { await stop(p); }
 });
@@ -102,7 +102,7 @@ test('0059 AC4: /api/state reads afresh, and the page asks for it when the panel
     r.write('0002-two.md', fm({ id: '"0002"', title: 'Two' }));
     const second = JSON.parse((await request(port, { pathName: '/api/state' })).body);
     assert.equal(second.tickets.length, first.tickets.length + 1);
-    const html = (await request(port)).body;
+    const html = (await request(port, { pathName: '/panel.js' })).body; // 0433: the page's script, which it loads from /panel.js
     assert.match(html, /new EventSource\('\/api\/events'\)/);
     assert.doesNotMatch(html, /POLL_MS/);
   } finally { await stop(p); }

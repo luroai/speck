@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { T, panelRepo, freePort, startPanel, stop, request, post, fakePage, page, model, queueRows, click, exitOf, findChrome, browserPage, charAt, styles } from './support/panel.mjs';
+import { T, panelRepo, freePort, startPanel, stop, request, post, fakePage, page, model, queueRows, click, exitOf, findChrome, browserPage, charAt, styles, pageScript } from './support/panel.mjs';
 
 // ---------- 0051: expand a queue ticket to read its build log ----------
 
@@ -224,7 +224,7 @@ test('0051 AC4: the log is shown as text, never as HTML', async () => {
   const log = logOf(p, rowOf(p, '0001'));
   assert.equal(log.textContent, evil);
   assert.ok(!p.all(rowOf(p, '0001')).some(n => n.tagName === 'img' || n.tagName === 'b' && n._text === 'bold'), 'no element made from the log');
-  assert.ok(!/innerHTML|insertAdjacentHTML|outerHTML/.test(page().match(/<script>([\s\S]*?)<\/script>/)[1]));
+  assert.ok(!/innerHTML|insertAdjacentHTML|outerHTML/.test(pageScript()));
 });
 
 test('0051 AC5: no log is asked for while no queue ticket is open, and only open ones are asked for', async () => {
