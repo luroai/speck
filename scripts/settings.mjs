@@ -59,14 +59,11 @@ export const SETTING_GROUPS = [
       explain: 'How hard the reviewer thinks: low, medium, high, xhigh or max, any other effort Codex offers for its model, or blank for the reviewer\'s own default. More effort takes longer and costs more, but can catch more.' },
     { key: 'allow_same_model_review', default: false,
       explain: 'Whether the builder and reviewer may be the same model, needed only when they are in the same family (such as a Claude builder and a claude-subagent reviewer) and would run the same model, or when either model is left at its default (a Cursor build left at its default runs on auto, which counts as a model of its own when speck starts the build). Leave it false so a different model checks the work: true lets a model review work like its own, which tends to catch less.' },
-  ] },
-  { title: 'How much runs at once', settings: [
+    // 0406: parallel runs and ticket size limits sit here too, after the builder and reviewer
     { key: 'max_parallel_builds', default: 1,
       explain: 'How many tickets speck run builds at once. More finish sooner, but use more of your computer and agent usage, and builds that change the same files are more likely to clash.' },
     { key: 'max_parallel_tests', default: 1,
       explain: 'How many test runs go at once in this project, from any build, while the rest wait their turn. Raising it shortens the wait, but can slow the computer down or make tests that share something fail.' },
-  ] },
-  { title: 'Ticket size limits', settings: [
     { key: 'limits.max_acceptance_criteria', default: 5,
       explain: 'The most acceptance criteria a ticket can have before speck refuses to set it ready and asks you to split it. Raising it allows bigger tickets, which are harder to review well.' },
     { key: 'limits.max_changed_lines', default: 300,
