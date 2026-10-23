@@ -2760,7 +2760,6 @@ function agentWords(a) {
   if (a.kind === 'provider') return a.key_set === true ? 'Key set' : 'No key';
   return a.installed !== true ? 'Not installed' : a.signed_in === true ? 'Installed, signed in' : 'Installed, not signed in';
 }
-const ROLE_WORDS = roles => roles.length > 1 ? `${roles.slice(0, -1).join(', ')} and ${roles.at(-1)}` : roles[0];
 function agentButton(label, key, fn) {
   const b = focusable(el('button', 'save', label), key);
   b.type = 'button';
@@ -2769,12 +2768,11 @@ function agentButton(label, key, fn) {
 }
 // One of your agents: its name, whether it's ready, and Remove. A provider's row has its key field, to replace it.
 function agentRow(a) {
-  const st = agentState(a.id), roles = Array.isArray(a.roles) ? a.roles.filter(r => typeof r === 'string') : [];
+  const st = agentState(a.id);
   const remove = agentButton(st.busy === 'remove' ? 'Removing…' : 'Remove', `remove:${a.id}`, () => agentAction(a, 'remove'));
   remove.setAttribute('aria-label', `Remove ${a.name}`);
   return el('div', 'arow agent', null,
     el('div', 'row', null, el('span', 'label', null, el('span', 'name', a.name)), el('div', 'control', null, el('span', 'state', agentWords(a)), remove)),
-    roles.length ? el('p', null, `The ${ROLE_WORDS(roles)} ${roles.length > 1 ? 'use' : 'uses'} it.`) : null,
     a.ready !== true && typeof a.why === 'string' && a.why ? el('p', null, a.why) : null,
     a.kind === 'provider' ? keyLine(a) : null);
 }
