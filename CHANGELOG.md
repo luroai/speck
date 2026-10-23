@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.14.0 · 23 October 2026
+
+What's new since 0.13.1. A minor release that adds model providers, through your own API key for each. DeepSeek is the first, and the only one tested with speck so far. Save this machine's DeepSeek key once, and DeepSeek can build your tickets, review them and run the Foreman, chosen from the command line or in Settings. Nothing changes unless you choose it.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.14.0 init`.
+
+### API keys
+
+- `speck keys set deepseek` saves this machine's DeepSeek API key. It asks for the key without showing it as you type, or you can pipe it in, as in `speck keys set deepseek < key.txt`. A key given on the command line is refused. The key is kept in `speck/.cache/machine/keys.json` in the main checkout, which git ignores and only you can read or write, so every worktree of the repo uses the same key.
+- speck never prints or logs a key, and never writes one to a ticket, a review pack, a run record or `speck/config.yml`. `speck keys` lists each provider speck knows and whether its key is set, and nothing more. `speck keys remove deepseek` deletes the key. A provider speck doesn't know is refused, naming the ones it does.
+
+### Reviewing with DeepSeek
+
+- With `reviewer: deepseek`, each review round runs on DeepSeek's model named in `reviewer_model`, `deepseek-v4-pro` or `deepseek-v4-flash`, or `deepseek-v4-pro` when that's blank. `reviewer_effort` isn't passed. It's read-only, as the Claude reviewer is, later rounds carry on the same session, and the round is recorded like any other.
+- DeepSeek counts as a family of its own, so it can review any builder's work, Claude Code's included.
+
+### Building with DeepSeek
+
+- With `builder: deepseek`, in `speck/config.yml` with `build_command` blank or on one ticket, `speck run` builds the ticket on DeepSeek's model named in `builder_model`, or `deepseek-v4-pro` when that's blank. The build follows `/speck-build` as a Claude Code build does: stopping, resuming and handing a ticket back all work the same, and the panel names the builder as DeepSeek.
+- `speck config set builder deepseek` now sets `build_command` blank in the same change, as switching the builder in Settings does.
+
+### The Foreman on DeepSeek
+
+- With `foreman: deepseek`, the Foreman runs on DeepSeek's model named in `foreman_model`, or DeepSeek's default when that's blank, and `foreman_effort` isn't passed. A blank `foreman` uses DeepSeek while DeepSeek builds, as it does for Codex and Cursor builders. It may do only what the Claude Code Foreman may: read files, and run speck's commands and read-only git commands.
+
+### How speck runs DeepSeek
+
+- speck runs a provider's models through Claude Code, so Claude Code must be installed. Claude Code gets only the provider's address and this machine's key for it: it never sends a request to Anthropic, and it doesn't use your Claude sign-in, your own Claude Code settings or your connectors. A build still reads the repo's own `CLAUDE.md`, `AGENTS.md` and speck's skills, and the commands it runs still run as you, as any build's do.
+- Without the key, or without Claude Code, nothing starts: a review round fails before it begins and records nothing, `speck run` leaves the ticket ready and says why, and the Foreman isn't started, with `speck run` saying why. Each says how to fix it, and `speck doctor` checks both when DeepSeek builds or reviews.
+
+### Settings
+
+- The builder, reviewer and Foreman lists offer DeepSeek by its own name, and choosing it lists DeepSeek's models for the model setting.
+- While DeepSeek is chosen for any of them, a new API keys box says whether this machine has a DeepSeek key, with a field to enter or replace it. The field never shows a saved key, and saving one keeps it for this machine as `speck keys set` does, without a commit. With no key saved, it says DeepSeek can't run until you enter one. While Claude Code isn't installed, Settings doesn't offer DeepSeek and says why.
+
 ## 0.13.1 · 23 October 2026
 
 What's fixed since 0.13.0. A bug-fix release: a stopped build starts again without restarting `speck run`, a test that fails once by chance no longer sends a ticket back, `speck doctor` checks a Cursor reviewer, and a pop-up's Close button stays in view. Nothing changes in your config or the commands.
