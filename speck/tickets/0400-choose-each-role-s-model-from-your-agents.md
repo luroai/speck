@@ -1,7 +1,7 @@
 ---
 id: "0400"
 title: "Choose each role's model from your agents"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-18-find-the-agents-and-models-on-this-machine.
 after: ["0399"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T10:50:07.524Z"
+approved: "2026-10-23T11:03:13.682Z"
 
 ---
 # 0400 · Choose each role's model from your agents
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Builder, Reviewer and Foreman each have an agent list and a separate model list, which offer agents you haven't set up and make you choose twice.
@@ -53,9 +54,15 @@ To see it, open Settings and look at builder, reviewer and Foreman. If a role us
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Cancelling a builder switch restores only the agent, leaving the newly chosen model pending.; F2 A machine override of only the model can no longer be cleared.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 741,079
+- Elapsed since build started: 13 min
+- Changed lines: 198 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Idea: speck/ideas/2026-10-23-make-a-long-model-list-easy-to-pick-from.md (Cursor's ~230 models make each list long).
