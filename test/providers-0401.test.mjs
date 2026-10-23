@@ -11,7 +11,7 @@ import { fakeClaude, after } from './support/provider-builder.mjs';
 import { settingsAnswer, panelSaveSettings } from '../scripts/settings.mjs';
 import { panelProviderAddRequest } from '../scripts/provider-form.mjs';
 import { knownProviders, customProvidersFile, checkedProvider } from '../scripts/custom-providers.mjs';
-import { readYourAgents } from '../scripts/your-agents.mjs';
+import { readYourAgents, removeAgent } from '../scripts/your-agents.mjs';
 import { providerKey, saveProviderKey } from '../scripts/keys.mjs';
 import { buildPlan } from '../scripts/ticket-builder.mjs';
 import { reviewerOptions } from '../scripts/reviewers.mjs';
@@ -221,4 +221,37 @@ test('0401 AC1: the README names Add an API provider and the file the provider i
   const readme = fs.readFileSync(path.join(import.meta.dirname, '..', 'README.md'), 'utf8');
   assert.match(readme, /\*\*Add an API provider\*\*/);
   assert.ok(readme.includes('`speck/.cache/machine/providers.json`'));
+});
+
+test('0401 AC2: a provider that is one of your agents isn\'t replaced by adding it again; once removed, adding it again changes it', async () => {
+  const r = panelRepo();
+  await add(r);
+  const again = await add(r, { ...ACME, address: 'https://other.test/anthropic', key: 'sk-other-0401' });
+  assert.equal(again.status, 422);
+  assert.match(again.body.error, /already one of your agents.*remove it/);
+  assert.equal(knownProviders(r.dir).find(p => p.name === 'acme-ai').address, 'http://127.0.0.1:9/anthropic', 'unchanged');
+  assert.equal(providerKey(r.dir, 'acme-ai'), KEY, 'its key unchanged');
+  removeAgent(r.dir, 'acme-ai', {}, { providers: knownProviders(r.dir), find: () => AGENTS_FOUND });
+  const replaced = await add(r, { ...ACME, address: 'https://other.test/anthropic', key: 'sk-other-0401' });
+  assert.equal(replaced.status, 200, JSON.stringify(replaced.body));
+  assert.equal(knownProviders(r.dir).find(p => p.name === 'acme-ai').address, 'https://other.test/anthropic');
+  assert.equal(providerKey(r.dir, 'acme-ai'), 'sk-other-0401');
+  assert.ok(readYourAgents(r.dir).includes('acme-ai'));
+});
+
+test('0401 AC2: when the provider can\'t be saved, its key is put back as it was and nothing else changes', async () => {
+  const r = panelRepo();
+  await add(r);
+  removeAgent(r.dir, 'acme-ai', {}, { providers: knownProviders(r.dir), find: () => AGENTS_FOUND });
+  const fail = () => { throw Object.assign(new Error('disk full'), { code: 'ENOSPC' }); };
+  const out = await panelProviderAddRequest(r.dir, JSON.stringify({ ...ACME, address: 'https://other.test/anthropic', key: 'sk-other-0401' }), { find: find(), saveProvider: fail });
+  assert.equal(out.status, 500);
+  assert.match(out.body.error, /nothing was saved/);
+  assert.equal(knownProviders(r.dir).find(p => p.name === 'acme-ai').address, 'http://127.0.0.1:9/anthropic');
+  assert.equal(providerKey(r.dir, 'acme-ai'), KEY, 'the old key is back');
+  assert.ok(!readYourAgents(r.dir).includes('acme-ai'));
+  const fresh = await panelProviderAddRequest(r.dir, JSON.stringify({ ...ACME, name: 'New Co' }), { find: find(), saveProvider: fail });
+  assert.equal(fresh.status, 500);
+  assert.equal(knownProviders(r.dir).some(p => p.name === 'new-co'), false);
+  assert.equal(providerKey(r.dir, 'new-co', { providers: [{ name: 'new-co', label: 'New Co' }] }), null, 'no key left behind');
 });
