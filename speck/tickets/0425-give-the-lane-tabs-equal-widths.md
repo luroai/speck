@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0412", "0413", "0414", "0415", "0416", "0417", "0418", "0419", "0420", "0421", "0422", "0423", "0424"] # ticket ids that must be done first
+after: ["0420"] # ticket ids that must be done first
 created: 2026-10-23
 
 ---
@@ -40,7 +40,7 @@ The three tabs are the same size and share the row, and each lane's counts are a
 - The user asked for this on 2026-10-23.
 - Changes 0410's tab row: criterion 2 replaces 0410's `<n> needs you` text on the Build tab with the number alone, so the tabs fit a third of 320 px.
 - Today: `.tabs`, `.tab`, `#queue-n`, `#shipped-n` and `#build-needs` in `templates/panel.html`.
-- Waits for 0412 to 0424: all change `templates/panel.html`.
+- Waits for 0420, which also changes the Shipped count. Builds alongside 0421 to 0424 (the user, 2026-10-23), which change other parts of `templates/panel.html`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
