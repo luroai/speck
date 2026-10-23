@@ -136,6 +136,15 @@ test('0426 AC3: each state colour is Cursor\'s, at the nearest shade that meets 
   }
 });
 
+test('0426 AC3: every link is blue, visited or not, including the pull request link in a review pack', () => {
+  uses('a', 'color', '--run');
+  assert.doesNotMatch(css(), /:(visited|link)\b/, 'nothing gives a visited link another colour');
+  // the pull request link is a plain <a> in the pack's ship line
+  assert.match(page(), /const a = el\('a', null, pr\.url\);/);
+  for (const sel of ['#full-ticket .ship-said, #doc-view .ship-said', '#full-ticket .ship-said.bad, #doc-view .ship-said.bad'])
+    assert.doesNotMatch(css(), new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' a\\b'), `${sel} doesn't recolour its link`);
+});
+
 test('0426 AC3: needs you, waiting for you, passing checks, links, the focus ring and the stage edges take those colours', () => {
   // needs you, a stopped build and the high-risk tag: red
   uses('.tab .needs', 'color', '--bad');
