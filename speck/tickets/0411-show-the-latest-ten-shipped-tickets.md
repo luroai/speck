@@ -39,6 +39,7 @@ Shipped lists the latest ten finished tickets.
 ## Notes
 - Five is set in two places that must agree: `SHIPPED_SHOWN` in `scripts/board-feed.mjs` and the `i < 5` filter on `shipped:` in `templates/panel.html`.
 - Waits for 0410: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
