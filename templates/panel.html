@@ -550,7 +550,7 @@
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
   /* 0362: a document task's Markdown file, over the whole panel, its path and Close above its text in a centred column.
      0366: the Foreman's detail opens in the same pop-up. */
-  #doc-view, #foreman { border-radius: 12px; position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #doc-view, #foreman { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #doc-view[hidden], #foreman[hidden] { display: none; }
   #doc-view .top, #doc-view .doc-actions, #doc-view .md, #foreman .top, #foreman .fm-body { max-width: 760px; margin: 0 auto; }
   #doc-view .top, #foreman .top { margin-bottom: 10px; }
@@ -635,7 +635,7 @@
      outline, which follows them. speck's screen and its frame stay square, as the design's console is. */
   button, input:not([type="checkbox"]):not([type="radio"]), select, textarea, .tag, .question-fact, .next, .prio-menu { border-radius: 8px; }
   .tab { border-radius: 8px 8px 0 0; } /* the open tab's top corners, and the others' */
-  .item, .q, #shipped tr, .q .log, #settings .sgroup, #settings .switches, #full-ticket, #settings-unsaved .box { border-radius: 12px; } /* and #doc-view, #foreman in their own rule (0362) */
+  .item, .q, #shipped tr, .q .log, #settings .sgroup, #settings .switches, #settings-unsaved .box { border-radius: 12px; } /* the full ticket, a document and the pipeline log fill the window, so they stay square (0160) */
   .stats { border-radius: 12px; overflow: hidden; }
   #tag-tip, #settings .switch-row p.explain, #settings .setting p.explain { border-radius: 8px; } /* a tip, as small as a control */
   .bezel, .bezel .glass, .bezel .glass::after { border-radius: 0; }
