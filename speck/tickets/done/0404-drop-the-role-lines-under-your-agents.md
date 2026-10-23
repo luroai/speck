@@ -1,7 +1,7 @@
 ---
 id: "0404"
 title: "Drop the role lines under Your agents"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0403"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T12:03:55.061Z"
 approved: "2026-10-23T12:07:08.146Z"
+finished: "2026-10-23T12:10:04.345Z"
 
 ---
 # 0404 · Drop the role lines under Your agents
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Each agent in Your agents has a line such as "The builder and Foreman use it." or "The reviewer uses it." That repeats what the role lists already show, and adds clutter.
