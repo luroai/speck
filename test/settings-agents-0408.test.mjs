@@ -5,6 +5,10 @@ import { panelRepo, gitEnv } from './support/panel.mjs';
 import { openSettings } from './support/settings.mjs';
 import { agentsPage, agentsBox, agentRows, rowNamed, buttonIn, keyInputOf, AGENTS_FOUND, YOURS_VIEW, settingsWithAgents } from './support/your-agents.mjs';
 import { settingsAnswer } from '../scripts/settings.mjs';
+import { panelProviderAddRequest } from '../scripts/provider-form.mjs';
+import { customProviders, knownProviders } from '../scripts/custom-providers.mjs';
+import { readYourAgents } from '../scripts/your-agents.mjs';
+import { providerKey } from '../scripts/keys.mjs';
 
 Object.assign(process.env, gitEnv);
 
@@ -81,4 +85,67 @@ test('0408 AC3: a provider removed with its key kept is still offered with Add, 
   const p = await openAdd(view);
   assert.deepEqual(offered(p), ['Cursor', 'DeepSeek']);
   assert.ok(buttonIn(p, rowNamed(p, 'DeepSeek', true), 'Add'));
+});
+
+const KEY = 'sk-0408-secret-Rm52t';
+const fill = (p, prop, value) => { const n = field(p, prop); n.value = value; (n.listeners.input ?? n.listeners.change)?.({ target: n }); };
+const addByForm = (r, given) => panelProviderAddRequest(r.dir, JSON.stringify(given), { find: async () => structuredClone(AGENTS_FOUND) });
+
+test('0408 AC2: DeepSeek is added through the Add an API provider form: its key is saved and it joins your agents, on speck\'s own address', async () => {
+  const r = panelRepo();
+  const head0 = r.g('rev-parse', 'HEAD');
+  const out = await addByForm(r, { name: 'DeepSeek', address: 'https://elsewhere.test/anthropic', type: 'openai', key: KEY, models: 'other-model' });
+  assert.equal(out.status, 200, JSON.stringify(out.body));
+  assert.equal(providerKey(r.dir, 'deepseek'), KEY);
+  assert.ok(readYourAgents(r.dir).includes('deepseek'));
+  assert.equal(out.body.provider, 'deepseek');
+  assert.equal(out.body.your_agents.agents.find(a => a.id === 'deepseek').yours, true);
+  assert.match(out.body.said, /Added DeepSeek/);
+  assert.match(out.body.said, /uses its own/);
+  assert.deepEqual(customProviders(r.dir), [], 'not saved as a provider of your own');
+  const ds = knownProviders(r.dir).find(p => p.name === 'deepseek');
+  assert.equal(ds.address, 'https://api.deepseek.com/anthropic', 'what was typed for the address is not used');
+  assert.equal(ds.type, 'anthropic');
+  assert.doesNotMatch(JSON.stringify(out.body), new RegExp(KEY));
+  assert.equal(r.g('rev-parse', 'HEAD'), head0, 'no commit');
+  assert.equal(r.g('status', '--porcelain'), '', 'nothing git sees');
+  // Only the name and key are needed, in any case.
+  const r2 = panelRepo();
+  const bare = await addByForm(r2, { name: ' deepseek ', key: KEY });
+  assert.equal(bare.status, 200, JSON.stringify(bare.body));
+  assert.equal(providerKey(r2.dir, 'deepseek'), KEY);
+});
+
+test('0408 AC2: the form refuses DeepSeek with a bad key, or when it is already yours, and changes nothing', async () => {
+  const r = panelRepo();
+  const bad = await addByForm(r, { name: 'DeepSeek', key: 'has a space' });
+  assert.equal(bad.status, 422);
+  assert.equal(providerKey(r.dir, 'deepseek'), null, 'no key saved');
+  assert.ok(!(readYourAgents(r.dir) ?? []).includes('deepseek'));
+  const empty = await addByForm(r, { name: 'DeepSeek', key: '' });
+  assert.equal(empty.status, 422);
+  assert.equal(providerKey(r.dir, 'deepseek'), null);
+  assert.equal((await addByForm(r, { name: 'DeepSeek', key: KEY })).status, 200);
+  const again = await addByForm(r, { name: 'DeepSeek', key: 'sk-other-0408' });
+  assert.equal(again.status, 422);
+  assert.match(again.body.error, /already one of your agents/);
+  assert.equal(providerKey(r.dir, 'deepseek'), KEY, 'its key unchanged');
+  // speck's own agents are still refused by name.
+  const claude = await addByForm(r, { name: 'Claude', key: KEY, address: 'https://api.acme.test/anthropic', type: 'anthropic', models: 'm' });
+  assert.equal(claude.status, 422);
+  assert.match(claude.body.error, /already has an agent called claude/);
+});
+
+test('0408 AC2: on the page, the form sends DeepSeek with its key', async () => {
+  const p = agentsPage(settingsWithAgents(noDeepSeek()), { '/api/providers': { ok: true, provider: 'deepseek', key_set: true, said: 'Added DeepSeek to your agents on this machine.', your_agents: YOURS_VIEW() } });
+  await openSettings(p);
+  p.press(buttonIn(p, agentsBox(p), 'Add an agent'));
+  assert.ok(!offered(p).includes('DeepSeek'));
+  fill(p, 'name', 'DeepSeek');
+  fill(p, 'key', KEY);
+  p.press(buttonIn(p, agentsBox(p), 'Save provider and add'));
+  await p.settle();
+  assert.deepEqual(p.posts().map(c => c.url), ['/api/providers']);
+  assert.deepEqual(JSON.parse(p.posts()[0].body), { name: 'DeepSeek', address: '', type: 'anthropic', key: KEY, models: '' });
+  assert.doesNotMatch(agentsBox(p).textContent, new RegExp(KEY));
 });
