@@ -1,7 +1,7 @@
 ---
 id: "0407"
 title: "Open Settings before the agent lists are ready"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T12:25:48.528Z"
 ---
 # 0407 · Open Settings before the agent lists are ready
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Opening Settings sits on "Loading the settings…" until speck has finished asking every agent CLI whether it is signed in and which models it offers. Cursor's model list alone often takes a few seconds, so the view feels stuck even though the config is ready at once.
@@ -57,3 +57,76 @@ Settings opens from this machine's and the project's config straight away, and t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "78450de1e8d33188a74e8cde5959a1eb1e4c1b4d",
+    "session": "fresh",
+    "thread_id": "01a168c0-9e5d-7ed1-8849-93a022fb4164",
+    "builder_response": "- Tests run: test/settings-0407.test.mjs (with the commands.checks files, which speck test --files adds)\n- Round 1. GET /api/settings?quick=1 answers from the config alone (settingsQuick) with `loading: true`; the page draws it at once, then reads GET /api/settings (unchanged settingsAnswer) and fills the role lists and Your agents in place (fillCatalogues: redrawSettings with each key kept, and drawAgents, which restores focus). A first answer without `loading` is drawn as before, with no second read, so existing tests and views keep working.\n- AC4: no existing test checked that Settings stays on loading until every agent answers, so none was changed. I also ran the 39 existing test files that open Settings or read /api/settings: all 342 tests pass.\n- Pictures: four, of Settings loading and filled, light and dark, from a real panel with the full read held back in the browser.\n",
+    "seconds": 41,
+    "usage": {
+      "input_tokens": 197012,
+      "cached_input_tokens": 148352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1076,
+      "reasoning_output_tokens": 190
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T12:34:17.688Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs settingsQuick reads config without agent checks; panel.mjs exposes the quick endpoint. The three AC1 tests passed, covering response time and drawing settings before the full answer."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "fillCatalogues updates controls in place, with passing tests for preserved edits and focus. However, roleEntries always offers the Foreman's inherited-builder entry, so roleEditor never adds a loading label for the usual blank Foreman configuration. The AC2 loading test checks only builder and reviewer."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "fillCatalogues and drawAgents display catalogue errors while retaining settings. Both AC3 tests passed, covering error messages and saving an unrelated setting during loading."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied round output reports 118 passed, zero failed and three skipped. Existing tests were not weakened; the builder also reports 342 passing tests across the existing Settings-related files. Whole-suite verification remains the shipping check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The Foreman model control does not indicate loading when Foreman inherits the builder's agent. roleEntries includes the selected '|' entry even with an empty catalogue, while roleEditor adds loading text only for values absent from the entries. This violates the requirement that each role's list indicate loading.",
+        "suggested_fix": "Show a loading indicator for every role independently of whether its selected value already exists. Extend the deferred-answer test to check Foreman with its default inherited-builder value.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Settings now opens promptly and fills in agent information afterwards while preserving edits. Error handling and saving during loading are covered. One required detail remains: the default Foreman control gives no indication that its model list is still loading."
+  }
+}
+```
+
+</details>

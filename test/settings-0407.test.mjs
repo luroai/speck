@@ -76,9 +76,10 @@ test('0407 AC2: each role\'s list and Your agents say they are loading, then fil
   const later = deferred();
   const p = settingsPage([quick(), later]);
   await openSettings(p);
-  for (const role of ['builder', 'reviewer']) {
-    assert.match(options(p, role).map(o => o.textContent).join(' '), /loading the list/, `${role} says it's loading`);
+  for (const role of ['builder', 'reviewer', 'foreman']) { // the Foreman left to the builder's agent, which is among its entries
+    assert.match(options(p, role).map(o => o.textContent).join(' '), /Loading your agents' models/, `${role} says it's loading`);
   }
+  assert.equal(controlOf(p, 'foreman').value, '|');
   assert.match(agentsBox(p).textContent, /Loading your agents/);
   changeTo(p, 'max_parallel_builds', '3');
   const typed = controlOf(p, 'max_parallel_builds'), reviewer = controlOf(p, 'reviewer'), groups = [...pane(p).children];
@@ -91,6 +92,7 @@ test('0407 AC2: each role\'s list and Your agents say they are loading, then fil
   assert.deepEqual(options(p, 'reviewer').filter(o => !o.disabled).map(o => o.value), ['claude|fable', 'claude|opus', 'claude|', 'claude|haiku', 'claude-subagent|', 'codex|']);
   assert.equal(reviewer.value, 'codex|', 'the reviewer as set');
   assert.doesNotMatch(pane(p).textContent, /loading the list|Loading your agents/);
+  assert.equal(controlOf(p, 'foreman').value, '|', 'the Foreman as set');
   assert.match(agentsBox(p).textContent, /Claude Code/);
   assert.match(agentsBox(p).textContent, /Codex/);
   assert.equal(controlOf(p, 'max_parallel_builds'), typed);
