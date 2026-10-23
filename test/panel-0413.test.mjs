@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, page, findChrome, browserPage, styles } from './support/panel.mjs';
+import { T, page, findChrome, browserPage, styles, pageScript } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 import { settingsPage } from './support/settings.mjs';
 import { rules, get, selectors } from './support/css.mjs';
@@ -11,7 +11,7 @@ import { screenPage, foreman, state, wordDots, expected } from './support/screen
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const headerHtml = () => (page().match(/<header>([\s\S]*?)<\/header>/) || [])[1] || '';
-const script = () => page().match(/<script>([\s\S]*?)<\/script>/)[1];
+const script = () => pageScript();
 const decl = (sel, prop) => rules().filter(r => !r.at.length && selectors(r).includes(sel)).map(r => get(r, prop)).filter(v => v !== undefined).pop();
 
 test('0413 AC1: the header is speck\'s screen in its dark frame, under a title row of speck, then the project and base branch', () => {

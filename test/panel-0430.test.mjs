@@ -27,7 +27,7 @@ test('0430 AC2: the server answers /panel.css with the file as text/css, read af
     assert.match(String(res.headers['content-type']), /^text\/css\b/);
     assert.equal(res.headers['cache-control'], 'no-store');
     assert.equal(res.body, fs.readFileSync(copy.styles, 'utf8'));
-    const sent = (await request(p.port, { pathName: '/' })).body.match(/const PAGE = '([0-9a-f]{16})';/)[1];
+    const sent = (await request(p.port, { pathName: '/' })).body.match(/data-page="([0-9a-f]{16})"/)[1];
     const now = async () => JSON.parse((await request(p.port, { pathName: '/api/state' })).body).page;
     assert.equal(await now(), sent, 'not out of date before the change');
     fs.appendFileSync(copy.styles, '\n/* changed */\n');

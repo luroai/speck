@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, openLane, styles } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, openLane, styles, pageScript } from './support/panel.mjs';
 
 // ---------- 0427: use Cursor's fonts in the panel ----------
 
@@ -82,7 +82,7 @@ test('0427 AC4: no label is in spaced capitals: buttons and labels are sentence 
     assert.equal(family(rule(sel)), UI, `${sel}: the interface font`);
   }
   // The words themselves are already sentence case: the capitals were only the stylesheet's.
-  const script = page();
+  const script = pageScript();
   for (const words of ["'full-open', 'Full ticket'", "'full-open', 'Review pack'", '`${label} · ${n}`', "'Ask for changes'", "'Set ready'"]) assert.ok(script.includes(words), words);
   assert.match(script, /'More stats'/);
 });

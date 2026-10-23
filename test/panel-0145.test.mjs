@@ -2,7 +2,8 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { T, fakePage, queueRows, click, page as html, post, openQueueRows } from './support/panel.mjs';
+import { T, fakePage, queueRows, click, page as pageHtml, pageScript, post, openQueueRows } from './support/panel.mjs';
+const html = () => pageHtml() + pageScript(); // 0433: the page and the script it loads from /panel.js
 import { buildPanel, runs, psState, cli } from './support/build-panel.mjs';
 
 // ---------- 0145: no pause or play icon on the Build queue's rows ----------
