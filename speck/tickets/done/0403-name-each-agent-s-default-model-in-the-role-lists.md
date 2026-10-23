@@ -1,7 +1,7 @@
 ---
 id: "0403"
 title: "Name each agent's default model in the role lists"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0402"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T11:54:26.908Z"
 approved: "2026-10-23T12:00:39.638Z"
+finished: "2026-10-23T12:03:37.601Z"
 
 ---
 # 0403 · Name each agent's default model in the role lists
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Each role's model list has an entry such as "Claude Code · default". That word means nothing next to real names like Opus and Sonnet, so you can't tell which model a blank setting will run, or which one to pick to get the default back.
