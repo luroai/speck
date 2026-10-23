@@ -45,6 +45,7 @@ speck is ready to be released as 0.13.1.
 - After it ships, check that the `v0.13.1` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.13.1 --target main --title "speck 0.13.1" --notes-file docs/releases/v0.13.1.md`.
 - Checked 2026-10-22: `package.json` is `0.12.0` until 0375 ships `0.13.0`. 0346 prepared the 0.10.3 patch the same way.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
