@@ -1,7 +1,7 @@
 ---
 id: "0432"
 title: "Move the Settings view's script into a file of its own"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0431"] # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T22:50:48.520Z"
 
 ---
 # 0432 · Move the Settings view's script into a file of its own
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 About 1,100 lines of `templates/panel.html` are the Settings view's script, and Settings tickets have been frequent (0396 to 0409). Each one has to work inside the whole page's script, and clashes with any other panel ticket.
