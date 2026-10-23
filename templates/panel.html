@@ -2747,6 +2747,12 @@ function roleEditor(x) {
     o.value = e.value;
     into.appendChild(o);
   }
+  if (cataloguesLoading()) { // 0407: every role's list says so, even with what's picked among its entries
+    const o = el('option', null, 'Loading your agents\' models…');
+    o.value = '';
+    o.disabled = true;
+    select.appendChild(o);
+  }
   select.value = picked;
   select.setAttribute('aria-label', role);
   settingControls.set(role, select);
