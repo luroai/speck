@@ -158,15 +158,15 @@ test('0063 AC3: the pane stays on a ticket as it moves from Tickets to the queue
   await move({ status: 'approved', started: at(9), rounds: [round(1, 50)] }, 'approved');
   let next = await move({ status: 'done', started: at(9), finished: at(10), rounds: [round(1, 50)] }, 'ships');
   assert.ok(shipOf(p, '0001') && !rowOf(p, '0001'), 'it is in the Shipped list now');
-  // Four more ship after it: it's still among the latest 5.
-  for (let i = 0; i < 4; i++) next.tickets.push(shipped(`001${i}`, 11 + i));
+  // Nine more ship after it: it's still among the latest 10 (5 before 0411).
+  for (let i = 0; i < 9; i++) next.tickets.push(shipped(`001${i}`, 11 + i));
   p.set(clone(next));
   await refresh(p);
-  assert.equal(paneId(p), '0001', 'still in the latest 5');
-  next.tickets.push(shipped('0020', 16));
+  assert.equal(paneId(p), '0001', 'still in the latest 10');
+  next.tickets.push(shipped('0020', 21));
   p.set(clone(next));
   await refresh(p);
-  assert.ok(!shipOf(p, '0001'), 'a sixth pushed it off the list');
+  assert.ok(!shipOf(p, '0001'), 'an eleventh pushed it off the list');
   assert.ok(!paneOpen(p), 'so the pane closes');
   assert.ok(pane(p).hidden && p.byId('full-backdrop').hidden, 'with its backdrop');
   next.tickets.pop();
