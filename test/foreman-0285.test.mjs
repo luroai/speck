@@ -188,7 +188,7 @@ test('0285 AC4: the panel stamps the page it sends, and /api/state gives the sta
   const copy = cliCopy();
   const p = await startPanel(dir, ['--port', String(await freePort())], copy.cli);
   try {
-    const sent = (await request(p.port, { pathName: '/' })).body.match(/const PAGE = '([0-9a-f]{16})';/);
+    const sent = (await request(p.port, { pathName: '/' })).body.match(/data-page="([0-9a-f]{16})"/);
     assert.ok(sent, 'the page has a stamp');
     const now = async () => JSON.parse((await request(p.port, { pathName: '/api/state' })).body).page;
     assert.equal(await now(), sent[1]);

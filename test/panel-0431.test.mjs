@@ -19,7 +19,7 @@ test('0431 AC1: the model is in templates/panel-model.js, which the page loads b
   assert.doesNotMatch(html, /function panelModel\(|function progress\(|const IN_FLIGHT\b/);
   const at = html.indexOf('<script src="/panel-model.js"></script>');
   assert.ok(at > 0, 'the page loads /panel-model.js');
-  assert.ok(at < html.search(/<script>\s*'use strict';/), 'before the rest of its script');
+  assert.ok(at < html.indexOf('<script src="/panel.js"'), 'before the rest of its script (0433: which it loads from /panel.js)');
 });
 
 test('0431 AC2: the server answers /panel-model.js with the file as text/javascript, read afresh, a change makes an open page out of date, and other paths get the unknown answer', async () => {
@@ -32,7 +32,7 @@ test('0431 AC2: the server answers /panel-model.js with the file as text/javascr
     assert.match(String(res.headers['content-type']), /^text\/javascript\b/);
     assert.equal(res.headers['cache-control'], 'no-store');
     assert.equal(res.body, fs.readFileSync(copy.model, 'utf8'));
-    const sent = (await request(p.port, { pathName: '/' })).body.match(/const PAGE = '([0-9a-f]{16})';/)[1];
+    const sent = (await request(p.port, { pathName: '/' })).body.match(/data-page="([0-9a-f]{16})"/)[1];
     const now = async () => JSON.parse((await request(p.port, { pathName: '/api/state' })).body).page;
     assert.equal(await now(), sent, 'not out of date before the change');
     fs.appendFileSync(copy.model, '\n// changed\n');

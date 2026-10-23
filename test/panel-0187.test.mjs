@@ -245,7 +245,7 @@ test('0187 AC3: a write the page made is in the board it gets next, not an older
     const version = boards(s).at(-1).data;
     r.write('0002-two.md', 'id: "0002"\ntitle: Two\nstatus: draft\nsize: S\nrisk: low\nbuilder: claude\nreviewer: codex');
     const html = (await request(p.port)).body;
-    const token = (html.match(/const TOKEN = '([0-9a-f]+)';/) || [])[1];
+    const token = (html.match(/data-token="([0-9a-f]+)"/) || [])[1];
     await new Promise((resolve, reject) => {
       const req = http.request({ host: '127.0.0.1', port: p.port, method: 'POST', path: '/api/tickets/0002/priority/1', headers: { Host: `127.0.0.1:${p.port}`, Origin: `http://127.0.0.1:${p.port}`, 'X-Speck-Token': token } }, res => { res.resume(); res.on('end', resolve); });
       req.on('error', reject); req.end();
