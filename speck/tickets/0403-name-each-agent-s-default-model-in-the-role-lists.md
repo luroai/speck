@@ -42,6 +42,7 @@ Each role's list shows every model by name, with "(default)" on the agent's defa
 - Assumption: Claude Code's own default, when no `--model` is passed, is Sonnet. Cursor marks `(default)` in `agent models`; providers have `defaultModel` in `scripts/providers.mjs`.
 - Checked 2026-10-23: `roleEntries` in `templates/panel.html` pushes `${a.name} · default` for `${a.id}|` (blank model). `parseCursorModels` in `scripts/agents.mjs` strips `(default)` and does not keep which model it was.
 - Waits for 0402: both change the role lists in `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
