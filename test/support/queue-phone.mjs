@@ -30,6 +30,7 @@ export async function onPhone(fn, state = STATE()) {
   const b = await browserPage('about:blank');
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width: 375, height: 900, deviceScaleFactor: 1, mobile: true });
+    await b.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 }); // 0417: a phone's touch screen, where controls are finger-sized
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(state) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
