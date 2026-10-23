@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, shippedRows, queueRows, findChrome, browserPage, openDetails } from './support/panel.mjs';
+import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, shippedRows, queueRows, findChrome, browserPage, openDetails, openLane } from './support/panel.mjs';
 
 // ---------- 0137: open a shipped ticket by clicking its title ----------
 
@@ -107,6 +107,7 @@ test('0137 AC1-AC4: in a real browser, the title link opens the full ticket by m
   const key = async (k, code, vk) => { for (const type of ['keyDown', 'keyUp']) await b.send('Input.dispatchKeyEvent', { type, key: k, code, windowsVirtualKeyCode: vk, ...(k === 'Enter' && type === 'keyDown' ? { text: '\r' } : {}) }); };
   try {
     await b.until(`!!${link}`, 'the Shipped row\'s title link');
+    await b.js(openLane('shipped')); // 0410
     const look = await b.js(`(() => { const a = ${link}, s = getComputedStyle(a), probe = document.createElement('span');
       probe.style.color = 'var(--text)'; document.body.appendChild(probe); const text = getComputedStyle(probe).color; probe.remove();
       return { text: a.textContent, color: s.color, textColour: text, cursor: s.cursor, line: s.textDecorationLine, buttons: [...a.closest('tr').querySelectorAll('button')].map(x => x.textContent) }; })()`);

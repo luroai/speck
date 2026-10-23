@@ -81,9 +81,24 @@
   .settings-open:hover { border-color: var(--text); color: var(--text); }
   .settings-open svg { width: 15px; height: 15px; }
 
-  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 24px calc(20px + env(safe-area-inset-bottom)); }
+  /* 0410: the page is the height of the screen and never scrolls. Under the header, Plan, Build and Shipped are tabs,
+     one lane open at a time, and only the open lane's list scrolls. */
+  html, body { height: 100%; overflow: hidden; }
+  body { display: flex; flex-direction: column; height: 100dvh; }
+  header, .offline, .restart, .run-error, .tabs { flex: none; }
+  .tabs { display: flex; gap: 4px; padding: 12px 24px 0; border-bottom: .5px solid var(--line); background: var(--bg); }
+  .tab { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; min-width: 0; margin-bottom: -.5px; padding: 8px 14px; font: inherit; color: var(--muted); background: transparent; border: .5px solid transparent; border-bottom-color: var(--line); cursor: pointer; text-align: left; }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { color: var(--text); background: var(--panel); border-color: var(--line); border-bottom-color: var(--panel); }
+  .tab .tab-name { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
+  .tab .n, .tab .needs { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
+  .tab .needs { color: var(--bad); }
+  .tab .needs:empty { display: none; }
+  main { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 20px 24px calc(20px + env(safe-area-inset-bottom)); }
   section { background: var(--panel); border: .5px solid var(--line); }
-  section.full { grid-column: 1 / -1; }
+  main > section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  main > section[hidden] { display: none; }
+  .lane-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .sh { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-bottom: .5px solid var(--line); }
   .sh h2 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
   .sh .n { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); font-size: 12px; }
@@ -152,10 +167,6 @@
      is coloured, by its border and background (below the highlights, so they win) */
   #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
   #queue .empty { padding: 0 4px; }
-  /* 0162: an empty Build is one line, as high as its header, beside Plan too */
-  #queue[hidden] { display: none; }
-  section:has(> #queue[hidden]) { align-self: start; }
-  section:has(> #queue[hidden]) .sh { border-bottom: 0; }
   .q { padding: 10px 14px; border: 1px solid var(--line); }
   .q .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 0; align-items: baseline; cursor: pointer; }
   .q .top .line { grid-area: 1 / 1; display: flex; align-items: baseline; gap: 8px; }
@@ -584,7 +595,9 @@
     #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .run-error, .offline, .restart { padding: 6px 16px; }
 
-    main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+    main { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+    .tabs { padding: 8px 16px 0; gap: 2px; }
+    .tab { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; min-height: 44px; padding: 6px 10px; } /* each name on the top line, its count under it */
     .sh { flex-wrap: wrap; align-items: center; }
     .toggle { min-width: 44px; min-height: 44px; }
 
@@ -669,21 +682,26 @@
 <div class="restart" id="restart" hidden></div>
 <div class="run-error" id="run-error" hidden></div>
 
+<nav class="tabs" id="tabs" role="tablist" aria-label="Lanes">
+  <button class="tab" id="tab-plan" type="button" role="tab" aria-selected="false" aria-controls="shaping-section"><span class="tab-name">Plan</span></button>
+  <button class="tab" id="tab-build" type="button" role="tab" aria-selected="true" aria-controls="build-section"><span class="tab-name">Build</span><span class="n" id="queue-n"></span><span class="needs" id="build-needs"></span></button>
+  <button class="tab" id="tab-shipped" type="button" role="tab" aria-selected="false" aria-controls="shipped-section"><span class="tab-name">Shipped</span><span class="n" id="shipped-n"></span></button>
+</nav>
 <main>
-  <section id="shaping-section" class="shaping tickets" tabindex="-1">
-    <div class="sh"><h2>Plan</h2><span class="toggles" id="shaping-toggle"></span></div>
-    <div id="shaping"></div>
+  <section id="shaping-section" class="shaping tickets" role="tabpanel" aria-labelledby="tab-plan" tabindex="-1" hidden>
+    <div class="sh"><span class="toggles" id="shaping-toggle"></span></div>
+    <div id="shaping" class="lane-list"></div>
   </section>
-  <section id="build-section" tabindex="-1">
-    <div class="sh"><h2>Build</h2><span class="n" id="queue-n"></span></div>
-    <div id="queue"></div>
+  <section id="build-section" role="tabpanel" aria-labelledby="tab-build" tabindex="-1">
+    <div id="queue" class="lane-list"></div>
   </section>
-  <section class="full shipped">
-    <div class="sh"><h2>Shipped</h2><span class="n" id="shipped-n"></span></div>
-    <div class="stats" id="shipped-stats" hidden></div>
-    <div class="stats" id="shipped-more" hidden></div>
-    <button class="full-open more-stats" id="more-stats" type="button" aria-expanded="false" aria-controls="shipped-more" hidden></button>
-    <table><tbody id="shipped"></tbody></table>
+  <section id="shipped-section" class="shipped" role="tabpanel" aria-labelledby="tab-shipped" tabindex="-1" hidden>
+    <div class="lane-list" id="shipped-list">
+      <div class="stats" id="shipped-stats" hidden></div>
+      <div class="stats" id="shipped-more" hidden></div>
+      <button class="full-open more-stats" id="more-stats" type="button" aria-expanded="false" aria-controls="shipped-more" hidden></button>
+      <table><tbody id="shipped"></tbody></table>
+    </div>
   </section>
 </main>
 <div id="full-backdrop" hidden></div>
@@ -1932,6 +1950,7 @@ function returnFocus() {
   if (!from) return;
   const find = n => { if (n.fullOf === from.id) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
   const to = find($(from.list)) || find($(from.list === 'queue' ? 'shaping' : 'queue')) || $(from.list === 'queue' ? 'build-section' : 'shaping-section');
+  openTab(laneOf(to)); // 0410: the tab holding it opens first
   if (to.focus) to.focus();
 }
 // 0362, 0368: while a document's pop-up or Settings covers the panel, the side pane and its backdrop can't be reached either.
@@ -1945,7 +1964,7 @@ function holdPage(on) {
   if (!root || (heldAt !== null) === on) return;
   if (on) heldAt = [scrollX, scrollY];
   root.classList.toggle('held', on);
-  for (const n of document.querySelectorAll('header, #offline, #restart, main')) n.inert = on; // Tab can't reach, press or scroll to it
+  for (const n of document.querySelectorAll('header, #offline, #restart, #tabs, main')) n.inert = on; // Tab can't reach, press or scroll to it (0410: nor the tabs)
   if (!on) { scrollTo(...heldAt); heldAt = null; }
 }
 // A click on the backdrop closes the pane and nothing else. A drag from the pane to the backdrop clicks a node above both.
@@ -3736,6 +3755,7 @@ const ticketRows = () => [...$('shaping').children, ...$('queue').children].filt
 function goTo(id) {
   const row = ticketRows().find(n => n.gotoId === id);
   if (!row) return;
+  openTab(laneOf(row)); // 0410: the tab holding it opens first
   if (typeof row.scrollIntoView === 'function') row.scrollIntoView({ block: 'center' });
   if (flashId === id) { flashId = null; flash(); void row.offsetWidth; } // lit already: start its fade again
   flashId = id;
@@ -3778,6 +3798,47 @@ function keptItems(box, list, keyOf, viewOf, make, { own = x => x, derived = () 
   return nodes;
 }
 
+// 0410: Plan, Build and Shipped are tabs under the header, and only the open one's lane shows. Build opens with the
+// page. Each lane's list keeps its own scroll position, put back when its tab opens again.
+const LANES = { plan: ['tab-plan', 'shaping-section', 'shaping'], build: ['tab-build', 'build-section', 'queue'], shipped: ['tab-shipped', 'shipped-section', 'shipped-list'] };
+const TAB_ORDER = ['plan', 'build', 'shipped'];
+let openLane = 'build';
+const laneScroll = new Map(); // a closed lane's list's scroll position, by lane
+// The lane a node is in, by the list or section holding it: Plan for anything that isn't in Build or Shipped.
+const laneOf = n => TAB_ORDER.find(l => within(n, $(LANES[l][1])) || within(n, $(LANES[l][2]))) || 'plan';
+function openTab(lane) {
+  if (!LANES[lane]) return;
+  if (lane !== openLane) {
+    laneScroll.set(openLane, $(LANES[openLane][2]).scrollTop || 0);
+    openLane = lane;
+  }
+  drawTabs();
+  if (laneScroll.has(lane)) { $(LANES[lane][2]).scrollTop = laneScroll.get(lane); laneScroll.delete(lane); }
+}
+function drawTabs() {
+  for (const l of TAB_ORDER) {
+    const [tab, section] = LANES[l], on = l === openLane;
+    $(tab).setAttribute('aria-selected', String(on));
+    $(section).hidden = !on;
+  }
+}
+for (const [i, l] of TAB_ORDER.entries()) {
+  const tab = $(LANES[l][0]);
+  tab.addEventListener('click', () => { openTab(l); render(); });
+  // The left and right arrow keys open the tab beside it, round from the last to the first, with the focus on it.
+  tab.addEventListener('keydown', e => {
+    const step = e.altKey || e.ctrlKey || e.metaKey ? 0 : e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; // Alt+Left is the browser's Back
+    if (!step) return;
+    if (e.preventDefault) e.preventDefault();
+    const next = TAB_ORDER[(i + step + TAB_ORDER.length) % TAB_ORDER.length];
+    openTab(next);
+    render();
+    const to = $(LANES[next][0]);
+    if (to.focus) to.focus();
+  });
+}
+drawTabs();
+
 let state = null;
 function render() {
   if (!state) return;
@@ -3812,7 +3873,6 @@ function render() {
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.ship_counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
   startBadges(new Set(m.queue.filter(t => t.inFlight).map(t => String(t.id))));
-  $('queue').hidden = !m.queue.length; // 0162: an empty Build is one line, the message beside its heading
   startCounters(m.queue.flatMap((t, i) => [...(t.counter !== null && t.held_at === null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : []),
     ...(t.ship_counter !== null ? [[shipTime(rows[i]), t.ship_since, false]] : [])]));
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
@@ -3883,6 +3943,9 @@ function render() {
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
   renderForeman(f, stale);
+  // 0410: while Build's tab is closed, it says how many things need you, as the Foreman's status does
+  const needs = openLane === 'build' ? null : /^Needs you (\d+)$/.exec(f.word);
+  setText($('build-needs'), needs ? `${needs[1]} needs you` : '');
   drawRunSwitch();
   const again = typing && typing.isConnected === false ? askBoxes.get(typing.askKey) : null; // 0318
   if (again && again !== typing) {

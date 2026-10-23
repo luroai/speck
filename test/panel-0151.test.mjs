@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, openLane } from './support/panel.mjs';
 
 // ---------- 0151: each Plan ticket a clear card ----------
 
@@ -50,6 +50,7 @@ async function withPanel(fn, { width = 1280, theme = 'light' } = {}) {
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(theme) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#shaping .item') && !!document.querySelector('#queue .q')`, 'the panel');
+    await b.js(openLane('plan')); // 0410: these are Plan's cards
     assert.equal(await b.js(`document.documentElement.dataset.theme`), theme);
     await fn(b);
   } finally { await b.close(); await stop(panel); }

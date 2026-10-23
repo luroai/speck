@@ -46,6 +46,7 @@ Plan, Build and Shipped are three tabs under the header. One lane shows at a tim
 - Changes `templates/panel.html`: the `<main>` grid of `#shaping-section`, `#build-section` and `section.shipped`, `goTo` and `returnFocus`.
 - Tests written for the old layout, which expect all three sections on screen at once, change with it.
 - Failing before this build: none
+- Self-check: the tab row is now inert with the rest of the page while a pane covers it, so Tab can't reach it; an arrow key with Alt, Ctrl or Cmd held is left to the browser (Alt+Left goes back).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

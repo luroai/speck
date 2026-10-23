@@ -69,7 +69,12 @@ const FRAME = id => `[...document.querySelectorAll('#queue .q')].find(n => n.que
 
 test('0169 AC1, AC2 and AC4: in a real browser, the self-check and review badges move, and with reduced motion nothing moves', skip, async () => {
   const ids = ['0402', '0403'];
-  const frames = async b => Promise.all(ids.map(id => b.js(FRAME(id))));
+  // 0410: Build's list scrolls in a box shorter than the page was, and a badge out of view stands still, so the two are
+  // scrolled into view first.
+  const frames = async b => {
+    await b.js(`[...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '0402').scrollIntoView({ block: 'start' })`);
+    return Promise.all(ids.map(id => b.js(FRAME(id))));
+  };
   await withPanel(async b => {
     const first = await frames(b);
     await new Promise(r => setTimeout(r, 450));
