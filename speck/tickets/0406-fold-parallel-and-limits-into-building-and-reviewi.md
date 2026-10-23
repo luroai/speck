@@ -39,6 +39,8 @@ Parallel runs and ticket size limits sit in the Building and reviewing group.
 ## Notes
 - Asked for 2026-10-23 from the "How much runs at once" heading. The three groups are entries in `SETTING_GROUPS` in `scripts/settings.mjs` (0257, 0273).
 - Waits for 0405: both change how Settings is grouped or drawn (`scripts/settings.mjs`, `templates/panel.html`).
+- Failing before this build: none
+- Self-check: no changes. The panel draws whatever groups the server gives, so only `SETTING_GROUPS` changed; `test/panel-0257.test.mjs`'s list of groups was the check of the old titles (AC3).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
