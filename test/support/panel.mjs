@@ -188,7 +188,7 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
   const document = {
     createElement: tag => { const n = make(tag); made(n); return n; },
     createElementNS: (ns, tag) => { const n = make(tag); n.namespaceURI = ns; made(n); return n; }, // 0365: the Foreman's board is an SVG
-    createTextNode: t => ({ tagName: '#text', children: [], textContent: String(t) }),
+    createTextNode: t => ({ tagName: '#text', children: [], textContent: String(t), appendData(s) { this.textContent += s; } }), // appendData: 0422
     getElementById: id => { if (!nodes.has(id)) nodes.set(id, make('div')); return nodes.get(id); },
     listeners: {},
     addEventListener(type, fn) { this.listeners[type] = fn; }, // the page's own key handling (0054)
