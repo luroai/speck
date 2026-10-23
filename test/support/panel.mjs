@@ -474,3 +474,15 @@ export function heldTimeouts() {
     rest: ms => { const due = waits.filter(w => w.ms === ms); for (const w of due) waits.splice(waits.indexOf(w), 1); for (const w of due) w.fn(); },
   };
 }
+
+// 0424: the declarations of each CSS rule whose selector list holds exactly `sel`, in the page's style, media queries
+// included, and one declaration's value from them, or undefined.
+export const cssRules = sel => {
+  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].replace(/^[^{]*\{/, '').split(',').map(x => x.trim()).includes(sel)).map(m => m[2]);
+};
+export const cssValue = (decls, prop) => {
+  let out;
+  for (const d of decls) for (const m of d.matchAll(new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`, 'g'))) out = m[1].trim();
+  return out;
+};
