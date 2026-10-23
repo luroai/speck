@@ -42,6 +42,7 @@ Appearance and Auto-build are toggles at the top of Settings.
 - The user chose the name Auto-build on 2026-10-23.
 - Waits for 0395: both change Settings in `templates/panel.html`.
 - Failing before this build: none
+- Self-check: kept both switches showing while the settings load (loading asks Codex and Cursor for their models, which can take seconds), giving their rows their own class so the file's settings rows and their checks are unchanged; renamed the rows' classes away from the panel's existing `.toggle` style.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

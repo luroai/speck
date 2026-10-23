@@ -55,9 +55,9 @@ test('0150 AC2: on, it reads "Auto-build on" with a green square, aria-pressed t
   const p = switchPage([state({ on: true, pid: 7 })]);
   await p.settle();
   assert.equal(headerOf(p).hidden, false);
-  assert.equal(runOf(p).textContent, 'Auto-build on');
+  assert.equal(runOf(p).textContent, 'On');
   assert.equal(dotOf(p), undefined); // 0364: no builder, and no square (0163)
-  assert.equal(runOf(p).attrs['aria-pressed'], 'true');
+  assert.equal(runOf(p).attrs['aria-checked'], 'true');
   assert.equal(runOf(p).title, ON);
   assert.equal(runOf(p).disabled, false);
 });
@@ -65,9 +65,9 @@ test('0150 AC2: on, it reads "Auto-build on" with a green square, aria-pressed t
 test('0150 AC2: off, it reads "Auto-build off" with a red square, aria-pressed false and a tooltip saying a click starts it', async () => {
   const p = switchPage([state(null)]);
   await p.settle();
-  assert.equal(runOf(p).textContent, 'Auto-build off');
+  assert.equal(runOf(p).textContent, 'Off');
   assert.equal(dotOf(p), undefined); // 0364: no builder, and no square (0163)
-  assert.equal(runOf(p).attrs['aria-pressed'], 'false');
+  assert.equal(runOf(p).attrs['aria-checked'], 'false');
   assert.equal(runOf(p).title, OFF);
 });
 
@@ -79,13 +79,13 @@ test('0150 AC2: clicking it starts or pauses speck run as Start and Pause did, w
   assert.equal(p.calls.at(-1).url, '/api/run/on');
   assert.equal(p.calls.at(-1).opts.method, 'POST');
   assert.ok(p.calls.at(-1).opts.headers['X-Speck-Token'] !== undefined, 'sends the token');
-  assert.equal(runOf(p).textContent, 'Auto-build on');
-  assert.equal(runOf(p).attrs['aria-pressed'], 'true');
+  assert.equal(runOf(p).textContent, 'On');
+  assert.equal(runOf(p).attrs['aria-checked'], 'true');
   p.press(runOf(p));
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/off');
-  assert.equal(runOf(p).textContent, 'Auto-build off');
-  assert.equal(runOf(p).attrs['aria-pressed'], 'false');
+  assert.equal(runOf(p).textContent, 'Off');
+  assert.equal(runOf(p).attrs['aria-checked'], 'false');
 });
 
 test('0150 AC2: while a request is pending it reads "Starting…" or "Pausing…" and can\'t be clicked', async () => {
@@ -110,7 +110,7 @@ test('0150 AC2: if starting fails, the reason shows under the header', async () 
   await p.settle();
   assert.equal(p.byId('run-error').hidden, false);
   assert.equal(p.byId('run-error').textContent, 'speck run is already running.');
-  assert.equal(runOf(p).textContent, 'Auto-build off');
+  assert.equal(runOf(p).textContent, 'Off');
   assert.equal(runOf(p).disabled, false);
 });
 
@@ -173,13 +173,13 @@ test('0150 AC2: pressing Enter or Space on the focused button starts or pauses s
     await b.until(`document.getElementById('run').lastChild !== window.seen`, 'a refresh');
     assert.equal(await b.js(`document.activeElement === document.getElementById('run-switch')`), true, 'still focused after a refresh');
     await press(b, 'Enter', 'Enter', 13);
-    await b.until(`window.runCalls.length === 1 && document.getElementById('run-switch').textContent === 'Auto-build on'`, 'Enter to start it');
+    await b.until(`window.runCalls.length === 1 && document.getElementById('run-switch').textContent === 'On'`, 'Enter to start it');
     assert.deepEqual(await b.js('window.runCalls'), ['on']);
-    assert.equal(await b.js(`document.getElementById('run-switch').getAttribute('aria-pressed')`), 'true');
+    assert.equal(await b.js(`document.getElementById('run-switch').getAttribute('aria-checked')`), 'true');
     await b.until(`!document.getElementById('run-switch').disabled`, 'the request to finish');
     await b.js(`document.getElementById('run-switch').focus()`);
     await press(b, ' ', 'Space', 32);
-    await b.until(`window.runCalls.length === 2 && document.getElementById('run-switch').textContent === 'Auto-build off'`, 'Space to pause it');
+    await b.until(`window.runCalls.length === 2 && document.getElementById('run-switch').textContent === 'Off'`, 'Space to pause it');
     assert.deepEqual(await b.js('window.runCalls'), ['on', 'off']);
   });
 });

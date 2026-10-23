@@ -16,7 +16,7 @@ const switchOf = pillOf;
 test('0144 AC1: while speck run is on, the indicator reads "Auto-build on" with a green square (0150: and is the button)', async () => {
   const p = switchPage([state({ on: true, pid: 7 })]);
   await p.settle();
-  assert.equal(pillOf(p).textContent, 'Auto-build on');
+  assert.equal(pillOf(p).textContent, 'On');
   assert.equal(dotOf(p), undefined); // 0364: no builder, and no square (0163)
   assert.equal(switchOf(p).title, 'Pause Auto-build: ready tickets wait');
 });
@@ -25,7 +25,7 @@ test('0144 AC2: while speck run is off, the indicator reads "Auto-build off" wit
   const p = switchPage([state(null)]);
   await p.settle();
   const pill = pillOf(p);
-  assert.equal(pill.textContent, 'Auto-build off');
+  assert.equal(pill.textContent, 'Off');
   assert.equal(dotOf(p), undefined); // 0364: no builder, and no square (0163)
   assert.ok(!p.all(pill).some(n => /\brun-wait\b/.test(n.className || '')), 'no small print beside it');
 });
@@ -60,11 +60,11 @@ test('0144 AC4: clicking it posts to turn speck run on, then off, as Start and P
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/on');
   assert.equal(p.calls.at(-1).opts.method, 'POST');
-  assert.equal(pillOf(p).textContent, 'Auto-build on');
+  assert.equal(pillOf(p).textContent, 'On');
   p.press(switchOf(p));
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/off');
-  assert.equal(pillOf(p).textContent, 'Auto-build off');
+  assert.equal(pillOf(p).textContent, 'Off');
   assert.equal(p.byId('pills').children.length, 0);
 });
 
