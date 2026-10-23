@@ -40,6 +40,7 @@ Settings never shows the full-view "Loading the settings…" message. Only the i
 - Asked for 2026-10-23 after 0407: the quick config path works, but `openSettings` in `templates/panel.html` still sets `settingsView = { state: 'loading' }` and `renderSettings` draws "Loading the settings…" before `/api/settings?quick=1` returns.
 - Prefetching the quick answer when the panel starts is fine as how, so long as criterion 1 holds.
 - Waits for 0408: both change Settings in `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
