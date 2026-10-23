@@ -1,7 +1,7 @@
 ---
 id: "0391"
 title: "Build with DeepSeek"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0390"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T07:46:10.236Z"
 approved: "2026-10-23T08:02:13.066Z"
+finished: "2026-10-23T08:05:03.636Z"
 
 ---
 # 0391 · Build with DeepSeek
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck run builds with Claude Code, Codex or Cursor. There's no way to build with a model from a provider you have an API key for, such as DeepSeek.
