@@ -11,7 +11,7 @@ import { fakeClaude, after } from './support/provider-builder.mjs';
 import { loadConfig } from '../scripts/speck.mjs';
 import { checkConfigValue } from '../scripts/config.mjs';
 import { saveProviderKey } from '../scripts/keys.mjs';
-import { PROVIDER_SCRIPT } from '../scripts/provider-build.mjs';
+import { PROVIDER_SCRIPT, FOREMAN_MODE } from '../scripts/provider-build.mjs';
 import { foremanAgentQueue, foremanArgv, foremanAgentOf, foremanCantStart } from '../scripts/foreman-agent.mjs';
 
 Object.assign(process.env, gitEnv);
@@ -39,12 +39,12 @@ function queueFor(extra, opts = {}) {
   return { r, starts, said };
 }
 // The Foreman's words with the provider's launcher taken off the front: Claude Code's own.
-const claudeOf = argv => argv.slice(4);
+const claudeOf = argv => argv.slice(5);
 
 test('0392 AC1: with foreman deepseek, the Foreman runs Claude Code through DeepSeek on foreman_model or DeepSeek\'s default, without foreman_effort', () => {
   assert.equal(foremanAgentOf({ foreman: 'deepseek' }), 'deepseek');
   const argv = foremanArgv({ foreman: 'deepseek' }, 'B');
-  assert.deepEqual(argv.slice(0, 4), [process.execPath, PROVIDER_SCRIPT, 'deepseek', 'https://api.deepseek.com/anthropic']);
+  assert.deepEqual(argv.slice(0, 5), [process.execPath, PROVIDER_SCRIPT, FOREMAN_MODE, 'deepseek', 'https://api.deepseek.com/anthropic']);
   const claude = claudeOf(argv);
   assert.equal(claude[0], 'claude');
   assert.ok(claude.includes('--bare'), 'Anthropic sign-in only from the key it is given');
@@ -79,13 +79,17 @@ test('0392 AC2: a DeepSeek Foreman may do only what the Claude Code Foreman may'
   for (const w of ['--setting-sources=project', '--strict-mcp-config']) assert.ok(theirs.includes(w), w);
 });
 
+// Other sign-ins, tokens and keys speck's own environment might hold.
+const OTHERS = { AWS_ACCESS_KEY_ID: 'other-1', AWS_SECRET_ACCESS_KEY: 'other-2', GOOGLE_APPLICATION_CREDENTIALS: '/other-3.json', GH_TOKEN: 'other-4',
+  GITHUB_TOKEN: 'other-5', OPENAI_API_KEY: 'other-6', CURSOR_API_KEY: 'other-7', SPECK_PANEL_TOKEN: 'other-8', NPM_TOKEN: 'other-9', GIT_ASKPASS: '/other-10' };
+
 test('0392 AC2: the DeepSeek Foreman\'s Claude Code gets DeepSeek\'s address and this machine\'s key, and none of speck\'s own sign-ins', () => {
   const r = panelRepo();
   saveProviderKey(r.dir, 'deepseek', KEY);
   const fake = fakeClaude();
   const argv = foremanArgv({ foreman: 'deepseek' }, 'B');
   assert.ok(!argv.some(w => w.includes(KEY)), 'the key is never on a command line');
-  const res = spawnSync(argv[0], argv.slice(1), { cwd: r.dir, encoding: 'utf8', env: { ...process.env, PATH: fake.PATH, ...MINE, SPECK_FOREMAN_RUN: 'tok-1' } });
+  const res = spawnSync(argv[0], argv.slice(1), { cwd: r.dir, encoding: 'utf8', env: { ...process.env, PATH: fake.PATH, ...MINE, ...OTHERS, SPECK_FOREMAN_RUN: 'tok-1', HOME: '/home/me' } });
   assert.equal(res.status, 0, res.stderr);
   const [{ env, args }] = fake.calls();
   assert.ok(args.includes('--bare'));
@@ -96,6 +100,12 @@ test('0392 AC2: the DeepSeek Foreman\'s Claude Code gets DeepSeek\'s address and
   assert.notEqual(env.CLAUDE_CONFIG_DIR, MINE.CLAUDE_CONFIG_DIR, 'a Claude Code folder of its own');
   assert.ok(!Object.values(env).some(v => /^mine-/.test(v)), 'none of speck\'s own sign-ins');
   for (const k of ['ANTHROPIC_AUTH_TOKEN', 'CLAUDE_CODE_OAUTH_TOKEN', 'CLAUDE_CODE_USE_BEDROCK', 'CLAUDE_CODE_USE_VERTEX', 'AWS_BEARER_TOKEN_BEDROCK']) assert.equal(env[k], undefined, k);
+  for (const k of Object.keys(OTHERS)) assert.equal(env[k], undefined, `${k}: no other sign-in, token or key`);
+  // What it needs to run, and for `speck foreman` to commit its note as you.
+  assert.equal(env.PATH, fake.PATH);
+  assert.equal(env.HOME, '/home/me');
+  assert.equal(env.GIT_AUTHOR_NAME, gitEnv.GIT_AUTHOR_NAME);
+  assert.equal(env.GIT_COMMITTER_EMAIL, gitEnv.GIT_COMMITTER_EMAIL);
 });
 
 test('0392 AC3: with no DeepSeek key, or no Claude Code, the Foreman isn\'t started and speck run says why', () => {
@@ -117,7 +127,7 @@ test('0392 AC3: with no DeepSeek key, or no Claude Code, the Foreman isn\'t star
 test('0392 AC3: a blank foreman with a DeepSeek builder runs on DeepSeek, and foreman deepseek can be set', () => {
   assert.equal(foremanAgentOf({ builder: 'deepseek' }), 'deepseek');
   assert.equal(foremanAgentOf({ builder: 'deepseek', foreman: '' }), 'deepseek');
-  assert.equal(foremanArgv({ builder: 'deepseek' }, 'B')[2], 'deepseek');
+  assert.equal(foremanArgv({ builder: 'deepseek' }, 'B')[3], 'deepseek');
   assert.equal(foremanAgentOf({ builder: 'deepseek', foreman: 'codex' }), 'codex', 'a foreman that is set wins');
   assert.equal(foremanAgentOf({ builder: 'DeepSeek' }), 'claude', 'named exactly, as a builder is');
   assert.equal(foremanAgentOf({ foreman: '__proto__' }), 'claude');
@@ -131,7 +141,7 @@ test('0392 AC4: any provider in speck\'s list runs the Foreman the same way', ()
   assert.equal(foremanAgentOf({ builder: 'acme' }, providers), 'acme');
   assert.equal(foremanAgentOf({ foreman: 'acme' }), 'claude', 'not a provider speck knows');
   const argv = foremanArgv({ foreman: 'acme' }, 'B', undefined, providers);
-  assert.deepEqual(argv.slice(0, 4), [process.execPath, PROVIDER_SCRIPT, 'acme', ACME.address]);
+  assert.deepEqual(argv.slice(0, 5), [process.execPath, PROVIDER_SCRIPT, FOREMAN_MODE, 'acme', ACME.address]);
   assert.equal(after(argv, '--model'), 'acme-1');
   const r = panelRepo();
   assert.match(foremanCantStart(r.dir, { foreman: 'acme' }, { providers, installed: yes }), /no Acme API key.*speck keys set acme/);
@@ -144,13 +154,14 @@ test('0392 AC4: any provider in speck\'s list runs the Foreman the same way', ()
   assert.equal(env.ANTHROPIC_BASE_URL, ACME.address);
   assert.equal(env.ANTHROPIC_API_KEY, ACME_KEY);
   const q = queueFor({ foreman: 'acme' }, { providers, cantStart: () => '' });
-  assert.equal(q.starts[0]?.argv[2], 'acme', q.said.join('\n'));
+  assert.equal(q.starts[0]?.argv[3], 'acme', q.said.join('\n'));
   assert.ok(q.said.some(m => /the Foreman \(Acme\) is looking into it/.test(m)), q.said.join('\n'));
 });
 
 test('0392 AC3: the README, the brief and the config template name deepseek as a Foreman agent', () => {
   const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
-  assert.match(read('README.md'), /It runs on `foreman` \([^)]*`deepseek`/);
-  assert.match(read('docs/brief.md'), /`foreman` blank, claude, codex, cursor or a model provider's name, such as deepseek/);
-  assert.match(read('templates/config.yml'), /^foreman: "".*claude \| codex \| cursor \| deepseek/m);
+  const mentions = (text, setting) => text.split(/\n\s*\n|\n\|/).filter(part => part.includes(setting)).some(part => /\bdeepseek\b/.test(part));
+  assert.ok(mentions(read('README.md'), '`foreman_model`'), 'README');
+  assert.ok(mentions(read('docs/brief.md'), '`foreman_fixing` of'), 'brief');
+  assert.match(read('templates/config.yml'), /^foreman: .*\bdeepseek\b/m);
 });

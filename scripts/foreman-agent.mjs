@@ -22,7 +22,7 @@ import { askKey, dealtWith, readReplies, cmdForemanReply } from './foreman-answe
 import { cursorCli, CURSOR_HEADLESS } from './cursor-build.mjs';
 import { PROVIDERS } from './providers.mjs';
 import { providerNamed } from './provider-review.mjs';
-import { PROVIDER_SCRIPT, CLAUDE_FLAGS } from './provider-build.mjs';
+import { PROVIDER_SCRIPT, CLAUDE_FLAGS, FOREMAN_MODE } from './provider-build.mjs';
 import { onPath } from './install.mjs';
 import { providerKey } from './keys.mjs';
 
@@ -93,12 +93,12 @@ export function foremanBrief({ id, what, log, tail, agent = 'claude' }) {
 // only read and run speck and read-only git commands; Codex has no such list, so it runs as Codex builds do. 0333: so
 // does Cursor, as `cli`, without foreman_effort, as Cursor's model names carry the effort. 0392: a model provider's
 // Foreman runs Claude Code's, --bare and without foreman_effort, on foreman_model or else the provider's default model,
-// through provider-build.mjs, which reads this machine's key for it and gives Claude Code only the provider's address
-// and key to sign in with.
+// through provider-build.mjs, which reads this machine's key for it and gives Claude Code only what it needs to run and
+// the provider's address and key (providerForemanEnv).
 export function foremanArgv(cfg, brief, cli, providers = PROVIDERS) {
   const agent = foremanAgentOf(cfg, providers), model = textOf(cfg?.foreman_model), effort = textOf(cfg?.foreman_effort);
   const p = providerNamed(agent, providers);
-  if (p) return [process.execPath, PROVIDER_SCRIPT, p.name, p.address, ...claudeArgv(brief, model || p.defaultModel, '', ['--bare', ...CLAUDE_FLAGS])];
+  if (p) return [process.execPath, PROVIDER_SCRIPT, FOREMAN_MODE, p.name, p.address, ...claudeArgv(brief, model || p.defaultModel, '', ['--bare', ...CLAUDE_FLAGS])];
   if (agent === 'cursor') return [cli ?? cursorCli(), ...CURSOR_HEADLESS, ...(model ? ['--model', model] : []), brief];
   if (agent === 'codex')
     return ['codex', 'exec', '--json', '--dangerously-bypass-approvals-and-sandbox', ...(model ? ['-m', model] : []),
