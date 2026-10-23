@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fakePage, deferred, page, panelRepo, freePort, startPanel, stop, request, post, tokenOf } from './support/panel.mjs';
 import { panelSettings, SETTING_GROUPS, explainFully } from '../scripts/settings.mjs';
+import { fakeAgents, READY } from './support/agents.mjs';
 
 // ---------- 0257: show speck's settings, explained, in the panel ----------
 
@@ -189,7 +190,8 @@ test('0257 AC5: the view has no control that changes a setting, and opening and 
 
 test('0257 AC4-AC5: the panel serves the settings afresh on a GET, and refuses anything else', async () => {
   const r = panelRepo();
-  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  // 0429: stand-ins for the agents, which answer at once, ahead of any installed on this machine.
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], undefined, { PATH: `${fakeAgents(READY)}${path.delimiter}${process.env.PATH}` });
   try {
     const first = JSON.parse((await request(p.port, { pathName: '/api/settings' })).body);
     assert.equal(byKey(first).max_parallel_builds.value, 1);

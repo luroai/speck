@@ -43,6 +43,11 @@ The suite's ten slowest tests take half as long, still checking the same things.
 - Times vary with load, so measure the ten in one full `npm test` run, as ship runs it.
 - Waits for 0424, as 0423 and 0424 change the full-ticket pane that `test/panel-0060.test.mjs` checks. Builds alongside 0426 to 0428 (the user, 2026-10-23), which restyle the page and are unlikely to change these ten tests. If one does, the second to ship needs a merge round.
 - Failing before this build: none
+- Criterion 1 is about a full `npm test` run, which `speck ship` makes, so no test checks it: a test can't time the suite it's part of. Measured during the build instead, on this machine while other builds ran their tests: the ten, each file run on its own, 122.5 s before and 54.0 s after (44%); the ten files and five others run together, 84.3 s, against 163 s for the ten in 0418's whole-suite run. Criterion 2 is checked by `test/slow-tests-0429.test.mjs` and by the ten tests themselves, criterion 3 by the round's test files and the ship's run.
+- What changed: the three browser refresh tests ask the panel for a keep-alive, and so a refresh, every half a second (`SPECK_PANEL_PING_MS`); 0159's `b.until()` and `b.loaded()` tests give the helpers a 1-second limit of their own and check they give up within 2.5 s; 0177's AC3 tests slow only their first reading, not also the one after their write; 0257 uses stand-in agents ahead of the installed ones; the cancel test copies one set-up repo for each reason and runs the reasons at once; 0267 runs its two inner test runs at once; 0060's touch swipes are faster, over the same distances.
+- Left as they were: 0176 (halving speck run's check spacing would let a check slowed by load count as more than one, loosening the 5% check) and 0072 (four of its tests at once timed out a build's start under load).
+- Self-check: reverted two speed-ups that loosened a check or made a test flaky under load (0176's check spacing, 0072 running four tests at once), and checked that 0060's faster swipe sees the same as the old one.
+- Pictures: none, because nothing anyone sees changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

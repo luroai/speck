@@ -99,6 +99,9 @@ export const ended = (child, name, ms = 5000) => new Promise((resolve, reject) =
   child.once('exit', () => { clearTimeout(hard); clearTimeout(fail); resolve(); });
   child.kill();
 });
+// 0429: the panel's environment for a test that waits for the page's refreshes, each on a keep-alive: one every half a
+// second rather than every 5, so the test waits less for the same refreshes.
+export const QUICK_PINGS = { SPECK_PANEL_PING_MS: '500' };
 export const stop = (p, ms) => { p.child.removeAllListeners('exit'); return ended(p.child, 'the panel', ms); };
 
 // A request to the panel, with the body as text, or as bytes with `bytes`. One with no answer in `timeout` ms fails,
@@ -416,6 +419,8 @@ const exitOnSignals = () => {
   for (const [sig, n] of [['SIGINT', 2], ['SIGTERM', 15], ['SIGHUP', 1]]) process.once(sig, () => process.exit(128 + n));
 };
 
+// How long b.until() and b.loaded() wait when the call gives no limit of its own.
+export const UNTIL_MS = 10000;
 export async function browserPage(url) {
   const c = await sharedChromium();
   const { browserContextId } = await c.send('Target.createBrowserContext');
@@ -437,13 +442,14 @@ export async function browserPage(url) {
     if (r.exceptionDetails) throw new Error(`${expr}: ${r.exceptionDetails.text}`);
     return r.result.value;
   };
-  const until = async (expr, what) => {
-    for (let i = 0; i < 100; i++) { if (await js(expr)) return; await new Promise(r => setTimeout(r, 100)); }
+  // Gives up after `ms` (0429: UNTIL_MS unless the call gives its own), checking every 100 ms.
+  const until = async (expr, what, ms = UNTIL_MS) => {
+    for (let i = 0; i < ms / 100; i++) { if (await js(expr)) return; await new Promise(r => setTimeout(r, 100)); }
     throw new Error(`timed out waiting for ${what}`);
   };
   // The page itself loaded. Chrome opens about:blank first, whose readyState is already "complete", so waiting on
   // readyState alone can pass before the page has arrived, and a DevTools call about the page sent then is never answered (0159).
-  const loaded = () => until(`location.href === ${JSON.stringify(new URL(url).href)} && document.readyState === "complete"`, `${url} to load`);
+  const loaded = ms => until(`location.href === ${JSON.stringify(new URL(url).href)} && document.readyState === "complete"`, `${url} to load`, ms);
   const mouse = (type, [x, y]) => send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount: 1 });
   // A real drag with the mouse, from one point to another, through a point between them.
   const drag = async (from, to) => {
