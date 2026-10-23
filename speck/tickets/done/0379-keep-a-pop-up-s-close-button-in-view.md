@@ -1,7 +1,7 @@
 ---
 id: "0379"
 title: "Keep a pop-up's Close button in view"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0375"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:50:24.411Z"
 approved: "2026-10-22T23:57:57.562Z"
+finished: "2026-10-23T00:03:47.494Z"
 
 ---
 # 0379 · Keep a pop-up's Close button in view
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A long document's pop-up scrolls its path and Close button away with the document. On a phone there is no Escape key, so closing it means scrolling back to the top. The Settings pop-up and the Foreman's pop-up are the same kind of window.
