@@ -1,6 +1,6 @@
 # Find the agents and models on this machine
 
-Captured: 2026-10-18 · Status: idea
+Captured: 2026-10-18 · Status: ticketed (0398, 0399, 0400)
 
 ## What
 speck works out, for each agent, whether it's installed and signed in and which models it offers, with proper names and descriptions, and the Settings view and setup offer only what's really there. For example "Codex · GPT-6.1 Sol: latest workhorse model" rather than `gpt-6.1-sol`, and agents you don't have shown with a short note rather than as choices.
