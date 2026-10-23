@@ -1,7 +1,7 @@
 ---
 id: "0434"
 title: Show each collapsed ticket as two single lines                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0428"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T19:48:52.766Z"
-blocked_at: "2026-10-23T20:15:27.402Z"
+blocked_at: ""
+waited_seconds: 1637
 
 ---
 # 0434 · Show each collapsed ticket as two single lines
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 Collapsed tickets are taller and busier than they need to be. A ticket being built starts its details line with a stage sentence such as `Writing tests and code`, then its stage, its time, its priority, size and risk. On a phone each item is a finger-sized box, so the line wraps over three rows. A shipping ticket shows two unlabelled times (`Shipping · 01:08 · 20:12`), and a long title wraps over two lines.
@@ -48,6 +49,7 @@ Every collapsed ticket is two single lines: its title, then a short status line.
 - Self-check: kept a closed Build card's bug, fix and document tags, as AC3 names only its priority, size and risk; made the phone rule for a closed Shipped title win over the general one, so its tap area stays 44 px wide; switched the grid's dim dots from see-through to a colour, as no text or mark may be faded (0161).
 - Round 1 F1 (an open Build card's priority should open a menu): to dispute in round 2. "Still opens its menu" means as today, and today a Build card's priority shows its tip (0165 AC4); the server only sets a draft's priority (`scripts/panel.mjs`, panelSetPriority), so a menu there would be a new feature.
 - Built as: while the reviewer is reviewing, the stage names the round being reviewed (`Review 2` while round 2 runs), as the sentence that named it is now only the grid's name; 0223's test changes to match. A blocked, paused or stopped card's question, hint or message still sits under its two lines (0419 AC4), so AC5's two rows are its title line and status line; its status line is one line, cut off with an ellipsis on a phone when its words don't fit.
+- Went with the recommendation: hide them until the card is opened, except the Foreman's question (chosen by the user in the panel, 2026-10-23 20:42 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
