@@ -3392,6 +3392,7 @@ if (typeof matchMedia === 'function') {
   (function zoomed() {
     matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`).addEventListener('change', () => {
       for (const b of badges.values()) if (b.lcd) b.lcd.scr.size();
+      if (screen.lcd) screen.lcd.size(); // 0413: speck's screen too
       zoomed();
     }, { once: true });
   })();

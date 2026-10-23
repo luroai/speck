@@ -13,14 +13,15 @@ export const state = (f, o = {}) => ({ tickets: [T('0362', 'building'), T('0363'
 // The page, with a Screen that keeps what the page made it with, and the cards' badges left blank. made() gives the
 // screen's options, cast() speck's cast, and draw(t) the lit dots of one frame at `t`, as [column, row].
 export function screenPage(states, globals = {}) {
-  let made = null;
-  class Screen { constructor(canvas, o) { made = { canvas, ...o }; this.dirty = true; this.still = o.still; } }
+  let made = null, lcd = null;
+  class Screen { constructor(canvas, o) { made = { canvas, ...o }; this.dirty = true; this.still = o.still; lcd = this; } }
   const PAGE_LCD = { ...LCD, Screen, Cast: class extends LCD.Cast { constructor(...a) { super(...a); casts.push(this); } },
     badge() { return { set() {}, scr: { still: false, size() {} }, cast: { still: false } }; } };
   const casts = [];
   const p = fakePage(states, { SpeckLCD: PAGE_LCD, requestAnimationFrame() {}, ...globals });
   p.byId('screen').getContext = () => ({}); // a canvas
   p.made = () => made;
+  p.lcd = () => lcd; // the Screen the page made
   p.cast = () => casts[casts.length - 1];
   p.draw = (t = 1000, still = true) => {
     const buf = { c: made.cols, r: made.rows, v: new Uint8Array(made.cols * made.rows) };
