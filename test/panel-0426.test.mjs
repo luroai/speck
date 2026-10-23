@@ -60,11 +60,12 @@ function nearestAlpha(look, grey, from, need) {
 }
 const same = (a, b, what) => assert.equal(String(a).toLowerCase(), String(b).toLowerCase(), what);
 
+// Cursor Dark has no orange, so the bug tag takes Cursor Light's (charts.orange) in both looks.
 const CURSOR = {
   light: { grey: '#141414', text: '#141414EB', muted: '#141414AD', bg: '#F3F3F3', panel: '#FCFCFC', input: '#FCFCFC', dir: -1,
-    red: '#CF2D56', magenta: '#B8448B', green: '#1F8A65', blue: '#3C7CAB', cyan: '#4C7F8C', yellow: '#A16900' },
+    red: '#CF2D56', orange: '#DB704B', magenta: '#B8448B', green: '#1F8A65', blue: '#3C7CAB', cyan: '#4C7F8C', yellow: '#A16900' },
   dark: { grey: '#E4E4E4', text: '#E4E4E4EB', muted: '#E4E4E48D', bg: '#141414', panel: '#181818', input: '#1C1C1C', dir: 1,
-    red: '#E34671', magenta: '#B48EAD', green: '#70B489', blue: '#81A1C1', cyan: '#88C0D0', yellow: '#D2943E' },
+    red: '#E34671', orange: '#DB704B', magenta: '#B48EAD', green: '#70B489', blue: '#81A1C1', cyan: '#88C0D0', yellow: '#D2943E' },
 };
 
 test('0426 AC1: the page, cards, text and inputs are Cursor Dark\'s and Cursor Light\'s', () => {
@@ -120,7 +121,7 @@ test('0426 AC2: only rules whose text is 14 px or more use Cursor\'s muted', () 
 test('0426 AC3: each state colour is Cursor\'s, at the nearest shade that meets 0161\'s contrast for its text', () => {
   const all = looks();
   // token, Cursor's colour, and the contrast 0161 asks of its text: 7:1, as 0161 takes a rule that sets no size to be 13 px
-  const STATES = [['--bad', 'red', 7], ['--bug', 'red', 7], ['--idea', 'magenta', 7], ['--ok', 'green', 7], ['--run', 'blue', 7],
+  const STATES = [['--bad', 'red', 7], ['--bug', 'orange', 7], ['--idea', 'magenta', 7], ['--ok', 'green', 7], ['--run', 'blue', 7],
     ['--warn', 'yellow', 7], ['--fix', 'yellow', 7]];
   for (const [name, c] of Object.entries(CURSOR)) {
     const look = all[name];
@@ -128,9 +129,11 @@ test('0426 AC3: each state colour is Cursor\'s, at the nearest shade that meets 
       const own = c[colour];
       same(look[token], meets(look, own, need) ? own : nearest(look, own, need, c.dir), `${name}: ${token} is Cursor's ${colour}, at the nearest shade for ${need}:1`);
     }
+    // the bug tag has a colour of its own (0049), not the red of a ticket that needs you
+    assert.notEqual(look['--bug'].toLowerCase(), look['--bad'].toLowerCase(), `${name}: --bug isn't --bad`);
     // the edges and the focus ring need 3:1, which Cursor's own colours meet
-    for (const colour of ['blue', 'cyan', 'yellow', 'green']) {
-      same(look[`--${colour}`], c[colour], `${name}: --${colour} is Cursor's own`);
+    for (const [colour, token] of [['blue', '--blue'], ['cyan', '--inbox'], ['yellow', '--yellow'], ['green', '--green']]) {
+      same(look[token], c[colour], `${name}: ${token} is Cursor's own ${colour}`);
       assert.ok(meets(look, c[colour], 3), `${name}: Cursor's ${colour} meets 3:1 on every surface`);
     }
   }
@@ -163,7 +166,7 @@ test('0426 AC3: needs you, waiting for you, passing checks, links, the focus rin
   assert.match(rule(':focus-visible'), /outline: 2px solid var\(--blue\)/);
   // a ticket's edge at each stage: blue while its tests and code are written, cyan in its self-check, yellow in review,
   // green while it ships
-  for (const [sel, token] of [['.q.at-build', '--blue'], ['.q.at-check', '--cyan'], ['.q.at-review', '--yellow'], ['.q.at-ship', '--green']])
+  for (const [sel, token] of [['.q.at-build', '--blue'], ['.q.at-check', '--inbox'], ['.q.at-review', '--yellow'], ['.q.at-ship', '--green']])
     uses(sel, 'border-color', token);
 });
 

@@ -75,7 +75,7 @@ Round 2 (codex): approve.
 - Follow-ups:
   - speck/ideas/2026-10-23-tell-waiting-for-you-from-needs-you-at-a-glance.md: magenta and red are about 21° of hue apart in Cursor Light, so 0138's hue check now asks for 20° rather than 60°.
   - Known limit: the unused --accent and --accent-bg tokens stay, at Cursor values, as the 0126/0134 palette checks list them. A later tidy-up could drop them along with those checks.
-  - Known limit: the bug and fix tags now share the needs-you red and the review yellow (--bug equals --bad, --fix equals --warn), as 0161 reads a tag's colour rule as 13 px text and asks 7:1 of it.
+  - Known limit: the fix tag shares the review yellow (--fix equals --warn), as 0161 reads a tag's colour rule as 13 px text and asks 7:1 of it. The bug tag is in Cursor Light's orange (charts.orange), as Cursor Dark has none, so it keeps a colour of its own (0049).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->

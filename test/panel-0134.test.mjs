@@ -14,8 +14,8 @@ const rootVars = html => {
 const ZEN = { '--bg': '#f3f3f3', '--panel': '#fcfcfc', '--raise': '#f3f3f3', '--line': '#14141476', '--line-soft': '#14141413',
   '--text': '#141414EB', '--muted': '#141414BA', '--faint': '#141414BA', '--accent': '#cf2d56', '--bad': '#96213f' };
 const OWN = ['--ok', '--warn', '--run', '--idea', '--inbox', '--bug', '--fix'];
-// 0426: the bug tag is in Cursor's red, as --bad is, and the fix tag in its yellow, as --warn is
-const SHARED = new Set(['--bug --bad', '--fix --warn', '--warn --fix']);
+// 0426: the fix tag is in Cursor's yellow, as --warn is
+const SHARED = new Set(['--fix --warn', '--warn --fix']);
 const luminance = hex => {
   const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
