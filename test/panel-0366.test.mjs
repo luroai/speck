@@ -3,7 +3,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, page, T } from './support/panel.mjs';
+import { fakePage, page, T, styles } from './support/panel.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
 
 const ON = { on: true, pid: 4242 };
@@ -12,7 +12,7 @@ const view = (o = {}, tickets = [], agent) => foremanView({ run: ON, record: rec
 const state = (foreman, o = {}) => ({ tickets: [], ideas: [], resume_command: '', run: ON, foreman, ...o });
 // The declarations of each CSS rule whose selector list holds exactly `sel`, in the page's style, media queries included.
 const rules = sel => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = styles().replace(/\/\*[\s\S]*?\*\//g, '');
   return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].replace(/^[^{]*\{/, '').split(',').map(x => x.trim()).includes(sel)).map(m => m[2]);
 };
 const within = (n, box) => { for (; n; n = n.parentNode) if (n === box) return true; return false; };

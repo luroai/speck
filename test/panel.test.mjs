@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage, styles } from './support/panel.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -221,8 +221,8 @@ test('0031 AC3: the page has the mockup\'s areas, groups and dark style, without
   const html = page();
   for (const text of ['<span class="tab-name">Plan</span>', '<span class="tab-name">Build</span>', '<span class="tab-name">Shipped</span>', 'waiting on ']) // 0410: the areas are tabs
     assert.ok(html.includes(text), text);
-  assert.deepEqual(paletteProblems(html), [], 'the agreed colour palette');
-  assert.doesNotMatch(html, /border-radius: 0 !important/, 'no square corners forced (0428)');
+  assert.deepEqual(paletteProblems(styles()), [], 'the agreed colour palette');
+  assert.doesNotMatch(styles(), /border-radius: 0 !important/, 'no square corners forced (0428)');
   assert.doesNotMatch(html, /class="sample"/);
   assert.doesNotMatch(html, /· later/);
 });
@@ -413,7 +413,7 @@ test('0033 AC3: Shaping has a Tickets / Ideas toggle, Tickets first, one list at
 });
 
 test('0033 AC3: since 0167, tickets and ideas share one plain look: the selected toggle in the text colour, and no coloured section edge or item stripe', () => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const css = styles();
   assert.match(css, /\n\s*\.toggle\.on \{[^}]*color: var\(--text\);[^}]*border-color: var\(--text\)/);
   assert.doesNotMatch(css, /#shaping-section\.(tickets|ideas) \{/);
   assert.doesNotMatch(css, /\.item\.(ticket|idea) \{[^}]*border-left/);
@@ -565,7 +565,7 @@ test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167)
   assert.equal(sayOf(rows[0]).className, 'say bad', 'its sentence (0416: with no badge)');
   assert.ok(rows[0].textContent.includes('Split it or keep it?'));
   for (const r of rows.slice(1)) assert.ok(!p.all(r).some(red), `${r.textContent.slice(0, 4)} has nothing red`);
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const css = styles();
   assert.match(css, /\.q\.blocked \{[^}]*border-color:[^}]*var\(--bad\)/); // its border all round since 0167
   assert.match(css, /\.q \.top \.stage\.bad \{[^}]*color: var\(--bad\)/);
   assert.match(css, /\.q \.tag\.high \{[^}]*color: var\(--bad\)/, '0151 AC2: a high-risk tag in the queue is in the panel\'s red');
@@ -907,7 +907,7 @@ test('0035 AC3: with no done tickets, Shipped says nothing has shipped yet and s
   assert.equal(p.byId('shipped-stats').hidden, true);
   assert.equal(p.byId('shipped-stats').textContent, '');
   assert.match(p.byId('shipped').textContent, /Nothing shipped yet/);
-  assert.match(page().match(/<style>([\s\S]*?)<\/style>/)[1], /\.stats\[hidden\] \{ display: none; \}/, 'hidden wins over display: flex');
+  assert.match(styles(), /\.stats\[hidden\] \{ display: none; \}/, 'hidden wins over display: flex');
 });
 
 // ---------- 0045: flag a build that finished without shipping ----------

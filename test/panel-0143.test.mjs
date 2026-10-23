@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fakePage, T, full, click, top, items, queueRows, shippedRows } from './support/panel.mjs';
+import { page, fakePage, T, full, click, top, items, queueRows, shippedRows, styles } from './support/panel.mjs';
 
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
 const clone = s => JSON.parse(JSON.stringify(s));
@@ -14,7 +14,7 @@ const paneTags = p => {
   return box ? box.children.map(n => [n.className, n.textContent]) : null;
 };
 const fullButtonIn = (p, n) => p.all(n).find(x => x.tagName === 'button' && x.textContent === 'Full ticket');
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const rule = sel => (css().match(new RegExp(`\\n\\s*${sel.replace(/[.:#]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[1] || '';
 
 // Opens a ticket in the pane from Plan, Build or Shipped, as the user does.

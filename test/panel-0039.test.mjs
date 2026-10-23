@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fm, panelRepo, freePort, startPanel, stop, page, fakePage, full, idea, click, toggles, items, top, button, findChrome, browserPage, charAt, openLane } from './support/panel.mjs';
+import { fm, panelRepo, freePort, startPanel, stop, page, fakePage, full, idea, click, toggles, items, top, button, findChrome, browserPage, charAt, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0039: an open item closes only from its top row ----------
 
@@ -35,7 +35,7 @@ test('0039 AC1: a draft opens and closes from anywhere in its top row: id, title
     assert.ok(!isOpen(items(p)[0]), `closes from top-row node ${i}`);
   }
   assert.ok(!items(p)[0].listeners.click, 'the item itself does not open or close it');
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const css = styles();
   assert.match(css, /\.head \{[^}]*cursor: pointer/, 'the top row shows it can be clicked');
   assert.doesNotMatch(css, /\.item\.(ticket|idea) \{[^}]*cursor: pointer/, 'the details do not');
 });

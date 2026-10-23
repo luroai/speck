@@ -1,12 +1,12 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, round, exitOf, openLane } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, round, exitOf, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0140: fit the panel to a phone screen ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 
 const NOW = Date.now();
 const ago = m => new Date(NOW - m * 60000).toISOString();

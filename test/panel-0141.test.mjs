@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, full, items, shippedRows, queueRows, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, full, items, shippedRows, queueRows, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0141: keep a shipped ticket open when its title is tapped on a phone ----------
 
@@ -15,7 +15,7 @@ const pane = p => p.byId('full-ticket');
 const paneId = p => (pane(p).hidden || !pane(p).children.length ? null : pane(p).children[0].children[0].textContent);
 const rowOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const titleOf = (p, row) => p.all(row).find(n => n.className === 'title-link');
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const event = () => { const e = { prevented: false, stopped: false }; e.preventDefault = () => { e.prevented = true; }; e.stopPropagation = () => { e.stopped = true; }; return e; };
 
