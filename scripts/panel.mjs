@@ -16,7 +16,7 @@ import { pictureFile } from './pictures.mjs';
 import { documentFile } from './output.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettingRequest, panelSaveRequestAsync, settingsAnswer, agentModels, panelKeyAddRequest, panelAgentRequest, panelProviderAddRequest } from './settings.mjs';
+import { panelSettingRequest, panelSaveRequestAsync, settingsAnswer, settingsQuick, agentModels, panelKeyAddRequest, panelAgentRequest, panelProviderAddRequest } from './settings.mjs';
 import { foremanView, readForeman, fixingOf } from './foreman.mjs';
 import { agentView } from './foreman-agent.mjs';
 import { panelForemanReply } from './foreman-answer.mjs';
@@ -491,8 +491,8 @@ export async function panelServer() {
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read the build log: ${e.message}` })); }
     }
     // 0257: the settings people tune, read afresh from speck/config.yml each time the Settings view opens, with the
-    // models the reviewer, builder and Foreman agent offer (settingsAnswer).
-    if (where === '/api/settings') return settingsAnswer(repo).then(body => send(res, 200, 'application/json', JSON.stringify(body)),
+    // models the reviewer, builder and Foreman agent offer (settingsAnswer). 0407: ?quick=1, from the config alone, at once.
+    if (where === '/api/settings') return (query.get('quick') === '1' ? Promise.resolve().then(() => settingsQuick(repo)) : settingsAnswer(repo)).then(body => send(res, 200, 'application/json', JSON.stringify(body)),
       e => send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read speck/config.yml: ${e.message}` })));
     // 0369: the models of an agent chosen in the Settings view but not yet saved, read when it's chosen.
     if (where === '/api/agent-models') return agentModels(query.get('agent') ?? '').then(out => send(res, 200, 'application/json', JSON.stringify(out)));

@@ -252,6 +252,13 @@ export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCur
   return { ...panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents, providers }), your_agents: yours, ...(listed ? { agent_models: listed } : {}) };
 }
 
+// 0407: what the panel's GET /api/settings?quick=1 answers: panelSettings from this machine's and the project's config
+// alone, at once, with `loading: true`. It asks no agent anything: the Settings view draws it straight away, then reads
+// settingsAnswer for the agents' install and sign-in checks and their models, and fills those in.
+export function settingsQuick(repo, providers = knownProviders(repo)) {
+  return { ...panelSettings(repo, { providers }), loading: true };
+}
+
 // 0400: the models of each of your agents in `yours` (yourAgentsView), in its order, for the Settings view's one list
 // for each role: { id, name, efforts, models }, `efforts` true for an agent that takes one (Claude Code and Codex), and
 // `why` in one line when its models can't be read, so only its own default is offered. Cursor and Codex are asked
