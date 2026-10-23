@@ -41,6 +41,7 @@ A role's Settings row has one info button.
 - Asked for 2026-10-23 from the Foreman row's `About foreman_effort` button beside the role's own info button.
 - Checked 2026-10-23: `ROLE_PAIRS` in `templates/panel.html` nests `reviewer_effort` and `foreman_effort` into the role's row as a `.setting.model`, and `settingRow` gives that nested row its own info button (0400). 0402 will add `builder_effort` the same way.
 - Waits for 0404: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
