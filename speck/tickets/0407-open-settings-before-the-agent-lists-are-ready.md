@@ -1,7 +1,7 @@
 ---
 id: "0407"
 title: "Open Settings before the agent lists are ready"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-open-settings-before-the-agent-lists-are-re
 after: ["0406"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T12:25:48.528Z"
+approved: "2026-10-23T12:35:25.439Z"
 
 ---
 # 0407 · Open Settings before the agent lists are ready
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Opening Settings sits on "Loading the settings…" until speck has finished asking every agent CLI whether it is signed in and which models it offers. Cursor's model list alone often takes a few seconds, so the view feels stuck even though the config is ready at once.
@@ -57,9 +58,15 @@ Worth keeping an eye on: each time Settings opens, or after a Save, speck still 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The Foreman model control does not indicate loading when Foreman inherits the builder's agent.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 499,548
+- Elapsed since build started: 10 min
+- Changed lines: 93 (limit 5000)
 - Follow-ups:
   - Idea: keep the agents' lists between Settings reads, so they don't load again on every opening and Save (speck/ideas/2026-10-23-keep-the-agents-lists-between-settings-reads.md).
   - Tidy-up: while loading, a role's picked value reads as, for example, "Claude Code (default) (loading the list…)", with two sets of brackets.
