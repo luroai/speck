@@ -39,6 +39,7 @@ The panel has one layout, a single column, at every width, and a lane has no bor
 ## Notes
 - Asked for by the user on 2026-10-23: the panel is used mostly in a thin side pane, and its tickets are too tall there. A separate desktop layout isn't needed any more. Each ticket keeps its full box (the user, 2026-10-23).
 - Waits for 0417: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
