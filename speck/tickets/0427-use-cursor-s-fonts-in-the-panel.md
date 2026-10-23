@@ -42,7 +42,7 @@ The panel's text uses the fonts Cursor's own interface uses, and its labels read
 - The user asked for this on 2026-10-23: the panel is used mostly beside Cursor, at work and at home, and should look like part of it.
 - Checked 2026-10-23: VS Code's interface font, which Cursor is built on, is `-apple-system, BlinkMacSystemFont` on macOS, `"Segoe WPC", "Segoe UI"` on Windows and `system-ui, "Ubuntu", "Droid Sans"` on Linux. Its interface monospace is `"SF Mono", Monaco, Menlo, Courier` on macOS, `Consolas, "Courier New"` on Windows and `"Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New"` on Linux (microsoft/vscode `src/vs/workbench/browser/media/style.css`).
 - 14 px: Cursor's text is about 14–15 px beside the panel's 13 px in the user's screenshot of 2026-10-23.
-- Unverified: that Cursor hasn't replaced VS Code's interface fonts in its own panels (no Cursor source or docs to check).
+- Checked 2026-10-23: only Cursor's remote server is installed on this box, not its interface, so its workbench style sheet can't be read here. Nothing in the server or its built-in extensions names a different interface font, and their webviews use `var(--vscode-font-family)`, VS Code's interface font. Not proven, but nothing contradicts it.
 - Waits for 0426: both change `templates/panel.html`.
 
 ## In plain words
