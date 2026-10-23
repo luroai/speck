@@ -1,7 +1,7 @@
 ---
 id: "0401"
 title: "Add any API provider from Settings"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T11:24:39.331Z"
 ---
 # 0401 · Add any API provider from Settings
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 "Add an agent" offers DeepSeek as a fixed provider row. Anyone with another OpenAI- or Anthropic-compatible API has nowhere to enter its name, address, type and key.
@@ -61,3 +61,81 @@ Settings lets you add any API provider by name, base URL, API type and key, and 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "47e122e1b835d737e2df809000a23af4cbdfead0",
+    "session": "fresh",
+    "thread_id": "01a16889-f3d4-7c53-aac8-bbe749b0b2f0",
+    "builder_response": "- Tests run: test/providers-0401.test.mjs test/settings-agents-0399.test.mjs test/settings-provider-0393.test.mjs test/settings-roles-0400.test.mjs test/keys-0389.test.mjs test/review-provider-0390.test.mjs test/run-provider-0391.test.mjs test/foreman-provider-0392.test.mjs (plus the repo checks). 21 more test files that use the changed modules also passed (339 tests), run separately.\n- Design: providers you add are kept in speck/.cache/machine/providers.json (git-ignored) by scripts/custom-providers.mjs. knownProviders(repo) = speck's own (DeepSeek) then yours, and replaces the PROVIDERS default everywhere a provider is looked up. OpenAI-type providers are refused by cantRun() in buildPlan, providerReady, foremanCantStart and provider-build.mjs's main.\n- No existing test needed changing for criterion 5: \"Add an agent\" keeps DeepSeek's row and adds the form beside it.\n",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 213674,
+      "cached_input_tokens": 152192,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1010,
+      "reasoning_output_tokens": 146
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T11:34:31.357Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html providerFormRow offers all six required fields and both API types. The two AC1 form tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 tests passed, checking ignored machine storage, key exclusion from responses, no commit, agent membership and models in each role's list."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The AC3 test passed: buildPlan starts the provider wrapper, a fake Claude receives the URL and key through environment variables, and review and Foreman use the existing provider environment paths."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cantRun guards buildPlan, providerReady, foremanCantStart and the provider wrapper. The AC4 test passed and confirms Claude never starts for an OpenAI provider."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The AC5 test passed, preserving DeepSeek's key and build address beside a custom provider. The supplied regression run reports 195 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/custom-providers.mjs",
+        "issue": "saveCustomProvider silently replaces an existing provider with the same normalised name. panelProviderAddRequest permits this even while that provider is assigned to a role. Submitting the Add form again can therefore change its address, type and models without removing it first, contrary to the explicit scope restriction. It also writes the replacement before saving the new key: if key saving fails, the existing key remains associated with the replacement address.",
+        "suggested_fix": "Refuse additions whose normalised name belongs to a provider still in Your agents, before writing anything. Permit replacement only after the required removal, and ensure a failed key save cannot leave an existing provider redirected to a new address. Add tests for duplicate additions and key-save failure.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The form, machine-only storage and provider execution paths are covered by passing tests. One issue blocks approval: adding a provider with an existing name silently changes its settings, including where its key is sent. Require removal before replacement and preserve the existing settings if saving fails."
+  }
+}
+```
+
+</details>
