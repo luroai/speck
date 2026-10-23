@@ -1,7 +1,7 @@
 ---
 id: "0435"
 title: "Shorten the second line of Plan's note cards"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0434"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T20:59:20.145Z"
+approved: "2026-10-23T21:07:57.489Z"
 
 ---
 # 0435 · Shorten the second line of Plan's note cards
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Cards in Plan's Ideas and Inbox lists repeat themselves and run long: `idea` (or `inbox`) shows before the title and again on the second line, the second line is the note's full file path, which wraps on a phone, and the touch sizing puts a big gap between them.
@@ -55,9 +56,15 @@ Cards in Plan's Ideas and Inbox lists are now two short lines: the note's title,
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Long idea and inbox titles still wrap, so collapsed cards can occupy three or more rows at 390 px.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 381,075
+- Elapsed since build started: 9 min
+- Changed lines: 38 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
