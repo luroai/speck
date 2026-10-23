@@ -18,7 +18,8 @@ function fake(tickets) {
   });
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-const say = (p, id) => p.all(rowOf(p, id)).filter(n => /\bsay\b/.test(n.className || ''))[0].textContent;
+// 0434: while its reviewer or builder is at work, the sentence is the name of the grid of lights that stands in for it
+const say = (p, id) => p.all(rowOf(p, id)).filter(n => n.className === 'lights')[0].attrs['aria-label'];
 
 // A panel repo whose config has `cfgModel` as reviewer_model and whose ticket 0001 has `ticketModel`.
 function repo(cfgModel, ticketModel) {

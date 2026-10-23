@@ -271,7 +271,8 @@ test('0157 AC4: in the browser, a shortened token count has the exact number as 
 for (const theme of ['light', 'dark']) {
   test(`0157 AC5: at 375 px in the ${theme} look, nothing in Shipped reaches past the right edge`, skip, async () => {
     await withPanel(async b => {
-      const out = await b.js(`[...${SECTION}.querySelectorAll('*')].filter(n => n.getBoundingClientRect().right > innerWidth + 0.5 || n.scrollWidth > n.clientWidth + 1 && getComputedStyle(n).overflowX !== 'visible')
+      // 0434: a closed card's title is one line that ends in an ellipsis when it doesn't fit, so its text is wider than its box
+      const out = await b.js(`[...${SECTION}.querySelectorAll('*')].filter(n => n.getBoundingClientRect().right > innerWidth + 0.5 || n.scrollWidth > n.clientWidth + 1 && getComputedStyle(n).overflowX !== 'visible' && getComputedStyle(n).textOverflow !== 'ellipsis')
         .map(n => n.className || n.tagName)`);
       assert.deepEqual(out, []);
       assert.ok(await b.js(`document.documentElement.scrollWidth <= innerWidth`), 'the page doesn\'t scroll sideways');

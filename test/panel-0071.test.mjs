@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { CLI, env, T, fakePage, queueRows, exitOf, sayOf } from './support/panel.mjs';
+import { CLI, env, T, fakePage, queueRows, exitOf, sayOf, sentenceOf } from './support/panel.mjs';
 import { buildPanel, runs } from './support/build-panel.mjs';
 
 // ---------- 0071: a paused build on its queue row (its pause and play icon went in 0145) ----------
@@ -34,7 +34,7 @@ test('0071 AC4: a paused build says it\'s paused (its dot stood still until 0168
   await p.settle();
   const paused = rowOf(p, '0002'), running = rowOf(p, '0001');
   assert.equal(sayOf(paused).textContent, 'Paused');
-  assert.equal(sayOf(running).textContent, 'Writing tests and code', 'running: the builder is at work');
+  assert.equal(sentenceOf(running), 'Writing tests and code', 'running: the builder is at work (0434: its grid of lights says so)');
   const sub = p.all(topOf(paused)).find(n => n.className === 'sub');
   assert.match(sub.textContent, /^Paused · 01:0\d$/);
   assert.match(p.all(topOf(running)).find(n => n.className === 'sub').textContent, /^01:0\d$/);
@@ -51,7 +51,7 @@ test('0071 AC4: played again, it says what it\'s doing (its dot moved until 0168
   p.timers.shift()();
   await p.settle();
   const row = rowOf(p, '0002');
-  assert.match(sayOf(row).textContent, /is (reviewing|fixing)/, 'at work with the reviewer');
+  assert.match(sentenceOf(row), /is (reviewing|fixing)/, 'at work with the reviewer');
   assert.match(p.all(topOf(row)).find(n => n.className === 'sub').textContent, /^01:0\d$/);
 });
 

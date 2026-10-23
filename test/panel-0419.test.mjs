@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, MONO_UI } from './support/panel.mjs';
+import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, openQueueRows } from './support/panel.mjs';
 
 // ---------- 0419: a closed Plan or Build ticket is a title line and one line of details ----------
 
@@ -39,17 +39,20 @@ test('0419 AC1: a closed Plan ticket is its id and title, then its priority, siz
   assert.ok(!t.textContent.includes('waiting on'), 'Plan says "after", not "waiting on"');
 });
 
-test('0419 AC2: a closed Build ticket is its id and title, then its stage sentence, stage, timer, priority, size and risk; a queued one starts "Queued · waiting on <ids>"', async () => {
+// 0434: a closed Build ticket's stage sentence is a grid of lights while an agent is at work on it, and its priority,
+// size and risk show only while it's open.
+test('0419 AC2: a closed Build ticket is its id and title, then its stage sentence, stage and timer; a queued one starts "Queued · waiting on <ids>"', async () => {
   const p = page();
   await p.settle();
   const b = card(p, '0501');
   assert.deepEqual(linesOf(b), ['line', 'progress']);
   assert.equal(topOf(b).children[0].textContent, '0501Writing its code');
-  assert.equal(topOf(b).children[1].textContent, 'Writing tests and code · Build · 19:18 · P3 · M · low');
+  assert.equal(topOf(b).children[1].textContent, ' Build · 19:18');
+  assert.equal(topOf(b).children[1].children[0].attrs['aria-label'], 'Writing tests and code');
   const q = card(p, '0502');
   assert.deepEqual(linesOf(q), ['line', 'act']);
-  assert.equal(topOf(q).children[1].textContent, 'Queued · waiting on 0501, 0503 · P3 · M · low');
-  assert.equal(topOf(card(p, '0503')).children[1].textContent, 'Queued · unlocks 0502 · P1 · S · high');
+  assert.equal(topOf(q).children[1].textContent, 'Queued · waiting on 0501, 0503');
+  assert.equal(topOf(card(p, '0503')).children[1].textContent, 'Queued · unlocks 0502');
   for (const id of ['0501', '0502', '0503']) assert.deepEqual(card(p, id).children.map(c => c.className), ['top'], `${id}: nothing under the two lines`);
 });
 
@@ -70,6 +73,8 @@ test('0419 AC3: the priority opens its menu, size and risk explain themselves, a
     assert.equal(n.tip, tip);
     assert.equal(n.attrs.role, 'button');
   }
+  click(topOf(card(p, '0501'))); // 0434: a Build ticket's tags show while it's open
+  await p.settle();
   const [bPrio, bSize, bRisk] = tags(card(p, '0501'));
   assert.deepEqual([bPrio.tip, bSize.tip, bRisk.tip], ['Priority 3: built after P0 to P2 tickets', 'M: several files or one new component', 'Low risk: waits for you to ship it']);
   // the ids are Go to ticket links, in Plan and in Build
@@ -78,7 +83,7 @@ test('0419 AC3: the priority opens its menu, size and risk explain themselves, a
   assert.deepEqual(gotos(card(p, '0502')), ['Go to ticket 0501', 'Go to ticket 0503']);
 });
 
-test('0419 AC4: a question, a recommendation, a Ship hint and a message still show under the two lines', async () => {
+test('0419 AC4: a question, a recommendation, a Ship hint and a message still show under the two lines, while the card is open (0434)', async () => {
   const s = { run: { on: true }, tickets: [
     T('0601', 'blocked', { started: ago(300), blocked_question: 'A or B?', blocked_recommendation: 'A', blocked_resumable: true }),
     T('0602', 'blocked', { started: ago(300), blocked_question: 'C or D?', blocked_recommendation: 'C', foreman_will: true }),
@@ -87,7 +92,8 @@ test('0419 AC4: a question, a recommendation, a Ship hint and a message still sh
   ], ideas: [] };
   const p = page(s);
   await p.settle();
-  const under = id => card(p, id).children.slice(1).map(c => c.className);
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
+  const under = id => card(p, id).children.slice(1).map(c => c.className).filter(c => !/^(full-open|log)$/.test(c)); // then its buttons and log, as it's open
   for (const id of ['0601', '0602', '0603', '0604']) assert.deepEqual(linesOf(card(p, id)), ['line', 'progress'], `${id}: the two lines first`);
   assert.deepEqual(under('0601'), ['question', 'act']);
   assert.ok(p.all(card(p, '0601')).some(n => n.className === 'go-with' && n.textContent === 'Go with the recommendation'), 'the recommendation button');
@@ -100,7 +106,7 @@ test('0419 AC4: a question, a recommendation, a Ship hint and a message still sh
 
 // ---------- in a real browser: a 420 px side pane with a mouse ----------
 
-// Enough tickets to wait on that the details need three lines or more at 420 px.
+// Enough tickets to wait on that the details need three lines or more at 420 px, while the card is open (0434).
 const LONG_WAIT = Array.from({ length: 14 }, (_, i) => String(901 + i).padStart(4, '0'));
 const PANE = {
   run: { on: true },
@@ -134,7 +140,9 @@ const CARDS = sel => `(async () => {
     return { id: c.querySelector('.id').textContent, height: c.getBoundingClientRect().height, titleLines: lines(title), detailLines: lines(details),
       titleSize: parseFloat(getComputedStyle(title).fontSize), detailSize: parseFloat(getComputedStyle(details).fontSize),
       broken: [...details.children].filter(n => !n.matches('.sep, .ids') && n.getClientRects().length > 1).map(n => n.textContent),
-      overflows: details.scrollWidth > details.clientWidth + 0.5 || details.getBoundingClientRect().right > c.getBoundingClientRect().right };
+      // 0434: a closed Build card's status line is one line that ends in an ellipsis when it doesn't fit, inside the card
+      cut: title.scrollWidth > title.clientWidth + 0.5 && getComputedStyle(title).textOverflow === 'ellipsis',
+      overflows: (getComputedStyle(details).textOverflow !== 'ellipsis' && details.scrollWidth > details.clientWidth + 0.5) || details.getBoundingClientRect().right > c.getBoundingClientRect().right };
   });
 })()`;
 
@@ -150,8 +158,6 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
     await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#queue .q').length === 5 && document.querySelectorAll('#shaping .item.ticket').length === 2`, 'the panel');
     assert.equal(await b.js(`matchMedia('(pointer: coarse)').matches`), false, 'a mouse is the main pointer, not a touch screen');
     const seen = [];
-    // 0427: whether this machine's interface font is a monospace, as an i and an m are the same width only in one
-    const monoUi = await b.js(MONO_UI);
     for (const [lane, sel] of [['plan', '#shaping .item.ticket'], ['build', '#queue .q']]) {
       await b.js(openLane(lane));
       for (const c of await b.js(CARDS(sel))) {
@@ -159,21 +165,21 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         assert.ok(c.detailSize < c.titleSize, `${c.id}: the details (${c.detailSize} px) are smaller than the title (${c.titleSize} px)`);
         assert.deepEqual(c.broken, [], `${c.id}: the details line wraps only between its parts`);
         assert.ok(!c.overflows, `${c.id}: the details stay inside the card`);
-        if (c.id === '0702') { assert.ok(c.titleLines >= 2, `0702: a long title wraps (${c.titleLines} lines)`); continue; } // 0427: how many lines depends on the machine's interface font
-        // The user's choice for this ticket: the 64 px limit covers details on up to two lines. A long list of tickets
-        // waited on wraps between its ids, onto as many lines as it needs, and the card grows to show every one.
-        if (c.id === '0707') { assert.ok(c.titleLines === 1 && c.detailLines >= 3 && c.height > 64, `0707: ${c.detailLines} lines of details, ${c.height} px`); continue; }
-        // A reviewing ticket's sentence ("Codex is reviewing · round 2") is too long for its details to fit on one line
-        // in 12 px text here, so its details wrap, between their parts, and it's still no more than 64 px tall. 0427: so
-        // is a building ticket's ("Writing tests and code"), now 14 px, where the interface font is a monospace, as it is
-        // on a machine whose system font is one.
-        assert.equal(c.titleLines, 1, `${c.id}: the title fits on one line`);
-        const wraps = c.id === '0704' || (c.id === '0703' && monoUi);
-        assert.equal(c.detailLines, wraps ? 2 : 1, `${c.id}: the details fit on one line, or wrap when they're too long`);
+        // 0434: a closed ticket's title is one line, cut off with an ellipsis when it doesn't fit
+        assert.equal(c.titleLines, 1, `${c.id}: the title is on one line`);
+        if (c.id === '0702') { assert.ok(c.cut, '0702: a long title is cut off'); continue; }
+        // 0434: a closed Build card's status line is one line, even with a long list of tickets it waits on, cut off
+        // where it doesn't fit; an open one wraps between its ids. A Plan card's details still wrap when they don't fit.
+        assert.equal(c.detailLines, 1, `${c.id}: the details fit on one line`);
         assert.ok(c.height <= 64, `${c.id}: ${c.height} px tall`);
       }
     }
     assert.deepEqual(seen, ['0701', '0702', '0703', '0704', '0705', '0706', '0707']);
+    // 0434: open, its details wrap between the ids it waits on
+    await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0707').querySelector('.top').click()`);
+    await b.until(`!!document.querySelector('#queue .q.open')`, '0707 to open');
+    const [open] = await b.js(CARDS('#queue .q.open'));
+    assert.ok(open.id === '0707' && open.detailLines >= 3 && !open.overflows, `0707 open: ${open.detailLines} lines of details`);
   } finally { await b.close(); await stop(panel); }
 });
 
@@ -183,7 +189,11 @@ test('0419 AC1 and AC2: a ticket missing its priority, size or risk, or with no 
     T('0804', 'reviewing', { priority: 2, size: '', risk: 'low', started: ago(5) })], ideas: [] });
   await p.settle();
   assert.equal(topOf(card(p, '0801')).children[1].textContent, '2 criteria · lint passes');
-  assert.equal(topOf(card(p, '0802')).children[1].textContent, 'Writing tests and code · Build');
+  assert.equal(topOf(card(p, '0802')).children[1].textContent, ' Build');
   assert.equal(topOf(card(p, '0803')).children[1].textContent, 'Queued');
-  assert.equal(topOf(card(p, '0804')).children[1].textContent, 'The reviewer is reviewing · round 1 · Build · 00:05 · P2 · low');
+  assert.equal(topOf(card(p, '0804')).children[1].textContent, ' Review 1 · The reviewer · 00:05');
+  for (const id of ['0802', '0803', '0804']) { click(topOf(card(p, id))); await p.settle(); } // 0434: the tags show while it's open
+  assert.equal(topOf(card(p, '0802')).children[1].textContent, ' Build');
+  assert.equal(topOf(card(p, '0803')).children[1].textContent, 'Queued');
+  assert.equal(topOf(card(p, '0804')).children[1].textContent, ' Review 1 · The reviewer · 00:05 · P2 · low');
 });

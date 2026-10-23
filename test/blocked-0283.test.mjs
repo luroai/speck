@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { panelRepo, fm, good, T, fakePage, queueRows } from './support/panel.mjs';
+import { panelRepo, fm, good, T, fakePage, queueRows, openQueueRows } from './support/panel.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { questionFacts } from '../scripts/question-facts.mjs';
 
@@ -64,6 +64,7 @@ test('0283 AC4: the panel says on a blocked ticket\'s question whether it change
     T('0005', 'blocked', { blocked_question: null, blocked_recommendation: 'A', blocked_noticeable: true, blocked_clear: false }),
   ]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   assert.deepEqual(factsOf(p, '0001'), ['Changes what you\'d notice', 'Clear recommendation']);
   assert.deepEqual(factsOf(p, '0002'), ['Doesn\'t change what you\'d notice', 'Close call']);
   assert.deepEqual(factsOf(p, '0003'), [], 'nothing for an unknown');
