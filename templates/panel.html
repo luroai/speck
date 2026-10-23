@@ -729,7 +729,9 @@ function doing(t, shipping) {
   if (running !== null) sentence = `${reviewer} is reviewing · round ${running}`;
   else if (t.status === 'reviewing') {
     const n = (steps[2] && /(\d+)$/.exec(steps[2].label)) || [null, '1'];
-    if (t.review_running === null && n[0] !== null) sentence = `${name(t.builder, 'the builder')} is fixing round ${n[1]}'s findings`;
+    // 0391: a model provider's builder by its own name, such as DeepSeek
+    const builder = typeof t.builder_label === 'string' && t.builder_label.trim() ? t.builder_label.trim() : name(t.builder, 'the builder');
+    if (t.review_running === null && n[0] !== null) sentence = `${builder} is fixing round ${n[1]}'s findings`;
     else sentence = `${reviewer} is reviewing · round ${n[1]}`;
   }
   return { sentence, tone, moving: t.status === 'building' || t.status === 'reviewing' };

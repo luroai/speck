@@ -3,12 +3,18 @@
 // ticket's build with that builder's own command: Codex's (0289), Cursor's (0290) or Claude Code's (the build_command
 // speck sets up for it). builder_model is passed only when the ticket's builder is the one in speck/config.yml, as it's
 // in that builder's own format. A builder that isn't installed, or that speck has no command for, isn't started.
+// 0391: a model provider's, such as DeepSeek's, is built through Claude Code with the provider's own command
+// (provider-build.mjs), and isn't started without Claude Code or this machine's key for the provider.
 import crypto from 'node:crypto';
 import { splitCommand } from './speck.mjs';
 import { DEFAULT_BUILD_COMMAND, withBuilderModel, configBuilder, buildsEachTicket } from './build-model.mjs';
 import { codexStartWords } from './codex-build.mjs';
 import { cursorStartWords, cursorCli, createChat } from './cursor-build.mjs';
 import { onPath } from './install.mjs';
+import { providerKey } from './keys.mjs';
+import { PROVIDERS } from './providers.mjs';
+import { providerNamed } from './provider-review.mjs';
+import { providerStartWords } from './provider-build.mjs';
 
 const LABELS = { claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' };
 const OWN = Object.keys(LABELS);
@@ -26,15 +32,27 @@ export const claudeStartWords = cfg => withBuilderModel(splitCommand(DEFAULT_BUI
 
 // How speck run starts ticket `t`'s build with build_command blank: { agent, words }, {id} and {session} standing for
 // the ticket and its session, or { why } saying in a few words why it isn't started. `installed` says whether a command
-// is on the PATH, so tests can stand in.
-export function buildPlan(cfg, t, installed = onPath) {
+// is on the PATH, so tests can stand in. 0391: `providers` are the model providers speck knows, and a provider's key
+// is checked in `repo`'s when it's given.
+export function buildPlan(cfg, t, installed = onPath, { repo = null, providers = PROVIDERS } = {}) {
   const builder = ticketBuilder(t, cfg);
+  const p = Object.hasOwn(LABELS, builder) ? null : providerNamed(builder, providers);
+  if (p) return providerPlan(cfg, p, installed, repo, providers);
   if (!Object.hasOwn(LABELS, builder))
-    return { why: `its builder is ${builder}, which speck run has no command of its own for. Set build_command in speck/config.yml to build it, or set its builder to ${OWN.join(', ')}` };
+    return { why: `its builder is ${builder}, which speck run has no command of its own for. Set build_command in speck/config.yml to build it, or set its builder to ${[...OWN, ...providers.map(x => x.name)].join(', ')}` };
   const own = configFor(cfg, builder);
   const words = builder === 'codex' ? codexStartWords(own) : builder === 'cursor' ? cursorStartWords(own, cursorCli()) : claudeStartWords(cfg);
   if (!installed(words[0])) return { why: `its builder, ${LABELS[builder]}, isn't installed here (${builder === 'cursor' ? 'neither agent nor cursor-agent' : words[0]} isn't on the PATH). Install it, or set the ticket's builder to one that is` };
   return { agent: builder, words };
+}
+
+// 0391: how speck run starts a build with provider `p`, as buildPlan says it.
+function providerPlan(cfg, p, installed, repo, providers) {
+  if (!installed('claude')) return { why: `its builder, ${p.label}, needs Claude Code installed, as speck runs ${p.label}'s models through it (claude isn't on the PATH). Install Claude Code (https://claude.com/claude-code), or set the ticket's builder to another` };
+  let key = '';
+  try { key = repo ? providerKey(repo, p.name, { providers }) : 'not checked'; } catch (e) { return { why: e.message.replace(/\.$/, '') }; }
+  if (!key) return { why: `this machine has no ${p.label} API key for its builder, ${p.label}. Set one with \`speck keys set ${p.name}\`, or set the ticket's builder to another` };
+  return { agent: p.name, words: providerStartWords(configFor(cfg, p.name), p) };
 }
 
 // How speck run launches ticket `t`: { agent, words, tag }, with build_command's `words` and no agent when `command` is
@@ -47,7 +65,7 @@ export function launchPlan(cfg, t, { command, words, repo, failed, chat = create
     failed.set(t.id, { kind, why });
     return null;
   };
-  const plan = !buildsEachTicket(command ?? '') ? { agent: null, words } : buildPlan(cfg, t, installed);
+  const plan = !buildsEachTicket(command ?? '') ? { agent: null, words } : buildPlan(cfg, t, installed, { repo });
   if (plan.why) return stay('builder', plan.why);
   let tag = crypto.randomUUID();
   if (plan.agent === 'cursor') {

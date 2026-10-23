@@ -8,6 +8,7 @@ import { cacheDir, reviewDiff, validateVerdict, saveRound, reviewerPrompt, verdi
 import { cursorCli } from './cursor-build.mjs';
 import { PROVIDERS } from './providers.mjs';
 import { providerNamed, providerReady, providerEnv } from './provider-review.mjs';
+import { withoutProviderBuild } from './provider-build.mjs';
 
 const LIMIT_SCRIPT = fileURLToPath(new URL('./limit.mjs', import.meta.url));
 
@@ -29,8 +30,9 @@ export function tookTooLong(name, ms) {
 }
 
 // Runs a reviewer with the prompt on stdin, ending it and every process it started after `ms`. Returns the process
-// result, with `timedOut` set if it was ended for that, or `error` ({ code, message }) if it couldn't start.
-export function runLimited(cmd, args, { cwd, input, ms, env }) {
+// result, with `timedOut` set if it was ended for that, or `error` ({ code, message }) if it couldn't start. 0391: one
+// started from a model provider's build gets back what that build set for its own Claude Code (withoutProviderBuild).
+export function runLimited(cmd, args, { cwd, input, ms, env = withoutProviderBuild(process.env) }) {
   const r = sh(process.execPath, [LIMIT_SCRIPT, String(ms), cmd, ...args], { cwd, input, stdio: ['pipe', 'pipe', 'pipe', 'pipe'], ...(env ? { env } : {}) });
   const said = r.output[3] || '';
   if (said === 'timeout') return { ...r, timedOut: true };
