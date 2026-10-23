@@ -391,17 +391,17 @@
      outline: only the keyboard's focus ring sets one, 0161.) */
   #settings .sgroup, #settings .switches { margin-top: 16px; border: 0; box-shadow: 0 0 0 .5px var(--line); } /* 0396: the switches' box has no heading */
   #settings .sgroup .sh { padding: 8px 12px; }
-  #settings .keys[hidden] { display: none; } /* 0393: only while a model provider is chosen */
   #settings .sgroup h4 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
   #settings .switch-row, #settings .setting { position: relative; padding: 8px 12px; border-bottom: .5px solid var(--line-soft); } /* 0371: relative, for its explanation */
-  #settings .switch-row:last-child, #settings .setting:last-child { border-bottom: 0; }
+  #settings .arow { position: relative; padding: 8px 12px; border-bottom: .5px solid var(--line-soft); } /* 0399: a row of Your agents, as a setting's */
+  #settings .switch-row:last-child, #settings .setting:last-child, #settings .arow:last-child { border-bottom: 0; }
   /* 0281: the left half a whole number of pixels wide, so the info buttons and controls each side of the gap start on a
      whole pixel when the row's width is odd. Without round(), two equal halves as before. */
-  #settings .switch-row .row, #settings .setting .row { --gap: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-columns: round(down, calc((100% - var(--gap)) / 2), 1px) minmax(0, 1fr); align-items: center; gap: var(--gap); }
+  #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-columns: round(down, calc((100% - var(--gap)) / 2), 1px) minmax(0, 1fr); align-items: center; gap: var(--gap); }
   /* 0277: the name, then the info button at the end of the row's left half, so a group's info buttons line up in one
      column, a row's gap clear of the values, whatever the name's length */
-  #settings .switch-row .label, #settings .setting .label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
-  #settings .switch-row .control, #settings .setting .control { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+  #settings .switch-row .label, #settings .setting .label, #settings .arow .label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
+  #settings .switch-row .control, #settings .setting .control, #settings .arow .control { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
   #settings .setting .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
   #settings .setting p.explain .line { margin-top: 6px; } /* 0397: this machine's own value, under the explanation */
   /* 0381: an agent's model, a setting of its own drawn beside the agent's list in its row, its explanation floating from
@@ -412,19 +412,24 @@
   #settings .setting .setting .list .info { flex: none; }
   #settings .setting .setting .name { display: none; }
   #settings .setting .setting > p:not(.explain) { flex: 1 1 100%; margin: 0; }
-  #settings .switch-row .name, #settings .setting .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); } /* 0277: broken only where settingName allows */
+  #settings .switch-row .name, #settings .setting .name, #settings .arow .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); } /* 0277: broken only where settingName allows */
   #settings .setting .value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
-  #settings .setting p { margin: 4px 0 0; color: var(--muted); }
-  #settings .setting p.bad { color: var(--bad); }
+  #settings .setting p, #settings .arow p { margin: 4px 0 0; color: var(--muted); }
+  #settings .setting p.bad, #settings .arow p.bad { color: var(--bad); }
+  #settings .arow p.said { color: var(--text); }
+  /* 0399: Your agents: each agent's state beside its button, and a provider's key field on a line of its own under it */
+  #settings .agent .state { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+  #settings .agent .keyline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; min-width: 0; }
+  #settings .agent .keyline input.edit { box-sizing: border-box; flex: 1 1 16ch; width: auto; min-width: 0; }
   /* 0258: a setting the panel can change: its control and Save button */
-  #settings .setting .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
+  #settings .setting .edit, #settings .arow .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
   /* 0281: the boxes a whole number of pixels wide, borders and padding included, so their right edges fall on a whole
      pixel. 0273: the text box in the row's right half. */
   #settings .setting input.edit[type="number"] { box-sizing: border-box; width: calc(8ch + 14px); width: round(up, calc(8ch + 14px), 1px); }
   #settings .setting input.edit[type="text"] { box-sizing: border-box; width: calc(16ch + 14px); width: round(up, calc(16ch + 14px), 1px); }
   #settings .setting .risk { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); display: inline-flex; align-items: center; gap: 4px; } /* 0259: auto_ship_risk's boxes */
-  #settings .setting .save { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #settings .setting .save:hover { color: var(--text); border-color: var(--text); }
+  #settings .setting .save, #settings .arow .save { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #settings .setting .save:hover, #settings .arow .save:hover { color: var(--text); border-color: var(--text); }
   #settings .setting .save[aria-pressed="true"] { color: var(--text); border-color: var(--text); background: var(--raise); } /* 0261: where a change goes, once picked */
   /* 0274: the view's one Save, kept at the bottom of the pane however far it's scrolled */
   #settings > .savebar { position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom)); margin: 16px auto 0; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); padding: 10px 0 calc(16px + env(safe-area-inset-bottom)); background: var(--panel); border-top: .5px solid var(--line-soft); display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
@@ -437,7 +442,7 @@
   #settings .switch-row .info, #settings .setting .info { position: relative; display: inline-grid; place-items: center; align-self: center; width: 18px; height: 18px; padding: 0; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 1; color: var(--muted); background: none; border: .5px solid var(--line); cursor: help; }
   /* 0281: under 2 device pixels to a CSS pixel, half a pixel is less than a device pixel, which a browser may not draw,
      so there these borders are a whole pixel. From 2 up, half a pixel is a device pixel or more. */
-  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .switch-row .info, #settings .setting .edit, #settings .setting .info { border-width: 1px; } }
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .switch-row .info, #settings .setting .edit, #settings .arow .edit, #settings .setting .info { border-width: 1px; } }
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .sgroup, #settings .switches { box-shadow: 0 0 0 1px var(--line); } }
   #settings .switch-row .info:hover, #settings .switch-row .info:focus-visible, #settings .setting .info:hover, #settings .setting .info:focus-visible { color: var(--text); border-color: var(--text); }
   #settings .switch-row .info::before, #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
@@ -568,7 +573,7 @@
     .run-state .fixing { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; } /* "Fixing on" gives way too, inside the button */
     .settings-open { width: 44px; height: 44px; }
     #settings .switch-row .info::after, #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
-    #settings .switch-row .row, #settings .setting .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
+    #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .run-error, .offline, .restart { padding: 6px 16px; }
 
     main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
@@ -1963,10 +1968,11 @@ let settingAgentModels = new Map(); // 0369: each agent chosen since the view op
 let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'loading' | 'error' | 'ok', … }
 let settingTyped = new Map(), settingRefused = new Map(); // key → what was typed, and why the server refused it, until the view closes
 let settingClear = new Set(); // 0261: keys whose machine value is cleared on Save
-// 0393: each model provider's API key field: name → { typed, saving, said, refused }, until the view closes. A key is
-// only ever sent, never read back: the server says only whether this machine has it.
-let settingKeys = new Map();
-let settingKeysBox = null; // the view's box of key fields, as drawn
+// 0399: "Your agents", after Auto-build, drawn in place in a box kept while the view is open, so a change to it moves
+// nothing else in the view and keeps the keyboard focus. Each agent's { busy, typed } until the view closes: a provider's
+// key is only ever sent, never read back, as the server says only whether this machine has it (0393).
+let agentsBox = null, agentsAdding = false, agentsSaid = null; // the box; whether "Add an agent" is open; the last change's { text, bad }
+let agentStates = new Map();
 let settingsFailed = null; // 0274: why the last Save failed, when it wasn't one setting's fault
 let settingsSaid = null; // 0311: what the last Save changed that you didn't, such as builder_model cleared
 let settingsBar = null;
@@ -2028,7 +2034,8 @@ async function loadSettings() {
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
     next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups, reviewer_models: body.reviewer_models ?? null,
       claude_models: body.claude_models ?? null, builder_models: body.builder_models ?? null, foreman_models: body.foreman_models ?? null,
-      providers: Array.isArray(body.providers) ? body.providers.filter(x => x && typeof x.name === 'string' && typeof x.label === 'string') : [] } // 0393
+      providers: Array.isArray(body.providers) ? body.providers.filter(x => x && typeof x.name === 'string' && typeof x.label === 'string') : [], // 0393
+      your_agents: body.your_agents !== null && typeof body.your_agents === 'object' ? body.your_agents : null } // 0399
       : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
   } catch { next = { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
@@ -2088,7 +2095,9 @@ function closeSettings() {
   settingTyped = new Map();
   settingRefused = new Map();
   settingClear = new Set();
-  settingKeys = new Map();
+  agentsBox = agentsSaid = null;
+  agentsAdding = false;
+  agentStates = new Map();
   settingsFailed = settingsSaid = null;
   renderSettings();
   const back = $('settings-open');
@@ -2106,7 +2115,6 @@ function renderSettings() {
   settingControls = new Map();
   settingRowsDrawn = new Map();
   settingsBar = null;
-  settingKeysBox = null;
   // Drawn afresh, its buttons are new, so no pointer is over one and none has focus: only a kept explanation stays.
   settingHover = settingFocus = null;
   if (!settingTipKept) settingTip = null;
@@ -2127,13 +2135,10 @@ function renderSettings() {
       // 0273: a box like the panel's sections, with a heading bar
       kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
     }
-    settingKeysBox = el('section', 'keys');
-    kids.push(settingKeysBox);
-    drawKeys();
   }
   if (settingsView.state === 'ok' && settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
-  // 0396: Appearance and Auto-build first, then the Foreman (0285) once the settings have loaded
-  kids.splice(1, 0, toggleGroup(), ...(settingsView.state === 'ok' ? [foremanGroup(foremanRows)] : []));
+  // 0396: Appearance and Auto-build first, then 0399's Your agents and the Foreman (0285) once the settings have loaded
+  kids.splice(1, 0, toggleGroup(), ...(settingsView.state === 'ok' ? [agentsGroup(), foremanGroup(foremanRows)] : []));
   pane.replaceChildren(...kids);
   refreshSettings();
   showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
@@ -2321,7 +2326,6 @@ function settingEditor(x) {
     // those, keeping this control.
     if (x.key === 'reviewer' || x.key === 'builder' || x.key === 'foreman' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) { // 0348: and foreman
       redrawSettings(SETTING_AFFECTS[x.key], x.key);
-      if (x.key !== 'reviewer_model') drawKeys(); // 0393: the key fields of the providers now chosen
     } else refreshSettings();
   };
   if (settingClear.has(x.key)) { // 0261: this machine's value goes on Save, leaving the repo's
@@ -2551,71 +2555,160 @@ function replacesCommand(changes) {
 }
 // A setting's value as its control writes it: "low,high" for a list.
 const settingNow = x => x.value === null || x.value === undefined ? '' : Array.isArray(x.value) ? x.value.join(',') : String(x.value);
-// 0393: the model providers chosen in the view as builder, reviewer or the Foreman's agent, each once.
-function providersChosen() {
-  return [...new Set([settingChosen('builder'), settingChosen('reviewer'), foremanAgentChosen()])].map(settingProvider).filter(p => p !== null);
+// 0399: the Your agents group's box, drawn afresh.
+function agentsGroup() {
+  if (agentsBox === null) agentsBox = el('section', 'sgroup agents');
+  drawAgents();
+  return agentsBox;
 }
-// 0393: a field for each chosen provider's API key, saying whether this machine has one. It's never filled in with a
-// saved key, and its own button saves only the key, for this machine, apart from the view's Save.
-function drawKeys() {
-  const box = settingKeysBox;
+const agentState = id => { if (!agentStates.has(id)) agentStates.set(id, { busy: null, typed: '' }); return agentStates.get(id); };
+// The node in `box` whose data-focus is `key`, or null.
+function focusKeyed(box, key) {
+  const stack = [box];
+  while (stack.length) {
+    const n = stack.pop();
+    if (n !== box && typeof n.getAttribute === 'function' && n.getAttribute('data-focus') === key) return n;
+    for (const c of n.children || []) stack.push(c);
+  }
+  return null;
+}
+const focusable = (n, key) => { n.setAttribute('data-focus', key); return n; };
+// Draws the group in its box. When the keyboard focus was in it, it goes back to the same control, or to `after` when
+// that one's gone, such as the Remove button of an agent just removed, or else to Add an agent.
+function drawAgents(after = null) {
+  const box = agentsBox;
   if (box === null) return;
-  const chosen = providersChosen();
-  box.hidden = !chosen.length;
-  box.className = chosen.length ? 'sgroup keys' : 'keys'; // one of the view's groups only while it shows
-  if (!chosen.length) { box.replaceChildren(); return; }
-  box.replaceChildren(el('div', 'sh', null, el('h4', null, 'API keys')), ...chosen.map(keyRow));
-  showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept); // its explanation shows only when asked for
+  const had = document.activeElement;
+  const was = had && within(had, box) && typeof had.getAttribute === 'function' ? had.getAttribute('data-focus') : null;
+  const view = settingsView !== null ? settingsView.your_agents : null;
+  const kids = [el('div', 'sh', null, el('h4', null, 'Your agents'))];
+  if (view === null || view === undefined) kids.push(el('div', 'arow note', null, el('p', null, 'speck panel didn\'t say which agents are yours. Close Settings and open it again.')));
+  else if (typeof view.why === 'string' && view.why) kids.push(el('div', 'arow note', null, el('p', 'bad', view.why)));
+  else {
+    const all = Array.isArray(view.agents) ? view.agents.filter(a => a && typeof a.id === 'string' && typeof a.name === 'string') : [];
+    const mine = all.filter(a => a.yours === true);
+    if (!mine.length) kids.push(el('div', 'arow note', null, el('p', null, 'You have no agents on this machine yet. Add one below.')));
+    kids.push(...mine.map(agentRow), ...addRows(all.filter(a => a.yours !== true)));
+  }
+  if (agentsSaid !== null) kids.push(el('div', 'arow note', null, el('p', agentsSaid.bad ? 'bad' : 'said', agentsSaid.text)));
+  box.replaceChildren(...kids);
+  if (was === null) return;
+  const to = [was, after, 'adding'].map(k => (k === null ? null : focusKeyed(box, k))).find(n => n);
+  if (to && to.focus) to.focus({ preventScroll: true });
 }
-function keyRow(p) {
-  const st = settingKeys.get(p.name) ?? { typed: '', saving: false, said: null, refused: null };
-  settingKeys.set(p.name, st);
-  const input = el('input', 'edit');
+// What an agent is: installed and signed in, or a provider's key.
+function agentWords(a) {
+  if (a.kind === 'provider') return a.key_set === true ? 'Key set' : 'No key';
+  return a.installed !== true ? 'Not installed' : a.signed_in === true ? 'Installed, signed in' : 'Installed, not signed in';
+}
+const ROLE_WORDS = roles => roles.length > 1 ? `${roles.slice(0, -1).join(', ')} and ${roles.at(-1)}` : roles[0];
+function agentButton(label, key, fn) {
+  const b = focusable(el('button', 'save', label), key);
+  b.type = 'button';
+  b.addEventListener('click', fn);
+  return b;
+}
+// One of your agents: its name, whether it's ready, and Remove. A provider's row has its key field, to replace it.
+function agentRow(a) {
+  const st = agentState(a.id), roles = Array.isArray(a.roles) ? a.roles.filter(r => typeof r === 'string') : [];
+  const remove = agentButton(st.busy === 'remove' ? 'Removing…' : 'Remove', `remove:${a.id}`, () => agentAction(a, 'remove'));
+  remove.setAttribute('aria-label', `Remove ${a.name}`);
+  return el('div', 'arow agent', null,
+    el('div', 'row', null, el('span', 'label', null, el('span', 'name', a.name)), el('div', 'control', null, el('span', 'state', agentWords(a)), remove)),
+    roles.length ? el('p', null, `The ${ROLE_WORDS(roles)} ${roles.length > 1 ? 'use' : 'uses'} it.`) : null,
+    a.ready !== true && typeof a.why === 'string' && a.why ? el('p', null, a.why) : null,
+    a.kind === 'provider' ? keyLine(a) : null);
+}
+// Add an agent: a button, or once it's pressed, each agent speck knows that isn't yours. One that's installed can be
+// added, one that isn't says how to install it, and a provider asks for its key.
+function addRows(others) {
+  if (!others.length) return [el('div', 'arow note', null, el('p', null, 'Every agent speck knows is one of yours.'))];
+  const toggle = agentButton(agentsAdding ? 'Done' : 'Add an agent', 'adding', () => { agentsAdding = !agentsAdding; agentsSaid = null; drawAgents(); });
+  toggle.setAttribute('aria-expanded', String(agentsAdding));
+  const head = el('div', 'arow add', null, el('div', 'row', null, el('span', 'label', null, el('span', 'name', 'Add an agent')), el('div', 'control', null, toggle)));
+  if (!agentsAdding) return [head];
+  return [head, ...others.map(a => {
+    const st = agentState(a.id);
+    const add = a.kind === 'provider' ? (a.key_set === true ? agentButton(st.busy === 'add' ? 'Adding…' : 'Add', `add:${a.id}`, () => agentAction(a, 'add')) : null) // its key kept since it was removed
+      : a.installed !== true ? null : agentButton(st.busy === 'add' ? 'Adding…' : 'Add', `add:${a.id}`, () => agentAction(a, 'add'));
+    if (add) add.setAttribute('aria-label', `Add ${a.name}`);
+    const install = a.kind === 'provider' ? (a.key_set === true ? null : `Paste your ${a.name} API key to add it.`)
+      : a.installed !== true ? (typeof a.install === 'string' && a.install ? a.install : `Install ${a.name}, sign in, then add it here.`) : null;
+    return el('div', 'arow agent offer', null,
+      el('div', 'row', null, el('span', 'label', null, el('span', 'name', a.name)), el('div', 'control', null, el('span', 'state', agentWords(a)), add)),
+      install !== null ? el('p', null, install) : null,
+      a.kind === 'provider' ? keyLine(a) : null);
+  })];
+}
+// 0393's key field, in a provider's row: never filled in with a saved key. Saving it saves only the key, for this
+// machine, apart from the view's Save, and adds the provider to your agents.
+function keyLine(a) {
+  const st = agentState(a.id);
+  const input = focusable(el('input', 'edit'), `key:${a.id}`);
   input.type = 'password';
   input.autocomplete = 'off';
   input.value = st.typed;
-  input.placeholder = p.key_set ? 'Paste a new key to replace it' : 'Paste the key';
-  input.setAttribute('aria-label', `${p.label} API key`);
-  input.setAttribute('data-provider', p.name);
+  input.placeholder = a.key_set === true ? 'Paste a new key to replace it' : 'Paste the key';
+  input.setAttribute('aria-label', `${a.name} API key`);
+  input.setAttribute('data-provider', a.id);
   input.addEventListener('input', () => { st.typed = String(input.value ?? ''); });
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') { st.typed = String(input.value ?? ''); saveKey(p); } });
-  const save = el('button', 'save', st.saving ? 'Saving…' : p.key_set ? 'Replace key' : 'Save key');
-  save.type = 'button';
-  save.disabled = st.saving;
-  save.setAttribute('data-provider', p.name);
-  save.addEventListener('click', () => { st.typed = String(input.value ?? ''); saveKey(p); });
-  const has = p.key_set ? `This machine has a ${p.label} API key.` : `This machine has no ${p.label} API key. ${p.label} can't run until you enter one.`;
-  // An info button, as every setting has, so the row lines up with the others (0277).
-  const [info, tip] = settingInfo({ key: `${p.label} API key`, explain: `Your own ${p.label} API key, which speck uses to run ${p.label}'s models. It's kept for this machine only, where git ignores it, and is never shown here once saved.` }, settingTips.size);
-  return el('div', 'setting', null,
-    el('div', 'row', null, el('span', 'label', null, el('code', 'name', `${p.label} API key`), info), el('div', 'control', null, input, save)),
-    el('p', null, has),
-    typeof p.key_why === 'string' && p.key_why ? el('p', 'bad', p.key_why) : null,
-    st.said !== null ? el('p', 'said', st.said) : null,
-    st.refused !== null ? el('p', 'bad', st.refused) : null,
-    tip);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { st.typed = String(input.value ?? ''); saveKey(a); } });
+  const save = agentButton(st.busy === 'key' ? 'Saving…' : a.key_set === true ? 'Replace key' : a.yours === true ? 'Save key' : 'Save key and add', `keysave:${a.id}`,
+    () => { st.typed = String(input.value ?? ''); saveKey(a); });
+  save.setAttribute('data-provider', a.id);
+  return el('div', 'keyline', null, input, save);
 }
-// Sends the typed key to be saved for this machine. Once saved it's forgotten here, and the field is empty again.
-async function saveKey(p) {
-  const st = settingKeys.get(p.name), mine = settingsSeq;
-  if (!st || st.saving) return;
-  if (!st.typed.trim()) { st.refused = `Paste the ${p.label} API key first.`; st.said = null; drawKeys(); return; }
-  st.saving = true;
-  st.said = st.refused = null;
-  drawKeys();
-  let ok = false, why = null;
+// Takes the server's answer to a change: the group as it is now, and what it did or why it was refused.
+function agentsTook(out, unreached) {
+  const body = out !== null && out.body !== null && typeof out.body === 'object' ? out.body : null;
+  if (body !== null && body.your_agents !== null && typeof body.your_agents === 'object') settingsView.your_agents = body.your_agents;
+  if (out === null) agentsSaid = { text: unreached, bad: true };
+  else if (!out.ok) agentsSaid = { text: body !== null && typeof body.error === 'string' && body.error ? body.error : `${unreached.replace(/^Couldn't reach speck panel to /, 'Couldn\'t ').replace(/ Try again\.$/, '')} (${out.status}).`, bad: true };
+  else agentsSaid = { text: out.said, bad: false };
+}
+async function agentPost(url, init) {
   try {
-    const res = await fetch(`/api/keys/${encodeURIComponent(p.name)}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ key: st.typed }) });
+    const res = await fetch(url, { method: 'POST', ...init });
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
-    ok = res.ok && body !== null && body.key_set === true;
-    if (!ok) why = body && typeof body.error === 'string' && body.error ? body.error : `Couldn't save the ${p.label} API key (${res.status}).`;
-  } catch { why = `Couldn't reach speck panel to save the ${p.label} API key. Try again.`; }
+    return { ok: res.ok, status: res.status, body };
+  } catch { return null; }
+}
+// Adds or removes agent `a` on this machine: the server refuses to remove one a role uses, saying which.
+async function agentAction(a, action) {
+  const st = agentState(a.id), mine = settingsSeq;
+  if (st.busy) return;
+  st.busy = action;
+  agentsSaid = null;
+  drawAgents();
+  const out = await agentPost(`/api/agents/${encodeURIComponent(a.id)}/${action}`, { headers: { 'X-Speck-Token': TOKEN } });
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
-  st.saving = false;
-  if (ok) { p.key_set = true; st.typed = ''; st.said = `Saved the ${p.label} API key for this machine only.`; }
-  else st.refused = why;
-  drawKeys();
+  st.busy = null;
+  const ok = out !== null && out.ok && out.body !== null && out.body.ok === true;
+  agentsTook(out === null ? null : { ...out, ok, said: typeof out.body?.said === 'string' ? out.body.said : `${action === 'add' ? 'Added' : 'Removed'} ${a.name}.` },
+    `Couldn't reach speck panel to ${action} ${a.name}. Try again.`);
+  drawAgents(ok ? (action === 'add' ? `remove:${a.id}` : 'adding') : null);
+}
+// Sends the typed key to be saved for this machine. Once saved it's forgotten here, and the field is empty again.
+async function saveKey(a) {
+  const st = agentState(a.id), mine = settingsSeq;
+  if (st.busy) return;
+  if (!st.typed.trim()) { agentsSaid = { text: `Paste the ${a.name} API key first.`, bad: true }; drawAgents(); return; }
+  st.busy = 'key';
+  agentsSaid = null;
+  drawAgents();
+  const out = await agentPost(`/api/keys/${encodeURIComponent(a.id)}`, { headers: { 'X-Speck-Token': TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ key: st.typed }) });
+  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  st.busy = null;
+  const saved = out !== null && out.body !== null && typeof out.body === 'object' && out.body.key_set === true;
+  if (saved) {
+    st.typed = '';
+    const p = settingProvider(a.id);
+    if (p !== null) p.key_set = true;
+  }
+  const said = `Saved the ${a.name} API key for this machine only.${a.yours === true ? '' : ` Added ${a.name} to your agents.`}`;
+  agentsTook(out === null ? null : { ...out, ok: saved && out.ok, said }, `Couldn't reach speck panel to save the ${a.name} API key. Try again.`);
+  drawAgents(saved ? `key:${a.id}` : null);
 }
 // 0261: in the explanation of a setting that uses this machine's own value (0397), the project's value and a button to
 // clear this machine's on Save. Pressing it keeps the explanation open, to show what it did.
