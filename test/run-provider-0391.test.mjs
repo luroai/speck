@@ -231,7 +231,7 @@ test('0391 AC1: the board and the panel name the builder as DeepSeek', async () 
     : { tickets: [T('0801', 'reviewing', { started: new Date().toISOString(), build_running: true, self_check: 'no changes', builder: 'deepseek', builder_label: 'DeepSeek', reviewer: 'codex', review_running: null, rounds: [{ ...round(1, 10), verdict: 'changes_requested' }] })], ideas: [] }) }) });
   await p.settle();
   const row = queueRows(p).find(x => p.all(x).some(n => n.className === 'id' && n._text === '0801'));
-  assert.equal(p.all(row).filter(n => /\bsay\b/.test(n.className || ''))[0].textContent, 'DeepSeek is fixing round 1\'s findings');
+  assert.equal(p.all(row).filter(n => n.className === 'lights')[0].attrs['aria-label'], 'DeepSeek is fixing round 1\'s findings'); // 0434: the name of the grid of lights
 });
 
 test('0391 AC4: any provider in speck\'s list builds the same way', () => {

@@ -162,7 +162,8 @@ const CARDS = `(async () => {
       const title = c.querySelector('.title-link'), meta = c.querySelector('.meta'), details = c.querySelector('.details'), tag = c.querySelector('.line .tag');
       return { id: c.querySelector('.id').textContent, height: c.getBoundingClientRect().height, titleLines: lines(c.querySelector('.line')),
         metaLines: meta ? lines(meta) : 0, titleSize: parseFloat(getComputedStyle(title).fontSize), metaSize: meta ? parseFloat(getComputedStyle(meta).fontSize) : null,
-        meta: meta && box(meta), details: box(details), card: box(c), title: box(title), tag: tag && box(tag), metaClipped: meta ? meta.scrollWidth > meta.clientWidth + 0.5 || meta.getBoundingClientRect().right > c.getBoundingClientRect().right : false, metaText: meta && meta.textContent, metaW: meta && [meta.scrollWidth, meta.clientWidth] };
+        meta: meta && box(meta), details: box(details), card: box(c), title: box(title), tag: tag && box(tag), metaClipped: meta ? meta.scrollWidth > meta.clientWidth + 0.5 || meta.getBoundingClientRect().right > c.getBoundingClientRect().right : false, metaText: meta && meta.textContent, metaW: meta && [meta.scrollWidth, meta.clientWidth],
+        titleCut: title.scrollWidth > title.clientWidth + 0.5 && getComputedStyle(title).textOverflow === 'ellipsis' };
     }) };
 })()`;
 
@@ -205,7 +206,8 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
       assert.ok(c.details.top >= c.title.bottom - 0.5, `${c.id}: Details under the title`);
       assert.ok(c.details.right <= c.card.right, `${c.id}: Details inside the card`);
       if (c.tag) assert.ok(c.tag.top < c.title.bottom && c.tag.bottom > c.title.top, `${c.id}: the tag on the title's line`);
-      if (c.id === '0407') { assert.ok(c.titleLines >= 2, `0407: a long title wraps (${c.titleLines} lines)`); continue; } // 0427: how many lines depends on the machine's interface font
+      // 0434: a closed card's long title is one line, cut off with an ellipsis, so the card is as tall as any other
+      if (c.id === '0407') assert.ok(c.titleLines === 1 && c.titleCut, `0407: a long title is cut off on one line (${c.titleLines} lines)`);
       if (c.id === '0406') continue; // its warning is under its two lines (AC4)
       // AC5
       assert.equal(c.titleLines, 1, `${c.id}: the title fits on one line`);

@@ -87,9 +87,13 @@ const TITLES = `[...document.querySelectorAll('#shaping .item.ticket')].map(item
 })`;
 
 for (const [width, most] of [[375, 2], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
-  test(`0151 AC1: at ${width} px, a ticket's id is 14 px and its title 17 px, never cut off, on at most ${most} ${most === 1 ? 'line' : 'lines'} starting under the title`, skip, async () => {
+  test(`0151 AC1: at ${width} px, an open ticket's id is 14 px and its title 17 px, never cut off, on at most ${most} ${most === 1 ? 'line' : 'lines'} starting under the title`, skip, async () => {
     assert.equal(LONGEST.length, 68);
     await withPanel(async b => {
+      // 0434: a closed ticket's title is one line, cut off when it doesn't fit, so these are the open tickets' titles
+      await b.js(`[...document.querySelectorAll('#shaping .item.ticket .head')].forEach(h => h.click())`);
+      await settle(b);
+      assert.equal(await b.js(`document.querySelectorAll('#shaping .item.ticket.open').length`), 3, 'every ticket open');
       const titles = await b.js(TITLES);
       assert.deepEqual(titles.map(t => t.title), [LONGEST, LONG, 'Short']);
       const lines = most + (await b.js(MONO_UI) ? 1 : 0); // 0427: a bold title in a monospace system font can take a line more
@@ -150,6 +154,8 @@ for (const theme of ['light', 'dark']) {
       const red = await b.js(RGB('var(--bad)'));
       assert.notEqual(red, await b.js(RGB('var(--warn)')));
       const colours = sel => b.js(`[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => [getComputedStyle(n).color, getComputedStyle(n).borderTopColor])`);
+      await b.js(`document.querySelector('#queue .q .top').click()`); // 0434: a Build ticket shows its risk while it's open
+      await settle(b);
       const plan = await colours('#shaping .tag.high'), queue = await colours('#queue .tag.high');
       await b.js(`${ITEM('0201')}.querySelector('.head').click()`);
       await settle(b);

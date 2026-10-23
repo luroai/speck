@@ -35,28 +35,30 @@ const lineOf = row => textOf(row).children.filter(n => /^(say|stage|ship-at)\b/.
 const count = (s, re) => (s.match(re) || []).length;
 const acts = (p, row) => p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent);
 
-test('0201 AC1: a shipping card says "Shipping" once, under its title, then how long the ship has run, whoever ships it', async () => {
+test('0201 AC1: a shipping card says "Shipping" once, under its title, whoever ships it (0434: and not how long the ship has run)', async () => {
   const p = fake();
   await p.settle();
-  for (const [id, time] of [['0801', '00:04'], ['0802', '01:05'], ['0803', '02:05']]) {
+  for (const id of ['0801', '0802', '0803']) {
     const row = rowOf(p, id);
-    assert.match(lineOf(row), new RegExp(`^Shipping · 0?${time.slice(0, -1)}[0-9]$`), `${id}: ${lineOf(row)}`);
+    assert.equal(lineOf(row), 'Shipping', `${id}: ${lineOf(row)}`);
+    assert.ok(!p.all(row).some(n => /^ship-(at|time)\b/.test(n.className || '')), `${id}: no ship's time`);
     assert.equal(count(row.textContent, /Shipping/g), 1, `${id}: once on the card: ${row.textContent}`);
     const say = textOf(row).children.find(n => /\bsay\b/.test(n.className));
     assert.equal(say.textContent, 'Shipping', `${id}: the sentence is still "Shipping"`);
   }
 });
 
-test('0201 AC1: the ship\'s time counts up with the clock between polls', async () => {
+test('0201 AC1: no ship\'s time counts up with the clock between polls (0434)', async () => {
   let now = Date.now();
   class Clock extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now; } }
   const start = now;
   const p = fake(() => [T('0801', 'approved', approved({ auto_ship: true, build_exit: { at: ago(30, start), code: 0 }, ship: { running: true, auto: true, started: ago(10, start) } }))], { Date: Clock });
   await p.settle();
-  assert.equal(lineOf(rowOf(p, '0801')), 'Shipping · 00:10');
+  assert.equal(lineOf(rowOf(p, '0801')), 'Shipping');
   now += 60000;
   for (const { fn, ms } of p.intervals.values()) if (ms === 1000) fn();
-  assert.equal(lineOf(rowOf(p, '0801')), 'Shipping · 01:10');
+  assert.equal(lineOf(rowOf(p, '0801')), 'Shipping');
+  assert.ok(!rowOf(p, '0801').textContent.includes('01:10'), rowOf(p, '0801').textContent);
 });
 
 test('0201 AC2: a shipping card shows no step name and no separate "Shipping…" line', async () => {
@@ -95,7 +97,9 @@ test('0201 AC4: cards at every other stage still show their sentence and step na
   for (const [id, [say, stage]] of Object.entries(expect)) {
     const text = textOf(rowOf(p, id));
     assert.equal(text.className, 'progress', id);
-    assert.deepEqual(text.children.filter(n => /^(say|stage|ship-at)\b/.test(n.className || '')).map(n => [n.className.split(' ')[0], n.textContent]), [['say', say], ['stage', stage]], id);
+    // 0434: while its builder or reviewer is at work, a grid of lights named for the sentence stands in for it
+    assert.deepEqual(text.children.filter(n => /^(say|lights|stage|ship-at)\b/.test(n.className || '')).map(n => [n.className.split(' ')[0], n.className === 'lights' ? n.attrs['aria-label'] : n.textContent]),
+      [[id === '0805' ? 'say' : 'lights', say], ['stage', stage]], id);
   }
 });
 

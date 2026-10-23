@@ -49,10 +49,11 @@ test('0058 AC1: each in-flight ticket with a started shows MM:SS in the row\'s r
   assert.equal(shown('0005'), '', 'an unreadable started shows nothing');
   assert.equal(shown('0006'), '', 'no started shows nothing');
   assert.equal(shown('0007'), '', 'a ready ticket shows nothing');
-  // 0419: the counter is in the details line under the title, after the stage's name and before the tags.
+  // 0419: the counter is in the details line under the title, after the stage's name (0434: after the grid of lights,
+  // with no tags while it's closed).
   const line = p.all(rowOf(p, '0001')).find(n => n.className === 'progress');
   assert.ok(line.children.includes(subOf(p, '0001')));
-  assert.match(line.textContent, /^Writing tests and code · Build · 00:07 · P2 · S · low$/);
+  assert.match(line.textContent, /^ Build · 00:07$/);
   assert.ok(!rowOf(p, '0001').textContent.includes('min'), 'no whole minutes are left');
 });
 
@@ -205,7 +206,7 @@ test('0058 AC3 and AC4: in a real browser the counter ticks between polls, and a
     assert.equal(await sel(), (await text()).slice(4), 'the selected digit is still selected, and updated');
     // From the title across the counter.
     await select('#queue .q .title', 2, sub, 5);
-    assert.match(await sel(), /^long build\s+Writing tests and code · Build · \d\d:\d\d$/); // what it's doing and its stage come before the timer since 0156, and the tags after it since 0419
+    assert.match(await sel(), /^long build\s+Build · \d\d:\d\d$/); // what it's doing and its stage come before the timer since 0156 (0434: what it's doing as a grid of lights), and the tags after it while it's open
     await next();
     const shown = await text();
     assert.ok((await sel()).startsWith('long build') && (await sel()).endsWith(shown), 'the selection across the title and counter stays, updated');

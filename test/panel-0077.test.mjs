@@ -33,12 +33,15 @@ test('0077 AC1: only a draft\'s priority tag in the Tickets list is clickable; n
   assert.match(tag.className, /\bpick\b/, 'the draft\'s tag is clickable');
   assert.ok(tag.listeners.click, 'with a click handler');
   assert.equal(pTag(p, itemOf(p, '0002')), undefined, 'a draft with no priority shows no tag');
-  for (const row of queueRows(p)) {
-    const t = pTag(p, row);
+  // 0434: the queue shows the tag while its ticket is open
+  for (const id of ['0003', '0004']) {
+    queueRows(p).find(r => r.textContent.startsWith(id)).children[0].listeners.click();
+    await p.settle();
+    const row = queueRows(p).find(r => r.textContent.startsWith(id)), t = pTag(p, row);
     assert.ok(t, `${row.textContent}: the queue shows the tag`);
     assert.equal(t.className, 'tag', 'as today');
     p.press(t); // since 0165 it shows its tip, but it opens no menu (checked below) and leaves the row as it is
-    assert.ok(!/\bopen\b/.test(row.className), 'the row stays shut');
+    assert.ok(/\bopen\b/.test(row.className), 'the row stays open');
   }
   for (const row of [...queueRows(p), ...shippedRows(p)]) assert.equal(p.all(row).filter(x => /\b(pick|prio-menu)\b/.test(x.className || '')).length, 0);
   // The P1 tag keeps its own colour.

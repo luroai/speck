@@ -59,6 +59,9 @@ async function withPanel(fn, { width = 1280, height = 900, state = STATE(), touc
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(state) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#shaping .item') && !!document.querySelector('#queue .q')`, 'the panel');
+    // 0434: a Build ticket shows its priority, size and risk only while it's open
+    await b.js(`document.querySelector('#queue .q .top').click()`);
+    await b.until(`document.querySelector('#queue .q').classList.contains('open')`, 'the Build ticket to open');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
@@ -93,7 +96,7 @@ const TIP = `(() => { const t = document.getElementById('tag-tip'); if (!t || t.
   return { text: t.textContent, left: r.left, right: r.right, top: r.top, bottom: r.bottom }; })()`;
 const texts = (b, sel) => b.js(`[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => n.textContent)`);
 const openPane = async b => {
-  await b.js(`document.querySelector('#queue .q .top').click()`);
+  await b.js(`document.querySelector('#queue .q.open') || document.querySelector('#queue .q .top').click()`); // open already since 0434
   await settle(b);
   await b.js(`document.querySelector('#queue .q .full-open').click()`);
   await settle(b);
@@ -177,7 +180,7 @@ test('0165 AC2: Enter or Space on a focused tag shows its tip', skip, async () =
       await b.js(`document.querySelectorAll('#queue .q .tag')[1].focus()`);
       await key(b, k);
       assert.equal((await b.js(TIP))?.text, MEANING.M, `${JSON.stringify(k)} shows it`);
-      assert.equal(await b.js(`document.querySelector('#queue .q').classList.contains('open')`), false, `${JSON.stringify(k)} doesn't open the ticket`);
+      assert.equal(await b.js(`document.querySelector('#queue .q').classList.contains('open')`), true, `${JSON.stringify(k)} doesn't close the ticket`); // open, as its tags show only then (0434)
       await b.js(`document.activeElement.blur()`);
       await mouse(b, [5, 890]);
       assert.equal(await b.js(TIP), null);
@@ -205,6 +208,8 @@ test('0165 AC2: with a mouse the tip shows on hover, and goes once the pointer l
 // The risk tag's tip and label for a ticket in the queue, as the board gives it.
 const riskTip = async ticket => {
   const p = fakePage([STATE({ tickets: [T('0204', 'ready', { type: '', ...ticket })] })]);
+  await p.settle();
+  p.press(queueRows(p)[0].children[0]); // 0434: its tags show while it's open
   await p.settle();
   const tag = p.all(p.byId('queue')).find(n => isTag(n) && n._text === ticket.risk);
   p.pointer('touch');
@@ -257,7 +262,7 @@ test('0165 AC3: one tip at a time; a click elsewhere, Escape or a scroll closes 
     await mouse(b, await b.js(centre(WHERE.plan, 1)));
     assert.equal(await b.js(`document.querySelector('#shaping .item').classList.contains('open')`), true, 'the tag closed its ticket');
     await mouse(b, await b.js(centre(WHERE.queue, 1)));
-    assert.equal(await b.js(`document.querySelector('#queue .q').classList.contains('open')`), false, 'the tag opened the queue ticket');
+    assert.equal(await b.js(`document.querySelector('#queue .q').classList.contains('open')`), true, 'the tag closed the queue ticket'); // open, as its tags show only then (0434)
     // A click elsewhere.
     await mouse(b, [5, 890]);
     assert.equal(await b.js(TIP), null, 'a click elsewhere closes it');
@@ -288,7 +293,8 @@ test('0165 AC3: at 375 px, a tapped tip stays on screen, the rightmost tag\'s to
         assert.ok(tip.left >= 0 && tip.right <= 375 && tip.top >= 0 && tip.bottom <= 900, `${where} ${tags[i]}: the tip is off screen: ${JSON.stringify(tip)}`);
       }
     }
-    assert.equal(await b.js(`[...document.querySelectorAll('#shaping .item, #queue .q')].some(n => n.classList.contains('open'))`), false, 'a tap opened a ticket');
+    assert.equal(await b.js(`[...document.querySelectorAll('#shaping .item')].some(n => n.classList.contains('open'))`), false, 'a tap opened a ticket');
+    assert.equal(await b.js(`document.querySelector('#queue .q').classList.contains('open')`), true, 'a tap closed the queue ticket'); // open, as its tags show only then (0434)
   }, { width: 375, touch: true });
 });
 
@@ -345,7 +351,9 @@ test('0165 AC5: the fake page gives each tag its label, the Plan priority tag to
   assert.deepEqual(tags.map(n => n._text), ['P3', 'S', 'low', 'fix']);
   assert.deepEqual(tags.slice(1).map(n => n.attrs['aria-label']), [LABEL('S'), LABEL('low'), LABEL('fix')]);
   assert.match(tags[0].attrs['aria-label'], /^Priority 3: built after P0 to P2 tickets\. /);
-  const q = p.all(queueRows(p)[0]).filter(isTag);
+  p.press(queueRows(p)[0].children[0]); // 0434: a Build ticket's tags show while it's open
+  await p.settle();
+  const q = p.all(queueRows(p)[0].children[0]).filter(isTag);
   assert.deepEqual(q.map(n => n.attrs['aria-label']), [LABEL('P0'), LABEL('M'), LABEL('low'), LABEL('bug')]);
 });
 

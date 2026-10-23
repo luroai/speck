@@ -74,7 +74,7 @@ test('0041 AC2: a waiting ticket shows a dimmed padlock after its id, with "wait
   assert.ok(nodes(p, s, 'checks')[0].textContent.includes('after 0001, 0099'), 'Shaping: after its ids (0419)');
   const q = queued(p, '0007');
   assert.ok(/\block\b/.test(iconOf(p, q).className), 'queue: a padlock right after the id');
-  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · waiting on 0006 · P2 · S · low', 'queue: the text it already shows, then its tags (0419)');
+  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · waiting on 0006', 'queue: the text it already shows (0434: its tags only while it\'s open)');
   assert.ok(/\block\b/.test(iconOf(p, shaping(p, '0009')).className), 'waiting on an in-flight ticket');
   assert.match(rule('.lock'), /color:\s*var\(--faint\)/, 'the padlock is dimmed');
 });
@@ -107,7 +107,7 @@ test('0041 AC4: when the chain\'s first ticket is done, the next refresh takes t
   const q = queued(p, '0002');
   assert.ok(/\bchain\b/.test(iconOf(p, q).className), 'it starts the chain now');
   assert.equal(iconOf(p, q).title, 'Starts a chain: unlocks 0003');
-  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · unlocks 0003 · P2 · S · low');
+  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · unlocks 0003');
   assert.equal(nodes(p, q, 'lock').length, 0, 'no padlock');
   assert.ok(/\block\b/.test(iconOf(p, shaping(p, '0003')).className), 'the next one still waits');
 
