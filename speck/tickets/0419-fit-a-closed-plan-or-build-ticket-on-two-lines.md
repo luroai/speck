@@ -1,7 +1,7 @@
 ---
 id: "0419"
 title: "Fit a closed Plan or Build ticket on two lines"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0418"] # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T16:20:29.027Z"
 
 ---
 # 0419 · Fit a closed Plan or Build ticket on two lines
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A closed ticket in Plan or Build takes three or four rows: its title, a row of boxed tags, then its criteria and lint result, then what it waits on. In a narrow side pane that's 110–175 px per ticket, so only a few fit on screen.
