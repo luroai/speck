@@ -47,6 +47,8 @@ speck is ready to be released as 0.14.0.
 - Checked 2026-10-23: `package.json` is `0.13.1`, and the `v0.13.1` tag is on GitHub. 0375 and 0380 prepared 0.13.0 and 0.13.1 the same way.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: narrowed two claims in the release notes: a build still reads the repo's own Claude Code settings, so only your own aren't used, and `speck doctor` checks DeepSeek only when it builds or reviews. `test/release-0380.test.mjs`'s checks of the current version now follow `package.json`, and its figures check covers only the figures 0.13.1 was built from, as 0380 did for 0375.
+- Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
