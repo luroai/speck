@@ -43,6 +43,8 @@ The Settings view's script is in a file of its own.
 - The page's stamp (`stampOf` in `scripts/panel.mjs`) is worked out from `panel.html` alone today. `/lcd.js` and `/fonts/Doto.ttf` show how the server names each file it serves.
 - Today Settings runs from `openSettings` (about line 2061) to `saveSettings` and its helpers (about line 3200).
 - Failing before this build: none
+- Self-check: no changes. Settings registers only one document pointerdown listener, so loading it after the page's script changes no listener order. The page starts only once Settings has run, so nothing the board stream hears first can reach Settings before it exists. A real-browser test through the real panel (0372 AC2) opens Settings from the new file.
+- Pictures: none, because nothing on the page looks different.
 - Waits for 0431: both change `templates/panel.html`, `scripts/panel.mjs` and `test/support/panel.mjs`.
 
 ## In plain words
