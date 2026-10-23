@@ -47,7 +47,11 @@ Pressing speck's screen opens the pipeline log, which takes the place of the For
 - Self-check: a failed request for the log was sent again at once, in a loop; it now waits for the next redraw (test added). The page-wide `section` style drew a border round the two parts, so they're plain blocks.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Pressing speck's screen now opens a pop-up called Pipeline instead of the Foreman's detail. Its first part, Right now, shows everything the Foreman's detail used to, in the same order and with the same buttons. Under it, Log shows what speck run has been saying, newest line first, up to the latest 200 lines, so you no longer have to open its log file by hand.
+
+To see it, open the panel and press the screen. New lines appear within a couple of seconds while it's open. If you've scrolled down to read older lines, new ones arrive above without moving what you're reading. Close it with Close, Escape or a click beside it.
+
+Worth keeping an eye on: the pop-up keeps today's full-panel look, because the linked design couldn't be opened, so it may differ from that design.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +61,9 @@ Pressing speck's screen opens the pipeline log, which takes the place of the For
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none to the inbox):
+- Known limit: the log is read back until it has 200 whole lines, with no byte cap (round 2's finding). A run.log whose last lines are enormous would be read in full on each refresh while the pop-up is open. speck run's own lines are short, so this isn't expected in practice.
+- The design artifact linked in Notes isn't shared with the builder's account, so the pop-up wasn't checked against it. If it differs (for example a sheet rather than the full-panel pop-up), that's a new ticket.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -221,6 +228,89 @@ Pressing speck's screen opens the pipeline log, which takes the place of the For
     ],
     "escalation_question": "",
     "summary": "The reader-position fix now covers full and wrapped logs. The remaining issue is that large output can still cause recent lines to be omitted: the implementation raises the size limit instead of always showing the latest 200 lines."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6dfd8db792e91ca79613e6fe8ae619dae6117f31",
+    "session": "continued",
+    "thread_id": "01a16963-4c01-7db3-b14d-5c93aae8f69f",
+    "builder_response": "- Tests run: test/pipeline-0415.test.mjs test/panel-0413.test.mjs (plus the commands.checks files)\n- F2: fixed. scripts/run-log.mjs runLogTail has no byte limit now (RUN_LOG_MAX and the \"…\" cut are gone). It reads back from the end in 64 KiB chunks, counting line breaks as it goes, and decodes what it has read only once there are more than 200 breaks or it reaches the start; if blank lines at the end leave 200 or fewer lines, it reads on. Tests: 200 lines of 90 KiB each (over 16 MiB together, with a line before them and blank lines after) give exactly those 200, whole; 500 blank lines at the end don't push out the latest lines. The test that accepted truncation is removed.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 425371,
+      "cached_input_tokens": 362240,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3054,
+      "reasoning_output_tokens": 266
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T15:35:11.492Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html renderForeman shows Pipeline with Right now first and preserves the existing detail. Passing AC1 tests cover ordering, Answer/Dismiss controls and Reload page."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runLogTail now reads backwards without a byte limit and returns the latest 200 complete lines newest first. Passing tests cover output exceeding 16 MiB, trailing blank lines, live refresh, missing logs and scroll anchoring for full and wrapped logs."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests exercise Close, Escape and outside clicks, including focus returning to the screen."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs matches /api/run-log exactly; runLogTail uses only the server-selected run.log path. Passing tests cover traversal attempts, request parameters, symlinks and directories."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The real-browser AC5 test passed at 320 px in both themes, checking horizontal overflow and long-line wrapping."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:4225",
+        "issue": "The previously reported scroll-position failure is fixed by anchoring to a retained visible line.",
+        "suggested_fix": "None required; passing regression tests cover full and wrapped logs.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/run-log.mjs:26",
+        "issue": "The byte limit and truncation are removed. The reader continues until the latest 200 complete lines or the beginning of the file.",
+        "suggested_fix": "None required; passing regression tests cover 200 lines exceeding 16 MiB and trailing blank lines.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Pipeline pop-up preserves the existing controls and shows live output, newest first. Both reported issues are fixed: updates preserve the reader’s place, and long output no longer causes recent lines to disappear. All five criteria pass."
   }
 }
 ```
