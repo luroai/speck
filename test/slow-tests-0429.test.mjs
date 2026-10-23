@@ -47,3 +47,10 @@ test('0429 AC2: the settings test\'s stand-in agents come before any installed o
   }
   assert.match(testIn('panel-0257.test.mjs', '0257 AC4-AC5'), /await startPanel\([^\n]*fakeAgents\(READY\)/);
 });
+
+test('0429 AC2: 0176 still times speck status the same number of times for each size, and keeps the least of each three', () => {
+  const src = read('build-log-0176.test.mjs');
+  assert.match(src, /try \{ return statusMs\(dir, 3\); \}/);
+  assert.match(src, /for \(let round = 0; round < 4; round\+\+\)/);
+  assert.match(src, /assert\.ok\(slow < fast \* 1\.1,/);
+});
