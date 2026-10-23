@@ -44,7 +44,7 @@ test('0213 AC1: a P0 tag\'s text and border are in --bad, which the light and th
 
 test('0213 AC2: a P1 tag stays in --text and P2 to P5 tags stay plain grey tags', async () => {
   assert.match(rule('.tag.p1'), /color:\s*var\(--text\);\s*border-color:\s*var\(--text\)/);
-  assert.match(rule('.tag'), /color:\s*var\(--muted\)/);
+  assert.match(rule('.tag'), /color:\s*var\(--muted-large\)/); // 0426: Cursor's muted, as a tag is 14 px
   const s = () => ({ ideas: [], tickets: [1, 2, 3, 4, 5].map(n => T(`000${n}`, 'ready', { priority: n })) });
   const p = fakePage([s(), s(), s()]);
   await p.settle();

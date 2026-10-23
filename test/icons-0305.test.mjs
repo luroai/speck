@@ -18,7 +18,7 @@ test('0305 AC4: the manifest and the page\'s icon links are as they were', () =>
     { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
     { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
   ]);
-  assert.deepEqual([m.background_color, m.theme_color], ['#faf9f5', '#faf9f5']);
+  assert.deepEqual([m.background_color, m.theme_color], ['#f3f3f3', '#f3f3f3']);
   const head = (page().match(/<head>([\s\S]*?)<\/head>/) || [])[1] || '';
   for (const link of ['<link rel="icon" href="/icon.svg" type="image/svg+xml">',
     '<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">',

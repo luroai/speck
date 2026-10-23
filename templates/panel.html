@@ -11,8 +11,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="speck">
 <meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar">
-<meta name="theme-color" content="#faf9f5" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#181818" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3f3f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
 <title>speck · control panel</title>
 <script id="theme-start">
 // 0136: set the look before the page is first drawn: the one last chosen in this browser (in Settings since 0372), or
@@ -43,16 +43,22 @@
 </script>
 <style>
   :root {
-    --bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #87847d; --line-soft: #e8e7e3;
-    --text: #141413; --muted: #3d3d3a; --faint: #4d4c48;
-    --accent: #853123; --ok: #3f522e; --warn: #67460b; --bad: #921f2d; --run: #304f6d; --idea: #623f6c;
+    /* 0426: Cursor Light's colours. The greys are its text grey, #141414, at an alpha: --text and --muted-large are
+       Cursor's own, while --muted (text under 14 px), --faint and --line are the nearest alphas that reach 0161's 7:1 and
+       3:1 on every surface. The state colours are Cursor's, each at the nearest shade that reaches 0161's contrast for the
+       text it colours; --blue, --yellow and --green are Cursor's own, for edges and the focus ring, as --inbox, its cyan, is.
+       The bug tag is in Cursor Light's orange (charts.orange, #DB704B), at the shade 7:1 needs, so it isn't the red of --bad. */
+    --bg: #f3f3f3; --panel: #fcfcfc; --raise: #f3f3f3; --input: #fcfcfc; --line: #14141476; --line-soft: #14141413;
+    --text: #141414EB; --muted: #141414BA; --muted-large: #141414AD; --faint: #141414BA;
+    --accent: #cf2d56; --ok: #145a42; --warn: #6d4700; --bad: #96213f; --run: #285372; --idea: #833063;
+    --blue: #3c7cab; --yellow: #a16900; --green: #1f8a65;
     /* 0302: the LCD screen, from the design (docs/design/lcd/), lighter since 0308: speck's screen since 0413 */
     --lcd-bg: #e6e9db; --lcd-off: #dde1cf; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .14);
     --bezel: #262722; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1; /* 0413: the screen's dark frame, from the design's console */
     --dot: #b0412e; /* 0303: the speck in the header's mark */
-    --inbox: #22544c; /* the inbox's own colour */
-    --bug: #7a3553; /* the bug tag's own colour */
-    --fix: #584c0e; /* the fix tag's own colour */
+    --inbox: #4c7f8c; /* the inbox's own colour: Cursor's cyan */
+    --bug: #86371b; /* the bug tag's own colour: Cursor's orange */
+    --fix: #6d4700; /* the fix tag's own colour: Cursor's yellow, as --warn */
   }
   /* The zen look: a serif for headings and ticket titles, a light sans for body text and a monospace for labels. Each
      names the zen fonts first, used when they're installed, and none is loaded from another host. */
@@ -65,8 +71,9 @@
   body { padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left); }
   body { margin: 0; font: 400 13px/1.5 "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); }
   b, strong { font-weight: 600; }
+  a { color: var(--run); } /* 0426: every link, visited or not, in Cursor's blue (a pull request's, a ticket's text) */
   /* 0161: a clear ring round whatever the keyboard reaches */
-  :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } /* 0426: Cursor's blue */
   code, .mono, .id { font-family: "IBM Plex Mono", ui-monospace, monospace; }
   code { font-size: 12px; color: var(--muted); }
 
@@ -120,7 +127,7 @@
   .group.run { color: var(--run); }
 
   .id { font-size: 12px; color: var(--muted); }
-  .tag { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 27px; display: inline-block; }
+  .tag { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted-large); white-space: nowrap; line-height: 27px; display: inline-block; }
   .tag.p1 { color: var(--text); border-color: var(--text); }
   .tag.p0 { color: var(--bad); border-color: var(--bad); } /* 0213: a fix ticket's P0 stands out more than a P1 */
   .tag.high { color: var(--bad); border-color: var(--bad); }
@@ -136,7 +143,7 @@
   #tag-tip[hidden] { display: none; }
   .tag[role="button"]:not(.pick) { cursor: help; }
   .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; background: var(--panel); border: .5px solid var(--line); }
-  .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+  .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted-large); border: 0; cursor: pointer; }
   .prio-menu button:hover { color: var(--text); }
   .prio-menu button.on { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
   .item .prio-refused { margin-top: 6px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -302,6 +309,8 @@
   /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the card taller */
   #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
   #shipped .line .tags .tag { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; line-height: 16px; padding: 0 5px; }
+  /* 0426: a tag in a line of 12 px text is in the muted colour for small text. :where() keeps the risk and type tags' own colours */
+  :where(.item.ticket .head .checks, .q .top .progress, .q .top .act, #shipped .line .tags) .tag { color: var(--muted); }
   /* 0204: a ticket merged but not pushed, in crimson, with speck ship's message */
   #shipped td.unpushed { margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--bad); }
   #shipped .unpushed-head { color: var(--bad); font-weight: 600; }
@@ -328,7 +337,7 @@
   .foreman .stale, .foreman .held { color: var(--warn); }
   /* 0318: the Foreman's question, with an Answer box and Answer and Dismiss buttons, on its ticket's card and in its detail */
   .foreman-ask { margin: 6px 0 6px; white-space: normal; }
-  .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 13px; color: var(--text); background: var(--panel); border: .5px solid var(--line); resize: vertical; }
+  .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 13px; color: var(--text); background: var(--input); border: .5px solid var(--line); resize: vertical; }
   .foreman-ask .ask-buttons { display: flex; gap: 8px; margin: 6px 0 0; }
   .foreman-ask .ask-reply { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; }
   .foreman-ask .ask-reply:hover { border-color: var(--text); }
@@ -371,7 +380,7 @@
   @media (hover: hover) { .item:hover { background: var(--raise); } }
   /* The light tints. 0167: the open item in Shaping or the queue is set apart by a raised fill and a border in the text
      colour; only a ticket waiting for you or in trouble keeps a tint (below). */
-  :root { --accent-bg: #f7ebe6; --idea-bg: #f2ecf3; --inbox-bg: #e9f2f0; --bad-bg: #fae6e8; }
+  :root { --accent-bg: #f5f0e8; --idea-bg: #f7edf3; --inbox-bg: #eef2f3; --bad-bg: #f8ebef; } /* 0426: Cursor's yellow, magenta, cyan and red, 8% over --panel */
   .q.open { background: var(--raise); border-color: var(--text); }
   .note { margin: 0; color: var(--text); }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
@@ -393,10 +402,10 @@
   .q.to-ship { border-color: var(--idea); background: var(--idea-bg); }
   /* 0171: a ticket an agent is at work on has a 2px border in its stage's colour, and its fill stays as it is, as only a
      ticket that needs you is filled. It keeps it whether it's open or highlighted. */
-  .q.at-build { border-color: var(--run); border-width: 2px; }
+  .q.at-build { border-color: var(--blue); border-width: 2px; }
   .q.at-check { border-color: var(--inbox); border-width: 2px; }
-  .q.at-review { border-color: var(--warn); border-width: 2px; }
-  .q.at-ship { border-color: var(--ok); border-width: 2px; }
+  .q.at-review { border-color: var(--yellow); border-width: 2px; }
+  .q.at-ship { border-color: var(--green); border-width: 2px; }
   /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
   .goto { font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .goto:hover { text-decoration-style: solid; }
@@ -477,7 +486,7 @@
   #settings .provider-form .pfield .edit { box-sizing: border-box; width: 100%; }
   #settings .provider-form .keyline { display: flex; justify-content: flex-end; margin-top: 6px; }
   /* 0258: a setting the panel can change: its control and Save button */
-  #settings .setting .edit, #settings .arow .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
+  #settings .setting .edit, #settings .arow .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--input); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
   /* 0281: the boxes a whole number of pixels wide, borders and padding included, so their right edges fall on a whole
      pixel. 0273: the text box in the row's right half. */
   #settings .setting input.edit[type="number"] { box-sizing: border-box; width: calc(8ch + 14px); width: round(up, calc(8ch + 14px), 1px); }
@@ -562,7 +571,7 @@
   #full-ticket .md p, #full-ticket .criteria p { margin: 0 0 10px; }
   #full-ticket .md-h1 { font-size: 18px; }
   #full-ticket .md-h2 { font-size: 16px; }
-  #full-ticket .md-h3 { font-size: 15px; color: var(--muted); }
+  #full-ticket .md-h3 { font-size: 15px; color: var(--muted-large); }
   #full-ticket .md ul, #full-ticket .md ol, #full-ticket ol.criteria, #full-ticket .criteria ul, #full-ticket .criteria ol { margin: 0 0 10px; padding-left: 1.6em; list-style-position: outside; }
   #full-ticket li ul, #full-ticket li ol { margin: 4px 0 0; }
   #full-ticket h4:first-child, #full-ticket .md > :first-child { margin-top: 0; }
@@ -583,7 +592,7 @@
   #full-ticket .ship-said, #doc-view .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad, #doc-view .ship-said.bad { color: var(--bad); }
   /* 0357: beside it, a box for a note and an Ask for changes button, which sends the note back to the build */
-  #full-ticket .changes-note, #doc-view .changes-note { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 0 0 6px; padding: 4px 6px; font: inherit; font-size: 13px; color: var(--text); background: var(--panel); border: .5px solid var(--line); resize: vertical; }
+  #full-ticket .changes-note, #doc-view .changes-note { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 0 0 6px; padding: 4px 6px; font: inherit; font-size: 13px; color: var(--text); background: var(--input); border: .5px solid var(--line); resize: vertical; }
   #full-ticket .pack-buttons, #doc-view .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
   #full-ticket .ask-changes, #doc-view .ask-changes { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
   #full-ticket .ask-changes:disabled, #doc-view .ask-changes:disabled { cursor: default; opacity: .6; }
@@ -592,7 +601,7 @@
   #full-ticket .pack-document { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
   #full-ticket .pack-document:hover { background: var(--panel); }
   /* 0354: the button back from a document task's file to its review pack */
-  #full-ticket .md a, #full-ticket .criteria a, #doc-view .md a { color: var(--text); }
+  #full-ticket .md a, #full-ticket .criteria a, #doc-view .md a { color: var(--run); }
   /* 0294: the pictures of a visual change in its review pack, each opening full size when pressed */
   #full-ticket .pack-pictures { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 0 0 8px; }
   #full-ticket .pack-pictures figure { margin: 0; }
@@ -616,15 +625,17 @@
   .shaping .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 13px; }
   .shaping .md th, .shaping .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
   .shaping .md th { font-weight: 600; background: var(--raise); }
-  .shaping .md a { color: var(--text); }
+  .shaping .md a { color: var(--run); }
 
-  /* The dark look, "the same garden at night", switched to with the button in the header */
+  /* The dark look, switched to in Settings. 0426: Cursor Dark's colours, made as the light look's are, from its text
+     grey, #E4E4E4 */
   :root[data-theme="dark"] {
-    --bg: #181818; --panel: #1f1f1f; --raise: #222222; --line: #737373; --line-soft: #262626;
-    --text: #e4e4e4; --muted: #c4c4c4; --faint: #b4b4b4;
-    --accent: #e5a495; --ok: #a5bb8e; --warn: #daac5d; --bad: #f39ba5; --run: #97b7d8; --idea: #c3abd1;
-    --inbox: #82bfb5; --bug: #e0a2bf; --fix: #c9b65c;
-    --accent-bg: #2e2320; --idea-bg: #2a2430; --inbox-bg: #1d2a28; --bad-bg: #341d21;
+    --bg: #141414; --panel: #181818; --raise: #1c1c1c; --input: #1c1c1c; --line: #E4E4E462; --line-soft: #E4E4E413;
+    --text: #E4E4E4EB; --muted: #E4E4E4B8; --muted-large: #E4E4E48D; --faint: #E4E4E4B8;
+    --accent: #e34671; --ok: #7fbc95; --warn: #d9a65e; --bad: #ef95ad; --run: #97b2cc; --idea: #c4a6be;
+    --blue: #81a1c1; --yellow: #d2943e; --green: #70b489;
+    --inbox: #88c0d0; --bug: #e69d83; --fix: #d9a65e;
+    --accent-bg: #27221b; --idea-bg: #242124; --inbox-bg: #212527; --bad-bg: #281c1f;
     --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
     --bezel: #080907; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1;
     --dot: #d4664e;
