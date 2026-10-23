@@ -42,6 +42,7 @@ Each role picks one model from your agents' models.
 - The user chose on 2026-10-23 to keep the Claude subagent reviewer as an entry under Claude Code.
 - Waits for 0399.
 - Failing before this build: none
+- Self-check: a model provider is still left out of each role's list while Claude Code isn't installed, saying why, as before; clearing this machine's value for a role clears its model's too, as one list holds both; the README's sentence about the separate lists now describes the one list.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
