@@ -386,7 +386,7 @@
      outline: only the keyboard's focus ring sets one, 0161.) */
   #settings .sgroup { margin-top: 16px; border: 0; box-shadow: 0 0 0 .5px var(--line); }
   #settings .sgroup .sh { padding: 8px 12px; }
-  #settings .sgroup.keys[hidden] { display: none; } /* 0393: only while a model provider is chosen */
+  #settings .keys[hidden] { display: none; } /* 0393: only while a model provider is chosen */
   #settings .sgroup h4 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
   #settings .setting { position: relative; padding: 8px 12px; border-bottom: .5px solid var(--line-soft); } /* 0371: relative, for its explanation */
   #settings .setting:last-child { border-bottom: 0; }
@@ -2110,7 +2110,7 @@ function renderSettings() {
       // 0273: a box like the panel's sections, with a heading bar
       kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
     }
-    settingKeysBox = el('section', 'sgroup keys');
+    settingKeysBox = el('section', 'keys');
     kids.push(settingKeysBox);
     drawKeys();
   }
@@ -2515,8 +2515,10 @@ function drawKeys() {
   if (box === null) return;
   const chosen = providersChosen();
   box.hidden = !chosen.length;
+  box.className = chosen.length ? 'sgroup keys' : 'keys'; // one of the view's groups only while it shows
   if (!chosen.length) { box.replaceChildren(); return; }
   box.replaceChildren(el('div', 'sh', null, el('h4', null, 'API keys')), ...chosen.map(keyRow));
+  showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept); // its explanation shows only when asked for
 }
 function keyRow(p) {
   const st = settingKeys.get(p.name) ?? { typed: '', saving: false, said: null, refused: null };
@@ -2536,12 +2538,15 @@ function keyRow(p) {
   save.setAttribute('data-provider', p.name);
   save.addEventListener('click', () => { st.typed = String(input.value ?? ''); saveKey(p); });
   const has = p.key_set ? `This machine has a ${p.label} API key.` : `This machine has no ${p.label} API key. ${p.label} can't run until you enter one.`;
+  // An info button, as every setting has, so the row lines up with the others (0277).
+  const [info, tip] = settingInfo({ key: `${p.label} API key`, explain: `Your own ${p.label} API key, which speck uses to run ${p.label}'s models. It's kept for this machine only, where git ignores it, and is never shown here once saved.` }, settingTips.size);
   return el('div', 'setting', null,
-    el('div', 'row', null, el('span', 'label', null, el('code', 'name', `${p.label} API key`)), el('div', 'control', null, input, save)),
+    el('div', 'row', null, el('span', 'label', null, el('code', 'name', `${p.label} API key`), info), el('div', 'control', null, input, save)),
     el('p', null, has),
     typeof p.key_why === 'string' && p.key_why ? el('p', 'bad', p.key_why) : null,
     st.said !== null ? el('p', 'said', st.said) : null,
-    st.refused !== null ? el('p', 'bad', st.refused) : null);
+    st.refused !== null ? el('p', 'bad', st.refused) : null,
+    tip);
 }
 // Sends the typed key to be saved for this machine. Once saved it's forgotten here, and the field is empty again.
 async function saveKey(p) {
