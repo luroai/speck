@@ -26,6 +26,7 @@ const KINDS = Object.assign(Object.create(null), {
   reviewer_effort: 'effort', auto_ship_risk: 'risks', foreman_fixing: 'fixing',
   foreman: 'agent', foreman_model: 'text', foreman_effort: 'effort', // 0287
   ship_mode: 'shipmode', // 0295
+  builder_effort: 'effort', // 0402
   max_parallel_builds: 'count', max_parallel_tests: 'count', test_stall_minutes: 'count', review_timeout_minutes: 'count', ship_wait_minutes: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
   'limits.max_review_rounds': 'count', 'limits.max_merge_rounds': 'count', 'limits.escalate_after_repeat_disputes': 'count', 'limits.max_ticket_body_lines': 'count',
 });

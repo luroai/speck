@@ -20,6 +20,9 @@ export const configBuilder = cfg => (typeof cfg?.builder === 'string' ? cfg.buil
 // when it's blank or missing.
 export const modelOf = cfg => typeof cfg.builder_model === 'string' || typeof cfg.builder_model === 'number' ? String(cfg.builder_model).trim() : '';
 
+// 0402: builder_effort as speck/config.yml has it, trimmed: '' when it's blank or missing.
+export const effortOf = cfg => typeof cfg?.builder_effort === 'string' ? cfg.builder_effort.trim() : '';
+
 // 0289: true when speck run builds with its own Codex command: builder codex, and build_command set blank. A config
 // without build_command at all is refused by speck run, as before.
 export const codexBuilds = cfg => cfg?.builder === 'codex' && typeof cfg.build_command === 'string' && !cfg.build_command.trim();
@@ -40,11 +43,14 @@ export const ownBuilder = cfg => (codexBuilds(cfg) ? 'codex' : cursorBuilds(cfg)
 
 // build_command's words with `--model <builder_model>` added at the end when the builder is claude and builder_model
 // is set, replacing any --model the command already gives. Otherwise the words exactly as they are.
+// 0402: and `--effort <builder_effort>` the same way, when builder_effort is set.
 export function withBuilderModel(words, cfg) {
-  const model = modelOf(cfg);
-  if (!model || cfg.builder !== 'claude') return words;
-  const kept = words.filter((w, i) => !w.startsWith('--model=') && w !== '--model' && words[i - 1] !== '--model');
-  return [...kept, '--model', model];
+  if (cfg.builder !== 'claude') return words;
+  const without = (ws, flag) => ws.filter((w, i) => !w.startsWith(`${flag}=`) && w !== flag && ws[i - 1] !== flag);
+  const model = modelOf(cfg), effort = effortOf(cfg);
+  if (model) words = [...without(words, '--model'), '--model', model];
+  if (effort) words = [...without(words, '--effort'), '--effort', effort];
+  return words;
 }
 
 // The one line speck run says when it starts with builder_model set for a builder that isn't claude, or null.

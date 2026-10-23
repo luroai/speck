@@ -7,7 +7,7 @@ import path from 'node:path';
 import { SpeckError, parseYaml, worktreeList, yamlValue } from './core.mjs';
 import { sharedCacheDir } from './turns.mjs';
 
-export const MACHINE_SETTINGS = Object.freeze(['builder', 'builder_model', 'build_command', 'resume_command', 'reviewer', 'reviewer_model',
+export const MACHINE_SETTINGS = Object.freeze(['builder', 'builder_model', 'builder_effort', 'build_command', 'resume_command', 'reviewer', 'reviewer_model',
   'reviewer_effort', 'allow_same_model_review', 'auto_ship', 'auto_ship_risk', 'foreman', 'foreman_model', 'foreman_effort', 'foreman_fixing',
   'max_parallel_builds', 'max_parallel_tests']);
 
