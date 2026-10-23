@@ -42,6 +42,7 @@ The suite's ten slowest tests take half as long, still checking the same things.
 - Some time is in the test's own subject (0177 waits on a reading that takes 5 seconds), so not each one can halve: criterion 1 is the ten together.
 - Times vary with load, so measure the ten in one full `npm test` run, as ship runs it.
 - Waits for 0424, as 0423 and 0424 change the full-ticket pane that `test/panel-0060.test.mjs` checks. Builds alongside 0426 to 0428 (the user, 2026-10-23), which restyle the page and are unlikely to change these ten tests. If one does, the second to ship needs a merge round.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
