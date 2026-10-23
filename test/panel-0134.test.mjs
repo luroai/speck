@@ -64,11 +64,10 @@ test('0134 AC2: the page loads nothing from another host', () => {
   assert.doesNotMatch(css(), /url\(\s*["']?https?:/i, 'no url() on another host');
 });
 
-test('0134 AC2: the stylesheet names the zen fonts first, with standard fall-backs', () => {
+test('0134 AC2 (changed by 0427): the stylesheet names Cursor\'s interface font and monospace, with standard fall-backs', () => {
   const s = css();
-  assert.match(s, /"Shippori Mincho",\s*"Noto Serif JP",\s*Georgia,\s*serif/);
-  assert.match(s, /"Zen Kaku Gothic New",\s*"Noto Sans JP",\s*system-ui,\s*sans-serif/);
-  assert.match(s, /"IBM Plex Mono",\s*ui-monospace,\s*monospace/);
+  assert.ok(s.includes('-apple-system, BlinkMacSystemFont, \"Segoe WPC\", \"Segoe UI\", system-ui, \"Ubuntu\", \"Droid Sans\", sans-serif'));
+  assert.ok(s.includes('\"SF Mono\", Monaco, Menlo, Consolas, \"Ubuntu Mono\", \"Liberation Mono\", \"DejaVu Sans Mono\", \"Courier New\", monospace'));
 });
 
 test('0134 AC3 (undone by 0135): no section heading has a number beside it', () => {
@@ -96,7 +95,7 @@ test('0134 AC4: every static id is still there, and no visible text was added (0
   assert.deepEqual(text, TEXT);
 });
 
-test('0134 AC2-AC3: in a real browser, headings are serif and ticket ids monospace, with no number before a heading (0135)', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
+test('0134 AC2-AC3 (changed by 0427): in a real browser, headings are in the interface font and ticket ids monospace, with no number before a heading (0135)', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage(`http://127.0.0.1:${panel.port}/`);
@@ -105,8 +104,8 @@ test('0134 AC2-AC3: in a real browser, headings are serif and ticket ids monospa
     const heads = await b.js(`[...document.querySelectorAll('.tab .tab-name')].map(h => [h.textContent, getComputedStyle(h).fontFamily, h.previousElementSibling === null])`); // 0410: the tabs' names
     assert.deepEqual(heads.map(h => [h[0], h[2]]), [['Plan', true], ['Build', true], ['Shipped', true]]);
     for (const [name, family] of heads.map(h => [h[0], h[1]])) {
-      assert.match(family, /\bserif\b/, `${name} is serif: ${family}`);
-      assert.doesNotMatch(family, /monospace|sans-serif/, `${name} is not monospace: ${family}`);
+      assert.match(family, /\bsans-serif\b/, `${name} is in the interface font: ${family}`);
+      assert.doesNotMatch(family, /monospace/, `${name} is not monospace: ${family}`);
     }
     assert.match(await b.js(`getComputedStyle(document.querySelector('main .id')).fontFamily`), /\bmonospace\b/);
   } finally { await b.close(); await stop(panel); }

@@ -205,7 +205,7 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
       assert.ok(c.details.top >= c.title.bottom - 0.5, `${c.id}: Details under the title`);
       assert.ok(c.details.right <= c.card.right, `${c.id}: Details inside the card`);
       if (c.tag) assert.ok(c.tag.top < c.title.bottom && c.tag.bottom > c.title.top, `${c.id}: the tag on the title's line`);
-      if (c.id === '0407') { assert.equal(c.titleLines, 2, '0407: a long title wraps'); continue; }
+      if (c.id === '0407') { assert.ok(c.titleLines >= 2, `0407: a long title wraps (${c.titleLines} lines)`); continue; } // 0427: how many lines depends on the machine's interface font
       if (c.id === '0406') continue; // its warning is under its two lines (AC4)
       // AC5
       assert.equal(c.titleLines, 1, `${c.id}: the title fits on one line`);

@@ -11,7 +11,7 @@ import { ROOT, page, PALETTE, paletteProblems } from './support/panel.mjs';
 const parse = s => Object.fromEntries(s.split('; ').map(d => d.split(': ')));
 const LIGHT = parse('--bg: #f3f3f3; --panel: #fcfcfc; --raise: #f3f3f3; --line: #14141476; --line-soft: #14141413; --text: #141414EB; --muted: #141414BA; --faint: #141414BA; --accent: #cf2d56; --bad: #96213f; --ok: #145a42; --warn: #6d4700; --run: #285372; --idea: #833063; --inbox: #4c7f8c; --bug: #86371b; --fix: #6d4700; --accent-bg: #f5f0e8; --idea-bg: #f7edf3; --inbox-bg: #eef2f3; --bad-bg: #f8ebef');
 const DARK = parse('--bg: #141414; --panel: #181818; --raise: #1c1c1c; --line: #E4E4E462; --line-soft: #E4E4E413; --text: #E4E4E4EB; --muted: #E4E4E4B8; --faint: #E4E4E4B8; --accent: #e34671; --bad: #ef95ad; --ok: #7fbc95; --warn: #d9a65e; --run: #97b2cc; --idea: #c4a6be; --inbox: #88c0d0; --bug: #e69d83; --fix: #d9a65e; --accent-bg: #27221b; --idea-bg: #242124; --inbox-bg: #212527; --bad-bg: #281c1f');
-const FONTS = ['"Shippori Mincho", "Noto Serif JP", Georgia, serif', '"Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif', '"IBM Plex Mono", ui-monospace, monospace'];
+const FONTS = ['-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif', '"SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace']; // 0427: Cursor's fonts
 
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 const css = html => (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';

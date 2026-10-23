@@ -157,7 +157,7 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         assert.ok(c.detailSize < c.titleSize, `${c.id}: the details (${c.detailSize} px) are smaller than the title (${c.titleSize} px)`);
         assert.deepEqual(c.broken, [], `${c.id}: the details line wraps only between its parts`);
         assert.ok(!c.overflows, `${c.id}: the details stay inside the card`);
-        if (c.id === '0702') { assert.equal(c.titleLines, 2, '0702: a long title wraps'); continue; }
+        if (c.id === '0702') { assert.ok(c.titleLines >= 2, `0702: a long title wraps (${c.titleLines} lines)`); continue; } // 0427: how many lines depends on the machine's interface font
         // The user's choice for this ticket: the 64 px limit covers details on up to two lines. A long list of tickets
         // waited on wraps between its ids, onto as many lines as it needs, and the card grows to show every one.
         if (c.id === '0707') { assert.ok(c.titleLines === 1 && c.detailLines >= 3 && c.height > 64, `0707: ${c.detailLines} lines of details, ${c.height} px`); continue; }

@@ -45,6 +45,8 @@ The panel's text uses the fonts Cursor's own interface uses, and its labels read
 - Checked 2026-10-23: only Cursor's remote server is installed on this box, not its interface, so its workbench style sheet can't be read here. Nothing in the server or its built-in extensions names a different interface font, and their webviews use `var(--vscode-font-family)`, VS Code's interface font. Not proven, but nothing contradicts it.
 - Waits for 0426: both change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: words that were monospace only to look like labels (the lane counts, the Foreman's line, a question's facts, Settings' switches, look picker and agent names) moved to the interface font; a setting's key and value stay monospace, as code. On this machine Chrome takes `system-ui` to be Liberation Mono, so the browser tests see the interface font as a monospace: a long title there wraps onto three lines where the old serif took two, so 0419's and 0420's "a long title wraps" now check it wraps, not onto exactly two lines. The −3 px narrowing of the dots in a details line is kept: in a proportional font it closes the gaps, but without it the details no longer fit one line in this machine's monospace (a follow-up).
+- Pictures: taken on a box whose only fonts are Liberation Sans, Serif and Mono, with Liberation Sans standing in for the system font; on a Mac, Windows or Ubuntu machine the panel shows that system's own font.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -80,7 +80,7 @@ test('0273 AC4, AC5: at the narrowest width each row fits, and in both looks the
           return getComputedStyle(probe).color;
         }));
         probe.remove();
-        const fonts = ['IBM Plex Mono', 'Zen Kaku Gothic New', 'Shippori Mincho'];
+        const fonts = ['BlinkMacSystemFont', '"SF Mono"']; // 0427: Cursor's interface font and monospace
         const bad = [];
         for (const n of document.querySelectorAll('#settings, #settings *')) {
           if (['WBR', 'OPTION'].includes(n.tagName) || !n.getClientRects().length) continue;
