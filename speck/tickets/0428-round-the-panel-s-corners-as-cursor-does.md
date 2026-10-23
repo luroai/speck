@@ -43,6 +43,7 @@ The panel's controls, cards and pop-ups have rounded corners like Cursor's.
 - Criterion 3: 0421 left the open card's buttons with only an underline, which the user noticed on 2026-10-23. Plan's first toggle loses its left edge to `margin-left: -.5px` on `.toggle` since the lane's own border went (0418).
 - Waits for 0427: both change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: rounded the tag tip and Settings' explanations 8 px too, as small pop-ups, so none stays square beside the rest. Buttons left without a box of their own, each inside a box or not drawn as a button: the tabs, speck's screen, the switches, Appearance's three choices, the priority menu's numbers and the linked ids.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
