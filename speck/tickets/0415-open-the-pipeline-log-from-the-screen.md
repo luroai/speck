@@ -1,7 +1,7 @@
 ---
 id: "0415"
 title: "Open the pipeline log from the screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0414"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T15:21:38.601Z"
+approved: "2026-10-23T15:35:26.510Z"
 
 ---
 # 0415 · Open the pipeline log from the screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Foreman's detail says what's waiting and why, but not what speck run has done. To see that, you read `speck/.cache/runs/run.log` by hand.
@@ -57,9 +58,16 @@ Worth keeping an eye on: the pop-up keeps today's full-panel look, because the l
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Scroll preservation fails once the log contains 200 lines.; F2 The fixed 256 KiB read window silently omits recent output.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 938,679
+- Elapsed since build started: 14 min
+- Changed lines: 157 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none to the inbox):
 - Known limit: the log is read back until it has 200 whole lines, with no byte cap (round 2's finding). A run.log whose last lines are enormous would be read in full on each refresh while the pop-up is open. speck run's own lines are short, so this isn't expected in practice.
