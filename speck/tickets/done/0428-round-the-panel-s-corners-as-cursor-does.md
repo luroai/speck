@@ -1,7 +1,7 @@
 ---
 id: "0428"
 title: "Round the panel's corners as Cursor does"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-10-23T19:24:44.728Z"
 approved: "2026-10-23T19:46:07.618Z"
 blocked_at: ""
 waited_seconds: 76
+finished: "2026-10-23T19:48:37.581Z"
 
 ---
 # 0428 · Round the panel's corners as Cursor does
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Every corner in the panel is square: `* { border-radius: 0 !important; }` in `templates/panel.html`. Beside Cursor's rounded controls and panels, it looks like a different product.
