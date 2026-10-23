@@ -1,7 +1,7 @@
 ---
 id: "0390"
 title: "Review with DeepSeek"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-18-use-a-model-provider-through-your-own-api-key.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0389","0388"]                # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T07:35:14.552Z"
 
 ---
 # 0390 · Review with DeepSeek
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck's reviewers are Codex, Claude Code and Cursor. There's no way to review with a model from a provider you have an API key for, such as DeepSeek, which may be cheaper or quicker.
