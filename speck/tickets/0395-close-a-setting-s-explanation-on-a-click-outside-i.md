@@ -1,7 +1,7 @@
 ---
 id: "0395"
 title: "Close a setting's explanation on a click outside it"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-rehash-the-settings-screen.md"             
 after: []                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T10:00:15.940Z"
+approved: "2026-10-23T10:03:43.208Z"
 
 ---
 # 0395 · Close a setting's explanation on a click outside it
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 An open explanation in Settings stays until you press its info button again or press Escape. On a phone there's no Escape, so a tap elsewhere leaves it covering the rows under it.
@@ -50,9 +51,15 @@ In Settings, an open explanation now closes as soon as you click or tap anywhere
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 After changing reviewer, builder or foreman, its info button can no longer toggle its explanation closed.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 329,206
+- Elapsed since build started: 3 min
+- Changed lines: 16 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: on a touch screen, a touch that starts a scroll also closes an open explanation, as it's a press outside it.
 - Follow-ups: none.
