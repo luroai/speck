@@ -1,7 +1,7 @@
 ---
 id: "0436"
 title: "Let speck pass the time during a long wait"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T21:11:03.198Z"
 ---
 # 0436 · Let speck pass the time during a long wait
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0414, speck plays an event's animation, then shows the pipeline's state and holds it until the state changes. On a long build that's 40 minutes of watching with the clipboard, so the screen looks stuck.
@@ -47,7 +47,9 @@ Between events, speck shows the pipeline's state, and during a long wait it pass
 - Pictures: none, because the change is only when existing poses show (a pastime appears 2 minutes into a build), which a panel started here shows as Off; every pose and caption it uses is already drawn by 0414.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+During a long build or ship, speck no longer just stands there with its clipboard. It watches for 2 minutes, then takes a 1-minute break (tea, chess, a sweep or a messy moment), then watches again. While the pipeline is waiting, it's grumpy instead of watching, with the same breaks. When nothing is happening, it changes pastime every 3 minutes and dozes off after 15. When it needs you, it keeps the question mark, and when speck run is off, it sleeps. The top row still shows the pipeline's word throughout, and anything that happens interrupts at once.
+
+To see it, leave the panel open during a build for a few minutes. Worth a look: whether the break captions read well to you.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +59,72 @@ Between events, speck shows the pipeline's state, and during a long wait it pass
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "186161749061510c0b426824c24210cc26e92d4c",
+    "session": "fresh",
+    "thread_id": "01a16a9d-0599-73a2-bbf7-c056e8679f8e",
+    "builder_response": "- Tests run: test/panel-0436.test.mjs test/panel-0414.test.mjs (and the commands.checks files, which speck test --files adds)\n- Round 1. The rhythm lives in speckRests in templates/panel.html; the pastime picker is pickPastime. 0414's tests for Building, Shipping, Waiting and Idle are changed to match, as the ticket's Notes say, and the shared screen helpers moved from test/panel-0414.test.mjs to test/support/screen-speck.mjs.\n- Captions: Idle keeps 0414's four captions; while Building, Shipping or Waiting the pastimes use a second fixed set (PASTIMES), as 0414's Idle captions (\"NOTHING READY. CHESS?\") read wrong during a build.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 145930,
+      "cached_input_tokens": 102656,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 771,
+      "reasoning_output_tokens": 52
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T21:14:20.955Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: speckRests implements the 2-minute watch/1-minute pastime cycle; pickPastime excludes the previous choice. PASTIMES supplies fixed captions. Passing 0436 AC1 tests exercise Building and Shipping timing, random choices, captions and the unchanged top row."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "speckRests uses the same cycle for Waiting with grumpy as its own pose. Passing '0436 AC2' tests exercise both grumpy intervals and successive pastimes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "speckRests changes Idle pastimes every 3 minutes and sleeps at 15 minutes. Passing 0436 AC3 tests check the boundaries, non-repetition, continued sleep and waking on a status change; updated 0414 tests check waking after an event."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "speckRests returns ask for Needs you and sleeping for Off before applying pastime logic. Passing 0436 AC4 tests check both states repeatedly over 20 minutes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "speckNow prioritises events and marks the rhythm for restart; noteBoard resets it on a changed status word. Passing 0436 AC5 tests exercise event interruption, restarting watch intervals, status changes and restarting Idle's nap timer."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change adds the requested calm pastime rhythm while preserving status visibility and event interruptions. The tests exercise the timing and state changes, and the recorded run has 150 passes, no failures and three skips. No blocking concerns found."
+  }
+}
+```
+
+</details>
