@@ -154,10 +154,9 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         assert.deepEqual(c.broken, [], `${c.id}: the details line wraps only between its parts`);
         if (c.id === '0702') { assert.equal(c.titleLines, 2, '0702: a long title wraps'); continue; }
         // A reviewing ticket's sentence ("Codex is reviewing · round 2") is too long for its details to fit on one line
-        // in 12 px text here, so its details wrap, between their parts.
-        if (c.id === '0704') { assert.equal(c.detailLines, 2, '0704: details too long for one line wrap'); continue; }
+        // in 12 px text here, so its details wrap, between their parts, and it's still no more than 64 px tall.
         assert.equal(c.titleLines, 1, `${c.id}: the title fits on one line`);
-        assert.equal(c.detailLines, 1, `${c.id}: the details fit on one line`);
+        assert.equal(c.detailLines, c.id === '0704' ? 2 : 1, `${c.id}: the details fit on one line, or wrap when they're too long`);
         assert.ok(c.height <= 64, `${c.id}: ${c.height} px tall`);
       }
     }
