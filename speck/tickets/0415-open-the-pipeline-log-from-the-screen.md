@@ -143,3 +143,86 @@ Pressing speck's screen opens the pipeline log, which takes the place of the For
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "38bc6ec672697f87b8a90f765479ce36019b1223",
+    "session": "continued",
+    "thread_id": "01a16963-4c01-7db3-b14d-5c93aae8f69f",
+    "builder_response": "- Tests run: test/pipeline-0415.test.mjs test/panel-0413.test.mjs (plus the commands.checks files)\n- F1: fixed. templates/panel.html drawRunLog now anchors on the first log line the reader can see: before redrawing it finds that line's index and top, works out how many lines came in above (runLogShift: the fewest k for which the new lines from k on start with the drawn ones), and after redrawing scrolls so the same line is back at the same top. No match (a log started afresh) leaves the scroll alone. Tests: a full 200-line log with the oldest dropping as one arrives, a growing log with wrapped (taller) lines, and a fresh log, each with a fake layout whose line heights vary; they check the first visible line's text and top are unchanged.\n- F2: fixed. scripts/run-log.mjs runLogTail reads back from the end in 64 KiB chunks until it has more than 200 lines (so the latest 200 are whole) or reaches the start, decoding the joined buffers so UTF-8 isn't split. To keep the panel safe it never reads more than the last 16 MiB (RUN_LOG_MAX); a line cut there is shown starting with \"…\". Tests: a latest line over 256 KiB shown whole, 201 lines of ~4 KB each giving exactly the latest 200, and a line over RUN_LOG_MAX shown cut with \"…\".\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 306046,
+      "cached_input_tokens": 250752,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2372,
+      "reasoning_output_tokens": 266
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T15:34:15.011Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "renderForeman preserves the original detail under Right now. Passing AC1 tests cover the Pipeline title, ordering, question buttons and stale-page reload."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Passing tests now cover scroll anchoring with a full 200-line log and wrapped lines. However, runLogTail still stops at RUN_LOG_MAX, so the latest 200 lines are not always returned."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests exercise Close, Escape and outside clicks, with focus returning to the screen. The closing implementation is unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The exact /api/run-log route still reads only the server-selected run.log. Passing tests cover request parameters, traversal attempts, symlinks and directories."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The real-browser AC5 test passed at 320 px in both themes, checking horizontal overflow and long-line wrapping."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:4225",
+        "issue": "The original failure to preserve the reader's position when the 200-line window advances is fixed.",
+        "suggested_fix": "No further change required for the reported failure. The new tests check retained line text and position with both capped and wrapped output.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/run-log.mjs:37",
+        "issue": "The chunked reader fixes the reported 256 KiB examples, but replaces that limit with a 16 MiB limit. If the latest 200 lines exceed 16 MiB together, older lines within that required window are still omitted. An ellipsis marks the first returned fragment but does not restore the missing lines. The new maximum-size test accepts truncation rather than checking the criterion.",
+        "suggested_fix": "Continue reading backwards until 200 complete lines or the beginning of the file, counting newlines incrementally and decoding once. Add a test where the latest 200 lines together exceed 16 MiB. If a hard byte limit is required, obtain an explicit change to the acceptance criterion.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The reader-position fix now covers full and wrapped logs. The remaining issue is that large output can still cause recent lines to be omitted: the implementation raises the size limit instead of always showing the latest 200 lines."
+  }
+}
+```
+
+</details>
