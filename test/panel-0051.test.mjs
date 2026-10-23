@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { T, panelRepo, freePort, startPanel, stop, request, post, fakePage, page, queueRows, click, exitOf, findChrome, browserPage, charAt, styles } from './support/panel.mjs';
+import { T, panelRepo, freePort, startPanel, stop, request, post, fakePage, page, model, queueRows, click, exitOf, findChrome, browserPage, charAt, styles } from './support/panel.mjs';
 
 // ---------- 0051: expand a queue ticket to read its build log ----------
 
@@ -200,8 +200,7 @@ test('0051 AC3: the log shows as text with ANSI escapes removed, blank runs as o
 });
 
 test('0051 AC3: the formatting on its own', () => {
-  const m = page().match(/\/\/ ---- model[^\n]*\n([\s\S]*?)\/\/ ---- end model/);
-  const logText = vm.runInNewContext(`${m[1]}\nlogText`, {});
+  const logText = vm.runInNewContext(`${model()}\nlogText`, {}); // 0431: from the model's own file
   assert.equal(logText({ text: '', truncated: false }), 'No log yet.');
   assert.equal(logText({ text: '\x1b[0m\n\n', truncated: false }), 'No log yet.', 'nothing left once the codes are gone');
   assert.equal(logText(null), 'No log yet.');
