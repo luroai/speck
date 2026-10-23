@@ -53,6 +53,7 @@ async function withPanel(fn, { width = 1280, height = 900, state = STATE(), touc
   const b = await browserPage('about:blank');
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 700 });
+    await b.send('Emulation.setTouchEmulationEnabled', width < 700 ? { enabled: true, maxTouchPoints: 1 } : { enabled: false }); // 0417: a phone's touch screen, where controls are finger-sized
     if (touch) await b.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(state) });
