@@ -52,6 +52,7 @@ The panel uses Cursor's own light and dark theme colours, so it looks like part 
 - Colour tokens are in `:root` and `:root[data-theme="dark"]` in `templates/panel.html`.
 - Waits for 0421, 0422, 0424 and 0425: this changes styles across the whole of `templates/panel.html`.
 - Failing before this build: none
+- Self-check: small tags in a line of 12 px text kept Cursor's 14 px muted, so a `:where()` rule gives them the small-text muted; --bug and --fix took the 7:1 shades, as 0161 reads a tag's colour rule as 13 px text.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

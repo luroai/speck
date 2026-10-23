@@ -124,7 +124,7 @@ test('0055 AC1-AC4: in a real browser, no card moves, a refresh keeps a selectio
     assert.equal(await b.js(`${row('0002')}.querySelector('.stage') === window.step`), true, 'the same step stays');
     assert.equal(await b.js('getSelection().toString()'), 'A buil', 'the selection stays');
     // AC3: the stage's name keeps its in-flight blue.
-    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.stage')).color`), 'rgb(48, 79, 109)', 'in the in-flight blue');
+    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.stage')).color`), 'rgb(40, 83, 114)', 'in the in-flight blue'); // 0426: --run, Cursor's blue at the shade small text needs
   } finally {
     await b.close();
     await stop(panel);

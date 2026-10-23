@@ -49,13 +49,17 @@ test('0167 AC2: the speck red is used only for the speck itself', () => {
 test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours, with underlines or borders to show what can be clicked', () => {
   const coloured = [];
   for (const r of plain()) {
-    if (!selectors(r).some(s => /\.(id|title|title-link|goto|toggle)(?![\w-])/.test(lastCompound(s)) || /(^|\s)a(:hover)?$/.test(s))) continue;
+    // 0426: links in a ticket's text are in Cursor's blue, --run (below)
+    if (!selectors(r).some(s => /\.(id|title|title-link|goto|toggle)(?![\w-])/.test(lastCompound(s)))) continue;
     for (const k of ['color', 'border-color']) {
       const t = tokens(get(r, k));
       if (t.some(x => !NEUTRAL.includes(x))) coloured.push(`${r.sel} { ${k}: ${get(r, k)} }`);
     }
   }
   assert.deepEqual(coloured, [], 'no accent or list colour');
+  const links = plain().filter(r => selectors(r).some(s => /(^|\s)a(:hover)?$/.test(s)));
+  assert.ok(links.length, 'rules for links');
+  for (const r of links) for (const k of ['color', 'border-color']) if (get(r, k)) assert.deepEqual(tokens(get(r, k)), ['--run'], `${r.sel}: links are in Cursor's blue (0426)`);
   assert.match(get(rule('.goto'), 'text-decoration') || '', /underline/, 'a linked id is underlined');
   assert.match(get(rule('td .title-link'), 'text-decoration') || '', /underline/, 'a shipped title is underlined');
   assert.deepEqual(tokens(get(rule('.toggle.on'), 'border-color')), ['--text'], 'the selected tab has a border in the text colour');
@@ -124,7 +128,7 @@ const STATE = {
 };
 // Each queue card's state colour: its border and its background, or none.
 // 0171: a running card has a 2px border in its stage's colour instead, and no fill (RUNNING).
-const RUNNING = { '0301': 'run' };
+const RUNNING = { '0301': 'blue' }; // 0426: Cursor's blue
 const STATES = { '0301': null, '0302': ['--idea', '--idea-bg'], '0303': ['--bad', '--bad-bg'], '0304': ['--bad', '--bad-bg'], '0305': null, '0306': ['--idea', '--idea-bg'] };
 
 const stub = theme => `(() => {
@@ -159,7 +163,7 @@ const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAn
 // A colour as the browser computes it, from a CSS value such as var(--bad).
 const RGB = v => `(() => { const s = document.createElement('span'); s.style.color = ${JSON.stringify(v)}; document.body.appendChild(s);
   const c = getComputedStyle(s).color; s.remove(); return c; })()`;
-const colours = async b => { const c = {}; for (const k of ['line', 'text', 'muted', 'idea', 'idea-bg', 'bad', 'bad-bg', 'panel', 'run']) c[k] = await b.js(RGB(`var(--${k})`)); return c; };
+const colours = async b => { const c = {}; for (const k of ['line', 'text', 'muted', 'idea', 'idea-bg', 'bad', 'bad-bg', 'panel', 'run', 'blue']) c[k] = await b.js(RGB(`var(--${k})`)); return c; };
 // Each element's four border colours and widths, and its background.
 const LOOK = sel => `[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => { const s = getComputedStyle(n);
   return { id: (n.querySelector('.id') || n).textContent.slice(0, 40), cls: n.className, back: s.backgroundColor,
