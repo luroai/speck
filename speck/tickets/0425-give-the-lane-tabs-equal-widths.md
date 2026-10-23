@@ -43,6 +43,7 @@ The three tabs are the same size and share the row, and each lane's counts are a
 - Today: `.tabs`, `.tab`, `#queue-n`, `#shipped-n` and `#build-needs` in `templates/panel.html`.
 - Waits for 0420, which also changes the Shipped count. Builds alongside 0421 to 0424 (the user, 2026-10-23), which change other parts of `templates/panel.html`.
 - Failing before this build: none
+- Self-check: no changes. The Build lane's panel takes its name from the Build tab, so while the number shows, a screen reader names the lane "Build, <n> needs you" too.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
