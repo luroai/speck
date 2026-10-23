@@ -1,7 +1,7 @@
 ---
 id: "0376"
 title: "Launch a stopped ticket again without restarting speck run"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0375"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:50:24.940Z"
 approved: "2026-10-22T23:56:17.050Z"
+finished: "2026-10-23T00:01:08.060Z"
 
 ---
 # 0376 · Launch a stopped ticket again without restarting speck run
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck stop` ends a build, and speck run says to set the ticket ready again and commit it. The speck run that launched it never does: it keeps the ticket on its launched list, so nothing starts until speck run itself is restarted.
