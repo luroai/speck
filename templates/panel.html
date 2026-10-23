@@ -246,6 +246,9 @@
   /* 0434: a closed ticket's title is one line, cut off with an ellipsis when it doesn't fit, and a closed Build ticket's
      status line is one line too. An open one wraps as needed. */
   .item.ticket:not(.open) .line .title, .q:not(.open) .top .line .title, #shipped tr:not(.open) .line .title-link { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* 0435: a closed idea's or inbox note's title too, so the card is its title line and its second line */
+  .item.idea:not(.open) .line .title, .item.inbox:not(.open) .line .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.idea:not(.open) .head .line, .item.inbox:not(.open) .head .line { min-width: 0; } /* its grid column no wider than the card */
   .q:not(.open) .top .progress, .q:not(.open) .top .act { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* 0419: a Plan or Build ticket is its title line and one details line, in smaller type, its parts separated by " · ".
      Each part stays whole, so the line wraps between parts, and only when it doesn't fit; a list of linked ids too
@@ -3378,7 +3381,7 @@ function capturedOn(body) {
 // A collapsed idea or inbox card is its title and one short line (0435); open, the note's path is above its text.
 function noteItem(i, kind, open, second) {
   const isOpen = open.has(i.path);
-  const head = el('div', 'head', null, el('div', 'line', null, el('span', 'title', i.title)), el('span'),
+  const head = el('div', 'head', null, el('div', 'line', null, titled(el('span', 'title', i.title))), el('span'),
     el('div', 'checks', null, el('span', null, second)));
   head.addEventListener('click', () => flip(open, i.path));
   return el('div', `item ${kind}${isOpen ? ' open' : ''}`, null, head,

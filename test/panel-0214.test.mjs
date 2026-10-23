@@ -91,7 +91,7 @@ const CARDS = `[...document.querySelectorAll('#shaping .item')].map(item => {
       || lines.some(l => l.left < box.left || l.right > box.right + 0.5 || l.bottom > box.bottom + 0.5) };
 })`;
 
-test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox titles are 17 px, as a ticket\'s, never cut off, wrapping under the title (their labels gone since 0435)', skip, async () => {
+test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox titles are 17 px, as a ticket\'s, never cut off when open, wrapping under the title (their labels gone since 0435)', skip, async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
@@ -108,6 +108,9 @@ test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox titles are 17 px, 
       for (const [view] of VIEWS) {
         await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`);
         await b.until(`!!document.querySelector('#shaping .item.${view === 'ideas' ? 'idea' : 'inbox'}')`, view);
+        // 0435: a closed card's title is cut to one line, so these are opened, where a title wraps
+        await b.js(`document.querySelectorAll('#shaping .item .head').forEach(h => h.click()), true`);
+        await b.until(`document.querySelectorAll('#shaping .item.open').length === 2`, `${view}, open`);
         const cards = await b.js(CARDS);
         assert.equal(cards.length, 2, `${width} px, ${view}`);
         for (const c of cards) {
