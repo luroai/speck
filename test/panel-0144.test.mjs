@@ -1,11 +1,10 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { switchPage, deferred, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { switchPage, deferred } from './support/panel.mjs';
 
 // ---------- 0144: call the speck run switch Auto-build ----------
 
-const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const state = run => ({ tickets: [], ideas: [], resume_command: '', ...(run ? { run } : {}) });
 // 0150: the indicator is itself the button, so there's no separate Pause or Start, and "ready tickets wait" moved into its tooltip.
 // 0285: the switch is in the Settings view's Foreman group now, and the header button shows the Foreman. 0364: with no builder.
@@ -70,57 +69,5 @@ test('0144 AC4: clicking it posts to turn speck run on, then off, as Start and P
 
 // ---------- in a browser: the colours, and the phone layout ----------
 
-const stub = run => `(() => {
-  const STATE = ${JSON.stringify(state(run))};
-  const real = window.fetch.bind(window);
-  window.fetch = async (url, opts = {}) => String(url) === '/api/state'
-    ? new Response(JSON.stringify(STATE), { status: 200, headers: { 'content-type': 'application/json' } }) : real(url, opts);
-})();`;
-
-async function withPage(run, fn, width = 1280) {
-  const r = panelRepo();
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
-  const b = await browserPage('about:blank');
-  try {
-    await b.send('Emulation.setDeviceMetricsOverride', { width, height: 800, deviceScaleFactor: 1, mobile: width < 700 });
-    await b.send('Page.enable');
-    await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(run) });
-    await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && !!document.querySelector('#run .board')`, 'the panel');
-    await fn(b);
-  } finally { await b.close(); await stop(panel); }
-}
-const LINES = sel => `(() => {
-  const n = document.querySelector(${JSON.stringify(sel)}), range = document.createRange();
-  range.selectNodeContents(n);
-  const rects = [...range.getClientRects()].filter(r => r.width && r.height).sort((a, b) => a.top - b.top);
-  let lines = 0, bottom = -Infinity;
-  for (const r of rects) if (r.top >= bottom - 1) { lines++; bottom = r.bottom; } else bottom = Math.max(bottom, r.bottom);
-  return lines;
-})()`;
-
-// 0163: the builder took the square's place, so neither is green or red: the label says whether it's on. 0364: and the
-// builder has gone too, so the button shows its word alone. 0365: on its notice board.
-test('0144 AC1: on, the button shows its word, with no green square or builder', skip, async () => {
-  await withPage({ on: true, pid: 7 }, async b => {
-    assert.equal(await b.js(`!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`), true);
-  });
-});
-
-test('0144 AC2: off, the button shows its word, with no red square or builder', skip, async () => {
-  await withPage(null, async b => {
-    assert.equal(await b.js(`!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`), true);
-  });
-});
-
-for (const run of [null, { on: true, pid: 7 }]) {
-  test(`0144 AC2: at 375 px, the ${run ? 'on' : 'off'} indicator, which is its button (0150), is on one line`, skip, async () => {
-    await withPage(run, async b => {
-      for (const sel of ['#run']) {
-        assert.equal(await b.js(LINES(sel)), 1, `${sel} is on one line`);
-        const r = await b.js(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return r.right <= document.documentElement.clientWidth + 0.5; })()`);
-        assert.ok(r, `${sel} is on screen`);
-      }
-    }, 375);
-  });
-}
+// 0413: the in-browser checks of the Foreman's word in the header went with the header row: it's speck's screen now
+// (panel-0413.test.mjs).

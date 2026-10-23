@@ -48,6 +48,7 @@
     --accent: #853123; --ok: #3f522e; --warn: #67460b; --bad: #921f2d; --run: #304f6d; --idea: #623f6c;
     /* 0302: the builder badge's LCD screen, from the design (docs/design/lcd/), lighter since 0308 */
     --lcd-bg: #e6e9db; --lcd-off: #dde1cf; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .14);
+    --bezel: #262722; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1; /* 0413: the screen's dark frame, from the design's console */
     --dot: #b0412e; /* 0303: the speck in the header's mark */
     --inbox: #22544c; /* the inbox's own colour */
     --bug: #7a3553; /* the bug tag's own colour */
@@ -70,26 +71,23 @@
   code { font-size: 12px; color: var(--muted); }
 
   @font-face { font-family: "Doto"; src: url("/fonts/Doto.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
-  header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; display: flex; align-items: center; gap: clamp(10px, calc(10px + (100vw - 700px) * .03), 16px); padding: calc(14px + env(safe-area-inset-top)) clamp(16px, calc(16px + (100vw - 700px) * .04), 24px) 14px; border-bottom: .5px solid var(--line); background: var(--bg); }
-  /* 0309: the mark, speck and "control panel" in a row, each centred on the mark's line. 0373: the base branch sits
-     between speck and "control panel". The title gives way before anything else in the header, so the base branch is cut
-     short first, but its column never gets narrower than 58 px (its 10 px gap and about "base m…"), and speck and
-     "control panel" never are. It pushes the rest of the header to the right. */
-  .logo { display: grid; grid-template-columns: auto auto minmax(58px, auto) auto; align-items: center; flex: 0 1000 auto; margin-right: auto; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
-  /* 0170: speck's mark before the wordmark, in the text colour with the red dot. 0309: 32 px, two screen pixels a dot.
-     0320: the design's logo, its renderer's logo.markSVG() written into the page, with the speck in the panel's --dot */
-  .logo .mark { display: block; width: 32px; height: 32px; margin-right: 8px; --speck: var(--dot); }
-  /* 0304: speck's name in the design's dot-matrix lettering, from the panel's own copy of Doto (templates/fonts/). 0309: at 26 px */
-  .logo .name { font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 26px; line-height: 1; }
-  .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 12px; }
-  /* 0373: "base <branch>" just after speck, in the body's small text, cut short with "…" when the row is too narrow */
-  .logo .repo { font: 400 12px/1.5 "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; color: var(--muted); box-sizing: border-box; padding-left: 10px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .run-state, .settings-open { flex-shrink: 0; }
-  /* 0372: Settings ends the header: light and dark are chosen in it. Below 900 px the header's gaps and sides narrow
-     with the screen, so the base branch still has room beside speck. */
-  .settings-open { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
-  .settings-open:hover { border-color: var(--text); color: var(--text); }
-  .settings-open svg { width: 15px; height: 15px; }
+  /* 0413: the top of the panel is speck's screen in its dark frame, as the design's console (without its keys or the text
+     under the screen). The frame's title row has speck's name in the dot-matrix lettering, the project and base branch
+     cut short with "…", and Settings at its right end. The screen under it shows the Foreman's word and speck. */
+  header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; padding: calc(12px + env(safe-area-inset-top)) clamp(16px, calc(16px + (100vw - 700px) * .04), 24px) 12px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  .bezel { box-sizing: border-box; max-width: 520px; margin: 0 auto; padding: 5px 7px 7px; color: var(--bezel-ink); background: var(--bezel); border: 2px solid var(--bezel); }
+  .bezel.needs { border-color: var(--bad); } /* the Foreman's word is "Needs you <n>" */
+  .bezel .print { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 0 6px 2px; }
+  .bezel .name { flex: none; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 20px; line-height: 1; color: var(--bezel-ink); }
+  .bezel .repo { flex: 1 1 auto; min-width: 0; text-align: right; font: 400 12px/1.5 "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; color: var(--bezel-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bezel .repo code { font-size: inherit; color: inherit; }
+  .bezel .settings-open { flex: none; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: .5px solid var(--bezel-muted); background: transparent; color: var(--bezel-muted); cursor: pointer; }
+  .bezel .settings-open:hover { border-color: var(--bezel-ink); color: var(--bezel-ink); }
+  .bezel .settings-open svg { width: 15px; height: 15px; }
+  .bezel :focus-visible { outline-color: var(--bezel-ink); }
+  .bezel .glass { position: relative; display: block; width: 100%; padding: 0; color: var(--lcd-ink); background: var(--lcd-bg); border: .5px solid var(--bezel-muted); cursor: pointer; }
+  .bezel .glass::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 8px rgba(0, 0, 0, .3); pointer-events: none; }
+  .bezel .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 64; image-rendering: pixelated; }
 
   /* 0410: the page is the height of the screen and never scrolls. Under the header, Plan, Build and Shipped are tabs,
      one lane open at a time, and only the open lane's list scrolls. */
@@ -282,26 +280,7 @@
   td.num { color: var(--muted); text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; white-space: nowrap; }
 
   /* Live panel additions */
-  /* 0150: Auto-build is one button, the same height as the light/dark one beside it */
-  .run-state { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; white-space: nowrap; color: var(--muted); background: var(--panel); border: .5px solid var(--line); cursor: pointer; }
-  .run-state:hover { color: var(--text); border-color: var(--text); }
-  .run-state:disabled { cursor: default; opacity: .6; }
-  .run-state[hidden] { display: none; }
-  /* 0163: a label that ends in "…" rather than wrap or overflow. 0364: its word alone, with no builder before it. */
-  .run-state { position: relative; gap: 6px; max-width: 100%; min-width: 0; }
-  /* 0365: the Foreman's notice board, an LCD screen of 5 × 7 dots in its tone's colour, cut short by a narrow button */
-  .run-state .board { display: block; flex: 0 1 auto; min-width: 0; color: inherit; background: var(--lcd-bg); }
-  .run-state .board pattern rect { fill: var(--lcd-off); }
-  .run-state .board .lit { fill: currentColor; }
-  .run-state .board-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .run-state .board.plain { display: none; }
-  .run-state .board.plain + .board-text { position: static; width: auto; height: auto; min-width: 0; clip-path: none; text-overflow: ellipsis; }
-  .run-state .fixing { flex: none; font-size: 12px; color: var(--muted); border-left: .5px solid var(--line); padding-left: 6px; } /* 0317 */
-  /* 0285: the Foreman's status, coloured by its tone, and its detail, in a pop-up over the whole panel (0366) */
-  .run-state.fm-ok { color: var(--ok); border-color: var(--ok); }
-  .run-state.fm-warn { color: var(--warn); border-color: var(--warn); }
-  .run-state.fm-bad { color: var(--bad); border-color: var(--bad); }
-  .run-state.fm-off { color: var(--muted); }
+  /* 0285: the Foreman's detail, in a pop-up over the whole panel (0366) */
   .foreman { font-size: 13px; }
   .foreman h4 { margin: 8px 0 2px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   .foreman ul { margin: 0; padding-left: 18px; }
@@ -588,6 +567,7 @@
     --inbox: #82bfb5; --bug: #e0a2bf; --fix: #c9b65c;
     --accent-bg: #2e2320; --idea-bg: #2a2430; --inbox-bg: #1d2a28; --bad-bg: #341d21;
     --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
+    --bezel: #080907; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1;
     --dot: #d4664e;
     color-scheme: dark;
   }
@@ -599,15 +579,9 @@
   /* 0140: a phone screen. One column, nothing past the right edge, labels kept on one line, and every button and
      clickable control at least 44 px each way (Apple's smallest recommended tap target). Wider screens are unchanged. */
   @media (max-width: 699.98px) {
-    /* 0364: one row, the same at the top and scrolled, with 44 px buttons and 6 px above and below. 0373: the mark,
-       speck and the base branch, the Foreman and Settings. No "control panel" (0309). */
-    header { column-gap: 6px; padding: calc(6px + env(safe-area-inset-top)) 16px 6px; }
-    header > * { white-space: nowrap; }
-    .logo span { display: none; }
-    /* When the row is too narrow, the base branch gives way first (see .logo), then the Foreman's word is cut short too. */
-    .run-state { flex-shrink: 1; height: 44px; min-width: 44px; overflow: hidden; }
-    .run-state .fixing { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; } /* "Fixing on" gives way too, inside the button */
-    .settings-open { width: 44px; height: 44px; }
+    header { padding: calc(8px + env(safe-area-inset-top)) 16px 8px; } /* 0413: the screen's frame, as wide as the page allows */
+    .bezel .print { padding-bottom: 4px; }
+    .bezel .settings-open { width: 44px; height: 44px; margin: -4px -2px -4px 0; }
     #settings .switch-row .info::after, #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
     #settings .looks [role="radio"] { padding: 0 2px; } /* 0412: System, Light and Dark on one line in the control's half of the row, down to 320 px */
     #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
@@ -690,11 +664,12 @@
 </head>
 <body>
 <header>
-  <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges" class="mark" id="mark" aria-hidden="true"><path fill="currentColor" d="M2 1h2v1h-2zM12 1h2v1h-2zM1 2h1v1h-1zM5 2h6v1h-6zM14 2h1v1h-1zM1 3h1v1h-1zM10 3h2v1h-2zM14 3h1v1h-1zM3 4h1v1h-1zM12 4h1v1h-1zM2 5h1v1h-1zM13 5h1v1h-1zM1 6h2v1h-2zM13 6h2v1h-2zM1 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM13 11h2v1h-2zM2 12h1v1h-1zM13 12h1v1h-1zM3 13h1v1h-1zM12 13h1v1h-1zM4 14h2v1h-2zM10 14h2v1h-2zM5 15h6v1h-6z"/><path fill="var(--speck, #c4402a)" d="M7 8h2v1h-2zM7 9h2v1h-2z"/></svg><b class="name">speck</b><div class="repo">base <code>{{base}}</code></div><span>control panel</span></div>
-  <button class="run-state" id="run" type="button" aria-expanded="false" aria-controls="foreman" hidden></button>
-  <button class="settings-open" id="settings-open" type="button" aria-label="Settings" title="Settings">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="5.5" cy="4.5" r="1.6" fill="var(--bg)"/><circle cx="10.5" cy="11.5" r="1.6" fill="var(--bg)"/></svg>
-  </button>
+  <div class="bezel" id="bezel">
+    <div class="print"><b class="name">speck</b><span class="repo">{{repo}} · <code>{{base}}</code></span><button class="settings-open" id="settings-open" type="button" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="5.5" cy="4.5" r="1.6" fill="var(--bezel)"/><circle cx="10.5" cy="11.5" r="1.6" fill="var(--bezel)"/></svg>
+    </button></div>
+    <button class="glass" id="run" type="button" aria-label="The Foreman" aria-expanded="false" aria-controls="foreman" title="What speck run is doing, and what is waiting"><canvas class="lcd" id="screen" aria-hidden="true"></canvas></button>
+  </div>
 </header>
 <div class="offline" id="offline" hidden>Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…</div>
 <div class="restart" id="restart" hidden></div>
@@ -2006,8 +1981,8 @@ function chooseLook(look) {
   drawLook();
 }
 // 0160: the header stays at the top of the screen. --head is its height on screen, so a ticket scrolled to sits below
-// it. 0364: it's one row at every width, the same at the top and scrolled, and the base branch (0373: no longer the
-// project), cut short when the row is narrow, shows in full in its tooltip.
+// it. 0413: the header is speck's screen in its frame, and the project and base branch, cut short when the title row
+// is narrow, show in full in their tooltip.
 const pageHeader = document.querySelector?.('header');
 if (pageHeader) {
   new ResizeObserver(() => document.documentElement.style.setProperty('--head', `${pageHeader.offsetHeight}px`)).observe(pageHeader);
@@ -3402,15 +3377,14 @@ function startBadges(inFlight) {
   const still = reducedMotion();
   if (LCD) for (const b of badges.values()) if (!b.lcd) b.lcd = LCD.badge(b.canvas, b.pose, { still });
 }
-// The design's LCD renderer, for the builder badges. The header's mark is the design's logo, written into the page
-// since 0320, so it needs no script. 0364: the Foreman's button has no builder, so speck's mark shows once.
+// The design's LCD renderer, for the builder badges and, since 0413, speck's screen at the top of the panel.
 const LCD = globalThis.SpeckLCD;
 function reducedMotion() { return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches; }
 // The renderer reads the reduced-motion setting once, as the page loads, so each new badge is given it as it is now,
 // and a change to it holds the badges already drawn still or lets them move again.
 if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
   for (const b of badges.values()) if (b.lcd) { b.lcd.cast.still = b.lcd.scr.still = e.matches; b.lcd.scr.dirty = true; }
-  if (state) render(); // 0365: the Foreman's board stops, showing its word alone, or scrolls again
+  if (screen.lcd) { screen.cast.still = screen.lcd.still = e.matches; screen.lcd.dirty = true; } // 0413: speck's screen too
 });
 // A change of the screen's pixels per CSS pixel (a zoom, or another screen) gives each screen its new size, which its
 // renderer doesn't see, as the screen's size on the page stays the same. Its look it follows itself.
@@ -3418,6 +3392,7 @@ if (typeof matchMedia === 'function') {
   (function zoomed() {
     matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`).addEventListener('change', () => {
       for (const b of badges.values()) if (b.lcd) b.lcd.scr.size();
+      if (screen.lcd) screen.lcd.size(); // 0413: speck's screen too
       zoomed();
     }, { once: true });
   })();
@@ -3982,17 +3957,14 @@ function render() {
   more.setAttribute('aria-expanded', String(moreStats));
   $('shipped-n').textContent = `${m.shippedTotal} in total`;
 
-  // 0285: the Foreman, speck run's one status for the whole pipeline, in place of the speck run switch, which is in
-  // Settings now. Pressing it opens its detail. The button stays put and only its contents change, so it keeps focus.
-  // 0364: its word alone, with no builder.
+  // 0285: the Foreman, speck run's one status for the whole pipeline. Pressing it opens its detail. 0413: its word is
+  // the top row of speck's screen, which is the button, and the frame's edge is in the needs-you colour while the word
+  // is "Needs you <n>". The button stays put and only what the screen shows changes, so it keeps the focus.
   const f = foremanOf(state), stale = pageStale(state);
-  const run = $('run');
-  run.hidden = false;
-  run.className = `run-state fm-${stale ? 'warn' : f.tone}`;
-  // 0365: a dot-matrix notice board, scrolling the Foreman's word and what each ticket in flight is doing
-  const said = boardText(f, stale);
-  run.setAttribute('aria-label', said); // its name is the board's whole text, without "Fixing on" beside it
-  run.replaceChildren(...drawBoard(said, stale ? 'Reload page' : f.word), ...(!stale && f.fixing === 'fix' ? [el('span', 'fixing', 'Fixing on')] : [])); // 0317
+  const run = $('run'), word = stale ? 'Reload page' : f.word, fixing = !stale && f.fixing === 'fix'; // 0317
+  drawScreen(word, fixing);
+  $('bezel').className = NEEDS_YOU.test(word) ? 'bezel needs' : 'bezel';
+  run.setAttribute('aria-label', `The Foreman: ${word}${fixing ? ', fixing on' : ''}`);
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
   renderForeman(f, stale);
@@ -4012,7 +3984,7 @@ $('run').addEventListener('click', e => {
   foremanOpen = true;
   render();
 });
-// 0366: closes the Foreman's pop-up, with the focus back on its notice board.
+// 0366: closes the Foreman's pop-up, with the focus back on speck's screen (0413), which opened it.
 function closeForeman() {
   foremanOpen = false;
   render();
@@ -4030,80 +4002,45 @@ function foremanOf(st) {
     agent: f && f.agent && typeof f.agent === 'object' ? f.agent : null, // 0287: the Foreman agent's work
     fixing: f && typeof f.fixing === 'string' ? f.fixing : null, fixing_says: f && typeof f.fixing_says === 'string' ? f.fixing_says : '', took: list(f && f.took) }; // 0317
 }
-// 0365: the Foreman's notice board. Its text is the Foreman's word, then what each ticket in flight is doing, drawn in
-// the LCD screens' 5 × 7 dot font, in capitals, on dots 2 px apart. Text wider than the board scrolls from right to left,
-// 10 dots a second (0374: slow enough to read), and loops round with a gap. Text that fits, or any text with reduced
-// motion (which shows the word alone), stays still. The board is kept between redraws, so the same text carries on scrolling; new text starts again
-// from the right-hand edge. Its whole text is the button's name, whatever has scrolled into view.
-const BOARD = { pitch: 2, rows: 9, max: 90, gap: 16, speed: 10 };
-const MIDDOT = '.....|.....|.....|..#..|.....|.....|.....'.split('|'); // "·", which the font hasn't got
-function boardText(f, stale) {
-  if (stale) return 'Reload page';
-  const s = f.ship && typeof f.ship.running === 'string' && f.ship.running ? f.ship.running : null;
-  return [f.word, ...f.building.map(id => `${id} building`), ...(s ? [`${s} shipping`] : []), ...f.blocked.map(b => `${b && typeof b === 'object' ? b.id : b} blocked`)].join(' · ');
-}
-// Each lit dot of `text` in the 5 × 7 font, as one path, the text's left edge at 0 and its top a dot down.
-function boardDots(text) {
-  const font = LCD && LCD.F5, up = String(text).toUpperCase();
-  let d = '';
-  if (font) for (let n = 0; n < up.length; n++) {
-    const rows = up[n] === '·' ? MIDDOT : font.g[up[n]];
-    if (rows) for (let r = 0; r < font.h; r++) for (let c = 0; c < font.w; c++) if (rows[r][c] === '#') d += `M${n * (font.w + 1) + c + .1} ${r + 1.1}h.8v.8h-.8z`;
+// 0413: speck's screen, the top of the panel, drawn by the design's LCD renderer (SpeckLCD.Screen and render, from
+// lcd.js) on 160 × 64 dots. Its top row is the Foreman's word in the 5 × 7 font, in capitals, with "FIXING ON" at its
+// right while foreman_fixing is fix (0317). A word too wide for the row scrolls from right to left, 16 dots a second
+// after a pause, and loops round, or with reduced motion stays still, cut short. Under a dotted line speck stays in its
+// idle animation. The screen is made once, when the renderer and a canvas are there, and kept between redraws.
+const SCREEN = { cols: 160, rows: 64, top: 11, speed: 16, pause: 1800 };
+const NEEDS_YOU = /^Needs you \d+$/;
+let screen = { word: '', fixing: false, since: null, lcd: null, cast: null };
+function drawScreen(word, fixing) {
+  const up = String(word).toUpperCase();
+  if (up !== screen.word) screen.since = null; // a new word starts again from the left
+  Object.assign(screen, { word: up, fixing });
+  const canvas = $('screen');
+  if (!screen.lcd && LCD && typeof LCD.Screen === 'function' && typeof canvas.getContext === 'function') {
+    const still = reducedMotion();
+    screen.cast = new LCD.Cast(LCD.STATES, 'idle', { still, at: LCD.STATE_AT });
+    screen.lcd = new LCD.Screen(canvas, { cols: SCREEN.cols, rows: SCREEN.rows, still, draw: screenFrame });
   }
-  return { d, width: Math.max(0, up.length * 6 - 1) };
+  if (screen.lcd) screen.lcd.dirty = true;
 }
-const SVGNS = 'http://www.w3.org/2000/svg';
-const svgEl = (tag, attrs = {}) => { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
-let board = null; // { svg, g, a, b, shown, still, width, cols, t0, x }
-// The board, kept between redraws, then its whole text, made again with each one, for the button's name.
-function drawBoard(text, word) {
-  if (!board) {
-    const a = svgEl('path', { class: 'lit' }), b = svgEl('path', { class: 'lit' }), g = svgEl('g');
-    const dots = svgEl('pattern', { id: 'board-dots', width: '1', height: '1', patternUnits: 'userSpaceOnUse' });
-    dots.appendChild(svgEl('rect', { x: '.1', y: '.1', width: '.8', height: '.8' }));
-    const svg = svgEl('svg', { 'aria-hidden': 'true', focusable: 'false', preserveAspectRatio: 'xMinYMid slice' });
-    svg.appendChild(dots);
-    svg.appendChild(svgEl('rect', { class: 'unlit', width: '100%', height: '100%', fill: 'url(#board-dots)' }));
-    g.appendChild(a); g.appendChild(b); svg.appendChild(g);
-    board = { svg, g, a, b, shown: null, still: null, t0: null, x: null };
+// One frame of the screen at time `t`, onto the screen `s` (its pen() draws on its dots).
+function screenFrame(s, t) {
+  const p = s.pen(), { F5, INK, FAINT } = LCD, cols = SCREEN.cols;
+  let right = cols - 4;
+  if (screen.fixing) { const b = p.textBox('FIXING ON', cols - 4, 2, { font: F5, align: 'right', valign: 'top' }); p.textAt('FIXING ON', b, FAINT); right = b.left - 6; }
+  const W = screen.word.length * 6 - 1, room = right - 4;
+  let x = 4;
+  if (W > room && !s.still) {
+    if (screen.since === null) screen.since = t;
+    const C = W + room + 8, u = Math.floor(Math.max(0, t - screen.since - SCREEN.pause) * SCREEN.speed / 1000) % C;
+    x = 4 - u;
+    if (x < 4 - W) x += C;
   }
-  const still = reducedMotion(), shown = still ? word : text;
-  board.svg.setAttribute('class', LCD && LCD.F5 ? 'board' : 'board plain'); // without the renderer's font, the text itself shows
-  if (board.shown !== shown || board.still !== still) {
-    const { d, width } = boardDots(shown);
-    Object.assign(board, { shown, still, width, cols: Math.min(BOARD.max, width + 2), t0: null, x: null });
-    board.a.setAttribute('d', d);
-    board.b.setAttribute('d', d);
-    board.b.setAttribute('transform', `translate(${width + BOARD.gap} 0)`);
-    board.svg.setAttribute('viewBox', `0 0 ${board.cols} ${BOARD.rows}`);
-    board.svg.setAttribute('width', String(board.cols * BOARD.pitch));
-    board.svg.setAttribute('height', String(BOARD.rows * BOARD.pitch));
-  }
-  boardFrame(null);
-  if (!still && !boardTicking && typeof requestAnimationFrame === 'function') { boardTicking = true; requestAnimationFrame(boardTick); }
-  return [board.svg, el('span', 'board-text', text)];
-}
-let boardTicking = false;
-function boardTick(now) {
-  if (!board || board.still) { boardTicking = false; return; }
-  boardFrame(now);
-  requestAnimationFrame(boardTick);
-}
-// Places the board's text for the time `now` (null: as it was, or at the start). How many dots show is how wide the
-// board is on the page, so a narrow screen scrolls text the full board would fit.
-function boardFrame(now) {
-  if (now === null && board.t0 !== null) return; // a redraw while it scrolls: it carries on where it is
-  const w = typeof board.svg.getBoundingClientRect === 'function' ? board.svg.getBoundingClientRect().width : 0, shows = w > 0 ? Math.floor(w / BOARD.pitch) : board.cols;
-  const scrolls = !board.still && board.width + 2 > shows, P = board.width + BOARD.gap;
-  let x = 1;
-  if (scrolls) {
-    if (board.t0 === null && now !== null) board.t0 = now;
-    const s = board.t0 === null ? 0 : Math.floor((now - board.t0) * BOARD.speed / 1000);
-    x = shows - s;
-    if (x <= -P) x = (((x % P) + P) % P || P) - P; // gone off the left: back where its copy was
-  } else board.t0 = null;
-  board.b.setAttribute('display', scrolls ? 'inline' : 'none');
-  if (x !== board.x) { board.x = x; board.g.setAttribute('transform', `translate(${x} 0)`); }
+  p.clip = [0, 0, right + 1, SCREEN.top]; p.text(screen.word, x, 2, { font: F5, align: 'left', valign: 'top' }); p.clip = null;
+  for (let i = 1; i < cols; i += 2) p.put(i, SCREEN.top, FAINT);
+  for (let i = 22; i < cols - 21; i += 3) p.put(i, SCREEN.rows - 3, FAINT); // the floor speck stands on
+  const sp = s.pen(.75, cols / 2, SCREEN.rows - 4);
+  sp.clip = [0, SCREEN.top + 1, cols, SCREEN.rows];
+  LCD.render(sp, screen.cast ? screen.cast.frame(t) : { B: { t }, props: [] });
 }
 // 0285: true when the server's code is newer than the code this page was sent with.
 const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.page !== PAGE);
