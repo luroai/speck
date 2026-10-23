@@ -1,7 +1,7 @@
 ---
 id: "0427"
 title: "Use Cursor's fonts in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0426"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T18:57:11.441Z"
+approved: "2026-10-23T19:14:01.511Z"
 
 ---
 # 0427 · Use Cursor's fonts in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel names Zen Kaku Gothic New, Shippori Mincho and IBM Plex Mono, but doesn't load them, so each machine shows whatever it falls back to. Its serif headings and spaced capital labels don't look like Cursor beside it.
@@ -55,9 +56,15 @@ The panel now uses the same fonts as Cursor: your computer's own interface font 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A ticket's stage sentence remains 12 px, although AC1 explicitly includes it among body text that must be 14 px.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 876,608
+- Elapsed since build started: 17 min
+- Changed lines: 154 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (to the inbox): speck/ideas/2026-10-23-give-the-dots-in-a-details-line-their-gaps-back.md (the dots' gaps close in a proportional font); speck/ideas/2026-10-23-measure-the-panel-s-layout-in-a-proportional-font.md (the build machine's Chrome shows `system-ui` as Liberation Mono, so the layout tests measure a monospaced panel).
 - Known limit: the selects in Settings (an agent and its model, a setting's value) stay in the monospace, as a setting's values.
