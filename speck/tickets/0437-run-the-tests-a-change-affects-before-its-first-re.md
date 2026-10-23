@@ -129,3 +129,73 @@ Before its first review round, a build also runs the existing tests that cover t
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9ace134e2454cc55c180dc4b9decb975e12e5739",
+    "session": "continued",
+    "thread_id": "01a16acc-6640-7250-a778-29da42260f9c",
+    "builder_response": "- Tests run: test/related-0437.test.mjs (with commands.checks), via `speck test --files`. Only the ticket's own test file changed since round 1.\n- F1: fixed. test/related-0437.test.mjs's AC3 test no longer finds the step by its opening words or asserts its sentences: it checks only that the build skill's Implement section contains the command `speck test --related <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 204052,
+      "cached_input_tokens": 156288,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1433,
+      "reasoning_output_tokens": 120
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T22:06:41.479Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/related.mjs: changedFiles and relatedTests still implement changed-file selection, basename/path matching and support-module imports, excluding speck/. All four AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs: cmdTest reports selections before running the combined files with commands.checks, and returns without running tests for an empty selection. All AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md step 5 specifies --related before the first review, with the ticket's files and captured output. Step 1.6 retains the prohibition on fixing previously failing tests. The revised AC3 command check passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md's speck test row names --related and explains direct changed-file references and references through test/support imports. The AC4 test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/related-0437.test.mjs:138",
+        "issue": "The prose assertions were removed, but the replacement still depends on exact numbered headings and their order: BUILD.slice(BUILD.indexOf('## 3. Implement'), BUILD.indexOf('## 4. Review loop')). Renaming or renumbering either heading breaks the test even when the command remains correct. This retains the document wording/heading-order dependency prohibited by the review rules.",
+        "suggested_fix": "Check the concrete command against BUILD directly, without slicing by document headings. Judge its placement before the first review by reading the skill.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The functionality still meets the ticket and the reported tests pass. The previous test issue is only partly fixed: it now depends on exact section headings. Remove that dependency before approval."
+  }
+}
+```
+
+</details>
