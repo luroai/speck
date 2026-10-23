@@ -92,7 +92,7 @@ test('0413 AC4: pressing the screen opens the Foreman\'s detail, and again close
   await p.settle();
   assert.equal(p.byId('foreman').hidden, false);
   assert.equal(p.byId('run').attrs['aria-expanded'], 'true');
-  assert.match(p.byId('foreman').textContent, /The Foreman[\s\S]*Building/);
+  assert.match(p.byId('foreman').textContent, /Pipeline[\s\S]*Building/); // 0415: titled Pipeline
   p.press(p.byId('run'));
   await p.settle();
   assert.equal(p.byId('foreman').hidden, true);

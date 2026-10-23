@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { SpeckError, findTicket, padId, runsOf } from './speck.mjs';
 import { runState, runsDir, pidAlive, refusalFile, takeRefusal } from './run.mjs';
 import { isSpeckRun, runProcesses } from './run-lock.mjs';
+export { runLogPart, runLogAnswer } from './run-log.mjs'; // 0415: speck run's output, for the Pipeline pop-up
 
 // 0133: the Ship button in an approved ticket's review pack. It's the user shipping (Gate 2), so it runs `speck ship <id>`
 // as /speck-ship does, in its own process, since a ship runs the tests and can take minutes. Resolves with { status,
