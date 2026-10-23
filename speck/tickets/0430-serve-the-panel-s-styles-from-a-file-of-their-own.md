@@ -1,7 +1,7 @@
 ---
 id: "0430"
 title: "Serve the panel's styles from a file of their own"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0428", "0429", "0434", "0435", "0436", "0438"] # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T22:25:05.525Z"
 
 ---
 # 0430 · Serve the panel's styles from a file of their own
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `templates/panel.html` holds the panel's markup, about 630 lines of styles and 3,700 lines of script in one 4,400-line file. Every panel ticket changes it, so they can't build side by side without clashing, and agents work through the whole file for every change.
