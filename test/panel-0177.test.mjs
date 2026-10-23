@@ -64,8 +64,8 @@ test('0177 AC2: a request whose connection closed before its reading started cau
   } finally { await stop(s.p); }
 });
 
-// Each AC3 test waits about 10 seconds for its slow reading and the one after its write, on a panel of its own, so they
-// run at the same time (0198). Each compares an answer given while a reading runs with the same ask on the same panel
+// Each AC3 test waits about 5 seconds for its slow reading, on a panel of its own, so they run at the same time (0198).
+// The reading after its write, which nothing is asked during, isn't slowed (0429: it took another 5 seconds until then). Each compares an answer given while a reading runs with the same ask on the same panel
 // with nothing reading, timed in the same test, rather than with 1 second, so a busy machine slows both alike (0207).
 // An answer that waits for the reading takes the rest of the reading longer (waitedForReading): the length of one
 // reading, as the panel measured it, since a request that a write made out of date waits for a second one too.
@@ -82,7 +82,7 @@ function standIn(r, id) {
 
 describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { concurrency: true }, () => {
   test('0177 AC3: while one reading takes 5 seconds, the page, its icons, a build log, Set ready, Back to Plan and priority answer within 1 second', async () => {
-    const s = await slowPanel(5000);
+    const s = await slowPanel(5000, undefined, 1);
     try {
       const asks = priority => [
         ['the page', () => request(s.port), 200],
@@ -120,7 +120,7 @@ describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { 
     r.write('0002-two.md', fm({ id: '"0002"', title: 'Two', status: 'building' }));
     r.g('add', '-A'); r.g('commit', '-qm', 'building');
     const builds = [standIn(r, '0001'), standIn(r, '0002')];
-    const s = await slowServe(r.dir, 5000);
+    const s = await slowServe(r.dir, 5000, undefined, 1);
     try {
       const stopping = async id => {
         const t = await timed(() => post(s.port, `/api/tickets/${id}/stop`, { token: s.token }));
@@ -140,7 +140,7 @@ describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { 
 
   test('0177 AC3: while one reading takes 5 seconds, the speck run switch turns it on and off within 1 second each', async () => {
     const r = runRepo({ tickets: [] });
-    const s = await slowServe(r.dir, 5000);
+    const s = await slowServe(r.dir, 5000, undefined, 1);
     const pids = [];
     try {
       // Turns speck run on and off, with how long each answer took.
@@ -171,7 +171,7 @@ describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { 
     const base = await timed(async () => runIn(other.dir, 'ship', '1'));
     assert.equal(base.out.status, 0, base.out.stderr);
     const r = shipRepo();
-    const s = await slowServe(r.dir, 5000);
+    const s = await slowServe(r.dir, 5000, undefined, 1);
     try {
       const slow = timed(() => state(s.port));
       await wait(300);
