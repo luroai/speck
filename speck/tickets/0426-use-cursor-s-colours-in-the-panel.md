@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0425"] # ticket ids that must be done first
+after: ["0421", "0422", "0424", "0425"] # ticket ids that must be done first
 created: 2026-10-23
 
 ---
@@ -49,7 +49,7 @@ The panel uses Cursor's own light and dark theme colours, so it looks like part 
 - Cursor's own borders and muted text fall short of 0161: dark borders are 1.2:1 and dark muted text 5.1:1 against their backgrounds. Criterion 2 keeps 0161.
 - The stage edges are `.q.at-build`, `.at-check`, `.at-review` and `.at-ship` (0171). The user asked on 2026-10-23 for them to take Cursor's colours too, after seeing the old gold review edge beside Cursor.
 - Colour tokens are in `:root` and `:root[data-theme="dark"]` in `templates/panel.html`.
-- Waits for 0425: both change `templates/panel.html`.
+- Waits for 0421, 0422, 0424 and 0425: this changes styles across the whole of `templates/panel.html`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0421"] # ticket ids that must be done first
+after: [] # ticket ids that must be done first
 created: 2026-10-23
 
 ---
@@ -39,7 +39,7 @@ The build log reads like a log: times in a column of their own, each kind of ent
 ## Notes
 - The user asked for this on 2026-10-23. It's what they use most to trust that work is moving.
 - The lines come from `readableLog` in `scripts/build-log.mjs` (0291, 0340, 0341, 0342). The panel shows them with `logText` and `showLog` in `templates/panel.html`.
-- Waits for 0421: both change `templates/panel.html`.
+- Builds alongside 0420, 0421 and 0423 (the user, 2026-10-23): each changes a different part of `templates/panel.html`. This one changes the log's rendering and styles. `.q .log` sits a few lines from 0421's `.q .stop-build`, so the second of the two to ship may need a merge round.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
