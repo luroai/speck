@@ -1,7 +1,7 @@
 ---
 id: "0403"
 title: "Name each agent's default model in the role lists"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-name-each-agent-s-default-model-in-the-role
 after: ["0402"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T11:54:26.908Z"
+approved: "2026-10-23T12:00:39.638Z"
 
 ---
 # 0403 · Name each agent's default model in the role lists
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each role's model list has an entry such as "Claude Code · default". That word means nothing next to real names like Opus and Sonnet, so you can't tell which model a blank setting will run, or which one to pick to get the default back.
@@ -56,9 +57,14 @@ To see it, open Settings and open the Builder or Reviewer list. For Codex, speck
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 145,644
+- Elapsed since build started: 6 min
+- Changed lines: 58 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-23-name-codex-s-default-from-its-own-settings.md (label the model in Codex's own settings as its default).
