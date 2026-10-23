@@ -1,7 +1,7 @@
 ---
 id: "0413"
 title: "Make speck's LCD screen the panel's header"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0410", "0411", "0412"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T14:25:17.773Z"
+approved: "2026-10-23T14:59:47.350Z"
 
 ---
 # 0413 · Make speck's LCD screen the panel's header
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's header is a row of speck's name, the base branch and the Foreman's scrolling notice board. The board is hard to read as it scrolls, and speck, the one thing watching the whole pipeline, has no place of its own on the page.
@@ -59,9 +60,16 @@ Worth keeping an eye on: the screen is much taller than the old row, so lists st
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
+- Review rounds: 3, 2 of them merge rounds
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,491,540
+- Elapsed since build started: 34 min
+- Changed lines: 223 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Skipped as a duplicate: while Settings is open, the keyboard focus can jump from a control to the Settings dialog when the agents' lists arrive and the view is redrawn. This matches 0407's recorded known limit. It made 0150's keyboard test fail on a busy machine, so that test now waits for the lists before focusing the switch.
