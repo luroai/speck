@@ -37,9 +37,13 @@ export function providerStartWords(cfg, p) {
   return [process.execPath, PROVIDER_SCRIPT, p.name, p.address, claude, ...CLAUDE_FLAGS, ...rest, '--model', modelOf(cfg) || p.defaultModel];
 }
 
-// The command that resumes provider `p`'s build by hand, {session} standing for its session.
-export const providerResumeCommand = (cfg, p) =>
-  ['node', PROVIDER_SCRIPT, p.name, p.address, 'claude', ...CLAUDE_FLAGS, '--resume', '{session}', '--model', modelOf(cfg) || p.defaultModel].join(' ');
+// A word for a POSIX shell: as it is when it's only safe characters, otherwise in single quotes.
+const shellWord = w => (/^[A-Za-z0-9\/._=:@{}-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`);
+
+// The command that resumes provider `p`'s build by hand in a shell, {session} standing for its session. `script` is
+// this file, wherever speck is.
+export const providerResumeCommand = (cfg, p, script = PROVIDER_SCRIPT) =>
+  ['node', script, p.name, p.address, 'claude', ...CLAUDE_FLAGS, '--resume', '{session}', '--model', modelOf(cfg) || p.defaultModel].map(shellWord).join(' ');
 
 // The environment provider `p`'s build runs Claude Code with, on `model`, from speck's own `from`.
 export function providerBuildEnv(repo, p, key, model, from = process.env) {

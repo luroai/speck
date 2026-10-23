@@ -12,7 +12,7 @@ import { saveProviderKey, removeProviderKey } from '../scripts/keys.mjs';
 import { buildPlan, launchPlan } from '../scripts/ticket-builder.mjs';
 import { resumeFor } from '../scripts/hand-back.mjs';
 import { resumeCommandOf, resumeHint } from '../scripts/build-records.mjs';
-import { providerStartWords, PROVIDER_SCRIPT, PROVIDER_BUILD, withoutProviderBuild } from '../scripts/provider-build.mjs';
+import { providerStartWords, providerResumeCommand, PROVIDER_SCRIPT, PROVIDER_BUILD, withoutProviderBuild } from '../scripts/provider-build.mjs';
 import { runLimited } from '../scripts/reviewers.mjs';
 import { doctorChecks } from '../scripts/install.mjs';
 import { statusData } from '../scripts/speck.mjs';
@@ -76,6 +76,12 @@ test('0391 AC1: a stopped or handed-back DeepSeek build resumes its own session 
   const byHand = resumeCommandOf({ resume_command: 'claude --resume {session}' }, 'deepseek');
   assert.ok(byHand.includes(PROVIDER_SCRIPT) && byHand.includes('--resume {session}') && byHand.includes('--strict-mcp-config'), byHand);
   assert.match(resumeHint({ resume_command: 'claude --resume {session}' }, rec), /provider-build\.mjs deepseek .*--resume sess-1/);
+  // Wherever speck is, a shell runs it with the script's path as one word, and nothing in it run as a command.
+  const odd = "/home/me/My Projects/it's $(touch x); speck/provider-build.mjs";
+  const cmd = providerResumeCommand({}, DEEPSEEK, odd).split('{session}').join('sess-1');
+  const words = spawnSync('sh', ['-c', `set -- ${cmd}; printf '%s\\n' "$@"`], { encoding: 'utf8' }).stdout.trimEnd().split('\n');
+  assert.deepEqual(words.slice(0, 4), ['node', odd, 'deepseek', DEEPSEEK.address]);
+  assert.equal(after(words, '--resume'), 'sess-1');
 });
 
 test('0391 AC1, AC2: speck run starts a deepseek ticket\'s build, records it as DeepSeek\'s, and Claude Code gets only DeepSeek\'s address and key', async () => {
