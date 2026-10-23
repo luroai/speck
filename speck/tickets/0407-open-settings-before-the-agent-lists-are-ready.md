@@ -47,7 +47,11 @@ Settings opens from this machine's and the project's config straight away, and t
 - Waits for 0406: both change Settings loading and grouping (`templates/panel.html`, `scripts/settings.mjs`, `scripts/panel.mjs`).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Settings now opens straight away with every group and its values, instead of sitting on "Loading the settings…" while speck asks each agent whether it's signed in and which models it offers. While those answers come in, Your agents says "Loading your agents…" and each role's list says its models are loading. When they arrive, those parts fill in where they are, without closing Settings, losing anything you've typed or moving where you are.
+
+To see it, open Settings in the panel: the view appears at once, and the agents and model lists fill in a moment later, which takes longest when Cursor is one of your agents. If the agents can't be read, those places say why and the rest of Settings still works and saves.
+
+Worth keeping an eye on: each time Settings opens, or after a Save, speck still asks the agents again, so the lists take a few seconds to fill every time. After a Save, the lists from before stay on show until the new ones arrive.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,7 +60,11 @@ Settings opens from this machine's and the project's config straight away, and t
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Idea: keep the agents' lists between Settings reads, so they don't load again on every opening and Save (speck/ideas/2026-10-23-keep-the-agents-lists-between-settings-reads.md).
+  - Tidy-up: while loading, a role's picked value reads as, for example, "Claude Code (default) (loading the list…)", with two sets of brackets.
+  - Known limit: the lists arrive together, once every agent has answered, not one agent at a time.
+  - Known limit: if the lists' layout changes when they arrive (only when this machine's list of your agents can't be read), the view is drawn again at the same scroll position, but the keyboard focus isn't kept.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +133,76 @@ Settings opens from this machine's and the project's config straight away, and t
     ],
     "escalation_question": "",
     "summary": "Settings now opens promptly and fills in agent information afterwards while preserving edits. Error handling and saving during loading are covered. One required detail remains: the default Foreman control gives no indication that its model list is still loading."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e7566c54454324be13cd125a6f120dde6e33b952",
+    "session": "continued",
+    "thread_id": "01a168c0-9e5d-7ed1-8849-93a022fb4164",
+    "builder_response": "- Tests run: test/settings-0407.test.mjs (with the commands.checks files, which speck test --files adds)\n- F1: fixed. roleEditor in templates/panel.html adds a disabled \"Loading your agents' models…\" entry to every role's list while the lists are read, whether or not what's picked is among its entries, so the Foreman left to the builder's agent says so too. The AC2 test now checks builder, reviewer and foreman (left blank, '|'), and that the Foreman's value stays '|' once filled. The pictures are unchanged: the new entry shows only with a list opened.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 299832,
+      "cached_input_tokens": 246016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1628,
+      "reasoning_output_tokens": 190
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T12:35:01.766Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "settingsQuick in scripts/settings.mjs reads config without querying agents. loadSettings draws the quick response before requesting catalogues. The three AC1 tests passed, including the half-second endpoint check."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "roleEditor now adds a loading entry for every role, including Foreman inheriting the builder. The expanded AC2 test passed, checking all three roles, retained values, edits, controls and scroll. The separate focus-after-save test also passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "fillCatalogues and drawAgents retain the settings view and display catalogue errors. Both AC3 tests passed, covering timeout explanations and saving an unrelated setting while catalogues load."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied round results report 118 passed, zero failed and three skipped. The change strengthens the existing ticket test without weakening regression checks. Whole-suite verification remains the shipping check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The default Foreman model control previously lacked a loading indication.",
+        "suggested_fix": "Implemented: roleEditor adds a disabled loading entry independently of the selected value, and the AC2 test now covers the default Foreman.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Settings opens promptly while agent lists load afterwards. Loading indicators now cover every role, including Foreman. The tests cover preserved edits and focus, error messages and saving during loading. No blocking findings remain."
   }
 }
 ```
