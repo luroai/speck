@@ -178,8 +178,8 @@ test('0257 AC5: the view has no control that changes a setting, and opening and 
   await open(p);
   // 0268: and each setting's info button, which only shows its explanation
   // 0285: and the speck run switch in the Foreman group, which turns speck run on or off rather than change a setting
-  // 0372: and the list of looks, kept in this browser rather than in speck/config.yml
-  const controls = p.all(pane(p)).filter(n => ['button', 'input', 'select', 'textarea', 'form'].includes(n.tagName) && n.className !== 'info' && !/\brun-switch\b/.test(n.className) && n.id !== 'look');
+  // 0372: and the list of looks, kept in this browser rather than in speck/config.yml (0412: its three choices)
+  const controls = p.all(pane(p)).filter(n => ['button', 'input', 'select', 'textarea', 'form'].includes(n.tagName) && n.className !== 'info' && !/\brun-switch\b/.test(n.className) && !/^look-/.test(n.id || ''));
   assert.deepEqual(controls.map(n => n.className), ['close'], 'only the close button');
   p.press(controls[0]);
   await p.settle();

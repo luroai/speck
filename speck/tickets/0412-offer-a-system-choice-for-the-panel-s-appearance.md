@@ -43,6 +43,8 @@ Appearance offers System, Light and Dark, and System follows the computer's sett
 - Asked for by the user on 2026-10-23, alongside the tabs (0410).
 - Waits for 0410 and 0411: all three change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: narrowed the three choices' padding and type under 400 px so they fit the control's half of the row at 320 px; moved 0396's Space check from Auto-build to Appearance's Dark so the test doesn't start speck run on the shared panel.
+- Superseded tests updated for the three choices: settings-0396 (AC2, AC4), panel-0372, panel-0136 (browser helpers), panel-0257 (the controls it ignores).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
