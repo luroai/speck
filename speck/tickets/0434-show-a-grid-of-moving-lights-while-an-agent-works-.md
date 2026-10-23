@@ -52,7 +52,7 @@ Every collapsed ticket is two single lines: its title, then a short status line.
 - Went with the recommendation: hide them until the card is opened, except the Foreman's question (chosen by the user in the panel, 2026-10-23 20:42 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Every closed ticket in Plan, Build and Shipped is now two short lines: its title on one line (cut off with "…" when it's long, with the whole title when you hover over it) and a short status line. While a builder or reviewer is working on a ticket, its status line starts with a small grid of moving lights instead of a sentence. Hover over the grid to read what it's doing. The status line then shows the stage, the reviewer's model while a review runs, and one time. A shipping ticket no longer shows a second time for the ship itself. Priority, size and risk, a blocked ticket's question, and any message from a build now show only once you open the card. The Foreman's question is the exception and stays in view. To see it, open the Build lane on a phone or in a narrow window. Worth watching: on a phone, a long status such as "Approved · waiting for you to ship it" can push the stage and time out of view.
 
 ## Blocked question
 A closed Build card can have more under its two lines: a blocked ticket's question and its Go with the recommendation button, the Foreman's question with its Answer box, a paused build's "carry it on with speck play" hint, and a stopped or approved build's message. AC5 says every closed Build card is two rows, but 0419 kept these showing under the two lines. Should a closed card hide them until you open it (the status line already says "Blocked · it has a question for you", "Paused", "The build stopped" and so on), or keep showing them, so only cards without them are two rows? I recommend hiding them until opened, as the ticket's outcome says every closed ticket is two lines, but keeping the Foreman's question showing, as a queued card's status line ("Queued") gives no sign of it.
@@ -66,6 +66,9 @@ Clear winner: no
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Fit a closed card's stage and time on a phone: speck/ideas/2026-10-23-fit-a-closed-card-s-stage-and-time-on-a-phone.md
+  - Tidy-up: the board's ship_counter (how long a ship has run) is no longer shown anywhere in the panel; it's still worked out in the page's model and tested by 0153.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -147,6 +150,89 @@ Clear winner: no
     ],
     "escalation_question": "",
     "summary": "The moving lights, shorter timers and single-line titles work in the passing tests. Two requirements remain unmet: priority opens a tooltip instead of a menu, and several collapsed ticket states still show extra rows. The phone tests exclude those states, so their passing result does not cover every Build ticket."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c7cbb0947108618d0e1e61a7e8d197e4e58b4356",
+    "session": "continued",
+    "thread_id": "01a16a66-51ca-7813-b560-63a7a749f1f6",
+    "builder_response": "- Tests run: test/blocked-0283.test.mjs test/foreman-0317.test.mjs test/go-with-0284.test.mjs test/panel-0040.test.mjs test/panel-0050.test.mjs test/panel-0053.test.mjs test/panel-0069.test.mjs test/panel-0138.test.mjs test/panel-0145.test.mjs test/panel-0153.test.mjs test/panel-0196.test.mjs test/panel-0203.test.mjs test/panel-0338.test.mjs test/panel-0361.test.mjs test/panel-0419.test.mjs test/panel-0434.test.mjs test/panel.test.mjs test/resume-0044.test.mjs test/stopped-wait-0217.test.mjs \n- F1: disputed. AC3 says an open card's priority \"still opens its menu\": \"still\" means as today, and today a Build card's priority opens its tip, not a menu that sets it (0165 AC4: \"in the queue and the pane it shows its tip\"; its tests are unchanged and pass). The panel server sets a priority only on a draft and refuses any other ticket with 409 (scripts/panel.mjs, panelSetPriority: \"not a draft, so its priority can't be changed from here\"), so a priority menu on a Build card would be a new feature the ticket doesn't ask for and the server would refuse. test/panel-0434.test.mjs AC3 checks the open card's priority tag is a button that opens its tip, as before.\n- F2: fixed, as the user chose (recorded in the ticket's Notes): a closed Build card is its two lines only. Its blocked question and Go with the recommendation button, resume command, paused hint, exit label and message, Ship hint, Foreman-will and went-with lines, and a finished document's Review pack button, show once it's open (templates/panel.html, queueItem). The one exception, by the user's choice, is the Foreman's question with its Answer box, which stays under a closed card, as a queued card's status line gives no sign of it. Both 0434 AC5 phone tests now include the blocked, approved-waiting, paused and stopped cards, and a new fake-page test checks every closed card is its top row only, the Foreman's question stays, and each one shows what it has once opened.\n- Existing tests changed for F2: those that read what's under a closed card now open it first (a support helper, openQueueRows, and boardPage, which answers log requests apart so opening a card doesn't take the next board), or check the status line instead; 0053, 0069 and 0361 now check a closed card is its top row only. Pictures retaken, with a blocked card in the Build lane.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 434902,
+      "cached_input_tokens": 341376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2008,
+      "reasoning_output_tokens": 191
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T20:55:56.070Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "doing(), lights() and the motion styles provide the accessible 4 × 4 grid only for working agents. Passing 0434 AC1 tests cover inactive states, dimensions, animation and reduced motion."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "progressOf(), queuedLine() and the counter rendering retain one build timer and remove the shipping timer. Both 0434 AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Collapsed cards omit priority, size and risk; open cards restore them. The passing 0434 AC3 test verifies the existing priority tooltip. Accepted the preservation interpretation of 'still': 0165 AC4 explicitly establishes this tooltip behaviour, and panelSetPriority() permits changes only on drafts."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "titleLine(), titled(fullLink(t)) and collapsed-only CSS preserve full title text and tooltips while applying single-line ellipsis. The 0434 AC4 test passed; previous browser layout coverage remains applicable."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "queueItem() now returns collapsed cards before appending additional details. Both passing 390 px browser tests include blocked, approved, paused and stopped cards. A new passing test verifies details return when opened and preserves the Foreman question exception explicitly chosen by the user in the ticket's Notes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Open Build priorities show a tooltip rather than a priority-changing menu. Existing tests and the server restriction establish that this preserves the prior behaviour intended by 'still'.",
+        "suggested_fix": "No implementation change required; accepted the evidence supporting preservation of existing behaviour.",
+        "state": "dispute_accepted"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0434.test.mjs",
+        "issue": "Previously excluded ticket states now participate in the phone tests, and their extra details appear only when opened. The user explicitly authorised keeping Foreman questions visible.",
+        "suggested_fix": "Completed in queueItem() and the expanded 0434 tests.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. Collapsed tickets now have shorter status lines, single-line titles and moving lights while agents work. Questions and build messages appear when opened, except Foreman questions, which remain visible as requested. Existing priority tooltip behaviour is preserved. The reported tests pass."
   }
 }
 ```
