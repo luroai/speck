@@ -67,13 +67,14 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
   const wait = ms => new Promise(res => setTimeout(res, ms));
   const item = '#shaping .item';
   const isHidden = () => b.js(`document.getElementById('full-ticket').hidden`);
-  const scrollY = () => b.js('scrollY');
+  // 0410: the page itself never scrolls, and Plan's list does, so it's the list that has to stay still.
+  const scrollY = () => b.js(`document.getElementById('shaping').scrollTop`);
   const openStates = () => b.js(`[...document.querySelectorAll('${item}')].map(n => n.classList.contains('open'))`);
   const openPane = async () => {
     await b.js(`[...document.querySelectorAll('${item}.open button')].find(x => x.textContent === 'Full ticket').click()`);
     await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket ol li')`, 'the pane');
   };
-  const scrollTo = async y => { await b.js(`scrollTo(0, ${y})`); await b.until(`scrollY === ${y}`, `the page at ${y}`); };
+  const scrollTo = async y => { await b.js(`document.getElementById('shaping').scrollTop = ${y}`); await b.until(`document.getElementById('shaping').scrollTop === ${y}`, `the list at ${y}`); };
   const still = async (y, what) => { await wait(250); assert.equal(await scrollY(), y, what); };
   const wheel = (x, y, deltaY) => b.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x, y, deltaX: 0, deltaY });
   const key = (k, code, vk, text) => b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, ...(text ? { text } : {}) })
@@ -87,9 +88,10 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
   const inPane = [1100, 450], outside = [200, 450];
   try {
     await b.until(`document.querySelectorAll('${item}').length === 39`, 'the drafts');
+    await b.js(`document.getElementById('tab-plan').click()`); // 0410
     await b.js(`document.querySelector('${item} .title').click()`);
     await b.until(`!!document.querySelector('${item}.open .detail')`, 'the draft to open');
-    assert.ok(await b.js('document.documentElement.scrollHeight > innerHeight + 600'), 'the page is longer than the window');
+    assert.ok(await b.js(`(l => l.scrollHeight > l.clientHeight + 600)(document.getElementById('shaping'))`), 'the list is longer than its box');
 
     // AC1: wheel, keyboard and touch never move the page, at the pane's top, bottom or outside it.
     await scrollTo(300);
@@ -168,9 +170,9 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     assert.ok(await isHidden(), 'a click outside closes the pane');
     assert.deepEqual(await openStates(), before, 'no ticket opened or closed');
     assert.equal(await scrollY(), 300, 'AC2: the page is where it was');
-    await b.until(`document.documentElement.scrollHeight > innerHeight + 600`, 'the page still long');
+    await b.until(`(l => l.scrollHeight > l.clientHeight + 600)(document.getElementById('shaping'))`, 'the list still long');
     await wheel(...outside, 200);
-    await b.until('scrollY !== 300', 'the page to scroll again once the pane is closed');
+    await b.until(`document.getElementById('shaping').scrollTop !== 300`, 'the list to scroll again once the pane is closed');
 
     // A click outside over a button: the list toggle stays on Tickets.
     await scrollTo(0);
@@ -198,7 +200,10 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     await openPane();
     long('cancelled'); // a ready ticket shows in the queue, where the pane stays open on it (0063)
     await b.until(`document.getElementById('full-ticket').hidden`, 'the pane to close once the ticket is cancelled');
-    await still(350, 'after the ticket left the list');
+    // 0410: the list, not the page, was scrolled into that ticket, the first and tallest, so with it gone the list shows
+    // where it was, at its top, and the page itself still hasn't moved.
+    await still(0, 'after the ticket left the list');
+    assert.equal(await b.js('scrollY'), 0, 'the page itself never scrolls');
   } finally {
     await b.close();
     await stop(panel);

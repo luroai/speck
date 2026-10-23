@@ -82,8 +82,11 @@ const key = async (b, k) => {
 };
 // Every tag in a part of the page, as a selector the page can use: Plan, the Build queue or the full ticket pane.
 const WHERE = { plan: '#shaping .item .tag', queue: '#queue .q .tag', pane: '#full-ticket .tag' };
+// 0410: opens the tab of the lane a selector looks in, Plan's or Build's, when it isn't open already, as only the open
+// lane shows (pressing a tab closes a tip or a menu, as any click does).
+const laneFor = sel => `(t => { if (t && t.getAttribute('aria-selected') !== 'true') t.click(); })(document.getElementById(${JSON.stringify(sel)}.startsWith('#shaping') ? 'tab-plan' : ${JSON.stringify(sel)}.startsWith('#queue') ? 'tab-build' : null));`;
 // Scrolls the tag into the middle of the screen and gives back its middle point.
-const centre = (sel, i) => `(() => { const n = document.querySelectorAll(${JSON.stringify(sel)})[${i}]; n.scrollIntoView({ block: 'center' });
+const centre = (sel, i) => `(() => { ${laneFor(sel)} const n = document.querySelectorAll(${JSON.stringify(sel)})[${i}]; n.scrollIntoView({ block: 'center' });
   const r = n.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`;
 const TIP = `(() => { const t = document.getElementById('tag-tip'); if (!t || t.hidden) return null; const r = t.getBoundingClientRect();
   return { text: t.textContent, left: r.left, right: r.right, top: r.top, bottom: r.bottom }; })()`;
@@ -99,7 +102,7 @@ const openPane = async b => {
 // ---------- AC1 ----------
 
 // Each tag's visible box, and whether the points of a 44 by 44 px square centred on it reach that tag.
-const BOXES = sel => `[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => {
+const BOXES = sel => `${laneFor(sel)} [...document.querySelectorAll(${JSON.stringify(sel)})].map(n => {
   n.scrollIntoView({ block: 'center' });
   const r = n.getBoundingClientRect(), s = getComputedStyle(n), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
   const points = [[cx - 21.5, cy - 21.5], [cx + 21.5, cy - 21.5], [cx - 21.5, cy + 21.5], [cx + 21.5, cy + 21.5], [cx, cy - 21.5], [cx, cy + 21.5], [cx - 21.5, cy], [cx + 21.5, cy]];
@@ -262,7 +265,8 @@ test('0165 AC3: one tip at a time; a click elsewhere, Escape or a scroll closes 
     // A scroll.
     await mouse(b, await b.js(centre(WHERE.queue, 1)));
     assert.ok(await b.js(TIP));
-    await b.js(`new Promise(r => { addEventListener('scroll', () => r(), { once: true }); scrollBy(0, 40); })`);
+    // 0410: the page itself never scrolls, so Build's list does, made long enough to scroll
+    await b.js(`new Promise(r => { const l = document.getElementById('queue'); l.style.paddingBottom = '1000px'; l.addEventListener('scroll', () => r(), { once: true }); l.scrollBy(0, 40); })`);
     await settle(b);
     assert.equal(await b.js(TIP), null, 'a scroll closes it');
   }, { width: 700, height: 600 });

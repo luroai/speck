@@ -457,6 +457,8 @@ export async function browserPage(url) {
   // send: a raw DevTools call to the page, for example to emulate reduced motion (0055). browser: one to Chromium itself (0182).
   return { js, until, loaded, drag, move, close, send, browser: c.send, pid: c.chrome.pid };
 }
+// 0410: the script that opens a lane's tab ('plan', 'build' or 'shipped') in a real browser, as only the open one shows.
+export const openLane = lane => `document.getElementById('tab-${lane}').click(), true`;
 // The page point at a character offset in the first text node of the element a selector finds.
 export const charAt = (sel, offset) => `(() => { const t = document.querySelector(${JSON.stringify(sel)}).firstChild; const r = document.createRange();
   r.setStart(t, ${offset}); r.setEnd(t, ${offset} + 1); const b = r.getBoundingClientRect(); return [b.left + 1, b.top + b.height / 2]; })()`;

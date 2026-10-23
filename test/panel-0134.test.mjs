@@ -72,7 +72,8 @@ test('0134 AC2: the stylesheet names the zen fonts first, with standard fall-bac
 test('0134 AC3 (undone by 0135): no section heading has a number beside it', () => {
   const html = staticHtml();
   for (const name of ['Plan', 'Build', 'Shipped']) {
-    assert.match(html, new RegExp(`<div class="sh"><h2>${name}</h2>`), `the ${name} heading is still exactly <h2>${name}</h2>, with nothing before it`);
+    // 0410: each heading is its tab's name now
+    assert.match(html, new RegExp(`<button [^>]*role="tab"[^>]*><span class="tab-name">${name}</span>`), `the ${name} heading is still exactly ${name}, with nothing before it`);
   }
   assert.doesNotMatch(html, /<span class="num"/, 'no section number');
 });
@@ -99,7 +100,7 @@ test('0134 AC2-AC3: in a real browser, headings are serif and ticket ids monospa
   const b = await browserPage(`http://127.0.0.1:${panel.port}/`);
   try {
     await b.until(`!!document.querySelector('main .id')`, 'a ticket id');
-    const heads = await b.js(`[...document.querySelectorAll('.sh h2')].map(h => [h.textContent, getComputedStyle(h).fontFamily, h.previousElementSibling === null])`);
+    const heads = await b.js(`[...document.querySelectorAll('.tab .tab-name')].map(h => [h.textContent, getComputedStyle(h).fontFamily, h.previousElementSibling === null])`); // 0410: the tabs' names
     assert.deepEqual(heads.map(h => [h[0], h[2]]), [['Plan', true], ['Build', true], ['Shipped', true]]);
     for (const [name, family] of heads.map(h => [h[0], h[1]])) {
       assert.match(family, /\bserif\b/, `${name} is serif: ${family}`);
