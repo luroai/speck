@@ -34,14 +34,14 @@ test('0413 AC1: the old header row and the notice board are gone', () => {
   assert.ok(!rules().some(r => selectors(r).some(x => /\.run-state|\.logo\b|\.board\b/.test(x))), 'none of their styles');
 });
 
-test('0413 AC2: the top row shows the Foreman\'s word in the dot font, in capitals, with speck below it in its idle animation', async () => {
+test('0413 AC2: the top row shows the Foreman\'s word in the dot font, in capitals, with speck below it', async () => {
   for (const word of ['Off', 'Idle', 'Building 2', 'Needs you 1']) {
     const p = screenPage([state(foreman({ word }))]);
     await p.settle();
     assert.ok(p.made(), `the screen is made: ${word}`);
     assert.equal(p.made().cols, 160);
     assert.deepEqual(wordDots(p.draw()), expected(word.toUpperCase(), 4, 2), word);
-    assert.equal(p.cast().cur, 'idle', 'speck idles');
+    assert.ok(p.cast().cur, 'speck is cast'); // 0414: in the pose the pipeline gives it (panel-0414.test.mjs)
     const below = p.draw().filter(([, r]) => r > 12);
     assert.ok(below.length > 100, `speck is drawn below the word: ${below.length} dots`);
   }

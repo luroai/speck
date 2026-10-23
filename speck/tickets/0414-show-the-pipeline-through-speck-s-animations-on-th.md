@@ -58,6 +58,9 @@ speck, the Foreman, plays an animation for each thing that happens in the pipeli
 - The animations are the ones in console.html in https://claude.ai/artifact/R5CQDZJfMZ2rYcTmZK1B8z and `templates/lcd.js`: the landing page's states (`STATES`, whose `building` is the laptop), the panel's `ship`, `wait` and `bad` poses (`PANEL`), and the mock's new clipboard pose (`watch` in console.html). "One push" is one 3.2-second loop of `PANEL.ship`.
 - Waits for 0413: both change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: capped the events waiting to play at the latest 8, so a tab hidden for hours doesn't replay every event since (test added); the brief's line on the screen now says what speck shows.
+- The screen is 72 dots tall rather than 64 (0413's layout), to fit the caption's row under speck, as the console mock has it.
+- 0413's test that speck idles whatever the word now checks only that speck is cast: 0414 replaces that behaviour.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
