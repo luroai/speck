@@ -265,9 +265,9 @@ export const top = item => item.children.find(n => /\bhead\b/.test(n.className))
 export const queueRows = p => p.byId('queue').children.filter(n => /\bq\b/.test(n.className));
 // A queue row's node with this class, searched for through the whole row, or null.
 const inRow = (row, re) => (function find(n) { if (re.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
-// An in-flight queue row's builder badge (0168; the ensō and five stage dots before it, the five-part bar before them),
-// and the current stage's name beside it. Both null on a ready ticket.
-export const badgeOf = row => inRow(row, /^badge\b/);
+// An in-flight queue row's sentence saying what it's doing (0156; beside the builder badge from 0168 until 0416), and
+// the current stage's name. Both null on a ready ticket.
+export const sayOf = row => inRow(row, /^say\b/);
 export const stageOf = row => inRow(row, /^stage\b/);
 export const steps = t => t.steps.map(s => s.state || '');
 

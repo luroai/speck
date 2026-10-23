@@ -11,7 +11,7 @@ const finished = (o = {}) => T('0001', 'approved', { task: 'document', auto_ship
 const code = (o = {}) => T('0002', 'approved', { auto_ship: false, rounds: [round(1, 1)], ...exitOf(MESSAGE), ...o });
 const state = (...tickets) => ({ tickets, ideas: [] });
 const rowOf = (p, id) => queueRows(p).find(r => r.textContent.includes(id));
-const say = row => row.children[0].children.find(n => n.className === 'badgerow');
+const say = row => row.children[0].children.find(n => n.className === 'progress');
 const buttons = (p, row, label) => p.all(row).filter(n => n.tagName === 'button' && n.textContent === label);
 async function load(responses) {
   const p = fakePage(responses);

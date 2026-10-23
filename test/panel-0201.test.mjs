@@ -29,12 +29,12 @@ function fake(tickets = TICKETS, { ship = () => ({ ok: true, status: 200, json: 
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
-const textOf = row => topOf(row).children.find(n => n.className === 'badgerow').children[1];
-const lineOf = row => textOf(row).textContent; // the line beside the builder badge
+const textOf = row => topOf(row).children.find(n => /^progress\b/.test(n.className));
+const lineOf = row => textOf(row).textContent; // the line under the title (beside the builder badge until 0416)
 const count = (s, re) => (s.match(re) || []).length;
 const acts = (p, row) => p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent);
 
-test('0201 AC1: a shipping card says "Shipping" once, beside its badge, then how long the ship has run, whoever ships it', async () => {
+test('0201 AC1: a shipping card says "Shipping" once, under its title, then how long the ship has run, whoever ships it', async () => {
   const p = fake();
   await p.settle();
   for (const [id, time] of [['0801', '00:04'], ['0802', '01:05'], ['0803', '02:05']]) {
@@ -93,7 +93,7 @@ test('0201 AC4: cards at every other stage still show their sentence and step na
   const expect = { '0804': ['Writing tests and code', 'Build'], '0805': ['Approved · waiting for you to ship it', 'Ship'], '0806': ['The reviewer is reviewing · round 1', 'Review 1'] };
   for (const [id, [say, stage]] of Object.entries(expect)) {
     const text = textOf(rowOf(p, id));
-    assert.equal(text.className, 'badgetext', id);
+    assert.equal(text.className, 'progress', id);
     assert.deepEqual(text.children.map(n => [n.className.split(' ')[0], n.textContent]), [['say', say], ['stage', stage]], id);
   }
 });

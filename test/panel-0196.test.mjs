@@ -25,15 +25,16 @@ function fake(tickets = TICKETS) {
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 const classes = n => (n.className || '').split(/\s+/).filter(Boolean);
-// What a card shows: its classes, its sentence and the sentence's classes, its badge's pose and name, and its labels.
+// What a card shows: its classes, its sentence and the sentence's classes, the stage its border shows (0171), or null,
+// and its labels. 0416: the builder badge's pose went with the badge; the border still shows the stage.
 function shows(p, id) {
-  const row = rowOf(p, id), [badge, text] = topOf(row).children.find(n => n.className === 'badgerow').children;
+  const row = rowOf(p, id), text = topOf(row).children.find(n => classes(n)[0] === 'progress');
   const say = text.children.find(n => /\bsay\b/.test(n.className));
-  return { card: classes(row), say: say.textContent, sayClass: classes(say), pose: classes(badge)[1], label: badge.attrs['aria-label'],
+  return { card: classes(row), say: say.textContent, sayClass: classes(say), stage: (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null,
     acts: p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent) };
 }
 
-test('0196 AC1: an approved ticket auto-ship covers, whose build has ended, waits to ship in the normal colour with its badge at work', async () => {
+test('0196 AC1: an approved ticket auto-ship covers, whose build has ended, waits to ship in the normal colour, its border at the ship stage', async () => {
   const p = fake();
   await p.settle();
   const s = shows(p, '0601');
@@ -42,8 +43,8 @@ test('0196 AC1: an approved ticket auto-ship covers, whose build has ended, wait
   assert.ok(!s.card.includes('to-ship') && !s.card.includes('blocked'), `not purple or crimson: ${s.card}`);
   assert.deepEqual(s.acts, [], 'no "Build finished without shipping"');
   const shipping = shows(p, '0602');
-  assert.equal(s.pose, shipping.pose, 'the badge moves as it does while shipping');
-  assert.equal(s.pose, 'ship'); // the shipping loop since 0172
+  assert.equal(s.stage, shipping.stage, 'its border shows the stage as it does while shipping');
+  assert.equal(s.stage, 'ship');
   assert.ok(s.card.includes('at-ship'), 'its border shows the ship stage');
   const m = panelModel()({ tickets: TICKETS, ideas: [], run: { on: true } }).queue.find(t => t.id === '0601');
   assert.deepEqual([m.to_ship, m.red, m.exit_label], [false, false, null]);
@@ -74,13 +75,13 @@ test('0196 AC4: one auto-ship doesn\'t cover, or whose last auto-ship didn\'t fi
     assert.equal(s.say, 'Approved · waiting for you to ship it', id);
     assert.deepEqual(s.sayClass, ['say', 'to-ship'], id);
     assert.ok(s.card.includes('to-ship'), id);
-    assert.equal(s.pose, 'wait', id);
+    assert.equal(s.stage, null, id);
     assert.deepEqual(s.acts, ['Build finished without shipping'], id);
   }
   const failed = shows(p, '0604');
   assert.equal(failed.say, 'Approved · waiting for you to ship it');
   assert.deepEqual(failed.sayClass, ['say', 'bad']);
   assert.ok(failed.card.includes('blocked'));
-  assert.equal(failed.pose, 'bad');
+  assert.equal(failed.stage, null);
   assert.deepEqual(failed.acts, ["Auto-ship didn't finish", 'Ship it from its review pack, or run /speck-ship 0604']);
 });
