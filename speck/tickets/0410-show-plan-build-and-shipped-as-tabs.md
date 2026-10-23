@@ -1,7 +1,7 @@
 ---
 id: "0410"
 title: "Show Plan, Build and Shipped as tabs"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []               # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T13:30:04.514Z"
+approved: "2026-10-23T13:55:45.094Z"
 
 ---
 # 0410 · Show Plan, Build and Shipped as tabs
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel stacks Plan and Build side by side with Shipped under them, so the page scrolls as a whole and a long list in one lane pushes the others out of view. On a narrow pane you scroll past one lane to reach the next.
@@ -59,9 +60,15 @@ Worth a look: on a phone, a tab's count sits under its name, so the tab row is t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Switching tabs through Go to ticket or returning focus can leave the Build tab's needs indicator incorrect until the next refresh.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 590,841
+- Elapsed since build started: 26 min
+- Changed lines: 105 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (tidy-ups and known limits, no inbox notes):
 - The `.sh h2` style rule in the panel is unused now that the lane headings are the tabs' names; it could go.
