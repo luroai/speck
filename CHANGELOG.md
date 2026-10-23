@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.13.1 · 23 October 2026
+
+What's fixed since 0.13.0. A bug-fix release: a stopped build starts again without restarting `speck run`, a test that fails once by chance no longer sends a ticket back, `speck doctor` checks a Cursor reviewer, and a pop-up's Close button stays in view. Nothing changes in your config or the commands.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.13.1 init`.
+
+### Builds and shipping
+
+- After `speck stop` ends a build that `speck run` started, setting its ticket ready again and committing that change is enough: the same `speck run` starts the build again on its next check. Until the change is committed, it still says the build was stopped and asks you to set the ticket ready and commit it. You no longer need to restart `speck run`.
+- When a ship's tests fail, speck runs the failing tests' files once more. A test that passes on that second try is now treated as a chance failure: the ship's refusal no longer names it, and `speck run` no longer hands the ticket back to its build to fix it. A test that fails both times is still named, and still hands the ticket back as before.
+
+### Checking your setup
+
+- With `reviewer: cursor` and no command of your own under `reviewer_options.cursor`, `speck doctor` now checks that Cursor's CLI, `agent` or `cursor-agent`, is installed, and says how to install it when neither is. Before, a missing Cursor CLI only showed up when the first review failed. With a command of your own there, doctor checks that command, as before.
+
+### The panel
+
+- A document's pop-up keeps the file's path and Close at the top while the document scrolls under them, at every width and in both looks. The Settings pop-up keeps its heading and Close in view, and the Foreman's pop-up keeps its Close in view, while the rest scrolls. On a phone, with no Escape key, you no longer have to scroll back to the top to close one. Ship and Ask for changes still sit above the document and scroll with it.
+
 ## 0.13.0 · 22 October 2026
 
 What's new since 0.12.0. A minor release that reworks Settings and the header, and keeps your own settings out of git. Settings opens in a pop-up over the whole panel, an agent's models show as soon as you choose it, and changing a setting leaves the view where it was. Light and dark move into Settings, and the header shows the dot-matrix "speck" word again, with the base branch beside it. Who builds and reviews, and how, are now your own settings, saved for this machine without a commit, and new tickets leave them to your settings.
