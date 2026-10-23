@@ -4,9 +4,11 @@
 
 import { modelFamily } from './core.mjs';
 import { DEFAULT_BUILD_COMMAND } from './build-model.mjs';
+import { PROVIDERS } from './providers.mjs';
 
-export const BUILDER_NAMES = Object.freeze({ claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' });
-export const OWN_BUILD_COMMANDS = Object.freeze({ claude: DEFAULT_BUILD_COMMAND, codex: '', cursor: '' });
+// 0393: and each model provider, such as DeepSeek, which speck run starts with its own command when build_command is blank.
+export const BUILDER_NAMES = Object.freeze({ claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor', ...Object.fromEntries(PROVIDERS.map(p => [p.name, p.label])) });
+export const OWN_BUILD_COMMANDS = Object.freeze({ claude: DEFAULT_BUILD_COMMAND, codex: '', cursor: '', ...Object.fromEntries(PROVIDERS.map(p => [p.name, ''])) });
 
 // The build_command speck sets for `builder`, or null for a builder it can't start by itself (such as gemini).
 export const ownBuildCommand = builder => Object.hasOwn(OWN_BUILD_COMMANDS, builder) ? OWN_BUILD_COMMANDS[builder] : null;
