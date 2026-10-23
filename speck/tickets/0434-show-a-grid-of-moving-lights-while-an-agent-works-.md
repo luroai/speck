@@ -43,6 +43,7 @@ Every collapsed ticket is two single lines: its title, then a short status line.
 - This replaces 0416's rule that only speck's screen moves, for this grid only. The test for that rule changes to allow it.
 - Today: `doing()` gives the stage sentence, and 0419 set out the details line, in `templates/panel.html`.
 - Waits for 0428: both change `templates/panel.html`. 0430 waits for it too, as 0430 moves every style.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
