@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, MONO_UI } from './support/panel.mjs';
 
 // ---------- 0419: a closed Plan or Build ticket is a title line and one line of details ----------
 
@@ -151,7 +151,7 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
     assert.equal(await b.js(`matchMedia('(pointer: coarse)').matches`), false, 'a mouse is the main pointer, not a touch screen');
     const seen = [];
     // 0427: whether this machine's interface font is a monospace, as an i and an m are the same width only in one
-    const monoUi = await b.js(`(() => { const w = t => { const s = document.createElement('span'); s.textContent = t; document.body.appendChild(s); const x = s.getBoundingClientRect().width; s.remove(); return x; }; return w('iiii') === w('mmmm'); })()`);
+    const monoUi = await b.js(MONO_UI);
     for (const [lane, sel] of [['plan', '#shaping .item.ticket'], ['build', '#queue .q']]) {
       await b.js(openLane(lane));
       for (const c of await b.js(CARDS(sel))) {
