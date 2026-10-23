@@ -1,7 +1,7 @@
 ---
 id: "0418"
 title: "Lay the panel out in one column at every width"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0417"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T16:07:18.865Z"
 approved: "2026-10-23T16:17:31.512Z"
+finished: "2026-10-23T16:20:21.127Z"
 
 ---
 # 0418 · Lay the panel out in one column at every width
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel keeps a separate layout for wide windows, with its own rules, but it's used mostly in a narrow side pane, and since 0410 the lanes are tabs showing one list at a time. Each lane also has a border of its own round its tickets' boxes, which takes width in a narrow pane and makes the tickets harder to pick out.
