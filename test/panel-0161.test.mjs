@@ -156,7 +156,7 @@ test('0161 AC3: no text is smaller than 12 px, and nothing is lighter than weigh
       if (k === 'font-weight' && /^\d+$/.test(v)) assert.ok(Number(v) >= 400, `${r.sel}: font-weight ${v}`);
     }
   }
-  assert.match(get(rules().find(r => r.sel === 'body' && get(r, 'font')), 'font'), /^400 13px/, 'running text is 400');
+  assert.match(get(rules().find(r => r.sel === 'body' && get(r, 'font')), 'font'), /^400 14px/, 'running text is 400 (14 px since 0427)');
 });
 
 // 0419: a Plan or Build card's tags are words in its details line, not boxes. 0420: a shipped ticket's tag is a small

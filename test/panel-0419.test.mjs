@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, MONO_UI } from './support/panel.mjs';
 
 // ---------- 0419: a closed Plan or Build ticket is a title line and one line of details ----------
 
@@ -150,6 +150,8 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
     await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#queue .q').length === 5 && document.querySelectorAll('#shaping .item.ticket').length === 2`, 'the panel');
     assert.equal(await b.js(`matchMedia('(pointer: coarse)').matches`), false, 'a mouse is the main pointer, not a touch screen');
     const seen = [];
+    // 0427: whether this machine's interface font is a monospace, as an i and an m are the same width only in one
+    const monoUi = await b.js(MONO_UI);
     for (const [lane, sel] of [['plan', '#shaping .item.ticket'], ['build', '#queue .q']]) {
       await b.js(openLane(lane));
       for (const c of await b.js(CARDS(sel))) {
@@ -157,14 +159,17 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         assert.ok(c.detailSize < c.titleSize, `${c.id}: the details (${c.detailSize} px) are smaller than the title (${c.titleSize} px)`);
         assert.deepEqual(c.broken, [], `${c.id}: the details line wraps only between its parts`);
         assert.ok(!c.overflows, `${c.id}: the details stay inside the card`);
-        if (c.id === '0702') { assert.equal(c.titleLines, 2, '0702: a long title wraps'); continue; }
+        if (c.id === '0702') { assert.ok(c.titleLines >= 2, `0702: a long title wraps (${c.titleLines} lines)`); continue; } // 0427: how many lines depends on the machine's interface font
         // The user's choice for this ticket: the 64 px limit covers details on up to two lines. A long list of tickets
         // waited on wraps between its ids, onto as many lines as it needs, and the card grows to show every one.
         if (c.id === '0707') { assert.ok(c.titleLines === 1 && c.detailLines >= 3 && c.height > 64, `0707: ${c.detailLines} lines of details, ${c.height} px`); continue; }
         // A reviewing ticket's sentence ("Codex is reviewing · round 2") is too long for its details to fit on one line
-        // in 12 px text here, so its details wrap, between their parts, and it's still no more than 64 px tall.
+        // in 12 px text here, so its details wrap, between their parts, and it's still no more than 64 px tall. 0427: so
+        // is a building ticket's ("Writing tests and code"), now 14 px, where the interface font is a monospace, as it is
+        // on a machine whose system font is one.
         assert.equal(c.titleLines, 1, `${c.id}: the title fits on one line`);
-        assert.equal(c.detailLines, c.id === '0704' ? 2 : 1, `${c.id}: the details fit on one line, or wrap when they're too long`);
+        const wraps = c.id === '0704' || (c.id === '0703' && monoUi);
+        assert.equal(c.detailLines, wraps ? 2 : 1, `${c.id}: the details fit on one line, or wrap when they're too long`);
         assert.ok(c.height <= 64, `${c.id}: ${c.height} px tall`);
       }
     }
