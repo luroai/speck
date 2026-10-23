@@ -41,6 +41,7 @@ Each shipped ticket is two lines, and the stats above the list are one line.
 - Asked for by the user on 2026-10-23: the panel is used mostly in a thin side pane, and its tickets are too tall there.
 - Today's layout is 0157 and 0162 (`#shipped` in `templates/panel.html`).
 - Waits for 0419: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
