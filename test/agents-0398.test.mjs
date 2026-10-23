@@ -172,3 +172,29 @@ test('0398 AC5: the README and speck help name the agents commands', () => {
   const help = speck(root, process.env, 'help').stdout;
   assert.match(help, /speck agents add\|remove <agent>/);
 });
+
+test('0398 AC3 F1: setup saves the list in a project that already had speck', () => {
+  const setup = fs.readFileSync(path.resolve(import.meta.dirname, '..', 'skills', 'speck-setup', 'SKILL.md'), 'utf8');
+  for (const s of ['`list`', '`yours`', '`speck agents add <id>`', '`speck agents remove <agent>`']) assert.ok(setup.includes(s), s);
+  // What it runs saves every agent that counted as yours: the first add keeps them all.
+  const r = panelRepo();
+  saveProviderKey(r.dir, 'deepseek', 'sk-test');
+  const env = envOf({ claude: READY.claude, codex: READY.codex });
+  for (const a of [...json(r, env).agents, ...json(r, env).providers].filter(x => x.yours)) assert.equal(speck(r.dir, env, 'agents', 'add', a.id).status, 0);
+  assert.deepEqual(readYourAgents(r.dir), ['claude', 'codex', 'deepseek']);
+});
+
+test('0398 AC1 F2: speck agents still lists every agent before speck is set up', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-none-0398-'));
+  const out = speck(dir, envOf(ONLY_CLAUDE), 'agents', '--json');
+  assert.equal(out.status, 0, out.stderr);
+  const report = JSON.parse(out.stdout), a = byId(report);
+  assert.equal(report.list, false);
+  assert.equal(a.claude.installed, true);
+  assert.equal(a.claude.yours, true);
+  assert.equal(a.deepseek.key_set, false);
+  assert.equal(speck(dir, envOf(ONLY_CLAUDE), 'agents').status, 0);
+  const add = speck(dir, envOf(ONLY_CLAUDE), 'agents', 'add', 'claude');
+  assert.equal(add.status, 1);
+  assert.match(add.stderr, /No speck\/config.yml found/);
+});
