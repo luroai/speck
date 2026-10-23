@@ -1,7 +1,7 @@
 ---
 id: "0412"
 title: "Offer a System choice for the panel's appearance"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T14:10:05.627Z"
 ---
 # 0412 · Offer a System choice for the panel's appearance
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Appearance in Settings is a light/dark switch. A panel that hasn't been switched follows the computer's light or dark setting, but once you press the switch there's no way back to following it, so a computer that changes look at sunset leaves the panel behind.
@@ -47,7 +47,9 @@ Appearance offers System, Light and Dark, and System follows the computer's sett
 - Superseded tests updated for the three choices: settings-0396 (AC2, AC4), panel-0372, panel-0136 (browser helpers), panel-0257 (the controls it ignores).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Appearance in Settings now has three choices side by side: System, Light and Dark. System is chosen until you pick another, and it makes the panel follow your computer's light or dark setting, switching by itself when the computer changes, for example at sunset. Light and Dark stay put whatever the computer does, and picking System again goes back to following it straight away.
+
+To see it, open Settings and pick each choice in turn; with System chosen, change your computer's light or dark setting and watch the panel follow without reloading. The choice is remembered in this browser only, as before. On a very narrow phone screen the three words are a little smaller so they fit on one line.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,4 +58,74 @@ Appearance offers System, Light and Dark, and System follows the computer's sett
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limit: a choice made in another tab of the same browser applies to this tab on its next reload, not at once (as before).
+- Follow-ups: none sent to the inbox.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "69c43f99930a42cc6565af9f4706b3f56bfb3009",
+    "session": "fresh",
+    "thread_id": "01a1691f-0af5-7552-b179-0ba9d4497766",
+    "builder_response": "- Tests run: test/settings-0412.test.mjs test/settings-0396.test.mjs test/panel-0372.test.mjs test/panel-0136.test.mjs test/panel-0257.test.mjs\n- The four existing test files tested the old light/dark switch, which this ticket replaces; their switch-specific assertions are updated to the three choices (see the ticket's Notes). 0412's own tests are in test/settings-0412.test.mjs, two of them in a real browser (live following of the computer's setting, and AC5's 320 px fit and keyboard).\n",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 159564,
+      "cached_input_tokens": 113536,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 690,
+      "reasoning_output_tokens": 13
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T14:17:14.507Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: LOOKS, lookChoice and drawLook provide ordered choices and selected state. Passing 0412 AC1 tests cover default System and existing saved choices."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html: theme-start listens for system colour-scheme changes when System is selected. Both the simulated and real-browser 0412 AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html: chooseLook stores Light/Dark and removes the stored override for System; pickLook applies each immediately. Passing 0412 AC3 tests exercise both overrides, reloads and returning to System."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "chooseLook uses browser localStorage independently of configuration changes. Passing 0412 AC4 tests verify no requests, disabled Save and closing without an unsaved-change prompt."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "lookGroup and drawLook supply named radio semantics, checked states and keyboard navigation. Passing 0412 AC5 tests cover accessibility attributes and real-browser Tab, arrows, Home and Space, plus single-line fit at 320 px."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Appearance now offers System, Light and Dark. System follows the computer immediately, while explicit choices persist in this browser. Tests cover persistence, keyboard access and the narrow layout; the reviewed run passed with no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
