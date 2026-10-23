@@ -149,7 +149,7 @@ for (const theme of ['light', 'dark']) {
     await withPanel(async b => {
       const [top, bottom] = await b.js(`(() => { const s = getComputedStyle(${SECTION}); return [[s.borderTopWidth, s.borderTopStyle, s.borderTopColor], [s.borderBottomWidth, s.borderBottomStyle, s.borderBottomColor]]; })()`);
       assert.deepEqual(top, bottom);
-      assert.equal(top[2], await b.js(RGB('var(--line)')));
+      assert.deepEqual([top[0], top[1]], ['0px', 'none'], '0418: no border round a lane at all');
     }, { theme });
   });
 }

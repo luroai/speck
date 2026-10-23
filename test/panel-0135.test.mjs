@@ -25,7 +25,8 @@ test('0135 AC1-AC2: in a real browser, each section header starts with its headi
       const pseudo = [[sh, '::before'], [h2, '::before'], [h2, '::after']].map(([e, p]) => getComputedStyle(e, p).content);
       return { text: h2.textContent, first: sh.firstElementChild === h2, before: before.filter(Boolean),
         kids: [...sh.children].map(c => (c === h2 ? 'H2' : c.className)), pseudo,
-        leftmost: [...sh.children].every(c => c === h2 || c.getBoundingClientRect().width === 0 || c.getBoundingClientRect().left >= h2.getBoundingClientRect().right) };
+        leftmost: [...sh.children].every(c => { const r = c.getBoundingClientRect(), h = h2.getBoundingClientRect(); // 0418: or under it, as a tab's count is
+          return c === h2 || r.width === 0 || r.left >= h.right || (r.top >= h.bottom - 0.5 && r.left >= h.left - 0.5); }) };
     })`);
     assert.deepEqual(heads.map(h => h.text), ['Plan', 'Build', 'Shipped'], 'AC2: the headings are exactly Plan, Build and Shipped');
     for (const [i, [name, kids]] of BEFORE.entries()) {
