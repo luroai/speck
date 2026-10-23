@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: [] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T17:53:56.145Z"
-approved: "2026-10-23T18:03:08.396Z"
+approved: "2026-10-23T18:12:11.229Z"
 
 ---
 # 0423 · Open the full ticket over the whole panel
@@ -54,12 +54,13 @@ To see it, open any ticket's Full ticket, or an approved ticket's Review pack. C
 ## Review log
 Round 1 (codex): changes requested: F1 The text column exceeds the required 720 px maximum at odd window widths: 1281 − 280 − 280 = 721 px.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 376,944
-- Elapsed since build started: 9 min
+- Reviewer tokens: 734,400
+- Elapsed since build started: 18 min
 - Changed lines: 11 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
@@ -193,6 +194,72 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Full tickets and review packs cover the whole panel, with a sticky title row and working close controls. The width issue is fixed. All acceptance criteria pass, and the reported test run has no failures."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4a80b06c65b27226bb0e3e67994229bbdcc14d51",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a169eb-6655-77a2-9e75-fa99c9a81182",
+    "builder_response": "- Tests run: test/panel-0423.test.mjs test/panel-0281.test.mjs test/panel-0053.test.mjs test/panel-0051.test.mjs test/pack-0362.test.mjs test/pack-0363.test.mjs test/panel-0054.test.mjs test/panel-0137.test.mjs test/panel-0073.test.mjs test/panel-0147.test.mjs test/panel-0138.test.mjs test/panel-0141.test.mjs test/panel-0162.test.mjs test/panel-0160.test.mjs test/panel-0140.test.mjs test/panel-0142.test.mjs test/panel-0153.test.mjs test/panel-0213.test.mjs test/panel-0155.test.mjs test/panel-0062.test.mjs test/panel-0165.test.mjs test/panel-0133.test.mjs test/panel-0366.test.mjs test/panel-0063.test.mjs test/panel-0158.test.mjs test/panel-0361.test.mjs test/panel-focus-0326.test.mjs test/panel-0417.test.mjs test/panel-0368.test.mjs test/panel-0134.test.mjs test/panel-0136.test.mjs test/panel-0201.test.mjs test/panel-0060.test.mjs test/panel.test.mjs test/panel-0161.test.mjs test/panel-0411.test.mjs test/release-0367.test.mjs test/panel-0061.test.mjs test/panel-0143.test.mjs test/panel-0132.test.mjs test/panel-0357.test.mjs test/panel-0156.test.mjs test/panel-0157.test.mjs test/panel-0199.test.mjs test/panel-0410.test.mjs test/panel-0151.test.mjs test/pictures-0294.test.mjs test/pull-request-0295.test.mjs \n- Tests fail together: merged main into the ticket (no conflicts). speck ship's full run failed one test, \"0281 AC3: the change is limited to the Settings view\". It is a guard saying every CSS rule that uses round(), --gap, an outline shadow or max-resolution is one of #settings'. 0423's #full-ticket rule rounds its centred column's padding to whole pixels with round(), as Settings' column does (the left side down, the right up, from round 1's F1), so the guard tripped. It passed in the build because I ran only the test files that mention the full ticket, and 0281's doesn't.\n- Fix: test/panel-0281.test.mjs now also accepts a selector that is exactly #full-ticket, with a comment naming 0423. Any other selector using those features, including any other #full-ticket rule, still fails it. The alternative, dropping the rounding from #full-ticket, would bring back half-pixel padding at odd window widths, which 0281 exists to prevent.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 355578,
+      "cached_input_tokens": 306432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1878,
+      "reasoning_output_tokens": 141
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T18:12:08.702Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html:407 retains position: fixed; inset: 0 for #full-ticket. Passing panel-0423 AC1 tests check the full-window styles and exercise Full ticket and Review pack opening."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html:527 retains the shared sticky title-row rule. Passing panel-0423 AC2 tests check that rule and exercise Close, Escape and focus restoration through closeFull and returnFocus."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The #full-ticket padding rounds down on the left and up on the right, preserving the 720 px maximum. The passing panel-0423 AC3 test verifies the formulas and results at even and odd window widths."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:407",
+        "issue": "The original padding calculation allowed a 721 px text column at odd window widths.",
+        "suggested_fix": "Fixed: right padding rounds up, and the AC3 test covers even and odd window widths.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change still meets all acceptance criteria. The older Settings test now permits the full ticket's rounding rule while retaining its guard for other selectors. The test run reports 650 passes, no failures and three skips. No blocking concerns remain."
   }
 }
 ```
