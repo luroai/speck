@@ -1,7 +1,7 @@
 ---
 id: "0437"
 title: "Run the tests a change affects before its first review"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: [] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T21:55:26.036Z"
+approved: "2026-10-23T22:07:38.378Z"
 
 ---
 # 0437 · Run the tests a change affects before its first review
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build runs only its own test files before review, and the whole suite runs only at ship. So a change that breaks an existing test is caught at ship, after the reviewer approved: speck run hands the ticket back, and the build re-tests, fixes and gets another review round. 0427, a font change, lost about 8 of its 25 minutes this way, to layout tests it hadn't run.
@@ -52,9 +53,16 @@ Before a build's first review, speck now also runs the existing tests that menti
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new AC3 test locates the skill step by its exact opening wording and asserts exact prose sentences at lines 141–142.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 622,188
+- Elapsed since build started: 12 min
+- Changed lines: 117 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - `--related` picks nearly the whole suite for a change to `scripts/speck.mjs` (named by most test/support modules) or any `SKILL.md`: 374 of 390 files here. Sent to the inbox: `speck/ideas/2026-10-23-keep-related-tests-from-picking-the-whole-suite.md`.
