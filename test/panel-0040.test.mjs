@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, round, click, toggles, items, top, queueRows, stageOf, shippedRows, findChrome, browserPage, charAt, openLane } from './support/panel.mjs';
+import { T, fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, round, click, toggles, items, top, queueRows, stageOf, shippedRows, findChrome, browserPage, charAt, openLane, QUICK_PINGS } from './support/panel.mjs';
 
 // ---------- 0040: selected text in an open ticket or idea survives the refresh ----------
 
@@ -168,7 +168,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
   const ideas = path.join(r.dir, 'speck', 'ideas');
   fs.mkdirSync(ideas, { recursive: true });
   fs.writeFileSync(path.join(ideas, 'note.md'), '# A parked idea\n\nStatus: idea\n\nThe note text, long enough to select across.\n');
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())], undefined, QUICK_PINGS); // 0429: a refresh every half a second
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');

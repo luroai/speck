@@ -4,26 +4,47 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { parseTicket, setField } from '../scripts/speck.mjs';
 import { CLI, good, gitEnv } from './support/speck.mjs';
+import { copied } from './support/copy.mjs';
 
-function cancelRepo() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-cancel-'));
+// A speck repo, or with `title`, a copy of one holding that ticket as add() writes it, with its path as `p`: set up once
+// per title, and copied for each call (0429).
+const added = new Map();
+function cancelRepo(title) {
   const env = { ...process.env, ...gitEnv };
+  if (title) {
+    const dir = copied('cancel', [title], 'speck-cancel-', d => { added.set(title, cancelRepoIn(d, env).add(title)); });
+    return { ...cancelRepoIn(dir, env, false), p: added.get(title) };
+  }
+  return cancelRepoIn(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-cancel-')), env);
+}
+function cancelRepoIn(dir, env, setUp = true) {
   const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  // The same, without blocking the file's other work while it runs (0429).
+  const runAsync = (...a) => new Promise(resolve => {
+    const c = spawn(process.execPath, [CLI, ...a], { cwd: dir, env });
+    let stdout = '', stderr = '';
+    c.stdout.setEncoding('utf8').on('data', d => { stdout += d; });
+    c.stderr.setEncoding('utf8').on('data', d => { stderr += d; });
+    c.on('error', e => { stderr += e.message; });
+    c.on('close', status => resolve({ status, stdout, stderr }));
+  });
   const at = p => fs.existsSync(path.join(dir, p));
   const read = p => fs.readFileSync(path.join(dir, p), 'utf8');
   const fm = p => parseTicket(read(p)).fm;
   const filed = p => path.join('speck', 'tickets', 'done', path.basename(p));
-  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir, encoding: 'utf8', env });
-  assert.equal(run('init', '--skip-checks').status, 0);
+  if (setUp) {
+    spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir, encoding: 'utf8', env });
+    assert.equal(run('init', '--skip-checks').status, 0);
+  }
   const add = title => {
     const p = run('new', ...title.split(' ')).stdout.trim();
     fs.writeFileSync(path.join(dir, p), read(p).split('## Problem')[0] + good);
     return p;
   };
-  return { dir, run, add, at, read, fm, filed };
+  return { dir, run, runAsync, add, at, read, fm, filed };
 }
 
 test('AC1: speck cancel records the reason and the date, files the ticket under done/ and rewrites the header', () => {
@@ -131,15 +152,15 @@ test('AC4: speck new never reuses a cancelled ticket number', () => {
 // Review round 3 (F1): a reason is stored and shown exactly as typed.
 const AWKWARD = ['false', '0', '123', 'true', 'null', 'Use option: "B"', 'C:\\temp\\x', 'Too costly # revisit later', "it's 'quoted'", 'line one\nline two', '[a, b]', 'say " # later', 'back\\" # slash', 'ends with backslash\\'];
 
-test('AC1/AC4: a reason reads back exactly as typed and appears in status, even when it looks like YAML', () => {
-  for (const reason of AWKWARD) {
-    const r = cancelRepo();
-    const p = r.add('Export bookings');
-    const res = r.run('cancel', '1', reason);
+// Each reason in a repo of its own, all at once (0429).
+test('AC1/AC4: a reason reads back exactly as typed and appears in status, even when it looks like YAML', async () => {
+  await Promise.all(AWKWARD.map(async reason => {
+    const r = cancelRepo('Export bookings'), { p } = r;
+    const res = await r.runAsync('cancel', '1', reason);
     assert.equal(res.status, 0, `${JSON.stringify(reason)}: ${res.stderr}`);
     assert.strictEqual(r.fm(r.filed(p)).cancel_reason, reason, `stored: ${JSON.stringify(reason)}`);
-    assert.ok(r.run('status').stdout.includes(`❌ ${reason}`), `shown in status: ${JSON.stringify(reason)}`);
-  }
+    assert.ok((await r.runAsync('status')).stdout.includes(`❌ ${reason}`), `shown in status: ${JSON.stringify(reason)}`);
+  }));
 });
 
 test('AC3: reopening keeps an awkward reason exactly, and cancelling again replaces it', () => {

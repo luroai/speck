@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { ROOT } from './support/speck.mjs';
 import { STARTS } from './support/heavy.mjs';
 
@@ -57,24 +57,34 @@ function copyWith(docs) {
   return dir;
 }
 
-// Runs `files` with node --test in `dir`, only the tests named `names` when given, returning the exit code, how many
-// tests passed and the names of those that failed. The run is a test run of its own, not part of this one's.
+// Runs `files` with node --test in `dir`, only the tests named `names` when given, resolving to the exit code, how many
+// tests passed and the names of those that failed. The run is a test run of its own, not part of this one's. One still
+// going after 5 minutes is ended, and fails.
 function runIn(dir, files, names) {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
   const only = names ? [`--test-name-pattern=^(?:${names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})$`] : [];
-  const r = spawnSync(process.execPath, ['--test', '--test-reporter=tap', ...only, ...files], { cwd: dir, env, encoding: 'utf8', timeout: 300000 });
-  const failed = [...r.stdout.matchAll(/^\s*not ok \d+ - (.*)$/gm)].map(m => m[1]);
-  const passed = Number(r.stdout.match(/^# pass (\d+)$/m)?.[1] || 0);
-  return { status: r.status, passed, failed, out: r.stdout + r.stderr };
+  return new Promise(resolve => {
+    const child = spawn(process.execPath, ['--test', '--test-reporter=tap', ...only, ...files], { cwd: dir, env, timeout: 300000, killSignal: 'SIGKILL' });
+    let stdout = '', stderr = '';
+    child.stdout.setEncoding('utf8').on('data', d => { stdout += d; });
+    child.stderr.setEncoding('utf8').on('data', d => { stderr += d; });
+    child.on('error', e => { stderr += e.message; });
+    child.on('close', status => {
+      const failed = [...stdout.matchAll(/^\s*not ok \d+ - (.*)$/gm)].map(m => m[1]);
+      const passed = Number(stdout.match(/^# pass (\d+)$/m)?.[1] || 0);
+      resolve({ status, passed, failed, out: stdout + stderr });
+    });
+  });
 }
 
-// Runs the tests docTests() finds in `dir`: whole files in one run, the chosen tests of the others in a second.
-function runDocTests(dir) {
+// Runs the tests docTests() finds in `dir`: whole files in one run, the chosen tests of the others in a second, both at
+// once (0429).
+async function runDocTests(dir) {
   const all = docTests();
-  const whole = runIn(dir, all.filter(t => !t.names).map(t => t.file));
   const parts = all.filter(t => t.names?.length);
-  const some = runIn(dir, parts.map(t => t.file), parts.flatMap(t => t.names));
+  const [whole, some] = await Promise.all([runIn(dir, all.filter(t => !t.names).map(t => t.file)),
+    runIn(dir, parts.map(t => t.file), parts.flatMap(t => t.names))]);
   return { files: all.length, status: whole.status || some.status, passed: whole.passed + some.passed,
     failed: [...whole.failed, ...some.failed], out: whole.out + some.out };
 }
@@ -123,7 +133,7 @@ function mutate(text, { headings = true, reorder = false } = {}) {
   return ordered.flat().join('\n\n') + '\n';
 }
 
-test('0267 AC1, AC3: rewording and reordering the README, the brief, the changelog and the release notes fails no test', () => {
+test('0267 AC1, AC3: rewording and reordering the README, the brief, the changelog and the release notes fails no test', async () => {
   const docs = {
     'README.md': mutate(read('README.md'), { reorder: true }),
     'docs/brief.md': mutate(read('docs/brief.md'), { reorder: true }),
@@ -132,7 +142,7 @@ test('0267 AC1, AC3: rewording and reordering the README, the brief, the changel
   };
   for (const f of releaseNotes()) docs[f] = mutate(read(f));
   for (const [f, text] of Object.entries(docs)) assert.notEqual(text, read(f), `${f} was changed`);
-  const r = runDocTests(copyWith(docs));
+  const r = await runDocTests(copyWith(docs));
   assert.ok(r.files >= 20, `found the test files that read documents: ${r.files}`);
   assert.ok(r.passed >= 100, `the tests ran: ${r.passed} passed\n${r.out.slice(-2000)}`);
   assert.deepEqual(r.failed, [], r.out.slice(-4000));
@@ -155,7 +165,7 @@ test('0267 AC3: the rewording rewords the opening and every section\'s first sen
   assert.match(mutate(doc, { headings: false }), /^## One$[\s\S]*^## Two$/m);
 });
 
-test('0267 AC2: the tests that check facts in documents still catch a wrong command, version, link or name', () => {
+test('0267 AC2: the tests that check facts in documents still catch a wrong command, version, link or name', async () => {
   const readme = read('README.md');
   const version = JSON.parse(read('package.json')).version;
   const broken = readme
@@ -163,7 +173,7 @@ test('0267 AC2: the tests that check facts in documents still catch a wrong comm
     .replaceAll('[LICENSE](LICENSE)', 'LICENSE')
     .replaceAll(version, '9.9.9')
     .replaceAll('`/speck-setup`', '/speck-start');
-  const r = runIn(copyWith({ 'README.md': broken }),
+  const r = await runIn(copyWith({ 'README.md': broken }),
     ['test/install-0253.test.mjs', 'test/licence-0090.test.mjs', 'test/release-0248.test.mjs', 'test/setup-0088.test.mjs']);
   assert.notEqual(r.status, 0);
   for (const name of [
