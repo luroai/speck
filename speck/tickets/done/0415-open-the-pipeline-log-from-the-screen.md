@@ -1,7 +1,7 @@
 ---
 id: "0415"
 title: "Open the pipeline log from the screen"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0414"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T15:21:38.601Z"
 approved: "2026-10-23T15:35:26.510Z"
+finished: "2026-10-23T15:38:24.621Z"
 
 ---
 # 0415 · Open the pipeline log from the screen
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The Foreman's detail says what's waiting and why, but not what speck run has done. To see that, you read `speck/.cache/runs/run.log` by hand.
