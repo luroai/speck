@@ -133,7 +133,8 @@ test('0427 AC1: in a real browser, a ticket\'s stage sentence and a question are
     await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0802').querySelector('.top').click(), true`);
     await b.until(`!!document.querySelector('#queue .q.open .question')`, 'the question');
     const seen = await b.js(`[...document.querySelectorAll('#queue .q .top .say'), document.querySelector('#queue .q.open .question')].map(n => ({ text: n.textContent, size: getComputedStyle(n).fontSize, font: getComputedStyle(n).fontFamily }))`);
-    assert.equal(seen.length, 3, JSON.stringify(seen));
+    assert.equal(seen.length, 2, JSON.stringify(seen)); // 0434: 0801's builder is at work, so a grid of lights stands in for its sentence
+    assert.ok(await b.js(`!!document.querySelector('#queue .q .top .lights')`), '0801: its grid');
     for (const s of seen) {
       assert.equal(s.size, '14px', `${s.text}: ${s.size}`);
       assert.match(s.font, /BlinkMacSystemFont/, `${s.text}: ${s.font}`);

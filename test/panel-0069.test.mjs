@@ -95,10 +95,10 @@ test('0069 AC3: a ready ticket\'s Queued line is unchanged', async () => {
   // 0419: the Queued line is the top row's details line, followed by the ticket's tags
   const queuedOf = row => row.children[0].children[1];
   assert.deepEqual(shape(waiting), ['top']);
-  assert.equal(queuedOf(waiting).textContent, 'Queued · waiting on 0006 · P2 · S · low');
+  assert.equal(queuedOf(waiting).textContent, 'Queued · waiting on 0006');
   assert.equal(queuedOf(waiting).children[0].tagName, 'b');
-  assert.equal(queuedOf(chain).textContent, 'Queued · unlocks 0005 · P2 · S · low');
+  assert.equal(queuedOf(chain).textContent, 'Queued · unlocks 0005');
   const lone = fakePage([{ tickets: [T('0007', 'ready')], ideas: [] }]);
   await lone.settle();
-  assert.equal(queuedOf(queueRows(lone)[0]).textContent, 'Queued · P2 · S · low');
+  assert.equal(queuedOf(queueRows(lone)[0]).textContent, 'Queued');
 });

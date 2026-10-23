@@ -201,8 +201,11 @@ for (const width of [375, 699, 700, 1000, 1280]) {
 // The same widths as 0151's AC1 tests. A ready ticket has no timer, so its title wraps as a Plan ticket's does. Since
 // 0168 so does a ticket in flight's, whose timer is on its progress's row (from 0156 its ensō was beside its title).
 for (const [width, most] of [[375, 2], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
-  test(`0155 AC3: at ${width} px, the longest title wraps as in Plan, on at most ${most} ${most === 1 ? 'line' : 'lines'}, in flight or not`, skip, async () => {
+  test(`0155 AC3: at ${width} px, the longest title wraps as in Plan, on at most ${most} ${most === 1 ? 'line' : 'lines'}, in flight or not, while its card is open`, skip, async () => {
     await withPanel(async b => {
+      // 0434: a closed card's title is one line, cut off when it doesn't fit
+      await open(b, '0306');
+      await open(b, '0301');
       const lines = most + (await b.js(MONO_UI) ? 1 : 0); // 0427: a bold title in a monospace system font can take a line more
       const ready = await b.js(LAYOUT('0306'));
       assert.ok(ready.lines.length >= 1 && ready.lines.length <= lines, `0306: the title is on ${ready.lines.length} lines`);

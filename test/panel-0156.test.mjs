@@ -29,6 +29,9 @@ const SAYS = {
   '0407': ['The build stopped', 'bad'], '0408': ['Shipping', ''],
 };
 const MOVING = ['0401', '0402', '0403', '0408'];
+// 0434: while its builder or reviewer is at work, a grid of lights stands in for the sentence, which is its name.
+const WORKING = ['0401', '0402', '0403'];
+const sentenceIn = n => (n.className === 'lights' ? n.attrs['aria-label'] : n.textContent);
 
 function fake(tickets = TICKETS) {
   return fakePage([], {
@@ -97,10 +100,10 @@ test('0156 AC3: one plain sentence under the title says what is happening, in th
   const p = fake();
   await p.settle();
   for (const [id, [text, tone]] of Object.entries(SAYS)) {
-    const top = topOf(rowOf(p, id)), say = find(p, top, /^say\b/);
+    const top = topOf(rowOf(p, id)), say = find(p, top, /^(say|lights)\b/);
     assert.equal(say.length, 1, `${id}: one sentence`);
-    assert.equal(say[0].textContent, text, id);
-    assert.equal(say[0].className, tone ? `say ${tone}` : 'say', `${id}: its colour`);
+    assert.equal(sentenceIn(say[0]), text, id);
+    assert.equal(say[0].className, WORKING.includes(id) ? 'lights' : tone ? `say ${tone}` : 'say', `${id}: its colour`);
     assert.ok(top.children.findIndex(n => classes(n)[0] === 'progress') > top.children.findIndex(n => n.className === 'line'), `${id}: under the title`);
   }
   const css = page();
@@ -116,11 +119,11 @@ test('0156 AC3: a reviewer that isn\'t named is "The reviewer", and an approved 
     T('0503', 'reviewing', { started: ago(5), reviewer: 'constructor' }),
   ]);
   await p.settle();
-  const say = id => find(p, rowOf(p, id), /\bsay\b/)[0];
-  assert.equal(say('0501').textContent, 'The reviewer is reviewing · round 1');
-  assert.equal(say('0502').textContent, 'Approved · waiting for you to ship it');
+  const say = id => find(p, rowOf(p, id), /^(say|lights)\b/)[0];
+  assert.equal(sentenceIn(say('0501')), 'The reviewer is reviewing · round 1');
+  assert.equal(sentenceIn(say('0502')), 'Approved · waiting for you to ship it');
   assert.equal(say('0502').className, 'say bad');
-  assert.equal(say('0503').textContent, 'Constructor is reviewing · round 1');
+  assert.equal(sentenceIn(say('0503')), 'Constructor is reviewing · round 1');
 });
 
 test('0156 AC3 and AC4: an approved ticket waits in purple whether or not its build has exited, and not while it ships', async () => {
@@ -147,7 +150,7 @@ test('0156 AC4: the current stage\'s name follows the sentence (its five dots we
   for (const [id, name] of Object.entries(expect)) {
     const text = find(p, rowOf(p, id), /^progress$/)[0];
     const parts = text.children.filter(n => n.className && n.className !== 'sep'); // 0419: separated by " · ", then the timer and the tags
-    assert.deepEqual(parts.slice(0, 2).map(n => n.className.split(' ')[0]), ['say', 'stage'], `${id}: the sentence, then the stage`);
+    assert.deepEqual(parts.slice(0, 2).map(n => n.className.split(' ')[0]), [WORKING.includes(id) ? 'lights' : 'say', 'stage'], `${id}: the sentence (0434: or its grid of lights), then the stage`);
     const tone = SAYS[id][1];
     assert.equal(parts[1].textContent, name, id);
     assert.equal(parts[1].className, tone ? `stage ${tone}` : 'stage', `${id}: in the state colour`);
@@ -188,9 +191,10 @@ const RGB = v => `(() => { const s = document.createElement('span'); s.style.col
   const c = getComputedStyle(s).color; s.remove(); return c; })()`;
 const LOOK = id => `(() => {
   const card = ${CARD(id)}, rect = n => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
-  return { card: rect(card), title: rect(card.querySelector('.top .title')), id: rect(card.querySelector('.top .id')),
-    say: rect(card.querySelector('.say')), stage: card.querySelector('.stage') && rect(card.querySelector('.stage')), shipAt: card.querySelector('.ship-at') && rect(card.querySelector('.ship-at')),
-    sayColor: getComputedStyle(card.querySelector('.say')).color, stageColor: card.querySelector('.stage') && getComputedStyle(card.querySelector('.stage')).color };
+  const line = card.querySelector('.top .progress');
+  return { card: rect(card), line: rect(line), clips: getComputedStyle(line).overflowX === 'hidden' && getComputedStyle(line).textOverflow === 'ellipsis', title: rect(card.querySelector('.top .title')), id: rect(card.querySelector('.top .id')),
+    say: rect(card.querySelector('.say, .lights')), stage: card.querySelector('.stage') && rect(card.querySelector('.stage')), shipAt: card.querySelector('.ship-at') && rect(card.querySelector('.ship-at')),
+    sayColor: getComputedStyle(card.querySelector('.say, .lights')).color, stageColor: card.querySelector('.stage') && getComputedStyle(card.querySelector('.stage')).color };
 })()`;
 
 for (const theme of ['light', 'dark']) {
@@ -204,18 +208,23 @@ for (const theme of ['light', 'dark']) {
           const l = await b.js(LOOK(id));
           // AC3: the sentence under the title, in the state colour or the text colour.
           assert.ok(l.say.top >= l.title.bottom - 0.5, `${id}: the sentence is under the title`);
-          assert.equal(l.sayColor, tone ? tones[tone] : colour.text, `${id}: the sentence's colour`);
+          assert.equal(l.sayColor, WORKING.includes(id) ? colour.run : tone ? tones[tone] : colour.text, `${id}: the sentence's colour (0434: its grid's, in the in-flight blue)`);
           // AC4: the stage's name after the sentence (0419: on its line, or the next when it doesn't fit), in the state
-          // colour. 0201: a shipping card has none, and how long its ship has run follows "Shipping" on the same line.
+          // colour. 0201: a shipping card has none. 0434: nor how long its ship has run.
           if (id === '0408') {
             assert.equal(l.stage, null, `${id}: no stage's name`);
-            assert.ok(Math.abs(l.shipAt.top - l.say.top) < 2 && l.shipAt.left >= l.say.right - 0.5, `${id}: the ship's time on the sentence's line`);
+            assert.equal(l.shipAt, null, `${id}: no ship's time`);
           } else {
             assert.ok((Math.abs(l.stage.top - l.say.top) < 2 && l.stage.left >= l.say.right - 0.5) || l.stage.top >= l.say.bottom - 0.5, `${id}: the stage's name follows the sentence`);
             assert.equal(l.stageColor, tones[tone], `${id}: the stage's colour`);
           }
-          // AC5: everything in the card stays inside it.
-          for (const k of id === '0408' ? ['say', 'shipAt', 'title', 'id'] : ['say', 'stage', 'title', 'id']) assert.ok(l[k].left >= l.card.left - 0.5 && l[k].right <= l.card.right + 0.5, `${id}: its ${k} overflows the card`);
+          // AC5: everything in the card stays inside it. 0434: a closed card's status line is one line, inside the card,
+          // and cuts off with an ellipsis what doesn't fit, such as the stage after a long sentence on a phone.
+          assert.ok(l.clips && l.line.left >= l.card.left - 0.5 && l.line.right <= l.card.right + 0.5, `${id}: its status line stays inside the card`);
+          for (const k of id === '0408' ? ['say', 'title', 'id'] : ['say', 'stage', 'title', 'id']) {
+            if (k === 'stage' && l.stage.right > l.line.right) continue; // cut off by the status line
+            assert.ok(l[k].left >= l.card.left - 0.5 && l[k].right <= l.card.right + 0.5, `${id}: its ${k} overflows the card`);
+          }
         }
         assert.equal(await b.js(`document.documentElement.scrollWidth <= innerWidth`), true, 'the page doesn\'t scroll sideways');
       }, { width, theme });
