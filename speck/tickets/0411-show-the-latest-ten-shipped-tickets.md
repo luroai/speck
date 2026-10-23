@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0410"]         # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T13:59:01.373Z"
-approved: "2026-10-23T14:03:13.779Z"
+approved: "2026-10-23T14:07:13.583Z"
 
 ---
 # 0411 · Show the latest ten shipped tickets
@@ -52,12 +52,13 @@ The Shipped tab now lists the last ten tickets that shipped, not five, so a busy
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 134,359
-- Elapsed since build started: 4 min
+- Reviewer tokens: 365,902
+- Elapsed since build started: 8 min
 - Changed lines: 12 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
@@ -115,6 +116,63 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Shipped now shows the latest ten tickets, newest first, while still showing older tickets whose push failed. All ten retain their full content and opening controls. Older tickets remain compact in the server response. The relevant tests passed, and no blocking issues were found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7b480bedd914a0e5607ba2bf29eceab0fd12ead7",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16912-3625-79a0-824f-a88b6e71eb5c",
+    "builder_response": "- Tests run: test/panel-0063.test.mjs test/panel-0411.test.mjs test/panel-0178.test.mjs test/panel.test.mjs test/ship-0204.test.mjs\n- Merged main into the ticket branch (no conflicts).\n- Failing test in speck ship: \"0063 AC3: the pane stays on a ticket as it moves from Tickets to the queue to Shipped, and closes when it shows nowhere\". Why: it pinned the Shipped list at five (four more ship and it stays, a sixth pushes it off). This ticket makes it ten, and my earlier search for tests pinning five missed it.\n- Change: test/panel-0063.test.mjs now ships nine more after it (still in the latest 10), then an eleventh pushes it off and the pane closes. What it checks is unchanged. No code changed in this round.\n",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 230600,
+      "cached_input_tokens": 180224,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 943,
+      "reasoning_output_tokens": 14
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T14:07:10.633Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panelModel in templates/panel.html selects the latest ten newest-first plus unpushed tickets. Passing 0411 AC1 tests cover ordering, rendered cards, unpushed tickets and fewer than ten."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0411 AC2 tests exercise Details, full-ticket content and Review pack requests for all ten. Updated panel-0063 AC3 passes and preserves its boundary check: the pane stays open through ten tickets and closes when an eleventh displaces its ticket."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelBoard in scripts/board-feed.mjs retains ten whole tickets and trims older finished tickets. Passing 0411 AC3 checks the 500-byte limit; the updated 0178 server integration test verifies ten whole tickets and three trimmed tickets."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still meets all three criteria. The additional test update correctly adjusts the pane’s closing boundary from five shipped tickets to ten without weakening its checks. All 195 tests completed with no failures; three were skipped. No blocking issues found."
   }
 }
 ```
