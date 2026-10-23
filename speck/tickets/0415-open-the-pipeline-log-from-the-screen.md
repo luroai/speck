@@ -1,7 +1,7 @@
 ---
 id: "0415"
 title: "Open the pipeline log from the screen"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T15:21:38.601Z"
 ---
 # 0415 · Open the pipeline log from the screen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The Foreman's detail says what's waiting and why, but not what speck run has done. To see that, you read `speck/.cache/runs/run.log` by hand.
@@ -57,3 +57,89 @@ Pressing speck's screen opens the pipeline log, which takes the place of the For
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ce7910bff25c549b2e4f9bcd8d90638ad231232d",
+    "session": "fresh",
+    "thread_id": "01a16963-4c01-7db3-b14d-5c93aae8f69f",
+    "builder_response": "- Tests run: test/pipeline-0415.test.mjs test/panel-0413.test.mjs (plus the commands.checks files, which speck test --files adds)\n- Round 1. Notes for the reviewer:\n  - The linked design artifact isn't shared with this account, so the build follows the criteria. The pop-up keeps today's full-panel shape; \"a click outside it\" is a click beside its centred column (pointerdown and click both beside it), as Settings does (0368), reusing besideColumn.\n  - The board carries `run_log` (size:mtime of run.log, from runLogPart). A write to run.log already makes the board watcher read again after BOARD_LOG_MS (2 s), so the stamp change is announced on that refresh; the page then asks GET /api/run-log, only while the pop-up is open and only when run_log changed. No run_log on the board means no run.log, so the page says so without asking.\n  - /api/run-log takes nothing from the request: the route matches the exact path and reads path.join(runs, 'run.log'). A run.log that is a symlink or not a plain file is treated as missing (lstat + O_NOFOLLOW + fstat).\n  - test/panel-0413.test.mjs: one assertion changed from the old title \"The Foreman\" to \"Pipeline\", since AC1 replaces that title.\n  - scripts/panel.mjs is at the repo's 600-line limit, so the route and board part live in scripts/run-log.mjs, imported through scripts/panel-run.mjs.\n",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 200382,
+      "cached_input_tokens": 154752,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1454,
+      "reasoning_output_tokens": 90
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T15:31:55.612Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html renderForeman preserves the existing detail under Right now. Passing AC1 tests cover title, section order, Answer/Dismiss buttons and Reload page."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Live updates and missing-file behaviour have passing tests, but drawRunLog preserves position using total height changes, which fails when the 200-line window replaces equal-height lines. runLogTail also silently discards lines beyond its 256 KiB read window."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests exercise Close, Escape and clicks beside the column, including focus returning to the screen."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs matches /api/run-log exactly; runLogAnswer takes only the server's runs directory. Passing AC4 tests cover request parameters, traversal attempts, symlinks and directories."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing real-browser AC5 test checks horizontal overflow and long-line wrapping at 320 px in both themes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:4225",
+        "issue": "Scroll preservation fails once the log contains 200 lines. Adding a line removes the oldest line, so equal-height lines leave scrollHeight unchanged and scrollTop is not adjusted. A read-only fakePage reproduction changed the visible row from 'line 175' to 'line 176' while scrollTop remained 500. The existing test only covers a growing list below the cap.",
+        "suggested_fix": "Anchor the viewport to a retained log line and its offset rather than the total height difference. Add coverage for updates to an already full 200-line log, including wrapped lines.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/run-log.mjs:34",
+        "issue": "The fixed 256 KiB read window silently omits recent output. For example, a latest line longer than that window is discarded entirely by lines.shift(), potentially showing an empty log despite existing output. Multiple long lines can also yield fewer than the latest 200 lines. The added long-file test explicitly accepts this omission.",
+        "suggested_fix": "Read backwards in chunks until 200 complete lines or the beginning of the file is reached, preserving long lines. Test a latest line exceeding 256 KiB and 200 lines whose combined size exceeds that limit.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Pipeline pop-up preserves the existing controls and adds live output with a working mobile layout. Two issues need fixing: updates move the reader's place once the log reaches 200 lines, and long output can disappear from the displayed log."
+  }
+}
+```
+
+</details>
