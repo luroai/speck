@@ -172,7 +172,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
-  const autoBuild = () => b.js(`document.getElementById('run').textContent`);
+  const autoBuild = () => b.js(`document.getElementById('run').getAttribute('aria-label').replace(/^The Foreman: /, '')`); // 0413: the word on speck's screen, in its name
   try {
     const item = '#shaping .item';
     await b.until(`!!document.querySelector('${item} .title')`, 'the draft');
@@ -183,7 +183,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
     assert.equal(await sel(), 'Export button', 'the drag selected text');
     // AC1 and AC5: unchanged refreshes keep it, and the header keeps updating.
     // Each refresh puts a new label in the Foreman's button (0150; 0303: its builder stays), so a label that isn't the one marked is a refresh since.
-    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').lastChild`); await b.until(`document.getElementById('run').lastChild !== window.seen`, what); };
+    const refreshed = async what => { await b.js(`window.seen = window.drawn || 0; if (!window.drawWatch) (window.drawWatch = new MutationObserver(() => { window.drawn = (window.drawn || 0) + 1; })).observe(document.getElementById('bezel'), { attributes: true }); true`); await b.until(`(window.drawn || 0) > window.seen`, what); }; // 0413: each redraw sets the frame of speck's screen, which stays between them
     await refreshed('a refresh'); await refreshed('a second refresh');
     assert.match(await autoBuild(), /^(Off|Idle)$/, 'the header button is still updated (0285: with the Foreman\'s status)');
     assert.equal(await sel(), 'Export button', 'kept through refreshes');

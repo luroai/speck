@@ -87,7 +87,7 @@ test('0127 AC3: the pill sits in the header, not in a ticket row (0150: it is th
   assert.doesNotMatch(header, /id="pills"/);
   const p = fakePage([state(true)]);
   await p.settle();
-  assert.deepEqual(p.byId('run').children.map(n => ((n.attrs || {}).class || n.className).split(' ')[0]), ['board', 'board-text'], 'its notice board and the board\'s text alone (0364: no square or builder before it; 0365)');
+  assert.equal(p.byId('run').children.length, 0, 'nothing put in it: it is speck\'s screen (0413)');
   assert.equal(p.byId('pills').children.length, 0);
 });
 

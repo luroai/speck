@@ -227,7 +227,8 @@ const LINES = sel => `(() => {
 })()`;
 // 0150: speck run's state is itself its on/off button, Auto-build, and the live indicator has gone.
 // 0372: and Settings, which ends it now that light and dark are chosen in Settings.
-const HEADER = { 'the speck name': 'header .logo', 'the repo and base branch': 'header .repo', 'Auto-build': '#run',
+// 0413: the title row of speck's screen's frame, and the screen under it
+const HEADER = { 'the speck name': 'header .name', 'the repo and base branch': 'header .repo', "speck's screen": '#run',
   'Settings': '#settings-open' };
 
 test('0140 AC3: at 375 px, the header shows each of its parts in full, each label on one line', skip, async () => {
@@ -242,10 +243,10 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
       // 0364: the project shares the phone's one row with the buttons, so it may be cut short with "…", never hidden
       if (sel === 'header .repo') assert.ok(!r.cut || await b.js(`getComputedStyle(document.querySelector('header .repo')).textOverflow === 'ellipsis'`), `${what} is in full or ends in "…"`);
       else assert.ok(!r.cut, `${what} isn't cut short`);
-      if (sel !== '#settings-open') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
+      if (sel !== '#settings-open' && sel !== '#run') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
     }
-    assert.equal(await b.js(`document.querySelector('header .repo').textContent`), 'base main'); // 0373: without the project
-    assert.ok(await b.js(`!document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`), "the Foreman's notice board is shown, with no builder"); // 0364, 0365
+    assert.match(await b.js(`document.querySelector('header .repo').textContent`), / · main$/); // 0413: the project, then the base branch
+    assert.ok(await b.js(`document.querySelector('#run canvas').getBoundingClientRect().height > 0`), "speck's screen is shown"); // 0413
   });
 });
 

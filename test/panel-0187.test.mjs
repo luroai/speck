@@ -165,9 +165,10 @@ test('0187 AC2: the page opens one stream, asks for the board only when told, an
   for (const f of p.timers.splice(0)) f();
   await p.settle();
   assert.equal(states(), 1, 'a keep-alive asks for nothing');
-  const drawn = p.byId('run').children.at(-1); // its label: the builder before it stays between redraws (0303)
+  let drawn = 0; // 0413: each redraw sets the frame of speck's screen, which stays between redraws
+  Object.defineProperty(p.byId('bezel'), 'className', { get: () => 'bezel', set: () => { drawn++; } });
   sources[0].emit('ping', '1');
-  assert.notEqual(p.byId('run').children.at(-1), drawn, 'but redraws the page, so what it works out from the clock moves on');
+  assert.ok(drawn > 0, 'but redraws the page, so what it works out from the clock moves on');
   sources[0].emit('message', '2');
   await p.settle();
   assert.equal(states(), 2);

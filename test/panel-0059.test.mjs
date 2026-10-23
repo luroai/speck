@@ -26,8 +26,7 @@ test('0059 AC1: editing panel.html while the panel runs shows on the next reques
     assert.equal(after.status, 200);
     assert.match(after.headers['content-type'], /text\/html/);
     assert.match(after.body, /EDITED-0059/);
-    assert.match(after.body, /<div class="repo">base <code>main<\/code><\/div>/); // 0373: the base branch, without the project
-    assert.doesNotMatch(after.body, new RegExp(`<code>${path.basename(r.dir)}</code>`));
+    assert.ok(after.body.includes(`<span class="repo">${path.basename(r.dir)} · <code>main</code></span>`), 'the project and base branch (0413)');
     assert.match(after.body, /const TOKEN = '[0-9a-f]{64}';/);
     assert.doesNotMatch(after.body, /\{\{(repo|base|token)\}\}/);
   } finally { await stop(p); }

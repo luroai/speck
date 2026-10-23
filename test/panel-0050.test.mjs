@@ -217,7 +217,7 @@ test('0050 AC1-AC5: in a real browser, selections and the build message scroll s
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
   // Each refresh puts a new label in the Foreman's button (0150; 0303: its builder stays), so a label that isn't the one marked is a refresh since.
-  const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').lastChild`); await b.until(`document.getElementById('run').lastChild !== window.seen`, what); };
+  const refreshed = async what => { await b.js(`window.seen = window.drawn || 0; if (!window.drawWatch) (window.drawWatch = new MutationObserver(() => { window.drawn = (window.drawn || 0) + 1; })).observe(document.getElementById('bezel'), { attributes: true }); true`); await b.until(`(window.drawn || 0) > window.seen`, what); }; // 0413: each redraw sets the frame of speck's screen, which stays between them
   const exit = '#queue .question.exit';
   try {
     await b.until(`!!document.querySelector('${exit}') && document.querySelectorAll('#shipped tr').length === 1`, 'the queue and Shipped');
