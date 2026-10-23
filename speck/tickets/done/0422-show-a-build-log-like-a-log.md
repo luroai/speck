@@ -1,7 +1,7 @@
 ---
 id: "0422"
 title: "Show a build log like a log"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: [] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T17:53:56.021Z"
 approved: "2026-10-23T18:03:55.902Z"
+finished: "2026-10-23T18:13:24.096Z"
 
 ---
 # 0422 · Show a build log like a log
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The build log is how you see that a build is really moving, like watching the model work. But it's one block of plain monospace text: times, tool calls, the agent's messages and failures all look the same, and a long line that wraps starts again at the left edge, so it reads as a new entry.
