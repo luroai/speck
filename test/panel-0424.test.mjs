@@ -127,6 +127,22 @@ test('0424 AC3: the text is at least 15 px with a line height of at least 1.5', 
   }
 });
 
+// The size a selector's text gets from the last rule that names it and sets one, as the cascade gives it between rules of
+// the same specificity, or undefined when no rule sets one.
+const lastSize = sel => cssValue(cssRules(sel).filter(d => /font-size/.test(d)), 'font-size');
+
+test('0424 AC3: tables and code blocks in a ticket or a review pack are the text size too, and none of the text is set smaller', () => {
+  for (const sel of ['#full-ticket .md table', '#full-ticket pre code']) {
+    const v = lastSize(sel);
+    assert.ok(v && parseFloat(v) >= 15, `${sel} is at least 15px (is ${v})`);
+  }
+  for (const sel of ['#full-ticket .md th', '#full-ticket .md td', '#full-ticket .md p', '#full-ticket .criteria p', '#full-ticket code.md-code', '#full-ticket .md summary', '#full-ticket ol.criteria > li']) {
+    const v = lastSize(sel);
+    assert.ok(v === undefined || v === 'inherit' || parseFloat(v) >= 15, `${sel} keeps the text size (sets ${v})`);
+  }
+  assert.equal(lastSize('#doc-view .md table'), '13px', 'a document\'s pop-up is left as it was');
+});
+
 test('0424 AC3: a heading in a section\'s text is smaller than the section\'s heading, and each level smaller than the one above', () => {
   const [h1, h2, h3] = [1, 2, 3].map(n => px(`#full-ticket .md-h${n}`));
   assert.ok(h1 < px(SECTION), '# is smaller than a section heading');
