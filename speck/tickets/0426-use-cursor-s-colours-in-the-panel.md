@@ -55,7 +55,7 @@ The panel uses Cursor's own light and dark theme colours, so it looks like part 
 - Self-check: small tags in a line of 12 px text kept Cursor's 14 px muted, so a `:where()` rule gives them the small-text muted; --bug and --fix took the 7:1 shades, as 0161 reads a tag's colour rule as 13 px text.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel now uses Cursor's own colours, in both the light and the dark look, so it sits beside Cursor as if it were part of it. The page, cards, text, pop-ups, Settings and input boxes take Cursor's greys. Red, magenta, green, blue, cyan and yellow show a ticket's state, made a little darker in light or lighter in dark wherever Cursor's own shade would be too faint to read. Links and the outline that shows where the keyboard is are now blue. speck's screen at the top, its dark frame and its dot-matrix name look as they did. To see it, open the panel and switch between Light, Dark and System in Settings. Worth keeping an eye on: Cursor's magenta (waiting for you to ship) and red (needs you) are closer to each other than speck's old purple and red were.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -65,6 +65,10 @@ The panel uses Cursor's own light and dark theme colours, so it looks like part 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - speck/ideas/2026-10-23-tell-waiting-for-you-from-needs-you-at-a-glance.md: magenta and red are about 21° of hue apart in Cursor Light, so 0138's hue check now asks for 20° rather than 60°.
+  - Known limit: the unused --accent and --accent-bg tokens stay, at Cursor values, as the 0126/0134 palette checks list them. A later tidy-up could drop them along with those checks.
+  - Known limit: the bug and fix tags now share the needs-you red and the review yellow (--bug equals --bad, --fix equals --warn), as 0161 reads a tag's colour rule as 13 px text and asks 7:1 of it.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +142,81 @@ The panel uses Cursor's own light and dark theme colours, so it looks like part 
     ],
     "escalation_question": "",
     "summary": "The main palette and stage colours match the ticket, and the reported contrast tests pass. One visible link was missed: pull-request URLs still use the browser’s default colours. Fix and test that before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "45b509c546a47e0fe5ca8df2c96cdfcb86667db0",
+    "session": "continued",
+    "thread_id": "01a16a15-3f04-7da1-a5bd-5417cb7c9543",
+    "builder_response": "- Tests run: test/panel-0426.test.mjs test/panel-0161.test.mjs test/mockup-0126.test.mjs test/panel-0134.test.mjs test/panel-0136.test.mjs test/panel-0138.test.mjs test/panel-0147.test.mjs test/panel-0149.test.mjs test/icons-0305.test.mjs test/panel-0155.test.mjs test/panel-0167.test.mjs test/panel-0171.test.mjs test/panel-0213.test.mjs test/panel-0041.test.mjs test/panel-0055.test.mjs test/panel-0158.test.mjs test/panel-0418.test.mjs\n- F1: fixed. templates/panel.html: a page-wide `a { color: var(--run); }` rule, so every link, the pull request link prPart() makes included, is in Cursor's blue at the 7:1 shade. An author `color` on `a` applies to visited links too (the browser's own :link/:visited colours are user-agent styles, which any author rule beats), and no rule in the stylesheet sets :visited or :link. New test \"0426 AC3: every link is blue, visited or not, including the pull request link in a review pack\" checks the rule, that nothing styles :visited/:link, that prPart's link is a plain <a>, and that no .ship-said rule recolours its link. 0161's static check now covers the `a` rule (7:1 on every surface) and passes. A browser can't report a visited link's colour (getComputedStyle hides it for privacy), so the visited case is checked through the stylesheet.\n",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 504794,
+      "cached_input_tokens": 430976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1646,
+      "reasoning_output_tokens": 207
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T18:47:22.529Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html defines the requested light and dark surface, text and input colours. Passing 0426 AC1 tests verify token values and their use."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0426 AC2 tests verify Cursor's muted colours and calculate the nearest grey alphas for small text and borders. The 0161 contrast tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0426 AC3 tests verify state shades, stage edges and focus colour. The global a rule now applies --run to prPart() links, including visited links, resolving the missed case."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The LCD, frame and title colour tokens remain unchanged in templates/panel.html; passing 0426 AC4 checks their values and use."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing 0426 AC5 and existing theme tests cover light, dark and System behaviour. The current test output confirms 272 passed, zero failed and three skipped, including passing 0161 contrast checks."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:73",
+        "issue": "Pull-request links previously retained browser-default colours because only markdown links received Cursor blue.",
+        "suggested_fix": "Completed: the global anchor rule applies --run, with regression coverage for pull-request and visited links.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel now uses Cursor's light and dark colours while preserving speck's screen and title colours. The missed pull-request link is fixed, contrast checks pass, and no blocking concerns remain."
   }
 }
 ```
