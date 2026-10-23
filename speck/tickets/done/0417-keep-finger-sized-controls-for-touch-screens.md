@@ -1,7 +1,7 @@
 ---
 id: "0417"
 title: "Keep finger-sized controls for touch screens"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0416"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T15:53:47.802Z"
 approved: "2026-10-23T16:04:29.962Z"
+finished: "2026-10-23T16:07:10.742Z"
 
 ---
 # 0417 · Keep finger-sized controls for touch screens
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Below 700 px wide, every tag, toggle and button on the panel is at least 44 × 44 px (0140), a size meant for fingers. The panel is used mostly in a narrow side pane with a mouse, where those sizes make every card much taller than it needs to be.
