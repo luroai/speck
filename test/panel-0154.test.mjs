@@ -227,7 +227,8 @@ test('0154 AC2: in a browser, pressing Enter on an id brings its ticket into vie
 
 test('0154 AC1: in a browser, a tap on a ticket lights nothing up, even for a moment, and a mouse over it still does', skip, () => withBoard(async b => {
   // The middle of its Queued line: it has no bar since 0156.
-  const at = await b.js(`(() => { const r = [...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '0002').querySelector('.act').getBoundingClientRect();
+  // 0413: below speck's screen, the card may start under the fold of this 500 px window, so it's scrolled to first.
+  const at = await b.js(`(() => { const q = [...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '0002'); q.scrollIntoView({ block: 'center' }); const r = q.querySelector('.act').getBoundingClientRect();
     return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
   assert.ok(at[1] < await b.js('innerHeight'), 'it is on screen');
   // Every time a ticket is lit or dimmed, as headless Chrome sends a mouseleave straight after a tap's mouseenter, which a phone doesn't.

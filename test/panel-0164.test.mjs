@@ -201,7 +201,8 @@ test('0164 AC3: a card is shaded on hover only where the main pointer can hover'
 test('0164 AC3: in a browser whose pointer can\'t hover, a tapped card keeps its background, and an opened card keeps its opened colour', skip, () => withBoard(async b => {
   assert.equal(await b.js(`matchMedia('(hover: none)').matches`), true, 'this headless browser reports a pointer that can\'t hover');
   const back = id => b.js(`getComputedStyle([...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === '${id}')).backgroundColor`);
-  const at = await b.js(`(() => { const r = [...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === '0008').querySelector('.title').getBoundingClientRect(); return [r.left + 4, r.top + r.height / 2]; })()`);
+  // 0413: below speck's screen, the card may start under the fold, so it's scrolled to first.
+  const at = await b.js(`(() => { const t = [...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === '0008').querySelector('.title'); t.scrollIntoView({ block: 'center' }); const r = t.getBoundingClientRect(); return [r.left + 4, r.top + r.height / 2]; })()`);
   const before = await back('0008');
   const raise = await b.js(`(() => { const s = document.createElement('span'); s.style.color = 'var(--raise)'; document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c; })()`);
   assert.notEqual(before, raise, 'a closed card isn\'t shaded to start with');
