@@ -42,6 +42,10 @@ Each shipped ticket is two lines, and the stats above the list are one line.
 - Today's layout is 0157 and 0162 (`#shipped` in `templates/panel.html`).
 - Waits for 0419: both change `templates/panel.html`.
 - Failing before this build: none
+- Stats line wording: the example in AC3 ("24 shipped today · median 10 min · $1.77 median builder cost") measures about 406 px of 12 px text, and only about 300 px is free beside More stats in a 420 px pane. The line is `24 today · median 10 min, $1.77`, the same three figures, with each one's tooltip saying what it is ("Tickets shipped today", "Median builder cost, over 2 tickets"). "Shipped today" was cut to "today" as it didn't fit beside Fewer stats, which More stats becomes when pressed, with real figures such as 34 tickets.
+- Ship time in a card's line: the time alone today, as before, but the day alone ("20 Oct") for an earlier day, without "Shipped" or the time, so a line with every figure fits beside Details at 420 px with a scroll bar. The line's tooltip gives "Shipped 20 Oct, 17:42 · …". On a phone (375 px), a line that still doesn't fit wraps between its parts rather than being cut off (0157 AC5).
+- Older tests changed to the new layout: 0035 (panel.test.mjs), 0050, 0058, 0120, 0157, 0161 (the shipped tag is a small box in the title's line, exempted as 0419's in-line tags are) and 0162.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

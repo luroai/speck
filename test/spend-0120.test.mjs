@@ -112,8 +112,10 @@ test('0120 AC4: the stats add median builder tokens and cost, each over the done
   assert.deepEqual(m.stats.builderCost, { median: 0.88, count: 2 }, 'mean of 0.5 and 1.25, to the cent');
   const p = fakePage([state]);
   await p.settle();
-  const texts = [...p.byId('shipped-stats').children, ...p.byId('shipped-more').children].map(c => c.textContent);
-  assert.deepEqual([texts[2], ...texts.slice(4)], ['$0.88median builder cost2 tickets', '–median reviewer tokens0 tickets', '300median builder tokens3 tickets']); // as 0162 lays them out
+  const texts = p.byId('shipped-more').children.map(c => c.textContent);
+  assert.match(p.byId('shipped-stats').textContent, /, \$0\.88$/); // one line since 0420
+  assert.equal(p.all(p.byId('shipped-stats')).find(n => n.className === 'part' && n.textContent === '$0.88').title, 'Median builder cost, over 2 tickets');
+  assert.deepEqual(texts.slice(1), ['–median reviewer tokens0 tickets', '300median builder tokens3 tickets']); // as 0162 lays them out
 });
 
 test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipped is unchanged', async () => {
@@ -123,8 +125,9 @@ test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipp
   await p.settle();
   await openDetails(p);
   assert.equal(shippedRows(p)[0].children.find(n => n.className === 'figs').textContent, 'Time4 minReview rounds2Reviewer tokens1,500'); // as 0157 lays them out
-  assert.deepEqual([...p.byId('shipped-stats').children, ...p.byId('shipped-more').children].map(c => c.textContent),
-    ['1shipped today', '4median minutes1 ticket', '–median builder cost0 tickets', '2median review rounds1 ticket', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']); // as 0162 lays them out
+  assert.equal(p.byId('shipped-stats').textContent, '1 today · median 4 min, –'); // one line since 0420
+  assert.deepEqual(p.byId('shipped-more').children.map(c => c.textContent),
+    ['2median review rounds1 ticket', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']); // as 0162 lays them out
   const m = panelModel()(state);
   assert.equal(m.shipped[0].tokens, 1500);
   assert.equal(m.shipped[0].builderTokens, null);
