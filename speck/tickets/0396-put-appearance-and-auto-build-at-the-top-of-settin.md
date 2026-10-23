@@ -1,7 +1,7 @@
 ---
 id: "0396"
 title: "Put Appearance and Auto-build at the top of Settings as toggles"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-rehash-the-settings-screen.md"             
 after: ["0395"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T10:06:50.742Z"
+approved: "2026-10-23T10:21:23.468Z"
 
 ---
 # 0396 · Put Appearance and Auto-build at the top of Settings as toggles
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Appearance sits at the bottom of Settings as a list with a description, and the Auto-build switch is labelled "speck run" with a description under it. Neither name says plainly what it does, and the descriptions add clutter.
@@ -51,9 +52,14 @@ Settings now opens with two switches at the top: Appearance, which flips the pan
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 188,908
+- Elapsed since build started: 15 min
+- Changed lines: 127 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
