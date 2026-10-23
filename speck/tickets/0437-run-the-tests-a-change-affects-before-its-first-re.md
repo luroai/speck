@@ -46,7 +46,7 @@ Before its first review round, a build also runs the existing tests that cover t
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Before a build's first review, speck now also runs the existing tests that mention a file the build changed, so a change that breaks an older test is caught before the reviewer looks at it, not at shipping. Before it runs them, it lists each test it chose and which changed file brought it in. To see it, run `speck test --related` on a ticket's branch. Keep an eye on how many tests it picks: a change to speck's main command file or to a skill picks nearly the whole suite, which takes a couple of minutes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +56,10 @@ Before its first review round, a build also runs the existing tests that cover t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - `--related` picks nearly the whole suite for a change to `scripts/speck.mjs` (named by most test/support modules) or any `SKILL.md`: 374 of 390 files here. Sent to the inbox: `speck/ideas/2026-10-23-keep-related-tests-from-picking-the-whole-suite.md`.
+  - The `speck-review` skill's "Before every round" still names only `speck test --files`; round 1's `--related` is in the build skill only, as AC3 asked. A tidy-up to mention it there too.
+- The first `--related` run caught a real break (0238's usage-message test), fixed before round 1.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -194,6 +198,76 @@ Before its first review round, a build also runs the existing tests that cover t
     ],
     "escalation_question": "",
     "summary": "The functionality still meets the ticket and the reported tests pass. The previous test issue is only partly fixed: it now depends on exact section headings. Remove that dependency before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8ebeb1009d484875df2690330f0fc70868380e66",
+    "session": "continued",
+    "thread_id": "01a16acc-6640-7250-a778-29da42260f9c",
+    "builder_response": "- Tests run: test/related-0437.test.mjs (with commands.checks), via `speck test --files`. Only the ticket's own test file changed since round 2.\n- F1: fixed. The AC3 test no longer slices the skill by its headings: it checks only that the build skill contains the command `speck test --related <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`. Its placement before the first review is left to reading the skill.\n",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 301935,
+      "cached_input_tokens": 251392,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1979,
+      "reasoning_output_tokens": 120
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T22:07:13.575Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/related.mjs: changedFiles and relatedTests select tests by changed path or basename and support-module imports, excluding speck/. All four AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs: cmdTest prints relatedReport before running the combined selection with commands.checks, and runs nothing for an empty selection. Passing AC2 tests cover these behaviours."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md step 5 requires --related with the round's files before the first review and captures its output for the reviewer. The prohibition on fixing previously failing tests remains. The revised command-fact test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md's speck test row documents --related and selection by changed-file names or support-module references. The AC4 test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/related-0437.test.mjs:137",
+        "issue": "The document wording and heading-order dependencies have been removed. The test now checks only the concrete command.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change runs related tests before the first review, explains why each was selected and includes configured checks. All criteria are met, the reported tests pass and the previous blocking finding is resolved."
   }
 }
 ```
