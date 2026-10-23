@@ -73,7 +73,7 @@ Round 2 (codex): approve.
 Follow-ups (tidy-ups and known limits, no inbox notes):
 - The `.sh h2` style rule in the panel is unused now that the lane headings are the tabs' names; it could go.
 - The speck run error line (`.run-error`) isn't made inert with the rest of the page while a pane is open. That was already so before this ticket.
-- 26 older test files changed with the layout, mostly to open the lane they look at (`openLane` in `test/support/panel.mjs`).
+- 23 older test files changed with the layout, mostly to open the lane they look at (`openLane` in `test/support/panel.mjs`).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
