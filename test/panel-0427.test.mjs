@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, openLane } from './support/panel.mjs';
 
 // ---------- 0427: use Cursor's fonts in the panel ----------
 
@@ -105,4 +105,38 @@ test('0427 AC1 self-check: words that were in the monospace only to look like la
     '#settings .switch-row .name, #settings .arow .name']) assert.equal(family(rule(sel)), UI, sel);
   // a setting's key and value are code, so they stay in the monospace
   assert.equal(family(rule('#settings .setting .value')), MONO);
+});
+
+// ---------- in a real browser ----------
+
+const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
+const STATE = { run: { on: true }, ideas: [], tickets: [
+  T('0801', 'building', { title: 'At work', started: new Date(Date.now() - 60000).toISOString(), build_running: true }),
+  T('0802', 'blocked', { title: 'Stuck', started: new Date(Date.now() - 60000).toISOString(), blocked_question: 'Which way?' }),
+] };
+const stub = `(() => {
+  const STATE = ${JSON.stringify(STATE)};
+  const real = window.fetch.bind(window);
+  const json = b => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } });
+  window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? json(STATE) : /\\/log$/.test(String(url)) ? json({ text: '' }) : real(url, opts);
+})();`;
+
+test('0427 AC1: in a real browser, a ticket\'s stage sentence and a question are 14 px, in the interface font', skip, async () => {
+  const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
+  const b = await browserPage('about:blank');
+  try {
+    await b.send('Page.enable');
+    await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub });
+    await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
+    await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#queue .q').length === 2`, 'the panel');
+    await b.js(openLane('build'));
+    await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0802').querySelector('.top').click(), true`);
+    await b.until(`!!document.querySelector('#queue .q.open .question')`, 'the question');
+    const seen = await b.js(`[...document.querySelectorAll('#queue .q .top .say'), document.querySelector('#queue .q.open .question')].map(n => ({ text: n.textContent, size: getComputedStyle(n).fontSize, font: getComputedStyle(n).fontFamily }))`);
+    assert.equal(seen.length, 3, JSON.stringify(seen));
+    for (const s of seen) {
+      assert.equal(s.size, '14px', `${s.text}: ${s.size}`);
+      assert.match(s.font, /BlinkMacSystemFont/, `${s.text}: ${s.font}`);
+    }
+  } finally { await b.close(); await stop(panel); }
 });
