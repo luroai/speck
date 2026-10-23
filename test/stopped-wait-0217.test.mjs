@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
-import { T, round, panelModel, panelRepo, fakePage, queueRows } from './support/panel.mjs';
+import { T, round, panelModel, panelRepo, fakePage, queueRows, openQueueRows } from './support/panel.mjs';
 import { runsPath, speck, json } from './support/ticker.mjs';
 import { runRepo, startRun, until, stopRun, record, killAll } from './support/run.mjs';
 import { parseTicket, statusData } from '../scripts/speck.mjs';
@@ -54,6 +54,7 @@ test('0217 AC1: a ticket whose build stopped before finishing has its timer stop
   const t = T('0001', 'building', { started: ago(13), waited_seconds: 60, build_exit: { at: ago(3), code: 1, message: 'gone' } });
   const p = fakePage([{ tickets: [t], ideas: [] }], { Date: c.Date });
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   assert.match(p.all(rowOf(p, '0001')).map(n => n._text || '').join(' '), /Build stopped before finishing/);
   assert.equal(subOf(p, '0001').textContent, '09:00');
   await tick(p, c, 5000);
@@ -92,6 +93,7 @@ test('0217 AC2: a ticket shown as "Build stopped unexpectedly" has its timer sto
   const t = T('0001', 'building', { started: ago(10), waited_seconds: 60, build_stopped: true, build_stopped_at: ago(2) });
   const p = fakePage([{ tickets: [t], ideas: [] }], { Date: c.Date });
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   assert.match(p.all(rowOf(p, '0001')).map(n => n._text || '').join(' '), /Build stopped unexpectedly/);
   assert.equal(subOf(p, '0001').textContent, '07:00');
   await tick(p, c, 5000);

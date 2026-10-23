@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage } from './support/panel.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -247,6 +247,7 @@ test('0031 AC5: a title like <b>x</b> is rendered as those characters, in every 
   };
   const p = fakePage([state]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   for (const area of ['shaping', 'queue', 'shipped']) {
     const nodes = p.all(p.byId(area));
     assert.ok(p.byId(area).textContent.includes(evil), `${area} shows the title literally`);
@@ -553,6 +554,7 @@ test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167)
   assert.deepEqual(panelModel()(state).queue.map(t => t.red), [true, false, false, false, false]);
   const p = fakePage([state]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const rows = queueRows(p);
   const red = n => /\b(bad|blocked)\b/.test(n.className || '');
   assert.match(rows[0].className, /\bblocked\b/);
@@ -918,6 +920,7 @@ test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its bor
   assert.deepEqual(m.queue.map(t => t.exit_label), ['Build finished without shipping', null]);
   const p = fakePage([state]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const [a, b] = queueRows(p);
   assert.match(a.className, /\bto-ship\b/);
   assert.equal(stageOf(a).textContent, 'Ship');
@@ -937,6 +940,7 @@ test('0045 AC3: a build_exit with no message shows just the label', async () => 
   const state = { tickets: [T('0001', 'approved', exitOf(null))], ideas: [] };
   const p = fakePage([state]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const [a] = queueRows(p);
   assert.match(a.className, /\bto-ship\b/); // purple since 0138
   assert.ok(a.textContent.includes('Build finished without shipping'));
@@ -950,6 +954,7 @@ test('0045 AC4: a building or reviewing ticket with a build_exit says the build 
   assert.deepEqual(m.queue.map(t => t.exit_label), ['Build stopped before finishing', 'Build stopped before finishing']);
   const p = fakePage([state]);
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const [a, b] = queueRows(p);
   for (const [row, msg, step] of [[a, 'Stopped here.', 'Build'], [b, 'Out of turns.', 'Review 1']]) {
     assert.match(row.className, /\bblocked\b/);
@@ -969,7 +974,8 @@ test('0045 AC5: blocked, ready and tickets with no build_exit look as they do no
   const strip = m => m.queue.map(({ build_exit, ...t }) => t);
   assert.deepEqual(strip(model(withExit)), strip(model(plain)), 'the same model, apart from the build_exit field itself');
   assert.deepEqual(model(withExit).queue.map(t => t.red), [true, false, false, false, false]);
-  const render = async state => { const p = fakePage([state]); await p.settle(); return queueRows(p).map(r => ({ cls: r.className, text: r.textContent, red: p.all(r).filter(isRed).length })); };
+  // 0434: each card open, as what's under a Build card's two lines shows only then
+  const render = async state => { const p = boardPage([state]); await p.settle(); await openQueueRows(p); return queueRows(p).map(r => ({ cls: r.className, text: r.textContent, red: p.all(r).filter(isRed).length })); };
   assert.deepEqual(await render(withExit), await render(plain));
   const rows = await render(withExit);
   assert.ok(!rows.some(r => /Should not show|without shipping|before finishing/.test(r.text)));

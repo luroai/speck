@@ -22,7 +22,8 @@ function fake(tickets) {
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const find = (p, row, re) => p.all(row).filter(n => re.test(n.className || ''));
-const say = (p, id) => find(p, rowOf(p, id), /\bsay\b/)[0].textContent;
+// 0434: while its reviewer or builder is at work, the sentence is the name of the grid of lights that stands in for it
+const say = (p, id) => find(p, rowOf(p, id), /^lights$/)[0].attrs['aria-label'];
 const stage = (p, id) => find(p, rowOf(p, id), /^stage\b/)[0]?.textContent;
 
 test('0223 AC1: while a round is running, the card names the round being run: 1 for the first, otherwise the last recorded plus one', async () => {
@@ -49,13 +50,14 @@ test('0223 AC2: while no round is running, the card says the builder is fixing t
   assert.equal(say(p, '0613'), "The builder is fixing round 1's findings");
 });
 
-test('0223 AC4: the stage name still uses the last recorded round, whether or not a round is running', async () => {
+// 0434: the sentence is now only the grid of lights' name, so while a round is running the stage names that round
+test('0223 AC4: the stage name uses the last recorded round while no round is running, and the running one while one is', async () => {
   const p = fake([
     reviewing('0621', { rounds: [asked(1)], review_running: 2 }),
     reviewing('0622', { rounds: [asked(1)], review_running: null }),
   ]);
   await p.settle();
-  assert.equal(stage(p, '0621'), 'Review 1');
+  assert.equal(stage(p, '0621'), 'Review 2');
   assert.equal(stage(p, '0622'), 'Review 1');
 });
 

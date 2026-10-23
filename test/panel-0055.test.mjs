@@ -112,9 +112,10 @@ test('0055 AC1-AC4: in a real browser, no card moves, a refresh keeps a selectio
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`document.querySelectorAll('#queue .q').length === 4`, 'the queue');
-    // AC1 and AC2: since 0416, no card has a canvas, and nothing animates in CSS.
+    // AC1 and AC2: since 0416, no card has a canvas, and nothing animates in CSS but (0434) the dots of the grid of
+    // lights on a card an agent is at work on.
     assert.equal(await b.js(`document.querySelectorAll('#queue canvas').length`), 0);
-    assert.deepEqual(await b.js(`document.getAnimations().length`), 0);
+    assert.deepEqual(await b.js(`document.getAnimations().filter(a => !a.effect.target.matches('#queue .q .lights > i')).length`), 0);
     // AC4: a refresh keeps the row's step, and a selection in the row stays.
     const t = `${row('0002')}.querySelector('.title')`;
     await b.drag(await b.js(charIn(t, 0)), await b.js(charIn(t, 6)));

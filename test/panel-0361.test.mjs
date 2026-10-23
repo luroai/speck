@@ -51,17 +51,16 @@ test('0361 AC1: open, it still has no exit line or log box', async () => {
   noExit(p, row);
 });
 
-test('0361 AC2: closed, it has a Review pack button that opens the pack, files first, without opening the row', async () => {
-  const p = await load([state(finished()), { pack: PACK, documents: DOCS }, state(finished())]);
-  const row = rowOf(p, '0001');
-  assert.doesNotMatch(row.className, /\bopen\b/);
-  const [pack] = buttons(p, row, 'Review pack');
+// 0434: closed, a Build card is its two lines only, so the Review pack button shows once it's open
+test('0361 AC2: closed, it is its two lines; open, its Review pack button opens the pack, files first', async () => {
+  const closed = await load([state(finished())]);
+  assert.deepEqual(rowOf(closed, '0001').children.map(n => n.className), ['top'], 'closed: its two lines only');
+  const p = await opened([state(finished()), LOG, { pack: PACK, documents: DOCS }, state(finished())]);
+  const [pack] = buttons(p, rowOf(p, '0001'), 'Review pack');
   assert.ok(pack, 'a Review pack button');
   p.press(pack);
   await p.settle();
   assert.ok(p.calls.some(c => String(c.url).endsWith('/api/tickets/0001/pack')), 'asks for the pack');
-  assert.ok(!p.calls.some(c => /\/log\b/.test(String(c.url))), 'no log asked for: the row stayed closed');
-  assert.doesNotMatch(rowOf(p, '0001').className, /\bopen\b/, 'the row is still closed');
   assert.deepEqual(docButtons(p).map(b => b.textContent), DOCS.map(d => d.path), 'the document\'s files');
   assert.ok(pane(p).children.findIndex(n => p.all(n).includes(docButtons(p)[0])) <= pane(p).children.findIndex(n => n.className === 'md'), 'at the top');
 });
@@ -84,12 +83,13 @@ test('0361 AC3: open, it has the Full ticket and Review pack buttons and the bui
 });
 
 test('0361 AC4: a code ticket waiting to be shipped keeps its line, log box and sentence, and no closed Review pack button', async () => {
-  const p = await load([state(code())]);
+  const closed = await load([state(code())]);
+  assert.ok(say(rowOf(closed, '0002')).textContent.startsWith('Approved · waiting for you to ship it'));
+  assert.equal(buttons(closed, rowOf(closed, '0002'), 'Review pack').length, 0);
+  const p = await opened([state(code()), LOG], '0002'); // 0434: its line and log box show while it's open
   const row = rowOf(p, '0002');
   assert.ok(findText(p, row, 'Build finished without shipping'));
   assert.ok(p.all(row).some(n => /\bquestion exit to-ship\b/.test(n.className || '')));
-  assert.ok(say(row).textContent.startsWith('Approved · waiting for you to ship it'));
-  assert.equal(buttons(p, row, 'Review pack').length, 0);
 });
 
 test('0361 AC4: a document task blocked, building, reviewing, shipping or stopped looks as it did', async () => {
@@ -107,8 +107,9 @@ test('0361 AC4: a document task blocked, building, reviewing, shipping or stoppe
     assert.ok(!row.textContent.includes('Finished · read the document'), name);
     assert.equal(buttons(p, row, 'Review pack').length, 0, `${name}: no Review pack button while closed`);
     if (label) {
-      assert.ok(findText(p, row, label), `${name}: its line`);
-      if (t.build_exit) assert.ok(row.textContent.includes('line one of the log'), `${name}: its log box`);
+      const o = await opened([state(t), LOG]), open = rowOf(o, '0001'); // 0434: its line shows while it's open
+      assert.ok(findText(o, open, label), `${name}: its line`);
+      if (t.build_exit) assert.ok(open.textContent.includes('line one of the log'), `${name}: its log box`);
     }
   }
 });
