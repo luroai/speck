@@ -60,10 +60,10 @@ test('0417 AC2: the touch screen rules apply at any width and keep each 44 px mi
   assert.match(got.get('.tag-row, #full-ticket .top .tags') || '', /gap:\s*18px/);
 });
 
-// The rules for narrow windows that aren't about a control's size, as they were before this ticket.
-const NARROW = ['header', '.bezel .print', '#settings .switch-row .info::after, #settings .setting .info::after', '#settings .looks [role="radio"]',
-  '#settings .switch-row .row, #settings .setting .row, #settings .arow .row', '.run-error, .offline, .restart', 'main', '.tabs', '.tab', '.sh',
-  '#shaping', '.detail', '.ready', '#queue', '.resume', '.resume .cmd', '.stat', '#shipped'];
+// The rules for narrow windows that aren't about a control's size, as they were before this ticket. 0418: the panel's
+// own layout is the same at every width, so only those for Settings and for class names shared with the lanes are left.
+const NARROW = ['#settings .switch-row .info::after, #settings .setting .info::after', '#settings .looks [role="radio"]',
+  '#settings .switch-row .row, #settings .setting .row, #settings .arow .row', '.sh', '.detail', '.ready', '.resume', '.resume .cmd'];
 
 test('0417 AC3: the other rules for narrow windows are still under 700 px', () => {
   const narrow = media('(max-width: 699.98px)');
@@ -71,7 +71,6 @@ test('0417 AC3: the other rules for narrow windows are still under 700 px', () =
   const got = rules(narrow[0].body);
   const sels = got.map(([s]) => s);
   for (const sel of NARROW) assert.ok(sels.includes(sel), `${sel} is still in the narrow rules`);
-  assert.match(got.find(([s]) => s === '.tab')[1], /flex-direction:\s*column;[^}]*padding:\s*6px 10px/, 'each tab\'s name on the top line, its count under it');
   assert.match(got.find(([s]) => s === '.detail')[1], /grid-template-columns:\s*minmax\(0, 1fr\)/);
   // 0158: tables as blocks, and the review pack's criteria laid out for a narrow window
   assert.ok(sels.some(s => s.includes('#full-ticket .md table')) && sels.some(s => s.includes('.ac-table tr')), 'the narrow table rules');
@@ -150,7 +149,7 @@ test('0417 AC1, AC3: in a 375 px window with no touch screen, no control has a 4
   // AC3: the narrow layout itself, which isn't about a control's size
   await b.js(openLane('build'));
   assert.equal(await b.js(`getComputedStyle(document.getElementById('tab-build')).flexDirection`), 'column', 'each tab\'s count under its name');
-  assert.equal(await b.js(`getComputedStyle(document.querySelector('main')).paddingLeft`), '16px');
+  assert.equal(await b.js(`getComputedStyle(document.getElementById('queue')).paddingLeft`), '16px'); // 0418: the lane's list, as main has none
 }));
 
 for (const width of [375, 1280]) {

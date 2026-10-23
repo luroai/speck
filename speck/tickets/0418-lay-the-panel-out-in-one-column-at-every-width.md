@@ -40,6 +40,8 @@ The panel has one layout, a single column, at every width, and a lane has no bor
 - Asked for by the user on 2026-10-23: the panel is used mostly in a thin side pane, and its tickets are too tall there. A separate desktop layout isn't needed any more. Each ticket keeps its full box (the user, 2026-10-23).
 - Waits for 0417: both change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: Settings and the full ticket share the class names `.sh`, `.detail`, `.ready` and `.resume` with the lanes, so the one-column rules for those apply only inside the lanes (`main …`), and their rules for narrow windows stay as they were for Settings and the full ticket.
+- Older tests changed to match: 0060, 0135, 0157, 0160, 0161, 0167, 0281 and 0417 checked the separate wide layout or the lane's border, which this ticket removes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
