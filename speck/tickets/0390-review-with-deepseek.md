@@ -44,6 +44,7 @@ speck's reviewers are Codex, Claude Code and Cursor. There's no way to review wi
 - Start from the Claude reviewer's command, `CLAUDE_ARGS` in `scripts/reviewers.mjs`, adding `--bare`. The key goes into the reviewer's own environment only.
 - Checked 2026-10-23: `claude --help` (2.1.301) says sessions are saved to disk unless `--no-session-persistence` is given, so `--resume` is local to Claude Code and works whichever endpoint it's pointed at.
 - Waits for 0389 for the key, and for 0388, which changes how a ticket's reviewer is chosen (`scripts/review.mjs`, `scripts/same-model.mjs`).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
