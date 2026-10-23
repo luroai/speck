@@ -1,7 +1,7 @@
 ---
 id: "0401"
 title: "Add any API provider from Settings"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T11:24:39.331Z"
 approved: "2026-10-23T11:36:02.278Z"
+finished: "2026-10-23T11:38:59.508Z"
 
 ---
 # 0401 · Add any API provider from Settings
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 "Add an agent" offers DeepSeek as a fixed provider row. Anyone with another OpenAI- or Anthropic-compatible API has nowhere to enter its name, address, type and key.
