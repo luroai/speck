@@ -1,7 +1,7 @@
 ---
 id: "0398"
 title: "Keep a list of your agents for this machine"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-18-find-the-agents-and-models-on-this-machine.
 after: []                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T10:00:15.944Z"
+approved: "2026-10-23T10:07:19.648Z"
 
 ---
 # 0398 · Keep a list of your agents for this machine
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings offers every agent speck knows, whether or not it's set up here. DeepSeek appears as a choice before any API key is added, and Claude Code, Codex and Cursor appear whether or not they're installed.
@@ -55,9 +56,15 @@ Nothing changes yet in the Settings view: that comes with the next two tickets. 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Setup does not create the list for an existing speck installation on a machine without one.; F2 cmdAgents now unconditionally calls findRepoRoot, so listing agents fails before speck is initialised.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 558,470
+- Elapsed since build started: 7 min
+- Changed lines: 174 (limit 5000)
 - Follow-ups (no inbox notes; known limits only):
   - `speck init --skip-checks` doesn't make the list, as it skips the other checks; setup fills it from `speck agents --json` instead.
   - An agent that's installed but signed out can be added, with a note on how to sign in: the criteria refuse only agents that aren't installed.
