@@ -1,7 +1,7 @@
 ---
 id: "0412"
 title: "Offer a System choice for the panel's appearance"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0410", "0411"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T14:10:05.627Z"
-approved: "2026-10-23T14:17:22.708Z"
+approved: "2026-10-23T14:22:13.308Z"
 
 ---
 # 0412 · Offer a System choice for the panel's appearance
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Appearance in Settings is a light/dark switch. A panel that hasn't been switched follows the computer's light or dark setting, but once you press the switch there's no way back to following it, so a computer that changes look at sunset leaves the panel behind.
@@ -57,12 +57,13 @@ To see it, open Settings and pick each choice in turn; with System chosen, chang
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 160,254
-- Elapsed since build started: 7 min
+- Reviewer tokens: 445,122
+- Elapsed since build started: 12 min
 - Changed lines: 83 (limit 5000)
 - Known limit: a choice made in another tab of the same browser applies to this tab on its next reload, not at once (as before).
 - Follow-ups: none sent to the inbox.
