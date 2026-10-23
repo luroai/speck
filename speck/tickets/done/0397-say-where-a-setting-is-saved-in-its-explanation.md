@@ -1,7 +1,7 @@
 ---
 id: "0397"
 title: "Say where a setting is saved in its explanation"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0396"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T10:24:22.591Z"
 approved: "2026-10-23T10:31:30.898Z"
+finished: "2026-10-23T10:34:17.748Z"
 
 ---
 # 0397 · Say where a setting is saved in its explanation
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Settings marks rows "repo", "repo default", "default" and "this machine", and opens with a paragraph starting "What speck uses now…". The marks and the paragraph confuse more than they explain.
