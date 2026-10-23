@@ -151,7 +151,7 @@ test('0158 AC1: at 375 px, each row of every table in the pane and in an opened 
         if (t.criteria && i < 3) return; // AC2: the number, criterion and result go unlabelled
         assert.equal(c.labelDisplay, 'block', 'the label is on a line of its own above the cell\'s text');
         assert.ok(c.labelSize < c.cellSize, 'in small type');
-        assert.equal(c.labelCase, 'uppercase', 'in capitals');
+        assert.equal(c.labelCase, 'none', 'in sentence case (0427: no longer in capitals)');
         assert.equal(c.labelColour, muted, 'muted');
       });
       if (t.criteria) continue; // AC2 has its own layout
