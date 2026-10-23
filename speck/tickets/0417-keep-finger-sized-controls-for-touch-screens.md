@@ -41,6 +41,7 @@ Controls are finger-sized on touch screens only, so a narrow pane used with a mo
 - Checked 2026-10-23: turning on touch emulation over DevTools (`Emulation.setTouchEmulationEnabled`, which Playwright's `hasTouch` uses) makes `(pointer: coarse)` match in the installed headless Chromium. Without it, headless Chromium matches neither `(pointer: fine)` nor `(pointer: coarse)`, and `Emulation.setEmulatedMedia` can't emulate `pointer`. Playwright itself isn't installed here: the tests use the DevTools call directly.
 - Waits for 0416: both change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: no changes. Headless Chromium matches neither `(pointer: fine)` nor `(pointer: coarse)`, so the browser test for AC1 runs with no touch screen (pointer none), and the stylesheet test checks no 44 px size sits outside the touch screen rules at any width. The phone tests of 0140, 0151, 0154, 0162, 0164 and 0165 now turn on touch emulation below 700 px, as a phone has a touch screen.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
