@@ -16,7 +16,7 @@ import { pictureFile } from './pictures.mjs';
 import { documentFile } from './output.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettingRequest, panelSaveRequestAsync, settingsAnswer, agentModels, panelKeyAddRequest, panelAgentRequest } from './settings.mjs';
+import { panelSettingRequest, panelSaveRequestAsync, settingsAnswer, agentModels, panelKeyAddRequest, panelAgentRequest, panelProviderAddRequest } from './settings.mjs';
 import { foremanView, readForeman, fixingOf } from './foreman.mjs';
 import { agentView } from './foreman-agent.mjs';
 import { panelForemanReply } from './foreman-answer.mjs';
@@ -225,7 +225,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes, POST /api/keys/<provider> (0393), POST /api/agents/<agent>/add or /remove (0399) and POST /api/run/on or /off. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes, POST /api/keys/<provider> (0393), POST /api/agents/<agent>/add or /remove (0399), POST /api/providers (0401) and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -373,11 +373,11 @@ export async function panelServer() {
     const query = new URLSearchParams(req.url.split('?')[1] || ''); // 0259's ?confirm= and 0261's ?scope=
     if (saveAll) return (async () => wrote(res, await panelSaveRequestAsync(repo, req.url.split('?')[1] || '')))(); // 0311: reads the new builder's models first
     if (setting) return wrote(res, panelSettingRequest(repo, setting[1], setting[2], query.get('confirm'), query.get('scope')));
-    const keyPath = where.match(/^\/api\/keys\/([^/]+)$/); // 0393: a model provider's API key, from Settings
+    const keyPath = where.match(/^\/api\/keys\/([^/]+)$/) ?? (where === '/api/providers' ? [where, null] : null); // 0393: a model provider's API key, from Settings. 0401: or a provider you add
     if (req.method === 'POST' && keyPath) {
       if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
-      requestBody(req).then(body => (body === null ? { status: 413, body: { error: 'That key is too long, so nothing was saved.' } } : panelKeyAddRequest(repo, keyPath[1], body))) // 0399: and joins your agents
+      requestBody(req).then(body => (body === null ? { status: 413, body: { error: `That ${keyPath[1] === null ? 'provider' : 'key'} is too long, so nothing was saved.` } } : keyPath[1] === null ? panelProviderAddRequest(repo, body) : panelKeyAddRequest(repo, keyPath[1], body))) // 0399: and joins your agents
         .catch(e => ({ status: 500, body: { error: `Couldn't save the key, so nothing was saved: ${e instanceof SpeckError ? e.message : 'the request failed'}.` } })).then(out => wrote(res, out));
       return;
     }

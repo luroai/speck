@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { TEMPLATES, SpeckError, sh, git, reviewerSettings, settingsMeta, posix } from './core.mjs';
 import { cacheDir, reviewDiff, validateVerdict, saveRound, reviewerPrompt, verdictInProse } from './review.mjs';
 import { cursorCli } from './cursor-build.mjs';
-import { PROVIDERS } from './providers.mjs';
+import { knownProviders } from './custom-providers.mjs';
 import { providerNamed, providerReady, providerEnv } from './provider-review.mjs';
 import { withoutProviderBuild } from './provider-build.mjs';
 
@@ -96,7 +96,7 @@ const BUILT_IN = Object.freeze({
 
 // The options a reviewer runs with: its own under reviewer_options when they give a command, or speck's built-in ones.
 // 0390: a provider in `providers` is built in too, with `provider` saying which.
-export function reviewerOptions(cfg, name, providers = PROVIDERS) {
+export function reviewerOptions(cfg, name, providers = knownProviders()) {
   const own = cfg.reviewer_options?.[name];
   const mine = own && typeof own === 'object' ? own : {};
   if (typeof mine.command === 'string' && mine.command.trim()) return mine;
@@ -197,7 +197,7 @@ function atPath(obj, dotted) {
 // Runs a reviewer set up in config as a command. speck reads the verdict from its output, so the builder never handles it.
 // If the reviewer can resume a session (session_id_path and resume_command), later rounds continue it with only the new
 // round's prompt. Otherwise, or if resuming fails, a fresh run gets the full history.
-export function runCommandReview(repo, id, name, command, s, providers = PROVIDERS) {
+export function runCommandReview(repo, id, name, command, s, providers = knownProviders(repo)) {
   const options = reviewerOptions(s.cfg, name, providers);
   const settings = reviewerSettings(s.ticket.fm, s.cfg);
   const values = { model: settings.model, effort: settings.effort };

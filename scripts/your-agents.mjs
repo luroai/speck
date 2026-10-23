@@ -8,7 +8,8 @@ import path from 'node:path';
 import { SpeckError, findRepoRoot, loadConfig } from './core.mjs';
 import { machineConfigFile } from './machine.mjs';
 import { sharedCacheDir } from './turns.mjs';
-import { PROVIDERS, findProvider } from './providers.mjs';
+import { findProvider } from './providers.mjs';
+import { knownProviders } from './custom-providers.mjs';
 import { keysStatus } from './keys.mjs';
 import { findAgents, agentLines } from './agents.mjs';
 import { foremanAgentOf } from './foreman-agent.mjs';
@@ -21,7 +22,7 @@ const knownIds = providers => [...CLI_AGENTS, ...providers.map(p => p.name)];
 
 // This machine's list, as agent ids speck knows, in speck's order, or null when it has none. `repo` is null outside a
 // speck project, where there's no list or key to read.
-export function readYourAgents(repo, { providers = PROVIDERS } = {}) {
+export function readYourAgents(repo, { providers = knownProviders(repo) } = {}) {
   if (repo === null) return null;
   const file = yourAgentsFile(repo);
   let text;
@@ -42,7 +43,7 @@ function writeYourAgents(repo, ids, providers) {
 
 // Every agent speck knows, with whether it's ready here: { agents, providers }, each entry with `ready`. Agents come
 // from findAgents, providers with whether this machine has their key, and the models speck runs them on.
-function everyAgent(repo, { find = findAgents, models = true, providers = PROVIDERS } = {}) {
+function everyAgent(repo, { find = findAgents, models = true, providers = knownProviders(repo) } = {}) {
   const agents = find({ models }).agents.map(a => ({ ...a, ready: a.installed === true && a.signed_in === true }));
   const keys = repo === null ? {} : Object.fromEntries(keysStatus(repo, { providers }).map(k => [k.name, k.set]));
   const provs = providers.map(p => ({ id: p.name, name: p.label, key_set: keys[p.name] === true, ready: keys[p.name] === true,
@@ -70,7 +71,7 @@ export function agentsReport(repo, opts = {}) {
 export function fillYourAgents(repo, opts = {}) {
   if (readYourAgents(repo, opts) !== null) return null;
   const ids = readyIds(everyAgent(repo, { ...opts, models: false }));
-  if (ids.length) writeYourAgents(repo, ids, opts.providers ?? PROVIDERS);
+  if (ids.length) writeYourAgents(repo, ids, opts.providers ?? knownProviders(repo));
   return ids;
 }
 
@@ -85,7 +86,7 @@ function idOf(name, providers) {
 
 // Adds `name` to this machine's list, refusing one that isn't installed or a provider without its key. Returns what to say.
 export function addAgent(repo, name, opts = {}) {
-  const providers = opts.providers ?? PROVIDERS, id = idOf(name, providers);
+  const providers = opts.providers ?? knownProviders(repo), id = idOf(name, providers);
   const every = everyAgent(repo, { ...opts, models: false }), entry = [...every.agents, ...every.providers].find(a => a.id === id);
   if (entry.key_set === false) throw new SpeckError(`${entry.name} has no API key on this machine, so it wasn't added. Set one with \`speck keys set ${id}\`, then add it again.`);
   if (entry.installed === false) throw new SpeckError(`${entry.name} isn't installed, so it wasn't added. Install it, sign in, then add it again.`);
@@ -98,14 +99,14 @@ export function addAgent(repo, name, opts = {}) {
 }
 
 // The roles that use agent `id` in `cfg`: builder, reviewer or Foreman.
-export function rolesUsing(id, cfg, providers = PROVIDERS) {
+export function rolesUsing(id, cfg, providers = knownProviders()) {
   const reviewer = cfg?.reviewer === 'claude-subagent' ? 'claude' : cfg?.reviewer;
   return [['builder', cfg?.builder], ['reviewer', reviewer], ['Foreman', foremanAgentOf(cfg, providers)]].filter(([, v]) => v === id).map(([role]) => role);
 }
 
 // Removes `name` from this machine's list, refusing one the builder, reviewer or Foreman uses. Returns what to say.
 export function removeAgent(repo, name, cfg, opts = {}) {
-  const providers = opts.providers ?? PROVIDERS, id = idOf(name, providers), label = nameOf(id, providers);
+  const providers = opts.providers ?? knownProviders(repo), id = idOf(name, providers), label = nameOf(id, providers);
   const roles = rolesUsing(id, cfg, providers);
   if (roles.length) {
     const said = roles.length > 1 ? `${roles.slice(0, -1).join(', ')} and ${roles.at(-1)}` : roles[0];
@@ -121,7 +122,7 @@ export function removeAgent(repo, name, cfg, opts = {}) {
 // without their models), each with whether it's yours, whether it's ready, how to install one that isn't, and the
 // roles in `cfg` that use it. Never a key: only whether a provider has one.
 export function yourAgentsView(repo, found, cfg, opts = {}) {
-  const providers = opts.providers ?? PROVIDERS;
+  const providers = opts.providers ?? knownProviders(repo);
   const report = agentsReport(repo, { ...opts, providers, models: false, find: () => found });
   const row = (a, kind) => ({ id: a.id, name: a.name, kind, yours: a.yours === true, ready: a.ready === true,
     ...(kind === 'agent' ? { installed: a.installed === true, signed_in: a.signed_in === true } : { key_set: a.key_set === true }),
@@ -165,7 +166,7 @@ export function cmdAgents(args, opts = {}) {
 
 // What `speck init` says after filling the list: one line, or null when the list was already there.
 export function fillLine(repo, opts = {}) {
-  const added = fillYourAgents(repo, opts), providers = opts.providers ?? PROVIDERS;
+  const added = fillYourAgents(repo, opts), providers = opts.providers ?? knownProviders(repo);
   if (added === null) return `kept    this machine's list of your agents (${names(yourAgents(repo, opts), providers) || 'none'})`;
   return added.length ? `added   your agents on this machine: ${names(added, providers)}` : 'found   no agent installed and signed in, or provider with its key set, so this machine has no list of your agents yet. Each one you set up counts as yours until you make one with speck agents add <agent>.';
 }

@@ -9,7 +9,8 @@ import { isatty } from 'node:tty';
 import { SpeckError, findRepoRoot } from './core.mjs';
 import { machineConfigFile } from './machine.mjs';
 import { sharedCacheDir } from './turns.mjs';
-import { PROVIDERS, findProvider } from './providers.mjs';
+import { findProvider } from './providers.mjs';
+import { knownProviders } from './custom-providers.mjs';
 
 export const keysFile = repo => path.join(path.dirname(machineConfigFile(repo)), 'keys.json');
 
@@ -20,7 +21,8 @@ function providerOf(name, providers) {
   return p;
 }
 
-// The keys in this machine's file, for the providers in `providers` only: {} when there's no file.
+// The keys in this machine's file, for the providers in `providers` only, or with null every key in it (0401): {} when
+// there's no file.
 function readKeys(repo, providers) {
   const file = keysFile(repo);
   let text;
@@ -34,7 +36,8 @@ function readKeys(repo, providers) {
   if (!read || typeof read !== 'object' || Array.isArray(read))
     throw new SpeckError(`This machine's API keys file, ${file}, can't be read. Delete it, then set each key again with \`speck keys set <provider>\`.`);
   const out = {};
-  for (const p of providers) if (Object.hasOwn(read, p.name) && typeof read[p.name] === 'string' && read[p.name]) out[p.name] = read[p.name];
+  for (const name of providers === null ? Object.keys(read).filter(k => k !== '__proto__') : providers.map(p => p.name))
+    if (Object.hasOwn(read, name) && typeof read[name] === 'string' && read[name]) out[name] = read[name];
   return out;
 }
 
@@ -53,12 +56,12 @@ function writeKeys(repo, keys) {
 }
 
 // The key for provider `name` on this machine, or null when it has none.
-export function providerKey(repo, name, { providers = PROVIDERS } = {}) {
+export function providerKey(repo, name, { providers = knownProviders(repo) } = {}) {
   return readKeys(repo, providers)[providerOf(name, providers).name] ?? null;
 }
 
 // Each provider with whether this machine has its key, and nothing more.
-export function keysStatus(repo, { providers = PROVIDERS } = {}) {
+export function keysStatus(repo, { providers = knownProviders(repo) } = {}) {
   const keys = readKeys(repo, providers);
   return providers.map(p => ({ name: p.name, label: p.label, set: Object.hasOwn(keys, p.name) }));
 }
@@ -72,16 +75,16 @@ export function checkedKey(text) {
   return key;
 }
 
-export function saveProviderKey(repo, name, key, { providers = PROVIDERS } = {}) {
-  const p = providerOf(name, providers), keys = readKeys(repo, providers);
+export function saveProviderKey(repo, name, key, { providers = knownProviders(repo) } = {}) {
+  const p = providerOf(name, providers), keys = readKeys(repo, null); // 0401: keeping every other provider's key
   keys[p.name] = checkedKey(key);
   writeKeys(repo, keys);
   return p;
 }
 
 // Removes provider `name`'s key: true if there was one.
-export function removeProviderKey(repo, name, { providers = PROVIDERS } = {}) {
-  const p = providerOf(name, providers), keys = readKeys(repo, providers);
+export function removeProviderKey(repo, name, { providers = knownProviders(repo) } = {}) {
+  const p = providerOf(name, providers), keys = readKeys(repo, null);
   if (!Object.hasOwn(keys, p.name)) return false;
   delete keys[p.name];
   writeKeys(repo, keys);
@@ -104,7 +107,7 @@ export function readKeyInput(label) {
 
 const USAGE = 'Usage: speck keys, to see which providers have a key on this machine, speck keys set <provider>, which reads the key from its input, or speck keys remove <provider>.';
 
-export function cmdKeys(args, { providers = PROVIDERS, readKey = readKeyInput } = {}) {
+export function cmdKeys(args, { providers = knownProviders(), readKey = readKeyInput } = {}) {
   const repo = findRepoRoot(), [sub, name, ...rest] = args;
   if (!sub) {
     for (const s of keysStatus(repo, { providers })) console.log(`${s.label} (${s.name}): ${s.set ? 'key set' : 'no key'}`);
