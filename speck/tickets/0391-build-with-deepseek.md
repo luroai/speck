@@ -43,6 +43,7 @@ speck run builds with Claude Code, Codex or Cursor. There's no way to build with
 - Checked 2026-10-23: `claude --help` (2.1.301) says `--bare` takes Anthropic auth strictly from `ANTHROPIC_API_KEY` or an apiKeyHelper, and never reads OAuth or the keychain. It also skips hooks, plugins and CLAUDE.md discovery, but skills still resolve by `/skill-name`.
 - Start from `DEFAULT_BUILD_COMMAND` in `scripts/build-model.mjs` and the per-builder plans in `scripts/ticket-builder.mjs` (0312), adding `--bare`. `--bare` skips CLAUDE.md discovery, so the build has to be given AGENTS.md (or CLAUDE.md) itself, for example with `--append-system-prompt-file`.
 - Waits for 0390.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
