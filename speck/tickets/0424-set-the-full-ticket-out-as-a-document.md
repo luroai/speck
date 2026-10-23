@@ -41,6 +41,7 @@ The full ticket and a review pack read as a hierarchical document: a title, sect
 - The user asked for this on 2026-10-23.
 - Today: the full ticket's Markdown is drawn by `markdown()` in `templates/panel.html` (0132, 0158).
 - Waits for 0423: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
