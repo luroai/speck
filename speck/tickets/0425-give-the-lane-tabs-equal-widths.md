@@ -1,7 +1,7 @@
 ---
 id: "0425"
 title: "Give the lane tabs equal widths"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0420"] # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T18:04:27.401Z"
 
 ---
 # 0425 · Give the lane tabs equal widths
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The Plan, Build and Shipped tabs (0410) are different widths and heights: Build and Shipped show their counts under their names ("1 in flight · 12 queued", "395 in total"), and Plan has none, so the row looks uneven.
