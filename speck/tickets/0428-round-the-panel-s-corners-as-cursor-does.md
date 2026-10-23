@@ -1,7 +1,7 @@
 ---
 id: "0428"
 title: "Round the panel's corners as Cursor does"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,14 +15,14 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0427"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T19:24:44.728Z"
-approved: "2026-10-23T19:37:46.175Z"
+approved: "2026-10-23T19:46:07.618Z"
 blocked_at: ""
 waited_seconds: 76
 
 ---
 # 0428 · Round the panel's corners as Cursor does
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 Every corner in the panel is square: `* { border-radius: 0 !important; }` in `templates/panel.html`. Beside Cursor's rounded controls and panels, it looks like a different product.
@@ -67,13 +67,14 @@ Clear winner: yes
 Round 1 (codex): changes requested: F1 The implementation narrows 'every button' to a hand-picked inventory without authorisation in the acceptance criteria.
 Round 2 (codex): changes requested.
 Round 3 (codex): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 4, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 663,012
-- Elapsed since build started: 13 min
-- Changed lines: 49 (limit 5000)
+- Reviewer tokens: 1,140,082
+- Elapsed since build started: 21 min
+- Changed lines: 48 (limit 5000)
 Follow-ups (Delivery log only, none to the inbox):
 - Known limit: at 320 px wide, Appearance's three choices have 1 px side padding to stay on one line with their own borders.
 - Beyond the listed pop-ups, the tag tip and Settings' explanations are rounded 8 px, as small pop-ups.
