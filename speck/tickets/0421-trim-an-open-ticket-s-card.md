@@ -41,6 +41,8 @@ An open ticket's card has no worktree line, and its buttons are small.
 - Today: the `act path` line and the `full-open` and `stop-build` buttons in `templates/panel.html`.
 - Builds alongside 0420, 0422 and 0423 (the user, 2026-10-23): each changes a different part of `templates/panel.html`. This one changes the open card's buttons and worktree line.
 - Failing before this build: none
+- Tests changed: 0053 AC2 and AC4 and 0069 AC1 asserted the worktree line this ticket removes (AC1), so they now check it's gone; 0053's test that the path is put in as text went with the line.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
