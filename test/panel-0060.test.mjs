@@ -85,7 +85,7 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     await b.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 });
     await b.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1 });
   };
-  const inPane = [1100, 450], outside = [200, 450];
+  const inPane = [1100, 450], outside = [400, 450]; // 0418: in the 720 px column, from 280 to 1000 px, left of the pane
   try {
     await b.until(`document.querySelectorAll('${item}').length === 39`, 'the drafts');
     await b.js(`document.getElementById('tab-plan').click()`); // 0410
