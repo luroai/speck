@@ -45,6 +45,7 @@ Settings lets you add any API provider by name, base URL, API type and key, and 
 - Assumption: Anthropic type uses the existing Claude Code path (`ANTHROPIC_BASE_URL` and key). OpenAI type is stored and shown, and a later ticket makes it run.
 - Checked 2026-10-23: `PROVIDERS` in `scripts/providers.mjs` holds only DeepSeek. `addRows` in `templates/panel.html` offers each known provider that isn't yours with a key field (0399). `providerVars` in `scripts/provider-review.mjs` only sets Anthropic variables.
 - Risk is high: it stores API keys, as 0389 did.
+- Failing before this build: none
 - Changes `templates/panel.html` and the provider/key scripts (`scripts/providers.mjs`, `scripts/keys.mjs`, `scripts/settings.mjs`, `scripts/your-agents.mjs`, `scripts/provider-review.mjs`). No open ticket changes those.
 
 ## In plain words
