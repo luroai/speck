@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, openQueueRows } from './support/panel.mjs';
 
 // ---------- 0419: a closed Plan or Build ticket is a title line and one line of details ----------
 
@@ -83,7 +83,7 @@ test('0419 AC3: the priority opens its menu, size and risk explain themselves, a
   assert.deepEqual(gotos(card(p, '0502')), ['Go to ticket 0501', 'Go to ticket 0503']);
 });
 
-test('0419 AC4: a question, a recommendation, a Ship hint and a message still show under the two lines', async () => {
+test('0419 AC4: a question, a recommendation, a Ship hint and a message still show under the two lines, while the card is open (0434)', async () => {
   const s = { run: { on: true }, tickets: [
     T('0601', 'blocked', { started: ago(300), blocked_question: 'A or B?', blocked_recommendation: 'A', blocked_resumable: true }),
     T('0602', 'blocked', { started: ago(300), blocked_question: 'C or D?', blocked_recommendation: 'C', foreman_will: true }),
@@ -92,7 +92,8 @@ test('0419 AC4: a question, a recommendation, a Ship hint and a message still sh
   ], ideas: [] };
   const p = page(s);
   await p.settle();
-  const under = id => card(p, id).children.slice(1).map(c => c.className);
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
+  const under = id => card(p, id).children.slice(1).map(c => c.className).filter(c => !/^(full-open|log)$/.test(c)); // then its buttons and log, as it's open
   for (const id of ['0601', '0602', '0603', '0604']) assert.deepEqual(linesOf(card(p, id)), ['line', 'progress'], `${id}: the two lines first`);
   assert.deepEqual(under('0601'), ['question', 'act']);
   assert.ok(p.all(card(p, '0601')).some(n => n.className === 'go-with' && n.textContent === 'Go with the recommendation'), 'the recommendation button');

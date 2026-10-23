@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { CLI, env, runRepo } from './support/run.mjs';
-import { T, fakePage, queueRows, panelModel, page, ROOT } from './support/panel.mjs';
+import { T, fakePage, queueRows, panelModel, page, ROOT, openQueueRows } from './support/panel.mjs';
 
 // ---------- 0044: show how to resume a blocked build's session ----------
 
@@ -91,6 +91,7 @@ async function clipPage(s, { fail = false } = {}) {
   const navigator = { clipboard: { writeText: async text => { if (fail) throw new Error('denied'); copied.push(text); } } };
   const p = fakePage([s], { navigator, setTimeout: (fn, ms) => timers.push({ fn, ms }) });
   await p.settle();
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   return { p, copied, timers };
 }
 
@@ -126,13 +127,13 @@ test('0044 AC3: with resume_command blank, the panel shows only "session <id>", 
   const { p } = await clipPage(state({}, { resume_command: '' }));
   const row = queueRows(p)[0];
   assert.equal(byClass(p, row, 'resume')[0].textContent, `session ${SESSION}`);
-  assert.equal(p.all(row).filter(n => n.tagName === 'button').length, 0);
+  assert.equal(p.all(row).filter(n => n.className === 'copy').length, 0);
 });
 
 test('0044 AC4: Copy copies the command\'s exact text and says "Copied" for 2 seconds', async () => {
   const s = state({ session: { id: SESSION, cwd: '/home/me/my repo' } });
   const { p, copied, timers } = await clipPage(s);
-  const btn = () => p.all(queueRows(p)[0]).find(n => n.tagName === 'button');
+  const btn = () => p.all(queueRows(p)[0]).find(n => n.className === 'copy');
   assert.equal(btn().textContent, 'Copy');
   const before = timers.length;
   btn().listeners.click({ stopPropagation() {} });
@@ -148,7 +149,7 @@ test('0044 AC4: Copy copies the command\'s exact text and says "Copied" for 2 se
 
 test('0044 AC4: a second copy within 2 seconds keeps "Copied" until 2 seconds after the second', async () => {
   const { p, timers } = await clipPage(state());
-  const btn = () => p.all(queueRows(p)[0]).find(n => n.tagName === 'button');
+  const btn = () => p.all(queueRows(p)[0]).find(n => n.className === 'copy');
   const before = timers.length;
   btn().listeners.click({ stopPropagation() {} });
   await p.settle();
@@ -164,7 +165,7 @@ test('0044 AC4: a second copy within 2 seconds keeps "Copied" until 2 seconds af
 
 test('0044 AC4: when the clipboard refuses, the button says so instead of "Copied", and the command stays on show to copy by hand', async () => {
   const { p } = await clipPage(state(), { fail: true });
-  const btn = () => p.all(queueRows(p)[0]).find(n => n.tagName === 'button');
+  const btn = () => p.all(queueRows(p)[0]).find(n => n.className === 'copy');
   btn().listeners.click({ stopPropagation() {} });
   await p.settle();
   assert.notEqual(btn().textContent, 'Copied');
@@ -183,7 +184,7 @@ test('0044 AC5: a blocked ticket with no session, and tickets that aren\'t block
   const { p } = await clipPage(s);
   for (const row of queueRows(p)) {
     assert.equal(byClass(p, row, 'resume').length, 0);
-    assert.equal(p.all(row).filter(n => n.tagName === 'button').length, 0);
+    assert.equal(p.all(row).filter(n => n.className === 'copy').length, 0);
   }
 });
 
@@ -195,7 +196,7 @@ test('0044: the page uses the Clipboard API and builds the command with textCont
 test('0050: the Copy label changes on the kept row, so text selected in it stays through the label reset and the next refresh', async () => {
   const { p, timers } = await clipPage(state(), { fail: true });
   const row = queueRows(p)[0];
-  const cmd = byClass(p, row, 'cmd')[0], btn = p.all(row).find(n => n.tagName === 'button');
+  const cmd = byClass(p, row, 'cmd')[0], btn = p.all(row).find(n => n.className === 'copy');
   const kept = () => queueRows(p)[0] === row && p.all(row).includes(cmd) && p.all(row).includes(btn);
   const before = timers.length;
   btn.listeners.click({ stopPropagation() {} });
@@ -208,5 +209,5 @@ test('0050: the Copy label changes on the kept row, so text selected in it stays
   timers[0].fn();
   await p.settle();
   assert.ok(kept(), 'and through the next refresh');
-  assert.equal(p.all(queueRows(p)[0]).find(n => n.tagName === 'button').textContent, 'Copy');
+  assert.equal(p.all(queueRows(p)[0]).find(n => n.className === 'copy').textContent, 'Copy');
 });

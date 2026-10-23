@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelModel, T, round, fakePage, queueRows, exitOf, isRed, stageOf, sayOf, findText } from './support/panel.mjs';
+import { page, panelModel, T, round, fakePage, queueRows, exitOf, isRed, stageOf, sayOf, findText, boardPage, openQueueRows } from './support/panel.mjs';
 
 const MESSAGE = 'speck ship refused: tests failed.';
 const purple = n => /\bto-ship\b/.test(n.className || '');
@@ -33,7 +33,8 @@ const ruleVar = (selector, prop) => {
 };
 
 const waiting = (o = {}) => T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf(MESSAGE), ...o });
-const rows = async state => { const p = fakePage([state]); await p.settle(); return { p, rows: queueRows(p) }; };
+// 0434: each card open, as what's under a Build card's two lines shows only then
+const rows = async state => { const p = boardPage([state]); await p.settle(); await openQueueRows(p); return { p, rows: queueRows(p) }; };
 const openRow = async (state, id) => {
   const p = fakePage([state]);
   await p.settle();
