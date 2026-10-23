@@ -42,6 +42,7 @@ Before its first review round, a build also runs the existing tests that cover t
 - `test/support/panel.mjs` names `templates/panel.html`, so a change to the panel brings in every test that imports it. That's most panel tests, a few minutes, once per build, against an 8-minute hand-back. After the split (0430 to 0433), this picks fewer tests for each change.
 - `speck test` is in `scripts/turns.mjs` (0239). The skill is `skills/speck-build/SKILL.md`; `.claude/skills/` links to it.
 - Waits for nothing: no open ticket changes these files.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
