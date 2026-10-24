@@ -141,9 +141,11 @@ test('0291 AC3: the panel shows a Codex or Cursor build\'s tokens, and no $0 cos
   await p.settle();
   await openDetails(p);
   const [row] = shippedRows(p);
-  assert.equal(row.children.find(n => n.className === 'figs').textContent, 'Time4 minReview rounds1Reviewer tokens1,200Builder tokens4,240');
+  assert.equal(figsOf(row), 'Time4 minReview rounds1Builder cost—Builder tokens4,240Reviewer tokens1,200', 'no cost recorded: a dash (0464)');
   assert.ok(!p.all(row).some(n => /\$0/.test(n.textContent || '')), 'no $0 anywhere on the card');
 });
+// 0464: an open card's figures are in its facts table, after its Shipped cell, whose time depends on the clock
+const figsOf = tr => tr.children.find(n => n.className === 'steps').children.find(n => n.className === 'facts').children.slice(1).map(c => c.textContent).join('');
 const builderOf = s => ({ builder_tokens: s.tokens, builder_cost_usd: s.cost_usd });
 
 // ---------- AC4 ----------
