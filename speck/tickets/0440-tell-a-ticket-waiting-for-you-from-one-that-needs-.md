@@ -1,7 +1,7 @@
 ---
 id: "0440"
 title: "Tell a ticket waiting for you from one that needs you"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-tell-waiting-for-you-from-needs-you-at-a-gl
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T07:32:34.098Z"
+approved: "2026-10-24T07:44:56.144Z"
 
 ---
 # 0440 · Tell a ticket waiting for you from one that needs you
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0426, a ticket waiting for you to ship it is Cursor's magenta and one that needs you is Cursor's red. They're only about 30° apart in hue, so at a glance they look the same, and 0138's check that they differ was eased from 60° to 20° to let them through.
@@ -50,9 +51,14 @@ A ticket that's approved and waiting for you to ship it is now green in the Buil
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 121,198
+- Elapsed since build started: 12 min
+- Changed lines: 27 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, none to the inbox):
   - A ticket being shipped has a 2 px edge in Cursor's own green (`--green`), and one waiting for you a 1 px edge in the darker or lighter text green (`--ok`) with a green tint. They're told apart by the tint and the edge's width. If that turns out too close, give the shipping edge another colour.
