@@ -41,6 +41,10 @@ The script for the panel's header is in a file of its own, so a ticket that chan
 - Asked for by the user on 2026-10-24, for release 0.15.0 and to be built next, so that tickets changing different parts of the panel can build side by side. The 0.15.0 panel work (0453 to 0471) was one chain of about 19 tickets, built one at a time for 5 to 6 hours with 4 build slots, because every ticket changed `templates/panel.js` (2,378 lines) or `templates/panel.css` (841 lines). A move with no visible change, as 0430 to 0433 were.
 - Waits for 0473: both change `panel.html`, `panel.js` and the server's list of files.
 - Failing before this build: none
+- Self-check: no changes. The moved lines are unchanged apart from comments and one new function: the old and new files' lines, sorted, differ only in the new file's header comment, a shorter comment in render() and `drawHeader`, which holds render()'s lines for the screen's word, the frame's edge and the screen button's label, title and aria-expanded, in the same order. panel-header.js loads after panel.js, as it uses its helpers (`$`, `el`, `setText`, `within`, `foremanOf`) as it loads, and before the pop-ups. Nothing in panel.js, the pop-ups or Settings uses what moved as it loads.
+- AC1: moved: the title row (the header's height and the project's tooltip), the screen's renderer hookup (`LCD`, `reducedMotion` and its listeners), speck's screen and poses (`SCREEN` to `speckRests`) and the tabs (`LANES` to their listeners, and the first `drawTabs()`). `foremanOf` and `pageStale` stay in panel.js: the pop-ups use them too. Pressing the screen stays in the pop-ups' file (0473).
+- AC4: tests that read the moved code or list the page's scripts now include the new file: 0432 AC1, 0433 AC1 (`drawScreen`), 0473 AC2 and AC3, and 0415 AC5's page opened from its file.
+- Pictures: none, because nothing anyone sees changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -26,6 +26,7 @@ export const MODEL = path.join(ROOT, 'templates', 'panel-model.js'); // 0431: th
 export const SETTINGS = path.join(ROOT, 'templates', 'panel-settings.js'); // 0432: the Settings view's script, which it loads from /panel-settings.js
 export const SCRIPT = path.join(ROOT, 'templates', 'panel.js'); // 0433: the rest of the page's script, which it loads from /panel.js
 export const POPUPS = path.join(ROOT, 'templates', 'panel-popups.js'); // 0473: the pop-ups' script, which it loads from /panel-popups.js
+export const HEADER = path.join(ROOT, 'templates', 'panel-header.js'); // 0474: the header's script, which it loads from /panel-header.js
 export const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
 export const env = { ...process.env, ...gitEnv };
 export const good = `## Problem\nUsers cannot export.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n`;
@@ -138,7 +139,7 @@ export function cliCopy() {
   fs.cpSync(path.join(ROOT, 'templates'), path.join(dir, 'templates'), { recursive: true });
   return { cli: path.join(dir, 'scripts', 'speck.mjs'), page: path.join(dir, 'templates', 'panel.html'), styles: path.join(dir, 'templates', 'panel-base.css'),
     model: path.join(dir, 'templates', 'panel-model.js'), settings: path.join(dir, 'templates', 'panel-settings.js'),
-    script: path.join(dir, 'templates', 'panel.js'), popups: path.join(dir, 'templates', 'panel-popups.js') };
+    script: path.join(dir, 'templates', 'panel.js'), popups: path.join(dir, 'templates', 'panel-popups.js'), header: path.join(dir, 'templates', 'panel-header.js') };
 }
 
 // The page's pure model function, run outside the browser.
@@ -153,6 +154,8 @@ export const settingsScript = () => fs.readFileSync(SETTINGS, 'utf8');
 export const pageScript = () => fs.readFileSync(SCRIPT, 'utf8');
 // 0473: the pop-ups' script, from its own file.
 export const popupsScript = () => fs.readFileSync(POPUPS, 'utf8');
+// 0474: the header's script, from its own file.
+export const headerScript = () => fs.readFileSync(HEADER, 'utf8');
 // 0473: the scripts the page loads, as the tags in panel.html name them, in its order: [{ src, attrs }], src without its slash.
 export const pageScripts = (html = page()) => [...html.matchAll(/<script src="\/([^"]+)"([^>]*)><\/script>/g)].map(m => ({ src: m[1], attrs: m[2] }));
 
