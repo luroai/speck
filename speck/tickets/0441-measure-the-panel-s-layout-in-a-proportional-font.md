@@ -49,6 +49,7 @@ The tests' browser draws the panel in a proportional font, as people see it.
 - Went with the recommendation: allow 3 lines at 375 px for everyone (chosen by the Foreman, as foreman_fixing is fix, 2026-10-24 07:41 UTC).
 - Found while building: in the proportional font, four other panel tests failed on real layout problems the monospace had hidden, so criterion 3 needed small panel fixes: on a phone, a linked id's tap area was 43 px wide (now at least 44, its text centred), and a comma and a space between ids were narrower than the two ids' reaches, so a tap just right of an id went to the next one (the ids in a note now have 4 px wider spaces, and each id's text reaches 5 px either side, not 6); Escape closing the full ticket moved the list 10 px to bring its button into view (focus goes back without scrolling, as 0060 asks); and 0419's list of waited-on tickets was too short to need three lines (now 20 ids, not 14).
 - 0140 AC2 (at 700 px the phone rules change nothing) failed once in the related run and passes on its own, with and without this change: it measures a ticking clock's text under load.
+- Merging main after a refused ship: 0443's status line test found a closed Build card's line 1 px taller than one line, as a monospace tag on the interface font's baseline reaches past the line's box. The details line's tags, and Plan's priority box, now sit at the line's top. 0140 AC2 freezes the page's clock before comparing its two snapshots, as a ticking time changes width in a proportional font (it failed under load in both related runs).
 - Self-check: no changes. Checked that 0441 AC1 fails without the font settings file, that a FONTCONFIG_FILE already set is kept (fontconfig resolves the include as it would the variable) and that an & or < in its path is escaped.
 
 ## In plain words
@@ -72,7 +73,6 @@ Round 1 (codex): approve.
 - Changed lines: 8 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
-  - Idea: speck/ideas/2026-10-24-hold-the-clock-still-in-0140-s-phone-rules-comparison.md (0140 AC2 fails now and then under load).
   - Tidy-up: the 4 px word spacing on a note's ids also widens the space in "waiting on" and "unlocks". Spacing only after the commas would need the separators in their own elements.
   - Known limit: the test browser's font settings file is for fontconfig (Linux). Elsewhere it does nothing, and a machine whose fontconfig has neither Liberation Sans nor its own proportional sans-serif would still measure in a monospace.
 
