@@ -30,7 +30,8 @@ const classes = n => (n.className || '').split(/\s+/).filter(Boolean);
 function shows(p, id) {
   const row = rowOf(p, id), text = topOf(row).children.find(n => classes(n)[0] === 'progress');
   const say = text.children.find(n => /\bsay\b/.test(n.className));
-  return { card: classes(row), say: say.textContent, sayClass: classes(say), stage: (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null,
+  return { card: classes(row), say: say.attrs?.['aria-label'] ?? say.textContent, // 0443: a closed card's long sentence is the accessible name of its short words
+    sayClass: classes(say), stage: (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null,
     acts: p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent) };
 }
 

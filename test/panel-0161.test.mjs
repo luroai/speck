@@ -57,7 +57,8 @@ const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.sta
 const EDGED = ['.tag', '.toggle', '.bezel .settings-open', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
   '#full-ticket .close', '#full-ticket .ship', '.prio-menu', '.item', '.q', '#shipped tr', 'section'];
 const CONTROL = /(?:^|[^\w-])(?:\.(?:tag|toggle|settings-open|run-state|set-ready|full-open|stop-build|back-to-plan|copy|close|ship|prio-menu|item|q)|section)(?![\w-])/;
-const lastCompound = s => s.trim().split(/\s+|>|\+|~/).filter(Boolean).pop() || '';
+// 0443: what's inside a :not() or :has() is no part of the element the selector picks
+const lastCompound = s => s.replace(/\((?:[^()]|\([^()]*\))*\)/g, '()').trim().split(/\s+|>|\+|~/).filter(Boolean).pop() || '';
 const size = r => {
   const fs = get(r, 'font-size'), font = get(r, 'font');
   const m = (fs || '').match(/^([\d.]+)px$/) || (font || '').match(/(?:^|\s)([\d.]+)px(?:\/|\s)/);
