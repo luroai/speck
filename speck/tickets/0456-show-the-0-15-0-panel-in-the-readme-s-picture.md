@@ -1,7 +1,7 @@
 ---
 id: "0456"
 title: "Show the 0.15.0 panel in the README's picture"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0456 · Show the 0.15.0 panel in the README's picture
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The README's picture, taken on 19 October for 0306, shows the panel before 0.15.0's rebuild: the old header with its Foreman box and buttons, square-edged LCD badges and the Plan and Build sections stacked down the page. 0.15.0 rebuilds the panel, so someone reading the README sees a panel that no longer exists.
