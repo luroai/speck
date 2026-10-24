@@ -1,7 +1,7 @@
 ---
 id: "0446"
 title: "Skip speck's events from while the panel was hidden"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-skip-speck-s-events-from-while-the-panel-wa
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T07:45:23.994Z"
+approved: "2026-10-24T08:11:42.440Z"
 
 ---
 # 0446 · Skip speck's events from while the panel was hidden
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the panel's tab has been hidden or the screen asleep, speck plays every pipeline event it missed, one after another, when you come back. After a night's builds that's a long queue of celebrations and question marks about things already past.
@@ -53,9 +54,17 @@ Worth keeping an eye on: speck now goes by the time each event happened, as spec
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The reconnect age check measures the age of the previous board rather than the event.; F2 d.back remains set until the next fresh board, so events occurring while visible can be suppressed or collapsed.
+Round 2 (codex): changes requested.
+Round 3 (codex): changes requested: F3 If an animation frame runs between speckShown(true) and the returning board arriving, the retained event starts playing and leaves the queue.
+Round 4 (codex, extra round): approve.
 
 ## Delivery log
+- Review rounds: 4, round 4 an extra round
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,315,593
+- Elapsed since build started: 26 min
+- Changed lines: 73 (limit 5000)
 Follow-ups (known limits, no inbox notes):
 - An event whose ticket has no date for it (for example an old ticket file with no `finished`) counts as from the board before, so after a long sleep it never plays, even if it was recent.
 - Nothing missed plays until the first board after coming back arrives; if the panel server is down then, the missed event is dropped rather than played late.
