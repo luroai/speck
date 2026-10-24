@@ -537,13 +537,16 @@ export async function browserPage(url) {
   // send: a raw DevTools call to the page, for example to emulate reduced motion (0055). browser: one to Chromium itself (0182).
   return { js, until, loaded, drag, move, close, send, browser: c.send, pid: c.chrome.pid };
 }
+// 0476: the script that brings a slide between the lanes to its end at once in a real browser, so a test that presses a
+// tab can measure the lane at rest straight away rather than partway through the slide.
+export const REST_LANES = `(document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.parentElement === document.querySelector('main')).forEach(a => a.finish()), delete document.querySelector('main').dataset.slide)`;
 // 0410: the script that opens a lane's tab ('plan', 'build' or 'shipped') in a real browser, as only the open one shows.
 // 0427: in a real browser, whether the panel's interface font (system-ui) is a monospace there: an i and an m are the
 // same width only in one. 0441: never in the tests' browser, whose fontconfig file prefers a proportional font. It
 // measures on a canvas, as a span added to the panel's body is a flex item as wide as the page, whatever its text.
 export const monoFont = font => `(() => { const c = document.createElement('canvas').getContext('2d'); c.font = ${JSON.stringify(font)}; return c.measureText('iiii').width === c.measureText('mmmm').width; })()`;
 export const MONO_UI = monoFont('17px system-ui');
-export const openLane = lane => `document.getElementById('tab-${lane}').click(), true`;
+export const openLane = lane => `document.getElementById('tab-${lane}').click(), ${REST_LANES}, true`; // 0476: at rest
 // The page point at a character offset in the first text node of the element a selector finds.
 export const charAt = (sel, offset) => `(() => { const t = document.querySelector(${JSON.stringify(sel)}).firstChild; const r = document.createRange();
   r.setStart(t, ${offset}); r.setEnd(t, ${offset} + 1); const b = r.getBoundingClientRect(); return [b.left + 1, b.top + b.height / 2]; })()`;

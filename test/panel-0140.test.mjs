@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, round, exitOf, openLane, styles } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, round, exitOf, openLane, REST_LANES, styles } from './support/panel.mjs';
 
 // ---------- 0140: fit the panel to a phone screen ----------
 
@@ -157,11 +157,13 @@ const SECTIONS = `(() => {
   const heads = [], boxes = [];
   for (const tab of document.querySelectorAll('#tabs .tab')) {
     tab.click();
+    ${REST_LANES}; // 0476: at rest
     const open = [...main.querySelectorAll(':scope > section')].filter(n => !n.hidden);
     heads.push(tab.querySelector('.tab-name').textContent + (open.length === 1 ? '' : ' with ' + open.length + ' lanes'));
     boxes.push(box(open[0]));
   }
   document.getElementById('tab-build').click();
+  ${REST_LANES};
   return { main: { left: main.getBoundingClientRect().left + parseFloat(s.paddingLeft), right: main.getBoundingClientRect().right - parseFloat(s.paddingRight) }, heads, boxes };
 })()`;
 

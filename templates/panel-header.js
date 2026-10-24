@@ -259,7 +259,9 @@ function openTab(lane) {
   if (!LANES[lane]) return;
   if (lane !== openLane) {
     laneScroll.set(openLane, $(LANES[openLane][2]).scrollTop || 0);
+    const from = rowAt();
     openLane = lane;
+    slideFrom(from); // 0476: slides to its card
   }
   drawTabs();
   if (laneScroll.has(lane)) { $(LANES[lane][2]).scrollTop = laneScroll.get(lane); laneScroll.delete(lane); }
@@ -270,6 +272,7 @@ function drawTabs() {
     $(tab).setAttribute('aria-selected', String(on));
     $(section).hidden = !on;
   }
+  placeLanes(touch && touch.way === 'x' ? touch.shown : 0); // a refresh leaves a card a finger is moving where it is
   // While Build's tab is closed, it says how many things need you, as the Foreman's status does
   const needs = openLane === 'build' ? null : /^Needs you (\d+)$/.exec(foremanOf(state).word);
   // 0425: the number alone, so the tabs fit a third of a narrow pane; its accessible name says what it is
@@ -290,5 +293,129 @@ for (const [i, l] of TAB_ORDER.entries()) {
     const to = $(LANES[next][0]);
     if (to.focus) to.focus();
   });
+}
+// 0476: the lanes are three cards in one row, as wide as the column. At rest only the open one shows, as before; while
+// the row moves, all three show in their places (data-slide on the lanes' box: 'drag' while a finger moves it, 'settle'
+// while it comes to rest), and the row is moved so the open card is in view: --lane is its place in the row, and --drag
+// how far a finger has moved the row from there. A swipe, a sideways scroll on a trackpad, the left and right arrow keys
+// or a tab bring another card into view.
+const lanesBox = document.querySelector?.('main') || $('lanes');
+const SLIDE_MS = 200; // how long a card takes to come to rest
+let slides = []; // the slide's animations, one for each card, while the row comes to rest
+function placeLanes(drag = 0) {
+  if (!lanesBox.style) return;
+  lanesBox.style.setProperty('--lane', String(TAB_ORDER.indexOf(openLane)));
+  lanesBox.style.setProperty('--drag', `${drag}px`);
+}
+// Shows every card in its place in the row, each closed lane's list where it was left.
+function showRow(how) {
+  if (!lanesBox.dataset.slide) for (const l of TAB_ORDER) if (l !== openLane && laneScroll.has(l)) $(LANES[l][2]).scrollTop = laneScroll.get(l);
+  lanesBox.dataset.slide = how;
+}
+// Where the row is now, in pixels from the first card: moved by a finger or a slide, or at rest on the open card.
+function rowAt() {
+  if (!lanesBox.dataset) return 0;
+  if (lanesBox.dataset.slide) return new DOMMatrix(getComputedStyle($(LANES[openLane][1])).transform).m41;
+  return -TAB_ORDER.indexOf(openLane) * lanesBox.clientWidth;
+}
+// Slides the row from `from` px to the open card, and shows only that card once it's there. With reduced motion, the
+// open card shows at once.
+function slideFrom(from) {
+  if (!lanesBox.dataset) return;
+  for (const a of slides) a.cancel();
+  slides = [];
+  placeLanes();
+  const to = -TAB_ORDER.indexOf(openLane) * lanesBox.clientWidth;
+  if (reducedMotion() || Math.abs(from - to) < 1 || typeof lanesBox.animate !== 'function') { delete lanesBox.dataset.slide; return; }
+  showRow('settle');
+  const mine = slides = TAB_ORDER.map(l => $(LANES[l][1]).animate([{ transform: `translateX(${from}px)` }, { transform: `translateX(${to}px)` }], { duration: SLIDE_MS, easing: 'cubic-bezier(.25, .8, .35, 1)' }));
+  mine[0].finished.then(() => { if (slides === mine) { slides = []; delete lanesBox.dataset.slide; } }, () => {});
+}
+// The lane beside the open one, `step` along the row (-1 left, 1 right), opened if there is one there. The ends don't
+// wrap round, as a card can't be swiped past the last one. Without one, the row slides back to the open card.
+function stepLane(step) {
+  const next = TAB_ORDER[TAB_ORDER.indexOf(openLane) + step];
+  if (next) { openTab(next); render(); } else slideFrom(rowAt());
+}
+// Whether a node, or one it's in, inside the lanes scrolls sideways itself, as a wide code block does: a swipe or a
+// sideways scroll that starts there scrolls it instead.
+function scrollsSideways(n) {
+  for (; n && n !== lanesBox && n.nodeType === 1; n = n.parentNode) {
+    if (n.scrollWidth > n.clientWidth + 1 && /^(auto|scroll)$/.test(getComputedStyle(n).overflowX)) return true;
+  }
+  return false;
+}
+// A touch is followed sideways or left to the browser to scroll up and down, by the way it has gone more once it's gone
+// 10 px. Followed sideways, the row moves with the finger (a third as far past either end), and on lifting it a quick
+// flick changes lane however short it was, and a slower drag past a third of the card's width does. The lists only
+// scroll up and down themselves (touch-action: pan-y), so the browser never holds on to a sideways touch.
+let touch = null; // { x, y, way: null | 'x' | 'y', drag, base, shown, at: [[time, x]…] } while a finger is down, or null
+const FLICK = 0.3; // px per ms
+if (lanesBox.addEventListener) {
+  lanesBox.addEventListener('touchstart', e => {
+    touch = null;
+    if (e.touches.length !== 1 || pageHeld() || scrollsSideways(e.target)) return;
+    const t = e.touches[0];
+    touch = { x: t.clientX, y: t.clientY, way: null, drag: 0, base: 0, shown: 0, at: [[e.timeStamp, t.clientX]] };
+  }, { passive: true });
+  lanesBox.addEventListener('touchmove', e => {
+    if (!touch || touch.way === 'y') return;
+    if (e.touches.length !== 1) { touch = null; slideFrom(rowAt()); return; }
+    const t = e.touches[0], dx = t.clientX - touch.x, dy = t.clientY - touch.y;
+    if (!touch.way) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 10) return;
+      touch.way = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      if (touch.way === 'y') return;
+      // A card still coming to rest stops where the finger catches it
+      touch.base = slides.length ? rowAt() + TAB_ORDER.indexOf(openLane) * lanesBox.clientWidth : 0;
+      for (const a of slides) a.cancel();
+      slides = [];
+      if (!reducedMotion()) showRow('drag');
+    }
+    if (e.cancelable) e.preventDefault();
+    touch.at.push([e.timeStamp, t.clientX]);
+    if (touch.at.length > 6) touch.at.shift();
+    const i = TAB_ORDER.indexOf(openLane), pastEnd = (i === 0 && dx > 0) || (i === TAB_ORDER.length - 1 && dx < 0);
+    touch.drag = dx;
+    touch.shown = reducedMotion() ? 0 : touch.base + (pastEnd ? dx / 3 : dx);
+    placeLanes(touch.shown);
+  }, { passive: false });
+  const lift = e => {
+    const was = touch;
+    touch = null;
+    if (!was || was.way !== 'x') return;
+    // The finger's speed over the last 100 ms of its moving, or none when it stopped for 100 ms before lifting
+    const [t1, x1] = was.at[was.at.length - 1], [t0, x0] = was.at.find(([t]) => t1 - t <= 100);
+    const speed = t1 > t0 && e.timeStamp - t1 <= 100 ? (x1 - x0) / (t1 - t0) : 0;
+    const step = e.type === 'touchcancel' ? 0
+      : Math.abs(speed) >= FLICK && Math.sign(speed) === Math.sign(was.drag) ? -Math.sign(speed)
+        : Math.abs(was.drag) > lanesBox.clientWidth / 3 ? -Math.sign(was.drag) : 0;
+    if (step) stepLane(step); else slideFrom(rowAt());
+  };
+  lanesBox.addEventListener('touchend', lift);
+  lanesBox.addEventListener('touchcancel', lift);
+  // A sideways scroll on a trackpad changes lane once it has gone 40 px, and once only, until it stops: a pause of
+  // 150 ms, as its glide after the fingers lift keeps it going.
+  let wheelSum = 0, wheelDone = false, wheelQuiet = 0;
+  lanesBox.addEventListener('wheel', e => {
+    if (e.ctrlKey || Math.abs(e.deltaX) <= Math.abs(e.deltaY) || scrollsSideways(e.target)) return;
+    if (e.cancelable) e.preventDefault();
+    clearTimeout(wheelQuiet);
+    wheelQuiet = setTimeout(() => { wheelSum = 0; wheelDone = false; }, 150);
+    if (wheelDone) return;
+    wheelSum += e.deltaX;
+    if (Math.abs(wheelSum) >= 40) { wheelDone = true; stepLane(Math.sign(wheelSum)); }
+  }, { passive: false });
+}
+// The left and right arrow keys, pressed anywhere but in a text field or on a tab (which has its own), with nothing
+// over the lanes, change lane. The page's own key handler sends them here.
+const TYPED = /^(INPUT|TEXTAREA|SELECT)$/i;
+function laneKey(e) {
+  const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+  if (!step || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || pageHeld() || priorityMenu !== null) return;
+  const n = e.target;
+  if (n && (TYPED.test(n.tagName || '') || n.isContentEditable || (n.getAttribute && n.getAttribute('role') === 'tab'))) return;
+  if (e.preventDefault) e.preventDefault();
+  stepLane(step);
 }
 drawTabs();
