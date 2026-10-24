@@ -1,7 +1,7 @@
 ---
 id: "0443"
 title: "Fit a collapsed Build ticket's status on a phone"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0443 · Fit a collapsed Build ticket's status on a phone
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 0434, a collapsed Build ticket's status line is one line, cut off with an ellipsis. On a phone, a long status such as `Approved · waiting for you to ship it` or `Blocked · the Foreman will take its recommendation` pushes the stage and time out of sight.
