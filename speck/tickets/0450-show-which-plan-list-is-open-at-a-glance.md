@@ -41,6 +41,7 @@ The open Plan list's button is clearly selected.
 - Today: `.toggle` and `.toggle.on` in `templates/panel.css`.
 - Waits for 0444: both change `templates/panel.css`. 0442 waits for this one.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
