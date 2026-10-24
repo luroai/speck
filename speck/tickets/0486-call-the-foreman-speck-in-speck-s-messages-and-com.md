@@ -1,7 +1,7 @@
 ---
 id: "0486"
 title: "Call the Foreman speck in speck's messages and commands"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T18:44:03.734Z"
 ---
 # 0486 · Call the Foreman speck in speck's messages and commands
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck run`, `speck status` and the Pipeline log say "the Foreman" in about forty messages, and you answer it with `speck foreman answer`. With one speck watching the pipeline, the second name is a concept people have to learn for nothing.
@@ -50,7 +50,11 @@ speck's messages and commands say speck where they said the Foreman, and the old
 - Pictures: none, because nothing the panel draws changes: its Watching group heading and roles are 0485's.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's messages no longer talk about "the Foreman": `speck run`, `speck status` and the Pipeline log now say speck, for example "speck asks you about 0479". You answer its questions with `speck answer` and `speck dismiss`, and the old `speck foreman` commands still work. `speck config show` calls the group of these settings Watching.
+
+To see it, run `speck status` or `speck help`: neither mentions the Foreman.
+
+Worth knowing: the panel still says Foreman in a few places, and the setting names and docs still use the old word, until the three related tickets ship.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,3 +64,71 @@ speck's messages and commands say speck where they said the Foreman, and the old
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (none sent to the inbox, as the sibling tickets cover them):
+- The brief still says the agent's commits start `speck(<id>): Foreman: answer` and `dismiss`, and `test/foreman-answer-0318.test.mjs` checks that wording: 0488 changes both (its AC2).
+- The skill's own text still says `speck foreman …`, which still works: 0488.
+- The panel's Watching heading and the role's name in Your agents (`rolesUsing` in `scripts/your-agents.mjs`): 0485.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c0ce2f377d67ba01878d2974526da61b5dac7297",
+    "session": "fresh",
+    "thread_id": "01a16f4a-5453-7de1-88dc-f4251b43e5a1",
+    "builder_response": "- Tests run (speck test --related): test/watch-0486.test.mjs test/agents-0398.test.mjs test/core.test.mjs test/foreman-0285.test.mjs test/foreman-0317.test.mjs test/foreman-agent-0287.test.mjs test/foreman-answer-0318.test.mjs test/foreman-asked-0328.test.mjs test/foreman-cursor-0333.test.mjs test/foreman-fix-0286.test.mjs test/foreman-provider-0392.test.mjs test/panel-0041.test.mjs test/panel-0050.test.mjs test/panel-0053.test.mjs test/panel-0257.test.mjs test/panel-0451.test.mjs test/panel-0483.test.mjs test/settings-0370.test.mjs test/settings-0381.test.mjs test/settings-0396.test.mjs test/settings-0407.test.mjs test/settings-agents-0399.test.mjs test/settings-builder-effort-0402.test.mjs test/settings-foreman-0348.test.mjs test/settings-groups-0406.test.mjs test/settings-info-0405.test.mjs test/settings-models-0369.test.mjs test/settings-provider-0393.test.mjs test/settings-roles-0400.test.mjs test/settings-roles-0403.test.mjs test/setup-0107.test.mjs test/status-json.test.mjs test/worktrees.test.mjs , plus every test file naming a changed file, and the commands.checks files. 1530 pass, 0 fail.\n- AC1 is checked by test/watch-0486.test.mjs's scanner (test/support/strings.mjs), which reads every string literal in scripts/*.mjs, outside comments and regexes, and allows only setting names (0487), internal file, env and module names, the old Notes/commit wording kept for reading old tickets, and the role name 'Foreman' in your-agents.mjs, which only the panel shows (0485 owns rolesUsing per its Notes); the CLI refusal in removeAgent rewords it.\n- The Settings group's title is now Watching (speck config show prints it), with the one line of templates/panel-settings.js that finds the group by its title. Test fixtures with that title were updated; the panel's own visible heading stays 0485's.\n- The agent's log file is now run.watch.log, since speck run prints its path.\n- Old notes (\"chosen by the Foreman\") and old commits (speck(<id>): Foreman:) still count as speck's own (go-with, foreman-took, build-records, foremanOnly, codeKey).\n- The skill moved to skills/speck-watch with name: speck-watch; its text still says speck foreman, which still works, and is 0488's.\n- Existing tests that asserted the old wording were updated to the new wording; panel-text assertions were left for 0485.\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 318285,
+      "cached_input_tokens": 230016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 811,
+      "reasoning_output_tokens": 78
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T19:02:12.641Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Reviewed remaining Foreman references across scripts/: message text now says speck; retained references serve settings, internal identifiers or compatibility. Passing 0486 AC1 tests scan script strings and exercise queue and status output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs dispatches answer, dismiss and watch to the existing handlers and retains foreman aliases. Passing 0486 AC2 tests cover replies, refusals, agent actions and usage text; existing action tests also pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/build-records.mjs emits watch: subjects and recognises both prefixes through byWatch. foremanOnly and codeKey preserve legacy recognition. Passing 0486 AC3 test verifies old and new commits against real git history."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/install.mjs retires speck-foreman; skills/speck-watch declares the new name; foremanBrief points to it. Passing 0486 AC4 tests verify installation cleanup and brief paths. Recorded related run reports 1530 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Commands and pipeline messages now call the watcher speck. The old commands and historical records remain compatible, and installation replaces the old skill. The relevant tests pass, with no blocking concerns found."
+  }
+}
+```
+
+</details>
