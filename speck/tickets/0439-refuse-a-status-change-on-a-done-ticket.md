@@ -1,7 +1,7 @@
 ---
 id: "0439"
 title: "Refuse a status change on a done ticket"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-24T07:32:35.385Z"
+approved: "2026-10-24T07:45:00.804Z"
 
 ---
 # 0439 · Refuse a status change on a done ticket
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck set <id> status <value>` accepts a ticket that's already done. Setting it ready moves the shipped ticket out of `speck/tickets/done/` and back into the queue. On 2026-10-23 that reopened 0436 after it had shipped: `speck run` wouldn't build it again, and every ticket waiting on it stalled until the commit was reverted.
@@ -52,9 +53,15 @@ A ticket that has shipped can no longer have its status changed by mistake. Tryi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The documentation test requires the specific prose words “done” and “refuses”.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 440,876
+- Elapsed since build started: 12 min
+- Changed lines: 14 (limit 5000)
 Follow-ups:
 - The test "0384 AC3: the panel shows the round as running through every exit 12" fails on the base code too, unchanged by this build: saved to the inbox as speck/ideas/2026-10-24-fix-the-0384-running-round-test.md.
 - `scripts/speck.mjs` and `scripts/panel.mjs` are both at the 600-line limit, so the next change to either needs code moved out first.
