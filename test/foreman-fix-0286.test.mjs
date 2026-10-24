@@ -24,7 +24,7 @@ const recordOf = r => JSON.parse(fs.readFileSync(r.record, 'utf8'));
 // One check of speck run as tick() makes it: the Foreman's choices, then goWithQueue's resumes. Returns what started
 // and what was said.
 function runCheck(r, fixing, { said = [], started = [], queue = null } = {}) {
-  const fixes = queue || foremanFixQueue({ repo: r.dir, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: fixing }), say: m => said.push(m) });
+  const fixes = queue || foremanFixQueue({ repo: r.dir, readConfig: () => ({ ...loadConfig(r.dir), watch: fixing }), say: m => said.push(m) });
   const running = new Set();
   const goWiths = goWithQueue({ repo: r.dir, cfg: CFG, words: WORDS, max: 1, running,
     startBuild: (id, argv, cwd, session, flags, record) => { started.push({ id, argv, rec: JSON.parse(record(4242)) }); running.add(id); },
@@ -35,40 +35,40 @@ function runCheck(r, fixing, { said = [], started = [], queue = null } = {}) {
   return { said, started, queue: fixes };
 }
 
-test('0286 AC1: foreman_fixing is in the config template, tell, with a comment, and speck reads tell when it is missing or unknown', () => {
+test('0286 AC1: watch is in the config template, tell, with a comment, and speck reads tell when it is missing or unknown', () => {
   const text = fs.readFileSync(path.join(ROOT, 'templates', 'config.yml'), 'utf8');
-  assert.match(text, /^foreman_fixing: tell +# .*off.*tell.*fix/m);
-  assert.equal(parseYaml(text).foreman_fixing, 'tell');
+  assert.match(text, /^watch: tell +# .*off.*tell.*fix/m);
+  assert.equal(parseYaml(text).watch, 'tell');
   assert.equal(fixingOf({}), 'tell');
-  assert.equal(fixingOf({ foreman_fixing: 'constructor' }), 'tell');
-  assert.equal(fixingOf({ foreman_fixing: 'fix' }), 'fix');
+  assert.equal(fixingOf({ watch: 'constructor' }), 'tell');
+  assert.equal(fixingOf({ watch: 'fix' }), 'fix');
 });
 
-test('0286 AC1: speck config set accepts off, tell and fix for foreman_fixing, and refuses anything else', () => {
-  for (const v of ['off', 'tell', 'fix']) assert.equal(checkConfigValue('foreman_fixing', v), v);
-  for (const v of ['', 'on', 'FIX', 'true']) assert.throws(() => checkConfigValue('foreman_fixing', v), /foreman_fixing must be off, tell, fix/);
+test('0286 AC1: speck config set accepts off, tell and fix for watch, and refuses anything else', () => {
+  for (const v of ['off', 'tell', 'fix']) assert.equal(checkConfigValue('watch', v), v);
+  for (const v of ['', 'on', 'FIX', 'true']) assert.throws(() => checkConfigValue('watch', v), /watch must be off, tell, fix/);
   const r = panelRepo();
-  const out = r.run('config', 'set', 'foreman_fixing', 'fix');
+  const out = r.run('config', 'set', 'watch', 'fix');
   assert.equal(out.status, 0, out.stderr);
-  assert.equal(loadConfig(r.dir).foreman_fixing, 'fix');
+  assert.equal(loadConfig(r.dir).watch, 'fix');
 });
 
-test('0286 AC1: the settings give foreman_fixing in a Foreman group, explained, picked from off, tell and fix, and the panel saves it', () => {
+test('0286 AC1: the settings give watch in a Foreman group, explained, picked from off, tell and fix, and the panel saves it', () => {
   const r = panelRepo();
   const g = panelSettings(r.dir).groups.find(x => x.title === 'Watching');
-  const s = g.settings.find(x => x.key === 'foreman_fixing');
+  const s = g.settings.find(x => x.key === 'watch');
   assert.equal(s.value, 'tell');
   assert.equal(s.editable, true);
   assert.deepEqual(s.choices, ['off', 'tell', 'fix']);
   assert.match(s.explain, /fix/);
-  assert.equal(panelSaveSettings(r.dir, [{ key: 'foreman_fixing', value: 'fix' }]).status, 200);
-  assert.equal(loadConfig(r.dir).foreman_fixing, 'fix');
-  assert.equal(panelSaveSettings(r.dir, [{ key: 'foreman_fixing', value: 'always' }]).status, 422);
+  assert.equal(panelSaveSettings(r.dir, [{ key: 'watch', value: 'fix' }]).status, 200);
+  assert.equal(loadConfig(r.dir).watch, 'fix');
+  assert.equal(panelSaveSettings(r.dir, [{ key: 'watch', value: 'always' }]).status, 422);
 });
 
-test('0286 AC1: the Settings view shows foreman_fixing in its Foreman group, under the speck run switch, with its explanation', async () => {
+test('0286 AC1: the Settings view shows watch in its Foreman group, under the speck run switch, with its explanation', async () => {
   const settings = { groups: [
-    { title: 'Watching', settings: [{ key: 'foreman_fixing', value: 'tell', default: true, explain: 'What the Foreman does.', editable: true, choices: ['off', 'tell', 'fix'] }] },
+    { title: 'Watching', settings: [{ key: 'watch', value: 'tell', default: true, explain: 'What the Foreman does.', editable: true, choices: ['off', 'tell', 'fix'] }] },
     { title: 'Shipping', settings: [{ key: 'auto_ship', value: false, default: true, explain: 'Ships.' }] },
   ] };
   const fetch = async url => ({ ok: true, status: 200, json: async () => (String(url).startsWith('/api/settings') ? settings : { tickets: [], ideas: [] }) });
@@ -81,11 +81,11 @@ test('0286 AC1: the Settings view shows foreman_fixing in its Foreman group, und
   const foreman = groups[0];
   assert.ok(foreman.textContent.startsWith('Watching'), 'first');
   assert.ok(p.all(p.byId('settings').children.find(n => n.className === 'switches')).some(n => n.id === 'run-switch'), 'with the speck run switch above it (0396)');
-  const pick = p.all(foreman).find(n => n.tagName === 'select' && n.attrs['aria-label'] === 'foreman_fixing');
+  const pick = p.all(foreman).find(n => n.tagName === 'select' && n.attrs['aria-label'] === 'watch');
   assert.ok(pick, 'a list to pick from');
   assert.deepEqual(p.all(pick).filter(n => n.tagName === 'option').map(o => o.value), ['off', 'tell', 'fix']);
   assert.ok(p.all(foreman).some(n => n.className === 'explain' && n.textContent === 'What the Foreman does.'), 'explained');
-  assert.ok(!p.all(groups[1]).some(n => n.attrs?.['aria-label'] === 'foreman_fixing'), 'not in another group');
+  assert.ok(!p.all(groups[1]).some(n => n.attrs?.['aria-label'] === 'watch'), 'not in another group');
 });
 
 test('0286 AC2: with fix, speck run takes the recommendation on its check, notes that the Foreman chose it and resumes the build saying so', () => {
@@ -93,11 +93,11 @@ test('0286 AC2: with fix, speck run takes the recommendation on its check, notes
   const { said, started } = runCheck(r, 'fix');
   const text = r.ticket();
   assert.match(text, /^status: building$/m);
-  assert.match(text, new RegExp(`- Went with the recommendation: ${OPTION} \\(chosen by speck, as foreman_fixing is fix, \\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d UTC\\)\\.`));
+  assert.match(text, new RegExp(`- Went with the recommendation: ${OPTION} \\(chosen by speck, as watch is fix, \\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d UTC\\)\\.`));
   assert.match(r.g('log', '-1', '--format=%s'), /^speck\(0001\): go with the recommendation$/);
   assert.equal(started.length, 1, 'resumed in the same check');
   assert.deepEqual(started[0].argv, ['claude', '-p', goWithMessage('0001', OPTION, '/speck-build', 'foreman'), '--resume', 'sess-1']);
-  assert.match(started[0].argv[2], /^speck \(foreman_fixing: fix\) chose the recommended option/);
+  assert.match(started[0].argv[2], /^speck \(watch: fix\) chose the recommended option/);
   assert.equal(started[0].rec.went_with.by, 'foreman');
   assert.ok(said.some(m => /0001: speck went with its recommendation/.test(m)));
 });
@@ -147,7 +147,7 @@ test('0286 AC4: the Foreman takes a ticket\'s recommendation once; when it block
 test('0286 AC2: a build speck run still has running is left until a later check', () => {
   const r = blockedRepo();
   const said = [], calls = [];
-  const q = foremanFixQueue({ repo: r.dir, running: new Set(['0001']), readConfig: () => ({ foreman_fixing: 'fix' }), say: m => said.push(m), goWith: (...a) => { calls.push(a); return { status: 200 }; } });
+  const q = foremanFixQueue({ repo: r.dir, running: new Set(['0001']), readConfig: () => ({ watch: 'fix' }), say: m => said.push(m), goWith: (...a) => { calls.push(a); return { status: 200 }; } });
   q.check(statusData(r.dir).tickets);
   assert.deepEqual(calls, []);
   assert.deepEqual(said, []);

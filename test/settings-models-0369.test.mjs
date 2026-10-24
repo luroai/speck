@@ -32,12 +32,12 @@ function modelsPage(view, models = READ) {
 }
 const row = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, ...o });
 const EFFORTS = ['', 'low', 'medium', 'high', 'xhigh', 'max'];
-const view = ({ builder = 'claude', reviewer = 'codex', foreman = 'claude', builder_model = '', reviewer_model = '', foreman_model = '' } = {}) => ({ groups: [
+const view = ({ builder = 'claude', reviewer = 'codex', foreman = 'claude', builder_model = '', reviewer_model = '', watch_model = '' } = {}) => ({ groups: [
   { title: 'Building and reviewing', settings: [
     row('builder', builder, { choices: ['claude', 'codex', 'cursor'] }), row('builder_model', builder_model),
     row('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor'] }), row('reviewer_model', reviewer_model),
     row('reviewer_effort', '', { choices: EFFORTS })] },
-  { title: 'Watching', settings: [row('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), row('foreman_model', foreman_model)] }],
+  { title: 'Watching', settings: [row('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), row('watch_model', watch_model)] }],
   builder_models: { builder, models: read(builder).models }, reviewer_models: { reviewer, models: read(reviewer).models },
   foreman_models: { foreman: foreman || 'claude', models: read(foreman).models }, claude_models: CLAUDE_MODELS });
 const options = (p, key) => p.all(controlOf(p, key)).filter(n => n.tagName === 'option')
@@ -96,16 +96,16 @@ test('0369 AC3: choosing another Foreman agent lists its models, without the lin
     await openSettings(p);
     changeTo(p, 'foreman', to);
     await p.settle();
-    assert.equal(controlOf(p, 'foreman_model').tagName, 'select');
-    assert.deepEqual(options(p, 'foreman_model'), options(want, 'foreman_model'), to);
-    assert.ok(!said(p, 'foreman_model').some(t => /open Settings again/.test(t)), said(p, 'foreman_model').join(' | '));
+    assert.equal(controlOf(p, 'watch_model').tagName, 'select');
+    assert.deepEqual(options(p, 'watch_model'), options(want, 'watch_model'), to);
+    assert.ok(!said(p, 'watch_model').some(t => /open Settings again/.test(t)), said(p, 'watch_model').join(' | '));
   }
   // The Foreman on the builder's agent, picked as the builder: the same list, read once for both.
   const p = modelsPage(view({ foreman: '' }));
   await openSettings(p);
   changeTo(p, 'builder', 'cursor');
   await p.settle();
-  assert.deepEqual(options(p, 'foreman_model').map(o => o.value), ['', 'auto', 'grok-4.7-high']);
+  assert.deepEqual(options(p, 'watch_model').map(o => o.value), ['', 'auto', 'grok-4.7-high']);
   assert.deepEqual(asked(p), ['/api/agent-models?agent=cursor']);
 });
 

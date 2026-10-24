@@ -29,8 +29,8 @@ const builderRow = builder => ({ key: 'builder', value: builder, default: false,
 const view = ({ builder = 'claude', foreman = '', foreman_models }) => ({ groups: [
   { title: 'Building and reviewing', settings: [builderRow(builder)] },
   { title: 'Watching', settings: [
-    { key: 'foreman', value: foreman, default: false, explain: 'The Foreman agent.', editable: true, choices: ['', 'claude', 'codex', 'cursor'] },
-    { key: 'foreman_model', value: '', default: false, explain: 'The Foreman model.', editable: true },
+    { key: 'watch_agent', value: foreman, default: false, explain: 'The Foreman agent.', editable: true, choices: ['', 'claude', 'codex', 'cursor'] },
+    { key: 'watch_model', value: '', default: false, explain: 'The Foreman model.', editable: true },
   ] }],
   claude_models: CLAUDE_MODELS, ...(foreman_models ? { foreman_models } : {}) });
 const optionText = (p, key) => Object.fromEntries(p.all(controlOf(p, key)).filter(n => n.tagName === 'option').map(o => [o.value, o.textContent]));
@@ -38,11 +38,11 @@ const said = (p, key) => p.all(rowOf(p, key)).filter(n => n.tagName === 'p').map
 
 test('0348 AC1: foremanModels reads the models of the agent the Foreman runs on', async () => {
   const r = panelRepo();
-  withKey(r, 'foreman', 'claude');
+  withKey(r, 'watch_agent', 'claude');
   assert.deepEqual(await foremanModels(r.dir, notAsked, notAsked), { foreman: 'claude', models: CLAUDE_MODELS });
-  withKey(r, 'foreman', 'codex');
+  withKey(r, 'watch_agent', 'codex');
   assert.deepEqual(await foremanModels(r.dir, codexRead, notAsked), { foreman: 'codex', models: CODEX });
-  withKey(r, 'foreman', 'cursor');
+  withKey(r, 'watch_agent', 'cursor');
   const cursor = await onlyOnPathAsync(fakeAgents(READY), () => foremanModels(r.dir, notAsked));
   assert.equal(cursor.foreman, 'cursor');
   assert.deepEqual(cursor.models.map(m => m.slug), ['auto', 'opus-4.6-thinking', 'sonnet-4.6']);
@@ -50,23 +50,23 @@ test('0348 AC1: foremanModels reads the models of the agent the Foreman runs on'
   assert.deepEqual(panelSettings(r.dir, { foremanModels: cursor }).foreman_models, cursor);
 });
 
-test('0348 AC1: foreman_model is a list of the Foreman agent\'s models, each by its display name', async () => {
+test('0348 AC1: watch_model is a list of the Foreman agent\'s models, each by its display name', async () => {
   const p = settingsPage([view({ foreman: 'codex', foreman_models: { foreman: 'codex', models: CODEX } })]);
   await openSettings(p);
-  assert.equal(controlOf(p, 'foreman_model').tagName, 'select');
-  const text = optionText(p, 'foreman_model');
+  assert.equal(controlOf(p, 'watch_model').tagName, 'select');
+  const text = optionText(p, 'watch_model');
   assert.deepEqual(Object.keys(text), ['', 'gpt-new']);
   assert.match(text['gpt-new'], /GPT New/);
   // Claude's names for claude.
   const c = settingsPage([view({ foreman: 'claude', foreman_models: { foreman: 'claude', models: CLAUDE_MODELS } })]);
   await openSettings(c);
-  assert.deepEqual(Object.keys(optionText(c, 'foreman_model')), ['', 'fable', 'opus', 'sonnet', 'haiku']);
-  assert.match(optionText(c, 'foreman_model').opus, /Always the newest Opus model/);
+  assert.deepEqual(Object.keys(optionText(c, 'watch_model')), ['', 'fable', 'opus', 'sonnet', 'haiku']);
+  assert.match(optionText(c, 'watch_model').opus, /Always the newest Opus model/);
 });
 
 test('0348 AC2: with foreman blank, the list is of the builder when that\'s Codex or Cursor, and Claude Code otherwise', async () => {
   const r = panelRepo();
-  withKey(r, 'foreman', '');
+  withKey(r, 'watch_agent', '');
   withKey(r, 'builder', 'codex');
   assert.deepEqual(await foremanModels(r.dir, codexRead, notAsked), { foreman: 'codex', models: CODEX });
   withKey(r, 'builder', 'cursor');
@@ -76,15 +76,15 @@ test('0348 AC2: with foreman blank, the list is of the builder when that\'s Code
   // In the view, too.
   const p = settingsPage([view({ builder: 'codex', foreman_models: { foreman: 'codex', models: CODEX } })]);
   await openSettings(p);
-  assert.deepEqual(Object.keys(optionText(p, 'foreman_model')), ['', 'gpt-new']);
+  assert.deepEqual(Object.keys(optionText(p, 'watch_model')), ['', 'gpt-new']);
   const c = settingsPage([view({ builder: 'claude', foreman_models: { foreman: 'claude', models: CLAUDE_MODELS } })]);
   await openSettings(c);
-  assert.deepEqual(Object.keys(optionText(c, 'foreman_model')), ['', 'fable', 'opus', 'sonnet', 'haiku']);
+  assert.deepEqual(Object.keys(optionText(c, 'watch_model')), ['', 'fable', 'opus', 'sonnet', 'haiku']);
 });
 
-test('0348 AC3: when the Foreman agent\'s models can\'t be read, foreman_model is a box to type in, with why in one line', async () => {
+test('0348 AC3: when the Foreman agent\'s models can\'t be read, watch_model is a box to type in, with why in one line', async () => {
   const r = panelRepo();
-  withKey(r, 'foreman', 'cursor');
+  withKey(r, 'watch_agent', 'cursor');
   const none = await onlyOnPathAsync(fakeAgents({}), () => foremanModels(r.dir, notAsked));
   assert.equal(none.foreman, 'cursor');
   assert.equal(none.models, undefined);
@@ -92,26 +92,26 @@ test('0348 AC3: when the Foreman agent\'s models can\'t be read, foreman_model i
   assert.doesNotMatch(none.why, /\n/);
   const p = settingsPage([view({ foreman: 'cursor', foreman_models: none })]);
   await openSettings(p);
-  assert.equal(controlOf(p, 'foreman_model').tagName, 'input');
-  assert.equal(said(p, 'foreman_model').filter(t => /Cursor isn't installed/.test(t)).length, 1);
+  assert.equal(controlOf(p, 'watch_model').tagName, 'input');
+  assert.equal(said(p, 'watch_model').filter(t => /Cursor isn't installed/.test(t)).length, 1);
 });
 
 // 0369 AC3: changed from saying to save codex and open Settings again: its models are read when it's chosen.
 test('0348 AC4: choosing another Foreman agent reads its models, without saying to save it first', async () => {
   const p = settingsPage([view({ foreman: 'claude', foreman_models: { foreman: 'claude', models: CLAUDE_MODELS } })]);
   await openSettings(p);
-  changeTo(p, 'foreman', 'codex');
-  assert.equal(controlOf(p, 'foreman_model').tagName, 'input');
+  changeTo(p, 'watch_agent', 'codex');
+  assert.equal(controlOf(p, 'watch_model').tagName, 'input');
   assert.ok(p.settingsCalls.some(c => c.url === '/api/agent-models?agent=codex'));
-  assert.ok(!said(p, 'foreman_model').some(t => /open Settings again/.test(t)), said(p, 'foreman_model').join(' | '));
+  assert.ok(!said(p, 'watch_model').some(t => /open Settings again/.test(t)), said(p, 'watch_model').join(' | '));
   // Back to the saved one: its list again.
-  changeTo(p, 'foreman', 'claude');
-  assert.equal(controlOf(p, 'foreman_model').tagName, 'select');
+  changeTo(p, 'watch_agent', 'claude');
+  assert.equal(controlOf(p, 'watch_model').tagName, 'select');
   // Claude's names need no save.
   const q = settingsPage([view({ foreman: 'codex', foreman_models: { foreman: 'codex', models: CODEX } })]);
   await openSettings(q);
-  changeTo(q, 'foreman', 'claude');
-  assert.deepEqual(Object.keys(optionText(q, 'foreman_model')), ['', 'fable', 'opus', 'sonnet', 'haiku']);
+  changeTo(q, 'watch_agent', 'claude');
+  assert.deepEqual(Object.keys(optionText(q, 'watch_model')), ['', 'fable', 'opus', 'sonnet', 'haiku']);
 });
 
 test('0348: the brief names foreman_model and the commands that list its models', () => {

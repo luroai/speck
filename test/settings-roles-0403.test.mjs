@@ -27,8 +27,8 @@ const YOUR_MODELS = ({ cursor = { models: CURSOR, default_model: 'grok-4.7-high'
 const YOURS = { list: true, agents: ['claude', 'codex', 'cursor', 'deepseek'].map(id => ({ id, name: id, kind: id === 'deepseek' ? 'provider' : 'agent', yours: true, ready: true, roles: [] })) };
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, for_machine: true, from: 'repo', repo_value: value, ...o });
 const EFFORTS = { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] };
-const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_model = '', reviewer_model = '', foreman_model = '', cursor } = {}) => ({ groups: [
-  { title: 'Watching', settings: [S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('foreman_model', foreman_model), S('foreman_effort', '', EFFORTS)] },
+const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_model = '', reviewer_model = '', watch_model = '', cursor } = {}) => ({ groups: [
+  { title: 'Watching', settings: [S('watch_agent', foreman, { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('watch_model', watch_model), S('watch_effort', '', EFFORTS)] },
   { title: 'Building and reviewing', settings: [
     S('builder', builder, { choices: ['claude', 'codex', 'cursor', 'deepseek'], build_command: { value: '', own: { claude: '', codex: '', cursor: '' }, each_ticket: true } }),
     S('builder_model', builder_model), S('builder_effort', '', EFFORTS), S('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor', 'deepseek'] }),
@@ -46,7 +46,7 @@ const saveQuery = p => new URLSearchParams(posted(p).find(u => u.startsWith('/ap
 test('0403 AC1: each role\'s list names every model, with no entry labelled only "default"', async () => {
   const p = settingsPage([view()]);
   await openSettings(p);
-  for (const role of ['builder', 'reviewer', 'foreman']) {
+  for (const role of ['builder', 'reviewer', 'watch_agent']) {
     for (const l of labels(p, role)) assert.doesNotMatch(l, /·\s*default\b/i, `${role}: ${l}`);
     for (const name of ['Fable', 'Opus', 'Sonnet', 'Haiku']) assert.ok(labels(p, role).some(l => l.startsWith(`Claude Code · ${name}`)), `${role}: Claude Code · ${name}`);
     assert.equal(labelOf(p, role, 'claude|opus'), 'Claude Code · Opus');
@@ -59,7 +59,7 @@ test('0403 AC1: each role\'s list names every model, with no entry labelled only
 test('0403 AC2: the default model is labelled "(default)", once, and selected while the model is blank', async () => {
   const p = settingsPage([view()]);
   await openSettings(p);
-  for (const role of ['builder', 'reviewer', 'foreman']) {
+  for (const role of ['builder', 'reviewer', 'watch_agent']) {
     assert.equal(labelOf(p, role, 'claude|'), 'Claude Code · Sonnet (default)');
     assert.equal(labelOf(p, role, 'codex|'), 'Codex · GPT-6.1 Sol (default)');
     assert.equal(labelOf(p, role, 'cursor|'), 'Cursor · Grok 4.7 High (default)');

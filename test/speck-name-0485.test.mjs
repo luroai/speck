@@ -93,7 +93,7 @@ test('0485 AC1: nowhere in the panel says Foreman, in any case: header, lanes, o
 });
 
 test('0485 AC1: the scan finds Foreman where it shows, and lets the setting names through', () => {
-  assert.deepEqual(foremanIn(['foreman_fixing is fix', 'set foreman_model', 'The FOREMAN asks', 'foremen']), ['The FOREMAN asks']);
+  assert.deepEqual(foremanIn(['watch is fix', 'set watch_model', 'The FOREMAN asks', 'foremen']), ['The FOREMAN asks']);
 });
 
 test('0485 AC2: the cards, the full ticket and the dismiss confirm use the new wording', async () => {

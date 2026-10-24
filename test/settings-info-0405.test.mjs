@@ -16,7 +16,7 @@ const YOURS = { list: true, agents: AGENT_MODELS.map(a => ({ id: a.id, name: a.n
 const EFFORTS = ['', 'low', 'medium', 'high', 'xhigh', 'max'];
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does. ${SAVED}`, editable: true, for_machine: true, from: 'repo', repo_value: value, ...o });
 const view = ({ builder = 'claude', models = true, effortFrom = 'repo' } = {}) => ({ groups: [
-  { title: 'Watching', settings: [S('foreman', '', { choices: ['', 'claude', 'codex', 'cursor'] }), S('foreman_model', ''), S('foreman_effort', '', { choices: EFFORTS })] },
+  { title: 'Watching', settings: [S('watch_agent', '', { choices: ['', 'claude', 'codex', 'cursor'] }), S('watch_model', ''), S('watch_effort', '', { choices: EFFORTS })] },
   { title: 'Building and reviewing', settings: [
     S('builder', builder, { choices: ['claude', 'codex', 'cursor'], build_command: { value: '', own: { claude: '', codex: '', cursor: '' }, each_ticket: true } }),
     S('builder_model', ''), S('builder_effort', '', { choices: EFFORTS }),
@@ -33,12 +33,13 @@ const tipsIn = (p, node) => p.all(node).filter(n => n.tagName === 'p' && cls(n, 
 const shown = (p, n) => { for (let m = n; m && m !== p.byId('settings'); m = m.parentNode) if (m.hidden) return false; return true; };
 const fire = (n, type, more = {}) => n.listeners[type]({ target: n, currentTarget: n, stopPropagation() {}, preventDefault() {}, ...more });
 const opened = async (v, globals = {}) => { const p = settingsPage([v], [], globals); await p.settle(); await openSettings(p); return p; };
-const ROLES = ['builder', 'reviewer', 'foreman'];
+const ROLES = ['builder', 'reviewer', 'watch_agent'];
+const effortOf = role => role === 'watch_agent' ? 'watch_effort' : `${role}_effort`; // 0487
 
 test('0405 AC1: builder, reviewer and Foreman each show one info button in the row that holds their effort', async () => {
   const p = await opened(view());
   for (const role of ROLES) {
-    const row = rowOf(p, role), effort = rowOf(p, `${role}_effort`);
+    const row = rowOf(p, role), effort = rowOf(p, effortOf(role));
     assert.ok(p.all(row).includes(effort), `${role}'s effort sits in its row`);
     assert.ok(shown(p, effort), `${role}'s agent takes an effort`);
     assert.deepEqual(infos(p, row).map(b => b.attrs['aria-label']), [`About ${role}`], `${role}: one info button, the role's`);
@@ -50,9 +51,9 @@ test('0405 AC1: a role still has one info button after its agent changes, back t
   const p = await opened(view());
   changeTo(p, 'builder', 'cursor|auto');
   changeTo(p, 'builder', 'codex|gpt-6.1-sol');
-  for (const role of ['builder', 'foreman']) {
+  for (const role of ['builder', 'watch_agent']) {
     assert.deepEqual(infos(p, rowOf(p, role)).map(b => b.attrs['aria-label']), [`About ${role}`], role);
-    assert.equal(tipsIn(p, rowOf(p, role))[0].textContent, `What ${role} does. What ${role}_effort does. ${SAVED}`, `${role}: its effort explained again`);
+    assert.equal(tipsIn(p, rowOf(p, role))[0].textContent, `What ${role} does. What ${effortOf(role)} does. ${SAVED}`, `${role}: its effort explained again`);
   }
 });
 
@@ -60,7 +61,7 @@ test('0405 AC2: the one explanation covers the role and its effort, saying where
   const p = await opened(view());
   for (const role of ROLES) {
     const tip = tipsIn(p, rowOf(p, role))[0];
-    assert.equal(tip.textContent, `What ${role} does. What ${role}_effort does. ${SAVED}`, role);
+    assert.equal(tip.textContent, `What ${role} does. What ${effortOf(role)} does. ${SAVED}`, role);
     assert.equal(infos(p, rowOf(p, role))[0].attrs['aria-describedby'], tip.id, 'a screen reader reads it with the button');
   }
 });
@@ -102,9 +103,9 @@ test('0405 AC2: this machine\'s own effort is said, with its button, in the role
 test('0405 AC3: a role whose agent takes no effort keeps one info button, explaining only the role', async () => {
   const p = await opened(view({ builder: 'cursor|auto' }));
   changeTo(p, 'builder', 'cursor|auto');
-  for (const role of ['builder', 'foreman']) {
+  for (const role of ['builder', 'watch_agent']) {
     const row = rowOf(p, role);
-    assert.equal(shown(p, rowOf(p, `${role}_effort`)), false, `${role}: Cursor takes no effort`);
+    assert.equal(shown(p, rowOf(p, effortOf(role))), false, `${role}: Cursor takes no effort`);
     assert.deepEqual(infos(p, row).map(b => b.attrs['aria-label']), [`About ${role}`], role);
     assert.equal(tipsIn(p, row)[0].textContent, `What ${role} does. ${SAVED}`, role);
   }
