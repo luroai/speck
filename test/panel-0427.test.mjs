@@ -130,9 +130,11 @@ test('0427 AC1: in a real browser, a ticket\'s stage sentence and a question are
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#queue .q').length === 2`, 'the panel');
     await b.js(openLane('build'));
+    const look = sel => `[${sel}].map(n => ({ text: n.textContent, size: getComputedStyle(n).fontSize, font: getComputedStyle(n).fontFamily }))`;
+    const said = await b.js(look(`...document.querySelectorAll('#queue .q .top .say')`)); // 0462: a closed card's, as an open one has its facts in a table
     await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0802').querySelector('.top').click(), true`);
     await b.until(`!!document.querySelector('#queue .q.open .question')`, 'the question');
-    const seen = await b.js(`[...document.querySelectorAll('#queue .q .top .say'), document.querySelector('#queue .q.open .question')].map(n => ({ text: n.textContent, size: getComputedStyle(n).fontSize, font: getComputedStyle(n).fontFamily }))`);
+    const seen = [...said, ...await b.js(look(`document.querySelector('#queue .q.open .question')`))];
     assert.equal(seen.length, 2, JSON.stringify(seen)); // 0434: 0801's builder is at work, so a grid of lights stands in for its sentence
     assert.ok(await b.js(`!!document.querySelector('#queue .q .top .lights')`), '0801: its grid');
     for (const s of seen) {

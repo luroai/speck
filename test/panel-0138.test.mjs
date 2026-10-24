@@ -35,6 +35,8 @@ const ruleVar = (selector, prop) => {
 const waiting = (o = {}) => T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf(MESSAGE), ...o });
 // 0434: each card open, as what's under a Build card's two lines shows only then
 const rows = async state => { const p = boardPage([state]); await p.settle(); await openQueueRows(p); return { p, rows: queueRows(p) }; };
+// 0462: closed, as the current step and the sentence are in a closed card's line; an open one has its facts in a table
+const closed = async state => { const p = boardPage([state]); await p.settle(); return queueRows(p); };
 const openRow = async (state, id) => {
   const p = fakePage([state]);
   await p.settle();
@@ -47,11 +49,12 @@ test('0138 AC1: an approved ticket whose build has exited is purple on its borde
   const m = panelModel()({ tickets: [waiting()], ideas: [] });
   assert.equal(m.queue[0].red, false);
   assert.equal(m.queue[0].to_ship, true);
+  const [shut] = await closed({ tickets: [waiting()], ideas: [] });
+  assert.equal(stageOf(shut).textContent, 'Ship');
+  assert.match(stageOf(shut).className, /\bto-ship\b/);
+  assert.equal(sayOf(shut).className, 'say to-ship', 'it waits for you, in purple (0416: with no badge)');
   const { p, rows: [a] } = await rows({ tickets: [waiting()], ideas: [] });
   assert.match(a.className, /\bto-ship\b/);
-  assert.equal(stageOf(a).textContent, 'Ship');
-  assert.match(stageOf(a).className, /\bto-ship\b/);
-  assert.equal(sayOf(a).className, 'say to-ship', 'it waits for you, in purple (0416: with no badge)');
   const label = findText(p, a, 'Build finished without shipping');
   assert.ok(label, 'the label');
   const line = p.all(a).find(n => n.children && n.children.includes(label)) || p.all(a).find(n => n.textContent === 'Build finished without shipping' && n.className);
@@ -103,11 +106,13 @@ test('0138 AC3: blocked, stopped-before-finishing and stopped-unexpectedly ticke
   const m = panelModel()(state);
   assert.deepEqual(m.queue.map(t => t.red), [true, true, true, true]);
   assert.deepEqual(m.queue.map(t => t.to_ship), [false, false, false, false]);
+  for (const row of await closed(state)) {
+    assert.match(stageOf(row).className, /\bbad\b/);
+    assert.equal(sayOf(row).className, 'say bad', 'it needs you, in its sentence (0416: with no badge)');
+  }
   const { p, rows: all } = await rows(state);
   for (const row of all) {
     assert.match(row.className, /\bblocked\b/);
-    assert.match(stageOf(row).className, /\bbad\b/);
-    assert.equal(sayOf(row).className, 'say bad', 'it needs you, in its sentence (0416: with no badge)');
     assert.ok(!p.all(row).some(purple), 'nothing purple');
   }
   for (const [row, label] of [[all[1], 'Build stopped before finishing'], [all[2], 'Build stopped before finishing'], [all[3], 'Build stopped unexpectedly']])

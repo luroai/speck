@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fm, panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, readT, fakePage, full, T, items, top, queueRows, shippedRows, deferred } from './support/panel.mjs';
+import { fm, panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, readT, fakePage, full, T, items, top, queueRows, shippedRows, deferred, factsOf } from './support/panel.mjs';
 
 // ---------- 0077: set a draft ticket's priority with a click in the panel ----------
 
@@ -33,8 +33,11 @@ test('0077 AC1: only a draft\'s priority tag in the Tickets list is clickable; n
   assert.match(tag.className, /\bpick\b/, 'the draft\'s tag is clickable');
   assert.ok(tag.listeners.click, 'with a click handler');
   assert.equal(pTag(p, itemOf(p, '0002')), undefined, 'a draft with no priority shows no tag');
-  // 0434: the queue shows the tag while its ticket is open
-  for (const id of ['0003', '0004']) {
+  // 0434: the queue shows the tag while its ticket is open. 0462: one in flight shows its priority in its facts instead
+  queueRows(p).find(r => r.textContent.startsWith('0004')).children[0].listeners.click();
+  await p.settle();
+  assert.deepEqual(factsOf(queueRows(p).find(r => r.textContent.startsWith('0004')))[3], ['Priority', 'P2']);
+  for (const id of ['0003']) {
     queueRows(p).find(r => r.textContent.startsWith(id)).children[0].listeners.click();
     await p.settle();
     const row = queueRows(p).find(r => r.textContent.startsWith(id)), t = pTag(p, row);

@@ -29,9 +29,9 @@ const classes = n => (n.className || '').split(/\s+/).filter(Boolean);
 // and its labels. 0416: the builder badge's pose went with the badge; the border still shows the stage.
 function shows(p, id) {
   const row = rowOf(p, id), text = topOf(row).children.find(n => classes(n)[0] === 'progress');
-  const say = text.children.find(n => /\bsay\b/.test(n.className));
-  return { card: classes(row), say: say.attrs?.['aria-label'] ?? say.textContent, // 0443: a closed card's long sentence is the accessible name of its short words
-    sayClass: classes(say), stage: (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null,
+  const say = text ? text.children.find(n => /\bsay\b/.test(n.className)) : null; // 0462: an open card has its facts in a table instead
+  return { card: classes(row), say: say ? say.attrs?.['aria-label'] ?? say.textContent : null, // 0443: a closed card's long sentence is the accessible name of its short words
+    sayClass: say ? classes(say) : null, stage: (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null,
     acts: p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent) };
 }
 
@@ -71,16 +71,18 @@ test('0196 AC2: an approved ticket being shipped shows as shipping in the Build 
 test('0196 AC4: one auto-ship doesn\'t cover, or whose last auto-ship didn\'t finish, shows as before', async () => {
   const p = fake();
   await p.settle();
+  const closed = Object.fromEntries(['0603', '0604', '0605'].map(id => [id, shows(p, id)])); // 0462: the sentence is in a closed card's line
   await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
+  const open = id => ({ ...shows(p, id), say: closed[id].say, sayClass: closed[id].sayClass });
   for (const id of ['0603', '0605']) {
-    const s = shows(p, id);
+    const s = open(id);
     assert.equal(s.say, 'Approved · waiting for you to ship it', id);
     assert.deepEqual(s.sayClass, ['say', 'to-ship'], id);
     assert.ok(s.card.includes('to-ship'), id);
     assert.equal(s.stage, null, id);
     assert.deepEqual(s.acts, ['Build finished without shipping'], id);
   }
-  const failed = shows(p, '0604');
+  const failed = open('0604');
   assert.equal(failed.say, 'Approved · waiting for you to ship it');
   assert.deepEqual(failed.sayClass, ['say', 'bad']);
   assert.ok(failed.card.includes('blocked'));

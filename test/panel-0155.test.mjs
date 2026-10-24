@@ -142,11 +142,11 @@ const LAYOUT = id => `(() => {
     if (same) { same.left = Math.min(same.left, r.left); same.right = Math.max(same.right, r.right); }
     else lines.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
   }
-  const sub = card.querySelector('.top .sub'), progress = card.querySelector('.top .progress'), act = card.querySelector('.top .act');
+  const sub = card.querySelector('.top .sub'), progress = card.querySelector('.top .progress'), facts = card.querySelector('.top .facts'), act = card.querySelector('.top .act');
   const under = [...card.children].filter(n => !n.classList.contains('top'));
   return { left, right, idSize: getComputedStyle(idN).fontSize, titleSize: ts.fontSize, id: rect(idN), lines,
     cut: t.scrollWidth > t.clientWidth + 0.5 || t.scrollHeight > t.clientHeight + 0.5 || ts.textOverflow === 'ellipsis' || lines.some(l => l.left < box.left || l.right > box.right + 0.5),
-    sub: sub && sub.textContent ? rect(sub) : null, progress: progress ? rect(progress) : null, act: act ? rect(act) : null, line: rect(card.querySelector('.top .line')),
+    sub: sub && sub.textContent ? rect(sub) : null, progress: progress ? rect(progress) : null, facts: facts ? rect(facts) : null, act: act ? rect(act) : null, line: rect(card.querySelector('.top .line')),
     tags: [...card.querySelectorAll('.top .tag')].map(n => ({ text: n.textContent, ...rect(n) })),
     under: under.map(n => ({ what: n.className, button: n.tagName === 'BUTTON', first: n === under.find(x => x.tagName === 'BUTTON'), ...rect(n) })),
     firstButton: (() => { const bs = under.filter(n => n.tagName === 'BUTTON'); return bs.length ? rect(bs[0]) : null; })() };
@@ -172,16 +172,18 @@ for (const width of [375, 699, 700, 1000, 1280]) {
         const titleBottom = Math.max(...l.lines.map(x => x.bottom)), titleRight = Math.max(...l.lines.map(x => x.right));
         // 0419: under the title, one details line from the card's left padding: a ticket in flight's progress (0168),
         // with its timer in it, or a ready one's Queued line, with no timer; then the tags, in the same line.
-        // The title has the full width.
+        // 0462: an open one in flight has its facts in a table under its step track instead, its timer and its priority,
+        // size and risk in their cells. The title has the full width.
         assert.ok(Math.abs(l.line.right - l.right) < 1, `${id}: the title's row ends at ${l.line.right}, not the card's right padding at ${l.right}`);
-        const details = STATES[id] === 'ready' ? l.act : l.progress;
+        const details = STATES[id] === 'ready' ? l.act : l.facts;
         assert.ok(details, `${id}: no details line`);
         assert.ok(Math.abs(details.left - l.left) < 0.5, `${id}: the details line starts at ${details.left}, not the card's left padding at ${l.left}`);
         assert.ok(details.top >= titleBottom - 0.5, `${id}: the details line is under the title`);
         const inside = r => r.left >= details.left - 0.5 && r.right <= details.right + 0.5 && r.top >= details.top - 0.5 && r.bottom <= details.bottom + 0.5;
         if (STATES[id] === 'ready') assert.ok(l.sub === null && l.progress === null, `${id}: a ready ticket has no timer`);
         else assert.ok(l.sub && inside(l.sub), `${id}: the timer is in the details line`);
-        assert.ok(l.tags.length >= 3, `${id}: ${l.tags.length} tags`);
+        if (STATES[id] === 'ready') assert.ok(l.tags.length >= 3, `${id}: ${l.tags.length} tags`);
+        else assert.equal(l.tags.length, 0, `${id}: no tags, as its facts are in their cells`);
         for (const t of l.tags) {
           assert.ok(inside(t), `${id}: ${t.text} is in the details line`);
           assert.ok(Math.abs(t.height - l.tags[0].height) < 0.5, `${id}: ${t.text} is ${t.height} px high, ${l.tags[0].text} ${l.tags[0].height} px`);
