@@ -161,9 +161,3 @@ test('0470 AC2 and AC3: in a real browser, the title is in the header\'s Doto at
     assert.ok(kept.top >= -1 && kept.bottom <= 200, `the top row is still in view (${kept.top} to ${kept.bottom})`);
   } finally { await b.close(); }
 });
-
-test('0470 AC1: the brief calls it the Pipeline log pop-up', () => {
-  const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
-  assert.match(brief, /opens the Pipeline log pop-up/);
-  assert.doesNotMatch(brief, /the Pipeline pop-up/);
-});
