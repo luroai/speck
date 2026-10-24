@@ -39,6 +39,7 @@ A ticket waiting for you to ship it and one that needs you are clearly different
 - For release 0.15.0 (0452). The user asked on 2026-10-24 for everything relevant to the release to be ticketed.
 - Green already means passing checks and shipping in 0426, so "approved, ready to ship" sits with them.
 - Waits for nothing: the colour tokens are in `templates/panel.css`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
