@@ -79,7 +79,7 @@ test('0427 AC4: no label is in spaced capitals: buttons and labels are sentence 
     if (ls !== undefined) assert.ok(parseFloat(ls) <= 0, `${r.sel}: letter-spacing ${ls}`);
   }
   for (const sel of ['.full-open', '.toggle', '.set-ready', '.q .stop-build', '.q .back-to-plan', '.resume .copy', '.group', '.detail h4',
-    '#full-ticket .close, #doc-view .close, #foreman .close, #settings .close', '#full-ticket .ship, #doc-view .ship', '#settings .save-all']) {
+    '#full-ticket .close, #doc-view .close, #foreman .close', '#settings .close', '#full-ticket .ship, #doc-view .ship', '#settings .save-all']) { // 0472: Settings' Close in its own file
     assert.equal(family(rule(sel)), UI, `${sel}: the interface font`);
   }
   // The words themselves are already sentence case: the capitals were only the stylesheet's.
