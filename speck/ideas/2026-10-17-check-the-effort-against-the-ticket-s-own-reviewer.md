@@ -1,6 +1,6 @@
 # Check the effort against the ticket's own reviewer
 
-Captured: 2026-10-17 · Status: inbox
+Captured: 2026-10-17 · Status: dropped
 Triaged: 1
 From ticket: 0276
 

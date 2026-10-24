@@ -1,6 +1,6 @@
 # Refuse a reviewer name with spaces in config set
 
-Captured: 2026-10-20 · Status: inbox
+Captured: 2026-10-20 · Status: dropped
 From ticket: 0332
 
 ## What

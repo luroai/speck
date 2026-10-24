@@ -1,6 +1,6 @@
 # Same-model check knows a provider build's model
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0391
 
 ## What

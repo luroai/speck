@@ -1,6 +1,6 @@
 # Log flaky tests when base branch failures are left out
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: dropped
 Triaged: 1
 From ticket: 0228
 

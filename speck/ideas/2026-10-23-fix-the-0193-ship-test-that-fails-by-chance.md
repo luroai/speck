@@ -1,6 +1,6 @@
 # Fix the 0193 ship test that fails by chance
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0429
 
 ## What

@@ -1,6 +1,6 @@
 # Choose a model your agent doesn't list
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0400
 
 ## What

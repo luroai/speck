@@ -1,6 +1,6 @@
 # Name DeepSeek properly when it reviews
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0391
 
 ## What

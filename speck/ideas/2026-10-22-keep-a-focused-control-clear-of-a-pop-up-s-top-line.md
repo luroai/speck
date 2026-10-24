@@ -1,6 +1,6 @@
 # Keep a focused control clear of a pop-up's top line
 
-Captured: 2026-10-22 · Status: inbox
+Captured: 2026-10-22 · Status: dropped
 From ticket: 0379
 
 ## What

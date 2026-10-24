@@ -1,6 +1,6 @@
 # Tell "waiting for you" from "needs you" at a glance
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: ticketed (0440)
 From ticket: 0426
 
 ## What

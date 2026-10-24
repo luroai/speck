@@ -1,6 +1,6 @@
 # Tell the form a known provider needs only its key
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0408
 
 ## What

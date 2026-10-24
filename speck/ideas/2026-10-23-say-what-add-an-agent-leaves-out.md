@@ -1,6 +1,6 @@
 # Say what Add an agent leaves out
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0408
 
 ## What

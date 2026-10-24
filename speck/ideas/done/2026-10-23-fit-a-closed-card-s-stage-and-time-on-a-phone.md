@@ -1,6 +1,6 @@
 # Fit a closed card's stage and time on a phone
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: ticketed (0443)
 From ticket: 0434
 
 ## What

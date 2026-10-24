@@ -1,6 +1,6 @@
 # Confirm sleep time is left out on a real Mac
 
-Captured: 2026-10-20 · Status: inbox
+Captured: 2026-10-20 · Status: dropped
 From ticket: 0344
 
 ## What

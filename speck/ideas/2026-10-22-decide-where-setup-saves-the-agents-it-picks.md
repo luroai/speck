@@ -1,6 +1,6 @@
 # Decide where setup saves the agents it picks
 
-Captured: 2026-10-22 · Status: inbox
+Captured: 2026-10-22 · Status: dropped
 From ticket: 0386
 
 ## What

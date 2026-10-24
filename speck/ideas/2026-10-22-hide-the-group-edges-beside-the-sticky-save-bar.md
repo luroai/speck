@@ -1,6 +1,6 @@
 # Hide the group edges beside the sticky Save bar
 
-Captured: 2026-10-22 · Status: inbox
+Captured: 2026-10-22 · Status: dropped
 From ticket: 0368
 
 ## What

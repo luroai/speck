@@ -1,6 +1,6 @@
 # Run OpenAI-type providers
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0401
 
 ## What

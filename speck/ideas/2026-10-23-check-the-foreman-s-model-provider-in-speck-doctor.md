@@ -1,6 +1,6 @@
 # Check the Foreman's model provider in speck doctor
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0393
 
 ## What
