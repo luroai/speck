@@ -668,7 +668,7 @@
     --accent: #e34671; --ok: #7fbc95; --warn: #d9a65e; --bad: #ef95ad; --run: #97b2cc; --idea: #c4a6be;
     --blue: #81a1c1; --yellow: #d2943e; --green: #70b489;
     --inbox: #88c0d0; --bug: #e69d83; --fix: #d9a65e;
-    --purple: #a08ad6; --purple-text: #b9a7e4; --cyan-text: #88c0d0;
+    --purple: #a08ad6; --purple-text: #b9a7e4; --cyan-text: #8cc3d2; /* a shade apart from --inbox, which keeps a colour of its own (0038) */
     --accent-bg: #27221b; --ok-bg: #1f2421; --inbox-bg: #212527; --bad-bg: #281c1f;
     --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
     --bezel: #080907; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1;
