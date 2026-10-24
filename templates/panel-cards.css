@@ -1,0 +1,436 @@
+/* The panel's styles (0472: a file for each area of the panel): the cards in Plan, Build and Shipped and everything
+   in them, the build log included. */
+  /* 0425: Build's and Shipped's counts, the first line of their lane */
+  .lane-n { flex: none; padding: 6px 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); }
+  .lane-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .group { padding: 7px 14px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
+  .group.attn { color: var(--warn); }
+  .group.run { color: var(--run); }
+  .prio { position: relative; display: inline-block; }
+  .tag.pick { cursor: pointer; }
+  .tag.pick:hover { color: var(--text); border-color: var(--muted); }
+  .tag.p0.pick:hover { color: var(--bad); border-color: var(--bad); } /* 0213: P0 stays red on hover */
+  .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; gap: 2px; padding: 2px; background: var(--panel); border: .5px solid var(--line); }
+  .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted-large); border: .5px solid var(--line); cursor: pointer; } /* 0428: boxed, as every button is */
+  .prio-menu button:hover { color: var(--text); border-color: var(--text); }
+  .prio-menu button.on { color: var(--text); border-color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+  .item .prio-refused { margin-top: 6px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+  /* Shaping */
+  /* 0151: each item is a card of its own, with space between cards */
+  #shaping { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
+  #shaping .empty { padding: 0 4px; }
+  .item { padding: 10px 14px; border: 1px solid var(--line); }
+  .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
+  .item .head { margin: -10px -14px; padding: 10px 14px; } /* the item's padding opens and closes it too */
+  .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; }
+  .item.open { background: var(--raise); border-color: var(--text); }
+  .detail { margin-top: 10px; border-top: .5px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
+  .detail h4 { margin: 0 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); font-weight: 400; }
+  .detail p { margin: 0 0 8px; color: var(--text); }
+  .detail ol { margin: 0; padding-left: 18px; color: var(--text); }
+  .detail ol li { margin-bottom: 4px; }
+  .ready { border-left: .5px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
+  .ready div { padding: 3px 0; }
+  .set-ready { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin-top: 10px; padding: 4px 12px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
+  .set-ready:disabled { background: transparent; color: var(--faint); border-color: var(--line); cursor: not-allowed; }
+  .ready div.refused { white-space: pre-wrap; }
+  /* 0151: a ticket's id and title on one line, a wrapped title's next line starting under the title, then its tags.
+     0214: an idea's or inbox note's title too, without a label since 0435 */
+  .item .line { display: flex; align-items: baseline; gap: 8px; }
+  .item .line .id { flex: none; font-size: 14px; }
+  .item .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
+  .item .path { margin-bottom: 6px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; } /* 0435: an open note's path, above its text */
+
+  /* Queue */
+  /* 0155: each ticket is a card of its own, laid out as a Plan ticket. 0167: only a ticket waiting for you or in trouble
+     is coloured, by its border and background (below the highlights, so they win) */
+  #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
+  #queue .empty { padding: 0 4px; }
+  /* 0449: an empty lane's message, centred: that it's clear, what shipped lately and the next step */
+  #queue .idle { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 4px; text-align: center; }
+  #queue .idle .idle-head { margin-bottom: 4px; font-size: 15px; color: var(--text); }
+  #queue .idle .go-plan { margin: 10px 0 0; }
+  .q { padding: 10px 14px; border: 1px solid var(--line); }
+  .q .top { cursor: pointer; }
+  .q .top .line { display: flex; align-items: baseline; gap: 8px; }
+  .q .top .line .id { flex: none; font-size: 14px; }
+  .q .top .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
+  .q .top .sub { font-variant-numeric: tabular-nums; }
+  .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--log-bg); border: 1px solid var(--line);
+    font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; } /* 0455: a terminal in every look */
+  /* 0422: one line of the log a row, its text past a column for the time, so a line that wraps, or a message's next line,
+     starts under the text. Each kind of entry has its own colour; anything else keeps the log's muted one */
+  .q .log { overflow-anchor: none; } /* 0422: rows taken out at the top leave the box's scroll place as it was, as text did */
+  .q .log .ln { display: block; padding-left: 9ch; }
+  .q .log .ln.timed { text-indent: -9ch; }
+  .q .log .ln.plain { padding-left: 0; }
+  .q .log .at { color: var(--log-muted); }
+  .q .log .msg { color: var(--log-text); }
+  .q .log .tool { color: var(--log-run); }
+  .q .log .fail { color: var(--log-bad); }
+  .q .log .note { color: var(--log-warn); }
+  .q.wait { background: var(--raise); } /* 0161: set back by its fill, not faded, so its text keeps its contrast */
+  /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
+  /* 0421: an open card's Full ticket, Review pack and Stop build are small buttons on one line. 0428: each boxed, as every button is */
+  .q .stop-build { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; line-height: 16px; margin: 6px 0 2px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
+  .q .stop-build:disabled { cursor: default; opacity: .6; }
+  /* An open ready ticket's Back to Plan button, beside Full ticket, and why the server refused it */
+  .q .back-to-plan { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .q .back-to-plan:hover { color: var(--text); border-color: var(--text); }
+  .q .back-to-plan:disabled { cursor: default; opacity: .6; }
+  .q .stop-refused, .q .plan-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
+  .question { margin: 6px 0 4px; padding: 6px 10px; border-left: 2px solid var(--bad); background: var(--bad-bg); color: var(--text); }
+  /* 0283: under a blocked question, whether it changes what you'd notice and whether the recommendation is a clear one */
+  .question-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; white-space: normal; }
+  .question-fact { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); }
+  /* 0284: on a blocked question with a recommendation, the button that takes it and has speck run carry the build on */
+  .q .go-with { display: block; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 6px 0 0; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; white-space: normal; }
+  .q .go-with:hover { border-color: var(--text); }
+  .q .go-with:disabled { cursor: default; opacity: .6; }
+  .q .go-with-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
+  .act { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); }
+  .act b { color: var(--text); font-weight: 400; }
+  .act.to-ship { color: var(--ok); }
+  /* 0168: an in-flight ticket's progress, under its title: a sentence saying what's happening and the current stage's
+     name, then the timer. 0416: in words only, with no builder badge. */
+  .q .top .say { display: inline-block; color: var(--text); font-size: 14px; line-height: 13px; } /* 0427: the stage sentence is body text, in a line of smaller details: a block one line of 13 px tall, so it starts under the title and keeps the line its height */
+  .q .top .ship-at { color: var(--text); font-variant-numeric: tabular-nums; }
+  .q .top .say.bad { color: var(--bad); }
+  .q .top .say.to-ship { color: var(--ok); }
+  .q .top .stage { color: var(--run); }
+  .q .top .stage.bad { color: var(--bad); }
+  .q .top .stage.to-ship { color: var(--ok); }
+  /* 0434: while an agent is at work on a ticket, a 4 × 4 grid of dots, 12.5 px square, in place of the stage sentence.
+     Its lights move across it only when the browser allows motion (below); held still, one diagonal is lit. */
+  .q .top .lights { display: inline-grid; grid-template-columns: repeat(4, 2px); grid-auto-rows: 2px; gap: 1.5px; width: 12.5px; height: 12.5px; vertical-align: middle; color: var(--run); }
+  .q .top .lights i { display: block; width: 2px; height: 2px; border-radius: 50%; background: var(--line); }
+  .q .top .lights .d3 { background: var(--run); }
+  /* 0434: a closed ticket's title is one line, cut off with an ellipsis when it doesn't fit, and a closed Build ticket's
+     status line is one line too. An open one wraps as needed. */
+  .item.ticket:not(.open) .line .title, .q:not(.open) .top .line .title, #shipped tr:not(.open) .line .title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* 0435: a closed idea's or inbox note's title too, so the card is its title line and its second line */
+  .item.idea:not(.open) .line .title, .item.inbox:not(.open) .line .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.idea:not(.open) .head .line, .item.inbox:not(.open) .head .line { min-width: 0; } /* its grid column no wider than the card */
+  .q:not(.open) .top .progress, .q:not(.open) .top .act { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* 0419: a Plan or Build ticket is its title line and one details line, in smaller type, its parts separated by " · ".
+     Each part stays whole, so the line wraps between parts, and only when it doesn't fit. */
+  .item.ticket, .q { padding: 6px 10px; }
+  .item.ticket .head { display: block; margin: -6px -10px; padding: 6px 10px; }
+  .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
+  .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
+  .item.ticket .head .checks, .q .top .progress, .q .top .act { display: block; font-family: inherit; font-size: 12px; line-height: 14px; color: var(--muted); }
+  .item.ticket .head .checks > *, .q .top .progress > *, .q .top .act > * { white-space: nowrap; }
+  .item.ticket .head .checks .prio { vertical-align: top; } /* 0441: at the line's top, as the tags in it are */
+  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; padding: 0; border: 0; line-height: inherit; vertical-align: top; } /* inline, as a box beside a dot would let the line break before the dot. 0441: at the line's top, as on its baseline the monospace's line box reaches a pixel past the line's */
+  @media (prefers-reduced-motion: no-preference) {
+    /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
+    .item.flash, .q.flash { animation: flash 1.5s ease-out; }
+    @keyframes flash { 0%, 40% { box-shadow: inset 0 0 0 2px var(--text); } } /* 0167: a ring only, so a state's tint stays */
+    /* 0434: the grid's lights sweep across it from one corner to the other, a diagonal at a time */
+    .q .top .lights i { animation: lights 1.4s linear infinite both; }
+    .q .top .lights .d1 { animation-delay: .1s; } .q .top .lights .d2 { animation-delay: .2s; } .q .top .lights .d3 { animation-delay: .3s; }
+    .q .top .lights .d4 { animation-delay: .4s; } .q .top .lights .d5 { animation-delay: .5s; } .q .top .lights .d6 { animation-delay: .6s; }
+    @keyframes lights { 0%, 40%, 100% { background-color: var(--line); } 15% { background-color: var(--run); } }
+  }
+  .question.exit.to-ship { border-left-color: var(--ok); }
+  .question.exit.carried { border-left-color: var(--run); background: var(--raise); } /* 0338: speck run is carrying it on */
+  .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
+  .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px; }
+  .resume .cmd { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
+  .resume .copy { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
+  .resume .copy:hover { color: var(--text); }
+  /* 0418: in the lanes, the narrow layout at every width: a Plan item's readiness under its details, and a resume command
+     that wraps. Elsewhere these keep their own layout. */
+  main .sh { flex-wrap: wrap; align-items: center; }
+  main .detail { grid-template-columns: minmax(0, 1fr); }
+  main .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
+  main .resume { flex-wrap: wrap; }
+  main .resume .cmd { min-width: 0; }
+  .q .tag.high { color: var(--bad); border-color: var(--bad); }
+  .next { color: var(--ok); font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; border: .5px solid var(--ok); padding: 0 5px; }
+
+  /* Shipped */
+  /* 0157: the stats a grid of tiles of equal size, each number over its label and the tickets its median covers, and
+     each shipped ticket a card of its own, laid out as a Plan ticket */
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line); border-bottom: .5px solid var(--line-soft); }
+  .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 6px; background: var(--panel); }
+  .stat .num { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 18px; font-weight: 600; line-height: 1.3; }
+  .stat .label { font-size: 14px; line-height: 1.4; color: var(--muted); }
+  .stat .count { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; color: var(--faint); }
+  .stats[hidden] { display: none; }
+  /* 0420: the three stats one line of smaller type, with More stats at its end; the other three still tiles under it.
+     Each stat stays whole, so in a pane too narrow for the line, such as a phone's, it wraps between them. */
+  .stats-line { display: flex; align-items: flex-end; gap: 8px; padding: 6px 16px; border-bottom: .5px solid var(--line-soft); }
+  .stats-line[hidden] { display: none; }
+  #shipped-stats { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
+  #shipped-stats .part { white-space: nowrap; }
+  #shipped-stats .num { font-weight: 600; color: var(--text); }
+  #shipped-stats[hidden] { display: none; }
+  .full-open.more-stats { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
+  .more-stats[hidden] { display: none; }
+  /* 0420: a shipped ticket is its title line, with any bug or fix tag after the title, and one line of smaller type:
+     when it shipped and its figures, separated by " · ". More stats is plain words in a thin box, so these lines fit
+     on one line in a 420 px pane with a scroll bar. 0466: its top row opens and closes it, as a Build ticket's does. */
+  #shipped .sum { display: flex; align-items: flex-end; gap: 6px; margin-top: 2px; }
+  #shipped .meta { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
+  #shipped .meta > * { white-space: nowrap; } /* whole, so a line too long for a phone wraps between its time and figures */
+  section.shipped table { display: block; }
+  #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
+  #shipped .empty { padding: 0 4px; }
+  #shipped tr { display: block; padding: 6px 8px; border: 1px solid var(--line); }
+  #shipped td { display: block; padding: 0; border: 0; }
+  #shipped .line { display: flex; align-items: baseline; gap: 8px; }
+  #shipped .line .id { flex: none; font-size: 14px; line-height: 14px; }
+  #shipped .line .title { flex: 0 1 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-weight: 600; font-size: 17px; line-height: 22px; overflow-wrap: anywhere; }
+  /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the card taller */
+  #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
+  #shipped .line .tags .tag { font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; line-height: 16px; padding: 0 5px; }
+  /* 0426: a tag in a line of 12 px text is in the muted colour for small text. :where() keeps the risk and type tags' own colours */
+  :where(.item.ticket .head .checks, .q .top .progress, .q .top .act, #shipped .line .tags) .tag { color: var(--muted); }
+  /* 0204: a ticket merged but not pushed, in crimson, with speck ship's message */
+  #shipped td.unpushed { margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--bad); }
+  #shipped .unpushed-head { color: var(--bad); font-weight: 600; }
+  #shipped .unpushed-said { margin-top: 2px; font-size: 12px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+  /* 0464: an open one's track and table (0461, 0462) under its title, then (0466) Full ticket and Review pack */
+  #shipped .full-cell { display: flex; align-items: center; gap: 6px; width: auto; margin-top: 8px; }
+  /* 0318: the Foreman's question, with an Answer box and Answer and Dismiss buttons, on its ticket's card and in its detail */
+  .foreman-ask { margin: 6px 0 6px; white-space: normal; }
+  .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: .5px solid var(--line); resize: vertical; }
+  .foreman-ask .ask-buttons { display: flex; gap: 8px; margin: 6px 0 0; }
+  .foreman-ask .ask-reply { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; }
+  .foreman-ask .ask-reply:hover { border-color: var(--text); }
+  .foreman-ask .ask-reply:disabled { cursor: default; opacity: .6; }
+  .foreman-ask .ask-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
+  .question { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .ready div { overflow-wrap: anywhere; }
+
+  /* Shaping: tickets, ideas and the inbox, one list at a time. The selected tab has a border in the text colour (0167). */
+  .toggles { display: flex; gap: 6px; } /* 0428: apart, so each rounded toggle shows its own four edges */
+  .toggle { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; padding: 1px 10px; background: transparent; border: .5px solid var(--line); color: var(--muted); cursor: pointer; }
+  .toggle.on { color: var(--panel); background: var(--text); border-color: var(--text); position: relative; z-index: 1; } /* 0450: filled, so the open list shows at a glance; its text is the section's background */
+  /* 0164: only where the main pointer can hover, as a phone keeps a tapped card's :hover until the next tap */
+  @media (hover: hover) { .item:hover { background: var(--raise); } }
+  .q.open { background: var(--raise); border-color: var(--text); }
+  .note { margin: 0; color: var(--text); }
+  .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
+
+  /* Chains through after:: a chain icon on a ticket that unlocks others, a padlock on one that waits */
+  .chain, .lock { display: inline-block; position: relative; width: 12px; height: 10px; vertical-align: -1px; cursor: help; }
+  .chain { color: var(--muted); transform: rotate(-35deg); }
+  .chain::before, .chain::after { content: ''; position: absolute; top: 3px; width: 6px; height: 4px; border: 1.5px solid currentColor; }
+  .chain::before { left: 0; } .chain::after { left: 4px; }
+  .lock { color: var(--faint); }
+  .lock::before { content: ''; position: absolute; left: 3px; top: 0; width: 6px; height: 5px; border: 1.5px solid currentColor; border-bottom: 0; }
+  .lock::after { content: ''; position: absolute; left: 2px; top: 4px; width: 8px; height: 6px; background: currentColor; }
+  /* 0468: a closed ticket's dependency chip, at the end of its title line: a link icon and how many it waits on, or an
+     arrow and how many wait on it. It never shrinks or wraps, so the title gives way and ends in its ellipsis */
+  .dep-chip { flex: none; align-self: center; display: inline-flex; align-items: center; justify-content: center; padding: 0; font: inherit; font-size: 12px; line-height: 14px;
+    font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); background: none; border: 0; cursor: pointer; }
+  .dep-pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border: .5px solid var(--line); border-radius: 8px; }
+  .dep-chip:hover { color: var(--text); } .dep-chip:hover .dep-pill { border-color: var(--text); }
+  .dep-icon { display: inline-block; position: relative; width: 11px; height: 10px; }
+  .dep-icon.link { transform: rotate(-35deg); }
+  .dep-icon.link::before, .dep-icon.link::after { content: ''; position: absolute; top: 3px; width: 6px; height: 4px; border: 1.5px solid currentColor; border-radius: 2px; }
+  .dep-icon.link::before { left: 0; } .dep-icon.link::after { left: 4px; }
+  .dep-icon.arrow::before { content: ''; position: absolute; left: 0; top: 4px; width: 8px; height: 1.5px; background: currentColor; }
+  .dep-icon.arrow::after { content: ''; position: absolute; left: 5px; top: 2px; width: 4px; height: 4px; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); }
+  /* 0185: a hovered ticket and those linked to it get a ring in the text colour inside their border, and keep their fill and
+     text colours. The rest are left exactly as they are, rather than set back with the hover's own fill. */
+  .item.hl, .q.hl { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
+  /* 0167: a ticket in trouble, blocked or its build stopped, is crimson; one waiting for you to ship it is green (0440:
+     magenta was too near the red), as nothing is wrong (0138). Each keeps its border and background whether it's open
+     or highlighted. */
+  .q.blocked { border-color: var(--bad); background: var(--bad-bg); }
+  .q.to-ship { border-color: var(--ok); background: var(--ok-bg); }
+  /* 0171: a ticket an agent is at work on has a 2px border in its stage's colour, and its fill stays as it is, as only a
+     ticket that needs you is filled. It keeps it whether it's open or highlighted. */
+  .q.at-build { border-color: var(--blue); border-width: 2px; }
+  .q.at-check { border-color: var(--inbox); border-width: 2px; }
+  .q.at-review { border-color: var(--yellow); border-width: 2px; }
+  .q.at-ship { border-color: var(--purple); border-width: 2px; } /* 0461: purple, as its Ship bar is */
+  /* 0461: an open ticket's five steps, under its title: five equal bars in one row, each with its name under it. A
+     step reached so far has its bar in its own colour, and the current one its name in it and bold. A name too long
+     for its bar ends in an ellipsis. */
+  .q .track, .item.ticket .track, #shipped .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 6px 0 4px; }
+  .q .track .step, .item.ticket .track .step, #shipped .track .step { display: block; min-width: 0; padding-top: 3px; border-top: 4px solid var(--line); font-size: 12px; line-height: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q .track .step.done, .item.ticket .track .step.done, #shipped .track .step.done { color: var(--text); }
+  .q .track .step.now, .item.ticket .track .step.now, #shipped .track .step.now { font-weight: 600; }
+  .q .track .step.done.build, .q .track .step.now.build, .item.ticket .track .step.done.build, .item.ticket .track .step.now.build, #shipped .track .step.done.build, #shipped .track .step.now.build { border-top-color: var(--blue); }
+  .q .track .step.done.check, .q .track .step.now.check, .item.ticket .track .step.done.check, .item.ticket .track .step.now.check, #shipped .track .step.done.check, #shipped .track .step.now.check { border-top-color: var(--inbox); }
+  .q .track .step.done.review, .q .track .step.now.review, .item.ticket .track .step.done.review, .item.ticket .track .step.now.review, #shipped .track .step.done.review, #shipped .track .step.now.review { border-top-color: var(--yellow); }
+  .q .track .step.done.approve, .q .track .step.now.approve, .item.ticket .track .step.done.approve, .item.ticket .track .step.now.approve, #shipped .track .step.done.approve, #shipped .track .step.now.approve { border-top-color: var(--green); }
+  .q .track .step.done.ship, .q .track .step.now.ship, .item.ticket .track .step.done.ship, .item.ticket .track .step.now.ship, #shipped .track .step.done.ship, #shipped .track .step.now.ship { border-top-color: var(--purple); }
+  .q .track .step.now.build, .item.ticket .track .step.now.build, #shipped .track .step.now.build { color: var(--run); }
+  .q .track .step.now.check, .item.ticket .track .step.now.check, #shipped .track .step.now.check { color: var(--cyan-text); }
+  .q .track .step.now.review, .item.ticket .track .step.now.review, #shipped .track .step.now.review { color: var(--warn); }
+  .q .track .step.now.approve, .item.ticket .track .step.now.approve, #shipped .track .step.now.approve { color: var(--ok); }
+  .q .track .step.now.ship, .item.ticket .track .step.now.ship, #shipped .track .step.now.ship { color: var(--purple-text); }
+  .q .track.stopped .step.now, .item.ticket .track.stopped .step.now, #shipped .track.stopped .step.now { border-top-color: var(--bad); color: var(--bad); } /* blocked, or its build stopped */
+  /* 0462: an open in-flight ticket's facts, under its track: six even cells in three columns and two rows, with lines
+     between them and round them. Each is its label above its value, each on one line, cut short with … */
+  .q .facts, .item.ticket .facts, #shipped .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 4px; border-top: .5px solid var(--line); border-left: .5px solid var(--line); }
+  .q .facts .fact, .item.ticket .facts .fact, #shipped .facts .fact { min-width: 0; padding: 4px 6px; border-right: .5px solid var(--line); border-bottom: .5px solid var(--line); }
+  .q .facts .label, .q .facts .value, .item.ticket .facts .label, .item.ticket .facts .value, #shipped .facts .label, #shipped .facts .value { display: block; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q .facts .label, .item.ticket .facts .label, #shipped .facts .label { font-size: 12px; line-height: 14px; color: var(--muted); }
+  .q .facts .value, .item.ticket .facts .value, #shipped .facts .value { font-size: 12px; line-height: 16px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .q .facts .value .lights, .item.ticket .facts .value .lights, #shipped .facts .value .lights { margin: 1.75px 5px 0 0; vertical-align: top; } /* at the line's top, so the line keeps its height */
+  .q .facts .value.now.bad, .item.ticket .facts .value.now.bad, #shipped .facts .value.now.bad { color: var(--bad); }
+  .q .facts .value.now.to-ship, .item.ticket .facts .value.now.to-ship, #shipped .facts .value.now.to-ship { color: var(--ok); }
+  .q .facts .value.bug, .item.ticket .facts .value.bug, #shipped .facts .value.bug { color: var(--bug); }
+  .q .facts .value.fix, .item.ticket .facts .value.fix, #shipped .facts .value.fix { color: var(--fix); }
+  .q .facts .value.document, .item.ticket .facts .value.document, #shipped .facts .value.document { color: var(--idea); }
+  /* 0463: the same track and table on an open ticket that hasn't started. A draft's priority opens the menu that sets it,
+     underlined as a linked id is, with room for its menu */
+  .item.ticket .facts .value.pick { overflow: visible; }
+  .item.ticket .facts .prio { vertical-align: top; }
+  .item.ticket .facts .set-prio { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+  .item.ticket .facts .set-prio:hover { text-decoration-style: solid; }
+  /* 0467: an open ticket's dependency box, under its table. Waits on: a header with its counts, a bar of even
+     segments, then a grid of id chips six to a row, the one that shows the shipped ones two columns wide. Chain: five
+     even slots on a line, each a circle over its id. Every chip and slot keeps to its column, its id on one line. */
+  .deps { margin: 6px 0 4px; padding: 6px; border: .5px solid var(--line); }
+  .deps-head { display: flex; gap: 8px; justify-content: space-between; font-size: 12px; line-height: 16px; color: var(--muted); white-space: nowrap; }
+  .deps-head b { font-weight: 600; color: var(--text); }
+  .deps-head span { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .deps-bar { display: flex; gap: 1px; height: 4px; margin: 6px 0; }
+  .deps-bar i { flex: 1 1 0; min-width: 0; border-top: 4px solid var(--line); } /* a border, as the track's bars are */
+  .deps-bar i.shipped { border-top-color: var(--green); }
+  .deps-bar i.building { border-top-color: var(--blue); }
+  .deps-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  .deps .chip { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 4px 0; font: inherit; font-size: 12px; line-height: 16px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip;
+    color: var(--text); background: var(--raise); border: .5px solid var(--line); border-radius: 3px; font-variant-numeric: tabular-nums; }
+  .deps .chip.building { color: var(--run); border-color: var(--blue); }
+  .deps .chip.shipped { color: var(--ok); border-color: var(--green); }
+  .deps .chip.more { grid-column: span 2; color: var(--muted); }
+  .deps button.chip, .deps button.slot { cursor: pointer; }
+  .deps button.chip:hover, .deps button.slot:hover .sid { text-decoration: underline; }
+  .deps-slots { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+  .deps-slots::before { content: ''; position: absolute; left: 10%; right: 10%; top: 10px; border-top: 1px solid var(--line); }
+  .deps .slot { display: flex; flex-direction: column; align-items: center; box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 0; font: inherit; color: var(--text); background: none; border: 0; }
+  /* each circle is its border, 10 px wide all round, on the panel's colour, so the line behind it doesn't show through */
+  .deps .slot .dot { position: relative; box-sizing: border-box; width: 20px; height: 20px; border-radius: 50%; border: 10px solid var(--line); background: var(--panel); }
+  .deps .slot.shipped .dot { border-color: var(--green); }
+  .deps .slot.building .dot { border-color: var(--blue); }
+  .deps .slot.self .dot { border-color: var(--text); }
+  .deps .slot.more .dot { border: 1.5px dashed var(--line); }
+  .deps .slot.shipped .dot::after { content: ''; position: absolute; left: -2.5px; top: -6.5px; width: 4px; height: 8px; border: solid var(--panel); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* its tick */
+  .deps .slot .sid { max-width: 100%; margin-top: 2px; font-size: 12px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: clip; font-variant-numeric: tabular-nums; }
+  .deps .slot.self .sid { font-weight: 600; }
+  .deps .slot.more .sid { color: var(--muted); }
+  /* 0154: a ticket gone to from a dependency box (0467) lights briefly. It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
+  @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
+
+  .full-open { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .full-open:hover { color: var(--text); }
+  .q .full-open { margin: 6px 8px 2px 0; padding: 1px 10px; font-size: 12px; line-height: 16px; }
+  .q .full-open:hover { border-color: var(--text); }
+  td.full-cell { width: 1%; padding-left: 0; }
+  #shipped tr { cursor: pointer; } /* 0466: its top row opens and closes it, as .q .top does, */
+  #shipped td.unpushed, #shipped td.full-cell { cursor: auto; } /* and what's under it doesn't */
+  td .full-open { margin: 0; padding: 0 8px; font-size: 12px; white-space: nowrap; }
+  td .full-open + .full-open { margin-left: 6px; }
+  /* 0142: an opened draft's, idea's or inbox note's Markdown in Plan, formatted as in the full ticket pane */
+  .shaping .md { overflow-wrap: anywhere; }
+  .shaping .md p { margin: 0 0 8px; color: var(--text); }
+  .shaping .md > :last-child, .shaping .md li > :last-child { margin-bottom: 0; }
+  .shaping .md ul, .shaping .md ol { margin: 0 0 8px; padding-left: 20px; color: var(--text); }
+  .shaping .md li { margin-bottom: 0; }
+  .shaping .md li ul, .shaping .md li ol { margin: 2px 0 0; }
+  .shaping .md h5, .shaping .md h6 { margin: 10px 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; color: var(--text); font-weight: 600; }
+  .shaping .md-h1 { font-size: 14px; }
+  .shaping .md-h2 { font-size: 12px; }
+  .shaping .md-h3 { font-size: 12px; color: var(--muted); }
+  .shaping code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
+  .shaping .md pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
+  .shaping .md pre code { font-size: 12px; }
+  .shaping .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 14px; }
+  .shaping .md th, .shaping .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
+  .shaping .md th { font-weight: 600; background: var(--raise); }
+  .shaping .md a { color: var(--run); }
+
+  /* 0428: rounded corners as Cursor's: 8 px for a control, 12 px for a card or a box */
+  .question-fact, .next, .prio-menu { border-radius: 8px; }
+  .item, .q, #shipped tr, .q .log { border-radius: 12px; }
+  .stats { border-radius: 12px; overflow: hidden; }
+
+  /* 0140: a phone screen */
+  @media (max-width: 699.98px) {
+    .detail { grid-template-columns: minmax(0, 1fr); }
+    .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
+    .resume { flex-wrap: wrap; }
+    .resume .cmd { min-width: 0; }
+    /* 0142: an opened note's Markdown in Plan, as in the full ticket. 0158: each table row is a block, its heading row
+       hidden (but still copied) and each cell labelled with its heading */
+    .shaping .md table, .shaping .md tbody, .shaping .md tr, .shaping .md td { display: block; }
+    .shaping .md thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .shaping .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
+    .shaping .md tr:last-child { border-bottom: 0; }
+    .shaping .md td { border: 0; padding: 2px 0; overflow-wrap: normal; overflow-x: auto; } /* a word too long for the line scrolls in its cell, unbroken */
+    .shaping .md td::before { content: attr(data-label); display: block; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); white-space: nowrap; }
+    /* A review pack's criteria: the number and result on one line, then the criterion, then the labelled evidence */
+    .shaping .md .ac-table tr { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+    .shaping .md .ac-table td:nth-child(-n+3)::before { display: none; }
+    .shaping .md .ac-table td:nth-child(1) { order: 0; font-weight: 600; }
+    .shaping .md .ac-table td:nth-child(3) { order: 1; }
+    .shaping .md .ac-table td:nth-child(2) { order: 2; flex-basis: 100%; }
+    .shaping .md .ac-table td:nth-child(n+4) { order: 3; flex-basis: 100%; }
+  }
+
+  /* 0417: a touch screen, at any width: every button and clickable control at least 44 px each way */
+  @media (pointer: coarse) {
+    .toggle { min-width: 44px; min-height: 44px; }
+
+    /* Shaping */
+    .head { min-height: 44px; }
+    /* 0151: the priority tag looks like the others, and its tap area is the 44 px box around it */
+    .item.ticket .prio { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
+    /* 0162: the tap area reaches 7 px past the tag on each side, into the gaps, so the gaps beside it match the rest */
+    .item.ticket .prio { padding: 0 7px; margin: 0 -7px; }
+    .tag.pick::after { content: ''; position: absolute; inset: 0; }
+    .tag-row { gap: 18px; }
+    .prio-menu button { min-width: 44px; min-height: 44px; }
+    .set-ready, .full-open { min-width: 44px; min-height: 44px; }
+    .deps .chip, .deps .slot { min-height: 44px; } /* 0467 */
+    .dep-chip { min-width: 44px; min-height: 44px; margin: -13px 0; } /* 0468: its pill in the middle, and the title line no taller */
+
+    /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' tap areas in
+       it stay apart */
+    .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; }
+    .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { padding: 0 12px; }
+    .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline-block; } /* a box, for its tap area */
+    /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
+       gap before a tag stays wide, and its words, stage and time fit on a phone */
+    .q:not(.open) .top .progress .sep:not(:has(+ .tag)) { padding: 0; }
+    /* The priority's 44 px box takes no more room in the line than its two characters do */
+    .item.ticket .head .checks .prio { padding: 0; margin: 0 calc(1ch - 22px); font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
+    /* 0463: in a draft's facts table, the priority's 44 px box starts at the value's left, and its negative margins give
+       back what it reaches above and below the line, so the cell stays as tall as the others. A tap anywhere in it
+       reaches the priority. */
+    .item.ticket .facts .prio { justify-content: flex-start; padding: 0; margin: -14px 0; vertical-align: top; }
+    .item.ticket .facts .set-prio::after { content: ''; position: absolute; inset: 0; }
+
+    /* Queue: the top row is at least 44 px high */
+    .q .top { min-height: 44px; }
+    /* 0224: a linked id's tap area reaches past its text, so the tags beside it in the line (0419) are above it: a tap
+       anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
+    .q .top .tag:not(.pick) { z-index: 1; }
+    .q .full-open { min-height: 44px; }
+    .q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply { min-width: 44px; min-height: 44px; }
+    .resume .copy { min-width: 44px; min-height: 44px; }
+
+    /* Shipped */
+    .more-stats { min-width: 44px; min-height: 44px; }
+    #shipped .line .title { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
+    #shipped tr:not(.open) .line .title { display: block; min-width: 44px; line-height: 44px; } /* 0434: a block, so its title can end in an ellipsis */
+    td .full-open { min-height: 44px; }
+
+  }
+
+  /* 0453: every button's border at least a device pixel on each side, as 0281 gave Settings' info buttons: a half pixel
+     is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
+     button's edges on whole pixels. */
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
+    .prio-menu button, .set-ready, .q .stop-build, .q .back-to-plan, .q .go-with, .resume .copy, .foreman-ask .ask-reply, .toggle, .full-open { border-width: 1px; }
+  }

@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 // ---------- 0281: every Settings control's border on all four sides. Only a real browser lays the view out. ----------
 
@@ -71,7 +71,7 @@ test('0281 AC1 AC2: at every width and pixel ratio, the controls sit on whole pi
 // Every rule using what this ticket brings in is one of the Settings view's. 0423: or the full ticket's own rule, whose
 // centred column is rounded to whole pixels the same way. 0453: or one of the rules that bring the same to every button.
 test('0281 AC3: the change is limited to the Settings view', () => {
-  const css = fs.readFileSync(new URL('../templates/panel.css', import.meta.url), 'utf8');
+  const css = styles(); // 0472: from each area's file
   const rules = css.split("\n").filter(l => l.includes("{") && /round\(|--gap|box-shadow: 0 0 0|max-resolution/.test(l) && !/\b0453:/.test(l));
   assert.ok(rules.length >= 5, `the ticket's rules: ${rules.length}`);
   for (const l of rules) {

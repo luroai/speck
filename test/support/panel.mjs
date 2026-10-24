@@ -19,7 +19,9 @@ import { copied } from './copy.mjs';
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
 export const PAGE = path.join(ROOT, 'templates', 'panel.html');
-export const STYLES = path.join(ROOT, 'templates', 'panel.css'); // 0430: the page's styles, which it loads from /panel.css
+// 0430: the page's styles, which it loads from /panel.css. 0472: a file for each area of the panel, in the order the page loads them.
+export const STYLE_FILES = ['panel-base.css', 'panel-header.css', 'panel-cards.css', 'panel-popups.css', 'panel-settings.css'];
+export const STYLES = STYLE_FILES.map(f => path.join(ROOT, 'templates', f));
 export const MODEL = path.join(ROOT, 'templates', 'panel-model.js'); // 0431: the page's model, which it loads from /panel-model.js
 export const SETTINGS = path.join(ROOT, 'templates', 'panel-settings.js'); // 0432: the Settings view's script, which it loads from /panel-settings.js
 export const SCRIPT = path.join(ROOT, 'templates', 'panel.js'); // 0433: the rest of the page's script, which it loads from /panel.js
@@ -128,19 +130,20 @@ export function request(port, { method = 'GET', pathName = '/', host = `127.0.0.
 export const raw = (port, pathName, host = `127.0.0.1:${port}`, timeout) => request(port, { pathName, host, bytes: true, timeout });
 
 // A copy of the CLI (the whole scripts/ folder, since it's split into modules: 0018) and its templates, so a test can edit its code or panel.html without touching the repo's own (0059, 0067).
+// 0472: `styles` is the first of the page's style files, panel-base.css.
 export function cliCopy() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-cli-'));
   fs.cpSync(path.join(ROOT, 'scripts'), path.join(dir, 'scripts'), { recursive: true });
   fs.cpSync(path.join(ROOT, 'templates'), path.join(dir, 'templates'), { recursive: true });
-  return { cli: path.join(dir, 'scripts', 'speck.mjs'), page: path.join(dir, 'templates', 'panel.html'), styles: path.join(dir, 'templates', 'panel.css'),
+  return { cli: path.join(dir, 'scripts', 'speck.mjs'), page: path.join(dir, 'templates', 'panel.html'), styles: path.join(dir, 'templates', 'panel-base.css'),
     model: path.join(dir, 'templates', 'panel-model.js'), settings: path.join(dir, 'templates', 'panel-settings.js'),
     script: path.join(dir, 'templates', 'panel.js') };
 }
 
 // The page's pure model function, run outside the browser.
 export const page = () => fs.readFileSync(PAGE, 'utf8');
-// 0430: the page's styles, from their own file.
-export const styles = () => fs.readFileSync(STYLES, 'utf8');
+// 0430: the page's styles, from their own file. 0472: from each area's file, in the order the page loads them.
+export const styles = () => STYLES.map(f => fs.readFileSync(f, 'utf8')).join('\n');
 // 0431: the page's model, from its own file.
 export const model = () => fs.readFileSync(MODEL, 'utf8');
 // 0432: the Settings view's script, from its own file.

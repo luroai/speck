@@ -9,7 +9,13 @@ import { sharedPanel } from './support/shared-panel.mjs';
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const head = () => page().match(/<head>([\s\S]*?)<\/head>/)[1];
 const css = () => styles();
-const phoneCss = () => (css().match(/@media \(max-width: 699\.98px\) \{([\s\S]*)$/) || [])[1] || '';
+// 0472: what's in each area's rules for a phone, as the styles are a file for each area, each with its own.
+const phoneCss = () => [...css().matchAll(/@media \(max-width: 699\.98px\) \{/g)].map(m => {
+  const text = css();
+  let depth = 1, j = m.index + m[0].length;
+  for (; depth && j < text.length; j++) { if (text[j] === '{') depth++; else if (text[j] === '}') depth--; }
+  return text.slice(m.index + m[0].length, j - 1);
+}).join('\n');
 
 // Enough tickets for the page to scroll well past one screen, on a phone and on a desktop. 0001 unlocks 0002, so 0002's
 // row in the Build queue, open, has a button that jumps to 0001 (0154, 0467), and closed, a chip (0468).
