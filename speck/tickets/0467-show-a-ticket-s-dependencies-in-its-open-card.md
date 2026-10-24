@@ -1,7 +1,7 @@
 ---
 id: "0467"
 title: "Show a ticket's dependencies in its open card"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T12:39:41.469Z"
 ---
 # 0467 · Show a ticket's dependencies in its open card
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 An open ticket lists the tickets it waits on, or unlocks, as ids in a line of text. A ticket that waits on many, such as a release ticket waiting on 27, runs to three lines or more on a phone, mostly ids that have already shipped, and you can't see how far along they are.
@@ -46,7 +46,7 @@ An open ticket shows its dependencies in a small, even box under its facts table
 - Self-check: in the full ticket, which covers the page, a chip or circle now shows its ticket in the pane rather than lighting a card hidden behind it; a loop through after: stops rather than going round; repeated ids in after: count once.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+An open ticket now shows what it depends on in a small box under its facts table, instead of a line of ticket numbers. A ticket waiting on several others gets a "Waits on" box: a count of how many have shipped, are being built or are queued, a coloured bar, and a grid of the ones still to ship, with a button to show the shipped ones too. A ticket in a simple chain gets a "Chain" box: a row of five circles showing up to two tickets before it, itself and up to two after it, with "+n" when the chain goes further. Pressing a number takes you to that ticket. To see it, open a draft or queued ticket that has an `after:` list, or the full view of one. Worth a look: on a Plan card the box sits just under the line that divides the facts from the details, so there's a little more space above it than on a Build card.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +56,71 @@ An open ticket shows its dependencies in a small, even box under its facts table
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (Delivery log only, none went to the inbox):
+  - On a Plan card the box is the first thing in the card's details, under their dividing line, because 0463's tests fix what the card's top row and second child are. A Build card has it straight under its top row. Moving it up on Plan would mean changing those tests.
+  - Which ids have their shipped tickets shown is never cleared once a ticket leaves the board (a tidy-up).
+  - A circle for "+n" is filled with the panel colour, a touch lighter than a raised card behind it in the light look.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "52a8a8a40470716d5ddf7e399034f82848e72a9f",
+    "session": "fresh",
+    "thread_id": "01a16dfd-d30d-78d3-9cce-623785427ede",
+    "builder_response": "- Tests run: test/panel-0467.test.mjs, plus (with --related) test/panel-0417.test.mjs test/panel-0419.test.mjs test/panel-0434.test.mjs test/panel-0461.test.mjs test/panel-0462.test.mjs test/panel-0463.test.mjs test/panel-0464.test.mjs test/panel-0465.test.mjs test/panel-0466.test.mjs test/panel-0154.test.mjs test/panel-0164.test.mjs and every test file naming a changed file (0178, 0187, 0188, 0208, 0246, 0281, 0411, 0416, 0430, 0431, 0433, 0444, 0459, ship-0204), as these open cards, the full pane, tap sizes and id links.\n- Notes for the reviewer:\n  - Where the box sits: an existing 0463 test asserts an open card's top row is exactly title, track, table, and that a Plan card's second child is its detail. To keep AC4 (no passing test fails) without changing them, the box is first in a Plan card's detail, and straight after the top row in a Build card. Both put it right under the table. In the full ticket it is the third child of the steps block (0465).\n  - In the full ticket, which covers the page, a chip or circle shows its ticket in the pane rather than lighting a card hidden behind it.\n  - The panel's board cut-down shipped tickets now keep `after:`, so a chain can walk back through old shipped tickets.\n  - The browser test allows a button to reach under 1 px into the 4 px gap: Chrome draws buttons whole pixels wide (measured: 51 px in a 50.33 px column), while plain spans fit exactly.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 223523,
+      "cached_input_tokens": 169728,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 999,
+      "reasoning_output_tokens": 92
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T12:59:06.143Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-model.js depsOf and templates/panel.js depsBox implement the counts, status bar, sorted chips and shipped toggle. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "depsOf builds five chain slots, follows the lowest downstream id and counts hidden tickets. Both AC2 tests passed, covering colours, ticks, branching, empty slots and cycles."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "depNode uses goTo for cards and openFull for the full pane. Navigation tests passed. The real-browser test passed at 320, 390, 768 and 1280 px with 27 dependencies, checking slot boundaries and uncut, single-line ids."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "ticketDetail, queueItem and paneSteps place the box beneath the facts table. The AC4 test verifies matching full-ticket boxes and removal of open-card id lines. Verified test output reports 306 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Open tickets now show compact dependency boxes with progress colours, expandable shipped tickets and links to related tickets. The full ticket shows the same information. The tests cover the requested behaviour and phone-width layout; no blocking issues were found."
+  }
+}
+```
+
+</details>
