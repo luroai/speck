@@ -86,7 +86,8 @@ const TITLES = `[...document.querySelectorAll('#shaping .item.ticket')].map(item
       || lines.some(l => l.left < box.left || l.right > box.right + 0.5 || l.bottom > box.bottom + 0.5) };
 })`;
 
-for (const [width, most] of [[375, 2], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
+// 0441: 3 lines at 375 px, as the longest title takes in a proportional font with Arial's widths
+for (const [width, most] of [[375, 3], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
   test(`0151 AC1: at ${width} px, an open ticket's id is 14 px and its title 17 px, never cut off, on at most ${most} ${most === 1 ? 'line' : 'lines'} starting under the title`, skip, async () => {
     assert.equal(LONGEST.length, 68);
     await withPanel(async b => {

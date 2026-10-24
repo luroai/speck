@@ -34,4 +34,6 @@ test('0441 AC2: the checks 0427 eased for a monospaced panel have no exception f
   const build = fs.readFileSync(path.join(ROOT, 'test', 'panel-0155.test.mjs'), 'utf8');
   assert.match(build, /ready\.lines\.length <= most\b/, '0155: a ready title on at most the lines it allowed before 0427');
   assert.match(build, /flying\.lines\.length <= most\b/, '0155: a building title on at most the lines it allowed before 0427');
+  // the 375 px limit is 3 lines for everyone, as the user chose, and every other width keeps the limit it had before 0427
+  for (const s of [plan, build]) assert.ok(s.includes('of [[375, 3], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]'), 'the line limits');
 });
