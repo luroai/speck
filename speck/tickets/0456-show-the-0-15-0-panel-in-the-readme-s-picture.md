@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0455", "0457", "0462"]                # ticket ids that must be done first
+after: ["0455", "0457", "0465"]                # ticket ids that must be done first
 created: 2026-10-24
 
 ---
@@ -41,7 +41,7 @@ The README's light and dark pictures show the 0.15.0 panel in a narrow browser p
 - 0306's pictures were made with the demo in `speck-assets/readme/demo/` beside this checkout, outside the repo: `server.mjs` serves the real panel page from a speck checkout with made-up tickets inside a mock agent app (`frame.html`), and `shoot.mjs` takes the screenshot at 2× with headless Chromium. Update it for the new panel (the panel is now split across `templates/panel.html`, `panel.css`, `panel.js` and the files they load). Don't commit that folder or its paths.
 - The mock agent app stays generic: it can be laid out like an editor with an agent chat and a browser pane, but shows no product's name or logo.
 - `test/readme-0306.test.mjs` already checks AC2's file facts for the same two files.
-- Waits for 0455, 0457 and 0462, the last 0.15.0 changes to the panel's look, which wait for 0454 and 0453, so the picture shows the panel as it ships. 0452 waits for this.
+- Waits for 0455, 0457 and 0465, the last 0.15.0 changes to the panel's look, which wait for 0454 and 0453, so the picture shows the panel as it ships. 0452 waits for this.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
