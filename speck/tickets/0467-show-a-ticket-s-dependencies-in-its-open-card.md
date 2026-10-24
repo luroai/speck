@@ -1,7 +1,7 @@
 ---
 id: "0467"
 title: "Show a ticket's dependencies in its open card"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0466"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T12:39:41.469Z"
+approved: "2026-10-24T12:59:18.656Z"
 
 ---
 # 0467 · Show a ticket's dependencies in its open card
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 An open ticket lists the tickets it waits on, or unlocks, as ids in a line of text. A ticket that waits on many, such as a release ticket waiting on 27, runs to three lines or more on a phone, mostly ids that have already shipped, and you can't see how far along they are.
@@ -52,9 +53,14 @@ An open ticket now shows what it depends on in a small box under its facts table
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 224,522
+- Elapsed since build started: 20 min
+- Changed lines: 171 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, none went to the inbox):
   - On a Plan card the box is the first thing in the card's details, under their dividing line, because 0463's tests fix what the card's top row and second child are. A Build card has it straight under its top row. Moving it up on Plan would mean changing those tests.
