@@ -1,7 +1,7 @@
 ---
 id: "0459"
 title: "Show the pipeline log as a terminal of short lines"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T10:17:36.223Z"
 ---
 # 0459 · Show the pipeline log as a terminal of short lines
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The Pipeline pop-up's log lists speck run's raw lines, newest first, on the page's own background, with no times. Many lines are long sentences with session ids and file paths, so it doesn't read as a log of what the pipeline is doing.
@@ -56,3 +56,76 @@ The pipeline log looks like a ticket's build log: a terminal of short, timed lin
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c22cd3457ecfbed0cdf2b7f603e8bd8e814c4135",
+    "session": "fresh",
+    "thread_id": "01a16d70-e5f3-7f20-bbb0-c92b1a5f70de",
+    "builder_response": "- Tests run: `speck test --related test/pipeline-0459.test.mjs test/pipeline-0415.test.mjs test/pipeline-0458.test.mjs` (the related run added the files naming a changed file, and the repo's checks)\n- Round 1. The summaries are `runLogSummary`/`runLogLine` in templates/panel-model.js, drawn by `drawRunLog` and `runLogRow` in templates/panel.js. The API still gives newest first; the page reverses it.\n- Changed existing tests, as the ticket replaces what they checked: 0415 AC2's and 0458 AC4's order checks now expect the newest at the bottom; 0415's two tests of a reader's place as lines come in above them are replaced by 0459 AC4's tests of a reader scrolled up in the log's own box; 0415 AC5's long line is now a sentence (summaries are cut to 48 characters and drop paths), checked on the newest line, still wrapping at 320 px.\n- Pictures of the pop-up in both looks are in the review pack.\n",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 118067,
+      "cached_input_tokens": 84224,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 981,
+      "reasoning_output_tokens": 123
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T10:25:13.203Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.css reuses the build log's background, border, font and text colours. Passing 0459 AC1 tests check these styles."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runLogRow and the .ln/.timed styles provide the timestamp column and hanging indentation. Passing 0459 AC2 tests exercise timed and untimed rows."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runLogSummary and runPlain implement the required summaries and removal of technical details. Passing 0459 AC3 tests cover the specified forms, truncation and filtering."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Ordering, retention and empty-state tests pass, and the server still reads only run.log. However, drawRunLog compares tagName to lowercase 'ol'; browsers return 'OL', so every update replaces the box and scrolls to the bottom, losing a scrolled-up reader's place."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js:1998",
+        "issue": "The existing log box is never reused in a real browser because HTML element tagName is uppercase ('OL'). Each new log update therefore creates a fresh box and forces it to the bottom. The scroll-preservation tests miss this because fakePage stores lowercase tagName values.",
+        "suggested_fix": "Use a case-insensitive tag check or normalise tagName before comparing it. Add a regression check using browser-style uppercase tagName values, verifying that an update reuses the box and preserves a scrolled-up reader's position.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The terminal styling and short, timed summaries meet the ticket's requirements. One browser-specific bug needs fixing: new messages pull readers back to the bottom even when they have scrolled up. The current tests miss this because their fake elements use different tag names from a browser."
+  }
+}
+```
+
+</details>

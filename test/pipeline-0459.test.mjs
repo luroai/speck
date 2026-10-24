@@ -90,8 +90,8 @@ test('0459 AC3: no summary is over 48 characters or shows a session id, a proces
     `0457 stopped (session ${SESSION}).`,
     'Opening 0457\'s pull request: speck pr 0457. Log: speck/.cache/runs/0457.pr.log',
     'Run `speck ship 0457 --auto` to ship it.',
-    'remote: Permission to luroai/speck.git denied to you.',
-    'fatal: unable to access \'https://github.com/luroai/speck.git/\': The requested URL returned error: 403',
+    'remote: Permission to example/app.git denied to someone.',
+    'fatal: unable to access \'https://github.com/example/app.git/\': The requested URL returned error: 403',
     '0251 build ended by `speck stop`.',
     'Conflicting files: scripts/panel.mjs, docs/brief.md.',
     'See run.log for more.',
@@ -134,7 +134,7 @@ async function opened(oldestFirst, more = [], made) {
   await p.settle();
   return p;
 }
-const list = p => p.all(p.byId('foreman')).find(n => /\brun-log\b/.test(n.className || '') && n.tagName === 'ol');
+const list = p => p.all(p.byId('foreman')).find(n => /\brun-log\b/.test(n.className || '') && /^ol$/i.test(n.tagName));
 const shown = p => list(p).children.map(li => li.textContent);
 const tick = async p => { for (const fn of p.timers.splice(0)) fn(); await p.settle(); };
 const next = (n, lines) => [state({ run_log: String(n) }), { lines: lines.slice().reverse(), stamp: String(n) }];
@@ -152,7 +152,7 @@ function layout() {
     Object.defineProperty(n, 'scrollTop', { configurable: true, get: () => Math.min(top, Math.max(0, n.scrollHeight - n.clientHeight)), set: v => { top = Math.max(0, Math.min(v, Math.max(0, n.scrollHeight - n.clientHeight))); } });
     n.getBoundingClientRect = () => {
       if (n.className === 'run-log') return { top: 100, bottom: 300, left: 0, right: 0 };
-      if (n.tagName === 'li' && n.parentNode) { const at = 100 + before(n) - box().scrollTop; return { top: at, bottom: at + tall(n), left: 0, right: 0 }; }
+      if (/^li$/i.test(n.tagName) && n.parentNode) { const at = 100 + before(n) - box().scrollTop; return { top: at, bottom: at + tall(n), left: 0, right: 0 }; }
       return { top: 0, bottom: 0, left: 0, right: 0 };
     };
   };
@@ -217,6 +217,22 @@ for (const [what, before, after] of [
     assert.equal(now.top, was.top, 'in the same place');
   });
 }
+
+test('0459 AC4: with a browser\'s tag names, in capitals, an update keeps the same box and a scrolled-up reader\'s place', async () => {
+  let lay = () => {};
+  const p = await opened(numbered(1, 50), next(2, numbered(1, 53)), n => { n.tagName = n.tagName.toUpperCase(); lay(n); });
+  lay = layout();
+  for (const n of p.all(p.byId('foreman'))) lay(n);
+  const box = list(p);
+  assert.equal(box.tagName, 'OL');
+  box.scrollTop = 300;
+  const was = firstSeen(p);
+  await tick(p);
+  assert.equal(list(p), box, 'the same box');
+  assert.equal(shown(p).at(-1), 'line 53');
+  assert.equal(box.scrollTop, 300, 'still where the reader left it');
+  assert.deepEqual(firstSeen(p), was);
+});
 
 test('0459 AC4: a log started afresh, sharing no lines with the one drawn, leaves a scrolled-up reader\'s scroll as it is', async () => {
   let lay = () => {};
