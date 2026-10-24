@@ -32,7 +32,8 @@ test('AC2: CHANGELOG.md has a 0.2.0 section', () => {
 });
 
 test('AC3: the README and the brief name the current version', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.ok(read(f).includes(pkg().version), f);
+  // 0491: the version on the status line, the one fact here the README's tests check.
+  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), new RegExp(`Status: ${pkg().version.replace(/\./g, '\\.')}\\b`), f);
 });
 
 test('AC4: the README setup prompt installs the latest release', () => {

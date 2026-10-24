@@ -50,12 +50,12 @@ function readmeLines(src) {
 
 // The test files allowed to read the README, each with what it checks there. A fact anywhere else in the README is
 // checked by review.
-const SETUP = 'the setup prompt', VERSION = "the status line's version and the setup prompt";
+const SETUP = 'the setup prompt', VERSION = "the status line's version and the setup prompt"; // and nothing else in it
 const ALLOWED = {
   'test/readme-0089.test.mjs': SETUP,
   'test/readme-0250.test.mjs': SETUP,
   'test/setup-0107.test.mjs': SETUP,
-  'test/install-0253.test.mjs': `${SETUP} and the command that installs speck`,
+  'test/install-0253.test.mjs': SETUP,
   'test/readme-0249.test.mjs': 'the <picture> block and its images',
   'test/readme-links-0491.test.mjs': "that the README's links and anchors resolve",
   ...Object.fromEntries(['0092', '0106', '0210', '0226', '0236', '0243', '0248', '0254', '0282', '0297', '0298', '0307',

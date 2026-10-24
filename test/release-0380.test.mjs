@@ -54,7 +54,6 @@ test('0380 AC3: the README\'s and the brief\'s status lines name the current ver
 
 test('0380 AC3: the setup prompt still installs the latest release, as 0253 left it', () => {
   assert.deepEqual(setupPromptProblems(read('README.md')), []);
-  assert.doesNotMatch(read('README.md'), /speck#v\d/);
 });
 
 test('0380 AC4: the release notes say how to update to 0.13.1 and name the commands the fixes use', () => {
