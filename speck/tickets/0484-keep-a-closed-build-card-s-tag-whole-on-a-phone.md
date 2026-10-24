@@ -40,6 +40,7 @@ A closed Build card's bug, fix or document tag always shows whole.
 - From the inbox note, raised by the builder on 0443, whose criteria name only the words, stage and time. Decided while ticketing on 2026-10-24: the tag stays on the status line, whole, rather than moving or being dropped.
 - Today: `.q:not(.open) .top .progress` and the rules round it under 0443's comment in `templates/panel-cards.css`, and the closed card's status line built in `templates/panel.js` (0443).
 - Waits for 0483: both change the closed Build card's update in `templates/panel.js`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
