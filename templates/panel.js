@@ -774,6 +774,32 @@ if (pageHeader) {
   const repo = pageHeader.querySelector('.repo');
   if (repo) repo.title = repo.textContent.trim();
 }
+// 0453: a phone draws a side of a button's border only when that edge is on a whole pixel (0281), so each button with a
+// border is made a whole number of pixels wide, and what follows it in its row starts on a whole pixel too. It's done
+// as soon as the page changes, before it's drawn, so new words never squeeze into an old width, and again for every
+// button when the window's size or the fonts change. `wholeOf` keeps what each button showed when it was measured, so
+// one is measured again only when its words or classes change.
+const wholeOf = new WeakMap(), wholeSized = new WeakSet();
+function wholeButtons(again = false) {
+  const sig = b => `${b.className}\n${b.textContent}`;
+  const todo = [...document.querySelectorAll('button')].filter(b => (again || wholeOf.get(b) !== sig(b)) && b.getClientRects().length);
+  for (const b of todo) if (wholeSized.has(b)) { b.style.width = ''; wholeSized.delete(b); }
+  const widths = todo.map(b => (getComputedStyle(b).borderLeftStyle === 'none' ? null : b.getBoundingClientRect().width));
+  todo.forEach((b, i) => {
+    wholeOf.set(b, sig(b));
+    const w = widths[i];
+    if (w === null || Math.abs(w - Math.round(w)) < 1e-3) return;
+    b.style.boxSizing = 'border-box';
+    b.style.width = `${Math.ceil(w)}px`;
+    wholeSized.add(b);
+  });
+}
+if (typeof MutationObserver === 'function' && document.body) {
+  new MutationObserver(() => wholeButtons()).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'aria-selected', 'open'] });
+  addEventListener('resize', () => wholeButtons(true));
+  document.fonts?.addEventListener?.('loadingdone', () => wholeButtons(true));
+  wholeButtons();
+}
 $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-backdrop')) closeFull(); });
 $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render(); });
 // 0396: a switch, a button kept between redraws so it keeps focus, showing its state beside a sliding knob.

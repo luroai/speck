@@ -40,6 +40,9 @@ Every button on the panel shows all four sides of its border on a phone.
 - From the builder's note on 0281 (this note was dropped in the 0.15.0 triage, then picked up again for this).
 - Waits for 0449: both change `templates/panel.css`. 0452 waits for this one.
 - Failing before this build: none
+- How: the panel's script makes each button with a border a whole number of pixels wide as soon as the page changes (CSS can't round a width that comes from the words), and again on a resize or a font loading. The tabs are laid out in whole pixels in CSS, and the tab before another draws the edge they share, rather than the two overlapping by half a pixel; the side shared with the open tab takes its text colour. The main column, a document's and the Foreman's are centred on a whole pixel. Below a pixel ratio of 2, every button's border is 1 px. "Edges" means the left and right ones, as in 0281; the top and bottom aren't rounded.
+- Changed older tests: 0281 AC3 now allows rules marked 0453 to use its rounding outside Settings; 0428's shared-edge check reads the new way the tabs share it (the left tab draws it), still once.
+- Self-check: moved the rounding from the next frame to straight after each change, as More stats → Fewer stats wrapped for a frame in its old width (0420's test caught it); the tabs' width rounds to the nearest pixel, as a third of 288 px came out a hair under 96 and rounded down to 95 (0425's test caught it).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
