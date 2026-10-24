@@ -40,6 +40,10 @@ Pressing speck's screen shows the pipeline log and nothing else.
 ## Notes
 - Asked for by the user on 2026-10-24: "when you click the LCD screen, you just see the pipeline log", because Right now showed information from 0344, "over 100 tickets … ago", that they've not used.
 - Failing before this build: none
+- The server still sends the board's `foreman` object unchanged: `speck status` and the screen's word use it. Only the panel stops drawing Right now.
+- Tests changed because this ticket removes what they checked (AC4 read as: every test still passes, with assertions on the pop-up's Right now replaced by the new behaviour, or by the same facts from the board or `speck status`): 0285 AC2 (two tests) and AC1/AC2 shipping, 0317 AC1, AC2 and AC3 detail tests, 0287 AC4, 0318 AC1 detail, 0366 AC1 and AC4 (refresh now checks the log; the typed answer is now checked on the card, where a refresh doesn't redraw the box), 0413 AC4, 0451 AC3, 0415 AC1 (four tests become two) and its AC3 drag target.
+- Docs: the brief and README no longer say the Foreman's detail lists what `speck status` now alone shows.
+- Self-check: added a test that the Reload page button goes once the page is no longer stale, with the focus it had going back to the pop-up, which needed the focus check to change.
 - Today: `renderForeman` in `templates/panel.js` draws Right now from the board's `foreman` object (0285, 0287, 0299, 0317, 0318, 0328, 0366). Whether the server keeps sending what only Right now used is the builder's call.
 - The screen's tooltip says "what speck run is doing, what is waiting, and its log": it should no longer promise what's gone.
 

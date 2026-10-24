@@ -307,13 +307,11 @@
   /* 0285: the Foreman's detail, in a pop-up over the whole panel (0366) */
   .foreman { font-size: 14px; overflow-anchor: none; } /* 0415: the page keeps a reader's place in the log itself */
   .foreman h3 { margin: 14px 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
-  .foreman .fm-now > h3:first-child { margin-top: 4px; }
+  .foreman .fm-stale[hidden] + .fm-log > h3 { margin-top: 4px; } /* 0458: the log's heading is the first thing under the top */
   .foreman ol.run-log { margin: 0; padding: 0; list-style: none; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
   .foreman ol.run-log li { padding: 1px 0; border-bottom: .5px solid var(--line-soft); white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
-  .foreman h4 { margin: 8px 0 2px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; font-weight: 600; color: var(--muted); }
-  .foreman ul { margin: 0; padding-left: 18px; }
   .foreman p { margin: 2px 0; }
-  .foreman .stale, .foreman .held { color: var(--warn); }
+  .foreman .stale { color: var(--warn); }
   /* 0318: the Foreman's question, with an Answer box and Answer and Dismiss buttons, on its ticket's card and in its detail */
   .foreman-ask { margin: 6px 0 6px; white-space: normal; }
   .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: .5px solid var(--line); resize: vertical; }
