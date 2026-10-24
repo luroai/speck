@@ -148,6 +148,54 @@ function chains(tickets) {
   }
   return { unlocks: id => unlocks.get(String(id)) || [], linked: id => linked.get(String(id)) || [String(id)] };
 }
+// 0467: what an open ticket's dependency box shows, or null for none. `byId`: every ticket on the board by id, done ones
+// too. `unlocks`: chains()'s. A ticket whose after: names two or more shows a Waits on box: each of them, in id order,
+// with its state ('shipped', 'building' or 'queued') and how many are in each. One whose after: names one, or that an
+// unfinished ticket waits on, shows a Chain box: five slots, up to two tickets before it, itself, then up to two after
+// it. Before it: the one it waits on, then the one that one waits on when it waits on only one. After it: the lowest
+// id waiting on it, then the lowest waiting on that. When more lie beyond an end, its last slot is { more: n } in their
+// place, n counting the ones not shown. A slot with nothing in it is null.
+const byNumber = (a, b) => a.localeCompare(b, 'en', { numeric: true });
+function depsOf(t, byId, unlocks) {
+  const id = String(t.id), waiting = new Set((Array.isArray(t.waiting_on) ? t.waiting_on : []).map(String));
+  const afterOf = x => [...new Set((x && Array.isArray(x.after) ? x.after : []).map(String))].filter(a => a !== String(x.id));
+  // Shipped is done, building is in flight, queued the rest. One not on the board is shipped when it's in the ticket's
+  // after: and its waiting_on leaves it out, as speck counts it done.
+  const after = afterOf(t);
+  const stateOf = d => { const o = byId.get(d); return o ? o.status === 'done' ? 'shipped' : IN_FLIGHT.includes(o.status) ? 'building' : 'queued' : after.includes(d) && !waiting.has(d) ? 'shipped' : 'queued'; };
+  if (after.length >= 2) {
+    // Shipped or not as its facts table counts them, from waiting_on.
+    const items = after.sort(byNumber).map(d => ({ id: d, state: !waiting.has(d) ? 'shipped' : stateOf(d) === 'building' ? 'building' : 'queued' }));
+    const count = s => items.filter(i => i.state === s).length;
+    return { kind: 'waits', items, shipped: count('shipped'), building: count('building'), queued: count('queued') };
+  }
+  const later = unlocks(id).map(String).filter(d => d !== id);
+  if (!after.length && !later.length) return null;
+  const seen = new Set([id]);
+  const before = [];
+  for (let at = t; ;) {
+    const a = afterOf(at);
+    if (a.length !== 1 || seen.has(a[0])) break;
+    seen.add(a[0]);
+    before.push(a[0]);
+    at = byId.get(a[0]) || { id: a[0], after: [] };
+  }
+  // Every ticket waiting on it, through others too, and the walk along the lowest ids.
+  const all = new Set(), queue = [id];
+  while (queue.length) for (const d of unlocks(queue.shift()).map(String)) if (d !== id && !all.has(d)) { all.add(d); queue.push(d); }
+  const walk = [];
+  for (let at = id, done = new Set([id]); walk.length < 2;) {
+    const next = unlocks(at).map(String).filter(d => !done.has(d)).sort(byNumber)[0];
+    if (next === undefined) break;
+    done.add(next);
+    walk.push(next);
+    at = next;
+  }
+  const slot = d => ({ id: d, state: stateOf(d) });
+  const side = (ids, total) => { const s = [0, 1].map(i => (i < ids.length ? slot(ids[i]) : null)); if (total > Math.min(ids.length, 2)) s[1] = { more: total - 1 }; return s; };
+  const left = side(before, before.length).reverse(), right = side(walk, all.size);
+  return { kind: 'chain', before: before.length, after: all.size, slots: [...left, { id, state: 'self' }, ...right] };
+}
 // A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.
 const shellWord = w => (/^[A-Za-z0-9\/._-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`);
 // How to reopen a blocked or killed (`stopped`) build's session: `cd <folder> && <resume_command>` with {session}
@@ -168,11 +216,11 @@ function counter(ms) {
 }
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
-  const links = chains(tickets);
-  // A ticket starts a chain when it waits on nothing and an unfinished ticket waits on it.
+  const links = chains(tickets), byId = new Map(tickets.map(t => [String(t.id), t]));
+  // A ticket starts a chain when it waits on nothing and an unfinished ticket waits on it. 0467: deps, its dependency box.
   const chain = t => {
     const waiting_on = Array.isArray(t.waiting_on) ? t.waiting_on : [], unlocks = links.unlocks(t.id);
-    return { ...t, waiting_on, unlocks, chain: !waiting_on.length && unlocks.length > 0, linked: links.linked(t.id) };
+    return { ...t, waiting_on, unlocks, chain: !waiting_on.length && unlocks.length > 0, linked: links.linked(t.id), deps: depsOf({ ...t, waiting_on }, byId, links.unlocks) };
   };
   const ideas = (state && Array.isArray(state.ideas) ? state.ideas : []).filter(i => i);
   const statusOf = i => String(i.status || '').trim();
