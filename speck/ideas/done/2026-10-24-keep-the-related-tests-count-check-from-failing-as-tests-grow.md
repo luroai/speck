@@ -1,6 +1,6 @@
 # Keep the related-tests count check from failing as tests grow
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: ticketed (0482)
 From ticket: 0447
 
 ## What

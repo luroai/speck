@@ -1,6 +1,7 @@
 # Explain the facts grid's priority, size and risk
 
 Captured: 2026-10-24 · Status: inbox
+Triaged: 1
 From ticket: 0462
 
 ## What

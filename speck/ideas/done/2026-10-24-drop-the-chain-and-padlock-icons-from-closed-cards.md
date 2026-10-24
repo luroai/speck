@@ -1,6 +1,6 @@
 # Drop the chain and padlock icons from closed cards
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: ticketed (0483)
 From ticket: 0468
 
 ## What

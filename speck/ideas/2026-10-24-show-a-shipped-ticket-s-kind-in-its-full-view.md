@@ -1,6 +1,7 @@
 # Show a shipped ticket's kind in its full view
 
 Captured: 2026-10-24 · Status: inbox
+Triaged: 1
 From ticket: 0465
 
 ## What
