@@ -185,7 +185,7 @@ test('0413 AC2: a word too wide for the top row starts at its left, then scrolls
 });
 
 // 0451: "FIXING ON" is gone from the top row, which has the time at its right instead (panel-0451.test.mjs).
-test('0413 AC2: with foreman_fixing fix, a short word is drawn in full and the name is only the word', async () => {
+test('0413 AC2: with watch fix, a short word is drawn in full and the name is only the word', async () => {
   for (const fixing of ['fix', 'tell']) {
     const p = screenPage([state(foreman({ word: 'Idle', fixing }))]);
     await p.settle();

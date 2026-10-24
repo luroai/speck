@@ -108,9 +108,31 @@ function scalar(v) {
   return v;
 }
 
+// 0487: the settings once named after the Foreman, by their old names. A config that sets only an old name is read as
+// if it set the new one, and where both are set the new name wins.
+export const RENAMED = Object.freeze({ foreman_fixing: 'watch', foreman: 'watch_agent', foreman_model: 'watch_model', foreman_effort: 'watch_effort' });
+export const settingName = key => (Object.hasOwn(RENAMED, key) ? RENAMED[key] : key);
+export function renameOld(cfg) {
+  if (cfg === null || typeof cfg !== 'object') return cfg;
+  for (const [old, name] of Object.entries(RENAMED)) if (Object.hasOwn(cfg, old)) {
+    if (!Object.hasOwn(cfg, name)) cfg[name] = cfg[old];
+    delete cfg[old];
+  }
+  return cfg;
+}
+// The setting `name` in a config object, or its old name's value when only that is set.
+export function setting(cfg, name) {
+  if (cfg === null || typeof cfg !== 'object') return undefined;
+  if (Object.hasOwn(cfg, name)) return cfg[name];
+  const old = Object.keys(RENAMED).find(o => RENAMED[o] === name);
+  return old !== undefined && Object.hasOwn(cfg, old) ? cfg[old] : undefined;
+}
+// A config file's text as speck reads its settings: parseYaml, with old names read as new ones.
+export const parseConfig = text => renameOld(parseYaml(text));
+
 // speck/config.yml with speck's defaults, and with this machine's values over the file's unless `machine` is false.
 export function loadConfig(repo, { machine = true } = {}) {
-  const cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
+  const cfg = parseConfig(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
   if (machine) applyMachineConfig(repo, cfg);
   const limits = {
     max_acceptance_criteria: 5, max_changed_lines: 300, max_review_rounds: 3, max_merge_rounds: 2,

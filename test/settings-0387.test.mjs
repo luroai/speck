@@ -33,10 +33,10 @@ const asksWhere = p => p.all(p.byId('settings')).some(n => n.tagName === 'button
 test('0387 AC1: saving your own settings saves them for this machine, changing nothing in speck/config.yml and making no commit', () => {
   const r = panelRepo();
   const was = snapshot(r);
-  const out = panelSaveSettings(r.dir, [{ key: 'reviewer_effort', value: 'high' }, { key: 'foreman', value: 'codex' },
+  const out = panelSaveSettings(r.dir, [{ key: 'reviewer_effort', value: 'high' }, { key: 'watch_agent', value: 'codex' },
     { key: 'reviewer_model', value: 'gpt-y', machine: true }, { key: 'max_parallel_builds', value: '3' }]);
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.deepEqual(machineConfig(r.dir), { reviewer_model: 'gpt-y', reviewer_effort: 'high', foreman: 'codex', max_parallel_builds: 3 });
+  assert.deepEqual(machineConfig(r.dir), { reviewer_model: 'gpt-y', reviewer_effort: 'high', watch_agent: 'codex', max_parallel_builds: 3 });
   assert.deepEqual(snapshot(r), was);
   const s = byKey(panelSettings(r.dir));
   assert.equal(s.reviewer_effort.value, 'high');

@@ -26,7 +26,7 @@ const BLOCKED = (id, o = {}) => T(id, 'blocked', { blocked_question: 'A or B?', 
 const shown = r => statusData(r.dir).tickets.find(t => t.id === '0001');
 const setFixing = (r, v) => {
   const file = path.join(r.dir, 'speck', 'config.yml'), text = fs.readFileSync(file, 'utf8');
-  fs.writeFileSync(file, /^foreman_fixing:/m.test(text) ? text.replace(/^foreman_fixing:.*$/m, `foreman_fixing: ${v}`) : `${text.replace(/\s*$/, '')}\nforeman_fixing: ${v}\n`);
+  fs.writeFileSync(file, /^watch:/m.test(text) ? text.replace(/^watch:.*$/m, `watch: ${v}`) : `${text.replace(/\s*$/, '')}\nforeman_fixing: ${v}\n`);
 };
 async function opened(f, tickets = []) {
   const p = fakePage([state(f, tickets)]);
@@ -73,7 +73,7 @@ test('0317 AC2: the board says the Foreman will take a recommendation only with 
   assert.equal(shown(unresumable).foreman_will, false, 'speck run can\'t resume its build');
   const before = blockedRepo();
   setFixing(before, 'fix');
-  fs.writeFileSync(before.file, before.ticket().replace('- A note.', `- A note.\n- Went with the recommendation: A (chosen by the Foreman, as foreman_fixing is fix, 2026-10-18 10:00 UTC).`));
+  fs.writeFileSync(before.file, before.ticket().replace('- A note.', `- A note.\n- Went with the recommendation: A (chosen by the Foreman, as watch is fix, 2026-10-18 10:00 UTC).`));
   assert.equal(shown(before).foreman_will, false, 'the Foreman has answered one for it before');
 });
 
@@ -147,8 +147,8 @@ test('0317 AC3: the board lists the recommendations the Foreman took in the last
 
 test('0317 AC4: the Foreman\'s choice is recorded as the Foreman\'s, the button\'s as yours, and each is shown as such', async () => {
   const r = blockedRepo(), said = [];
-  foremanFixQueue({ repo: r.dir, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: 'fix' }), say: m => said.push(m) }).check(statusData(r.dir).tickets);
-  assert.match(r.ticket(), /Went with the recommendation: .*\(chosen by speck, as foreman_fixing is fix, /);
+  foremanFixQueue({ repo: r.dir, readConfig: () => ({ ...loadConfig(r.dir), watch: 'fix' }), say: m => said.push(m) }).check(statusData(r.dir).tickets);
+  assert.match(r.ticket(), /Went with the recommendation: .*\(chosen by speck, as watch is fix, /);
   assert.equal(shown(r).went_with.by, 'foreman');
   const u = blockedRepo();
   assert.equal(goWith(u.dir, '0001', new Date()).status, 200);

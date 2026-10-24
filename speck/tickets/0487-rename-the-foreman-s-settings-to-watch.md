@@ -42,6 +42,7 @@ The settings are called `watch`, `watch_agent`, `watch_model` and `watch_effort`
 - Today: `SETTING_GROUPS` in `scripts/settings.mjs`, the kinds in `scripts/config.mjs`, `foremanAgentOf`, `FIXING` in `scripts/foreman.mjs`, `templates/config.yml`, and `AGENT_KEYS`, `SETTING_PAIRS`, `ROLE_PAIRS` and `ROLES` in `templates/panel-settings.js`. This repo's own `speck/config.yml` has no Foreman settings.
 - Waits for 0485 (Settings' group title and the role's name in `templates/panel-settings.js`) and 0486 (messages that name `foreman_fixing`).
 - Failing before this build: none
+- Self-check: no changes. The readers of these settings (fixingOf, foremanAgentOf, foremanArgv) take a config object with either name, the new one winning, so a config read some other way than loadConfig keeps working.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

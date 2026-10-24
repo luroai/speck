@@ -38,7 +38,7 @@ const view = ({ builder = 'claude', reviewer = 'codex', foreman = 'claude' } = {
   { title: 'Shipping', settings: [S('auto_ship', false, { choices: ['true', 'false'] }), S('auto_ship_risk', ['low'], { choices: ['low', 'high'] })] },
   { title: 'Limits', settings: [S('limits.max_review_rounds', 3),
     S('max_parallel_builds', 1, { for_machine: true, from: 'repo', repo_value: 1 }), S('base_branch', 'main')] },
-  { title: 'Watching', settings: [S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), S('foreman_model', '')] }],
+  { title: 'Watching', settings: [S('watch_agent', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), S('watch_model', '')] }],
   builder_models: { builder, models: listOf(builder) }, reviewer_models: { reviewer, models: listOf(reviewer) },
   foreman_models: { foreman, models: listOf(foreman) }, claude_models: CLAUDE_MODELS });
 
@@ -68,9 +68,9 @@ const options = (p, key) => p.all(controlOf(p, key)).filter(n => n.tagName === '
 
 // What changing each kind of control affects, beyond its own row.
 const CHANGES = [
-  ['builder list', p => changeTo(p, 'builder', 'cursor'), 'builder', ['builder', 'builder_model', 'foreman_model']],
+  ['builder list', p => changeTo(p, 'builder', 'cursor'), 'builder', ['builder', 'builder_model', 'watch_model']],
   ['reviewer list', p => changeTo(p, 'reviewer', 'cursor'), 'reviewer', ['reviewer', 'reviewer_model', 'reviewer_effort']],
-  ['Foreman list', p => changeTo(p, 'foreman', 'codex'), 'foreman', ['foreman', 'foreman_model']],
+  ['Foreman list', p => changeTo(p, 'watch_agent', 'codex'), 'watch_agent', ['watch_agent', 'watch_model']],
   ['reviewer_model list', p => changeTo(p, 'reviewer_model', 'gpt-new'), 'reviewer_model', ['reviewer_model', 'reviewer_effort']],
   ['reviewer_effort list', p => changeTo(p, 'reviewer_effort', 'low'), 'reviewer_effort', []],
   ['auto_ship list', p => changeTo(p, 'auto_ship', 'true'), 'auto_ship', []],
@@ -119,7 +119,7 @@ test('0370 AC1: models read after a change redraw only the settings that show th
   assert.deepEqual(options(p, 'builder_model'), ['', 'auto', 'grok-4.7-high']);
   assert.equal(controlOf(p, 'builder'), builder);
   assert.equal(focused, 0, 'the focus never left it');
-  for (const k of KEYS.filter(k => !['builder_model', 'reviewer_model', 'reviewer_effort', 'foreman_model'].includes(k))) unchanged(p, snap, k, 'models read');
+  for (const k of KEYS.filter(k => !['builder_model', 'reviewer_model', 'reviewer_effort', 'watch_model'].includes(k))) unchanged(p, snap, k, 'models read');
 });
 
 test('0370 AC2: what a change must show still updates', async () => {
@@ -144,9 +144,9 @@ test('0370 AC2: what a change must show still updates', async () => {
   changeTo(p, 'reviewer_model', 'gpt-old');
   assert.deepEqual(options(p, 'reviewer_effort'), ['', 'high']);
   // The Foreman agent: its models.
-  changeTo(p, 'foreman', 'cursor');
+  changeTo(p, 'watch_agent', 'cursor');
   await p.settle();
-  assert.deepEqual(options(p, 'foreman_model'), ['', 'auto', 'grok-4.7-high']);
+  assert.deepEqual(options(p, 'watch_model'), ['', 'auto', 'grok-4.7-high']);
   // 0387: a change to one of your own settings is saved for this machine, so where it goes is never asked.
   const asks = () => p.all(rowOf(p, 'max_parallel_builds')).filter(n => n.tagName === 'button' && /This machine only/.test(n.textContent)).length;
   changeTo(p, 'max_parallel_builds', '3');

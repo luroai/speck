@@ -16,9 +16,9 @@ import { codexBuilds, codexStartWords } from './codex-build.mjs';
 import { cursorBuilds, cursorStartWords } from './cursor-build.mjs';
 
 // What the build's session is told when speck run resumes it. `skill` is how its agent names /speck-build. 0286: `by`
-// 'foreman' when the Foreman chose it (foreman_fixing: fix), not the user.
+// 'foreman' when the Foreman chose it (watch: fix), not the user.
 export const goWithMessage = (id, option, skill = '/speck-build', by = 'user') =>
-  `${by === 'foreman' ? 'speck (foreman_fixing: fix) chose' : 'The user chose'} the recommended option for ticket ${id}'s blocked question: ${option}. It's recorded in the ticket's Notes, and the ticket is building again. Carry on with ${skill} ${id} from where you left off, going with that option.`;
+  `${by === 'foreman' ? 'speck (watch: fix) chose' : 'The user chose'} the recommended option for ticket ${id}'s blocked question: ${option}. It's recorded in the ticket's Notes, and the ticket is building again. Carry on with ${skill} ${id} from where you left off, going with that option.`;
 // 0286: how the Notes line says the Foreman chose it, which is also how it knows it has chosen once for the ticket.
 // 0486: before, 'chosen by the Foreman', which still counts.
 export const FOREMAN_CHOSE = 'chosen by speck';
@@ -82,7 +82,7 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: at }).stdout.trim();
   if (!branch.startsWith(`${cfg.branch_prefix}${pad}-`)) return refuse(`Ticket ${pad}'s branch isn't checked out where its build left it, so its choice can't be committed there. ${byHand}`);
   const when = `${now.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
-  const line = `- Went with the recommendation: ${option} (${by === 'foreman' ? `${FOREMAN_CHOSE}, as foreman_fixing is fix` : 'chosen by the user in the panel'}, ${when}).`;
+  const line = `- Went with the recommendation: ${option} (${by === 'foreman' ? `${FOREMAN_CHOSE}, as watch is fix` : 'chosen by the user in the panel'}, ${when}).`;
   let text;
   try { text = replaceSection(t.raw, 'Notes', old => (old ? `${old}\n${line}` : line), path.relative(at, t.file)); }
   catch (e) { if (e instanceof SpeckError) return refuse(e.message); throw e; }
