@@ -1,7 +1,7 @@
 ---
 id: "0455"
 title: "Make a ticket's build log look like a terminal"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0454"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:44:54.260Z"
+approved: "2026-10-24T09:56:08.319Z"
 
 ---
 # 0455 · Make a ticket's build log look like a terminal
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The build log inside an open ticket uses the page's own background, so in the light look it's a pale box that doesn't read as a terminal. It has only a left edge, and its 12 px corners trim even that, so it doesn't read as a box at all.
@@ -52,9 +53,15 @@ When you open a ticket on the Build tab, its build log now looks like a terminal
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The AC3 browser test substitutes a whole-pixel offset within the card for a whole-pixel top edge.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 457,249
+- Elapsed since build started: 11 min
+- Changed lines: 5 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, no inbox notes):
 - Tidy-up: 0422 AC2's test still works out the log's contrast from each look's root colours rather than the log's own, so it passes but no longer measures what is drawn. 0455's tests measure the real colours. It could be pointed at the log's own variables.
