@@ -1,7 +1,7 @@
 ---
 id: "0466"
 title: Open a shipped ticket the way a Build ticket opens                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0465"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T12:18:39.128Z"
 
 ---
 # 0466 · Open a shipped ticket the way a Build ticket opens
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 In Plan and Build, pressing a ticket's top row opens the card, and the open card has a Full ticket button. In Shipped, pressing the title jumps straight to the full ticket, and a separate Details button opens the card. The same press does different things in different tabs.
