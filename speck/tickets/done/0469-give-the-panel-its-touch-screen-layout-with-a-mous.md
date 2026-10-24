@@ -1,7 +1,7 @@
 ---
 id: "0469"
 title: "Give the panel its touch-screen layout with a mouse too"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0468", "0474"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T14:36:38.942Z"
 approved: "2026-10-24T14:51:59.598Z"
+finished: "2026-10-24T14:55:15.042Z"
 
 ---
 # 0469 · Give the panel its touch-screen layout with a mouse too
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In Cursor's browser pane with a mouse, the panel's cards are squashed: the title and details rows sit tight together and the text looks big for the card. In Cursor's mobile view, and on a phone, the same cards are taller and better spaced, because the panel only gives a touch screen its roomier layout. The user prefers that layout everywhere.
