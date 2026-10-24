@@ -8,7 +8,9 @@ import { PAGE, page, findChrome, browserPage, styles } from './support/panel.mjs
 import { PACK, DOCS, text, openPack, docView, docButtons } from './support/documents.mjs';
 import { settingsPage, openSettings, rowOf } from './support/settings.mjs';
 
-const POPS = ['doc-view', 'foreman', 'settings'];
+// 0479: not the Pipeline log, which no longer scrolls as a whole: it's a frame that holds still, with only its log box
+// scrolling (test/pipeline-0479.test.mjs).
+const POPS = ['doc-view', 'settings'];
 // The declarations of each CSS rule whose selector list holds exactly `sel`, in the page's style, media queries included.
 const rules = sel => {
   const css = styles().replace(/\/\*[\s\S]*?\*\//g, '');
@@ -69,7 +71,6 @@ const LONG = Array.from({ length: 120 }, (_, i) => `<p>Line ${i + 1} of a long d
 // Each pop-up filled as the page draws it: its top line with Close first, then what scrolls.
 const FILL = {
   'doc-view': `<div class="top"><span class="title">outputs/memos/a/very/long/path/to/the/memo-about-pricing.md</span><button class="close">Close</button></div><div class="doc-actions"><button class="ship">Ship</button></div><div class="md">${LONG}</div>`,
-  foreman: `<div class="top"><span class="title">The Foreman</span><button class="close">Close</button></div><div class="fm-body">${LONG}</div>`,
   settings: `<div class="top"><h3>Settings</h3><button class="close">Close</button></div><div class="sgroup">${LONG}</div>`,
 };
 
@@ -90,7 +91,7 @@ test('0379 AC1 and AC2: in a real browser, at 390 and 1280 px wide in both looks
         for (const id of POPS) {
           const at = await b.js(`(() => {
             document.documentElement.dataset.theme = ${JSON.stringify(look)};
-            for (const x of ${JSON.stringify(POPS)}) document.getElementById(x).hidden = true;
+            for (const x of ${JSON.stringify([...POPS, 'foreman'])}) document.getElementById(x).hidden = true;
             const v = document.getElementById(${JSON.stringify(id)});
             v.innerHTML = ${JSON.stringify(FILL[id])};
             v.hidden = false;
