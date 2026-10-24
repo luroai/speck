@@ -120,9 +120,9 @@ test('0467 AC2: an open card in a chain shows the Chain box: its header, then fi
   await q.settle();
   const b = boxOf(q, (await openCard(q, '0002'))[0]);
   assert.deepEqual(slotsOf(b).map(slotText), [['slot', ''], ['slot shipped', '0001'], ['slot self', '0002'], ['slot', ''], ['slot', '']]);
-  assert.match(styles(), /\.deps \.slot\.shipped \.dot \{[^}]*var\(--green\)/, 'a shipped one\'s circle is green');
+  assert.match(styles(), /\.deps \.slot\.shipped \.dot \{ border-color: var\(--green\)/, 'a shipped one\'s circle is green');
   assert.match(styles(), /\.deps \.slot\.shipped \.dot::after \{[^}]*border-width: 0 2px 2px 0; transform: rotate\(45deg\)/, 'with a tick');
-  assert.match(styles(), /\.deps \.slot\.building \.dot \{[^}]*var\(--blue\)/, 'one building is blue');
+  assert.match(styles(), /\.deps \.slot\.building \.dot \{ border-color: var\(--blue\)/, 'one building is blue');
   assert.equal(cls(b, /^deps-head$/).children[1].textContent, '1 before · 0 after');
   // neither: no box
   const [alone] = await openCard(p, '0300');

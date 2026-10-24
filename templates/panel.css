@@ -443,9 +443,9 @@
   .deps-head b { font-weight: 600; color: var(--text); }
   .deps-head span { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
   .deps-bar { display: flex; gap: 1px; height: 4px; margin: 6px 0; }
-  .deps-bar i { flex: 1 1 0; min-width: 0; background: var(--line); }
-  .deps-bar i.shipped { background: var(--green); }
-  .deps-bar i.building { background: var(--blue); }
+  .deps-bar i { flex: 1 1 0; min-width: 0; border-top: 4px solid var(--line); } /* a border, as the track's bars are */
+  .deps-bar i.shipped { border-top-color: var(--green); }
+  .deps-bar i.building { border-top-color: var(--blue); }
   .deps-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
   .deps .chip { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 4px 0; font: inherit; font-size: 12px; line-height: 16px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip;
     color: var(--text); background: var(--raise); border: .5px solid var(--line); border-radius: 3px; font-variant-numeric: tabular-nums; }
@@ -457,12 +457,13 @@
   .deps-slots { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
   .deps-slots::before { content: ''; position: absolute; left: 10%; right: 10%; top: 10px; border-top: 1px solid var(--line); }
   .deps .slot { display: flex; flex-direction: column; align-items: center; box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 0; font: inherit; color: var(--text); background: none; border: 0; }
-  .deps .slot .dot { position: relative; box-sizing: border-box; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid transparent; background: var(--line); font-size: 12px; line-height: 17px; text-align: center; color: var(--panel); }
-  .deps .slot.shipped .dot { background: var(--green); border-color: var(--green); }
-  .deps .slot.building .dot { background: var(--blue); border-color: var(--blue); }
-  .deps .slot.self .dot { background: var(--accent); border-color: var(--accent); }
-  .deps .slot.more .dot { background: var(--panel); border: 1.5px dashed var(--line); }
-  .deps .slot.shipped .dot::after { content: ''; position: absolute; left: 5.5px; top: 2.5px; width: 4px; height: 8px; border: solid var(--panel); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* its tick */
+  /* each circle is its border, 10 px wide all round, on the panel's colour, so the line behind it doesn't show through */
+  .deps .slot .dot { position: relative; box-sizing: border-box; width: 20px; height: 20px; border-radius: 50%; border: 10px solid var(--line); background: var(--panel); }
+  .deps .slot.shipped .dot { border-color: var(--green); }
+  .deps .slot.building .dot { border-color: var(--blue); }
+  .deps .slot.self .dot { border-color: var(--text); }
+  .deps .slot.more .dot { border: 1.5px dashed var(--line); }
+  .deps .slot.shipped .dot::after { content: ''; position: absolute; left: -2.5px; top: -6.5px; width: 4px; height: 8px; border: solid var(--panel); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* its tick */
   .deps .slot .sid { max-width: 100%; margin-top: 2px; font-size: 12px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: clip; font-variant-numeric: tabular-nums; }
   .deps .slot.self .sid { font-weight: 600; }
   .deps .slot.more .sid { color: var(--muted); }
