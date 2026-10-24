@@ -240,7 +240,9 @@ test('0287 AC4: what the Foreman agent did, and why, goes in the ticket\'s Notes
   a.q.stuck({ id: '0001', what: 'its build ended with the ticket still building', log: '' });
   a.check();
   let v = agentView(r.runs, [T('0001', 'building')]);
-  assert.deepEqual(v.running, { id: '0001', what: 'its build ended with the ticket still building' });
+  const { started, ...running } = v.running;
+  assert.deepEqual(running, { id: '0001', what: 'its build ended with the ticket still building' });
+  assert.ok(Number.isFinite(Date.parse(started)), 'and when it started (0446)');
   act(r, a.starts[0].token, 'ask', '0001', 'Should it keep the old test?', '--why=the build stopped on a choice it can\'t make');
   assert.match(r.ticket(), /^- The Foreman \(2026-10-18 14:00 UTC\) asked you: Should it keep the old test\?\. Why: the build stopped on a choice it can't make$/m);
   assert.match(r.g('log', '-1', '--format=%s'), /^speck\(0001\): Foreman: ask$/);

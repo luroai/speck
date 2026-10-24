@@ -186,7 +186,7 @@ export function agentView(runs, tickets = []) {
   const asks = [...latest.values()].filter(a => a.action === 'ask' && statusOf.has(a.id) && statusOf.get(a.id) === a.status && !dealt.has(askKey(a.id, a.at)))
     .map(a => ({ id: a.id, question: textOf(a.text), at: textOf(a.at) }));
   return {
-    running: s.running ? { id: s.running.id, what: textOf(s.running.what) } : null,
+    running: s.running ? { id: s.running.id, what: textOf(s.running.what), started: textOf(s.running.started) } : null, // started: 0446
     waiting: s.queue.map(q => q.id),
     did: actions.slice(-RECENT).reverse().map(a => ({ id: a.id, action: a.action, did: ACTIONS[a.action], text: textOf(a.text), why: textOf(a.why), at: textOf(a.at), ...(a.fix_id ? { fix_id: a.fix_id } : {}),
       ...(a.action === 'ask' ? { outcome: askOutcome(a) } : {}) })),

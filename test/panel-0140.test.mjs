@@ -200,6 +200,10 @@ for (const width of [700, 1280]) {
       // Everything holds still to be compared, speck's screen too: dropping rules restarts an animation.
       await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
       await b.until(`document.getAnimations().length === 0`, 'nothing moving');
+      // 0441: the clocks too. In a proportional font a ticking time changes its width, so the page's clock stops, and a
+      // second passes for the timers to draw the time it stopped at.
+      await b.js(`(() => { const D = Date, at = D.now(); window.Date = class extends D { constructor(...a) { super(...(a.length ? a : [at])); } static now() { return at; } }; return true; })()`);
+      await new Promise(res => setTimeout(res, 1100));
       const withRules = await b.js(SNAPSHOT);
       assert.ok(await b.js(DROP_NARROW) > 0, 'the page has width rules to drop');
       await settle(b);
