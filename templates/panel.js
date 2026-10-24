@@ -35,7 +35,21 @@ function chainIcon(t) {
 }
 // 0419: a Plan or Build ticket's first line: its id, its chain icon when it has one (`icon`), then its title.
 // 0434: the whole title is its tooltip, as a closed ticket's title is cut off when it doesn't fit on one line.
-const titleLine = (t, icon) => el('div', 'line', null, el('span', 'id', t.id), icon ? chainIcon(t) : null, titled(el('span', 'title', t.title)));
+// 0468: and, on a closed one, its dependency chip at the end (`closed`).
+const titleLine = (t, icon, closed) => el('div', 'line', null, el('span', 'id', t.id), icon ? chainIcon(t) : null, titled(el('span', 'title', t.title)), closed ? depChip(t) : null);
+// 0468: a closed ticket's dependencies as one chip: a link icon and how many unshipped tickets it waits on, or, waiting
+// on none, an arrow icon and how many unshipped tickets wait on it directly, or nothing. It is a button for its name and
+// tooltip; pressing it reaches its top row, which opens the card.
+function depChip(t) {
+  const waits = new Set(list(t.waiting_on).map(String)).size, unlocks = waits ? 0 : new Set(list(t.unlocks).map(String)).size;
+  if (!waits && !unlocks) return null;
+  const label = waits ? `Waits on ${plural(waits, 'ticket')}` : `${plural(unlocks, 'ticket')} ${unlocks === 1 ? 'waits' : 'wait'} on this`;
+  const b = el('button', 'dep-chip', null, el('span', 'dep-pill', null, el('span', waits ? 'dep-icon link' : 'dep-icon arrow'), el('span', 'dep-count', waits || unlocks)));
+  b.type = 'button';
+  b.title = label;
+  b.setAttribute('aria-label', label);
+  return b;
+}
 const titled = n => { n.title = n.textContent; return n; };
 // 0419: its second line, in smaller type: the parts separated by " · ", each kept whole, so the line breaks only at
 // the space after a dot, and only when it doesn't fit. The dot's span keeps the space before it, so a wrapped line
@@ -183,17 +197,16 @@ function ticketItem(t) {
 }
 // A ticket's top row. When only its chain changes, through other tickets, a new top row replaces the old one and the
 // details stay on the page.
-// 0419: its details line is its priority, size and risk, its criteria and lint result, then the tickets it waits on
-// after "after", or those it unlocks when it starts a chain. 0463: only while it's closed; open, its steps and facts
+// 0419: its details line is its priority, size and risk, then its criteria and lint result (0468: the tickets it waits
+// on or unlocks are in its chip). 0463: only while it's closed; open, its steps and facts
 // are in a track and a table, as an open one in flight's are.
 function ticketHead(t) {
   const criteria = list(t.acceptance_criteria);
   const lint = t.lint || { errors: 0, warnings: 0 };
-  const head = el('div', 'head', null, titleLine(t, true), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [detailsLine('checks', [...tagsOf(t, true),
+  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [detailsLine('checks', [...tagsOf(t, true),
     el('span', null, plural(criteria.length, 'criterion', 'criteria')),
     lint.errors ? check('bad', false, `lint: ${plural(lint.errors, 'error')}`) : check('ok', true, 'lint passes'),
-    lint.warnings ? check('warn', false, plural(lint.warnings, 'warning')) : null,
-    t.chain ? el('span', 'ids', 'unlocks ', ...idLinks(t.unlocks)) : t.waiting_on.length ? el('span', 'ids', 'after ', ...idLinks(t.waiting_on)) : null])]);
+    lint.warnings ? check('warn', false, plural(lint.warnings, 'warning')) : null])]);
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
   return head;
@@ -940,7 +953,7 @@ function queueItem(t) {
   // 0434: its priority, size and risk only while it's open.
   // 0461: an open one in flight shows its five steps as a track under its title. 0462: and its facts in a table under it.
   // 0463: and so does an open queued one, its steps all grey.
-  const top = el('div', 'top', null, titleLine(t, !t.inFlight), isOpen ? trackOf(t.inFlight ? t : { steps: NOT_STARTED }) : null,
+  const top = el('div', 'top', null, titleLine(t, !t.inFlight, !isOpen), isOpen ? trackOf(t.inFlight ? t : { steps: NOT_STARTED }) : null,
     t.inFlight ? isOpen ? factsOf(t, d) : progressOf(t, d) : isOpen ? waitingFacts(t, 'Queued', 'Waiting on', false) : queuedLine(t));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
@@ -1463,14 +1476,9 @@ function setLogText(box, text) {
   box.replaceChildren(...next.map((l, i) => logRow(l, i < next.length - 1, plain)));
 }
 const queueCounter = t => (t.counter !== null ? `${t.paused ? 'Paused · ' : ''}${t.counter}` : t.paused ? 'Paused' : '');
-// A closed ready ticket's details line (0419): Queued, the tickets it waits on or unlocks, then any bug, fix or document
-// tag. 0463: open, its facts are in a table (waitingFacts).
-function queuedLine(t) {
-  const note = t.chain ? 'unlocks ' : t.waiting_on.length ? 'waiting on ' : null;
-  const line = detailsLine('act', [el('b', null, 'Queued'), note ? el('span', 'ids', note, ...idLinks(noteIds(t))) : null, typeTag(t), taskTag(t)]);
-  line.links = shownLinks(t).join(','); // which ids are buttons, as the text alone doesn't say
-  return line;
-}
+// A closed ready ticket's details line (0419): Queued, then any bug, fix or document tag (0468: the tickets it waits on
+// or unlocks are in its chip). 0463: open, its facts are in a table (waitingFacts).
+const queuedLine = t => detailsLine('act', [el('b', null, 'Queued'), typeTag(t), taskTag(t)]);
 // Puts new text in a node with one text node by replacing only the characters that differ, in place, so a selection in
 // or across it stays and moves with the text. A browser would pull a selection's end inside those characters back to
 // their start, so it is put at their new end instead.
@@ -1506,15 +1514,22 @@ function queueUpdate(q, t) {
   const sub = counterOf(q);
   if (sub) putCounter(sub, queueCounter(t));
   if (openQueue.has(String(t.id))) putDeps(q, child(q, 'top'), t); // 0467
+  const isOpen = openQueue.has(String(t.id)), top = child(q, 'top'), row = child(top, 'line');
+  // 0468: a closed one's chip, in flight too
+  const chip = isOpen ? null : depChip(t), was = child(row, 'dep-chip');
+  if (!was || !chip || was.title !== chip.title) {
+    if (chip) row.appendChild(chip);
+    if (was) row.removeChild(was);
+  }
   if (t.inFlight) return;
-  const top = child(q, 'top'), row = child(top, 'line'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
+  const icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
   if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
     if (icon) row.insertBefore(icon, old || child(row, 'title')); // the icon comes right after the id
     if (old) row.removeChild(old);
   }
   // 0463: an open one's facts table, in place of its line
-  const isOpen = openQueue.has(String(t.id)), act = child(top, isOpen ? 'facts' : 'act'), line = isOpen ? waitingFacts(t, 'Queued', 'Waiting on', false) : queuedLine(t);
-  if (act.textContent !== line.textContent || act.links !== line.links) { top.insertBefore(line, act); top.removeChild(act); }
+  const act = child(top, isOpen ? 'facts' : 'act'), line = isOpen ? waitingFacts(t, 'Queued', 'Waiting on', false) : queuedLine(t);
+  if (act.textContent !== line.textContent) { top.insertBefore(line, act); top.removeChild(act); }
 }
 // The counters run on their own 1-second timer, apart from the state updates and render(), so they move on between updates.
 // Each tick puts only the counters right, and the timer is cleared once no in-flight ticket in the queue has a started.
@@ -1581,24 +1596,12 @@ function lightUp() {
     n.className = lit.includes(n.ticketId) ? `${cls} hl` : cls;
   }
 }
-// 0154: each id in a "waiting on" or "unlocks" note is a button that scrolls its ticket into view and lights it for
-// 1.5 seconds, when that ticket is on the page (in the queue, or a draft while Plan shows its tickets); otherwise plain text.
+// 0154: an id that goes to its ticket scrolls it into view and lights it for 1.5 seconds, when that ticket is on the
+// page (in the queue, or a draft while Plan shows its tickets); otherwise it is plain text. 0468: since a closed card's
+// ids are in its chip, only an open card's dependency box has them (0467).
 let onPage = new Set(); // the ids of the tickets on the page, from the last render
 const FLASH_MS = 1500;
 let flashId = null, flashes = 0; // the id lit by the latest tap on its id, until its time is up, and how many taps there have been
-const noteIds = t => (t.chain ? t.unlocks : t.waiting_on); // the ids in its note
-const shownLinks = t => noteIds(t).filter(id => onPage.has(String(id))); // the ones that are buttons
-function idLinks(ids) {
-  return ids.flatMap((id, i) => [i ? document.createTextNode(', ') : null, onPage.has(String(id)) ? gotoButton(String(id)) : document.createTextNode(String(id))].filter(Boolean));
-}
-function gotoButton(id) {
-  const b = el('button', 'goto', null, el('span', null, id)); // the span: its text, above the other ids' tap areas (0164)
-  b.type = 'button';
-  b.setAttribute('aria-label', `Go to ticket ${id}`);
-  // Stopped here, so it neither opens nor closes the ticket it's in.
-  b.addEventListener('click', e => { e.stopPropagation(); goTo(id); });
-  return b;
-}
 function goable(node, t) { node.gotoId = String(t.id); return node; }
 const ticketRows = () => [...$('shaping').children, ...$('queue').children].filter(n => n.gotoId !== undefined);
 function goTo(id) {
@@ -1742,7 +1745,7 @@ function render() {
   else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
     t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null], ticketItem,
-    { own: ownData, derived: t => [t.chain, t.unlocks, shownLinks(t), depsSig(t)], update: newHead }), 'No draft tickets.');
+    { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), 'No draft tickets.');
   renderFull(m);
 
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
@@ -1750,7 +1753,7 @@ function render() {
   const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null,
     unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null, goingWith.has(String(t.id)), goWithRefused.get(String(t.id)) ?? null,
     foremanAskOf(t.id)?.question ?? null, askPending.get(String(t.id)) ?? null, askRefused.get(String(t.id)) ?? null], queueItem,
-    { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks, shownLinks(t), depsSig(t)], update: queueUpdate });
+    { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks, depsSig(t)], update: queueUpdate });
   fill('queue', rows, m.queue.length ? '' : idleLane(m));
   if (m.queue.length) idleClock(null, null);
   const pt = paneTicket, paneSub = pt ? paneCounter() : null; // 0465: the pane's counter moves on too

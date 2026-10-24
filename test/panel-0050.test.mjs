@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { T, fm, good, panelRepo, freePort, startPanel, stop, fakePage, full, round, exitOf, queueRows, shippedRows, startOfToday, findChrome, browserPage, charAt, openLane, QUICK_PINGS, openQueueRows, boardPage } from './support/panel.mjs';
+import { chipSaid } from './support/dep-chip.mjs';
 
 // ---------- 0050: selected text and scroll in queue and Shipped rows survive the refresh ----------
 
@@ -77,7 +78,7 @@ test('0050 AC1: a chain change that comes only from another ticket shows on a ke
   const row = rowOf(p, '0006');
   const kept = held(p, 'queue', byClass(p, row, 'title'));
   assert.ok(byClass(p, row, 'lock'), 'it waits on 0005');
-  assert.match(row.textContent, /waiting on 0005/);
+  assert.equal(chipSaid(p, row), 'Waits on 1 ticket'); // 0468: in its chip
   await refresh(p);
   assert.ok(kept(), 'the row stayed');
   assert.ok(byClass(p, rowOf(p, '0006'), 'lock'), 'still waiting, so still a padlock');
@@ -93,7 +94,7 @@ test('0050 AC1: a chain change that comes only from another ticket shows on a ke
   await refresh(q);
   assert.ok(keptFive(), '0005 kept its node');
   assert.ok(byClass(q, rowOf(q, '0005'), 'chain'), 'the chain icon shows');
-  assert.match(rowOf(q, '0005').textContent, /unlocks 0007/, 'and the unlocks text');
+  assert.equal(chipSaid(q, rowOf(q, '0005')), '1 ticket waits on this', 'and its chip (0468)');
 });
 
 test('0050 AC2: a build message box keeps its node, and so its scroll position, through refreshes in which its ticket is unchanged', async () => {

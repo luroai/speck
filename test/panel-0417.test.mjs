@@ -28,9 +28,10 @@ function blocks(text) {
 const rules = body => [...body.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(m => [m[1].trim().replace(/\s+/g, ' '), m[2].trim()]);
 const media = q => blocks(css()).filter(b => b.prelude === `@media ${q}`);
 
-// Every selector with a 44 px minimum (or a 44 px width and height) under 700 px before this ticket.
+// Every selector with a 44 px minimum (or a 44 px width and height) under 700 px before this ticket, less the ids
+// in a closed card's note, which 0468 replaced with a chip.
 const SIZED = ['.bezel .settings-open', '.tab', '.toggle', '.head', '.item.ticket .prio', '.prio-menu button', '.set-ready, .full-open',
-  '.goto', '.q .top', '.q .full-open', '.q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply', '.resume .copy',
+  '.q .top', '.q .full-open', '.q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply', '.resume .copy',
   '.more-stats', '#shipped .line .title', 'td .full-open',
   '#full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close',
   '#full-ticket .md summary, #doc-view .md summary'];

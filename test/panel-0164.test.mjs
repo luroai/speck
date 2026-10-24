@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, full, items, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
+import { T, full, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0164: line up a ticket's dependency note ----------
 
@@ -11,7 +11,6 @@ const css = () => styles();
 // 0001 (a draft) unlocks seven tickets, enough that its note wraps onto a line of its own on a phone; 0003 (a draft)
 // waits on 0001, and 0008 is a short draft whose "waiting on 0001" fits beside its criteria at every width.
 const UNLOCKED = ['0002', '0003', '0004', '0005', '0006', '0007'];
-const UNLOCKS = [...UNLOCKED, '0008']; // every ticket 0001 unlocks
 const board = () => ({
   run: { on: false },
   tickets: [
@@ -36,143 +35,15 @@ async function withBoard(fn, { width = 1280 } = {}) {
       window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? new Response(JSON.stringify(STATE), { status: 200, headers: { 'content-type': 'application/json' } }) : real(url, opts);
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#shaping .item .goto').length > 0`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#shaping .item .dep-chip').length > 0`, 'the panel');
     await b.js(openLane('plan')); // 0410: these are Plan's cards
     await b.js(`document.fonts.ready.then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))`);
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
 
-// For a card's details row: each part's text, font size, and the place of its first and last line of text, measured
-// from the text itself (not its boxes, which a tap area may stretch). A note's ids and commas are measured one by one.
-const ROW = id => `(() => {
-  const card = [...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === ${JSON.stringify(id)});
-  // Only its text's own boxes, not an icon's.
-  const rectsOf = node => { const out = [], w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
-    for (let t = node.nodeType === 3 ? node : w.nextNode(); t; t = node.nodeType === 3 ? null : w.nextNode()) { const r = document.createRange(); r.selectNodeContents(t); out.push(...[...r.getClientRects()].filter(x => x.width > 0)); }
-    return out; };
-  const lineOf = rects => ({ left: Math.round(rects[0].left), bottom: Math.round(rects[0].bottom), lastBottom: Math.round(rects[rects.length - 1].bottom) });
-  const checks = card.querySelector('.checks');
-  // 0419: the line starts with the ticket's tags, and " · " separates its parts
-  const parts = [...checks.children].filter(n => !n.matches('.sep, .tag, .prio')).map(n => ({ text: n.textContent, size: getComputedStyle(n).fontSize, height: Math.round(n.getBoundingClientRect().height),
-    boxLeft: Math.round(n.getClientRects()[0].left), ...lineOf(rectsOf(n)) }));
-  const note = [...checks.children].find(n => /^(unlocks|after) /.test(n.textContent));
-  const pieces = note ? [...note.childNodes].map(c => ({ text: c.textContent, goto: c.nodeType === 1, size: c.nodeType === 1 ? getComputedStyle(c).fontSize : getComputedStyle(note).fontSize,
-    box: c.nodeType === 1 ? (b => ({ top: Math.round(b.top), bottom: Math.round(b.bottom), left: Math.round(b.left), right: Math.round(b.right), height: Math.round(b.height) }))(c.getBoundingClientRect()) : null,
-    ...(r => ({ textLeft: r[0].left, textRight: r[r.length - 1].right, textBottom: Math.round(r[0].bottom) }))(rectsOf(c)) })) : [];
-  return { parts, pieces, cardLeft: Math.round(checks.getBoundingClientRect().left) };
-})()`;
-
-// ---------- AC1 ----------
-
-for (const width of [1280, 375]) {
-  for (const id of ['0001', '0008']) {
-    test(`0164 AC1: at ${width} px, ${id}'s dependency note shares the text size and baseline of the lint result, or starts its own line at the left edge`, skip, () => withBoard(async b => {
-      const { parts, cardLeft } = await b.js(ROW(id));
-      const [criteria, lint] = parts;
-      const note = parts.find(p => /^(unlocks|after) /.test(p.text));
-      assert.ok(note, `found the note: ${JSON.stringify(parts)}`);
-      assert.match(criteria.text, /criteria$/);
-      assert.equal(lint.text, 'lint passes');
-      for (const p of [lint, note]) assert.equal(p.size, criteria.size, `"${p.text}" is the size of "${criteria.text}"`);
-      // 0419: after the tags on the details line, so a part that wraps starts the next line at the left edge
-      for (const p of [criteria, lint]) if (p.bottom > parts[0].bottom) assert.equal(p.boxLeft, cardLeft, `"${p.text}" starts its line at the left edge`);
-      if (note.bottom === lint.bottom) assert.ok(note.left > lint.left, 'on the same line, after the lint result');
-      else {
-        assert.ok(note.bottom > lint.bottom, `on a line of its own, under the lint result: ${JSON.stringify(parts)}`);
-        assert.equal(note.boxLeft, cardLeft, 'which starts at the left edge, not indented');
-      }
-      // Nothing in it pushes its line out.
-      if (note.lastBottom === note.bottom) assert.ok(Math.abs(note.height - criteria.height) <= 1, `on one line, the note is ${note.height} px high, as "${criteria.text}" is ${criteria.height} px`);
-    }, { width }));
-  }
-}
-
-test('0164 AC1: on a phone, the seven-id note doesn\'t fit beside the criteria, so it starts its own line (the case above checks it lines up)', skip, () => withBoard(async b => {
-  const { parts } = await b.js(ROW('0001'));
-  const note = parts.find(p => p.text.startsWith('unlocks '));
-  assert.ok(note.bottom > parts[0].bottom, `the note wrapped: ${JSON.stringify(parts)}`);
-}, { width: 375 }));
-
-// ---------- AC2 ----------
-
-test('0164 AC2: the note reads "unlocks 0002, 0003, …" with each comma straight after its id', async () => {
-  const p = fakePage([board()]);
-  await p.settle();
-  const card = items(p).find(n => p.all(n).some(x => x.className === 'id' && x._text === '0001'));
-  const note = p.all(card).find(n => n.tagName === 'span' && /^unlocks /.test(n.textContent || ''));
-  assert.equal(note.textContent, `unlocks ${UNLOCKS.join(', ')}`);
-});
-
-for (const width of [1280, 375]) {
-  test(`0164 AC2: at ${width} px, there's no gap between an id and its comma, one space before the next id, and each id sits on the text's baseline`, skip, () => withBoard(async b => {
-    for (const id of ['0001', '0008']) {
-      const { pieces } = await b.js(ROW(id));
-      const gotos = pieces.filter(p => p.goto);
-      assert.ok(gotos.length >= 1, `${id} has linked ids`);
-      for (const [i, p] of pieces.entries()) {
-        assert.equal(p.size, pieces[0].size, `"${p.text}" is the size of "${pieces[0].text}"`);
-        if (!p.goto) continue;
-        const prev = pieces[i - 1], next = pieces[i + 1];
-        // An id to the right of the text before it is on its line, so on its baseline.
-        if (p.textLeft > prev.textLeft) assert.equal(p.textBottom, prev.textBottom, `${id}: ${p.text} is on the baseline of "${prev.text}"`);
-        if (next) {
-          assert.equal(next.text, ', ');
-          assert.ok(Math.abs(next.textLeft - p.textRight) < 1, `${id}: the comma after ${p.text} is ${(next.textLeft - p.textRight).toFixed(1)} px from it`);
-          // The next id starts where the ", " ends: the comma and one space are all that's between them.
-          const after = pieces[i + 2];
-          if (after.textLeft > p.textLeft) assert.ok(Math.abs(after.textLeft - next.textRight) < 1, `${id}: ${(after.textLeft - next.textRight).toFixed(1)} px from the comma after ${p.text} to ${after.text}`);
-        }
-      }
-    }
-  }, { width }));
-}
-
-test('0164 AC2: under 700 px each id\'s tap area is at least 44 px each way, its text in line with the note\'s', skip, () => withBoard(async b => {
-  for (const id of ['0001', '0008']) {
-    const { pieces } = await b.js(ROW(id));
-    for (const [i, p] of pieces.entries()) {
-      if (!p.goto) continue;
-      assert.ok(p.box.height >= 44 && p.box.right - p.box.left >= 44, `${id}: ${p.text}'s tap area is ${p.box.right - p.box.left} by ${p.box.height} px`);
-      const prev = pieces[i - 1];
-      if (p.textLeft > prev.textLeft) assert.ok(p.box.top < prev.textBottom - 20 && p.box.bottom > prev.textBottom + 10, `${id}: ${p.text}'s tap area reaches above and below the line`);
-    }
-  }
-}, { width: 375 }));
-
-// Review round 1, F1: a note that wraps onto several lines has its lines closer together than a tap area is high, so
-// each id's own text, and the band of its own line, must reach that id and not one on the line above or below.
-const WHERE = id => `(() => {
-  const card = [...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === ${JSON.stringify(id)});
-  const ids = [...card.querySelectorAll('.goto')];
-  ids[0].scrollIntoView({ block: 'center' });
-  return ids.map(n => { const r = document.createRange(); r.selectNodeContents(n); const t = r.getBoundingClientRect(); return { id: n.textContent, left: t.left, right: t.right, top: t.top, bottom: t.bottom }; });
-})()`;
-const HIT = (x, y) => `(() => { const n = document.elementFromPoint(${x}, ${y}); const b = n && n.closest('.goto'); return b ? b.textContent : null; })()`;
-
-test('0164 AC4: on a phone, in a note on several lines, each id\'s text and its own line reach that id, and a tap goes to it', skip, () => withBoard(async b => {
-  const ids = await b.js(WHERE('0001'));
-  const lines = [...new Set(ids.map(i => Math.round(i.top)))];
-  assert.ok(lines.length >= 2, `the note is on several lines: ${JSON.stringify(ids)}`);
-  const first = Math.min(...ids.map(i => i.top)), last = Math.max(...ids.map(i => i.bottom));
-  for (const i of ids) {
-    const mid = (i.left + i.right) / 2;
-    const points = [[mid, (i.top + i.bottom) / 2, 'the middle of its text'], [i.left + 1, i.top + 1, 'its text\'s top left'], [i.right - 1, i.bottom - 1, 'its text\'s bottom right'],
-      [i.left - 4, (i.top + i.bottom) / 2, 'just left of its text'], [i.right + 4, (i.top + i.bottom) / 2, 'just right of its text']];
-    if (Math.round(i.top) === Math.round(first)) points.push([mid, i.top - 10, 'above the note, in its tap area']);
-    if (Math.round(i.bottom) === Math.round(last)) points.push([mid, i.bottom + 10, 'below the note, in its tap area']);
-    for (const [x, y, what] of points) assert.equal(await b.js(HIT(x, y)), i.id, `${what} reaches ${i.id}`);
-  }
-  // A real tap on every id goes to that ticket.
-  await b.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
-  for (const i of ids) {
-    await b.js(openLane('plan')); // 0410: going to a Build ticket opens Build, so back to the note in Plan
-    const [at] = (await b.js(WHERE('0001'))).filter(x => x.id === i.id);
-    await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: (at.left + at.right) / 2, y: (at.top + at.bottom) / 2 }] });
-    await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await b.until(`[...document.querySelectorAll('.flash')].some(n => n.querySelector('.id').textContent === '${i.id}')`, `the highlight on ${i.id}`);
-  }
-}, { width: 375 }));
+// 0468: AC1, AC2 and AC4 lined up a closed card's note of ids, and the taps on them; a closed card's ids are in its
+// chip now (test/panel-0468.test.mjs), and an open card's go to their tickets from its dependency box (0154, 0467).
 
 // ---------- AC3 ----------
 
@@ -222,18 +93,4 @@ test('0164 AC3: in a browser whose pointer can\'t hover, a tapped card keeps its
   await b.until(`document.querySelectorAll('#shaping .item.open').length === 0`, 'a second tap to close it');
   await new Promise(r => setTimeout(r, 50));
   assert.equal(await back('0008'), before, 'once closed, the tapped card isn\'t left shaded');
-}, { width: 375 }));
-
-// ---------- AC4 ----------
-
-test('0164 AC4: on a phone, tapping an id near the top of its tap area scrolls to that ticket and briefly highlights it', skip, () => withBoard(async b => {
-  const at = await b.js(`(() => { const btn = [...[...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === '0001').querySelectorAll('.goto')].find(n => n.textContent === '0007');
-    btn.scrollIntoView({ block: 'center' }); const r = btn.getBoundingClientRect(); return [r.left + r.width / 2, r.top + 4]; })()`);
-  await b.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
-  await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: at[0], y: at[1] }] });
-  await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await b.until(`[...document.querySelectorAll('.flash')].some(n => n.querySelector('.id').textContent === '0007')`, 'the highlight on 0007');
-  const r = await b.js(`(() => { const n = document.querySelector('.flash'); const box = n.getBoundingClientRect(); return { inView: box.bottom > 0 && box.top < innerHeight, open: document.querySelectorAll('.item.open').length }; })()`);
-  assert.deepEqual(r, { inView: true, open: 0 });
-  await b.until(`!document.querySelector('.flash')`, 'the highlight to end by itself');
 }, { width: 375 }));

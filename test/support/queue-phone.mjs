@@ -1,7 +1,7 @@
 import { panelRepo, freePort, startPanel, stop, browserPage, T } from './panel.mjs';
 
-// Two queued tickets, each with a plain Queued line, as in 0165's test. With chained, each one's Queued line names
-// the other, the ticket it unlocks or waits on. Shared by 0190's and 0224's tests.
+// Two queued tickets, each with a plain Queued line, as in 0165's test. With chained, one waits on the other, so each
+// has a dependency chip in its title row (0468). Shared by 0190's and 0224's tests.
 export const STATE = ({ chained = false } = {}) => ({
   run: { on: false },
   tickets: [

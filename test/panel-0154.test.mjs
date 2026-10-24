@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, full, items, top, toggles, queueRows, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
+import { T, fakePage, boardPage, full, items, top, toggles, queueRows, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0154: go to a linked ticket by tapping its id ----------
 
@@ -26,7 +26,7 @@ const board = () => ({
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')._text;
 const shaping = (p, id) => items(p).find(n => idOf(p, n) === id);
 const queued = (p, id) => queueRows(p).find(n => idOf(p, n) === id);
-const gotos = (p, n) => p.all(n).filter(x => /\bgoto\b/.test(x.className || ''));
+const gotos = (p, n) => p.all(n).filter(x => x.tagName === 'button' && /^Go to ticket /.test((x.attrs || {})['aria-label'] || ''));
 const goto = (p, n, id) => gotos(p, n).find(b => b.textContent === id);
 const lit = n => /\bhl\b/.test(n.className);
 const dim = n => /\bdim\b/.test(n.className);
@@ -67,20 +67,26 @@ test('0154 AC1: with a mouse, hovering still highlights linked tickets and leave
   assert.ok(rows(p).every(n => !lit(n) && !dim(n)), 'and it ends when the pointer leaves');
 });
 
-test('0154 AC2: each linked id in an "unlocks" or "waiting on" note, in Plan and the Build queue, is a button', async () => {
+// 0468: a closed card's ids are in its chip now, so the ids that go to their tickets are those in an open card's
+// dependency box (0467).
+const openUp = async (p, ...ids) => {
+  for (const id of ids) { const n = rows(p).find(r => idOf(p, r) === id); if (!/\bopen\b/.test(n.className)) tap(p, items(p).includes(n) ? top(n) : n.children[0]); await p.settle(); }
+};
+
+test('0154 AC2: each linked id in an open card\'s dependency box, in Plan and the Build queue, is a button', async () => {
   const p = fakePage([board()]);
   await p.settle();
-  assert.deepEqual(gotos(p, shaping(p, '0001')).map(b => [b.tagName, b.type, b.textContent]), [['button', 'button', '0002'], ['button', 'button', '0003'], ['button', 'button', '0004']], 'Plan: unlocks');
-  assert.deepEqual(gotos(p, shaping(p, '0003')).map(b => b.textContent), ['0001'], 'Plan: waiting on');
-  assert.match(shaping(p, '0001').textContent, /unlocks 0002, 0003, 0004/, 'the note reads as before');
-  assert.deepEqual(gotos(p, queued(p, '0002')).map(b => [b.tagName, b.textContent]), [['button', '0001']], 'queue: waiting on');
-  assert.match(queued(p, '0004').textContent, /Queued · waiting on 0001, 0009/, 'the queue line reads as before');
+  await openUp(p, '0001', '0003', '0002', '0006');
+  assert.deepEqual(gotos(p, shaping(p, '0001')).map(b => [b.tagName, b.type, b.textContent]), [['button', 'button', '0002']], 'Plan: what it unlocks');
+  assert.deepEqual(gotos(p, shaping(p, '0003')).map(b => b.textContent), ['0001'], 'Plan: what it waits on');
+  assert.deepEqual(gotos(p, queued(p, '0002')).map(b => [b.tagName, b.textContent]), [['button', '0001']], 'queue: what it waits on');
   assert.deepEqual(gotos(p, queued(p, '0006')).map(b => b.textContent), ['0005'], 'a ticket in flight is on the page too');
 });
 
 test('0154 AC2: tapping or clicking an id scrolls its ticket into view and highlights it for about 1.5 seconds, opening and closing nothing', async () => {
   const { p, delays } = withTimers();
   await p.settle();
+  await openUp(p, '0002');
   const target = shaping(p, '0001');
   let scrolled = 0;
   target.scrollIntoView = () => { scrolled++; };
@@ -99,13 +105,13 @@ test('0154 AC2: tapping or clicking an id scrolls its ticket into view and highl
   assert.match(css(), /@media \(prefers-reduced-motion: reduce\) \{ \.item\.flash, \.q\.flash \{ box-shadow: inset 0 0 0 2px var\(--text\)/, 'or, asked for less motion, stays lit without fading (by a ring in the text colour since 0167)');
 });
 
-test('0154 AC2: a tap on an id in a Plan ticket\'s top row doesn\'t open that ticket, and a newer tap\'s highlight isn\'t cut short', async () => {
+test('0154 AC2: a tap on an id in an open Plan ticket doesn\'t close that ticket, and a newer tap\'s highlight isn\'t cut short', async () => {
   const { p } = withTimers();
   await p.settle();
+  await openUp(p, '0001');
   for (const n of rows(p)) n.scrollIntoView = () => {};
-  const from = shaping(p, '0001');
-  tap(p, goto(p, from, '0002'));
-  assert.ok(!/\bopen\b/.test(shaping(p, '0001').className), 'the ticket with the note stays closed');
+  tap(p, goto(p, shaping(p, '0001'), '0002'));
+  assert.match(shaping(p, '0001').className, /\bopen\b/, 'the ticket with the box stays open');
   assert.ok(flashing(queued(p, '0002')));
   const first = p.timers.at(-1);
   queued(p, '0002').scrollIntoView = () => {};
@@ -119,6 +125,7 @@ test('0154 AC2: a tap on an id in a Plan ticket\'s top row doesn\'t open that ti
 test('0154 AC2: the highlight lasts through a refresh that rebuilds the ticket', async () => {
   const { p } = withTimers();
   await p.settle();
+  await openUp(p, '0002');
   for (const n of rows(p)) n.scrollIntoView = () => {};
   tap(p, goto(p, queued(p, '0002'), '0001'));
   tap(p, top(shaping(p, '0001'))); // opening it rebuilds its item
@@ -128,53 +135,60 @@ test('0154 AC2: the highlight lasts through a refresh that rebuilds the ticket',
 test('0154 AC2: activating an id with Enter or Space works as a click does, since it is a real button', async () => {
   const p = fakePage([board()]);
   await p.settle();
+  await openUp(p, '0001', '0002');
   const all = [...gotos(p, shaping(p, '0001')), ...gotos(p, queued(p, '0002'))];
-  assert.equal(all.length, 4);
+  assert.equal(all.length, 2);
   for (const b of all) {
     assert.equal(b.tagName, 'button', 'a button, which a browser presses on Enter or Space');
     assert.equal(b.type, 'button');
   }
+  const opened = rows(p).map(n => /\bopen\b/.test(n.className));
   p.key('Enter'); p.key(' ');
-  assert.ok(rows(p).every(n => !/\bopen\b/.test(n.className)), 'the page\'s own key handling doesn\'t act on Enter or Space');
+  assert.deepEqual(rows(p).map(n => /\bopen\b/.test(n.className)), opened, 'the page\'s own key handling doesn\'t act on Enter or Space');
 });
 
 test('0154 AC3: an id whose ticket isn\'t on the page is plain text, not a button', async () => {
   const p = fakePage([board(), board()]);
   await p.settle();
+  await openUp(p, '0004', '0002', '0006');
   const q = queued(p, '0004');
-  assert.deepEqual(gotos(p, q).map(b => b.textContent), ['0001'], 'a shipped ticket\'s id is not a button');
-  assert.match(q.textContent, /waiting on 0001, 0009/, 'but it is still shown');
+  p.press(p.all(q).find(n => n.className === 'chip more')); // its shipped one too
+  await p.settle();
+  assert.deepEqual(gotos(p, queued(p, '0004')).map(b => b.textContent), ['0001'], 'a shipped ticket\'s id is not a button');
+  assert.ok(p.all(queued(p, '0004')).some(n => n.tagName === 'span' && n.textContent === '0009'), 'but it is still shown');
   // Plan showing ideas: the drafts aren't on the page, so the queue's links to them are plain text.
   toggles(p).find(b => /\bideas\b/.test(b.className)).listeners.click();
   assert.deepEqual(gotos(p, queued(p, '0002')), [], 'a draft on a Plan tab that isn\'t showing');
-  assert.match(queued(p, '0002').textContent, /waiting on 0001/);
+  assert.ok(p.all(queued(p, '0002')).some(n => n.tagName === 'span' && n.textContent === '0001'));
   assert.deepEqual(gotos(p, queued(p, '0006')).map(b => b.textContent), ['0005'], 'a queued ticket\'s link stays a button');
   toggles(p).find(b => /\btickets\b/.test(b.className)).listeners.click();
   assert.deepEqual(gotos(p, queued(p, '0002')).map(b => b.textContent), ['0001'], 'back to a button when the drafts are showing again');
 });
 
-test('0154 AC3: a link to a ticket that has left the page since its note was built is plain text after the refresh', async () => {
+test('0154 AC3: a link to a ticket that has left the page since its box was built is plain text after the refresh', async () => {
   const later = board();
-  later.tickets = later.tickets.map(t => (t.id === '0002' ? { ...t, status: 'cancelled' } : t));
-  const p = fakePage([board(), later]);
+  later.tickets = later.tickets.map(t => (t.id === '0005' ? { ...t, status: 'cancelled' } : t));
+  const p = boardPage([board(), later]); // 0434: opening a Build card asks for its log apart from the boards
   await p.settle();
-  assert.deepEqual(gotos(p, shaping(p, '0001')).map(b => b.textContent), ['0002', '0003', '0004']);
-  const kept = queued(p, '0006');
+  await openUp(p, '0006');
+  assert.deepEqual(gotos(p, queued(p, '0006')).map(b => b.textContent), ['0005']);
+  const kept = queued(p, '0002');
   p.timers.shift()(); // the next poll
   await p.settle();
-  assert.ok(!queued(p, '0002'), '0002 has left the queue');
-  assert.deepEqual(gotos(p, shaping(p, '0001')).map(b => b.textContent), ['0003', '0004'], 'only the tickets still on the page are buttons');
-  assert.equal(queued(p, '0006'), kept, 'a row with nothing new keeps its node');
+  assert.ok(!queued(p, '0005'), '0005 has left the queue');
+  assert.deepEqual(gotos(p, queued(p, '0006')), [], 'it is no button now');
+  assert.equal(queued(p, '0002'), kept, 'a row with nothing new keeps its node');
 });
 
-test('0154 AC4: each id button says where it goes to a screen reader and is at least 44 px high on a phone', async () => {
+test('0154 AC4: each id button says where it goes to a screen reader and is at least 44 px high on a touch screen', async () => {
   const p = fakePage([board()]);
   await p.settle();
-  for (const b of [...gotos(p, shaping(p, '0001')), ...gotos(p, queued(p, '0006'))]) {
-    assert.equal(b.attrs['aria-label'], `Go to ticket ${b.textContent}`);
-  }
-  const phone = (css().match(/@media \(max-width: 699\.98px\) \{([\s\S]*)$/) || [])[1] || '';
-  assert.match(phone, /\.goto\b[^{]*\{[^}]*min-height:\s*44px/, 'a tap area 44 px high under 700 px');
+  await openUp(p, '0001', '0006');
+  const all = [...gotos(p, shaping(p, '0001')), ...gotos(p, queued(p, '0006'))];
+  assert.equal(all.length, 2);
+  for (const b of all) assert.match(b.attrs['aria-label'], new RegExp(`^Go to ticket ${b.textContent}, `));
+  const touch = (css().match(/@media \(pointer: coarse\) \{([\s\S]*)$/) || [])[1] || '';
+  assert.match(touch, /\.deps \.chip, \.deps \.slot \{ min-height: 44px; \}/, 'a tap area 44 px high on a touch screen');
 });
 
 async function withBoard(fn, { width = 1280 } = {}) {
@@ -192,7 +206,7 @@ async function withBoard(fn, { width = 1280 } = {}) {
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     for (let i = 0; ; i++) {
-      try { if (await b.js(`location.port === '${panel.port}' && !!document.querySelector('#queue .q .goto')`)) break; } catch (e) { if (i >= 100) throw e; }
+      try { if (await b.js(`location.port === '${panel.port}' && !!document.querySelector('#queue .q .dep-chip')`)) break; } catch (e) { if (i >= 100) throw e; }
       if (i >= 100) throw new Error('timed out waiting for the panel');
       await new Promise(res => setTimeout(res, 100));
     }
@@ -200,29 +214,39 @@ async function withBoard(fn, { width = 1280 } = {}) {
   } finally { await b.close(); await stop(panel); }
 }
 
+// 0468: opens these cards, as only an open card's dependency box has ids that go to their tickets.
+const OPEN = ids => `(() => { for (const id of ${JSON.stringify(ids)}) { const n = [...document.querySelectorAll('#shaping .item, #queue .q')].find(c => c.querySelector('.id').textContent === id);
+  if (!n.classList.contains('open')) n.firstElementChild.click(); } return true; })()`;
+const GOTOS = list => `[...document.querySelectorAll('#${list} button[aria-label^="Go to ticket "]')]`;
+
 test('0154 AC4: on a 375 px screen every id button is at least 44 px high and named for its ticket', skip, () => withBoard(async b => {
   // 0410: each lane's in turn, as only the open one shows
   const sizes = [];
-  for (const [lane, list] of [['plan', 'shaping'], ['build', 'queue']]) {
+  for (const [lane, list, ids] of [['plan', 'shaping', ['0001', '0003']], ['build', 'queue', ['0002', '0006']]]) {
     await b.js(openLane(lane));
-    sizes.push(...await b.js(`[...document.querySelectorAll('#${list} .goto')].map(n => [n.getAttribute('aria-label'), n.textContent, Math.round(n.getBoundingClientRect().height)])`));
+    await b.js(OPEN(ids));
+    await b.until(`${GOTOS(list)}.length >= 2`, 'the open cards\' id buttons');
+    sizes.push(...await b.js(`${GOTOS(list)}.map(n => [n.getAttribute('aria-label'), n.textContent, Math.round(n.getBoundingClientRect().height)])`));
   }
   assert.ok(sizes.length >= 4, `found the id buttons: ${JSON.stringify(sizes)}`);
   for (const [label, text, h] of sizes) {
-    assert.equal(label, `Go to ticket ${text}`);
+    assert.match(label, new RegExp(`^Go to ticket ${text}, `));
     assert.ok(h >= 44, `${text} is ${h} px high`);
   }
 }, { width: 375 }));
 
 test('0154 AC2: in a browser, pressing Enter on an id brings its ticket into view and highlights it without opening anything', skip, () => withBoard(async b => {
+  await b.js(openLane('build'));
+  await b.js(OPEN(['0002']));
+  await b.until(`${GOTOS('queue')}.some(n => n.textContent === '0001')`, 'its dependency box');
   await b.js(`document.querySelector('#queue').scrollIntoView()`);
-  await b.js(`(() => { const btn = [...document.querySelectorAll('#queue .goto')].find(n => n.textContent === '0001'); btn.focus(); })()`);
+  await b.js(`(() => { const btn = ${GOTOS('queue')}.find(n => n.textContent === '0001'); btn.focus(); })()`);
   await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' });
   await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
   await b.until(`[...document.querySelectorAll('#shaping .item')].some(n => n.classList.contains('flash'))`, 'the highlight');
   const r = await b.js(`(() => { const n = [...document.querySelectorAll('#shaping .item')].find(n => n.classList.contains('flash')); const box = n.getBoundingClientRect();
     return { id: n.querySelector('.id').textContent, inView: box.bottom > 0 && box.top < innerHeight, open: document.querySelectorAll('.item.open, .q.open').length }; })()`);
-  assert.deepEqual(r, { id: '0001', inView: true, open: 0 });
+  assert.deepEqual(r, { id: '0001', inView: true, open: 1 }, 'only the card it was pressed in is open');
   await b.until(`![...document.querySelectorAll('.flash')].length`, 'the highlight to end by itself');
 }));
 
