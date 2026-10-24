@@ -1741,12 +1741,15 @@ const speckPoses = () => ({ ...LCD.STATES, watch: watchPose, ask: LCD.PANEL.bad,
 // 0414: what speck does, from what the page has seen of the pipeline. Each board is compared with the one before it
 // (noteBoard): what changed queues an event, played one after another, or starts the laptop while drafts are written.
 // Between them speck follows the Foreman's word (speckRests). 0436: and passes the time during a long wait.
-const SPECK = { push: 3200, event: 6000, writing: 30000, nap: 15 * 60000, watch: 2 * 60000, pastime: 60000, turn: 3 * 60000 };
+const SPECK = { push: 3200, event: 6000, writing: 30000, nap: 15 * 60000, watch: 2 * 60000, pastime: 60000, turn: 3 * 60000, missed: 60000 };
 // 0436: the pastimes, tea, chess, messy and sweeping, with their captions while Idle and while waiting on the pipeline.
 const IDLE_MOODS = [['eating', 'TEA, WHILE IT IS QUIET'], ['playing', 'NOTHING READY. CHESS?'], ['messy', 'CRUMBS IN THE WORKTREE'], ['cleaning', 'SWEEPING OLD BRANCHES']];
 const PASTIMES = [['eating', 'A CUP OF TEA'], ['playing', 'A QUICK GAME OF CHESS'], ['messy', 'CRUMBS ON THE CLIPBOARD'], ['cleaning', 'A QUICK SWEEP']];
-// rest: when the word's rhythm started, which of its turns has picked a pastime, and which one (0436).
-const speckDo = { seen: null, queue: [], playing: null, writing: null, word: null, rest: null, last: null, woke: false, n: 0 };
+// rest: when the word's rhythm started, which of its turns has picked a pastime, and which one (0436). 0446: st and
+// seenAt, the last board noted and when; hiddenAt, when the page was hidden; back, set when it's shown again until the
+// next board is noted.
+const speckDo = { seen: null, queue: [], playing: null, writing: null, word: null, rest: null, last: null, woke: false, n: 0,
+  st: null, seenAt: null, hiddenAt: null, back: null };
 // 0436: a pastime at random, never the one before.
 function pickPastime(d) {
   const all = IDLE_MOODS.map((_, i) => i).filter(i => i !== d.last);
@@ -1760,27 +1763,69 @@ function noteBoard(st, f, word) {
   const d = speckDo, now = Date.now();
   if (word !== d.word) { d.word = word; d.woke = false; d.rest = { since: now, turn: -1, i: null }; }
   if (!st || !Array.isArray(st.tickets)) return;
+  const fresh = st !== d.st;
+  d.st = st;
   const tickets = new Map(st.tickets.filter(t => t && typeof t === 'object' && t.id != null).map(t => [String(t.id), t]));
   const ids = [...tickets.keys()].sort(byId), ag = f.agent && typeof f.agent === 'object' ? f.agent : {};
-  const asks = (Array.isArray(ag.asks) ? ag.asks : []).filter(a => a && a.id != null).map(a => ({ id: String(a.id), key: `${a.id} ${a.at}` }));
+  const asks = (Array.isArray(ag.asks) ? ag.asks : []).filter(a => a && a.id != null).map(a => ({ id: String(a.id), key: `${a.id} ${a.at}`, at: a.at }));
   const shipping = new Set(ids.filter(id => tickets.get(id).ship && tickets.get(id).ship.running === true));
   if (f.ship && typeof f.ship.running === 'string') shipping.add(f.ship.running);
   const seen = { tickets: new Map(ids.map(id => [id, { status: tickets.get(id).status, text: draftText(tickets.get(id)) }])), asks: new Set(asks.map(a => a.key)),
     running: ag.running && ag.running.id != null ? String(ag.running.id) : null, shipping };
-  const was = d.seen;
+  const was = d.seen, wasAt = d.seenAt;
   d.seen = seen;
+  if (fresh) d.seenAt = now;
+  const back = fresh ? d.back : null;
+  if (back) d.back = null;
   if (!was) return; // what happened before the page loaded doesn't play
-  const play = (pose, cap, ms) => { d.queue.push({ pose, cap, ms, key: `e${++d.n}` }); };
+  const from = d.queue.length;
+  // 0446: each event notes when the page heard of it and, when the board says, when it happened.
+  const play = (pose, cap, ms, when) => { const at = typeof when === 'string' ? Date.parse(when) : NaN; d.queue.push({ pose, cap, ms, key: `e${++d.n}`, noted: now, at: Number.isFinite(at) ? at : null }); };
   const became = (id, status) => was.tickets.has(id) && was.tickets.get(id).status !== status && tickets.get(id).status === status;
   const runOn = !!(st.run && st.run.on);
-  for (const id of ids) if (became(id, 'done')) play('celebrating', `${id} SHIPPED`, SPECK.event);
-  for (const id of [...shipping].sort(byId)) if (!was.shipping.has(id)) play('ship', `SHIPPING ${id}`, SPECK.push);
-  for (const id of ids) if (became(id, 'blocked')) play('ask', `${id} HAS A QUESTION`, SPECK.event);
-  for (const a of asks) if (!was.asks.has(a.key)) play('ask', `${a.id} HAS A QUESTION`, SPECK.event);
-  for (const id of ids) if (became(id, 'approved') && !(tickets.get(id).auto_ship === true && runOn)) play('flag', `${id} IS READY TO SHIP`, SPECK.event);
-  if (seen.running && seen.running !== was.running) play('confused', `LOOKING INTO ${seen.running}`, SPECK.event);
+  const ship = id => (tickets.get(id) && tickets.get(id).ship) || {};
+  for (const id of ids) if (became(id, 'done')) play('celebrating', `${id} SHIPPED`, SPECK.event, tickets.get(id).finished);
+  for (const id of [...shipping].sort(byId)) if (!was.shipping.has(id)) play('ship', `SHIPPING ${id}`, SPECK.push, ship(id).started);
+  for (const id of ids) if (became(id, 'blocked')) play('ask', `${id} HAS A QUESTION`, SPECK.event, tickets.get(id).blocked_at);
+  for (const a of asks) if (!was.asks.has(a.key)) play('ask', `${a.id} HAS A QUESTION`, SPECK.event, a.at);
+  for (const id of ids) if (became(id, 'approved') && !(tickets.get(id).auto_ship === true && runOn)) play('flag', `${id} IS READY TO SHIP`, SPECK.event, tickets.get(id).approved);
+  if (seen.running && seen.running !== was.running) play('confused', `LOOKING INTO ${seen.running}`, SPECK.event, ag.running.started);
+  // 0446: the first board after the page is shown again holds what changed while it had no stream. A change the board
+  // dates from before the page was shown, or doesn't date at all, is from while it was hidden: one with no date came
+  // after the board before, which is all that's known of when. Of those and the one kept when the page was shown, only
+  // the latest plays, and only when it came less than a minute before. A change dated from after plays as any other.
+  if (back) {
+    const got = d.queue.splice(from), later = got.filter(e => e.at !== null && e.at >= back.at);
+    const missed = got.filter(e => !later.includes(e)).map(e => ({ ...e, at: e.at ?? wasAt })).filter(e => e.at !== null);
+    const one = latestMissed([...(back.kept ? [back.kept] : []), ...missed], back.at);
+    if (one) d.queue.push(one);
+    d.queue.push(...later);
+  }
   const drafts = ids.filter(id => tickets.get(id).status === 'draft' && (!was.tickets.has(id) || (was.tickets.get(id).status === 'draft' && was.tickets.get(id).text !== seen.tickets.get(id).text)));
   if (drafts.length) d.writing = { id: drafts[drafts.length - 1], until: now + SPECK.writing };
+}
+// 0446: the page hidden (visible false) or shown again. Of the events from while it was hidden, only the latest plays,
+// and only when it came less than a minute before the page was shown; the next board's changes count as from then too,
+// so nothing missed plays until that board has come.
+function speckShown(visible) {
+  const d = speckDo, now = Date.now();
+  if (!visible) { if (d.hiddenAt === null) d.hiddenAt = now; return; }
+  if (d.hiddenAt === null) return;
+  const since = d.hiddenAt, missed = [...(d.playing ? [d.playing] : []), ...d.queue].filter(e => e.noted >= since);
+  d.hiddenAt = null;
+  if (d.playing && d.playing.noted >= since) d.playing = null;
+  d.queue = d.queue.filter(e => e.noted < since);
+  const one = latestMissed(missed, now);
+  let kept = null;
+  if (one) { const { until, ...e } = one; kept = e; }
+  d.back = { at: now, kept }; // kept waits for the next board, which may hold a later one
+}
+// 0446: of events missed while the page was hidden, the one that happened last, by its date or else when the page
+// heard of it, when that was less than a minute before `shown`; otherwise null. Of two at once, the later in the list.
+function latestMissed(events, shown) {
+  let one = null;
+  for (const e of events) { const at = e.at ?? e.noted; if (at !== null && (!one || at >= (one.at ?? one.noted))) one = e; }
+  return one && shown - (one.at ?? one.noted) < SPECK.missed ? one : null;
 }
 // What speck does at `now`: { pose, cap }, with a `key` of its own for each event.
 function speckNow(now) {
@@ -2102,6 +2147,6 @@ function connect() {
 // 0432, 0433: the page starts once the whole page has loaded, after the Settings script it loads from /panel-settings.js
 // has run, so nothing it hears first finds Settings missing.
 document.addEventListener('DOMContentLoaded', () => {
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') connect(); });
+  document.addEventListener('visibilitychange', () => { const on = document.visibilityState === 'visible'; speckShown(on); if (on) connect(); });
   connect();
 });
