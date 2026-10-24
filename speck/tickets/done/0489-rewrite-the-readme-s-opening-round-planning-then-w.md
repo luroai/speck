@@ -1,7 +1,7 @@
 ---
 id: "0489"
 title: "Rewrite the README's opening round planning then walking away"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0456", "0488", "0491"]                # ticket ids that must be done fi
 created: 2026-10-24
 started: "2026-10-24T20:22:18.064Z"
 approved: "2026-10-24T20:26:02.915Z"
+finished: "2026-10-24T20:29:32.294Z"
 
 ---
 # 0489 · Rewrite the README's opening round planning then walking away
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck's tagline, "Ship code you can't read, and still trust it", starts from what the reader can't do, and the README's opening was written before speck became a slim panel beside your agent and before it worked with any agent. It takes four paragraphs to reach the picture. It also doesn't mention tasks, tickets whose build does a job other than code, such as an email draft, a plan or research. For launch, the first screen should say how speck is used: a short burst of planning, then walking away while the agents build, review and ship, code or not.
