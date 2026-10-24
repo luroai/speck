@@ -744,7 +744,7 @@ function returnFocus() {
   const find = n => { if (n.fullOf === from.id) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
   const to = find($(from.list)) || find($(from.list === 'queue' ? 'shaping' : 'queue')) || $(from.list === 'queue' ? 'build-section' : 'shaping-section');
   openTab(laneOf(to)); // 0410: the tab holding it opens first
-  if (to.focus) to.focus();
+  if (to.focus) to.focus({ preventScroll: true }); // 0441: the list stays where it was, as 0060 asks, even with the button out of view
 }
 // 0362, 0368: while a document's pop-up or Settings covers the panel, the side pane and its backdrop can't be reached either.
 function holdPane() { for (const id of ['full-ticket', 'full-backdrop']) $(id).inert = !!docOpen || settingsView !== null; }
