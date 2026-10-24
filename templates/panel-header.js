@@ -1,7 +1,7 @@
 'use strict';
 // 0474: the panel's header, which the page loads from /panel-header.js after its own script and before the pop-ups: the
 // dark frame's title row, speck's screen (its poses, words and time, drawn by the design's renderer from lcd.js) and the
-// Plan, Build and Shipped tabs under it. It uses the page's helpers ($, el, setText, within, foremanOf and the rest), and
+// strip of the Plan, Build and Shipped lanes under it (0477). It uses the page's helpers ($, el, setText, within, foremanOf and the rest), and
 // the page's render() calls drawHeader and drawTabs.
 
 // 0160: the header stays at the top of the screen. --head is its height on screen, so a ticket scrolled to sits below
@@ -247,7 +247,8 @@ function drawHeader(f, stale) {
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: speck run\'s log';
 }
-// 0410: Plan, Build and Shipped are tabs under the header, and only the open one's lane shows. Build opens with the
+// 0410: Plan, Build and Shipped are tabs under the header, and only the open one's lane shows. 0477: they're a strip
+// of the lanes' names, still tabs to a screen reader. Build opens with the
 // page. Each lane's list keeps its own scroll position, put back when its tab opens again.
 const LANES = { plan: ['tab-plan', 'shaping-section', 'shaping'], build: ['tab-build', 'build-section', 'queue'], shipped: ['tab-shipped', 'shipped-section', 'shipped-list'] };
 const TAB_ORDER = ['plan', 'build', 'shipped'];
@@ -273,9 +274,9 @@ function drawTabs() {
     $(section).hidden = !on;
   }
   placeLanes(touch && touch.way === 'x' ? touch.shown : 0); // a refresh leaves a card a finger is moving where it is
-  // While Build's tab is closed, it says how many things need you, as the Foreman's status does
-  const needs = openLane === 'build' ? null : /^Needs you (\d+)$/.exec(foremanOf(state).word);
-  // 0425: the number alone, so the tabs fit a third of a narrow pane; its accessible name says what it is
+  // Build says how many things need you, as the Foreman's status does (0477: whichever lane is in view)
+  const needs = /^Needs you (\d+)$/.exec(foremanOf(state).word);
+  // 0425: the number alone; its accessible name says what it is
   setText($('build-needs'), needs ? needs[1] : '');
   $('tab-build').setAttribute('aria-label', needs ? `Build, ${needs[1]} needs you` : 'Build');
 }

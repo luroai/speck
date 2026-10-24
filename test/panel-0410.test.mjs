@@ -200,7 +200,7 @@ test('0410 AC4: with Plan or Shipped open and the Foreman reading "Needs you <n>
   const needs = { word: 'Needs you 2', tone: 'bad' };
   const p = livePage(board({ foreman: needs }));
   await p.settle();
-  assert.equal(p.byId('build-needs').textContent, '', 'Build open: nothing extra');
+  assert.equal(p.byId('build-needs').textContent, '2', 'Build open'); // 0477: whichever lane is open
   click(p.byId(TAB.plan));
   assert.equal(p.byId('build-needs').textContent, '2', 'Plan open'); // 0425: the number alone
   click(p.byId(TAB.shipped));
@@ -214,7 +214,7 @@ test('0410 AC4: with Plan or Shipped open and the Foreman reading "Needs you <n>
   await refresh(p);
   assert.equal(p.byId('build-needs').textContent, '11', 'and it follows the count');
   click(p.byId(TAB.build));
-  assert.equal(p.byId('build-needs').textContent, '', 'gone once Build opens');
+  assert.equal(p.byId('build-needs').textContent, '11', 'still there once Build opens (0477)');
 });
 
 test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back there, puts "<n>" on Build straight away', async () => {
@@ -226,7 +226,7 @@ test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back t
   assert.equal(p.byId('build-needs').textContent, '2', 'before any refresh');
   // Back to Build through a link, then opened from Build and closed once it's back in Plan.
   p.press(await gotoIn(p, items(p).find(n => idOf(p, n) === '0001'), '0002'));
-  assert.equal(p.byId('build-needs').textContent, '', 'Build open again');
+  assert.equal(p.byId('build-needs').textContent, '2', 'Build open again (0477: whichever lane is open)');
   const row = queueRows(p).find(n => idOf(p, n) === '0003');
   click(row.children.find(n => n.className === 'top'));
   await p.settle();
