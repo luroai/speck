@@ -1,7 +1,7 @@
 ---
 id: "0484"
 title: "Keep a closed Build card's tag whole on a phone"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0483"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:44:36.293Z"
 approved: "2026-10-24T19:03:12.724Z"
+finished: "2026-10-24T19:08:45.113Z"
 
 ---
 # 0484 · Keep a closed Build card's tag whole on a phone
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a phone, a closed Build card with a long status line, such as `Foreman will answer · Review 2 · 99:59 · bug`, cuts its bug, fix or document tag off with an ellipsis, sometimes to just `…`. A lone `…` after the time looks as if the time is cut off, and the tag can't be read or tapped until the card is opened.
