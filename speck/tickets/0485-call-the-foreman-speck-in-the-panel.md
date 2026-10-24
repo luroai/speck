@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0484"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T19:09:01.422Z"
-approved: "2026-10-24T19:18:41.419Z"
+approved: "2026-10-24T19:23:19.400Z"
 
 ---
 # 0485 · Call the Foreman speck in the panel
@@ -60,12 +60,13 @@ The setting names themselves (such as foreman_fixing) still say foreman until a 
 ## Review log
 Round 1 (codex): changes requested: F1 The screen's runtime accessible name and tooltip do not meet AC3.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 371,528
-- Elapsed since build started: 10 min
+- Reviewer tokens: 739,996
+- Elapsed since build started: 14 min
 - Changed lines: 32 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -209,6 +210,77 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "The panel now calls the watcher speck and titles its Settings group Watching. The screen's accessible name and status tooltip are fixed. All four criteria pass, with no blocking concerns remaining."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b8500823c83d917a21a62cf47dd9800dfb346dd0",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16f56-f1f9-7a30-9313-f8ba250c0c08",
+    "builder_response": "- Tests run: test/panel-0257.test.mjs test/speck-name-0485.test.mjs\n- Ship failed on \"0257 AC2: the view shows each group in order …\" (test/panel-0257.test.mjs). main was already merged in (git merge main: already up to date), so this is the ticket's own change: 0486 left that test looking for the panel's old \"Foreman\" heading in place of the server's \"Watching\" group title, until 0485 changed the heading. 0485 now draws \"Watching\", so the test found no \"Foreman\" and failed.\n- Changed: the test now looks for each group by its own title, Watching included (line 108). It checks the same things as before: every group shows, in order. Nothing else.\n- Also checked: no other test looks for the old heading or role name (grep for 'Foreman' in test/ finds only the README check in release-0298 and 0486's own exception).\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 366419,
+      "cached_input_tokens": 302720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2049,
+      "reasoning_output_tokens": 43
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T19:23:15.816Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The passing 0485 AC1 tests exercise the board states, tabs, full ticket, confirmations, Pipeline pop-up, Settings and Your agents, scanning visible and accessible wording for Foreman outside the stated exceptions."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel-model.js and templates/panel.js retain all requested card, recommendation, question, answer and dismiss wording. The 0485 AC2 test passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "drawHeader preserves the accessible name \"speck's screen\" and starts the tooltip with \"speck: <status>\". The 0485 AC3 runtime assertions pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "foremanGroup renders Watching, ROLES names the role speck, and rolesUsing returns speck. The panel-0257 update preserves checks that every Settings group appears in order, replacing only the obsolete heading expectation. The supplied run reports 127 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js:246",
+        "issue": "The screen's runtime accessible name and tooltip previously did not meet AC3.",
+        "suggested_fix": "Completed: the accessible name remains \"speck's screen\", the tooltip starts with the status, and tests check both attributes separately.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel consistently calls the watcher speck. The remaining Settings test now expects Watching while preserving its original checks. All four criteria pass, with no blocking concerns."
   }
 }
 ```
