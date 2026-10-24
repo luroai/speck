@@ -1,7 +1,7 @@
 ---
 id: "0464"
 title: Lay out an open shipped ticket like one in flight                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ approved: "2026-10-24T11:46:51.061Z"
 ---
 # 0464 · Lay out an open shipped ticket like one in flight
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 After 0461 and 0462, an open ticket in flight shows a step track and an even table of facts, but a shipped ticket's Details shows its figures as a list of labels and values. The cards don't look like one family.
@@ -121,6 +121,68 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Open shipped tickets now show the shared coloured step track and six-cell facts table, with Review pack below. Missing figures, long values and narrow screens are covered. The recorded tests pass, and I found no blocking issues or unrelated changes."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1e77c100eb75433293dfb4406246f3d2f0e01499",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16dbb-9e59-70e0-bc12-4202e21713aa",
+    "builder_response": "- Tests run: test/build-log-0291.test.mjs test/spend-0120.test.mjs test/panel-0157.test.mjs test/panel-0162.test.mjs test/panel-0464.test.mjs\n- Why: speck ship's run on the ticket as it would land failed three tests: \"0291 AC3: the panel shows a Codex or Cursor build's tokens, and no $0 cost\", \"0120 AC3: Shipped rows label the existing figure as reviewer tokens and show the builder's tokens and cost\" and \"0120 AC5: a ticket with no builder spend shows none, and the rest of Shipped is unchanged\". main had nothing new (git merge main: already up to date), so the cause is this ticket: those tests read the open card's `.figs` list, which this ticket replaces with the facts table, and the build's related run didn't pick those files up.\n- What changed: only tests. Each now reads the open card's figures from its facts table (after the Shipped cell, whose time depends on the clock), in the table's order, with \"—\" for a figure not recorded, as AC2 asks. Their intent stays: Codex/Cursor builds show tokens and never \"$0\"; reviewer tokens are labelled as such alongside builder tokens and cost; a ticket with no builder spend shows none.\n- Also: two older checks that had become vacuous (they looked for `.fig`/`.figs`, which no longer exist) now look at the facts table: 0162 AC4 checks the table waits for Details, and the 0157 browser layout test measures the table's six cells in a grid under the title. No product code changed.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 236595,
+      "cached_input_tokens": 178944,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1225,
+      "reasoning_output_tokens": 19
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T11:51:08.982Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js shippedSteps(), trackOf() and shippedFacts() retain the shared track and table. Passing panel-0464 tests verify completed colours, Review 2, matching styles, ellipsis and tooltips."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shippedFacts() renders all six cells in the required order with missing-value dashes. Passing AC2 tests cover recorded figures, missing figures, token tooltips and the Shipped value updating after midnight."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "render() puts the track and table beneath the title and Review pack below them, retaining the closed summary line. Passing AC3 and real-browser tests verify this at 320 and 390 px with a long value. Updated panel-0157 and panel-0162 assertions now exercise the facts table."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "factCell() retains semantic dt/dd label-value pairs, covered by the passing AC4 test. The current recorded run has 176 passes, zero failures and three skips. All three tests that failed during shipping now pass with meaningful assertions adapted to the required table."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change still meets all four criteria. The additional test updates preserve checks for builder and reviewer figures, missing costs and the Details layout. All three failures found during shipping now pass; no product code changed this round, and I found no blocking issues."
   }
 }
 ```
