@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0453", "0454", "0455", "0457", "0458", "0459", "0460", "0461", "0462", "0463", "0464", "0465", "0466", "0467", "0468", "0469", "0471"]                # ticket ids that must be done first
+after: ["0453", "0454", "0455", "0457", "0458", "0459", "0460", "0461", "0462", "0463", "0464", "0465", "0466", "0467", "0468", "0469", "0471", "0476", "0477"]                # ticket ids that must be done first
 created: 2026-10-24
 
 ---
@@ -41,7 +41,7 @@ The README's light and dark pictures show the 0.15.0 panel in a narrow browser p
 - 0306's pictures were made with the demo in `speck-assets/readme/demo/` beside this checkout, outside the repo: `server.mjs` serves the real panel page from a speck checkout with made-up tickets inside a mock agent app (`frame.html`), and `shoot.mjs` takes the screenshot at 2× with headless Chromium. Update it for the new panel (the panel is now split across `templates/panel.html`, `panel.css`, `panel.js` and the files they load). Don't commit that folder or its paths.
 - The mock agent app stays generic: it can be laid out like an editor with an agent chat and a browser pane, but shows no product's name or logo.
 - `test/readme-0306.test.mjs` already checks AC2's file facts for the same two files.
-- Waits for every 0.15.0 ticket that changes the panel's look or feel, 0453 to 0455 and 0457 to 0469 and 0471, so the picture shows the panel as it ships (the user asked on 2026-10-24 for it to come right after all of them). 0452 waits for this.
+- Waits for every 0.15.0 ticket that changes the panel's look or feel, 0453 to 0455 and 0457 to 0469, 0471, 0476 and 0477, so the picture shows the panel as it ships (the user asked on 2026-10-24 for it to come right after all of them). 0452 waits for this.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
