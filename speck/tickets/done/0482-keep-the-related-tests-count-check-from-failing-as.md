@@ -1,7 +1,7 @@
 ---
 id: "0482"
 title: "Keep the related-tests count check from failing as the suite grows"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:33:25.291Z"
 approved: "2026-10-24T18:37:15.221Z"
+finished: "2026-10-24T18:40:41.674Z"
 
 ---
 # 0482 · Keep the related-tests count check from failing as the suite grows
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 0447's AC3 test checks that 0437's change (`scripts/turns.mjs`, the build skill and `docs/brief.md`) picks fewer than 100 related tests from a copy of this repo's own `test/` folder. It picks 98 today, and every new test that names `docs/brief.md` adds one, so within a few tickets `speck ship` will fail on it for a ticket that did nothing wrong.
