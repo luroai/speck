@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { findChrome } from './support/panel.mjs';
-import { STATE, onPhone } from './support/queue-phone.mjs';
+import { onPhone } from './support/queue-phone.mjs';
 
 // ---------- 0190: a queued ticket's Queued line stays clear of its tags' tap areas on a phone ----------
 
@@ -37,15 +37,4 @@ test('0190 AC1: at 375 px, every point of each queued ticket\'s tags\' 44 by 44 
   });
 });
 
-test('0190 AC2: at 375 px, a tap on the id in a Queued line still reaches that id', skip, async () => {
-  await onPhone(async b => {
-    const hit = await b.js(`(() => {
-      const id = [...document.querySelectorAll('#queue .q .act .goto')].find(n => n.textContent === '0204');
-      id.scrollIntoView({ block: 'center' });
-      const r = id.querySelector('span').getBoundingClientRect();
-      const n = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      return !!n && (n === id || id.contains(n));
-    })()`);
-    assert.equal(hit, true, 'the middle of the id reaches it');
-  }, STATE({ chained: true }));
-});
+// 0468: AC2 checked a tap on the id in a Queued line; a closed card's ids are in its chip now.

@@ -100,7 +100,7 @@ test('0463 AC3: the dotted line is gone from an open one, closed ones keep their
   await p.settle();
   for (const id of PLAN) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className), ['line', 'checks'], `${id}: closed, its line`);
   for (const id of QUEUED) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className), ['line', 'act'], `${id}: closed, its line`);
-  assert.equal(topOf(card(p, '0812')).children[1].textContent, 'Queued · waiting on 0811 · fix');
+  assert.equal(topOf(card(p, '0812')).children[1].textContent, 'Queued · fix'); // 0468: its ids in its chip
   await openAll(p);
   for (const id of [...PLAN, ...QUEUED]) {
     assert.ok(!p.all(topOf(card(p, id))).some(n => /^(checks|act)\b/.test(n.className || '')), `${id}: no dotted line`);

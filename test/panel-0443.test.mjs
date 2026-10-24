@@ -31,7 +31,7 @@ const CASES = [
 const SAME = [
   { id: '0811', on: true, words: 'Paused', t: T('0811', 'building', { started: ago(300), build_running: true, paused: true }) },
   { id: '0812', on: true, words: 'Shipping', t: T('0812', 'approved', approved({ auto_ship: true, build_exit: { at: ago(30), code: 0 }, ship: { running: true, auto: true, started: ago(8) } })) },
-  { id: '0813', on: true, words: 'Queued · waiting on 0801', t: T('0813', 'ready', { after: ['0801'], waiting_on: ['0801'] }) },
+  { id: '0813', on: true, words: 'Queued', t: T('0813', 'ready', { after: ['0801'], waiting_on: ['0801'] }) },
 ];
 const boardOf = on => ({ run: on ? { on: true } : null, ideas: [], tickets: [...CASES, ...SAME].filter(c => c.on === on).map(c => c.t) });
 const page = on => fakePage([boardOf(on)], { Date: stoppedClock(NOW) });
@@ -53,7 +53,7 @@ test('0443 AC1: on a closed Build ticket, each long status shows in short words'
   }
 });
 
-test('0443 AC1: Paused, Shipping and Queued · waiting on <ids> stay as they are', async () => {
+test('0443 AC1: Paused, Shipping and Queued stay as they are (0468: its ids in its chip)', async () => {
   const p = page(true);
   await p.settle();
   for (const c of SAME) assert.ok(statusOf(card(p, c.id)).textContent.startsWith(c.words), `${c.id}: ${statusOf(card(p, c.id)).textContent}`);

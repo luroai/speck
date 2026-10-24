@@ -8,7 +8,8 @@ import { STATE, onPhone } from './support/queue-phone.mjs';
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
-// 0204's Queued line reads "Queued · unlocks 0205" and 0205's "Queued · waiting on 0204", each id a link.
+// 0204 unlocks 0205, and 0205 waits on 0204. 0468: their ids are in their chips, at the end of their title rows, not
+// in their Queued lines.
 const CHAINED = STATE({ chained: true });
 
 const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
@@ -34,11 +35,11 @@ const ROWS = `[...document.querySelectorAll('#queue .q')].map(q => {
   return { id: q.querySelector('.id').textContent, line: q.querySelector('.top .act').textContent, tags };
 })`;
 
-test('0224 AC1: at 375 px, every point of each queued ticket\'s tags\' 44 by 44 px tap areas reaches its tag, with a linked id in the same Queued line (0419)', skip, async () => {
+test('0224 AC1: at 375 px, every point of each queued ticket\'s tags\' 44 by 44 px tap areas reaches its tag, with a linked ticket (0419, 0468)', skip, async () => {
   await onPhone(async b => {
     const rows = await b.js(ROWS);
     // 0434: a closed card's line has only its bug, fix or document tag. 0463: open, its facts are in a table.
-    assert.deepEqual(rows.map(r => [r.id, r.line]), [['0204', 'Queued · unlocks 0205 · bug'], ['0205', 'Queued · waiting on 0204 · fix']]);
+    assert.deepEqual(rows.map(r => [r.id, r.line]), [['0204', 'Queued · bug'], ['0205', 'Queued · fix']]);
     for (const row of rows) {
       assert.equal(row.tags.length, 1, `${row.id}: its tag`);
       for (const t of row.tags) assert.deepEqual(t.misses, [], `${row.id} ${t.text}: these points of its 44 px tap area miss it`);
@@ -72,29 +73,4 @@ test('0224 AC1: at 375 px, a tap at the bottom edge of a queued ticket\'s tag ta
   }, CHAINED);
 });
 
-test('0224 AC2: at 375 px, a tap on a linked id\'s text still goes to that ticket', skip, async () => {
-  await onPhone(async b => {
-    for (const [id, to] of [['0204', '0205'], ['0205', '0204']]) {
-      const at = await b.js(`(() => {
-        const q = [...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}');
-        q.scrollIntoView({ block: 'center' });
-        const r = q.querySelector('.act .goto span').getBoundingClientRect();
-        return [r.left + r.width / 2, r.top + r.height / 2];
-      })()`);
-      await tap(b, at);
-      const lit = await b.js(`[...document.querySelectorAll('.flash')].map(q => q.querySelector('.id').textContent)`);
-      assert.deepEqual(lit, [to], `a tap on ${to} in ${id}'s Queued line lights ${to}`);
-    }
-  }, CHAINED);
-});
-
-// 0419: the tags are in the Queued line, after the linked id, so the space that kept them apart is the " · " between them.
-test('0224 AC2: at 375 px, a queued ticket\'s linked id\'s text is clear of its first tag\'s tap area', skip, async () => {
-  await onPhone(async b => {
-    const gaps = await b.js(`[...document.querySelectorAll('#queue .q')].map(q => {
-      const id = q.querySelector('.act .goto span').getBoundingClientRect(), tag = q.querySelector('.act .tag').getBoundingClientRect();
-      return [q.querySelector('.id').textContent, tag.top < id.bottom && tag.bottom > id.top ? tag.left + tag.width / 2 - 22 - id.right : null];
-    })`);
-    for (const [id, gap] of gaps) assert.ok(gap === null || gap >= 0, `${id}: the first tag's tap area reaches ${-gap} px into the linked id`);
-  }, CHAINED);
-});
+// 0468: AC2 kept a tap on a linked id in a Queued line clear of the tags; a closed card's ids are in its chip now.

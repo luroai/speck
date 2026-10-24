@@ -42,6 +42,7 @@ A closed ticket shows its dependencies as one small chip at the end of its title
 - Today: `ticketHead` and `queuedLine` in `templates/panel.js` put `after`, `unlocks` or `waiting on` and the ids in the second line.
 - Waits for 0467: both change those functions.
 - Failing before this build: none
+- Self-check: no changes. Before it, the run of every page test found the chip below 12 px and its tap area under 44 px on a touch screen; both fixed, with the existing checks (0161, 0140) now covering the chip.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
