@@ -257,7 +257,7 @@ test('0459 AC4: with no run.log, the box says speck run hasn\'t written anything
 });
 
 test('0459 AC4: the page asks only /api/run-log for the log, which reads only run.log (0415)', () => {
-  const script = fs.readFileSync(new URL('../templates/panel.js', import.meta.url), 'utf8');
+  const script = fs.readFileSync(new URL('../templates/panel-popups.js', import.meta.url), 'utf8'); // 0473: the Pipeline log's script is in the pop-ups' file
   assert.deepEqual([...script.matchAll(/fetch\('(\/api\/run-log[^']*)'/g)].map(m => m[1]), ['/api/run-log']);
   const runs = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0459-'));
   fs.writeFileSync(path.join(runs, 'other.log'), 'not the log\n');

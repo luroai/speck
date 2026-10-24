@@ -3,11 +3,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, SCRIPT, pageScript, page, fakePage, T, panelRepo, freePort, startPanel, stop, request, cliCopy } from './support/panel.mjs';
+import { ROOT, SCRIPT, pageScript, popupsScript, page, fakePage, T, panelRepo, freePort, startPanel, stop, request, cliCopy } from './support/panel.mjs';
 
 // ---------- 0433: the rest of the page's script in a file of its own ----------
 
-const PAGE_NAMES = ['render', 'connect', 'openFull', 'ticketItem', 'renderForeman', 'drawScreen'];
+const PAGE_NAMES = ['render', 'connect', 'ticketItem', 'drawScreen'], POPUP_NAMES = ['openFull', 'renderForeman']; // 0473: the pop-ups' in their own file
 const declares = (js, name) => new RegExp(`^(?:async function|function|let|const) ${name}\\b`, 'm').test(js);
 
 test('0433 AC1: the rest of the script is in templates/panel.js, loaded from /panel.js, and panel.html is only markup, the look\'s script and the tags that load the rest', () => {
@@ -21,9 +21,10 @@ test('0433 AC1: the rest of the script is in templates/panel.js, loaded from /pa
     assert.ok(declares(js, name), `panel.js has ${name}`);
     assert.ok(!declares(html, name), `panel.html no longer has ${name}`);
   }
+  for (const name of POPUP_NAMES) assert.ok(declares(popupsScript(), name) && !declares(html, name), `panel-popups.js has ${name}, and panel.html doesn't`);
   const scripts = [...html.matchAll(/<script\b[^>]*>/g)].map(m => m[0]);
   assert.deepEqual(scripts, ['<script id="theme-start">', '<script src="/panel-model.js">', '<script src="/lcd.js">',
-    '<script src="/panel.js" data-page="{{page}}" data-token="{{token}}">', '<script src="/panel-settings.js">']);
+    '<script src="/panel.js" data-page="{{page}}" data-token="{{token}}">', '<script src="/panel-popups.js">', '<script src="/panel-settings.js">']); // 0473: and its pop-ups'
   for (const m of html.matchAll(/<script src="[^"]*"[^>]*>([\s\S]*?)<\/script>/g)) assert.equal(m[1], '', 'each loaded script tag is empty');
   assert.match(html, /<script id="theme-start">[\s\S]*?setLook[\s\S]*?<\/script>/, 'the look is still set before the page is drawn');
   assert.ok(html.split('\n').length < 150, `panel.html has ${html.split('\n').length} lines`);
