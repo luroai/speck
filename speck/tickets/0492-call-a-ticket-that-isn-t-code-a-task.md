@@ -43,6 +43,7 @@ A ticket is code or a task, `kind: code | task`, and everything speck shows peop
 - Today: `TASKS` and `ticketTask` in `scripts/core.mjs`, `scripts/lint.mjs`, `scripts/output.mjs`, `scripts/pack.mjs`, `scripts/review.mjs`, `scripts/ship.mjs` (a document task waits for you to ship it), `scripts/pr-ship.mjs`, `scripts/panel.mjs`, the `speck output` line in `scripts/speck.mjs`'s usage, `templates/ticket.md`, `templates/reviewer-document.md`, and in the panel `taskTag` and the card's kind in `templates/panel.js`, the `Finished · read the document` words in `templates/panel-model.js`, and the pack's file links in `templates/panel-popups.js`.
 - One ticket has `task: document` today: `speck/tickets/done/0358-…`. Every other ticket file has `task: code`.
 - Unchained: 0489 changes only the first line of `speck help` and the comment at the top of `scripts/speck.mjs`, and 0491 the reviewer prompt's point 2 in `templates/reviewer-prompt.md`, not `reviewer-document.md`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
