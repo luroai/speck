@@ -38,6 +38,7 @@ The Result column is wide enough for its heading and its mark.
 - For release 0.15.0 (0452). The user asked on 2026-10-24 for everything relevant to the release to be ticketed.
 - Seen in the builder's pictures for 0423. The columns share out the width by their text, and Criterion and Evidence take nearly all of it.
 - Waits for 0440: both change `templates/panel.css`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
