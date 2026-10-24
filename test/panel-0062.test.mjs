@@ -18,7 +18,7 @@ const readyBox = (p, n) => p.all(n).find(x => /\bready\b/.test(x.className) && x
 // The readiness list's lines: each line's text and its colour class, without the buttons or a refusal.
 const lines = (p, n) => readyBox(p, n).children.filter(x => x.tagName === 'div' && !/\brefused\b/.test(x.className)).map(x => [x.className, x.textContent]);
 const refusal = (p, n) => (readyBox(p, n).children.find(x => /\brefused\b/.test(x.className)) || {}).textContent;
-const paneBody = p => pane(p).children[1];
+const paneBody = p => pane(p).children.at(-1); // 0465: the body is last, after the track and table
 
 const MIXED = {
   size: 'M', risk: 'high', acceptance_criteria: ['One.', 'Two.', 'Three.'],
@@ -44,7 +44,7 @@ test('0062 AC1: the pane shows the same readiness lines as the open ticket, afte
     const want = lines(p, itemOf(p, '0001'));
     assert.ok(want.length >= 4, 'the list has its readiness lines');
     assert.deepEqual(lines(p, pane(p)), want, 'the same lines, in the same order and colours');
-    const [head, body] = pane(p).children;
+    const [head, , body] = pane(p).children; // 0465: the track and table between them
     assert.ok(head.textContent.startsWith('0001'), 'the id and title come first');
     const ready = readyBox(p, pane(p));
     assert.equal(body.children[0], ready, 'the readiness list is the first thing after them');
@@ -149,7 +149,7 @@ test('0062 AC4: the readiness list changes on the refresh with the ticket, and t
   click(fullButton(p, itemOf(p, '0001')));
   const kept = p.all(paneBody(p)).find(n => n.tagName === 'p'); // text in the problem, which a reader might have selected
   const detached = () => kept.detached || 0;
-  const [head, body] = pane(p).children;
+  const [head, , body] = pane(p).children; // 0465: the track and table between them
   const ready = readyBox(p, pane(p));
   await refresh(p);
   assert.equal(readyBox(p, pane(p)), ready, 'unchanged: the readiness list keeps its nodes');
@@ -160,7 +160,7 @@ test('0062 AC4: the readiness list changes on the refresh with the ticket, and t
   assert.equal(setReadyOf(p, pane(p)).disabled, true, 'and the button follows the new lint');
   assert.equal(detached(), 0, 'the problem text stays on the page');
   assert.equal(pane(p).children[0], head, 'and so do the id and title');
-  assert.equal(pane(p).children[1], body, 'and the sections');
+  assert.equal(pane(p).children[2], body, 'and the sections');
   assert.equal(body.detached || 0, 0);
   await refresh(p);
   const now = readyBox(p, pane(p));

@@ -163,11 +163,10 @@ for (const theme of ['light', 'dark']) {
       await settle(b);
       await b.js(`${ITEM('0201')}.querySelector('.full-open').click()`);
       await b.until(`!document.getElementById('full-ticket').hidden`, 'the full ticket');
-      const pane = await colours('#full-ticket .tag.high');
-      for (const [where, found] of [['Plan', plan], ['the full ticket pane', pane]]) {
-        assert.equal(found.length, 1, `one high risk tag in ${where}`);
-        assert.deepEqual(found[0], [red, red], where);
-      }
+      // 0465: and so is the full ticket's, as its open card's is
+      assert.equal((await colours('#full-ticket .tag.high')).length, 0, 'no risk tag in the full ticket pane');
+      assert.equal(plan.length, 1, 'one high risk tag in Plan');
+      assert.deepEqual(plan[0], [red, red], 'Plan');
     }, { theme });
   });
 }

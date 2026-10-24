@@ -612,10 +612,10 @@ function packBlocks(text) {
   }
   return [...out, ...md(text.slice(at))];
 }
-// The side pane: the ticket's id and title, its tags under them (0143: values only, no priority menu), for a draft its
-// readiness list and buttons as in the list, without Full ticket, then each of its sections that has something in it,
-// its Markdown formatted.
-function fullTicket(t, draft) {
+// The side pane: the ticket's id and title, then (0465) the step track and facts table its card shows open, for a draft
+// its readiness list and buttons as in the list, without Full ticket, then each of its sections that has something in
+// it, its Markdown formatted.
+function fullTicket(t, draft, steps) {
   const close = el('button', 'close', 'Close');
   close.type = 'button';
   close.addEventListener('click', closeFull);
@@ -636,14 +636,22 @@ function fullTicket(t, draft) {
   }
   mdPart(body, 'Out of scope', t.out_of_scope);
   mdPart(body, 'Notes', t.notes);
-  // 0424: its id and status above its title, and its tags under it.
-  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'state', String(t.status ?? '')), close, el('span', 'title', t.title), paneTags(t)), body];
+  // 0424: its id and status above its title. 0465: its track and table under it, in place of its tags.
+  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'state', String(t.status ?? '')), close, el('span', 'title', t.title)), steps, body];
 }
-// The pane's tags under the title, or nothing when the ticket has none.
-function paneTags(t) {
-  const tagged = [typeTag(t), taskTag(t), ...fieldTags(t, false)].filter(Boolean);
-  return tagged.length ? el('div', 'tags', null, ...tagged) : null;
+// 0465: the track and table the ticket's card shows open, drawn as the list it's in draws them: a draft's as in Plan, a
+// ready one's as in Build, one in flight's as in Build, and a shipped one's as in Shipped. Its priority is a value
+// alone, with no menu (0143).
+function paneSteps(t) {
+  const [track, facts] = paneFrom === 'draft' ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', false)]
+    : paneFrom === 'shipped' ? [trackOf({ steps: shippedSteps(t) }), shippedFacts(t, shippedDay)]
+      : !t.inFlight ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Queued', 'Waiting on', false)]
+        : [trackOf(t), factsOf(t, doing(t, t.shipping || shippingId === String(t.id)))];
+  return el('div', 'steps', null, track, facts);
 }
+// What the pane's track and table show, apart from the counter in a Time cell, which the clock puts right.
+const stepsShown = n => signature([n.children[0].className, ...[...n.children[0].children].map(s => [s.className, s.textContent]),
+  ...[...n.children[1].children].map(c => { const v = c.children[1]; return [c.children[0].textContent, v.className, v.className === 'value time' ? null : [v.title, v.textContent]]; })]);
 // A heading and its Markdown, formatted, or nothing when the text is empty.
 function mdPart(body, heading, text) {
   if (text === null || text === undefined || text === '') return;
@@ -690,17 +698,17 @@ function mdInline(nodes) {
   });
 }
 const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false);
-// What the pane shows apart from its readiness list and tags, what that list shows, with the view state it depends on,
-// and what the tags show.
+// What the pane shows apart from its readiness list and its track and table, and what that list shows, with the view
+// state it depends on.
 const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes];
 const readyData = t => [ownData(t), settingReady.has(t.id), refused.get(t.id) ?? null];
-const tagData = t => [t.type, t.priority, t.size, t.risk, t.auto_ship === true, t.status]; // 0165: auto_ship changes the risk tag's tip
 // Shows the ticket whose id is in fullId wherever it shows: in the Tickets list, the queue or the Shipped list, the
 // first one in that order when ids repeat. It closes the pane when the ticket shows in none of them. The pane keeps
 // its nodes while what they show is unchanged, so text selected in it survives the refresh. When only a draft's
 // readiness list data or its Set ready state changes, a new list replaces the old and the rest stays. The same goes
-// for the tags under the title (0143).
-let fullBuilt = null, readyBuilt = null, tagsBuilt = null; // the signatures of what the pane, its readiness list and its tags show
+// for the track and table under the title (0465), whose counter is put right in place, as a card's is.
+let fullBuilt = null, readyBuilt = null, stepsBuilt = null; // the signatures of what the pane, its readiness list and its track and table show
+let paneFrom = null; // 0465: which list the pane's ticket is in: 'draft', 'queue' or 'shipped'
 function renderFull(m) {
   const pane = $('full-ticket'), find = ts => ts.find(d => String(d.id) === fullId);
   const draft = fullId === null ? null : find(m.drafts), t = fullId === null ? null : draft || find(m.queue) || find(m.shipped) || null;
@@ -708,36 +716,41 @@ function renderFull(m) {
   if (!t) { fullId = null; packOf = null; }
   if (docOpen && (!packOf || String(packOf.id) !== String(docOpen.id))) { if (within(document.activeElement, $('doc-view'))) focusBack = true; docSeq++; docOpen = null; drawDoc(); } // 0362: its pack has gone
   paneTicket = t;
+  paneFrom = !t ? null : draft ? 'draft' : find(m.queue) ? 'queue' : 'shipped';
   drawDocActs(); // 0363
   const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null, changesSending, changesSaid.get(fullId) ?? null, changesRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
-  const tagsSig = t && !packOf ? signature([fullId, tagData(t)]) : null;
+  const steps = t && !packOf ? paneSteps(t) : null, stepsSig = steps ? signature([fullId, t.status, stepsShown(steps)]) : null;
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
   holdPage(pageHeld());
   if (sig !== fullBuilt) {
     fullBuilt = sig;
     readyBuilt = readySig;
-    tagsBuilt = tagsSig;
-    pane.replaceChildren(...(t ? (packOf ? packPane(t) : fullTicket(t, !!draft)) : []));
+    stepsBuilt = stepsSig;
+    pane.replaceChildren(...(t ? (packOf ? packPane(t) : fullTicket(t, !!draft, steps)) : []));
     return;
   }
   if (readySig !== readyBuilt) {
     readyBuilt = readySig;
-    const body = pane.children[1], old = body.children[0];
+    const body = pane.children[2], old = body.children[0];
     const focused = !!old.contains && old.contains(document.activeElement); // its Set ready, just clicked
     body.insertBefore(paneReadiness(t), old);
     body.removeChild(old);
     if (focused && pane.focus) pane.focus({ preventScroll: true }); // so the keys still scroll the pane
   }
-  if (tagsSig !== tagsBuilt) {
-    tagsBuilt = tagsSig;
-    const head = pane.children[0], old = [...head.children].find(n => n.className === 'tags'), now = paneTags(t);
-    const state = [...head.children].find(n => n.className === 'state');
+  if (stepsSig !== stepsBuilt) {
+    stepsBuilt = stepsSig;
+    const state = [...pane.children[0].children].find(n => n.className === 'state');
     if (state) state.textContent = String(t.status ?? ''); // 0424
-    if (old) head.removeChild(old);
-    if (now) head.appendChild(now);
+    pane.insertBefore(steps, pane.children[1]);
+    pane.removeChild(pane.children[2]);
+  } else if (steps) {
+    const sub = paneCounter();
+    if (sub) putCounter(sub, queueCounter(t));
   }
 }
+// 0465: the counter in the pane's Time cell, for a ticket in flight in the queue, or null.
+const paneCounter = () => (paneFrom === 'queue' && paneTicket.inFlight && !packOf ? timeOf($('full-ticket').children[1].children[1]) : null);
 function closeFull() { fullId = null; packOf = null; focusBack = true; render(); } // 0362: the pop-up goes with it (renderFull)
 // 0326: once the pane has closed and the board is drawn, the focus goes back to the Full ticket button that opened it,
 // the one drawn in its place since, or, when its ticket has none on the board now, to the top of the list it was in.
@@ -1048,6 +1061,7 @@ function waitingFacts(t, status, after, pick) {
     factCell('Lint', lintText, null, lintText, null, bits.length ? bits.flatMap((b, i) => (i ? [document.createTextNode(' · '), b] : [b])) : null),
     ...lastFacts(t, pick));
 }
+const shippedDay = when => when.replace(/,.*$/, ''); // 0464: the day alone, before today
 // 0464: a shipped ticket's five steps, every one done, the Review step naming its last round, such as "Review 2".
 const shippedSteps = t => NOT_STARTED.map((s, i) => ({ label: i === 2 && t.roundCount > 0 ? `Review ${t.roundCount}` : s.label, state: 'done' }));
 // 0464: its facts, in the same table: when it shipped, as its line says it, with the time too as its tooltip, then
@@ -1672,7 +1686,9 @@ function render() {
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
   fill('queue', rows, m.queue.length ? '' : idleLane(m));
   if (m.queue.length) idleClock(null, null);
-  startCounters(m.queue.flatMap((t, i) => (t.counter !== null && t.held_at === null && counterOf(rows[i]) ? [[counterOf(rows[i]), t.since, !!t.paused]] : [])));
+  const pt = paneTicket, paneSub = pt ? paneCounter() : null; // 0465: the pane's counter moves on too
+  startCounters([...m.queue.flatMap((t, i) => (t.counter !== null && t.held_at === null && counterOf(rows[i]) ? [[counterOf(rows[i]), t.since, !!t.paused]] : [])),
+    ...(paneSub && pt.counter !== null && pt.held_at === null ? [[paneSub, pt.since, !!pt.paused]] : [])]);
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();
   queueIds = new Set(m.queue.map(t => String(t.id)));
@@ -1691,7 +1707,7 @@ function render() {
   // it is put right on a kept card.
   // In the line, a ticket shipped before today shows its day alone ("20 Oct"), so the line fits a 420 px pane; its
   // tooltip says when it shipped, with the time, and its figures.
-  const day = when => when.replace(/,.*$/, '');
+  const day = shippedDay;
   const metaTip = (t, figs) => [t.end !== null ? `Shipped ${t.when}` : null, figs || null].filter(Boolean).join(' · ');
   for (const id of openShipped) if (!m.shipped.some(t => String(t.id) === id)) openShipped.delete(id);
   fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), t => openShipped.has(String(t.id)), t => {

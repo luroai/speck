@@ -42,6 +42,7 @@ The full ticket shows the same step track and table as the ticket's open card.
 - Today: `fullTicket` in `templates/panel.js` draws the top as id, status, Close, title and `paneTags` (0424).
 - Waits for 0464, which waits for 0463, 0462 and 0461: it reuses all three tables and changes the same files.
 - Failing before this build: none
+- Self-check: no changes. Found while testing: the review pack's Ship button rules (`#full-ticket .ship`) also styled the track's Ship step in the full view, so a rule now resets it and the browser test checks every step's look.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
