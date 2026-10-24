@@ -52,7 +52,7 @@ Each lane card has a dark frame like speck's screen, thinner, with its lane's na
 ## In plain words
 Plan, Build and Shipped now each sit in a dark frame like speck's screen at the top, so the panel reads as two screens: speck's above, and the lane you're looking at below. The frame is the same for every lane; only its title changes, written in the same dot-matrix letters as "speck", with a coloured dot before it: grey for Plan, blue for Build and purple for Shipped. The lane's count, such as "1 in flight · 8 queued", now sits at the right of that title and is cut short with "…" if there isn't room.
 
-To see it, open the panel and swipe or tap between the lanes: the whole framed card slides. Worth a look on a small phone: the frame takes a little width, so ticket cards are slightly narrower than before.
+To see it, open the panel and swipe or tap between the lanes: the whole framed card slides. Worth a look on a small phone: the frame takes a little width, so the space round the ticket cards inside it is tighter than before, to keep them nearly as wide.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -68,7 +68,6 @@ Round 1 (codex): approve.
 - Changed lines: 25 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
-  - Inbox: speck/ideas/2026-10-24-give-the-tickets-more-room-inside-a-lane-s-frame.md (tickets are 40 px narrower at 320 px inside the frame).
   - Tidy-up: 0438 AC2's test name still says the frame lines up with "the cards"; it now checks the lane's frame, with the cards inside it.
 
 ## Review rounds

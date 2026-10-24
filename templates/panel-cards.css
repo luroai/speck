@@ -33,7 +33,7 @@
 
   /* Shaping */
   /* 0151: each item is a card of its own, with space between cards */
-  #shaping { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
+  #shaping { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
   #shaping .empty { padding: 0 4px; }
   .item { padding: 10px 14px; border: 1px solid var(--line); }
   .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
@@ -60,7 +60,7 @@
   /* Queue */
   /* 0155: each ticket is a card of its own, laid out as a Plan ticket. 0167: only a ticket waiting for you or in trouble
      is coloured, by its border and background (below the highlights, so they win) */
-  #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
+  #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
   #queue .empty { padding: 0 4px; }
   /* 0449: an empty lane's message, centred: that it's clear, what shipped lately and the next step */
   #queue .idle { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 4px; text-align: center; }
@@ -192,7 +192,7 @@
   #shipped .meta { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
   #shipped .meta > * { white-space: nowrap; } /* whole, so a line too long for a phone wraps between its time and figures */
   section.shipped table { display: block; }
-  #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
+  #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
   #shipped .empty { padding: 0 4px; }
   #shipped tr { display: block; padding: 6px 8px; border: 1px solid var(--line); }
   #shipped td { display: block; padding: 0; border: 0; }

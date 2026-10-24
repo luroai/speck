@@ -164,7 +164,7 @@ test('0417 AC1, AC3: in a 375 px window with no touch screen, each control has t
   // AC3: the narrow layout itself, which isn't about a control's size
   await b.js(openLane('build'));
   assert.equal(await b.js(`getComputedStyle(document.getElementById('tab-build')).flexDirection`), 'row', 'each tab\'s name on one line (0425)');
-  assert.equal(await b.js(`getComputedStyle(document.getElementById('queue')).paddingLeft`), '16px'); // 0418: the lane's list, as main has none
+  assert.equal(await b.js(`getComputedStyle(document.getElementById('queue')).paddingLeft`), '8px'); // 0418: the lane's list, as main has none. 0478: 8 px inside the lane's frame
 }));
 
 for (const width of [375, 1280]) {
