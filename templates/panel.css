@@ -218,7 +218,8 @@
   .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
   .item.ticket .head .checks, .q .top .progress, .q .top .act { display: block; font-family: inherit; font-size: 12px; line-height: 14px; color: var(--muted); }
   .item.ticket .head .checks > :not(.ids), .q .top .progress > :not(.ids), .q .top .act > :not(.ids) { white-space: nowrap; }
-  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; padding: 0; border: 0; line-height: inherit; vertical-align: baseline; } /* inline, as a box beside a dot would let the line break before the dot */
+  .item.ticket .head .checks .prio { vertical-align: top; } /* 0441: at the line's top, as the tags in it are */
+  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; padding: 0; border: 0; line-height: inherit; vertical-align: top; } /* inline, as a box beside a dot would let the line break before the dot. 0441: at the line's top, as on its baseline the monospace's line box reaches a pixel past the line's */
   /* the spaces either side of a dot a little narrower than a whole character, so a line such as "Writing tests and code
      · Build · 19:18 · P3 · M · low" fits a 420 px pane */
   .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { letter-spacing: -3px; }
