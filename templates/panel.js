@@ -873,6 +873,7 @@ function shapingToggle(m) {
   const button = (view, label, n) => {
     const b = el('button', `toggle ${view}${shapingView === view ? ' on' : ''}`, `${label} · ${n}`);
     b.type = 'button';
+    b.setAttribute('aria-pressed', String(shapingView === view)); // 0450: a screen reader hears which list is open
     b.addEventListener('click', () => { shapingView = view; render(); });
     return b;
   };
