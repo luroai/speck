@@ -565,6 +565,9 @@
   #full-ticket .md th, #full-ticket .md td, #doc-view .md th, #doc-view .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
   #full-ticket .md table, #full-ticket pre code { font-size: 15px; } /* 0424: a table's and a code block's text is the ticket's text size too */
   #full-ticket .md th, #doc-view .md th { font-weight: 600; background: var(--raise); }
+  /* 0444: the criteria table's Result column is as wide as its heading and its mark. The pack lets a word break
+     anywhere, so without this the column shrank to one letter and the long Criterion and Evidence took the rest. */
+  #full-ticket .md .ac-table th:nth-child(3), #full-ticket .md .ac-table td:nth-child(3) { white-space: nowrap; overflow-wrap: normal; }
   #full-ticket .md details, #doc-view .md details { margin: 0 0 8px; }
   #full-ticket .md summary, #doc-view .md summary { cursor: pointer; color: var(--muted); }
   td .full-open + .full-open { margin-left: 6px; }
