@@ -1,5 +1,5 @@
 ---
-name: speck-foreman
+name: speck-watch
 description: The Foreman agent's instructions. speck run starts the Foreman agent, with foreman_fixing set to fix, when work stops for a reason speck has no steps for, and its brief points here. It looks into one stop and does one thing about it. It's agent-only, never typed as a command.
 user-invocable: false
 ---
