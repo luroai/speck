@@ -156,7 +156,8 @@ const CARDS = `(async () => {
       const title = c.querySelector('.line .title'), meta = c.querySelector('.meta'), tag = c.querySelector('.line .tag');
       return { id: c.querySelector('.id').textContent, height: c.getBoundingClientRect().height, titleLines: lines(c.querySelector('.line')),
         metaLines: meta ? lines(meta) : 0, titleSize: parseFloat(getComputedStyle(title).fontSize), metaSize: meta ? parseFloat(getComputedStyle(meta).fontSize) : null,
-        meta: meta && box(meta), card: box(c), title: box(title), tag: tag && box(tag), metaClipped: meta ? meta.scrollWidth > meta.clientWidth + 0.5 || meta.getBoundingClientRect().right > c.getBoundingClientRect().right : false, metaText: meta && meta.textContent, metaW: meta && [meta.scrollWidth, meta.clientWidth],
+        meta: meta && box(meta), card: box(c), title: box(title), titleText: (r => (r.selectNodeContents(title), box(r)))(document.createRange()), // 0494: its text, inside its tap area's padding
+        tag: tag && box(tag), metaClipped: meta ? meta.scrollWidth > meta.clientWidth + 0.5 || meta.getBoundingClientRect().right > c.getBoundingClientRect().right : false, metaText: meta && meta.textContent, metaW: meta && [meta.scrollWidth, meta.clientWidth],
         titleCut: title.scrollWidth > title.clientWidth + 0.5 && getComputedStyle(title).textOverflow === 'ellipsis' };
     }) };
 })()`;
@@ -195,7 +196,7 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
         assert.ok(c.metaSize < c.titleSize, `${c.id}: the details (${c.metaSize} px) are smaller than the title (${c.titleSize} px)`);
         assert.equal(c.metaLines, 1, `${c.id}: the details on one line`);
         assert.ok(!c.metaClipped, `${c.id}: the details fit, with none cut off: "${c.metaText}" ${c.metaW}`);
-        assert.ok(c.meta.top >= c.title.bottom - 0.5, `${c.id}: the details under the title`);
+        assert.ok(c.meta.top >= c.titleText.bottom - 0.5, `${c.id}: the details under the title's text`);
         assert.ok(c.meta.right <= c.card.right + 0.5, `${c.id}: the details inside the card`);
       }
       if (c.tag) assert.ok(c.tag.top < c.title.bottom && c.tag.bottom > c.title.top, `${c.id}: the tag on the title's line`);
