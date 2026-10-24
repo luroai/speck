@@ -8,6 +8,9 @@
     --text: #141414EB; --muted: #141414BA; --muted-large: #141414AD; --faint: #141414BA;
     --accent: #cf2d56; --ok: #145a42; --warn: #6d4700; --bad: #96213f; --run: #285372; --idea: #833063;
     --blue: #3c7cab; --yellow: #a16900; --green: #1f8a65;
+    /* 0461: a step's track: a purple for Ship, well apart from --bad's crimson, and text shades of the cyan and purple
+       that reach 0161's 7:1 */
+    --purple: #7c5cc4; --purple-text: #593c98; --cyan-text: #295560;
     /* 0302: the LCD screen, from the design (docs/design/lcd/), lighter since 0308: speck's screen since 0413 */
     --lcd-bg: #e6e9db; --lcd-off: #dde1cf; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .14);
     --bezel: #262722; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1; /* 0413: the screen's dark frame, from the design's console */
@@ -397,7 +400,25 @@
   .q.at-build { border-color: var(--blue); border-width: 2px; }
   .q.at-check { border-color: var(--inbox); border-width: 2px; }
   .q.at-review { border-color: var(--yellow); border-width: 2px; }
-  .q.at-ship { border-color: var(--green); border-width: 2px; }
+  .q.at-ship { border-color: var(--purple); border-width: 2px; } /* 0461: purple, as its Ship bar is */
+  /* 0461: an open ticket's five steps, under its title: five equal bars in one row, each with its name under it. A
+     step reached so far has its bar in its own colour, and the current one its name in it and bold. A name too long
+     for its bar ends in an ellipsis. */
+  .q .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 6px 0 4px; }
+  .q .track .step { display: block; min-width: 0; padding-top: 3px; border-top: 4px solid var(--line); font-size: 12px; line-height: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q .track .step.done { color: var(--text); }
+  .q .track .step.now { font-weight: 600; }
+  .q .track .step.done.build, .q .track .step.now.build { border-top-color: var(--blue); }
+  .q .track .step.done.check, .q .track .step.now.check { border-top-color: var(--inbox); }
+  .q .track .step.done.review, .q .track .step.now.review { border-top-color: var(--yellow); }
+  .q .track .step.done.approve, .q .track .step.now.approve { border-top-color: var(--green); }
+  .q .track .step.done.ship, .q .track .step.now.ship { border-top-color: var(--purple); }
+  .q .track .step.now.build { color: var(--run); }
+  .q .track .step.now.check { color: var(--cyan-text); }
+  .q .track .step.now.review { color: var(--warn); }
+  .q .track .step.now.approve { color: var(--ok); }
+  .q .track .step.now.ship { color: var(--purple-text); }
+  .q .track.stopped .step.now { border-top-color: var(--bad); color: var(--bad); } /* blocked, or its build stopped */
   /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
   .goto { font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .goto:hover { text-decoration-style: solid; }
@@ -647,6 +668,7 @@
     --accent: #e34671; --ok: #7fbc95; --warn: #d9a65e; --bad: #ef95ad; --run: #97b2cc; --idea: #c4a6be;
     --blue: #81a1c1; --yellow: #d2943e; --green: #70b489;
     --inbox: #88c0d0; --bug: #e69d83; --fix: #d9a65e;
+    --purple: #a08ad6; --purple-text: #b9a7e4; --cyan-text: #8cc3d2; /* a shade apart from --inbox, which keeps a colour of its own (0038) */
     --accent-bg: #27221b; --ok-bg: #1f2421; --inbox-bg: #212527; --bad-bg: #281c1f;
     --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
     --bezel: #080907; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1;

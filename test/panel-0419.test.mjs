@@ -11,7 +11,9 @@ const ago = s => new Date(NOW - s * 1000).toISOString();
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')._text;
 const card = (p, id) => [...items(p), ...queueRows(p)].find(n => idOf(p, n) === id);
 const topOf = n => n.children[0]; // a Plan item's head, or a queue card's top row
-const linesOf = n => topOf(n).children.map(c => c.className); // the two lines in it
+// 0461: an open Build card's track of steps sits between its two lines, so they're found past it
+const linesOf = n => topOf(n).children.filter(c => !/^track\b/.test(c.className)).map(c => c.className); // the two lines in it
+const detailsOf = n => topOf(n).children.filter(c => !/^track\b/.test(c.className))[1];
 
 const board = () => ({
   run: { on: true },
@@ -33,9 +35,9 @@ test('0419 AC1: a closed Plan ticket is its id and title, then its priority, siz
   const t = card(p, '0419');
   assert.deepEqual(linesOf(t), ['line', 'checks'], 'a title line and a details line');
   assert.equal(topOf(t).children[0].textContent, '0419Fit a closed ticket on two lines', 'the id and the title');
-  assert.equal(topOf(t).children[1].textContent, 'P3 · M · low · 3 criteria · lint passes · after 0418');
-  assert.equal(topOf(card(p, '0418')).children[1].textContent, 'P2 · S · low · 2 criteria · lint passes · unlocks 0419', 'one that waits on nothing has no "after"');
-  assert.equal(topOf(card(p, '0430')).children[1].textContent, 'P4 · S · high · bug · 2 criteria · lint: 2 errors · 1 warning');
+  assert.equal(detailsOf(t).textContent, 'P3 · M · low · 3 criteria · lint passes · after 0418');
+  assert.equal(detailsOf(card(p, '0418')).textContent, 'P2 · S · low · 2 criteria · lint passes · unlocks 0419', 'one that waits on nothing has no "after"');
+  assert.equal(detailsOf(card(p, '0430')).textContent, 'P4 · S · high · bug · 2 criteria · lint: 2 errors · 1 warning');
   assert.ok(!t.textContent.includes('waiting on'), 'Plan says "after", not "waiting on"');
 });
 
@@ -47,19 +49,19 @@ test('0419 AC2: a closed Build ticket is its id and title, then its stage senten
   const b = card(p, '0501');
   assert.deepEqual(linesOf(b), ['line', 'progress']);
   assert.equal(topOf(b).children[0].textContent, '0501Writing its code');
-  assert.equal(topOf(b).children[1].textContent, ' Build · 19:18');
-  assert.equal(topOf(b).children[1].children[0].attrs['aria-label'], 'Writing tests and code');
+  assert.equal(detailsOf(b).textContent, ' Build · 19:18');
+  assert.equal(detailsOf(b).children[0].attrs['aria-label'], 'Writing tests and code');
   const q = card(p, '0502');
   assert.deepEqual(linesOf(q), ['line', 'act']);
-  assert.equal(topOf(q).children[1].textContent, 'Queued · waiting on 0501, 0503');
-  assert.equal(topOf(card(p, '0503')).children[1].textContent, 'Queued · unlocks 0502');
+  assert.equal(detailsOf(q).textContent, 'Queued · waiting on 0501, 0503');
+  assert.equal(detailsOf(card(p, '0503')).textContent, 'Queued · unlocks 0502');
   for (const id of ['0501', '0502', '0503']) assert.deepEqual(card(p, id).children.map(c => c.className), ['top'], `${id}: nothing under the two lines`);
 });
 
 test('0419 AC3: the priority opens its menu, size and risk explain themselves, and each id after "after" or "waiting on" is a Go to ticket link', async () => {
   const p = page();
   await p.settle();
-  const tags = n => p.all(topOf(n).children[1]).filter(x => /\btag\b/.test(x.className));
+  const tags = n => p.all(detailsOf(n)).filter(x => /\btag\b/.test(x.className));
   // Plan: the priority opens the menu that sets it
   const [prio, size, risk] = tags(card(p, '0419'));
   assert.equal(prio.attrs['aria-label'], 'Priority 3: built after P0 to P2 tickets. Opens the priority menu');
@@ -78,7 +80,7 @@ test('0419 AC3: the priority opens its menu, size and risk explain themselves, a
   const [bPrio, bSize, bRisk] = tags(card(p, '0501'));
   assert.deepEqual([bPrio.tip, bSize.tip, bRisk.tip], ['Priority 3: built after P0 to P2 tickets', 'M: several files or one new component', 'Low risk: waits for you to ship it']);
   // the ids are Go to ticket links, in Plan and in Build
-  const gotos = n => p.all(topOf(n).children[1]).filter(x => x.className === 'goto').map(x => x.attrs['aria-label']);
+  const gotos = n => p.all(detailsOf(n)).filter(x => x.className === 'goto').map(x => x.attrs['aria-label']);
   assert.deepEqual(gotos(card(p, '0419')), ['Go to ticket 0418']);
   assert.deepEqual(gotos(card(p, '0502')), ['Go to ticket 0501', 'Go to ticket 0503']);
 });
@@ -188,12 +190,12 @@ test('0419 AC1 and AC2: a ticket missing its priority, size or risk, or with no 
   const p = page({ run: { on: true }, tickets: [full('0801', bare), T('0802', 'building', { ...bare, started: 'not a date' }), T('0803', 'ready', bare),
     T('0804', 'reviewing', { priority: 2, size: '', risk: 'low', started: ago(5) })], ideas: [] });
   await p.settle();
-  assert.equal(topOf(card(p, '0801')).children[1].textContent, '2 criteria · lint passes');
-  assert.equal(topOf(card(p, '0802')).children[1].textContent, ' Build');
-  assert.equal(topOf(card(p, '0803')).children[1].textContent, 'Queued');
-  assert.equal(topOf(card(p, '0804')).children[1].textContent, ' Review 1 · The reviewer · 00:05');
+  assert.equal(detailsOf(card(p, '0801')).textContent, '2 criteria · lint passes');
+  assert.equal(detailsOf(card(p, '0802')).textContent, ' Build');
+  assert.equal(detailsOf(card(p, '0803')).textContent, 'Queued');
+  assert.equal(detailsOf(card(p, '0804')).textContent, ' Review 1 · The reviewer · 00:05');
   for (const id of ['0802', '0803', '0804']) { click(topOf(card(p, id))); await p.settle(); } // 0434: the tags show while it's open
-  assert.equal(topOf(card(p, '0802')).children[1].textContent, ' Build');
-  assert.equal(topOf(card(p, '0803')).children[1].textContent, 'Queued');
-  assert.equal(topOf(card(p, '0804')).children[1].textContent, ' Review 1 · The reviewer · 00:05 · P2 · low');
+  assert.equal(detailsOf(card(p, '0802')).textContent, ' Build');
+  assert.equal(detailsOf(card(p, '0803')).textContent, 'Queued');
+  assert.equal(detailsOf(card(p, '0804')).textContent, ' Review 1 · The reviewer · 00:05 · P2 · low');
 });
