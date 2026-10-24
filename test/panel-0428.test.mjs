@@ -99,6 +99,7 @@ test('0428 AC3: every button has a border on all four sides, in a colour 0161 ch
     const got = sides(sels);
     for (const [d, s] of Object.entries(got)) {
       assert.ok(s.width && parseFloat(s.width) > 0, `${what}: its ${d} border is ${s.width}`);
+      if (what === 'the open tab' && d === 'bottom') { assert.equal(s.colour, '--panel', 'the open tab\'s bottom is its lane\'s colour (0457)'); continue; }
       assert.ok(['--line', '--text', '--bad', '--bezel-muted'].includes(s.colour), `${what}: its ${d} border is in ${s.colour}`);
     }
   }
