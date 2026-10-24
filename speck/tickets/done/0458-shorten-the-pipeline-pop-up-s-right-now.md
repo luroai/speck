@@ -1,7 +1,7 @@
 ---
 id: "0458"
 title: Show only the pipeline log when the screen is pressed                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:21:17.863Z"
 approved: "2026-10-24T09:38:23.918Z"
+finished: "2026-10-24T09:41:09.512Z"
 
 ---
 # 0458 · Show only the pipeline log when the screen is pressed
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Pressing speck's screen opens the Pipeline pop-up, whose Right now section lists what's building, waiting, shipping and blocked, recommendations taken and what the Foreman looked into, some of it from 100 tickets ago. The user doesn't use it, and it pushes the log they do want further down.
