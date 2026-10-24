@@ -40,6 +40,10 @@ The top right of speck's screen shows the time, like a handheld's clock.
 - The user asked on 2026-10-24 for that space to show something else. The clock follows the design's handheld (`handheld()` in `templates/lcd.js`).
 - Today: `drawScreen(word, fixing)` in `templates/panel.js`.
 - Waits for 0446: both change speck's screen in `templates/panel.js`.
+- Failing before this build: none
+- "Blinking once a second": the colon shows for the first half of each second and is off for the second half, so it blinks every second. The design's handheld swaps it every other second instead.
+- The top row's word now has room up to 6 dots left of the clock, so a long word is cut and scrolls there rather than at the screen's edge.
+- Self-check: a docs test pinned the brief's wording of the clock, which the docs rule (0267) refuses; it now checks only that "Fixing on" is gone from the README and the brief.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

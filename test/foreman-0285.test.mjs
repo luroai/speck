@@ -18,7 +18,7 @@ const rec = (o = {}) => ({ lock: 4242, max: 2, building: [], switching: null, re
 const view = (o, tickets = [], run = ON) => foremanView({ run, record: rec(o), tickets });
 const state = (foreman, o = {}) => ({ tickets: [], ideas: [], resume_command: '', run: ON, foreman, ...o });
 const header = p => p.byId('run');
-const label = p => header(p).attrs['aria-label'].replace(/^The Foreman: /, '').replace(/, fixing on$/, ''); // 0413: the word on speck's screen, in its name
+const label = p => header(p).attrs['aria-label'].replace(/^The Foreman: /, ''); // 0413: the word on speck's screen, in its name
 const detail = p => p.byId('foreman');
 
 test('0285 AC1: the status is one or two words: Off, Idle, Building <n>, Shipping <id>, Waiting with its reason, or Needs you <n>', () => {
