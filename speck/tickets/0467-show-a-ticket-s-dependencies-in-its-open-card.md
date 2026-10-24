@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0466"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T12:39:41.469Z"
-approved: "2026-10-24T12:59:18.656Z"
+approved: "2026-10-24T13:04:15.706Z"
 
 ---
 # 0467 · Show a ticket's dependencies in its open card
@@ -54,13 +54,14 @@ An open ticket now shows what it depends on in a small box under its facts table
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 224,522
-- Elapsed since build started: 20 min
-- Changed lines: 171 (limit 5000)
+- Reviewer tokens: 571,139
+- Elapsed since build started: 25 min
+- Changed lines: 172 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, none went to the inbox):
   - On a Plan card the box is the first thing in the card's details, under their dividing line, because 0463's tests fix what the card's top row and second child are. A Build card has it straight under its top row. Moving it up on Plan would mean changing those tests.
@@ -125,6 +126,68 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Open tickets now show compact dependency boxes with progress colours, expandable shipped tickets and links to related tickets. The full ticket shows the same information. The tests cover the requested behaviour and phone-width layout; no blocking issues were found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ac5ba914d2420894dcaba7cd68c5d3365dcbc446",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16dfd-d30d-78d3-9cce-623785427ede",
+    "builder_response": "- Tests run: test/panel-0161.test.mjs test/panel-0167.test.mjs test/panel-0467.test.mjs test/panel-0417.test.mjs test/panel-0463.test.mjs test/panel-0465.test.mjs, with --related (every test file naming a changed file).\n- Ship ran the whole suite on the ticket merged with main (main had nothing new: the merge was already up to date) and three stylesheet checks failed:\n  - 0161 AC1 (contrast): `.deps .slot .dot` set `color: var(--panel)` on a `--line` fill, 3.29:1. The circles hold no text (the tick is a border on `::after`), so the colour is gone.\n  - 0161 AC1 (fills): `.deps-bar i` and the circles filled with non-surface colours. The bar's segments are now a 4 px `border-top`, as the step track's bars are, and each circle is a 10 px border all round on `--panel` (a surface), so the line behind it still doesn't show through.\n  - 0167 AC2: the ticket's own circle used `--accent`, the speck red, kept for the speck itself. It now uses `--text`: filled, dark in the light look and light in the dark one.\n- No test was changed to get past these; the 0467 test's two CSS assertions follow the new border declarations. Pictures retaken in both looks.\n",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 345154,
+      "cached_input_tokens": 282368,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1463,
+      "reasoning_output_tokens": 105
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T13:04:13.285Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "depsOf and depsBox retain the counts, equal status segments, sorted chips and shipped toggle. Both AC1 tests passed; panel.css preserves segment colours using borders."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The chain model and five-slot rendering remain unchanged. Both AC2 tests passed. panel.css retains green shipped circles with ticks, blue building circles and a filled current-ticket circle."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Card and full-pane navigation tests passed. The real-browser test with 27 dependencies passed at widths from 320 px, checking slot boundaries and single-line, uncut ids."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The AC4 test passed for matching full-ticket boxes and removal of open-card id lines. The previously failing 0161 and 0167 stylesheet checks now pass. Verified output reports 261 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The dependency boxes still meet all four criteria. The stylesheet changes fix the failures found during shipping while preserving the requested colours, ticks and layout. No blocking issues remain."
   }
 }
 ```
