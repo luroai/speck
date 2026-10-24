@@ -1,7 +1,7 @@
 ---
 id: "0449"
 title: "Make an empty Build lane say what to do next"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0449 · Make an empty Build lane say what to do next
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 With nothing building or ready, the Build lane says "Nothing in flight or ready" twice, once as its counts line and once as its message, and nothing else. It looks empty and gives no next step.
