@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:21:17.863Z"
-approved: "2026-10-24T09:29:45.492Z"
+approved: "2026-10-24T09:38:23.918Z"
 
 ---
 # 0458 · Show only the pipeline log when the screen is pressed
@@ -60,12 +60,13 @@ Worth a look: anyone who used Right now to see why a ready ticket isn't building
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 148,173
-- Elapsed since build started: 8 min
+- Reviewer tokens: 470,953
+- Elapsed since build started: 17 min
 - Changed lines: 67 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-ups, no inbox note): the board's `foreman` object still carries what only Right now drew in the panel (`fixing_says`, `took`, `held`, the agent's `did`), as `speck status` uses most of it. A later ticket could trim what the panel is sent. The `where` argument of the panel's Foreman answer box now only ever gets `card`.
@@ -128,6 +129,68 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The Pipeline pop-up now shows only the log, with Reload page available when needed. Ticket questions and their controls remain on the cards, and opening, closing and focus handling retain test coverage. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e66bdd7bd01fcd3a05747a68f75e930f53859e2b",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16d3e-2758-7150-b09a-185f0793e149",
+    "builder_response": "- Tests run: test/foreman-0299.test.mjs test/foreman-asked-0328.test.mjs test/pipeline-0458.test.mjs test/foreman-0285.test.mjs test/foreman-0317.test.mjs test/foreman-agent-0287.test.mjs test/foreman-answer-0318.test.mjs test/panel-0366.test.mjs test/panel-0413.test.mjs test/panel-0451.test.mjs test/pipeline-0415.test.mjs (248 tests, 0 failing).\n- Handed back by speck run's ship queue: tests failed on the ticket merged with main. Merged main into the branch (no conflicts).\n- Failing tests: 0299 AC2, AC4, AC5 and 0328 AC5. Why: like the 17 already changed in round 1, they asserted the Right now section's text in the Pipeline pop-up, which this ticket removes; my round-1 `--related` run missed them because they name no file the ticket changed.\n- What changed: each now checks the same facts in `speck status` (foremanLines), which still shows them, and that the pop-up no longer shows them. 0299 AC4's \"Nothing is waiting to ship\" was panel-only wording; it now checks that speck status lists a waiting ticket and lists none when none waits. No code changed.\n",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 321579,
+      "cached_input_tokens": 229888,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1201,
+      "reasoning_output_tokens": 15
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T09:38:21.859Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js renderForeman draws the Pipeline title, Close and Log, with no Right now sections. Passing test/pipeline-0458.test.mjs AC1 tests verify the contents and absence of the removed headings and lines."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "renderForeman retains the conditional Reload page button above the log, calling location.reload(). Passing 0458 AC2 tests cover visibility, activation and focus when the button disappears."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.js queueItem retains foremanAskBox and blocked questions on ticket cards. The passing 0458 AC3 test verifies the questions and Answer/Dismiss controls."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0458 AC4 and existing 0415/0366 tests cover opening, closing, focus return and log behaviour. Verified current test output: 248 tests, 245 passed, 3 skipped, 0 failures. The revised 0299 and 0328 tests preserve checks of status information while asserting its removal from the pop-up."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still meets all four criteria. The additional test updates correctly reflect removal of Right now while preserving coverage of the information available through speck status. No blocking issues found."
   }
 }
 ```
