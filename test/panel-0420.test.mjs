@@ -31,15 +31,15 @@ const cardOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.classNam
 const kids = n => n.children.map(c => c.className);
 const lineOf = (p, id) => byClass(p, cardOf(p, id), 'line')[0];
 const metaOf = (p, id) => byClass(p, cardOf(p, id), 'meta')[0];
-const detailsOf = (p, id) => byClass(p, cardOf(p, id), 'details')[0];
+const titleOf = (p, id) => byClass(p, cardOf(p, id), 'title')[0]; // 0466: it opens the card, where Details did
 
 test('0420 AC1: a shipped ticket is its id, title and bug or fix tag, then one line: when it shipped, then its figures, separated by " · "', async () => {
   const p = page();
   await p.settle();
   assert.deepEqual(kids(cardOf(p, '0401')), ['name', 'sum'], 'two lines and nothing else');
-  assert.deepEqual(lineOf(p, '0401').children.map(n => [n.className, n.textContent]), [['id', '0401'], ['title-link', 'Every figure']], 'no tag: none after the title');
+  assert.deepEqual(lineOf(p, '0401').children.map(n => [n.className, n.textContent]), [['id', '0401'], ['title', 'Every figure']], 'no tag: none after the title');
   // the tag after the title, on the title's line
-  assert.deepEqual(lineOf(p, '0402').children.map(n => n.className), ['id', 'title-link', 'tags tag-row']);
+  assert.deepEqual(lineOf(p, '0402').children.map(n => n.className), ['id', 'title', 'tags tag-row']);
   assert.deepEqual(byClass(p, lineOf(p, '0402'), 'tag').map(n => n.textContent), ['bug']);
   assert.deepEqual(byClass(p, lineOf(p, '0403'), 'tag').map(n => n.textContent), ['fix']);
   assert.deepEqual(kids(byClass(p, cardOf(p, '0402'), 'name')[0]), ['line'], 'no row of tags under the title');
@@ -48,8 +48,8 @@ test('0420 AC1: a shipped ticket is its id, title and bug or fix tag, then one l
   assert.equal(metaOf(p, '0402').textContent, '11:40 · 30 min · 1 round · $1.50');
   assert.equal(metaOf(p, '0403').textContent, '11:38', 'no figures: when it shipped alone');
   assert.equal(metaOf(p, '0404').textContent, '1 round', 'no ship time: its figures alone');
-  assert.equal(metaOf(p, '0405'), undefined, 'neither: no text, only the Details button');
-  assert.deepEqual(kids(byClass(p, cardOf(p, '0405'), 'sum')[0]), ['full-open details']);
+  assert.equal(metaOf(p, '0405'), undefined, 'neither: no second line');
+  assert.deepEqual(kids(cardOf(p, '0405')), ['name'], 'and no Details button (0466)');
   assert.equal(metaOf(p, '0401').title, 'Shipped 11:50 · 15 min · 2 rounds · $2.91', 'when it shipped, with the time, and its figures as its tooltip');
   assert.equal(metaOf(p, '0404').title, '1 round');
   assert.deepEqual(byClass(p, metaOf(p, '0401'), 'when').map(n => n.textContent), ['11:50']);
@@ -71,27 +71,21 @@ test('0420 AC1: a kept card\'s ship time still turns from the time alone to the 
   assert.equal(before.title, 'Shipped 23 Oct, 11:50 · 15 min · 2 rounds · $2.91', 'and its tooltip, with the time');
 });
 
-test('0420 AC2: a small Details button ends the second line, opens and closes the details, and the title opens the full ticket', async () => {
+test('0420 AC2 (0466): the second line ends with no button, and the title opens and closes the card in place', async () => {
   const p = page([board(), board(), board()]);
   await p.settle();
   const sum = byClass(p, cardOf(p, '0401'), 'sum')[0];
-  assert.deepEqual(kids(sum), ['meta', 'full-open details'], 'the line, then the button at its end');
-  const d = detailsOf(p, '0401');
-  assert.equal(d.tagName, 'button');
-  assert.equal(d.textContent, 'Details');
-  assert.equal(d.attrs['aria-expanded'], 'false');
-  p.press(d);
+  assert.deepEqual(kids(sum), ['meta'], 'the line alone');
+  assert.equal(titleOf(p, '0401').attrs['aria-expanded'], 'false');
+  p.press(titleOf(p, '0401'));
   await p.settle();
   assert.deepEqual(kids(cardOf(p, '0401')), ['name', 'steps', 'full-cell']); // 0464: its steps and facts
-  assert.equal(detailsOf(p, '0401').attrs['aria-expanded'], 'true');
+  assert.equal(titleOf(p, '0401').attrs['aria-expanded'], 'true');
   assert.ok(p.all(cardOf(p, '0401')).some(n => n.textContent === 'Review pack'));
-  p.press(detailsOf(p, '0401'));
+  assert.equal(p.byId('full-ticket').hidden, true, 'the title opens no full ticket');
+  p.press(titleOf(p, '0401'));
   await p.settle();
   assert.deepEqual(kids(cardOf(p, '0401')), ['name', 'sum']);
-  p.press(lineOf(p, '0401').children[1]);
-  await p.settle();
-  assert.equal(p.byId('full-ticket').hidden, false, 'the title opens the full ticket');
-  assert.ok(p.byId('full-ticket').textContent.includes('0401'));
 });
 
 test('0420 AC3: the stats are one line, followed by More stats, which opens the other figures as before', async () => {
@@ -159,10 +153,10 @@ const CARDS = `(async () => {
   const room = row.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - parseFloat(cs.columnGap) - text.getBoundingClientRect().width - more.getBoundingClientRect().width;
   return { stats: { label: more.textContent, lines: lines(stats), box: box(stats), more: box(more), row: box(row), overflows: stats.getBoundingClientRect().right > row.getBoundingClientRect().right, room, digits },
     cards: [...document.querySelectorAll('#shipped tr')].map(c => {
-      const title = c.querySelector('.title-link'), meta = c.querySelector('.meta'), details = c.querySelector('.details'), tag = c.querySelector('.line .tag');
+      const title = c.querySelector('.line .title'), meta = c.querySelector('.meta'), tag = c.querySelector('.line .tag');
       return { id: c.querySelector('.id').textContent, height: c.getBoundingClientRect().height, titleLines: lines(c.querySelector('.line')),
         metaLines: meta ? lines(meta) : 0, titleSize: parseFloat(getComputedStyle(title).fontSize), metaSize: meta ? parseFloat(getComputedStyle(meta).fontSize) : null,
-        meta: meta && box(meta), details: box(details), card: box(c), title: box(title), tag: tag && box(tag), metaClipped: meta ? meta.scrollWidth > meta.clientWidth + 0.5 || meta.getBoundingClientRect().right > c.getBoundingClientRect().right : false, metaText: meta && meta.textContent, metaW: meta && [meta.scrollWidth, meta.clientWidth],
+        meta: meta && box(meta), card: box(c), title: box(title), tag: tag && box(tag), metaClipped: meta ? meta.scrollWidth > meta.clientWidth + 0.5 || meta.getBoundingClientRect().right > c.getBoundingClientRect().right : false, metaText: meta && meta.textContent, metaW: meta && [meta.scrollWidth, meta.clientWidth],
         titleCut: title.scrollWidth > title.clientWidth + 0.5 && getComputedStyle(title).textOverflow === 'ellipsis' };
     }) };
 })()`;
@@ -196,15 +190,14 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
       assert.ok(st.room >= st.digits, `${label}: ${st.room.toFixed(1)} px to spare, less than three more digits (${st.digits.toFixed(1)} px)`);
     }
     for (const c of cards) {
-      // AC1: the details line is smaller type, on one line, with Details at its end (AC2)
+      // AC1: the details line is smaller type, on one line, inside the card (0466: with no Details button at its end)
       if (c.meta) {
         assert.ok(c.metaSize < c.titleSize, `${c.id}: the details (${c.metaSize} px) are smaller than the title (${c.titleSize} px)`);
         assert.equal(c.metaLines, 1, `${c.id}: the details on one line`);
         assert.ok(!c.metaClipped, `${c.id}: the details fit, with none cut off: "${c.metaText}" ${c.metaW}`);
-        assert.ok(c.details.left >= c.meta.right - 0.5 && c.details.top < c.meta.bottom && c.details.bottom > c.meta.top, `${c.id}: Details after them, on their line`);
+        assert.ok(c.meta.top >= c.title.bottom - 0.5, `${c.id}: the details under the title`);
+        assert.ok(c.meta.right <= c.card.right + 0.5, `${c.id}: the details inside the card`);
       }
-      assert.ok(c.details.top >= c.title.bottom - 0.5, `${c.id}: Details under the title`);
-      assert.ok(c.details.right <= c.card.right, `${c.id}: Details inside the card`);
       if (c.tag) assert.ok(c.tag.top < c.title.bottom && c.tag.bottom > c.title.top, `${c.id}: the tag on the title's line`);
       // 0434: a closed card's long title is one line, cut off with an ellipsis, so the card is as tall as any other
       if (c.id === '0407') assert.ok(c.titleLines === 1 && c.titleCut, `0407: a long title is cut off on one line (${c.titleLines} lines)`);

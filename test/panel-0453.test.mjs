@@ -69,7 +69,7 @@ const VIEWS = [
   ['Plan, a ticket open', `${openLane('plan')}, document.querySelector('#shaping .item .head').click(), true`, `!!document.querySelector('#shaping .item.open .full-open')`],
   ['Plan, the priority menu', `document.querySelector('#shaping .tag.pick, #shaping .set-prio').click(), true`, `!!document.querySelector('.prio-menu button')`],
   ['Build, a ticket open', `document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), ${openLane('build')}, document.querySelector('#queue .q .top').click(), true`, `!!document.querySelector('#queue .q.open .full-open')`],
-  ['Shipped, Details open', `${openLane('shipped')}, document.querySelector('#shipped .details').click(), true`, `!!document.querySelector('#shipped .facts')`],
+  ['Shipped, a ticket open', `${openLane('shipped')}, document.querySelector('#shipped .line .title').click(), true`, `!!document.querySelector('#shipped .facts')`], // 0466: its title opens it
   ['the full ticket', `${openLane('plan')}, document.querySelector('#shaping .item.open .full-open').click(), true`, `!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .close')`],
   ['a review pack with a document', `closeFull(), packOf = ${PACK}, fullId = '0002', fullFrom = null, render(), true`, `!!document.querySelector('#full-ticket .pack-document')`],
   ['a document', `docOpen = { id: '0002', path: 'outputs/0002/plan.md', state: 'ok', text: '# Plan\\n\\nWords.' }, drawDoc(), true`, `!document.getElementById('doc-view').hidden && !!document.querySelector('#doc-view .close')`],
@@ -81,7 +81,7 @@ const VIEWS = [
 async function eachView(b, port, width, dpr, each) {
   await b.send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: dpr, mobile: width < 900 });
   await b.send('Page.navigate', { url: `http://127.0.0.1:${port}/?w=${width}&d=${dpr}` });
-  await b.until(`location.search === '?w=${width}&d=${dpr}' && document.readyState === 'complete' && !!document.querySelector('#shaping .item .head') && !!document.querySelector('#shipped .details')`, 'the panel');
+  await b.until(`location.search === '?w=${width}&d=${dpr}' && document.readyState === 'complete' && !!document.querySelector('#shaping .item .head') && !!document.querySelector('#shipped .line .title')`, 'the panel');
   await b.js(`document.fonts.ready.then(() => true)`);
   for (const [view, open, shows] of VIEWS) {
     await b.js(open);
@@ -128,7 +128,7 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
         }
       });
     }
-    for (const name of ['Details', 'More stats', 'Close', 'Save', 'Review pack', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'outputs/0002/plan.md', 'Plan', 'Build', 'Light', 'Discard', 'Keep editing'])
+    for (const name of ['More stats', 'Close', 'Save', 'Review pack', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'outputs/0002/plan.md', 'Plan', 'Build', 'Light', 'Discard', 'Keep editing'])
       assert.ok(seen.has(name) || [...seen].some(t => t.startsWith(name)), `the ${name} button was checked`);
   } finally { await b.close(); await stop(panel); }
 });
@@ -142,7 +142,7 @@ test('0453 AC3: the open tab is edged in the text colour on its top and sides', 
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 900, deviceScaleFactor: 3, mobile: true });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`document.readyState === 'complete' && !!document.querySelector('#shipped .details')`, 'the panel');
+    await b.until(`document.readyState === 'complete' && !!document.querySelector('#shipped .line .title')`, 'the panel');
     for (const lane of ['plan', 'build', 'shipped']) {
       await b.js(openLane(lane));
       const got = await b.js(`(() => { const t = document.getElementById('tab-${lane}'), prev = t.previousElementSibling, cs = getComputedStyle(t), text = getComputedStyle(document.body).color;
@@ -158,9 +158,9 @@ test('0453 AC3: the open tab is edged in the text colour on its top and sides', 
 // AC2: a picture of each button at a phone's size and pixel ratio shows its border on every side. For each side, along its
 // middle, the device pixels at its edge differ from the button's own background just inside it.
 const NAMED = [
-  ['Shipped, Details open', '#shipped .details'],
-  ['Shipped, Details open', '#more-stats'],
-  ['Shipped, Details open', '#shipped .full-open:not(.details):not(.more-stats)'],
+  ['Shipped, a ticket open', '#more-stats'],
+  ['Shipped, a ticket open', '#shipped .full-cell .full-open:first-child'], // 0466: Full ticket, where Details was
+  ['Shipped, a ticket open', '#shipped .full-cell .full-open:last-child'],
   ['Build, a ticket open', '#queue .q.open .full-open'],
   ['the full ticket', '#full-ticket .close'],
   ['a review pack with a document', '#full-ticket .close'],
@@ -185,7 +185,7 @@ const sidesShown = (png, r, dpr) => {
     right: side(along(T, B), y => [[R, y], [R - 1, y]], y => [R - 5, y]),
   };
 };
-test('0453 AC2: on a phone at a pixel ratio of 3, Details, Close, Save, Review pack, a document\'s button and the Foreman\'s Close show all four sides of their border', { skip }, async () => {
+test('0453 AC2: on a phone at a pixel ratio of 3, Full ticket (0466: where Details was), Close, Save, Review pack, a document\'s button and the Foreman\'s Close show all four sides of their border', { skip }, async () => {
   const r = repo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');

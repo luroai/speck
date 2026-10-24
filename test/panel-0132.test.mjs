@@ -151,7 +151,7 @@ test('0132 AC2 (self-check): a pack that arrives after its pane was closed, or r
   await openDetails(q); // 0162
   q.press(packButtons(q, shippedRow(q))[0]);
   await q.settle();
-  q.press(q.all(shippedRow(q)).find(x => x.className === 'title-link')); // its title opens the full ticket (0137)
+  q.press(q.all(shippedRow(q)).find(x => x.tagName === 'button' && x.textContent === 'Full ticket')); // its card's Full ticket (0466)
   later.resolve({ ok: true, status: 200, json: async () => ({ pack: PACK }) });
   await q.settle();
   assert.ok(!pane(q).textContent.includes('Approved by reviewer'), 'the full ticket stays');

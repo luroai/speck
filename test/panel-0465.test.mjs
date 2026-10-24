@@ -44,7 +44,7 @@ async function openCard(p, id) {
     return [card, head.children.find(n => n.className.startsWith('track')), head.children.find(n => n.className === 'facts')];
   }
   card = shippedRows(p).find(n => idOf(p, n) === id);
-  if (!/\bopen\b/.test(card.className)) { p.press(button(p, card, 'Details')); await p.settle(); }
+  if (!/\bopen\b/.test(card.className)) { p.press(p.all(card).find(n => n.className === 'title')); await p.settle(); } // 0466: its title opens it
   card = shippedRows(p).find(n => idOf(p, n) === id);
   const steps = card.children.find(n => n.className === 'steps');
   return [card, steps.children[0], steps.children[1]];
@@ -52,7 +52,7 @@ async function openCard(p, id) {
 // Opens its full view from its card, as the user does.
 async function openFull(p, id) {
   const [card] = await openCard(p, id);
-  const b = button(p, card, 'Full ticket') || p.all(card).find(n => n.className === 'title-link');
+  const b = button(p, card, 'Full ticket');
   p.press(b);
   await p.settle();
   assert.equal(pane(p).hidden, false, `${id}: the full view is open`);
@@ -197,7 +197,7 @@ const OPEN = id => `(async () => {
   const has = sel => [...document.querySelectorAll(sel)].find(n => [...n.querySelectorAll('.id')].some(i => i.textContent === ${JSON.stringify(id)}));
   if (has('#shaping .item.ticket')) { document.getElementById('tab-plan').click(); has('#shaping .item.ticket .head').click(); await wait(() => has('#shaping .item.ticket.open')); has('#shaping .item.ticket.open').querySelector('.full-open').click(); }
   else if (has('#queue .q')) { document.getElementById('tab-build').click(); if (!has('#queue .q.open')) has('#queue .q').querySelector('.top').click(); await wait(() => has('#queue .q.open')); has('#queue .q.open').querySelector('.full-open').click(); }
-  else { document.getElementById('tab-shipped').click(); has('#shipped tr').querySelector('.title-link').click(); }
+  else { document.getElementById('tab-shipped').click(); if (!has('#shipped tr.open')) has('#shipped tr').querySelector('.title').click(); await wait(() => has('#shipped tr.open')); has('#shipped tr.open').querySelector('.full-open').click(); } // 0466
   const pane = document.getElementById('full-ticket');
   await wait(() => !pane.hidden && pane.querySelector('.top .id') && pane.querySelector('.top .id').textContent === ${JSON.stringify(id)} && pane.querySelector('.steps'));
   const steps = pane.querySelector(':scope > .steps'), t = steps.querySelector('.track'), f = steps.querySelector('.facts'), r = steps.getBoundingClientRect();
