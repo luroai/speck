@@ -43,7 +43,11 @@ Coming back to the panel plays at most the latest event, and only a recent one.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you come back to the panel after its tab was hidden or the screen was asleep, speck no longer plays every event it missed one after another. It plays at most one: the latest thing that happened, and only if it happened less than a minute before you came back. Then it goes back to showing what the pipeline is doing. While you're watching, every event still plays as before.
+
+To see it, switch to another tab while a build ships or asks a question, wait a minute or more, and come back: speck shows the pipeline straight away. Come back within a minute and you see just the latest event.
+
+Worth keeping an eye on: speck now goes by the time each event happened, as speck recorded it. The Foreman's status detail gets that time for when it started looking into a ticket too.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,7 +56,9 @@ Coming back to the panel plays at most the latest event, and only a recent one.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox notes):
+- An event whose ticket has no date for it (for example an old ticket file with no `finished`) counts as from the board before, so after a long sleep it never plays, even if it was recent.
+- Nothing missed plays until the first board after coming back arrives; if the panel server is down then, the missed event is dropped rather than played late.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -263,6 +269,83 @@ Coming back to the panel plays at most the latest event, and only a recent one.
     ],
     "escalation_question": "",
     "summary": "Both earlier findings are fixed. One remaining timing bug can show an older celebration and discard a newer question if an animation frame runs before the refreshed board arrives. That fails the requirement to show only the latest hidden event."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · extra round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9199ce5b094b4343dbb15be2370adc6c2688bc69",
+    "extra": true,
+    "session": "continued",
+    "thread_id": "01a16ce7-49ca-7940-b4dd-f023e692ed61",
+    "builder_response": "- Tests run: `speck test --related test/panel-0446.test.mjs test/foreman-agent-0287.test.mjs`. 2507 tests, 0 failing, 3 skipped.\n- F3: fixed. speckShown no longer puts the kept event in the queue: it waits in `d.back.kept` until the first fresh board after showing, which the page asks for at once as it reconnects. That board's reconciliation in noteBoard now always runs (not only when the board has new events), picks the single latest eligible event among the kept one and the board's missed ones (`latestMissed`, age measured against when the page was shown), queues it, then the changes dated after showing. So no animation frame can start a missed event before the board is reconciled. New regression test: a ship heard while hidden, the page shown, a frame drawn (speck shows the pipeline, the ship waits), then the board with a newer, dated question: the question plays, then the pipeline's state; it fails on the previous commit. The earlier tests that shown-then-checked now send the board the reconnect brings first, and the test helper clones each board so each is a new object, as the server's JSON is.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 498595,
+      "cached_input_tokens": 443008,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3873,
+      "reasoning_output_tokens": 602
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T08:11:30.633Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "speckShown holds the retained event in back.kept until noteBoard reconciles the refreshed board. latestMissed selects the latest hidden event and applies the strict under-60-second cutoff against visibility resuming. Passing AC1 tests cover age boundaries, long sleeps, timestamp ordering, pipeline state afterwards, and an animation frame before the refreshed board arrives."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "noteBoard preserves normal event queuing while visible and separately queues events dated after visibility resumes. Passing AC2 tests cover sequential playback, playback after returning, and ticket transitions and Foreman starts occurring before the refreshed board arrives."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "Event age now uses recorded timestamps, including the Foreman start timestamp exposed by agentView. Regression tests cover recent and old events after a long sleep.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "Events dated after visibility resumes retain normal playback, including Foreman starts. Passing regression tests exercise both cases.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "The retained event now waits outside the playback queue until the returning board is reconciled. The new passing regression test draws a frame before that board arrives and verifies that only the newer hidden question plays.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Returning to the panel now plays only the latest recent hidden event, then resumes the pipeline display. Events occurring while visible continue playing normally. All findings are resolved; the reported test run has no failures."
   }
 }
 ```
