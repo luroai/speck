@@ -38,6 +38,7 @@ The pipeline log looks like a ticket's build log: a terminal of short, timed lin
 
 ## Notes
 - Asked for by the user on 2026-10-24: "a nice looking kind of like terminal log … with timestamps. Everything's indented from the timestamp, just like all the individual ticket build logs", and earlier "summaries is fine". A first try, to be tuned once it's been used.
+- Failing before this build: none
 - Today: `drawRunLog` and `runLogShift` in `templates/panel.js`, styled by `.foreman ol.run-log` in `templates/panel.css` (0415). It shows newest first, and 0415 keeps a scrolled reader's place by shifting the scroll as lines arrive at the top; with newest at the bottom, that logic changes. A build log's lines are laid out by `logParts` and `logRow` (0422).
 - The line forms in criterion 3 are the ones in this repo's `run.log` on 2026-10-24, before 0460 adds times in front of them.
 - Waits for 0457 (and so 0455, 0454 and 0453): all change `templates/panel.css`, and criterion 1 reuses 0455's look. Waits for 0458: both change `renderForeman` in `templates/panel.js`. Waits for 0460, whose times it shows.
