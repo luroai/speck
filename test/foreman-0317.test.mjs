@@ -45,9 +45,10 @@ test('0317 AC1: with Fixing fix, the header keeps the status word, and 0451: its
   }
 });
 
-test('0317 AC1: the Foreman\'s detail says which setting Fixing has, and speck status says Fixing is on', async () => {
-  for (const fixing of ['fix', 'tell', 'off']) assert.match(detail(await opened(view([], { fixing }))).textContent, new RegExp(`Fixing: ${fixing}\\. The Foreman`));
-  assert.doesNotMatch(detail(await opened(view([], { fixing: 'constructor' }))).textContent, /Fixing:/, 'a setting speck doesn\'t know isn\'t shown');
+test('0317 AC1: the board says which setting Fixing has, and speck status says Fixing is on', async () => {
+  // 0458: the Foreman's detail shows only the log now, so this is the board's, which speck status says
+  for (const fixing of ['fix', 'tell', 'off']) assert.match(view([], { fixing }).fixing_says, new RegExp(`^${fixing}\\. The Foreman`));
+  assert.equal(view([], { fixing: 'constructor' }).fixing_says, '', 'a setting speck doesn\'t know isn\'t said');
   const lines = foremanLines(view([], { fixing: 'fix' }));
   assert.equal(lines[0], 'FOREMAN: Idle · Fixing on');
   assert.match(lines[1], /^ {2}Fixing: fix\. /);
@@ -90,14 +91,12 @@ test('0317 AC2: a blocked card says the Foreman will take its recommendation, an
   }
 });
 
-test('0317 AC2: the Foreman\'s detail says the same for each blocked ticket, and doesn\'t count the Foreman\'s under Needs you', async () => {
+test('0317 AC2: the board says the same for each blocked ticket, and doesn\'t count the Foreman\'s under Needs you', async () => {
   const tickets = [BLOCKED('0001', { foreman_will: true }), BLOCKED('0002')];
   const f = view(tickets, { fixing: 'fix' });
   assert.equal(f.word, 'Needs you 1');
   assert.equal(view([tickets[0]], { fixing: 'fix' }).word, 'Idle', 'nothing is waiting for you');
-  const t = detail(await opened(f)).textContent;
-  assert.match(t, /0001 Ticket 0001A or B\?The Foreman will take its recommendation\./);
-  assert.match(t, /0002 Ticket 0002A or B\?Waiting for you\./);
+  assert.deepEqual(f.blocked.map(b => [b.id, b.foreman]), [['0001', true], ['0002', false]]); // 0458: the cards say it, not the detail
 });
 
 test('0317 AC2: speck status says the same for each blocked ticket', () => {
@@ -134,16 +133,14 @@ test('0317 AC3: once the Foreman goes with it, the board, card and speck status 
   assert.doesNotMatch(r.run('status').stdout, /✓/);
 });
 
-test('0317 AC3: the Foreman\'s detail lists the recommendations it took in the last 24 hours, newest first', async () => {
+test('0317 AC3: the board lists the recommendations the Foreman took in the last 24 hours, newest first', async () => {
   const now = Date.parse('2026-10-18T22:00:00Z');
   const tickets = [T('0001', 'done', { foreman_took: [{ option: 'old', at: '2026-10-17T21:00:00.000Z' }, { option: 'A', at: '2026-10-18T12:00:00.000Z' }] }),
     T('0002', 'building', { foreman_took: [{ option: 'B', at: '2026-10-18T21:30:00.000Z' }] }), T('0003', 'ready', { foreman_took: [{ option: 'bad', at: 'never' }] })];
   const f = view(tickets, { now, fixing: 'fix' });
   assert.deepEqual(f.took.map(w => [w.id, w.option]), [['0002', 'B'], ['0001', 'A']]);
-  const t = detail(await opened(f)).textContent;
-  assert.match(t, /Recommendations taken0002 The Foreman went with the recommendation: B · 2026-10-18 21:30 UTC0001 The Foreman went with the recommendation: A · 2026-10-18 12:00 UTC/);
-  assert.doesNotMatch(t, /old/);
-  assert.match(detail(await opened(view([], { now }))).textContent, /The Foreman hasn't taken a recommendation in the last 24 hours\./);
+  assert.deepEqual(f.took.map(w => w.at), ['2026-10-18T21:30:00.000Z', '2026-10-18T12:00:00.000Z']);
+  assert.deepEqual(view([], { now }).took, []); // 0458: the Foreman's detail no longer lists them
 });
 
 test('0317 AC4: the Foreman\'s choice is recorded as the Foreman\'s, the button\'s as yours, and each is shown as such', async () => {

@@ -53,17 +53,12 @@ const BUSY = view({ building: ['0001'], ready: [{ id: '0004', kind: 'after', why
 
 // ---------- AC1: a pop-up over the whole panel, in a document's look, with Close and the detail ----------
 
-test('0366 AC1: pressing the notice board opens a pop-up with a Close button and the detail\'s sections and wording', async () => {
+test('0366 AC1: pressing the notice board opens a pop-up with a Close button and, since 0458, only the log', async () => {
   const p = await opened([state(BUSY)]);
   assert.equal(pop(p).hidden, false, 'open');
   assert.ok(closeOf(p), 'a Close button');
-  const t = pop(p).textContent;
-  for (const h of ['Building', 'Ready, not building', 'Shipping', 'Blocked', 'Recommendations taken', 'Looked into']) {
-    assert.ok(p.all(pop(p)).some(n => n.tagName === 'h4' && n.textContent === h), `its ${h} section`);
-  }
-  assert.match(t, /0004 waiting for 0003/);
-  assert.match(t, /Blocked0006 Ticket 0006Which one\?Waiting for you\./);
-  assert.match(t, /The Foreman hasn't had to look into anything\./);
+  assert.deepEqual(p.all(pop(p)).filter(n => /^h\d$/.test(n.tagName)).map(n => n.textContent), ['Log']);
+  assert.doesNotMatch(pop(p).textContent, /0004 waiting for 0003|Which one\?/);
 });
 
 test('0366 AC1: the pop-up is a modal dialog after the board, not under the header, sharing the document pop-up\'s rules', () => {
@@ -112,28 +107,30 @@ for (const [how, close] of [['Close', p => p.press(closeOf(p))], ['Escape', p =>
 // ---------- AC4: it stays up to date, keeping an answer being typed, and Reload page still reloads ----------
 
 test('0366 AC4: the pop-up stays up to date as the panel refreshes, keeping its Close button and the focus in it', async () => {
-  const p = await opened([state(BUSY), state(view({ building: ['0001', '0002'] }, [T('0001', 'ready'), T('0002', 'ready')]))]);
+  // 0458: what changes in it is the log
+  const p = await opened([state(BUSY, { run_log: '1' }), { lines: ['first'] }, state(BUSY, { run_log: '2' }), { lines: ['second', 'first'] }]);
   const close = closeOf(p);
+  assert.match(pop(p).textContent, /first/);
   await tick(p);
   assert.equal(pop(p).hidden, false, 'still open');
-  assert.match(pop(p).textContent, /Building0001\s*0002/);
-  assert.doesNotMatch(pop(p).textContent, /Which one\?/, 'what has gone, goes');
+  assert.match(pop(p).textContent, /secondfirst/);
   assert.equal(closeOf(p), close, 'Close is kept');
   assert.ok(within(p.focused(), pop(p)), 'the focus stays in the pop-up');
 });
 
 test('0366 AC4: an answer being typed to the Foreman\'s question keeps its text and focus through a refresh', async () => {
+  // 0458: the question is on its ticket's card, not in the pop-up
   const agent = { running: null, asks: [{ id: '0001', question: 'Should it keep the old test?' }], did: [] };
   const f = { ...view({}, [T('0001', 'building')]), agent };
-  const p = await opened([state(f, { tickets: [T('0001', 'building')] }), state(f, { tickets: [T('0001', 'building')] })]);
-  const box = () => p.all(pop(p)).find(n => n.tagName === 'textarea');
+  const p = popPage([state(f, { tickets: [T('0001', 'building')] }), state(f, { tickets: [T('0001', 'building')] })]);
+  await p.settle();
+  const box = () => p.all(p.byId('queue')).find(n => n.tagName === 'textarea');
   const typed = box();
   assert.ok(typed, 'the question has an Answer box');
   typed.value = 'Keep it';
   typed.listeners.input();
   typed.focus();
   await tick(p);
-  assert.notEqual(box(), typed, 'drawn again');
   assert.equal(box().value, 'Keep it', 'with the text typed');
   assert.equal(p.focused(), box(), 'and the focus in it');
 });

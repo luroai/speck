@@ -78,16 +78,13 @@ test('0451 AC2: with reduced motion on, the colon doesn\'t blink', async () => {
   assert.deepEqual(clockDots(q.draw(1000, false)), expected('07 45', CLOCK.left, 2), 'and blinks without it');
 });
 
-test('0451 AC3: the screen\'s accessible name no longer mentions fixing; Settings and the Right now still say whether it\'s on', async () => {
+test('0451 AC3: the screen\'s accessible name no longer mentions fixing; Settings still says whether it\'s on', async () => {
   for (const fixing of ['fix', 'tell', 'off', null]) {
     const { p } = await shown({ fixing, fixing_says: fixing ? `the ${fixing} setting` : '' });
     const name = p.byId('run').attrs['aria-label'];
     assert.equal(name, 'The Foreman: Idle', `with ${fixing}`);
     assert.doesNotMatch(name, /fixing/i);
-    p.press(p.byId('run'));
-    await p.settle();
-    const said = p.byId('foreman').textContent;
-    if (fixing) assert.match(said, new RegExp(`Fixing: the ${fixing} setting`), `Right now says it: ${fixing}`);
+    // 0458: the Pipeline pop-up shows only the log, so it no longer says it
   }
   assert.ok(SETTING_GROUPS.find(g => g.title === 'Foreman').settings.some(s => s.key === 'foreman_fixing'), 'Settings still has foreman_fixing');
 });
