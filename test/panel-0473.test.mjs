@@ -106,7 +106,7 @@ test('0473 AC2: the server answers each of the page\'s files with it, as text/cs
 test('0473 AC2: a page whose stamp differs from the server\'s says it is out of date and offers to reload', async () => {
   const p = fakePage([{ tickets: [], ideas: [], page: 'ffffffffffffffff' }]);
   await p.settle();
-  assert.match(p.byId('run').attrs['aria-label'], /^The Foreman: Reload page/);
+  assert.match(p.byId('run').attrs['aria-label'], /^speck: Reload page/);
   p.press(p.byId('run'));
   await p.settle();
   assert.ok(p.all(p.byId('foreman')).some(n => n.tagName === 'button' && n.textContent === 'Reload page'), 'the Pipeline pop-up offers to reload');

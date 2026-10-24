@@ -29,7 +29,7 @@ test('0399 AC1: the Settings answer lists each agent with whether it is yours, r
   assert.equal(claude.yours, true);
   assert.equal(claude.installed, true);
   assert.equal(claude.signed_in, true);
-  assert.deepEqual(claude.roles, ['builder', 'Foreman']);
+  assert.deepEqual(claude.roles, ['builder', 'speck']);
   assert.deepEqual(viewRow(answer, 'codex').roles, ['reviewer']);
   assert.equal(cursor.yours, false);
   assert.equal(cursor.installed, false);

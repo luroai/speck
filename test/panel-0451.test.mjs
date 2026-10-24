@@ -82,7 +82,7 @@ test('0451 AC3: the screen\'s accessible name no longer mentions fixing; Setting
   for (const fixing of ['fix', 'tell', 'off', null]) {
     const { p } = await shown({ fixing, fixing_says: fixing ? `the ${fixing} setting` : '' });
     const name = p.byId('run').attrs['aria-label'];
-    assert.equal(name, 'The Foreman: Idle', `with ${fixing}`);
+    assert.equal(name, 'speck: Idle', `with ${fixing}`);
     assert.doesNotMatch(name, /fixing/i);
     // 0458: the Pipeline pop-up shows only the log, so it no longer says it
   }

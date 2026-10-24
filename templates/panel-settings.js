@@ -721,7 +721,7 @@ function replacesCommand(changes) {
 const settingNow = x => x.value === null || x.value === undefined ? '' : Array.isArray(x.value) ? x.value.join(',') : String(x.value);
 // 0400: each role's one list, made of your agents' models, grouped by agent, as "<agent> · <model>". Choosing an entry
 // sets the role's agent and model together. Its effort, for an agent that takes one, sits beside it.
-const ROLES = { builder: { model: 'builder_model', name: 'builder' }, reviewer: { model: 'reviewer_model', name: 'reviewer' }, foreman: { model: 'foreman_model', name: 'Foreman' } };
+const ROLES = { builder: { model: 'builder_model', name: 'builder' }, reviewer: { model: 'reviewer_model', name: 'reviewer' }, foreman: { model: 'foreman_model', name: 'speck' } };
 // Your agents' models, as the server read them, or null when it didn't say: then each role keeps its agent and model lists.
 function yourModels() {
   const list = settingsView !== null && settingsView.state === 'ok' && Array.isArray(settingsView.agent_models) ? settingsView.agent_models : null;
@@ -842,7 +842,7 @@ function takesEffort(role) {
 function notYoursLine(role) {
   const agent = settingChosen(role);
   if (agent === '' || yourAgent(agent) !== null || knownAgent(agent) === null) return null;
-  return el('p', 'bad', `${agentLabel(agent)} isn't one of your agents on this machine any more, so choose the ${ROLES[role].name}'s model again from the list.`);
+  return el('p', 'bad', `${agentLabel(agent)} isn't one of your agents on this machine any more, so choose ${role === 'foreman' ? '' : 'the '}${ROLES[role].name}'s model again from the list.`);
 }
 // 0393: speck runs a model provider's models through Claude Code, so while Claude Code isn't installed none is offered.
 const needsClaude = id => settingProvider(id) !== null && knownAgent('claude') !== null && knownAgent('claude').installed === false;

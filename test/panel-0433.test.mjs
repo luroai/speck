@@ -64,7 +64,7 @@ test('0433 AC2: the server answers /panel.js with the file as text/javascript, r
 test('0433 AC2: a page whose stamp differs from the server\'s says it is out of date and offers to reload', async () => {
   const p = fakePage([{ tickets: [T('0001', 'ready')], ideas: [], page: 'ffffffffffffffff' }]);
   await p.settle();
-  assert.match(p.byId('run').attrs['aria-label'], /^The Foreman: Reload page/);
+  assert.match(p.byId('run').attrs['aria-label'], /^speck: Reload page/);
 });
 
 test('0433 AC3: the fake page runs the page\'s script from its file, with the stamp and token from its tag, and draws the board', async () => {

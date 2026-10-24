@@ -172,7 +172,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
-  const autoBuild = () => b.js(`document.getElementById('run').getAttribute('aria-label').replace(/^The Foreman: /, '')`); // 0413: the word on speck's screen, in its name
+  const autoBuild = () => b.js(`document.getElementById('run').getAttribute('aria-label').replace(/^speck: /, '')`); // 0413: the word on speck's screen, in its name
   try {
     const item = '#shaping .item';
     await b.until(`!!document.querySelector('${item} .title')`, 'the draft');

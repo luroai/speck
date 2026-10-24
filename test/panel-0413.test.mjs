@@ -189,7 +189,7 @@ test('0413 AC2: with foreman_fixing fix, a short word is drawn in full and the n
     const p = screenPage([state(foreman({ word: 'Idle', fixing }))]);
     await p.settle();
     assert.deepEqual(wordDots(p.draw()), expected('IDLE', 4, 2), fixing);
-    assert.equal(p.byId('run').attrs['aria-label'], 'The Foreman: Idle');
+    assert.equal(p.byId('run').attrs['aria-label'], 'speck: Idle');
   }
 });
 
