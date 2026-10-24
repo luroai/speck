@@ -125,7 +125,8 @@ test('0425 AC3: Build\'s and Shipped\'s counts are the first line of their lane,
   assert.equal(p.byId('shipped-n').textContent, '0 in total');
   p.set({ tickets: [], ideas: [] });
   await refresh(p);
-  assert.equal(p.byId('queue-n').textContent, 'Nothing in flight or ready');
+  assert.equal(p.byId('queue-n').textContent, ''); // 0449: an empty lane says so in its message alone
+  assert.equal(p.byId('queue-n').hidden, true);
 });
 
 // ---------- AC4 ----------

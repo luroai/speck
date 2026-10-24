@@ -1431,9 +1431,36 @@ function flash() {
 // Puts the nodes in the box in order, leaving in place any that are already there, so a node kept from the last
 // render is never taken out of the page (a browser drops any text selected in a node it takes out).
 function fill(id, nodes, emptyText) {
-  const box = $(id), want = nodes.length ? nodes : [el('div', 'empty', emptyText)];
+  const box = $(id), want = nodes.length ? nodes : [typeof emptyText === 'string' ? el('div', 'empty', emptyText) : emptyText];
   for (const c of [...box.children]) if (!want.includes(c)) box.removeChild(c);
   want.forEach((n, i) => { if (box.children[i] !== n) box.insertBefore(n, box.children[i] || null); });
+}
+// 0449: an empty Build lane says it's clear, when the last ticket shipped and how many shipped today (leaving those
+// out with nothing shipped yet), and the next step: a button to Plan's drafts, or to talk to your agent with none.
+function idleLane(m) {
+  const last = m.shipped.find(t => t.end !== null) || null;
+  const when = last ? el('div', 'idle-last', `Last shipped ${last.id} · ${shippedAgo(last.end, Date.now())}`) : null;
+  idleClock(when, last);
+  let next;
+  if (m.drafts.length) {
+    next = el('button', 'full-open go-plan', `Go to Plan · ${plural(m.drafts.length, 'draft')}`);
+    next.type = 'button';
+    next.addEventListener('click', () => {
+      shapingView = 'tickets';
+      openTab('plan');
+      render();
+      if ($('tab-plan').focus) $('tab-plan').focus();
+    });
+  } else next = el('div', 'idle-hint', 'Talk to your agent to capture an idea or make a ticket.');
+  return el('div', 'empty idle', null, el('div', 'idle-head', 'Nothing building'), when,
+    last ? el('div', 'idle-today', `${m.stats.today} shipped today`) : null, next);
+}
+// The last-shipped line's minutes move on between updates of the board, on a timer cleared once the line has gone.
+const IDLE_MS = 30000;
+let idleTimer = null;
+function idleClock(node, t) {
+  if (idleTimer !== null) { clearInterval(idleTimer); idleTimer = null; }
+  if (node) idleTimer = setInterval(() => setText(node, `Last shipped ${t.id} · ${shippedAgo(t.end, Date.now())}`), IDLE_MS);
 }
 // The items built by the last render, for each box, by key ('t:<id>' or 'i:<path>' in Shaping, the id elsewhere), each
 // with everything it shows. An item whose own data and view state are unchanged keeps its node, so text selected in it,
@@ -1533,7 +1560,8 @@ function render() {
     unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null, goingWith.has(String(t.id)), goWithRefused.get(String(t.id)) ?? null,
     foremanAskOf(t.id)?.question ?? null, askPending.get(String(t.id)) ?? null, askRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
-  fill('queue', rows, 'Nothing in flight or ready.');
+  fill('queue', rows, m.queue.length ? '' : idleLane(m));
+  if (m.queue.length) idleClock(null, null);
   startCounters(m.queue.flatMap((t, i) => (t.counter !== null && t.held_at === null && counterOf(rows[i]) ? [[counterOf(rows[i]), t.since, !!t.paused]] : [])));
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();
@@ -1542,7 +1570,9 @@ function render() {
   lightUp();
   flash();
   const flying = m.queue.filter(t => t.inFlight).length;
-  $('queue-n').textContent = m.queue.length ? `${flying} in flight · ${m.queue.length - flying} queued` : 'Nothing in flight or ready';
+  // 0449: an empty lane says so in its message alone
+  $('queue-n').textContent = m.queue.length ? `${flying} in flight · ${m.queue.length - flying} queued` : '';
+  $('queue-n').hidden = !m.queue.length;
 
   // 0157: each shipped ticket is a card. 0420: its id and title, with a bug or fix tag after the title, then one line:
   // when it shipped (the time, or the day before today) and (0162) its figures, separated by " · ", and a Details button, which shows its figures as label
