@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0454"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:44:54.260Z"
-approved: "2026-10-24T10:00:51.619Z"
+approved: "2026-10-24T10:05:24.245Z"
 
 ---
 # 0455 · Make a ticket's build log look like a terminal
@@ -56,12 +56,13 @@ When you open a ticket on the Build tab, its build log now looks like a terminal
 Round 1 (codex): changes requested: F1 The AC3 browser test substitutes a whole-pixel offset within the card for a whole-pixel top edge.
 Round 2 (codex): approve.
 Round 3 (codex, merge round): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3, 1 of them a merge round
+- Review rounds: 4, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 845,918
-- Elapsed since build started: 16 min
+- Reviewer tokens: 1,360,781
+- Elapsed since build started: 20 min
 - Changed lines: 17 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, no inbox notes):
@@ -276,6 +277,77 @@ Follow-ups (Delivery log only, no inbox notes):
     ],
     "escalation_question": "",
     "summary": "The merged change preserves the black terminal appearance, readable colours and visible rounded borders. Dedicated log colour tokens resolve the theme-test failure, and the updated tests check the actual displayed colours without weakening coverage. Ready for owner review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6b6b4fc1122a3828d4317216d1279f4e1328b2dc",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16d55-15bb-7b50-87eb-a38305a864eb",
+    "builder_response": "- Tests run: every test file that reads the stylesheet (the 58 files under `test/` that use `styles()`, `STYLES` or `paletteProblems`), including test/panel-0455, 0422, 0426 and 0161: 620 pass, 0 fail, 3 skipped (the same skips as before).\n- Ship failed on `0161 AC1: every text colour meets 4.5:1 on each background it can sit on, and 7:1 below 14 px, in light and dark`. Main hadn't moved (`git merge main`: already up to date), so the cause was this ticket's change. It reported `light: .q .log .at (--log-muted #a9a9a9) on --bg #f3f3f3 (over --bg) is 2.12:1`. 0161's check measures any rule with a text colour but no background of its own against the page's surfaces (`--bg`, `--panel`, …). The log's kinds (`.q .log .at`, `.msg`, `.tool`, `.fail`, `.note`) set only a colour, so 0161 measured light-grey log text on the light page. That isn't where it's drawn. It sits inside `.q .log`, whose background is `--log-bg` (#000000) in every look. My earlier `--related` runs missed 0161 because it never names `templates/panel.css` (it reads the stylesheet through `styles()`).\n- Fix (`test/panel-0161.test.mjs`): `behind()` already sends rules starting `.bezel` to `--bezel`, the frame they're drawn on (0413). It now also sends rules whose every selector starts `.q .log` to `--log-bg`, the log's own background. Every other rule is checked as before, and the 7:1 below 14 px still applies: the log's 12 px text is now checked at 7:1 on black, and passes (e.g. #a9a9a9 on #000 is about 9:1). No colour or code changed this round.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 512457,
+      "cached_input_tokens": 447232,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2406,
+      "reasoning_output_tokens": 93
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T10:05:22.278Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.css retains --log-bg: #000000 across themes. The passing 0455 browser test checks light, dark and both System preferences."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0455 tests check contrast and distinct text colours. Updated 0161 behind() checks log text against its actual --log-bg background while retaining the stricter 7:1 threshold for 12px text."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The four-sided 1px border and rounded corners remain unchanged. The passing phone browser test checks visible sides at DPR 3 and whole-pixel horizontal edges, following the accepted 0453 interpretation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Production code is unchanged this round. The passing 0422 browser test covers line layout, selection, copying and scrolling. The supplied output confirms 620 passes, zero failures and three existing skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0455.test.mjs",
+        "issue": "The earlier vertical pixel-alignment concern was settled by the ticket's explicit reference to 0453, which interprets alignment as applying to left and right edges while requiring all four sides to remain visible.",
+        "suggested_fix": "No change required.",
+        "state": "dispute_accepted"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The terminal appearance continues to meet the ticket. The contrast-test correction measures log text against the black background where it actually appears and preserves the existing contrast requirements. All 620 tests run passed; ready for owner review."
   }
 }
 ```
