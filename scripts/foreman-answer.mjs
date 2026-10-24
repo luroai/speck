@@ -1,7 +1,7 @@
-// 0318: answering or dismissing a question the Foreman agent asked you (0287), from the panel or `speck foreman answer`
-// and `speck foreman dismiss`. Each reply is kept in speck run's runs folder in a file of its own, taken only when it
-// isn't there yet, so a question is dealt with once, however many try at the same moment. The reply is noted in the
-// ticket's Notes. speck run's next check carries an answer out as the Foreman would its own instruction: it resumes the
+// 0318: answering or dismissing a question the Foreman agent asked you (0287), from the panel or `speck answer` and
+// `speck dismiss` (0486: or the old `speck foreman answer` and `dismiss`). Each reply is kept in speck run's runs
+// folder in a file of its own, taken only when it isn't there yet, so a question is dealt with once, however many try
+// at the same moment. The reply is noted in the ticket's Notes. speck run's next check carries an answer out as the Foreman would its own instruction: it resumes the
 // build's own session with it, or ships an approved ticket auto_ship covers again, once.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -46,10 +46,10 @@ const when = at => `${new Date(at).toISOString().slice(0, 16).replace('T', ' ')}
 // Answers (`action` 'answer', with `text`) or dismisses ('dismiss') the Foreman's latest question about ticket `rawId`.
 // Every refusal comes before the first write, and says what to do. Returns what it says.
 export function foremanReply(repo, action, rawId, text, { now = new Date(), env = process.env, tickets = null } = {}) {
-  if (!['answer', 'dismiss'].includes(action) || !rawId) throw new SpeckError('Usage: speck foreman answer <id> "<your answer>" | speck foreman dismiss <id>');
-  if (textOf(env.SPECK_FOREMAN_RUN)) throw new SpeckError('The Foreman can\'t answer or dismiss its own question: only you can.');
+  if (!['answer', 'dismiss'].includes(action) || !rawId) throw new SpeckError('Usage: speck answer <id> "<your answer>" | speck dismiss <id>');
+  if (textOf(env.SPECK_FOREMAN_RUN)) throw new SpeckError('speck can\'t answer or dismiss its own question: only you can.');
   const answer = oneLine(text);
-  if (action === 'answer' && !answer) throw new SpeckError(`speck foreman answer needs your answer: speck foreman answer ${rawId} "<your answer>".`);
+  if (action === 'answer' && !answer) throw new SpeckError(`speck answer needs your answer: speck answer ${rawId} "<your answer>".`);
   const cfg = loadConfig(repo);
   let main = repo;
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
@@ -59,16 +59,16 @@ export function foremanReply(repo, action, rawId, text, { now = new Date(), env 
   const id = t.fm.id;
   const mine = readActions(runs).filter(a => a.id === id);
   const ask = mine.filter(a => a.action === 'ask').pop();
-  if (!ask) throw new SpeckError(`The Foreman hasn't asked you anything about ${id}, so there's nothing to answer or dismiss.`);
-  if (typeof ask.at !== 'string' || !Number.isFinite(Date.parse(ask.at))) throw new SpeckError(`The Foreman's question about ${id} has no time in ${path.relative(main, runs)}, so it can't be answered or dismissed here. Answer it in the ticket's Notes, then carry on with /speck-build ${id}.`);
+  if (!ask) throw new SpeckError(`speck hasn't asked you anything about ${id}, so there's nothing to answer or dismiss.`);
+  if (typeof ask.at !== 'string' || !Number.isFinite(Date.parse(ask.at))) throw new SpeckError(`speck's question about ${id} has no time in ${path.relative(main, runs)}, so it can't be answered or dismissed here. Answer it in the ticket's Notes, then carry on with /speck-build ${id}.`);
   const key = askKey(id, ask.at), done = fileOf(runs, key, 'json'), claim = fileOf(runs, key, 'claim');
   const already = () => {
     const r = readObject(done);
-    return new SpeckError(`The Foreman's question about ${id} has already been dealt with${r ? `: you ${r.action === 'answer' ? 'answered' : 'dismissed'} it at ${when(r.at)}` : ''}. Nothing changed.`);
+    return new SpeckError(`speck's question about ${id} has already been dealt with${r ? `: you ${r.action === 'answer' ? 'answered' : 'dismissed'} it at ${when(r.at)}` : ''}. Nothing changed.`);
   };
   if (dealtWith(runs).has(key)) throw already();
-  if (mine[mine.length - 1] !== ask) throw new SpeckError(`The Foreman's question about ${id} no longer waits for you: it has done something else about the ticket since. Nothing changed.`);
-  if (t.fm.status !== ask.status) throw new SpeckError(`The Foreman's question about ${id} no longer waits for you: the ticket has moved on from ${ask.status} to ${t.fm.status}. Nothing changed.`);
+  if (mine[mine.length - 1] !== ask) throw new SpeckError(`speck's question about ${id} no longer waits for you: it has done something else about the ticket since. Nothing changed.`);
+  if (t.fm.status !== ask.status) throw new SpeckError(`speck's question about ${id} no longer waits for you: the ticket has moved on from ${ask.status} to ${t.fm.status}. Nothing changed.`);
   let carry = null;
   if (action === 'answer') {
     const row = t.fm.status === 'approved' ? (tickets || statusData(repo).tickets).find(x => String(x.id) === id) : null;
@@ -76,7 +76,7 @@ export function foremanReply(repo, action, rawId, text, { now = new Date(), env 
     else {
       const rec = readObject(path.join(runs, `${id}.json`));
       const cant = !rec ? 'it has no run record from speck run' : resumeFor(runWords(cfg), cfg, id, rec, '').why;
-      if (cant) throw new SpeckError(`speck run can't resume ticket ${id}'s build (${cant}), so your answer wasn't recorded. Dismiss the question with speck foreman dismiss ${id}, then carry on with /speck-build ${id} yourself.`);
+      if (cant) throw new SpeckError(`speck run can't resume ticket ${id}'s build (${cant}), so your answer wasn't recorded. Dismiss the question with speck dismiss ${id}, then carry on with /speck-build ${id} yourself.`);
       carry = 'resume';
     }
   }
@@ -86,13 +86,13 @@ export function foremanReply(repo, action, rawId, text, { now = new Date(), env 
   catch (e) { if (e.code === 'EEXIST') throw already(); throw new SpeckError(`Couldn't write your reply in ${path.relative(main, runs)} (${e.message}), so nothing changed. Check you can write to that folder, then try again.`); }
   // A reply that finished between the check and the claim.
   if (fs.existsSync(done)) { fs.rmSync(claim, { force: true }); throw already(); }
-  const line = action === 'answer' ? `- You answered the Foreman (${when(now)}): ${sentence(answer)} Its question: ${question}`
-    : `- You dismissed the Foreman's question (${when(now)}): ${question}`;
+  const line = action === 'answer' ? `- You answered speck (${when(now)}): ${sentence(answer)} Its question: ${question}`
+    : `- You dismissed speck's question (${when(now)}): ${question}`;
   try { noteInTicket(at, t, line, `${foremanSubject(id)} ${action}`); } catch (e) { fs.rmSync(claim, { force: true }); throw e; }
   try { fs.renameSync(claim, done); } catch (e) {
     throw new SpeckError(`Your reply is noted in ${id}'s Notes, but speck run couldn't be told of it (${e.message}). Check you can write to ${path.relative(main, runs)}, then carry on with /speck-build ${id} yourself.`);
   }
-  if (action === 'dismiss') return `Dismissed the Foreman's question about ${id}, and noted it in its Notes. The ticket is left as it is.`;
+  if (action === 'dismiss') return `Dismissed speck's question about ${id}, and noted it in its Notes. The ticket is left as it is.`;
   return carry === 'reship' ? `Noted your answer in ${id}'s Notes. speck run ships it again, once, on its next check while it's on.`
     : `Noted your answer in ${id}'s Notes. speck run resumes its build with your answer on its next check while it's on.`;
 }
@@ -110,7 +110,8 @@ export function panelForemanReply(repo, id, action, body, o = {}) {
   catch (e) { return e instanceof SpeckError ? { status: 409, body: { error: e.message } } : { status: 500, body: { error: String(e?.message || e) } }; }
 }
 
-// speck foreman answer|dismiss <id> ["<text>"]. Everything after the id is the answer, even words starting with --.
+// speck answer|dismiss <id> ["<text>"], or speck foreman answer|dismiss. Everything after the id is the answer, even
+// words starting with --.
 export function cmdForemanReply(args) {
   const [action, id, ...rest] = args;
   console.log(foremanReply(findRepoRoot(), action, id, rest.join(' ')));

@@ -22,11 +22,11 @@ export function foremanFixQueue({ repo, readConfig, running = new Set(), goWith 
       if (out.status === 200) {
         told.delete(t.id);
         t.status = 'building';
-        say(`${t.id}: the Foreman went with its recommendation (${t.blocked_recommendation}), as foreman_fixing is fix, and noted it in the ticket.`);
+        say(`${t.id}: speck went with its recommendation (${t.blocked_recommendation}), as foreman_fixing is fix, and noted it in the ticket.`);
         continue;
       }
       const why = String(out.body?.error || `refused (${out.status})`);
-      if (told.get(t.id) !== why) say(`${t.id}: the Foreman didn't take its recommendation: ${why}`);
+      if (told.get(t.id) !== why) say(`${t.id}: speck didn't take its recommendation: ${why}`);
       told.set(t.id, why);
     }
   };

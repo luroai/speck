@@ -37,7 +37,7 @@ const view = ({ builder = 'claude', reviewer = 'codex', foreman = 'claude', buil
     row('builder', builder, { choices: ['claude', 'codex', 'cursor'] }), row('builder_model', builder_model),
     row('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor'] }), row('reviewer_model', reviewer_model),
     row('reviewer_effort', '', { choices: EFFORTS })] },
-  { title: 'Foreman', settings: [row('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), row('foreman_model', foreman_model)] }],
+  { title: 'Watching', settings: [row('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), row('foreman_model', foreman_model)] }],
   builder_models: { builder, models: read(builder).models }, reviewer_models: { reviewer, models: read(reviewer).models },
   foreman_models: { foreman: foreman || 'claude', models: read(foreman).models }, claude_models: CLAUDE_MODELS });
 const options = (p, key) => p.all(controlOf(p, key)).filter(n => n.tagName === 'option')

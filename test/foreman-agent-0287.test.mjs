@@ -51,9 +51,9 @@ test('0287 AC1: with fix, a stop speck has no steps for starts the Foreman agent
   assert.match(b, /the last thing it said/);
   assert.match(b, /speck\/\.cache\/runs\/0001\.log/);
   assert.doesNotMatch(b, /early line/, 'only the last lines');
-  for (const action of ['resume 0001', 'reship 0001', 'fix 0001', 'ask 0001']) assert.ok(b.includes(`speck.mjs foreman ${action}`), action);
+  for (const action of ['resume 0001', 'reship 0001', 'fix 0001', 'ask 0001']) assert.ok(b.includes(`speck.mjs watch ${action}`), action);
   assert.match(b, /Never set a ticket ready, approve work, ship anything yourself/);
-  assert.match(b, /speck-foreman/);
+  assert.match(b, /speck-watch/);
   assert.equal(a.starts[0].cwd, r.dir);
 });
 
@@ -110,10 +110,10 @@ test('0287 AC2: speck foreman takes one action, only from the agent speck run st
   a.q.stuck({ id: '0001', what: 'its build ended', log: '' });
   a.check();
   const token = a.starts[0].token;
-  assert.throws(() => act(r, undefined, 'ask', '0001', 'Which?', '--why=x'), /Only the Foreman agent speck run starts/);
-  assert.throws(() => act(r, 'another', 'ask', '0001', 'Which?', '--why=x'), /Only the Foreman agent/);
+  assert.throws(() => act(r, undefined, 'ask', '0001', 'Which?', '--why=x'), /Only the agent speck run starts to look into a stop/);
+  assert.throws(() => act(r, 'another', 'ask', '0001', 'Which?', '--why=x'), /Only the agent speck run starts/);
   assert.throws(() => act(r, token, 'ask', '0001', 'Which?'), /--why/);
-  assert.throws(() => act(r, token, 'approve', '0001', '--why=x'), /Usage: speck foreman/);
+  assert.throws(() => act(r, token, 'approve', '0001', '--why=x'), /Usage: speck watch/);
   assert.throws(() => act(r, token, 'reship', '0001', '--why=x'), /isn't an approved ticket that auto_ship covers/);
   const before = r.head();
   act(r, token, 'ask', '0001', 'Should it keep the old test?', '--why=the build stopped on a choice');
@@ -198,7 +198,7 @@ test('0287 AC3: speck config set accepts the Foreman agent\'s settings, and refu
 
 test('0287 AC3: the Settings view\'s Foreman group offers them, explained and editable', () => {
   const r = panelRepo();
-  const g = panelSettings(r.dir).groups.find(x => x.title === 'Foreman');
+  const g = panelSettings(r.dir).groups.find(x => x.title === 'Watching');
   const by = Object.fromEntries(g.settings.map(s => [s.key, s]));
   for (const key of ['foreman', 'foreman_model', 'foreman_effort']) {
     assert.ok(by[key], key);
@@ -244,8 +244,8 @@ test('0287 AC4: what the Foreman agent did, and why, goes in the ticket\'s Notes
   assert.deepEqual(running, { id: '0001', what: 'its build ended with the ticket still building' });
   assert.ok(Number.isFinite(Date.parse(started)), 'and when it started (0446)');
   act(r, a.starts[0].token, 'ask', '0001', 'Should it keep the old test?', '--why=the build stopped on a choice it can\'t make');
-  assert.match(r.ticket(), /^- The Foreman \(2026-10-18 14:00 UTC\) asked you: Should it keep the old test\?\. Why: the build stopped on a choice it can't make$/m);
-  assert.match(r.g('log', '-1', '--format=%s'), /^speck\(0001\): Foreman: ask$/);
+  assert.match(r.ticket(), /^- speck \(2026-10-18 14:00 UTC\) asked you: Should it keep the old test\?\. Why: the build stopped on a choice it can't make$/m);
+  assert.match(r.g('log', '-1', '--format=%s'), /^speck\(0001\): watch: ask$/);
   a.end(a.starts[0]); a.check();
   v = agentView(r.runs, [T('0001', 'building')]);
   assert.equal(v.running, null);
@@ -254,7 +254,7 @@ test('0287 AC4: what the Foreman agent did, and why, goes in the ticket\'s Notes
   assert.deepEqual(v.asks.map(q => q.question), ['Should it keep the old test?']);
   const f = foremanView({ run: ON, record: { lock: process.pid }, tickets: [T('0001', 'building')], agent: v });
   assert.equal(f.word, 'Needs you 1');
-  assert.ok(foremanLines(f).some(l => l.includes('The Foreman asks you about 0001: Should it keep the old test?')));
+  assert.ok(foremanLines(f).some(l => l.includes('speck asks you about 0001: Should it keep the old test?')));
   assert.ok(foremanLines(f).some(l => l.includes('Why: the build stopped on a choice')));
   assert.deepEqual(agentView(r.runs, [T('0001', 'done')]).asks, [], 'a question goes once its ticket has moved on');
   // 0458: the panel's detail shows only the log now. The question is on the ticket's card (0318).

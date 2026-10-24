@@ -54,6 +54,6 @@ test('0406 AC2: each moved setting still reads, explains and saves as it did', (
 test('0406 AC3: Shipping and Foreman stay their own groups, with the settings they had', () => {
   const keys = title => SETTING_GROUPS.find(g => g.title === title)?.settings.map(s => s.key);
   assert.deepEqual(keys('Shipping'), ['auto_ship', 'auto_ship_risk', 'ship_mode']);
-  assert.deepEqual(keys('Foreman'), ['foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']);
-  assert.deepEqual(titles(), ['Foreman', 'Shipping', 'Building and reviewing']);
+  assert.deepEqual(keys('Watching'), ['foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']);
+  assert.deepEqual(titles(), ['Watching', 'Shipping', 'Building and reviewing']);
 });
