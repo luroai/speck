@@ -117,9 +117,10 @@ test('0462 AC3: a closed ticket keeps its one line, a queued one its line, and t
     assert.ok(c.children[0].children.some(n => (t.status === 'ready' ? /^act\b/ : /^progress\b/).test(n.className)), `${t.id}: its line`);
   }
   await openQueueRows(p);
+  // 0463: an open queued one has a table too, in place of its line
   const q = card(p, '0907');
-  assert.equal(factsOf(q), null, 'queued: no table');
-  assert.ok(q.children[0].children.some(n => /^act\b/.test(n.className)), 'queued: its line');
+  assert.equal(cells(factsOf(q))[0][1], 'Queued', 'queued: its table');
+  assert.ok(!q.children[0].children.some(n => /^act\b/.test(n.className)), 'queued: no line');
   for (const id of ['0901', '0903']) {
     const c = card(p, id), names = c.children.slice(1).map(n => (n.tagName === 'button' ? n.textContent : n.className));
     assert.ok(names.includes('Full ticket'), `${id}: Full ticket`);
@@ -179,7 +180,6 @@ test('0462 AC2: in a real browser at 320 and 390 px, the cells are even, each va
       await b.until(`document.querySelectorAll('#queue .q.open').length === ${TICKETS.length}`, 'every card open');
       const cards = await b.js(MEASURE);
       for (const c of cards) {
-        if (c.id === '0907') { assert.ok(c.none, `${width}: the queued ticket has no table`); continue; }
         assert.ok(!c.none, `${width} ${c.id}: a table`);
         assert.ok(c.box[0] >= c.card[0] && c.box[1] <= c.card[1], `${width} ${c.id}: inside its card`);
         assert.ok(c.scroll[0] <= c.scroll[1] + 0.5, `${width} ${c.id}: nothing past the table`);

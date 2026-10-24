@@ -37,9 +37,10 @@ const ROWS = `[...document.querySelectorAll('#queue .q')].map(q => {
 test('0224 AC1: at 375 px, every point of each queued ticket\'s tags\' 44 by 44 px tap areas reaches its tag, with a linked id in the same Queued line (0419)', skip, async () => {
   await onPhone(async b => {
     const rows = await b.js(ROWS);
-    assert.deepEqual(rows.map(r => [r.id, r.line]), [['0204', 'Queued · unlocks 0205 · P0 · M · low · bug'], ['0205', 'Queued · waiting on 0204 · P1 · S · high · fix']]);
+    // 0434: a closed card's line has only its bug, fix or document tag. 0463: open, its facts are in a table.
+    assert.deepEqual(rows.map(r => [r.id, r.line]), [['0204', 'Queued · unlocks 0205 · bug'], ['0205', 'Queued · waiting on 0204 · fix']]);
     for (const row of rows) {
-      assert.equal(row.tags.length, 4, `${row.id}: its four tags`);
+      assert.equal(row.tags.length, 1, `${row.id}: its tag`);
       for (const t of row.tags) assert.deepEqual(t.misses, [], `${row.id} ${t.text}: these points of its 44 px tap area miss it`);
     }
   }, CHAINED);
