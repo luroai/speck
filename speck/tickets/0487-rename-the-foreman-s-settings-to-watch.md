@@ -1,7 +1,7 @@
 ---
 id: "0487"
 title: "Rename the Foreman's settings to watch"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0485", "0486"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T19:26:36.248Z"
+approved: "2026-10-24T19:44:22.996Z"
 
 ---
 # 0487 · Rename the Foreman's settings to watch
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The settings for what speck does when work stops are named after the Foreman: `foreman_fixing`, `foreman`, `foreman_model` and `foreman_effort`. Settings shows those names, so the Foreman lives on there after the panel and the messages stop using it.
@@ -55,9 +56,15 @@ To see it, open Settings and look at the Watching group, or run `speck config sh
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The migrated AC3 test no longer exercises switching speck's agent.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 775,295
+- Elapsed since build started: 18 min
+- Changed lines: 182 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: `speck status` still says "Fixing on" and "Fixing: …" for `watch: fix` (inbox: speck/ideas/2026-10-24-name-watch-in-speck-status-s-fixing-line.md).
 - Follow-up, skipped as a duplicate: the speck-watch skill's description still names `foreman_fixing` (covered by 0488, which updates every skill).
