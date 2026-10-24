@@ -1,7 +1,7 @@
 ---
 id: "0471"
 title: "Make the header's speck word fill its row"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0469"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T14:55:28.786Z"
 approved: "2026-10-24T14:59:46.246Z"
+finished: "2026-10-24T15:03:09.924Z"
 
 ---
 # 0471 · Make the header's speck word fill its row
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The word "speck" in dot-matrix letters at the top of the panel is 20 px, small for the dark frame's title row it sits in, which is as tall as the 44 px Settings button beside it. It leaves the row looking empty.
