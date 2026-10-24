@@ -1,7 +1,7 @@
 ---
 id: "0465"
 title: "Lay out the full ticket's top like its open card"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0464"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T11:54:24.290Z"
+approved: "2026-10-24T12:15:28.032Z"
 
 ---
 # 0465 · Lay out the full ticket's top like its open card
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full ticket, opened over the whole panel, shows a ticket's tags under its title, while its card (after 0461 to 0464) shows a step track and an even table of facts. The two views of one ticket don't match.
@@ -51,9 +52,14 @@ A ticket opened full screen now shows the same coloured step track and table of 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 211,011
+- Elapsed since build started: 21 min
+- Changed lines: 132 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: a shipped ticket's full view no longer shows its kind (bug, fix or document), priority, size or risk, since its table matches the shipped card's. Sent to the inbox: speck/ideas/2026-10-24-show-a-shipped-ticket-s-kind-in-its-full-view.md
 - Known limit: the full view's priority, size and risk are plain values, with none of the tag tips 0165 gave them, the same as on an open card.
