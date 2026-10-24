@@ -20,7 +20,7 @@ const asks = board([T('0362', 'done'), T('0363', 'blocked'), T('0364', 'approved
 // The page on a stream the test drives: `send()` hears the next board, `hide()` and `show()` hide the page and show it.
 function page(boards) {
   const { EventSource, sources } = manualSources();
-  const p = speckPage(boards, { globals: { EventSource } });
+  const p = speckPage(boards.map(b => structuredClone(b)), { globals: { EventSource } }); // each board new, as the server sends it
   let v = 0;
   p.send = async () => { sources[sources.length - 1].emit('message', String(++v)); await p.settle(); };
   const vis = async state => { p.document.visibilityState = state; p.document.listeners.visibilitychange({}); await p.settle(); };
@@ -31,7 +31,7 @@ function page(boards) {
 }
 
 test('0446 AC1: of the events while the page was hidden, only the latest plays when it comes back, then speck shows the pipeline', async () => {
-  const p = page([start(), ships, blocks, asks]);
+  const p = page([start(), ships, blocks, asks, asks]);
   await p.send();
   shows(p, 'watch', 'WATCHING 2 BUILDS');
   await p.hide();
@@ -39,6 +39,7 @@ test('0446 AC1: of the events while the page was hidden, only the latest plays w
   await p.send(); p.go(5000);
   await p.send(); p.go(30000);
   await p.show();
+  await p.send(); // the same board, on the new stream
   shows(p, 'flag', '0364 IS READY TO SHIP');
   p.go(5800);
   shows(p, 'flag', '0364 IS READY TO SHIP');
@@ -49,21 +50,23 @@ test('0446 AC1: of the events while the page was hidden, only the latest plays w
 });
 
 test('0446 AC1: an event from a minute or more before the page came back doesn\'t play', async () => {
-  const p = page([start(), ships, blocks]);
+  const p = page([start(), ships, blocks, blocks]);
   await p.send();
   await p.hide();
   await p.send(); p.go(5000);
   await p.send(); p.go(60000);
   await p.show();
+  await p.send();
   shows(p, 'ask', '1 NEEDS YOU');
 });
 
 test('0446 AC1: one 59 seconds old still plays', async () => {
-  const p = page([start(), ships]);
+  const p = page([start(), ships, ships]);
   await p.send();
   await p.hide();
   await p.send(); p.go(59000);
   await p.show();
+  await p.send();
   shows(p, 'celebrating', '0362 SHIPPED');
 });
 
@@ -153,13 +156,15 @@ test('0446 AC1: after a night asleep, a ship the board dates 2 minutes before th
 });
 
 test('0446 AC1: an event heard while hidden that the board dates over a minute before the page came back doesn\'t play', async () => {
-  const p = page([start(), board([T('0362', 'done', { finished: AT(0) }), T('0363', 'building'), T('0364', 'reviewing')], { word: 'Building 2' })]);
+  const shipped = board([T('0362', 'done', { finished: AT(0) }), T('0363', 'building'), T('0364', 'reviewing')], { word: 'Building 2' });
+  const p = page([start(), shipped, shipped]);
   await p.send();
   await p.hide();
   p.go(90000);
   await p.send(); // heard now, but it shipped 90 seconds ago
   p.go(1000);
   await p.show();
+  await p.send();
   shows(p, 'watch', 'WATCHING 2 BUILDS');
 });
 
@@ -206,4 +211,20 @@ test('0446 AC1: the Foreman agent\'s board says when it started looking into a t
   const runs = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0446-'));
   fs.writeFileSync(path.join(runs, 'run.foreman-agent.json'), JSON.stringify({ running: { id: '0363', token: 't', pid: null, key: 'k', what: 'its ship was refused', started: '2026-10-24T08:00:00.000Z' } }));
   assert.deepEqual(agentView(runs, []).running, { id: '0363', what: 'its ship was refused', started: '2026-10-24T08:00:00.000Z' });
+});
+
+test('0446 AC1: nothing missed plays before the first board after the page came back, so a later one in it isn\'t lost', async () => {
+  const later = board([T('0362', 'done', { finished: AT(1000) }), T('0363', 'blocked', { blocked_at: AT(15000) }), T('0364', 'reviewing')], { word: 'Needs you 1' });
+  const p = page([start(), board([T('0362', 'done', { finished: AT(1000) }), T('0363', 'building'), T('0364', 'reviewing')], { word: 'Building 1' }), later]);
+  await p.send();
+  await p.hide();
+  p.go(1000);
+  await p.send(); // the ship, heard while hidden
+  p.go(19000);
+  await p.show();
+  shows(p, 'watch', 'WATCHING 1 BUILD'); // a frame before the board: the ship waits
+  await p.send(); // the question, from while the page was hidden
+  shows(p, 'ask', '0363 HAS A QUESTION');
+  p.go(6200);
+  shows(p, 'ask', '1 NEEDS YOU');
 });
