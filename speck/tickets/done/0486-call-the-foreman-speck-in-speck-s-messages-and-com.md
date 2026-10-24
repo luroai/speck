@@ -1,7 +1,7 @@
 ---
 id: "0486"
 title: "Call the Foreman speck in speck's messages and commands"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:44:03.734Z"
 approved: "2026-10-24T19:02:24.812Z"
+finished: "2026-10-24T19:05:45.996Z"
 
 ---
 # 0486 · Call the Foreman speck in speck's messages and commands
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck run`, `speck status` and the Pipeline log say "the Foreman" in about forty messages, and you answer it with `speck foreman answer`. With one speck watching the pipeline, the second name is a concept people have to learn for nothing.
