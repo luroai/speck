@@ -43,6 +43,7 @@ The Pipeline log is one framed card that fills the screen and stays still, and o
 - Mock-up of the lane cards' frame the user approved: https://claude.ai/artifact/3sE9DU2PdnsvR6p1tLNw8j
 - The panel stays thin (decided 2026-10-24), so on a wide window the frame is as wide as the panel's column, not the whole window.
 - Waits for 0470 (its `Pipeline log` title, in the pop-ups' files) and 0478 (the lane card's frame, which this reuses).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
