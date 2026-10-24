@@ -1779,7 +1779,7 @@ function noteBoard(st, f, word) {
   for (const id of ids) if (became(id, 'blocked')) play('ask', `${id} HAS A QUESTION`, SPECK.event, tickets.get(id).blocked_at);
   for (const a of asks) if (!was.asks.has(a.key)) play('ask', `${a.id} HAS A QUESTION`, SPECK.event, a.at);
   for (const id of ids) if (became(id, 'approved') && !(tickets.get(id).auto_ship === true && runOn)) play('flag', `${id} IS READY TO SHIP`, SPECK.event, tickets.get(id).approved);
-  if (seen.running && seen.running !== was.running) play('confused', `LOOKING INTO ${seen.running}`, SPECK.event);
+  if (seen.running && seen.running !== was.running) play('confused', `LOOKING INTO ${seen.running}`, SPECK.event, ag.running.started);
   // 0446: the first board after the page is shown again holds what changed while it had no stream. A change the board
   // dates from before the page was shown, or doesn't date at all, is from while it was hidden: one with no date came
   // after the board before, which is all that's known of when. Of those and the one kept when the page was shown, only
