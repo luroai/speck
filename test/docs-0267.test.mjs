@@ -179,7 +179,7 @@ test('0267 AC2: the tests that check facts in documents still catch a wrong comm
     ['test/install-0253.test.mjs', 'test/release-0394.test.mjs', 'test/release-0248.test.mjs', 'test/setup-0088.test.mjs']);
   assert.notEqual(r.status, 0);
   for (const name of [
-    /^0253 AC2: every speck npx command outside the changelog and release notes uses the latest release/, // a command
+    /^0253 AC2: every speck npx command outside the README, the changelog and release notes uses the latest release/, // a command
     /^0394 AC4: the release notes link to the changelog heading/, // a link
     /^0248 AC3: the README and the brief name the current version/, // a version
     /^0088 AC1: the brief names \/speck-setup/, // a name

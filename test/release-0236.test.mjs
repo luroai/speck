@@ -39,11 +39,11 @@ test('0236 AC2: CHANGELOG.md has a 0.5.0 section', () => {
 test('0236 AC3: the README setup prompt installs the latest release', () => {
   // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
   assert.deepEqual(setupPromptProblems(read('README.md')), []);
-  assert.doesNotMatch(read('README.md'), /#v0\.4\.0/);
 });
 
 test('0236 AC3: the README and the brief name the current version', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.ok(read(f).includes(version()), f);
+  // 0491: the version on the status line, the one fact here the README's tests check.
+  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), new RegExp(`Status: ${version().replace(/\./g, '\\.')}\\b`), f);
 });
 
 test('0236 AC4: the release notes say how to install 0.5.0', () => {

@@ -50,12 +50,12 @@ test('0282 AC2: the 0.5.4 and earlier sections are as v0.5.4 tagged them', t => 
 });
 
 test('0282 AC3: the README and the brief name the current version', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.ok(read(f).includes(version()), f);
+  // 0491: the version on the status line, the one fact here the README's tests check.
+  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), new RegExp(`Status: ${version().replace(/\./g, '\\.')}\\b`), f);
 });
 
 test('0282 AC3: the setup prompt still installs the latest release, as 0253 left it', () => {
   assert.deepEqual(setupPromptProblems(read('README.md')), []);
-  assert.doesNotMatch(read('README.md'), /speck#v\d/);
 });
 
 test('0282 AC4: the release notes say how to install 0.6.0 and name the new settings', () => {
