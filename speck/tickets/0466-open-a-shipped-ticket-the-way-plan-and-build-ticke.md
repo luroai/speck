@@ -38,6 +38,7 @@ A shipped ticket opens and closes like a Plan or Build ticket, and its full tick
 
 ## Notes
 - Asked for by the user on 2026-10-24: "on the plan and the build tickets, you expand the ticket and then there's a button to see the full ticket … in the shipped tickets, if you click the title, it just expands into the full ticket … make the ship tickets follow that same pattern."
+- Failing before this build: none
 - Today, in `templates/panel.js`: the Shipped list's title is `fullLink(t)`, which opens the full ticket, and its `Details` button flips `openShipped` (0157, 0420). Build's card toggles from its top row (`toggleLog`), and its open card has `fullButton(t, 'queue')` (0326).
 - Waits for 0465, which waits for 0464: 0464 changes what a shipped ticket's open card shows, and all three change `templates/panel.js`.
 
