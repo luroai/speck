@@ -1,7 +1,9 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, round, openLane, styles } from './support/panel.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { ROOT, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, round, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0417: finger-sized controls on touch screens only ----------
 
@@ -36,10 +38,14 @@ const SIZED = ['.bezel .settings-open', '.tab', '.toggle', '.head', '.item.ticke
   '#full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close',
   '#full-ticket .md summary, #doc-view .md summary'];
 
-test('0417 AC1: no rule outside the touch screen rules gives a control a 44 px size, at any width', () => {
-  const found = [];
+// 0469: the header's and the cards' plain rules, which give a mouse the touch screen's sizes too
+const lanes = () => ['panel-header.css', 'panel-cards.css'].map(f => fs.readFileSync(path.join(ROOT, 'templates', f), 'utf8')).join('\n');
+const plain = () => blocks(lanes()).filter(b => !b.prelude.startsWith('@'));
+
+test('0417 AC1: no rule outside the touch screen rules, and (0469) the header\'s and cards\' rules for every pointer, gives a control a 44 px size, at any width', () => {
+  const found = [], all = plain().map(b => `${b.prelude}{${b.body}}`);
   for (const b of blocks(css())) {
-    if (b.prelude === '@media (pointer: coarse)') continue;
+    if (b.prelude === '@media (pointer: coarse)' || all.includes(`${b.prelude}{${b.body}}`)) continue;
     for (const [sel, decls] of b.prelude.startsWith('@') ? rules(b.body) : [[b.prelude, b.body]]) if (/\b44px\b/.test(decls)) found.push(`${b.prelude || '(no media query)'} ${sel}`);
   }
   assert.deepEqual(found, []);
@@ -52,6 +58,7 @@ test('0417 AC2: the touch screen rules apply at any width and keep each 44 px mi
   assert.ok(blocks(css()).every(b => !/^@media .*pointer/.test(b.prelude) || b.prelude === '@media (pointer: coarse)'), 'no other query for touch screens');
   const got = new Map();
   for (const b of coarse) for (const [sels, decls] of rules(b.body)) for (const sel of sels.split(', ')) got.set(sel, (got.get(sel) || '') + decls);
+  for (const b of plain()) for (const sel of b.prelude.replace(/\s+/g, ' ').split(', ')) got.set(sel, (got.get(sel) || '') + b.body); // 0469
   for (const sel of SIZED.flatMap(s => s.split(', '))) {
     const d = got.get(sel) || '';
     assert.ok(/min-height:\s*44px|(^|[\s;])height:\s*44px/.test(d), `${sel} is at least 44 px high on a touch screen: ${d}`);
@@ -137,18 +144,22 @@ const CONTROLS = lane => `(async () => {
 })()`;
 const LANES = ['plan', 'build', 'shipped'];
 
-test('0417 AC1, AC3: in a 375 px window with no touch screen, no control has a 44 px minimum and the narrow layout still applies', skip, () => withPanel(async b => {
-  await view(b, 375, false);
+// 0469: a mouse has the touch screen's 44 px minimums too, so each control's are the same with either
+test('0417 AC1, AC3: in a 375 px window with no touch screen, each control has the 44 px minimums it has on a touch screen and the narrow layout still applies', skip, () => withPanel(async b => {
   const seen = [];
   for (const lane of LANES) {
-    const all = await b.js(CONTROLS(lane));
-    seen.push(...all);
-    const big = all.filter(c => c.minWidth === '44px' || c.minHeight === '44px').map(c => `${lane}: ${c.what} ${c.minWidth} x ${c.minHeight}`);
-    assert.deepEqual(big, [], 'no 44 px minimums with a mouse');
+    const big = [];
+    for (const touch of [true, false]) {
+      await view(b, 375, touch);
+      const all = await b.js(CONTROLS(lane));
+      seen.push(...all);
+      big.push(all.map(c => `${lane}: ${c.what} ${c.minWidth} x ${c.minHeight}`));
+    }
+    assert.deepEqual(big[1], big[0], 'the same minimums with a mouse as on a touch screen');
   }
   assert.ok(seen.some(c => /toggle/.test(c.what)) && seen.some(c => /set-ready/.test(c.what)), 'the controls were there to check');
   const gear = await b.js(`(() => { const r = document.getElementById('settings-open').getBoundingClientRect(); return [r.width, r.height]; })()`);
-  assert.deepEqual(gear, [30, 30], 'Settings keeps its compact 30 px button');
+  assert.deepEqual(gear, [44, 44], 'Settings has its 44 px button with a mouse too (0469)');
   // AC3: the narrow layout itself, which isn't about a control's size
   await b.js(openLane('build'));
   assert.equal(await b.js(`getComputedStyle(document.getElementById('tab-build')).flexDirection`), 'row', 'each tab\'s name on one line (0425)');

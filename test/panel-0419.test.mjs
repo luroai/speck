@@ -152,7 +152,7 @@ const CARDS = sel => `(async () => {
   });
 })()`;
 
-test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title fits on one line and details on two is no more than 64 px tall, and its details are smaller type that wraps only when it does not fit', skip, async () => {
+test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title fits on one line and details on two is no more than 80 px tall (0469), and its details are smaller type that wraps only when it does not fit', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -177,7 +177,7 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         // 0434: a closed Build card's status line is one line, even with a long list of tickets it waits on, cut off
         // where it doesn't fit; an open one wraps between its ids. A Plan card's details still wrap when they don't fit.
         assert.equal(c.detailLines, 1, `${c.id}: the details fit on one line`);
-        assert.ok(c.height <= 64, `${c.id}: ${c.height} px tall`);
+        assert.ok(c.height <= 80, `${c.id}: ${c.height} px tall`); // 0469: with the touch screen's 44 px title row and details line
       }
     }
     assert.deepEqual(seen, ['0701', '0702', '0703', '0704', '0705', '0706', '0707']);
