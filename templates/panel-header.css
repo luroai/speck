@@ -39,12 +39,10 @@
   .bezel .glass { border-radius: 4px; }
   .bezel .glass::after { border-radius: inherit; }
 
-  /* 0417: a touch screen, at any width: every button at least 44 px each way */
-  @media (pointer: coarse) {
-    /* 0454: no negative margin above or below, so the title row grows to hold it and it stays 4 px clear of the screen */
-    .bezel .settings-open { width: 44px; height: 44px; margin: 0 -2px 0 0; }
-    .tab { min-height: 44px; }
-  }
+  /* 0417: every button at least 44 px each way. 0469: with a mouse too, at any width, as on a touch screen */
+  /* 0454: no negative margin above or below, so the title row grows to hold it and it stays 4 px clear of the screen */
+  .bezel .settings-open { width: 44px; height: 44px; margin: 0 -2px 0 0; }
+  .tab { min-height: 44px; }
 
   /* 0453: every button's border at least a device pixel on each side, as 0281 gave Settings' info buttons: a half pixel
      is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
