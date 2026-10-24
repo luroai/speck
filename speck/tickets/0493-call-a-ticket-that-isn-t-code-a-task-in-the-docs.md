@@ -1,7 +1,7 @@
 ---
 id: "0493"
 title: "Call a ticket that isn't code a task in the docs"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0492", "0490"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T20:41:21.961Z"
+approved: "2026-10-24T20:45:41.852Z"
 
 ---
 # 0493 · Call a ticket that isn't code a task in the docs
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0492, speck calls a ticket that isn't code a task, with `kind: code | task`, but its skills, the brief and the README still describe document tasks and `task: document`. Agents following the skills would keep writing the old field.
@@ -51,9 +52,14 @@ To see it, ask for a ticket that drafts an email: it should come out with `kind:
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 188,749
+- Elapsed since build started: 4 min
+- Changed lines: 18 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-ups only, no inbox notes): the title of the 0355 test about how a task ships still says "document task"; it isn't shown to people.
 
