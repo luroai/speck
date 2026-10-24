@@ -47,7 +47,9 @@ A collapsed shipped ticket's title starts as far from the top of its card as a B
 - Went with the recommendation: keep opening the card where it is (chosen by the user in the panel, 2026-10-24 21:09 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In the Shipped lane, a closed ticket's title now starts at the same height in its card as a Build or Plan ticket's title, on a phone and with a mouse. Before, it sat noticeably lower. Tapping the title still opens the card where it is, and the area you can tap is as big as before. Closed shipped cards are also a little shorter, so more of them fit on the screen.
+
+To see it, open the panel on a phone or in a narrow window and switch between Plan, Build and Shipped: the titles sit at the same height. Worth a look: when you move to a shipped title with the keyboard, its focus outline now reaches slightly above the top of the card. An open shipped card's title still sits lower than an open Build or Plan card's; that's saved as a follow-up idea.
 
 ## Blocked question
 Criterion 2 says tapping a shipped ticket's title opens the full ticket "as today", but today (since 0466) it opens the card where it is, with Full ticket inside it. Should the title keep opening the card where it is, so criterion 2 is reworded to say that, or should it open the full ticket instead? I recommend keeping it as it is: the build already does that and changes nothing about what a tap does.
@@ -60,6 +62,9 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- An open shipped card's title still starts 19 px down its card, against 8 px for Build and 7 px for Plan (measured after this build). Saved to the inbox: speck/ideas/2026-10-24-line-up-an-open-shipped-ticket-s-title.md.
+- Known limit: the keyboard focus ring around a closed shipped title's 44 px box now reaches about 6 px above the card's top edge.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +128,71 @@ Clear winner: yes
     ],
     "escalation_question": "Should tapping the shipped title keep opening the card in place, as the current implementation does, or open the full ticket pane as criterion 2 states?",
     "summary": "The title alignment and card height checks pass, and the title retains its 44 px touch target. Approval needs one clarification: the ticket says tapping the title opens the full ticket, while the existing behaviour and new test open the card in place."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6fe6e3c6027dc7ca6c6257631e70eb538ebd4621",
+    "session": "continued",
+    "thread_id": "01a16fb1-a333-7fd3-b12e-3b0c1842533f",
+    "builder_response": "- Tests run: test/panel-0494.test.mjs test/panel-0420.test.mjs test/panel-0141.test.mjs test/panel-0417.test.mjs test/panel-0466.test.mjs (plus the checks files).\n- F1: fixed. The user answered the question: keep opening the card where it is (recorded in the ticket's Notes). Criterion 2 now says the title \"opens the card where it is, as today (0466)\", and the Problem no longer calls the title a link to the full ticket. The 0494 AC2 test already checks exactly that: a real touch tap at the bottom of the 44 px tap area opens the card in place. No code changed this round.\n",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 295494,
+      "cached_input_tokens": 254720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1562,
+      "reasoning_output_tokens": 129
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T21:09:47.726Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/panel-0494.test.mjs AC1/AC3 uses real browser text measurements to compare Shipped against both Build and Plan within 2 px at touch 390 px and mouse 390/1280 px. The test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The clarified criterion requires opening the card in place. test/panel-0494.test.mjs AC2 verifies a contiguous touch target at least 44 px tall, text within 9 px of the card top, and an actual touch opening the card in place. The test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "test/panel-0494.test.mjs AC1/AC3 checks collapsed card height against the recorded pre-change 76 px in all three configurations. The test passed; the CSS uses negative margins to return the title padding's layout space."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0494-line-up-a-shipped-ticket-s-title-with-build-and-pl.md",
+        "issue": "Criterion 2 previously described opening the full ticket, conflicting with the existing interaction and test.",
+        "suggested_fix": "Clarify the intended interaction and align criterion 2 with it.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The shipped title now lines up with Build and Plan, retains its 44 px touch target and opens the card in place as confirmed by the user. Cards do not grow taller. All three criteria pass; the reported test run has no failures."
   }
 }
 ```
