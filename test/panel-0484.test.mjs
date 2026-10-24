@@ -32,6 +32,7 @@ const stub = `(() => {
 // text reaches past it or the line (cut short), and for a tag, what a tap at its middle reaches.
 const LINES = `(async () => {
   await document.fonts.ready;
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); // after the page has handled a resize
   return [...document.querySelectorAll('#queue .q:not(.open)')].map(c => {
     const status = c.firstElementChild.children[1], box = status.getBoundingClientRect();
     const parts = [...status.children].filter(n => !n.classList.contains('sep')).map(n => {
@@ -45,13 +46,15 @@ const LINES = `(async () => {
   });
 })()`;
 
-// The rules 0484 added, taken out of the page, so it can be measured as it was before them.
+// The rule 0484 added, taken out of the page, and the widths its page script gave the words, so the page can be
+// measured as it was before them.
 const WITHOUT = `(() => {
+  let gone = 0;
   for (const sheet of document.styleSheets) for (let i = sheet.cssRules.length - 1; i >= 0; i--) {
-    const r = sheet.cssRules[i];
-    if (r.selectorText && /^\\.q:not\\(\\.open\\) \\.top \\.progress( >|$)|\\.progress > \\.lights \\+/.test(r.selectorText)) sheet.deleteRule(i);
+    if (/\\.progress > :is\\(\\.say, \\.by\\)/.test(sheet.cssRules[i].selectorText || '')) { sheet.deleteRule(i); gone++; }
   }
-  return true;
+  for (const w of document.querySelectorAll('#queue .progress > *')) w.style.maxWidth = '';
+  return gone;
 })()`;
 // Where everything a card's top row draws sits, in the card: each piece of its text, as laid out (a space alone draws
 // nothing), and each box that
@@ -160,7 +163,7 @@ test('0484 AC3: a closed card whose line fits, and an open card, sit exactly as 
       for (const l of lines) for (const p of l.parts) assert.ok(!p.cut && p.inside, `${l.id}: "${p.text}" fits at 700 px`);
       const after = await b.js(SPOTS);
       assert.equal(Object.keys(after).length, TICKETS.length);
-      await b.js(WITHOUT);
+      assert.equal(await b.js(WITHOUT), 1, 'the rule 0484 added was taken out');
       const before = await b.js(SPOTS);
       assert.deepEqual(Object.keys(after), Object.keys(before), `${theme}: the same cards`);
       for (const id of Object.keys(after)) {
@@ -174,5 +177,21 @@ test('0484 AC3: a closed card whose line fits, and an open card, sit exactly as 
       await b.js(`(document.querySelectorAll('#queue .q .top')[2].click(), true)`);
       await b.until(`document.querySelectorAll('#queue .q.open').length === 1`, 'an open card again');
     }
+  } finally { await b.close(); await stop(panel); }
+});
+
+test('0484 AC3: a closed card\'s line, its words cut short or not, copies as it did before 0484', skip, async () => {
+  const { panel, b } = await open(320);
+  const COPY = `[...document.querySelectorAll('#queue .q:not(.open)')].map(c => { const line = c.firstElementChild.children[1], r = document.createRange();
+    r.selectNodeContents(line); getSelection().removeAllRanges(); getSelection().addRange(r); return [c.querySelector('.id').textContent, getSelection().toString(), line.innerText]; })`;
+  try {
+    const after = await b.js(COPY);
+    const bug = after.find(([id]) => id === '0901');
+    assert.equal(bug[1], bug[2]);
+    assert.match(bug[1], /^Foreman will answer · Review 2 · 99:5\d · bug$/, 'the cut line copies whole, on one line');
+    assert.equal(await b.js(WITHOUT), 1);
+    const before = await b.js(COPY);
+    const sameTime = x => x.map(([id, sel, text]) => [id, sel.replace(/\d\d:\d\d/g, 'MM:SS'), text.replace(/\d\d:\d\d/g, 'MM:SS')]); // its clock ticks between
+    assert.deepEqual(sameTime(after), sameTime(before), 'every closed card copies as before');
   } finally { await b.close(); await stop(panel); }
 });
