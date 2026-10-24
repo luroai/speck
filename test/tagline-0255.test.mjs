@@ -7,10 +7,11 @@ import { spawnSync } from 'node:child_process';
 import { ROOT, CLI } from './support/speck.mjs';
 
 // ---------- 0255: replace speck's tagline with one that says what's different ----------
+// 0489: the tagline changed again, to the one 0489 checks.
 // 0267 removed the check on the README's opening lines, which review checks now.
 
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
-const TAGLINE = "Ship code you can't read, and still trust it.";
+const TAGLINE = "Plan in ten minutes. Come back to it shipped.";
 const OLD = 'Your judgement, at agent speed.';
 
 test('0255 AC2: speck help, the comment at the top of scripts/speck.mjs and package.json use the new tagline', () => {

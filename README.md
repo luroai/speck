@@ -1,21 +1,23 @@
 # speck
 
-**Ship code you can't read, and still trust it.**
+**Plan in ten minutes. Come back to it shipped.**
 
-speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time.
+speck gives you a team you can trust. You spend your time where it counts: deciding what needs doing and what done looks like, in a quick conversation with your coding agent. Then you walk away. Your agents build each change tests first, a second AI reviews it, and speck ships it, the same way every time.
 
-speck was built by a product manager, for people who work in and around engineering teams but don't write code: product managers, founders, programme managers and designers. They've always had to ship code they can't read. It's for engineers too.
+It isn't only code. A ticket can be a task instead, such as drafting an email, writing a plan or pulling together research. An agent does it, a second AI checks it against what you asked for, and the result waits for you in `outputs/`.
 
-You plan tickets in a conversation with your coding agent and follow the builds in speck's panel. Both sit side by side in one app, such as Claude Code's desktop app, Cursor or an editor with a built-in browser.
+It fits the way you really work, in bursts. Ticket up some work before a meeting, check the panel on your phone afterwards, and set the next batch going before bed. speck stops only when it needs you, with one plain question.
 
-You make two decisions: what gets built and what gets shipped. When your tickets look right, set them ready, start the builds from the panel and walk away. Go to a meeting, have lunch, go to bed. While you're gone, speck works through them and stops only when it needs you. Nothing ships until you ship it, unless you've told speck it can ship low-risk tickets on its own.
-
-You can trust the result without reading the code because every ticket goes through the same steps. Its tests are written first, from acceptance criteria you agreed up front. The agent that builds it checks its own work, a second AI reviews it independently, and the whole test suite runs before it ships. Each approved ticket comes with a one-page review pack in plain English, with the reviewer's evidence for every criterion.
+You don't need to read the code to check the work. Every ticket comes with a one-page review pack in plain English, with the reviewer's evidence for each criterion. Nothing ships until you say so, or until you let speck ship low-risk work by itself.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-dark.png">
   <img alt="An agent conversation on the left, with speck's panel open beside it in a narrow browser pane on the right. The panel's screen shows one ticket building, and its Build lane is open: one ticket approved and ready to ship, one being built and two queued." src="docs/images/demo-light.png">
 </picture>
+
+Use the agents you already have: Claude Code, Codex or Cursor, or a model provider you have an API key for, such as DeepSeek. speck doesn't let a model review its own work unless you allow it.
+
+speck was built by a product manager, for people who decide what gets built but don't write the code. Engineers use it too.
 
 > Status: 0.14.0, a public preview. It works end to end on a local machine. Expect rough edges.
 

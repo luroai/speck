@@ -54,6 +54,10 @@ speck's tagline is "Plan in ten minutes. Come back to it shipped.", and the READ
 - `auto_ship` is `false` in `templates/config.yml`, so the third paragraph's last sentence keeps shipping as your call by default.
 - Today: `test/tagline-0255.test.mjs` checks the old tagline in `speck help`, `scripts/speck.mjs` and `package.json`; it changes with AC1.
 - Waits for 0456 (the picture this places), 0488 (the README's Foreman wording) and 0491 (which tests may read the README).
+- Failing before this build: none
+- AC2 to AC4 are about how the README reads, so they have no tests: read the README's opening down to the status line against the Notes' paragraphs. `test/wording-0125.test.mjs` also checked the old tagline, so it changes with AC1 as `test/tagline-0255.test.mjs` does. That the README no longer has the old tagline is checked by review too: 0491 lets only a few test files read the README.
+- No pictures: only the README's words change, and its picture stays as it was.
+- Self-check: AC3's paragraph said "any model you have an API key for", but speck runs only Anthropic-compatible providers today, so it now says "a model provider you have an API key for". The review rule matches `allow_same_model_review`: speck refuses a reviewer that would run the builder's model unless it's true.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
