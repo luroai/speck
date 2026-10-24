@@ -40,6 +40,7 @@ The Settings button sits inside the frame's title row with a clear gap above spe
 - Today: `.bezel .settings-open` in `templates/panel.css`, with `width: 44px; height: 44px; margin: -4px -2px -4px 0` on a touch screen.
 - Waits for 0453: both change `templates/panel.css`.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
