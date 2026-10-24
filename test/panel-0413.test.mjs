@@ -5,7 +5,7 @@ import { T, page, findChrome, browserPage, styles, pageScript } from './support/
 import { sharedPanel } from './support/shared-panel.mjs';
 import { settingsPage } from './support/settings.mjs';
 import { rules, get, selectors } from './support/css.mjs';
-import { screenPage, foreman, state, wordDots, expected } from './support/screen.mjs';
+import { screenPage, foreman, state, wordDots, expected, CLOCK } from './support/screen.mjs';
 
 // ---------- 0413: speck's LCD screen is the panel's header ----------
 
@@ -174,26 +174,23 @@ test('0413 AC2: a word too wide for the top row starts at its left, then scrolls
   const word = 'Waiting: the base branch is failing its tests';
   const p = screenPage([state(foreman({ word }))]);
   await p.settle();
-  const start = [...expected(word.toUpperCase(), 4, 2)].filter(d => Number(d.split(',')[0]) <= 156); // 4 dots in from each side
+  const start = [...expected(word.toUpperCase(), 4, 2)].filter(d => Number(d.split(',')[0]) <= CLOCK.wordRight); // 4 dots in from the left, 0451: and up to the clock
   const first = wordDots(p.draw(5000, false));
   assert.deepEqual(first, new Set(start), 'its start, cut at the right edge');
   assert.deepEqual(wordDots(p.draw(5000 + 1500, false)), first, 'still during the pause');
   assert.notDeepEqual(wordDots(p.draw(5000 + 1800 + 1000, false)), first, 'then it moves');
   assert.deepEqual(wordDots(p.draw(1000, true)), new Set(start), 'still with reduced motion');
-  assert.ok([...first].every(d => Number(d.split(',')[0]) < 160), 'nothing past the screen');
+  assert.ok([...first].every(d => Number(d.split(',')[0]) <= CLOCK.wordRight), 'nothing past the clock (0451)');
 });
 
-test('0413 AC2: with foreman_fixing fix, "FIXING ON" sits at the right of the top row, and a short word is drawn in full beside it', async () => {
-  const p = screenPage([state(foreman({ word: 'Idle', fixing: 'fix' }))]);
-  await p.settle();
-  const top = wordDots(p.draw());
-  for (const d of expected('IDLE', 4, 2)) assert.ok(top.has(d), `the word: ${d}`);
-  const W = 'FIXING ON'.length * 6 - 1;
-  assert.ok([...top].some(d => Number(d.split(',')[0]) >= 156 - W), 'something drawn at the right');
-  assert.equal(p.byId('run').attrs['aria-label'], 'The Foreman: Idle, fixing on');
-  const q = screenPage([state(foreman({ word: 'Idle', fixing: 'tell' }))]);
-  await q.settle();
-  assert.deepEqual(wordDots(q.draw()), expected('IDLE', 4, 2), 'only the word without it');
+// 0451: "FIXING ON" is gone from the top row, which has the time at its right instead (panel-0451.test.mjs).
+test('0413 AC2: with foreman_fixing fix, a short word is drawn in full and the name is only the word', async () => {
+  for (const fixing of ['fix', 'tell']) {
+    const p = screenPage([state(foreman({ word: 'Idle', fixing }))]);
+    await p.settle();
+    assert.deepEqual(wordDots(p.draw()), expected('IDLE', 4, 2), fixing);
+    assert.equal(p.byId('run').attrs['aria-label'], 'The Foreman: Idle');
+  }
 });
 
 test('0413 AC1: a change of the screen\'s pixels per CSS pixel gives speck\'s screen its new size, as it does the badges', async () => {

@@ -1616,11 +1616,11 @@ function render() {
   // the top row of speck's screen, which is the button, and the frame's edge is in the needs-you colour while the word
   // is "Needs you <n>". The button stays put and only what the screen shows changes, so it keeps the focus.
   const f = foremanOf(state), stale = pageStale(state);
-  const run = $('run'), word = stale ? 'Reload page' : f.word, fixing = !stale && f.fixing === 'fix'; // 0317
+  const run = $('run'), word = stale ? 'Reload page' : f.word;
   noteBoard(state, f, word); // 0414
-  drawScreen(word, fixing);
+  drawScreen(word);
   $('bezel').className = NEEDS_YOU.test(word) ? 'bezel needs' : 'bezel';
-  run.setAttribute('aria-label', `The Foreman: ${word}${fixing ? ', fixing on' : ''}`);
+  run.setAttribute('aria-label', `The Foreman: ${word}`); // 0451: Settings and the Right now say whether fixing is on
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: what speck run is doing, what is waiting, and its log';
   renderForeman(f, stale);
@@ -1663,19 +1663,20 @@ function foremanOf(st) {
     fixing: f && typeof f.fixing === 'string' ? f.fixing : null, fixing_says: f && typeof f.fixing_says === 'string' ? f.fixing_says : '', took: list(f && f.took) }; // 0317
 }
 // 0413: speck's screen, the top of the panel, drawn by the design's LCD renderer (SpeckLCD.Screen and render, from
-// lcd.js) on 160 × 72 dots. Its top row is the Foreman's word in the 5 × 7 font, in capitals, with "FIXING ON" at its
-// right while foreman_fixing is fix (0317). A word too wide for the row scrolls from right to left, 16 dots a second
+// lcd.js) on 160 × 72 dots. Its top row is the Foreman's word in the 5 × 7 font, in capitals, with the time at its
+// right, HH:MM in the 24-hour clock, as on the design's handheld (0451). Its colon shows for the first half of each
+// second, or always with reduced motion. A word too wide for the row scrolls from right to left, 16 dots a second
 // after a pause, and loops round, or with reduced motion stays still, cut short. The screen is made once, when the
 // renderer and a canvas are there, and kept between redraws. 0414: under a dotted line speck shows the pipeline
 // (speckNow), with a caption, centred, under a second dotted line. The Screen draws every frame, even with reduced
 // motion, so speck changes as soon as the pipeline does; reduced motion holds the poses and the word still.
 const SCREEN = { cols: 160, rows: 72, top: 11, floor: 61, line: 63, cap: 65, speed: 16, pause: 1800 };
 const NEEDS_YOU = /^Needs you \d+$/;
-let screen = { word: '', fixing: false, since: null, lcd: null, cast: null, still: false, shown: null };
-function drawScreen(word, fixing) {
+let screen = { word: '', since: null, lcd: null, cast: null, still: false, shown: null };
+function drawScreen(word) {
   const up = String(word).toUpperCase();
   if (up !== screen.word) screen.since = null; // a new word starts again from the left
-  Object.assign(screen, { word: up, fixing });
+  screen.word = up;
   const canvas = $('screen');
   if (!screen.lcd && LCD && typeof LCD.Screen === 'function' && typeof canvas.getContext === 'function') {
     screen.still = reducedMotion();
@@ -1687,8 +1688,10 @@ function drawScreen(word, fixing) {
 // One frame of the screen at time `t`, onto the screen `s` (its pen() draws on its dots).
 function screenFrame(s, t) {
   const p = s.pen(), { F5, INK, FAINT } = LCD, cols = SCREEN.cols, still = s.still || screen.still;
-  let right = cols - 4;
-  if (screen.fixing) { const b = p.textBox('FIXING ON', cols - 4, 2, { font: F5, align: 'right', valign: 'top' }); p.textAt('FIXING ON', b, FAINT); right = b.left - 6; }
+  const at = new Date(), two = n => String(n).padStart(2, '0');
+  const time = `${two(at.getHours())}${still || at.getMilliseconds() < 500 ? ':' : ' '}${two(at.getMinutes())}`; // 0451
+  const b = p.textBox(time, cols - 4, 2, { font: F5, align: 'right', valign: 'top' }), right = b.left - 6;
+  p.textAt(time, b, INK);
   const W = screen.word.length * 6 - 1, room = right - 4;
   let x = 4;
   if (W > room && !still) {

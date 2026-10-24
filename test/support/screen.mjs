@@ -32,8 +32,12 @@ export function screenPage(states, globals = {}) {
   };
   return p;
 }
-// The lit dots of the screen's top row, above its dotted line, as "column,row".
-export const wordDots = dots => new Set(dots.filter(([, r]) => r < 11).map(([c, r]) => `${c},${r}`));
+// The lit dots of the screen's top row, above its dotted line, as "column,row": the word's, left of the clock, and
+// the clock's, `HH:MM` at the row's right, 4 dots in from the edge (0451).
+export const CLOCK = { left: 156 - (5 * 6 - 1), wordRight: 156 - (5 * 6 - 1) - 6 };
+const topDots = (dots, keep) => new Set(dots.filter(([c, r]) => r < 11 && keep(c)).map(([c, r]) => `${c},${r}`));
+export const wordDots = dots => topDots(dots, c => c <= CLOCK.wordRight);
+export const clockDots = dots => topDots(dots, c => c > CLOCK.wordRight);
 // The dots `text` lights in the 5 × 7 font with its top left at (x, y).
 export const expected = (text, x, y) => {
   const out = new Set();
