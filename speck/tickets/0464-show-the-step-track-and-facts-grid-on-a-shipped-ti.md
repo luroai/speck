@@ -1,7 +1,7 @@
 ---
 id: "0464"
 title: Lay out an open shipped ticket like one in flight                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0463"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T11:37:23.357Z"
+approved: "2026-10-24T11:46:51.061Z"
 
 ---
 # 0464 · Lay out an open shipped ticket like one in flight
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0461 and 0462, an open ticket in flight shows a step track and an even table of facts, but a shipped ticket's Details shows its figures as a list of labels and values. The cards don't look like one family.
@@ -51,9 +52,14 @@ Opening a shipped ticket with Details now shows the same coloured row of five st
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 126,361
+- Elapsed since build started: 9 min
+- Changed lines: 91 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. Note: while a card is open, Details moves from the end of its closed line to the end of the Review pack row under the table.
 
