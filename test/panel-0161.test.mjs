@@ -48,14 +48,15 @@ const contrast = (a, b, base = '#ffffff') => {
 // The backgrounds text and controls sit on: the page, the sections, raised rows and the open items' tints.
 const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--ok-bg', '--inbox-bg', '--bad-bg'];
 // 0413: what sits in speck's screen's dark frame (its rules start ".bezel") sits on the frame's colour, not the surfaces.
-const onFrame = sel => sel.split(',').every(s => /^\.bezel\b/.test(s.trim()));
+// 0478: so does what's in a lane's frame: the lane's own fill is the frame, and its title row sits on it.
+const onFrame = sel => sel.split(',').every(s => /^(?:\.bezel\b|main > section$|\.lane-title\b|#[\w-]+-section \.lane-title\b|\.lane-n$)/.test(s.trim()));
 // 0455: and what's in a ticket's build log (its rules start ".q .log") sits on the log's own black, in every look. 0459:
 // so does what's in the pipeline log (".foreman .run-log").
 const inLog = sel => sel.split(',').every(s => /^(?:\.q \.log|\.foreman \.run-log)\b/.test(s.trim()));
 const behind = sel => (onFrame(sel) ? ['--bezel'] : inLog(sel) ? ['--log-bg'] : SURFACES);
 // Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
 // stage dots and the ensō's speck went in 0168.)
-const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.bezel .name::before']; // 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title
+const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.bezel .name::before', '.lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before']; // 0478: nor do the dots before each lane's title. 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title
 // Every control and card with an edge of its own, by its main rule.
 const EDGED = ['.tag', '.toggle', '.bezel .settings-open', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
   '#full-ticket .close', '#full-ticket .ship', '.prio-menu', '.item', '.q', '#shipped tr', 'section'];

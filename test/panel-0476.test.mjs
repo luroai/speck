@@ -218,7 +218,7 @@ test('0476 AC3: the tabs stay in step with the cards, and the lane open and each
   try {
     const w = await b.width(), [x, y] = await middle(b);
     await b.js(`document.getElementById('tab-plan').click(), 1`);
-    assert.equal(await b.js(`document.querySelector('main').dataset.slide === 'settle' && getComputedStyle(document.getElementById('build-section')).display`), 'flex', 'pressing a tab slides from the card that was open');
+    assert.equal(await b.js(`document.querySelector('main').dataset.slide === 'settle' && getComputedStyle(document.getElementById('build-section')).display !== 'none'`), true, 'pressing a tab slides from the card that was open');
     await settles(b, 'plan', 'after pressing Plan\'s tab');
     // Self-check: a ticket scrolled into view partway through a slide, as "Go to ticket" does, never scrolls the row aside.
     await b.js(`document.getElementById('tab-shipped').click(), document.querySelector('#shipped tr:last-child').scrollIntoView(), 1`);
