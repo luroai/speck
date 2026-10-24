@@ -43,6 +43,9 @@ Facts are tested in the brief, and the README is checked by review, apart from t
 - Measured on 2026-10-24: 58 test files read `README.md`, most of them `release-*.test.mjs` (settings each release added) and `readme-0250.test.mjs` (a command or setting for each step and clever bit). Keep `readme-0089` (setup prompt), `readme-0249` and `readme-0306` (pictures), and the status-line checks in the release tests.
 - Waits for 0488, which changes the README's and the brief's Foreman wording and the tests that check it.
 - Failing before this build: none
+- Self-check: the brief's own AC1 check pinned its wording, which 0267's rewording caught: it now checks only the names the brief's paragraph gives, and the skill's and the prompt's wording, which are instructions.
+- Also changed, beyond the three files AC1 names: the build skill's two lines on testing a document's facts, so a build doesn't add README tests the ticket skill now marks `(checked by review)`.
+- Kept beyond the four in AC2's list: install-0253's check of the README's terminal install command and the release tests' check that no README install command names a fixed release, as a wrong one breaks installs; both are in files AC2 allows. docs-0267 now rewords and breaks the brief and the release notes rather than the README.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

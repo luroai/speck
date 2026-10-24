@@ -162,8 +162,9 @@ test('0116 AC4: the skill is gone from speck and from this repo\'s skill folders
 });
 
 // 0194 brought back a ship queue, in speck run, so only the skill's name is checked.
-test('0116 AC4: the brief, the README and the skills no longer describe the skill', () => {
-  const files = ['docs/brief.md', 'README.md', ...fs.readdirSync(path.join(ROOT, 'skills')).map(s => `skills/${s}/SKILL.md`)];
+// 0491: whether the README names it is checked by review.
+test('0116 AC4: the brief and the skills no longer describe the skill', () => {
+  const files = ['docs/brief.md', ...fs.readdirSync(path.join(ROOT, 'skills')).map(s => `skills/${s}/SKILL.md`)];
   for (const f of files) assert.doesNotMatch(read(f), /speck-integrate/, f);
 });
 

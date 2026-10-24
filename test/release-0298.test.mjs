@@ -59,11 +59,6 @@ test('0298 AC3: the setup prompt still installs the latest release, as 0253 left
   assert.doesNotMatch(read('README.md'), /speck#v\d/);
 });
 
-test('0298 AC3: the README names the settings the shipped tickets added', () => {
-  const readme = read('README.md');
-  for (const name of ['watch: fix', '`watch_agent`', 'watch_model', 'watch_effort', 'ship_mode: pr']) assert.ok(readme.includes(name), name); // 0488: renamed, and the Foreman is speck
-});
-
 test('0298 AC4: the release notes say how to install or update 0.8.0 and name the new settings and their defaults', () => {
   for (const name of ['foreman_fixing', '`tell`', '`foreman`', 'foreman_model', 'foreman_effort', 'ship_mode', '`local`', '`speck/config.yml`']) assert.ok(notes().includes(name), name);
   assert.match(notes(), INSTALL);

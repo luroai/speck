@@ -229,8 +229,9 @@ test('0386 AC4: speck config show marks every one of your own settings this mach
   for (const key of OWN) assert.match(text, new RegExp(`^  ${key}: .*\\(this machine's own, over speck/config\\.yml's `, 'm'), key);
 });
 
-test('0386 AC5: the README and the brief name --repo and where your own settings are kept', () => {
-  for (const doc of ['README.md', 'docs/brief.md']) {
+// 0491: the README's names are checked by review.
+test('0386 AC5: the brief names --repo and where your own settings are kept', () => {
+  for (const doc of ['docs/brief.md']) {
     const text = fs.readFileSync(path.join(ROOT, doc), 'utf8');
     assert.match(text, /speck config set --repo/, doc);
     assert.match(text, /speck\/\.cache\/machine\/config\.yml/, doc);

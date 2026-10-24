@@ -175,13 +175,6 @@ test('0311 AC4: offeredModels gives the names speck agents lists, or null when t
   } finally { process.env.PATH = was; }
 });
 
-test('0311 AC2: the README\'s row for config set builder names builder_model', () => {
-  const row = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8').split('\n').find(l => l.includes('`config set builder <name>`') && l.startsWith('|'));
-  assert.ok(row, 'the command table has the row');
-  assert.match(row, /`builder_model`/);
-  assert.match(row, /`speck agents`/);
-});
-
 test('0311 AC4: a builder named like a built-in is named as given, and a blank builder_model is never read for', () => {
   assert.equal(clearsBuilderModel('opus', '__proto__', () => null), "__proto__'s models couldn't be read, so builder_model can't be checked");
   assert.equal(clearsBuilderModel('opus', 'constructor', () => ['x']), "constructor doesn't offer opus, as speck agents lists its models");

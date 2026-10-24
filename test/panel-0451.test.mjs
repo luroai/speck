@@ -90,6 +90,7 @@ test('0451 AC3: the screen\'s accessible name no longer mentions fixing; Setting
   assert.ok(SETTING_GROUPS.find(g => g.title === 'Watching').settings.some(s => s.key === 'watch'), 'Settings still has watch');
 });
 
-test('0451 AC1: neither the README nor the brief says the screen shows "Fixing on"', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('"Fixing on"'), f);
+// 0491: the README is checked by review.
+test('0451 AC1: the brief doesn\'t say the screen shows "Fixing on"', () => {
+  for (const f of ['docs/brief.md']) assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('"Fixing on"'), f);
 });

@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const SKILLS = fs.readdirSync(path.join(ROOT, 'skills')).map(n => `skills/${n}/SKILL.md`).filter(f => fs.existsSync(path.join(ROOT, f)));
-const DOCS = ['README.md', 'docs/brief.md', ...SKILLS, 'templates/config.yml'];
+const DOCS = ['docs/brief.md', ...SKILLS, 'templates/config.yml']; // 0491: not the README, which review checks
 // The old names a doc may still give. That it says they still work where it does is checked by review.
 const OLD = /`foreman_fixing`|`foreman_model`|`foreman_effort`|`foreman`|`speck foreman[^`]*`/g;
 
@@ -22,13 +22,10 @@ test('0488 AC1: the docs say Foreman only in the old setting names and `speck fo
   }
 });
 
-test('0488 AC2: the README and the brief name the new settings and commands', () => {
-  for (const f of ['README.md', 'docs/brief.md']) {
-    const text = read(f);
-    for (const name of ['`watch`', '`watch_agent`', '`watch_model`', '`watch_effort`', '`speck answer <id> "<answer>"`', '`speck dismiss <id>`']) assert.ok(text.includes(name), `${f}: ${name}`);
-  }
-  assert.ok(read('README.md').includes('`watch: fix`'), 'README: `watch: fix`');
+// 0491: the README's names are checked in the brief instead (docs-0491).
+test('0488 AC2: the brief names the new settings and commands', () => {
   const brief = read('docs/brief.md');
+  for (const name of ['`watch`', '`watch_agent`', '`watch_model`', '`watch_effort`', '`watch: fix`', '`speck answer <id> "<answer>"`', '`speck dismiss <id>`']) assert.ok(brief.includes(name), name);
   for (const name of ['`speck watch <action> <id> … --why=<why>`', '`speck-watch`', '`speck(<id>): watch: <action>`']) assert.ok(brief.includes(name), name);
 });
 

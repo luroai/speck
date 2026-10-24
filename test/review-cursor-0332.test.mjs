@@ -93,8 +93,9 @@ test('0332 AC3: a cursor command set under reviewer_options is run instead of th
   assert.deepEqual(r.calls()[0].args, ['--mine']);
 });
 
-test('0332 AC4: no reviewer command in the README or the brief runs Cursor\'s CLI without --trust', () => {
-  for (const doc of ['README.md', 'docs/brief.md']) {
+// 0491: the README is checked by review.
+test('0332 AC4: no reviewer command in the brief runs Cursor\'s CLI without --trust', () => {
+  for (const doc of ['docs/brief.md']) {
     const text = fs.readFileSync(path.join(ROOT, doc), 'utf8');
     const commands = [...text.matchAll(/^\s*(?:resume_)?command:\s*(.+)$/gm)].map(m => m[1].trim().replace(/^(['"])(.*)\1$/, '$2'));
     for (const c of commands) {
