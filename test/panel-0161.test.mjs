@@ -46,7 +46,7 @@ const contrast = (a, b, base = '#ffffff') => {
 };
 
 // The backgrounds text and controls sit on: the page, the sections, raised rows and the open items' tints.
-const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--idea-bg', '--inbox-bg', '--bad-bg'];
+const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--ok-bg', '--inbox-bg', '--bad-bg'];
 // 0413: what sits in speck's screen's dark frame (its rules start ".bezel") sits on the frame's colour, not the surfaces.
 const onFrame = sel => sel.split(',').every(s => /^\.bezel\b/.test(s.trim()));
 const behind = sel => (onFrame(sel) ? ['--bezel'] : SURFACES);

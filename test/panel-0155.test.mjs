@@ -27,11 +27,11 @@ const STATE = {
   ],
   ideas: [],
 };
-// The colour of each card's border by its state since 0167: plain while at work or ready, purple waiting to ship, red
+// The colour of each card's border by its state since 0167: plain while at work or ready, purple waiting to ship (green since 0440), red
 // blocked or stopped. A ready ticket is 'ready'.
 // 0171: a running card's border has its stage's colour: building in --run, review in --warn. 0426: Cursor's blue and
 // yellow, --blue and --yellow.
-const STATES = { '0301': 'blue', '0302': 'yellow', '0303': 'idea', '0304': 'bad', '0305': 'bad', '0306': 'ready', '0307': 'ready' };
+const STATES = { '0301': 'blue', '0302': 'yellow', '0303': 'ok', '0304': 'bad', '0305': 'bad', '0306': 'ready', '0307': 'ready' };
 
 // Before the page's own script runs: the look to use, a confirm that says yes, and a fetch that answers with the board
 // above and records each POST.
@@ -108,7 +108,7 @@ for (const theme of ['light', 'dark']) {
     test(`0155 AC2: at ${width} px in the ${theme} look, each card's border is coloured by its state (all round since 0167), open or closed`, skip, async () => {
       await withPanel(async b => {
         const colour = {};
-        for (const k of ['line', 'idea', 'bad', 'text', 'blue', 'yellow']) colour[k] = await b.js(RGB(`var(--${k})`));
+        for (const k of ['line', 'ok', 'bad', 'text', 'blue', 'yellow']) colour[k] = await b.js(RGB(`var(--${k})`));
         assert.equal(new Set(Object.values(colour)).size, 6, 'six different colours');
         const check = async when => {
           for (const c of await b.js(CARDS)) {
