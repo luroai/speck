@@ -289,7 +289,7 @@ const TEXTS = `(() => { ${LIB}
 // The edge of every control and card on show against what's next to it: each border side with a width, or its fill.
 const EDGES = `(() => { ${LIB}
   const out = [];
-  const sel = 'button:not(.prio-menu button):not(.dep-chip), .dep-pill, .tag:not(:is(.checks, .progress, .act) .tag), .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge. 0419: a card's tags are words. 0468: a chip's edge is its pill's
+  const sel = 'button:not(.prio-menu button):not(.dep-chip):not(.tab), .dep-pill, .tag:not(:is(.checks, .progress, .act) .tag), .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge. 0419: a card's tags are words. 0468: a chip's edge is its pill's. 0477: a lane's name in the strip is a word
   for (const el of document.querySelectorAll(sel)) {
     if (!shown(el)) continue;
     const s = getComputedStyle(el), next = behind(el.parentElement);
@@ -320,7 +320,7 @@ function checkTexts(texts, where, atLeast = 21) {
     assert.ok(t.ratio >= need - 0.005, `${what} is ${t.ratio.toFixed(2)}:1, under ${need}:1`);
   }
 }
-function checkEdges(edges, where, atLeast = 11) {
+function checkEdges(edges, where, atLeast = 8) { // 0477: 11 less the three lanes in the strip, which have no edge
   assert.ok(edges.length >= atLeast, `${where}: controls found (${edges.length})`);
   for (const e of edges.filter(x => !x.disabled)) assert.ok(e.best >= 3 - 0.005, `${where}: ${e.what}'s edge is ${e.best.toFixed(2)}:1`);
 }
