@@ -1,4 +1,4 @@
-/* The panel's styles (0472: a file for each area of the panel): the dark frame at the top, speck's screen in it and the tabs under it. */
+/* The panel's styles (0472: a file for each area of the panel): the dark frame at the top, speck's screen in it and the lanes' strip under it. */
   /* 0413: the top of the panel is speck's screen in its dark frame, as the design's console (without its keys or the text
      under the screen). The frame's title row has speck's name in the dot-matrix lettering, the project and base branch
      cut short with "…", and Settings at its right end. The screen under it shows the Foreman's word and speck. 0438: the
@@ -20,22 +20,21 @@
   .bezel .glass { position: relative; display: block; width: 100%; max-width: 520px; margin: 0 auto; padding: 0; overflow: hidden; color: var(--lcd-ink); background: var(--lcd-bg); border: .5px solid var(--bezel-muted); cursor: pointer; }
   .bezel .glass::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 8px rgba(0, 0, 0, .3); pointer-events: none; }
   .bezel .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 72; image-rendering: pixelated; }
-  /* 0425: the three tabs share the row equally, each its name on one line (and Build's needs-you number) */
-  .tabs { display: flex; padding: 8px 16px 0; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .tab + .tab { border-left-width: 0; } /* 0428: each tab boxed as every button is, the edge between two shared. 0453: drawn by the tab before it, so every edge is on a whole pixel */
-  .tab:has(+ .tab[aria-selected="true"]) { border-right-color: var(--text); } /* 0453: the side it shares with the open tab is that tab's edge */
-  @supports (width: round(down, 1px, 1px)) { .tab:not(:last-child) { flex: none; box-sizing: border-box; width: round(calc(100% / 3), 1px); } } /* 0453: the nearest whole number of pixels, the last tab taking the rest */
-  .tab { flex: 1 1 0; display: flex; align-items: baseline; justify-content: flex-start; column-gap: 6px; min-width: 0; margin-bottom: -.5px; padding: 6px 8px; font: inherit; color: var(--muted); background: transparent; border: .5px solid var(--line); cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; }
-  .tab:hover { color: var(--text); }
-  .tab[aria-selected="true"] { color: var(--text); background: var(--panel); border-color: var(--text); border-bottom-color: var(--panel); box-shadow: 0 1px 0 var(--panel); position: relative; z-index: 1; } /* 0428: over its neighbours' shared edges. Boxed as every button is, and set apart by its edge in the text colour, as the chosen toggle is. 0457: its bottom edge is the lane's colour, and its shadow the lane's colour just under it, over whatever of the tab row's line a browser draws thicker than its overlap, so the tab and its lane are one sheet */
-  .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 18px; font-weight: 600; }
-  .tab .needs { flex: none; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
+  /* 0477: the lanes are a thin strip under speck's screen, in place of the tabs: each lane's name on one row, in order,
+     the one in view in the text colour and the others muted, and Build's needs-you number after its name whichever lane
+     is in view. Nothing in it depends on how many lanes there are. Each lane is a 44 px button, taller than the strip:
+     its name is in the strip and its last 12 px reach down past it, over the top of the lane's own padding, never up
+     into the header (0160). The strip is drawn over what they reach into. */
+  .tabs { position: relative; z-index: 8; display: flex; align-items: flex-start; justify-content: center; gap: 4px; height: 32px; padding: 0 16px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  .tab { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 6px; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 10px 12px; font: inherit; color: var(--muted); background: transparent; border: 0; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
+  .tab:hover, .tab[aria-selected="true"] { color: var(--text); }
+  .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 14px; font-weight: 600; line-height: 1; }
+  .tab .needs { flex: none; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; line-height: 1; }
   .tab .needs { color: var(--bad); }
   .tab .needs:empty { display: none; }
 
-  /* 0428: rounded corners as Cursor's: a tab's top corners 8 px, as a control's. 0438: speck's frame is a card's 12 px, and the screen's corners
-     follow it: the frame's less the 9 px between them, at least 4 px. The screen cuts what it draws to its corners. */
-  .tab { border-radius: 8px 8px 0 0; } /* the open tab's top corners, and the others' */
+  /* 0438: speck's frame is a card's 12 px, and the screen's corners follow it: the frame's less the 9 px between them,
+     at least 4 px. The screen cuts what it draws to its corners. */
   .bezel { border-radius: 12px; }
   .bezel .glass { border-radius: 4px; }
   .bezel .glass::after { border-radius: inherit; }
@@ -43,11 +42,10 @@
   /* 0417: every button at least 44 px each way. 0469: with a mouse too, at any width, as on a touch screen */
   /* 0454: no negative margin above or below, so the title row grows to hold it and it stays 4 px clear of the screen */
   .bezel .settings-open { width: 44px; height: 44px; margin: 0 -2px 0 0; }
-  .tab { min-height: 44px; }
 
   /* 0453: every button's border at least a device pixel on each side, as 0281 gave Settings' info buttons: a half pixel
      is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
-    .bezel .settings-open, .bezel .glass, .tab { border-width: 1px; }
+    .bezel .settings-open, .bezel .glass { border-width: 1px; }
   }
