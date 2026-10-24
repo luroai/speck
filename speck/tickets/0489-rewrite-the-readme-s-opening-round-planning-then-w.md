@@ -1,7 +1,7 @@
 ---
 id: "0489"
 title: "Rewrite the README's opening round planning then walking away"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,25 +12,25 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0456", "0488"]                # ticket ids that must be done first
+after: ["0456", "0488", "0491"]                # ticket ids that must be done first
 created: 2026-10-24
 
 ---
 # 0489 · Rewrite the README's opening round planning then walking away
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
-The README's opening was written before speck became a slim panel beside your agent and before it worked with any agent. Its tagline, "Ship code you can't read, and still trust it", starts from what the reader can't do, and it takes four paragraphs to reach the picture. For launch, the first screen should say how speck is used: a short burst of planning, then walking away while the agents build, review and ship.
+speck's tagline, "Ship code you can't read, and still trust it", starts from what the reader can't do, and the README's opening was written before speck became a slim panel beside your agent and before it worked with any agent. It takes four paragraphs to reach the picture. For launch, the first screen should say how speck is used: a short burst of planning, then walking away while the agents build, review and ship.
 
 ## Outcome
-The README opens with the new tagline and opener, then the picture, then which agents speck works with.
+speck's tagline is "Plan in ten minutes. Come back to it shipped.", and the README opens with it, the new opener, the picture and which agents speck works with.
 
 ## Acceptance criteria
-1. The README starts with the heading `# speck`, then `**Plan in ten minutes. Come back to it shipped.**`, then the three opener paragraphs in Notes, word for word. It no longer contains `Ship code you can't read`.
-2. The demo picture (its `<picture>` block, unchanged) comes straight after those three paragraphs and before the status line, and is the README's first image.
-3. After the picture, one paragraph names the agents speck builds and reviews with, Claude Code, Codex, Cursor and model providers such as DeepSeek, and says speck doesn't let a model review its own work unless you allow it. Then one sentence says it was built by a product manager for people who decide what gets built but don't write the code, and that engineers use it too. Both read naturally and every claim in them is true of speck today (checked by review).
-4. The opening's four old paragraphs are gone, and nothing from the status line down changes. No test that passed before this change fails.
+1. `speck help`'s first line is `speck: Plan in ten minutes. Come back to it shipped.`, the comment at the top of `scripts/speck.mjs` is `// speck: Plan in ten minutes. Come back to it shipped.`, and `package.json`'s description starts with the new tagline. None of them, nor the README, contains `Ship code you can't read`.
+2. The README starts with `# speck`, then the tagline in bold, then the three opener paragraphs in Notes, word for word, then the demo picture (its `<picture>` block, unchanged) as the README's first image, before the status line (checked by review).
+3. After the picture, one paragraph names the agents speck builds and reviews with, Claude Code, Codex, Cursor and model providers such as DeepSeek, and says speck doesn't let a model review its own work unless you allow it. Then one sentence says it was built by a product manager for people who decide what gets built but don't write the code, and that engineers use it too. Every claim in them is true of speck today (checked by review).
+4. The opening's four old paragraphs are gone, and nothing from the status line down changes (checked by review). No test that passed before this change fails.
 
 ## Out of scope
 - Everything from `## Get started` down (0490), and the status line and figures (0452).
@@ -49,7 +49,8 @@ The README opens with the new tagline and opener, then the picture, then which a
 
 - A starting point for AC3's paragraph: "Use the agents you already have: Claude Code, Codex or Cursor, or any model you have an API key for, such as DeepSeek." Check the review rule against `allow_same_model_review` before writing it.
 - `auto_ship` is `false` in `templates/config.yml`, so the third paragraph's last sentence keeps shipping as your call by default.
-- Waits for 0456 (the picture this places) and 0488 (which changes the README's Foreman wording).
+- Today: `test/tagline-0255.test.mjs` checks the old tagline in `speck help`, `scripts/speck.mjs` and `package.json`; it changes with AC1.
+- Waits for 0456 (the picture this places), 0488 (the README's Foreman wording) and 0491 (which tests may read the README).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
