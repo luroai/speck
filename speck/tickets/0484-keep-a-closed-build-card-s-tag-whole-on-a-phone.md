@@ -41,6 +41,8 @@ A closed Build card's bug, fix or document tag always shows whole.
 - Today: `.q:not(.open) .top .progress` and the rules round it under 0443's comment in `templates/panel-cards.css`, and the closed card's status line built in `templates/panel.js` (0443).
 - Waits for 0483: both change the closed Build card's update in `templates/panel.js`.
 - Failing before this build: none
+- 0443's 375 px test let a tag after the time be cut off and checked the words were never cut. 0484 reverses that: a line with a tag now cuts its words short first. 0443's 0807 line (`Read the document · Ship · 20:12 · bug · document`) is 43 px too wide at 375 px with both tags whole, and only narrower gaps round the tags would make room, which would change lines that fit (AC3) and 0419's tap-area gaps. So 0443's test now lets a tagged line's words be cut short; its stage and time must still show whole.
+- Self-check: the reviewer's model on a working card's line (by) gives up room as the words do, and the lights keep their place; added a working card with a long model and a card with no tag to the tests.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

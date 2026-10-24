@@ -138,9 +138,12 @@ for (const touch of [true, false]) {
           const c = [...CASES, ...SAME].find(x => x.id === l.id);
           if (!l.parts.some(x => /\btag\b/.test(x.cls))) assert.ok(!l.overflows, `${l.id}: nothing reaches past its status line: ${l.text} (${l.widths.join(' > ')} px)`);
           assert.ok(l.height <= l.lineHeight + 0.5, `${l.id}: one line (${l.height} px)`);
-          for (const part of l.parts.filter(x => !/\btag\b/.test(x.cls))) { // a tag after the time may be cut off
+          // 0484: a line with a tag keeps the tag whole and cuts its words short first, so only its stage and time are
+          // sure to show whole; its words show, cut short or not
+          const tagged = l.parts.some(x => /\btag\b/.test(x.cls));
+          for (const part of l.parts.filter(x => !/\btag\b/.test(x.cls))) {
             assert.ok(part.inside, `${l.id}: "${part.text}" shows whole`);
-            assert.ok(!part.cut, `${l.id}: "${part.text}" isn't cut off`);
+            if (!(tagged && /\bsay\b/.test(part.cls))) assert.ok(!part.cut, `${l.id}: "${part.text}" isn't cut off`);
           }
           if (c.short) assert.equal(l.parts[0].text, c.short, `${l.id}: its short words`);
           if (c.id !== '0813') assert.ok(l.parts.some(x => /\d:\d{2}$/.test(x.text)), `${l.id}: its time: ${l.text}`);
