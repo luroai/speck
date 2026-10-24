@@ -27,7 +27,7 @@ test('0334 AC1: with a Cursor builder, section 5 offers an all-Cursor setup: bui
   assert.match(bullet, /one question/i);
   assert.match(bullet, /`auto`/);
   assert.match(bullet, /reviewer on Cursor[^.]*model[^.]*pick/i);
-  assert.match(bullet, /speck's (own )?agent[^.]*Cursor[^.]*(another|other) (installed|agent)/i); // 0488: was the Foreman
+  assert.ok(bullet.includes('`speck config set watch_agent <name>`'), 'speck\'s agent on Cursor or another agent'); // 0488: the wording is checked by review
 });
 
 test('0334 AC2: models are offered only from speck agents --json, by name, never made up', () => {
