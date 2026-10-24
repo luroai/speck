@@ -45,7 +45,11 @@ A closed ticket shows its dependencies as one small chip at the end of its title
 - Self-check: no changes. Before it, the run of every page test found the chip below 12 px and its tap area under 44 px on a touch screen; both fixed, with the existing checks (0161, 0140) now covering the chip.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A closed ticket in Plan or Build no longer lists the tickets it waits on, or that wait on it, in its second line. Instead, a small chip at the right end of its title row shows a link icon and how many unshipped tickets it waits on, or, when it waits on none, an arrow and how many wait on it directly. Hover over the chip, or use a screen reader, to hear what it counts; pressing it opens the card, where the dependency box still lists each ticket and takes you to it.
+
+To see it, open the panel on a phone or a narrow window and look at a ticket with an after: list: the title stays on one line, ending in "…" if it's long, with the chip beside it. A running build that others wait on shows its chip too.
+
+Worth a look: closed cards still show the chain or padlock icon after the id as well as the chip, which says the same thing twice (saved as an idea in the inbox).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +59,10 @@ A closed ticket shows its dependencies as one small chip at the end of its title
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Idea: drop the chain and padlock icons from closed cards, now that the chip says the same (speck/ideas/2026-10-24-drop-the-chain-and-padlock-icons-from-closed-cards.md).
+  - Known limit: each closed card with a chip adds a Tab stop, as the chip is a button for its name and tooltip.
+  - Tests: most panel tests load the page through test/support/panel.mjs, so `speck test --related` doesn't pick them up for a change to templates/panel.js; this build ran every test/panel*.test.mjs file by hand to find the ones the change broke.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +131,76 @@ A closed ticket shows its dependencies as one small chip at the end of its title
     ],
     "escalation_question": "",
     "summary": "The chips work on Plan cards and queued Build cards, with clear labels and tested phone layouts. However, they disappear once a Build ticket starts, even when other tickets still wait on it. That gap needs fixing before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b102d8a95755e3d4d252980fff6b3b9cf84dc170",
+    "session": "continued",
+    "thread_id": "01a16e18-6f78-7232-ae4a-0a10e4c088a9",
+    "builder_response": "- Tests run: test/panel-0468.test.mjs test/panel-0041.test.mjs test/panel-0050.test.mjs test/panel-0053.test.mjs test/panel-0069.test.mjs test/panel-0151.test.mjs test/panel-0154.test.mjs test/panel-0160.test.mjs test/panel-0161.test.mjs test/panel-0164.test.mjs test/panel-0167.test.mjs test/panel-0190.test.mjs test/panel-0224.test.mjs test/panel-0410.test.mjs test/panel-0417.test.mjs test/panel-0419.test.mjs test/panel-0434.test.mjs test/panel-0443.test.mjs test/panel-0463.test.mjs test/panel.test.mjs. Separately, every test/panel*.test.mjs file and every other test file using the page was run again after the fix: all passed.\n- F1: fixed. `queueItem` now gives every closed Build card its chip, in flight too (`titleLine(t, !t.inFlight, !isOpen)`), and `queueUpdate` puts a kept row's chip right before it returns for an in-flight ticket. New test \"0468 AC1: a closed Build ticket in flight shows its chip too, and a kept one follows the board\": a building ticket four wait on shows the arrow chip with 4, a reviewing one with 1; the next board adds a fifth and the same card's chip says 5, once; opened, it has none. It failed before the fix. 0419 AC2's title-line text for a building ticket now includes its chip's count. Pictures retaken, with a running build's chip.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 379334,
+      "cached_input_tokens": 318976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1549,
+      "reasoning_output_tokens": 100
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T13:31:59.563Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "depChip counts waiting_on or direct unlocks, prioritising waits and omitting empty chips. ticketHead and queueItem now include chips on every closed Plan or Build card. Passing 0468 AC1 tests cover counts, icons, shipped dependencies, in-flight cards and updates."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "depChip supplies aria-label and title on a native button whose click reaches the top-row handler. Passing 0468 AC2 tests verify names, tooltips and opening cards in both lanes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "ticketHead and queuedLine omit dependency ids from second lines. Passing real-browser 0468 AC3 tests check single-line titles and chips beside them at 320, 390, 600 and 1000 px; the title CSS supplies ellipsis."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The round's recorded output reports 334 passes, zero failures and three skips. Existing test updates reflect the intended replacement of closed-card dependency links."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "Closed in-flight Build cards previously omitted dependency chips.",
+        "suggested_fix": "Completed: queueItem now renders chips for closed in-flight cards, and queueUpdate refreshes them before its in-flight return. The new passing regression test verifies building and reviewing cards, count updates on a retained card, and removal when opened.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Dependency chips now work across closed Plan and Build cards, including tickets being built or reviewed. Counts update correctly, labels explain them, and browser tests confirm the phone layout. The previous blocking issue is resolved."
   }
 }
 ```
