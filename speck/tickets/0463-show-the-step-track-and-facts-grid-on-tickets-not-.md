@@ -44,6 +44,7 @@ An open ticket that hasn't started shows the same step track and table as one in
 - The user agreed on 2026-10-24 that `After` holds a count, as option E in the mock-ups shows: the tickets themselves are shown under the table by 0467.
 - Waits for 0462, whose table this reuses.
 - Failing before this build: none
+- Self-check: the open draft's priority control, in its Priority cell, got its own plain class rather than a borderless tag (the contrast checks need every tag's edge), and a 44 px tap box on touch screens whose negative margins keep the cell as tall as the others; the browser test now runs on a touch screen too.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
