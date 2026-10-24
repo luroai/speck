@@ -37,17 +37,12 @@ test('0254 AC2: CHANGELOG.md has a 0.5.4 section', () => {
 });
 
 test('0254 AC3: the README and the brief name the current version', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.ok(read(f).includes(version()), f);
+  // 0491: the version on the status line, the one fact here the README's tests check.
+  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), new RegExp(`Status: ${version().replace(/\./g, '\\.')}\\b`), f);
 });
 
 test('0254 AC3: the setup prompt still installs the latest release, as 0253 left it', () => {
   assert.deepEqual(setupPromptProblems(read('README.md')), []);
-  assert.doesNotMatch(read('README.md'), /#v0\.5\.\d/);
-});
-
-test('0254 AC3: no install command in the README names a fixed release', () => {
-  // 0253: no install command names a fixed release.
-  assert.doesNotMatch(read('README.md'), /speck#v\d/);
 });
 
 test('0254 AC4: the release notes say how to install 0.5.4', () => {

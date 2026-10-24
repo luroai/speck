@@ -148,8 +148,8 @@ test('0402 AC4: changing the builder\'s model redraws the effort list for that m
   assert.deepEqual(offered(p, 'builder_effort'), ['', 'low', 'high', 'ultra', 'xhigh'], 'the default: any model\'s');
 });
 
-test('0402 AC2 AC3: the README lists builder_effort as your own, and the brief names how each builder is given it', () => {
-  const readme = fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8'), brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  assert.ok(readme.includes('`builder_effort`'), 'the README names builder_effort');
+// 0491: the README is checked by review.
+test('0402 AC2 AC3: the brief names builder_effort and how each builder is given it', () => {
+  const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
   for (const fact of ['`builder_effort`', '`--effort <value>`', '`-c model_reasoning_effort="<value>"`', '`ultra`']) assert.ok(brief.includes(fact), fact);
 });

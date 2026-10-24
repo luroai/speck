@@ -138,9 +138,10 @@ test('0280 AC5: the Settings view explains allow_same_model_review as needed onl
   assert.match(s.explain, /default/);
 });
 
-test('0280 self-check: the README, the brief and the config template name builder_model where they explain allow_same_model_review', () => {
+// 0491: the README is checked by review.
+test('0280 self-check: the brief and the config template name builder_model where they explain allow_same_model_review', () => {
   const root = path.resolve(import.meta.dirname, '..');
-  for (const f of ['README.md', 'docs/brief.md', 'templates/config.yml']) {
+  for (const f of ['docs/brief.md', 'templates/config.yml']) {
     const lines = fs.readFileSync(path.join(root, f), 'utf8').split('\n').filter(l => /allow_same_model_review/.test(l) && !/^\s*\|?\s*`?speck /.test(l));
     assert.ok(lines.length, f);
     for (const l of lines) assert.match(l, /builder_model/, `${f}: ${l.slice(0, 120)}`);

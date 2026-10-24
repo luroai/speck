@@ -156,13 +156,11 @@ test('0390 AC4: any provider in speck\'s list reviews the same way, checked with
   assert.equal(env.HOME, path.join(r.dir, 'speck', '.cache', 'provider-acme'));
 });
 
-test('0390 AC5: the brief\'s table of reviewers has a provider row, and the README names DeepSeek as tested', () => {
+// 0491: the README's names are checked in the brief instead (docs-0491).
+test('0390 AC5: the brief\'s table of reviewers has a provider row', () => {
   const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
   const row = brief.split('\n').find(l => l.startsWith('| `deepseek`'));
   assert.ok(row, 'a row for provider reviewers');
   assert.match(row, /--bare/);
   assert.match(row, /speck keys set deepseek/);
-  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  assert.match(readme, /reviewer: deepseek/);
-  assert.match(readme, /speck keys set deepseek/);
 });

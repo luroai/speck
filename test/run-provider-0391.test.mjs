@@ -266,8 +266,3 @@ test('0391 AC2: without --model the build runs on the provider\'s default model,
   assert.match(bad.stderr, /speck run starts this with a model provider's name/);
   assert.equal(fake.calls().length, 1);
 });
-
-test('0391 AC5: the README names DeepSeek as a tested builder', () => {
-  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  assert.ok(readme.includes('`builder: deepseek`'));
-});

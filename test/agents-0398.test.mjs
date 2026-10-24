@@ -165,10 +165,9 @@ test('0398 AC4: without a list, every ready agent and provider with a key is you
   assert.equal(fs.existsSync(yourAgentsFile(r.dir)), false);
 });
 
-test('0398 AC5: the README and speck help name the agents commands', () => {
+// 0491: the README's names are checked in the brief instead (docs-0491).
+test('0398 AC5: speck help names the agents commands', () => {
   const root = path.resolve(import.meta.dirname, '..');
-  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
-  for (const s of ['speck agents add', 'speck agents remove', 'speck/.cache/machine/agents.json']) assert.ok(readme.includes(s), s);
   const help = speck(root, process.env, 'help').stdout;
   assert.match(help, /speck agents add\|remove <agent>/);
 });

@@ -15,8 +15,9 @@ const INSTALL = "npx 'github:luroai/speck#semver:*' init";
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const git = (...a) => spawnSync('git', a, { cwd: ROOT, encoding: 'utf8' });
 
-test('AC1: README and the brief give the install command for luroai/speck', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.ok(read(f).includes(INSTALL), `${f} gives ${INSTALL}`);
+// 0491: the README's install commands are checked by install-0253.
+test('AC1: the brief gives the install command for luroai/speck', () => {
+  for (const f of ['docs/brief.md']) assert.ok(read(f).includes(INSTALL), `${f} gives ${INSTALL}`);
 });
 
 test('AC1: a copy of speck that cannot install itself points to luroai/speck', () => {

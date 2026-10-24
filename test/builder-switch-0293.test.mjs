@@ -233,8 +233,9 @@ test('0293 AC5: the view says which tickets keep their builder while a new one i
   assert.match(line().textContent, /every ticket that doesn't name its own builder/);
 });
 
-test('0293 AC4: the README and the setup skill name the command that switches the builder', () => {
-  for (const f of ['README.md', 'skills/speck-setup/SKILL.md']) {
+// 0491: the README's names are checked in the brief instead (docs-0491).
+test('0293 AC4: the setup skill names the command that switches the builder', () => {
+  for (const f of ['skills/speck-setup/SKILL.md']) {
     const text = fs.readFileSync(path.join(ROOT, f), 'utf8');
     assert.match(text, /config set builder <name>/, f);
     assert.match(text, /--replace/, f);

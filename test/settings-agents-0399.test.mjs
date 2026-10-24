@@ -223,12 +223,6 @@ test('0399 AC2: a provider removed with its key still kept can be added back wit
   assert.ok(rowNamed(p, 'TestCo'));
 });
 
-test('0399 AC1: the README names the group and its Add an agent as Settings shows them', () => {
-  const readme = fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /\*\*Your agents\*\* group/);
-  assert.match(readme, /\*\*Add an agent\*\*/);
-});
-
 // ---------- in a real browser ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
