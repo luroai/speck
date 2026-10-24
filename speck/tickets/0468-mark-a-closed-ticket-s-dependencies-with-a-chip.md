@@ -69,7 +69,7 @@ Round 2 (codex): approve.
 - Follow-ups:
   - Idea: drop the chain and padlock icons from closed cards, now that the chip says the same (speck/ideas/2026-10-24-drop-the-chain-and-padlock-icons-from-closed-cards.md).
   - Known limit: each closed card with a chip adds a Tab stop, as the chip is a button for its name and tooltip.
-  - Tests: most panel tests load the page through test/support/panel.mjs, so `speck test --related` doesn't pick them up for a change to templates/panel.js; this build ran every test/panel*.test.mjs file by hand to find the ones the change broke.
+  - Idea: bring in page tests for a panel script change (speck/ideas/2026-10-24-bring-in-page-tests-for-a-panel-script-change.md). Most panel tests load the page through test/support/panel.mjs, so `speck test --related` didn't pick them up; this build ran every test/panel*.test.mjs file by hand to find the ones the change broke.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
