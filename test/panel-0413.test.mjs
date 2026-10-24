@@ -92,7 +92,7 @@ test('0413 AC4: pressing the screen opens the Foreman\'s detail, and again close
   await p.settle();
   assert.equal(p.byId('foreman').hidden, false);
   assert.equal(p.byId('run').attrs['aria-expanded'], 'true');
-  assert.match(p.byId('foreman').textContent, /Pipeline[\s\S]*Log/); // 0415: titled Pipeline. 0458: with only the log
+  assert.match(p.byId('foreman').textContent, /Pipeline log/); // 0415: titled Pipeline. 0458: with only the log. 0470: titled Pipeline log
   p.press(p.byId('run'));
   await p.settle();
   assert.equal(p.byId('foreman').hidden, true);

@@ -452,7 +452,7 @@ function closeForeman() {
 // while it's open and only the detail under it is drawn again, so the focus stays in the pop-up through a refresh.
 // While it's open the page behind is held (holdPage), so only the pop-up can be clicked, scrolled or reached with Tab.
 // 0415: the Pipeline pop-up, with speck run's output as its Log section. 0458: the log is all it shows, apart from a
-// stale page's Reload page button above it.
+// stale page's Reload page button above it. 0470: titled Pipeline log, with no Log heading over the log box.
 function renderForeman(stale) {
   const box = $('foreman'), was = !box.hidden && box.children.length > 0;
   box.hidden = !foremanOpen;
@@ -463,8 +463,8 @@ function renderForeman(stale) {
     const close = el('button', 'close', 'Close');
     close.type = 'button';
     close.addEventListener('click', e => { e.stopPropagation(); closeForeman(); });
-    body = el('div', 'fm-body', null, el('div', 'fm-stale'), el('div', 'fm-log', null, el('h3', null, 'Log')));
-    box.replaceChildren(el('div', 'top', null, el('span', 'title', 'Pipeline'), close), body);
+    body = el('div', 'fm-body', null, el('div', 'fm-stale'), el('div', 'fm-log'));
+    box.replaceChildren(el('div', 'top', null, el('span', 'title', 'Pipeline log'), close), body);
     runLogShown = undefined; runLogDrawn = null;
   }
   const top = body.children[0];
@@ -509,10 +509,10 @@ function drawRunLog() {
   runLogShown = key;
   // 0459: the oldest line at the top and the newest at the bottom, in a box of its own that scrolls. The server gives
   // them newest first.
-  const lines = given && given.slice().reverse().map(String), was = sec.children[1];
+  const lines = given && given.slice().reverse().map(String), was = sec.children[0];
   if (!lines || !lines.length) {
     runLogDrawn = null;
-    sec.replaceChildren(sec.children[0], el('div', 'run-log', null, el('p', 'none', lines && runLogFor === null ? 'Reading speck run\'s log…' : 'speck run hasn\'t written anything yet.')));
+    sec.replaceChildren(el('div', 'run-log', null, el('p', 'none', lines && runLogFor === null ? 'Reading speck run\'s log…' : 'speck run hasn\'t written anything yet.')));
     return;
   }
   const list = was && /^ol$/i.test(was.tagName || '') && Array.isArray(runLogDrawn) ? was : el('ol', 'run-log');
@@ -527,7 +527,7 @@ function drawRunLog() {
   }
   runLogDrawn = lines;
   list.replaceChildren(...lines.map(runLogRow));
-  if (list !== was) sec.replaceChildren(sec.children[0], list);
+  if (list !== was) sec.replaceChildren(list);
   const again = anchor && rect(list.children[anchor.at]);
   if (follow) list.scrollTop = list.scrollHeight;
   else if (again) list.scrollTop += again.top - anchor.top;

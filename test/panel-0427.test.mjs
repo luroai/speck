@@ -39,6 +39,7 @@ test('0427 AC1 and AC2: every font list in the stylesheet is the interface font,
   for (const r of named) {
     const f = family(r);
     if (r.sel === '.bezel .name') { assert.equal(f, DOTO, 'speck\'s title stays Doto'); continue; }
+    if (r.sel === '#foreman .top .title') { assert.equal(f, DOTO, '0470: so is the Pipeline log pop-up\'s'); continue; }
     if (r.sel === '@font-face') continue;
     assert.ok(f === UI || f === MONO, `${r.sel}: ${f}`);
   }
@@ -63,7 +64,7 @@ test('0427 AC2: ids, the build log, code and figures use Cursor\'s monospace', (
 });
 
 test('0427 AC3: headings, tab names and ticket titles are the interface font at 600, and the old fonts are gone', () => {
-  for (const sel of ['.tab .tab-name', '.sh h2', '.title', '#shipped .line .title', '.foreman h3', '#settings .top h3', '#settings .sgroup h4', '#settings-unsaved h3',
+  for (const sel of ['.tab .tab-name', '.sh h2', '.title', '#shipped .line .title', /* 0470: the pop-up's Log heading is gone */ '#settings .top h3', '#settings .sgroup h4', '#settings-unsaved h3',
     '#full-ticket h4, #full-ticket > .md .md-h1, #full-ticket > .md .md-h2, #full-ticket > .md .md-h3']) {
     const r = rule(sel);
     assert.equal(family(r), UI, `${sel}: the interface font`);
