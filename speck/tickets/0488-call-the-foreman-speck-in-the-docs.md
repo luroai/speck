@@ -1,7 +1,7 @@
 ---
 id: "0488"
 title: "Call the Foreman speck in the docs"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0487"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T19:48:07.127Z"
+approved: "2026-10-24T19:56:47.806Z"
 
 ---
 # 0488 · Call the Foreman speck in the docs
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The README, the brief, the setup skill and the agent's own skill still describe the Foreman, its settings and its commands, after the panel, the messages and the settings stop using it.
@@ -52,9 +53,15 @@ speck's guides no longer talk about a separate "Foreman". The README, the design
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 New or changed assertions pin document prose and sentence structure, contrary to the review rules.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 531,002
+- Elapsed since build started: 9 min
+- Changed lines: 58 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-ups only, so no inbox notes): the cache files speck run writes (`run.foreman.json`, `run.foreman-did.jsonl`, `run.foreman-agent.json`, `run.foreman-answer.*`) and the agent's environment variable still have foreman in their names; the brief now names only their folder. Renaming them would let the brief name them again.
 
