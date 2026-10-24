@@ -1,7 +1,7 @@
 ---
 id: "0464"
 title: Lay out an open shipped ticket like one in flight                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0464 · Lay out an open shipped ticket like one in flight
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 After 0461 and 0462, an open ticket in flight shows a step track and an even table of facts, but a shipped ticket's Details shows its figures as a list of labels and values. The cards don't look like one family.
