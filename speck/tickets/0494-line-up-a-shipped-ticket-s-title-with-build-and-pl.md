@@ -1,7 +1,7 @@
 ---
 id: "0494"
 title: "Line up a shipped ticket's title with Build and Plan on a phone"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T20:47:56.137Z"
-blocked_at: "2026-10-24T20:55:15.078Z"
+blocked_at: ""
+waited_seconds: 826
 
 ---
 # 0494 · Line up a shipped ticket's title with Build and Plan on a phone
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 On a phone, a collapsed shipped ticket's title sits lower in its card than a Build or Plan ticket's. The title is a link to the full ticket, and on a touch screen it's a 44 px tall target with its text centred in it, so the text starts about 11 px further down. With a mouse, the three line up.
@@ -43,6 +44,7 @@ A collapsed shipped ticket's title starts as far from the top of its card as a B
 - Failing before this build: none
 - Measured before the change: with a mouse too, the shipped title's text started 19 px down its card, against 8 px for Build and 7 px for Plan, as 0469 gave a mouse the touch screen's 44 px title line.
 - Self-check: the title's 44 px box is now drawn on top of the details line it reaches over, so a tap there still reaches the title; 0420's "details under the title" check now measures the title's text rather than its padded tap box. Known limit: its keyboard focus ring is 44 px tall around that box, as before, but now reaches about 6 px above the card's top edge.
+- Went with the recommendation: keep opening the card where it is (chosen by the user in the panel, 2026-10-24 21:09 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
