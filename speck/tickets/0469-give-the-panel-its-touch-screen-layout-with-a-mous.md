@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0468"]                # ticket ids that must be done first
+after: ["0468", "0474"]                # ticket ids that must be done first
 created: 2026-10-24
 
 ---
@@ -39,7 +39,7 @@ The panel looks the same with a mouse as it does on a touch screen at the same w
 ## Notes
 - Asked for by the user on 2026-10-24, from two photos of the panel in Cursor's browser pane: with a mouse "the tickets look really small and like squished, and the text is almost bigger", and in Cursor's mobile view "the tickets are a bit taller, there's a bit more spacing … I prefer the mobile view. Can you make the Cursor desktop view look like the mobile view?"
 - Today: `@media (pointer: coarse)` in `templates/panel.css` (0151, 0162, 0164, 0165, 0419, 0441, 0443, 0454) holds the touch layout's sizes.
-- Waits for 0468, the last queued ticket that changes the cards' layout in `templates/panel.css`, so this applies to the step track, facts table, dependency box and chip they add, and its check covers them.
+- Waits for 0474, the last of the file splits the user asked on 2026-10-24 to be built first, so this changes the split stylesheets. And for 0468, the last queued ticket that changes the cards' layout in `templates/panel.css`, so this applies to the step track, facts table, dependency box and chip they add, and its check covers them.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

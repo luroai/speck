@@ -37,7 +37,7 @@ The script for the panel's pop-ups is in a file of its own, so a ticket that cha
 - Any change to what the pop-ups do.
 
 ## Notes
-- Asked for by the user on 2026-10-24, to be done after 0.15.0 goes out, so that tickets changing different parts of the panel can build side by side. The 0.15.0 panel work (0453 to 0471) was one chain of about 19 tickets, built one at a time for 5 to 6 hours with 4 build slots, because every ticket changed `templates/panel.js` (2,378 lines) or `templates/panel.css` (841 lines). A move with no visible change, as 0430 to 0433 were.
+- Asked for by the user on 2026-10-24, for release 0.15.0 and to be built next, so that tickets changing different parts of the panel can build side by side. The 0.15.0 panel work (0453 to 0471) was one chain of about 19 tickets, built one at a time for 5 to 6 hours with 4 build slots, because every ticket changed `templates/panel.js` (2,378 lines) or `templates/panel.css` (841 lines). A move with no visible change, as 0430 to 0433 were.
 - Same pattern as 0432 (Settings) and 0433 (the rest of the script).
 - Today: `fullTicket`, `openFull`, `renderFull`, the document pop-up and `renderForeman` with `drawRunLog` are in `templates/panel.js`.
 - Waits for 0472: both change `panel.html` and the server's list of files.
