@@ -92,7 +92,7 @@
     padding-left: max(16px, env(safe-area-inset-left), calc(16px + round(down, calc((100% - 720px) / 2), 1px))); padding-right: max(16px, env(safe-area-inset-right), calc(16px + round(up, calc((100% - 720px) / 2), 1px))); }
   #foreman[hidden] { display: none; }
   #foreman .top { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; min-width: 0; margin: 0; padding: 7px 6px 6px 10px; color: var(--bezel-ink); background: var(--bezel); border-radius: 12px 12px 0 0; }
-  #foreman .top .title { display: inline-flex; align-items: center; gap: .25em; min-width: 0; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 22px; line-height: 1; white-space: nowrap; } /* 0470: in the header's lettering (.bezel .name), in the title row's light ink */
+  #foreman .top .title { display: inline-flex; align-items: center; gap: .25em; min-width: 0; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 22px; line-height: 1; white-space: nowrap; color: inherit; } /* 0470: in the header's lettering (.bezel .name). In the title row's light ink, over every .title's text colour */
   #foreman .top .title::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; background: var(--lcd-red); } /* speck's own dot, as the header's: decoration, so a screen reader passes over it */
   #foreman .fm-body { display: flex; flex-direction: column; min-height: 0; padding: 0 4px 4px; color: var(--bezel-ink); background: var(--bezel); border-radius: 0 0 12px 12px; }
   #foreman .fm-stale { flex: none; padding: 0 6px 6px; }
