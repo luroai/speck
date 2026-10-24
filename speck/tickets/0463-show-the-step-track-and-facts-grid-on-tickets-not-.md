@@ -28,7 +28,7 @@ An open ticket that hasn't started shows the same step track and table as one in
 
 ## Acceptance criteria
 1. An open ticket in Plan's Tickets list, and an open ticket queued in Build, shows under its title the same step track as 0461 and the same table as 0462: the same bars, colours, cell sizes, lines, label and value places, one line per value with `…` and the full text as its tooltip. All five bars and names are grey, as no step has started.
-2. Its table's six cells are `After` (the tickets it waits on, as links, or `unlocks` and the tickets it unlocks when it starts a chain, or `—`), `Criteria` (how many), `Lint` (`passes`, or its errors and warnings in their colours), `Priority`, `Size · risk` and `Type`, in that order. In Build, the `After` cell is labelled `Waiting on`.
+2. Its table's six cells are `Status` (`Draft` for every ticket in Plan, `Queued` for a ticket queued in Build), `After` (the tickets it waits on, as links, or `unlocks` and the tickets it unlocks when it starts a chain, or `—`), `Lint` (`passes`, or its errors and warnings in their colours), `Priority`, `Size · risk` and `Type`, in that order, so `Status` is the top-left cell, where a ticket in flight has `Now`. In Build, the `After` cell is labelled `Waiting on`.
 3. The line joined by dots is gone from these open tickets, and what's under it (the criteria, the priority control, Set ready, Full ticket and so on) stays as it is. A closed ticket keeps its one short line. Checked in a real browser at 320 px and 390 px, with a value longer than its cell.
 4. A screen reader reads each cell as its label and value. No test that passed before this change fails.
 
@@ -39,6 +39,7 @@ An open ticket that hasn't started shows the same step track and table as one in
 ## Notes
 - Asked for by the user on 2026-10-24, after choosing the step track and facts grid for open build tickets (0461, 0462; mock-ups at https://claude.ai/artifact/BANvGzKKYy1p4AjBipypTb): "that layout should just be the template for all tickets in plan and ship. And also when you open a ticket in the full screen mode, like that table should be there as well."
 - Today: `ticketHead` draws a Plan ticket's line (priority, size, risk, criteria, lint, after or unlocks), and `queuedLine` a queued one's, both in `templates/panel.js`.
+- The user asked on 2026-10-24 for the top-left cell to say `Draft` for any ticket in Plan. The number of criteria isn't in the table, as an open Plan ticket lists its criteria under it.
 - Waits for 0462, whose table this reuses.
 
 ## In plain words
