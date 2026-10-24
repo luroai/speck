@@ -105,7 +105,7 @@ test('0257 AC2: the view shows each group in order, each setting\'s name and val
   await p.settle();
   await open(p);
   const text = pane(p).textContent;
-  const at = GROUPS.map(([title]) => text.indexOf(title === 'Watching' ? 'Foreman' : title)); // the panel's own heading for it (0485)
+  const at = GROUPS.map(([title]) => text.indexOf(title)); // 0485: the panel titles the Watching group as the server does
   assert.ok(at.every(i => i >= 0), `every group is shown: ${text}`);
   assert.deepEqual([...at].sort((a, b) => a - b), at, 'in order');
   const rows = p.all(pane(p)).filter(n => /\bsetting\b/.test(n.className || ''));

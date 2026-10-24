@@ -38,7 +38,7 @@ test('0474 AC1: on the fake page, speck\'s screen, its frame and the tabs still 
   const f = { word: 'Needs you 2', tone: 'needs', building: [], ready: [], held: [], blocked: [] };
   const p = fakePage([{ tickets: [], ideas: [], foreman: f, run: { on: true } }]);
   await p.settle();
-  assert.equal(p.byId('run').attrs['aria-label'], 'The Foreman: Needs you 2', 'the screen\'s button says the word');
+  assert.match(p.byId('run').title, /^speck: Needs you 2 · /, 'the screen\'s button says the word in its tooltip (0485)');
   assert.equal(p.byId('bezel').className, 'bezel needs', 'the frame\'s edge is in the needs-you colour');
   assert.equal(p.byId('tab-build').attrs['aria-selected'], 'true', 'Build opens with the page');
   p.press(p.byId('tab-plan'));
@@ -89,6 +89,6 @@ test('0474 AC3: the fake page runs panel-header.js from its file, in the page\'s
   const p = fakePage([{ tickets: [T('0001', 'building')], ideas: [], page: 'ffffffffffffffff' }]);
   assert.deepEqual(p.scripts, ['panel-model.js', 'lcd.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
   await p.settle();
-  assert.match(p.byId('run').attrs['aria-label'], /^The Foreman: Reload page/, 'a page whose stamp differs says it is out of date');
+  assert.match(p.byId('run').title, /^speck: Reload page · /, 'a page whose stamp differs says it is out of date');
   assert.match(p.byId('run').title, /newer code/);
 });

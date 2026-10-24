@@ -15,7 +15,7 @@ export const AGENTS_FOUND = Object.freeze({ agents: [
 export function YOURS_VIEW({ cursor = false, cursorInstalled = cursor, testco = false, long = false } = {}) {
   const codexWhy = long ? 'Codex isn\'t signed in: run codex login, then reload this view. https://github.com/openai/codex/blob/main/docs/authentication-and-signing-in.md' : 'Codex isn\'t signed in: run codex login.';
   return { list: true, agents: [
-    { id: 'claude', name: 'Claude Code', kind: 'agent', yours: true, ready: true, installed: true, signed_in: true, roles: ['builder', 'Foreman'] },
+    { id: 'claude', name: 'Claude Code', kind: 'agent', yours: true, ready: true, installed: true, signed_in: true, roles: ['builder', 'speck'] },
     { id: 'codex', name: 'Codex', kind: 'agent', yours: true, ready: false, installed: true, signed_in: false, why: codexWhy, roles: ['reviewer'] },
     { id: 'cursor', name: 'Cursor', kind: 'agent', yours: cursor, ready: cursorInstalled, installed: cursorInstalled, signed_in: cursorInstalled, roles: [],
       ...(cursorInstalled ? {} : { why: 'Cursor isn\'t installed.', install: 'Install the Cursor CLI: https://cursor.com/docs/cli/installation' }) },

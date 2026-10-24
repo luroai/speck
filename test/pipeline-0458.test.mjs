@@ -57,7 +57,7 @@ test('0458 AC1: none of Right now\'s headings or lines are in the pop-up', async
   const t = pop(p).textContent;
   for (const h of RIGHT_NOW) assert.ok(!p.all(pop(p)).some(n => n.textContent === h), `no ${h}`);
   for (const gone of [/Right now/, /Fixing:/, /Every build waits on main/, /Nothing is/, /0004 waiting for 0003/, /is shipping/, /Which one\?/,
-    /Waiting for you/, /The Foreman went with the recommendation/, /is being looked into/, /Should it keep the old test/, /resumed its build/,
+    /Waiting for you/, /speck went with the recommendation/, /is being looked into/, /Should it keep the old test/, /resumed its build/,
     /The Foreman hasn't/, /No ready ticket/]) assert.doesNotMatch(t, gone);
   assert.ok(!p.all(pop(p)).some(n => /\bforeman-ask\b/.test(n.className || '')), 'no Foreman question in it');
 });
@@ -113,7 +113,7 @@ test('0458 AC3: a Foreman\'s question keeps its Answer and Dismiss buttons on it
   const queue = p.byId('queue');
   const ask = p.all(queue).find(n => /\bforeman-ask\b/.test(n.className || ''));
   assert.ok(ask, 'the card has the Foreman\'s question');
-  assert.match(ask.textContent, /The Foreman asks you: Should it keep the old test\?/);
+  assert.match(ask.textContent, /speck asks you: Should it keep the old test\?/);
   for (const b of ['Answer', 'Dismiss']) assert.ok(buttons(p, ask).includes(b), `its ${b} button`);
   assert.match(queue.textContent, /Which one\?/, 'the blocked ticket\'s question is on its card');
 });

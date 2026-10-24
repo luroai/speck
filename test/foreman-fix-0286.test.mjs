@@ -77,9 +77,9 @@ test('0286 AC1: the Settings view shows foreman_fixing in its Foreman group, und
   p.press(p.byId('settings-open'));
   await p.settle();
   const groups = p.byId('settings').children.filter(n => n.className === 'sgroup');
-  assert.equal(groups.filter(n => n.textContent.startsWith('Foreman')).length, 1, 'one Foreman group');
+  assert.equal(groups.filter(n => n.textContent.startsWith('Watching')).length, 1, 'one Foreman group');
   const foreman = groups[0];
-  assert.ok(foreman.textContent.startsWith('Foreman'), 'first');
+  assert.ok(foreman.textContent.startsWith('Watching'), 'first');
   assert.ok(p.all(p.byId('settings').children.find(n => n.className === 'switches')).some(n => n.id === 'run-switch'), 'with the speck run switch above it (0396)');
   const pick = p.all(foreman).find(n => n.tagName === 'select' && n.attrs['aria-label'] === 'foreman_fixing');
   assert.ok(pick, 'a list to pick from');

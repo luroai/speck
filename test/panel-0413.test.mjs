@@ -105,7 +105,7 @@ test('0413 AC4: while the panel runs newer code, the top row reads "Reload page"
   await p.settle();
   assert.deepEqual(wordDots(p.draw()), expected('RELOAD PAGE', 4, 2));
   assert.equal(p.byId('bezel').className, 'bezel', 'the word is Reload page now');
-  assert.match(p.byId('run').attrs['aria-label'], /Reload page/);
+  assert.match(p.byId('run').title, /^speck: Reload page · /); // 0485: the word is in its tooltip
   p.press(p.byId('run'));
   await p.settle();
   const reload = p.all(p.byId('foreman')).find(n => n.id === 'foreman-reload');
@@ -113,11 +113,12 @@ test('0413 AC4: while the panel runs newer code, the top row reads "Reload page"
   assert.equal(reload.textContent, 'Reload page');
 });
 
-test('0413 AC5: the screen\'s accessible name includes the Foreman\'s word', async () => {
+// 0485: its accessible name is speck's screen, and the word is in its tooltip, which a screen reader reads with it.
+test('0413 AC5: the screen\'s tooltip includes speck\'s word', async () => {
   for (const word of ['Off', 'Idle', 'Building 2', 'Needs you 1']) {
     const p = screenPage([state(foreman({ word }))]);
     await p.settle();
-    assert.ok(p.byId('run').attrs['aria-label'].includes(word), `${word}: ${p.byId('run').attrs['aria-label']}`);
+    assert.ok(p.byId('run').title.startsWith(`speck: ${word} · `), `${word}: ${p.byId('run').title}`);
   }
   assert.match(headerHtml(), /<canvas class="lcd" id="screen" aria-hidden="true">/, 'the canvas is drawn for the eye only');
 });
@@ -136,7 +137,7 @@ test('0413 AC1, AC4 and AC5: at 320 px the frame fits without sideways scrolling
       window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? new Response(JSON.stringify(STATE), { status: 200, headers: { 'content-type': 'application/json' } }) : real(url, opts);
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && /Needs you 1/.test(document.querySelector('#run').getAttribute('aria-label') || '')`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && /Needs you 1/.test(document.querySelector('#run').title || '')`, 'the panel');
     await b.js('document.fonts.ready.then(() => true)');
     const m = await b.js(`(() => {
       const r = s => { const b = document.querySelector(s).getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, height: b.height }; };
@@ -189,7 +190,7 @@ test('0413 AC2: with foreman_fixing fix, a short word is drawn in full and the n
     const p = screenPage([state(foreman({ word: 'Idle', fixing }))]);
     await p.settle();
     assert.deepEqual(wordDots(p.draw()), expected('IDLE', 4, 2), fixing);
-    assert.equal(p.byId('run').attrs['aria-label'], 'The Foreman: Idle');
+    assert.match(p.byId('run').title, /^speck: Idle · /);
   }
 });
 
