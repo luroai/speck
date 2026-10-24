@@ -1,7 +1,7 @@
 ---
 id: "0493"
 title: "Call a ticket that isn't code a task in the docs"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T20:41:21.961Z"
 ---
 # 0493 · Call a ticket that isn't code a task in the docs
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 After 0492, speck calls a ticket that isn't code a task, with `kind: code | task`, but its skills, the brief and the README still describe document tasks and `task: document`. Agents following the skills would keep writing the old field.
@@ -43,7 +43,9 @@ speck's skills and docs describe `kind: code | task`, and a ticket that isn't co
 - Self-check: no changes. The brief's new paragraph on `kind` matches `ticketKind` and `outputProblem`; `test/ship-0355.test.mjs` now finds the brief's lines about how a task ships by the word task rather than document task.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's own instructions to its agents and its design guide now call a ticket that isn't code a task, and tell agents to write `kind: task` on one, matching what the panel and speck's messages already say. Nothing speck does changes: an agent making a ticket for an email draft, a plan or a report now writes the new field rather than the old one.
+
+To see it, ask for a ticket that drafts an email: it should come out with `kind: task` and an output folder. The guide still says older tickets with the old line keep working.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,3 +55,63 @@ speck's skills and docs describe `kind: code | task`, and a ticket that isn't co
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (tidy-ups only, no inbox notes): the title of the 0355 test about how a task ships still says "document task"; it isn't shown to people.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c642c0d71b4dcbbdf402c158c3782d861a0160c5",
+    "session": "fresh",
+    "thread_id": "01a16fa9-0e42-7993-91af-900942e38039",
+    "builder_response": "- Tests run: `speck test --related test/docs-0493.test.mjs test/ship-0355.test.mjs` (107 files: this ticket's test, the 0355 test it changed, and every test file naming a changed file). 1119 pass, 0 fail.\n- The README already calls a ticket that isn't code a task and never named `task:`, so it is unchanged; per 0491 the README isn't read by tests for this, so AC1's README part is for review.\n- `test/ship-0355.test.mjs` found the brief's lines about how a task ships by the words \"document task\"; it now finds them by the word task, asserting the same facts.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 188083,
+      "cached_input_tokens": 133248,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 666,
+      "reasoning_output_tokens": 38
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T20:45:33.853Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The three passing AC1 tests in test/docs-0493.test.mjs check the skills and brief for current field names and prohibited legacy terms. docs/brief.md:172 contains the sole legacy-field exception. README.md:7 already calls non-code work a task and contains no legacy field names."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md:24 explicitly instructs agents to use kind: task for jobs such as email drafts, plans and reports, with an output: folder relative to outputs/."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The document rules remain unchanged in docs/brief.md:79 and both skills. CHANGELOG.md and docs/releases/ have no changes. The supplied related-test run reports 1119 passes, zero failures and three skips. The adjusted ship-0355 test retains its existing factual assertions."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The guidance now calls non-code work a task and tells agents to use the new kind field. Document review rules remain intact, and the tests reported no regressions. Ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
