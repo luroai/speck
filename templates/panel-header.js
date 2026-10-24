@@ -39,7 +39,7 @@ if (typeof matchMedia === 'function') {
 // renderer and a canvas are there, and kept between redraws. 0414: under a dotted line speck shows the pipeline
 // (speckNow), with a caption, centred, under a second dotted line. The Screen draws every frame, even with reduced
 // motion, so speck changes as soon as the pipeline does; reduced motion holds the poses and the word still.
-const SCREEN = { cols: 160, rows: 72, top: 11, floor: 61, line: 63, cap: 65, speed: 16, pause: 1800 };
+const SCREEN = { cols: 160, rows: 72, top: 11, floor: 61, line: 63, cap: 65, speed: 16, pause: 1800, fit: 25 };
 const NEEDS_YOU = /^Needs you \d+$/;
 let screen = { word: '', since: null, lcd: null, cast: null, still: false, shown: null };
 function drawScreen(word) {
@@ -83,9 +83,12 @@ function screenFrame(s, t) {
   LCD.render(sp, screen.cast ? screen.cast.frame(t) : { B: { t }, props: [] });
   const CW = now.cap.length * 6 - 1;
   p.clip = [4, SCREEN.line + 1, cols - 4, SCREEN.rows];
-  p.text(now.cap, Math.max(4, Math.round(cols / 2 - CW / 2)), SCREEN.cap, { font: F5, align: 'left', valign: 'top' });
+  p.text(now.cap, Math.max(4, Math.round(cols / 2 - CW / 2)), SCREEN.cap, { font: capFont(), align: 'left', valign: 'top' });
   p.clip = null;
 }
+// 0495: the caption's font, the 5 × 7 one with … added, which the design's font doesn't have.
+let CAP_FONT = null;
+const capFont = () => CAP_FONT || (CAP_FONT = { ...LCD.F5, g: { ...LCD.F5.g, '…': ['.....', '.....', '.....', '.....', '.....', '.....', '#.#.#'] } });
 // 0414: speck's poses: the landing page's states (its `building` is the laptop), three of the panel's, and the
 // console mock's clipboard, `watch`.
 const rim = a => ({ x: 20 * Math.cos(a), y: -24 + 20 * Math.sin(a) });
@@ -120,7 +123,7 @@ const PASTIMES = [['eating', 'A CUP OF TEA'], ['playing', 'A QUICK GAME OF CHESS
 // rest: when the word's rhythm started, which of its turns has picked a pastime, and which one (0436). 0446: st and
 // seenAt, the last board noted and when; hiddenAt, when the page was hidden; back, set when it's shown again until the
 // next board is noted.
-const speckDo = { seen: null, queue: [], playing: null, writing: null, word: null, rest: null, last: null, woke: false, n: 0,
+const speckDo = { f: null, seen: null, queue: [], playing: null, writing: null, word: null, rest: null, last: null, woke: false, n: 0,
   st: null, seenAt: null, hiddenAt: null, back: null };
 // 0436: a pastime at random, never the one before.
 function pickPastime(d) {
@@ -133,6 +136,7 @@ const byId = (a, b) => a.localeCompare(b, 'en', { numeric: true });
 const draftText = t => JSON.stringify([t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes, t.priority, t.size, t.risk, t.kind, t.type, t.after]);
 function noteBoard(st, f, word) {
   const d = speckDo, now = Date.now();
+  d.f = f && typeof f === 'object' ? f : null; // 0495: for the captions between events
   if (word !== d.word) { d.word = word; d.woke = false; d.rest = { since: now, turn: -1, i: null }; }
   if (!st || !Array.isArray(st.tickets)) return;
   const fresh = st !== d.st;
@@ -208,6 +212,18 @@ function speckNow(now) {
   if (d.writing && now < d.writing.until) { d.woke = true; return { pose: 'building', cap: `WRITING ${d.writing.id}` }; }
   return speckRests(now);
 }
+// 0495: the caption between events says what the top row doesn't: which tickets, or why. It fits the row (0414) in
+// SCREEN.fit characters, cut with … where it doesn't.
+const capCut = c => (c.length > SCREEN.fit ? `${c.slice(0, SCREEN.fit - 1).trimEnd()}…` : c);
+// The ids, each once, lowest first.
+const capIds = ids => [...new Set(ids.filter(id => id != null && id !== '').map(String))].sort(byId);
+// A caption naming `ids`: `one` around a single id, and for more `<id> AND <id>` or `<id> AND <n> MORE`, after
+// one[0], then `many`. `none` when there are none.
+function idsCap(ids, one, many, none = '') {
+  if (!ids.length) return none;
+  if (ids.length === 1) return capCut(`${one[0]}${ids[0]}${one[1]}`);
+  return capCut(`${one[0]}${ids[0]} AND ${ids.length === 2 ? ids[1] : `${ids.length - 1} MORE`}${many}`);
+}
 // What speck does between events, by the Foreman's word. 0436: while it's Building, Shipping or Waiting, speck
 // watches (or is grumpy) for 2 minutes, then passes the time for 1, and so on; while it's Idle it changes pastime every
 // 3 minutes and naps after 15. An event or writing starts the rhythm again, and wakes it from a nap.
@@ -216,11 +232,15 @@ function speckRests(now) {
   if (d.woke) { d.woke = false; r.since = now; r.turn = w === 'Idle' && r.i !== null ? 0 : -1; }
   const el = Math.max(0, now - r.since);
   let m, own = null;
-  if (w === 'Off') return { pose: 'sleeping', cap: 'SPECK RUN IS OFF' };
-  if ((m = /^Needs you (\d+)$/.exec(w))) return { pose: 'ask', cap: `${m[1]} NEEDS YOU` };
-  if ((m = /^Building (\d+)$/.exec(w))) own = { pose: 'watch', cap: m[1] === '1' ? 'WATCHING 1 BUILD' : `WATCHING ${m[1]} BUILDS` };
-  else if (/^Shipping\b/.test(w)) own = { pose: 'watch', cap: 'WATCHING THE SHIP' };
-  else if (/^Waiting\b/.test(w)) own = { pose: 'grumpy', cap: 'WAITING' };
+  const f = d.f || {}, list = v => (Array.isArray(v) ? v : []);
+  if (w === 'Off') return { pose: 'sleeping', cap: 'TURN ON AUTO-BUILD' };
+  if (NEEDS_YOU.test(w)) {
+    const yours = f.fixing === 'off' ? [] : list(f.blocked).filter(b => b && !b.foreman).map(b => b.id);
+    return { pose: 'ask', cap: idsCap(capIds([...yours, ...list(f.agent && f.agent.asks).map(a => a && a.id)]), ['', ' HAS A QUESTION'], ' ASK YOU') };
+  }
+  if (/^Building \d+$/.test(w)) own = { pose: 'watch', cap: idsCap(capIds(list(f.building)), ['WATCHING ', ''], '', 'WATCHING THE BUILDS') };
+  else if (/^Shipping\b/.test(w)) own = { pose: 'watch', cap: capCut(f.base ? `ON ITS WAY TO ${f.base.toUpperCase()}` : 'ON ITS WAY') };
+  else if (/^Waiting\b/.test(w)) own = { pose: 'grumpy', cap: capCut(String(f.why || '').replace(/\s+/g, ' ').trim().replace(/^waiting /i, '').toUpperCase()) };
   if (own) {
     const every = SPECK.watch + SPECK.pastime, turn = Math.floor(el / every);
     if (el - turn * every < SPECK.watch) return own;

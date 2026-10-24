@@ -73,7 +73,8 @@ export function switchingReady(tickets, running, own) {
 // its questions to you counted under Needs you. 0317: `fixing` is given back, each blocked ticket says whether the
 // Foreman will take its recommendation (foreman_will on the board's ticket), those aren't counted under Needs you, and
 // `took` lists the recommendations the Foreman took in the 24 hours before `now`, newest first.
-export function foremanView({ run, record, tickets, fixing = 'tell', agent = null, now = Date.now() }) {
+// 0495: `base` is the base branch's name, given back as it is, and `why` the full reason while the word is Waiting, '' otherwise.
+export function foremanView({ run, record, tickets, fixing = 'tell', agent = null, now = Date.now(), base = '' }) {
   const on = !!(run && run.on);
   const rec = on && record && record.lock === run.pid ? record : null;
   const all = list(tickets).filter(t => t && typeof t === 'object');
@@ -104,14 +105,15 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
   if (ship && ship.hold) held.push(`Shipping is ${ship.hold.message}`);
   const ag = agent && typeof agent === 'object' ? agent : { running: null, waiting: [], did: [], asks: [] };
   const asks = list(ag.asks).filter(a => a && !blocked.some(b => b.id === a.id));
-  const view = (word, tone) => ({ word, tone, fixing, fixing_says: Object.hasOwn(FIXING_SAYS, fixing) ? FIXING_SAYS[fixing] : '', building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag });
+  const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), fixing, fixing_says: Object.hasOwn(FIXING_SAYS, fixing) ? FIXING_SAYS[fixing] : '', building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag });
   if (!on) return view('Off', 'off');
   if ((yours && fixing !== 'off') || asks.length) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length}`, 'bad');
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
   if (building.length) return view(`Building ${building.length}`, 'ok');
-  const why = switching ? 'new code' : ship && ship.hold ? 'on hold' : ready.find(r => SHORT[r.kind]) ? SHORT[ready.find(r => SHORT[r.kind]).kind]
-    : ship && ship.refused.length ? 'new commit' : null;
-  return why ? view(`Waiting: ${why}`, 'warn') : view('Idle', 'idle');
+  const short = ready.find(r => SHORT[r.kind]);
+  const [why, full] = switching ? ['new code', held[0]] : ship && ship.hold ? ['on hold', held[held.length - 1]] : short ? [SHORT[short.kind], short.why]
+    : ship && ship.refused.length ? ['new commit', ship.refused[0].message] : [null, ''];
+  return why ? view(`Waiting: ${why}`, 'warn', full) : view('Idle', 'idle');
 }
 
 // The Foreman for `speck status`: its status, then each ready ticket's reason and shipping's state, one per line.

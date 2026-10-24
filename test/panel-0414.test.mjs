@@ -12,7 +12,7 @@ test('0414 AC1: a new draft or a draft\'s changed text puts speck at the laptop,
   const p = speckPage([board([...building(), d0500]), board([...building(), d0500, T('0501', 'draft')]),
     board([...building(), { ...d0500, problem: 'Two.' }, T('0501', 'draft')]), board([...building(), { ...d0500, problem: 'Two.' }, T('0501', 'draft')])]);
   await p.settle();
-  shows(p, 'watch', 'WATCHING 2 BUILDS'); // a draft already on the board when the page loads doesn't count
+  shows(p, 'watch', 'WATCHING 0362 AND 0363'); // a draft already on the board when the page loads doesn't count
   await p.next();
   shows(p, 'building', 'WRITING 0501');
   p.go(20000);
@@ -22,7 +22,7 @@ test('0414 AC1: a new draft or a draft\'s changed text puts speck at the laptop,
   shows(p, 'building', 'WRITING 0500');
   await p.next(); // nothing changed
   p.go(1500);
-  shows(p, 'watch', 'WATCHING 2 BUILDS');
+  shows(p, 'watch', 'WATCHING 0362 AND 0363');
 });
 
 test('0414 AC1: with several new drafts at once, it names the newest', async () => {
@@ -34,22 +34,22 @@ test('0414 AC1: with several new drafts at once, it names the newest', async () 
 
 const EVENTS = [
   ['a ticket starts shipping', board(building()), board([T('0362', 'approved', { auto_ship: true, ship: { running: true, auto: true } }), T('0363', 'building')], { word: 'Shipping 0362', ship: { running: '0362', waiting: [] } }),
-    'ship', 'SHIPPING 0362', 3200, 'watch', 'WATCHING THE SHIP'],
-  ['a ticket ships', board(building()), board([T('0362', 'done'), T('0363', 'building')], { word: 'Building 1' }), 'celebrating', '0362 SHIPPED', 6000, 'watch', 'WATCHING 1 BUILD'],
-  ['a ticket is blocked', board(building()), board([T('0362', 'blocked'), T('0363', 'building')], { word: 'Needs you 1' }), 'ask', '0362 HAS A QUESTION', 6000, 'ask', '1 NEEDS YOU'],
+    'ship', 'SHIPPING 0362', 3200, 'watch', 'ON ITS WAY TO MAIN'],
+  ['a ticket ships', board(building()), board([T('0362', 'done'), T('0363', 'building')], { word: 'Building 1' }), 'celebrating', '0362 SHIPPED', 6000, 'watch', 'WATCHING 0363'],
+  ['a ticket is blocked', board(building()), board([T('0362', 'blocked'), T('0363', 'building')], { word: 'Needs you 1' }), 'ask', '0362 HAS A QUESTION', 6000, 'ask', '0362 HAS A QUESTION'],
   ['the Foreman agent asks you something', board(building()),
     board(building(), { word: 'Needs you 1', agent: { running: null, waiting: [], did: [], asks: [{ id: '0363', question: 'Which?', at: '2026-10-23T12:00:00Z' }] } }),
-    'ask', '0363 HAS A QUESTION', 6000, 'ask', '1 NEEDS YOU'],
+    'ask', '0363 HAS A QUESTION', 6000, 'ask', '0363 HAS A QUESTION'],
   ['a ticket is approved and waits for you', board(building()), board([T('0362', 'approved', { auto_ship: false }), T('0363', 'building')], { word: 'Building 1' }),
-    'flag', '0362 IS READY TO SHIP', 6000, 'watch', 'WATCHING 1 BUILD'],
+    'flag', '0362 IS READY TO SHIP', 6000, 'watch', 'WATCHING 0363'],
   ['the Foreman agent starts looking into a ticket', board(building()),
-    board(building(), { agent: { running: { id: '0363', what: 'its ship was refused' }, waiting: [], did: [], asks: [] } }), 'confused', 'LOOKING INTO 0363', 6000, 'watch', 'WATCHING 2 BUILDS'],
+    board(building(), { agent: { running: { id: '0363', what: 'its ship was refused' }, waiting: [], did: [], asks: [] } }), 'confused', 'LOOKING INTO 0363', 6000, 'watch', 'WATCHING 0362 AND 0363'],
 ];
 for (const [what, before, after, pose, cap, ms, back, backCap] of EVENTS) {
   test(`0414 AC2: when ${what}, speck plays its animation once with ${cap}, then goes back`, async () => {
     const p = speckPage([before, after, after]);
     await p.settle();
-    shows(p, 'watch', 'WATCHING 2 BUILDS');
+    shows(p, 'watch', 'WATCHING 0362 AND 0363');
     await p.next();
     shows(p, pose, cap);
     p.go(ms - 200);
@@ -64,7 +64,7 @@ test('0414 AC2: an approved ticket that auto_ship ships while speck run is on pl
   const p = speckPage([board(building()), board([T('0362', 'approved', { auto_ship: true }), T('0363', 'building')], { word: 'Building 1' })]);
   await p.settle();
   await p.next();
-  shows(p, 'watch', 'WATCHING 1 BUILD');
+  shows(p, 'watch', 'WATCHING 0363');
 });
 
 test('0414 AC2: the push is one loop of the panel\'s ship pose, from its start', async () => {
@@ -85,11 +85,14 @@ test('0414 AC2: the push is one loop of the panel\'s ship pose, from its start',
   assert.equal(c.cur, 'watch', 'one loop, 3.2 seconds');
 });
 
-const WORDS = [['Off', 'sleeping', 'SPECK RUN IS OFF'], ['Building 3', 'watch', 'WATCHING 3 BUILDS'], ['Building 1', 'watch', 'WATCHING 1 BUILD'],
-  ['Shipping 0362', 'watch', 'WATCHING THE SHIP'], ['Needs you 2', 'ask', '2 NEEDS YOU'], ['Waiting: new code', 'grumpy', 'WAITING'], ['Waiting', 'grumpy', 'WAITING']];
-for (const [word, pose, cap] of WORDS) {
+// 0495: each caption says what the top row doesn't.
+const WORDS = [['Off', 'sleeping', 'TURN ON AUTO-BUILD'], ['Building 3', 'watch', 'WATCHING 0362 AND 2 MORE', { building: ['0362', '0363', '0364'] }],
+  ['Building 1', 'watch', 'WATCHING 0362', { building: ['0362'] }], ['Shipping 0362', 'watch', 'ON ITS WAY TO MAIN'],
+  ['Needs you 2', 'ask', '0362 AND 0363 ASK YOU', { blocked: [{ id: '0363' }, { id: '0362' }] }],
+  ['Waiting: new code', 'grumpy', 'SPECK RUN IS SWITCHING', { why: 'speck run is switching' }], ['Waiting: build slots', 'grumpy', 'ALL 2 BUILD SLOTS IN USE', { why: 'all 2 build slots in use' }]];
+for (const [word, pose, cap, f = {}] of WORDS) {
   test(`0414 AC3: the word "${word}" shows ${pose} with ${cap}`, async () => {
-    const p = speckPage([board(building(), { word })]);
+    const p = speckPage([board(building(), { word, ...f })]);
     await p.settle();
     shows(p, pose, cap);
     p.go(/^(Off|Needs you)/.test(word) ? 60 * MIN : 2 * MIN - 1000); // 0436: the others pass the time after 2 minutes
@@ -137,12 +140,12 @@ test('0414 AC3: a build\'s stages change nothing, and no model is asked', async 
   const p = speckPage([board([T('0362', 'building')], { word: 'Building 1' }), board([T('0362', 'reviewing', { review_running: 'reviewer' })], { word: 'Building 1' }),
     board([T('0362', 'reviewing', { review_running: 'builder', self_check: 'Self-check: no changes' })], { word: 'Building 1' })]);
   await p.settle();
-  shows(p, 'watch', 'WATCHING 1 BUILD');
+  shows(p, 'watch', 'WATCHING 0362');
   const calls = p.calls.length;
   await p.next();
-  shows(p, 'watch', 'WATCHING 1 BUILD');
+  shows(p, 'watch', 'WATCHING 0362');
   await p.next();
-  shows(p, 'watch', 'WATCHING 1 BUILD');
+  shows(p, 'watch', 'WATCHING 0362');
   assert.equal(p.calls.length, calls + 2, 'only the two boards are fetched: no model is asked');
 });
 
@@ -154,18 +157,18 @@ test('0414 AC4: two events at once play one after the other', async () => {
   p.go(6100);
   shows(p, 'ask', '0363 HAS A QUESTION');
   p.go(6100);
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
 
 test('0414 AC4: what happened before the page loaded doesn\'t play', async () => {
   const p = speckPage([board([T('0362', 'done'), T('0363', 'blocked'), T('0364', 'approved', { auto_ship: false }), T('0365', 'approved', { ship: { running: true } })],
     { word: 'Needs you 1', agent: { running: { id: '0363', what: 'x' }, waiting: [], did: [], asks: [{ id: '0364', question: 'Q', at: '2026-10-23T11:00:00Z' }] } })]);
   await p.settle();
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 AND 0364 ASK YOU');
 });
 
 test('0414 AC5: every caption fits on the screen, centred, without scrolling', async () => {
-  const caps = ['WATCHING 99 BUILDS', '99 NEEDS YOU', 'SPECK RUN IS OFF', 'WATCHING THE SHIP', 'NAPPING', 'WRITING 0414', 'SHIPPING 0414', '0414 SHIPPED',
+  const caps = ['WATCHING 0414 AND 98 MORE', '0414 AND 98 MORE ASK YOU', 'TURN ON AUTO-BUILD', 'ON ITS WAY TO MAIN', 'NAPPING', 'WRITING 0414', 'SHIPPING 0414', '0414 SHIPPED',
     '0414 HAS A QUESTION', '0414 IS READY TO SHIP', 'LOOKING INTO 0414'];
   for (const c of caps) assert.ok(c.length * 6 - 1 <= 152, `${c} fits between the 4-dot margins`);
   for (const [random] of IDLE) {
@@ -175,9 +178,9 @@ test('0414 AC5: every caption fits on the screen, centred, without scrolling', a
     assert.deepEqual(a, b, 'the caption doesn\'t move');
     for (const d of a) { const x = Number(d.split(',')[0]); assert.ok(x >= 4 && x <= 155, `inside the margins: ${d}`); }
   }
-  const p = speckPage([board(building(), { word: 'Building 99' })]);
+  const p = speckPage([board(building(), { word: 'Building 99', building: Array.from({ length: 99 }, (_, i) => String(414 + i).padStart(4, '0')) })]);
   await p.settle();
-  shows(p, 'watch', 'WATCHING 99 BUILDS', 1000, false);
+  shows(p, 'watch', 'WATCHING 0414 AND 98 MORE', 1000, false);
   assert.equal(p.made().rows, 72, 'a row of dots for the caption under speck');
 });
 
@@ -186,12 +189,12 @@ test('0414 AC5: with reduced motion each animation is one still frame, and the c
   await p.settle();
   const speck = dots => dots.filter(([, r]) => r > 11 && r < 63).map(d => d.join()).sort();
   assert.deepEqual(speck(p.draw(1000, false)), speck(p.draw(4321, false)), 'watching is still');
-  shows(p, 'watch', 'WATCHING 2 BUILDS', 1000, false);
+  shows(p, 'watch', 'WATCHING 0362 AND 0363', 1000, false);
   await p.next();
   shows(p, 'celebrating', '0362 SHIPPED', 5000, false);
   assert.deepEqual(speck(p.draw(5000, false)), speck(p.draw(7777, false)), 'celebrating is still');
   p.go(6100);
-  shows(p, 'watch', 'WATCHING 1 BUILD', 9000, false);
+  shows(p, 'watch', 'WATCHING 0363', 9000, false);
 });
 
 test('0414 AC4: every event seen plays, however many, including a ticket blocked and the Foreman asking about it at once', async () => {
@@ -206,5 +209,5 @@ test('0414 AC4: every event seen plays, however many, including a ticket blocked
   p.go(6100);
   shows(p, 'ask', '0510 HAS A QUESTION');
   p.go(6100);
-  shows(p, 'ask', '2 NEEDS YOU');
+  shows(p, 'ask', '0510 HAS A QUESTION');
 });
