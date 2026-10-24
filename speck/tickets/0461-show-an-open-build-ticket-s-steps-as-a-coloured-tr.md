@@ -1,7 +1,7 @@
 ---
 id: "0461"
 title: "Show an open build ticket's steps as a coloured track"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0461 · Show an open build ticket's steps as a coloured track
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 An open ticket in the Build lane says where it is in the pipeline only as a word in a line of facts joined by dots, which wraps untidily on a phone. You can't see at a glance how far through the five steps it is.
