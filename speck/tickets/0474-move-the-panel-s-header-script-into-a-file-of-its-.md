@@ -1,7 +1,7 @@
 ---
 id: "0474"
 title: "Move the panel's header script into a file of its own"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T14:28:14.801Z"
 ---
 # 0474 · Move the panel's header script into a file of its own
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 After 0473, the panel's header script, speck's screen, its words and the tabs, is still in `templates/panel.js` with the cards' script, so a ticket that changes the header and one that changes the cards build one after the other.
@@ -47,7 +47,7 @@ The script for the panel's header is in a file of its own, so a ticket that chan
 - Pictures: none, because nothing anyone sees changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing looks or works differently: the panel is exactly as it was. Behind the scenes, the part of the panel's code that runs its header (speck's screen with its poses, words and clock, the dark frame's title row, and the Plan, Build and Shipped tabs) now lives in a file of its own. A change to the header no longer touches the main panel code, so it can be built at the same time as a change to the cards or the pop-ups. To see it, open the panel and watch speck's screen, switch between the tabs (by pressing them or with the arrow keys), and check that Build's tab shows how many things need you while another tab is open. If any of them behaves even slightly differently, that's a fault in this change. An open panel page still offers to reload when this new file changes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +57,70 @@ The script for the panel's header is in a file of its own, so a ticket that chan
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (tidy-ups and known limits, none for the inbox):
+- `foremanOf` and `pageStale` stay in panel.js, as the pop-ups use them too. Pressing speck's screen stays in panel-popups.js (0473).
+- The header's file loads after panel.js because it uses its helpers (`$`, `el`, `setText`, `within`) as it loads. Moving those helpers into a shared file of their own would let each area's file load in any order.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7814d7307b983709a3061b9b15fd16c452141446",
+    "session": "fresh",
+    "thread_id": "01a16e53-fc41-7603-99e0-574e149fc39c",
+    "builder_response": "- Tests run: `speck test --related` with test/panel-0474.test.mjs test/panel-0432.test.mjs test/panel-0433.test.mjs test/panel-0473.test.mjs test/pipeline-0415.test.mjs, plus every existing test file that names a changed file (302 files, 2685 tests, 0 failing, 3 skipped as always).\n- The move: the title row (the header's --head height and the project's tooltip), the renderer hookup (LCD, reducedMotion, the reduced-motion and zoom listeners), speck's screen and poses (SCREEN through speckRests) and the tabs (LANES through their listeners, plus the first drawTabs()) are in templates/panel-header.js. render()'s lines for the screen's word, the frame's edge and the screen button's label, aria-expanded and title are now drawHeader(f, stale) in the header's file, called from render() in the same place and order (before renderForeman and drawTabs). foremanOf and pageStale stay in panel.js (the pop-ups use them); pressing the screen stays in panel-popups.js (0473). lcd.js is untouched.\n- The moved lines are unchanged apart from comments and drawHeader: `diff <(git show main:templates/panel.js | sort) <(cat templates/panel.js templates/panel-header.js | sort)` shows only the new header comment, render()'s shorter comment and drawHeader's wrapper lines.\n- AC2: panel-header.js loads after panel.js (whose helpers it uses as it loads) and before panel-popups.js; the server serves it read afresh as text/javascript with no-store, and puts it in the page's stamp. 0473's server test loops over every script the page loads, now including this one, and 0474's own test checks it directly, plus a missing file's plain message.\n- AC3: fakePage already runs each script tag's file in order (0473); 0474 AC3 checks panel-header.js is among them and the page runs.\n- AC4: tests that list the page's scripts or read moved code include the new file: 0432 AC1, 0433 AC1 (drawScreen), 0473 AC2/AC3, and 0415 AC5's file-opened page inlines the new script.\n- No pictures: nothing anyone sees changes.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 145441,
+      "cached_input_tokens": 90752,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 668,
+      "reasoning_output_tokens": 21
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T14:33:08.777Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-header.js contains the title-row setup, renderer hookup, screen and pose functions, and tab handling. panel.js delegates to drawHeader(). Comparison against main confirms the extraction preserves the moved logic; templates/lcd.js is unchanged. Both 0474 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel.html loads panel-header.js after panel.js and before the pop-ups. scripts/panel.mjs includes it in fresh file serving and the page stamp. Passing 0474 AC2 tests check loading, content type, fresh reads and stamp changes; existing 0473 AC2 tests cover all page assets and the reload offer."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "test/support/panel.mjs executes each script file in page order before DOMContentLoaded. The passing 0474 AC3 test exercises fakePage with panel-header.js and verifies the rendered stale-page status without a browser."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The recorded related-test run passed 2682 tests, with zero failures and three skips. Changes to existing tests update script lists and moved-code locations without weakening behaviour checks. The production diff stays within the extraction's scope."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel’s header script now lives in its own file, with its behaviour preserved. The server loads changes correctly and existing pages still offer to reload when outdated. The relevant tests passed, and I found no blocking issues."
+  }
+}
+```
+
+</details>
