@@ -1,7 +1,7 @@
 ---
 id: "0484"
 title: "Keep a closed Build card's tag whole on a phone"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-24-keep-a-closed-card-s-bug-or-document-tag-whole-on-a-phone.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0483"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T18:44:36.293Z"
 
 ---
 # 0484 · Keep a closed Build card's tag whole on a phone
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 On a phone, a closed Build card with a long status line, such as `Foreman will answer · Review 2 · 99:59 · bug`, cuts its bug, fix or document tag off with an ellipsis, sometimes to just `…`. A lone `…` after the time looks as if the time is cut off, and the tag can't be read or tapped until the card is opened.
