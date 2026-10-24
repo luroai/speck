@@ -1,7 +1,7 @@
 ---
 id: "0473"
 title: "Move the panel's pop-ups' script into a file of its own"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0472"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T14:13:03.735Z"
 approved: "2026-10-24T14:24:44.533Z"
+finished: "2026-10-24T14:27:59.039Z"
 
 ---
 # 0473 · Move the panel's pop-ups' script into a file of its own
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Most of the panel's script is in one file, `templates/panel.js`, so almost every ticket that changes how part of the panel behaves changes that file, and speck builds such tickets one after another even when they change unrelated parts.
