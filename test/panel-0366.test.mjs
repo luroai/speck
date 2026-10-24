@@ -113,7 +113,7 @@ test('0366 AC4: the pop-up stays up to date as the panel refreshes, keeping its 
   assert.match(pop(p).textContent, /first/);
   await tick(p);
   assert.equal(pop(p).hidden, false, 'still open');
-  assert.match(pop(p).textContent, /secondfirst/);
+  assert.match(pop(p).textContent, /firstsecond/); // 0459: the newest line at the bottom
   assert.equal(closeOf(p), close, 'Close is kept');
   assert.ok(within(p.focused(), pop(p)), 'the focus stays in the pop-up');
 });
