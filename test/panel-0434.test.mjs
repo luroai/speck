@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, round, fakePage, items, queueRows, shippedRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles } from './support/panel.mjs';
+import { T, full, round, fakePage, items, queueRows, shippedRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles, factsOf } from './support/panel.mjs';
 
 // ---------- 0434: each closed ticket is two single lines, with a grid of moving lights while an agent works ----------
 
@@ -102,7 +102,11 @@ test('0434 AC3: a closed Build ticket shows no priority, size or risk; an open o
   await p.settle();
   const tags = n => p.all(statusOf(n)).filter(x => /\btag\b/.test(x.className));
   for (const id of ['0901', '0903', '0905', '0906', '0426', '0910']) assert.deepEqual(tags(card(p, id)), [], `${id}: no tags while closed`);
-  for (const id of ['0901', '0426']) {
+  // 0462: an open one in flight shows them in its facts' cells instead
+  click(topOf(card(p, '0901')));
+  await p.settle();
+  assert.deepEqual(factsOf(card(p, '0901')).slice(3, 5), [['Priority', 'P3'], ['Size · risk', 'M · low']], '0901: open, it shows its priority, size and risk');
+  for (const id of ['0426']) {
     click(topOf(card(p, id)));
     await p.settle();
     const [prio, size, risk] = tags(card(p, id));
@@ -112,7 +116,6 @@ test('0434 AC3: a closed Build ticket shows no priority, size or risk; an open o
     assert.ok(!p.byId('tag-tip').hidden, `${id}: its priority opens its tip`);
     assert.equal(p.byId('tag-tip').textContent, prio.tip);
   }
-  assert.equal(statusOf(card(p, '0901')).textContent, ' Build · 01:07 · P3 · M · low');
 });
 
 test('0434 AC4: a closed ticket\'s title is one line, cut off with an ellipsis, with the whole title as its tooltip; an open one wraps', async () => {

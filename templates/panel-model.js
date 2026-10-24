@@ -38,7 +38,23 @@ const SHORT = {
 };
 function doing(t, shipping) {
   const d = doingNow(t, shipping);
-  return { ...d, short: Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null };
+  const short = Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null;
+  return { ...d, short, word: wordOf(t, d, short) };
+}
+// 0462: what it's doing in a word or two, for an open card's Now cell: reviewing, fixing, checking or writing while an
+// agent is at work, otherwise the sentence's short words, or the sentence when it's short already.
+function wordOf(t, d, short) {
+  if (!d.working) return short || d.sentence;
+  if (d.round !== null) return 'Reviewing';
+  if (/ is fixing /.test(d.sentence)) return 'Fixing';
+  return d.sentence === 'Checking its own work' ? 'Checking' : 'Writing';
+}
+// 0462: who is at work on it, for an open card's Builder or Reviewer cell: the reviewer by its model, as the status line
+// names it, while it reviews a round, otherwise the builder by its own name. A dash for a ticket that names neither.
+function workerOf(t, d) {
+  if (d.round !== null && d.round !== undefined && d.by) return { label: 'Reviewer', value: d.by };
+  const name = typeof t.builder_label === 'string' && t.builder_label.trim() ? t.builder_label.trim() : typeof t.builder === 'string' ? t.builder.trim() : '';
+  return { label: 'Builder', value: name ? `${name[0].toUpperCase()}${name.slice(1)}` : '–' };
 }
 function doingNow(t, shipping) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };

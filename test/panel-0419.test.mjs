@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, openQueueRows } from './support/panel.mjs';
+import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, openQueueRows, factsOf } from './support/panel.mjs';
 
 // ---------- 0419: a closed Plan or Build ticket is a title line and one line of details ----------
 
@@ -75,10 +75,11 @@ test('0419 AC3: the priority opens its menu, size and risk explain themselves, a
     assert.equal(n.tip, tip);
     assert.equal(n.attrs.role, 'button');
   }
-  click(topOf(card(p, '0501'))); // 0434: a Build ticket's tags show while it's open
+  click(topOf(card(p, '0501'))); // 0434: a Build ticket's priority, size and risk show while it's open
   await p.settle();
-  const [bPrio, bSize, bRisk] = tags(card(p, '0501'));
-  assert.deepEqual([bPrio.tip, bSize.tip, bRisk.tip], ['Priority 3: built after P0 to P2 tickets', 'M: several files or one new component', 'Low risk: waits for you to ship it']);
+  // 0462: in its facts' cells, as plain values
+  const cells = factsOf(card(p, '0501'));
+  assert.deepEqual([cells[3], cells[4]], [['Priority', 'P3'], ['Size · risk', 'M · low']]);
   // the ids are Go to ticket links, in Plan and in Build
   const gotos = n => p.all(detailsOf(n)).filter(x => x.className === 'goto').map(x => x.attrs['aria-label']);
   assert.deepEqual(gotos(card(p, '0419')), ['Go to ticket 0418']);
@@ -96,7 +97,7 @@ test('0419 AC4: a question, a recommendation, a Ship hint and a message still sh
   await p.settle();
   await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const under = id => card(p, id).children.slice(1).map(c => c.className).filter(c => !/^(full-open|log)$/.test(c)); // then its buttons and log, as it's open
-  for (const id of ['0601', '0602', '0603', '0604']) assert.deepEqual(linesOf(card(p, id)), ['line', 'progress'], `${id}: the two lines first`);
+  for (const id of ['0601', '0602', '0603', '0604']) assert.deepEqual(linesOf(card(p, id)), ['line', 'facts'], `${id}: the title and (0462) its facts first`);
   assert.deepEqual(under('0601'), ['question', 'act']);
   assert.ok(p.all(card(p, '0601')).some(n => n.className === 'go-with' && n.textContent === 'Go with the recommendation'), 'the recommendation button');
   assert.deepEqual(under('0602'), ['question', 'act foreman-will']);
@@ -195,7 +196,9 @@ test('0419 AC1 and AC2: a ticket missing its priority, size or risk, or with no 
   assert.equal(detailsOf(card(p, '0803')).textContent, 'Queued');
   assert.equal(detailsOf(card(p, '0804')).textContent, ' Review 1 · The reviewer · 00:05');
   for (const id of ['0802', '0803', '0804']) { click(topOf(card(p, id))); await p.settle(); } // 0434: the tags show while it's open
-  assert.equal(detailsOf(card(p, '0802')).textContent, ' Build');
   assert.equal(detailsOf(card(p, '0803')).textContent, 'Queued');
-  assert.equal(detailsOf(card(p, '0804')).textContent, ' Review 1 · The reviewer · 00:05 · P2 · low');
+  // 0462: an open one in flight has its facts in cells, each always there, with a dash for what it doesn't have
+  const cell = (id, label) => factsOf(card(p, id)).find(([l]) => l === label)[1];
+  assert.deepEqual(['Time', 'Priority', 'Size · risk'].map(l => cell('0802', l)), ['–', '–', '– · –']);
+  assert.deepEqual(['Time', 'Priority', 'Size · risk'].map(l => cell('0804', l)), ['00:05', 'P2', '– · low']);
 });
