@@ -61,12 +61,11 @@ const BUTTONS = {
   'Settings in the frame': ['button', '.bezel .settings-open'],
   'Appearance\'s choices': ['button', '#settings .looks [role="radio"]'],
   'the priority menu\'s numbers': ['button', '.prio-menu button'],
-  'a closed tab': ['button', '.tab'],
-  'the open tab': ['button', '.tab', '.tab[aria-selected="true"]'],
+  // 0477: the lanes' names in the strip under speck's screen are no longer boxed tabs
 };
 
 test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu have an 8 px corner radius', () => {
-  for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], / tab$/.test(what) ? '8px 8px 0 0' : '8px', what); // a tab's bottom sits on the lane's line
+  for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], '8px', what);
   for (const sel of ['select', 'textarea', '.tag', '.prio-menu', '.toggle'])
     assert.equal(resolve(['button', sel])['border-radius'], '8px', sel);
   for (const sel of ['input:not([type="checkbox"]):not([type="radio"])', 'textarea', 'select'])
@@ -76,13 +75,7 @@ test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu ha
   assert.equal(resolve(['textarea', '#full-ticket .changes-note'])['border-radius'], '8px', 'the note for changes');
 });
 
-test('0428 AC1: the open tab\'s top corners are rounded 8 px', () => {
-  assert.equal(resolve(['button', '.tab', '.tab[aria-selected="true"]'])['border-radius'], '8px 8px 0 0');
-  assert.ok(!(parseFloat(resolve(['.tabs']).gap) > 0), 'no gap, so each tab is still a third of the row (0425)');
-  // 0453: the tab before draws the edge they share, rather than the two overlapping half a pixel, so its edges are on whole pixels
-  assert.equal(resolve(['.tab + .tab'])['border-left-width'], '0', 'two tabs share the edge between them, so it shows once');
-  assert.equal(resolve(['.tab[aria-selected="true"]'])['z-index'], '1', 'the open tab\'s edge is drawn over its neighbours\'');
-});
+// 0477: the tabs, and their corners, are gone: the lanes are a strip of their names.
 
 test('0428 AC2: cards, the build log, the stats, Settings\' groups and the pop-ups have a 12 px corner radius', () => {
   const BOXES = {
@@ -99,7 +92,6 @@ test('0428 AC3: every button has a border on all four sides, in a colour 0161 ch
     const got = sides(sels);
     for (const [d, s] of Object.entries(got)) {
       assert.ok(s.width && parseFloat(s.width) > 0, `${what}: its ${d} border is ${s.width}`);
-      if (what === 'the open tab' && d === 'bottom') { assert.equal(s.colour, '--panel', 'the open tab\'s bottom is its lane\'s colour (0457)'); continue; }
       assert.ok(['--line', '--text', '--bad', '--bezel-muted'].includes(s.colour), `${what}: its ${d} border is in ${s.colour}`);
     }
   }
