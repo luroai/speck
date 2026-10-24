@@ -45,7 +45,7 @@ Every button on the panel shows all four sides of its border on a phone.
 - Self-check: moved the rounding from the next frame to straight after each change, as More stats → Fewer stats wrapped for a frame in its old width (0420's test caught it); the tabs' width rounds to the nearest pixel, as a third of 288 px came out a hair under 96 and rounded down to 95 (0425's test caught it).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a phone, every button in the panel now shows its full outline, all four sides. Before, buttons such as Details in the Shipped list and Close on a full ticket lost their left edge. To see it, open the panel on your phone and look at the Shipped list's Details buttons, a full ticket's Close and Settings' Save: each has a complete box round it. On a screen that isn't high-resolution, button outlines are now a full pixel thick so they don't fade. The three tabs look the same as before. Worth a look: buttons can be up to a pixel wider than before, which shouldn't be noticeable.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +55,10 @@ Every button on the panel shows all four sides of its border on a phone.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox notes):
+  - Only the left and right edges are rounded to whole pixels, as in 0281. The tops and bottoms can still fall between pixels, though none was reported missing.
+  - A button stretched to fill a container that isn't a whole number of pixels wide gets rounded up, so it can reach up to a pixel past it. No such button was found in the views checked.
+  - In a browser without `:has()`, the side the open tab shares with the tab before it is drawn in the line colour rather than the text colour.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -118,6 +122,71 @@ Every button on the panel shows all four sides of its border on a phone.
     ],
     "escalation_question": "",
     "summary": "The tested Details, Close, Save and Review pack buttons pass the browser checks, and corners and contrast are preserved. However, the Settings unsaved-changes dialog still puts its buttons between whole pixels on some phones. Fix that layout and cover the omitted button views before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "59b2aeec4d5fdb2e120825c9f61924cd1157bc88",
+    "session": "continued",
+    "thread_id": "01a16d3a-a169-7e53-8717-2268d7c59752",
+    "builder_response": "- Tests run: test/panel-0453.test.mjs test/panel-0281.test.mjs test/panel-0428.test.mjs test/panel-0420.test.mjs test/panel-0425.test.mjs test/panel-0161.test.mjs, plus the related files speck test --related chose.\n- F1: fixed. templates/panel.css: `#settings-unsaved .box` is now placed from the left at `max(0px, round(down, calc((100% - 360px) / 2), 1px))` (start-aligned, with `margin: 0 auto` before it for a browser without round()), so the box and its buttons sit on whole pixels. test/panel-0453.test.mjs now opens Settings' unsaved-changes question and the Foreman's view in every size, adds an odd 393 px phone width at 3x to SIZES, and the AC2 picture check covers the question's Save and the Foreman's Close. Without the CSS fix the AC1 test fails at \"393 px at 3x, Settings' question about unsaved changes: save-all \"Save\"'s right edge at 175.5 px\"; with it, it passes. The Foreman's view in the test repo shows only Close (no Answer or Reload), as speck run isn't running; those buttons get the same rounding from the page script and the same 1 px rule below 2dppx.\n",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 394672,
+      "cached_input_tokens": 333568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1633,
+      "reasoning_output_tokens": 336
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T09:28:58.924Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js wholeButtons rounds bordered button widths; templates/panel.css rounds column and tab positions, supplies shared tab edges and increases borders below DPR 2. The passing 0453 AC1 AC3 browser test now includes the unsaved Settings dialog at 393px and DPR 3."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing 0453 AC2 real-browser screenshot test checks all four border sides at 390px and DPR 3 for Details, Close, Save, Review pack and document buttons, now including the unsaved Settings dialog and Foreman's Close."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0453 geometry and selected-tab tests check existing corner radii and edge colours. Existing panel-0428 and panel-0161 tests also passed, covering corners and contrast."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.css",
+        "issue": "The unsaved Settings dialog previously placed its buttons on fractional CSS pixels at odd phone widths.",
+        "suggested_fix": "Round the dialog's horizontal placement and add browser coverage at an odd phone width, including its buttons and the Foreman view.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The dialog alignment issue is fixed and covered at the phone width that exposed it. Browser checks pass for border visibility, corners and contrast. No blocking findings remain."
   }
 }
 ```
