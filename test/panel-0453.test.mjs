@@ -74,6 +74,8 @@ const VIEWS = [
   ['a review pack with a document', `closeFull(), packOf = ${PACK}, fullId = '0002', fullFrom = null, render(), true`, `!!document.querySelector('#full-ticket .pack-document')`],
   ['a document', `docOpen = { id: '0002', path: 'outputs/0002/plan.md', state: 'ok', text: '# Plan\\n\\nWords.' }, drawDoc(), true`, `!document.getElementById('doc-view').hidden && !!document.querySelector('#doc-view .close')`],
   ['Settings', `closeDoc(), closeFull(), document.getElementById('settings-open').click(), true`, `document.querySelectorAll('#settings .setting').length >= 10 && !!document.querySelector('#settings .save-all')`],
+  ['Settings\' question about unsaved changes', `settingsLeaving = { saving: false }, renderLeaving(), true`, `!document.getElementById('settings-unsaved').hidden && document.querySelectorAll('#settings-unsaved button').length === 3`],
+  ['the Foreman', `keepEditing(), closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .close')`],
 ];
 // Opens the panel at a size and pixel ratio, then each view in turn, calling `each(view, buttons)` with what MEASURE gives.
 async function eachView(b, port, width, dpr, each) {
@@ -91,8 +93,8 @@ async function eachView(b, port, width, dpr, each) {
 
 const skip = findChrome() ? false : 'needs Chrome or Chromium';
 
-// The phone widths, an iPhone's odd one among them, and a wide window at an odd width, which centres the column.
-const SIZES = [[320, 1], [375, 3], [390, 3], [400, 2], [1280, 1], [1281, 2]];
+// The phone widths, odd ones among them, and a wide window at an odd width, which centres the column.
+const SIZES = [[320, 1], [375, 3], [390, 3], [393, 3], [400, 2], [1280, 1], [1281, 2]];
 test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole pixels with a border at least a device pixel on all four sides, and keeps its corners', { skip }, async () => {
   const r = repo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
@@ -102,7 +104,7 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
     for (const [width, dpr] of SIZES) {
       await eachView(b, panel.port, width, dpr, (view, all) => {
         const at = `${width} px at ${dpr}x, ${view}`;
-        assert.ok(all.length >= 2, `${at}: buttons found (${all.length})`);
+        assert.ok(all.length >= 1, `${at}: buttons found (${all.length})`);
         for (const o of all) {
           seen.add(o.text);
           // AC1: its left and right edges on whole pixels, or a tab's left edge on the tab before it, which draws that side
@@ -126,7 +128,7 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
         }
       });
     }
-    for (const name of ['Details', 'More stats', 'Close', 'Save', 'Review pack', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'outputs/0002/plan.md', 'Plan', 'Build', 'Light'])
+    for (const name of ['Details', 'More stats', 'Close', 'Save', 'Review pack', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'outputs/0002/plan.md', 'Plan', 'Build', 'Light', 'Discard', 'Keep editing'])
       assert.ok(seen.has(name) || [...seen].some(t => t.startsWith(name)), `the ${name} button was checked`);
   } finally { await b.close(); await stop(panel); }
 });
@@ -165,6 +167,8 @@ const NAMED = [
   ['a document', '#doc-view .close'],
   ['Settings', '#settings .close'],
   ['Settings', '#settings .save-all'],
+  ['Settings\' question about unsaved changes', '#settings-unsaved .save-all'],
+  ['the Foreman', '#foreman .close'],
 ];
 const sidesShown = (png, r, dpr) => {
   const px = (x, y) => png.at(Math.max(0, Math.min(png.w - 1, x)), Math.max(0, Math.min(png.h - 1, y)));
@@ -180,7 +184,7 @@ const sidesShown = (png, r, dpr) => {
     right: side(along(T, B), y => [[R, y], [R - 1, y]], y => [R - 5, y]),
   };
 };
-test('0453 AC2: on a phone at a pixel ratio of 3, Details, Close, Save, Review pack and a document\'s button show all four sides of their border', { skip }, async () => {
+test('0453 AC2: on a phone at a pixel ratio of 3, Details, Close, Save, Review pack, a document\'s button and the Foreman\'s Close show all four sides of their border', { skip }, async () => {
   const r = repo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');

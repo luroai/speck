@@ -504,6 +504,7 @@
   #settings-unsaved { position: fixed; inset: 0; z-index: 11; display: grid; place-items: center; padding: 16px; background: rgba(20, 20, 19, .2); }
   #settings-unsaved[hidden] { display: none; }
   #settings-unsaved .box { width: min(360px, 100%); padding: 16px; background: var(--panel); border: .5px solid var(--line); box-shadow: 0 8px 24px rgba(20, 20, 19, .18); }
+  #settings-unsaved .box { box-sizing: border-box; justify-self: start; margin: 0 auto; margin-left: max(0px, round(down, calc((100% - 360px) / 2), 1px)); } /* 0453: centred on a whole pixel, so its buttons are too */
   #settings-unsaved h3 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 18px; font-weight: 600; }
   #settings-unsaved p { margin: 8px 0 0; color: var(--muted); }
   #settings-unsaved .choices { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
