@@ -236,9 +236,9 @@ test('0285 AC5: the record is saved only when it changes, and isn\'t taken for a
   assert.deepEqual(fs.readdirSync(runs), ['run.foreman.json'], 'no temporary file left');
 });
 
-test('0285 AC5: the brief names the file speck run records the Foreman in', () => {
+test('0285 AC5: the brief names the folder speck run records its status in', () => { // 0488: the folder, as the file's name says foreman
   const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  assert.ok(brief.includes('speck/.cache/runs/run.foreman.json'));
+  assert.match(brief, /^\| `speck status \[--json\]` \|[^\n]*`speck\/\.cache\/runs\/`/m);
   const runs = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-foreman-'));
   saveForeman(runs, rec());
   assert.deepEqual(fs.readdirSync(runs), ['run.foreman.json']);
