@@ -1,7 +1,7 @@
 ---
 id: "0453"
 title: "Draw all four sides of every button on a phone"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0449"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:08:45.305Z"
 approved: "2026-10-24T09:29:09.939Z"
+finished: "2026-10-24T09:33:59.056Z"
 
 ---
 # 0453 · Draw all four sides of every button on a phone
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a phone, some buttons lose a side of their border: the Shipped list's Details button and the full ticket's Close button show no left edge. Their borders are half a CSS pixel and their edges can fall between device pixels, so the phone doesn't draw that side. 0281 fixed the same thing for Settings' info buttons and boxes.
