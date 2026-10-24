@@ -246,7 +246,7 @@ test('0050 AC1-AC5: in a real browser, selections and the build message scroll s
     assert.equal(await sel(), 'Should the', 'kept while another ticket changes');
     assert.equal(await b.js(`document.querySelector('${exit}').scrollTop`), scrolled, 'the scroll position stayed');
     // AC3: a Shipped row.
-    const ship = '#shipped tr td:first-child .title-link'; // the title, in a link from 0137 until 0141
+    const ship = '#shipped tr td:first-child .title'; // the title, in a link from 0137 until 0141, opening the card since 0466
     await b.js(openLane('shipped')); // 0410
     const at = await b.js(`document.querySelector('${ship}').lastChild.textContent.indexOf('Shipped')`);
     await b.js(`(() => { const t = document.querySelector('${ship}').lastChild, r = document.createRange(); r.setStart(t, ${at}); r.setEnd(t, ${at} + 7); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
