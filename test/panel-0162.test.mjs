@@ -45,19 +45,19 @@ test('0162 AC1: the three fixed hints are gone from the page', async () => {
 
 // ---------- AC2 ----------
 
-// 0410: Build is a tab now, which says "Nothing in flight or ready" beside its name, and its lane says so too.
-test('0162 AC2: with nothing in flight or ready, Build says "Nothing in flight or ready"; a ready ticket brings its full layout back', async () => {
+// 0410: Build is a tab now. 0449: an empty lane says "Nothing building" in its message alone, and its counts line is hidden.
+test('0162 AC2: with nothing in flight or ready, Build says "Nothing building"; a ready ticket brings its full layout back', async () => {
   const p = fakePage([STATE({ queue: false }), STATE(), STATE({ queue: false })]);
   await p.settle();
-  const empty = () => p.byId('queue').children.map(n => [n.className, n.textContent]);
-  assert.equal(p.byId('queue-n').textContent, 'Nothing in flight or ready');
-  assert.deepEqual(empty(), [['empty', 'Nothing in flight or ready.']], 'the lane says so');
+  const empty = () => p.byId('queue').children.map(n => [n.className, n.children[0].textContent]);
+  assert.equal(p.byId('queue-n').hidden, true);
+  assert.deepEqual(empty(), [['empty idle', 'Nothing building']], 'the lane says so');
   await refresh(p);
   assert.equal(p.byId('queue-n').textContent, '0 in flight · 1 queued');
   assert.equal(queueRows(p).length, 1);
   await refresh(p);
-  assert.deepEqual(empty(), [['empty', 'Nothing in flight or ready.']], 'and again once it has gone');
-  assert.equal(p.byId('queue-n').textContent, 'Nothing in flight or ready');
+  assert.deepEqual(empty(), [['empty idle', 'Nothing building']], 'and again once it has gone');
+  assert.equal(p.byId('queue-n').hidden, true);
 });
 
 test('0162 AC2: a ticket in flight also brings the full layout back', async () => {
@@ -218,17 +218,19 @@ for (const width of [375, 1280]) {
     }, { width });
   });
 
-  // 0410: Build is a tab, open on load. 0425: its message is the first line of its lane, above the lane's list.
-  test(`0162 AC2: at ${width} px an empty Build says "Nothing in flight or ready" at the top of its lane and in its list`, skip, async () => {
+  // 0410: Build is a tab, open on load. 0425: its message is the first line of its lane, above the lane's list. 0449: an
+  // empty lane's counts line is hidden, and its list says "Nothing building" first.
+  test(`0162 AC2: at ${width} px an empty Build says "Nothing building" at the top of its lane, once`, skip, async () => {
     await withPanel(async b => {
       const s = await b.js(`(() => { const name = document.querySelector('#tab-build .tab-name'), n = document.getElementById('queue-n'), sec = document.getElementById('build-section');
-        return { text: n.innerText, inTab: sec.firstElementChild === n && n.getBoundingClientRect().bottom <= document.getElementById('queue').getBoundingClientRect().top + 0.5, name: name.innerText,
-          lane: document.getElementById('queue').innerText, open: !document.getElementById('build-section').hidden }; })()`);
+        return { text: n.innerText, shown: n.getBoundingClientRect().height > 0, name: name.innerText,
+          first: document.querySelector('#queue .idle').firstElementChild.innerText, lane: sec.innerText, open: !sec.hidden }; })()`);
       assert.equal(s.name, 'Build');
-      assert.equal(s.text, 'Nothing in flight or ready');
-      assert.ok(s.inTab, 'the message is the first line of the lane');
+      assert.equal(s.text, '');
+      assert.ok(!s.shown, 'the counts line takes no room');
       assert.ok(s.open, 'Build is open');
-      assert.equal(s.lane, 'Nothing in flight or ready.');
+      assert.equal(s.first, 'Nothing building');
+      assert.equal(s.lane.split('Nothing building').length - 1, 1, 'it says so once');
     }, { width, state: STATE({ queue: false }) });
   });
 
