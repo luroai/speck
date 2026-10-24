@@ -40,6 +40,8 @@ A collapsed shipped ticket's title starts as far from the top of its card as a B
 - Shipped cards are styled by `#shipped tr` and `#shipped .line .title` in `templates/panel-cards.css`.
 - Waits for nothing: no open ticket changes that file. 0452 waits for this one.
 - Failing before this build: none
+- Measured before the change: with a mouse too, the shipped title's text started 19 px down its card, against 8 px for Build and 7 px for Plan, as 0469 gave a mouse the touch screen's 44 px title line.
+- Self-check: the title's 44 px box is now drawn on top of the details line it reaches over, so a tap there still reaches the title; 0420's "details under the title" check now measures the title's text rather than its padded tap box. Known limit: its keyboard focus ring is 44 px tall around that box, as before, but now reaches about 6 px above the card's top edge.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
