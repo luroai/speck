@@ -39,6 +39,7 @@ Coming back to the panel plays at most the latest event, and only a recent one.
 - From the builder's self-check on 0414. The reviewer held that 0414's criterion 4 asked for every event to play, so this needed a product decision: the latest only, under a minute old.
 - speck's screen code is in `templates/panel.js`.
 - Waits for nothing.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
