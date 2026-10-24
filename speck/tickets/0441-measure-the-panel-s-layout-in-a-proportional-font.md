@@ -1,7 +1,7 @@
 ---
 id: "0441"
 title: "Measure the panel's layout in a proportional font"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-measure-the-panel-s-layout-in-a-proportiona
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T07:32:36.679Z"
+blocked_at: "2026-10-24T07:41:43.797Z"
 
 ---
 # 0441 · Measure the panel's layout in a proportional font
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 On the build machine, Chrome draws the panel's interface font (`system-ui` and the rest of 0427's stack) as Liberation Mono, a monospace font. So the browser tests that measure how text wraps and how tall cards are see a panel nobody uses, and 0427 had to ease some of their checks for a monospaced panel.
@@ -40,12 +41,19 @@ The tests' browser draws the panel in a proportional font, as people see it.
 - From the builder's note on 0427. Liberation Sans is installed here and is proportional; it's fontconfig's choice for `system-ui` that gives Liberation Mono.
 - Changes the test support and the eased tests only, so it waits for nothing.
 - Failing before this build: none
+- Found while building: 0434 had already replaced the checks 0427 eased in 0419's and 0420's tests (a closed ticket's title is now one cut-off line, and the building ticket's details exception is gone), so the eased checks left are 0151's and 0155's longest-title line limits (`most + 1` when the interface font measured as a monospace).
+- Found while building: 0427's monospace check measured a span added to the panel's body, which is a flex item as wide as the page whatever its text, so on the panel page it always said monospace. It now measures on a canvas.
+- Found while building: with the test browser's fontconfig file preferring Liberation Sans (Arial's widths), 0151's and 0155's longest title (68 characters, bold 17 px) takes 3 lines at 375 px: about 563 px of text in a 260 px column. Every other width passes the limit it had before 0427.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+In a proportional font, the longest test title ("Read the owner's private words from outside the repo in 0082's check") takes 3 lines on a 375 px phone screen, not the 2 that 0151's and 0155's tests allowed before 0427, so restoring that limit (criterion 2) makes those two tests fail (criterion 3). Should the 375 px limit become 3 lines for everyone, with no monospace exception (every other width keeps its old limit), or should the tests keep asking for 2 lines and fail until a separate ticket makes titles fit on a phone?
+
+Recommended: allow 3 lines at 375 px for everyone
+Changes what you'd notice: no
+Clear winner: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
