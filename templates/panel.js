@@ -1995,7 +1995,7 @@ function drawRunLog() {
     sec.replaceChildren(sec.children[0], el('div', 'run-log', null, el('p', 'none', lines && runLogFor === null ? 'Reading speck run\'s log…' : 'speck run hasn\'t written anything yet.')));
     return;
   }
-  const list = was && was.tagName === 'ol' && Array.isArray(runLogDrawn) ? was : el('ol', 'run-log');
+  const list = was && /^ol$/i.test(was.tagName || '') && Array.isArray(runLogDrawn) ? was : el('ol', 'run-log');
   // A box at its bottom, or just drawn, shows the new lines. A reader scrolled up stays where they are: the first line
   // they can see is found again, past the lines that dropped out at the top, and the box scrolled so it's where it was.
   const follow = list !== was || atBottom(list), rect = n => (n && typeof n.getBoundingClientRect === 'function' ? n.getBoundingClientRect() : null);
