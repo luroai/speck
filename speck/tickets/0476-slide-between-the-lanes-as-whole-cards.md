@@ -45,6 +45,7 @@ Each lane is a whole card, with its title at its top and its tickets under it, a
 - From the user testing the mock-up on a phone on 2026-10-24: sliding should be snappier, and the browser's own sideways scrolling (scroll snap) held on to an up-and-down scroll, so a sideways swipe straight after one didn't move the lanes. So the panel follows sideways swipes itself and leaves up-and-down scrolling to the browser: how is the builder's call. Version 3 of the mock-up does it with touch events, claiming a touch once it's gone 10 px more sideways than up or down, with `touch-action: pan-y` on each lane's scrolling list; a lane that's wider than the column (padding outside its width) leaves the next lane out of line.
 - Today: `openTab` in `templates/panel.js` (0410, 0425) shows one lane under the tabs; each lane's list scrolls on its own (`.lane-list`). Built for release 0.15.0.
 - Waits for 0469, and through it the file splits (0472 to 0474): 0469 changes the tabs' and cards' spacing, which this rebuilds. Re-chained by the user on 2026-10-24 so it builds side by side with 0471, which changes only the word in the screen's title row.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
