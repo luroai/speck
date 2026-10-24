@@ -41,6 +41,7 @@ A closed ticket shows its dependencies as one small chip at the end of its title
 - Asked for by the user on 2026-10-24, choosing option E in the mock-ups (https://claude.ai/artifact/BANvGzKKYy1p4AjBipypTb): "on the collapsed ticket, there's just a link or just a little icon which kind of shows you where it's the top of the dependency or it is linked to something else."
 - Today: `ticketHead` and `queuedLine` in `templates/panel.js` put `after`, `unlocks` or `waiting on` and the ids in the second line.
 - Waits for 0467: both change those functions.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
