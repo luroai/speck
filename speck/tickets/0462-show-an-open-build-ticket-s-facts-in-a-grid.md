@@ -1,7 +1,7 @@
 ---
 id: "0462"
 title: "Show an open build ticket's facts in a grid"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0462 · Show an open build ticket's facts in a grid
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 An open ticket in the Build lane lists what it's doing, its stage, its reviewer, its timer, priority, size, risk and type in one line joined by dots. On a phone the line wraps wherever the width runs out, so it looks untidy and nothing tells you which part matters.
