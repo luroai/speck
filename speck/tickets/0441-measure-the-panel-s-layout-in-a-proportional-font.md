@@ -17,7 +17,7 @@ created: 2026-10-24
 started: "2026-10-24T07:32:36.679Z"
 blocked_at: ""
 waited_seconds: 12
-approved: "2026-10-24T08:00:26.373Z"
+approved: "2026-10-24T08:23:41.537Z"
 
 ---
 # 0441 · Measure the panel's layout in a proportional font
@@ -64,13 +64,14 @@ Clear winner: yes
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 357,196
-- Elapsed since build started: 28 min
-- Changed lines: 8 (limit 5000)
+- Reviewer tokens: 893,744
+- Elapsed since build started: 51 min
+- Changed lines: 11 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Tidy-up: the 4 px word spacing on a note's ids also widens the space in "waiting on" and "unlocks". Spacing only after the commas would need the separators in their own elements.
@@ -129,6 +130,63 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The test browser now measures the panel using a proportional font, and layout checks no longer allow extra lines for monospace text. Small fixes preserve phone tap targets and scroll position. The agreed three-line phone title limit is applied consistently. One timing-sensitive test failed under load; the evidence supports a flaky clock comparison rather than a regression."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8ddfa4a10f2f8f68d26bfef4c3464fd4dfe3bb4f",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16cec-0a39-7cb2-bde7-9eb691f26a80",
+    "builder_response": "- Merge round after a refused ship (exit 16). On the ticket merged with main, these failed: 0443 AC3 at 375 px on a touch screen and with a mouse (\"every closed Build ticket's status line shows its words, stage and time whole\").\n- I merged main into the branch (`git merge main`), which had no conflicts.\n- Why they failed: in the proportional font, 0804's status line is one line but 15 px tall (45 px on touch) against a 14 px (44 px) line-height. The `bug` tag is in the monospace, and on the interface font's baseline its line box reaches a pixel past the line's. Fix: the details line's tags (`.item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag`) now use `vertical-align: top` rather than `baseline`. Plan's priority box (`.item.ticket .head .checks .prio`) does too, as 0151 AC2 requires every tag in the line to share one row.\n- 0140 AC2 (the layout is unchanged without the phone rules) failed under load in both related runs: a time's width changed between the two snapshots as the clock ticked, which a monospace never showed. The test now freezes the page's `Date` and waits one tick before taking its snapshots. I withdrew the inbox idea I had filed for this.\n- Tests run: `speck test --related` with test/panel-0443.test.mjs test/panel-0441.test.mjs test/panel-0151.test.mjs test/panel-0155.test.mjs test/panel-0060.test.mjs test/panel-0140.test.mjs test/panel-0164.test.mjs test/panel-0419.test.mjs (276 related files): 2524 passed, 0 failed.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 535260,
+      "cached_input_tokens": 444032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1288,
+      "reasoning_output_tokens": 68
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T08:23:38.535Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/panel.mjs launch() retains the proportional fontconfig settings. Passing 0441 AC1 measures different i/m widths with the panel body's font stack and confirms monospace remains monospace."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "0151 AC1 and 0155 AC3 retain unconditional browser-measured title limits, including the agreed three-line limit at 375 px. The 0419 and 0420 checks retain their merged behaviour without monospace exceptions. Both 0441 tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The related run records 2,524 passes and zero failures. Previously failing 0443 AC3 passes for touch and mouse, and 0151 AC2 verifies tag alignment. The 0140 snapshot comparison still checks all styles and boxes; freezing Date removes clock movement without weakening its layout assertions. Both widths pass."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change preserves proportional-font testing and the stricter layout checks. Tags now fit within status lines, and the snapshot test holds clocks still to avoid timing failures. All tests in the related run pass; no blocking concerns remain."
   }
 }
 ```
