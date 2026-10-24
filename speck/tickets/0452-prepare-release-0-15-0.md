@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0439", "0440", "0441", "0442", "0443", "0444", "0445", "0446", "0447", "0448", "0449", "0450", "0451", "0453", "0454", "0455", "0456", "0457", "0458", "0459", "0460", "0461", "0462", "0463", "0464", "0465", "0466", "0467", "0468", "0469", "0470", "0471", "0472", "0473", "0474", "0476", "0475", "0477", "0478", "0479", "0489", "0490", "0494"]                # ticket ids that must be done first
+after: ["0439", "0440", "0441", "0442", "0443", "0444", "0445", "0446", "0447", "0448", "0449", "0450", "0451", "0453", "0454", "0455", "0456", "0457", "0458", "0459", "0460", "0461", "0462", "0463", "0464", "0465", "0466", "0467", "0468", "0469", "0470", "0471", "0472", "0473", "0474", "0476", "0475", "0477", "0478", "0479", "0489", "0490", "0494", "0495"]                # ticket ids that must be done first
 created: 2026-10-24
 
 ---
