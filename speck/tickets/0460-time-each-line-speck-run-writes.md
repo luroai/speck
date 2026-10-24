@@ -41,6 +41,9 @@ Each line speck run writes says when it was written.
 - `run.log` is speck run's own output, sent to the file by `panelRunOn` in `scripts/panel-run.mjs` (0128), so started from a terminal, speck run's output is timed too.
 - The build log's time form is matched by `logParts` in `templates/panel.js`: `^(\d\d:\d\d:\d\d )`.
 - Failing before this build: none
+- Two existing tests matched `^speck run: watching` in run.log; that line now starts with its time, so both now expect `HH:MM:SS ` before it (`test/flaky-0207.test.mjs`, `test/panel-0220.test.mjs`).
+- The timing is switched on in `cmdRun` only when this process is `speck run` itself, as `scripts/speck.mjs` is at its 600-line limit, and so a test running `cmdRun` inside its own process isn't left timed.
+- Self-check: no changes (checked console.warn and console.info aren't used, an empty message, the `speck` bin and the worker's own process).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
