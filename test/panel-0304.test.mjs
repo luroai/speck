@@ -12,13 +12,13 @@ const FONT = path.join(ROOT, 'templates', 'fonts', 'Doto.ttf');
 const face = () => rules().find(r => r.sel === '@font-face' && /"Doto"/.test(get(r, 'font-family') || ''));
 const name = () => rule('.bezel .name'); // 0413: in the title row of speck's screen's frame
 
-test('0304 AC1: the header\'s "speck" is its own element, set in Doto at weight 900, at 20 px since 0413', () => {
+test('0304 AC1: the header\'s "speck" is its own element, set in Doto at weight 900, at 32 px since 0471', () => {
   assert.match(page(), /<div class="print"><b class="name">speck<\/b><span class="repo">/); // 0413: first in the title row of speck's screen's frame
   const r = name();
   assert.ok(r, 'a rule for the name');
   assert.match(get(r, 'font-family'), /^"Doto",/, 'Doto first');
   assert.equal(get(r, 'font-weight'), '900');
-  assert.equal(get(r, 'font-size'), '20px', 'the size 0413 sets speck at, in the frame\'s title row');
+  assert.equal(get(r, 'font-size'), '32px', 'the size 0471 sets speck at, to fill the frame\'s title row');
   assert.equal(get(r, 'line-height'), '1', 'no taller a line than its size, so the header keeps its height');
 });
 

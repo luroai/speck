@@ -3,13 +3,14 @@
      under the screen). The frame's title row has speck's name in the dot-matrix lettering, the project and base branch
      cut short with "…", and Settings at its right end. The screen under it shows the Foreman's word and speck. 0438: the
      frame is as wide as the tabs and cards under it, the screen at most 520 px, centred in it, and a dot in speck's
-     vermilion, its eye's colour, sits before the title. */
+     vermilion, its eye's colour, sits before the title. 0471: the title is 32 px, to fill the row the 44 px Settings
+     button gives it without making it taller, and its dot and the gap after it are sized from it. */
   header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; padding: calc(8px + env(safe-area-inset-top)) 16px 8px; border-bottom: .5px solid var(--line); background: var(--bg); }
   .bezel { box-sizing: border-box; padding: 5px 7px 7px; color: var(--bezel-ink); background: var(--bezel); border: 2px solid var(--bezel); }
   .bezel.needs { border-color: var(--bad); } /* the Foreman's word is "Needs you <n>" */
   .bezel .print { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 0 4px 2px; }
-  .bezel .name { flex: none; display: inline-flex; align-items: center; gap: 6px; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 20px; line-height: 1; color: var(--bezel-ink); }
-  .bezel .name::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--lcd-red); } /* decoration: no text, so a screen reader passes over it */
+  .bezel .name { flex: none; display: inline-flex; align-items: center; gap: .25em; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 32px; line-height: 1; color: var(--bezel-ink); }
+  .bezel .name::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; background: var(--lcd-red); } /* decoration: no text, so a screen reader passes over it */
   .bezel .repo { flex: 1 1 auto; min-width: 0; text-align: right; font: 400 12px/1.5 -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; color: var(--bezel-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bezel .repo code { font-size: inherit; color: inherit; }
   .bezel .settings-open { flex: none; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: .5px solid var(--bezel-muted); background: transparent; color: var(--bezel-muted); cursor: pointer; }
