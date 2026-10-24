@@ -40,6 +40,8 @@ A ticket waiting for you to ship it and one that needs you are clearly different
 - Green already means passing checks and shipping in 0426, so "approved, ready to ship" sits with them.
 - Waits for nothing: the colour tokens are in `templates/panel.css`.
 - Failing before this build: none
+- Words and edge use `--ok`, the green 0426 already sets at the shade 0161's 7:1 needs; the tint is a new `--ok-bg`, Cursor's green 8% over `--panel`, in place of `--idea-bg`, which only this card used. `--idea` stays for the document tag.
+- Self-check: no changes. Only comments that still called this card purple were brought up to date.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
