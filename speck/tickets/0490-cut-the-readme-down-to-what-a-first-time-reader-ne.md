@@ -1,7 +1,7 @@
 ---
 id: "0490"
 title: "Cut the README down to what a first-time reader needs"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0489"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T20:29:47.438Z"
+approved: "2026-10-24T20:37:37.235Z"
 
 ---
 # 0490 · Cut the README down to what a first-time reader needs
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The README is 285 lines, with paragraphs over 1,000 characters that list setting names, fallbacks and limits. Someone arriving from the launch post, often on a phone, has to wade through detail the brief already holds before they understand what speck does.
@@ -52,9 +53,14 @@ The README is now about half as long, short enough to read on a phone. The openi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 212,950
+- Elapsed since build started: 8 min
+- Changed lines: 224 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Tidy-up: "How it works" uses `speck set` and `speck run` before the Commands section says that `speck` stands for `node .speck/scripts/speck.mjs`. Worth a word earlier if readers trip on it. No idea note: wording only.
