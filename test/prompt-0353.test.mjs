@@ -67,7 +67,7 @@ test('0353 AC2: a document task\'s prompt tells the reviewer to read the documen
   const r = docRepo();
   const p = r.run('prompt', '1');
   assert.equal(p.status, 0, p.stderr);
-  assert.match(p.stdout, /This ticket is a task/); // 0492: a task, not a document task
+  assert.match(p.stdout, /\ba task\b/i); // 0492: a task, not a document task
   assert.match(p.stdout, /cite/i);
   assert.match(p.stdout, /missing test/i);
 });

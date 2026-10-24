@@ -1,7 +1,7 @@
 ---
 id: "0492"
 title: "Call a ticket that isn't code a task"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T20:02:10.113Z"
 ---
 # 0492 · Call a ticket that isn't code a task
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A ticket that isn't a code change is called a "document task" (`task: document`), but its build can do any job whose result it leaves in `outputs/`: an email draft, a plan, a report or research. "Document" undersells it, and the same word also means the README and `docs/` in speck's rules for acceptance criteria.
@@ -57,3 +57,76 @@ A ticket is code or a task, `kind: code | task`, and everything speck shows peop
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a354331244699be8010974342b9d6f9350421949",
+    "session": "fresh",
+    "thread_id": "01a16f8c-2600-7981-9c4d-311c8f9b5ad5",
+    "builder_response": "- Tests run: `speck test --related` on test/kind-0492.test.mjs test/task-0350.test.mjs test/pack-0359.test.mjs test/prompt-0353.test.mjs test/ship-0355.test.mjs test/panel-0361.test.mjs test/panel-0443.test.mjs test/panel-0462.test.mjs test/panel-0463.test.mjs test/panel-0484.test.mjs (161 related files). Four timing-sensitive tests failed under a load average of ~25 (0484's clock passing 100:00, 0232's CPU budget, 0384); their files (test/panel-0484.test.mjs, test/quick-waits-0232.test.mjs, test/review-wait-0384.test.mjs) passed on a re-run, appended to the test output.\n- Older tests that asserted the old words or `task: 'document'` fixtures now assert the new words and `kind: 'task'`; the facts they check are unchanged. test/support/documents.mjs and test/support/doc-ship.mjs swap the template's `kind: code` line for the old `task: document` line, so the 0354/0355/0359/0361 tests still run on an old-format ticket (AC2, AC4).\n- `templates/reviewer-document.md` keeps its file name (the prompt never shows it); its text now says task and result.\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 232426,
+      "cached_input_tokens": 168192,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 980,
+      "reasoning_output_tokens": 166
+    },
+    "tests": {
+      "failing": 4,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T20:14:09.552Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "core.mjs ticketKind, lint.mjs lintTicket and templates/ticket.md implement the new field, validation and output requirement. Passing 0492 AC1 tests exercise these paths and speck new."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "core.mjs ticketKind maps legacy values and gives kind precedence. Passing 0492 AC2 tests check compatibility, precedence, status JSON and preservation of the old line through speck set."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Output messages, reviewer-document.md, panel taskTag and panel-model.js use task/result. Passing 0492 AC3 tests exercise displayed tags, tooltips, accessible names and finished cards."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0492 AC4 tests exercise output folders, reviewer file listings, pack links, served files and automatic shipping prevention. Existing prompt, pack and shipping tests cover legacy tickets. The four initial failures passed on rerun in /tmp/speck-0492-tests.txt."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/kind-0492.test.mjs:112",
+        "issue": "The new assertion pins templates/reviewer-document.md to the exact heading “## The result”. This checks a document's wording and fails on a harmless heading edit, which the review rules explicitly identify as blocking.",
+        "suggested_fix": "Remove the exact reviewer-template heading assertion. Keep the checks for prohibited terminology and the behavioural checks that the prompt identifies the output folder and files.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The rename appears to work, including compatibility with older tickets and access to task results. One new test must change because it unnecessarily locks the reviewer instructions to an exact heading."
+  }
+}
+```
+
+</details>
