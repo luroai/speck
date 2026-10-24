@@ -1,7 +1,7 @@
 ---
 id: "0448"
 title: "Match the phone's top bar to the chosen look"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T07:46:02.107Z"
 approved: "2026-10-24T07:51:23.946Z"
+finished: "2026-10-24T08:06:59.428Z"
 
 ---
 # 0448 · Match the phone's top bar to the chosen look
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the panel runs as a home-screen app, the phone's top bar takes its colour from the page's `theme-color`, which follows only the phone's own light or dark setting. Choosing Light or Dark in Settings (0412) changes the panel but leaves the top bar in the other look.
