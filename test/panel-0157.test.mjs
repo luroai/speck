@@ -212,7 +212,7 @@ const CARDS = `(() => {
       const same = lines.find(l => Math.abs(l.top - q.top) < 2);
       if (same) same.left = Math.min(same.left, q.left); else lines.push({ top: q.top, bottom: q.bottom, left: q.left });
     }
-    const figs = n.querySelector('.figs');
+    const figs = n.querySelector('.facts'); // 0464: the figures are in the facts table
     return { id: idN.textContent, top: side('Top'), right: side('Right'), bottom: side('Bottom'), left: side('Left'), gap: next ? next.getBoundingClientRect().top - r.bottom : null,
       idSize: getComputedStyle(idN).fontSize, titleSize: getComputedStyle(t).fontSize, idRect: rect(idN), lines, when: rect(n.querySelector('.when')),
       figs: rect(figs), figsDisplay: figs && getComputedStyle(figs).display, figCells: figs ? [...figs.children].map(rect) : [], pack: rect(n.querySelector('.full-cell .full-open')) };
@@ -250,9 +250,11 @@ for (const width of [375, 1280]) {
         for (const l of rest) assert.ok(Math.abs(l.left - first.left) < 1, `${c.id}: a wrapped line starts under the title, not the id`);
         const below = c.lines.at(-1).bottom;
         if (c.when) assert.ok(c.when.top >= below - 0.5, `${c.id}: the ship time under the title`);
+        assert.ok(!c.when, `${c.id}: open, its line gives way to the table (0464)`);
+        assert.equal(c.figCells.length, 6, `${c.id}: six cells (0464)`);
         if (c.figCells.length) {
           assert.equal(c.figsDisplay, 'grid', `${c.id}: the figures in a grid`);
-          assert.ok(c.figs.top >= (c.when ? c.when.bottom : below) - 0.5, `${c.id}: the figures under the ship time`);
+          assert.ok(c.figs.top >= below - 0.5, `${c.id}: the figures under the title`);
           if (c.figCells.length > 1) assert.ok(new Set(c.figCells.map(f => Math.round(f.left))).size > 1, `${c.id}: more than one column`);
         }
         assert.ok(c.pack.top >= (c.figCells.length ? c.figs.bottom : c.when ? c.when.bottom : below) - 0.5, `${c.id}: Review pack at the bottom`);

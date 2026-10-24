@@ -132,7 +132,7 @@ test('0162 AC4: a shipped card shows its id and title, its ship time and one lin
     assert.equal(d[0].textContent, 'Details');
     assert.equal(d[0].attrs['aria-expanded'], 'false');
   }
-  assert.deepEqual(byClass(p, a, 'fig'), [], 'the labelled figures wait for Details');
+  assert.deepEqual(byClass(p, a, 'facts'), [], 'the labelled figures wait for Details (0464: in the facts table)');
   assert.ok(!p.all(a).some(n => n.textContent === 'Review pack'), 'and so does Review pack');
 });
 
