@@ -175,10 +175,10 @@ test('0286 AC5: with tell, the Foreman counts blocked tickets under Needs you; w
   assert.equal(off.blocked.length, 2, 'still listed in its detail');
 });
 
-test('0286 AC1: the README and the brief name foreman_fixing and its three values', () => {
+test('0286 AC1: the README and the brief name watch and its three values', () => { // 0488: was foreman_fixing
   for (const doc of ['README.md', 'docs/brief.md']) {
     const text = fs.readFileSync(path.join(ROOT, doc), 'utf8');
-    assert.ok(text.includes('`foreman_fixing'), doc);
-    for (const v of ['off', 'tell', 'fix']) assert.match(text, new RegExp(`\`(foreman_fixing: )?${v}\``), `${doc}: ${v}`);
+    assert.ok(text.includes('`watch`'), doc);
+    for (const v of ['off', 'tell', 'fix']) assert.match(text, new RegExp(`\`(watch: )?${v}\``), `${doc}: ${v}`);
   }
 });
