@@ -1,7 +1,7 @@
 ---
 id: "0464"
 title: Lay out an open shipped ticket like one in flight                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T11:37:23.357Z"
 ---
 # 0464 · Lay out an open shipped ticket like one in flight
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 After 0461 and 0462, an open ticket in flight shows a step track and an even table of facts, but a shipped ticket's Details shows its figures as a list of labels and values. The cards don't look like one family.
@@ -45,7 +45,7 @@ An open shipped ticket shows the same step track and table as one in flight, wit
 - Self-check: Review pack's row had the old 1% table-cell width, which squeezed it and put Review pack off a whole pixel; it now spans the card, and the browser test checks that row and Details at its end. Also checked a merged-but-not-pushed card keeps its note under the table.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Opening a shipped ticket with Details now shows the same coloured row of five steps and the same six-box table as a ticket being built, so every card looks like one family. All five steps are in colour, as it's finished, and the review step says how many rounds it took, such as "Review 2". The table gives when it shipped, how long it took, its review rounds, the builder's cost and tokens, and the reviewer's tokens, with a dash for anything not recorded. Review pack sits under the table, and the Details button that closes it is now at the end of that row. To see it, open the Shipped tab and press Details on any ticket. Closed cards still show their single line.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +55,68 @@ An open shipped ticket shows the same step track and table as one in flight, wit
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none. Note: while a card is open, Details moves from the end of its closed line to the end of the Review pack row under the table.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b989513a75fb601e0c64b8af46dd1d599a43d504",
+    "session": "fresh",
+    "thread_id": "01a16dbb-9e59-70e0-bc12-4202e21713aa",
+    "builder_response": "- Tests run: test/panel-0464.test.mjs test/panel-0137.test.mjs test/panel-0157.test.mjs test/panel-0162.test.mjs test/panel-0420.test.mjs test/panel-0427.test.mjs test/panel-0453.test.mjs (with --related, which added the repo checks and the files naming templates/panel.js or panel.css)\n- Open card layout: title line, then a `steps` cell holding the track and the facts table, then any \"merged, not pushed\" note, then Review pack with Details at the end of its row (Details moved there from the closed line, which is gone while open).\n- The Shipped cell's value is the time or day as the closed line says it; its tooltip is the line's own `when` (the day and time before today), and shortened token counts have the exact number as their tooltip, as on the line before.\n- Updated old tests that asserted the removed labelled figures (0137, 0157, 0162, 0420, 0427, 0453): same intent, new layout. 0427 no longer requires the figures in monospace, as the table (0462) isn't.\n- Pictures: light and dark at 420 px, kept with `speck picture`.\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 125665,
+      "cached_input_tokens": 76416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 696,
+      "reasoning_output_tokens": 19
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T11:46:42.617Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js shippedSteps(), shippedFacts() and trackOf() reuse the shared layout. Passing panel-0464 tests verify all five completed steps, Review 2, shared CSS, tooltips and real-browser layout."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shippedFacts() always renders the six specified cells in order. Passing AC2 tests cover figures, missing values, exact token tooltips and the Shipped cell's midnight update."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "render() replaces the open card's old figures and summary with steps and facts, followed by Review pack. Passing AC3 tests verify closing behaviour and the unchanged closed line; the real-browser test passed at 320 and 390 px with an overflowing cost."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "factCell() supplies dt/dd label-value pairs within a dl, verified by the passing AC4 test. Recorded test output confirms 214 passed, zero failed and three skipped; the ticket's browser test passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Open shipped tickets now show the shared coloured step track and six-cell facts table, with Review pack below. Missing figures, long values and narrow screens are covered. The recorded tests pass, and I found no blocking issues or unrelated changes."
+  }
+}
+```
+
+</details>
