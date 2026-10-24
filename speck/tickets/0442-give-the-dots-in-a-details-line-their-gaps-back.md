@@ -1,7 +1,7 @@
 ---
 id: "0442"
 title: "Give the dots in a details line their gaps back"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-give-the-dots-in-a-details-line-their-gaps-
 after: ["0441", "0450"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T08:37:18.185Z"
+approved: "2026-10-24T08:43:26.001Z"
 
 ---
 # 0442 · Give the dots in a details line their gaps back
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In the interface font, the " · " between the parts of a details line nearly touches the words either side, as in "18:56·20 min", because its spaces were narrowed to suit the old monospace font.
@@ -48,9 +49,14 @@ The dots between the parts of a ticket's small second line no longer crowd the w
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 148,807
+- Elapsed since build started: 6 min
+- Changed lines: 7 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
