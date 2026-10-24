@@ -1,7 +1,7 @@
 ---
 id: "0459"
 title: "Show the pipeline log as a terminal of short lines"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0457", "0458", "0460"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T10:17:36.223Z"
 
 ---
 # 0459 · Show the pipeline log as a terminal of short lines
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The Pipeline pop-up's log lists speck run's raw lines, newest first, on the page's own background, with no times. Many lines are long sentences with session ids and file paths, so it doesn't read as a log of what the pipeline is doing.
