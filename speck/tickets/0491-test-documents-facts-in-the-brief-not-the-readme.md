@@ -1,7 +1,7 @@
 ---
 id: "0491"
 title: "Test documents' facts in the brief, not the README"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0488"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T20:02:16.837Z"
+approved: "2026-10-24T20:18:14.901Z"
 
 ---
 # 0491 · Test documents' facts in the brief, not the README
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck's rule that a fact in a document gets a test has left 58 test files reading the README. Each release ticket checks the README names that release's settings, and those checks never retire, so the README's structure is pinned: cutting or rewording it means moving dozens of tests. The README is speck's pitch, not its reference; `docs/brief.md` is the reference.
@@ -58,9 +59,15 @@ Worth keeping an eye on: the README's separate terminal install command is no lo
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The allowed list explicitly permits checks beyond AC2's exceptions.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 581,060
+- Elapsed since build started: 16 min
+- Changed lines: 35 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Test the README's terminal install command: saved to `speck/ideas/2026-10-24-test-the-readme-s-terminal-install-command.md`.
