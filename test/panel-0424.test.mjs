@@ -50,15 +50,17 @@ const allSizes = () => {
 
 const TITLE = '#full-ticket .top .title', SECTION = '#full-ticket h4', TEXT = '#full-ticket .md';
 
-// ---------- AC1: the title, the id and status above it, the tags under it ----------
+// ---------- AC1: the title, the id and status above it, the tags under it (0465: its track and table) ----------
 
 test('0424 AC1: the id and status come before the title, and the priority, size, risk and type after it', async () => {
   const p = await openTicket();
   const head = pane(p).children[0];
   const kids = head.children.filter(n => n.tagName !== 'button');
-  assert.deepEqual(kids.map(n => n.className), ['id', 'state', 'title', 'tags']);
-  assert.deepEqual(kids.slice(0, 3).map(n => n.textContent), ['0001', 'draft', 'A draft']);
-  assert.deepEqual(kids[3].children.map(n => n.textContent).sort(), ['M', 'P3', 'bug', 'high'], 'its priority, size, risk and type');
+  assert.deepEqual(kids.map(n => n.className), ['id', 'state', 'title']);
+  assert.deepEqual(kids.map(n => n.textContent), ['0001', 'draft', 'A draft']);
+  // 0465: in the table under the top row, in place of the tags
+  const facts = pane(p).children[1].children[1].children.map(c => c.children[1].textContent);
+  assert.deepEqual(facts.slice(3), ['P3', 'M · high', 'bug'], 'its priority, size, risk and type');
 });
 
 test('0424 AC1: the title is the largest text, on a line of its own, and the id and status are in small type', () => {
@@ -66,9 +68,7 @@ test('0424 AC1: the title is the largest text, on a line of its own, and the id 
   for (const [sel, size] of allSizes()) if (sel !== TITLE) assert.ok(size < title, `${sel} (${size}px) is smaller than the title (${title}px)`);
   assert.equal(cssValue(cssRules(TITLE), 'flex-basis'), '100%', 'the title takes its own line');
   assert.ok(px('#full-ticket .top .id') <= 12 && px('#full-ticket .top .state') <= 12, 'id and status in small type');
-  assert.equal(cssValue(cssRules('#full-ticket .top .tags'), 'flex-basis'), '100%', 'the tags take the line under it');
-  assert.ok(+cssValue(cssRules(TITLE), 'order') > 0 && +cssValue(cssRules('#full-ticket .top .tags'), 'order') > +cssValue(cssRules(TITLE), 'order'),
-    'the title, then the tags, come after the id, status and Close, wherever Close is in the line');
+  assert.ok(+cssValue(cssRules(TITLE), 'order') > 0, 'the title comes after the id, status and Close, wherever Close is in the line'); // 0465: no tags after it
 });
 
 test('0424 AC1: a ticket in the queue or the Shipped list shows its own status above its title', async () => {
@@ -93,12 +93,12 @@ test('0424 AC1: the status follows a change to the ticket, and the rest of the p
   await p.settle();
   click(p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
   await p.settle();
-  const [head, body] = pane(p).children, state = head.children.find(n => n.className === 'state');
+  const [head, , body] = pane(p).children, state = head.children.find(n => n.className === 'state'); // 0465: the track and table between them
   assert.equal(state.textContent, 'building');
   p.timers.shift()();
   await p.settle();
   assert.equal(state.textContent, 'reviewing', 'the same node, now saying reviewing');
-  assert.deepEqual(pane(p).children.slice(0, 2), [head, body]);
+  assert.deepEqual([pane(p).children[0], pane(p).children[2]], [head, body]);
   assert.equal(body.detached || 0, 0, 'the body was not redrawn');
 });
 
@@ -106,7 +106,7 @@ test('0424 AC1: the status follows a change to the ticket, and the rest of the p
 
 test('0424 AC2: each section has a heading smaller than the title and larger than the text', async () => {
   const p = await openTicket();
-  const heads = p.all(pane(p).children[1]).filter(n => n.tagName === 'h4').map(n => n.textContent);
+  const heads = p.all(pane(p).children.at(-1)).filter(n => n.tagName === 'h4').map(n => n.textContent);
   for (const h of ['Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']) assert.ok(heads.includes(h), h);
   assert.ok(px(SECTION) < px(TITLE), 'smaller than the title');
   assert.ok(px(SECTION) > px(TEXT), 'larger than the text');
@@ -152,7 +152,7 @@ test('0424 AC3: a heading in a section\'s text is smaller than the section\'s he
 test('0424 AC3: a ticket\'s sections sit inside its body, so a review pack\'s heading rules never reach them', async () => {
   const p = await openTicket();
   assert.ok(!pane(p).children.some(n => n.className === 'md'), 'no section\'s text straight in the pane');
-  assert.ok(p.all(pane(p).children[1]).some(n => n.className === 'md'), 'the sections\' text is in the body');
+  assert.ok(p.all(pane(p).children.at(-1)).some(n => n.className === 'md'), 'the sections\' text is in the body');
 });
 
 // ---------- AC4: lists ----------

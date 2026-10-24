@@ -57,7 +57,7 @@ test('0417 AC2: the touch screen rules apply at any width and keep each 44 px mi
     assert.match(got.get(sel), /min-width:\s*44px/, `${sel} is at least 44 px wide on a touch screen`);
   // The tags' 44 px tap areas, and the gaps that keep them apart (0165)
   assert.match(got.get('.tag:not(.pick)::after') || '', /44px/);
-  assert.match(got.get('.tag-row, #full-ticket .top .tags') || '', /gap:\s*18px/);
+  assert.match(got.get('.tag-row') || '', /gap:\s*18px/); // 0465: the full ticket has no tags
 });
 
 // The rules for narrow windows that aren't about a control's size, as they were before this ticket. 0418: the panel's
