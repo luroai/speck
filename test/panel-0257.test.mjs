@@ -11,7 +11,7 @@ import { fakeAgents, READY } from './support/agents.mjs';
 // ---------- 0257: show speck's settings, explained, in the panel ----------
 
 const GROUPS = [
-  ['Watching', ['foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']], // 0286, 0287
+  ['Watching', ['watch', 'watch_agent', 'watch_model', 'watch_effort']], // 0286, 0287
   ['Shipping', ['auto_ship', 'auto_ship_risk', 'ship_mode']], // 0295 added ship_mode
   ['Building and reviewing', ['builder', 'builder_model', 'builder_effort', 'reviewer', // 0402 added builder_effort
     'reviewer_model', 'reviewer_effort', 'allow_same_model_review', // 0406 folded in the parallel and size-limit settings
@@ -124,7 +124,7 @@ test('0257 AC2: the view shows each group in order, each setting\'s name and val
 
 test('0257 AC3: each setting has an explanation of one or two sentences, and the shipping ones say a ticket they cover is merged and pushed without waiting for you', () => {
   const all = SETTING_GROUPS.flatMap(g => g.settings);
-  assert.equal(all.length, 19); // 0279 added builder_model, 0286 foreman_fixing, 0287 foreman, foreman_model and foreman_effort, 0295 ship_mode, 0402 builder_effort
+  assert.equal(all.length, 19); // 0279 added builder_model, 0286 watch, 0287 foreman, watch_model and watch_effort, 0295 ship_mode, 0402 builder_effort
   for (const s of all) {
     assert.equal(typeof s.explain, 'string');
     const sentences = s.explain.trim().split(/(?<=[.!?])\s+(?=[A-Z])/);

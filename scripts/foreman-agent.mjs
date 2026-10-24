@@ -1,4 +1,4 @@
-// 0287: the Foreman agent. With foreman_fixing: fix, when work stops for a reason speck has no steps for (a ship refused
+// 0287: the Foreman agent. With watch: fix, when work stops for a reason speck has no steps for (a ship refused
 // for a reason it doesn't hand back to the build, or a build that ends with its ticket neither approved nor blocked),
 // speck run starts an agent with a short brief to look into it. The agent follows the speck-watch skill and does one
 // thing, through `speck watch <action>` (0486: was `speck foreman`): resume the build with an instruction, re-run the
@@ -8,7 +8,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { SpeckError, sh, loadConfig, worktreeList, ticketBranches, findRepoRoot } from './core.mjs';
+import { SpeckError, sh, loadConfig, worktreeList, ticketBranches, findRepoRoot, setting } from './core.mjs';
 import { replaceSection, commitTicketOnly } from './close.mjs';
 import { buildTicket, saveRecord, foremanSubject, oldForemanSubject, byWatch } from './build-records.mjs';
 import { readableLog } from './build-log.mjs';
@@ -43,9 +43,9 @@ export const ACTIONS = Object.freeze({
 });
 const RECENT = 5; // how many of its actions the status detail shows
 
-// The agent the Foreman runs on: foreman when it's set, otherwise the builder when that's Codex or Cursor (0333),
-// otherwise Claude Code. 0392: or a model provider in `providers`, such as deepseek, set as foreman or as the builder.
-export const foremanAgentOf = (cfg, providers = knownProviders()) => (FOREMAN_AGENTS.includes(cfg?.foreman) || providerNamed(cfg?.foreman, providers) ? cfg.foreman
+// The agent the Foreman runs on: watch_agent when it's set, otherwise the builder when that's Codex or Cursor (0333),
+// otherwise Claude Code. 0392: or a model provider in `providers`, such as deepseek, set as watch_agent or as the builder.
+export const foremanAgentOf = (cfg, providers = knownProviders(), agent = setting(cfg, 'watch_agent')) => (FOREMAN_AGENTS.includes(agent) || providerNamed(agent, providers) ? agent
   : ['codex', 'cursor'].includes(cfg?.builder) || providerNamed(cfg?.builder, providers) ? cfg.builder : 'claude');
 // 0392: the model provider the Foreman runs on, or null.
 export const foremanProvider = (cfg, providers = knownProviders()) => providerNamed(foremanAgentOf(cfg, providers), providers);
@@ -90,14 +90,14 @@ export function foremanBrief({ id, what, log, tail, agent = 'claude' }) {
   ].join('\n');
 }
 
-// The command that starts the agent with `brief`, on foreman_model and foreman_effort when they're set. Claude Code may
+// The command that starts the agent with `brief`, on watch_model and watch_effort when they're set. Claude Code may
 // only read and run speck and read-only git commands; Codex has no such list, so it runs as Codex builds do. 0333: so
-// does Cursor, as `cli`, without foreman_effort, as Cursor's model names carry the effort. 0392: a model provider's
-// Foreman runs Claude Code's, --bare and without foreman_effort, on foreman_model or else the provider's default model,
+// does Cursor, as `cli`, without watch_effort, as Cursor's model names carry the effort. 0392: a model provider's
+// Foreman runs Claude Code's, --bare and without watch_effort, on watch_model or else the provider's default model,
 // through provider-build.mjs, which reads this machine's key for it and gives Claude Code only what it needs to run and
 // the provider's address and key (providerForemanEnv).
 export function foremanArgv(cfg, brief, cli, providers = knownProviders()) {
-  const agent = foremanAgentOf(cfg, providers), model = textOf(cfg?.foreman_model), effort = textOf(cfg?.foreman_effort);
+  const agent = foremanAgentOf(cfg, providers), model = textOf(setting(cfg, 'watch_model')), effort = textOf(setting(cfg, 'watch_effort'));
   const p = providerNamed(agent, providers);
   if (p) return [process.execPath, PROVIDER_SCRIPT, FOREMAN_MODE, p.name, p.address, ...claudeArgv(brief, model || p.defaultModel, '', ['--bare', ...CLAUDE_FLAGS])];
   if (agent === 'cursor') return [cli ?? cursorCli(), ...CURSOR_HEADLESS, ...(model ? ['--model', model] : []), brief];
@@ -233,7 +233,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     const s = readAgentState(runs()), k = key(id);
     if (s.tried[id] === k || s.running?.id === id && s.running.key === k || s.queue.some(q => q.id === id && q.key === k)) return;
     s.queue = [...s.queue.filter(q => q.id !== id), { id, key: k, what: String(what), log: String(log || '') }];
-    if (save(s)) say(`${id}: speck will look into it, as foreman_fixing is fix: ${what}`);
+    if (save(s)) say(`${id}: speck will look into it, as watch is fix: ${what}`);
   };
 
   // An agent that has ended: each action it took for its ticket is carried out.

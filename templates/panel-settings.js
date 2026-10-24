@@ -124,7 +124,7 @@ async function readSettings(url) {
 }
 // 0407: what the agents' checks and lists give the view, which the config alone doesn't.
 const CATALOGUES = ['reviewer_models', 'builder_models', 'foreman_models', 'your_agents', 'agent_models'];
-const AGENT_KEYS = ['builder', 'reviewer', 'foreman'];
+const AGENT_KEYS = ['builder', 'reviewer', 'watch_agent']; // 0487: watch_agent was foreman
 // The choices of each role's agent, and why some are left out, from `from`'s rows into `into`'s.
 function keepChoices(into, from) {
   const rows = v => v.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []);
@@ -300,9 +300,9 @@ function toggleGroup() {
   return el('section', 'switches', null, row('Appearance', lookInfo, lookGroup, lookTip), row('Auto-build', runInfo, runSwitchButton, runSwitchSaid, runTip));
 }
 // 0381: each agent's model, drawn in the agent's row: key → the agent's key.
-const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', foreman_model: 'foreman' };
+const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', watch_model: 'watch_agent' };
 // 0400: with one list for each role, its effort is drawn beside it instead, and its model has no row.
-const ROLE_PAIRS = { builder_effort: 'builder', reviewer_effort: 'reviewer', foreman_effort: 'foreman' }; // 0402: and the builder's
+const ROLE_PAIRS = { builder_effort: 'builder', reviewer_effort: 'reviewer', watch_effort: 'watch_agent' }; // 0402: and the builder's
 const settingPairs = () => yourModels() !== null ? ROLE_PAIRS : SETTING_PAIRS;
 // The agent whose row `key`'s model is drawn in, when the server put both in one group; otherwise null.
 function pairedWith(key) {
@@ -336,13 +336,13 @@ function settingRow(x, n) {
   const row = el('div', model ? 'setting model' : 'setting', null,
     model ? el('span', 'pick', null, settingName(x.key), el('span', 'list', null, ...shown, info))
       : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
-    role === null && ['reviewer', 'builder', 'foreman'].includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393
+    role === null && ['reviewer', 'builder', 'watch_agent'].includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393
     role !== null ? notYoursLine(role) : null, role !== null ? unlistedLine(role) : null, role !== null ? needsClaudeLine() : null, // 0400
     role !== null && cataloguesWhy() !== null ? el('p', 'bad', `Couldn't read your agents' models. ${cataloguesWhy()}`) : null, // 0407
     x.key === 'builder' ? builderSwitchLine(x) : null,
     x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
     x.key === 'builder_model' && builderModelsWhy() !== null ? el('p', null, builderModelsWhy()) : null,
-    x.key === 'foreman_model' && foremanModelsWhy() !== null ? el('p', null, foremanModelsWhy()) : null, // 0348
+    x.key === 'watch_model' && foremanModelsWhy() !== null ? el('p', null, foremanModelsWhy()) : null, // 0348
     settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
     // 0400: a refusal of the role's model, whose list is the role's own
     role !== null && settingRefused.has(ROLES[role].model) && settingRefused.get(ROLES[role].model) !== settingRefused.get(x.key) ? el('p', 'bad', settingRefused.get(ROLES[role].model)) : null,
@@ -402,8 +402,8 @@ function redrawSettings(keys, kept = null) {
 }
 // 0370: the settings whose rows show what a change to `key` alters: its own lines, and the lists of models and efforts
 // it decides.
-const SETTING_AFFECTS = { reviewer: ['reviewer', 'reviewer_model', 'reviewer_effort'], builder: ['builder', 'builder_model', 'foreman_model'],
-  foreman: ['foreman', 'foreman_model'], reviewer_model: ['reviewer_model', 'reviewer_effort'] };
+const SETTING_AFFECTS = { reviewer: ['reviewer', 'reviewer_model', 'reviewer_effort'], builder: ['builder', 'builder_model', 'watch_model'],
+  watch_agent: ['watch_agent', 'watch_model'], reviewer_model: ['reviewer_model', 'reviewer_effort'] };
 // 0273: a setting's name, which a narrow row breaks after a dot or an underscore ("max_parallel_" then "builds"),
 // rather than in the middle of a word.
 function settingName(key) {
@@ -478,7 +478,7 @@ function settingEditor(x) {
     settingTyped.set(x.key, value);
     // 0276: the reviewer and its model decide what the model and effort lists offer, so those are drawn again. 0370: only
     // those, keeping this control.
-    if (x.key === 'reviewer' || x.key === 'builder' || x.key === 'foreman' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) { // 0348: and foreman
+    if (x.key === 'reviewer' || x.key === 'builder' || x.key === 'watch_agent' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) { // 0348: and foreman
       redrawSettings(SETTING_AFFECTS[x.key], x.key);
     } else refreshSettings();
   };
@@ -511,11 +511,11 @@ function settingEditor(x) {
     // offered, but can't be picked again.
     const off = [...new Set([settingNow(x), typed])].filter(c => !choices.includes(c));
     for (const c of [...off, ...choices]) {
-      const list = x.key === 'reviewer_model' ? reviewerModelList() : x.key === 'builder_model' ? builderModelList() : x.key === 'foreman_model' ? foremanModelList() : null;
+      const list = x.key === 'reviewer_model' ? reviewerModelList() : x.key === 'builder_model' ? builderModelList() : x.key === 'watch_model' ? foremanModelList() : null;
       const m = off.includes(c) ? null : (list || []).find(x => x.slug === c); // 0288: with its display name and description
       const named = m && m.display_name && m.display_name !== c ? ` (${m.display_name})` : '';
       // 0393: a model provider is offered by its own name, such as DeepSeek.
-      const agent = ['builder', 'reviewer', 'foreman'].includes(x.key) && settingProvider(c) !== null ? settingProvider(c).label : c;
+      const agent = ['builder', 'reviewer', 'watch_agent'].includes(x.key) && settingProvider(c) !== null ? settingProvider(c).label : c;
       const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${agent} (not offered)` : `${agent}${named}${m && m.description ? `: ${m.description}` : ''}`);
       o.value = c;
       if (off.includes(c)) o.disabled = true;
@@ -542,7 +542,7 @@ function settingChoices(x) {
     const built = builderModelList();
     return built !== null ? ['', ...built.map(m => m.slug)] : null;
   }
-  if (x.key === 'foreman_model') { // 0348: the Foreman agent's models, or a box to type in
+  if (x.key === 'watch_model') { // 0348: the Foreman agent's models, or a box to type in
     const listed = foremanModelList();
     return listed !== null ? ['', ...listed.map(m => m.slug)] : null;
   }
@@ -625,7 +625,7 @@ async function askAgentModels(agent) {
   // 0370: only the settings that show the models just read.
   const shows = (of, chosen) => chosen === agent && modelsRead(settingsView[`${of}_models`], of, chosen) === got;
   redrawSettings([...(shows('builder', settingChosen('builder')) ? ['builder_model'] : []),
-    ...(shows('reviewer', settingChosen('reviewer')) ? ['reviewer_model', 'reviewer_effort'] : []), ...(shows('foreman', foremanAgentChosen()) ? ['foreman_model'] : [])]);
+    ...(shows('reviewer', settingChosen('reviewer')) ? ['reviewer_model', 'reviewer_effort'] : []), ...(shows('foreman', foremanAgentChosen()) ? ['watch_model'] : [])]);
   const again = had ? settingControls.get(had[0]) : null;
   if (again && again.focus && again !== document.activeElement) again.focus();
 }
@@ -641,10 +641,10 @@ function builderModelList() {
     : read === null && m && typeof m === 'object' && chosen === 'claude' && Array.isArray(settingsView.claude_models) ? settingsView.claude_models : null;
   return list === null ? null : list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
 }
-// 0348: the agent the Foreman runs on as chosen in the view, as foremanAgentOf in foreman-agent.mjs reads it: foreman
+// 0348: the agent the Foreman runs on as chosen in the view, as foremanAgentOf in foreman-agent.mjs reads it: watch_agent
 // when it's set, otherwise the builder when that's Codex or Cursor, otherwise Claude Code. 0393: or a model provider.
 function foremanAgentChosen() {
-  const foreman = settingChosen('foreman'), builder = settingChosen('builder');
+  const foreman = settingChosen('watch_agent'), builder = settingChosen('builder');
   return ['claude', 'codex', 'cursor'].includes(foreman) || settingProvider(foreman) !== null ? foreman
     : ['codex', 'cursor'].includes(builder) || settingProvider(builder) !== null ? builder : 'claude';
 }
@@ -657,7 +657,7 @@ function foremanModelList() {
     : read && Array.isArray(read.models) ? read.models : null;
   return list === null ? null : list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
 }
-// 0348: why foreman_model is a box to type in rather than a list, in one line, or null when it's a list or the server
+// 0348: why watch_model is a box to type in rather than a list, in one line, or null when it's a list or the server
 // didn't say.
 function foremanModelsWhy() {
   const m = settingsView !== null ? settingsView.foreman_models : null;
@@ -721,7 +721,7 @@ function replacesCommand(changes) {
 const settingNow = x => x.value === null || x.value === undefined ? '' : Array.isArray(x.value) ? x.value.join(',') : String(x.value);
 // 0400: each role's one list, made of your agents' models, grouped by agent, as "<agent> · <model>". Choosing an entry
 // sets the role's agent and model together. Its effort, for an agent that takes one, sits beside it.
-const ROLES = { builder: { model: 'builder_model', name: 'builder' }, reviewer: { model: 'reviewer_model', name: 'reviewer' }, foreman: { model: 'foreman_model', name: 'speck' } };
+const ROLES = { builder: { model: 'builder_model', name: 'builder' }, reviewer: { model: 'reviewer_model', name: 'reviewer' }, watch_agent: { model: 'watch_model', name: 'speck' } };
 // Your agents' models, as the server read them, or null when it didn't say: then each role keeps its agent and model lists.
 function yourModels() {
   const list = settingsView !== null && settingsView.state === 'ok' && Array.isArray(settingsView.agent_models) ? settingsView.agent_models : null;
@@ -758,7 +758,7 @@ function defaultWords(a) {
 // `role`'s entries: { group, value, label }, each value "<agent>|<model>", a blank model being the agent's own default,
 // which stands in for that model by name (0403).
 function roleEntries(role) {
-  const out = role === 'foreman' ? [{ group: null, value: '|', label: `The builder's agent, now ${agentLabel(buildersAgent())}` }] : [];
+  const out = role === 'watch_agent' ? [{ group: null, value: '|', label: `The builder's agent, now ${agentLabel(buildersAgent())}` }] : [];
   for (const a of yourModels().filter(a => !needsClaude(a.id))) {
     const own = { group: a.name, value: `${a.id}|`, label: `${a.name}${defaultWords(a)}` }, models = agentModelsOf(a);
     if (!models.some(m => m.slug === defaultSlug(a))) out.push(own);
@@ -832,17 +832,17 @@ function roleEditor(x) {
   return [select];
 }
 // What a change to a role's list redraws: its own row, its effort, and the Foreman's, which can run on the builder's agent.
-const ROLE_AFFECTS = { builder: ['builder', 'builder_effort', 'foreman', 'foreman_effort'], reviewer: ['reviewer', 'reviewer_effort'], foreman: ['foreman', 'foreman_effort'] };
+const ROLE_AFFECTS = { builder: ['builder', 'builder_effort', 'watch_agent', 'watch_effort'], reviewer: ['reviewer', 'reviewer_effort'], watch_agent: ['watch_agent', 'watch_effort'] };
 // Whether the agent `role` runs on, as chosen, takes an effort: Claude Code and Codex do.
 function takesEffort(role) {
-  const agent = role === 'foreman' ? foremanAgentChosen() : agentOfRole(settingChosen(role)), a = yourAgent(agent);
+  const agent = role === 'watch_agent' ? foremanAgentChosen() : agentOfRole(settingChosen(role)), a = yourAgent(agent);
   return a !== null ? a.efforts === true : ['claude', 'codex'].includes(agent);
 }
 // A role whose agent, as chosen, is one speck knows but not one of yours says so.
 function notYoursLine(role) {
   const agent = settingChosen(role);
   if (agent === '' || yourAgent(agent) !== null || knownAgent(agent) === null) return null;
-  return el('p', 'bad', `${agentLabel(agent)} isn't one of your agents on this machine any more, so choose ${role === 'foreman' ? '' : 'the '}${ROLES[role].name}'s model again from the list.`);
+  return el('p', 'bad', `${agentLabel(agent)} isn't one of your agents on this machine any more, so choose ${role === 'watch_agent' ? '' : 'the '}${ROLES[role].name}'s model again from the list.`);
 }
 // 0393: speck runs a model provider's models through Claude Code, so while Claude Code isn't installed none is offered.
 const needsClaude = id => settingProvider(id) !== null && knownAgent('claude') !== null && knownAgent('claude').installed === false;
@@ -852,7 +852,7 @@ function needsClaudeLine() {
 }
 // Why only an agent's default is offered, while it's chosen: its models couldn't be read.
 function unlistedLine(role) {
-  const agent = role === 'foreman' ? foremanAgentChosen() : settingChosen(role), a = yourAgent(agent);
+  const agent = role === 'watch_agent' ? foremanAgentChosen() : settingChosen(role), a = yourAgent(agent);
   if (a === null || agentModelsOf(a).length || typeof a.why !== 'string' || !a.why) return null;
   return el('p', null, `Only ${a.name}'s default is offered: ${a.why}`);
 }

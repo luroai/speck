@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig, yamlValue } from './core.mjs';
+import { SpeckError, findRepoRoot, parseYaml, parseConfig, stripComment, EFFORTS, loadConfig, yamlValue, RENAMED, settingName } from './core.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValues } from './machine.mjs';
 import { knownEffort } from './codex-models.mjs';
 import { ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
@@ -23,8 +23,8 @@ const KINDS = Object.assign(Object.create(null), {
   worktree_setup: 'text', build_command: 'text', resume_command: 'text', 'commands.test': 'text', 'github.status_check': 'text',
   'commands.test_files': 'files', 'commands.checks': 'paths',
   allow_same_model_review: 'flag', auto_ship: 'flag', worktrees: 'flag',
-  reviewer_effort: 'effort', auto_ship_risk: 'risks', foreman_fixing: 'fixing',
-  foreman: 'agent', foreman_model: 'text', foreman_effort: 'effort', // 0287
+  reviewer_effort: 'effort', auto_ship_risk: 'risks', watch: 'fixing',
+  watch_agent: 'agent', watch_model: 'text', watch_effort: 'effort', // 0287, 0487: were foreman_fixing, foreman, foreman_model and foreman_effort
   ship_mode: 'shipmode', // 0295
   builder_effort: 'effort', // 0402
   max_parallel_builds: 'count', max_parallel_tests: 'count', test_stall_minutes: 'count', review_timeout_minutes: 'count', ship_wait_minutes: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
@@ -105,8 +105,24 @@ function settingLine(indent, key, v, old = '') {
   return hash === -1 ? head + cr : `${head.padEnd(hash - 1)} ${body.slice(hash)}${cr}`;
 }
 
+// 0487: the file's text with no line left for the old name of the setting `name`. The last old line becomes the new
+// name's, keeping its place and comment, when the file has no line for the new name yet.
+function dropOldNames(text, name) {
+  const olds = Object.keys(RENAMED).filter(o => RENAMED[o] === name);
+  if (!olds.length) return text;
+  const lines = text.split('\n'), entries = settingLines(lines).filter(e => e.path.length === 1);
+  const old = entries.filter(e => olds.includes(e.path[0]));
+  if (!old.length) return text;
+  const keep = entries.some(e => e.path[0] === name) ? null : old.pop();
+  if (keep) lines[keep.i] = settingLine(keep.indent, name, keep.value.trim(), lines[keep.i]);
+  const gone = new Set(old.map(e => e.i));
+  return lines.filter((_, i) => !gone.has(i)).join('\n');
+}
+
 // The file's text with the setting at `keys` set to the written value `v`. A missing setting is added under its section.
+// 0487: a setting once named after the Foreman is written under its new name only.
 export function setConfigText(text, keys, v) {
+  if (keys.length === 1) text = dropOldNames(text, keys[0]);
   const lines = text.split('\n');
   const entries = settingLines(lines);
   const same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]);
@@ -138,6 +154,7 @@ export function setConfigText(text, keys, v) {
 // in a file git ignores. A blank value removes it, so speck/config.yml's value applies again. 0386: `speck config set`
 // does the same for your own settings without --machine, where a blank value is saved as blank rather than removing it.
 function setMachine(key, raw, remove, replace = false) {
+  key = settingName(key); // 0487
   if (!MACHINE_SETTINGS.includes(key))
     throw new SpeckError(`--machine can set only ${MACHINE_SETTINGS.join(', ')}, not "${key}". Set ${key} for every machine with \`speck config set ${key} <value>\`.`);
   if (key === 'builder' && !remove) return setBuilder(raw, replace, true);
@@ -162,7 +179,8 @@ export function cmdConfig(args) {
   const flags = args.slice(1), machine = flags.includes('--machine'), repoFlag = flags.includes('--repo');
   const words = flags.filter(a => a !== '--machine' && a !== '--repo');
   const replace = words[0] === 'builder' && words.slice(1).includes('--replace'); // 0293
-  const [sub, key, ...rest] = [args[0], ...words.filter(a => !(replace && a === '--replace'))];
+  const [sub, given, ...rest] = [args[0], ...words.filter(a => !(replace && a === '--replace'))];
+  const key = given && settingName(given); // 0487: an old name sets the new one
   if (sub !== 'set' || !key || !rest.length || (machine && repoFlag)) throw new SpeckError(USAGE);
   // 0386: your own settings are saved for this machine, unless --repo asks for speck/config.yml's.
   if (machine || (!repoFlag && MACHINE_SETTINGS.includes(key))) return setMachine(key, rest.join(' '), machine && rest.join(' ') === '', replace);
@@ -172,7 +190,7 @@ export function cmdConfig(args) {
   const file = path.join(repo, 'speck', 'config.yml');
   const text = fs.readFileSync(file, 'utf8');
   const keys = key.split('.');
-  const get = t => keys.reduce((o, k) => (o && typeof o === 'object' && Object.hasOwn(o, k) ? o[k] : undefined), parseYaml(t));
+  const get = t => keys.reduce((o, k) => (o && typeof o === 'object' && Object.hasOwn(o, k) ? o[k] : undefined), parseConfig(t));
   const next = setConfigText(text, keys, yamlValue(value));
   // Check the change reads back as given before writing anything.
   if (JSON.stringify(get(next)) !== JSON.stringify(value))

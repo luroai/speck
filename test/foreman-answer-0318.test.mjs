@@ -24,7 +24,7 @@ const NOW = new Date('2026-10-19T09:30:00Z');
 // The Foreman agent's queue, as 0287's tests have it: starts and resumed builds are kept, and an agent runs until end().
 function agents(r) {
   const starts = [], resumed = [], said = [], again = [], running = new Set(), live = new Set();
-  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: 'fix' }),
+  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), watch: 'fix' }),
     words: WORDS, cfg: CFG, max: 1, running, ships: { again: id => again.push(id) }, say: m => said.push(m),
     startBuild: (id, argv) => { resumed.push({ id, argv }); running.add(id); },
     start: (argv, cwd, log, env) => { const pid = 90000 + starts.length; starts.push({ token: env.SPECK_FOREMAN_RUN, pid }); live.add(pid); return { pid, exited: () => !live.has(pid) }; },

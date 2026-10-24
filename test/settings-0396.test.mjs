@@ -11,7 +11,7 @@ import { settingsPage, openSettings, posted } from './support/settings.mjs';
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, ...o });
 const VIEW = () => ({ groups: [
   { title: 'Shipping', settings: [S('auto_ship', false, { choices: ['true', 'false'] })] },
-  { title: 'Watching', settings: [S('foreman_fixing', 'fix', { choices: ['off', 'tell', 'fix'] })] },
+  { title: 'Watching', settings: [S('watch', 'fix', { choices: ['off', 'tell', 'fix'] })] },
 ] });
 
 // The Settings view on the fake page, in `theme`, with speck run off, a localStorage that records what's stored,

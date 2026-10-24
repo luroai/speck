@@ -30,23 +30,23 @@ function withPath(dirs, fn) {
 }
 
 test('0333 AC1: speck config set foreman cursor and the Settings view accept cursor as the Foreman\'s agent', () => {
-  assert.equal(checkConfigValue('foreman', 'cursor'), 'cursor');
-  assert.throws(() => checkConfigValue('foreman', 'Cursor'), /foreman must be blank or one of claude, codex, cursor/);
+  assert.equal(checkConfigValue('watch_agent', 'cursor'), 'cursor');
+  assert.throws(() => checkConfigValue('watch_agent', 'Cursor'), /watch_agent must be blank or one of claude, codex, cursor/);
   const r = panelRepo();
-  const out = r.run('config', 'set', 'foreman', 'cursor');
+  const out = r.run('config', 'set', 'watch_agent', 'cursor');
   assert.equal(out.status, 0, out.stderr);
-  assert.equal(loadConfig(r.dir).foreman, 'cursor');
+  assert.equal(loadConfig(r.dir).watch_agent, 'cursor');
   const g = panelSettings(r.dir).groups.find(x => x.title === 'Watching');
-  const foreman = g.settings.find(s => s.key === 'foreman');
+  const foreman = g.settings.find(s => s.key === 'watch_agent');
   assert.ok(foreman.choices.includes('cursor'), String(foreman.choices));
   assert.match(foreman.explain, /cursor/);
 });
 
-test('0333 AC2: with foreman cursor, the Foreman starts with Cursor\'s CLI headless, on foreman_model when it\'s set, with the brief as the prompt', () => {
-  assert.deepEqual(foremanArgv({ foreman: 'cursor' }, 'B', 'agent'), ['agent', ...HEADLESS, 'B'], 'blank foreman_model: no --model');
-  assert.deepEqual(foremanArgv({ foreman: 'cursor', foreman_model: 'gpt-5-high' }, 'B', 'agent'), ['agent', ...HEADLESS, '--model', 'gpt-5-high', 'B']);
-  const effort = foremanArgv({ foreman: 'cursor', foreman_effort: 'high' }, 'B', 'agent');
-  assert.ok(!effort.some(w => /effort/.test(w)), 'foreman_effort isn\'t passed to Cursor');
+test('0333 AC2: with foreman cursor, the Foreman starts with Cursor\'s CLI headless, on watch_model when it\'s set, with the brief as the prompt', () => {
+  assert.deepEqual(foremanArgv({ foreman: 'cursor' }, 'B', 'agent'), ['agent', ...HEADLESS, 'B'], 'blank watch_model: no --model');
+  assert.deepEqual(foremanArgv({ foreman: 'cursor', watch_model: 'gpt-5-high' }, 'B', 'agent'), ['agent', ...HEADLESS, '--model', 'gpt-5-high', 'B']);
+  const effort = foremanArgv({ foreman: 'cursor', watch_effort: 'high' }, 'B', 'agent');
+  assert.ok(!effort.some(w => /effort/.test(w)), 'watch_effort isn\'t passed to Cursor');
   assert.equal(skillPath('cursor'), '.claude/skills/speck-watch/SKILL.md');
 });
 
@@ -57,7 +57,7 @@ test('0333 AC2: the Foreman finds Cursor\'s CLI as agent, or as cursor-agent whe
 
 test('0333 AC2: speck run\'s Foreman queue starts a Cursor Foreman with its brief as the prompt', () => {
   const r = blockedRepo({ status: 'building' }), starts = [];
-  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: 'fix', foreman: 'cursor', foreman_model: 'm1' }),
+  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), watch: 'fix', watch_agent: 'cursor', watch_model: 'm1' }),
     words: [], cfg: { base_branch: 'main', branch_prefix: 'speck/' }, max: 1, running: new Set(), ships: { again: () => {} }, say: () => {},
     startBuild: () => {}, start: argv => { starts.push(argv); return { pid: 91000, exited: () => false }; }, alive: () => true, withToken: () => [] });
   q.stuck({ id: '0001', what: 'its build ended with the ticket still building', log: '' });

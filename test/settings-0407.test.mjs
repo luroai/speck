@@ -14,7 +14,7 @@ const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What 
 const EFFORTS = { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] };
 // The view from the config alone, as GET /api/settings?quick=1 answers it.
 const quick = () => ({ groups: [
-  { title: 'Watching', settings: [S('foreman', '', { choices: ['', 'claude', 'codex'] }), S('foreman_model', ''), S('foreman_effort', '', EFFORTS)] },
+  { title: 'Watching', settings: [S('watch_agent', '', { choices: ['', 'claude', 'codex'] }), S('watch_model', ''), S('watch_effort', '', EFFORTS)] },
   { title: 'Building and reviewing', settings: [
     S('builder', 'claude', { choices: ['claude', 'codex'], build_command: { value: '', own: { claude: '', codex: '' }, each_ticket: true } }),
     S('builder_model', ''), S('builder_effort', '', EFFORTS), S('reviewer', 'codex', { choices: ['codex', 'claude', 'claude-subagent'] }),
@@ -76,10 +76,10 @@ test('0407 AC2: each role\'s list and Your agents say they are loading, then fil
   const later = deferred();
   const p = settingsPage([quick(), later]);
   await openSettings(p);
-  for (const role of ['builder', 'reviewer', 'foreman']) { // the Foreman left to the builder's agent, which is among its entries
+  for (const role of ['builder', 'reviewer', 'watch_agent']) { // the Foreman left to the builder's agent, which is among its entries
     assert.match(options(p, role).map(o => o.textContent).join(' '), /Loading your agents' models/, `${role} says it's loading`);
   }
-  assert.equal(controlOf(p, 'foreman').value, '|');
+  assert.equal(controlOf(p, 'watch_agent').value, '|');
   assert.match(agentsBox(p).textContent, /Loading your agents/);
   changeTo(p, 'max_parallel_builds', '3');
   const typed = controlOf(p, 'max_parallel_builds'), reviewer = controlOf(p, 'reviewer'), groups = [...pane(p).children];
@@ -92,7 +92,7 @@ test('0407 AC2: each role\'s list and Your agents say they are loading, then fil
   assert.deepEqual(options(p, 'reviewer').filter(o => !o.disabled).map(o => o.value), ['claude|fable', 'claude|opus', 'claude|', 'claude|haiku', 'claude-subagent|', 'codex|']);
   assert.equal(reviewer.value, 'codex|', 'the reviewer as set');
   assert.doesNotMatch(pane(p).textContent, /loading the list|Loading your agents/);
-  assert.equal(controlOf(p, 'foreman').value, '|', 'the Foreman as set');
+  assert.equal(controlOf(p, 'watch_agent').value, '|', 'the Foreman as set');
   assert.match(agentsBox(p).textContent, /Claude Code/);
   assert.match(agentsBox(p).textContent, /Codex/);
   assert.equal(controlOf(p, 'max_parallel_builds'), typed);

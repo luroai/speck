@@ -12,7 +12,7 @@ const CURSOR = [{ slug: 'auto', display_name: 'Auto' }, { slug: 'grok-4.7-high',
 const MODELS = { codex: { models: CODEX }, cursor: { models: CURSOR } };
 const listOf = agent => Object.hasOwn(MODELS, agent) ? MODELS[agent].models : CLAUDE_MODELS;
 const CLAUDE = CLAUDE_MODELS.map(m => m.slug);
-const PAIRS = [['builder', 'builder_model'], ['reviewer', 'reviewer_model'], ['foreman', 'foreman_model']];
+const PAIRS = [['builder', 'builder_model'], ['reviewer', 'reviewer_model'], ['watch_agent', 'watch_model']];
 
 // A page whose fetch answers GET /api/settings with each of `views` in turn, POST with each of `saves` in turn,
 // /api/agent-models?agent=<id> with `models[id]` (or a promise of it), and everything else with an empty board.
@@ -32,9 +32,9 @@ function page(views, { saves = [], models = MODELS } = {}) {
   return p;
 }
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, ...o });
-const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_model = '', reviewer_model = '', foreman_model = '' } = {}) => ({ groups: [
-  { title: 'Watching', settings: [S('foreman_fixing', 'tell', { choices: ['off', 'tell', 'fix'] }), S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }),
-    S('foreman_model', foreman_model), S('foreman_effort', '', { choices: ['', 'low', 'high'] })] },
+const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_model = '', reviewer_model = '', watch_model = '' } = {}) => ({ groups: [
+  { title: 'Watching', settings: [S('watch', 'tell', { choices: ['off', 'tell', 'fix'] }), S('watch_agent', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }),
+    S('watch_model', watch_model), S('watch_effort', '', { choices: ['', 'low', 'high'] })] },
   { title: 'Building and reviewing', settings: [
     S('builder', builder, { choices: ['claude', 'codex', 'cursor'], build_command: { value: '', own: { claude: '', codex: '', cursor: '' }, each_ticket: true } }),
     S('builder_model', builder_model), S('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor', 'mine'] }),
@@ -68,17 +68,17 @@ test('0381 AC1: each agent and its model are two lists on one row, the agent\'s 
   assert.deepEqual(options(p, 'builder_model'), ['', 'gpt-new', 'gpt-old'], 'the builder\'s models: Codex\'s');
   assert.deepEqual(options(p, 'reviewer'), ['codex', 'claude', 'claude-subagent', 'cursor', 'mine']);
   assert.deepEqual(options(p, 'reviewer_model'), ['', 'auto', 'grok-4.7-high'], 'the reviewer\'s models: Cursor\'s');
-  assert.deepEqual(options(p, 'foreman'), ['', 'claude', 'codex', 'cursor']);
-  assert.deepEqual(options(p, 'foreman_model'), ['', ...CLAUDE], 'the Foreman\'s models: Claude\'s');
+  assert.deepEqual(options(p, 'watch_agent'), ['', 'claude', 'codex', 'cursor']);
+  assert.deepEqual(options(p, 'watch_model'), ['', ...CLAUDE], 'the Foreman\'s models: Claude\'s');
 });
 
 test('0381 AC2: choosing an agent fills its row\'s model list before saving, and the first lists keep what they offered', async () => {
   const p = page([view({ builder: 'claude', reviewer: 'claude-subagent', foreman: '' })]);
   await openSettings(p);
   assert.deepEqual(options(p, 'reviewer'), ['codex', 'claude', 'claude-subagent', 'cursor', 'mine'], 'a reviewer command too');
-  assert.deepEqual(options(p, 'foreman'), ['', 'claude', 'codex', 'cursor'], 'blank too');
+  assert.deepEqual(options(p, 'watch_agent'), ['', 'claude', 'codex', 'cursor'], 'blank too');
   for (const [agent, model, pick, want] of [['builder', 'builder_model', 'cursor', ['', 'auto', 'grok-4.7-high']],
-    ['reviewer', 'reviewer_model', 'codex', ['', 'gpt-new', 'gpt-old']], ['foreman', 'foreman_model', 'codex', ['', 'gpt-new', 'gpt-old']]]) {
+    ['reviewer', 'reviewer_model', 'codex', ['', 'gpt-new', 'gpt-old']], ['watch_agent', 'watch_model', 'codex', ['', 'gpt-new', 'gpt-old']]]) {
     changeTo(p, agent, pick);
     await p.settle();
     assert.deepEqual(options(p, model), want, `${model} after picking ${pick}`);
@@ -121,14 +121,14 @@ test('0381 AC3: a model not offered stays marked, the loading line and the type-
 });
 
 test('0381 AC4: the efforts keep their own rows, and changing either list in a row leaves the rest of Settings where it was', async () => {
-  for (const [what, key, value, affects] of [['builder', 'builder', 'codex', ['builder', 'builder_model', 'foreman_model']],
+  for (const [what, key, value, affects] of [['builder', 'builder', 'codex', ['builder', 'builder_model', 'watch_model']],
     ['builder_model', 'builder_model', 'opus', []], ['reviewer', 'reviewer', 'cursor', ['reviewer', 'reviewer_model', 'reviewer_effort']],
-    ['reviewer_model', 'reviewer_model', 'gpt-new', ['reviewer_model', 'reviewer_effort']], ['foreman', 'foreman', 'codex', ['foreman', 'foreman_model']],
-    ['foreman_model', 'foreman_model', 'opus', []]]) {
+    ['reviewer_model', 'reviewer_model', 'gpt-new', ['reviewer_model', 'reviewer_effort']], ['watch_agent', 'watch_agent', 'codex', ['watch_agent', 'watch_model']],
+    ['watch_model', 'watch_model', 'opus', []]]) {
     const p = page([view()]);
     await openSettings(p);
     const rows = topRows(p).map(r => nameOf(p, r));
-    for (const k of ['reviewer_effort', 'foreman_effort']) assert.ok(rows.includes(k), `${k} has its own row`);
+    for (const k of ['reviewer_effort', 'watch_effort']) assert.ok(rows.includes(k), `${k} has its own row`);
     const pane = p.byId('settings');
     pane.scrollTop = 480;
     let drawnAfresh = false;

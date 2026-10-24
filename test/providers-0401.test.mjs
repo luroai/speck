@@ -106,13 +106,13 @@ test('0401 AC2: the provider then appears in Your agents and in each role\'s lis
   const listed = answer.agent_models.find(a => a.id === 'acme-ai');
   assert.equal(listed.name, 'Acme AI');
   assert.deepEqual(listed.models.map(m => m.slug), ['acme-large', 'acme-small']);
-  for (const key of ['builder', 'reviewer', 'foreman']) {
+  for (const key of ['builder', 'reviewer', 'watch_agent']) {
     const s = answer.groups.flatMap(g => g.settings).find(x => x.key === key);
     assert.ok(s.choices.includes('acme-ai'), key);
   }
   assert.doesNotMatch(JSON.stringify(answer), new RegExp(KEY));
   // Picking it for a role saves for this machine, as a provider speck knows does.
-  const saved = panelSaveSettings(r.dir, [{ key: 'builder', value: 'acme-ai', machine: true }, { key: 'foreman', value: 'acme-ai', machine: true }]);
+  const saved = panelSaveSettings(r.dir, [{ key: 'builder', value: 'acme-ai', machine: true }, { key: 'watch_agent', value: 'acme-ai', machine: true }]);
   assert.equal(saved.status, 200, JSON.stringify(saved.body));
   assert.equal(machineConfig(r.dir).builder, 'acme-ai');
   assert.equal(machineConfig(r.dir).build_command, '');

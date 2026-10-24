@@ -76,7 +76,7 @@ test('0319 AC2: a recommendation taken for a build first started outside speck r
 test('0319 AC2: a resume the Foreman asks for, of a build first started outside speck run, is speck run\'s own', () => {
   const r = blockedRepo({ status: 'building', record: SEEN });
   const running = new Set(), started = [], starts = [], live = new Set();
-  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: 'fix' }),
+  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), watch: 'fix' }),
     words: WORDS, cfg: CFG, max: 1, running, ships: { again: () => {} }, say: () => {}, startBuild: starter(r, running, started),
     start: (argv, cwd, log, env) => { const pid = 90000 + starts.length; starts.push({ token: env.SPECK_FOREMAN_RUN, pid }); live.add(pid); return { pid, exited: () => !live.has(pid) }; },
     alive: pid => live.has(pid), withToken: () => [] });

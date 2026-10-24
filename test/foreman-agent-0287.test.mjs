@@ -28,7 +28,7 @@ const ON = { on: true, pid: process.pid };
 // until the test ends it with end(). Builds it resumes are kept too.
 function agents(r, { fixing = 'fix', max = 1, cfg = {}, persist, withToken = () => [] } = {}) {
   const starts = [], resumed = [], said = [], again = [], running = new Set(), live = new Set();
-  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: fixing, ...cfg }),
+  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), watch: fixing, ...cfg }),
     words: WORDS, cfg: CFG, max, running, ships: { again: id => again.push(id) }, say: m => said.push(m),
     startBuild: (id, argv, cwd, session, flags, record) => { resumed.push({ id, argv, rec: JSON.parse(record(4242)) }); running.add(id); },
     start: (argv, cwd, log, env) => { const pid = 90000 + starts.length; starts.push({ argv, cwd, log, token: env.SPECK_FOREMAN_RUN, pid }); live.add(pid); return { pid, exited: () => !live.has(pid) }; },
@@ -174,41 +174,41 @@ test('0287 AC2: speck foreman keeps its note to one line, and refuses a ticket w
   assert.deepEqual(fs.readdirSync(path.join(r2.dir, 'speck', 'tickets')), before, 'no fix ticket made');
 });
 
-test('0287 AC3: foreman, foreman_model and foreman_effort are in the config template, blank, each with a comment', () => {
+test('0287 AC3: foreman, watch_model and watch_effort are in the config template, blank, each with a comment', () => {
   const text = fs.readFileSync(path.join(ROOT, 'templates', 'config.yml'), 'utf8');
-  for (const key of ['foreman', 'foreman_model', 'foreman_effort']) assert.match(text, new RegExp(`^${key}: "" +# \\S`, 'm'), key);
+  for (const key of ['watch_agent', 'watch_model', 'watch_effort']) assert.match(text, new RegExp(`^${key}: "" +# \\S`, 'm'), key);
   const cfg = parseYaml(text);
-  assert.equal(cfg.foreman, ''); assert.equal(cfg.foreman_model, ''); assert.equal(cfg.foreman_effort, '');
+  assert.equal(cfg.watch_agent, ''); assert.equal(cfg.watch_model, ''); assert.equal(cfg.watch_effort, '');
 });
 
 test('0287 AC3: speck config set accepts the Foreman agent\'s settings, and refuses what it can\'t run', () => {
-  for (const v of ['', 'claude', 'codex']) assert.equal(checkConfigValue('foreman', v), v);
-  for (const v of ['gemini', 'constructor', 'CLAUDE']) assert.throws(() => checkConfigValue('foreman', v), /foreman must be blank or one of claude, codex/);
-  assert.equal(checkConfigValue('foreman_model', 'sonnet'), 'sonnet');
-  for (const v of ['', 'low', 'max']) assert.equal(checkConfigValue('foreman_effort', v), v);
-  assert.throws(() => checkConfigValue('foreman_effort', 'loads'), /foreman_effort must be blank/);
+  for (const v of ['', 'claude', 'codex']) assert.equal(checkConfigValue('watch_agent', v), v);
+  for (const v of ['gemini', 'constructor', 'CLAUDE']) assert.throws(() => checkConfigValue('watch_agent', v), /watch_agent must be blank or one of claude, codex/);
+  assert.equal(checkConfigValue('watch_model', 'sonnet'), 'sonnet');
+  for (const v of ['', 'low', 'max']) assert.equal(checkConfigValue('watch_effort', v), v);
+  assert.throws(() => checkConfigValue('watch_effort', 'loads'), /watch_effort must be blank/);
   const r = panelRepo();
-  for (const [k, v] of [['foreman', 'codex'], ['foreman_model', 'gpt-x'], ['foreman_effort', 'high']]) {
+  for (const [k, v] of [['watch_agent', 'codex'], ['watch_model', 'gpt-x'], ['watch_effort', 'high']]) {
     const out = r.run('config', 'set', k, v);
     assert.equal(out.status, 0, out.stderr);
   }
   const cfg = loadConfig(r.dir);
-  assert.deepEqual([cfg.foreman, cfg.foreman_model, cfg.foreman_effort], ['codex', 'gpt-x', 'high']);
+  assert.deepEqual([cfg.watch_agent, cfg.watch_model, cfg.watch_effort], ['codex', 'gpt-x', 'high']);
 });
 
 test('0287 AC3: the Settings view\'s Foreman group offers them, explained and editable', () => {
   const r = panelRepo();
   const g = panelSettings(r.dir).groups.find(x => x.title === 'Watching');
   const by = Object.fromEntries(g.settings.map(s => [s.key, s]));
-  for (const key of ['foreman', 'foreman_model', 'foreman_effort']) {
+  for (const key of ['watch_agent', 'watch_model', 'watch_effort']) {
     assert.ok(by[key], key);
     assert.equal(by[key].editable, true, key);
     assert.equal(by[key].value, '', key);
     assert.ok(by[key].explain.length > 20, key);
   }
-  assert.deepEqual(by.foreman.choices, ['', 'claude', 'codex', 'cursor', 'deepseek']); // 0333: and cursor. 0393: and each model provider
-  assert.deepEqual(by.foreman_effort.choices, ['', 'low', 'medium', 'high', 'xhigh', 'max']);
-  assert.equal(by.foreman_model.choices, undefined, 'typed in');
+  assert.deepEqual(by.watch_agent.choices, ['', 'claude', 'codex', 'cursor', 'deepseek']); // 0333: and cursor. 0393: and each model provider
+  assert.deepEqual(by.watch_effort.choices, ['', 'low', 'medium', 'high', 'xhigh', 'max']);
+  assert.equal(by.watch_model.choices, undefined, 'typed in');
 });
 
 test('0287 AC3: setup offers the Foreman agent\'s settings', () => {
@@ -216,7 +216,7 @@ test('0287 AC3: setup offers the Foreman agent\'s settings', () => {
   for (const cmd of ['speck config set foreman <name>', 'speck config set foreman_model <name>', 'speck config set foreman_effort <effort>']) assert.ok(skill.includes(cmd), cmd);
 });
 
-test('0287 AC3: the agent runs on foreman, foreman_model and foreman_effort, blank for the defaults', () => {
+test('0287 AC3: the agent runs on foreman, watch_model and watch_effort, blank for the defaults', () => {
   assert.equal(foremanAgentOf({}), 'claude');
   assert.equal(foremanAgentOf({ builder: 'codex' }), 'codex');
   assert.equal(foremanAgentOf({ builder: 'codex', foreman: 'claude' }), 'claude');
@@ -224,11 +224,11 @@ test('0287 AC3: the agent runs on foreman, foreman_model and foreman_effort, bla
   const plain = foremanArgv({}, 'B');
   assert.deepEqual(plain.slice(0, 3), ['claude', '-p', 'B']);
   assert.ok(!plain.includes('--model') && !plain.includes('--effort'));
-  const claude = foremanArgv({ foreman_model: 'sonnet', foreman_effort: 'low' }, 'B');
+  const claude = foremanArgv({ watch_model: 'sonnet', watch_effort: 'low' }, 'B');
   assert.equal(claude[claude.indexOf('--model') + 1], 'sonnet');
   assert.equal(claude[claude.indexOf('--effort') + 1], 'low');
   assert.ok(!claude.includes('--dangerously-skip-permissions'));
-  const codex = foremanArgv({ foreman: 'codex', foreman_model: 'gpt-x', foreman_effort: 'high' }, 'B');
+  const codex = foremanArgv({ foreman: 'codex', watch_model: 'gpt-x', watch_effort: 'high' }, 'B');
   assert.deepEqual(codex.slice(0, 2), ['codex', 'exec']);
   assert.equal(codex[codex.indexOf('-m') + 1], 'gpt-x');
   assert.ok(codex.includes('model_reasoning_effort="high"'));
@@ -345,7 +345,7 @@ if (process.env.FAKE_STATUS) { spawnSync(process.execPath, [${JSON.stringify(CLI
   const briefs = () => fs.readdirSync(out).map(f => fs.readFileSync(path.join(out, f), 'utf8'));
   for (const [status, expect] of [['', true], ['blocked', false]]) {
     const r = runRepo({ worktrees: 'true', command: `"${process.execPath}" "${builder}" {id} {session}` });
-    fs.appendFileSync(r.cfgFile, 'foreman_fixing: fix\n');
+    fs.appendFileSync(r.cfgFile, 'watch: fix\n');
     r.g('commit', '-qam', 'fix');
     for (const f of fs.readdirSync(out)) fs.rmSync(path.join(out, f));
     const run = startRun(r.dir, { PATH: `${bin}${path.delimiter}${process.env.PATH}`, FAKE_STATUS: status });
