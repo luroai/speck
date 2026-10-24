@@ -46,7 +46,7 @@ A done ticket's status can't be changed by `speck set` or the panel, so shipped 
 - Self-check: no changes. `scripts/speck.mjs` and `scripts/panel.mjs` were both at the 600-line limit, so the checks share existing lines; the panel's Set ready and Back to Plan are exported so the tests call them directly.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket that has shipped can no longer have its status changed by mistake. Trying to set it ready, back to draft or anything else, from the command line or with the panel's buttons, now stops with a message saying the ticket is done and shipped, and nothing changes. To see it, run `speck set` on a done ticket's number with `status ready`. Other tickets change status as before, and shipping still files a ticket as done. A done ticket's other details, such as its priority, can still be changed.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,7 +55,9 @@ A done ticket's status can't be changed by `speck set` or the panel, so shipped 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- The test "0384 AC3: the panel shows the round as running through every exit 12" fails on the base code too, unchanged by this build: saved to the inbox as speck/ideas/2026-10-24-fix-the-0384-running-round-test.md.
+- `scripts/speck.mjs` and `scripts/panel.mjs` are both at the 600-line limit, so the next change to either needs code moved out first.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -124,6 +126,76 @@ A done ticket's status can't be changed by `speck set` or the panel, so shipped 
     ],
     "escalation_question": "",
     "summary": "The change prevents reopening shipped tickets through the command or panel, while ordinary status changes and shipping remain covered. One documentation test unnecessarily locks in wording and must be corrected before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "49ecb6eb098f6121bb2959a7338caf424695d531",
+    "session": "continued",
+    "thread_id": "01a16cdc-00ed-7252-8311-be7ec0caf04d",
+    "builder_response": "- Tests run: test/set-0439.test.mjs test/ship.test.mjs test/ready-0108.test.mjs (plus the commands.checks files, which speck test adds).\n- F1: fixed. Removed the AC4 test from test/set-0439.test.mjs (and its now-unused ROOT import). AC4 is checked by reading docs/brief.md's `speck set` row, as the ticket's Notes now say.\n",
+    "seconds": 12,
+    "usage": {
+      "input_tokens": 263589,
+      "cached_input_tokens": 216704,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1290,
+      "reasoning_output_tokens": 35
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T07:44:37.609Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: checkSetTicket rejects status changes on done tickets before writes or commits. Six passing AC1 tests verify the message, non-zero exit and unchanged file, location and commit."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs: panelSetReady and panelBackToPlan use setRefusal and checkSetTicket for done tickets. Passing AC2 test verifies both return the shared message and change nothing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests exercise non-done status changes and speck ship filing a ticket as done. Updated ship.test.mjs and ready-0108.test.mjs retain coverage of moving non-done tickets. The supplied run has no failures."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Checked by review, as recorded in the ticket Notes: docs/brief.md:191 says, “It refuses to change a done ticket's status, so shipped work stays shipped.”"
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/set-0439.test.mjs",
+        "issue": "The documentation wording test and its unused import have been removed. The documentation criterion is now checked by review.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Shipped tickets now refuse status changes through the command and both panel actions, without changing files or commits. Ordinary status changes and shipping remain covered by passing tests. The documentation test concern is resolved; the change is ready for the owner's merge decision."
   }
 }
 ```
