@@ -18,10 +18,13 @@ import { cursorBuilds, cursorStartWords } from './cursor-build.mjs';
 // What the build's session is told when speck run resumes it. `skill` is how its agent names /speck-build. 0286: `by`
 // 'foreman' when the Foreman chose it (foreman_fixing: fix), not the user.
 export const goWithMessage = (id, option, skill = '/speck-build', by = 'user') =>
-  `${by === 'foreman' ? 'The Foreman (foreman_fixing: fix) chose' : 'The user chose'} the recommended option for ticket ${id}'s blocked question: ${option}. It's recorded in the ticket's Notes, and the ticket is building again. Carry on with ${skill} ${id} from where you left off, going with that option.`;
+  `${by === 'foreman' ? 'speck (foreman_fixing: fix) chose' : 'The user chose'} the recommended option for ticket ${id}'s blocked question: ${option}. It's recorded in the ticket's Notes, and the ticket is building again. Carry on with ${skill} ${id} from where you left off, going with that option.`;
 // 0286: how the Notes line says the Foreman chose it, which is also how it knows it has chosen once for the ticket.
-export const FOREMAN_CHOSE = 'chosen by the Foreman';
-const choseOnce = lines => (lines || []).some(line => /^\s*[-*]\s+Went with the recommendation:/.test(line) && line.includes(`(${FOREMAN_CHOSE}`));
+// 0486: before, 'chosen by the Foreman', which still counts.
+export const FOREMAN_CHOSE = 'chosen by speck';
+const OLD_CHOSE = 'chosen by the Foreman';
+export const chosenBySpeck = said => said.startsWith(FOREMAN_CHOSE) || said.startsWith(OLD_CHOSE);
+const choseOnce = lines => (lines || []).some(line => /^\s*[-*]\s+Went with the recommendation:/.test(line) && (line.includes(`(${FOREMAN_CHOSE}`) || line.includes(`(${OLD_CHOSE}`)));
 
 // A ticket's run record from speck run, or null when it has none or it can't be read.
 function readRecord(runs, id) {
@@ -70,7 +73,7 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   if (t.fm.status !== 'blocked') return refuse(`Ticket ${pad} is "${t.fm.status}", not blocked, so it has no question waiting for you.`);
   const option = questionFacts(contentLines(t.sections['blocked question'])).recommendation;
   if (!option) return refuse(`Ticket ${pad}'s question has no recommendation to go with. ${byHand}`);
-  if (by === 'foreman' && choseOnce(t.sections.notes)) return refuse(`The Foreman has already gone with a recommendation for ticket ${pad} once, so this question waits for you. ${byHand}`);
+  if (by === 'foreman' && choseOnce(t.sections.notes)) return refuse(`speck has already gone with a recommendation for ticket ${pad} once, so this question waits for you. ${byHand}`);
   const runs = runsOf(repo);
   const file = path.join(runs, `${pad}.json`), rec = readRecord(runs, pad);
   const why = cantResume(cfg, pad, rec)
@@ -106,7 +109,7 @@ export function goWithQueue({ cfg, words, max, running, startBuild, saveRecord: 
       if ((t.status !== 'building' && t.status !== 'reviewing') || t.build_running || running.has(t.id)) continue;
       const rec = readRecord(runs(), t.id), g = pendingOf(rec);
       if (!g) continue;
-      const file = path.join(runs(), `${t.id}.json`), who = g.by === 'foreman' ? 'the Foreman' : 'you'; // 0286
+      const file = path.join(runs(), `${t.id}.json`), who = g.by === 'foreman' ? 'speck' : 'you'; // 0286
       const { go_with: _, exited: _e, exit_code: _c, ...kept } = rec;
       if (g.head !== refsOf(repo, cfg, t.id).head || sessionInUse(rec.session)) {
         try { save(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* tried again next check */ }

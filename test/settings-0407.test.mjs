@@ -14,7 +14,7 @@ const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What 
 const EFFORTS = { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] };
 // The view from the config alone, as GET /api/settings?quick=1 answers it.
 const quick = () => ({ groups: [
-  { title: 'Foreman', settings: [S('foreman', '', { choices: ['', 'claude', 'codex'] }), S('foreman_model', ''), S('foreman_effort', '', EFFORTS)] },
+  { title: 'Watching', settings: [S('foreman', '', { choices: ['', 'claude', 'codex'] }), S('foreman_model', ''), S('foreman_effort', '', EFFORTS)] },
   { title: 'Building and reviewing', settings: [
     S('builder', 'claude', { choices: ['claude', 'codex'], build_command: { value: '', own: { claude: '', codex: '' }, each_ticket: true } }),
     S('builder_model', ''), S('builder_effort', '', EFFORTS), S('reviewer', 'codex', { choices: ['codex', 'claude', 'claude-subagent'] }),

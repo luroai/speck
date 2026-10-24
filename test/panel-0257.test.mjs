@@ -11,7 +11,7 @@ import { fakeAgents, READY } from './support/agents.mjs';
 // ---------- 0257: show speck's settings, explained, in the panel ----------
 
 const GROUPS = [
-  ['Foreman', ['foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']], // 0286, 0287
+  ['Watching', ['foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']], // 0286, 0287
   ['Shipping', ['auto_ship', 'auto_ship_risk', 'ship_mode']], // 0295 added ship_mode
   ['Building and reviewing', ['builder', 'builder_model', 'builder_effort', 'reviewer', // 0402 added builder_effort
     'reviewer_model', 'reviewer_effort', 'allow_same_model_review', // 0406 folded in the parallel and size-limit settings
@@ -105,7 +105,7 @@ test('0257 AC2: the view shows each group in order, each setting\'s name and val
   await p.settle();
   await open(p);
   const text = pane(p).textContent;
-  const at = GROUPS.map(([title]) => text.indexOf(title));
+  const at = GROUPS.map(([title]) => text.indexOf(title === 'Watching' ? 'Foreman' : title)); // the panel's own heading for it (0485)
   assert.ok(at.every(i => i >= 0), `every group is shown: ${text}`);
   assert.deepEqual([...at].sort((a, b) => a - b), at, 'in order');
   const rows = p.all(pane(p)).filter(n => /\bsetting\b/.test(n.className || ''));

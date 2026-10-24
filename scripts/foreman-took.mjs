@@ -1,6 +1,6 @@
 // 0317: what the Foreman will do about a blocked ticket and what it has done, from the ticket's Notes, where goWith
 // records each recommendation taken and who chose it (0284, 0286), so the panel and `speck status` say the same.
-import { FOREMAN_CHOSE, goWithResumable } from './go-with.mjs';
+import { chosenBySpeck, goWithResumable } from './go-with.mjs';
 import { fixable, fixingOf } from './foreman.mjs';
 import { contentLines } from './core.mjs';
 import { questionFacts } from './question-facts.mjs';
@@ -13,7 +13,7 @@ export function wentWithLines(lines) {
   for (const line of Array.isArray(lines) ? lines : []) {
     const m = typeof line === 'string' ? line.match(LINE) : null;
     if (!m || !Number.isFinite(Date.parse(`${m[3]}T${m[4]}:00Z`))) continue;
-    out.push({ option: m[1], by: m[2].startsWith(FOREMAN_CHOSE) ? 'foreman' : 'user', at: new Date(`${m[3]}T${m[4]}:00Z`).toISOString() });
+    out.push({ option: m[1], by: chosenBySpeck(m[2]) ? 'foreman' : 'user', at: new Date(`${m[3]}T${m[4]}:00Z`).toISOString() });
   }
   return out;
 }
@@ -41,7 +41,7 @@ export const withForeman = (t, fixing, entry) => ({ ...entry, ...foremanFacts(t,
 // A choice's time as the Notes give it, for the panel and `speck status`.
 export const tookAt = at => (typeof at === 'string' && Number.isFinite(Date.parse(at)) ? `${new Date(at).toISOString().slice(0, 16).replace('T', ' ')} UTC` : '');
 // Who went with it, as a ticket says it.
-export const whoWent = w => (w && w.by === 'foreman' ? 'The Foreman went with the recommendation' : 'You went with the recommendation');
+export const whoWent = w => (w && w.by === 'foreman' ? 'speck went with the recommendation' : 'You went with the recommendation');
 
 // The board `speck status` gives the Foreman, from its parsed tickets: each with the facts above, as the panel has them.
 export function foremanBoard(tickets, cfg, runs) {
@@ -56,7 +56,7 @@ export function foremanBoard(tickets, cfg, runs) {
 export function foremanTicketLines(b, q) {
   const lines = [];
   if (b?.status === 'blocked' && q) lines.push(`        ? ${q}`);
-  if (b?.status === 'blocked') lines.push(b.foreman_will ? `        → The Foreman will take its recommendation: ${b.blocked_recommendation}` : '        → Waiting for you');
+  if (b?.status === 'blocked') lines.push(b.foreman_will ? `        → speck will take its recommendation: ${b.blocked_recommendation}` : '        → Waiting for you');
   if (b?.went_with) lines.push(`        ✓ ${whoWent(b.went_with)}: ${b.went_with.option} (${tookAt(b.went_with.at)})`);
   return lines;
 }

@@ -85,19 +85,20 @@ function main(args) {
   let repo, key = '', known = null;
   try { known = findProvider(name, knownProviders()); } catch { /* read below */ }
   const p = { ...known, name, address, label: known?.label ?? name };
-  if (cantRun(p, foreman ? 'run the Foreman' : 'build')) stop(cantRun(p, foreman ? 'run the Foreman' : 'build')); // 0401
+  const work = foreman ? 'look into stops for speck' : 'build';
+  if (cantRun(p, work)) stop(cantRun(p, work)); // 0401
   try {
     repo = findRepoRoot();
     key = providerKey(repo, name, { providers: [p] });
   } catch (e) { stop(e.message); }
-  if (!key) stop(foreman ? `This machine has no ${p.label} API key, so the ${p.label} Foreman can't run. Set one with \`speck keys set ${name}\`.`
+  if (!key) stop(foreman ? `This machine has no ${p.label} API key, so speck can't look into stops on ${p.label}. Set one with \`speck keys set ${name}\`.`
     : `This machine has no ${p.label} API key, so the ${p.label} build can't run. Set one with \`speck keys set ${name}\`, then build the ticket again.`);
   const at = words.indexOf('--model');
   const model = (at >= 0 && words[at + 1]) || p.defaultModel || '';
   const child = spawn(words[0], words.slice(1), { stdio: 'inherit', env: (foreman ? providerForemanEnv : providerBuildEnv)(repo, p, key, model) });
   const pass = signal => () => { try { child.kill(signal); } catch { /* already gone */ } };
   for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.on(signal, pass(signal));
-  child.on('error', e => stop(e.code === 'ENOENT' ? `${foreman ? `The ${p.label} Foreman needs` : `${p.label} builds need`} Claude Code installed, as speck runs ${p.label}'s models through it. Install Claude Code so \`claude\` is on your PATH (https://claude.com/claude-code).` : `Claude Code couldn't start (${e.message}).`));
+  child.on('error', e => stop(e.code === 'ENOENT' ? `${foreman ? `speck needs` : `${p.label} builds need`} Claude Code installed, as speck runs ${p.label}'s models through it. Install Claude Code so \`claude\` is on your PATH (https://claude.com/claude-code).` : `Claude Code couldn't start (${e.message}).`));
   child.on('exit', (code, signal) => {
     if (!signal) process.exit(code ?? 1);
     for (const s of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.removeAllListeners(s);

@@ -45,6 +45,9 @@ speck's messages and commands say speck where they said the Foreman, and the old
 - Today: the messages in `scripts/foreman-agent.mjs`, `foreman.mjs`, `foreman-answer.mjs`, `foreman-took.mjs`, `foreman-fix.mjs`, `go-with.mjs`, `provider-build.mjs` and `run.mjs`; the commands in `scripts/speck.mjs`; `foremanSubject` in `scripts/build-records.mjs`; `skillPath` in `scripts/foreman-agent.mjs`; `RETIRED_SKILLS` in `scripts/install.mjs`.
 - Unchained from 0485: this changes `scripts/` and the skill's folder, 0485 the panel's `templates/`.
 - Failing before this build: none
+- Self-check: kept reading old Notes lines ("chosen by the Foreman") and old commits (`speck(<id>): Foreman:`) as speck's own, with a test for each; renamed the agent's log file, as `speck run` prints its path; made `cmdWatch` a function declaration, as speck.mjs reads it while the modules load in a cycle.
+- Scope: the Settings group's title is Watching here (and in the one line of `templates/panel-settings.js` that finds it), because `speck config show` prints it. The role's name in Your agents (`rolesUsing`) stays Foreman for 0485, which owns it; the CLI's refusal to remove an agent words it as "the agent speck watches with". The skill's own text, the README and the brief still say `speck foreman`, which still works (0488).
+- Pictures: none, because nothing the panel draws changes: its Watching group heading and roles are 0485's.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

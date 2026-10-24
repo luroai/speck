@@ -98,7 +98,7 @@ export function addAgent(repo, name, opts = {}) {
   return `Added ${entry.name} to your agents on this machine.${signedOut}`;
 }
 
-// The roles that use agent `id` in `cfg`: builder, reviewer or Foreman.
+// The roles that use agent `id` in `cfg`: builder, reviewer or Foreman, as Your agents names them.
 export function rolesUsing(id, cfg, providers = knownProviders()) {
   const reviewer = cfg?.reviewer === 'claude-subagent' ? 'claude' : cfg?.reviewer;
   return [['builder', cfg?.builder], ['reviewer', reviewer], ['Foreman', foremanAgentOf(cfg, providers)]].filter(([, v]) => v === id).map(([role]) => role);
@@ -109,8 +109,9 @@ export function removeAgent(repo, name, cfg, opts = {}) {
   const providers = opts.providers ?? knownProviders(repo), id = idOf(name, providers), label = nameOf(id, providers);
   const roles = rolesUsing(id, cfg, providers);
   if (roles.length) {
-    const said = roles.length > 1 ? `${roles.slice(0, -1).join(', ')} and ${roles.at(-1)}` : roles[0];
-    throw new SpeckError(`${label} is the ${said}, so it wasn't removed. Set the ${said} to another agent first, then remove it.`);
+    const named = roles.map(r => (r === 'Foreman' ? 'the agent speck watches with' : `the ${r}`)); // 0486
+    const said = named.length > 1 ? `${named.slice(0, -1).join(', ')} and ${named.at(-1)}` : named[0];
+    throw new SpeckError(`${label} is ${said}, so it wasn't removed. Set ${said} to another agent first, then remove it.`);
   }
   const list = readYourAgents(repo, opts) ?? yourAgents(repo, opts);
   if (!list.includes(id)) return `${label} isn't one of your agents on this machine, so there was nothing to remove.`;

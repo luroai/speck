@@ -61,7 +61,7 @@ const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', providers 
       row('builder', builder, { choices: ['claude', 'codex', 'cursor', ...names] }), row('builder_model', ''),
       row('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor', ...names] }), row('reviewer_model', ''),
       row('reviewer_effort', '', { choices: EFFORTS })] },
-    { title: 'Foreman', settings: [row('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor', ...names] }), row('foreman_model', '')] }],
+    { title: 'Watching', settings: [row('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor', ...names] }), row('foreman_model', '')] }],
   builder_models: { builder, models: CLAUDE_MODELS }, reviewer_models: { reviewer, models: [{ slug: 'gpt-new', efforts: ['low'] }] },
   foreman_models: { foreman: 'claude', models: CLAUDE_MODELS }, claude_models: CLAUDE_MODELS, providers, your_agents: yoursFor(providers) };
 };

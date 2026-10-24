@@ -1,8 +1,8 @@
 // 0287: the Foreman agent. With foreman_fixing: fix, when work stops for a reason speck has no steps for (a ship refused
 // for a reason it doesn't hand back to the build, or a build that ends with its ticket neither approved nor blocked),
-// speck run starts an agent with a short brief to look into it. The agent follows the speck-foreman skill and does one
-// thing, through `speck foreman <action>`: resume the build with an instruction, re-run the ship once, make a draft fix
-// ticket or ask the user one question. Each is noted in the ticket's Notes and shown in the Foreman's status detail.
+// speck run starts an agent with a short brief to look into it. The agent follows the speck-watch skill and does one
+// thing, through `speck watch <action>` (0486: was `speck foreman`): resume the build with an instruction, re-run the
+// ship once, make a draft fix ticket or ask the user one question. Each is noted in the ticket's Notes and shown in the Foreman's status detail.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -10,7 +10,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { SpeckError, sh, loadConfig, worktreeList, ticketBranches, findRepoRoot } from './core.mjs';
 import { replaceSection, commitTicketOnly } from './close.mjs';
-import { buildTicket, saveRecord, foremanSubject } from './build-records.mjs';
+import { buildTicket, saveRecord, foremanSubject, oldForemanSubject, byWatch } from './build-records.mjs';
 import { readableLog } from './build-log.mjs';
 import { resumeFor, resumedRecord } from './hand-back.mjs';
 import { pidAlive } from './run-switch.mjs';
@@ -31,7 +31,7 @@ const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 // None is <id>.json or <id>.log, so nothing that reads the runs folder's build records takes them for one.
 const STATE = 'run.foreman-agent.json'; // speck run's: the agent running, those waiting, what it has looked into
 const DID = 'run.foreman-did.jsonl'; // the agent's actions, one JSON object a line, written by `speck foreman`
-const LOG = 'run.foreman-agent.log'; // the agent's output, from its latest run
+const LOG = 'run.watch.log'; // the agent's output, from its latest run. 0486: named so the lines that print it don't say foreman
 
 // The agents the Foreman can run on, and what each action is.
 export const FOREMAN_AGENTS = Object.freeze(['claude', 'codex', 'cursor']);
@@ -57,11 +57,11 @@ const agentLabel = (cfg, providers = knownProviders()) => foremanProvider(cfg, p
 export function foremanCantStart(repo, cfg, { providers = knownProviders(repo), installed = onPath } = {}) {
   const p = foremanProvider(cfg, providers);
   if (!p) return '';
-  if (cantRun(p, 'run the Foreman')) return cantRun(p, 'run the Foreman'); // 0401
-  if (!installed('claude')) return `the ${p.label} Foreman needs Claude Code installed, as speck runs ${p.label}'s models through it (claude isn't on the PATH). Install Claude Code (https://claude.com/claude-code), or set foreman to another agent.`;
+  if (cantRun(p, 'look into stops for speck')) return cantRun(p, 'look into stops for speck'); // 0401
+  if (!installed('claude')) return `speck needs Claude Code installed to look into stops on ${p.label}, as speck runs ${p.label}'s models through it (claude isn't on the PATH). Install Claude Code (https://claude.com/claude-code), or set foreman to another agent.`;
   let key = '';
   try { key = providerKey(repo, p.name, { providers }); } catch (e) { return e.message; }
-  return key ? '' : `this machine has no ${p.label} API key for the Foreman. Set one with \`speck keys set ${p.name}\`, or set foreman to another agent.`;
+  return key ? '' : `this machine has no ${p.label} API key for speck to look into stops with. Set one with \`speck keys set ${p.name}\`, or set foreman to another agent.`;
 }
 const textOf = v => (typeof v === 'string' ? v.trim() : '');
 const oneLine = v => textOf(v).replace(/\s+/g, ' ');
@@ -70,18 +70,18 @@ const sentence = v => (/[.!?]$/.test(v) ? v : `${v}.`);
 const utc = at => (typeof at === 'string' && Number.isFinite(Date.parse(at)) ? ` at ${new Date(at).toISOString().slice(0, 16).replace('T', ' ')} UTC` : '');
 
 // The skill the agent follows, as the agent finds it in the repo.
-export const skillPath = agent => `${agent === 'codex' ? '.agents' : '.claude'}/skills/speck-foreman/SKILL.md`;
+export const skillPath = agent => `${agent === 'codex' ? '.agents' : '.claude'}/skills/speck-watch/SKILL.md`;
 
 // The brief the agent starts with: the ticket, what happened, the last lines of its log and what it may do.
 export function foremanBrief({ id, what, log, tail, agent = 'claude' }) {
-  const cli = 'node .speck/scripts/speck.mjs foreman';
+  const cli = 'node .speck/scripts/speck.mjs watch';
   return [
-    `You are speck's Foreman. Work on ticket ${id} stopped for a reason speck has no steps for, and speck run asked you to look into it.`,
+    `You are speck, watching the pipeline. Work on ticket ${id} stopped for a reason speck has no steps for, and speck run asked you to look into it.`,
     `What happened: ${what}`,
     `Last lines of ${log}:`,
     tail || '(the log is empty or missing)',
     '',
-    `Follow the speck-foreman skill (${skillPath(agent)}). Find out why it stopped, then do exactly one of these, with --why saying why in a sentence:`,
+    `Follow the speck-watch skill (${skillPath(agent)}). Find out why it stopped, then do exactly one of these, with --why saying why in a sentence:`,
     `- ${cli} resume ${id} "<what the build should do>" --why="..."   resume the ticket's build with an instruction`,
     `- ${cli} reship ${id} --why="..."   have speck run ship it again, once (only an approved ticket auto_ship covers)`,
     `- ${cli} fix ${id} "<title of the fix ticket>" --why="..."   make a draft fix ticket for what's broken`,
@@ -123,7 +123,7 @@ export function foremanOnly(repo, id, from, to) {
   if (sh('git', ['merge-base', '--is-ancestor', from, to], { cwd: repo }).status !== 0) return false;
   const r = sh('git', ['log', '--format=%s', `${from}..${to}`], { cwd: repo });
   const subjects = r.status === 0 ? r.stdout.split('\n').filter(Boolean) : [];
-  return subjects.length > 0 && subjects.every(s => s.startsWith(foremanSubject(id)));
+  return subjects.length > 0 && subjects.every(s => byWatch(id, s));
 }
 
 // The commits a stop is looked into for: the base branch's and the ticket branch's latest commit that isn't the
@@ -133,7 +133,7 @@ export function codeKey(repo, cfg, id) {
   try { branches = ticketBranches(repo, cfg, id); } catch { /* unreadable: no branch */ }
   let head = '';
   if (branches.length === 1) {
-    const r = sh('git', ['log', '-1', '--format=%H', '--invert-grep', '--fixed-strings', `--grep=${foremanSubject(id)}`, `refs/heads/${branches[0]}`], { cwd: repo });
+    const r = sh('git', ['log', '-1', '--format=%H', '--invert-grep', '--fixed-strings', `--grep=${foremanSubject(id)}`, `--grep=${oldForemanSubject(id)}`, `refs/heads/${branches[0]}`], { cwd: repo });
     head = r.status === 0 ? r.stdout.trim() : '';
   }
   return `${ref(repo, `refs/heads/${cfg.base_branch}`)} ${head}`;
@@ -178,7 +178,7 @@ export function agentView(runs, tickets = []) {
     const key = askKey(a.id, a.at), r = replies.get(key);
     if (r) return r.action === 'answer' ? `You answered it${utc(r.at)}${oneLine(r.text) ? `: ${sentence(oneLine(r.text))}` : '.'}` : `You dismissed it${utc(r.at)}.`;
     if (dealt.has(key)) return 'No longer waiting: your reply is being noted.';
-    if (latest.get(a.id) !== a) return `No longer waiting: the Foreman has done something else about ${a.id} since.`;
+    if (latest.get(a.id) !== a) return `No longer waiting: speck has done something else about ${a.id} since.`;
     if (!statusOf.has(a.id)) return `No longer waiting: ${a.id} is no longer on the board.`;
     if (statusOf.get(a.id) !== a.status) return `No longer waiting: ${a.id} is ${statusOf.get(a.id)} now.`;
     return '';
@@ -225,7 +225,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
   const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const carried = new Set(); // 0318: the same for your answers to its questions
   const config = () => { try { return readConfig(); } catch { return null; } };
-  const save = s => { try { persist(runs(), s); return true; } catch (e) { say(`The Foreman couldn't save its record (${e.message}), so it tries again on speck run's next check.`); return false; } };
+  const save = s => { try { persist(runs(), s); return true; } catch (e) { say(`speck couldn't save its record of what it looks into (${e.message}), so it tries again on speck run's next check.`); return false; } };
 
   const stuck = ({ id, what, log }) => {
     const c = config();
@@ -233,7 +233,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     const s = readAgentState(runs()), k = key(id);
     if (s.tried[id] === k || s.running?.id === id && s.running.key === k || s.queue.some(q => q.id === id && q.key === k)) return;
     s.queue = [...s.queue.filter(q => q.id !== id), { id, key: k, what: String(what), log: String(log || '') }];
-    if (save(s)) say(`${id}: the Foreman will look into it, as foreman_fixing is fix: ${what}`);
+    if (save(s)) say(`${id}: speck will look into it, as foreman_fixing is fix: ${what}`);
   };
 
   // An agent that has ended: each action it took for its ticket is carried out.
@@ -245,11 +245,11 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     finished.add(r.token);
     const mine = readActions(runs()).filter(a => a.run === r.token && a.id === r.id);
     for (const a of mine) {
-      if (a.action === 'reship') { ships.again(a.id); say(`${a.id}: the Foreman asked for its ship to be tried again: ${a.why}`); }
+      if (a.action === 'reship') { ships.again(a.id); say(`${a.id}: speck asked for its ship to be tried again: ${a.why}`); }
       else if (a.action === 'resume') s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text }];
-      else say(`${a.id}: the Foreman ${ACTIONS[a.action]}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
+      else say(`${a.id}: speck ${ACTIONS[a.action]}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
     }
-    if (!mine.length) say(`${r.id}: the Foreman looked into it and took no action. Its log: ${path.relative(repo, path.join(runs(), LOG))}`);
+    if (!mine.length) say(`${r.id}: speck looked into it and took no action. Its log: ${path.relative(repo, path.join(runs(), LOG))}`);
   };
 
   const launch = (s, c, next) => {
@@ -264,13 +264,13 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     s.running = { id: next.id, token, pid: null, key: next.key, what: next.what, started: new Date().toISOString() };
     if (!save(s)) return;
     const cant = cantStart(c); // 0392: a provider's without Claude Code or this machine's key for it
-    if (cant) { s.running = null; save(s); return say(`${next.id}: the Foreman couldn't start on ${label}: ${cant}`); }
+    if (cant) { s.running = null; save(s); return say(`${next.id}: speck couldn't start looking into it on ${label}: ${cant}`); }
     const started = start(argv, repo, path.join(runs(), LOG), { ...process.env, SPECK_FOREMAN_RUN: token });
-    if (started.error || !started.pid) { s.running = null; save(s); return say(`${next.id}: the Foreman couldn't start ${label}: ${started.error || 'it has no process id'}.`); }
+    if (started.error || !started.pid) { s.running = null; save(s); return say(`${next.id}: speck couldn't start ${label} to look into it: ${started.error || 'it has no process id'}.`); }
     child = { token, exited: started.exited };
     s.running = { ...s.running, pid: started.pid };
     save(s);
-    say(`${next.id}: the Foreman (${label}) is looking into it. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
+    say(`${next.id}: speck (${label}) is looking into it. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
   };
 
   const resume = (s, t) => {
@@ -279,14 +279,14 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     s.resumes = s.resumes.filter(x => x !== r);
     const skill = rec?.agent === 'codex' ? '$speck-build' : '/speck-build';
     const message = r.by === 'user'
-      ? `speck's Foreman looked into why ticket ${t.id}'s work stopped and asked the user: "${r.question}" Their answer: ${r.message} Carry on with ${skill} ${t.id} from where you left off, as they said.`
-      : `speck's Foreman looked into why ticket ${t.id}'s work stopped, and asks the build to carry on: ${r.message} Carry on with ${skill} ${t.id} from where you left off.`;
+      ? `speck looked into why ticket ${t.id}'s work stopped and asked the user: "${r.question}" Their answer: ${r.message} Carry on with ${skill} ${t.id} from where you left off, as they said.`
+      : `speck looked into why ticket ${t.id}'s work stopped, and asks the build to carry on: ${r.message} Carry on with ${skill} ${t.id} from where you left off.`;
     const { argv, why } = rec ? resumeFor(words, cfg, t.id, rec, message) : { argv: null, why: 'it has no run record' };
-    if (!argv) return say(`${t.id}: the Foreman asked for its build to be resumed, but speck run can't: ${why}.`);
+    if (!argv) return say(`${t.id}: speck asked for its build to be resumed, but speck run can't: ${why}.`);
     const { exited: _e, exit_code: _c, ...kept } = rec, next = { ...resumedRecord(kept), foreman_resumed: new Date().toISOString(), resume_command: argv };
-    try { saveRecord(file, next); } catch (e) { return say(`${t.id}: the Foreman asked for its build to be resumed, but its run record couldn't be saved (${e.message}).`); }
+    try { saveRecord(file, next); } catch (e) { return say(`${t.id}: speck asked for its build to be resumed, but its run record couldn't be saved (${e.message}).`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
-    say(`${t.id}: speck run is resuming its build, as the Foreman asked (session ${rec.session}).`);
+    say(`${t.id}: speck run is resuming its build, as speck asked (session ${rec.session}).`);
     startBuild(t.id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
   };
 
@@ -317,13 +317,13 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
       s.answered = [...s.answered, x.key];
       changed = true;
       const t = tickets.find(y => String(y.id) === x.id);
-      if (!t || t.status !== x.status) { say(`${x.id}: your answer to the Foreman wasn't carried out, as the ticket has moved on since.`); continue; }
-      if (x.carry === 'reship') { ships.again(x.id); say(`${x.id}: speck run is shipping it again, once, as you answered the Foreman.`); }
+      if (!t || t.status !== x.status) { say(`${x.id}: your answer to speck wasn't carried out, as the ticket has moved on since.`); continue; }
+      if (x.carry === 'reship') { ships.again(x.id); say(`${x.id}: speck run is shipping it again, once, as you answered speck.`); }
       else s.resumes = [...s.resumes.filter(y => y.id !== x.id), { id: x.id, message: x.text, by: 'user', question: x.question, status: x.status }];
     }
     // An answer waiting for a build slot is dropped once its ticket has moved on.
     const stale = s.resumes.filter(x => x.by === 'user' && !tickets.some(t => String(t.id) === x.id && t.status === x.status));
-    for (const x of stale) say(`${x.id}: your answer to the Foreman wasn't carried out, as the ticket has moved on since.`);
+    for (const x of stale) say(`${x.id}: your answer to speck wasn't carried out, as the ticket has moved on since.`);
     if (stale.length) { s.resumes = s.resumes.filter(x => !stale.includes(x)); changed = true; }
     for (const t of tickets) {
       if (!s.resumes.some(x => x.id === t.id) || running.has(t.id) || t.build_running) continue;
@@ -345,9 +345,9 @@ export function buildStuck(status) {
     : `its build ended with the ticket still ${status}, neither approved nor blocked`;
 }
 
-// ---------- speck foreman <action> <id> [text] --why=<why>: what the Foreman agent may do ----------
+// ---------- speck watch <action> <id> [text] --why=<why>: what the agent looking into a stop may do ----------
 
-const USAGE = 'Usage: speck foreman resume <id> "<instruction>" | reship <id> | fix <id> "<title>" | ask <id> "<question>", each with --why="<why>". Only the Foreman agent speck run starts may run these. You answer or dismiss its question with speck foreman answer <id> "<your answer>" or speck foreman dismiss <id>.';
+const USAGE = 'Usage: speck watch resume <id> "<instruction>" | reship <id> | fix <id> "<title>" | ask <id> "<question>", each with --why="<why>". Only the agent speck run starts to look into a stop may run these. You answer or dismiss its question with speck answer <id> "<your answer>" or speck dismiss <id>.';
 
 // Writes `line` at the end of the ticket's Notes and commits only the ticket where its build keeps it. Returns nothing,
 // or throws a SpeckError saying why, changing nothing.
@@ -390,15 +390,15 @@ export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RU
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   const runs = path.join(main, 'speck', '.cache', 'runs');
   const s = readAgentState(runs);
-  if (!token || !s.running || s.running.token !== token) throw new SpeckError(`Only the Foreman agent speck run starts may run speck foreman, and none is running as this one. ${USAGE}`);
+  if (!token || !s.running || s.running.token !== token) throw new SpeckError(`Only the agent speck run starts to look into a stop may run speck watch, and none is running as this one. ${USAGE}`);
   let at, t;
   try { ({ at, t } = buildTicket(repo, cfg, rawId)); } catch (e) { if (e instanceof SpeckError) throw new SpeckError(`No ticket ${rawId}: ${e.message}`); throw e; }
   const id = t.fm.id;
-  if (s.running.id !== id) throw new SpeckError(`This Foreman run is looking into ticket ${s.running.id}, not ${id}.`);
-  if (readActions(runs).some(a => a.run === token)) throw new SpeckError(`This Foreman run has already taken its one action for ${id}. Stop here.`);
+  if (s.running.id !== id) throw new SpeckError(`This run is looking into ticket ${s.running.id}, not ${id}.`);
+  if (readActions(runs).some(a => a.run === token)) throw new SpeckError(`This run has already taken its one action for ${id}. Stop here.`);
   const text = oneLine(rest.join(' '));
   if (!why) throw new SpeckError(`Say why with --why="<why, in a sentence>". ${USAGE}`);
-  if (action !== 'reship' && !text) throw new SpeckError(`speck foreman ${action} needs ${action === 'resume' ? 'the instruction for the build' : action === 'fix' ? 'the fix ticket\'s title' : 'the question'}. ${USAGE}`);
+  if (action !== 'reship' && !text) throw new SpeckError(`speck watch ${action} needs ${action === 'resume' ? 'the instruction for the build' : action === 'fix' ? 'the fix ticket\'s title' : 'the question'}. ${USAGE}`);
   if (['done', 'cancelled'].includes(t.fm.status)) throw new SpeckError(`Ticket ${id} is ${t.fm.status}, so there's nothing to do for it.`);
   if (action === 'resume') {
     const rec = readObject(path.join(runs, `${id}.json`));
@@ -416,18 +416,20 @@ export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RU
   const when = `${now.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
   const did = action === 'resume' ? `resumed its build: ${text}` : action === 'reship' ? 'asked speck run to ship it again, once'
     : action === 'fix' ? `made draft fix ticket ${fixId}: ${text}` : `asked you: ${text}`;
-  noteInTicket(at, t, `- The Foreman (${when}) ${did}. Why: ${why}`, `${foremanSubject(id)} ${action}`);
+  noteInTicket(at, t, `- speck (${when}) ${did}. Why: ${why}`, `${foremanSubject(id)} ${action}`);
   const entry = { run: token, id, action, text, why, at: now.toISOString(), status: t.fm.status, ...(fixId ? { fix_id: fixId } : {}) };
   fs.appendFileSync(path.join(runs, DID), `${JSON.stringify(entry)}\n`);
   return {
     resume: `Noted in ${id}'s Notes. speck run resumes its build with your instruction once you've ended. Stop here.`,
     reship: `Noted in ${id}'s Notes. speck run ships it again once you've ended. Stop here.`,
     fix: `Made draft fix ticket ${fixId}, which waits for the user to shape it and set it ready, and noted it in ${id}'s Notes. Stop here.`,
-    ask: `Noted in ${id}'s Notes. The Foreman's status shows your question to the user. Stop here.`,
+    ask: `Noted in ${id}'s Notes. speck's status shows your question to the user. Stop here.`,
   }[action];
 }
 
+// speck watch <action> <id> …: the agent's. 0486: speck foreman, the old name, takes these and your answer and dismiss.
+export function cmdWatch(args) { console.log(foremanAction(findRepoRoot(), args)); } // a declaration, as speck.mjs takes it while the modules load
 export function cmdForeman(args) {
   if (['answer', 'dismiss'].includes(args[0])) return cmdForemanReply(args); // 0318: yours
-  console.log(foremanAction(findRepoRoot(), args));
+  cmdWatch(args);
 }
