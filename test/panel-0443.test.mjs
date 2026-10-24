@@ -18,7 +18,7 @@ const CASES = [
     t: T('0802', 'approved', approved({ type: 'fix', auto_ship: true, build_exit: { at: ago(30), code: 0 } })) },
   { id: '0803', on: true, short: 'Has a question', sentence: 'Blocked · it has a question for you',
     t: T('0803', 'blocked', { started: ago(5999), self_check: 'no changes', rounds: [round(1, 10), round(2, 10)], blocked_question: 'A or B?', foreman_will: false }) },
-  { id: '0804', on: true, short: 'Foreman will answer', sentence: 'Blocked · the Foreman will take its recommendation',
+  { id: '0804', on: true, short: 'speck will answer', sentence: 'Blocked · speck will take its recommendation',
     t: T('0804', 'blocked', { type: 'bug', started: ago(45296), self_check: 'no changes', rounds: [round(1, 10), round(2, 10)], blocked_question: 'A or B?', blocked_recommendation: 'A', foreman_will: true }) },
   { id: '0805', on: true, short: 'Build stopped', sentence: 'The build stopped',
     t: T('0805', 'reviewing', { type: 'bug', started: ago(5999), self_check: 'no changes', rounds: [round(1, 10)], build_exit: { at: ago(30), code: 1 } }) },

@@ -243,7 +243,7 @@ function drawHeader(f, stale) {
   noteBoard(state, f, word); // 0414
   drawScreen(word);
   $('bezel').className = NEEDS_YOU.test(word) ? 'bezel needs' : 'bezel';
-  run.setAttribute('aria-label', `The Foreman: ${word}`); // 0451: Settings says whether fixing is on
+  run.setAttribute('aria-label', `speck: ${word}`); // 0451: Settings says whether fixing is on
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: speck run\'s log';
 }

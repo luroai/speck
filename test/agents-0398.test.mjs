@@ -108,7 +108,7 @@ test('0398 AC2: removing an agent the builder, reviewer or Foreman uses is refus
   assert.match(out.stderr, /Codex is the reviewer/);
   assert.equal(readYourAgents(r.dir), null);
   assert.deepEqual(rolesUsing('claude', { builder: 'codex', reviewer: 'claude-subagent' }), ['reviewer']);
-  assert.deepEqual(rolesUsing('deepseek', { builder: 'claude', reviewer: 'codex', foreman: 'deepseek' }), ['Foreman']);
+  assert.deepEqual(rolesUsing('deepseek', { builder: 'claude', reviewer: 'codex', foreman: 'deepseek' }), ['speck']);
 });
 
 // A new repo, set up with speck init and its checks.

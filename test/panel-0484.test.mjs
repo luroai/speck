@@ -10,7 +10,7 @@ const NOW = Date.now(); // the real browser's clock too
 const ago = s => new Date(NOW - s * 1000).toISOString();
 const approved = o => ({ started: ago(1212), approved: ago(60), self_check: 'no changes', rounds: [round(1, 10)], ...o });
 
-// 0901: a blocked bug ticket whose line is "Foreman will answer · Review 2 · 99:5x · bug"; 0902: a finished document
+// 0901: a blocked bug ticket whose line is "speck will answer · Review 2 · 99:5x · bug"; 0902: a finished document
 // task; 0903: a fix ticket waiting for you; 0904: one under review, its grid of lights and its reviewer's long model in
 // the line; 0905: no tag.
 const TICKETS = [
@@ -128,7 +128,7 @@ test('0484 AC2: at 320 px and 375 px, in both looks, the blocked bug ticket\'s l
         await resize(b, width);
         const lines = await b.js(LINES);
         const bug = lines.find(l => l.id === '0901'), doc = lines.find(l => l.id === '0902');
-        assert.match(bug.text, /^Foreman will answer · Review 2 · 99:5\d · bug$/, `${theme}, ${width} px: the blocked bug ticket's line`);
+        assert.match(bug.text, /^speck will answer · Review 2 · 99:5\d · bug$/, `${theme}, ${width} px: the blocked bug ticket's line`);
         assert.match(doc.text, /^Read the document · \S.* · \d+:\d{2} · document$/, `${theme}, ${width} px: the document task's line`);
         for (const l of [bug, doc]) {
           const [words, ...rest] = l.parts;
@@ -188,7 +188,7 @@ test('0484 AC3: a closed card\'s line, its words cut short or not, copies as it 
     const after = await b.js(COPY);
     const bug = after.find(([id]) => id === '0901');
     assert.equal(bug[1], bug[2]);
-    assert.match(bug[1], /^Foreman will answer · Review 2 · 99:5\d · bug$/, 'the cut line copies whole, on one line');
+    assert.match(bug[1], /^speck will answer · Review 2 · 99:5\d · bug$/, 'the cut line copies whole, on one line');
     assert.equal(await b.js(WITHOUT), 1);
     const before = await b.js(COPY);
     const sameTime = x => x.map(([id, sel, text]) => [id, sel.replace(/\d\d:\d\d/g, 'MM:SS'), text.replace(/\d\d:\d\d/g, 'MM:SS')]); // its clock ticks between

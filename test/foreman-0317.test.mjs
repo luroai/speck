@@ -41,7 +41,7 @@ test('0317 AC1: with Fixing fix, the header keeps the status word, and 0451: its
     const p = fakePage([state(view([], { fixing }))]);
     await p.settle();
     // 0451: speck's screen shows the time where "FIXING ON" was, and its name is the status word alone
-    assert.equal(header(p).attrs['aria-label'], 'The Foreman: Idle', `with ${fixing}`);
+    assert.equal(header(p).attrs['aria-label'], 'speck: Idle', `with ${fixing}`);
   }
 });
 
@@ -82,14 +82,14 @@ test('0317 AC2: a blocked card says the Foreman will take its recommendation, an
   await p.settle();
   await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const one = rowOf(p, '0001').textContent;
-  assert.ok(one.includes(`The Foreman will take its recommendation: ${OPTION}`), one);
+  assert.ok(one.includes(`speck will take its recommendation: ${OPTION}`), one);
   assert.doesNotMatch(one, /Waiting for you|Answer the question, then run|question for you/);
   // 0462: open, its facts' Now cell says it in short words, with the sentence as their tooltip
-  assert.equal(nowOf(rowOf(p, '0001')).textContent, 'Foreman will answer');
-  assert.equal(nowOf(rowOf(p, '0001')).title, 'Blocked · the Foreman will take its recommendation');
+  assert.equal(nowOf(rowOf(p, '0001')).textContent, 'speck will answer');
+  assert.equal(nowOf(rowOf(p, '0001')).title, 'Blocked · speck will take its recommendation');
   for (const id of ['0002', '0003']) {
     assert.match(rowOf(p, id).textContent, /Waiting for you\. Answer the question, then run \/speck-build /);
-    assert.doesNotMatch(rowOf(p, id).textContent, /The Foreman will/);
+    assert.doesNotMatch(rowOf(p, id).textContent, /speck will/);
   }
 });
 
@@ -122,7 +122,7 @@ test('0317 AC3: once the Foreman goes with it, the board, card and speck status 
   const p = fakePage([state(view(), [t])]);
   await p.settle();
   await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  assert.ok(rowOf(p, '0001').textContent.includes(`The Foreman went with the recommendation: ${OPTION} · ${time}`), rowOf(p, '0001').textContent);
+  assert.ok(rowOf(p, '0001').textContent.includes(`speck went with the recommendation: ${OPTION} · ${time}`), rowOf(p, '0001').textContent);
   const out = r.run('status').stdout;
   assert.ok(out.includes(`        ✓ speck went with the recommendation: ${OPTION} (${time})\n`), out);
   assert.ok(out.includes(`  speck went with the recommendation for 0001: ${OPTION} (${time})\n`), out);
@@ -160,7 +160,7 @@ test('0317 AC4: the Foreman\'s choice is recorded as the Foreman\'s, the button\
   await p.settle();
   await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   assert.match(rowOf(p, '0001').textContent, /You went with the recommendation: /);
-  assert.doesNotMatch(rowOf(p, '0001').textContent, /The Foreman went/);
+  assert.doesNotMatch(rowOf(p, '0001').textContent, /speck went/);
   assert.match(u.run('status').stdout, /✓ You went with the recommendation: /);
 });
 

@@ -43,6 +43,8 @@ The panel calls the watcher speck everywhere, and the word "Foreman" never shows
 - Today: `templates/panel.html` (`aria-label="The Foreman"`), `templates/panel-header.js` (`The Foreman: ${word}`), `templates/panel-model.js` (the `SHORT` words), `templates/panel.js` (the blocked question, answer and dismiss texts, and the role's name), `templates/panel-settings.js` (the group's title and `ROLES`), and `rolesUsing` in `scripts/your-agents.mjs`, which names the role for Your agents.
 - Failing before this build: none
 - Waits for 0484, which changes the closed Build card's status line, where `Foreman will answer` shows.
+- Self-check: "choose the speck's model again" read badly once the role is named speck, so that line now says "choose speck's model again".
+- Pictures: Settings' Watching group in both looks. The Build cards' new wording needs a blocked ticket speck will answer, which the real board doesn't have now, so 0485's tests check it on the fake page.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
