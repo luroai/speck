@@ -64,12 +64,12 @@ for (const touch of [true, false]) {
     }
   }));
 
-  test(`0454 AC2: with ${how}, the Settings button is ${touch ? 'at least 44 × 44 px' : 'still 30 × 30 px'}, inside a title row tall enough to hold it`, skip, () => withPanel(touch, async b => {
+  // 0469: at least 44 × 44 px with a mouse too
+  test(`0454 AC2: with ${how}, the Settings button is at least 44 × 44 px, inside a title row tall enough to hold it`, skip, () => withPanel(touch, async b => {
     for (const w of WIDTHS) {
       await b.at(w);
       const m = await b.js(measure), at = `${w} px: ${JSON.stringify(m)}`;
-      if (touch) assert.ok(m.button.width >= 44 && m.button.height >= 44, `44 × 44 px: ${at}`);
-      else assert.deepEqual([m.button.width, m.button.height], [30, 30], `its current size: ${at}`);
+      assert.ok(m.button.width >= 44 && m.button.height >= 44, `44 × 44 px: ${at}`);
       assert.ok(m.button.top >= m.row.top && m.button.bottom <= m.row.bottom, `inside the title row: ${at}`);
     }
   }));
