@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0439", "0440", "0441", "0442", "0443", "0444", "0445", "0446", "0447", "0448", "0449", "0450", "0451"]                # ticket ids that must be done first
+after: ["0439", "0440", "0441", "0442", "0443", "0444", "0445", "0446", "0447", "0448", "0449", "0450", "0451", "0453"]                # ticket ids that must be done first
 created: 2026-10-24
 
 ---
@@ -37,10 +37,10 @@ speck 0.15.0 is ready to tag, with its changelog and release notes.
 - Tagging and publishing the release, which the user does after shipping this.
 
 ## Notes
-- The user asked on 2026-10-24 for everything relevant to the release to be ticketed first: 0439 to 0451.
+- The user asked on 2026-10-24 for everything relevant to the release to be ticketed first: 0439 to 0451 and 0453.
 - What's new since `v0.14.0`, for the changelog: speck's LCD screen as the panel's header, with speck as the Foreman reacting to the pipeline (0413, 0414, 0436, 0438, 0446, 0451); the pipeline log in place of the Foreman's detail (0415); Plan, Build and Shipped as tabs (0410, 0425); shorter tickets and words only for stages, with a working grid (0416, 0419, 0420, 0421, 0434, 0435, 0443); the latest ten shipped (0411); System, Light and Dark (0412, 0448); Cursor's colours, fonts and corners (0426, 0427, 0428, 0440, 0442, 0450); the build log as a log (0422); the full ticket over the whole panel, set out as a document (0423, 0424, 0445); one layout at every width (0417, 0418); faster builds (0429, 0437, 0447) and the panel split into files (0430 to 0433). Check each against `git log v0.14.0..HEAD`.
 - Same shape as 0394 (release 0.14.0).
-- Waits for 0439 to 0451.
+- Waits for 0439 to 0451 and 0453.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
