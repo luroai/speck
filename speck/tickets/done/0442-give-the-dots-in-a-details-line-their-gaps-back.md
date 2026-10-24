@@ -1,7 +1,7 @@
 ---
 id: "0442"
 title: "Give the dots in a details line their gaps back"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0441", "0450"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T08:37:18.185Z"
 approved: "2026-10-24T08:43:26.001Z"
+finished: "2026-10-24T08:46:19.590Z"
 
 ---
 # 0442 · Give the dots in a details line their gaps back
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In the interface font, the " · " between the parts of a details line nearly touches the words either side, as in "18:56·20 min", because its spaces were narrowed to suit the old monospace font.
