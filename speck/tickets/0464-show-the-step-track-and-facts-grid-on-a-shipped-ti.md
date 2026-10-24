@@ -42,6 +42,7 @@ An open shipped ticket shows the same step track and table as one in flight, wit
 - Today: the Shipped list in `templates/panel.js` (0157, 0162, 0420) draws `figs` (Time, Review rounds, Reviewer tokens, Builder tokens, Builder cost) as `.fig` label and value pairs when a row is open.
 - Waits for 0463: both change the shared table and `templates/panel.css`.
 - Failing before this build: none
+- Self-check: Review pack's row had the old 1% table-cell width, which squeezed it and put Review pack off a whole pixel; it now spans the card, and the browser test checks that row and Details at its end. Also checked a merged-but-not-pushed card keeps its note under the table.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

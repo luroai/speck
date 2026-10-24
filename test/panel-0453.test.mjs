@@ -69,7 +69,7 @@ const VIEWS = [
   ['Plan, a ticket open', `${openLane('plan')}, document.querySelector('#shaping .item .head').click(), true`, `!!document.querySelector('#shaping .item.open .full-open')`],
   ['Plan, the priority menu', `document.querySelector('#shaping .tag.pick, #shaping .set-prio').click(), true`, `!!document.querySelector('.prio-menu button')`],
   ['Build, a ticket open', `document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), ${openLane('build')}, document.querySelector('#queue .q .top').click(), true`, `!!document.querySelector('#queue .q.open .full-open')`],
-  ['Shipped, Details open', `${openLane('shipped')}, document.querySelector('#shipped .details').click(), true`, `!!document.querySelector('#shipped .figs')`],
+  ['Shipped, Details open', `${openLane('shipped')}, document.querySelector('#shipped .details').click(), true`, `!!document.querySelector('#shipped .facts')`],
   ['the full ticket', `${openLane('plan')}, document.querySelector('#shaping .item.open .full-open').click(), true`, `!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .close')`],
   ['a review pack with a document', `closeFull(), packOf = ${PACK}, fullId = '0002', fullFrom = null, render(), true`, `!!document.querySelector('#full-ticket .pack-document')`],
   ['a document', `docOpen = { id: '0002', path: 'outputs/0002/plan.md', state: 'ok', text: '# Plan\\n\\nWords.' }, drawDoc(), true`, `!document.getElementById('doc-view').hidden && !!document.querySelector('#doc-view .close')`],

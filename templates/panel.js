@@ -1048,6 +1048,20 @@ function waitingFacts(t, status, after, pick) {
     factCell('Lint', lintText, null, lintText, null, bits.length ? bits.flatMap((b, i) => (i ? [document.createTextNode(' · '), b] : [b])) : null),
     ...lastFacts(t, pick));
 }
+// 0464: a shipped ticket's five steps, every one done, the Review step naming its last round, such as "Review 2".
+const shippedSteps = t => NOT_STARTED.map((s, i) => ({ label: i === 2 && t.roundCount > 0 ? `Review ${t.roundCount}` : s.label, state: 'done' }));
+// 0464: its facts, in the same table: when it shipped, as its line says it, with the time too as its tooltip, then
+// its figures, tokens shortened as on the line with the exact count as their tooltip. One it doesn't have shows "—".
+function shippedFacts(t, day) {
+  const tokens = (label, n, has) => (!has ? factCell(label, '—', null)
+    : factCell(label, shortened(n) ?? n.toLocaleString('en-GB'), null, n.toLocaleString('en-GB')));
+  return el('dl', 'facts', null,
+    t.end !== null ? factCell('Shipped', day(t.when), null, t.when) : factCell('Shipped', '—', null),
+    factCell('Time', t.minutes !== null ? `${t.minutes} min` : '—', null),
+    factCell('Review rounds', t.roundCount > 0 ? String(t.roundCount) : '—', null),
+    factCell('Builder cost', t.builderCost !== null ? dollars(t.builderCost) : '—', null),
+    tokens('Builder tokens', t.builderTokens, t.builderTokens !== null), tokens('Reviewer tokens', t.tokens, t.tokens > 0));
+}
 // 0443: what a ticket no agent is working on is doing, in words: closed, a long sentence in short words, with the
 // sentence as their tooltip and accessible name; open, the sentence.
 function say(d, tone, isOpen) {
@@ -1671,9 +1685,10 @@ function render() {
   $('queue-n').hidden = !m.queue.length;
 
   // 0157: each shipped ticket is a card. 0420: its id and title, with a bug or fix tag after the title, then one line:
-  // when it shipped (the time, or the day before today) and (0162) its figures, separated by " · ", and a Details button, which shows its figures as label
-  // and value pairs, leaving out any it doesn't have, and Review pack. The shipped time turns from the time alone to
-  // date and time after midnight, so it is put right on a kept card.
+  // when it shipped (the time, or the day before today) and (0162) its figures, separated by " · ", and a Details button.
+  // 0464: open, the line gives way to the step track and facts table an open ticket in flight has, every step done, and
+  // Review pack and Details under them. The shipped time turns from the time alone to date and time after midnight, so
+  // it is put right on a kept card.
   // In the line, a ticket shipped before today shows its day alone ("20 Oct"), so the line fits a 420 px pane; its
   // tooltip says when it shipped, with the time, and its figures.
   const day = when => when.replace(/,.*$/, '');
@@ -1681,10 +1696,6 @@ function render() {
   for (const id of openShipped) if (!m.shipped.some(t => String(t.id) === id)) openShipped.delete(id);
   fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), t => openShipped.has(String(t.id)), t => {
     const id = String(t.id), isOpen = openShipped.has(id);
-    const fig = (label, value) => el('div', 'fig', null, el('span', 'k', label), typeof value === 'string' ? el('span', 'v', value) : value);
-    const figs = [t.minutes !== null ? fig('Time', `${t.minutes} min`) : null, t.roundCount > 0 ? fig('Review rounds', String(t.roundCount)) : null,
-      t.tokens > 0 ? fig('Reviewer tokens', tokenCount(t.tokens)) : null, t.builderTokens !== null ? fig('Builder tokens', tokenCount(t.builderTokens)) : null,
-      t.builderCost !== null ? fig('Builder cost', dollars(t.builderCost)) : null].filter(Boolean);
     const line = [t.minutes !== null ? `${t.minutes} min` : null, t.roundCount > 0 ? plural(t.roundCount, 'round') : null,
       t.builderCost !== null ? dollars(t.builderCost) : null].filter(Boolean).join(' · ');
     const details = el('button', 'full-open details', 'Details');
@@ -1696,13 +1707,16 @@ function render() {
     const parts = [t.end !== null ? el('span', 'when', day(t.when)) : null, line ? el('span', 'figline', line) : null].filter(Boolean);
     // 0204: merged, but the push of the base branch failed: what speck ship said, which says how to fix it.
     const unpushed = t.unpushed ? el('td', 'unpushed', null, el('div', 'unpushed-head', 'Merged, but not pushed'), t.unpushed_message ? el('div', 'unpushed-said', t.unpushed_message) : null) : null;
+    if (isOpen) return el('tr', 'open', null, name, el('td', 'steps', null, trackOf({ steps: shippedSteps(t) }), shippedFacts(t, day)), unpushed,
+      el('td', 'full-cell', null, packButton(t), details));
     const meta = parts.length ? detailsLine('meta', parts) : null;
     if (meta) meta.title = metaTip(t, line);
-    return el('tr', isOpen ? 'open' : null, null, name, el('td', 'sum', null, meta, details), unpushed,
-      isOpen && figs.length ? el('td', 'figs', null, ...figs) : null, isOpen ? el('td', 'full-cell', null, packButton(t)) : null);
+    return el('tr', null, null, name, el('td', 'sum', null, meta, details), unpushed);
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => {
     const meta = child(child(tr, 'sum') || tr, 'meta'), w = meta && child(meta, 'when');
     if (w) { setText(w, day(t.when)); meta.title = metaTip(t, child(meta, 'figline')?.textContent); }
+    const facts = child(child(tr, 'steps') || tr, 'facts'), cell = facts && child(facts.children[0], 'value');
+    if (cell && t.end !== null) { setText(cell.children[0], day(t.when)); cell.title = t.when; }
   } }), 'Nothing shipped yet.');
   // 0162: three stats, and More stats shows the other three. A stat over 9,999 is shortened as a card's figures are,
   // with the exact number as its tooltip. 0420: the three are one line, "24 today · median 10 min, $1.77", short enough
