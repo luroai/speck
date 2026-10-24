@@ -1,7 +1,7 @@
 ---
 id: "0441"
 title: "Measure the panel's layout in a proportional font"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-10-24T07:32:36.679Z"
 blocked_at: ""
 waited_seconds: 12
 approved: "2026-10-24T08:23:41.537Z"
+finished: "2026-10-24T08:26:46.459Z"
 
 ---
 # 0441 · Measure the panel's layout in a proportional font
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On the build machine, Chrome draws the panel's interface font (`system-ui` and the rest of 0427's stack) as Liberation Mono, a monospace font. So the browser tests that measure how text wraps and how tall cards are see a panel nobody uses, and 0427 had to ease some of their checks for a monospaced panel.
