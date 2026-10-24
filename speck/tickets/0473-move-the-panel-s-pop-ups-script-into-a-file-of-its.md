@@ -42,6 +42,7 @@ The script for the panel's pop-ups is in a file of its own, so a ticket that cha
 - Same pattern as 0432 (Settings) and 0433 (the rest of the script).
 - Today: `fullTicket`, `openFull`, `renderFull`, the document pop-up and `renderForeman` with `drawRunLog` are in `templates/panel.js`.
 - Waits for 0472: both change `panel.html` and the server's list of files.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
