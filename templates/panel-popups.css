@@ -2,8 +2,6 @@
    log, each over the whole panel. */
   /* 0285: the Foreman's detail, in a pop-up over the whole panel (0366) */
   .foreman { font-size: 14px; overflow-anchor: none; } /* 0415: the page keeps a reader's place in the log itself */
-  .foreman h3 { margin: 14px 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
-  .foreman .fm-stale[hidden] + .fm-log > h3 { margin-top: 4px; } /* 0458: the log's heading is the first thing under the top */
   /* 0459: the log is a terminal, as a ticket's build log is (0455), filling the pop-up under its heading, its oldest
      line at the top. Each line's time is in a column of its own and its text past it, as a build log's (0422) */
   .foreman .run-log { box-sizing: border-box; margin: 0; padding: 6px 10px; height: max(12em, calc(100vh - 9em)); height: max(12em, calc(100dvh - 9em - env(safe-area-inset-top) - env(safe-area-inset-bottom))); overflow-y: auto; overflow-anchor: none;
@@ -79,6 +77,7 @@
   #doc-view .top, #doc-view .doc-actions, #doc-view .md, #foreman .top, #foreman .fm-body { max-width: 760px; margin: 0 auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); } /* 0453: on a whole pixel, as Settings' column is (0281) */
   #doc-view .top, #foreman .top { margin-bottom: 10px; }
   #doc-view .top .title, #foreman .top .title { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; overflow-wrap: anywhere; }
+  #foreman .top .title { font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 20px; line-height: 1; white-space: nowrap; color: var(--text); } /* 0470: in the header's lettering (.bezel .name) */
   /* 0379: each pop-up's top line, with its Close, stays at the top while the rest scrolls under it. The pop-up's own top
      padding, the room for a phone's notch, is in the line instead, so nothing shows through above it. Above a setting's
      explanation (z-index 2), which scrolls under it too. */
