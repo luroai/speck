@@ -39,6 +39,7 @@ Pressing speck's screen shows the pipeline log and nothing else.
 
 ## Notes
 - Asked for by the user on 2026-10-24: "when you click the LCD screen, you just see the pipeline log", because Right now showed information from 0344, "over 100 tickets … ago", that they've not used.
+- Failing before this build: none
 - Today: `renderForeman` in `templates/panel.js` draws Right now from the board's `foreman` object (0285, 0287, 0299, 0317, 0318, 0328, 0366). Whether the server keeps sending what only Right now used is the builder's call.
 - The screen's tooltip says "what speck run is doing, what is waiting, and its log": it should no longer promise what's gone.
 
