@@ -106,16 +106,11 @@ test('0434 AC3: a closed Build ticket shows no priority, size or risk; an open o
   click(topOf(card(p, '0901')));
   await p.settle();
   assert.deepEqual(factsOf(card(p, '0901')).slice(3, 5), [['Priority', 'P3'], ['Size · risk', 'M · low']], '0901: open, it shows its priority, size and risk');
-  for (const id of ['0426']) {
-    click(topOf(card(p, id)));
-    await p.settle();
-    const [prio, size, risk] = tags(card(p, id));
-    assert.ok(prio && size && risk, `${id}: open, it shows its priority, size and risk`);
-    assert.equal(prio.attrs.role, 'button');
-    click(prio);
-    assert.ok(!p.byId('tag-tip').hidden, `${id}: its priority opens its tip`);
-    assert.equal(p.byId('tag-tip').textContent, prio.tip);
-  }
+  // 0463: and so does an open queued one, as plain text
+  click(topOf(card(p, '0426')));
+  await p.settle();
+  assert.equal(factsOf(card(p, '0426'))[0][1], 'Queued');
+  assert.deepEqual(factsOf(card(p, '0426')).slice(3, 5), [['Priority', 'P2'], ['Size · risk', 'S · high']], '0426: open, it shows its priority, size and risk');
 });
 
 test('0434 AC4: a closed ticket\'s title is one line, cut off with an ellipsis, with the whole title as its tooltip; an open one wraps', async () => {
