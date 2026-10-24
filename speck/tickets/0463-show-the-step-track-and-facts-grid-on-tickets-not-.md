@@ -1,7 +1,7 @@
 ---
 id: "0463"
 title: "Lay out an open ticket that hasn't started like one in flight"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0462"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T11:10:51.080Z"
+approved: "2026-10-24T11:34:07.514Z"
 
 ---
 # 0463 · Lay out an open ticket that hasn't started like one in flight
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0461 and 0462, an open ticket in flight shows a step track and an even table of facts, but an open ticket in Plan, or one queued in Build, still lists its facts in a line joined by dots that wraps on a phone. The cards don't look like one family.
@@ -53,9 +54,14 @@ When you open a ticket in Plan, or a queued ticket in Build, it now looks like a
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 208,273
+- Elapsed since build started: 23 min
+- Changed lines: 132 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: the Build queue now shows no priority, size or risk tag anywhere (closed cards haven't since 0434, and open ones have them in the table as plain text), so their tips are only in Plan and the full ticket pane. Which tickets an open ticket waits on is left to 0467, as the ticket's Notes say.
 
