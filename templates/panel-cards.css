@@ -439,7 +439,10 @@
   /* Shipped */
   .more-stats { min-width: 44px; min-height: 44px; }
   #shipped .line .title { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
-  #shipped tr:not(.open) .line .title { display: block; min-width: 44px; line-height: 44px; } /* 0434: a block, so its title can end in an ellipsis */
+  /* 0434: a block, so its title can end in an ellipsis. 0494: its text on a 22 px line, where a Build or Plan title's
+     starts, with 11 px of padding above and below for its 44 px tap area, which its negative margins give back, so
+     nothing around it moves. It's above the details line it reaches over, so a tap anywhere in it reaches the title. */
+  #shipped tr:not(.open) .line .title { display: block; position: relative; min-width: 44px; line-height: 22px; padding: 11px 0; margin: -11px 0; }
   td .full-open { min-height: 44px; }
 
   /* 0469: a touch screen only: tap areas that reach past a control without changing the layout */
