@@ -42,6 +42,8 @@ The header's "speck" is bigger and fills its row better, without making the dark
 - Today: `.bezel .name` in `templates/panel.css` is `Doto` at weight 900 and 20 px with `line-height: 1`, and its `::before` dot is 8 px.
 - Waits for 0469, which sets the title row's height with a mouse. Re-chained by the user on 2026-10-24 so it builds side by side with 0476: this changes only the word in the screen's title row, in the header's styles, and 0476 the tabs and lanes.
 - Failing before this build: none
+- Self-check: no changes
+- 0304 AC1 pinned the old 20 px size; it now checks the 32 px this ticket sets, as it was moved on by 0413 before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
