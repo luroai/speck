@@ -31,7 +31,7 @@ const SHORT = {
   'Approved · waiting for you to ship it': 'Ready to ship',
   'Approved · waiting to ship': 'Shipping next',
   'Blocked · it has a question for you': 'Has a question',
-  'Blocked · the Foreman will take its recommendation': 'Foreman will answer',
+  'Blocked · speck will take its recommendation': 'speck will answer',
   'The build stopped': 'Build stopped',
   'Approved · turn on Auto-build to ship it': 'Turn on Auto-build',
   'Finished · read the document': 'Read the document',
@@ -63,7 +63,7 @@ function doingNow(t, shipping) {
   const autoShips = t.status === 'approved' && t.auto_ship === true && !t.red && !t.to_ship;
   const tone = t.red ? 'bad' : t.to_ship || (approved && !autoShips) ? 'to-ship' : '';
   const at = sentence => ({ sentence, tone, moving: false });
-  if (t.status === 'blocked') return at(t.foreman_will === true ? 'Blocked · the Foreman will take its recommendation' : 'Blocked · it has a question for you'); // 0317
+  if (t.status === 'blocked') return at(t.foreman_will === true ? 'Blocked · speck will take its recommendation' : 'Blocked · it has a question for you'); // 0317
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
   if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');

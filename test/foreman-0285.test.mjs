@@ -18,7 +18,7 @@ const rec = (o = {}) => ({ lock: 4242, max: 2, building: [], switching: null, re
 const view = (o, tickets = [], run = ON) => foremanView({ run, record: rec(o), tickets });
 const state = (foreman, o = {}) => ({ tickets: [], ideas: [], resume_command: '', run: ON, foreman, ...o });
 const header = p => p.byId('run');
-const label = p => header(p).attrs['aria-label'].replace(/^The Foreman: /, ''); // 0413: the word on speck's screen, in its name
+const label = p => header(p).title.replace(/^speck: /, '').split(' · ')[0]; // 0413: the word on speck's screen, in its tooltip (0485)
 const detail = p => p.byId('foreman');
 
 test('0285 AC1: the status is one or two words: Off, Idle, Building <n>, Shipping <id>, Waiting with its reason, or Needs you <n>', () => {
@@ -45,11 +45,11 @@ test('0285 AC1: the header shows the Foreman\'s status and colour in place of th
   await p.settle();
   assert.equal(label(p), 'Building 2'); // 0413: the word alone, on speck's screen, whose frame shows only "Needs you" in colour
   assert.equal(p.byId('bezel').className, 'bezel');
-  assert.doesNotMatch(header(p).attrs['aria-label'], /Auto-build/);
+  assert.doesNotMatch(header(p).attrs['aria-label'] + header(p).title, /Auto-build/);
   click(header(p));
   await p.settle();
   assert.ok(!p.calls.some(c => /\/api\/run\//.test(c.url)), 'pressing it doesn\'t turn speck run on or off');
-  assert.match(page().match(/<header>([\s\S]*?)<\/header>/)[1], /<button class="glass" id="run" type="button" aria-label="The Foreman" aria-expanded="false" aria-controls="foreman"/);
+  assert.match(page().match(/<header>([\s\S]*?)<\/header>/)[1], /<button class="glass" id="run" type="button" aria-label="speck's screen" aria-expanded="false" aria-controls="foreman"/);
 });
 
 test('0285 AC2: pressing the status opens its detail; 0458: which shows only the log, while speck status keeps ready tickets with why, shipping\'s state and blocked tickets with their questions', async () => {
@@ -126,7 +126,7 @@ test('0285 AC3: Settings has a Foreman group, first, with the speck run switch, 
   click(p.byId('settings-open'));
   await p.settle();
   const groups = p.byId('settings').children.filter(n => n.className === 'sgroup');
-  assert.equal(groups[0].textContent.startsWith('Foreman'), true, 'the Foreman group comes first');
+  assert.equal(groups[0].textContent.startsWith('Watching'), true, 'the Foreman group comes first');
   // 0396: the switch is Auto-build's, in the box above the groups.
   const box = p.byId('settings').children.find(n => n.className === 'switches');
   assert.ok(p.byId('settings').children.indexOf(box) < p.byId('settings').children.indexOf(groups[0]), 'Auto-build above it');

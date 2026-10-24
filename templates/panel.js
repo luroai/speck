@@ -571,10 +571,10 @@ function queueItem(t) {
   const pack = t.status === 'approved' || t.shipping || t.doc_finished; // 0361: a finished document is in its review pack
   // 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
   // build carries on with a recommendation says who went with it, until it moves on
-  if (t.status === 'blocked' && t.foreman_will === true) q.appendChild(el('div', 'act foreman-will', `The Foreman will take its recommendation: ${t.blocked_recommendation}`));
+  if (t.status === 'blocked' && t.foreman_will === true) q.appendChild(el('div', 'act foreman-will', `speck will take its recommendation: ${t.blocked_recommendation}`));
   else if (t.status === 'blocked') q.appendChild(el('div', 'act', `Waiting for you. Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
   const went = wentWithOf(t);
-  if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? 'The Foreman went with the recommendation' : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
+  if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? 'speck went with the recommendation' : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
   q.appendChild(fullButton(t, 'queue'));
   if (pack) q.appendChild(packButton(t));
   if (t.pausable) {
@@ -833,7 +833,7 @@ function foremanAskBox(id, question, where) {
   box.placeholder = 'Your answer';
   box.rows = 2;
   box.disabled = !!pending;
-  box.setAttribute('aria-label', `Your answer to the Foreman's question about ${id}`);
+  box.setAttribute('aria-label', `Your answer to speck's question about ${id}`);
   box.askKey = `${where}:${id}`;
   askBoxes.set(box.askKey, box);
   box.addEventListener('input', () => askDrafts.set(id, String(box.value ?? '')));
@@ -848,7 +848,7 @@ function foremanAskBox(id, question, where) {
   const answer = press('Answer', 'Answering…', 'answer'), dismiss = press('Dismiss', 'Dismissing…', 'dismiss');
   answer.title = 'Send your answer: speck run carries the work on with it';
   dismiss.title = 'Dismiss the question, leaving the ticket as it is';
-  return el('div', 'foreman-ask', null, el('p', 'question', `The Foreman asks you: ${question}`), box, el('div', 'ask-buttons', null, answer, dismiss),
+  return el('div', 'foreman-ask', null, el('p', 'question', `speck asks you: ${question}`), box, el('div', 'ask-buttons', null, answer, dismiss),
     askRefused.has(id) ? el('div', 'ask-refused', askRefused.get(id)) : null);
 }
 async function replyToForeman(id, action, question) {
@@ -856,7 +856,7 @@ async function replyToForeman(id, action, question) {
   const text = String(askDrafts.get(id) || '').trim();
   askRefused.delete(id);
   if (action === 'answer' && !text) { askRefused.set(id, 'Write your answer in the box first.'); render(); return; }
-  if (action === 'dismiss' && (typeof confirm !== 'function' || !confirm(`Dismiss the Foreman's question about ${id}: "${question}"? It's noted in the ticket's Notes, and the ticket is left as it is.`))) return;
+  if (action === 'dismiss' && (typeof confirm !== 'function' || !confirm(`Dismiss speck's question about ${id}: "${question}"? It's noted in the ticket's Notes, and the ticket is left as it is.`))) return;
   askPending.set(id, action);
   render();
   try {
@@ -1407,7 +1407,7 @@ function drawRunSwitch() {
 const runSwitchSaid = el('p', 'bad');
 runSwitchSaid.hidden = true;
 function foremanGroup(rows = []) {
-  return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Foreman')), ...rows);
+  return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Watching')), ...rows);
 }
 // 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the button shows
 // that at once. A refusal shows speck run's own message under the header until the next click on the switch.

@@ -67,7 +67,7 @@ test('0407 AC1: Settings draws every group and its values before the agents\' li
   const p = settingsPage([quick(), deferred()]); // the whole answer never comes
   await openSettings(p);
   assert.doesNotMatch(pane(p).textContent, /Loading the settings/);
-  for (const g of ['Your agents', 'Foreman', 'Building and reviewing']) assert.ok(groupTitles(p).includes(g), `${g} is drawn`);
+  for (const g of ['Your agents', 'Watching', 'Building and reviewing']) assert.ok(groupTitles(p).includes(g), `${g} is drawn`);
   assert.equal(controlOf(p, 'max_parallel_builds').value, '2');
   assert.deepEqual(p.settingsCalls.filter(c => c.method === 'GET' && c.url.startsWith('/api/settings')).map(c => c.url), ['/api/settings?quick=1', '/api/settings']);
 });

@@ -62,7 +62,7 @@ test('0318 AC1: the Foreman\'s question shows on the ticket\'s card with an Answ
   await p.settle();
   const card = askIn(p, p.byId('queue'));
   assert.ok(card, 'the card has the question');
-  assert.match(card.textContent, /The Foreman asks you: Should it keep the old test\?/);
+  assert.match(card.textContent, /speck asks you: Should it keep the old test\?/);
   assert.ok(find(p, card, n => n.tagName === 'textarea'), 'an Answer box');
   assert.ok(buttonIn(p, card, 'Answer'));
   assert.ok(buttonIn(p, card, 'Dismiss'));

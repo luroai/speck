@@ -104,7 +104,7 @@ test('0419 AC4: a question, a recommendation, a Ship hint and a message still sh
   assert.deepEqual(under('0601'), ['question', 'act']);
   assert.ok(p.all(card(p, '0601')).some(n => n.className === 'go-with' && n.textContent === 'Go with the recommendation'), 'the recommendation button');
   assert.deepEqual(under('0602'), ['question', 'act foreman-will']);
-  assert.equal(card(p, '0602').children[2].textContent, 'The Foreman will take its recommendation: C');
+  assert.equal(card(p, '0602').children[2].textContent, 'speck will take its recommendation: C');
   assert.deepEqual(under('0603'), ['act to-ship', 'question exit to-ship']);
   assert.equal(card(p, '0603').children[2].textContent, 'Approved, not shipped.');
   assert.deepEqual(under('0604'), ['act bad', 'question exit']);

@@ -243,9 +243,9 @@ function drawHeader(f, stale) {
   noteBoard(state, f, word); // 0414
   drawScreen(word);
   $('bezel').className = NEEDS_YOU.test(word) ? 'bezel needs' : 'bezel';
-  run.setAttribute('aria-label', `The Foreman: ${word}`); // 0451: Settings says whether fixing is on
+  run.setAttribute('aria-label', 'speck\'s screen'); // 0485: its word is in its tooltip. 0451: Settings says whether fixing is on
   run.setAttribute('aria-expanded', String(foremanOpen));
-  run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: speck run\'s log';
+  run.title = `speck: ${word} · ${stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: speck run\'s log'}`;
 }
 // 0410: Plan, Build and Shipped are tabs under the header, and only the open one's lane shows. 0477: they're a strip
 // of the lanes' names, still tabs to a screen reader. Build opens with the
