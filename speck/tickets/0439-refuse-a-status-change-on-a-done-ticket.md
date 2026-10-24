@@ -41,6 +41,7 @@ A done ticket's status can't be changed by `speck set` or the panel, so shipped 
 - The check belongs in `checkSetTicket` in `scripts/speck.mjs`, which `speck set` and the panel (`scripts/panel.mjs`) both call. `speck ship`, PR ship and install file a ticket as done with `placeTicket` directly, so they're unaffected.
 - `speck cancel` already refuses a done ticket: "delivered work is part of the record".
 - Waits for nothing: no open ticket changes these files.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
