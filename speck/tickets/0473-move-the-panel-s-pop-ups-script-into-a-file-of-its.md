@@ -43,6 +43,10 @@ The script for the panel's pop-ups is in a file of its own, so a ticket that cha
 - Today: `fullTicket`, `openFull`, `renderFull`, the document pop-up and `renderForeman` with `drawRunLog` are in `templates/panel.js`.
 - Waits for 0472: both change `panel.html` and the server's list of files.
 - Failing before this build: none
+- Self-check: no changes. The moved lines are unchanged apart from comments (the old and new files' lines, sorted, differ only in the new file's header comment, one comment on `foremanOpen` and one on the page's start). Nothing in `panel.js` that runs as it loads uses what moved, which the fake page would show, as it runs each file as a separate script, as a browser does.
+- AC3: `fakePage` now reads the script tags from `panel.html` and runs each file in that order, `lcd.js` included (it puts `SpeckLCD` on the page, unless a test gives its own, which the page then uses as before).
+- AC4: tests that read the moved code from `panel.js` now read it from `panel-popups.js`: 0031 AC4 (the one page reload), 0426 AC3, 0427 AC4, 0433 AC1 (`openFull`, `renderForeman`) and 0459 AC4. The script-tag lists in 0432 AC1 and 0433 AC1 include the new tag, and 0415 AC5's page opened from its file puts the pop-ups' script in its tag's place.
+- Pictures: none, because nothing anyone sees changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

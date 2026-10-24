@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage, styles } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, popupsScript, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage, styles } from './support/panel.mjs';
 import { chipSaid } from './support/dep-chip.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
@@ -143,7 +143,7 @@ test('0031 AC4: a status change in this checkout or in another worktree shows in
 });
 
 test('0031 AC4: the page gets /api/state when the panel says the board changed, not on a timer (0187), says when it is disconnected and recovers', () => {
-  const html = pageScript();
+  const html = pageScript() + popupsScript(); // 0473: the Reload page button is in the pop-ups' file
   assert.match(html, /fetch\(['"]\/api\/state['"]/);
   assert.match(html, /new EventSource\('\/api\/events'\)/);
   assert.doesNotMatch(html, /POLL_MS|setTimeout\(poll/, 'no poll on a timer');

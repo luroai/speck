@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { fakePage, page, T, panelRepo, cliCopy, startPanel, stop, freePort, request, findChrome, browserPage, styles, model, settingsScript, pageScript } from './support/panel.mjs';
+import { fakePage, page, T, panelRepo, cliCopy, startPanel, stop, freePort, request, findChrome, browserPage, styles, model, settingsScript, pageScript, popupsScript } from './support/panel.mjs';
 import { openStream } from './support/stream.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
 import { runLogTail, runLogStamp, RUN_LOG_LINES } from '../scripts/run-log.mjs';
@@ -312,10 +312,11 @@ test('0415 AC5: in a real browser at 320 px wide, the open pop-up doesn\'t scrol
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: model() });
     await b.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 640, deviceScaleFactor: 1, mobile: true });
     // 0432: nor /panel-settings.js, so it opens a copy of the page with the Settings script in its place, from its own file.
-    // 0433: and the same for /panel.js, keeping what its tag gives it.
+    // 0433: and the same for /panel.js, keeping what its tag gives it. 0473: and for /panel-popups.js.
     const copy = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0415-')), 'panel.html');
     fs.writeFileSync(copy, page().replace('<script src="/panel-settings.js"></script>', () => `<script>${settingsScript()}</script>`)
-      .replace('<script src="/panel.js" data-page="{{page}}" data-token="{{token}}"></script>', () => `<script data-page="{{page}}" data-token="{{token}}">${pageScript()}</script>`));
+      .replace('<script src="/panel.js" data-page="{{page}}" data-token="{{token}}"></script>', () => `<script data-page="{{page}}" data-token="{{token}}">${pageScript()}</script>`)
+      .replace('<script src="/panel-popups.js"></script>', () => `<script>${popupsScript()}</script>`));
     const url = pathToFileURL(copy).href;
     await b.send('Page.navigate', { url });
     await b.until(`location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`, 'the page');
