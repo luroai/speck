@@ -24,14 +24,14 @@ waited_seconds: 826
 **Status:** 🔨 building
 
 ## Problem
-On a phone, a collapsed shipped ticket's title sits lower in its card than a Build or Plan ticket's. The title is a link to the full ticket, and on a touch screen it's a 44 px tall target with its text centred in it, so the text starts about 11 px further down. With a mouse, the three line up.
+On a phone, a collapsed shipped ticket's title sits lower in its card than a Build or Plan ticket's. The title opens the card, and on a touch screen it's a 44 px tall target with its text centred in it, so the text starts about 11 px further down. With a mouse, the three line up.
 
 ## Outcome
 A collapsed shipped ticket's title starts as far from the top of its card as a Build or Plan ticket's, on a phone as well as with a mouse.
 
 ## Acceptance criteria
 1. On a touch screen at 390 px wide, and with a mouse at 390 px and 1280 px, the top of a collapsed shipped ticket's title text is the same distance from the top of its card as a collapsed Build or Plan ticket's, to within 2 px, measured in a real browser.
-2. On a touch screen, the title is still a target at least 44 px tall that opens the full ticket, as today, without adding space above the title's text.
+2. On a touch screen, the title is still a target at least 44 px tall that opens the card where it is, as today (0466), without adding space above the title's text.
 3. A collapsed shipped ticket is no taller than it was before this change.
 
 ## Out of scope
