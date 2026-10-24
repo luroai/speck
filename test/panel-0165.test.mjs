@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { panelRepo, freePort, startPanel, stop, request, findChrome, browserPage, fakePage, T, full, items, top, queueRows } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, request, findChrome, browserPage, fakePage, T, full, items, top, queueRows, REST_LANES } from './support/panel.mjs';
 
 // ---------- 0165: explain each tag when it's tapped ----------
 
@@ -87,7 +87,7 @@ const key = async (b, k) => {
 const WHERE = { plan: '#shaping .item .tag', queue: '#queue .q .tag', pane: '#full-ticket .tag' };
 // 0410: opens the tab of the lane a selector looks in, Plan's or Build's, when it isn't open already, as only the open
 // lane shows (pressing a tab closes a tip or a menu, as any click does).
-const laneFor = sel => `(t => { if (t && t.getAttribute('aria-selected') !== 'true') t.click(); })(document.getElementById(${JSON.stringify(sel)}.startsWith('#shaping') ? 'tab-plan' : ${JSON.stringify(sel)}.startsWith('#queue') ? 'tab-build' : null));`;
+const laneFor = sel => `(t => { if (t && t.getAttribute('aria-selected') !== 'true') { t.click(); ${REST_LANES}; } })(document.getElementById(${JSON.stringify(sel)}.startsWith('#shaping') ? 'tab-plan' : ${JSON.stringify(sel)}.startsWith('#queue') ? 'tab-build' : null));`;
 // Scrolls the tag into the middle of the screen and gives back its middle point.
 const centre = (sel, i) => `(() => { ${laneFor(sel)} const n = document.querySelectorAll(${JSON.stringify(sel)})[${i}]; n.scrollIntoView({ block: 'center' });
   const r = n.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`;

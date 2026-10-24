@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, click, items, top, findChrome, browserPage, charAt, QUICK_PINGS } from './support/panel.mjs';
+import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, click, items, top, findChrome, browserPage, charAt, QUICK_PINGS, openLane } from './support/panel.mjs';
 
 // ---------- 0060: the full ticket pane holds the page still, and a click outside it closes it ----------
 // 0423: the pane is over the whole window, so in a real browser there's no outside left to click.
@@ -86,10 +86,10 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     await b.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 });
     await b.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1 });
   };
-  const inPane = [1100, 450], outside = [400, 450]; // 0418: in the 720 px column, from 280 to 1000 px. 0423: both in the pane while it's open
+  const inPane = [1100, 450], outside = [400, 600]; // 0418: in the 720 px column, from 280 to 1000 px. 0423: both in the pane while it's open. 0476: lower, in Plan's list under the lane's name
   try {
     await b.until(`document.querySelectorAll('${item}').length === 39`, 'the drafts');
-    await b.js(`document.getElementById('tab-plan').click()`); // 0410
+    await b.js(openLane('plan')); // 0410. 0476: at rest
     await b.js(`document.querySelector('${item} .title').click()`);
     await b.until(`!!document.querySelector('${item}.open .detail')`, 'the draft to open');
     assert.ok(await b.js(`(l => l.scrollHeight > l.clientHeight + 600)(document.getElementById('shaping'))`), 'the list is longer than its box');
