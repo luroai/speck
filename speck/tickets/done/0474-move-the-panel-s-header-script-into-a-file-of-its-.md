@@ -1,7 +1,7 @@
 ---
 id: "0474"
 title: "Move the panel's header script into a file of its own"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0473"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T14:28:14.801Z"
 approved: "2026-10-24T14:33:17.139Z"
+finished: "2026-10-24T14:36:31.123Z"
 
 ---
 # 0474 · Move the panel's header script into a file of its own
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 After 0473, the panel's header script, speck's screen, its words and the tabs, is still in `templates/panel.js` with the cards' script, so a ticket that changes the header and one that changes the cards build one after the other.
