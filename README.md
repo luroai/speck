@@ -14,7 +14,7 @@ You can trust the result without reading the code because every ticket goes thro
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-dark.png">
-  <img alt="An agent conversation on the left, with speck's panel open beside it on the right, showing tickets being planned, built and waiting to ship." src="docs/images/demo-light.png">
+  <img alt="An agent conversation on the left, with speck's panel open beside it in a narrow browser pane on the right. The panel's screen shows one ticket building, and its Build lane is open: one ticket approved and ready to ship, one being built and two queued." src="docs/images/demo-light.png">
 </picture>
 
 > Status: 0.14.0, a public preview. It works end to end on a local machine. Expect rough edges.
