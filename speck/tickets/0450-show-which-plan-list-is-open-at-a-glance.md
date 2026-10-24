@@ -40,6 +40,7 @@ The open Plan list's button is clearly selected.
 - From the user's phone screenshot on 2026-10-24: "I don't know which item I've selected out of tickets/idea/inbox."
 - Today: `.toggle` and `.toggle.on` in `templates/panel.css`.
 - Waits for 0444: both change `templates/panel.css`. 0442 waits for this one.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
