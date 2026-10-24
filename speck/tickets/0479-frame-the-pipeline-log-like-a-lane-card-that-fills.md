@@ -1,7 +1,7 @@
 ---
 id: "0479"
 title: "Frame the Pipeline log like a lane card that fills the screen"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0479 · Frame the Pipeline log like a lane card that fills the screen
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Pressing speck's screen opens the Pipeline log as a page that scrolls as a whole, with its title, Close and the log scrolling together. It doesn't look like the rest of the panel after 0478, where each lane is a framed card, and on a phone the whole page moving when you only want to read the log feels loose.
