@@ -412,7 +412,7 @@ function drawToggle(b, on, word) {
   b.replaceChildren(el('span', 'track', null, el('span', 'knob')), el('span', 'state', word));
 }
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
+  if (e.key !== 'Escape') return laneKey(e); // 0476: the left and right arrow keys change lane
   if (tipTag !== null) closeTip();
   else if (docOpen !== null) closeDoc(); // 0362: the pop-up, over everything else
   else if (foremanOpen && settingsView === null) closeForeman(); // 0285: the Foreman's detail

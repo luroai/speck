@@ -111,7 +111,7 @@ test('0425 AC2: with Plan or Shipped open and the Foreman reading "Needs you <n>
 
 test('0425 AC3: Build\'s and Shipped\'s counts are the first line of their lane, above its tickets, with today\'s wording', async () => {
   const html = staticHtml();
-  const first = id => html.match(new RegExp(`<section id="${id}"[^>]*>\\s*<([a-z]+) [^>]*id="([^"]+)"`))[2];
+  const first = id => html.match(new RegExp(`<section id="${id}"[^>]*>\\s*<h2 class="lane-title">[^<]*</h2>\\s*<([a-z]+) [^>]*id="([^"]+)"`))[2]; // 0476: under the lane's name
   assert.equal(first('build-section'), 'queue-n', 'Build\'s count opens its lane');
   assert.equal(first('shipped-section'), 'shipped-n', 'Shipped\'s count opens its lane');
   assert.doesNotMatch(nav(), /id="(queue-n|shipped-n)"/, 'and neither is in a tab');

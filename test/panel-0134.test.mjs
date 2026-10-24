@@ -85,7 +85,8 @@ const IDS = ['offline', 'restart', 'shaping-section', 'shaping-toggle', 'shaping
 // 0413: the title row of speck's screen's frame is speck, then the project and base branch.
 const TEXT = ['speck', '{{repo}} ·', '{{base}}',
   'Disconnected: can\'t reach speck panel. Showing the last state received. Retrying every 2 seconds…',
-  'Plan', 'Build', 'Shipped'];
+  'Plan', 'Build', 'Shipped',
+  'Plan', 'Build', 'Shipped']; // 0476: each lane's name at the top of its card
 
 test('0134 AC4: every static id is still there, and no visible text was added (0135 removed the section numbers)', () => {
   const html = staticHtml();
