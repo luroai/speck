@@ -42,6 +42,8 @@ Each lane is a light card with a thin edge and its name in dark dot-matrix lette
 - Asked for by the user on 2026-10-24, from a phone screenshot of the Build lane: "there's too much black border … less space for tickets … it distracts away from the main lcd screen but I like the layout and swipe." From the mock-up's four looks (https://claude.ai/artifact/F9FWtouNDenRB3K4djw47y) the user chose B, the light card with its name.
 - Today: `main > section`, `.lane-title`, `.lane-n`, `.sh` and `.lane-list` under 0478's comment in `templates/panel-cards.css`, and `--bezel-step` (Plan's dot on the dark frame) in `templates/panel-base.css`. The Pipeline log (0479, `templates/panel-popups.css`) has its own rules for its frame, so this change leaves it as it is.
 - Failing before this build: none
+- Self-check: the card's edge was drawn behind the lane's list, which hid its right side along the list in a real browser, so the edge is now drawn over the lane's contents and the card's fill is the lane's own background cut to inside its padding; a test checks the edge is drawn on top.
+- Tests superseded by this change: 0478's checks of the dark frame's colour, corners and light ink, 0161's list of lane rules on the frame, and 0479's check that the Pipeline log's 4 px frame matches a lane's: each now checks the light card, and 0479's keeps its own 4 px.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
