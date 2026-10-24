@@ -47,7 +47,11 @@ A ticket is code or a task, `kind: code | task`, and everything speck shows peop
 - Self-check: `speck status --json` dropped the raw `task` field an old ticket carries, so it gives only `kind`; the full-ticket pop-up's starting accessible name `Document` became `Result`. Old tests that asserted the old words (0350, 0353, 0355, 0359, 0361, 0443, 0462, 0463, 0484) now assert the new ones; the fixtures in `test/support/documents.mjs` and `test/support/doc-ship.mjs` make their ticket a task with the old `task: document` line, so the old line stays covered.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket whose build doesn't change code, such as drafting an email or writing a plan, is now called a task rather than a document task. New tickets say `kind: code`, and you write `kind: task` for one of these. Older tickets that still say `task: document` keep working as tasks, and speck never rewrites them.
+
+To see it, look at a task ticket in the panel: its tag reads "task", with a tip saying the build leaves its result in outputs/, and once its build finishes its card reads "Read the result". The review pack lists its files under "Result", and the reviewer is told to read the result rather than a document.
+
+Worth keeping an eye on: the skills, the brief and the README still say "document task" until 0493 ships.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +61,7 @@ A ticket is code or a task, `kind: code | task`, and everything speck shows peop
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (tidy-ups only, no inbox notes): internal names still say document, such as `documentSection`, `documentLines`, `panelDocuments`, `documentFile`, `templates/reviewer-document.md`, `doc_finished` and the `.pack-document` CSS classes; and the older tests' titles still say "document task". None of them is shown to people.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +130,76 @@ A ticket is code or a task, `kind: code | task`, and everything speck shows peop
     ],
     "escalation_question": "",
     "summary": "The rename appears to work, including compatibility with older tickets and access to task results. One new test must change because it unnecessarily locks the reviewer instructions to an exact heading."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a7854dbe0d8143013e56ad37e278be73cf891d21",
+    "session": "continued",
+    "thread_id": "01a16f8c-2600-7981-9c4d-311c8f9b5ad5",
+    "builder_response": "- Tests run: test/kind-0492.test.mjs test/prompt-0353.test.mjs (with the commands.checks files).\n- F1: fixed. Removed the exact `## The result` heading assertion from test/kind-0492.test.mjs (AC3 test of what speck prints). It still checks that nothing printed says \"document\" and that the prompt part lists the folder's files (AC4). Likewise loosened test/prompt-0353.test.mjs's check from the sentence `This ticket is a task` to the word \"a task\", as it had checked \"document task\" before.\n",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 369056,
+      "cached_input_tokens": 299520,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1633,
+      "reasoning_output_tokens": 166
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T20:14:45.137Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "core.mjs ticketKind and lint.mjs lintTicket implement kind validation and the task output requirement. templates/ticket.md has the required default and comment. Passing 0492 AC1 tests cover validation and speck new."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "core.mjs ticketKind maps legacy task values and gives kind precedence. Passing 0492 AC2 tests check both formats, precedence and preservation of the old line through speck set."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The reviewer template and output messages use task/result. panel.js taskTag supplies the required tag and tip; panel-model.js supplies Read the result. Passing 0492 AC3 tests cover wording, tags, tooltips and accessible names."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Output and shipping functions consistently use ticketKind. Passing 0492 AC4 and earlier workflow tests cover output folders, reviewer listings, pack links, file serving and waiting for manual shipping. Round 2 reports 127 passed, zero failed and three skipped; earlier timing failures passed on rerun."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/kind-0492.test.mjs",
+        "issue": "The exact reviewer-template heading assertion has been removed. Terminology and output-file behaviour remain covered.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The rename works across ticket validation, the panel, review prompts and task results, while preserving older tickets. The brittle heading test has been removed. All criteria pass, with no blocking findings remaining."
   }
 }
 ```
