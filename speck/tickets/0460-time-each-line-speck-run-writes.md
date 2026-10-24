@@ -40,6 +40,7 @@ Each line speck run writes says when it was written.
 - Asked for by the user on 2026-10-24: the pipeline log "with timestamps … just like all the individual ticket build logs."
 - `run.log` is speck run's own output, sent to the file by `panelRunOn` in `scripts/panel-run.mjs` (0128), so started from a terminal, speck run's output is timed too.
 - The build log's time form is matched by `logParts` in `templates/panel.js`: `^(\d\d:\d\d:\d\d )`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
