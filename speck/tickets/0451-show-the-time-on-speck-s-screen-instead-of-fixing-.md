@@ -1,7 +1,7 @@
 ---
 id: "0451"
 title: "Show the time on speck's screen instead of Fixing on"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0446"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T08:22:50.644Z"
 
 ---
 # 0451 · Show the time on speck's screen instead of Fixing on
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The top right of speck's screen shows `FIXING ON` while `foreman_fixing` is `fix`. It's a setting's name rather than anything happening, and it confuses more than it tells.
