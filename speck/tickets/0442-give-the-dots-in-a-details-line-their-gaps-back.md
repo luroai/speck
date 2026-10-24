@@ -37,6 +37,7 @@ Every " · " in a details line has a clear gap on each side.
 ## Notes
 - For release 0.15.0 (0452). The user asked on 2026-10-24 for everything relevant to the release to be ticketed.
 - From the builder's note on 0427: the narrowing couldn't come out while the tests measured a monospace font, which 0441 fixes.
+- Failing before this build: none
 - Waits for 0441 (the font the tests measure) and 0450, which comes after 0440 and 0444: all change `templates/panel.css`.
 
 ## In plain words
