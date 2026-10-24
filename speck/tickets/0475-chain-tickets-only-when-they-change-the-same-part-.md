@@ -43,6 +43,7 @@ The ticket skill chains tickets only when they're likely to change the same part
 - Today: step 6 of `skills/speck-ticket/SKILL.md`, "Chain tickets that change the same files" (0205), which came from 0188 and 0189 clashing at ship on 2026-10-15.
 - The risk: tickets left unchained that do clash cost a merge round when the second ships, as about a quarter of 0450 to 0467 did, at about a minute of review each. The step should chain when in doubt.
 - Moved into 0.15.0 by the user on 2026-10-24, to build alongside the file splits (0472 to 0474): it changes only the ticket skill and its installed copies, which no other open ticket changes. It doesn't re-chain the tickets already queued.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
