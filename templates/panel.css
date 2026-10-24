@@ -220,9 +220,6 @@
   .item.ticket .head .checks > :not(.ids), .q .top .progress > :not(.ids), .q .top .act > :not(.ids) { white-space: nowrap; }
   .item.ticket .head .checks .prio { vertical-align: top; } /* 0441: at the line's top, as the tags in it are */
   .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; padding: 0; border: 0; line-height: inherit; vertical-align: top; } /* inline, as a box beside a dot would let the line break before the dot. 0441: at the line's top, as on its baseline the monospace's line box reaches a pixel past the line's */
-  /* the spaces either side of a dot a little narrower than a whole character, so a line such as "Writing tests and code
-     · Build · 19:18 · P3 · M · low" fits a 420 px pane */
-  .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { letter-spacing: -3px; }
   @media (prefers-reduced-motion: no-preference) {
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
@@ -266,7 +263,6 @@
   #shipped-stats { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
   #shipped-stats .part { white-space: nowrap; }
   #shipped-stats .num { font-weight: 600; color: var(--text); }
-  #shipped-stats .sep { letter-spacing: -3px; }
   #shipped-stats[hidden] { display: none; }
   .full-open.more-stats, #shipped .details { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
   .more-stats[hidden] { display: none; }
@@ -276,7 +272,6 @@
   #shipped .sum { display: flex; align-items: flex-end; gap: 6px; margin-top: 2px; }
   #shipped .meta { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
   #shipped .meta > * { white-space: nowrap; } /* whole, so a line too long for a phone wraps between its time and figures */
-  #shipped .meta .sep { letter-spacing: -3px; }
   #shipped .details { margin-left: auto; }
   section.shipped table { display: block; }
   #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
@@ -711,7 +706,7 @@
     /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' and linked
        ids' tap areas in it stay apart */
     .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; }
-    .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { letter-spacing: 0; padding: 0 12px; }
+    .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { padding: 0 12px; }
     .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline-block; } /* a box, for its tap area */
     /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
        gap before a tag stays wide, and its words, stage and time fit on a phone */
