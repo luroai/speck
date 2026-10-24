@@ -1,7 +1,7 @@
 ---
 id: "0494"
 title: "Line up a shipped ticket's title with Build and Plan on a phone"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-10-24T20:47:56.137Z"
 blocked_at: ""
 waited_seconds: 826
 approved: "2026-10-24T21:10:31.434Z"
+finished: "2026-10-24T21:14:04.730Z"
 
 ---
 # 0494 · Line up a shipped ticket's title with Build and Plan on a phone
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a phone, a collapsed shipped ticket's title sits lower in its card than a Build or Plan ticket's. The title opens the card, and on a touch screen it's a 44 px tall target with its text centred in it, so the text starts about 11 px further down. With a mouse, the three line up.
