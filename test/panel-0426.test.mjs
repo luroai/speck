@@ -165,8 +165,8 @@ test('0426 AC3: needs you, waiting for you, passing checks, links, the focus rin
   uses('#full-ticket .md a, #full-ticket .criteria a, #doc-view .md a', 'color', '--run');
   assert.match(rule(':focus-visible'), /outline: 2px solid var\(--blue\)/);
   // a ticket's edge at each stage: blue while its tests and code are written, cyan in its self-check, yellow in review,
-  // green while it ships
-  for (const [sel, token] of [['.q.at-build', '--blue'], ['.q.at-check', '--inbox'], ['.q.at-review', '--yellow'], ['.q.at-ship', '--green']])
+  // purple while it ships (0461, as its Ship bar is)
+  for (const [sel, token] of [['.q.at-build', '--blue'], ['.q.at-check', '--inbox'], ['.q.at-review', '--yellow'], ['.q.at-ship', '--purple']])
     uses(sel, 'border-color', token);
 });
 

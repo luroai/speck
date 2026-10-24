@@ -44,6 +44,7 @@ An open ticket that's in flight shows a track of its five steps, each in its own
 - Colours today, in `templates/panel.css`: `.q.at-build` `--blue`, `.q.at-check` `--inbox` (cyan), `.q.at-review` `--yellow`, `.q.at-ship` `--green`, and a ticket waiting to ship `--ok`. Purple is `--idea`. 0440 moved the waiting-to-ship colour off magenta because it was too near the red: the purple chosen must still read as different from `--bad`.
 - Waits for 0459, the last open ticket that changes `templates/panel.css` and `templates/panel.js`.
 - Failing before this build: none
+- Self-check: no changes. The track sits between an open card's title and its line of facts, so five older tests that found that line by its place (0419, 0434, 0443) now find it past the track, with their checks unchanged; 0171's and 0426's checks of the shipping border now expect the purple AC3 asks for.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

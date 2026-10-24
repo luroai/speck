@@ -37,7 +37,7 @@ const boardOf = on => ({ run: on ? { on: true } : null, ideas: [], tickets: [...
 const page = on => fakePage([boardOf(on)], { Date: stoppedClock(NOW) });
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')?._text;
 const card = (p, id) => queueRows(p).find(n => idOf(p, n) === id);
-const statusOf = n => n.children[0].children[1];
+const statusOf = n => n.children[0].children.filter(c => !/^track\b/.test(c.className))[1]; // 0461: past an open card's track
 const sayOf = (p, n) => p.all(statusOf(n)).find(x => /\bsay\b/.test(x.className || ''));
 
 test('0443 AC1: on a closed Build ticket, each long status shows in short words', async () => {
