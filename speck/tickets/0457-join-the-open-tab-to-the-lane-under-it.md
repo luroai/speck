@@ -42,6 +42,7 @@ The open tab and its lane read as one sheet of paper, with no line between them,
 - The tabs are `<button>`s, so 0453 (every button drawn on all four sides) covers them. The open tab's missing bottom edge is this ticket's deliberate exception to 0453.
 - Waits for 0455, which waits for 0454 and 0453: all change `templates/panel.css`.
 - Failing before this build: none
+- Self-check: Chrome draws the tab row's half-pixel line a whole pixel thick, so the open tab's half-pixel overlap left half of it showing; the open tab now also has a shadow in the lane's colour just under it, which covers it in any browser (spilling only into the lane, which is the same colour). Updated 0453's and 0428's checks of the open tab's bottom edge, which this ticket deliberately makes the lane's colour.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
