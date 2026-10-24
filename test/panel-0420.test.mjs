@@ -161,7 +161,7 @@ const CARDS = `(async () => {
     }) };
 })()`;
 
-test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose title fits on one line is no more than 56 px tall, and the stats are one line', skip, async () => {
+test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose title fits on one line is no more than 76 px tall (0469), and the stats are one line', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -186,7 +186,7 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
       assert.ok(!st.overflows, `${label}: the stats stay inside their line`);
       assert.ok(st.more.top < st.box.bottom && st.more.bottom > st.box.top, `${label}: on the same line`);
       assert.ok(st.more.left >= st.box.right - 0.5, `${label}: after the stats`);
-      assert.ok(st.row.height <= 40, `${label}: the stats line is ${st.row.height} px tall`);
+      assert.ok(st.row.height <= 57, `${label}: the stats line is ${st.row.height} px tall`); // 0469: with the touch screen's 44 px More stats
       assert.ok(st.room >= st.digits, `${label}: ${st.room.toFixed(1)} px to spare, less than three more digits (${st.digits.toFixed(1)} px)`);
     }
     for (const c of cards) {
@@ -204,7 +204,7 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
       if (c.id === '0406') continue; // its warning is under its two lines (AC4)
       // AC5
       assert.equal(c.titleLines, 1, `${c.id}: the title fits on one line`);
-      assert.ok(c.height <= 56, `${c.id}: ${c.height} px tall`);
+      assert.ok(c.height <= 76, `${c.id}: ${c.height} px tall`); // 0469: with the touch screen's 44 px title line
     }
     assert.deepEqual(cards.map(c => c.id).sort(), ['0401', '0402', '0403', '0404', '0405', '0406', '0407', '0408']);
   } finally { await b.close(); await stop(panel); }

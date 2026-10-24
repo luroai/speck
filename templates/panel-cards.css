@@ -378,54 +378,56 @@
     .shaping .md .ac-table td:nth-child(n+4) { order: 3; flex-basis: 100%; }
   }
 
-  /* 0417: a touch screen, at any width: every button and clickable control at least 44 px each way */
+  /* 0417: every button and clickable control at least 44 px each way. 0469: with a mouse too, at any width, so the panel
+     looks the same with a mouse as on a touch screen */
+  .toggle { min-width: 44px; min-height: 44px; }
+
+  /* Shaping */
+  .head { min-height: 44px; }
+  /* 0151: the priority tag looks like the others, and its tap area is the 44 px box around it */
+  .item.ticket .prio { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
+  /* 0162: the tap area reaches 7 px past the tag on each side, into the gaps, so the gaps beside it match the rest */
+  .item.ticket .prio { padding: 0 7px; margin: 0 -7px; }
+  .tag-row { gap: 18px; }
+  .prio-menu button { min-width: 44px; min-height: 44px; }
+  .set-ready, .full-open { min-width: 44px; min-height: 44px; }
+  .deps .chip, .deps .slot { min-height: 44px; } /* 0467 */
+  .dep-chip { min-width: 44px; min-height: 44px; margin: -13px 0; } /* 0468: its pill in the middle, and the title line no taller */
+
+  /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' tap areas in
+     it stay apart */
+  .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; }
+  .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { padding: 0 12px; }
+  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline-block; } /* a box, for its tap area */
+  /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
+     gap before a tag stays wide, and its words, stage and time fit on a phone */
+  .q:not(.open) .top .progress .sep:not(:has(+ .tag)) { padding: 0; }
+  /* The priority's 44 px box takes no more room in the line than its two characters do */
+  .item.ticket .head .checks .prio { padding: 0; margin: 0 calc(1ch - 22px); font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
+  /* 0463: in a draft's facts table, the priority's 44 px box starts at the value's left, and its negative margins give
+     back what it reaches above and below the line, so the cell stays as tall as the others. A tap anywhere in it
+     reaches the priority. */
+  .item.ticket .facts .prio { justify-content: flex-start; padding: 0; margin: -14px 0; vertical-align: top; }
+
+  /* Queue: the top row is at least 44 px high */
+  .q .top { min-height: 44px; }
+  .q .full-open { min-height: 44px; }
+  .q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply { min-width: 44px; min-height: 44px; }
+  .resume .copy { min-width: 44px; min-height: 44px; }
+
+  /* Shipped */
+  .more-stats { min-width: 44px; min-height: 44px; }
+  #shipped .line .title { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
+  #shipped tr:not(.open) .line .title { display: block; min-width: 44px; line-height: 44px; } /* 0434: a block, so its title can end in an ellipsis */
+  td .full-open { min-height: 44px; }
+
+  /* 0469: a touch screen only: tap areas that reach past a control without changing the layout */
   @media (pointer: coarse) {
-    .toggle { min-width: 44px; min-height: 44px; }
-
-    /* Shaping */
-    .head { min-height: 44px; }
-    /* 0151: the priority tag looks like the others, and its tap area is the 44 px box around it */
-    .item.ticket .prio { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
-    /* 0162: the tap area reaches 7 px past the tag on each side, into the gaps, so the gaps beside it match the rest */
-    .item.ticket .prio { padding: 0 7px; margin: 0 -7px; }
     .tag.pick::after { content: ''; position: absolute; inset: 0; }
-    .tag-row { gap: 18px; }
-    .prio-menu button { min-width: 44px; min-height: 44px; }
-    .set-ready, .full-open { min-width: 44px; min-height: 44px; }
-    .deps .chip, .deps .slot { min-height: 44px; } /* 0467 */
-    .dep-chip { min-width: 44px; min-height: 44px; margin: -13px 0; } /* 0468: its pill in the middle, and the title line no taller */
-
-    /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' tap areas in
-       it stay apart */
-    .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; }
-    .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { padding: 0 12px; }
-    .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline-block; } /* a box, for its tap area */
-    /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
-       gap before a tag stays wide, and its words, stage and time fit on a phone */
-    .q:not(.open) .top .progress .sep:not(:has(+ .tag)) { padding: 0; }
-    /* The priority's 44 px box takes no more room in the line than its two characters do */
-    .item.ticket .head .checks .prio { padding: 0; margin: 0 calc(1ch - 22px); font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
-    /* 0463: in a draft's facts table, the priority's 44 px box starts at the value's left, and its negative margins give
-       back what it reaches above and below the line, so the cell stays as tall as the others. A tap anywhere in it
-       reaches the priority. */
-    .item.ticket .facts .prio { justify-content: flex-start; padding: 0; margin: -14px 0; vertical-align: top; }
     .item.ticket .facts .set-prio::after { content: ''; position: absolute; inset: 0; }
-
-    /* Queue: the top row is at least 44 px high */
-    .q .top { min-height: 44px; }
     /* 0224: a linked id's tap area reaches past its text, so the tags beside it in the line (0419) are above it: a tap
        anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
     .q .top .tag:not(.pick) { z-index: 1; }
-    .q .full-open { min-height: 44px; }
-    .q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply { min-width: 44px; min-height: 44px; }
-    .resume .copy { min-width: 44px; min-height: 44px; }
-
-    /* Shipped */
-    .more-stats { min-width: 44px; min-height: 44px; }
-    #shipped .line .title { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
-    #shipped tr:not(.open) .line .title { display: block; min-width: 44px; line-height: 44px; } /* 0434: a block, so its title can end in an ellipsis */
-    td .full-open { min-height: 44px; }
-
   }
 
   /* 0453: every button's border at least a device pixel on each side, as 0281 gave Settings' info buttons: a half pixel

@@ -42,6 +42,10 @@ The panel looks the same with a mouse as it does on a touch screen at the same w
 - Today: `@media (pointer: coarse)` in `templates/panel.css` (0151, 0162, 0164, 0165, 0419, 0441, 0443, 0454) holds the touch layout's sizes.
 - Waits for 0474, the last of the file splits the user asked on 2026-10-24 to be built first, so this changes the split stylesheets. And for 0468, the last queued ticket that changes the cards' layout in `templates/panel.css`, so this applies to the step track, facts table, dependency box and chip they add, and its check covers them.
 
+- Failing before this build: none
+- Tests changed for the new behaviour: 0417 (AC1 and the mouse test: a mouse now gets the touch screen's 44 px minimums, the same as on a touch screen), 0419, 0420 and 0421 (their mouse height limits raised to the touch layout's: 80, 76 and 57 px, and 44 px buttons), and 0454 AC2 (the Settings button is 44 × 44 px with a mouse too). Each pinned the compact mouse layout this ticket replaces; the rest of each test is unchanged.
+- Self-check: no changes
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 

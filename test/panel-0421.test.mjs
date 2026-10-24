@@ -110,7 +110,7 @@ const BOXES = id => `(async () => {
     return { text: b.textContent, height: r.height, top: r.top, left: r.left, right: r.right, box: ['Top', 'Left', 'Right'].map(e => getComputedStyle(b)['border' + e + 'Width']) }; });
 })()`;
 
-test('0421 AC2: with a mouse, an open card\'s buttons are small text buttons on one line, each no more than 28 px tall, with Stop build last', skip, async () => {
+test('0421 AC2: with a mouse, an open card\'s buttons are small text buttons on one line, each no more than 44 px tall (0469), with Stop build last', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -127,7 +127,7 @@ test('0421 AC2: with a mouse, an open card\'s buttons are small text buttons on 
       await b.until(`[...document.querySelectorAll('#queue .q.open')].some(c => c.querySelector('.id').textContent === '${id}')`, `${id} to open`);
       const got = await b.js(BOXES(id));
       assert.deepEqual(got.map(x => x.text), want, `${id}: its buttons, in order`);
-      for (const x of got) assert.ok(x.height <= 28, `${id}: ${x.text} is ${x.height} px tall`);
+      for (const x of got) assert.ok(x.height <= 44, `${id}: ${x.text} is ${x.height} px tall`); // 0469: the touch screen's 44 px
       assert.ok(got.every(x => Math.abs(x.top - got[0].top) < 1), `${id}: on one line: ${JSON.stringify(got)}`);
       for (let k = 1; k < got.length; k++) assert.ok(got[k].left >= got[k - 1].right, `${id}: ${got[k].text} after ${got[k - 1].text}`);
       for (const x of got) assert.ok(x.box.every(w => parseFloat(w) > 0), `${id}: ${x.text} is boxed (0428): ${x.box}`);
