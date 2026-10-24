@@ -1,7 +1,7 @@
 ---
 id: "0480"
 title: "Set each lane in a light card instead of a dark frame"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:03:26.428Z"
 approved: "2026-10-24T18:17:56.207Z"
+finished: "2026-10-24T18:20:48.767Z"
 
 ---
 # 0480 · Set each lane in a light card instead of a dark frame
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0478 each lane sits in a dark frame as heavy as speck's screen above it. On a phone the two black slabs compete, so the screen no longer stands out, and the frame's title bar and edges take room from the tickets.
