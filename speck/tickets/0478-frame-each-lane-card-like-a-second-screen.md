@@ -43,6 +43,7 @@ Each lane card has a dark frame like speck's screen, thinner, with its lane's na
 - Mock-up the user approved on 2026-10-24 ("that's exactly what I was thinking"): https://claude.ai/artifact/3sE9DU2PdnsvR6p1tLNw8j. It shows the frame, the title, the dot and the lane's line in the title row.
 - The dots match 0461's step colours: grey for a step not reached, `--blue` for Build and the purple 0461 picks for Ship.
 - Waits for 0477: both change the lanes' and the header's styles. Built for release 0.15.0.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
