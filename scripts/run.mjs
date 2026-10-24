@@ -25,6 +25,7 @@ import { launchPlan, ignoredBuildersNote } from './ticket-builder.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
 import { recordedRun, keepsLock } from './run-lock.mjs';
+import { timeRunOutput } from './run-times.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
 export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
@@ -95,6 +96,7 @@ export function takeRefusal(file) {
 // Writes a refusal to start to the file the panel named in SPECK_RUN_REFUSAL as well (0220), so the panel shows only this
 // speck run's words. The variable is dropped first, so no build or ship this speck run starts inherits it.
 export function cmdRun() {
+  if (process.argv[2] === 'run') timeRunOutput(); // 0460: only in speck run's own process, not a command run inside another
   const refusal = process.env.SPECK_RUN_REFUSAL;
   delete process.env.SPECK_RUN_REFUSAL;
   try { runOn(false); } catch (e) {
@@ -103,7 +105,8 @@ export function cmdRun() {
   }
 }
 
-export const runWorker = () => runOn(true); // speck run on new code, started by the one it replaces (0247)
+// speck run on new code, started by the one it replaces (0247), timing its output as the first one does (0460).
+export const runWorker = () => { timeRunOutput(); runOn(true); };
 
 // Watches the board: starts a build for each ready ticket that isn't waiting on another, up to max_parallel_builds at
 // once, and ships approved ones (shipQueue). Each runs in its own process group, so stopping speck run leaves it running.

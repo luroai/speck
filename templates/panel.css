@@ -62,10 +62,12 @@
   html, body { height: 100%; overflow: hidden; }
   body { display: flex; flex-direction: column; height: 100dvh; }
   header, .offline, .restart, .run-error, .tabs { flex: none; }
-  header, .offline, .restart, .run-error, .tabs, main { box-sizing: border-box; width: 100%; max-width: 720px; margin-left: auto; margin-right: auto; }
+  header, .offline, .restart, .run-error, .tabs, main { box-sizing: border-box; width: 100%; max-width: 720px; margin-left: auto; margin-right: auto; margin-left: max(0px, round(down, calc((100% - 720px) / 2), 1px)); } /* 0453: on a whole pixel when centred in an odd width */
   /* 0425: the three tabs share the row equally, each its name on one line (and Build's needs-you number) */
   .tabs { display: flex; padding: 8px 16px 0; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .tab + .tab { margin-left: -.5px; } /* 0428: each tab boxed as every button is, the edge between two shared, so each is still a third of the row */
+  .tab + .tab { border-left-width: 0; } /* 0428: each tab boxed as every button is, the edge between two shared. 0453: drawn by the tab before it, so every edge is on a whole pixel */
+  .tab:has(+ .tab[aria-selected="true"]) { border-right-color: var(--text); } /* 0453: the side it shares with the open tab is that tab's edge */
+  @supports (width: round(down, 1px, 1px)) { .tab:not(:last-child) { flex: none; box-sizing: border-box; width: round(calc(100% / 3), 1px); } } /* 0453: the nearest whole number of pixels, the last tab taking the rest */
   .tab { flex: 1 1 0; display: flex; align-items: baseline; justify-content: flex-start; column-gap: 6px; min-width: 0; margin-bottom: -.5px; padding: 6px 8px; font: inherit; color: var(--muted); background: transparent; border: .5px solid var(--line); cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; }
   .tab:hover { color: var(--text); }
   .tab[aria-selected="true"] { color: var(--text); background: var(--panel); border-color: var(--text); position: relative; z-index: 1; } /* 0428: over its neighbours' shared edges. Boxed as every button is, and set apart by its edge in the text colour, as the chosen toggle is */
@@ -500,6 +502,7 @@
   #settings-unsaved { position: fixed; inset: 0; z-index: 11; display: grid; place-items: center; padding: 16px; background: rgba(20, 20, 19, .2); }
   #settings-unsaved[hidden] { display: none; }
   #settings-unsaved .box { width: min(360px, 100%); padding: 16px; background: var(--panel); border: .5px solid var(--line); box-shadow: 0 8px 24px rgba(20, 20, 19, .18); }
+  #settings-unsaved .box { box-sizing: border-box; justify-self: start; margin: 0 auto; margin-left: max(0px, round(down, calc((100% - 360px) / 2), 1px)); } /* 0453: centred on a whole pixel, so its buttons are too */
   #settings-unsaved h3 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 18px; font-weight: 600; }
   #settings-unsaved p { margin: 8px 0 0; color: var(--muted); }
   #settings-unsaved .choices { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
@@ -528,7 +531,7 @@
      0366: the Foreman's detail opens in the same pop-up. */
   #doc-view, #foreman { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #doc-view[hidden], #foreman[hidden] { display: none; }
-  #doc-view .top, #doc-view .doc-actions, #doc-view .md, #foreman .top, #foreman .fm-body { max-width: 760px; margin: 0 auto; }
+  #doc-view .top, #doc-view .doc-actions, #doc-view .md, #foreman .top, #foreman .fm-body { max-width: 760px; margin: 0 auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); } /* 0453: on a whole pixel, as Settings' column is (0281) */
   #doc-view .top, #foreman .top { margin-bottom: 10px; }
   #doc-view .top .title, #foreman .top .title { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; overflow-wrap: anywhere; }
   /* 0379: each pop-up's top line, with its Close, stays at the top while the rest scrolls under it. The pop-up's own top
@@ -735,4 +738,14 @@
     /* The full ticket and review pack */
     #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close { min-width: 44px; min-height: 44px; }
     #full-ticket .md summary, #doc-view .md summary { min-height: 44px; padding-top: 12px; }
+  }
+
+  /* 0453: every button's border at least a device pixel on each side, as 0281 gave Settings' info buttons: a half pixel
+     is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
+     button's edges on whole pixels. */
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
+    .bezel .settings-open, .bezel .glass, .tab, .prio-menu button, .set-ready, .q .stop-build, .q .back-to-plan, .q .go-with, .resume .copy,
+    .foreman-ask .ask-reply, .foreman .reload, .toggle, .full-open, #settings .setting .save, #settings .arow .save, #settings .save-all,
+    #settings-unsaved button, #full-ticket .close, #doc-view .close, #foreman .close, #settings .close, #full-ticket .ship, #doc-view .ship,
+    #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document { border-width: 1px; }
   }
