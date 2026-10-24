@@ -1,5 +1,10 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { agentView } from '../scripts/foreman-agent.mjs';
 import { T } from './support/panel.mjs';
 import { manualSources } from './support/stream.mjs';
 import { building, board, speckPage, shows } from './support/screen-speck.mjs';
@@ -172,4 +177,33 @@ test('0446 AC2: a change the first board after a night asleep dates from after t
   shows(p, 'flag', '0364 IS READY TO SHIP'); // approved after the page came back
   p.go(6100);
   shows(p, 'ask', '1 NEEDS YOU');
+});
+
+const looking = started => board([...building(), T('0364', 'reviewing')], { agent: { running: { id: '0363', what: 'its ship was refused', started }, waiting: [], did: [], asks: [] } });
+
+test('0446 AC1: after a night asleep, the Foreman starting to look into a ticket 10 seconds before the page came back plays', async () => {
+  const p = page([start(), looking(AT(H8 - 10000))]);
+  await p.send();
+  await p.hide();
+  p.go(H8);
+  await p.show();
+  await p.send();
+  shows(p, 'confused', 'LOOKING INTO 0363');
+});
+
+test('0446 AC2: the Foreman starting to look into a ticket after the page came back, before its first board, plays as usual', async () => {
+  const p = page([start(), looking(AT(H8 + 3000))]);
+  await p.send();
+  await p.hide();
+  p.go(H8);
+  await p.show();
+  p.go(10000);
+  await p.send();
+  shows(p, 'confused', 'LOOKING INTO 0363');
+});
+
+test('0446 AC1: the Foreman agent\'s board says when it started looking into a ticket', () => {
+  const runs = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0446-'));
+  fs.writeFileSync(path.join(runs, 'run.foreman-agent.json'), JSON.stringify({ running: { id: '0363', token: 't', pid: null, key: 'k', what: 'its ship was refused', started: '2026-10-24T08:00:00.000Z' } }));
+  assert.deepEqual(agentView(runs, []).running, { id: '0363', what: 'its ship was refused', started: '2026-10-24T08:00:00.000Z' });
 });
