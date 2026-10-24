@@ -200,7 +200,9 @@ test('AC1: setting a ticket to done moves it into speck/tickets/done/, and out a
   assert.equal(r.at(done), true, 'moved into speck/tickets/done/ under the same name');
   assert.equal(r.fm(done).status, 'done');
   assert.match(r.read(done), /^finished: /m, 'the finished timestamp survives the move');
-  // A done ticket that goes back to work returns to speck/tickets/.
+  // A ticket filed there that isn't done, once it goes back to work, returns to speck/tickets/. A done one can't (0439).
+  assert.notEqual(r.run('set', '1', 'status', 'reviewing').status, 0, 'a done ticket stays done');
+  fs.writeFileSync(path.join(r.dir, done), r.read(done).replace(/^status: done/m, 'status: blocked'));
   assert.equal(r.run('set', '1', 'status', 'reviewing').status, 0);
   assert.equal(r.at(live), true);
   assert.equal(r.at(done), false, 'only one copy is left behind');
@@ -224,10 +226,9 @@ test('AC2: commands find a done ticket, status still lists it, and new never reu
   assert.equal(r.run('set', '1', 'priority', '1').status, 0);
   assert.equal(r.fm(done).priority, 1);
   assert.equal(r.run('lint', '1').status, 0);
-  assert.equal(r.run('set', '1', 'status', 'ready').status, 0, 'lint found the ticket in the done folder too');
-  assert.equal(r.at(path.join('speck', 'tickets', '0001-export-bookings.md')), true, 'a live ticket is back in speck/tickets/');
-  assert.equal(r.run('status').stdout.includes('DONE (1)'), false, 'it is not done any more');
-  assert.equal(r.run('set', '1', 'status', 'done').status, 0);
+  // Its status can't change (0439), and it says so, so set found it too.
+  assert.match(r.run('set', '1', 'status', 'ready').stderr, /Ticket 0001 is done and shipped/);
+  assert.equal(r.at(done), true, 'it stays in the done folder');
   assert.match(r.run('status').stdout, /DONE \(1\)/, 'done tickets are still listed');
   // The next number skips the one in the done folder.
   assert.equal(r.run('new', 'Second').stdout.trim(), path.join('speck', 'tickets', '0002-second.md'));
