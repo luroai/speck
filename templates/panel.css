@@ -15,6 +15,9 @@
     --inbox: #4c7f8c; /* the inbox's own colour: Cursor's cyan */
     --bug: #86371b; /* the bug tag's own colour: Cursor's orange */
     --fix: #6d4700; /* the fix tag's own colour: Cursor's yellow, as --warn */
+    /* 0455: a ticket's build log is a terminal in every look, so the dark look leaves these as they are: black, and its
+       text in the dark look's colours */
+    --log-bg: #000000; --log-text: #e4e4e4; --log-muted: #a9a9a9; --log-run: #97b2cc; --log-bad: #ef95ad; --log-warn: #d9a65e;
   }
   /* 0427: Cursor's fonts, which are VS Code's: its interface font for text, headings and labels (headings and ticket
      titles at 600, labels in sentence case), and its monospace for ids, the build log, code and figures. Both are fonts
@@ -158,19 +161,19 @@
   .q .top .line .id { flex: none; font-size: 14px; }
   .q .top .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
   .q .top .sub { font-variant-numeric: tabular-nums; }
-  .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--bg); border-left: 2px solid var(--line-soft);
-    font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
+  .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--log-bg); border: 1px solid var(--line);
+    font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; } /* 0455: a terminal in every look */
   /* 0422: one line of the log a row, its text past a column for the time, so a line that wraps, or a message's next line,
      starts under the text. Each kind of entry has its own colour; anything else keeps the log's muted one */
   .q .log { overflow-anchor: none; } /* 0422: rows taken out at the top leave the box's scroll place as it was, as text did */
   .q .log .ln { display: block; padding-left: 9ch; }
   .q .log .ln.timed { text-indent: -9ch; }
   .q .log .ln.plain { padding-left: 0; }
-  .q .log .at { color: var(--muted); }
-  .q .log .msg { color: var(--text); }
-  .q .log .tool { color: var(--run); }
-  .q .log .fail { color: var(--bad); }
-  .q .log .note { color: var(--warn); }
+  .q .log .at { color: var(--log-muted); }
+  .q .log .msg { color: var(--log-text); }
+  .q .log .tool { color: var(--log-run); }
+  .q .log .fail { color: var(--log-bad); }
+  .q .log .note { color: var(--log-warn); }
   .q.wait { background: var(--raise); } /* 0161: set back by its fill, not faded, so its text keeps its contrast */
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
   /* 0421: an open card's Full ticket, Review pack and Stop build are small buttons on one line. 0428: each boxed, as every button is */
