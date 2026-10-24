@@ -1,0 +1,152 @@
+/* The panel's styles (0472: a file for each area of the panel): Settings, over the whole panel, and its question about unsaved changes. */
+  /* 0396: Appearance's and Auto-build's switches: a track whose knob slides right when it's on, and its state beside it */
+  #settings [role="switch"] { display: inline-flex; align-items: center; gap: 8px; min-height: 26px; padding: 0; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--text); background: none; border: 0; cursor: pointer; }
+  #settings [role="switch"]:disabled { cursor: default; opacity: .6; }
+  #settings [role="switch"] .track { position: relative; flex: none; box-sizing: border-box; width: 34px; height: 18px; border: 1px solid var(--line); border-radius: 9px; background: var(--raise); }
+  #settings [role="switch"] .knob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; color: var(--panel); background: var(--muted); transition: left .15s; }
+  #settings [role="switch"][aria-checked="true"] .track { border-color: var(--text); color: var(--panel); background: var(--text); }
+  #settings [role="switch"][aria-checked="true"] .knob { left: 18px; background: var(--panel); }
+  #settings [role="switch"]:hover .track { border-color: var(--text); }
+  #settings [role="switch"] .state { white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { #settings [role="switch"] .knob { transition: none; } }
+  /* 0412: Appearance's System, Light and Dark, side by side, the chosen one filled. 0428: each a box of its own, as every button is */
+  #settings .looks { display: inline-flex; flex: none; gap: 4px; }
+  #settings .looks [role="radio"] { min-height: 26px; padding: 0 6px; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); cursor: pointer; white-space: nowrap; }
+  #settings .looks [role="radio"]:hover { color: var(--text); }
+  #settings .looks [role="radio"][aria-checked="true"] { color: var(--panel); background: var(--text); border-color: var(--text); }
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .looks [role="radio"] { border-width: 1px; } }
+  #settings .switch-row p.bad { margin: 4px 0 0; color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
+  #settings .switch-row p.bad[hidden] { display: none; }
+  /* 0257: the Settings view, a side pane like the full ticket's, over its own backdrop */
+  #settings-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: pinch-zoom; }
+  #settings-backdrop[hidden], #settings[hidden] { display: none; }
+  /* 0368: a pop-up over the whole panel, as a document's is (0362), its settings in a centred column. Beside the column
+     is its backdrop. Above the ticket pane, and below the question about unsaved changes. The column's left edge is
+     rounded down to a whole pixel, so its controls stay on whole pixels (0281) whatever room the scroll bar takes.
+     0385: it scrolls only up and down. A finger can't pan it sideways, and each of its children clips anything wider
+     than the column, 16 px beyond it so focus rings and shadows still show: that stays inside the pop-up's padding, so
+     there's nothing beside the column to scroll to, even from script. */
+  #settings { position: fixed; inset: 0; z-index: 10; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y pinch-zoom; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #settings > * { max-width: 760px; overflow-x: clip; overflow-clip-margin: 16px; margin-left: auto; margin-right: auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); }
+  #settings .top h3 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 18px; font-weight: 600; }
+  /* 0273: each group a box with a heading bar, like the panel's sections, with space between them. Each setting is a
+     row, its name and info button on the left and its value or control on the right: every row splits its width the
+     same way, so a group's controls line up in one column. */
+  /* 0281: the box's line drawn just outside it as a shadow, taking no room, so what's in the box starts on a whole
+     pixel. A half-pixel border shifted it half a pixel, and a phone could then drop a control's left border. (Not an
+     outline: only the keyboard's focus ring sets one, 0161.) */
+  #settings .sgroup, #settings .switches { margin-top: 16px; border: 0; box-shadow: 0 0 0 .5px var(--line); } /* 0396: the switches' box has no heading */
+  #settings .sgroup .sh { padding: 8px 12px; }
+  #settings .sgroup h4 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 15px; font-weight: 600; }
+  #settings .switch-row, #settings .setting { position: relative; padding: 8px 12px; border-bottom: .5px solid var(--line-soft); } /* 0371: relative, for its explanation */
+  #settings .arow { position: relative; padding: 8px 12px; border-bottom: .5px solid var(--line-soft); } /* 0399: a row of Your agents, as a setting's */
+  #settings .switch-row:last-child, #settings .setting:last-child, #settings .arow:last-child { border-bottom: 0; }
+  /* 0281: the left half a whole number of pixels wide, so the info buttons and controls each side of the gap start on a
+     whole pixel when the row's width is odd. Without round(), two equal halves as before. */
+  #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-columns: round(down, calc((100% - var(--gap)) / 2), 1px) minmax(0, 1fr); align-items: center; gap: var(--gap); }
+  /* 0277: the name, then the info button at the end of the row's left half, so a group's info buttons line up in one
+     column, a row's gap clear of the values, whatever the name's length */
+  #settings .switch-row .label, #settings .setting .label, #settings .arow .label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
+  #settings .switch-row .control, #settings .setting .control, #settings .arow .control { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+  #settings .setting .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+  #settings .setting p.explain .line { margin-top: 6px; } /* 0397: this machine's own value, under the explanation */
+  /* 0381: an agent's model, a setting of its own drawn beside the agent's list in its row, its explanation floating from
+     the row. Its name is the list's and the info button's label, so only the agent's shows. */
+  #settings .setting .setting { position: static; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; flex: 1 1 14ch; min-width: 0; max-width: 100%; }
+  #settings .setting .setting .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; max-width: 100%; }
+  #settings .setting .setting .list { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; } /* its info button kept beside it */
+  #settings .setting .setting .list .info { flex: none; }
+  #settings .setting .setting .name { display: none; }
+  #settings .setting[hidden], #settings .setting .setting[hidden] { display: none; } /* 0400: an effort for an agent that takes none */
+  #settings .setting .setting > p:not(.explain) { flex: 1 1 100%; margin: 0; }
+  #settings .switch-row .name, #settings .setting .name, #settings .arow .name { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; color: var(--text); }
+  #settings .switch-row .name, #settings .arow .name { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; } /* 0427: a switch's or an agent's name is words; a setting's is its key */ /* 0277: broken only where settingName allows */
+  #settings .setting .value { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
+  #settings .setting p, #settings .arow p { margin: 4px 0 0; color: var(--muted); }
+  #settings .setting p.bad, #settings .arow p.bad { color: var(--bad); }
+  #settings .arow p.said { color: var(--text); }
+  /* 0399: Your agents: each agent's state beside its button, and a provider's key field on a line of its own under it */
+  #settings .agent .state { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+  #settings .agent .keyline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; min-width: 0; }
+  #settings .agent .keyline input.edit { box-sizing: border-box; flex: 1 1 16ch; width: auto; min-width: 0; }
+  /* 0401: Add an API provider's form: a label above each field, two to a line where there's room */
+  #settings .provider-form .pfields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18ch), 1fr)); gap: 6px 12px; margin-top: 6px; }
+  #settings .provider-form .pfield { display: grid; gap: 2px; min-width: 0; color: var(--muted); }
+  #settings .provider-form .pfield .edit { box-sizing: border-box; width: 100%; }
+  #settings .provider-form .keyline { display: flex; justify-content: flex-end; margin-top: 6px; }
+  /* 0258: a setting the panel can change: its control and Save button */
+  #settings .setting .edit, #settings .arow .edit { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; color: var(--text); background: var(--input); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
+  /* 0281: the boxes a whole number of pixels wide, borders and padding included, so their right edges fall on a whole
+     pixel. 0273: the text box in the row's right half. */
+  #settings .setting input.edit[type="number"] { box-sizing: border-box; width: calc(8ch + 14px); width: round(up, calc(8ch + 14px), 1px); }
+  #settings .setting input.edit[type="text"] { box-sizing: border-box; width: calc(16ch + 14px); width: round(up, calc(16ch + 14px), 1px); }
+  #settings .setting .risk { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; color: var(--text); display: inline-flex; align-items: center; gap: 4px; } /* 0259: auto_ship_risk's boxes */
+  #settings .setting .save, #settings .arow .save { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #settings .setting .save:hover, #settings .arow .save:hover { color: var(--text); border-color: var(--text); }
+  #settings .setting .save[aria-pressed="true"] { color: var(--text); border-color: var(--text); background: var(--raise); } /* 0261: where a change goes, once picked */
+  /* 0274: the view's one Save, kept at the bottom of the pane however far it's scrolled */
+  #settings > .savebar { position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom)); margin: 16px auto 0; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); padding: 10px 0 calc(16px + env(safe-area-inset-bottom)); background: var(--panel); border-top: .5px solid var(--line-soft); display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+  #settings .savebar p.bad { flex: 1 1 100%; margin: 0; color: var(--bad); }
+  #settings .savebar p.said { flex: 1 1 100%; margin: 0; color: var(--text); }
+  #settings .save-all { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--text); padding: 4px 14px; cursor: pointer; }
+  #settings .save-all:disabled { color: var(--faint); border-color: var(--line); background: none; cursor: default; }
+  /* 0268: the info button beside a setting's name, and its explanation under the setting's line while it's open */
+  /* 0277: no taller than the controls beside it, and its ::after makes the target bigger than the box */
+  #settings .switch-row .info, #settings .setting .info { position: relative; display: inline-grid; place-items: center; align-self: center; width: 18px; height: 18px; padding: 0; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; line-height: 1; color: var(--muted); background: none; border: .5px solid var(--line); cursor: help; }
+  /* 0281: under 2 device pixels to a CSS pixel, half a pixel is less than a device pixel, which a browser may not draw,
+     so there these borders are a whole pixel. From 2 up, half a pixel is a device pixel or more. */
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .switch-row .info, #settings .setting .edit, #settings .arow .edit, #settings .setting .info { border-width: 1px; } }
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .sgroup, #settings .switches { box-shadow: 0 0 0 1px var(--line); } }
+  #settings .switch-row .info:hover, #settings .switch-row .info:focus-visible, #settings .setting .info:hover, #settings .setting .info:focus-visible { color: var(--text); border-color: var(--text); }
+  #settings .switch-row .info::before, #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
+  #settings .switch-row .info::after, #settings .setting .info::after { content: ""; position: absolute; inset: -4px; } /* 0277: a 26 by 26 px target */
+  /* 0371: floated just above its setting's row, over what's there, so showing it moves nothing. Below the row instead
+     when there's no room above it in the view. The row is what it's placed from. */
+  #settings .switch-row p.explain, #settings .setting p.explain { position: absolute; left: 12px; right: 12px; bottom: calc(100% - 4px); z-index: 2; margin: 0; padding: 6px 10px; color: var(--text); background: var(--raise); border: .5px solid var(--line); box-shadow: 0 4px 12px rgba(20, 20, 19, .12); overflow-wrap: anywhere; }
+  #settings .switch-row p.explain.below, #settings .setting p.explain.below { bottom: auto; top: calc(100% - 4px); }
+  #settings .switch-row p.explain[hidden], #settings .setting p.explain[hidden] { display: none; }
+  /* 0405: a role's, which explains its effort too, can be taller than a narrow view: it scrolls rather than run off it */
+  #settings .setting p.explain { max-height: 60vh; overflow-y: auto; }
+  /* 0275: asked on closing the view with changes not saved, over the view and its backdrop */
+  #settings-unsaved { position: fixed; inset: 0; z-index: 11; display: grid; place-items: center; padding: 16px; background: rgba(20, 20, 19, .2); }
+  #settings-unsaved[hidden] { display: none; }
+  #settings-unsaved .box { width: min(360px, 100%); padding: 16px; background: var(--panel); border: .5px solid var(--line); box-shadow: 0 8px 24px rgba(20, 20, 19, .18); }
+  #settings-unsaved .box { box-sizing: border-box; justify-self: start; margin: 0 auto; margin-left: max(0px, round(down, calc((100% - 360px) / 2), 1px)); } /* 0453: centred on a whole pixel, so its buttons are too */
+  #settings-unsaved h3 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 18px; font-weight: 600; }
+  #settings-unsaved p { margin: 8px 0 0; color: var(--muted); }
+  #settings-unsaved .choices { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  #settings-unsaved button { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 4px 14px; cursor: pointer; }
+  #settings-unsaved button:hover { color: var(--text); border-color: var(--text); }
+  #settings-unsaved button.save-all { color: var(--text); background: var(--raise); border-color: var(--text); }
+  #settings .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
+  #settings .close { margin-left: auto; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #settings .close:hover { color: var(--text); }
+  #settings .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
+
+  /* 0428: rounded corners as Cursor's: 8 px for a tip, as small as a control, and 12 px for a box */
+  #settings .sgroup, #settings .switches, #settings-unsaved .box { border-radius: 12px; }
+  #settings .switch-row p.explain, #settings .setting p.explain { border-radius: 8px; } /* a tip, as small as a control */
+
+  /* The dark look's backdrops */
+  :root[data-theme="dark"] #settings-backdrop { background: rgba(0, 0, 0, .45); }
+  :root[data-theme="dark"] #settings-unsaved { background: rgba(0, 0, 0, .45); }
+
+  /* 0140: a phone screen */
+  @media (max-width: 699.98px) {
+    #settings .switch-row .info::after, #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
+    #settings .looks [role="radio"] { padding: 0 1px; } /* 0412: System, Light and Dark on one line in the control's half of the row, down to 320 px. 0428: 1 px, for their own borders */
+    #settings .looks { gap: 2px; }
+    #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
+  }
+
+  /* 0417: a touch screen, at any width: Close at least 44 px each way */
+  @media (pointer: coarse) {
+    #settings .close { min-width: 44px; min-height: 44px; }
+  }
+
+  /* 0453: every button's border at least a device pixel on each side, as 0281 gave Settings' info buttons: a half pixel
+     is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
+     button's edges on whole pixels. */
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
+    #settings .setting .save, #settings .arow .save, #settings .save-all, #settings-unsaved button, #settings .close { border-width: 1px; }
+  }

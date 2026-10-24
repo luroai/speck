@@ -46,15 +46,17 @@ test('0417 AC1: no rule outside the touch screen rules gives a control a 44 px s
 });
 
 test('0417 AC2: the touch screen rules apply at any width and keep each 44 px minimum the narrow rules had', () => {
+  // 0472: a block for touch screens in each area's file, none with a width in its query, and each selector's rules from them all
   const coarse = media('(pointer: coarse)');
-  assert.equal(coarse.length, 1, 'one block for touch screens, with no width in its query');
+  assert.ok(coarse.length >= 1, 'blocks for touch screens, with no width in their query');
+  assert.ok(blocks(css()).every(b => !/^@media .*pointer/.test(b.prelude) || b.prelude === '@media (pointer: coarse)'), 'no other query for touch screens');
   const got = new Map();
-  for (const [sel, decls] of rules(coarse[0].body)) got.set(sel, (got.get(sel) || '') + decls);
-  for (const sel of SIZED) {
+  for (const b of coarse) for (const [sels, decls] of rules(b.body)) for (const sel of sels.split(', ')) got.set(sel, (got.get(sel) || '') + decls);
+  for (const sel of SIZED.flatMap(s => s.split(', '))) {
     const d = got.get(sel) || '';
     assert.ok(/min-height:\s*44px|(^|[\s;])height:\s*44px/.test(d), `${sel} is at least 44 px high on a touch screen: ${d}`);
   }
-  for (const sel of ['.toggle', '.prio-menu button', '.set-ready, .full-open', '.resume .copy', '.more-stats', '#shipped .line .title', '.item.ticket .prio'])
+  for (const sel of ['.toggle', '.prio-menu button', '.set-ready', '.full-open', '.resume .copy', '.more-stats', '#shipped .line .title', '.item.ticket .prio'])
     assert.match(got.get(sel), /min-width:\s*44px/, `${sel} is at least 44 px wide on a touch screen`);
   // The tags' 44 px tap areas, and the gaps that keep them apart (0165)
   assert.match(got.get('.tag:not(.pick)::after') || '', /44px/);
@@ -68,8 +70,8 @@ const NARROW = ['#settings .switch-row .info::after, #settings .setting .info::a
 
 test('0417 AC3: the other rules for narrow windows are still under 700 px', () => {
   const narrow = media('(max-width: 699.98px)');
-  assert.equal(narrow.length, 1);
-  const got = rules(narrow[0].body);
+  assert.ok(narrow.length >= 1); // 0472: one in each area's file that has any
+  const got = narrow.flatMap(b => rules(b.body));
   const sels = got.map(([s]) => s);
   for (const sel of NARROW) assert.ok(sels.includes(sel), `${sel} is still in the narrow rules`);
   assert.match(got.find(([s]) => s === '.detail')[1], /grid-template-columns:\s*minmax\(0, 1fr\)/);
