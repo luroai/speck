@@ -41,6 +41,7 @@ The panel's styles are in one file for each area of the panel, so a ticket that 
 - Asked for by the user on 2026-10-24, for release 0.15.0 and to be built next, so that tickets changing different parts of the panel can build side by side. The 0.15.0 panel work (0453 to 0471) was one chain of about 19 tickets, built one at a time for 5 to 6 hours with 4 build slots, because every ticket changed `templates/panel.js` (2,378 lines) or `templates/panel.css` (841 lines). A move with no visible change, as 0430 to 0433 were.
 - Same pattern as 0430, which moved the styles out of `panel.html`.
 - Waits for 0468, the ticket being built when this was set; the rest of 0.15.0's panel tickets (0469 onwards) wait for 0474, so they build on the split files.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
