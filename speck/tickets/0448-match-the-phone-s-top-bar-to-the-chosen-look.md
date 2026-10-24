@@ -1,7 +1,7 @@
 ---
 id: "0448"
 title: "Match the phone's top bar to the chosen look"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-13-match-the-phone-s-top-bar-to-the-panel-s-ch
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T07:46:02.107Z"
+approved: "2026-10-24T07:51:23.946Z"
 
 ---
 # 0448 · Match the phone's top bar to the chosen look
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the panel runs as a home-screen app, the phone's top bar takes its colour from the page's `theme-color`, which follows only the phone's own light or dark setting. Choosing Light or Dark in Settings (0412) changes the panel but leaves the top bar in the other look.
@@ -50,9 +51,14 @@ When the panel runs as an app on your phone's home screen, the bar at the top of
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 158,383
+- Elapsed since build started: 5 min
+- Changed lines: 7 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-up, no idea note): the top bar's two colours are written in the <head> script as well as in the stylesheet's --bg, so a change to either background needs both. 0149's test checks the light one against --bg.
 
