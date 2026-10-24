@@ -1,7 +1,7 @@
 ---
 id: "0463"
 title: "Lay out an open ticket that hasn't started like one in flight"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0463 · Lay out an open ticket that hasn't started like one in flight
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 After 0461 and 0462, an open ticket in flight shows a step track and an even table of facts, but an open ticket in Plan, or one queued in Build, still lists its facts in a line joined by dots that wraps on a phone. The cards don't look like one family.
