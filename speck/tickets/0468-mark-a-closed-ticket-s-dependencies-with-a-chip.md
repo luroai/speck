@@ -1,7 +1,7 @@
 ---
 id: "0468"
 title: "Mark a closed ticket's dependencies with a chip"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0468 · Mark a closed ticket's dependencies with a chip
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A closed ticket in Plan or Build names the tickets it waits on, or unlocks, as text in its second line, which runs long and wraps on a phone when there are many.
