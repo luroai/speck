@@ -33,7 +33,7 @@ const page = (s = board()) => fakePage([s], { Date: stoppedClock(NOW) });
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')?._text;
 const card = (p, id) => [...items(p), ...queueRows(p)].find(n => idOf(p, n) === id);
 const topOf = n => n.children[0];
-const statusOf = n => topOf(n).children[1];
+const statusOf = n => topOf(n).children.filter(c => !/^track\b/.test(c.className))[1]; // 0461: past an open card's track
 const gridOf = (p, n) => p.all(n).find(x => x.className === 'lights') || null;
 
 test('0434 AC1: while its builder or reviewer is at work, the status line starts with a 4 × 4 grid named for the sentence it replaces', async () => {
