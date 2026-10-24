@@ -22,10 +22,11 @@
   .bezel .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 72; image-rendering: pixelated; }
   /* 0477: the lanes are a thin strip under speck's screen, in place of the tabs: each lane's name on one row, in order,
      the one in view in the text colour and the others muted, and Build's needs-you number after its name whichever lane
-     is in view. Nothing in it depends on how many lanes there are. Each lane is a 44 px button, taller than the strip,
-     centred on it so it reaches past the strip's top and bottom, and the strip is drawn over what it reaches into. */
-  .tabs { position: relative; z-index: 8; display: flex; align-items: center; justify-content: center; gap: 4px; height: 32px; padding: 0 16px; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .tab { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 6px; min-width: 44px; min-height: 44px; margin: 0; padding: 0 10px; font: inherit; color: var(--muted); background: transparent; border: 0; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
+     is in view. Nothing in it depends on how many lanes there are. Each lane is a 44 px button, taller than the strip:
+     its name is in the strip and its last 12 px reach down past it, over the top of the lane's own padding, never up
+     into the header (0160). The strip is drawn over what they reach into. */
+  .tabs { position: relative; z-index: 8; display: flex; align-items: flex-start; justify-content: center; gap: 4px; height: 32px; padding: 0 16px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  .tab { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 6px; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 10px 12px; font: inherit; color: var(--muted); background: transparent; border: 0; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
   .tab:hover, .tab[aria-selected="true"] { color: var(--text); }
   .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 14px; font-weight: 600; line-height: 1; }
   .tab .needs { flex: none; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; line-height: 1; }

@@ -36,7 +36,7 @@ function measure() {
     return on.length ? set(on[on.length - 1].r.style, side) : null;
   };
   const shown = n => n.getClientRects().length && !n.closest('[hidden], [inert]') && getComputedStyle(n).visibility !== 'hidden';
-  return [...document.querySelectorAll('button')].filter(shown).map(n => {
+  return [...document.querySelectorAll('button:not(.tab)')].filter(shown).map(n => { // 0477: the lanes' names in the strip have no border
     const cs = getComputedStyle(n), r = n.getBoundingClientRect(), prev = n.previousElementSibling;
     const sides = ['top', 'right', 'bottom', 'left'];
     return { what: `${n.className || n.id} "${n.textContent.trim().slice(0, 20)}"`, cls: n.className, text: n.textContent.trim(),
@@ -128,32 +128,12 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
         }
       });
     }
-    for (const name of ['More stats', 'Close', 'Save', 'Review pack', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'outputs/0002/plan.md', 'Plan', 'Build', 'Light', 'Discard', 'Keep editing'])
+    for (const name of ['More stats', 'Close', 'Save', 'Review pack', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'outputs/0002/plan.md', 'Light', 'Discard', 'Keep editing'])
       assert.ok(seen.has(name) || [...seen].some(t => t.startsWith(name)), `the ${name} button was checked`);
   } finally { await b.close(); await stop(panel); }
 });
 
-// AC3: the open tab's edge is the text colour, as before, though the tab before it draws the side they share. 0457: its
-// bottom edge is the lane's colour, so the tab and its lane are one sheet.
-test('0453 AC3: the open tab is edged in the text colour on its top and sides', { skip }, async () => {
-  const r = repo();
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
-  const b = await browserPage('about:blank');
-  try {
-    await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 900, deviceScaleFactor: 3, mobile: true });
-    await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`document.readyState === 'complete' && !!document.querySelector('#shipped .line .title')`, 'the panel');
-    for (const lane of ['plan', 'build', 'shipped']) {
-      await b.js(openLane(lane));
-      const got = await b.js(`(() => { const t = document.getElementById('tab-${lane}'), prev = t.previousElementSibling, cs = getComputedStyle(t), text = getComputedStyle(document.body).color;
-        const ink = n => { const c = document.createElement('span'); c.style.color = n; document.body.append(c); const v = getComputedStyle(c).color; c.remove(); return v; };
-        const want = ink('var(--text)');
-        return { top: cs.borderTopColor === want, right: cs.borderRightColor === want, bottom: cs.borderBottomColor === ink('var(--panel)'),
-          left: prev ? getComputedStyle(prev).borderRightColor === want : cs.borderLeftColor === want }; })()`);
-      assert.deepEqual(got, { top: true, right: true, bottom: true, left: true }, `${lane}'s tab`);
-    }
-  } finally { await b.close(); await stop(panel); }
-});
+// 0477: the tabs, and the open tab's edge, are gone: the lanes are a strip of their names.
 
 // AC2: a picture of each button at a phone's size and pixel ratio shows its border on every side. For each side, along its
 // middle, the device pixels at its edge differ from the button's own background just inside it.
