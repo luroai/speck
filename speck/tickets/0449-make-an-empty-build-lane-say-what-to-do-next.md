@@ -1,7 +1,7 @@
 ---
 id: "0449"
 title: "Make an empty Build lane say what to do next"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0445", "0451"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T08:54:16.316Z"
+approved: "2026-10-24T09:05:39.671Z"
 
 ---
 # 0449 · Make an empty Build lane say what to do next
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 With nothing building or ready, the Build lane says "Nothing in flight or ready" twice, once as its counts line and once as its message, and nothing else. It looks empty and gives no next step.
@@ -51,9 +52,15 @@ When nothing is building or waiting, the Build tab now says "Nothing building" o
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 shippedAgo() shows minutes ago for a shipment yesterday when fewer than 60 minutes have elapsed.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 473,590
+- Elapsed since build started: 11 min
+- Changed lines: 48 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
