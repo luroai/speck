@@ -36,9 +36,9 @@ async function withPanel(fn) {
 }
 const measure = `(() => {
   const r = el => { const b = el.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; };
-  const frame = document.querySelector('.bezel'), glass = document.querySelector('.bezel .glass'), tabs = [...document.querySelectorAll('.tab')];
+  const frame = document.querySelector('.bezel'), glass = document.querySelector('.bezel .glass'), strip = document.getElementById('tabs'), ss = getComputedStyle(strip);
   const fs = getComputedStyle(frame), gs = getComputedStyle(glass), after = getComputedStyle(glass, '::after');
-  return { frame: r(frame), glass: r(glass), canvas: r(document.querySelector('#screen')), tabs: { left: r(tabs[0]).left, right: r(tabs[tabs.length - 1]).right },
+  return { frame: r(frame), glass: r(glass), canvas: r(document.querySelector('#screen')), tabs: { left: r(strip).left + parseFloat(ss.paddingLeft), right: r(strip).right - parseFloat(ss.paddingRight) }, // 0477: the lanes' strip's row
     cards: [...document.querySelectorAll('#queue .q')].map(r), frameRadius: parseFloat(fs.borderTopLeftRadius), glassRadii: [gs.borderTopLeftRadius, gs.borderTopRightRadius, gs.borderBottomLeftRadius, gs.borderBottomRightRadius].map(parseFloat),
     afterRadius: parseFloat(after.borderTopLeftRadius), clips: gs.overflow, glassBorder: parseFloat(gs.borderTopWidth), width: innerWidth, page: document.documentElement.scrollWidth };
 })()`;

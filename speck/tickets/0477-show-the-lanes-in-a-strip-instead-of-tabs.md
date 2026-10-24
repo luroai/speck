@@ -45,6 +45,8 @@ A thin strip under speck's screen shows every lane and which is in view, in plac
 - 0457 joined the open tab to the lane under it like a folder's tab; this replaces the tabs, so that look goes too.
 - Waits for 0476: both change the header's and the lanes' script and styles. Built for release 0.15.0.
 - Failing before this build: none
+- Self-check: each lane's 44 px button reaches 6 px past the strip's top and bottom, so the strip is drawn over what's there (z-index 8, under every pop-up and backdrop); checked that only padding and plain text sit in those bands. Squared the buttons' corners, as the shared 8 px button corners made a tap in a corner miss.
+- Older tests changed: 0457's file is removed and 0425 AC1 and 0428's open-tab corners test dropped, as they checked the folder-tab look and thirds this replaces; 0410 AC4, 0425 AC2, 0426, 0428 and 0438 now check the strip (the number shows with Build in view, no boxed tabs, the frame lines up with the strip's row).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
