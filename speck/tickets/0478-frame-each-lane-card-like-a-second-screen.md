@@ -44,6 +44,9 @@ Each lane card has a dark frame like speck's screen, thinner, with its lane's na
 - The dots match 0461's step colours: grey for a step not reached, `--blue` for Build and the purple 0461 picks for Ship.
 - Waits for 0477: both change the lanes' and the header's styles. Built for release 0.15.0.
 - Failing before this build: none
+- Plan's dot is 0461's grey for a step not reached, `--line`, at the dark look's value (`--bezel-step`) in both looks: the light look's `--line` is dark ink that wouldn't show on the dark frame.
+- Existing tests updated for the frame: 0161 (the lane's title row sits on the frame, its dots hold no text), 0427 (the lane title may be Doto), 0438 (speck's frame lines up with the lane's frame, and the cards sit inside it) and 0476 (a sliding lane shows as a grid, not flex).
+- Self-check: drew the frame on the lane itself rather than a pseudo-element, so the real-browser contrast check sees the title on the frame; kept the safe-area padding on the column
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
