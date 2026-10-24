@@ -1,7 +1,7 @@
 ---
 id: "0467"
 title: "Show a ticket's dependencies in its open card"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0466"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T12:39:41.469Z"
 
 ---
 # 0467 · Show a ticket's dependencies in its open card
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 An open ticket lists the tickets it waits on, or unlocks, as ids in a line of text. A ticket that waits on many, such as a release ticket waiting on 27, runs to three lines or more on a phone, mostly ids that have already shipped, and you can't see how far along they are.
