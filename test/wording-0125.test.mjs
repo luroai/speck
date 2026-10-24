@@ -7,7 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT, CLI, gitIn } from './support/speck.mjs';
 
-const TAGLINE = "Ship code you can't read, and still trust it.";
+const TAGLINE = "Plan in ten minutes. Come back to it shipped.";
 const help = () => spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' }).stdout;
 
 function initOutput() {
