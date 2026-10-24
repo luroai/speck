@@ -39,6 +39,7 @@ The tests' browser draws the panel in a proportional font, as people see it.
 - For release 0.15.0 (0452). The user asked on 2026-10-24 for everything relevant to the release to be ticketed.
 - From the builder's note on 0427. Liberation Sans is installed here and is proportional; it's fontconfig's choice for `system-ui` that gives Liberation Mono.
 - Changes the test support and the eased tests only, so it waits for nothing.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
