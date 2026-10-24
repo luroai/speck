@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0469"]                # ticket ids that must be done first
+after: ["0474"]                # ticket ids that must be done first
 created: 2026-10-24
 
 ---
@@ -38,7 +38,7 @@ The pop-up has one title, `Pipeline log`, on its top row, in the same dot-matrix
 ## Notes
 - Asked for by the user on 2026-10-24, from a phone screenshot: "The title should read pipeline log … put them all on the top line … make the title a little bit bigger, maybe even like in the same dot matrix style text as the speck title."
 - Today: `renderForeman` in `templates/panel.js` draws the top as `Pipeline` and Close, and the log section's `Log` heading. `#foreman .top .title` in `templates/panel.css` sets the title in the monospace font at 12 px. The header's word is `.bezel .name`, in `Doto` at weight 900.
-- Waits for 0469, the last queued ticket that changes `templates/panel.css`.
+- Waits for 0474, the last of the file splits (0472 to 0474), which move the Pipeline log's script and styles into the pop-ups' own files. Re-chained by the user on 2026-10-24 so it builds side by side with 0469, which leaves the pop-ups out.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
