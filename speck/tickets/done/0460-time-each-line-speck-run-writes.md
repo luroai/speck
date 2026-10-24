@@ -1,7 +1,7 @@
 ---
 id: "0460"
 title: "Time each line speck run writes"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:21:18.556Z"
 approved: "2026-10-24T09:27:32.223Z"
+finished: "2026-10-24T09:31:02.098Z"
 
 ---
 # 0460 · Time each line speck run writes
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck run's output, which the panel shows as the pipeline log from `speck/.cache/runs/run.log`, has no times, so you can't tell when anything in the pipeline happened.
