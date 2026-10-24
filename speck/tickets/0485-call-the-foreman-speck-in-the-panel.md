@@ -1,7 +1,7 @@
 ---
 id: "0485"
 title: "Call the Foreman speck in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0484"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T19:09:01.422Z"
+approved: "2026-10-24T19:18:41.419Z"
 
 ---
 # 0485 · Call the Foreman speck in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel talks about "the Foreman" as if it were a second character, while the one thing watching the pipeline is speck, on its screen. Two names for one watcher make the panel harder to follow.
@@ -57,9 +58,15 @@ The setting names themselves (such as foreman_fixing) still say foreman until a 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The screen's runtime accessible name and tooltip do not meet AC3.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 371,528
+- Elapsed since build started: 10 min
+- Changed lines: 32 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - The 0484 copy test's 99:5x window is 10 seconds and failed twice under the related run's load: speck/ideas/2026-10-24-fix-the-0484-copy-test-that-fails-under-load.md.
