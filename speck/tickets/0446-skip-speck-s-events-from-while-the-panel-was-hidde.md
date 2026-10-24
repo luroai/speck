@@ -124,3 +124,71 @@ Coming back to the panel plays at most the latest event, and only a recent one.
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "693105f46031cd6a8e89b045767be8c4211b3738",
+    "session": "continued",
+    "thread_id": "01a16ce7-49ca-7940-b4dd-f023e692ed61",
+    "builder_response": "- Tests run: `speck test --related test/panel-0446.test.mjs` (the ticket's own file plus the related files, test/panel-0414.test.mjs and test/panel-0436.test.mjs among them). 2498 tests, 0 failing, 3 skipped.\n- F1: fixed. Each event now carries the time the board gives for it: a shipped ticket's `finished`, a blocked one's `blocked_at`, an approved one's `approved`, a ship's `ship.started` and a Foreman question's `at` (`play(..., when)` in noteBoard). Its age is measured from that date (`latestMissed`), both for events heard while hidden and for the first board after the page is shown. Only an event the board gives no date for (the Foreman agent starting to look into a ticket, or a ticket missing its field) falls back to the time of the board before, which is the earliest it can have happened, so an undated one plays only when that is known to be under a minute. New tests: a ship dated 10 s before showing after 8 h asleep plays (and beats an older, dated question); one dated 2 min before doesn't; an event heard while hidden but dated 90 s back doesn't.\n- F2: fixed. In the first board after showing, a change the board dates at or after the moment the page was shown is not treated as missed: it plays as usual, after the one missed event kept (`later` in noteBoard). New test: 8 h asleep, board arrives 10 s after showing with a ship and a question from before and an approval dated after showing: the latest missed (the question) plays, then the approval, then the pipeline's state. An undated change in that first board still can't be told apart from one before showing; the board normally arrives within a second of showing, as connect() reconnects at once.\n",
+    "seconds": 72,
+    "usage": {
+      "input_tokens": 292363,
+      "cached_input_tokens": 248832,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2386,
+      "reasoning_output_tokens": 494
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T08:02:14.008Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The new passing AC1 tests exercise dated shipments and blocked tickets. However, noteBoard still creates the Foreman's LOOKING INTO event without a timestamp and substitutes wasAt after reconnection. A recent Foreman start after a long sleep is therefore discarded."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The new passing AC2 test verifies dated approvals after return. Foreman starts remain undated and are classified as missed even when they happen while visible. A direct execution of noteBoard after an eight-hour hide and a ten-second visible interval returned WATCHING 1 BUILD instead of LOOKING INTO 1."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "The timestamp fix covers ticket transitions and questions, but not the Foreman starting to investigate a ticket. That event always lacks a timestamp, so a start ten seconds before returning after eight hours asleep is still discarded. scripts/foreman-agent.mjs stores running.started internally but omits it from the board's running object.",
+        "suggested_fix": "Expose the Foreman start timestamp in the board and use it for the LOOKING INTO event. Add a recent-start-after-long-sleep regression test.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "A Foreman investigation starting after visibility resumes is still treated as hidden activity when reported in the first returning board. After a long sleep it is discarded; multiple undated visible events can also be collapsed. The new test covers only dated ticket transitions.",
+        "suggested_fix": "Use the Foreman start timestamp to classify this event relative to visibility resuming, and test a start occurring while visible before the first returning board arrives.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The fixes correctly handle dated shipments, questions and approvals. One existing animation remains affected: the Foreman starting an investigation has no timestamp in the board, so recent starts and starts after returning can still disappear. Both findings remain open for that case."
+  }
+}
+```
+
+</details>
