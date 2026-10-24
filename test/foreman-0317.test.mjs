@@ -41,7 +41,7 @@ test('0317 AC1: with Fixing fix, the header keeps the status word, and 0451: its
     const p = fakePage([state(view([], { fixing }))]);
     await p.settle();
     // 0451: speck's screen shows the time where "FIXING ON" was, and its name is the status word alone
-    assert.equal(header(p).attrs['aria-label'], 'speck: Idle', `with ${fixing}`);
+    assert.match(header(p).title, /^speck: Idle · /, `with ${fixing}`);
   }
 });
 
