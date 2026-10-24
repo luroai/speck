@@ -130,7 +130,7 @@ function pickPastime(d) {
 }
 const byId = (a, b) => a.localeCompare(b, 'en', { numeric: true });
 // A draft's text, to tell when it changes.
-const draftText = t => JSON.stringify([t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes, t.priority, t.size, t.risk, t.task, t.type, t.after]);
+const draftText = t => JSON.stringify([t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes, t.priority, t.size, t.risk, t.kind, t.type, t.after]);
 function noteBoard(st, f, word) {
   const d = speckDo, now = Date.now();
   if (word !== d.word) { d.word = word; d.woke = false; d.rest = { since: now, turn: -1, i: null }; }

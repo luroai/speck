@@ -4,12 +4,13 @@ import path from 'node:path';
 import { shipRepo } from './speck.mjs';
 import { fakePage, T, queueRows } from './panel.mjs';
 
-// The ship repo's approved ticket, made a document task writing into outputs/memos/pricing/, with a memo, a draft in a
-// folder inside it, a PDF and a file of another ticket's beside it.
+// The ship repo's approved ticket, made a task writing into outputs/memos/pricing/, with a memo, a draft in a
+// folder inside it, a PDF and a file of another ticket's beside it. 0492: by the old task: document line in place of
+// its kind line, which still makes it a task.
 export function docRepo({ files = true } = {}) {
   const r = shipRepo();
   const file = path.join(r.dir, 'speck', 'tickets', '0001-export-bookings.md');
-  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/^task: code\b/m, 'task: document\noutput: memos/pricing/'));
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/^kind: code\b/m, 'task: document\noutput: memos/pricing/'));
   const dir = path.join(r.dir, 'outputs', 'memos', 'pricing');
   if (files) {
     fs.mkdirSync(path.join(dir, 'drafts'), { recursive: true });

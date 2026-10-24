@@ -185,7 +185,7 @@ export function saveRound(repo, id, verdict, meta) {
 
 export function reviewerPrompt(repo, ticket, cfg, round, extra) {
   const tpl = fs.readFileSync(path.join(TEMPLATES, 'reviewer-prompt.md'), 'utf8');
-  // A document task's document is outside the diff: where it is and how to judge it go before the diff (0353).
+  // A task's result is outside the diff: where it is and how to judge it go before the diff (0353).
   const doc = documentSection(repo, ticket.fm ? ticket : parseTicket(ticket.raw));
   if (round === 1) {
     const values = { TICKET: stripRounds(ticket.raw), BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };

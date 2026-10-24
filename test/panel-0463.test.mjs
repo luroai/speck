@@ -15,7 +15,7 @@ const many = n => Array.from({ length: n }, (_, i) => String(1000 + i));
 const TICKETS = [
   full('0801', { priority: 3, size: 'M', risk: 'low' }),
   full('0802', { priority: 1, size: 'S', risk: 'high', type: 'bug', after: ['0801'], waiting_on: ['0801'], lint: { errors: 2, warnings: 1 } }),
-  full('0803', { priority: 4, size: 'S', risk: LONG, task: 'document', after: many(27), waiting_on: many(11), lint: { errors: 0, warnings: 3 } }),
+  full('0803', { priority: 4, size: 'S', risk: LONG, kind: 'task', after: many(27), waiting_on: many(11), lint: { errors: 0, warnings: 3 } }),
   full('0804', { after: ['0700'], waiting_on: [] }),
   T('0811', 'building', { started: ago(65), build_running: true, builder: 'claude' }),
   T('0812', 'ready', { priority: 2, size: 'M', risk: 'high', type: 'fix', after: ['0811'], waiting_on: ['0811'] }),
@@ -76,7 +76,7 @@ test('0463 AC2: the six cells are Status, After or Waiting on, Lint, Priority, S
   const want = {
     '0801': [['Status', 'Draft'], ['After', '—'], ['Lint', 'passes'], ['Priority', 'P3'], ['Size · risk', 'M · low'], ['Type', 'code']],
     '0802': [['Status', 'Draft'], ['After', '1 left'], ['Lint', '2 errors · 1 warning'], ['Priority', 'P1'], ['Size · risk', 'S · high'], ['Type', 'bug']],
-    '0803': [['Status', 'Draft'], ['After', '11 left of 27'], ['Lint', '3 warnings'], ['Priority', 'P4'], ['Size · risk', `S · ${LONG}`], ['Type', 'document']],
+    '0803': [['Status', 'Draft'], ['After', '11 left of 27'], ['Lint', '3 warnings'], ['Priority', 'P4'], ['Size · risk', `S · ${LONG}`], ['Type', 'task']],
     '0804': [['Status', 'Draft'], ['After', '—'], ['Lint', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
     '0812': [['Status', 'Queued'], ['Waiting on', '1 left'], ['Lint', 'passes'], ['Priority', 'P2'], ['Size · risk', 'M · high'], ['Type', 'fix']],
     '0813': [['Status', 'Queued'], ['Waiting on', '2 left of 3'], ['Lint', '1 error'], ['Priority', 'P5'], ['Size · risk', `S · ${LONG}`], ['Type', 'code']],
@@ -90,7 +90,7 @@ test('0463 AC2: the six cells are Status, After or Waiting on, Lint, Priority, S
   assert.deepEqual(lint('0813'), [['bad', '1 error']]);
   const kind = id => factsIn(card(p, id)).children[5].children[1].className;
   assert.equal(kind('0802'), 'value bug');
-  assert.equal(kind('0803'), 'value document');
+  assert.equal(kind('0803'), 'value task');
   assert.equal(kind('0812'), 'value fix');
   assert.equal(kind('0801'), 'value');
 });

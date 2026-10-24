@@ -82,7 +82,7 @@ function testsLines(r) {
 // What reviewPack and plainPack refuse with for a ticket that has no review rounds, so the panel can tell it apart.
 export const NO_ROUNDS = 'No review rounds recorded.';
 
-// `pictures: false` leaves out the pictures the builder took (0294), and `documents: false` a document task's files
+// `pictures: false` leaves out the pictures the builder took (0294), and `documents: false` a task's files
 // (0354), for the panel, which shows them itself.
 export function reviewPack(repo, id, { pictures = true, documents = true } = {}) {
   const cfg = loadConfig(repo);
@@ -102,7 +102,7 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
     `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${who(last.meta)}, ${last.meta.merge ? `merge round ${mergeRun(all)} of ${cfg.limits.max_merge_rounds}` : `round ${ordinaryRounds(all)} of ${cfg.limits.max_review_rounds}${last.meta.extra ? ', an extra round' : ''}`})`,
     ...(blind.length ? ['', ...blind.map(r => `${NO_INSPECT} (round ${r.meta.round})`)] : []),
     '', `**Summary:** ${v.summary}`,
-    ...documentLines(repo, t, { links: documents }), // 0359: a document task's document first, before the criteria
+    ...documentLines(repo, t, { links: documents }), // 0359: a task's result first, before the criteria
     '', '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
     ...v.criteria.map(c => `| ${c.id} | ${(ac[c.id - 1] || '').replace(/^\d+\.\s+/, '').replace(/\|/g, '\\|')} | ${icon[c.status] || c.status} | ${c.evidence.replace(/\n/g, ' ').replace(/\|/g, '\\|')} |`),
     ...(pictures ? picturesLines(repo, t.fm.id) : []),
@@ -165,7 +165,7 @@ export function cmdPack(args) {
 
 // A ticket's review pack for the panel's Review pack button: the text `speck pack <id>` prints from this checkout now,
 // or null when the ticket has no review rounds, which isn't an error. Reads only, writing nothing. With any pictures
-// the builder took (0294), the text leaves them out and `pictures` lists them, for the panel to show. So with a document
+// the builder took (0294), the text leaves them out and `pictures` lists them, for the panel to show. So with a
 // task's files (0354): `documents` lists them, for the panel to link to.
 export function panelPack(repo, id) {
   let t;

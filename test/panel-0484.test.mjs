@@ -15,7 +15,7 @@ const approved = o => ({ started: ago(1212), approved: ago(60), self_check: 'no 
 // the line; 0905: no tag.
 const TICKETS = [
   T('0901', 'blocked', { type: 'bug', started: ago(5990), self_check: 'no changes', rounds: [round(1, 10), round(2, 10)], blocked_question: 'A or B?', blocked_recommendation: 'A', foreman_will: true }),
-  T('0902', 'approved', approved({ task: 'document', auto_ship: false, build_exit: { at: ago(30), code: 0, message: 'Done.' } })),
+  T('0902', 'approved', approved({ kind: 'task', auto_ship: false, build_exit: { at: ago(30), code: 0, message: 'Done.' } })),
   T('0903', 'approved', approved({ type: 'fix', auto_ship: false })),
   T('0904', 'reviewing', { type: 'bug', started: ago(300), build_running: true, self_check: 'no changes', rounds: [], review_running: 1, review_model: 'anthropic/claude-opus-5-5-20261001' }),
   T('0905', 'blocked', { started: ago(5990), self_check: 'no changes', rounds: [round(1, 10)], blocked_question: 'A or B?' }),
@@ -111,7 +111,7 @@ for (const touch of [true, false]) {
             for (const p of l.parts.filter(isTag)) assert.ok(p.tapped, `${at}: a tap on "${p.text}" reaches it`);
             for (const p of l.parts.filter(x => isWords(x) && x.cut)) assert.equal(p.ellipsis, 'ellipsis', `${at}: "${p.text}" is cut short with …`);
           }
-          const want = { '0901': 'bug', '0902': 'document', '0903': 'fix', '0904': 'bug' };
+          const want = { '0901': 'bug', '0902': 'task', '0903': 'fix', '0904': 'bug' };
           for (const [id, tag] of Object.entries(want)) assert.equal(lines.find(l => l.id === id).parts.filter(isTag).map(p => p.text).join(), tag, `${theme}, ${width} px, ${id}: its tag`);
         }
       }
@@ -129,7 +129,7 @@ test('0484 AC2: at 320 px and 375 px, in both looks, the blocked bug ticket\'s l
         const lines = await b.js(LINES);
         const bug = lines.find(l => l.id === '0901'), doc = lines.find(l => l.id === '0902');
         assert.match(bug.text, /^speck will answer · Review 2 · 99:5\d · bug$/, `${theme}, ${width} px: the blocked bug ticket's line`);
-        assert.match(doc.text, /^Read the document · \S.* · \d+:\d{2} · document$/, `${theme}, ${width} px: the document task's line`);
+        assert.match(doc.text, /^Read the result · \S.* · \d+:\d{2} · task$/, `${theme}, ${width} px: the document task's line`);
         for (const l of [bug, doc]) {
           const [words, ...rest] = l.parts;
           assert.match(words.cls, /\bsay\b/, `${l.id}: its words come first`);

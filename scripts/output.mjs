@@ -1,12 +1,12 @@
-// 0352: a document task's folder in the main checkout's outputs/, where its build writes the document. outputs/ isn't
-// in git, so a document written in a ticket's worktree would never reach the main checkout: it's written there instead.
+// 0352: a task ticket's folder in the main checkout's outputs/, where its build leaves its result. outputs/ isn't
+// in git, so a result written in a ticket's worktree would never reach the main checkout: it's written there instead.
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { TEMPLATES, SpeckError, findRepoRoot, findTicket, padId, ticketTask, ticketOutput, worktreeList } from './core.mjs';
+import { TEMPLATES, SpeckError, findRepoRoot, findTicket, padId, ticketKind, ticketOutput, worktreeList } from './core.mjs';
 import { outputProblem } from './lint.mjs';
 
-// A document task's folder in the main checkout's outputs/, as an absolute path, without making it. The ticket's
+// A task ticket's folder in the main checkout's outputs/, as an absolute path, without making it. The ticket's
 // output must already have passed lint.
 function outputPath(repo, t) {
   return path.join(mainCheckout(repo), outputRel(t));
@@ -21,7 +21,7 @@ function mainCheckout(repo) {
 export function outputFolder(repo, id) {
   const t = findTicket(repo, id);
   const pad = padId(t.fm.id ?? id);
-  if (ticketTask(t) !== 'document') throw new SpeckError(`Ticket ${pad} is a code ticket, not a document task, so it has no output folder.`);
+  if (ticketKind(t) !== 'task') throw new SpeckError(`Ticket ${pad} is a code ticket, not a task, so it has no output folder.`);
   const problem = outputProblem(ticketOutput(t));
   if (problem) throw new SpeckError(`Ticket ${pad} has no output folder to give: ${problem} Fix it in the ticket, then run this again.`);
   const dir = outputPath(repo, t);
@@ -32,13 +32,13 @@ export function outputFolder(repo, id) {
   return dir.endsWith(path.sep) ? dir : dir + path.sep;
 }
 
-// 0353: what the reviewer prompt says about a document task's document: its folder and the files in it, or that it's
+// 0353: what the reviewer prompt says about a task's result: its folder and the files in it, or that it's
 // empty or missing, and how to judge the criteria. Makes nothing. '' for a code ticket, whose prompt is unchanged.
 export function documentSection(repo, t) {
-  if (ticketTask(t) !== 'document') return '';
+  if (ticketKind(t) !== 'task') return '';
   const problem = outputProblem(ticketOutput(t));
   return fs.readFileSync(path.join(TEMPLATES, 'reviewer-document.md'), 'utf8').trim()
-    .replace('{{WHERE}}', () => problem ? `The ticket gives no folder to read: ${problem} So there's no document to read: fail each criterion that needs one.` : documentWhere(outputPath(repo, t)));
+    .replace('{{WHERE}}', () => problem ? `The ticket gives no folder to read: ${problem} So there's no result to read: fail each criterion that needs one.` : documentWhere(outputPath(repo, t)));
 }
 function documentWhere(dir) {
   const where = `Read it in this folder:\n\n\`${dir.replace(/[\\/]+$/, '')}${path.sep}\``;
@@ -54,13 +54,13 @@ function documentWhere(dir) {
   return [`${where}\n\nFiles in it:\n`, ...found.map(f => `- \`${f}\``)].join('\n');
 }
 
-// 0354: a document task's files, for its review pack: { where, files, why }, with `where` the folder's path from the
+// 0354: a task's files, for its review pack: { where, files, why }, with `where` the folder's path from the
 // project root and `files` each regular file in it, from that folder, or `why` it has none. Makes nothing. null for a
 // code ticket.
 function outputFiles(repo, t) {
-  if (ticketTask(t) !== 'document') return null;
+  if (ticketKind(t) !== 'task') return null;
   const problem = outputProblem(ticketOutput(t));
-  if (problem) return { why: `The ticket gives no folder for the document: ${problem}`, files: [] };
+  if (problem) return { why: `The ticket gives no folder for the result: ${problem}`, files: [] };
   const where = path.posix.join('outputs', path.posix.normalize(ticketOutput(t).trim().replace(/\\/g, '/')), '/');
   let files;
   try {
@@ -82,15 +82,15 @@ function unlinkedOutput(repo, t) {
   return fs.realpathSync(dir) === dir ? dir : null;
 }
 
-// The review pack's lines about a document task's files: a heading and each file's path from the project root, or why
+// The review pack's lines about a task's files: a heading and each file's path from the project root, or why
 // there are none. None for a code ticket. `links: false` leaves out the files, for the panel, which links to them itself.
 export function documentLines(repo, t, { links = true } = {}) {
   const out = outputFiles(repo, t);
   if (!out || (!links && out.files.length)) return [];
-  return ['', '### Document', ...(out.files.length ? out.files.map(f => `- \`${path.posix.join(out.where, f)}\``) : [`- ${out.why}`])];
+  return ['', '### Result', ...(out.files.length ? out.files.map(f => `- \`${path.posix.join(out.where, f)}\``) : [`- ${out.why}`])];
 }
 
-// The panel's list of a document task's files: each one's path from the project root and the address it's served at.
+// The panel's list of a task's files: each one's path from the project root and the address it's served at.
 export function panelDocuments(repo, t) {
   const out = outputFiles(repo, t);
   return out ? out.files.map(f => ({ path: path.posix.join(out.where, f),
@@ -98,14 +98,14 @@ export function panelDocuments(repo, t) {
 }
 
 // The file at `rel` in ticket `id`'s output folder, as the panel serves it: { type, body }, or null when the ticket isn't
-// a document task, or `rel` isn't a regular file inside that folder, or leads outside it by `..` or by a link.
+// a task, or `rel` isn't a regular file inside that folder, or leads outside it by `..` or by a link.
 const TYPES = { md: 'text/markdown; charset=utf-8', markdown: 'text/markdown; charset=utf-8', txt: 'text/plain; charset=utf-8',
   csv: 'text/csv; charset=utf-8', html: 'text/html; charset=utf-8', htm: 'text/html; charset=utf-8', json: 'application/json',
   pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml' };
 export function documentFile(repo, id, rel) {
   try {
     const t = findTicket(repo, id);
-    if (ticketTask(t) !== 'document' || outputProblem(ticketOutput(t)) || typeof rel !== 'string' || !rel || rel.includes('\0')) return null;
+    if (ticketKind(t) !== 'task' || outputProblem(ticketOutput(t)) || typeof rel !== 'string' || !rel || rel.includes('\0')) return null;
     const dir = unlinkedOutput(repo, t);
     const file = dir && path.resolve(dir, rel);
     // Inside the folder, a regular file, and no link on the way to it, from outputs/ down.
