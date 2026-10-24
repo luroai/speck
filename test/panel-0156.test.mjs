@@ -31,7 +31,7 @@ const SAYS = {
 const MOVING = ['0401', '0402', '0403', '0408'];
 // 0434: while its builder or reviewer is at work, a grid of lights stands in for the sentence, which is its name.
 const WORKING = ['0401', '0402', '0403'];
-const sentenceIn = n => (n.className === 'lights' ? n.attrs['aria-label'] : n.textContent);
+const sentenceIn = n => n.attrs?.['aria-label'] ?? n.textContent; // 0443: a closed card's long sentence is the accessible name of its short words
 
 function fake(tickets = TICKETS) {
   return fakePage([], {
@@ -79,7 +79,7 @@ test('0156 AC2 and AC3: a ship the panel itself started says "Shipping" in the n
     confirm: () => true,
   });
   await p.settle();
-  assert.equal(find(p, rowOf(p, '0405'), /\bsay\b/)[0].textContent, 'Approved · waiting for you to ship it');
+  assert.equal(sentenceIn(find(p, rowOf(p, '0405'), /\bsay\b/)[0]), 'Approved · waiting for you to ship it');
   assert.equal(find(p, rowOf(p, '0405'), /\bsay\b/)[0].className, 'say to-ship');
   // Open the card, then its review pack, and press Ship.
   p.press(topOf(rowOf(p, '0405')));
@@ -108,7 +108,7 @@ test('0156 AC3: one plain sentence under the title says what is happening, in th
   }
   const css = styles();
   assert.match(css, /\.say\.bad \{ color: var\(--bad\); \}/);
-  assert.match(css, /\.say\.to-ship \{ color: var\(--idea\); \}/);
+  assert.match(css, /\.say\.to-ship \{ color: var\(--ok\); \}/);
   assert.match(css, /\.q \.top \.say \{[^}]*color: var\(--text\)/);
 });
 
@@ -202,8 +202,8 @@ for (const theme of ['light', 'dark']) {
     test(`0156 AC3 to AC5: at ${width} px in the ${theme} look, the sentence and the stage's name (beside the badge from 0168 until 0416) are laid out and coloured, with nothing overflowing`, skip, async () => {
       await withPanel(async b => {
         const colour = {};
-        for (const k of ['run', 'bad', 'idea', 'text']) colour[k] = await b.js(RGB(`var(--${k})`));
-        const tones = { '': colour.run, bad: colour.bad, 'to-ship': colour.idea };
+        for (const k of ['run', 'bad', 'ok', 'text']) colour[k] = await b.js(RGB(`var(--${k})`));
+        const tones = { '': colour.run, bad: colour.bad, 'to-ship': colour.ok };
         for (const [id, [, tone]] of Object.entries(SAYS)) {
           const l = await b.js(LOOK(id));
           // AC3: the sentence under the title, in the state colour or the text colour.

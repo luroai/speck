@@ -28,10 +28,10 @@ test('0167 AC1: no section or card rule draws a top or left stripe, and each car
   }
 });
 
-test('0167 AC2: a ticket waiting for you is purple, a blocked or stopped one crimson, each with its border and a light background', () => {
+test('0167 AC2: a ticket waiting for you is green (0440), a blocked or stopped one crimson, each with its border and a light background', () => {
   const blocked = rule('.q.blocked'), toShip = rule('.q.to-ship');
   assert.deepEqual([tokens(get(blocked, 'border-color')), tokens(get(blocked, 'background'))], [['--bad'], ['--bad-bg']]);
-  assert.deepEqual([tokens(get(toShip, 'border-color')), tokens(get(toShip, 'background'))], [['--idea'], ['--idea-bg']]);
+  assert.deepEqual([tokens(get(toShip, 'border-color')), tokens(get(toShip, 'background'))], [['--ok'], ['--ok-bg']]);
   // The passing checks stay green.
   assert.deepEqual(tokens(get(rule('.ok'), 'color')), ['--ok']);
 });
@@ -129,7 +129,7 @@ const STATE = {
 // Each queue card's state colour: its border and its background, or none.
 // 0171: a running card has a 2px border in its stage's colour instead, and no fill (RUNNING).
 const RUNNING = { '0301': 'blue' }; // 0426: Cursor's blue
-const STATES = { '0301': null, '0302': ['--idea', '--idea-bg'], '0303': ['--bad', '--bad-bg'], '0304': ['--bad', '--bad-bg'], '0305': null, '0306': ['--idea', '--idea-bg'] };
+const STATES = { '0301': null, '0302': ['--ok', '--ok-bg'], '0303': ['--bad', '--bad-bg'], '0304': ['--bad', '--bad-bg'], '0305': null, '0306': ['--ok', '--ok-bg'] };
 
 const stub = theme => `(() => {
   try { localStorage.setItem('speck-theme', ${JSON.stringify(theme)}); } catch {}
@@ -163,7 +163,7 @@ const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAn
 // A colour as the browser computes it, from a CSS value such as var(--bad).
 const RGB = v => `(() => { const s = document.createElement('span'); s.style.color = ${JSON.stringify(v)}; document.body.appendChild(s);
   const c = getComputedStyle(s).color; s.remove(); return c; })()`;
-const colours = async b => { const c = {}; for (const k of ['line', 'text', 'muted', 'idea', 'idea-bg', 'bad', 'bad-bg', 'panel', 'run', 'blue']) c[k] = await b.js(RGB(`var(--${k})`)); return c; };
+const colours = async b => { const c = {}; for (const k of ['line', 'text', 'muted', 'ok', 'ok-bg', 'bad', 'bad-bg', 'panel', 'run', 'blue']) c[k] = await b.js(RGB(`var(--${k})`)); return c; };
 // Each element's four border colours and widths, and its background.
 const LOOK = sel => `[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => { const s = getComputedStyle(n);
   return { id: (n.querySelector('.id') || n).textContent.slice(0, 40), cls: n.className, back: s.backgroundColor,
