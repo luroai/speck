@@ -1,4 +1,5 @@
-// 0143: the full ticket pane shows a ticket's priority, size, risk and any bug or fix tag under its title.
+// 0143: the full ticket pane shows a ticket's priority, size, risk and any bug or fix tag under its title. 0465: in the
+// table under it, as its open card shows them, in place of the tags; a shipped ticket's table has its figures instead.
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -8,10 +9,11 @@ const ago = min => new Date(Date.now() - min * 60000).toISOString();
 const clone = s => JSON.parse(JSON.stringify(s));
 const pane = p => p.byId('full-ticket');
 const paneTop = p => pane(p).children[0];
-// The pane's tags, as each one's classes and text, or null when it shows none.
+// 0465: the pane's Priority, Size · risk and Type cells, as [label, value] each, or null when its table has none.
 const paneTags = p => {
-  const box = paneTop(p).children.find(n => n.className === 'tags');
-  return box ? box.children.map(n => [n.className, n.textContent]) : null;
+  const f = pane(p).children[1] && pane(p).children[1].children[1];
+  const kept = f ? f.children.map(c => [c.children[0].textContent, c.children[1].textContent]).filter(([l]) => ['Priority', 'Size · risk', 'Type'].includes(l)) : [];
+  return kept.length ? kept : null;
 };
 const fullButtonIn = (p, n) => p.all(n).find(x => x.tagName === 'button' && x.textContent === 'Full ticket');
 const css = () => styles();
@@ -42,16 +44,17 @@ const STATE = () => ({ ideas: [], tickets: [
 
 test('0143 AC1: the pane shows priority, size and risk under the title, whichever list it was opened from', async () => {
   for (const [where, id, want] of [
-    ['plan', '0001', [['tag p1', 'P1'], ['tag', 'M'], ['tag high', 'high']]],
-    ['build', '0005', [['tag', 'P3'], ['tag', 'S'], ['tag', 'low']]],
-    ['shipped', '0009', [['tag', 'P2'], ['tag', 'M'], ['tag high', 'high']]],
+    ['plan', '0001', [['Priority', 'P1'], ['Size · risk', 'M · high'], ['Type', 'code']]],
+    ['build', '0005', [['Priority', 'P3'], ['Size · risk', 'S · low'], ['Type', 'code']]],
+    ['shipped', '0009', null], // 0465: its table has its figures, as its open card's has
   ]) {
     const p = fakePage([STATE(), STATE(), STATE()]);
     await p.settle();
     openFrom(p, where, id);
-    assert.deepEqual(paneTags(p), want, `${where}: the tags`);
+    assert.deepEqual(paneTags(p), want, `${where}: the cells`);
     const kids = paneTop(p).children.map(n => n.className);
-    assert.deepEqual(kids, ['id', 'state', 'close', 'title', 'tags'], `${where}: id, status and Close, then the title (0424), the tags after them`);
+    assert.deepEqual(kids, ['id', 'state', 'close', 'title'], `${where}: id, status and Close, then the title (0424)`);
+    assert.equal(pane(p).children[1].className, 'steps', `${where}: the track and table after them (0465)`);
   }
 });
 
@@ -59,7 +62,6 @@ test('0143 AC1: the tags are styled as in the lists, and sit on their own line u
   assert.match(rule('.tag.p1'), /color:\s*var\(--text\)/); // the text colour since 0167: the speck red is only for the speck
   assert.match(rule('.tag.high'), /color:\s*var\(--bad\)/); // red since 0151
   assert.match(rule('#full-ticket .top'), /flex-wrap:\s*wrap/);
-  assert.match(rule('#full-ticket .top .tags'), /flex-basis:\s*100%/);
 });
 
 test('0143 AC1: the pane\'s tags follow a change to the ticket', async () => {
@@ -69,11 +71,11 @@ test('0143 AC1: the pane\'s tags follow a change to the ticket', async () => {
   const p = fakePage([s, s2, clone(s2)]);
   await p.settle();
   openFrom(p, 'plan', '0001');
-  const [head, body] = pane(p).children, [id, title] = head.children;
+  const [head, , body] = pane(p).children, [id, title] = head.children;
   p.timers.shift()();
   await p.settle();
-  assert.deepEqual(paneTags(p), [['tag', 'P4'], ['tag', 'M'], ['tag', 'low']]);
-  assert.deepEqual([pane(p).children[0], pane(p).children[1], ...head.children.slice(0, 2)], [head, body, id, title], 'the rest of the pane keeps its nodes');
+  assert.deepEqual(paneTags(p), [['Priority', 'P4'], ['Size · risk', 'M · low'], ['Type', 'code']]);
+  assert.deepEqual([pane(p).children[0], pane(p).children[2], ...head.children.slice(0, 2)], [head, body, id, title], 'the rest of the pane keeps its nodes');
   assert.equal(body.detached || 0, 0);
 });
 
@@ -85,28 +87,29 @@ test('0143 AC2: a bug or fix ticket shows its bug or fix tag in the pane, as in 
   let p = fakePage([s(), s(), s()]);
   await p.settle();
   openFrom(p, 'build', '0006');
-  assert.deepEqual(paneTags(p), [['tag fix', 'fix'], ['tag p0', 'P0'], ['tag', 'S'], ['tag', 'low']]);
+  assert.deepEqual(paneTags(p), [['Priority', 'P0'], ['Size · risk', 'S · low'], ['Type', 'fix']]);
+  assert.equal(pane(p).children[1].children[1].children[5].children[1].className, 'value fix', 'in the fix tag\'s colour');
   p = fakePage([s(), s(), s()]);
   await p.settle();
   openFrom(p, 'shipped', '0010');
-  assert.deepEqual(paneTags(p), [['tag bug', 'bug'], ['tag', 'P2'], ['tag', 'S'], ['tag', 'low']]);
+  assert.equal(paneTags(p), null, '0465: a shipped one\'s table has its figures, as its open card\'s has');
 });
 
 test('0143 AC3: a field the ticket doesn\'t have shows no tag, and a ticket with none shows no tags at all', async () => {
   const s = () => ({ ideas: [], tickets: [
-    T('0009', 'done', { started: ago(90), finished: ago(60), priority: null, risk: 'high' }),
-    T('0011', 'done', { started: ago(40), finished: ago(30), priority: '', size: '', risk: null, type: '' }),
-    T('0012', 'done', { started: ago(30), finished: ago(25), priority: undefined, size: undefined, risk: undefined, type: 'feature' }),
+    T('0009', 'ready', { priority: null, risk: 'high' }),
+    T('0011', 'ready', { priority: '', size: '', risk: null, type: '' }),
+    T('0012', 'ready', { priority: undefined, size: undefined, risk: undefined, type: 'feature' }),
   ] });
   let p = fakePage([s(), s(), s()]);
   await p.settle();
-  openFrom(p, 'shipped', '0009');
-  assert.deepEqual(paneTags(p), [['tag', 'S'], ['tag high', 'high']]);
+  openFrom(p, 'build', '0009');
+  assert.deepEqual(paneTags(p), [['Priority', '–'], ['Size · risk', 'S · high'], ['Type', 'code']]);
   for (const id of ['0011', '0012']) {
     p = fakePage([s(), s(), s()]);
     await p.settle();
-    openFrom(p, 'shipped', id);
-    assert.equal(paneTags(p), null, `${id}: no tags`);
+    openFrom(p, 'build', id);
+    assert.deepEqual(paneTags(p), [['Priority', '–'], ['Size · risk', '– · –'], ['Type', 'code']], `${id}: a dash for each, as on its card (0465)`);
     assert.deepEqual(paneTop(p).children.map(n => n.className), ['id', 'state', 'close', 'title'], `${id}: the top row as before (0424: with its status)`);
   }
 });
@@ -115,39 +118,40 @@ test('0143 AC3: the rest of the pane is unchanged', async () => {
   const p = fakePage([STATE(), STATE(), STATE()]);
   await p.settle();
   openFrom(p, 'shipped', '0009');
-  assert.equal(pane(p).children.length, 2, 'the top row and the body');
+  assert.equal(pane(p).children.length, 3, 'the top row, the track and table (0465), and the body');
   assert.equal(paneTop(p).children.find(n => n.className === 'title').textContent, 'Ticket 0009');
-  assert.equal(pane(p).children[1].children[0].tagName, 'h4', 'the body starts with its first section');
+  assert.equal(pane(p).children[2].children[0].tagName, 'h4', 'the body starts with its first section');
 });
 
 test('0143 AC4: the pane\'s priority tag only shows the value: clicking it opens no priority menu', async () => {
   const p = fakePage([STATE(), STATE(), STATE(), STATE()]);
   await p.settle();
   openFrom(p, 'plan', '0001');
-  const tag = p.all(paneTop(p)).find(n => n.textContent === 'P1' && /\btag\b/.test(n.className));
-  assert.ok(tag);
-  assert.ok(!/\bpick\b/.test(tag.className), 'not styled as clickable');
-  assert.equal(tag.title, undefined, 'no "Set the priority" hover text');
+  // 0465: its Priority cell, in the table under the title
+  const tag = pane(p).children[1].children[1].children[3].children[1];
+  assert.equal(tag.textContent, 'P1');
+  assert.ok(!p.all(tag).some(n => /\bpick\b/.test(n.className || '') || n.attrs?.role === 'button'), 'not styled as clickable');
+  assert.ok(!p.all(tag).some(n => n.title === 'Set the priority'), 'no "Set the priority" hover text');
   p.press(tag);
-  assert.equal(p.byId('tag-tip').textContent, 'Priority 1: built after P0 tickets', 'since 0165 its click shows its tip, not a menu');
   assert.equal(p.all(p.byId('shaping')).filter(n => n.className === 'prio-menu').length, 0, 'no menu in the list');
   assert.equal(p.all(pane(p)).filter(n => n.className === 'prio-menu').length, 0, 'none in the pane');
   assert.equal(paneTop(p).children[0].textContent, '0001', 'the pane stays open');
 });
 
 test('0143 AC3: tags come and go with the fields on a refresh, and the rest of the top row stays', async () => {
-  const one = o => ({ ideas: [], tickets: [T('0011', 'done', { started: ago(40), finished: ago(30), ...o })] });
-  const none = { priority: null, size: '', risk: '' };
-  const p = fakePage([one(none), one({ priority: null }), one(none)]);
+  const one = o => ({ ideas: [], tickets: [T('0011', 'ready', o)] });
+  const none = { priority: null, size: '', risk: '' }, empty = [['Priority', '–'], ['Size · risk', '– · –'], ['Type', 'code']];
+  const boards = [one(none), one({ priority: null }), one(none)]; // 0465: an open Build card fetches its log too
+  const p = fakePage([], { fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : clone(boards.length > 1 ? boards.shift() : boards[0])) }) });
   await p.settle();
-  openFrom(p, 'shipped', '0011');
+  openFrom(p, 'build', '0011');
   const kids = paneTop(p).children.slice();
-  assert.equal(paneTags(p), null);
+  assert.deepEqual(paneTags(p), empty);
   p.timers.shift()();
   await p.settle();
-  assert.deepEqual(paneTags(p), [['tag', 'S'], ['tag', 'low']]);
+  assert.deepEqual(paneTags(p), [['Priority', '–'], ['Size · risk', 'S · low'], ['Type', 'code']]);
   p.timers.shift()();
   await p.settle();
-  assert.equal(paneTags(p), null);
+  assert.deepEqual(paneTags(p), empty);
   assert.deepEqual(paneTop(p).children, kids, 'the id, title and Close as they were');
 });

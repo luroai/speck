@@ -17,8 +17,10 @@ const withId = (p, list, id) => list.find(i => p.all(i).some(n => n.className ==
 const openPane = (p, id) => {
   click(top(withId(p, items(p), id)));
   click(p.all(withId(p, items(p), id)).find(x => x.tagName === 'button' && x.textContent === 'Full ticket'));
-  return prioTags(p, p.byId('full-ticket').children[0]);
+  return prioTags(p, p.byId('full-ticket'));
 };
+// 0465: the full ticket pane's Priority cell, in the table under its title
+const panePriority = p => p.byId('full-ticket').children[1].children[1].children[3].children.map(n => n.textContent);
 
 test('0213 AC1: a P0 tag gets the p0 class in Plan, the Build queue and the full ticket pane', async () => {
   const p = fakePage([STATE(), STATE(), STATE()]);
@@ -30,7 +32,9 @@ test('0213 AC1: a P0 tag gets the p0 class in Plan, the Build queue and the full
   await openQueueRows(p);
   assert.equal(queueRows(p).flatMap(r => prioTags(p, r)).length, 0, 'no priority tag in the Build queue');
   assert.deepEqual(factsOf(withId(p, queueRows(p), '0004'))[3], ['Priority', 'P0'], 'the Build queue');
-  assert.deepEqual(openPane(p, '0001').map(t => t.cls), [['tag', 'p0']], 'the full ticket pane');
+  // 0465: and so is the full ticket pane's, as its open card's is
+  assert.deepEqual(openPane(p, '0001'), [], 'no priority tag in the full ticket pane');
+  assert.deepEqual(panePriority(p), ['Priority', 'P0'], 'the full ticket pane');
 });
 
 test('0213 AC1: a P0 tag\'s text and border are in --bad, which the light and the dark look both set', () => {
@@ -58,10 +62,11 @@ test('0213 AC2: a P1 tag stays in --text and P2 to P5 tags stay plain grey tags'
 test('0213 AC3: a P0 tag\'s tip, screen-reader wording and tab stop are as before, and its rule changes only colours', async () => {
   const p = fakePage([STATE(), STATE(), STATE()]);
   await p.settle();
-  // 0463: in the full ticket pane, as the Build queue has no priority tag
-  const want = { text: 'P0', tip: 'Priority 0: built before any other ticket', label: 'Priority 0: built before any other ticket', tab: 0 };
-  const { cls: c2, ...pane } = openPane(p, '0001')[0];
-  assert.deepEqual(pane, want, 'the full ticket pane');
+  // 0463: in the full ticket pane, as the Build queue has no priority tag. 0465: and the pane has none either, so the
+  // Plan tag's wording and tab stop, which opens the priority menu rather than a tip
+  const [plan] = items(p).flatMap(r => prioTags(p, r)).filter(t => t.text === 'P0');
+  assert.deepEqual([plan.label, plan.tab], ['Priority 0: built before any other ticket. Opens the priority menu', 0], 'Plan');
+  assert.deepEqual(openPane(p, '0001'), [], 'no priority tag in the full ticket pane');
   const props = rule('.tag.p0').split(';').map(s => s.split(':')[0].trim()).filter(Boolean);
   assert.deepEqual(props.sort(), ['border-color', 'color'], 'no size, padding or tap area change');
 });

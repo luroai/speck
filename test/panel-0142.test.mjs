@@ -25,7 +25,7 @@ function planSection(item, heading) {
 }
 // What the full ticket pane shows under a heading: the children of its formatted block.
 function paneSection(p, heading) {
-  const body = p.byId('full-ticket').children[1];
+  const body = p.byId('full-ticket').children.at(-1); // 0465: the body is last, after the track and table
   const i = body.children.findIndex(n => n.tagName === 'h4' && n.textContent === heading);
   assert.ok(i >= 0, `the pane has a ${heading} section`);
   return body.children[i + 1].children;
