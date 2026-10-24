@@ -1,7 +1,7 @@
 ---
 id: "0479"
 title: "Frame the Pipeline log like a lane card that fills the screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0470", "0478"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T16:16:16.318Z"
+approved: "2026-10-24T16:24:29.249Z"
 
 ---
 # 0479 · Frame the Pipeline log like a lane card that fills the screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Pressing speck's screen opens the Pipeline log as a page that scrolls as a whole, with its title, Close and the log scrolling together. It doesn't look like the rest of the panel after 0478, where each lane is a framed card, and on a phone the whole page moving when you only want to read the log feels loose.
@@ -57,9 +58,14 @@ Pressing speck's screen now opens the Pipeline log as one dark framed card, like
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 120,971
+- Elapsed since build started: 8 min
+- Changed lines: 36 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
