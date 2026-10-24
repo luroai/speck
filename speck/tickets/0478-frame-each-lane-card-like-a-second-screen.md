@@ -1,7 +1,7 @@
 ---
 id: "0478"
 title: "Frame each lane card like a second screen"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0477"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T15:54:21.320Z"
 
 ---
 # 0478 · Frame each lane card like a second screen
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 After 0476, each lane is a card you slide between, but it doesn't look like part of the same device as speck's screen above it. The user wants the panel to read as two screens: speck's screen on top for the overall view, and a second one under it where the tickets live.
