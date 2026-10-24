@@ -1,7 +1,7 @@
 ---
 id: "0469"
 title: "Give the panel its touch-screen layout with a mouse too"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0468", "0474"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T14:36:38.942Z"
+approved: "2026-10-24T14:51:59.598Z"
 
 ---
 # 0469 · Give the panel its touch-screen layout with a mouse too
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In Cursor's browser pane with a mouse, the panel's cards are squashed: the title and details rows sit tight together and the text looks big for the card. In Cursor's mobile view, and on a phone, the same cards are taller and better spaced, because the panel only gives a touch screen its roomier layout. The user prefers that layout everywhere.
@@ -53,9 +54,14 @@ With a mouse or trackpad, the panel now has the same roomier layout it already h
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 117,071
+- Elapsed since build started: 15 min
+- Changed lines: 96 (limit 5000)
 - Follow-ups: none. Known limit: with a mouse, the tags' invisible 44 px tap areas stay touch-only, as AC3 allows, so a click lands only on a tag's own box.
 
 ## Review rounds
