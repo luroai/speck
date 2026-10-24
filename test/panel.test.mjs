@@ -413,7 +413,8 @@ test('0033 AC3: Shaping has a Tickets / Ideas toggle, Tickets first, one list at
 
 test('0033 AC3: since 0167, tickets and ideas share one plain look: the selected toggle in the text colour, and no coloured section edge or item stripe', () => {
   const css = styles();
-  assert.match(css, /\n\s*\.toggle\.on \{[^}]*color: var\(--text\);[^}]*border-color: var\(--text\)/);
+  // 0450: filled with the text colour, its text in the section's background
+  assert.match(css, /\n\s*\.toggle\.on \{[^}]*color: var\(--panel\);[^}]*background: var\(--text\);[^}]*border-color: var\(--text\)/);
   assert.doesNotMatch(css, /#shaping-section\.(tickets|ideas) \{/);
   assert.doesNotMatch(css, /\.item\.(ticket|idea) \{[^}]*border-left/);
 });
