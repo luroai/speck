@@ -67,14 +67,14 @@ test('0366 AC1: the pop-up is a modal dialog after the board, not under the head
   assert.match(tag, /aria-modal="true"/);
   assert.match(tag, /tabindex="-1"/);
   assert.ok(html.indexOf(tag) > html.indexOf('</main>'), 'not between the header and the board');
-  for (const sel of ['#foreman', '#foreman[hidden]', '#foreman .top', '#foreman .close']) { // 0470: its title is in Doto, the document's isn't
+  for (const sel of ['#foreman .close']) { // 0470: its title is in Doto, the document's isn't. 0479: it's framed as a lane card, filling the window, so only its Close is the document's
     const shared = sel.replace('#foreman', '#doc-view');
     assert.ok(rules(sel).length >= 1, `${sel} is styled`);
-    assert.ok(rules(sel).every(r => rules(shared).includes(r)), `${sel} shares ${shared}'s rules`);
+    assert.ok(rules(sel).some(r => rules(shared).includes(r)), `${sel} shares ${shared}'s rules`); // 0479: and has the frame's colours as well
   }
   assert.match(rules('#foreman')[0], /position: fixed/);
   assert.match(rules('#foreman')[0], /inset: 0/);
-  assert.ok(rules('#foreman .fm-body').some(r => /max-width: 760px/.test(r) && /margin: 0 auto/.test(r)), 'its text in the same centred column');
+  assert.ok(rules('#foreman').some(r => /round\(down, calc\(\(100% - 720px\) \/ 2\), 1px\)/.test(r)), 'its text in a centred column (0479: the lanes\' column)');
   assert.ok(!rules('.foreman').some(r => /border-bottom|padding/.test(r)), 'no longer laid out as a strip under the header');
 });
 

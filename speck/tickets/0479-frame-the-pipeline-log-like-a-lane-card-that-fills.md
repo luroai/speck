@@ -44,6 +44,11 @@ The Pipeline log is one framed card that fills the screen and stays still, and o
 - The panel stays thin (decided 2026-10-24), so on a wide window the frame is as wide as the panel's column, not the whole window.
 - Waits for 0470 (its `Pipeline log` title, in the pop-ups' files) and 0478 (the lane card's frame, which this reuses).
 - Failing before this build: none
+- The frame lines up with the lane cards' frames: the pop-up's column is the lanes' 720 px column, and the frame sits inside it with the lanes' 16 px sides and 8 px gap above and below, so on a wide window it's 688 px wide, exactly over the lane frames.
+- Below 480 px high (outside AC2), the log box keeps at least 12 lines and the pop-up scrolls instead, its title row held at the top, as 0470 AC3's 200 px check expects.
+- A stale page's line sits on the frame itself, in the frame's light ink, with Reload page boxed as Close is on the frame, so the log box keeps its own corners (0459).
+- Existing tests updated for the frame: 0161 (what's in the Pipeline log's frame sits on --bezel, and its dot holds no text), 0366 (the pop-up no longer shares the document pop-up's layout, only its Close; its column is the lanes'), and 0379 (the Pipeline log no longer scrolls as a whole with a page-coloured top row, which AC2 replaces; the document pop-up and Settings are still checked).
+- Self-check: added a real-browser check that the log opens on its newest line in the new layout; no code changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
