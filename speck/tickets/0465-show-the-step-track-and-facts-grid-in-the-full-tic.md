@@ -41,6 +41,7 @@ The full ticket shows the same step track and table as the ticket's open card.
 - Asked for by the user on 2026-10-24, after choosing the step track and facts grid for open build tickets (0461, 0462; mock-ups at https://claude.ai/artifact/BANvGzKKYy1p4AjBipypTb): "that layout should just be the template for all tickets in plan and ship. And also when you open a ticket in the full screen mode, like that table should be there as well."
 - Today: `fullTicket` in `templates/panel.js` draws the top as id, status, Close, title and `paneTags` (0424).
 - Waits for 0464, which waits for 0463, 0462 and 0461: it reuses all three tables and changes the same files.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
