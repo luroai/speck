@@ -39,7 +39,7 @@ const topOf = row => row.children.find(n => n.className === 'top');
 const classes = n => (n.className || '').split(/\s+/).filter(Boolean);
 const progressOf = row => topOf(row).children.find(n => classes(n)[0] === 'progress');
 const WORKING = ['0901', '0902', '0903']; // 0434: their grid of lights stands in for their sentence
-const sentenceIn = n => (n.className === 'lights' ? n.attrs['aria-label'] : n.textContent);
+const sentenceIn = n => n.attrs?.['aria-label'] ?? n.textContent; // 0443: a closed card's long sentence is the accessible name of its short words
 // The page's CSS, from panel.css (0430), without its comments.
 const css = () => styles().replace(/\/\*[\s\S]*?\*\//g, '');
 
@@ -49,7 +49,7 @@ test('0416 AC1: no card has a tile, picture or animation of its stage, at any st
   for (const [t] of CARDS) {
     const row = rowOf(p, t.id);
     assert.ok(row, `${t.id}: a card`);
-    const pictures = p.all(row).filter(n => ['canvas', 'img', 'svg', 'video'].includes(n.tagName) || /\bbadge/.test(n.className || '') || n.attrs?.role === 'img');
+    const pictures = p.all(row).filter(n => ['canvas', 'img', 'svg', 'video'].includes(n.tagName) || /\bbadge/.test(n.className || '') || (n.attrs?.role === 'img' && !/\bsay\b/.test(n.className))); // 0443: short words named for their sentence are words, not a picture
     // 0434: only the grid of lights, on a card an agent is at work on
     assert.deepEqual(pictures.map(n => `${n.tagName}.${n.className}`), WORKING.includes(t.id) ? ['span.lights'] : [], `${t.id}: no picture on its card`);
   }

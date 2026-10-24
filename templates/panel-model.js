@@ -25,7 +25,22 @@ function progress(t) {
 // 0203: while speck run is off, one auto-ship covers waits for you to turn Auto-build on, in green.
 // 0223: the review round a building or reviewing ticket's reviewer is running, or null.
 const roundUnderReview = t => ((t.status === 'building' || t.status === 'reviewing') && Number.isInteger(t.review_running) && t.review_running > 0 ? t.review_running : null);
+// 0443: a long sentence in short words, for a closed card's status line on a phone: the sentence is their tooltip and
+// accessible name. A sentence not here is short already, or gives way to the grid of lights.
+const SHORT = {
+  'Approved · waiting for you to ship it': 'Ready to ship',
+  'Approved · waiting to ship': 'Shipping next',
+  'Blocked · it has a question for you': 'Has a question',
+  'Blocked · the Foreman will take its recommendation': 'Foreman will answer',
+  'The build stopped': 'Build stopped',
+  'Approved · turn on Auto-build to ship it': 'Turn on Auto-build',
+  'Finished · read the document': 'Read the document',
+};
 function doing(t, shipping) {
+  const d = doingNow(t, shipping);
+  return { ...d, short: Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null };
+}
+function doingNow(t, shipping) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
   if (t.ship_waiting) return { sentence: 'Approved · waiting to ship', tone: '', moving: true };
   const approved = t.status === 'approved' || t.status === 'done';

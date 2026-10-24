@@ -707,6 +707,9 @@
     .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; }
     .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { letter-spacing: 0; padding: 0 12px; }
     .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline-block; } /* a box, for its tap area */
+    /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
+       gap before a tag stays wide, and its words, stage and time fit on a phone */
+    .q:not(.open) .top .progress .sep:not(:has(+ .tag)) { padding: 0; }
     /* The priority's 44 px box takes no more room in the line than its two characters do */
     .item.ticket .head .checks .prio { padding: 0; margin: 0 calc(1ch - 22px); font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
 
