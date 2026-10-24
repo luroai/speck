@@ -1784,22 +1784,19 @@ function noteBoard(st, f, word) {
   // dates from before the page was shown, or doesn't date at all, is from while it was hidden: one with no date came
   // after the board before, which is all that's known of when. Of those and the one kept when the page was shown, only
   // the latest plays, and only when it came less than a minute before. A change dated from after plays as any other.
-  if (back && d.queue.length > from) {
+  if (back) {
     const got = d.queue.splice(from), later = got.filter(e => e.at !== null && e.at >= back.at);
     const missed = got.filter(e => !later.includes(e)).map(e => ({ ...e, at: e.at ?? wasAt })).filter(e => e.at !== null);
-    const kept = back.kept ? d.queue.indexOf(back.kept) : -1;
-    if (!back.kept || kept >= 0) { // a kept one that has started playing stays the only one
-      if (kept >= 0) d.queue.splice(kept, 1);
-      const one = latestMissed([...(back.kept ? [back.kept] : []), ...missed], back.at);
-      if (one) d.queue.push(one);
-    }
+    const one = latestMissed([...(back.kept ? [back.kept] : []), ...missed], back.at);
+    if (one) d.queue.push(one);
     d.queue.push(...later);
   }
   const drafts = ids.filter(id => tickets.get(id).status === 'draft' && (!was.tickets.has(id) || (was.tickets.get(id).status === 'draft' && was.tickets.get(id).text !== seen.tickets.get(id).text)));
   if (drafts.length) d.writing = { id: drafts[drafts.length - 1], until: now + SPECK.writing };
 }
 // 0446: the page hidden (visible false) or shown again. Of the events from while it was hidden, only the latest plays,
-// and only when it came less than a minute before the page was shown; the next board's changes count as from then too.
+// and only when it came less than a minute before the page was shown; the next board's changes count as from then too,
+// so nothing missed plays until that board has come.
 function speckShown(visible) {
   const d = speckDo, now = Date.now();
   if (!visible) { if (d.hiddenAt === null) d.hiddenAt = now; return; }
@@ -1810,8 +1807,8 @@ function speckShown(visible) {
   d.queue = d.queue.filter(e => e.noted < since);
   const one = latestMissed(missed, now);
   let kept = null;
-  if (one) { const { until, ...e } = one; d.queue.push(kept = e); }
-  d.back = { at: now, kept };
+  if (one) { const { until, ...e } = one; kept = e; }
+  d.back = { at: now, kept }; // kept waits for the next board, which may hold a later one
 }
 // 0446: of events missed while the page was hidden, the one that happened last, by its date or else when the page
 // heard of it, when that was less than a minute before `shown`; otherwise null. Of two at once, the later in the list.
