@@ -1095,8 +1095,7 @@ function foremanAskOf(id) {
   const a = state && state.foreman && typeof state.foreman === 'object' ? state.foreman.agent : null;
   return (a && Array.isArray(a.asks) ? a.asks : []).find(q => q && String(q.id) === String(id) && typeof q.question === 'string' && q.question) || null;
 }
-// 0318: the question with an Answer box and Answer and Dismiss buttons, on the ticket's card (`where` 'card') and in the
-// Foreman's detail ('detail'). The server notes your reply in the ticket's Notes, and speck run carries an answer out.
+// 0318: the question with an Answer box and Answer and Dismiss buttons, on the ticket's card (`where` 'card'). The server notes your reply in the ticket's Notes, and speck run carries an answer out.
 function foremanAskBox(id, question, where) {
   const pending = askPending.get(id) || null;
   const box = el('textarea', 'ask-answer');
@@ -1681,10 +1680,10 @@ function render() {
   noteBoard(state, f, word); // 0414
   drawScreen(word);
   $('bezel').className = NEEDS_YOU.test(word) ? 'bezel needs' : 'bezel';
-  run.setAttribute('aria-label', `The Foreman: ${word}`); // 0451: Settings and the Right now say whether fixing is on
+  run.setAttribute('aria-label', `The Foreman: ${word}`); // 0451: Settings says whether fixing is on
   run.setAttribute('aria-expanded', String(foremanOpen));
-  run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: what speck run is doing, what is waiting, and its log';
-  renderForeman(f, stale);
+  run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: speck run\'s log';
+  renderForeman(stale);
   drawTabs(); // 0410: and Build's "<n> needs you"
   drawRunSwitch();
   const again = typing && typing.isConnected === false ? askBoxes.get(typing.askKey) : null; // 0318
@@ -1932,8 +1931,9 @@ const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.pa
 // 0366: the detail, in the pop-up over the whole panel that a document opens in (0362). Its top, with Close, is kept
 // while it's open and only the detail under it is drawn again, so the focus stays in the pop-up through a refresh.
 // While it's open the page behind is held (holdPage), so only the pop-up can be clicked, scrolled or reached with Tab.
-// 0415: the Pipeline pop-up. The detail is its Right now section, and speck run's output is its Log section under it.
-function renderForeman(f, stale) {
+// 0415: the Pipeline pop-up, with speck run's output as its Log section. 0458: the log is all it shows, apart from a
+// stale page's Reload page button above it.
+function renderForeman(stale) {
   const box = $('foreman'), was = !box.hidden && box.children.length > 0;
   box.hidden = !foremanOpen;
   holdPage(pageHeld());
@@ -1943,48 +1943,25 @@ function renderForeman(f, stale) {
     const close = el('button', 'close', 'Close');
     close.type = 'button';
     close.addEventListener('click', e => { e.stopPropagation(); closeForeman(); });
-    body = el('div', 'fm-body', null, el('div', 'fm-now'), el('div', 'fm-log', null, el('h3', null, 'Log')));
+    body = el('div', 'fm-body', null, el('div', 'fm-stale'), el('div', 'fm-log', null, el('h3', null, 'Log')));
     box.replaceChildren(el('div', 'top', null, el('span', 'title', 'Pipeline'), close), body);
     runLogShown = undefined; runLogDrawn = null;
   }
-  const now = body.children[0];
-  const had = within(document.activeElement, now);
-  const kids = [];
-  if (stale) {
+  const top = body.children[0];
+  const lost = !stale && within(document.activeElement, top); // the Reload page button had the focus and goes
+  top.hidden = !stale;
+  if (!stale) top.replaceChildren();
+  else if (!top.children.length) {
     const reload = el('button', 'reload', 'Reload page');
     reload.type = 'button';
     reload.id = 'foreman-reload';
     reload.addEventListener('click', () => location.reload());
-    kids.push(el('p', 'stale', 'The panel is running newer code than this page shows. ', reload));
+    top.replaceChildren(el('p', 'stale', 'The panel is running newer code than this page shows. ', reload));
   }
-  const item = (id, ...rest) => el('li', null, null, el('code', null, id), ...rest.map(r => (typeof r === 'string' ? el('span', null, ` ${r}`) : r)));
-  const section = (title, items, none) => [el('h4', null, title), items.length ? el('ul', null, null, ...items) : el('p', 'none', none)];
-  if (f.fixing_says) kids.push(el('p', 'fixing-says', `Fixing: ${f.fixing_says}`)); // 0317: which setting Fixing has, as the server says it
-  for (const h of f.held) kids.push(el('p', 'held', String(h))); // 0299: what holds up every build or ship, said once
-  kids.push(...section('Building', f.building.map(id => item(String(id))), 'Nothing is building.'));
-  kids.push(...section('Ready, not building', f.ready.map(r => item(String(r.id), String(r.why || ''))), 'No ready ticket is waiting.'));
-  const s = f.ship, ship = [];
-  if (s && typeof s.running === 'string' && s.running) ship.push(item(s.running, 'is shipping.'));
-  // 0299: every approved ticket auto_ship covers that isn't shipping, with why. The hold is said above the sections.
-  for (const w of s && Array.isArray(s.waiting) ? s.waiting : []) ship.push(item(String(w.id), String(w.why || '')));
-  kids.push(...section('Shipping', ship, f.on ? 'Nothing is waiting to ship.' : 'speck run is off, so nothing ships by itself.'));
-  kids.push(...section('Blocked', f.blocked.map(b => item(String(b.id), String(b.title || ''),
-    b.question ? el('p', 'question', String(b.question)) : null, el('p', 'waits', b.foreman === true ? 'The Foreman will take its recommendation.' : 'Waiting for you.'))), 'Nothing is blocked.'));
-  // 0317: the recommendations the Foreman took in the last 24 hours
-  kids.push(...section('Recommendations taken', f.took.filter(w => w && typeof w === 'object').map(w => item(String(w.id), `The Foreman went with the recommendation: ${String(w.option || '')} · ${tookAt(w.at)}`)),
-    'The Foreman hasn\'t taken a recommendation in the last 24 hours.'));
-  // 0287: what the Foreman agent is looking into, its questions to you and what it did lately, and why
-  const a = f.agent, list = v => (Array.isArray(v) ? v : []), looked = [];
-  if (a && a.running && typeof a.running === 'object') looked.push(item(String(a.running.id), `is being looked into: ${String(a.running.what || '')}`));
-  for (const q of list(a && a.asks)) looked.push(item(String(q.id), foremanAskBox(String(q.id), String(q.question || ''), 'detail'))); // 0318
-  for (const d of list(a && a.did)) looked.push(item(String(d.id), `The Foreman ${String(d.did || d.action || '')}${d.text ? `: ${String(d.text)}` : ''}.`, d.why ? `Why: ${String(d.why)}` : '',
-    ...(typeof d.outcome === 'string' && d.outcome ? [el('p', 'outcome', d.outcome)] : []))); // 0328: what became of a question, as the server says it
-  kids.push(...section('Looked into', looked, 'The Foreman hasn\'t had to look into anything.'));
-  now.replaceChildren(el('h3', null, 'Right now'), ...kids);
   wantRunLog();
   drawRunLog();
   if (!was) box.scrollTop = 0;
-  if ((!was || had) && box.focus) box.focus({ preventScroll: true }); // into it, or back into it when what had it was drawn again
+  if ((!was || lost) && box.focus) box.focus({ preventScroll: true }); // into it, or back into it when what had it goes
 }
 // 0415: speck run's output, from run.log, newest line first. The board's run_log changes with each write to it, and
 // while the pop-up is open the page asks for the log again (GET /api/run-log) each time it does, one request at a time.
