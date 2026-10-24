@@ -81,8 +81,8 @@ test('0434 AC2: a closed Build ticket\'s status line is its grid or words, its s
   assert.equal(text('0903'), 'Review 1 · gpt-6.1-sol · 07:52', 'the round and the reviewer\'s model');
   assert.equal(text('0904'), 'Review 1 · 07:52', 'the builder fixing the findings');
   assert.equal(text('0905'), 'Shipping · 19:12', 'one time on a shipping ticket: its build\'s, held at its approval as before');
-  assert.equal(text('0910'), 'Queued · waiting on 0426');
-  assert.equal(text('0426'), 'Queued · unlocks 0910');
+  assert.equal(text('0910'), 'Queued'); // 0468: what it waits on or unlocks is in its chip
+  assert.equal(text('0426'), 'Queued');
   assert.ok(!p.all(card(p, '0905')).some(n => /ship-at|ship-time/.test(n.className || '')), 'no time for the ship itself');
 });
 

@@ -10,6 +10,7 @@ import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage, styles } from './support/panel.mjs';
+import { chipSaid } from './support/dep-chip.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -572,7 +573,7 @@ test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167)
   assert.match(css, /\.q \.tag\.high \{[^}]*color: var\(--bad\)/, '0151 AC2: a high-risk tag in the queue is in the panel\'s red');
 });
 
-test('0034 AC4: a ready ticket shows Queued, and since 0156 no progress, plus waiting on <ids> when it has any', async () => {
+test('0034 AC4: a ready ticket shows Queued, and since 0156 no progress, plus (since 0468) a chip when it waits on any', async () => {
   const state = { tickets: [T('0001', 'ready', { self_check: 'x', rounds: [round(1, 1)] }), T('0002', 'ready', { waiting_on: ['0009', '0004'] })], ideas: [] };
   assert.deepEqual(steps(panelModel()(state).queue[0]), ['', '', '', '', '']);
   const p = fakePage([state]);
@@ -582,8 +583,9 @@ test('0034 AC4: a ready ticket shows Queued, and since 0156 no progress, plus wa
   assert.equal(sayOf(a), null, 'no sentence');
   assert.equal(stageOf(a), null, 'no stage');
   assert.deepEqual(panelModel()(state).queue[0].steps.map(s => s.label), ['Build', 'Self-check', 'Review 1', 'Approve', 'Ship'], 'AC2: Review <n> while it has rounds');
-  assert.ok(!a.textContent.includes('waiting on'));
-  assert.ok(b.textContent.includes('Queued') && b.textContent.includes('waiting on 0009, 0004'));
+  assert.equal(chipSaid(p, a), null);
+  assert.ok(b.textContent.includes('Queued'));
+  assert.equal(chipSaid(p, b), 'Waits on 2 tickets');
 });
 
 test('0034 AC5: an in-flight ticket shows the time since started, as MM:SS since 0058 (its worktree path is in the open ticket, 0053)', async () => {

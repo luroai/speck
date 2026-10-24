@@ -172,11 +172,11 @@ for (const theme of ['light', 'dark']) {
 }
 
 for (const width of [375, 1280]) {
-  test(`0151 AC3: at ${width} px, the criteria count, lint result and waiting-on note follow the tags, in the same line (0419)`, skip, async () => {
+  test(`0151 AC3: at ${width} px, the criteria count and lint result follow the tags, in the same line (0419; 0468: what it waits on is in its chip)`, skip, async () => {
     await withPanel(async b => {
       const got = await b.js(`(() => { const item = ${ITEM('0202')}, checks = item.querySelector('.checks');
         return { text: checks.textContent, tagsIn: [...item.querySelectorAll('.head .tag')].every(n => checks.contains(n)) }; })()`);
-      assert.match(got.text, /^P2 · S · low · 2 criteria · lint passes · after 0201$/);
+      assert.match(got.text, /^P2 · S · low · 2 criteria · lint passes$/);
       assert.ok(got.tagsIn, 'the tags are in the same line');
     }, { width });
   });
