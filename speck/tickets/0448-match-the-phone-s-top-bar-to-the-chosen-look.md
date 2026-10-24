@@ -40,6 +40,8 @@ The phone's top bar follows the look chosen in Settings.
 - From the builder's note on 0149. The `theme-color` tags and the script that sets the look before the page is drawn are in `templates/panel.html`.
 - Waits for nothing.
 - Failing before this build: none
+- Self-check: no changes
+- Pictures: none, because the change is to the phone's own top bar when the panel runs as a home-screen app, which a desktop or headless browser doesn't draw; the panel itself looks the same.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
