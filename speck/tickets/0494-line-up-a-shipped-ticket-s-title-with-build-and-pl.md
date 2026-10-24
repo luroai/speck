@@ -1,7 +1,7 @@
 ---
 id: "0494"
 title: "Line up a shipped ticket's title with Build and Plan on a phone"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-10-24
 started: "2026-10-24T20:47:56.137Z"
 blocked_at: ""
 waited_seconds: 826
+approved: "2026-10-24T21:10:31.434Z"
 
 ---
 # 0494 · Line up a shipped ticket's title with Build and Plan on a phone
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 On a phone, a collapsed shipped ticket's title sits lower in its card than a Build or Plan ticket's. The title opens the card, and on a touch screen it's a 44 px tall target with its text centred in it, so the text starts about 11 px further down. With a mouse, the three line up.
@@ -58,9 +59,15 @@ Changes what you'd notice: yes
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): escalate: F1 Criterion 2 says the title opens the full ticket 'as today', but the existing behaviour and the new test open the card in place.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 490,954
+- Elapsed since build started: 23 min
+- Changed lines: 5 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - An open shipped card's title still starts 19 px down its card, against 8 px for Build and 7 px for Plan (measured after this build). Saved to the inbox: speck/ideas/2026-10-24-line-up-an-open-shipped-ticket-s-title.md.
