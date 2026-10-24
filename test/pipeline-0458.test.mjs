@@ -44,12 +44,12 @@ test('0458 AC1: the pop-up has only its title, Close and the log', async () => {
   assert.equal(pop(p).hidden, false, 'open');
   const [top, body] = pop(p).children;
   assert.equal(pop(p).children.length, 2, 'its top and its body');
-  assert.equal(top.textContent, 'PipelineClose');
+  assert.equal(top.textContent, 'Pipeline logClose'); // 0470
   assert.deepEqual(buttons(p, pop(p)), ['Close'], 'no button but Close');
   const shown = body.children.filter(n => !n.hidden);
   assert.equal(shown.length, 1, 'only the log shows in the body');
   assert.match(shown[0].className, /\bfm-log\b/);
-  assert.deepEqual(p.all(pop(p)).filter(n => /^h\d$/.test(n.tagName)).map(n => n.textContent), ['Log'], 'no heading but the log\'s');
+  assert.deepEqual(p.all(pop(p)).filter(n => /^h\d$/.test(n.tagName)).map(n => n.textContent), [], 'no heading: since 0470, not even the log\'s');
 });
 
 test('0458 AC1: none of Right now\'s headings or lines are in the pop-up', async () => {

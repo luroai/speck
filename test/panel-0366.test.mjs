@@ -57,7 +57,7 @@ test('0366 AC1: pressing the notice board opens a pop-up with a Close button and
   const p = await opened([state(BUSY)]);
   assert.equal(pop(p).hidden, false, 'open');
   assert.ok(closeOf(p), 'a Close button');
-  assert.deepEqual(p.all(pop(p)).filter(n => /^h\d$/.test(n.tagName)).map(n => n.textContent), ['Log']);
+  assert.deepEqual(p.all(pop(p)).filter(n => /^h\d$/.test(n.tagName)).map(n => n.textContent), []); // 0470: no Log heading
   assert.doesNotMatch(pop(p).textContent, /0004 waiting for 0003|Which one\?/);
 });
 
@@ -67,7 +67,7 @@ test('0366 AC1: the pop-up is a modal dialog after the board, not under the head
   assert.match(tag, /aria-modal="true"/);
   assert.match(tag, /tabindex="-1"/);
   assert.ok(html.indexOf(tag) > html.indexOf('</main>'), 'not between the header and the board');
-  for (const sel of ['#foreman', '#foreman[hidden]', '#foreman .top', '#foreman .top .title', '#foreman .close']) {
+  for (const sel of ['#foreman', '#foreman[hidden]', '#foreman .top', '#foreman .close']) { // 0470: its title is in Doto, the document's isn't
     const shared = sel.replace('#foreman', '#doc-view');
     assert.ok(rules(sel).length >= 1, `${sel} is styled`);
     assert.ok(rules(sel).every(r => rules(shared).includes(r)), `${sel} shares ${shared}'s rules`);

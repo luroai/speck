@@ -39,7 +39,8 @@ async function opened(responses, globals, made) {
   await p.settle();
   return p;
 }
-const sectionOf = (p, title) => p.all(pop(p)).find(n => /\bfm-(now|log)\b/.test(n.className || '') && n.children[0] && n.children[0].tagName === 'h3' && n.children[0].textContent === title);
+// 0470: the log's section has no Log heading any more.
+const sectionOf = (p, title) => (title === 'Log' ? p.all(pop(p)).find(n => /\bfm-log\b/.test(n.className || '')) : undefined);
 const logLines = p => { const s = sectionOf(p, 'Log'); const ol = s && p.all(s).find(n => n.tagName === 'ol'); return ol ? ol.children.map(li => li.textContent) : null; };
 const runLogCalls = p => p.calls.filter(c => c.url === '/api/run-log');
 
@@ -52,11 +53,11 @@ test('0415 AC1: pressing the screen opens a pop-up titled Pipeline, not The Fore
   const p = await opened([state(BUSY)]);
   assert.equal(pop(p).hidden, false, 'open');
   const title = p.all(pop(p)).find(n => /\btitle\b/.test(n.className || ''));
-  assert.equal(title.textContent, 'Pipeline');
+  assert.equal(title.textContent, 'Pipeline log'); // 0470
   assert.ok(!p.all(pop(p)).some(n => n.textContent === 'The Foreman'), 'the Foreman\'s detail is gone');
-  assert.match(page().match(/<div class="foreman" id="foreman"[^>]*>/)[0], /aria-label="Pipeline"/);
+  assert.match(page().match(/<div class="foreman" id="foreman"[^>]*>/)[0], /aria-label="Pipeline log"/); // 0470
   assert.ok(sectionOf(p, 'Log'), 'a Log section');
-  assert.deepEqual(p.all(pop(p)).filter(n => n.tagName === 'h3').map(n => n.textContent), ['Log'], 'only Log');
+  assert.deepEqual(p.all(pop(p)).filter(n => n.tagName === 'h3').map(n => n.textContent), [], 'only Log, with no heading (0470)');
 });
 
 test('0415 AC1: a stale page keeps its Reload page button, first in the pop-up, above the Log', async () => {
@@ -83,7 +84,7 @@ test('0415 AC2: the Log shows the lines /api/run-log gives, asked for once the p
 
 test('0415 AC2: with no run.log the Log says speck run hasn\'t written anything yet, without asking the server', async () => {
   const p = await opened([state(BUSY)]);
-  assert.equal(sectionOf(p, 'Log').textContent, 'Logspeck run hasn\'t written anything yet.');
+  assert.equal(sectionOf(p, 'Log').textContent, 'speck run hasn\'t written anything yet.'); // 0470: no Log heading
   assert.equal(runLogCalls(p).length, 0);
 });
 

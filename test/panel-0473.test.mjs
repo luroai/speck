@@ -43,7 +43,7 @@ test('0473 AC1: on the fake page, the full ticket, a review pack, a document and
   p.press(p.byId('run'));
   await p.settle();
   assert.equal(p.byId('foreman').hidden, false, 'the Pipeline log opens');
-  assert.match(p.byId('foreman').textContent, /Pipeline[\s\S]*Log/);
+  assert.match(p.byId('foreman').textContent, /Pipeline log/); // 0470
   p.key('Escape');
   assert.equal(p.byId('foreman').hidden, true, 'and closes');
 
