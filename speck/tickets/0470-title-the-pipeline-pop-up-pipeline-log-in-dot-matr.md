@@ -44,7 +44,7 @@ The pop-up has one title, `Pipeline log`, on its top row, in the same dot-matrix
 - Self-check: no changes to the code. The older tests that named the `Pipeline` title, the `Log` heading or its `.foreman h3` style (0366, 0413, 0415, 0427, 0458, 0473) were changed to the new title, as AC1 asks.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Pressing speck's screen now opens a pop-up with one title, "Pipeline log", on its top line beside Close, in the same dot-matrix lettering as the word "speck" in the header and a little bigger than before. The separate "Log" heading is gone, so the log starts straight under the title. To see it, press the screen at the top of the panel, in either look. The other pop-ups keep their small titles for now.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +54,7 @@ The pop-up has one title, `Pipeline log`, on its top row, in the same dot-matrix
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none. The document pop-up's title keeps its small monospace style, which this ticket puts out of scope.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -117,6 +118,71 @@ The pop-up has one title, `Pipeline log`, on its top row, in the same dot-matrix
     ],
     "escalation_question": "",
     "summary": "The pop-up now has the requested larger dot-matrix title, and the behaviour and browser checks pass. Before approval, remove one test that unnecessarily locks the product brief to exact wording."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "839ccaeaef0be05ff6e4dc8055f3ca95193f6f33",
+    "session": "continued",
+    "thread_id": "01a16e5d-d95a-70e1-b785-f99163210df4",
+    "builder_response": "- Tests run: test/pipeline-0470.test.mjs test/pipeline-0415.test.mjs test/pipeline-0458.test.mjs test/panel-0366.test.mjs test/panel-0413.test.mjs test/panel-0473.test.mjs test/panel-0427.test.mjs (179 passed, 0 failed).\n- F1: fixed. Removed the brief wording test from test/pipeline-0470.test.mjs. The brief's sentence stays updated; the title and accessible-name tests cover the name.\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 202127,
+      "cached_input_tokens": 157312,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1012,
+      "reasoning_output_tokens": 18
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T14:44:34.652Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "renderForeman in templates/panel-popups.js renders Pipeline log beside Close and removes the Log heading. templates/panel.html supplies the matching accessible name. Passing 0470 AC1 tests cover populated and empty logs and the accessible name."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel-popups.css specifies Doto at weight 900 and 20px, matching the header. The passing real-browser test verifies the loaded font and single-line placement beside Close at widths from 320px upwards in both looks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0470 AC3 tests cover Close, Escape, outside clicks and focus restoration. The real-browser test verifies the sticky top row while scrolling. The current run records 179 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/pipeline-0470.test.mjs",
+        "issue": "The test that required exact wording in the product brief has been removed.",
+        "suggested_fix": "No further action required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The pop-up displays Pipeline log in the requested larger dot-matrix lettering, with its controls and scrolling behaviour preserved. All criteria pass, and the blocking test issue is resolved."
   }
 }
 ```
