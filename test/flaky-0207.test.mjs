@@ -54,7 +54,7 @@ test('0207 AC2: a speck run turned on from the panel shows as on only once it ha
     assert.equal(res.status, 200, res.body);
     pid = JSON.parse(res.body).run.pid;
     const log = fs.readFileSync(path.join(r.dir, 'speck', '.cache', 'runs', 'run.log'), 'utf8');
-    assert.match(log, /^speck run: watching for ready tickets/m, 'it had said it\'s watching when the panel showed it on');
+    assert.match(log, /^\d\d:\d\d:\d\d speck run: watching for ready tickets/m, 'it had said it\'s watching when the panel showed it on');
     res = await post(p.port, '/api/run/on', { token });
     assert.equal(res.status, 409, res.body);
     const error = JSON.parse(res.body).error;
