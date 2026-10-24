@@ -540,26 +540,27 @@
   #full-ticket .md ul, #full-ticket .md ol, #full-ticket .criteria ul, #full-ticket .criteria ol, #doc-view .md ul, #doc-view .md ol { margin: 0 0 8px; padding-left: 20px; }
   #full-ticket li ul, #full-ticket li ol, #doc-view li ul, #doc-view li ol { margin: 2px 0 0; }
   #full-ticket h5, #full-ticket h6, #doc-view h5, #doc-view h6 { margin: 10px 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; color: var(--text); font-weight: 600; }
-  #doc-view .md-h1 { font-size: 14px; }
-  #doc-view .md-h2 { font-size: 12px; }
-  #doc-view .md-h3 { font-size: 12px; color: var(--muted); }
   /* 0424: the text, a heading in it smaller at each level and all smaller than a section's, and lists with their numbers
      and bullets hanging to the left of the text, a nested list indented under its item. */
-  #full-ticket .md, #full-ticket ol.criteria { font-size: 15px; line-height: 1.6; }
-  #full-ticket .md p, #full-ticket .criteria p { margin: 0 0 10px; }
+  #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { font-size: 15px; line-height: 1.6; }
+  #full-ticket .md p, #full-ticket .criteria p, #doc-view .md p { margin: 0 0 10px; }
   #full-ticket .md-h1 { font-size: 18px; }
   #full-ticket .md-h2 { font-size: 16px; }
   #full-ticket .md-h3 { font-size: 15px; color: var(--muted-large); }
-  #full-ticket .md ul, #full-ticket .md ol, #full-ticket ol.criteria, #full-ticket .criteria ul, #full-ticket .criteria ol { margin: 0 0 10px; padding-left: 1.6em; list-style-position: outside; }
-  #full-ticket li ul, #full-ticket li ol { margin: 4px 0 0; }
-  #full-ticket h4:first-child, #full-ticket .md > :first-child { margin-top: 0; }
+  #full-ticket .md ul, #full-ticket .md ol, #full-ticket ol.criteria, #full-ticket .criteria ul, #full-ticket .criteria ol, #doc-view .md ul, #doc-view .md ol { margin: 0 0 10px; padding-left: 1.6em; list-style-position: outside; }
+  #full-ticket li ul, #full-ticket li ol, #doc-view li ul, #doc-view li ol { margin: 4px 0 0; }
+  #full-ticket h4:first-child, #full-ticket .md > :first-child, #doc-view .md > :first-child { margin-top: 0; }
+  /* 0445: a document task's document set out as the full ticket is: its first heading is its title, in the title's
+     size, its other headings as a review pack's are, and its text, tables, code and lists in the ticket's sizes. */
+  #doc-view .md .md-h1, #doc-view .md .md-h2, #doc-view .md .md-h3 { margin: 28px 0 8px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
+  #doc-view .md .doc-title { margin: 0 0 14px; font-size: 26px; line-height: 1.25; font-weight: 600; }
   #full-ticket code.md-code, #doc-view code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
   #full-ticket pre, #doc-view pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   #full-ticket pre code, #doc-view pre code { font-size: 12px; }
   /* 0132: a review pack's table, and its findings, which fold away */
   #full-ticket .md table, #doc-view .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 14px; }
   #full-ticket .md th, #full-ticket .md td, #doc-view .md th, #doc-view .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
-  #full-ticket .md table, #full-ticket pre code { font-size: 15px; } /* 0424: a table's and a code block's text is the ticket's text size too */
+  #full-ticket .md table, #full-ticket pre code, #doc-view .md table, #doc-view pre code { font-size: 15px; } /* 0424: a table's and a code block's text is the ticket's text size too */
   #full-ticket .md th, #doc-view .md th { font-weight: 600; background: var(--raise); }
   /* 0444: the criteria table's Result column is as wide as its heading and its mark. The pack lets a word break
      anywhere, so without this the column shrank to one letter and the long Criterion and Evidence took the rest. */

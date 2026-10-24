@@ -39,6 +39,7 @@ A document task's document is set out like the full ticket.
 - From the builder's note on 0424, which kept the pop-up's rules apart to stay in scope. Open question answered: the document's first heading is its title.
 - Waits for 0442: both change `templates/panel.css`.
 - Failing before this build: none
+- Self-check: no changes. Checked a document with text before its first heading, one starting at ##, one with no heading, and the loading and error states (no heading, so no title). 0424's test that the pop-up kept its old 14 px table now expects 15 px, as this ticket changes it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

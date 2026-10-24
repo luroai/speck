@@ -140,7 +140,7 @@ test('0424 AC3: tables and code blocks in a ticket or a review pack are the text
     const v = lastSize(sel);
     assert.ok(v === undefined || v === 'inherit' || parseFloat(v) >= 15, `${sel} keeps the text size (sets ${v})`);
   }
-  assert.equal(lastSize('#doc-view .md table'), '14px', 'a document\'s pop-up is left as it was, but for 0427\'s 14 px body text');
+  assert.equal(lastSize('#doc-view .md table'), '15px', 'a document\'s pop-up, set out as the ticket is since 0445');
 });
 
 test('0424 AC3: a heading in a section\'s text is smaller than the section\'s heading, and each level smaller than the one above', () => {
