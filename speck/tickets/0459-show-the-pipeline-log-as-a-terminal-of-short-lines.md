@@ -39,6 +39,8 @@ The pipeline log looks like a ticket's build log: a terminal of short, timed lin
 ## Notes
 - Asked for by the user on 2026-10-24: "a nice looking kind of like terminal log … with timestamps. Everything's indented from the timestamp, just like all the individual ticket build logs", and earlier "summaries is fine". A first try, to be tuned once it's been used.
 - Failing before this build: none
+- Self-check: added a fallback height for browsers without dvh units; kept `speck run` as a name, not a command, so it isn't stripped from summaries; stripped `.git` file names before commands, so `speck.git denied` keeps its words.
+- Changed tests: 0415's and 0458's checks of the newest-first order now expect the newest at the bottom, 0415's two checks of a reader's place as lines come in above them are replaced by 0459's in a box of its own, and 0415 AC5's long line is a sentence, now cut to 48 characters, checked on the newest line at the bottom.
 - Today: `drawRunLog` and `runLogShift` in `templates/panel.js`, styled by `.foreman ol.run-log` in `templates/panel.css` (0415). It shows newest first, and 0415 keeps a scrolled reader's place by shifting the scroll as lines arrive at the top; with newest at the bottom, that logic changes. A build log's lines are laid out by `logParts` and `logRow` (0422).
 - The line forms in criterion 3 are the ones in this repo's `run.log` on 2026-10-24, before 0460 adds times in front of them.
 - Waits for 0457 (and so 0455, 0454 and 0453): all change `templates/panel.css`, and criterion 1 reuses 0455's look. Waits for 0458: both change `renderForeman` in `templates/panel.js`. Waits for 0460, whose times it shows.
