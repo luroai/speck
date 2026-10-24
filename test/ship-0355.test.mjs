@@ -98,7 +98,7 @@ test('0355 AC3: in pull request mode, a document task whose branch changes files
 
 test('0355 AC1, AC3: the brief names the setting and the folders that decide how a document task ships', () => {
   const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  const about = brief.split('\n').filter(l => /document task/.test(l));
+  const about = brief.split('\n').filter(l => /\btask\b/.test(l));
   assert.ok(about.some(l => l.includes('`auto_ship`')), 'auto_ship');
   assert.ok(about.some(l => l.includes('`outputs/`') && l.includes('`speck/`')), 'outputs/ and speck/');
 });

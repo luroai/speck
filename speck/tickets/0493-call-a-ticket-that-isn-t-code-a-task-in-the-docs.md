@@ -40,6 +40,7 @@ speck's skills and docs describe `kind: code | task`, and a ticket that isn't co
 - Today: `skills/speck-ticket/SKILL.md` (step 4's Task bullet), `skills/speck-build/SKILL.md` (two mentions), `docs/brief.md` (five) and the README.
 - Waits for 0492 (the field it describes) and 0490, which rewrites the README after 0489 and 0491, which change the README, the ticket skill and the brief's rules for documents.
 - Failing before this build: none
+- Self-check: no changes. The brief's new paragraph on `kind` matches `ticketKind` and `outputProblem`; `test/ship-0355.test.mjs` now finds the brief's lines about how a task ships by the word task rather than document task.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
