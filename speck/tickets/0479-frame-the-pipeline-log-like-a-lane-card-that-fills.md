@@ -1,7 +1,7 @@
 ---
 id: "0479"
 title: "Frame the Pipeline log like a lane card that fills the screen"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T16:16:16.318Z"
 ---
 # 0479 · Frame the Pipeline log like a lane card that fills the screen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Pressing speck's screen opens the Pipeline log as a page that scrolls as a whole, with its title, Close and the log scrolling together. It doesn't look like the rest of the panel after 0478, where each lane is a framed card, and on a phone the whole page moving when you only want to read the log feels loose.
@@ -51,7 +51,7 @@ The Pipeline log is one framed card that fills the screen and stays still, and o
 - Self-check: added a real-browser check that the log opens on its newest line in the new layout; no code changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Pressing speck's screen now opens the Pipeline log as one dark framed card, like the Plan, Build and Shipped cards, with speck's red dot and "Pipeline log" in the dot-matrix letters at the top and Close at the right. The card fills the screen and stays still: only the log inside it scrolls. On a wide window it lines up with the lane cards rather than stretching across. When the page is out of date, the Reload page line appears inside the card above the log, and the log gets shorter to make room. To see it, press speck's screen on a phone and scroll the log. On a very short window (under 480 px high), the whole card scrolls instead, so the log still has room.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,4 +60,68 @@ The Pipeline log is one framed card that fills the screen and stays still, and o
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0772c8b0b6004596dede101f244d622f6411d4b0",
+    "session": "fresh",
+    "thread_id": "01a16eb9-ec41-76a2-a599-f0e62bead2cb",
+    "builder_response": "- Tests run (speck test --related): test/foreman-0299.test.mjs test/pack-0362.test.mjs test/foreman-asked-0328.test.mjs test/foreman-answer-0318.test.mjs test/foreman-0285.test.mjs test/foreman-0317.test.mjs test/pack-0363.test.mjs test/panel-0161.test.mjs test/panel-0410.test.mjs test/panel-0366.test.mjs test/panel-0424.test.mjs test/panel-0379.test.mjs test/panel-0368.test.mjs test/panel-0417.test.mjs test/panel-0364.test.mjs test/panel-0453.test.mjs test/panel-0434.test.mjs test/panel-0427.test.mjs test/panel-0413.test.mjs test/panel-0428.test.mjs test/panel-0426.test.mjs test/pipeline-0458.test.mjs test/panel-0445.test.mjs test/panel-0454.test.mjs test/pipeline-0479.test.mjs test/panel-0473.test.mjs test/pipeline-0415.test.mjs test/panel-0472.test.mjs test/pipeline-0470.test.mjs test/pipeline-0459.test.mjs  test/panel-0478.test.mjs test/panel-0438.test.mjs, plus the related files and the checks it adds\n- Changes: templates/panel-popups.css only (the Pipeline log's own rules split from the document pop-up's, and framed). Existing tests updated for the frame: 0161, 0366, 0379. The ticket's Notes say why.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 120327,
+      "cached_input_tokens": 70784,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 644,
+      "reasoning_output_tokens": 12
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T16:24:22.366Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-popups.css frames #foreman with lane colours, 4 px sides, 12 px corners, safe-area padding and the centred lanes' column. Passing 0479 AC1 browser tests verify dimensions, title lettering, red dot, Close and safe areas."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0479 AC1 and AC2 browser test uses 200 lines at 390 × 844 and 1200 × 800, checks additional sizes from 320 × 480, and verifies that scrolling moves only the log."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0479 AC3 browser test shows and removes the stale-page message and Reload page button at three sizes, verifying that the log shrinks and grows while the frame remains fixed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0479 AC4 test exercises Close, Escape, outside click and focus restoration. Existing 0415, 0459 and 0470 coverage remains; the new browser test also verifies opening on the newest line. Recorded run: 407 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The Pipeline log now fills a stationary frame matching the lane cards, with only its log scrolling. The reload notice fits inside the frame, and existing controls and log behaviour are preserved. Browser checks and regression tests passed; no blocking concerns found."
+  }
+}
+```
+
+</details>
