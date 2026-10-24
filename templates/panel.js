@@ -880,7 +880,7 @@ function shapingToggle(m) {
   $('shaping-section').className = `shaping ${shapingView}`;
 }
 // A queue row: the ticket, its progress when it's in flight (0156), then what's under it. A blocked ticket is red, and so
-// is one whose build has exited, unless it's approved: then it's waiting for you to ship it, and purple.
+// is one whose build has exited, unless it's approved: then it's waiting for you to ship it, and green (0440).
 function queueItem(t) {
   const id = String(t.id), isOpen = openQueue.has(id), d = t.inFlight ? doing(t, t.shipping || shippingId === id) : null;
   const stage = d && !t.red && !t.to_ship ? stageOf(t, d) : null; // 0171: a running ticket's border shows its stage

@@ -119,7 +119,7 @@ const RGB = v => `(() => { const s = document.createElement('span'); s.style.col
   const c = getComputedStyle(s).color; s.remove(); return c; })()`;
 const colours = async b => {
   const c = {};
-  for (const k of ['line', 'text', 'run', 'inbox', 'warn', 'ok', 'idea', 'idea-bg', 'bad', 'bad-bg', 'panel', 'raise', 'blue', 'yellow', 'green']) c[k] = await b.js(RGB(`var(--${k})`));
+  for (const k of ['line', 'text', 'run', 'inbox', 'warn', 'ok', 'idea', 'ok-bg', 'bad', 'bad-bg', 'panel', 'raise', 'blue', 'yellow', 'green']) c[k] = await b.js(RGB(`var(--${k})`));
   return c;
 };
 const LOOK = `[...document.querySelectorAll('#queue .q')].map(n => { const s = getComputedStyle(n);
@@ -149,7 +149,7 @@ for (const theme of ['light', 'dark']) {
             border(card, c[STAGES[want].slice(2)], 2, what);
             assert.equal(card.back, open ? c.raise : plainBack, `${what}: the normal card background`);
           } else if (want === 'blocked') { border(card, c.bad, 1, what); assert.equal(card.back, c['bad-bg'], `${what}: crimson fill`); }
-          else if (want === 'to-ship') { border(card, c.idea, 1, what); assert.equal(card.back, c['idea-bg'], `${what}: purple fill`); }
+          else if (want === 'to-ship') { border(card, c.ok, 1, what); assert.equal(card.back, c['ok-bg'], `${what}: green fill (0440)`); }
           else border(card, open ? c.text : c.line, 1, what);
         }
       };
