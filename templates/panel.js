@@ -454,7 +454,11 @@ function drawDoc() {
   const body = el('div', 'md');
   if (docOpen.state === 'loading') body.appendChild(el('p', null, `Loading ${docOpen.path}…`));
   else if (docOpen.state === 'error') body.appendChild(el('p', 'bad', docOpen.text));
-  else for (const n of mdBlocks(markdown(docOpen.text, { tables: true }))) body.appendChild(n);
+  else {
+    for (const n of mdBlocks(markdown(docOpen.text, { tables: true }))) body.appendChild(n);
+    const title = [...body.children].find(n => /^h[56]$/i.test(n.tagName)); // 0445: its first heading is its title
+    if (title) title.className += ' doc-title';
+  }
   view.setAttribute('aria-label', docOpen.path);
   docActsBuilt = null;
   view.replaceChildren(el('div', 'top', null, el('span', 'title', docOpen.path), close), el('div', 'doc-actions'), body);
