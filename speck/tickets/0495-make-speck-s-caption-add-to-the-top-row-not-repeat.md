@@ -40,6 +40,7 @@ The caption under speck always says something the top row doesn't: which tickets
 - From the user's phone screenshot on 2026-10-24: "Says needs you twice on screen. It's a waste."
 - Today: `speckRests` in `templates/panel-header.js` (0414, 0436).
 - Waits for nothing: no open ticket changes that file. 0452 waits for this one.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
