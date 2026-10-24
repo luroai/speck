@@ -1,7 +1,7 @@
 ---
 id: "0477"
 title: "Show the lanes in a strip instead of tabs"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0476"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T15:30:02.992Z"
 
 ---
 # 0477 · Show the lanes in a strip instead of tabs
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Once the lanes slide as cards (0476), each card names its own lane at its top, so the row of three tabs above them repeats the names and takes room. But you still need to see at a glance which lane you're on, which others there are, and whether Build needs you.
