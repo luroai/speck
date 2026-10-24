@@ -38,7 +38,7 @@ test('0422 AC1: each entry\'s time is in a span of its own, with its text after 
   assert.equal(r[3].at, '12:00:02 ');
   assert.equal(r[1].at, '', 'a line with no time has no time span');
   const css = styles();
-  assert.match(css, /\.q \.log \.at \{[^}]*color: var\(--muted\)/, 'the time is muted');
+  assert.match(css, /\.q \.log \.at \{[^}]*color: var\(--log-muted\)/, 'the time is muted (0455: the log\'s own muted colour)');
 });
 
 test('0422 AC2: tool calls, messages, failures and the cut-short note each have a kind of their own', async () => {
@@ -50,7 +50,8 @@ test('0422 AC2: tool calls, messages, failures and the cut-short note each have 
 const css = () => styles();
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 const light = () => vars((css().match(/:root \{([\s\S]*?)\}/) || [])[1] || '');
-const dark = () => vars([...css().matchAll(/:root\[data-theme="dark"\] \{([^}]*)\}/g)].map(m => m[1]).join(' '));
+// the dark look keeps any colour it doesn't set itself, as the page does (0455: the log's)
+const dark = () => new Map([...light(), ...vars([...css().matchAll(/:root\[data-theme="dark"\] \{([^}]*)\}/g)].map(m => m[1]).join(' '))]);
 const luminance = hex => {
   const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -62,9 +63,9 @@ test('0422 AC2: each kind has a colour of its own, with at least 4.5:1 contrast 
   const kinds = ['.q .log .tool', '.q .log .msg', '.q .log .fail', '.q .log .note'].map(colourOf);
   assert.ok(kinds.every(Boolean), `every kind has a colour: ${kinds}`);
   assert.equal(new Set(kinds).size, 4, 'each colour is different');
-  assert.match(css(), /\.q \.log \{[^}]*background: var\(--bg\)/, 'the log sits on the page background');
+  assert.match(css(), /\.q \.log \{[^}]*background: var\(--log-bg\)/, 'the log sits on its own background (0455: a terminal\'s, in every look)');
   for (const [look, v] of [['light', light()], ['dark', dark()]]) {
-    for (const k of [...kinds, colourOf('.q .log .at')]) assert.ok(contrast(v.get(k), v.get('--bg')) >= 4.5, `${k} on --bg in the ${look} look: ${contrast(v.get(k), v.get('--bg')).toFixed(2)}`);
+    for (const k of [...kinds, colourOf('.q .log .at')]) assert.ok(contrast(v.get(k), v.get('--log-bg')) >= 4.5, `${k} on --log-bg in the ${look} look: ${contrast(v.get(k), v.get('--log-bg')).toFixed(2)}`);
   }
 });
 
