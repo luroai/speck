@@ -1,7 +1,7 @@
 ---
 id: "0482"
 title: "Keep the related-tests count check from failing as the suite grows"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-24-keep-the-related-tests-count-check-from-fai
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:33:25.291Z"
+approved: "2026-10-24T18:37:15.221Z"
 
 ---
 # 0482 · Keep the related-tests count check from failing as the suite grows
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0447's AC3 test checks that 0437's change (`scripts/turns.mjs`, the build skill and `docs/brief.md`) picks fewer than 100 related tests from a copy of this repo's own `test/` folder. It picks 98 today, and every new test that names `docs/brief.md` adds one, so within a few tickets `speck ship` will fail on it for a ticket that did nothing wrong.
@@ -50,9 +51,14 @@ Nothing changes in what speck does. One of speck's own checks, which makes sure 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 98,087
+- Elapsed since build started: 4 min
+- Changed lines: 0 (limit 5000)
 Follow-ups: none.
 
 ## Review rounds
