@@ -42,6 +42,9 @@ The panel's styles are in one file for each area of the panel, so a ticket that 
 - Same pattern as 0430, which moved the styles out of `panel.html`.
 - Waits for 0468, the ticket being built when this was set; the rest of 0.15.0's panel tickets (0469 onwards) wait for 0474, so they build on the split files.
 - Failing before this build: none
+- Self-check: scripts/panel.mjs went over the 600-line limit for scripts (0078), so the list of style files is kept on the line that names the page's files, and the server's route uses it; no other changes.
+- AC4 is checked by the tests that read the styles (0430's, 0281's and every test using `styles()` from test/support/panel.mjs, which now reads the five files in order) and by the whole suite at ship. Tests that read the moved rules as one file had them grouped (one touch-screen block, the cards' and the full ticket's selectors in one list) read them from the five files instead: 0160, 0281, 0417, 0427, 0430, 0455 and 0465.
+- Pictures: none, because nothing anyone sees changes (AC3's test compares every element's computed style).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -65,7 +65,7 @@ test('0455 AC3: the log box has a border on all four sides, in whole CSS pixels,
   const d = logDecls();
   assert.equal(decl(d, 'border-left'), undefined, 'no left edge of its own any more');
   assert.match(decl(d, 'border') || '', /^1px solid /, 'one CSS pixel on every side, at least a device pixel at any ratio');
-  assert.match(css(), /\.q \.log, [^{]*\{ border-radius: 12px; \}|, \.q \.log,[^{]*\{ border-radius: 12px; \}/, 'its 12 px corners');
+  assert.match(css(), /\.q \.log, [^{]*\{ border-radius: 12px; \}|, \.q \.log(,[^{]*)? \{ border-radius: 12px; \}/, 'its 12 px corners'); // 0472: last in the cards' list
 });
 
 test('0455 AC4: the log keeps its height, scrolling, monospaced font, line layout and selectable text', () => {

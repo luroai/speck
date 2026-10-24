@@ -114,8 +114,9 @@ test('0465 AC1: the track and the table look the same in the full view as on a B
   const qs = plain.filter(r => selectors(r).some(s => /^\.q \.(track|facts)\b/.test(s)));
   assert.ok(qs.length >= 20, 'the track\'s and table\'s rules');
   for (const r of qs) {
+    // 0472: the full view's in a rule of its own, in the pop-ups' file, with the same declarations
     for (const s of selectors(r).filter(s => s.startsWith('.q '))) {
-      assert.ok(selectors(r).includes(s.replace('.q ', '#full-ticket ')), `${s} also styles the full view's`);
+      assert.ok(plain.some(x => selectors(x).includes(s.replace('.q ', '#full-ticket ')) && JSON.stringify(x.decls) === JSON.stringify(r.decls)), `${s} also styles the full view's`);
     }
   }
 });
