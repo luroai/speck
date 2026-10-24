@@ -41,6 +41,9 @@ started: "2026-10-24T07:45:31.476Z"
 - From my own note on 0437's first `--related` run. `speck test` is in `scripts/turns.mjs`.
 - Waits for nothing: no open ticket changes these files.
 - Failing before this build: none
+- Self-check: support modules that import each other in a loop now each name what the other does, and a file at the repo's root is named after `../` but not after another folder.
+- 0437's tests' fixture gets two more empty support modules, so its panel page is named by one of four modules rather than one of two and still counts through it.
+- AC3 measures a copy of this repo's `test/` folder as it is (a test may not name a commit, so it can't be pinned to the tree the ticket measured): today it picks 96, most of them (70) for naming `docs/brief.md` itself.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
