@@ -1,7 +1,7 @@
 ---
 id: "0463"
 title: "Lay out an open ticket that hasn't started like one in flight"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0462"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T11:10:51.080Z"
 
 ---
 # 0463 · Lay out an open ticket that hasn't started like one in flight
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 After 0461 and 0462, an open ticket in flight shows a step track and an even table of facts, but an open ticket in Plan, or one queued in Build, still lists its facts in a line joined by dots that wraps on a phone. The cards don't look like one family.
