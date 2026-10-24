@@ -46,7 +46,11 @@ The pipeline log looks like a ticket's build log: a terminal of short, timed lin
 - Waits for 0457 (and so 0455, 0454 and 0453): all change `templates/panel.css`, and criterion 1 reuses 0455's look. Waits for 0458: both change `renderForeman` in `templates/panel.js`. Waits for 0460, whose times it shows.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Pipeline pop-up's log now looks like a ticket's build log: a black box with each line's time in its own column and a short summary after it, such as "0457 build started" or "0457 shipped", with the newest line at the bottom. Failed builds and tickets that didn't ship show in red. Session ids, file paths and commands no longer show.
+
+To see it, press speck's screen to open the Pipeline pop-up. It opens at the newest line and follows new ones as they come in; scroll up and it stays where you are.
+
+Worth a look: lines speck run writes that aren't one of the usual kinds show their first sentence, cut short, and start with a ticket's id when they name one, which can read oddly (for example "0457 speck run's code has changed…"). This is a first try, to be tuned once it's been used.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,9 @@ The pipeline log looks like a ticket's build log: a terminal of short, timed lin
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox notes):
+  - Each new line redraws the whole log, so text selected in it is lost when a line arrives (as before this ticket).
+  - Other lines that name a ticket get its id put in front of their first sentence, which can read oddly; tune the wording once the log has been used.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -124,6 +131,76 @@ The pipeline log looks like a ticket's build log: a terminal of short, timed lin
     ],
     "escalation_question": "",
     "summary": "The terminal styling and short, timed summaries meet the ticket's requirements. One browser-specific bug needs fixing: new messages pull readers back to the bottom even when they have scrolled up. The current tests miss this because their fake elements use different tag names from a browser."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "558b4f491a8ace7a9517b2268ad768db51f6449d",
+    "session": "continued",
+    "thread_id": "01a16d70-e5f3-7f20-bbb0-c92b1a5f70de",
+    "builder_response": "- Tests run: test/pipeline-0459.test.mjs test/pipeline-0415.test.mjs test/pipeline-0458.test.mjs (with the repo's checks)\n- F1: fixed. drawRunLog in templates/panel.js now matches the box's tag name whatever its case (`/^ol$/i`). New test \"0459 AC4: with a browser's tag names, in capitals, an update keeps the same box and a scrolled-up reader's place\" makes every element's tagName upper case as a browser does; it failed before the fix and passes now. The test's own finders and layout match tag names whatever their case too.\n- Also: test lines no longer name a real GitHub account (the repo's name check flagged one).\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 221150,
+      "cached_input_tokens": 179968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1569,
+      "reasoning_output_tokens": 123
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T10:26:06.917Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.css uses the build log's background, text colours, four-sided border and font. Passing 0459 AC1 tests compare these styles."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runLogRow and the .ln/.timed styles provide a separate timestamp column and hanging indentation for wrapped and untimed lines. The 0459 AC2 test passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runLogSummary, runPlain and runLogLine implement the required summaries, truncation and filtering. Passing 0459 AC3 tests exercise the specified message forms and removal of technical details."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "drawRunLog now recognises uppercase browser tag names and preserves the existing box. Passing AC4 tests cover that regression, scroll preservation, following new lines, chronological order, the latest 200 lines, refresh updates, the empty state and reading only run.log. The reported run has 153 passes, no failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js:1998",
+        "issue": "The previous lowercase tagName comparison replaced the log box on every browser update, losing a scrolled-up reader's position.",
+        "suggested_fix": "Implemented: the comparison is case-insensitive, and a regression test uses uppercase browser tag names to verify box reuse and preservation of the reader's position.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The pipeline log now displays short, timed summaries in a terminal box, with new messages at the bottom. The browser scroll bug is fixed and covered by a regression test. All acceptance criteria pass, with no blocking concerns remaining."
   }
 }
 ```
