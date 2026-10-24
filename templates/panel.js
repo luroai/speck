@@ -34,9 +34,10 @@ function chainIcon(t) {
   return icon;
 }
 // 0419: a Plan or Build ticket's first line: its id, its chain icon when it has one (`icon`), then its title.
+// 0483: only an open one has the icon, as a closed one's chip says the same.
 // 0434: the whole title is its tooltip, as a closed ticket's title is cut off when it doesn't fit on one line.
 // 0468: and, on a closed one, its dependency chip at the end (`closed`).
-const titleLine = (t, icon, closed) => el('div', 'line', null, el('span', 'id', t.id), icon ? chainIcon(t) : null, titled(el('span', 'title', t.title)), closed ? depChip(t) : null);
+const titleLine = (t, icon, closed) => el('div', 'line', null, el('span', 'id', t.id), icon && !closed ? chainIcon(t) : null, titled(el('span', 'title', t.title)), closed ? depChip(t) : null);
 // 0468: a closed ticket's dependencies as one chip: a link icon and how many unshipped tickets it waits on, or, waiting
 // on none, an arrow icon and how many unshipped tickets wait on it directly, or nothing. It is a button for its name and
 // tooltip; pressing it reaches its top row, which opens the card.
@@ -1043,7 +1044,7 @@ function setText(node, text) {
 }
 const child = (node, cls) => [...node.children].find(n => n.className === cls); // children is an HTMLCollection, with no find
 // What a kept queue row shows from the clock or from other tickets, put right on its node: the counter, and for a
-// ready ticket its chain icon and Queued line. Only the parts that change are replaced.
+// ready ticket its Queued line, and its chain icon while it is open (0483). Only the parts that change are replaced.
 // An in-flight row's details line, and its counter (0419: in that line, when it has one).
 // 0462: an open one's counter is in its facts' Time cell.
 const progressLine = q => [...child(q, 'top').children].find(n => /^(progress|facts)\b/.test(n.className)) || null;
@@ -1067,7 +1068,7 @@ function queueUpdate(q, t) {
     if (was) row.removeChild(was);
   }
   if (t.inFlight) return;
-  const icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
+  const icon = isOpen ? chainIcon(t) : null, old = child(row, 'chain') || child(row, 'lock'); // 0483: open ones only
   if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
     if (icon) row.insertBefore(icon, old || child(row, 'title')); // the icon comes right after the id
     if (old) row.removeChild(old);

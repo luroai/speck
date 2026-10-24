@@ -77,11 +77,12 @@ test('0050 AC1: a chain change that comes only from another ticket shows on a ke
   await p.settle();
   const row = rowOf(p, '0006');
   const kept = held(p, 'queue', byClass(p, row, 'title'));
-  assert.ok(byClass(p, row, 'lock'), 'it waits on 0005');
+  assert.ok(!byClass(p, row, 'lock'), 'closed, it has no padlock (0483)');
   assert.equal(chipSaid(p, row), 'Waits on 1 ticket'); // 0468: in its chip
   await refresh(p);
   assert.ok(kept(), 'the row stayed');
-  assert.ok(byClass(p, rowOf(p, '0006'), 'lock'), 'still waiting, so still a padlock');
+  assert.equal(chipSaid(p, rowOf(p, '0006')), 'Waits on 1 ticket', 'still waiting, so still its chip');
+  assert.ok(!byClass(p, rowOf(p, '0006'), 'lock'), 'and still no padlock (0483)');
   await refresh(p);
   assert.ok(kept());
   const s2 = { tickets: [T('0005', 'ready'), T('0006', 'ready')], ideas: [] };
@@ -93,7 +94,7 @@ test('0050 AC1: a chain change that comes only from another ticket shows on a ke
   await refresh(q);
   await refresh(q);
   assert.ok(keptFive(), '0005 kept its node');
-  assert.ok(byClass(q, rowOf(q, '0005'), 'chain'), 'the chain icon shows');
+  assert.ok(!byClass(q, rowOf(q, '0005'), 'chain'), 'closed, no chain icon (0483)');
   assert.equal(chipSaid(q, rowOf(q, '0005')), '1 ticket waits on this', 'and its chip (0468)');
 });
 
