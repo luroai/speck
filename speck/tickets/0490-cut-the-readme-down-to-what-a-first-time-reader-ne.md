@@ -41,6 +41,7 @@ The README is short enough to read on a phone, describes the panel as it is now,
 - Agreed with the user on 2026-10-24, from the page https://claude.ai/artifact/1TAXHPCUZ9wvSfkdaLKQzW: cut "The clever bits" to a sentence or two each, fold the four long paragraphs under "Where state lives" (your own settings, API keys, your agents, adding an API provider) into one short "Your agents" part, rewrite "The panel" round the phone-width column, shrink "Who it's for" to the "Most AI coding tools sell speed or autonomy" paragraph and the OpenSpec credit, and keep Requirements to one line for builders.
 - After 0491, only a few tests read the README (the setup prompt, the status line, the pictures and its links), so cutting text doesn't mean moving tests.
 - Waits for 0489, which rewrites the opening above this, and through it 0491.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
