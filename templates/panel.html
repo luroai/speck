@@ -23,7 +23,12 @@
   const system = matchMedia('(prefers-color-scheme: dark)');
   // 0160: the home-screen app's status bar: black-translucent (light text) on the dark look, default (dark text) on the
   // light one. iOS reads it as the app opens.
-  const bar = look => { const m = document.getElementById?.('status-bar'); if (m) m.content = look === 'dark' ? 'black-translucent' : 'default'; };
+  // 0448: and the phone's top bar, from theme-color: both tags take the look's page colour, so the one whose media
+  // matches the phone's own setting shows the look chosen in Settings.
+  const bar = look => {
+    const m = document.getElementById?.('status-bar'); if (m) m.content = look === 'dark' ? 'black-translucent' : 'default';
+    for (const t of document.querySelectorAll?.('meta[name="theme-color"]') || []) t.content = look === 'dark' ? '#141414' : '#f3f3f3';
+  };
   // 0372: Settings' look, while it's open, shows the one the page has (0396: drawn by the page's drawLook).
   const set = look => { root.dataset.theme = look; bar(look); if (typeof globalThis.drawLook === 'function') globalThis.drawLook(); };
   // 0412: System, Light or Dark: the one picked in this page, or else the one kept in this browser, or else System,
