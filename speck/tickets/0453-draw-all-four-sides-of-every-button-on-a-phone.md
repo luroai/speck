@@ -1,7 +1,7 @@
 ---
 id: "0453"
 title: "Draw all four sides of every button on a phone"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-17-keep-the-settings-buttons-borders-whole-on-
 after: ["0449"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:08:45.305Z"
+approved: "2026-10-24T09:29:09.939Z"
 
 ---
 # 0453 · Draw all four sides of every button on a phone
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On a phone, some buttons lose a side of their border: the Shipped list's Details button and the full ticket's Close button show no left edge. Their borders are half a CSS pixel and their edges can fall between device pixels, so the phone doesn't draw that side. 0281 fixed the same thing for Settings' info buttons and boxes.
@@ -51,9 +52,15 @@ On a phone, every button in the panel now shows its full outline, all four sides
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The unsaved Settings dialog still centres its 360px box on half a CSS pixel at odd phone widths above 392px.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 672,790
+- Elapsed since build started: 20 min
+- Changed lines: 45 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox notes):
   - Only the left and right edges are rounded to whole pixels, as in 0281. The tops and bottoms can still fall between pixels, though none was reported missing.
