@@ -1,7 +1,7 @@
 ---
 id: "0455"
 title: "Make a ticket's build log look like a terminal"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0454"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T09:44:54.260Z"
 
 ---
 # 0455 · Make a ticket's build log look like a terminal
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The build log inside an open ticket uses the page's own background, so in the light look it's a pale box that doesn't read as a terminal. It has only a left edge, and its 12 px corners trim even that, so it doesn't read as a box at all.
