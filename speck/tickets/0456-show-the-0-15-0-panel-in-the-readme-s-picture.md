@@ -1,7 +1,7 @@
 ---
 id: "0456"
 title: "Show the 0.15.0 panel in the README's picture"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0453", "0454", "0455", "0457", "0458", "0459", "0460", "0461", "0462", "0463", "0464", "0465", "0466", "0467", "0468", "0469", "0471", "0476", "0477", "0478", "0480", "0481", "0483", "0484", "0485"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T19:52:29.222Z"
 
 ---
 # 0456 · Show the 0.15.0 panel in the README's picture
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The README's picture, taken on 19 October for 0306, shows the panel before 0.15.0's rebuild: the old header with its Foreman box and buttons, square-edged LCD badges and the Plan and Build sections stacked down the page. 0.15.0 rebuilds the panel, so someone reading the README sees a panel that no longer exists.
