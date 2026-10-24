@@ -52,7 +52,7 @@ test('0285 AC1: the header shows the Foreman\'s status and colour in place of th
   assert.match(page().match(/<header>([\s\S]*?)<\/header>/)[1], /<button class="glass" id="run" type="button" aria-label="The Foreman" aria-expanded="false" aria-controls="foreman"/);
 });
 
-test('0285 AC2: pressing the status opens its detail: ready tickets with why, shipping\'s state and blocked tickets with their questions', async () => {
+test('0285 AC2: pressing the status opens its detail; 0458: which shows only the log, while speck status keeps ready tickets with why, shipping\'s state and blocked tickets with their questions', async () => {
   const f = view({ building: ['0001'], ready: [{ id: '0004', kind: 'after', why: 'waiting for 0003' }, { id: '0005', kind: 'slots', why: 'all 2 build slots in use' }],
     ship: { running: null, hold: { message: 'on hold until main has a new commit: 0002\'s ship found main\'s own tests failing.' }, refused: [{ id: '0008', message: 'waiting for a new commit on main or its branch. Its last try: tests failed' }] } },
   [T('0001', 'ready'), T('0004', 'ready'), T('0005', 'ready'), T('0006', 'blocked', { blocked_question: 'Which one?' })]);
@@ -63,13 +63,14 @@ test('0285 AC2: pressing the status opens its detail: ready tickets with why, sh
   await p.settle();
   assert.equal(detail(p).hidden, false);
   assert.equal(header(p).attrs['aria-expanded'], 'true');
-  const t = detail(p).textContent;
-  assert.match(t, /0004 waiting for 0003/);
-  assert.match(t, /0005 all 2 build slots in use/);
-  assert.doesNotMatch(t, /0001 speck run/, 'a ticket building isn\'t listed as waiting');
+  assert.doesNotMatch(detail(p).textContent, /0004|0005|0008|Which one\?/, '0458: the pop-up shows only the log');
+  const t = foremanLines(f).join('\n');
+  assert.match(t, /0004 ready, not building: waiting for 0003/);
+  assert.match(t, /0005 ready, not building: all 2 build slots in use/);
+  assert.doesNotMatch(t, /0001 ready/, 'a ticket building isn\'t listed as waiting');
   assert.match(t, /Shipping is on hold until main has a new commit/);
-  assert.match(t, /0008 waiting for a new commit on main or its branch\. Its last try: tests failed/);
-  assert.match(t, /Blocked0006 Ticket 0006Which one\?/);
+  assert.match(t, /0008 waiting to ship: waiting for a new commit on main or its branch\. Its last try: tests failed/);
+  assert.deepEqual(f.blocked.map(b => [b.id, b.question]), [['0006', 'Which one?']]);
   click(header(p));
   await p.settle();
   assert.equal(detail(p).hidden, true, 'pressing it again closes it');
@@ -78,12 +79,7 @@ test('0285 AC2: pressing the status opens its detail: ready tickets with why, sh
 test('0285 AC2: with speck run off, each ready ticket says speck run is off', async () => {
   const f = foremanView({ run: { on: false, pid: null }, record: null, tickets: [T('0004', 'ready')] });
   assert.deepEqual(f.ready, [{ id: '0004', why: 'speck run is off' }]);
-  const p = fakePage([state(f, { run: undefined })]);
-  await p.settle();
-  click(header(p));
-  await p.settle();
-  assert.match(detail(p).textContent, /0004 speck run is off/);
-  assert.match(detail(p).textContent, /speck run is off, so nothing ships by itself/);
+  assert.ok(foremanLines(f).includes('  0004 ready, not building: speck run is off'), 'speck status says so (0458: the pop-up shows only the log)');
 });
 
 test('0285 AC2: the ship queue records its hold and each refusal waiting for a new commit, with its message', () => {
@@ -118,12 +114,8 @@ test('0285 AC1, AC2: a ship started outside speck run\'s queue, from the panel\'
     const s = q.state([]);
     assert.equal(s.running, '0002');
     const v = view({ ship: s });
-    assert.equal(v.word, 'Shipping 0002');
-    const page = fakePage([state(v)]);
-    await page.settle();
-    click(header(page));
-    await page.settle();
-    assert.match(detail(page).textContent, /0002 is shipping\./);
+    assert.equal(v.word, 'Shipping 0002'); // 0458: the word on speck's screen, as the pop-up shows only the log
+    assert.equal(v.ship.running, '0002');
   } finally { killAll([p.pid]); }
 });
 

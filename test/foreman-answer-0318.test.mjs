@@ -68,18 +68,14 @@ test('0318 AC1: the Foreman\'s question shows on the ticket\'s card with an Answ
   assert.ok(buttonIn(p, card, 'Dismiss'));
 });
 
-test('0318 AC1: the Foreman\'s question shows in its detail with an Answer box and a Dismiss button', async () => {
+test('0318 AC1, 0458: the Foreman\'s question shows on its card, and no longer in its detail, which shows only the log', async () => {
   const { r } = asked();
   const p = pageWith(r);
   await p.settle();
   click(p.byId('run'));
   await p.settle();
-  const box = askIn(p, p.byId('foreman'));
-  assert.ok(box, 'the detail has the question');
-  assert.match(box.textContent, /Should it keep the old test\?/);
-  assert.ok(find(p, box, n => n.tagName === 'textarea'));
-  assert.ok(buttonIn(p, box, 'Answer'));
-  assert.ok(buttonIn(p, box, 'Dismiss'));
+  assert.equal(askIn(p, p.byId('foreman')), undefined, 'not in the detail');
+  assert.ok(askIn(p, p.byId('queue')), 'on the card');
 });
 
 test('0318 AC1: a ticket the Foreman hasn\'t asked about has no Answer box', async () => {

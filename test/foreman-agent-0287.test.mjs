@@ -235,7 +235,7 @@ test('0287 AC3: the agent runs on foreman, foreman_model and foreman_effort, bla
   assert.equal(codex.at(-1), 'B');
 });
 
-test('0287 AC4: what the Foreman agent did, and why, goes in the ticket\'s Notes and the Foreman\'s status detail', async () => {
+test('0287 AC4: what the Foreman agent did, and why, goes in the ticket\'s Notes and speck status', async () => {
   const r = blockedRepo({ status: 'building' }), a = agents(r);
   a.q.stuck({ id: '0001', what: 'its build ended with the ticket still building', log: '' });
   a.check();
@@ -257,16 +257,7 @@ test('0287 AC4: what the Foreman agent did, and why, goes in the ticket\'s Notes
   assert.ok(foremanLines(f).some(l => l.includes('The Foreman asks you about 0001: Should it keep the old test?')));
   assert.ok(foremanLines(f).some(l => l.includes('Why: the build stopped on a choice')));
   assert.deepEqual(agentView(r.runs, [T('0001', 'done')]).asks, [], 'a question goes once its ticket has moved on');
-  // The panel's detail shows it.
-  const p = fakePage([{ tickets: [T('0001', 'building')], ideas: [], resume_command: '', run: ON, foreman: f }]);
-  await p.settle();
-  click(p.byId('run'));
-  await p.settle();
-  const text = p.byId('foreman').textContent;
-  assert.match(text, /Looked into/);
-  assert.match(text, /The Foreman asks you:/);
-  assert.match(text, /Should it keep the old test\?/);
-  assert.match(text, /Why: the build stopped on a choice/);
+  // 0458: the panel's detail shows only the log now. The question is on the ticket's card (0318).
 });
 
 test('0287 AC5: at most one Foreman agent at a time, and once for the same ticket and commits', () => {

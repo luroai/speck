@@ -72,7 +72,7 @@ test('0328 AC4: a question still waiting is listed as asked about its ticket wit
   assert.ok(lines.includes('    Answer with speck foreman answer 0001 "<your answer>", or dismiss it with speck foreman dismiss 0001'));
 });
 
-test('0328 AC5: the panel\'s Foreman detail shows each outcome as speck status does, and Needs you is unchanged', async () => {
+test('0328 AC5: speck status shows each outcome, which 0458 took out of the panel\'s Foreman detail, and Needs you is unchanged', async () => {
   const cases = [
     [runsWith({ reply: { action: 'dismiss', text: '', at: '2026-10-19T09:30:00.000Z' } }), 'building', 'You dismissed it at 2026-10-19 09:30 UTC.'],
     [runsWith({ reply: { action: 'answer', text: 'Keep it', at: '2026-10-19T09:31:00.000Z' } }), 'building', 'You answered it at 2026-10-19 09:31 UTC: Keep it.'],
@@ -80,7 +80,7 @@ test('0328 AC5: the panel\'s Foreman detail shows each outcome as speck status d
   ];
   for (const [runs, status, said] of cases) {
     const { f, text } = await detail(runs, status);
-    assert.ok(text.includes(said), `${said} in: ${text}`);
+    assert.ok(!text.includes(said), `0458: not in the panel's detail: ${text}`);
     assert.ok(askLine(foremanLines(f)).endsWith(said));
     assert.equal(f.word, 'Idle', 'nothing waits for you');
   }
