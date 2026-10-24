@@ -1,7 +1,7 @@
 ---
 id: "0492"
 title: "Call a ticket that isn't code a task"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T20:02:10.113Z"
 
 ---
 # 0492 · Call a ticket that isn't code a task
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A ticket that isn't a code change is called a "document task" (`task: document`), but its build can do any job whose result it leaves in `outputs/`: an email draft, a plan, a report or research. "Document" undersells it, and the same word also means the README and `docs/` in speck's rules for acceptance criteria.
