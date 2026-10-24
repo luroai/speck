@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-10-24-keep-a-closed-card-s-bug-or-document-tag-wh
 after: ["0483"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:44:36.293Z"
-approved: "2026-10-24T18:53:49.918Z"
+approved: "2026-10-24T19:03:12.724Z"
 
 ---
 # 0484 · Keep a closed Build card's tag whole on a phone
@@ -54,13 +54,14 @@ On a phone, a closed card in Build now always shows its bug, fix or document tag
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 97,770
-- Elapsed since build started: 9 min
-- Changed lines: 14 (limit 5000)
+- Reviewer tokens: 288,690
+- Elapsed since build started: 19 min
+- Changed lines: 25 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Changed one existing test: 0443's 375 px check now lets a tagged line's words be cut short, as this ticket asks (see Notes). The reviewer agreed.
 - Follow-ups: none.
@@ -118,6 +119,63 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Closed Build cards now shorten their status words first, keeping tags readable and tappable alongside the stage and time. Browser tests cover narrow screens and both looks, and confirm fitting lines and open cards retain their layout. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "36e35b20eac1062f54eb331b4b0c09435101c516",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16f42-99f2-71a0-befb-f66319eb83c4",
+    "builder_response": "- Handed back by the ship queue (speck ship exit 16). main had nothing new for this branch (git merge main: already up to date), so the failures came from this ticket's change alone.\n- Failing tests: 0050 AC4 and 0058 AC3/AC4 (a selection from a card's title across its status line read back with line breaks between the parts), and 0156 AC3 to AC5 (the stage's box no longer sat beside the words' box). Cause: the flex row from round 1 made each part a block-level flex item. Copying the line then put a line break between every part, and every part's box became 44 px tall.\n- What I changed: dropped the flex row. The line is inline text again, exactly as before. Only the words (`.say`, or `.by` on a working card) are now inline-block with `overflow-x: clip; text-overflow: ellipsis` (templates/panel-cards.css). `fitWords()` in templates/panel.js sets their max-width to the room the stage, time and tag leave, measured from the line's last part (a tag's touch tap area reaches past it, so scrollWidth can't be used). It runs alongside 0453's wholeButtons: on the same MutationObserver (renders, clock ticks, lane switches), on resize and when fonts load. The fake page has no MutationObserver, so it never runs there.\n- New test: 0484 AC3 \"copies as it did before 0484\" checks every closed card's selection text and innerText against the page with 0484's rule taken out. The AC3 layout test now also checks the rule was really taken out. The AC1/AC2 measurement waits two frames after a resize, for the page's resize handler.\n- 0443's test change from round 1 stays (a line with two tags still has to cut its words at 375 px).\n- Tests run: test/panel-0484.test.mjs test/panel-0050.test.mjs test/panel-0058.test.mjs test/panel-0156.test.mjs test/panel-0443.test.mjs test/panel-0442.test.mjs test/panel-0441.test.mjs test/panel-0419.test.mjs test/panel-0427.test.mjs test/panel-0434.test.mjs test/panel-0416.test.mjs, via --related, which added test/panel-0417 and test/panel-0433, plus the checks. 215 pass, 0 fail, 3 skipped.\n",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 189907,
+      "cached_input_tokens": 140672,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1013,
+      "reasoning_output_tokens": 37
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T19:03:08.995Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js fitWords() limits the words to the space left by the remaining status parts. Passing panel-0484 AC1/AC2 browser tests verify whole, tappable bug, fix and document tags across 320–480 px, with touch and mouse, in both looks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "fitWords() measures overflow using the last part and reduces only .say or .by; panel-cards.css applies clipping and ellipsis to those words. Passing AC2 browser tests cover the blocked bug and finished document lines at 320 and 375 px in both looks, including explicit verification that words truncate before stage, time or tag."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The revised implementation preserves inline layout and targets closed cards only. Passing AC3 tests compare fitting and open-card positions against the original rules and verify unchanged selection text. Previously failing 0050, 0058 and 0156 browser tests now pass without changes to those tests. Recorded output confirms 215 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The revised change keeps tags whole while shortening status words, and preserves the original inline layout. Tests confirm that copying text and positioning the stage work again, alongside the phone-width checks. No blocking concerns remain."
   }
 }
 ```
