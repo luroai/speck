@@ -1,7 +1,7 @@
 ---
 id: "0488"
 title: "Call the Foreman speck in the docs"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0487"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T19:48:07.127Z"
 approved: "2026-10-24T19:56:47.806Z"
+finished: "2026-10-24T20:02:06.615Z"
 
 ---
 # 0488 · Call the Foreman speck in the docs
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The README, the brief, the setup skill and the agent's own skill still describe the Foreman, its settings and its commands, after the panel, the messages and the settings stop using it.
