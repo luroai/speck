@@ -41,6 +41,7 @@ An open ticket that's in flight shows its facts in a small, even table under its
 - Asked for by the user on 2026-10-24, choosing option D in the mock-ups (https://claude.ai/artifact/BANvGzKKYy1p4AjBipypTb): "make sure any of the facts within the table do not create a new line. If it's too long … the ellipsis", and "as clean and as uniform as the images, … it's the uniformness that I love". The mock-ups show it for a ticket building, in review, and approved and waiting.
 - Today: `progressOf` in `templates/panel.js` (0168, 0416, 0434, 0443) draws the dotted line with `detailsLine`, and `tagsOf` its priority, size and risk while it's open. `say` gives a short and a full sentence for what it's doing (0443).
 - Waits for 0461: both change `progressOf` in `templates/panel.js` and the card's styles in `templates/panel.css`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
