@@ -1,7 +1,7 @@
 ---
 id: "0470"
 title: "Title the Pipeline pop-up Pipeline log in dot-matrix letters"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0474"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T14:36:41.315Z"
 approved: "2026-10-24T14:44:42.540Z"
+finished: "2026-10-24T14:48:00.594Z"
 
 ---
 # 0470 · Title the Pipeline pop-up Pipeline log in dot-matrix letters
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Pressing speck's screen opens a pop-up titled `Pipeline` in small monospace text, with a separate `Log` heading on the line under it. Since 0458 the log is all it shows, so the two headings split one name over two lines, and the small title doesn't match speck's header.
