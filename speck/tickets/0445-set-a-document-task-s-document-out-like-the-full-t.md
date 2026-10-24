@@ -38,6 +38,7 @@ A document task's document is set out like the full ticket.
 - For release 0.15.0 (0452). The user asked on 2026-10-24 for everything relevant to the release to be ticketed.
 - From the builder's note on 0424, which kept the pop-up's rules apart to stay in scope. Open question answered: the document's first heading is its title.
 - Waits for 0442: both change `templates/panel.css`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
