@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0476"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T15:30:02.992Z"
-approved: "2026-10-24T15:44:43.568Z"
+approved: "2026-10-24T15:51:23.285Z"
 
 ---
 # 0477 · Show the lanes in a strip instead of tabs
@@ -59,13 +59,14 @@ To see it, open the panel: the strip sits just under speck's screen. Keep an eye
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 177,020
-- Elapsed since build started: 15 min
-- Changed lines: 40 (limit 5000)
+- Reviewer tokens: 474,831
+- Elapsed since build started: 21 min
+- Changed lines: 41 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Mark the lane in view with more than its colour: `speck/ideas/2026-10-24-mark-the-lane-in-view-more-clearly-in-the-strip.md`.
@@ -129,6 +130,68 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The compact lane strip works as requested, keeps Build's attention count visible and preserves accessible lane switching. Browser tests confirm the tap targets and narrow layouts, including a fourth lane. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3a1ce301569b9894f59847b156d0652e0ba74de9",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16e95-2ba6-7953-bba4-1a1a5bd51bd7",
+    "builder_response": "- Tests fail together: main was already merged in (`git merge main`: already up to date), so the failures came from this ticket's own change, in tests my first run missed because they don't name the tabs.\n- 0160 AC1 (375 and 1280 px): each lane's 44 px button reached 6 px up past the strip into the header's bottom padding, so a point in the header hit the button. Fixed in templates/panel-header.css: the strip aligns its lanes to its top, and each button keeps its name in the strip's 32 px (12 px bottom padding, border-box) and reaches all 12 extra px downward, over the top of the lane title's 10 px padding, never into the header.\n- 0161 AC1–AC3 (light and dark): the edge-contrast sweep counted the strip's names as boxed controls with no edge. The names are words, as a card's tags are (0419), so the sweep leaves out `.tab`; their text contrast is still checked by the same test's text sweep, which passes. Its default minimum control count drops by the three lanes, 11 to 8.\n- 0453 AC1 AC3: the border sweep leaves out `.tab` (the names have no border by AC1), and no longer expects Plan and Build among the bordered buttons. 0453 AC3 \"the open tab is edged in the text colour\" is removed: it checked the tab look this ticket replaces, as 0457 did.\n- Tests run: test/panel-0160.test.mjs test/panel-0161.test.mjs test/panel-0453.test.mjs test/panel-0477.test.mjs test/panel-0410.test.mjs test/panel-0425.test.mjs test/panel-0426.test.mjs test/panel-0428.test.mjs test/panel-0438.test.mjs test/panel-0140.test.mjs test/panel-0417.test.mjs test/panel-0469.test.mjs test/panel-0418.test.mjs test/panel-0476.test.mjs, with --related and the repo checks: 255 pass, 0 fail. As an extra check I also ran every other test that sweeps all buttons or probes points on the page (0060, 0063, 0134, 0135, 0137, 0151, 0162, 0165, 0190, 0224, 0277, 0371, 0379, 0427, 0454, panel.test): 170 pass.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 296546,
+      "cached_input_tokens": 233856,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1265,
+      "reasoning_output_tokens": 60
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T15:51:21.038Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-header.css keeps the strip at 32 px with ordered lane names and selected/muted colours. Passing panel-0477 AC1 and browser tests verify appearance and dimensions."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel-header.js drawTabs() retains the count on every lane, using --bad and clearing it when no attention is needed. Passing panel-0477 AC2 exercises these behaviours."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Native tab-role buttons retain keyboard activation, panel associations and aria-selected. Passing panel-0477 tests verify switching, sliding and pointer hits across 44 × 44 px targets. The revised CSS extends targets downwards; unchanged panel-0160 header hit tests now pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing panel-0477 browser test checks one row from 320 px and a fourth lane without style changes. Verified current test output: 255 passed, zero failed, three skipped. Changes to 0161 and 0453 remove superseded border expectations while retaining text contrast checks."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The strip meets all four criteria. Its large tap targets now extend below the strip without intercepting presses in the header. The updated tests appropriately remove expectations for the old boxed tabs, and all tests in the review run pass."
   }
 }
 ```
