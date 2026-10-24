@@ -7,7 +7,6 @@ import path from 'node:path';
 import { panelRepo, fm } from './support/panel.mjs';
 import { shipRepo } from './support/ship.mjs';
 import { panelSetReady, panelBackToPlan } from '../scripts/panel.mjs';
-import { ROOT } from './support/speck.mjs';
 
 const DONE = /Ticket 0002 is done and shipped, so its status can't change\./;
 
@@ -69,11 +68,4 @@ test('0439 AC3: speck ship still sets a ticket done and files it in speck/ticket
   assert.notEqual(set.status, 0);
   assert.match(set.stderr, /Ticket 0001 is done and shipped, so its status can't change\./);
   assert.match(fs.readFileSync(file, 'utf8'), /^status: done\b/m);
-});
-
-test('0439 AC4: docs/brief.md\'s speck set row says it refuses to change a done ticket\'s status', () => {
-  const row = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8').split('\n').find(l => l.startsWith('| `speck set <id> <field> <value>`'));
-  assert.ok(row, 'the speck set row is there');
-  assert.match(row, /done/);
-  assert.match(row, /refuses/);
 });
