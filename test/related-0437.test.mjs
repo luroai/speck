@@ -4,28 +4,17 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { CLI, env, gIn } from './support/ship.mjs';
 import { ROOT } from './support/panel.mjs';
+import { repo, write } from './support/related.mjs';
 import { relatedTests, relatedReport } from '../scripts/related.mjs';
 
 const BUILD = fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
 const BRIEF = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
 
 const speck = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env });
-const write = (dir, rel, text) => { fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); fs.writeFileSync(path.join(dir, rel), text); };
-
-// A committed repo on main with these files, then a branch `feature`.
-function repo(files) {
-  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-related-')));
-  gIn(dir, 'init', '-q', '-b', 'main');
-  for (const [rel, text] of Object.entries(files)) write(dir, rel, text);
-  gIn(dir, 'add', '-A'); gIn(dir, 'commit', '-qm', 'base');
-  gIn(dir, 'checkout', '-qb', 'feature');
-  return dir;
-}
 
 const FILES = {
   'scripts/turns.mjs': 'export const a = 1;\n',
@@ -36,6 +25,9 @@ const FILES = {
   'speck/tickets/0001-x.md': '# ticket\n',
   'test/support/page.mjs': "export const PAGE = path.join(ROOT, 'templates', 'panel.html');\n",
   'test/support/other.mjs': 'export const x = 1;\n',
+  // Two more, so page.mjs is one of four and the panel's page counts as covered through it (0447).
+  'test/support/third.mjs': 'export const y = 1;\n',
+  'test/support/fourth.mjs': 'export const z = 1;\n',
   'test/by-path.test.mjs': "const f = 'templates/panel.html';\n",
   'test/by-import.test.mjs': "import { a } from '../scripts/turns.mjs';\n",
   'test/via-support.test.mjs': "import { PAGE } from './support/page.mjs';\n",
