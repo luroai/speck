@@ -30,7 +30,7 @@ const MINE = { ANTHROPIC_AUTH_TOKEN: 'mine-1', ANTHROPIC_API_KEY: 'mine-2', ANTH
 // speck run's Foreman queue for a stuck ticket 0001, on `extra` settings, starting nothing for real: { starts, said }.
 function queueFor(extra, opts = {}) {
   const r = blockedRepo({ status: 'building' }), starts = [], said = [];
-  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: 'fix', ...extra }),
+  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), watch: 'fix', ...extra }),
     words: [], cfg: { base_branch: 'main', branch_prefix: 'speck/' }, max: 1, running: new Set(), ships: { again: () => {} }, say: m => said.push(m),
     startBuild: () => {}, start: (argv, cwd, log, env) => { starts.push({ argv, cwd, env }); return { pid: 92000, exited: () => false }; }, alive: () => true, withToken: () => [],
     ...(typeof opts === 'function' ? opts(r) : opts) });
@@ -41,7 +41,7 @@ function queueFor(extra, opts = {}) {
 // The Foreman's words with the provider's launcher taken off the front: Claude Code's own.
 const claudeOf = argv => argv.slice(5);
 
-test('0392 AC1: with foreman deepseek, the Foreman runs Claude Code through DeepSeek on foreman_model or DeepSeek\'s default, without foreman_effort', () => {
+test('0392 AC1: with foreman deepseek, the Foreman runs Claude Code through DeepSeek on watch_model or DeepSeek\'s default, without watch_effort', () => {
   assert.equal(foremanAgentOf({ foreman: 'deepseek' }), 'deepseek');
   const argv = foremanArgv({ foreman: 'deepseek' }, 'B');
   assert.deepEqual(argv.slice(0, 5), [process.execPath, PROVIDER_SCRIPT, FOREMAN_MODE, 'deepseek', 'https://api.deepseek.com/anthropic']);
@@ -50,15 +50,15 @@ test('0392 AC1: with foreman deepseek, the Foreman runs Claude Code through Deep
   assert.ok(claude.includes('--bare'), 'Anthropic sign-in only from the key it is given');
   assert.equal(after(claude, '-p'), 'B', 'the brief is the prompt');
   assert.equal(after(claude, '--model'), 'deepseek-v4-pro');
-  assert.equal(after(claudeOf(foremanArgv({ foreman: 'deepseek', foreman_model: 'deepseek-v4-flash' }, 'B')), '--model'), 'deepseek-v4-flash');
-  const effort = foremanArgv({ foreman: 'deepseek', foreman_effort: 'high' }, 'B');
+  assert.equal(after(claudeOf(foremanArgv({ foreman: 'deepseek', watch_model: 'deepseek-v4-flash' }, 'B')), '--model'), 'deepseek-v4-flash');
+  const effort = foremanArgv({ foreman: 'deepseek', watch_effort: 'high' }, 'B');
   // 0402: the effort flags, not any word with "effort" in it, such as a worktree's folder in the script's path.
-  assert.ok(!effort.some(w => w === '--effort' || w.startsWith('--effort=') || /model_reasoning_effort/.test(w)), 'foreman_effort isn\'t passed');
+  assert.ok(!effort.some(w => w === '--effort' || w.startsWith('--effort=') || /model_reasoning_effort/.test(w)), 'watch_effort isn\'t passed');
   assert.ok(!effort.includes('high'));
 });
 
 test('0392 AC1: speck run\'s Foreman queue starts a DeepSeek Foreman with its brief and names DeepSeek', () => {
-  const { r, starts, said } = queueFor({ foreman: 'deepseek' }, { cantStart: () => '' });
+  const { r, starts, said } = queueFor({ watch_agent: 'deepseek' }, { cantStart: () => '' });
   assert.equal(starts.length, 1, said.join('\n'));
   const { argv, cwd, env } = starts[0];
   assert.equal(argv[1], PROVIDER_SCRIPT);
@@ -117,10 +117,10 @@ test('0392 AC3: with no DeepSeek key, or no Claude Code, the Foreman isn\'t star
   assert.equal(foremanCantStart(r.dir, { foreman: 'deepseek' }, { installed: yes }), '');
   assert.equal(foremanCantStart(r.dir, { foreman: 'claude' }, { installed: () => false }), '', 'only a provider\'s is checked here');
 
-  const noKey = queueFor({ foreman: 'deepseek' }, r2 => ({ cantStart: c => foremanCantStart(r2.dir, c, { installed: yes }) }));
+  const noKey = queueFor({ watch_agent: 'deepseek' }, r2 => ({ cantStart: c => foremanCantStart(r2.dir, c, { installed: yes }) }));
   assert.equal(noKey.starts.length, 0);
   assert.ok(noKey.said.some(m => /^0001: speck couldn't start looking into it on DeepSeek: this machine has no DeepSeek API key/.test(m)), noKey.said.join('\n'));
-  const noClaude = queueFor({ foreman: 'deepseek' }, r2 => (saveProviderKey(r2.dir, 'deepseek', KEY), { cantStart: c => foremanCantStart(r2.dir, c, { installed: () => false }) }));
+  const noClaude = queueFor({ watch_agent: 'deepseek' }, r2 => (saveProviderKey(r2.dir, 'deepseek', KEY), { cantStart: c => foremanCantStart(r2.dir, c, { installed: () => false }) }));
   assert.equal(noClaude.starts.length, 0);
   assert.ok(noClaude.said.some(m => /couldn't start looking into it on DeepSeek: .*needs Claude Code installed/.test(m)), noClaude.said.join('\n'));
 });
@@ -132,8 +132,8 @@ test('0392 AC3: a blank foreman with a DeepSeek builder runs on DeepSeek, and fo
   assert.equal(foremanAgentOf({ builder: 'deepseek', foreman: 'codex' }), 'codex', 'a foreman that is set wins');
   assert.equal(foremanAgentOf({ builder: 'DeepSeek' }), 'claude', 'named exactly, as a builder is');
   assert.equal(foremanAgentOf({ foreman: '__proto__' }), 'claude');
-  assert.equal(checkConfigValue('foreman', 'deepseek'), 'deepseek');
-  assert.throws(() => checkConfigValue('foreman', 'DeepSeek'), /foreman must be blank or one of claude, codex, cursor, deepseek/);
+  assert.equal(checkConfigValue('watch_agent', 'deepseek'), 'deepseek');
+  assert.throws(() => checkConfigValue('watch_agent', 'DeepSeek'), /watch_agent must be blank or one of claude, codex, cursor, deepseek/);
 });
 
 test('0392 AC4: any provider in speck\'s list runs the Foreman the same way', () => {
@@ -154,7 +154,7 @@ test('0392 AC4: any provider in speck\'s list runs the Foreman the same way', ()
   const [{ env }] = fake.calls();
   assert.equal(env.ANTHROPIC_BASE_URL, ACME.address);
   assert.equal(env.ANTHROPIC_API_KEY, ACME_KEY);
-  const q = queueFor({ foreman: 'acme' }, { providers, cantStart: () => '' });
+  const q = queueFor({ watch_agent: 'acme' }, { providers, cantStart: () => '' });
   assert.equal(q.starts[0]?.argv[3], 'acme', q.said.join('\n'));
   assert.ok(q.said.some(m => /speck \(Acme\) is looking into it/.test(m)), q.said.join('\n'));
 });
@@ -164,5 +164,5 @@ test('0392 AC3: the README, the brief and the config template name deepseek as a
   const mentions = (text, setting) => text.split(/\n\s*\n|\n\|/).filter(part => part.includes(setting)).some(part => /\bdeepseek\b/.test(part));
   assert.ok(mentions(read('README.md'), '`foreman_model`'), 'README');
   assert.ok(mentions(read('docs/brief.md'), '`foreman_model`'), 'brief');
-  assert.match(read('templates/config.yml'), /^foreman: .*\bdeepseek\b/m);
+  assert.match(read('templates/config.yml'), /^watch_agent: .*\bdeepseek\b/m);
 });

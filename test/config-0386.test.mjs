@@ -16,7 +16,7 @@ import { DEFAULT_BUILD_COMMAND } from '../scripts/build-model.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OWN = ['builder', 'builder_model', 'build_command', 'resume_command', 'reviewer', 'reviewer_model', 'reviewer_effort',
-  'allow_same_model_review', 'auto_ship', 'auto_ship_risk', 'foreman', 'foreman_model', 'foreman_effort', 'foreman_fixing',
+  'allow_same_model_review', 'auto_ship', 'auto_ship_risk', 'watch_agent', 'watch_model', 'watch_effort', 'watch',
   'max_parallel_builds', 'max_parallel_tests', 'builder_effort']; // 0402: and the builder's effort
 const CONFIG = `base_branch: main
 builder: claude
@@ -25,7 +25,7 @@ reviewer: codex
 reviewer_effort: high   # the project's default
 auto_ship: false
 auto_ship_risk: [low]
-foreman_fixing: tell
+watch: tell
 max_parallel_builds: 1
 ship_mode: local
 commands:
@@ -59,7 +59,7 @@ function repo() {
 const VALUES = {
   builder: 'cursor', builder_model: 'gpt-5', build_command: 'my-agent "/speck-build {id}" --id {session}', resume_command: "my-agent --resume '{session}'",
   reviewer: 'claude', reviewer_model: 'opus', reviewer_effort: 'max', allow_same_model_review: 'true', auto_ship: 'true', auto_ship_risk: 'low,high',
-  foreman: 'codex', foreman_model: 'gpt-5.5', foreman_effort: 'low', foreman_fixing: 'fix', max_parallel_builds: '3', max_parallel_tests: '4',
+  watch_agent: 'codex', watch_model: 'gpt-5.5', watch_effort: 'low', watch: 'fix', max_parallel_builds: '3', max_parallel_tests: '4',
   builder_effort: 'high', // 0402
 };
 
@@ -132,7 +132,7 @@ test('0386 AC2: every speck command, in the main checkout and a worktree, uses t
 test('0386 AC3: each value is refused with the same message speck config set --repo gives', () => {
   const r = repo();
   const bad = [['auto_ship', 'yes'], ['allow_same_model_review', 'maybe'], ['auto_ship_risk', 'medium'], ['reviewer_effort', 'huge'],
-    ['foreman', 'gemini'], ['foreman_fixing', 'always'], ['foreman_effort', 'huge'], ['max_parallel_builds', '0'], ['max_parallel_tests', 'two']];
+    ['watch_agent', 'gemini'], ['watch', 'always'], ['watch_effort', 'huge'], ['max_parallel_builds', '0'], ['max_parallel_tests', 'two']];
   for (const [key, value] of bad) {
     const own = r.set(r.dir, key, value), shared = r.set(r.dir, '--repo', key, value);
     assert.notEqual(own.status, 0, key);
@@ -148,7 +148,7 @@ test('0386 AC3: each value reads back exactly as given, including spaces, quotes
   const cases = [
     ['reviewer_model', 'a model "with" quotes and \'both\' # kinds', 'a model "with" quotes and \'both\' # kinds'],
     ['build_command', 'claude -p "/speck-build {id}" --session-id {session}', 'claude -p "/speck-build {id}" --session-id {session}'],
-    ['resume_command', ' padded ', ' padded '], ['builder_model', '42', '42'], ['foreman_model', 'true', 'true'],
+    ['resume_command', ' padded ', ' padded '], ['builder_model', '42', '42'], ['watch_model', 'true', 'true'],
     ['auto_ship_risk', '[low, high]', ['low', 'high']], ['auto_ship_risk', 'high', ['high']], ['auto_ship', 'false', false],
     ['max_parallel_tests', '7', 7], ['reviewer_effort', '', ''],
   ];

@@ -46,7 +46,7 @@ test('0451 AC1: the clock\'s colon blinks once a second', async () => {
   }
 });
 
-test('0451 AC1: "FIXING ON" no longer shows anywhere on the screen, with foreman_fixing fix', async () => {
+test('0451 AC1: "FIXING ON" no longer shows anywhere on the screen, with watch fix', async () => {
   for (const fixing of ['fix', 'tell', 'off']) {
     const { p, c } = await shown({ fixing });
     c.set(8, 15, 0, 0);
@@ -87,7 +87,7 @@ test('0451 AC3: the screen\'s accessible name no longer mentions fixing; Setting
     assert.doesNotMatch(name + tip, /fixing/i);
     // 0458: the Pipeline pop-up shows only the log, so it no longer says it
   }
-  assert.ok(SETTING_GROUPS.find(g => g.title === 'Watching').settings.some(s => s.key === 'foreman_fixing'), 'Settings still has foreman_fixing');
+  assert.ok(SETTING_GROUPS.find(g => g.title === 'Watching').settings.some(s => s.key === 'watch'), 'Settings still has watch');
 });
 
 test('0451 AC1: neither the README nor the brief says the screen shows "Fixing on"', () => {

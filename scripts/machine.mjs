@@ -4,11 +4,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, parseYaml, worktreeList, yamlValue } from './core.mjs';
+import { SpeckError, parseYaml, parseConfig, worktreeList, yamlValue } from './core.mjs';
 import { sharedCacheDir } from './turns.mjs';
 
 export const MACHINE_SETTINGS = Object.freeze(['builder', 'builder_model', 'builder_effort', 'build_command', 'resume_command', 'reviewer', 'reviewer_model',
-  'reviewer_effort', 'allow_same_model_review', 'auto_ship', 'auto_ship_risk', 'foreman', 'foreman_model', 'foreman_effort', 'foreman_fixing',
+  'reviewer_effort', 'allow_same_model_review', 'auto_ship', 'auto_ship_risk', 'watch_agent', 'watch_model', 'watch_effort', 'watch',
   'max_parallel_builds', 'max_parallel_tests']);
 
 // What each holds as speck reads it, for checking this machine's file: a whole number, true or false, a list of
@@ -32,10 +32,11 @@ export function machineConfigFile(repo) {
 }
 
 // This machine's values, as written in its file: only the settings it can hold, and {} when there's no file.
+// 0487: an old name is read as its new one, so the next save writes only the new name.
 export function machineConfig(repo) {
   let text;
   try { text = fs.readFileSync(machineConfigFile(repo), 'utf8'); } catch (e) { if (e.code === 'ENOENT') return {}; throw e; }
-  const read = parseYaml(text), out = {};
+  const read = parseConfig(text), out = {};
   for (const key of MACHINE_SETTINGS) if (Object.hasOwn(read, key)) out[key] = read[key];
   return out;
 }

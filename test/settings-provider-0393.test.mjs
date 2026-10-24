@@ -61,7 +61,7 @@ const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', providers 
       row('builder', builder, { choices: ['claude', 'codex', 'cursor', ...names] }), row('builder_model', ''),
       row('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor', ...names] }), row('reviewer_model', ''),
       row('reviewer_effort', '', { choices: EFFORTS })] },
-    { title: 'Watching', settings: [row('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor', ...names] }), row('foreman_model', '')] }],
+    { title: 'Watching', settings: [row('watch_agent', foreman, { choices: ['', 'claude', 'codex', 'cursor', ...names] }), row('watch_model', '')] }],
   builder_models: { builder, models: CLAUDE_MODELS }, reviewer_models: { reviewer, models: [{ slug: 'gpt-new', efforts: ['low'] }] },
   foreman_models: { foreman: 'claude', models: CLAUDE_MODELS }, claude_models: CLAUDE_MODELS, providers, your_agents: yoursFor(providers) };
 };
@@ -77,7 +77,7 @@ const keyPosts = p => p.calls93.filter(c => c.method === 'POST' && c.url.startsW
 test('0393 AC1: Settings offers DeepSeek as builder, reviewer and Foreman, and its models once chosen', async () => {
   const r = panelRepo();
   const answer = panelSettings(r.dir, { agents: AGENTS });
-  for (const key of ['builder', 'reviewer', 'foreman']) assert.ok(settingOf(answer, key).choices.includes('deepseek'), key);
+  for (const key of ['builder', 'reviewer', 'watch_agent']) assert.ok(settingOf(answer, key).choices.includes('deepseek'), key);
   assert.deepEqual(providerView(answer, 'deepseek').models.map(m => m.slug), ['deepseek-v4-pro', 'deepseek-v4-flash']);
   assert.equal(providerView(answer, 'deepseek').label, 'DeepSeek');
   assert.doesNotMatch(JSON.stringify(answer.providers), /Claude Code/);
@@ -93,7 +93,7 @@ test('0393 AC1: Settings offers DeepSeek as builder, reviewer and Foreman, and i
 test('0393 AC1: the lists label DeepSeek as DeepSeek, never Claude Code, and choosing it lists its models without asking the server', async () => {
   const p = keysPage(view());
   await openSettings(p);
-  for (const key of ['builder', 'reviewer', 'foreman']) {
+  for (const key of ['builder', 'reviewer', 'watch_agent']) {
     const o = options(p, key).find(x => x.value === 'deepseek');
     assert.equal(o?.text, 'DeepSeek', key);
   }
@@ -102,7 +102,7 @@ test('0393 AC1: the lists label DeepSeek as DeepSeek, never Claude Code, and cho
   await p.settle();
   assert.deepEqual(options(p, 'builder_model').map(o => o.value), ['', 'deepseek-v4-pro', 'deepseek-v4-flash']);
   // The Foreman, left blank, runs on the builder's agent: DeepSeek's models too.
-  assert.deepEqual(options(p, 'foreman_model').map(o => o.value), ['', 'deepseek-v4-pro', 'deepseek-v4-flash']);
+  assert.deepEqual(options(p, 'watch_model').map(o => o.value), ['', 'deepseek-v4-pro', 'deepseek-v4-flash']);
   changeTo(p, 'reviewer', 'deepseek');
   await p.settle();
   assert.deepEqual(options(p, 'reviewer_model').map(o => o.value), ['', 'deepseek-v4-pro', 'deepseek-v4-flash']);
@@ -111,9 +111,9 @@ test('0393 AC1: the lists label DeepSeek as DeepSeek, never Claude Code, and cho
   // Chosen as the Foreman itself.
   const f = keysPage(view());
   await openSettings(f);
-  changeTo(f, 'foreman', 'deepseek');
+  changeTo(f, 'watch_agent', 'deepseek');
   await f.settle();
-  assert.deepEqual(options(f, 'foreman_model').map(o => o.value), ['', 'deepseek-v4-pro', 'deepseek-v4-flash']);
+  assert.deepEqual(options(f, 'watch_model').map(o => o.value), ['', 'deepseek-v4-pro', 'deepseek-v4-flash']);
 });
 
 test('0393 AC1: switching the builder to DeepSeek from the panel builds with DeepSeek\'s own command and keeps a DeepSeek model', () => {
@@ -197,7 +197,7 @@ test('0393 AC3 (0408 AC1): DeepSeek with no key that isn\'t yours is not offered
 test('0393 AC3: the panel\'s checks say when Claude Code isn\'t installed, as speck doctor\'s do', async () => {
   const r = panelRepo();
   const answer = panelSettings(r.dir, { agents: NO_CLAUDE });
-  for (const key of ['builder', 'reviewer', 'foreman']) {
+  for (const key of ['builder', 'reviewer', 'watch_agent']) {
     const s = settingOf(answer, key);
     assert.ok(!s.choices.includes('deepseek'), key);
     assert.match(s.missing, /DeepSeek/, key);
@@ -205,10 +205,10 @@ test('0393 AC3: the panel\'s checks say when Claude Code isn\'t installed, as sp
   }
   // The page shows the Foreman's line too.
   const v = view();
-  v.groups[1].settings[0].missing = settingOf(answer, 'foreman').missing;
+  v.groups[1].settings[0].missing = settingOf(answer, 'watch_agent').missing;
   const p = keysPage(v);
   await openSettings(p);
-  assert.match(rowOf(p, 'foreman').textContent, /Claude Code isn't installed/);
+  assert.match(rowOf(p, 'watch_agent').textContent, /Claude Code isn't installed/);
   // Installed: offered.
   assert.ok(settingOf(panelSettings(r.dir, { agents: AGENTS }), 'builder').choices.includes('deepseek'));
   // Chosen already: still offered, saying it can't run.
@@ -223,7 +223,7 @@ test('0393 AC4: any provider in speck\'s list appears in Settings the same way',
   const r = panelRepo();
   saveProviderKey(r.dir, 'testco', KEY, { providers: WITH_TESTCO });
   const answer = panelSettings(r.dir, { agents: AGENTS, providers: WITH_TESTCO });
-  for (const key of ['builder', 'reviewer', 'foreman']) assert.ok(settingOf(answer, key).choices.includes('testco'), key);
+  for (const key of ['builder', 'reviewer', 'watch_agent']) assert.ok(settingOf(answer, key).choices.includes('testco'), key);
   const tc = providerView(answer, 'testco');
   assert.equal(tc.label, 'TestCo');
   assert.deepEqual(tc.models.map(m => m.slug), ['tc-big', 'tc-small']);
@@ -235,7 +235,7 @@ test('0393 AC4: any provider in speck\'s list appears in Settings the same way',
   // On the page: its label, its models and its key field.
   const p = keysPage(view({ providers: [providerRow(PROVIDERS[0]), providerRow(TESTCO)] }), [{ ok: true, provider: 'testco', key_set: true }]);
   await openSettings(p);
-  for (const key of ['builder', 'reviewer', 'foreman']) assert.equal(options(p, key).find(x => x.value === 'testco')?.text, 'TestCo', key);
+  for (const key of ['builder', 'reviewer', 'watch_agent']) assert.equal(options(p, key).find(x => x.value === 'testco')?.text, 'TestCo', key);
   changeTo(p, 'reviewer', 'testco');
   await p.settle();
   assert.deepEqual(options(p, 'reviewer_model').map(o => o.value), ['', 'tc-big', 'tc-small']);

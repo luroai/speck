@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, sh, loadConfig, parseYaml, findRepoRoot, EFFORTS } from './core.mjs';
+import { SpeckError, sh, loadConfig, parseConfig, findRepoRoot, EFFORTS } from './core.mjs';
 import { sameModelProblem } from './same-model.mjs';
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
@@ -24,14 +24,14 @@ export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
 export const SETTING_GROUPS = [
   // 0286: the panel shows this group's settings in its own group, under the speck run switch. 0486: Watching, was Foreman.
   { title: 'Watching', settings: [
-    { key: 'foreman_fixing', default: 'tell',
+    { key: 'watch', default: 'tell', // 0487: were foreman_fixing, foreman, foreman_model and foreman_effort
       explain: 'What speck does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. With fix, it also starts an agent to look into work that stops for a reason speck has no steps for, which resumes the build, ships it again once, makes a draft fix ticket or asks you.' },
-    // 0287: the agent the Foreman looks into stops with
-    { key: 'foreman', default: '',
+    // 0287: the agent speck looks into stops with
+    { key: 'watch_agent', default: '',
       explain: 'The agent speck runs on when it looks into work that stopped for a reason speck has no steps for: claude, codex, cursor or a model provider, such as DeepSeek, with your own API key for it. Blank uses the builder when that\'s codex, cursor or a model provider, and claude otherwise.' },
-    { key: 'foreman_model', default: '',
+    { key: 'watch_model', default: '',
       explain: 'The model speck\'s agent runs on, picked from that agent\'s models or written as it names it. Blank leaves it to the agent\'s own default.' },
-    { key: 'foreman_effort', default: '',
+    { key: 'watch_effort', default: '',
       explain: 'How hard speck\'s agent thinks: low, medium, high, xhigh or max, or blank for the agent\'s own default. Cursor isn\'t given it, as its model names carry the effort.' },
   ] },
   { title: 'Shipping', settings: [
@@ -81,7 +81,7 @@ const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] :
 // confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: allow_same_model_review
 // weakens the independent review. 0279: and builder_model. 0293: and builder, which sets build_command with it.
 export const EDITABLE = Object.freeze(['builder', 'builder_model', 'builder_effort', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
-  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']);
+  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'watch', 'watch_agent', 'watch_model', 'watch_effort']);
 const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
@@ -96,16 +96,16 @@ function choicesOf(key, file, providers = knownProviders()) {
   if (key === 'reviewer_effort' || key === 'builder_effort') return ['', ...EFFORTS]; // 0402: and the builder's
   if (key === 'auto_ship') return [true, false];
   if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
-  if (key === 'foreman_fixing') return [...FIXING]; // 0286
+  if (key === 'watch') return [...FIXING]; // 0286
   if (key === 'ship_mode') return [...SHIP_MODES]; // 0295
-  if (key === 'foreman') return [...new Set(['', ...FOREMAN_AGENTS, ...named])]; // 0287
-  if (key === 'foreman_effort') return ['', ...EFFORTS];
+  if (key === 'watch_agent') return [...new Set(['', ...FOREMAN_AGENTS, ...named])]; // 0287
+  if (key === 'watch_effort') return ['', ...EFFORTS];
   return undefined;
 }
 
 // A setting's value as speck reads it from the file's text: the file's own, or speck's default when it's missing.
 function valueIn(text, repo, key) {
-  const inFile = lookup(parseYaml(text), key) !== undefined, read = lookup(loadConfig(repo, { machine: false }), key);
+  const inFile = lookup(parseConfig(text), key) !== undefined, read = lookup(loadConfig(repo, { machine: false }), key);
   return { value: inFile && read !== undefined ? read : SETTING_GROUPS.flatMap(g => g.settings).find(s => s.key === key).default, inFile };
 }
 
@@ -122,12 +122,12 @@ function valueIn(text, repo, key) {
 // 0393: each model provider in `providers`, given back in `providers` with its label, its models and whether this
 // machine has its key (never the key), is offered as builder, reviewer and Foreman while Claude Code is installed.
 export function panelSettings(repo, { models, builderModels, foremanModels, agents, providers = knownProviders(repo) } = {}) {
-  const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
+  const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseConfig(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
     const { value, inFile } = valueIn(text, repo, s.key), all = choicesOf(s.key, file, providers);
     // 0393: the one set now is the one the view shows: this machine's when it has its own.
     const now = String((MACHINE_SETTINGS.includes(s.key) && Object.hasOwn(mine, s.key) ? mine[s.key] : value) ?? '');
-    const { choices, missing } = ['reviewer', 'builder', 'foreman'].includes(s.key) && agents ? readyReviewers(all, agents, now, s.key, providers) : { choices: all };
+    const { choices, missing } = ['reviewer', 'builder', 'watch_agent'].includes(s.key) && agents ? readyReviewers(all, agents, now, s.key, providers) : { choices: all };
     // 0293: build_command as the file has it, whether it was set by hand, and each builder's own, for the view to say
     // what switching the builder sets it to, and to ask first when it replaces one set by hand. 0324: and whether speck
     // run builds each ticket with its own builder with it, so the view says when it doesn't.
@@ -191,7 +191,7 @@ function readyReviewers(choices, { agents }, current, key, providers = knownProv
       cant.push(`${p.label} can't run here: ${why}.`); // chosen already, so still offered
       return true;
     }
-    if (key === 'foreman') return true;
+    if (key === 'watch_agent') return true;
     const agent = key === 'builder' ? byId.get(c) : Object.hasOwn(REVIEWER_AGENTS, c) ? byId.get(REVIEWER_AGENTS[c]) : undefined;
     if (!agent || (agent.installed && agent.signed_in) || c === current) return true;
     left.push(`${c} (${String(agent.why || `${agent.name} isn't ready.`).replace(/\.$/, '')})`);
@@ -381,7 +381,7 @@ function checkChange(repo, text, cfg, { key, value, machine, blank }) {
     return { status: 422, error: 'reviewer_model must be on one line, with no tabs or other control characters.' };
   // 0276: reviewer_effort is checked as speck config set checks it, which accepts an effort Codex lists, such as ultra.
   // 0402: and builder_effort.
-  const choices = key === 'reviewer_effort' || key === 'builder_effort' ? undefined : choicesOf(key, parseYaml(text), knownProviders(repo));
+  const choices = key === 'reviewer_effort' || key === 'builder_effort' ? undefined : choicesOf(key, parseConfig(text), knownProviders(repo));
   if (choices && ![].concat(want).every(w => choices.includes(w)))
     return { status: 422, error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` };
   const now = own && Object.hasOwn(mine, key) ? mine[key] : repoValue;
@@ -461,7 +461,7 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
   }
   let next = text;
   for (const c of toFile) next = setConfigText(next, c.key.split('.'), yamlValue(c.want));
-  const read = parseYaml(next), unread = toFile.filter(c => JSON.stringify(lookup(read, c.key)) !== JSON.stringify(c.want));
+  const read = parseConfig(next), unread = toFile.filter(c => JSON.stringify(lookup(read, c.key)) !== JSON.stringify(c.want));
   if (unread.length)
     return refusal(422, Object.fromEntries(unread.map(c => [c.key, `Couldn't write ${c.key} so that speck reads it back as given. Edit speck/config.yml by hand instead.`])));
   // This machine's first, all at once, so that a write or commit that fails can put them back, and speck/config.yml as it was.

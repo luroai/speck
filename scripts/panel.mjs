@@ -284,7 +284,7 @@ export async function panelServer() {
   // What /api/state answers with for a reading: the board, plus speck run's state and the last restart's error, kept in
   // parts so a page gets only what changed since the board it has (0188, see boardVersions), with the finished tickets
   // the page shows only in the Shipped figures cut down to those (0178, see panelBoard).
-  // 0286: foreman_fixing as speck/config.yml has it now, or its default when that can't be read.
+  // 0286: watch as speck/config.yml has it now, or its default when that can't be read.
   const fixingNow = () => { try { return fixingOf(loadConfig(repo)); } catch { return 'tell'; } };
   const boards = boardVersions(), stateOf = out => {
     if (out.error) return { status: 500, body: JSON.stringify({ error: out.error }) };

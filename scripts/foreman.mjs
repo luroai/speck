@@ -4,6 +4,7 @@
 // so both say the same and neither works the reasons out for itself.
 import fs from 'node:fs';
 import path from 'node:path';
+import { setting } from './core.mjs';
 
 // Not <id>.json, so nothing that reads the runs folder's build records takes it for one.
 const FILE = 'run.foreman.json';
@@ -29,7 +30,7 @@ export function readForeman(runs) {
 // The reason a ready ticket isn't building, in a word or two, for the status: by the kind speck run recorded.
 const SHORT = { after: 'other tickets', slots: 'build slots', switching: 'new code', uncommitted: 'not committed', stopped: 'stopped', unstarted: 'not started', chat: 'Cursor chat', builder: 'builder' };
 
-// 0286: foreman_fixing, what the Foreman does with a blocked question: off (nothing), tell (counts it under Needs you)
+// 0286: watch (0487: was foreman_fixing), what the Foreman does with a blocked question: off (nothing), tell (counts it under Needs you)
 // or fix (takes the recommendation of one that changes nothing you'd notice and has a clear winner). tell by default,
 // and for any value speck doesn't know.
 export const FIXING = Object.freeze(['off', 'tell', 'fix']);
@@ -39,7 +40,7 @@ export const FIXING_SAYS = Object.freeze({
   tell: 'tell. speck leaves blocked questions to you, and counts them under Needs you.',
   fix: 'fix. speck takes the recommendation of a blocked question that changes nothing you\'d notice and has a clear winner, once per ticket.',
 });
-export const fixingOf = cfg => (cfg && FIXING.includes(cfg.foreman_fixing) ? cfg.foreman_fixing : 'tell');
+export const fixingOf = cfg => (FIXING.includes(setting(cfg, 'watch')) ? setting(cfg, 'watch') : 'tell');
 // 0286: whether the Foreman may take a blocked ticket's recommendation, from what `speck status --json` gives (0283):
 // a recommendation, no change you'd notice and a clear winner. Anything unknown is left for you.
 export const fixable = t => !!t && t.status === 'blocked' && typeof t.blocked_recommendation === 'string' && t.blocked_recommendation !== ''
@@ -67,7 +68,7 @@ export function switchingReady(tickets, running, own) {
 // { word, tone, building, ready: [{ id, why }], held: [message], ship: { running, hold, refused: [{ id, message }],
 // waiting: [{ id, why }] } | null,
 // blocked: [{ id, title, question }] }, word being the status in one or two words and tone its colour:
-// off, idle, ok (building or shipping), warn (waiting) or bad (needs you). 0286: `fixing` is foreman_fixing: with off,
+// off, idle, ok (building or shipping), warn (waiting) or bad (needs you). 0286: `fixing` is watch: with off,
 // blocked tickets aren't counted under Needs you. 0287: `agent` is the Foreman agent's (agentView), given back as it is,
 // its questions to you counted under Needs you. 0317: `fixing` is given back, each blocked ticket says whether the
 // Foreman will take its recommendation (foreman_will on the board's ticket), those aren't counted under Needs you, and

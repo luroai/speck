@@ -30,9 +30,9 @@ const YOURS = ({ cursor = false } = {}) => ({ list: true, agents: [
   { id: 'deepseek', name: 'DeepSeek', kind: 'provider', yours: true, ready: true, key_set: true, roles: [] }] });
 
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, for_machine: true, from: 'repo', repo_value: value, ...o });
-const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_model = '', reviewer_model = '', foreman_model = '', cursor = false } = {}) => ({ groups: [
-  { title: 'Watching', settings: [S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('foreman_model', foreman_model),
-    S('foreman_effort', '', { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] })] },
+const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_model = '', reviewer_model = '', watch_model = '', cursor = false } = {}) => ({ groups: [
+  { title: 'Watching', settings: [S('watch_agent', foreman, { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('watch_model', watch_model),
+    S('watch_effort', '', { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] })] },
   { title: 'Building and reviewing', settings: [
     S('builder', builder, { choices: ['claude', 'codex', 'cursor', 'deepseek'], build_command: { value: '', own: { claude: '', codex: '', cursor: '' }, each_ticket: true } }),
     S('builder_model', builder_model), S('builder_effort', '', { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] }), S('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor', 'deepseek'] }),
@@ -76,8 +76,8 @@ test('0400 AC1: the Settings answer lists only your agents\' models, by agent, w
 test('0400 AC1: Builder, Reviewer and Foreman each have one list of your agents\' models, grouped by agent, and no model list of their own', async () => {
   const p = settingsPage([view()]);
   await openSettings(p);
-  for (const key of ['builder_model', 'reviewer_model', 'foreman_model']) assert.equal(rowOf(p, key), undefined, `no ${key} list`);
-  for (const role of ['builder', 'reviewer', 'foreman']) {
+  for (const key of ['builder_model', 'reviewer_model', 'watch_model']) assert.equal(rowOf(p, key), undefined, `no ${key} list`);
+  for (const role of ['builder', 'reviewer', 'watch_agent']) {
     const groups = groupsOf(p, role);
     assert.deepEqual(groups.map(([label]) => label), ['Claude Code', 'Codex', 'DeepSeek'], `${role}: grouped by your agents, Cursor left out`);
     const codex = groups.find(([label]) => label === 'Codex')[1];
@@ -138,30 +138,30 @@ test('0400 AC2: effort is offered beside the list only for an agent that takes o
   assert.equal(shown(p, effortRow(p, 'reviewer_effort')), false, 'a provider takes no effort');
   changeTo(p, 'reviewer', 'claude|opus');
   assert.ok(shown(p, effortRow(p, 'reviewer_effort')), 'Claude Code takes an effort');
-  assert.ok(shown(p, effortRow(p, 'foreman_effort')), 'the Foreman on the builder\'s agent, Claude Code, takes one');
-  changeTo(p, 'foreman', 'cursor|auto');
-  assert.equal(shown(p, effortRow(p, 'foreman_effort')), false);
-  assert.equal(controlOf(p, 'foreman').value, 'cursor|auto', 'the list keeps what was chosen');
+  assert.ok(shown(p, effortRow(p, 'watch_effort')), 'the Foreman on the builder\'s agent, Claude Code, takes one');
+  changeTo(p, 'watch_agent', 'cursor|auto');
+  assert.equal(shown(p, effortRow(p, 'watch_effort')), false);
+  assert.equal(controlOf(p, 'watch_agent').value, 'cursor|auto', 'the list keeps what was chosen');
 });
 
 test('0400 AC3: the reviewer list has the Claude subagent under Claude Code, and the Foreman list the builder\'s agent', async () => {
-  const p = settingsPage([view({ builder: 'codex', foreman: 'claude', foreman_model: 'opus' })], [{ ok: true, changed: ['foreman', 'foreman_model'] }]);
+  const p = settingsPage([view({ builder: 'codex', foreman: 'claude', watch_model: 'opus' })], [{ ok: true, changed: ['watch_agent', 'watch_model'] }]);
   await openSettings(p);
   const claude = groupsOf(p, 'reviewer').find(([label]) => label === 'Claude Code')[1];
   assert.equal(claude.filter(v => v === 'claude-subagent|').length, 1, 'one subagent entry, under Claude Code');
   assert.match(labelOf(p, 'reviewer', 'claude-subagent|'), /^Claude Code · .*subagent.*builder's session/i);
-  for (const role of ['builder', 'foreman']) assert.ok(!offered(p, role).some(v => v.startsWith('claude-subagent')), `${role}: no subagent`);
-  const first = controlOf(p, 'foreman').children[0];
+  for (const role of ['builder', 'watch_agent']) assert.ok(!offered(p, role).some(v => v.startsWith('claude-subagent')), `${role}: no subagent`);
+  const first = controlOf(p, 'watch_agent').children[0];
   assert.equal(first.value, '|', 'the builder\'s agent first, outside the agents\' groups');
   assert.match(first.textContent, /builder's agent/i);
   assert.match(first.textContent, /Codex/, 'naming the agent that is now');
   assert.ok(!offered(p, 'builder').includes('|') && !offered(p, 'reviewer').includes('|'));
-  changeTo(p, 'foreman', '|');
+  changeTo(p, 'watch_agent', '|');
   p.press(saveButton(p));
   await p.settle();
   const q = saveQuery(p);
-  assert.equal(q.get('blank:foreman'), '', 'today\'s blank Foreman');
-  assert.equal(q.get('blank:foreman_model'), '');
+  assert.equal(q.get('blank:watch_agent'), '', 'today\'s blank Foreman');
+  assert.equal(q.get('blank:watch_model'), '');
 });
 
 test('0400 AC4: a choice the same-model check refuses is refused when saved, saying why, beside the role', async () => {
@@ -191,7 +191,7 @@ test('0400 AC4: a role whose saved agent is no longer one of yours says so and a
   assert.equal(controlOf(p, 'reviewer').value, 'cursor|grok-4.7-high');
   assert.match(said(p, 'reviewer'), /Cursor isn't one of your agents/);
   assert.match(said(p, 'reviewer'), /choose/i);
-  assert.match(said(p, 'foreman'), /Cursor isn't one of your agents/);
+  assert.match(said(p, 'watch_agent'), /Cursor isn't one of your agents/);
   assert.doesNotMatch(said(p, 'builder'), /isn't one of your agents/, 'the builder\'s Claude Code is yours');
   changeTo(p, 'reviewer', 'codex|gpt-6.1-sol');
   assert.doesNotMatch(said(p, 'reviewer'), /isn't one of your agents/, 'chosen again');
@@ -202,7 +202,7 @@ test('0400 AC1 self-check: while Claude Code isn\'t installed, a model provider 
   Object.assign(v.your_agents.agents.find(a => a.id === 'claude'), { installed: false, signed_in: false, ready: false });
   const p = settingsPage([v]);
   await openSettings(p);
-  for (const role of ['builder', 'reviewer', 'foreman']) {
+  for (const role of ['builder', 'reviewer', 'watch_agent']) {
     assert.ok(!offered(p, role).some(x => x.startsWith('deepseek|')), `${role}: no DeepSeek`);
     assert.match(said(p, role), /Not offered: DeepSeek, as speck runs its models through Claude Code, and Claude Code isn't installed/);
   }

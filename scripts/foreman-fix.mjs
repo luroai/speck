@@ -1,11 +1,11 @@
-// 0286: the Foreman clearing blocked questions. With foreman_fixing: fix, each of speck run's checks takes the
+// 0286: the Foreman clearing blocked questions. With watch: fix, each of speck run's checks takes the
 // recommendation of every blocked ticket whose question changes nothing you'd notice and has a clear winner (0283), as
 // the panel's Go with the recommendation button does (0284), so the same check's goWithQueue resumes its build. It
 // does so at most once per ticket: goWith refuses a second time, leaving the question for you.
 import { fixingOf, fixable } from './foreman.mjs';
 import { goWith as goWithDefault } from './go-with.mjs';
 
-// `readConfig()` gives speck/config.yml as it is now, so a change to foreman_fixing counts from the next check.
+// `readConfig()` gives speck/config.yml as it is now, so a change to watch counts from the next check.
 // `running` holds the builds speck run has going: one still ending after it blocked is tried on a later check.
 // check(tickets) marks each ticket it chose for as building, in `tickets`, for the rest of the check.
 export function foremanFixQueue({ repo, readConfig, running = new Set(), goWith = goWithDefault, say = console.log }) {
@@ -22,7 +22,7 @@ export function foremanFixQueue({ repo, readConfig, running = new Set(), goWith 
       if (out.status === 200) {
         told.delete(t.id);
         t.status = 'building';
-        say(`${t.id}: speck went with its recommendation (${t.blocked_recommendation}), as foreman_fixing is fix, and noted it in the ticket.`);
+        say(`${t.id}: speck went with its recommendation (${t.blocked_recommendation}), as watch is fix, and noted it in the ticket.`);
         continue;
       }
       const why = String(out.body?.error || `refused (${out.status})`);

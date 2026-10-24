@@ -59,7 +59,7 @@ test('0486 AC1: the scanner finds the strings a file has, and only those', () =>
 // The agent's queue, as 0318's tests have it: an agent runs until end().
 function agents(r) {
   const starts = [], said = [], live = new Set();
-  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: 'fix' }),
+  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), watch: 'fix' }),
     words: ['claude', '-p', '/speck-build {id}', '--session-id', '{session}'], cfg: { base_branch: 'main', branch_prefix: 'speck/' }, max: 1, running: new Set(),
     ships: { again: () => {} }, say: m => said.push(m), startBuild: () => {},
     start: (argv, cwd, log, env) => { const pid = 91000 + starts.length; starts.push({ token: env.SPECK_FOREMAN_RUN, pid }); live.add(pid); return { pid, exited: () => !live.has(pid) }; },
@@ -93,7 +93,7 @@ test('0486 AC1: speck run\'s lines and speck status say speck where they said th
 
 test('0486 AC1: a note saying the Foreman chose a recommendation still counts as speck\'s one choice for the ticket', () => {
   const r = blockedRepo();
-  const old = '- Went with the recommendation: A (chosen by the Foreman, as foreman_fixing is fix, 2026-10-18 10:00 UTC).';
+  const old = '- Went with the recommendation: A (chosen by the Foreman, as watch is fix, 2026-10-18 10:00 UTC).';
   fs.writeFileSync(r.file, r.ticket().replace('- A note.', `- A note.\n${old}`));
   r.g('commit', '-qam', 'old choice');
   assert.equal(wentWithLines([old])[0].by, 'foreman');
@@ -102,7 +102,7 @@ test('0486 AC1: a note saying the Foreman chose a recommendation still counts as
   assert.match(out.body.error, /^speck has already gone with a recommendation for ticket 0001 once/);
   const fresh = blockedRepo();
   assert.equal(goWith(fresh.dir, '0001', new Date('2026-10-24T10:00:00Z'), { by: 'foreman' }).status, 200);
-  assert.match(fresh.ticket(), /\(chosen by speck, as foreman_fixing is fix, 2026-10-24 10:00 UTC\)/);
+  assert.match(fresh.ticket(), /\(chosen by speck, as watch is fix, 2026-10-24 10:00 UTC\)/);
   assert.equal(wentWithLines(fresh.ticket().split('\n'))[0].by, 'foreman');
 });
 
