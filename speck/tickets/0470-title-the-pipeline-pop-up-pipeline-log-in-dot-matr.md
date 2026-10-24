@@ -1,7 +1,7 @@
 ---
 id: "0470"
 title: "Title the Pipeline pop-up Pipeline log in dot-matrix letters"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0470 · Title the Pipeline pop-up Pipeline log in dot-matrix letters
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Pressing speck's screen opens a pop-up titled `Pipeline` in small monospace text, with a separate `Log` heading on the line under it. Since 0458 the log is all it shows, so the two headings split one name over two lines, and the small title doesn't match speck's header.
