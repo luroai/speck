@@ -41,6 +41,7 @@ An open shipped ticket shows the same step track and table as one in flight, wit
 - Asked for by the user on 2026-10-24, after choosing the step track and facts grid for open build tickets (0461, 0462; mock-ups at https://claude.ai/artifact/BANvGzKKYy1p4AjBipypTb): "that layout should just be the template for all tickets in plan and ship. And also when you open a ticket in the full screen mode, like that table should be there as well."
 - Today: the Shipped list in `templates/panel.js` (0157, 0162, 0420) draws `figs` (Time, Review rounds, Reviewer tokens, Builder tokens, Builder cost) as `.fig` label and value pairs when a row is open.
 - Waits for 0463: both change the shared table and `templates/panel.css`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
