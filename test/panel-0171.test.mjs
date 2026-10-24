@@ -9,8 +9,8 @@ import { rules, tokens, get, rule } from './support/css.mjs';
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 // Each stage's class on the card and the colour token of its border.
-// 0426: Cursor's blue, cyan (the inbox's own colour), yellow and green.
-const STAGES = { 'at-build': '--blue', 'at-check': '--inbox', 'at-review': '--yellow', 'at-ship': '--green' };
+// 0426: Cursor's blue, cyan (the inbox's own colour), yellow and green. 0461: purple while it ships, as its Ship bar is.
+const STAGES = { 'at-build': '--blue', 'at-check': '--inbox', 'at-review': '--yellow', 'at-ship': '--purple' };
 const TICKETS = [
   T('0501', 'building', { title: 'Writing its code', started: ago(65), build_running: true }),
   T('0502', 'building', { title: 'Checking itself', started: ago(65), build_running: true, self_check: 'no changes' }),
@@ -119,7 +119,7 @@ const RGB = v => `(() => { const s = document.createElement('span'); s.style.col
   const c = getComputedStyle(s).color; s.remove(); return c; })()`;
 const colours = async b => {
   const c = {};
-  for (const k of ['line', 'text', 'run', 'inbox', 'warn', 'ok', 'idea', 'ok-bg', 'bad', 'bad-bg', 'panel', 'raise', 'blue', 'yellow', 'green']) c[k] = await b.js(RGB(`var(--${k})`));
+  for (const k of ['line', 'text', 'run', 'inbox', 'warn', 'ok', 'idea', 'ok-bg', 'bad', 'bad-bg', 'panel', 'raise', 'blue', 'yellow', 'green', 'purple']) c[k] = await b.js(RGB(`var(--${k})`));
   return c;
 };
 const LOOK = `[...document.querySelectorAll('#queue .q')].map(n => { const s = getComputedStyle(n);

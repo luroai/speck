@@ -918,7 +918,8 @@ function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : stage ? ` at-${stage}` : !t.inFlight ? ' queued' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   // 0419: the id and title, then one details line: what it's doing, or that it's queued, then its priority, size and risk.
   // 0434: its priority, size and risk only while it's open.
-  const top = el('div', 'top', null, titleLine(t, !t.inFlight), t.inFlight ? progressOf(t, d, isOpen) : queuedLine(t, isOpen));
+  // 0461: an open one in flight shows its five steps as a track under its title.
+  const top = el('div', 'top', null, titleLine(t, !t.inFlight), t.inFlight && isOpen ? trackOf(t) : null, t.inFlight ? progressOf(t, d, isOpen) : queuedLine(t, isOpen));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
@@ -968,6 +969,17 @@ function queueItem(t) {
   }
   q.appendChild(logBox(id));
   return q;
+}
+// 0461: a ticket's five steps, each a bar with its name under it, in its own colour once it's reached. A blocked
+// ticket's, or one whose build stopped, has its current step in crimson.
+const STEP_KEYS = ['build', 'check', 'review', 'approve', 'ship'];
+function trackOf(t) {
+  const steps = (Array.isArray(t.steps) ? t.steps : []).slice(0, STEP_KEYS.length).map((s, i) => {
+    const n = el('span', `step ${STEP_KEYS[i]}${s.state ? ` ${s.state}` : ''}`, s.label);
+    n.title = s.label; // the whole name, when it's cut short
+    return n;
+  });
+  return el('div', `track${t.red ? ' stopped' : ''}`, null, ...steps);
 }
 // 0168: an in-flight ticket's progress, under its title: what it's doing in a sentence and the current stage's name, in
 // words only since 0416, then its timer (0058), then its priority, size and risk while it's open (0434), and any bug, fix or
