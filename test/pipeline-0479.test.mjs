@@ -99,6 +99,7 @@ const MEASURE = `(() => {
   const lane = [...document.querySelectorAll('main > section')].map(s => ({ s, b: s.getBoundingClientRect() })).find(x => x.b.width > 0);
   const ls = lane && getComputedStyle(lane.s), cs = getComputedStyle(top), bs = getComputedStyle(body), dot = getComputedStyle(t, '::before');
   const bezel = (() => { const d = document.createElement('div'); d.style.background = 'var(--bezel)'; document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; })();
+  const ink = (() => { const d = document.createElement('div'); d.style.color = 'var(--bezel-ink)'; document.body.appendChild(d); const c = getComputedStyle(d).color; d.remove(); return c; })();
   const se = document.scrollingElement;
   return { w: innerWidth, h: innerHeight, top: r(top), body: r(body), log: r(log), title: r(t), close: r(close), stale: stale.hidden ? null : r(stale),
     laneFrame: lane ? { left: lane.b.left + parseFloat(ls.paddingLeft), right: lane.b.right - parseFloat(ls.paddingRight) } : null,
@@ -107,7 +108,7 @@ const MEASURE = `(() => {
     side: [parseFloat(bs.paddingLeft), parseFloat(bs.paddingRight), parseFloat(bs.paddingBottom)],
     titleFont: getComputedStyle(t).fontFamily, titleWeight: getComputedStyle(t).fontWeight, nameFont: getComputedStyle(document.querySelector('.bezel .name')).fontFamily,
     dot: dot.backgroundColor, nameDot: getComputedStyle(document.querySelector('.bezel .name'), '::before').backgroundColor, dotW: parseFloat(dot.width),
-    titleText: t.textContent, titleRects: t.getClientRects().length,
+    ink, titleColor: getComputedStyle(t).color, titleText: t.textContent, titleRects: t.getClientRects().length,
     pageScrolls: se.scrollHeight > se.clientHeight || se.scrollWidth > se.clientWidth, popScrolls: v.scrollHeight > v.clientHeight || v.scrollWidth > v.clientWidth,
     bodyScrolls: body.scrollHeight > body.clientHeight, topScrolls: top.scrollHeight > top.clientHeight,
     logScrolls: log.scrollHeight > log.clientHeight, logOverflow: getComputedStyle(log).overflowY };
@@ -145,6 +146,7 @@ test('0479 AC1 and AC2: in a real browser at 390 × 844 and 1200 × 800 with 200
         assert.equal(m.log.bottom, m.body.bottom - m.laneSide, `${where}: the log box fills the frame to its bottom side`);
         // Its title row: speck's red dot, Pipeline log in the dot-matrix letters, and Close at its end.
         assert.equal(m.titleText, 'Pipeline log');
+        assert.equal(m.titleColor, m.ink, `${where}: in the frame's light ink (${m.titleColor})`);
         assert.equal(m.titleFont, m.nameFont, `${where}: in the header's lettering`);
         assert.equal(m.titleWeight, '900');
         assert.equal(m.dot, m.nameDot, `${where}: speck's own dot`);
