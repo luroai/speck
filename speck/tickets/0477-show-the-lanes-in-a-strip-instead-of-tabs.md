@@ -44,6 +44,7 @@ A thin strip under speck's screen shows every lane and which is in view, in plac
 - Decided by the user on 2026-10-24: the panel stays thin, a phone screen or a side panel beside an agent chat, "a bolt-on thing to the side, not an actual product on its own". A wider window doesn't show more lanes.
 - 0457 joined the open tab to the lane under it like a folder's tab; this replaces the tabs, so that look goes too.
 - Waits for 0476: both change the header's and the lanes' script and styles. Built for release 0.15.0.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
