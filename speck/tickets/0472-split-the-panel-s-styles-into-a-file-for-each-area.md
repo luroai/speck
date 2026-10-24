@@ -1,7 +1,7 @@
 ---
 id: "0472"
 title: "Split the panel's styles into a file for each area"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0468"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T13:39:17.266Z"
+approved: "2026-10-24T14:09:40.758Z"
 
 ---
 # 0472 · Split the panel's styles into a file for each area
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 All of the panel's styles are in one file, `templates/panel.css`, so almost every ticket that changes how any part of the panel looks changes that file. speck chains tickets that change the same files, so they build one after another even when they change unrelated parts.
@@ -53,9 +54,14 @@ Nothing looks different: the panel is exactly as it was. Behind the scenes, its 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 423,337
+- Elapsed since build started: 30 min
+- Changed lines: 1814 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (tidy-ups and known limits, none for the inbox):
 - A few test comments still say the page "can't load /panel.css" (0379, pipeline 0415, 0416). They're only comments, and the tests read the five files through `styles()`.
