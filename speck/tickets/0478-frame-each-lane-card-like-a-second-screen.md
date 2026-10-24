@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0477"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T15:54:21.320Z"
-approved: "2026-10-24T16:05:16.956Z"
+approved: "2026-10-24T16:13:13.367Z"
 
 ---
 # 0478 · Frame each lane card like a second screen
@@ -59,13 +59,14 @@ To see it, open the panel and swipe or tap between the lanes: the whole framed c
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 151,011
-- Elapsed since build started: 11 min
-- Changed lines: 25 (limit 5000)
+- Reviewer tokens: 404,275
+- Elapsed since build started: 19 min
+- Changed lines: 31 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Tidy-up: 0438 AC2's test name still says the frame lines up with "the cards"; it now checks the lane's frame, with the cards inside it.
@@ -128,6 +129,68 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Each lane now looks like a second screen, with a thinner matching frame, dot-matrix title and coloured stage dot. Browser tests confirm the layout and sliding behaviour in both looks, including narrow screens. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6029c729007df032cf5b2b10fdcee5d5ee524d32",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16ea8-1528-70f2-bf27-ed15a76c77ee",
+    "builder_response": "- Tests run: test/panel-0478.test.mjs test/panel-0417.test.mjs test/panel-0151.test.mjs test/panel-0155.test.mjs test/panel-0157.test.mjs test/panel-0467.test.mjs test/panel-0438.test.mjs test/panel-0161.test.mjs test/panel-0427.test.mjs test/panel-0476.test.mjs test/panel-0418.test.mjs test/panel-0140.test.mjs test/panel-0443.test.mjs test/panel-0453.test.mjs, with --related and the repo checks: 289 pass, 0 fail.\n- Handed back by the ship queue: the whole suite failed 11 tests on the approved branch (main hadn't moved; `git merge main` was already up to date). Two causes, both from this ticket:\n  1. 0151 AC4, 0155 AC1, 0157 AC3 measured each card's border against the lane section's own fill, which is now the dark frame; the cards sit on the lane's list (--panel). Those three tests now take the list's background, the surface actually behind the cards, with a 0478 comment. The contrast thresholds are unchanged.\n  2. 0151 AC1 and 0155 AC3 (a long title on one line at 1280/1440 px) and 0467 AC3 (a chip's id at 320 px) failed because the frame cost the cards 40 px of width. Fixed in code: Plan's, Build's and Shipped's lists (#shaping, #queue, #shipped) pad their sides 8 px inside the frame instead of 16 px, so cards lose 24 px rather than 40. 0417 asserted #queue's padding-left was 16px; it now asserts 8px, with a 0478 comment.\n- The inbox idea from the first approval (more room for the tickets in the frame) was removed, as this does it. Pictures retaken.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 252117,
+      "cached_input_tokens": 198528,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1147,
+      "reasoning_output_tokens": 37
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T16:13:03.988Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css retains the shared --bezel frame, matching corners, thinner sides and bottom, and --panel interiors. Both 0478 real-browser theme tests passed after the padding change."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": ".lane-title and .lane-n retain Doto at weight 900, the specified stage dots and inks, and right-aligned summaries with ellipsis. The passing 0478 browser tests exercise these properties, including forced truncation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The shared main > section rule still defines every frame. Both passing 0478 browser tests compare frame dimensions, colours and thicknesses across all three lanes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "All 0478 browser tests passed, covering widths from 320 px in both looks and movement of the whole framed card. The saved run reports 289 passes and zero failures, including the previously failing title, chip and contrast tests."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The framed lanes still meet all four criteria. Reduced inner padding restores room for ticket titles and dependency chips. The contrast tests now measure the background actually behind the cards without lowering their thresholds. No blocking issues found."
   }
 }
 ```
