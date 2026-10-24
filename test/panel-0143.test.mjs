@@ -3,7 +3,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fakePage, T, full, click, top, items, queueRows, shippedRows, styles } from './support/panel.mjs';
+import { page, fakePage, T, full, click, top, items, queueRows, shippedRows, shippedFull, styles } from './support/panel.mjs';
 
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
 const clone = s => JSON.parse(JSON.stringify(s));
@@ -30,8 +30,7 @@ function openFrom(p, where, id) {
     if (!fullButtonIn(p, row())) click(row().children.find(n => /\btop\b/.test(n.className)));
     click(fullButtonIn(p, row()));
   } else {
-    const row = shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-    p.press(p.all(row).find(n => n.className === 'title-link'));
+    p.press(shippedFull(p, () => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id)))); // 0466
   }
   assert.equal(paneTop(p).children[0].textContent, id, `${id} is open in the pane`);
 }

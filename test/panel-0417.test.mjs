@@ -31,7 +31,7 @@ const media = q => blocks(css()).filter(b => b.prelude === `@media ${q}`);
 // Every selector with a 44 px minimum (or a 44 px width and height) under 700 px before this ticket.
 const SIZED = ['.bezel .settings-open', '.tab', '.toggle', '.head', '.item.ticket .prio', '.prio-menu button', '.set-ready, .full-open',
   '.goto', '.q .top', '.q .full-open', '.q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply', '.resume .copy',
-  '.more-stats', 'td .title-link', 'td .full-open',
+  '.more-stats', '#shipped .line .title', 'td .full-open',
   '#full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close',
   '#full-ticket .md summary, #doc-view .md summary'];
 
@@ -53,7 +53,7 @@ test('0417 AC2: the touch screen rules apply at any width and keep each 44 px mi
     const d = got.get(sel) || '';
     assert.ok(/min-height:\s*44px|(^|[\s;])height:\s*44px/.test(d), `${sel} is at least 44 px high on a touch screen: ${d}`);
   }
-  for (const sel of ['.toggle', '.prio-menu button', '.set-ready, .full-open', '.resume .copy', '.more-stats', 'td .title-link', '.item.ticket .prio'])
+  for (const sel of ['.toggle', '.prio-menu button', '.set-ready, .full-open', '.resume .copy', '.more-stats', '#shipped .line .title', '.item.ticket .prio'])
     assert.match(got.get(sel), /min-width:\s*44px/, `${sel} is at least 44 px wide on a touch screen`);
   // The tags' 44 px tap areas, and the gaps that keep them apart (0165)
   assert.match(got.get('.tag:not(.pick)::after') || '', /44px/);
@@ -127,7 +127,7 @@ const CONTROLS = lane => `(async () => {
   for (const h of document.querySelectorAll('#shaping .item:not(.open) .head, #queue .q:not(.open) .top')) h.click();
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   const shown = n => { const r = n.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(n).visibility === 'visible'; };
-  return [...document.querySelectorAll('button, summary, .head, .q .top, .item.ticket .prio, td .title-link, .goto')].filter(shown).map(n => {
+  return [...document.querySelectorAll('button, summary, .head, .q .top, .item.ticket .prio, #shipped .line .title, .goto')].filter(shown).map(n => {
     const s = getComputedStyle(n), r = n.getBoundingClientRect();
     return { what: n.tagName.toLowerCase() + '.' + String(n.className).trim().split(/\\s+/).join('.'), width: r.width, height: r.height, minWidth: s.minWidth, minHeight: s.minHeight };
   });
@@ -160,7 +160,7 @@ for (const width of [375, 1280]) {
     for (const lane of LANES) {
       for (const c of await b.js(CONTROLS(lane))) {
         seen.add(c.what.split('.')[1] || c.what);
-        const minW = /^(button\.(toggle|set-ready|full-open|copy|more-stats|settings-open|prio)|span\.title-link)/.test(c.what);
+        const minW = /^(button\.(toggle|set-ready|full-open|copy|more-stats|settings-open|prio)|span\.title)/.test(c.what);
         if (c.height < 43.5 || (minW && c.width < 43.5)) small.push(`${lane}: ${c.what} ${Math.round(c.width)}x${Math.round(c.height)}`);
       }
     }
