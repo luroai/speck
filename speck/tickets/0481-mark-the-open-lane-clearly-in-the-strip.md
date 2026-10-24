@@ -1,7 +1,7 @@
 ---
 id: "0481"
 title: "Mark the open lane clearly in the strip"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:03:22.021Z"
+approved: "2026-10-24T18:09:13.143Z"
 
 ---
 # 0481 · Mark the open lane clearly in the strip
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In the strip under speck's screen (0477), the open lane's name differs from the others only by a slightly darker grey, so on a phone the user can't tell whether Plan, Build or Shipped is open.
@@ -50,9 +51,14 @@ The open lane in the strip under speck's screen (Plan, Build or Shipped) now has
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 90,298
+- Elapsed since build started: 6 min
+- Changed lines: 5 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
