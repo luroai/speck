@@ -1,7 +1,7 @@
 ---
 id: "0453"
 title: "Draw all four sides of every button on a phone"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T09:08:45.305Z"
 ---
 # 0453 · Draw all four sides of every button on a phone
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On a phone, some buttons lose a side of their border: the Shipped list's Details button and the full ticket's Close button show no left edge. Their borders are half a CSS pixel and their edges can fall between device pixels, so the phone doesn't draw that side. 0281 fixed the same thing for Settings' info buttons and boxes.
@@ -55,3 +55,71 @@ Every button on the panel shows all four sides of its border on a phone.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "940e13f9e10a5c6bcdb3fb4ff8c77f6a551872f4",
+    "session": "fresh",
+    "thread_id": "01a16d3a-a169-7e53-8717-2268d7c59752",
+    "builder_response": "- Tests run: test/panel-0453.test.mjs test/panel-0281.test.mjs test/panel-0428.test.mjs test/panel-0420.test.mjs test/panel-0425.test.mjs test/panel-0161.test.mjs, plus the related files speck test --related chose (panel-0416, panel-0430, panel-0433). Separately, before this round, every other test file that uses a real browser (60 files) passed, as did 0135, 0060, 0140, 0162, 0410, 0418, 0417, 0165, 0438, 0449, 0134, 0423, 0421.\n- Approach: CSS can't round a width that comes from a button's words, so the page script (templates/panel.js, wholeButtons) makes each visible button with a border a whole number of pixels wide, straight after each change to the page (a MutationObserver that doesn't watch `style`, so its own writes don't trigger it again), and again for every button on resize or a font loading. The tabs get whole widths in CSS; the edge two tabs share is now drawn by the left tab (`.tab + .tab { border-left-width: 0 }`) rather than an overlap of half a pixel, which can't keep both edges whole, and the side shared with the open tab takes the text colour (`:has`). The main column, a document's and the Foreman's are centred on a whole pixel, as 0281 did for Settings. Below 2dppx every button's border is 1px, as 0281 did for the info buttons.\n- \"Edges on whole CSS pixels\" is read as the left and right edges, as 0281's test reads it; tops and bottoms aren't rounded.\n- Older tests changed: 0281 AC3 (rounding limited to Settings) now also allows rules marked `0453:`, which bring the same rounding to every button. 0428's check that two tabs share one edge now reads the new way they share it.\n",
+    "seconds": 66,
+    "usage": {
+      "input_tokens": 275284,
+      "cached_input_tokens": 219520,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1201,
+      "reasoning_output_tokens": 336
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T09:26:26.826Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel.js wholeButtons rounds button widths but does not round their positions. templates/panel.css centres #settings-unsaved .box at width 360px: on a 393px phone its left edge is 16.5px, leaving its action buttons on fractional coordinates. This dialog is absent from test/panel-0453.test.mjs VIEWS."
+      },
+      {
+        "id": 2,
+        "status": "unclear",
+        "evidence": "The reported passing screenshot test checks the named Details, Close, Save and Review pack buttons at DPR 3, but omits other button views, including the Settings unsaved-changes dialog and Foreman controls."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0453 geometry test checks corner radii, and its selected-tab test checks the shared edge colour. Existing panel-0428 and panel-0161 tests also passed; the change retains the established contrast tokens."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.css",
+        "issue": "The unsaved Settings dialog still centres its 360px box on half a CSS pixel at odd phone widths above 392px. For example, at 393px its left edge is 16.5px. Rounding its buttons' widths cannot make their left and right positions whole pixels. The new tests never open this dialog, so they miss this failure of the every-button requirement.",
+        "suggested_fix": "Place the dialog's button row on whole CSS pixels, and extend the real-browser geometry and border checks to the unsaved-changes dialog at an odd phone width such as 393px and DPR 3. Include the other omitted button views in coverage of the every-button requirement.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The tested Details, Close, Save and Review pack buttons pass the browser checks, and corners and contrast are preserved. However, the Settings unsaved-changes dialog still puts its buttons between whole pixels on some phones. Fix that layout and cover the omitted button views before approval."
+  }
+}
+```
+
+</details>
