@@ -1,7 +1,7 @@
 ---
 id: "0443"
 title: "Fit a collapsed Build ticket's status on a phone"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-23-fit-a-closed-card-s-stage-and-time-on-a-phone.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T07:32:32.904Z"
 
 ---
 # 0443 · Fit a collapsed Build ticket's status on a phone
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0434, a collapsed Build ticket's status line is one line, cut off with an ellipsis. On a phone, a long status such as `Approved · waiting for you to ship it` or `Blocked · the Foreman will take its recommendation` pushes the stage and time out of sight.
