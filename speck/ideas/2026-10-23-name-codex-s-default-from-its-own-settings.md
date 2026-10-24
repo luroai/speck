@@ -1,6 +1,6 @@
 # Name Codex's default from its own settings
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0403
 
 ## What

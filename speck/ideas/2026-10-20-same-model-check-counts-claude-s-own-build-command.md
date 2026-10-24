@@ -1,6 +1,6 @@
 # Same-model check counts models when build_command is Claude Code's own
 
-Captured: 2026-10-20 · Status: inbox
+Captured: 2026-10-20 · Status: dropped
 From ticket: 0330
 
 ## What

@@ -1,6 +1,6 @@
 # Show why a pull request link isn't on its ticket
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 Triaged: 1
 From ticket: 0295
 

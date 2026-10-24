@@ -1,6 +1,6 @@
 # Return focus to a Shipped title or Review pack button when the pane closes
 
-Captured: 2026-10-19 · Status: inbox
+Captured: 2026-10-19 · Status: dropped
 From ticket: 0326
 
 ## What

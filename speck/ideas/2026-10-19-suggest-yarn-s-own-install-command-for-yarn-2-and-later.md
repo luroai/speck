@@ -1,6 +1,6 @@
 # Suggest Yarn's own install command for Yarn 2 and later
 
-Captured: 2026-10-19 · Status: inbox
+Captured: 2026-10-19 · Status: dropped
 From ticket: 0322
 
 ## What

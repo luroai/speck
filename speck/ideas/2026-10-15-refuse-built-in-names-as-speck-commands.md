@@ -1,6 +1,6 @@
 # Refuse built-in names as speck commands
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: dropped
 Triaged: 1
 From ticket: 0231
 
