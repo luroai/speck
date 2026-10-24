@@ -39,6 +39,7 @@ Every button on the panel shows all four sides of its border on a phone.
 - For release 0.15.0 (0452). From the user's phone screenshots on 2026-10-24: the Details and Close buttons have no left edge.
 - From the builder's note on 0281 (this note was dropped in the 0.15.0 triage, then picked up again for this).
 - Waits for 0449: both change `templates/panel.css`. 0452 waits for this one.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
