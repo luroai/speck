@@ -192,3 +192,79 @@ Coming back to the panel plays at most the latest event, and only a recent one.
 ```
 
 </details>
+
+<details><summary>Round 3 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "284977805329174f11cbb676c9148ce812900d92",
+    "session": "continued",
+    "thread_id": "01a16ce7-49ca-7940-b4dd-f023e692ed61",
+    "builder_response": "- Tests run: `speck test --related test/panel-0446.test.mjs test/foreman-agent-0287.test.mjs` (both files plus every related file, including those that name scripts/foreman-agent.mjs). 2506 tests, 0 failing, 3 skipped.\n- F1: fixed. The Foreman agent's board now gives `running.started` (scripts/foreman-agent.mjs agentView, from the start time speck run already records), and the LOOKING INTO event takes its date from it. The 0287 test that compared the running object exactly now checks the same fields and that `started` is a date. New tests: agentView gives `started`; after 8 h asleep, a Foreman start dated 10 s before showing plays.\n- F2: fixed by the same change: the Foreman start is now dated, so one dated after the page was shown counts as a later change and plays as usual. New test: 8 h asleep, the first board comes 10 s after showing with a start dated 3 s after showing, and it plays. Every event speck plays now has a date on the board; only a ticket missing its own field (for example an old ticket file with no `finished`) falls back to the time of the board before.\n",
+    "seconds": 54,
+    "usage": {
+      "input_tokens": 389153,
+      "cached_input_tokens": 339712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3384,
+      "reasoning_output_tokens": 589
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T08:07:33.982Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The passing AC1 tests now cover dated Foreman starts. However, noteBoard discards newer hidden events when back.kept has already started playing. This means the event shown can be an older one rather than the latest."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "noteBoard now dates LOOKING INTO using ag.running.started, supplied by agentView. Passing AC2 tests cover normal visible playback, dated changes after returning, and a Foreman start after returning before the first board arrives."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "Recent Foreman starts now carry their recorded start time through agentView into the animation's age check. The new passing tests cover the previously missing case.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "Foreman starts occurring after visibility resumes are now dated and preserved as visible events. The new passing regression test exercises this case.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "If an animation frame runs between speckShown(true) and the returning board arriving, the retained event starts playing and leaves the queue. noteBoard then finds kept === -1 and discards all newly discovered hidden events, even one with a newer timestamp. I reproduced the retained celebration playing while a newer hidden question was discarded. The existing replacement test receives the board before drawing, so it misses this race.",
+        "suggested_fix": "Delay playback of the retained hidden event until the returning board has been reconciled, then select the latest eligible hidden event. Add a regression test that draws a frame after showing the page and before receiving a board containing a newer hidden event.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both earlier findings are fixed. One remaining timing bug can show an older celebration and discard a newer question if an animation frame runs before the refreshed board arrives. That fails the requirement to show only the latest hidden event."
+  }
+}
+```
+
+</details>
