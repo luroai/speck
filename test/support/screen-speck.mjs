@@ -12,7 +12,9 @@ const clock = () => {
 };
 export const MIN = 60000;
 export const building = () => [T('0362', 'building'), T('0363', 'building')];
-export const board = (tickets, f = {}, o = {}) => state(foreman(f), { tickets, ...o });
+// 0495: the Foreman's builds and blocked tickets are the board's, and its base branch main, unless `f` says otherwise.
+export const board = (tickets, f = {}, o = {}) => state(foreman({ base: 'main', building: tickets.filter(t => ['building', 'reviewing'].includes(t.status)).map(t => t.id),
+  blocked: tickets.filter(t => t.status === 'blocked').map(t => ({ id: t.id, title: '', question: '', foreman: false })), ...f }), { tickets, ...o });
 // The page with its boards. `random` is a number, or a function giving Math.random's next answer. `globals`: more of
 // the page's globals, such as an EventSource (0446).
 export function speckPage(boards, { random = null, reduced = false, globals: more = {} } = {}) {

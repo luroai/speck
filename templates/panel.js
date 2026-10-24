@@ -1385,7 +1385,8 @@ function foremanOf(st) {
   return { word: f && typeof f.word === 'string' ? f.word : on ? 'Idle' : 'Off', tone, on,
     building: list(f && f.building), ready: list(f && f.ready), held: list(f && f.held), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked),
     agent: f && f.agent && typeof f.agent === 'object' ? f.agent : null, // 0287: the Foreman agent's work
-    fixing: f && typeof f.fixing === 'string' ? f.fixing : null, fixing_says: f && typeof f.fixing_says === 'string' ? f.fixing_says : '', took: list(f && f.took) }; // 0317
+    fixing: f && typeof f.fixing === 'string' ? f.fixing : null, fixing_says: f && typeof f.fixing_says === 'string' ? f.fixing_says : '', took: list(f && f.took), // 0317
+    why: f && typeof f.why === 'string' ? f.why : '', base: f && typeof f.base === 'string' ? f.base : '' }; // 0495: for speck's caption
 }
 // 0285: true when the server's code is newer than the code this page was sent with.
 const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.page !== PAGE);

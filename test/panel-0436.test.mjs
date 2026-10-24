@@ -13,7 +13,7 @@ const seq = (...a) => { let n = 0; return () => a[Math.min(n++, a.length - 1)]; 
 // The pose and caption dots speck shows now.
 const now = p => { const dots = p.draw(); return { pose: p.cast().cur, cap: [...capDots(dots)].sort().join(' ') }; };
 
-for (const [word, own, cap] of [['Building 2', 'watch', 'WATCHING 2 BUILDS'], ['Shipping 0362', 'watch', 'WATCHING THE SHIP']]) {
+for (const [word, own, cap] of [['Building 2', 'watch', 'WATCHING 0362 AND 0363'], ['Shipping 0362', 'watch', 'ON ITS WAY TO MAIN']]) {
   test(`0436 AC1: "${word}": 2 minutes watching, a 1-minute pastime, 2 minutes watching, and so on`, async () => {
     const p = speckPage([board(building(), { word })], { random: seq(0, 0, 0.5, 0.99) });
     await p.settle();
@@ -71,17 +71,17 @@ test('0436 AC1: each pastime has its caption from a fixed set, and the top row k
 });
 
 test('0436 AC2: "Waiting": 2 minutes grumpy, then 1-minute pastimes with 2 minutes grumpy between', async () => {
-  const p = speckPage([board(building(), { word: 'Waiting: new code' })], { random: seq(0, 0) });
+  const p = speckPage([board(building(), { word: 'Waiting: new code', why: 'speck run is switching' })], { random: seq(0, 0) });
   await p.settle();
-  shows(p, 'grumpy', 'WAITING');
+  shows(p, 'grumpy', 'SPECK RUN IS SWITCHING');
   p.go(2 * MIN - 1000);
-  shows(p, 'grumpy', 'WAITING');
+  shows(p, 'grumpy', 'SPECK RUN IS SWITCHING');
   p.go(1000);
   assert.equal(now(p).pose, 'eating');
   p.go(MIN);
-  shows(p, 'grumpy', 'WAITING');
+  shows(p, 'grumpy', 'SPECK RUN IS SWITCHING');
   p.go(2 * MIN - 1000);
-  shows(p, 'grumpy', 'WAITING');
+  shows(p, 'grumpy', 'SPECK RUN IS SWITCHING');
   p.go(1000);
   assert.equal(now(p).pose, 'playing');
 });
@@ -112,12 +112,12 @@ test('0436 AC3: Idle stays asleep until the word changes', async () => {
   p.go(15 * MIN);
   shows(p, 'sleeping', 'NAPPING');
   await p.next();
-  shows(p, 'watch', 'WATCHING 2 BUILDS');
+  shows(p, 'watch', 'WATCHING 0362 AND 0363');
 });
 
-for (const [word, pose, cap] of [['Needs you 2', 'ask', '2 NEEDS YOU'], ['Off', 'sleeping', 'SPECK RUN IS OFF']]) {
+for (const [word, pose, cap, f = {}] of [['Needs you 2', 'ask', '0362 AND 0363 ASK YOU', { blocked: [{ id: '0362' }, { id: '0363' }] }], ['Off', 'sleeping', 'TURN ON AUTO-BUILD']]) {
   test(`0436 AC4: "${word}" keeps ${pose} with no pastimes`, async () => {
-    const p = speckPage([board(building(), { word })], { random: 0 });
+    const p = speckPage([board(building(), { word, ...f })], { random: 0 });
     await p.settle();
     for (let n = 0; n < 40; n++) { shows(p, pose, cap); p.go(30000); }
   });
@@ -131,26 +131,26 @@ test('0436 AC5: an event interrupts a pastime at once, and after it the rhythm s
   await p.next(); // it ships
   shows(p, 'celebrating', '0362 SHIPPED');
   p.go(6100);
-  shows(p, 'watch', 'WATCHING 2 BUILDS');
+  shows(p, 'watch', 'WATCHING 0363');
   p.go(2 * MIN - 2000);
-  shows(p, 'watch', 'WATCHING 2 BUILDS', 1000);
+  shows(p, 'watch', 'WATCHING 0363', 1000);
   p.go(2000);
   assert.ok(PASTIMES.includes(now(p).pose), 'a pastime 2 minutes after the event');
 });
 
 test('0436 AC5: a new status word starts the rhythm again from its own animation', async () => {
-  const p = speckPage([board(building(), { word: 'Building 2' }), board(building(), { word: 'Building 1' }), board(building(), { word: 'Waiting' })], { random: 0 });
+  const p = speckPage([board(building(), { word: 'Building 2' }), board(building(), { word: 'Building 1', building: ['0363'] }), board(building(), { word: 'Waiting: build slots', why: 'all 2 build slots in use' })], { random: 0 });
   await p.settle();
   p.go(2 * MIN + 10000);
   assert.equal(now(p).pose, 'eating');
   await p.next();
-  shows(p, 'watch', 'WATCHING 1 BUILD');
+  shows(p, 'watch', 'WATCHING 0363');
   p.go(2 * MIN - 1000);
-  shows(p, 'watch', 'WATCHING 1 BUILD');
+  shows(p, 'watch', 'WATCHING 0363');
   await p.next();
-  shows(p, 'grumpy', 'WAITING');
+  shows(p, 'grumpy', 'ALL 2 BUILD SLOTS IN USE');
   p.go(2 * MIN - 1000);
-  shows(p, 'grumpy', 'WAITING');
+  shows(p, 'grumpy', 'ALL 2 BUILD SLOTS IN USE');
 });
 
 test('0436 AC5: after an event while Idle, the 15 minutes start again', async () => {
