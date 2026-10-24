@@ -1,7 +1,7 @@
 ---
 id: "0441"
 title: "Measure the panel's layout in a proportional font"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ waited_seconds: 12
 ---
 # 0441 · Measure the panel's layout in a proportional font
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On the build machine, Chrome draws the panel's interface font (`system-ui` and the rest of 0427's stack) as Liberation Mono, a monospace font. So the browser tests that measure how text wraps and how tall cards are see a panel nobody uses, and 0427 had to ease some of their checks for a monospaced panel.
@@ -51,7 +51,7 @@ The tests' browser draws the panel in a proportional font, as people see it.
 - Self-check: no changes. Checked that 0441 AC1 fails without the font settings file, that a FONTCONFIG_FILE already set is kept (fontconfig resolves the include as it would the variable) and that an & or < in its path is escaped.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's own tests now look at the panel in an ordinary proportional font, as people see it, not in the typewriter-style font this machine used to fall back on. That showed a few small problems on phones, which are now fixed: tapping a ticket number in a note always reaches that number, the numbers are a little further apart, and pressing Escape to close a full ticket no longer nudges the list. To see it, open the panel on a phone and tap the ticket numbers in a "waiting on" note. Keep an eye on the extra space: it also widens the gap in the words "waiting on" a little.
 
 ## Blocked question
 In a proportional font, the longest test title ("Read the owner's private words from outside the repo in 0082's check") takes 3 lines on a 375 px phone screen, not the 2 that 0151's and 0155's tests allowed before 0427, so restoring that limit (criterion 2) makes those two tests fail (criterion 3). Should the 375 px limit become 3 lines for everyone, with no monospace exception (every other width keeps its old limit), or should the tests keep asking for 2 lines and fail until a separate ticket makes titles fit on a phone?
@@ -65,3 +65,66 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Idea: speck/ideas/2026-10-24-hold-the-clock-still-in-0140-s-phone-rules-comparison.md (0140 AC2 fails now and then under load).
+  - Tidy-up: the 4 px word spacing on a note's ids also widens the space in "waiting on" and "unlocks". Spacing only after the commas would need the separators in their own elements.
+  - Known limit: the test browser's font settings file is for fontconfig (Linux). Elsewhere it does nothing, and a machine whose fontconfig has neither Liberation Sans nor its own proportional sans-serif would still measure in a monospace.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7ee6fe3c4de6e79da68aed771d0dd44c0235ed1e",
+    "session": "fresh",
+    "thread_id": "01a16cec-0a39-7cb2-bde7-9eb691f26a80",
+    "builder_response": "- Tests run: `speck test --related` with test/panel-0441.test.mjs test/panel-0151.test.mjs test/panel-0155.test.mjs test/panel-0060.test.mjs test/panel-0140.test.mjs test/panel-0164.test.mjs test/panel-0419.test.mjs test/quick-waits-0232.test.mjs (281 related files, plus the commands.checks files).\n- One failure in that run: 0140 AC2 at 700 px. It passes on its own, both with and without this change (run twice with the change, once on the commit before it). It compares computed styles that include a ticking clock's text, under the load of 281 files.\n- The user's answer to the blocked question (via the Foreman) is in Notes: 3 lines at 375 px for everyone.\n- Beyond the test support: criterion 3 needed small panel fixes for real layout problems that the monospace had hidden. They are listed in Notes: `.goto` min-width and centred text, wider spaces between ids in a note on phones with a 5 px reach, returnFocus without scrolling, and a longer 0419 fixture.\n",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 356368,
+      "cached_input_tokens": 276480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 828,
+      "reasoning_output_tokens": 68
+    },
+    "tests": {
+      "failing": 1,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T08:00:05.434Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/panel.mjs launch() supplies a fontconfig file preferring Liberation Sans. Passing test 0441 AC1 measures different i/m widths using canvas with the panel body's actual font stack, and verifies monospace remains monospace."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0151 AC1 and 0155 AC3 browser tests enforce unconditional line limits, including the recorded Foreman decision allowing three lines at 375 px. The 0419 and 0420 browser tests retain 0434's single-line closed titles and unconditional details checks. Passing 0441 AC2 confirms the monospace exceptions are absent."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The related run passed 2,573 tests, including the title, tap-target and scroll-preservation checks. Its single 0140 AC2 failure compares snapshots taken at different times; the differing timer width and subsequent element positions support the reported clock-related flake rather than a phone-rule regression. The builder reports isolated passes with and without this change."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The test browser now measures the panel using a proportional font, and layout checks no longer allow extra lines for monospace text. Small fixes preserve phone tap targets and scroll position. The agreed three-line phone title limit is applied consistently. One timing-sensitive test failed under load; the evidence supports a flaky clock comparison rather than a regression."
+  }
+}
+```
+
+</details>
