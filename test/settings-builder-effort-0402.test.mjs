@@ -30,7 +30,7 @@ const YOURS = { list: true, agents: AGENT_MODELS.map(a => ({ id: a.id, name: a.n
 const EFFORTS = ['', 'low', 'medium', 'high', 'xhigh', 'max'];
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, for_machine: true, from: 'repo', repo_value: value, ...o });
 const view = ({ builder = 'claude', builder_model = '', builder_effort = '' } = {}) => ({ groups: [
-  { title: 'Watching', settings: [S('foreman', '', { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('watch_model', ''), S('watch_effort', '', { choices: EFFORTS })] },
+  { title: 'Watching', settings: [S('watch_agent', '', { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('watch_model', ''), S('watch_effort', '', { choices: EFFORTS })] },
   { title: 'Building and reviewing', settings: [
     S('builder', builder, { choices: ['claude', 'codex', 'cursor', 'deepseek'], build_command: { value: '', own: { claude: '', codex: '', cursor: '' }, each_ticket: true } }),
     S('builder_model', builder_model), S('builder_effort', builder_effort, { choices: EFFORTS }),

@@ -37,7 +37,7 @@ const view = ({ builder = 'claude', reviewer = 'codex', foreman = 'claude', buil
     row('builder', builder, { choices: ['claude', 'codex', 'cursor'] }), row('builder_model', builder_model),
     row('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor'] }), row('reviewer_model', reviewer_model),
     row('reviewer_effort', '', { choices: EFFORTS })] },
-  { title: 'Watching', settings: [row('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), row('watch_model', watch_model)] }],
+  { title: 'Watching', settings: [row('watch_agent', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), row('watch_model', watch_model)] }],
   builder_models: { builder, models: read(builder).models }, reviewer_models: { reviewer, models: read(reviewer).models },
   foreman_models: { foreman: foreman || 'claude', models: read(foreman).models }, claude_models: CLAUDE_MODELS });
 const options = (p, key) => p.all(controlOf(p, key)).filter(n => n.tagName === 'option')
@@ -94,10 +94,11 @@ test('0369 AC3: choosing another Foreman agent lists its models, without the lin
     await openSettings(want);
     const p = modelsPage(view({ foreman: 'claude' }));
     await openSettings(p);
-    changeTo(p, 'foreman', to);
+    changeTo(p, 'watch_agent', to);
     await p.settle();
     assert.equal(controlOf(p, 'watch_model').tagName, 'select');
     assert.deepEqual(options(p, 'watch_model'), options(want, 'watch_model'), to);
+    assert.deepEqual(options(p, 'watch_model').filter(o => o.value !== '').map(o => o.value), read(to).models.map(m => m.slug), `${to}'s own models`); // 0487
     assert.ok(!said(p, 'watch_model').some(t => /open Settings again/.test(t)), said(p, 'watch_model').join(' | '));
   }
   // The Foreman on the builder's agent, picked as the builder: the same list, read once for both.

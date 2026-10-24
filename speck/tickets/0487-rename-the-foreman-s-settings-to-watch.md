@@ -1,7 +1,7 @@
 ---
 id: "0487"
 title: "Rename the Foreman's settings to watch"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T19:26:36.248Z"
 ---
 # 0487 · Rename the Foreman's settings to watch
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The settings for what speck does when work stops are named after the Foreman: `foreman_fixing`, `foreman`, `foreman_model` and `foreman_effort`. Settings shows those names, so the Foreman lives on there after the panel and the messages stop using it.
@@ -55,3 +55,76 @@ The settings are called `watch`, `watch_agent`, `watch_model` and `watch_effort`
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b14533809981a5750cbff3ff9094c846fdbd2740",
+    "session": "fresh",
+    "thread_id": "01a16f6f-febc-7ea2-83b2-bf94a6449e24",
+    "builder_response": "- Tests run: test/watch-settings-0487.test.mjs, every existing test file this change edited, and (via --related) every test file naming a changed file. 1710 pass, 0 fail.\n- Approach: core.mjs has RENAMED (old → new) and parseConfig/renameOld, used by loadConfig and machineConfig, so each layer (speck/config.yml, this machine's file) reads an old name as the new one, the new name winning within a layer; this machine's value still goes over the project's as before. The readers (fixingOf, foremanAgentOf, foremanArgv) also take a raw config object with either name via setting(), new winning.\n- speck config set: an old name is mapped to the new one (settingName) for both --repo and this machine; setConfigText drops old-name lines for that setting, turning the last into the new name's line in place (keeping its comment) when the new name isn't there yet. A machine save rewrites the file from machineConfig, so old names go.\n- Settings: SETTING_GROUPS, EDITABLE, choices, MACHINE_SETTINGS and panel-settings.js's role keys use the new names; the old ones are refused by the panel's save (403, as any non-editable key).\n- Existing tests: many set the old names on top of a loaded config (where the file's own new name now wins), or name the settings' keys; these were moved to the new names. Tests that check the README, brief, changelog and setup skill were left on the old names: those documents are 0488's.\n- Left as is: internal identifiers such as `by: 'foreman'`, the settings API's `foreman_models` field, and the status line's \"Fixing on\" word, none of which is a setting's name.\n- Pictures: the Settings view's Watching group, light and dark, read from this repo's own config, which still uses the old names.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 299999,
+      "cached_input_tokens": 217472,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 939,
+      "reasoning_output_tokens": 122
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T19:43:17.202Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "core.mjs parseConfig/loadConfig and machine.mjs machineConfig normalise both configuration layers. The passing 0487 AC1 tests cover values, defaults and agent arguments."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "core.mjs renameOld/setting prefer new names; config.mjs cmdConfig/dropOldNames translate writes and remove aliases. Passing 0487 AC2 tests exercise compatibility, precedence and repository/machine saves."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "settings.mjs and panel-settings.js use the new setting and role keys. Passing 0487 AC3, 0400 and 0405 tests cover display, saves, model lists and effort controls."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The config template and setting-related messages use watch names. Passing 0487 AC4 tests cover template facts and config output; the supplied test results report 1710 passes and no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/settings-models-0369.test.mjs",
+        "issue": "The migrated AC3 test no longer exercises switching speck's agent. Its fixture and changeTo call still use 'foreman', while production reads 'watch_agent'. Both the expected and actual watch_model lists therefore use the default Claude agent, so their equality passes without checking the selected Codex or Cursor models.",
+        "suggested_fix": "Change the fixture's setting key and changeTo call to watch_agent, and assert the selected agent's actual model slugs or requested catalogue. Also update the stale 'foreman' setting fixture in settings-builder-effort-0402.test.mjs.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The rename and backwards compatibility appear to work, and the reported tests pass. One existing test was accidentally weakened during migration: it now compares default model lists instead of checking agent switching. Fix that test before merge."
+  }
+}
+```
+
+</details>
