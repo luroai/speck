@@ -213,7 +213,7 @@ test('0287 AC3: the Settings view\'s Foreman group offers them, explained and ed
 
 test('0287 AC3: setup offers the Foreman agent\'s settings', () => {
   const skill = fs.readFileSync(path.join(ROOT, 'skills', 'speck-setup', 'SKILL.md'), 'utf8');
-  for (const cmd of ['speck config set foreman <name>', 'speck config set foreman_model <name>', 'speck config set foreman_effort <effort>']) assert.ok(skill.includes(cmd), cmd);
+  for (const cmd of ['speck config set watch_agent <name>', 'speck config set watch_model <name>', 'speck config set watch_effort <effort>']) assert.ok(skill.includes(cmd), cmd); // 0488
 });
 
 test('0287 AC3: the agent runs on foreman, watch_model and watch_effort, blank for the defaults', () => {

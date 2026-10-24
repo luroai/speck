@@ -41,6 +41,9 @@ speck's docs describe speck as the one watching the pipeline, with the new setti
 - Today: README's Foreman and Settings bullets (lines 130 to 165), the brief's `speck panel`, `speck config set`, `speck foreman` and `speck status` rows, `skills/speck-setup/SKILL.md` (its Foreman agent questions) and the agent's skill, moved to `skills/speck-watch/SKILL.md` by 0486.
 - Waits for 0487, which names the settings this describes, and through it 0485 and 0486.
 - Failing before this build: none
+- Self-check: the brief no longer names the cache files and the environment variable whose names say foreman (it names `speck/.cache/runs/` instead), and the commit-prefix sentence says exactly what the old prefix still does.
+- Tests updated: 0285, 0286, 0287, 0298, 0318, 0334 and 0392 checked the README, the brief or the setup skill for the old names, which this ticket replaces, so they now check the new ones.
+- Pictures: none, because only the wording of the docs changes, not how anything looks.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

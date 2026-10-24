@@ -27,7 +27,7 @@ test('0334 AC1: with a Cursor builder, section 5 offers an all-Cursor setup: bui
   assert.match(bullet, /one question/i);
   assert.match(bullet, /`auto`/);
   assert.match(bullet, /reviewer on Cursor[^.]*model[^.]*pick/i);
-  assert.match(bullet, /Foreman[^.]*Cursor[^.]*(another|other) (installed|agent)/i);
+  assert.match(bullet, /speck's (own )?agent[^.]*Cursor[^.]*(another|other) (installed|agent)/i); // 0488: was the Foreman
 });
 
 test('0334 AC2: models are offered only from speck agents --json, by name, never made up', () => {
@@ -48,7 +48,7 @@ test('0334 AC3: recommends a reviewer model from another provider when builder_m
 test('0334 AC4: everything is set with speck config set, with no hand edit and no allow_same_model_review', () => {
   const bullet = allCursor();
   for (const cmd of ['speck config set builder cursor', 'speck config set reviewer cursor', 'speck config set reviewer_model <name>',
-    'speck config set foreman <name>', 'speck config set foreman_model <name>']) assert.ok(bullet.includes(cmd), `missing ${cmd}`);
+    'speck config set watch_agent <name>', 'speck config set watch_model <name>']) assert.ok(bullet.includes(cmd), `missing ${cmd}`);
   assert.match(bullet, /never edit `speck\/config\.yml`|no hand edit/i);
   assert.match(bullet, /without `allow_same_model_review`|no `allow_same_model_review`|leave `allow_same_model_review`/i);
   assert.doesNotMatch(bullet, /allow_same_model_review true/);
