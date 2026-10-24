@@ -39,6 +39,7 @@ The check still guards 0447's rules for `speck test --related`, without dependin
 ## Notes
 - From the inbox note, raised while building 0447. Measured on 2026-10-24 on main: 0437's change picks 98 test files, so two more tests that name the brief fail it.
 - Today: `measuredRepo()` and the AC3 test in `test/related-0447.test.mjs` copy the live `test/` folder. history-0085 forbids commit ids in tests, so the check can't pin the folder to a commit.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
