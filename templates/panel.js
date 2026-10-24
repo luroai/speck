@@ -198,11 +198,13 @@ function ticketHead(t) {
   head.addEventListener('click', () => flip(open, t.id));
   return head;
 }
-const ownData = t => { const { unlocks, chain, linked, ...own } = t; return own; }; // what /api/state has for this ticket
+const ownData = t => { const { unlocks, chain, linked, deps, ...own } = t; return own; }; // what /api/state has for this ticket
 function newHead(node, t) {
-  const old = child(node, 'head');
-  node.insertBefore(ticketHead(t), old);
+  const old = child(node, 'head'), head = ticketHead(t);
+  node.insertBefore(head, old);
   node.removeChild(old);
+  const detail = child(node, 'detail');
+  if (detail) putDeps(detail, null, t); // 0467
 }
 // A heading and its Markdown, formatted as in the full ticket pane, or nothing when the text is empty. The blocks go
 // straight under the heading, each paragraph a `p.text`, so a selection can run from one section's text into the next.
@@ -246,7 +248,7 @@ function ticketDetail(t, criteria) {
   const body = el('div', 'md');
   part(body, 'Problem', t.problem);
   part(body, 'Outcome', t.outcome);
-  return el('div', 'detail', null, body, readiness(t, criteria, true));
+  return el('div', 'detail', null, withDeps(t), body, readiness(t, criteria, true)); // 0467: first, its dependency box
 }
 // A ticket's readiness list from what speck can check, its Set ready button, the Full ticket button when `withFull`,
 // and why the server last refused to set it ready.
@@ -649,11 +651,11 @@ function paneSteps(t) {
     : paneFrom === 'shipped' ? [trackOf({ steps: shippedSteps(t) }), shippedFacts(t, shippedDay)]
       : !t.inFlight ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Queued', 'Waiting on', false)]
         : [trackOf(t), factsOf(t, doing(t, t.shipping || shippingId === String(t.id)))];
-  return el('div', 'steps', null, track, facts);
+  return el('div', 'steps', null, track, facts, paneFrom === 'shipped' ? null : withDeps(t, true)); // 0467: and its dependency box
 }
 // What the pane's track and table show, apart from the counter in a Time cell, which the clock puts right.
 const stepsShown = n => signature([n.children[0].className, ...[...n.children[0].children].map(s => [s.className, s.textContent]),
-  ...[...n.children[1].children].map(c => { const v = c.children[1]; return [c.children[0].textContent, v.className, v.className === 'value time' ? null : [v.title, v.textContent]]; })]);
+  ...[...n.children[1].children].map(c => { const v = c.children[1]; return [c.children[0].textContent, v.className, v.className === 'value time' ? null : [v.title, v.textContent]]; }), n.children[2] ? n.children[2].sig : null]);
 // A heading and its Markdown, formatted, or nothing when the text is empty.
 function mdPart(body, heading, text) {
   if (text === null || text === undefined || text === '') return;
@@ -943,7 +945,7 @@ function queueItem(t) {
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
-  const q = goable(el('div', `${cls}${isOpen ? ' open' : ''}`, null, top), t);
+  const q = goable(el('div', `${cls}${isOpen ? ' open' : ''}`, null, top, isOpen ? withDeps(t) : null), t); // 0467: and its dependency box under it
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
   if (!t.inFlight) {
     const ask = foremanAskOf(id); // 0318: a build that ended without starting it
@@ -1065,6 +1067,66 @@ function waitingFacts(t, status, after, pick) {
     factCell('Lint', lintText, null, lintText, null, bits.length ? bits.flatMap((b, i) => (i ? [document.createTextNode(' · '), b] : [b])) : null),
     ...lastFacts(t, pick));
 }
+// 0467: an open ticket's dependency box, under its table, from the model's deps, or nothing when it has none. A Waits
+// on box: a header counting its tickets by state, a bar with one even segment for each, then a grid of chips six to a
+// row, one for each that hasn't shipped, and one chip two columns wide that shows and hides the shipped ones. A Chain
+// box: a header counting the tickets before and after it, then five even slots, each a circle over an id. A chip or a
+// circle for a ticket on the page goes to it, as an id in a note does (goTo). In the side pane, which covers the page,
+// it shows that ticket in the pane instead.
+const depsShown = new Set(); // ids whose Waits on box shows its shipped tickets too
+const DEP_WORDS = { shipped: 'shipped', building: 'building', queued: 'queued', self: 'this ticket' };
+const depsIds = t => (!t.deps ? [] : t.deps.kind === 'waits' ? t.deps.items.map(i => i.id) : t.deps.slots.filter(s => s && s.id && s.state !== 'self').map(s => s.id));
+const depsLinks = t => depsIds(t).filter(id => onPage.has(String(id))); // the ones that go to their ticket
+// A chip or a slot: a button that goes to the ticket when it's on the page, otherwise the same, not a button.
+function depNode(cls, id, state, kids, inPane) {
+  const go = state !== 'self' && onPage.has(String(id));
+  const n = el(go ? 'button' : 'span', cls, null, ...kids);
+  n.title = `${id} · ${DEP_WORDS[state]}`;
+  if (!go) return n;
+  n.type = 'button';
+  n.setAttribute('aria-label', `Go to ticket ${id}, ${DEP_WORDS[state]}`);
+  n.addEventListener('click', e => { e.stopPropagation(); if (inPane) openFull({ id }, fullFrom); else goTo(String(id)); }); // neither opens nor closes the card it's in
+  return n;
+}
+function depsBox(t, inPane = false) {
+  const d = t.deps;
+  if (!d) return null;
+  const id = String(t.id);
+  if (d.kind === 'waits') {
+    const counts = ['shipped', 'building', 'queued'].filter(s => d[s] > 0).map(s => `${d[s]} ${s}`).join(' · ');
+    const bar = el('div', 'deps-bar', null, ...d.items.map(i => el('i', i.state)).sort((a, b) => STATE_ORDER[a.className] - STATE_ORDER[b.className]));
+    bar.setAttribute('role', 'img');
+    bar.setAttribute('aria-label', counts);
+    const shown = depsShown.has(id), open = d.items.filter(i => i.state !== 'shipped'), done = d.items.filter(i => i.state === 'shipped');
+    const chips = [...open, ...shown ? done : []].map(i => depNode(`chip ${i.state}`, i.id, i.state, [el('span', null, i.id)], inPane));
+    if (done.length) {
+      const more = el('button', 'chip more', shown ? 'Hide shipped' : `+${done.length} shipped`);
+      more.type = 'button';
+      more.setAttribute('aria-expanded', String(shown));
+      more.addEventListener('click', e => { e.stopPropagation(); flip(depsShown, id); });
+      chips.push(more);
+    }
+    return el('div', 'deps deps-waits', null, el('div', 'deps-head', null, el('b', null, 'Waits on'), el('span', null, counts)), bar, el('div', 'deps-grid', null, ...chips));
+  }
+  const slots = d.slots.map(s => (!s ? el('span', 'slot')
+    : s.more ? el('span', 'slot more', null, el('span', 'dot'), el('span', 'sid', `+${s.more}`))
+      : depNode(`slot ${s.state}`, s.id, s.state, [el('span', 'dot'), el('span', 'sid', s.id)], inPane)));
+  return el('div', 'deps deps-chain', null, el('div', 'deps-head', null, el('b', null, 'Chain'), el('span', null, `${d.before} before · ${d.after} after`)), el('div', 'deps-slots', null, ...slots));
+}
+const STATE_ORDER = { shipped: 0, building: 1, queued: 2 };
+// What a dependency box shows, to tell when it needs drawing again.
+const depsSig = t => signature([t.deps || null, depsShown.has(String(t.id)), depsLinks(t)]);
+// Puts an open card's dependency box right in `card`, straight after `top`, or first in it when `top` is null: a new
+// one in place of the old when what it shows has changed, or none when it has none now.
+function putDeps(card, top, t) {
+  const kids = [...card.children], old = kids.find(n => /^deps\b/.test(n.className)) || null;
+  const sig = depsSig(t);
+  if (old && old.sig === sig) return;
+  const next = depsBox(t);
+  if (next) { next.sig = sig; card.insertBefore(next, old || kids[kids.indexOf(top) + 1] || null); }
+  if (old) card.removeChild(old);
+}
+const withDeps = (t, inPane) => { const b = depsBox(t, inPane); if (b) b.sig = depsSig(t); return b; };
 const shippedDay = when => when.replace(/,.*$/, ''); // 0464: the day alone, before today
 // 0464: a shipped ticket's five steps, every one done, the Review step naming its last round, such as "Review 2".
 const shippedSteps = t => NOT_STARTED.map((s, i) => ({ label: i === 2 && t.roundCount > 0 ? `Review ${t.roundCount}` : s.label, state: 'done' }));
@@ -1443,6 +1505,7 @@ const counterOf = q => { const p = progressLine(q); return !p ? null : p.classNa
 function queueUpdate(q, t) {
   const sub = counterOf(q);
   if (sub) putCounter(sub, queueCounter(t));
+  if (openQueue.has(String(t.id))) putDeps(q, child(q, 'top'), t); // 0467
   if (t.inFlight) return;
   const top = child(q, 'top'), row = child(top, 'line'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
   if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
@@ -1679,7 +1742,7 @@ function render() {
   else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
     t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null], ticketItem,
-    { own: ownData, derived: t => [t.chain, t.unlocks, shownLinks(t)], update: newHead }), 'No draft tickets.');
+    { own: ownData, derived: t => [t.chain, t.unlocks, shownLinks(t), depsSig(t)], update: newHead }), 'No draft tickets.');
   renderFull(m);
 
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
@@ -1687,7 +1750,7 @@ function render() {
   const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null,
     unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null, goingWith.has(String(t.id)), goWithRefused.get(String(t.id)) ?? null,
     foremanAskOf(t.id)?.question ?? null, askPending.get(String(t.id)) ?? null, askRefused.get(String(t.id)) ?? null], queueItem,
-    { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
+    { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks, shownLinks(t), depsSig(t)], update: queueUpdate });
   fill('queue', rows, m.queue.length ? '' : idleLane(m));
   if (m.queue.length) idleClock(null, null);
   const pt = paneTicket, paneSub = pt ? paneCounter() : null; // 0465: the pane's counter moves on too

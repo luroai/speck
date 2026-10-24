@@ -435,6 +435,38 @@
   .item.ticket .facts .prio { vertical-align: top; }
   .item.ticket .facts .set-prio { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .item.ticket .facts .set-prio:hover { text-decoration-style: solid; }
+  /* 0467: an open ticket's dependency box, under its table. Waits on: a header with its counts, a bar of even
+     segments, then a grid of id chips six to a row, the one that shows the shipped ones two columns wide. Chain: five
+     even slots on a line, each a circle over its id. Every chip and slot keeps to its column, its id on one line. */
+  .deps { margin: 6px 0 4px; padding: 6px; border: .5px solid var(--line); }
+  .deps-head { display: flex; gap: 8px; justify-content: space-between; font-size: 12px; line-height: 16px; color: var(--muted); white-space: nowrap; }
+  .deps-head b { font-weight: 600; color: var(--text); }
+  .deps-head span { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .deps-bar { display: flex; gap: 1px; height: 4px; margin: 6px 0; }
+  .deps-bar i { flex: 1 1 0; min-width: 0; border-top: 4px solid var(--line); } /* a border, as the track's bars are */
+  .deps-bar i.shipped { border-top-color: var(--green); }
+  .deps-bar i.building { border-top-color: var(--blue); }
+  .deps-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  .deps .chip { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 4px 0; font: inherit; font-size: 12px; line-height: 16px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip;
+    color: var(--text); background: var(--raise); border: .5px solid var(--line); border-radius: 3px; font-variant-numeric: tabular-nums; }
+  .deps .chip.building { color: var(--run); border-color: var(--blue); }
+  .deps .chip.shipped { color: var(--ok); border-color: var(--green); }
+  .deps .chip.more { grid-column: span 2; color: var(--muted); }
+  .deps button.chip, .deps button.slot { cursor: pointer; }
+  .deps button.chip:hover, .deps button.slot:hover .sid { text-decoration: underline; }
+  .deps-slots { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+  .deps-slots::before { content: ''; position: absolute; left: 10%; right: 10%; top: 10px; border-top: 1px solid var(--line); }
+  .deps .slot { display: flex; flex-direction: column; align-items: center; box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 0; font: inherit; color: var(--text); background: none; border: 0; }
+  /* each circle is its border, 10 px wide all round, on the panel's colour, so the line behind it doesn't show through */
+  .deps .slot .dot { position: relative; box-sizing: border-box; width: 20px; height: 20px; border-radius: 50%; border: 10px solid var(--line); background: var(--panel); }
+  .deps .slot.shipped .dot { border-color: var(--green); }
+  .deps .slot.building .dot { border-color: var(--blue); }
+  .deps .slot.self .dot { border-color: var(--text); }
+  .deps .slot.more .dot { border: 1.5px dashed var(--line); }
+  .deps .slot.shipped .dot::after { content: ''; position: absolute; left: -2.5px; top: -6.5px; width: 4px; height: 8px; border: solid var(--panel); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* its tick */
+  .deps .slot .sid { max-width: 100%; margin-top: 2px; font-size: 12px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: clip; font-variant-numeric: tabular-nums; }
+  .deps .slot.self .sid { font-weight: 600; }
+  .deps .slot.more .sid { color: var(--muted); }
   /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
   .goto { font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .goto:hover { text-decoration-style: solid; }
@@ -750,6 +782,7 @@
     .tag-row { gap: 18px; }
     .prio-menu button { min-width: 44px; min-height: 44px; }
     .set-ready, .full-open { min-width: 44px; min-height: 44px; }
+    .deps .chip, .deps .slot { min-height: 44px; } /* 0467 */
     /* 0164: each id reads as running text, on the line's baseline with its comma straight after it. Its tap area is
        at least 44 px each way, but its negative margins give back what it reaches past the text, so nothing moves. */
     .goto { display: inline-block; vertical-align: baseline; line-height: 16px; min-width: 44px; min-height: 44px; padding: 14px 8px; margin: -14px -8px; text-align: center; }

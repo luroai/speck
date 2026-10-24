@@ -262,7 +262,7 @@ export function boardVersions() {
 }
 
 // 0178: the board as the panel sends it. A finished ticket outside the Shipped list's latest ten (0411), which the page shows
-// only in the Shipped figures, keeps only what those use: its id and status, its times, its builder's spend and, in place
+// only in the Shipped figures, keeps only what those use: its id and status, its after: (0467: for an open ticket's Chain box), its times, its builder's spend and, in place
 // of its review rounds, how many there were and the reviewer tokens of them all (review_total). A cancelled one, which the page doesn't show,
 // keeps its id and status. The latest ten, picked as the page picks them, a ticket whose ship is still running and one
 // merged but not pushed (0204) stay whole. `speck status --json` is unchanged.
@@ -281,7 +281,7 @@ export function panelBoard(board) {
     if (!finished.has(t) || shown.has(t) || (t.ship && typeof t.ship === 'object' && t.ship.unpushed === true)) return t;
     const rounds = Array.isArray(t.rounds) ? t.rounds : [];
     const tokens = rounds.reduce((n, r) => n + (Number(r && r.tokens) || 0), 0);
-    return { id: t.id, status: t.status, started: at(t.started), finished: at(t.finished), approved: at(t.approved),
+    return { id: t.id, status: t.status, after: Array.isArray(t.after) ? t.after : [], started: at(t.started), finished: at(t.finished), approved: at(t.approved),
       waited_seconds: typeof t.waited_seconds === 'number' && Number.isFinite(t.waited_seconds) ? t.waited_seconds : null,
       review_total: { rounds: rounds.length, tokens }, builder_tokens: spent(t.builder_tokens), builder_cost_usd: spent(t.builder_cost_usd) };
   };
