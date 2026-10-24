@@ -221,11 +221,11 @@ test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back t
   const p = livePage(board({ foreman: { word: 'Needs you 2', tone: 'bad' } }));
   await p.settle();
   const waiting = queueRows(p).find(n => idOf(p, n) === '0002');
-  p.press(gotoIn(p, waiting, '0001'));
+  p.press(await gotoIn(p, waiting, '0001'));
   openIs(p, 'plan', 'after going to a Plan ticket');
   assert.equal(p.byId('build-needs').textContent, '2', 'before any refresh');
   // Back to Build through a link, then opened from Build and closed once it's back in Plan.
-  p.press(gotoIn(p, items(p).find(n => idOf(p, n) === '0001'), '0002'));
+  p.press(await gotoIn(p, items(p).find(n => idOf(p, n) === '0001'), '0002'));
   assert.equal(p.byId('build-needs').textContent, '', 'Build open again');
   const row = queueRows(p).find(n => idOf(p, n) === '0003');
   click(row.children.find(n => n.className === 'top'));
@@ -243,7 +243,12 @@ test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back t
 // ---------- AC5 ----------
 
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')._text;
-const gotoIn = (p, n, id) => p.all(n).find(x => /\bgoto\b/.test(x.className || '') && x.textContent === id);
+// 0468: a closed card's ids are in its chip, so this opens the card and finds the id in its dependency box (0467).
+async function gotoIn(p, n, id) {
+  const of = idOf(p, n), find = () => [...items(p), ...queueRows(p)].find(r => idOf(p, r) === of);
+  if (!/\bopen\b/.test(n.className)) { click(top(n) || n.children[0]); await p.settle(); }
+  return p.all(find()).find(x => x.tagName === 'button' && ((x.attrs || {})['aria-label'] || '').startsWith(`Go to ticket ${id}, `));
+}
 
 test('0410 AC5: "Go to ticket" opens the tab holding the ticket, then scrolls to it and lights it', async () => {
   let opened = null;
@@ -252,7 +257,7 @@ test('0410 AC5: "Go to ticket" opens the tab holding the ticket, then scrolls to
   const row = items(p).find(n => idOf(p, n) === '0001');
   row.scrollIntoView = () => { opened = showing(p); };
   const waiting = queueRows(p).find(n => idOf(p, n) === '0002');
-  p.press(gotoIn(p, waiting, '0001'));
+  p.press(await gotoIn(p, waiting, '0001'));
   assert.deepEqual(opened, ['plan'], 'Plan was open when it scrolled to the ticket');
   openIs(p, 'plan', 'after going to a Plan ticket');
   assert.match(row.className, /\bflash\b/, 'and it is lit');
@@ -263,8 +268,8 @@ test('0410 AC5: going to a Build ticket from another tab opens Build', async () 
   await p.settle();
   click(p.byId(TAB.shipped));
   const unlocks = items(p).find(n => idOf(p, n) === '0001');
-  // 0001 unlocks 0002, so its note links to it; press it as a hidden lane's button can't be, straight through goTo
-  const link = gotoIn(p, unlocks, '0002');
+  // 0001 unlocks 0002, so its dependency box links to it; press it as a hidden lane's button can't be, straight through goTo
+  const link = await gotoIn(p, unlocks, '0002');
   assert.ok(link, 'the Plan ticket links to the Build ticket it unlocks');
   let opened = null;
   queueRows(p).find(n => idOf(p, n) === '0002').scrollIntoView = () => { opened = showing(p); };
