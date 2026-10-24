@@ -41,6 +41,7 @@ The open tab and its lane read as one sheet of paper, with no line between them,
 - Today: `.tabs` has `border-bottom: .5px solid var(--line)`, and `.tab[aria-selected="true"]` has a full border in `var(--text)` on a `var(--panel)` background, in `templates/panel.css`. Tabs get their top corners from `.tab { border-radius: 8px 8px 0 0; }` further down the file.
 - The tabs are `<button>`s, so 0453 (every button drawn on all four sides) covers them. The open tab's missing bottom edge is this ticket's deliberate exception to 0453.
 - Waits for 0455, which waits for 0454 and 0453: all change `templates/panel.css`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
