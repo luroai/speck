@@ -1,5 +1,5 @@
-// 0415: pressing speck's screen opens the Pipeline pop-up: what the Foreman's detail showed, as its Right now section,
-// and speck run's output from run.log under it, as its Log section.
+// 0415: pressing speck's screen opens the Pipeline pop-up, with speck run's output from run.log as its Log section.
+// 0458: the Right now section above it, with what the Foreman's detail showed, is gone.
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -45,48 +45,26 @@ const runLogCalls = p => p.calls.filter(c => c.url === '/api/run-log');
 
 const BUSY = view({ building: ['0001'], ready: [{ id: '0004', kind: 'after', why: 'waiting for 0003' }] },
   [T('0001', 'ready'), T('0004', 'ready'), T('0006', 'blocked', { blocked_question: 'Which one?' })]);
-const HEADS = ['Building', 'Ready, not building', 'Shipping', 'Blocked', 'Recommendations taken', 'Looked into'];
 
-// ---------- AC1: a pop-up titled Pipeline, with the Foreman's detail as its Right now section ----------
+// ---------- AC1: a pop-up titled Pipeline (0458: with only its Log section) ----------
 
-test('0415 AC1: pressing the screen opens a pop-up titled Pipeline, not The Foreman, whose first section is Right now', async () => {
+test('0415 AC1: pressing the screen opens a pop-up titled Pipeline, not The Foreman, whose only section is Log (0458)', async () => {
   const p = await opened([state(BUSY)]);
   assert.equal(pop(p).hidden, false, 'open');
   const title = p.all(pop(p)).find(n => /\btitle\b/.test(n.className || ''));
   assert.equal(title.textContent, 'Pipeline');
   assert.ok(!p.all(pop(p)).some(n => n.textContent === 'The Foreman'), 'the Foreman\'s detail is gone');
   assert.match(page().match(/<div class="foreman" id="foreman"[^>]*>/)[0], /aria-label="Pipeline"/);
-  const now = sectionOf(p, 'Right now'), log = sectionOf(p, 'Log');
-  assert.ok(now && log, 'a Right now and a Log section');
-  const order = p.all(pop(p)).filter(n => n.tagName === 'h3').map(n => n.textContent);
-  assert.deepEqual(order, ['Right now', 'Log'], 'Right now first, then Log');
+  assert.ok(sectionOf(p, 'Log'), 'a Log section');
+  assert.deepEqual(p.all(pop(p)).filter(n => n.tagName === 'h3').map(n => n.textContent), ['Log'], 'only Log');
 });
 
-test('0415 AC1: Right now shows the detail\'s sections and wording, in the same order', async () => {
-  const p = await opened([state(BUSY)]);
-  const now = sectionOf(p, 'Right now');
-  assert.deepEqual(p.all(now).filter(n => n.tagName === 'h4').map(n => n.textContent), HEADS);
-  const t = now.textContent;
-  assert.match(t, /^Right nowFixing: tell\. [^]*?Building0001Ready, not building0004 waiting for 0003Shipping/);
-  assert.match(t, /Blocked0006 Ticket 0006Which one\?Waiting for you\./);
-  assert.match(t, /The Foreman hasn't had to look into anything\.$/);
-});
-
-test('0415 AC1: the Foreman\'s questions keep their Answer and Dismiss buttons in Right now', async () => {
-  const agent = { running: null, asks: [{ id: '0001', question: 'Should it keep the old test?' }], did: [] };
-  const f = { ...view({}, [T('0001', 'building')]), agent };
-  const p = await opened([state(f, { tickets: [T('0001', 'building')] })]);
-  const now = sectionOf(p, 'Right now');
-  assert.match(now.textContent, /Should it keep the old test\?/);
-  for (const b of ['Answer', 'Dismiss']) assert.ok(p.all(now).some(n => n.tagName === 'button' && n.textContent === b), `its ${b} button`);
-});
-
-test('0415 AC1: a stale page keeps its Reload page button, first in Right now', async () => {
+test('0415 AC1: a stale page keeps its Reload page button, first in the pop-up, above the Log', async () => {
   let reloaded = 0;
   const p = await opened([state(view({}), { page: 'newer' })], { location: { reload: () => { reloaded++; } } });
-  const now = sectionOf(p, 'Right now'), reload = p.all(now).find(n => n.id === 'foreman-reload');
+  const body = pop(p).children[1], reload = p.all(pop(p)).find(n => n.id === 'foreman-reload');
   assert.ok(reload, 'a Reload page button');
-  assert.ok(within(reload, now.children[1]), 'straight under the heading');
+  assert.ok(within(reload, body.children[0]) && body.children[1] === sectionOf(p, 'Log'), 'first, above the Log');
   reload.listeners.click();
   assert.equal(reloaded, 1);
 });
@@ -278,8 +256,8 @@ test('0415 AC3: a click in its column, or one ending beside it after starting in
   pop(p).listeners.pointerdown(inCol);
   pop(p).listeners.click(inCol);
   assert.equal(pop(p).hidden, false, 'a click in the column');
-  const now = sectionOf(p, 'Right now');
-  pop(p).listeners.pointerdown({ target: now, clientX: 500 });
+  const log = sectionOf(p, 'Log');
+  pop(p).listeners.pointerdown({ target: log, clientX: 500 });
   pop(p).listeners.click({ target: pop(p), clientX: 100 });
   assert.equal(pop(p).hidden, false, 'a drag from the column ending beside it');
 });
