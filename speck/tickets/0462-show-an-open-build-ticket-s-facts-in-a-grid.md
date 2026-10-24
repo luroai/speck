@@ -1,7 +1,7 @@
 ---
 id: "0462"
 title: "Show an open build ticket's facts in a grid"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0461"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T10:52:09.690Z"
+approved: "2026-10-24T11:07:31.038Z"
 
 ---
 # 0462 · Show an open build ticket's facts in a grid
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 An open ticket in the Build lane lists what it's doing, its stage, its reviewer, its timer, priority, size, risk and type in one line joined by dots. On a phone the line wraps wherever the width runs out, so it looks untidy and nothing tells you which part matters.
@@ -52,9 +53,14 @@ When you open a ticket that's being built, reviewed or waiting to ship, its deta
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 196,700
+- Elapsed since build started: 15 min
+- Changed lines: 85 (limit 5000)
 - Follow-ups: speck/ideas/2026-10-24-name-the-builder-s-model-in-the-facts-grid.md and speck/ideas/2026-10-24-explain-the-facts-grid-s-priority-size-and-risk.md.
 - Known limit: the Builder cell names the agent, not its model, as the board doesn't give the builder's model.
 
