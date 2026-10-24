@@ -178,11 +178,11 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
       }
     }
     assert.deepEqual(seen, ['0701', '0702', '0703', '0704', '0705', '0706', '0707']);
-    // 0434: open, its details wrap between the ids it waits on
+    // 0434: open, its details wrapped between the ids it waits on. 0463: open, its facts are in a table, which counts them
     await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0707').querySelector('.top').click()`);
-    await b.until(`!!document.querySelector('#queue .q.open')`, '0707 to open');
-    const [open] = await b.js(CARDS('#queue .q.open'));
-    assert.ok(open.id === '0707' && open.detailLines >= 3 && !open.overflows, `0707 open: ${open.detailLines} lines of details`);
+    await b.until(`!!document.querySelector('#queue .q.open .facts')`, '0707 to open');
+    const wait = await b.js(`[...document.querySelector('#queue .q.open .facts').children].map(c => [c.children[0].textContent, c.children[1].textContent])[1]`);
+    assert.deepEqual(wait, ['Waiting on', `${LONG_WAIT.length} left of ${LONG_WAIT.length}`], '0707 open');
   } finally { await b.close(); await stop(panel); }
 });
 
@@ -196,9 +196,10 @@ test('0419 AC1 and AC2: a ticket missing its priority, size or risk, or with no 
   assert.equal(detailsOf(card(p, '0803')).textContent, 'Queued');
   assert.equal(detailsOf(card(p, '0804')).textContent, ' Review 1 · The reviewer · 00:05');
   for (const id of ['0802', '0803', '0804']) { click(topOf(card(p, id))); await p.settle(); } // 0434: the tags show while it's open
-  assert.equal(detailsOf(card(p, '0803')).textContent, 'Queued');
   // 0462: an open one in flight has its facts in cells, each always there, with a dash for what it doesn't have
   const cell = (id, label) => factsOf(card(p, id)).find(([l]) => l === label)[1];
   assert.deepEqual(['Time', 'Priority', 'Size · risk'].map(l => cell('0802', l)), ['–', '–', '– · –']);
   assert.deepEqual(['Time', 'Priority', 'Size · risk'].map(l => cell('0804', l)), ['00:05', 'P2', '– · low']);
+  // 0463: and so does an open queued one
+  assert.deepEqual(['Status', 'Priority', 'Size · risk'].map(l => cell('0803', l)), ['Queued', '–', '– · –']);
 });

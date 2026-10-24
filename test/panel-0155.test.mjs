@@ -173,17 +173,16 @@ for (const width of [375, 699, 700, 1000, 1280]) {
         // 0419: under the title, one details line from the card's left padding: a ticket in flight's progress (0168),
         // with its timer in it, or a ready one's Queued line, with no timer; then the tags, in the same line.
         // 0462: an open one in flight has its facts in a table under its step track instead, its timer and its priority,
-        // size and risk in their cells. The title has the full width.
+        // size and risk in their cells. 0463: and so does an open ready one. The title has the full width.
         assert.ok(Math.abs(l.line.right - l.right) < 1, `${id}: the title's row ends at ${l.line.right}, not the card's right padding at ${l.right}`);
-        const details = STATES[id] === 'ready' ? l.act : l.facts;
+        const details = l.facts;
         assert.ok(details, `${id}: no details line`);
         assert.ok(Math.abs(details.left - l.left) < 0.5, `${id}: the details line starts at ${details.left}, not the card's left padding at ${l.left}`);
         assert.ok(details.top >= titleBottom - 0.5, `${id}: the details line is under the title`);
         const inside = r => r.left >= details.left - 0.5 && r.right <= details.right + 0.5 && r.top >= details.top - 0.5 && r.bottom <= details.bottom + 0.5;
-        if (STATES[id] === 'ready') assert.ok(l.sub === null && l.progress === null, `${id}: a ready ticket has no timer`);
+        if (STATES[id] === 'ready') assert.ok(l.sub === null && l.progress === null && l.act === null, `${id}: a ready ticket has no timer, and no Queued line`);
         else assert.ok(l.sub && inside(l.sub), `${id}: the timer is in the details line`);
-        if (STATES[id] === 'ready') assert.ok(l.tags.length >= 3, `${id}: ${l.tags.length} tags`);
-        else assert.equal(l.tags.length, 0, `${id}: no tags, as its facts are in their cells`);
+        assert.equal(l.tags.length, 0, `${id}: no tags, as its facts are in their cells`);
         for (const t of l.tags) {
           assert.ok(inside(t), `${id}: ${t.text} is in the details line`);
           assert.ok(Math.abs(t.height - l.tags[0].height) < 0.5, `${id}: ${t.text} is ${t.height} px high, ${l.tags[0].text} ${l.tags[0].height} px`);
