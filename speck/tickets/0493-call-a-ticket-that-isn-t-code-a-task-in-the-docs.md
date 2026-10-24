@@ -1,7 +1,7 @@
 ---
 id: "0493"
 title: "Call a ticket that isn't code a task in the docs"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0492", "0490"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T20:41:21.961Z"
 
 ---
 # 0493 · Call a ticket that isn't code a task in the docs
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 After 0492, speck calls a ticket that isn't code a task, with `kind: code | task`, but its skills, the brief and the README still describe document tasks and `task: document`. Agents following the skills would keep writing the old field.
