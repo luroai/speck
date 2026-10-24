@@ -1,7 +1,7 @@
 ---
 id: "0486"
 title: "Call the Foreman speck in speck's messages and commands"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:44:03.734Z"
+approved: "2026-10-24T19:02:24.812Z"
 
 ---
 # 0486 · Call the Foreman speck in speck's messages and commands
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck run`, `speck status` and the Pipeline log say "the Foreman" in about forty messages, and you answer it with `speck foreman answer`. With one speck watching the pipeline, the second name is a concept people have to learn for nothing.
@@ -60,9 +61,14 @@ Worth knowing: the panel still says Foreman in a few places, and the setting nam
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 319,096
+- Elapsed since build started: 18 min
+- Changed lines: 217 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (none sent to the inbox, as the sibling tickets cover them):
 - The brief still says the agent's commits start `speck(<id>): Foreman: answer` and `dismiss`, and `test/foreman-answer-0318.test.mjs` checks that wording: 0488 changes both (its AC2).
