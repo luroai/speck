@@ -1,7 +1,7 @@
 ---
 id: "0456"
 title: "Show the 0.15.0 panel in the README's picture"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T19:52:29.222Z"
 ---
 # 0456 · Show the 0.15.0 panel in the README's picture
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The README's picture, taken on 19 October for 0306, shows the panel before 0.15.0's rebuild: the old header with its Foreman box and buttons, square-edged LCD badges and the Plan and Build sections stacked down the page. 0.15.0 rebuilds the panel, so someone reading the README sees a panel that no longer exists.
@@ -52,7 +52,7 @@ The README's light and dark pictures show the 0.15.0 panel at phone width, in a 
 - Self-check: no changes (checked both pictures for names, accounts, version numbers, the word Foreman, a Disconnected banner and other products' marks; the panel's text is sans-serif apart from its own monospace ids and tags).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The picture at the top of the README now shows the rebuilt panel: an agent conversation on the left and the panel in a narrow browser pane beside it, with speck's screen as the header, the Plan, Build and Shipped strip, and the Build lane open with one ticket ready to ship, one being built and two queued. There's a light and a dark version, and GitHub shows whichever matches the reader's setting. To see it, open the README on GitHub once this has shipped. The pictures will need taking again whenever the panel's look changes a lot.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,3 +62,68 @@ The README's light and dark pictures show the 0.15.0 panel at phone width, in a 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5fc0880d6122fb36a640ac9c4e5a54c8154b2b7e",
+    "session": "fresh",
+    "thread_id": "01a16f7a-b50d-78c2-b7ce-1548315d799b",
+    "builder_response": "- Tests run: test/readme-0456.test.mjs, with `speck test --related` (61 related files, all passing).\n- The two pictures are `docs/images/demo-light.png` and `docs/images/demo-dark.png` (2880 × 1800, a 1440 × 900 window at 2×). The panel is in a 430 CSS px browser pane on the right of a generic mock agent app, as 0306's were taken (demo outside the repo, not committed). Please open both images to check AC1 and AC3.\n- What they show: speck's LCD screen as the header (BUILDING 1 with the time); the Plan, Build and Shipped strip with Build marked; the Build lane open as a light card, with 0042 approved and ready to ship, 0043 being built and 0045 and 0046 queued. Made-up tickets (a shop). Panel text is Liberation Sans (Segoe UI mapped in the demo page only); ids and tags stay in the panel's own monospace.\n- AC4: the README's alt text now describes the new picture.\n- AC2's test passes against 0306's old pictures too, since they also met those file facts.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 95393,
+      "cached_input_tokens": 69632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 801,
+      "reasoning_output_tokens": 18
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T19:54:55.484Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Visually inspected docs/images/demo-light.png and demo-dark.png: conversation left, phone-width panel right, LCD header, Plan/Build/Shipped strip with Build selected, and fictional tickets 0042 ready to ship, 0043 building and two queued. Text is sans-serif except the panel's display, ids and tags. Both themes are represented; the pane's proportions match the stated 430 CSS pixels."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/readme-0456.test.mjs exercises the image file requirements and passed. Independent chunk inspection confirms both PNGs are 2880 × 1800, light 305469 bytes and dark 285216 bytes, containing only IHDR, IDAT and IEND chunks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Visual inspection of both images found no personal details, other project or product names or logos, Disconnected banner, version number or word Foreman."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "README.md's image alt text accurately describes the narrow browser pane, LCD screen and open Build lane with approved, building and queued tickets. Reported related tests passed: 656 passed, three skipped, zero failures. Changes are limited to the pictures, alt text, image test and ticket record."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The light and dark pictures now show the updated phone-width panel beside a generic agent conversation. The alt text matches, image requirements are met, and the related tests passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
