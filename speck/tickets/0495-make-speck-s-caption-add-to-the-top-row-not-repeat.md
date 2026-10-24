@@ -1,7 +1,7 @@
 ---
 id: "0495"
 title: "Make speck's caption add to the top row, not repeat it"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T21:11:26.775Z"
 
 ---
 # 0495 · Make speck's caption add to the top row, not repeat it
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Between events, the caption under speck often repeats the screen's top row: `NEEDS YOU 1` over `1 NEEDS YOU`, `WAITING` over `WAITING`, `BUILDING 1` over `WATCHING 1 BUILD`. Two of the screen's three lines say the same thing.
