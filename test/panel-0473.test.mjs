@@ -61,7 +61,7 @@ test('0473 AC1: on the fake page, the full ticket, a review pack, a document and
 test('0473 AC2: panel.html loads panel-popups.js after the page\'s own script, which it uses, and before Settings', () => {
   const scripts = [...page().matchAll(/<script\b[^>]*>/g)].map(m => m[0]);
   assert.deepEqual(scripts, ['<script id="theme-start">', '<script src="/panel-model.js">', '<script src="/lcd.js">',
-    '<script src="/panel.js" data-page="{{page}}" data-token="{{token}}">', '<script src="/panel-popups.js">', '<script src="/panel-settings.js">']);
+    '<script src="/panel.js" data-page="{{page}}" data-token="{{token}}">', '<script src="/panel-header.js">', '<script src="/panel-popups.js">', '<script src="/panel-settings.js">']);
   assert.match(page(), /<script src="\/panel-popups\.js"><\/script>/, 'an empty tag');
 });
 
@@ -114,7 +114,7 @@ test('0473 AC2: a page whose stamp differs from the server\'s says it is out of 
 
 test('0473 AC3: the fake page runs every script the page loads, in the page\'s order, each from its file', async () => {
   const tags = [...page().matchAll(/<script src="\/([^"]+)"/g)].map(m => m[1]);
-  assert.deepEqual(tags, ['panel-model.js', 'lcd.js', 'panel.js', 'panel-popups.js', 'panel-settings.js']);
+  assert.deepEqual(tags, ['panel-model.js', 'lcd.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
   assert.deepEqual(pageScripts().map(s => s.src), tags);
   const p = fakePage([{ tickets: [], ideas: [] }]);
   assert.deepEqual(p.scripts, tags, 'every one, in order');
