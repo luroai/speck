@@ -1,7 +1,7 @@
 ---
 id: "0474"
 title: "Move the panel's header script into a file of its own"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0473"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T14:28:14.801Z"
+approved: "2026-10-24T14:33:17.139Z"
 
 ---
 # 0474 · Move the panel's header script into a file of its own
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0473, the panel's header script, speck's screen, its words and the tabs, is still in `templates/panel.js` with the cards' script, so a ticket that changes the header and one that changes the cards build one after the other.
@@ -53,9 +54,14 @@ Nothing looks or works differently: the panel is exactly as it was. Behind the s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 146,109
+- Elapsed since build started: 5 min
+- Changed lines: 597 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (tidy-ups and known limits, none for the inbox):
 - `foremanOf` and `pageStale` stay in panel.js, as the pop-ups use them too. Pressing speck's screen stays in panel-popups.js (0473).
