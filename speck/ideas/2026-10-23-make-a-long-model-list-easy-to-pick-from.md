@@ -1,6 +1,6 @@
 # Make a long model list easy to pick from
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0400
 
 ## What

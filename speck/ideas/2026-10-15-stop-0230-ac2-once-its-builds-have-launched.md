@@ -1,6 +1,6 @@
 # Stop 0230 AC2's speck run once its builds have launched
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: dropped
 Triaged: 1
 From ticket: 0232
 

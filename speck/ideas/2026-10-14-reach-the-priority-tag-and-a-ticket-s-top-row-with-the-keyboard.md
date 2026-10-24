@@ -1,6 +1,6 @@
 # Reach the priority tag and a ticket's top row with the keyboard
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: dropped
 Triaged: 1
 From ticket: 0161
 

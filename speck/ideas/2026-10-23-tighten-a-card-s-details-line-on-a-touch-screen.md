@@ -1,6 +1,6 @@
 # Tighten a card's details line on a touch screen
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0419
 
 ## What

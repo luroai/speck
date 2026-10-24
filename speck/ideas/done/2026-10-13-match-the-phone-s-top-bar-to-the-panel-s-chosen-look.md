@@ -1,6 +1,6 @@
 # Match the phone's top bar to the panel's chosen look
 
-Captured: 2026-10-13 · Status: inbox
+Captured: 2026-10-13 · Status: ticketed (0448)
 Triaged: 1
 From ticket: 0149
 

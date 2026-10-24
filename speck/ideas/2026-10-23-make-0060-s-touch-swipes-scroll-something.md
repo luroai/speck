@@ -1,6 +1,6 @@
 # Make 0060's touch swipes really scroll
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0429
 
 ## What

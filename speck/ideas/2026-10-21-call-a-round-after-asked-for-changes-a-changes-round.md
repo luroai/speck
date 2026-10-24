@@ -1,6 +1,6 @@
 # Call a round after asked-for changes a changes round
 
-Captured: 2026-10-21 · Status: inbox
+Captured: 2026-10-21 · Status: dropped
 From ticket: 0356
 
 ## What

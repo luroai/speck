@@ -1,6 +1,6 @@
 # End a test run's detached processes however it ends
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: dropped
 Triaged: 1
 From ticket: 0202
 

@@ -1,6 +1,6 @@
 # End a review round's reviewer when its build is stopped
 
-Captured: 2026-10-22 · Status: inbox
+Captured: 2026-10-22 · Status: dropped
 From ticket: 0384
 
 ## What

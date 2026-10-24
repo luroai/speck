@@ -1,6 +1,6 @@
 # Test the Foreman's Shipping list in pull request mode
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 Triaged: 1
 From ticket: 0299
 

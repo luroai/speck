@@ -1,6 +1,6 @@
 # Keep the agents' lists between Settings reads
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0407
 
 ## What

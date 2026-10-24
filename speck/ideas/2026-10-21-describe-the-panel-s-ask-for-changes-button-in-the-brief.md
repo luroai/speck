@@ -1,6 +1,6 @@
 # Describe the panel's Ask for changes button in the brief
 
-Captured: 2026-10-21 · Status: inbox
+Captured: 2026-10-21 · Status: dropped
 From ticket: 0357
 
 ## What

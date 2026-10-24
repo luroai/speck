@@ -1,6 +1,6 @@
 # Count only tickets that can ship as on their way
 
-Captured: 2026-10-20 · Status: inbox
+Captured: 2026-10-20 · Status: dropped
 From ticket: 0338
 
 ## What

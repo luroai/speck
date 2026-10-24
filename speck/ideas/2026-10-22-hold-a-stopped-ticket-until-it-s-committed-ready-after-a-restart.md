@@ -1,6 +1,6 @@
 # Hold a stopped ticket until it's committed ready, after a restart
 
-Captured: 2026-10-22 · Status: inbox
+Captured: 2026-10-22 · Status: dropped
 From ticket: 0376
 
 ## What

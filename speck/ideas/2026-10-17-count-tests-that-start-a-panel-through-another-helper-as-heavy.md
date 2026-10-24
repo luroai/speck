@@ -1,6 +1,6 @@
 # Count tests that start a panel through another helper as heavy
 
-Captured: 2026-10-17 · Status: inbox
+Captured: 2026-10-17 · Status: dropped
 Triaged: 1
 From ticket: 0271
 

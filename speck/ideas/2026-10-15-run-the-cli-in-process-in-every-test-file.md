@@ -1,6 +1,6 @@
 # Run the speck CLI in-process in every test file
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: dropped
 Triaged: 1
 From ticket: 0231
 

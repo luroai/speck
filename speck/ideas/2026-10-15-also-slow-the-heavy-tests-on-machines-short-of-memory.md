@@ -1,6 +1,6 @@
 # Also slow the heavy tests on machines short of memory
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: dropped
 Triaged: 1
 From ticket: 0233
 

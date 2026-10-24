@@ -1,6 +1,6 @@
 # Push a handed-back pull request again
 
-Captured: 2026-10-19 · Status: inbox
+Captured: 2026-10-19 · Status: dropped
 From ticket: 0323
 
 ## What

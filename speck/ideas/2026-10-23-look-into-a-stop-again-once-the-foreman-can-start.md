@@ -1,6 +1,6 @@
 # Look into a stop again once the Foreman can start
 
-Captured: 2026-10-23 · Status: inbox
+Captured: 2026-10-23 · Status: dropped
 From ticket: 0392
 
 ## What

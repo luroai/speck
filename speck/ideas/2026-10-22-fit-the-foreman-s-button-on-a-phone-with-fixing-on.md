@@ -1,6 +1,6 @@
 # Fit the Foreman's button on a phone with Fixing on
 
-Captured: 2026-10-22 · Status: inbox
+Captured: 2026-10-22 · Status: dropped
 From ticket: 0364
 
 ## What
