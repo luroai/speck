@@ -515,3 +515,57 @@ function linkTarget(s, from) {
   }
   return null;
 }
+// 0459: a line of speck run's log as the Pipeline pop-up shows it: its time (HH:MM:SS and a space, 0460) or '', a short
+// summary of its text, starting with the ticket's id when it names one, and its kind, 'fail' or 'msg'. The summary is
+// at most RUN_LOG_WIDTH characters and never shows a session id, a process id, a file path or a command.
+const RUN_LOG_WIDTH = 48;
+const RUN_ID = /(?<![\w:./-])(\d{4,})(?![\w:/-]|\.\w)/;
+const runCut = s => (s.length > RUN_LOG_WIDTH ? `${s.slice(0, RUN_LOG_WIDTH - 1).trimEnd()}…` : s);
+// A sentence without what it mustn't show: parentheses with a session or process in them, `code`, ids of sessions,
+// processes, paths, links, file names and speck's or a tool's commands. Whatever is left is tidied of the gaps they leave.
+function runPlain(s) {
+  return s
+    .replace(/\([^()]*\b(?:session|process|pid)\b[^()]*\)/gi, '')
+    .replace(/`[^`]*`/g, '')
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '')
+    .replace(/\b(?:process|pid|session)\s+\d+/gi, '')
+    .replace(/\S*\/\S*/g, '')
+    .replace(/\S*\w\.(?:mjs|cjs|js|ts|md|log|json|ya?ml|css|html|txt|lock|git)\b\S*/g, '')
+    .replace(/(?<![\w.'-])(?:speck|npm|npx|node|git|gh|claude|codex|cursor-agent)\s+[a-z][\w-]*(?:\s+(?:--?[\w=.-]+|\d{4,}))+/g, '')
+    .replace(/(?<![\w.'-])npm (?:test|ci|install)\b/g, '')
+    .replace(/\bLog:\s*(?=$|[.,;])/g, '')
+    .replace(/\(\s*\)/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([.,;:!?])/g, '$1')
+    .replace(/([,;:])(?=[.,;:]|$)/g, '')
+    .trim();
+}
+const runFirst = s => { const m = s.match(/^.*?[.!?](?=\s|$)/); return m ? m[0] : s; };
+// The short reasons a ship gives, for `<id> didn't ship`, or null for one it doesn't.
+function shipWhy(why) {
+  if (/\bconflict/i.test(why)) return 'a conflict';
+  if (/\b(?:tests? failed|failing tests)\b/i.test(why)) return 'tests failed';
+  const first = runPlain(runFirst(why)).replace(/[.!?]$/, '');
+  return first || null;
+}
+function runLogSummary(text) {
+  const s = String(text).trim();
+  let m;
+  if ((m = s.match(/^Launched (\d{4,})\b/))) return `${m[1]} build started`;
+  if ((m = s.match(/^Resumed (\d{4,})\b/))) return `${m[1]} build resumed`;
+  if ((m = s.match(/^(\d{4,}) build exited with code (\d+)\.?$/))) return m[2] === '0' ? `${m[1]} build finished` : `${m[1]} build failed (code ${m[2]})`;
+  if ((m = s.match(/^Shipping (\d{4,}):/))) return `${m[1]} shipping`;
+  if ((m = s.match(/^Shipped (\d{4,})\.?$/))) return `${m[1]} shipped`;
+  if ((m = s.match(/^(\d{4,}) didn't ship(?::\s*([\s\S]*))?$/))) {
+    const why = m[2] ? shipWhy(m[2]) : null, long = why ? `${m[1]} didn't ship: ${why}` : '';
+    return long && long.length <= RUN_LOG_WIDTH ? long : `${m[1]} didn't ship`;
+  }
+  if ((m = s.match(/^(\d{4,}) build\b.*\bstopped\.$/))) return `${m[1]} build stopped`;
+  const plain = runFirst(runPlain(s)), id = plain.match(RUN_ID);
+  return runCut(id && !plain.startsWith(id[1]) ? `${id[1]} ${plain}` : plain);
+}
+function runLogLine(line) {
+  const m = String(line).match(/^(\d\d:\d\d:\d\d )([\s\S]*)$/), text = runLogSummary(m ? m[2] : line);
+  const fail = /^\d{4,} (?:build failed|didn't ship)/.test(text);
+  return { at: m ? m[1] : '', text, kind: fail ? 'fail' : 'msg' };
+}

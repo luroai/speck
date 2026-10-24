@@ -1963,7 +1963,7 @@ function renderForeman(stale) {
   if (!was) box.scrollTop = 0;
   if ((!was || lost) && box.focus) box.focus({ preventScroll: true }); // into it, or back into it when what had it goes
 }
-// 0415: speck run's output, from run.log, newest line first. The board's run_log changes with each write to it, and
+// 0415: speck run's output, from run.log (0459: the newest line at the bottom). The board's run_log changes with each write to it, and
 // while the pop-up is open the page asks for the log again (GET /api/run-log) each time it does, one request at a time.
 // A board without run_log has no run.log. runLog is the last answer, for the run_log it was asked for (runLogFor),
 // declared with foremanOpen.
@@ -1983,34 +1983,48 @@ function drawRunLog() {
   const box = $('foreman'), sec = !box.hidden && box.children[1] ? box.children[1].children[1] : null;
   if (!sec) return;
   const stamp = state && typeof state.run_log === 'string' && state.run_log ? state.run_log : null;
-  const lines = stamp === null ? null : runLogFor === null ? [] : runLog;
-  const key = lines === null ? null : lines.join('\n');
+  const given = stamp === null ? null : runLogFor === null ? [] : runLog;
+  const key = given === null ? null : given.join('\n');
   if (key === runLogShown) return;
   runLogShown = key;
-  // A reader scrolled into the log stays where they are as new lines come in above them: the first line they can see
-  // is found again among the new lines, and the pop-up scrolled so it's where it was.
-  const top = box.children[0], list = sec.children[1], rect = n => (n && typeof n.getBoundingClientRect === 'function' ? n.getBoundingClientRect() : null);
+  // 0459: the oldest line at the top and the newest at the bottom, in a box of its own that scrolls. The server gives
+  // them newest first.
+  const lines = given && given.slice().reverse().map(String), was = sec.children[1];
+  if (!lines || !lines.length) {
+    runLogDrawn = null;
+    sec.replaceChildren(sec.children[0], el('div', 'run-log', null, el('p', 'none', lines && runLogFor === null ? 'Reading speck run\'s log…' : 'speck run hasn\'t written anything yet.')));
+    return;
+  }
+  const list = was && /^ol$/i.test(was.tagName || '') && Array.isArray(runLogDrawn) ? was : el('ol', 'run-log');
+  // A box at its bottom, or just drawn, shows the new lines. A reader scrolled up stays where they are: the first line
+  // they can see is found again, past the lines that dropped out at the top, and the box scrolled so it's where it was.
+  const follow = list !== was || atBottom(list), rect = n => (n && typeof n.getBoundingClientRect === 'function' ? n.getBoundingClientRect() : null);
   let anchor = null;
-  if (list && /\brun-log\b/.test(list.className || '') && box.scrollTop > 0 && rect(top) && rect(list) && rect(list).top < rect(top).bottom && Array.isArray(runLogDrawn) && lines && lines.length) {
-    const below = rect(top).bottom, seen = Array.from(list.children).findIndex(li => rect(li) && rect(li).bottom > below);
-    const k = seen < 0 ? null : runLogShift(runLogDrawn, lines);
-    if (k !== null && seen + k < lines.length) anchor = { at: seen + k, top: rect(list.children[seen]).top };
+  if (!follow && rect(list)) {
+    const seen = Array.from(list.children).findIndex(li => rect(li) && rect(li).bottom > rect(list).top);
+    const d = seen < 0 ? null : runLogDropped(runLogDrawn, lines);
+    if (d !== null && seen - d >= 0 && seen - d < lines.length) anchor = { at: seen - d, top: rect(list.children[seen]).top };
   }
   runLogDrawn = lines;
-  const shown = lines === null ? el('p', 'none', 'speck run hasn\'t written anything yet.')
-    : !lines.length ? el('p', 'none', runLogFor === null ? 'Reading speck run\'s log…' : 'speck run hasn\'t written anything yet.')
-    : el('ol', 'run-log', null, ...lines.map(l => el('li', null, String(l))));
-  sec.replaceChildren(sec.children[0], shown);
-  const again = anchor && rect(shown.children[anchor.at]);
-  if (again) box.scrollTop += again.top - anchor.top;
+  list.replaceChildren(...lines.map(runLogRow));
+  if (list !== was) sec.replaceChildren(sec.children[0], list);
+  const again = anchor && rect(list.children[anchor.at]);
+  if (follow) list.scrollTop = list.scrollHeight;
+  else if (again) list.scrollTop += again.top - anchor.top;
 }
-// How many lines came in above the log as drawn (was) to make it now: the fewest k for which now, from line k on,
-// starts with was's lines, or null when it doesn't at any k, as when speck run's log was started afresh.
-function runLogShift(was, now) {
-  for (let k = 0; k < now.length; k++) {
-    let same = was.length > 0;
-    for (let j = 0; same && j < was.length && k + j < now.length; j++) same = now[k + j] === was[j];
-    if (same) return k;
+// 0459: a line of the log, laid out as a build log's line (0422): its time, then its summary (runLogLine).
+function runLogRow(line) {
+  const p = runLogLine(line);
+  return el('li', `ln ${p.kind}${p.at ? ' timed' : ''}`, null, p.at ? el('span', 'at', p.at) : null, document.createTextNode(p.text));
+}
+// How many lines dropped out at the top of the log as drawn (was) to make it now: the fewest d for which was, from line
+// d on, is how now starts, or null when it isn't at any d, as when speck run's log was started afresh.
+function runLogDropped(was, now) {
+  for (let d = 0; d < was.length; d++) {
+    if (was.length - d > now.length) continue;
+    let same = true;
+    for (let j = 0; same && d + j < was.length; j++) same = now[j] === was[d + j];
+    if (same) return d;
   }
   return null;
 }

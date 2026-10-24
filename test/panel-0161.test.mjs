@@ -49,8 +49,9 @@ const contrast = (a, b, base = '#ffffff') => {
 const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--ok-bg', '--inbox-bg', '--bad-bg'];
 // 0413: what sits in speck's screen's dark frame (its rules start ".bezel") sits on the frame's colour, not the surfaces.
 const onFrame = sel => sel.split(',').every(s => /^\.bezel\b/.test(s.trim()));
-// 0455: and what's in a ticket's build log (its rules start ".q .log") sits on the log's own black, in every look.
-const inLog = sel => sel.split(',').every(s => /^\.q \.log\b/.test(s.trim()));
+// 0455: and what's in a ticket's build log (its rules start ".q .log") sits on the log's own black, in every look. 0459:
+// so does what's in the pipeline log (".foreman .run-log").
+const inLog = sel => sel.split(',').every(s => /^(?:\.q \.log|\.foreman \.run-log)\b/.test(s.trim()));
 const behind = sel => (onFrame(sel) ? ['--bezel'] : inLog(sel) ? ['--log-bg'] : SURFACES);
 // Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
 // stage dots and the ensō's speck went in 0168.)

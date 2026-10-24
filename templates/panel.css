@@ -313,8 +313,18 @@
   .foreman { font-size: 14px; overflow-anchor: none; } /* 0415: the page keeps a reader's place in the log itself */
   .foreman h3 { margin: 14px 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 14px; font-weight: 600; color: var(--text); }
   .foreman .fm-stale[hidden] + .fm-log > h3 { margin-top: 4px; } /* 0458: the log's heading is the first thing under the top */
-  .foreman ol.run-log { margin: 0; padding: 0; list-style: none; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
-  .foreman ol.run-log li { padding: 1px 0; border-bottom: .5px solid var(--line-soft); white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+  /* 0459: the log is a terminal, as a ticket's build log is (0455), filling the pop-up under its heading, its oldest
+     line at the top. Each line's time is in a column of its own and its text past it, as a build log's (0422) */
+  .foreman .run-log { box-sizing: border-box; margin: 0; padding: 6px 10px; height: max(12em, calc(100vh - 9em)); height: max(12em, calc(100dvh - 9em - env(safe-area-inset-top) - env(safe-area-inset-bottom))); overflow-y: auto; overflow-anchor: none;
+    background: var(--log-bg); border: 1px solid var(--line); list-style: none; color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; }
+  .foreman ol.run-log { font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; }
+  .foreman div.run-log { font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; }
+  .foreman .run-log p { margin: 0; }
+  .foreman .run-log .ln { display: block; padding-left: 9ch; min-width: 0; }
+  .foreman .run-log .ln.timed { text-indent: -9ch; }
+  .foreman .run-log .at { color: var(--log-muted); }
+  .foreman .run-log .msg { color: var(--log-text); }
+  .foreman .run-log .fail { color: var(--log-bad); }
   .foreman p { margin: 2px 0; }
   .foreman .stale { color: var(--warn); }
   /* 0318: the Foreman's question, with an Answer box and Answer and Dismiss buttons, on its ticket's card and in its detail */
@@ -622,7 +632,7 @@
      less the 9 px between them, at least 4 px. The screen cuts what it draws to its corners. */
   button, input:not([type="checkbox"]):not([type="radio"]), select, textarea, .tag, .question-fact, .next, .prio-menu { border-radius: 8px; }
   .tab { border-radius: 8px 8px 0 0; } /* the open tab's top corners, and the others' */
-  .item, .q, #shipped tr, .q .log, #settings .sgroup, #settings .switches, #settings-unsaved .box { border-radius: 12px; } /* the full ticket, a document and the pipeline log fill the window, so they stay square (0160) */
+  .item, .q, #shipped tr, .q .log, #settings .sgroup, #settings .switches, #settings-unsaved .box, .foreman .run-log { border-radius: 12px; } /* the full ticket and a document fill the window, so they stay square (0160) */
   .stats { border-radius: 12px; overflow: hidden; }
   #tag-tip, #settings .switch-row p.explain, #settings .setting p.explain { border-radius: 8px; } /* a tip, as small as a control */
   .bezel { border-radius: 12px; }
