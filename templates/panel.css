@@ -158,8 +158,11 @@
   .q .top .line .id { flex: none; font-size: 14px; }
   .q .top .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
   .q .top .sub { font-variant-numeric: tabular-nums; }
-  .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--bg); border-left: 2px solid var(--line-soft);
+  .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--bg); border: 1px solid var(--line);
     font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
+  /* 0455: a terminal in every look: a black box with an edge on all four sides, its text in the dark look's colours,
+     which it sets for itself, so the light look's dark ones don't reach it */
+  .q .log { --bg: #000000; --text: #e4e4e4; --muted: #a9a9a9; --run: #97b2cc; --bad: #ef95ad; --warn: #d9a65e; color-scheme: dark; }
   /* 0422: one line of the log a row, its text past a column for the time, so a line that wraps, or a message's next line,
      starts under the text. Each kind of entry has its own colour; anything else keeps the log's muted one */
   .q .log { overflow-anchor: none; } /* 0422: rows taken out at the top leave the box's scroll place as it was, as text did */
