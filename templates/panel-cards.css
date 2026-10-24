@@ -419,6 +419,20 @@
   /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
      gap before a tag stays wide, and its words, stage and time fit on a phone */
   .q:not(.open) .top .progress .sep:not(:has(+ .tag)) { padding: 0; }
+  /* 0484: a row, so when the line doesn't fit, its words give up room first, cut short with …, and its stage, time and
+     tag keep theirs. A row drops the spaces between its parts, so each space is drawn after its dot, or before the part
+     after the lights, instead. The words reach 3 px past their 13 px line each way, so … cuts nothing off below, and a tag
+     sits at the line's top, as 0441 has it. */
+  .q:not(.open) .top .progress { display: flex; align-items: baseline; }
+  .q:not(.open) .top .progress > * { flex: none; }
+  .q:not(.open) .top .progress > :is(.say, .by) { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .q:not(.open) .top .progress > .say { padding: 3px 0; margin: -3px 0; }
+  .q:not(.open) .top .progress > .tag { align-self: flex-start; }
+  /* the lights' middle half an x-height above the line's baseline, as vertical-align: middle put it: in a row their
+     baseline is their first row of dots' bottom, 2 px down, so they move up the 4.25 px to their middle and the half x */
+  .q:not(.open) .top .progress > .lights { position: relative; top: calc(-4.25px - .5ex); }
+  .q:not(.open) .top .progress > .sep, .q:not(.open) .top .progress > .lights + * { white-space: pre; }
+  .q:not(.open) .top .progress > .sep::after, .q:not(.open) .top .progress > .lights + ::before { content: ' '; }
   /* The priority's 44 px box takes no more room in the line than its two characters do */
   .item.ticket .head .checks .prio { padding: 0; margin: 0 calc(1ch - 22px); font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
   /* 0463: in a draft's facts table, the priority's 44 px box starts at the value's left, and its negative margins give
