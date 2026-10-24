@@ -75,7 +75,3 @@ test('0226 AC5: package.json, the newest changelog section name the same version
 test('0226 AC2: the 0.5.1 section names max_parallel_builds', () => {
   assert.match(changelogSection(read('CHANGELOG.md'), '0.5.1'), /max_parallel_builds/);
 });
-
-test('0226 AC3: the README\'s commands name run and pause <id>', () => {
-  for (const s of ['`run`', '`pause <id>`']) assert.ok(read('README.md').includes(s), s);
-});

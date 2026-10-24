@@ -249,6 +249,6 @@ test('0133 AC2 (self-check): a second ship while one is running is refused, and 
 
 test('0133 Notes: the docs say shipping happens through /speck-ship or the panel\'s Ship button, and agents never ship on their own', () => {
   const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
-  for (const f of ['docs/brief.md', 'AGENTS.md', 'README.md', 'skills/speck-ship/SKILL.md', 'scripts/install.mjs'])
+  for (const f of ['docs/brief.md', 'AGENTS.md', 'skills/speck-ship/SKILL.md', 'scripts/install.mjs']) // 0491: not the README, which review checks
     assert.match(read(f), /Ship button/, f);
 });

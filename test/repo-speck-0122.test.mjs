@@ -38,7 +38,7 @@ test('0122 AC2: the private-words check skips every file under speck/ and still 
     'speck/config.yml': 'zorblat\n', 'speck/tickets/done/0001-x.md': 'zorblat\n', 'speck/ideas/done/note.md': 'zorblat\n',
     'README.md': 'Zorblat\n', 'docs/speck/x.md': 'zorblat\n', 'speckle.md': 'zorblat\n', 'test/a.mjs': 'zorblat\n', 'clean.md': 'fine\n',
   });
-  assert.deepEqual(filesNaming(['zorblat'], repo).sort(), ['README.md', 'docs/speck/x.md', 'speckle.md', 'test/a.mjs']);
+  assert.deepEqual(filesNaming(['zorblat'], repo).sort(), ['README.md', 'docs/speck/x.md', 'speckle.md', 'test/a.mjs']); // a made-up repo's README
 });
 
 test('0122 AC3: the check catches a path to this repo\'s speck/ folder, built from its root, through a helper or relative, on one line or several', () => {

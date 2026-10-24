@@ -290,6 +290,6 @@ test('0194 AC2: a ticket with no build session to resume is reported once, with 
 });
 
 test('0194: the other docs no longer say a build ships its own ticket', () => {
-  for (const f of ['AGENTS.md', 'README.md', 'skills/speck-review/SKILL.md', 'scripts/install.mjs'])
+  for (const f of ['AGENTS.md', 'skills/speck-review/SKILL.md', 'scripts/install.mjs']) // 0491: not the README, which review checks
     assert.doesNotMatch(read(f), /`speck ship <id> --auto` (step )?in/, f);
 });

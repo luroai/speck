@@ -59,11 +59,6 @@ test('0297 AC3: the setup prompt still installs the latest release, as 0253 left
   assert.doesNotMatch(read('README.md'), /speck#v\d/);
 });
 
-test('0297 AC3: the README names the command and builders the shipped tickets added', () => {
-  const readme = read('README.md');
-  for (const name of ['`agents`', 'reviewer: claude', 'config set builder', 'codex', 'cursor']) assert.ok(readme.includes(name), name);
-});
-
 test('0297 AC4: the release notes say how to install or update 0.7.0 and name the new settings and command', () => {
   for (const name of ['speck agents', 'builder: codex', 'builder: cursor', 'reviewer: claude', 'build_command', '`speck/config.yml`']) assert.ok(notes().includes(name), name);
   assert.match(notes(), INSTALL);

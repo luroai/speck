@@ -292,13 +292,13 @@ test('0296 AC5: with ship_mode local, speck ship merges locally as before and ne
 
 // ---------- the docs ----------
 
-test('0296 AC1: the brief names what pull request mode ships with, and the README no longer lists it as missing', () => {
+// 0491: the README is checked by review.
+test('0296 AC1: the brief names what pull request mode ships with', () => {
   const read = f => fs.readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
   const brief = read('docs/brief.md');
   assert.match(brief, /`gh pr merge --merge`/);
   assert.match(brief, /`speck\(<id>\): ship`/);
   assert.match(fs.readFileSync(new URL('../scripts/pr-ship.mjs', import.meta.url), 'utf8'), /\['pr', 'merge', String\(v\.number\), '--merge'/);
   assert.doesNotMatch(brief, /pull requests as the way to ship/);
-  assert.doesNotMatch(read('README.md'), /pull requests as the way to ship/);
   assert.doesNotMatch(brief, /In this mode `speck ship` merges nothing/);
 });

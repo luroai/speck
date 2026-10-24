@@ -172,7 +172,8 @@ test('0121 AC4: an empty file, or one with only comments, checks nothing', () =>
   }
 });
 
-test('0121 AC5: the README or the brief names the private words file', () => {
-  const docs = ['README.md', 'docs/brief.md'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+// 0491: the README's names are checked by review.
+test('0121 AC5: the brief names the private words file', () => {
+  const docs = ['docs/brief.md'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
   assert.ok(docs.includes('~/.config/speck/private-words'));
 });

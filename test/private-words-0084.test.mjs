@@ -64,7 +64,7 @@ test('AC2: a tracked file naming a listed word is reported by name; 0082\'s tick
 test('AC2: 0082\'s check fails naming each file when a listed word is in a tracked file', () => {
   const r = run0082(home('# list\nLUROAI\n'));
   assert.match(ac2Line(r.stdout), /^\s*not ok/, r.stdout);
-  for (const f of ['README.md', 'test/luro-0082.test.mjs']) assert.ok(r.stdout.includes(f), `the message names ${f}`);
+  for (const f of ['docs/brief.md', 'test/luro-0082.test.mjs']) assert.ok(r.stdout.includes(f), `the message names ${f}`);
 });
 
 test('AC2: 0082\'s check passes when no tracked file has any listed word', () => {

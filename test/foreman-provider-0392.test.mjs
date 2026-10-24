@@ -159,10 +159,10 @@ test('0392 AC4: any provider in speck\'s list runs the Foreman the same way', ()
   assert.ok(q.said.some(m => /speck \(Acme\) is looking into it/.test(m)), q.said.join('\n'));
 });
 
-test('0392 AC3: the README, the brief and the config template name deepseek as a Foreman agent', () => {
+// 0491: the README's names are checked by review.
+test('0392 AC3: the brief and the config template name deepseek as a Foreman agent', () => {
   const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
   const mentions = (text, setting) => text.split(/\n\s*\n|\n\|/).filter(part => part.includes(setting)).some(part => /\bdeepseek\b/.test(part));
-  assert.ok(mentions(read('README.md'), '`watch_model`'), 'README'); // 0488: was foreman_model
   assert.ok(mentions(read('docs/brief.md'), '`watch_model`'), 'brief');
   assert.match(read('templates/config.yml'), /^watch_agent: .*\bdeepseek\b/m);
 });

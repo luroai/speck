@@ -133,9 +133,11 @@ function mutate(text, { headings = true, reorder = false } = {}) {
   return ordered.flat().join('\n\n') + '\n';
 }
 
-test('0267 AC1, AC3: rewording and reordering the README, the brief, the changelog and the release notes fails no test', async () => {
+// 0491: the README is left out. Its tests check only what breaks installs or the page (the setup prompt, the status
+// line's version, the pictures and that its links resolve), and a link to a heading rightly breaks when the heading
+// is reworded.
+test('0267 AC1, AC3: rewording and reordering the brief, the changelog and the release notes fails no test', async () => {
   const docs = {
-    'README.md': mutate(read('README.md'), { reorder: true }),
     'docs/brief.md': mutate(read('docs/brief.md'), { reorder: true }),
     // Each version's heading names its version, and the newest comes first: facts the version check reads.
     'CHANGELOG.md': mutate(read('CHANGELOG.md'), { headings: false }),
@@ -165,21 +167,21 @@ test('0267 AC3: the rewording rewords the opening and every section\'s first sen
   assert.match(mutate(doc, { headings: false }), /^## One$[\s\S]*^## Two$/m);
 });
 
+// 0491: the facts are broken in the brief and the release notes, where they're tested, rather than in the README.
 test('0267 AC2: the tests that check facts in documents still catch a wrong command, version, link or name', async () => {
-  const readme = read('README.md');
   const version = JSON.parse(read('package.json')).version;
-  const broken = readme
+  const notes = 'docs/releases/v0.14.0.md'; // the notes release-0394 checks
+  const brief = read('docs/brief.md')
     .replaceAll("npx 'github:luroai/speck#semver:*'", 'npx github:luroai/speck#v0.1.0')
-    .replaceAll('[LICENSE](LICENSE)', 'LICENSE')
     .replaceAll(version, '9.9.9')
     .replaceAll('`/speck-setup`', '/speck-start');
-  const r = await runIn(copyWith({ 'README.md': broken }),
-    ['test/install-0253.test.mjs', 'test/licence-0090.test.mjs', 'test/release-0248.test.mjs', 'test/setup-0088.test.mjs']);
+  const r = await runIn(copyWith({ 'docs/brief.md': brief, [notes]: read(notes).replaceAll('CHANGELOG.md#', 'CHANGELOG.md#no-') }),
+    ['test/install-0253.test.mjs', 'test/release-0394.test.mjs', 'test/release-0248.test.mjs', 'test/setup-0088.test.mjs']);
   assert.notEqual(r.status, 0);
   for (const name of [
-    /^0253 AC1: the setup prompt runs init at the latest release/, // a command
-    /^AC2: the README links to LICENSE/, // a link
+    /^0253 AC2: every speck npx command outside the changelog and release notes uses the latest release/, // a command
+    /^0394 AC4: the release notes link to the changelog heading/, // a link
     /^0248 AC3: the README and the brief name the current version/, // a version
-    /^0088 AC1: the README and the brief name \/speck-setup/, // a name
+    /^0088 AC1: the brief names \/speck-setup/, // a name
   ]) assert.ok(r.failed.some(t => name.test(t)), `${name} fails:\n${r.failed.join('\n')}`);
 });

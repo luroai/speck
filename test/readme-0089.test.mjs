@@ -12,8 +12,8 @@ const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const readme = () => read('README.md');
 const prompt = () => setupPrompt(readme()) || '';
 
+// 0491: what the README says around the prompt, such as which agents and systems it names, is checked by review.
 test('AC1: the README gives a prompt in a code block to paste into Claude Code', () => {
-  assert.match(readme(), /Claude Code/);
   assert.ok(prompt().trim(), 'the README has a setup prompt');
 });
 
@@ -28,9 +28,4 @@ test('AC1: the prompt runs init at the latest release, follows speck-setup and n
 // 0253: the prompt installs the latest release, so it names no version to match package.json.
 test('AC2: the prompt installs the latest release, not a fixed version', () => {
   assert.deepEqual(setupPromptProblems(readme()), []);
-});
-
-test('AC4: the README names macOS, Linux, Claude Code, git, Node.js 20 and Codex', () => {
-  const r = readme();
-  for (const name of [/macOS/, /Linux/, /Claude Code/, /\bgit\b/, /Node\.js 20\b/, /Codex/]) assert.match(r, name);
 });

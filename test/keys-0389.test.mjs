@@ -191,9 +191,3 @@ test('0389 AC4: a provider added to the list gets a key the same way', () => {
   assert.equal(providerKey(r.dir, 'deepseek'), KEY);
   assert.equal(mode(keysFile(r.dir)), 0o600);
 });
-
-test('0389 AC5: the README names where keys are kept, the commands that set and remove them, and DeepSeek', () => {
-  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  for (const fact of ['speck/.cache/machine/keys.json', 'speck keys set deepseek', 'speck keys remove deepseek', 'DeepSeek'])
-    assert.ok(readme.includes(fact), fact);
-});
