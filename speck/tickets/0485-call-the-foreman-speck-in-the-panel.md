@@ -41,6 +41,7 @@ The panel calls the watcher speck everywhere, and the word "Foreman" never shows
 ## Notes
 - Asked for by the user on 2026-10-24: "we need to remove the concept of a foreman now, as we have a single speck watching." The user agreed to call it speck, the settings `watch`, `watch_agent`, `watch_model` and `watch_effort`, and the Settings group Watching.
 - Today: `templates/panel.html` (`aria-label="The Foreman"`), `templates/panel-header.js` (`The Foreman: ${word}`), `templates/panel-model.js` (the `SHORT` words), `templates/panel.js` (the blocked question, answer and dismiss texts, and the role's name), `templates/panel-settings.js` (the group's title and `ROLES`), and `rolesUsing` in `scripts/your-agents.mjs`, which names the role for Your agents.
+- Failing before this build: none
 - Waits for 0484, which changes the closed Build card's status line, where `Foreman will answer` shows.
 
 ## In plain words
