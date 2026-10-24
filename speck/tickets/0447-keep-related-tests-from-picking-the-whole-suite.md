@@ -1,7 +1,7 @@
 ---
 id: "0447"
 title: "Keep related tests from picking the whole suite"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T07:45:31.476Z"
 ---
 # 0447 · Keep related tests from picking the whole suite
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck test --related` (0437) brings in a test through a module under `test/support/` when the module names a changed file. Nearly every support module names `scripts/speck.mjs`, the CLI they run, so any change to it picks almost the whole suite (374 of 390 test files for 0437), and a change to one `SKILL.md` picks every test naming any skill.
@@ -46,7 +46,7 @@ started: "2026-10-24T07:45:31.476Z"
 - AC3 measures a copy of this repo's `test/` folder as it is (a test may not name a commit, so it can't be pinned to the tree the ticket measured): today it picks 96, most of them (70) for naming `docs/brief.md` itself.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Before its first review, a build runs the existing tests that cover what it changed. Until now, changing speck's main command or one of its skills made that pick almost every test, so the check took as long as the full run. Now a build that changes the main command runs about 85 tests rather than 374, and a change to one skill brings in only the tests about that skill. You can see it in a build's log: the list of related tests it prints before the first review is much shorter. Worth keeping an eye on: the design brief is checked by about 70 tests, so a change to it still brings in a fair number, and that count grows as tests are added.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,4 +55,69 @@ started: "2026-10-24T07:45:31.476Z"
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- The AC3 count (96 today, limit 100) grows with every test that names `docs/brief.md`, so it will start failing an unrelated ship. Saved to the inbox: `speck/ideas/2026-10-24-keep-the-related-tests-count-check-from-failing-as-tests-grow.md`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "448124a97f413291c9e982e2ce6c3b70ddcf8b6f",
+    "session": "fresh",
+    "thread_id": "01a16ce9-9d3f-79b3-a521-ca2ac4812ab5",
+    "builder_response": "- Tests run: `speck test --related test/related-0447.test.mjs test/related-0437.test.mjs` (70 test files, commands.checks alongside): 764 pass, 0 fail.\n- Round 1. Notes on choices:\n  - The ticket says nearly every support module names `scripts/speck.mjs`, but by their own text only 11 of 51 do (under a quarter). Most of the rest run the CLI through `panel.mjs`, `cli.mjs` or `ship.mjs`, so a support module now names a file when it, or a support module it imports, does. With that, `scripts/speck.mjs` is named by more than a quarter and brings in only tests that name it directly (85 today, was 374).\n  - Basename matching was also letting `./support/speck.mjs` name `scripts/speck.mjs`. A file name after a `/` now counts only after its own folder's name (`scripts/speck.mjs`, `../scripts/speck.mjs`, `.speck/scripts/speck.mjs`), or after `../`/`./` for a file at the repo root.\n  - AC2: a SKILL.md is named by its folder path, by `<parent>/<skill>` (so `skills/speck-build` names `.claude/skills/speck-build/SKILL.md`), or by the skill's name not straight after `/`, `.` or `$`, so `/speck-build` and `$speck-build` commands in build_command fixtures don't count as reading the skill. Never through a support module.\n  - AC3 copies this repo's current `test/` folder (a test can't pin a commit id: history-0085 forbids it). Today: 96 picked (70 of them name docs/brief.md directly).\n  - 0437's test fixture gets two more empty support modules, so its panel page is named by one module in four and still counts through it; the test's intent is unchanged. Its repo/write helpers moved to `test/support/related.mjs` for sharing.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 131059,
+      "cached_input_tokens": 82176,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 612,
+      "reasoning_output_tokens": 89
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T07:57:22.561Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/related.mjs: relatedTests counts support modules naming each changed file, follows their imports safely through cycles, and permits indirect selection only at or below one quarter. Passing 0447 AC1 tests cover the threshold, direct selection, transitive imports and cycles."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/related.mjs: namer matches SKILL.md changes by skill folder or name; relatedTests excludes indirect skill selection. The passing 0447 AC2 test covers matching skills, other skills, generic SKILL.md references and support imports."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0447 AC3 test copies the repository’s current test folder, changes the three specified files, asserts fewer than 100 selections and checks inclusion of every test naming turns.mjs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md’s speck test row explains direct naming, skill matching, support imports and the quarter threshold. The passing 0447 AC4 test checks relevant file and command facts without fixing prose wording."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Related test selection now avoids broad support helpers pulling in almost the whole suite and distinguishes individual skills. The tests exercise the selection rules and the requested under-100 benchmark. The recorded run passed 764 tests with no failures; I found no blocking issues."
+  }
+}
+```
+
+</details>
