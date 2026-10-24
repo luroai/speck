@@ -1,7 +1,7 @@
 ---
 id: "0448"
 title: "Match the phone's top bar to the chosen look"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-13-match-the-phone-s-top-bar-to-the-panel-s-chosen-look.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T07:46:02.107Z"
 
 ---
 # 0448 · Match the phone's top bar to the chosen look
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When the panel runs as a home-screen app, the phone's top bar takes its colour from the page's `theme-color`, which follows only the phone's own light or dark setting. Choosing Light or Dark in Settings (0412) changes the panel but leaves the top bar in the other look.
