@@ -1,6 +1,6 @@
 # Keep a closed card's bug or document tag whole on a phone
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: ticketed (0484)
 From ticket: 0443
 
 ## What

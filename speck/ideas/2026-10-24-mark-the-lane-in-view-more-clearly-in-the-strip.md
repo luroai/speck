@@ -1,6 +1,6 @@
 # Mark the lane in view more clearly in the strip
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: dropped
 From ticket: 0477
 
 ## What
