@@ -103,8 +103,11 @@ export function buildKilled(runs, id) {
 // The last commit that changed a ticket file, as a hash ('' if none), in the checkout `dir` it's read from.
 export const lastTicketCommit = (dir, rel) => { const r = sh('git', ['log', '-1', '--format=%H', '--', rel], { cwd: dir }); return r.status === 0 ? r.stdout.trim() : ''; };
 
-// The subject every commit `speck foreman` makes to a ticket starts with.
-export const foremanSubject = id => `speck(${id}): Foreman:`;
+// The subject every commit `speck watch` makes to a ticket starts with. 0486: before, `speck(<id>): Foreman:`, which
+// still counts as the agent's own (oldForemanSubject), so tickets with those commits aren't looked into again.
+export const foremanSubject = id => `speck(${id}): watch:`;
+export const oldForemanSubject = id => `speck(${id}` + '): Foreman:';
+export const byWatch = (id, subject) => subject.startsWith(foremanSubject(id)) || subject.startsWith(oldForemanSubject(id));
 
 // 0349: the last commit at `rev` that changed a ticket file and isn't the Foreman's, as a hash ('' if none, or if git
 // doesn't know `rev`), so a note the Foreman commits doesn't count as the ticket being committed again.
@@ -112,7 +115,7 @@ export function lastOwnTicketCommit(dir, rel, id, rev = 'HEAD') {
   if (rev !== 'HEAD' && !/^[0-9a-f]{4,64}$/i.test(rev)) return '';
   const r = sh('git', ['log', '--format=%H %s', rev, '--', rel], { cwd: dir });
   if (r.status !== 0) return '';
-  const own = r.stdout.split('\n').find(l => l && !l.slice(l.indexOf(' ') + 1).startsWith(foremanSubject(id)));
+  const own = r.stdout.split('\n').find(l => l && !byWatch(id, l.slice(l.indexOf(' ') + 1)));
   return own ? own.split(' ')[0] : '';
 }
 

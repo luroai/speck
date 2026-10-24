@@ -64,9 +64,9 @@ test('0392 AC1: speck run\'s Foreman queue starts a DeepSeek Foreman with its br
   assert.equal(argv[1], PROVIDER_SCRIPT);
   assert.equal(cwd, r.dir);
   assert.ok(env.SPECK_FOREMAN_RUN, 'it gets its run\'s token, so its one action is taken');
-  assert.match(after(argv, '-p'), /You are speck's Foreman\. Work on ticket 0001/);
-  assert.match(after(argv, '-p'), /\.claude\/skills\/speck-foreman\/SKILL\.md/);
-  assert.ok(said.some(m => /the Foreman \(DeepSeek\) is looking into it/.test(m)), said.join('\n'));
+  assert.match(after(argv, '-p'), /You are speck, watching the pipeline\. Work on ticket 0001/);
+  assert.match(after(argv, '-p'), /\.claude\/skills\/speck-watch\/SKILL\.md/);
+  assert.ok(said.some(m => /speck \(DeepSeek\) is looking into it/.test(m)), said.join('\n'));
   assert.ok(!said.some(m => /Claude Code/.test(m)), said.join('\n'));
 });
 
@@ -119,10 +119,10 @@ test('0392 AC3: with no DeepSeek key, or no Claude Code, the Foreman isn\'t star
 
   const noKey = queueFor({ foreman: 'deepseek' }, r2 => ({ cantStart: c => foremanCantStart(r2.dir, c, { installed: yes }) }));
   assert.equal(noKey.starts.length, 0);
-  assert.ok(noKey.said.some(m => /^0001: the Foreman couldn't start on DeepSeek: this machine has no DeepSeek API key/.test(m)), noKey.said.join('\n'));
+  assert.ok(noKey.said.some(m => /^0001: speck couldn't start looking into it on DeepSeek: this machine has no DeepSeek API key/.test(m)), noKey.said.join('\n'));
   const noClaude = queueFor({ foreman: 'deepseek' }, r2 => (saveProviderKey(r2.dir, 'deepseek', KEY), { cantStart: c => foremanCantStart(r2.dir, c, { installed: () => false }) }));
   assert.equal(noClaude.starts.length, 0);
-  assert.ok(noClaude.said.some(m => /couldn't start on DeepSeek: .*needs Claude Code installed/.test(m)), noClaude.said.join('\n'));
+  assert.ok(noClaude.said.some(m => /couldn't start looking into it on DeepSeek: .*needs Claude Code installed/.test(m)), noClaude.said.join('\n'));
 });
 
 test('0392 AC3: a blank foreman with a DeepSeek builder runs on DeepSeek, and foreman deepseek can be set', () => {
@@ -156,7 +156,7 @@ test('0392 AC4: any provider in speck\'s list runs the Foreman the same way', ()
   assert.equal(env.ANTHROPIC_API_KEY, ACME_KEY);
   const q = queueFor({ foreman: 'acme' }, { providers, cantStart: () => '' });
   assert.equal(q.starts[0]?.argv[3], 'acme', q.said.join('\n'));
-  assert.ok(q.said.some(m => /the Foreman \(Acme\) is looking into it/.test(m)), q.said.join('\n'));
+  assert.ok(q.said.some(m => /speck \(Acme\) is looking into it/.test(m)), q.said.join('\n'));
 });
 
 test('0392 AC3: the README, the brief and the config template name deepseek as a Foreman agent', () => {

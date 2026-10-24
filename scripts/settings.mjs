@@ -22,17 +22,17 @@ import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs';
 export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
 
 export const SETTING_GROUPS = [
-  // 0286: the panel shows this group's settings in its own Foreman group, under the speck run switch.
-  { title: 'Foreman', settings: [
+  // 0286: the panel shows this group's settings in its own group, under the speck run switch. 0486: Watching, was Foreman.
+  { title: 'Watching', settings: [
     { key: 'foreman_fixing', default: 'tell',
-      explain: 'What the Foreman does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. With fix, it also starts an agent to look into work that stops for a reason speck has no steps for, which resumes the build, ships it again once, makes a draft fix ticket or asks you.' },
+      explain: 'What speck does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. With fix, it also starts an agent to look into work that stops for a reason speck has no steps for, which resumes the build, ships it again once, makes a draft fix ticket or asks you.' },
     // 0287: the agent the Foreman looks into stops with
     { key: 'foreman', default: '',
-      explain: 'The agent the Foreman runs on when it looks into work that stopped for a reason speck has no steps for: claude, codex, cursor or a model provider, such as DeepSeek, with your own API key for it. Blank uses the builder when that\'s codex, cursor or a model provider, and claude otherwise.' },
+      explain: 'The agent speck runs on when it looks into work that stopped for a reason speck has no steps for: claude, codex, cursor or a model provider, such as DeepSeek, with your own API key for it. Blank uses the builder when that\'s codex, cursor or a model provider, and claude otherwise.' },
     { key: 'foreman_model', default: '',
-      explain: 'The model the Foreman agent runs on, picked from that agent\'s models or written as it names it. Blank leaves it to the agent\'s own default.' },
+      explain: 'The model speck\'s agent runs on, picked from that agent\'s models or written as it names it. Blank leaves it to the agent\'s own default.' },
     { key: 'foreman_effort', default: '',
-      explain: 'How hard the Foreman agent thinks: low, medium, high, xhigh or max, or blank for the agent\'s own default. Cursor isn\'t given it, as its model names carry the effort.' },
+      explain: 'How hard speck\'s agent thinks: low, medium, high, xhigh or max, or blank for the agent\'s own default. Cursor isn\'t given it, as its model names carry the effort.' },
   ] },
   { title: 'Shipping', settings: [
     { key: 'auto_ship', default: false,
@@ -246,7 +246,7 @@ export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCur
   let models, built, foreman;
   try { models = await reviewerModels(repo, read, readCursor, providers); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
   try { built = await builderModels(repo, read, readCursor, providers); } catch (e) { built = { builder: '', why: `Couldn't read the builder's models (${e.message}), so type the model's name.` }; }
-  try { foreman = await foremanModels(repo, read, readCursor, providers); } catch (e) { foreman = { foreman: '', why: `Couldn't read the Foreman agent's models (${e.message}), so type the model's name.` }; }
+  try { foreman = await foremanModels(repo, read, readCursor, providers); } catch (e) { foreman = { foreman: '', why: `Couldn't read the models of the agent speck runs on (${e.message}), so type the model's name.` }; }
   const agents = await found, yours = yourAgentsShown(repo, agents, providers);
   const listed = yours.why ? null : await yourModels(yours, read, readCursor, providers);
   return { ...panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents, providers }), your_agents: yours, ...(listed ? { agent_models: listed } : {}) };

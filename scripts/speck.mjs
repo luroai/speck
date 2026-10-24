@@ -28,7 +28,7 @@ import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint, runState } from './run.mjs';
 import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs';
 import { withForeman, foremanBoard, foremanTicketLines } from './foreman-took.mjs';
-import { agentView, cmdForeman } from './foreman-agent.mjs';
+import { agentView, cmdForeman, cmdWatch } from './foreman-agent.mjs';
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
@@ -570,14 +570,14 @@ const HELP = `speck: Ship code you can't read, and still trust it.
   speck ship <id> [--auto]            merge an approved ticket into the base branch (the user's gate; --auto
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
   speck pr <id>                       push an approved ticket's branch and open its pull request with gh (ship_mode: pr)
-  speck foreman <action> <id> ...     what the Foreman agent speck run starts may do: resume, reship, fix or ask
-                                      (only that agent may run it)
-  speck foreman answer <id> "<text>"  answer the Foreman's question about a ticket (speck foreman dismiss <id>:
-                                      dismiss it)
+  speck watch <action> <id> ...       what the agent speck run starts to look into a stop may do: resume, reship,
+                                      fix or ask (only that agent may run it)
+  speck answer <id> "<text>"          answer speck's question about a ticket
+  speck dismiss <id>                  dismiss speck's question about a ticket
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, foreman: cmdForeman };
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {

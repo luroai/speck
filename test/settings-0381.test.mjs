@@ -33,7 +33,7 @@ function page(views, { saves = [], models = MODELS } = {}) {
 }
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, ...o });
 const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_model = '', reviewer_model = '', foreman_model = '' } = {}) => ({ groups: [
-  { title: 'Foreman', settings: [S('foreman_fixing', 'tell', { choices: ['off', 'tell', 'fix'] }), S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }),
+  { title: 'Watching', settings: [S('foreman_fixing', 'tell', { choices: ['off', 'tell', 'fix'] }), S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }),
     S('foreman_model', foreman_model), S('foreman_effort', '', { choices: ['', 'low', 'high'] })] },
   { title: 'Building and reviewing', settings: [
     S('builder', builder, { choices: ['claude', 'codex', 'cursor'], build_command: { value: '', own: { claude: '', codex: '', cursor: '' }, each_ticket: true } }),

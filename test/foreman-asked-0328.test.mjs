@@ -29,7 +29,7 @@ const viewOf = (runs, status = 'building') => {
   return foremanView({ run: ON, record: { lock: process.pid }, tickets, agent: agentView(runs, tickets) });
 };
 const statusLines = (runs, status) => foremanLines(viewOf(runs, status));
-const askLine = lines => lines.find(l => /The Foreman asked you/.test(l));
+const askLine = lines => lines.find(l => /speck asked you/.test(l));
 
 async function detail(runs, status = 'building') {
   const f = viewOf(runs, status);
@@ -43,33 +43,33 @@ async function detail(runs, status = 'building') {
 test('0328 AC1: a dismissed question is listed as asked about its ticket, then "You dismissed it" and when', () => {
   const runs = runsWith({ reply: { action: 'dismiss', text: '', at: '2026-10-19T09:30:00.000Z' } });
   const line = askLine(statusLines(runs));
-  assert.match(line, /The Foreman asked you about 0001: Should it keep the old test\?\. Why: the build stopped on a choice\. You dismissed it at 2026-10-19 09:30 UTC\.$/);
+  assert.match(line, /speck asked you about 0001: Should it keep the old test\?\. Why: the build stopped on a choice\. You dismissed it at 2026-10-19 09:30 UTC\.$/);
   assert.doesNotMatch(line, /asked you for/);
 });
 
 test('0328 AC2: an answered question is followed by "You answered it", when, and your answer', () => {
   const runs = runsWith({ reply: { action: 'answer', text: 'Keep it', at: '2026-10-19T09:31:00.000Z', carry: 'resume' } });
-  assert.match(askLine(statusLines(runs)), /The Foreman asked you about 0001: .*\. You answered it at 2026-10-19 09:31 UTC: Keep it\.$/);
+  assert.match(askLine(statusLines(runs)), /speck asked you about 0001: .*\. You answered it at 2026-10-19 09:31 UTC: Keep it\.$/);
 });
 
 test('0328 AC3: a question whose ticket has moved on says it no longer waits, naming the ticket\'s status now', () => {
   const runs = runsWith();
-  assert.match(askLine(statusLines(runs, 'done')), /The Foreman asked you about 0001: .*\. No longer waiting: 0001 is done now\.$/);
+  assert.match(askLine(statusLines(runs, 'done')), /speck asked you about 0001: .*\. No longer waiting: 0001 is done now\.$/);
 });
 
 test('0328 AC3: a question the Foreman did something else about since says it no longer waits, and why', () => {
   const runs = runsWith({ actions: [ask(), { run: 'y', id: '0001', action: 'reship', text: '', why: 'it was a flaky push', at: '2026-10-18T15:00:00.000Z', status: 'building' }] });
   const lines = statusLines(runs);
-  assert.match(askLine(lines), /\. No longer waiting: the Foreman has done something else about 0001 since\.$/);
-  assert.ok(lines.includes('  The Foreman asked speck run to ship it again, once for 0001. Why: it was a flaky push'), 'other actions keep their wording');
+  assert.match(askLine(lines), /\. No longer waiting: speck has done something else about 0001 since\.$/);
+  assert.ok(lines.includes('  speck asked speck run to ship it again, once for 0001. Why: it was a flaky push'), 'other actions keep their wording');
 });
 
 test('0328 AC4: a question still waiting is listed as asked about its ticket with nothing after it, and the ask line is unchanged', () => {
   const runs = runsWith();
   const lines = statusLines(runs);
-  assert.match(askLine(lines), /^ {2}The Foreman asked you about 0001: Should it keep the old test\?\. Why: the build stopped on a choice$/);
-  assert.ok(lines.includes('  The Foreman asks you about 0001: Should it keep the old test?'));
-  assert.ok(lines.includes('    Answer with speck foreman answer 0001 "<your answer>", or dismiss it with speck foreman dismiss 0001'));
+  assert.match(askLine(lines), /^ {2}speck asked you about 0001: Should it keep the old test\?\. Why: the build stopped on a choice$/);
+  assert.ok(lines.includes('  speck asks you about 0001: Should it keep the old test?'));
+  assert.ok(lines.includes('    Answer with speck answer 0001 "<your answer>", or dismiss it with speck dismiss 0001'));
 });
 
 test('0328 AC5: speck status shows each outcome, which 0458 took out of the panel\'s Foreman detail, and Needs you is unchanged', async () => {

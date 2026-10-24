@@ -86,7 +86,7 @@ test('0451 AC3: the screen\'s accessible name no longer mentions fixing; Setting
     assert.doesNotMatch(name, /fixing/i);
     // 0458: the Pipeline pop-up shows only the log, so it no longer says it
   }
-  assert.ok(SETTING_GROUPS.find(g => g.title === 'Foreman').settings.some(s => s.key === 'foreman_fixing'), 'Settings still has foreman_fixing');
+  assert.ok(SETTING_GROUPS.find(g => g.title === 'Watching').settings.some(s => s.key === 'foreman_fixing'), 'Settings still has foreman_fixing');
 });
 
 test('0451 AC1: neither the README nor the brief says the screen shows "Fixing on"', () => {

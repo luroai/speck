@@ -55,7 +55,7 @@ test('0286 AC1: speck config set accepts off, tell and fix for foreman_fixing, a
 
 test('0286 AC1: the settings give foreman_fixing in a Foreman group, explained, picked from off, tell and fix, and the panel saves it', () => {
   const r = panelRepo();
-  const g = panelSettings(r.dir).groups.find(x => x.title === 'Foreman');
+  const g = panelSettings(r.dir).groups.find(x => x.title === 'Watching');
   const s = g.settings.find(x => x.key === 'foreman_fixing');
   assert.equal(s.value, 'tell');
   assert.equal(s.editable, true);
@@ -68,7 +68,7 @@ test('0286 AC1: the settings give foreman_fixing in a Foreman group, explained, 
 
 test('0286 AC1: the Settings view shows foreman_fixing in its Foreman group, under the speck run switch, with its explanation', async () => {
   const settings = { groups: [
-    { title: 'Foreman', settings: [{ key: 'foreman_fixing', value: 'tell', default: true, explain: 'What the Foreman does.', editable: true, choices: ['off', 'tell', 'fix'] }] },
+    { title: 'Watching', settings: [{ key: 'foreman_fixing', value: 'tell', default: true, explain: 'What the Foreman does.', editable: true, choices: ['off', 'tell', 'fix'] }] },
     { title: 'Shipping', settings: [{ key: 'auto_ship', value: false, default: true, explain: 'Ships.' }] },
   ] };
   const fetch = async url => ({ ok: true, status: 200, json: async () => (String(url).startsWith('/api/settings') ? settings : { tickets: [], ideas: [] }) });
@@ -93,13 +93,13 @@ test('0286 AC2: with fix, speck run takes the recommendation on its check, notes
   const { said, started } = runCheck(r, 'fix');
   const text = r.ticket();
   assert.match(text, /^status: building$/m);
-  assert.match(text, new RegExp(`- Went with the recommendation: ${OPTION} \\(chosen by the Foreman, as foreman_fixing is fix, \\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d UTC\\)\\.`));
+  assert.match(text, new RegExp(`- Went with the recommendation: ${OPTION} \\(chosen by speck, as foreman_fixing is fix, \\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d UTC\\)\\.`));
   assert.match(r.g('log', '-1', '--format=%s'), /^speck\(0001\): go with the recommendation$/);
   assert.equal(started.length, 1, 'resumed in the same check');
   assert.deepEqual(started[0].argv, ['claude', '-p', goWithMessage('0001', OPTION, '/speck-build', 'foreman'), '--resume', 'sess-1']);
-  assert.match(started[0].argv[2], /^The Foreman \(foreman_fixing: fix\) chose the recommended option/);
+  assert.match(started[0].argv[2], /^speck \(foreman_fixing: fix\) chose the recommended option/);
   assert.equal(started[0].rec.went_with.by, 'foreman');
-  assert.ok(said.some(m => /0001: the Foreman went with its recommendation/.test(m)));
+  assert.ok(said.some(m => /0001: speck went with its recommendation/.test(m)));
 });
 
 test('0286 AC3: a question that changes what you\'d notice, is a close call or has any fact unknown is left for you, even with fix', () => {
@@ -139,7 +139,7 @@ test('0286 AC4: the Foreman takes a ticket\'s recommendation once; when it block
   assert.equal(r.head(), head);
   assert.equal(again.started.length, 0);
   assert.equal(ticketOf(r).status, 'blocked');
-  assert.equal(said.filter(m => /0001: the Foreman didn't take its recommendation: The Foreman has already gone with a recommendation for ticket 0001 once/.test(m)).length, 1);
+  assert.equal(said.filter(m => /0001: speck didn't take its recommendation: speck has already gone with a recommendation for ticket 0001 once/.test(m)).length, 1);
   runCheck(r, 'fix', { said, queue: again.queue });
   assert.equal(said.length, 1, 'said once, not on every check');
 });

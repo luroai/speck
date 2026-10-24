@@ -12,7 +12,7 @@ import { fillLine } from './your-agents.mjs';
 // ---------- install and doctor ----------
 
 const SKILLS = path.join(ROOT, 'skills');
-const RETIRED_SKILLS = ['speck-integrate']; // installed by an earlier version, removed on re-install (0116)
+const RETIRED_SKILLS = ['speck-integrate', 'speck-foreman']; // installed by an earlier version, removed on re-install (0116). 0486: speck-foreman is speck-watch now
 export const SKILL_DIRS = ['.claude/skills', '.agents/skills']; // Claude Code reads the first; Codex, cptr and others read the second
 const VERSION = (() => {
   // From the source package, or from the VERSION file written next to an installed copy.
