@@ -1,7 +1,7 @@
 ---
 id: "0483"
 title: "Drop the chain and padlock icons from closed cards"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-24-drop-the-chain-and-padlock-icons-from-close
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:33:27.080Z"
+approved: "2026-10-24T18:41:05.884Z"
 
 ---
 # 0483 · Drop the chain and padlock icons from closed cards
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A closed Plan or Build card shows a chain or padlock icon after its id and, since 0468, a dependency chip at the end of its title row. The two say the same thing twice, and the chain icon (others wait on this ticket) looks like the chip's link icon (this ticket waits on others) while meaning the opposite, so someone scanning the board on a phone can read them the wrong way round.
@@ -53,9 +54,14 @@ To see it, look at a card that waits on another ticket, or that others wait on, 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 186,877
+- Elapsed since build started: 8 min
+- Changed lines: 7 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
