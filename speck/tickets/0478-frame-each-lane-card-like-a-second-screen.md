@@ -1,7 +1,7 @@
 ---
 id: "0478"
 title: "Frame each lane card like a second screen"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T15:54:21.320Z"
 ---
 # 0478 · Frame each lane card like a second screen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 After 0476, each lane is a card you slide between, but it doesn't look like part of the same device as speck's screen above it. The user wants the panel to read as two screens: speck's screen on top for the overall view, and a second one under it where the tickets live.
@@ -49,7 +49,9 @@ Each lane card has a dark frame like speck's screen, thinner, with its lane's na
 - Self-check: drew the frame on the lane itself rather than a pseudo-element, so the real-browser contrast check sees the title on the frame; kept the safe-area padding on the column
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Plan, Build and Shipped now each sit in a dark frame like speck's screen at the top, so the panel reads as two screens: speck's above, and the lane you're looking at below. The frame is the same for every lane; only its title changes, written in the same dot-matrix letters as "speck", with a coloured dot before it: grey for Plan, blue for Build and purple for Shipped. The lane's count, such as "1 in flight · 8 queued", now sits at the right of that title and is cut short with "…" if there isn't room.
+
+To see it, open the panel and swipe or tap between the lanes: the whole framed card slides. Worth a look on a small phone: the frame takes a little width, so ticket cards are slightly narrower than before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,3 +61,70 @@ Each lane card has a dark frame like speck's screen, thinner, with its lane's na
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Inbox: speck/ideas/2026-10-24-give-the-tickets-more-room-inside-a-lane-s-frame.md (tickets are 40 px narrower at 320 px inside the frame).
+  - Tidy-up: 0438 AC2's test name still says the frame lines up with "the cards"; it now checks the lane's frame, with the cards inside it.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7794a2306a48ec9a49c990fa0ef9b0b612f3cc5f",
+    "session": "fresh",
+    "thread_id": "01a16ea8-1528-70f2-bf27-ed15a76c77ee",
+    "builder_response": "- Tests run: test/panel-0478.test.mjs test/panel-0438.test.mjs test/panel-0161.test.mjs test/panel-0427.test.mjs test/panel-0476.test.mjs test/panel-0418.test.mjs test/panel-0477.test.mjs test/panel-0425.test.mjs test/panel-0167.test.mjs test/panel-0160.test.mjs test/panel-0140.test.mjs test/panel-0449.test.mjs test/panel-0410.test.mjs test/panel-0413.test.mjs test/panel-0162.test.mjs test/panel-0453.test.mjs, with --related (which added 0417, 0430, 0469, 0472) and the repo checks.\n- The frame is the lane's own fill, cut to inside its padding (background-clip: content-box), so the lane still fills the column and slides whole (0476) with no border (0418), and the real-browser contrast check (0161) sees the title row on the frame. Its corners are 28px/20px less the 16px/8px padding: 12px, as the screen's.\n- Four existing tests encoded the old design and were updated, each with a 0478 comment: 0161 (the lane's frame and title row sit on --bezel; the dots hold no text), 0427 (.lane-title may be Doto, as .bezel .name), 0438 (speck's frame now lines up with the lane's frame, and the cards sit inside it, which AC1 requires) and 0476 (a sliding lane is shown as grid, not flex: it now checks display isn't none).\n- Plan's dot: 0461's grey for a step not reached is --line; on the frame, which is dark in both looks, it uses the dark look's --line value (--bezel-step), since the light look's would not show.\n- Pictures of all three lanes in both looks are in the review pack.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 150360,
+      "cached_input_tokens": 105728,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 651,
+      "reasoning_output_tokens": 37
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T16:04:57.682Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css defines the shared --bezel frame, matching corners, thinner sides and bottom, and --panel ticket backgrounds. The 0478 real-browser tests passed in both looks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The .lane-title, stage-dot and .lane-n rules provide Doto at weight 900, the specified inks and colours, and right-aligned ellipsis. Passing 0478 browser tests check these properties and force an overlong summary to truncate."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "All lanes use the same main > section frame rule. Passing 0478 browser tests compare their frame dimensions, colours and side thicknesses."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0478 browser tests check all frame sides and single-line titles at widths from 320 to 1280 px in both looks, plus movement of the frame and title during sliding. The saved test output confirms 304 passed, zero failed and three unrelated skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Each lane now looks like a second screen, with a thinner matching frame, dot-matrix title and coloured stage dot. Browser tests confirm the layout and sliding behaviour in both looks, including narrow screens. No blocking issues found."
+  }
+}
+```
+
+</details>
