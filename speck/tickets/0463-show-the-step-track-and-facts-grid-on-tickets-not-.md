@@ -43,6 +43,7 @@ An open ticket that hasn't started shows the same step track and table as one in
 - The user asked on 2026-10-24 for the top-left cell to say `Draft` for any ticket in Plan. The number of criteria isn't in the table, as an open Plan ticket lists its criteria under it.
 - The user agreed on 2026-10-24 that `After` holds a count, as option E in the mock-ups shows: the tickets themselves are shown under the table by 0467.
 - Waits for 0462, whose table this reuses.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
