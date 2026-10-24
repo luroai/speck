@@ -1,7 +1,7 @@
 ---
 id: "0465"
 title: "Lay out the full ticket's top like its open card"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0464"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T11:54:24.290Z"
 
 ---
 # 0465 · Lay out the full ticket's top like its open card
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The full ticket, opened over the whole panel, shows a ticket's tags under its title, while its card (after 0461 to 0464) shows a step track and an even table of facts. The two views of one ticket don't match.
