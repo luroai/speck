@@ -43,6 +43,7 @@ A ticket's build log looks like a terminal in both looks: a black box with light
 - Criterion 3 is the box version of what 0453 does for buttons.
 - Waits for 0454, which waits for 0453: all three change `templates/panel.css`.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
