@@ -1,7 +1,7 @@
 ---
 id: "0458"
 title: Show only the pipeline log when the screen is pressed                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T09:21:17.863Z"
 ---
 # 0458 · Show only the pipeline log when the screen is pressed
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Pressing speck's screen opens the Pipeline pop-up, whose Right now section lists what's building, waiting, shipping and blocked, recommendations taken and what the Foreman looked into, some of it from 100 tickets ago. The user doesn't use it, and it pushes the log they do want further down.
@@ -48,7 +48,11 @@ Pressing speck's screen shows the pipeline log and nothing else.
 - The screen's tooltip says "what speck run is doing, what is waiting, and its log": it should no longer promise what's gone.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Pressing speck's screen now opens a Pipeline pop-up with just the log of what speck run has been doing, newest first. The Right now list above it is gone: what's building, waiting, shipping and blocked, the recommendations the Foreman took and what it looked into.
+
+To see it, press the screen at the top of the panel. If the page is out of date, a Reload page button still shows above the log. The Foreman's questions, with their Answer and Dismiss buttons, and blocked tickets' questions are still on their tickets' cards, and `speck status` still lists everything Right now did.
+
+Worth a look: anyone who used Right now to see why a ready ticket isn't building now has to run `speck status` for that.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +62,68 @@ Pressing speck's screen shows the pipeline log and nothing else.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (tidy-ups, no inbox note): the board's `foreman` object still carries what only Right now drew in the panel (`fixing_says`, `took`, `held`, the agent's `did`), as `speck status` uses most of it. A later ticket could trim what the panel is sent. The `where` argument of the panel's Foreman answer box now only ever gets `card`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "def24e0f87e4ca8c912a063e1da8d8a989fdfac9",
+    "session": "fresh",
+    "thread_id": "01a16d3e-2758-7150-b09a-185f0793e149",
+    "builder_response": "- Tests run: `speck test --related` on test/pipeline-0458.test.mjs test/foreman-0285.test.mjs test/foreman-0317.test.mjs test/foreman-agent-0287.test.mjs test/foreman-answer-0318.test.mjs test/panel-0366.test.mjs test/panel-0413.test.mjs test/panel-0451.test.mjs test/pipeline-0415.test.mjs, plus every existing test file naming a changed file (1091 tests, 0 failing, 3 skipped).\n- AC4 (\"No test that passed before this change fails\"): 17 existing tests asserted the Right now section this ticket removes. Each is changed to check the new behaviour, or the same facts from the board or `speck status`, which still show them; none is skipped. The ticket's Notes list them.\n- Docs: the brief and README sentences saying the Foreman's detail shows things now shown only by `speck status` are narrowed to match.\n- Pictures of the pop-up in light and dark looks are in the review pack.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 147479,
+      "cached_input_tokens": 90496,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 694,
+      "reasoning_output_tokens": 15
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T09:29:35.007Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js renderForeman now draws only the Pipeline title, Close and Log, plus the conditional reload notice. Passing tests in test/pipeline-0458.test.mjs check the contents and absence of all former Right now headings and lines."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "renderForeman places the stale-page notice above the log and connects Reload page to location.reload(). Passing 0458 AC2 tests cover visibility, activation, removal and focus preservation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Ticket cards still call foremanAskBox in templates/panel.js. The passing 0458 AC3 test checks Answer and Dismiss on the card and preservation of the blocked question; test/foreman-answer-0318.test.mjs retains card behaviour coverage."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0458 AC4 and existing 0415/0366 tests cover opening, closing, focus return, modal behaviour and log refresh. Verified /tmp/speck-0458-tests.txt reports 1091 tests, 1088 passed, 3 skipped and no failures. Revised assertions reflect the intentionally removed section."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The Pipeline pop-up now shows only the log, with Reload page available when needed. Ticket questions and their controls remain on the cards, and opening, closing and focus handling retain test coverage. No blocking issues found."
+  }
+}
+```
+
+</details>
