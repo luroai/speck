@@ -1,7 +1,7 @@
 ---
 id: "0450"
 title: "Show which Plan list is open at a glance"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0450 · Show which Plan list is open at a glance
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 In Plan, the selected one of Tickets, Ideas and Inbox differs from the others only by a slightly darker border, so you can't tell which list is open.
