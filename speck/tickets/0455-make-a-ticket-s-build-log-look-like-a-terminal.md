@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0454"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:44:54.260Z"
-approved: "2026-10-24T09:56:08.319Z"
+approved: "2026-10-24T10:00:51.619Z"
 
 ---
 # 0455 · Make a ticket's build log look like a terminal
@@ -55,13 +55,14 @@ When you open a ticket on the Build tab, its build log now looks like a terminal
 ## Review log
 Round 1 (codex): changes requested: F1 The AC3 browser test substitutes a whole-pixel offset within the card for a whole-pixel top edge.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 457,249
-- Elapsed since build started: 11 min
-- Changed lines: 5 (limit 5000)
+- Reviewer tokens: 845,918
+- Elapsed since build started: 16 min
+- Changed lines: 17 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, no inbox notes):
 - Tidy-up: 0422 AC2's test still works out the log's contrast from each look's root colours rather than the log's own, so it passes but no longer measures what is drawn. 0455's tests measure the real colours. It could be pointed at the log's own variables.
@@ -204,6 +205,77 @@ Follow-ups (Delivery log only, no inbox notes):
     ],
     "escalation_question": "",
     "summary": "The log has a consistent black background, readable coloured text and visible rounded borders in every look. I accept the builder's dispute: the referenced button ticket establishes that whole-pixel alignment applies to the left and right edges. The change is ready for owner review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "70f764a4c1da0316ba8749cc7b8a7555959a1b81",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16d55-15bb-7b50-87eb-a38305a864eb",
+    "builder_response": "- Tests run: `speck test --related test/panel-0455.test.mjs test/panel-0422.test.mjs test/panel-0426.test.mjs`: 139 pass, 0 fail, 3 skipped (the same skips as before).\n- Merge round after a ship that failed together with main. I merged main into the branch (`git merge main`, no conflicts). Ship then failed on `0426 AC5: System, light and dark all take these colours: they are set only for the light look and the dark one`. That test allows only `:root` and `:root[data-theme=\"dark\"]` to set colour tokens such as `--bg`, `--text`, `--muted` and `--bad`, and this ticket's `.q .log { --bg: …; --text: …; … }` set them inside the log.\n- Fix (`templates/panel.css`): the log's colours are now tokens of their own, `--log-bg`, `--log-text`, `--log-muted`, `--log-run`, `--log-bad` and `--log-warn`, in `:root` only. The dark block doesn't set them, so every look has the same values. `.q .log` uses `background: var(--log-bg)` and `color: var(--log-muted)`, and each kind uses its `--log-*` colour. The colours are unchanged (black, #e4e4e4, #a9a9a9, #97b2cc, #ef95ad, #d9a65e), so the pictures still stand. The local-variables rule is gone.\n- `test/panel-0422.test.mjs`: three of 0422's assertions named the old variables, and this ticket deliberately changes what they describe. They now check the log's own colours, which is stricter, not weaker. `the log sits on the page background` (`var(--bg)`) is now `var(--log-bg)`. Each kind's 4.5:1 contrast is now measured on `--log-bg`, the real background, instead of the page's `--bg`, which no longer measured what is drawn (round 1's known limit). The time's colour is now `var(--log-muted)`, not `var(--muted)`. The test's `dark()` map now inherits `:root` tokens the dark block doesn't set, as the page does. Without that, `--log-*` would be undefined in the dark look. The time column, the kinds being distinct, and the text and layout checks are unchanged.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 386747,
+      "cached_input_tokens": 328448,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1922,
+      "reasoning_output_tokens": 93
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T10:00:49.545Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.css defines --log-bg: #000000 in :root without a dark override. The passing 0455 browser test verifies the same background in light, dark and both System preferences."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The log uses dedicated --log-* text colours. Passing 0455 contrast tests check every text category and distinct kind colours. Updated 0422 assertions measure contrast against the actual log background."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The 1px four-sided border and rounded corners remain unchanged. The passing phone browser test checks visible sides at DPR 3 and whole-pixel horizontal edges, consistent with the accepted 0453 interpretation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Height, scrolling, font and line-layout declarations remain intact. The passing 0422 real-browser test exercises wrapping, selection, copying and scroll preservation. The supplied output confirms 139 passes, zero failures and three existing skips, including a pass for 0426 AC5."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0455.test.mjs",
+        "issue": "The vertical pixel-alignment concern remains covered by the accepted interpretation from 0453: whole-pixel alignment applies to horizontal edges, while all four borders must remain visible.",
+        "suggested_fix": "No change required.",
+        "state": "dispute_accepted"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change preserves the black terminal appearance, readable colours and visible rounded borders. Dedicated log colour tokens resolve the theme-test failure, and the updated tests check the actual displayed colours without weakening coverage. Ready for owner review."
   }
 }
 ```
