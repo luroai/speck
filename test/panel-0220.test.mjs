@@ -57,7 +57,7 @@ test('0220 AC3: turning speck run on when it can start works as before, its line
     assert.equal(res.status, 200, JSON.stringify(res.body));
     pid = res.body.run.pid;
     assert.equal(res.body.run.on, true);
-    assert.match(fs.readFileSync(logOf(r.dir), 'utf8'), /^speck run: watching for ready tickets/m);
+    assert.match(fs.readFileSync(logOf(r.dir), 'utf8'), /^\d\d:\d\d:\d\d speck run: watching for ready tickets/m);
     assert.ok(await until(() => fs.existsSync(envFile) && fs.readFileSync(envFile, 'utf8').length > 0), 'the build started');
     assert.ok(await until(() => /Launched 0001/.test(fs.readFileSync(logOf(r.dir), 'utf8'))), 'speck run wrote its launch to run.log');
     assert.deepEqual(JSON.parse(fs.readFileSync(envFile, 'utf8')).filter(k => k.startsWith('SPECK_RUN_REFUSAL')), []);
