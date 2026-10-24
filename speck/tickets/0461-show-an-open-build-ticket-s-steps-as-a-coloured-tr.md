@@ -1,7 +1,7 @@
 ---
 id: "0461"
 title: "Show an open build ticket's steps as a coloured track"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0459"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T10:33:13.858Z"
 
 ---
 # 0461 · Show an open build ticket's steps as a coloured track
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 An open ticket in the Build lane says where it is in the pipeline only as a word in a line of facts joined by dots, which wraps untidily on a phone. You can't see at a glance how far through the five steps it is.
