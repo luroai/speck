@@ -46,6 +46,7 @@ The README's light and dark pictures show the 0.15.0 panel at phone width, in a 
 - Checked 2026-10-24: the demo's `server.mjs` serves only `panel.html`, `lcd.js`, the font and icons, so the split panel loads unstyled. It needs to serve every `templates/*.css` and `*.js` the page loads. Its `frame.html` pane is 640 px wide; 430 px gives a phone-width panel (draft pictures, above).
 - Checked 2026-10-24 (`fc-list`): this machine has only the Liberation fonts, so the panel's system-font stack falls back to Liberation Mono. The draft pictures mapped `Segoe UI` to Liberation Sans with `@font-face { src: local(...) }` in the demo page only.
 - Waits for every 0.15.0 ticket that changes the panel's look or feel, 0453 to 0455 and 0457 to 0469, 0471, 0476 to 0478, 0480, 0481 and 0483 to 0485, so the picture shows the panel as it ships (the user asked on 2026-10-24 for it to come right after all of them). 0452 waits for this.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
