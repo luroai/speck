@@ -555,14 +555,15 @@ test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167)
   assert.deepEqual(panelModel()(state).queue.map(t => t.red), [true, false, false, false, false]);
   const p = fakePage([state]);
   await p.settle();
+  // 0462: the stage and sentence are in a closed card's line; an open one has its facts in a table
+  const now = stageOf(queueRows(p)[0]);
+  assert.equal(now.textContent, 'Self-check');
+  assert.match(now.className, /\bbad\b/); // and the sentence (0156)
+  assert.equal(sayOf(queueRows(p)[0]).className, 'say bad', 'its sentence (0416: with no badge)');
   await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const rows = queueRows(p);
   const red = n => /\b(bad|blocked)\b/.test(n.className || '');
   assert.match(rows[0].className, /\bblocked\b/);
-  const now = stageOf(rows[0]);
-  assert.equal(now.textContent, 'Self-check');
-  assert.match(now.className, /\bbad\b/); // and the sentence (0156)
-  assert.equal(sayOf(rows[0]).className, 'say bad', 'its sentence (0416: with no badge)');
   assert.ok(rows[0].textContent.includes('Split it or keep it?'));
   for (const r of rows.slice(1)) assert.ok(!p.all(r).some(red), `${r.textContent.slice(0, 4)} has nothing red`);
   const css = styles();
@@ -921,12 +922,13 @@ test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its bor
   assert.deepEqual(m.queue.map(t => t.exit_label), ['Build finished without shipping', null]);
   const p = fakePage([state]);
   await p.settle();
+  // 0462: the stage and sentence are in a closed card's line; an open one has its facts in a table
+  assert.equal(stageOf(queueRows(p)[0]).textContent, 'Ship');
+  assert.match(stageOf(queueRows(p)[0]).className, /\bto-ship\b/);
+  assert.equal(sayOf(queueRows(p)[0]).className, 'say to-ship', 'its sentence waits for you (0416: with no badge)');
   await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const [a, b] = queueRows(p);
   assert.match(a.className, /\bto-ship\b/);
-  assert.equal(stageOf(a).textContent, 'Ship');
-  assert.match(stageOf(a).className, /\bto-ship\b/);
-  assert.equal(sayOf(a).className, 'say to-ship', 'its sentence waits for you (0416: with no badge)');
   assert.ok(!p.all(a).some(isRed), 'nothing red');
   assert.ok(findText(p, a, 'Build finished without shipping'), 'the label');
   assert.ok(findText(p, a, message), 'the message, as one text node with the HTML left as text');
@@ -955,13 +957,16 @@ test('0045 AC4: a building or reviewing ticket with a build_exit says the build 
   assert.deepEqual(m.queue.map(t => t.exit_label), ['Build stopped before finishing', 'Build stopped before finishing']);
   const p = fakePage([state]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const [a, b] = queueRows(p);
-  for (const [row, msg, step] of [[a, 'Stopped here.', 'Build'], [b, 'Out of turns.', 'Review 1']]) {
-    assert.match(row.className, /\bblocked\b/);
+  // 0462: the stage and sentence are in a closed card's line; an open one has its facts in a table
+  for (const [row, step] of [[queueRows(p)[0], 'Build'], [queueRows(p)[1], 'Review 1']]) {
     assert.equal(stageOf(row).textContent, step);
     assert.match(stageOf(row).className, /\bbad\b/);
     assert.equal(sayOf(row).className, 'say bad');
+  }
+  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
+  const [a, b] = queueRows(p);
+  for (const [row, msg] of [[a, 'Stopped here.'], [b, 'Out of turns.']]) {
+    assert.match(row.className, /\bblocked\b/);
     assert.ok(findText(p, row, 'Build stopped before finishing'));
     assert.ok(findText(p, row, msg));
     assert.ok(!row.textContent.includes('without shipping'));

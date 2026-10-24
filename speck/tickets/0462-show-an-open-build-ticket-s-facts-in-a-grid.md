@@ -42,6 +42,8 @@ An open ticket that's in flight shows its facts in a small, even table under its
 - Today: `progressOf` in `templates/panel.js` (0168, 0416, 0434, 0443) draws the dotted line with `detailsLine`, and `tagsOf` its priority, size and risk while it's open. `say` gives a short and a full sentence for what it's doing (0443).
 - Waits for 0461: both change `progressOf` in `templates/panel.js` and the card's styles in `templates/panel.css`.
 - Failing before this build: none
+- Self-check: an approved ticket whose auto-ship failed now labels its timer `Waiting` too, as it waits for you; the cells' labels went from 11 px to 12 px, as 0161 sets 12 px as the smallest text; and the lights in the Now cell are hidden from screen readers, so a cell reads as its label and value.
+- Old tests that read the open card's dotted line now read its table, or check the line on the closed card, where it still is: foreman-0317, panel.test (0034, 0045), 0050, 0077, 0138, 0153, 0155, 0156, 0196, 0201, 0203, 0361, 0419, 0427, 0434 and 0443. 0443 AC2 (an open card shows the full sentence) gives way to this ticket's AC1: the Now cell shows the short words, with the full sentence as its tooltip.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

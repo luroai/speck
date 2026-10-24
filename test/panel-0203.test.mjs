@@ -27,9 +27,9 @@ const classes = n => (n.className || '').split(/\s+/).filter(Boolean);
 // and its labels. 0416: the builder badge's pose went with the badge; the border still shows the stage.
 function shows(p, id) {
   const row = rowOf(p, id), text = topOf(row).children.find(n => classes(n)[0] === 'progress');
-  const say = text.children.find(n => /\bsay\b/.test(n.className));
-  return { card: classes(row), say: say.attrs?.['aria-label'] ?? say.textContent, // 0443: a closed card's long sentence is the accessible name of its short words
-    sayClass: classes(say), stage: (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null,
+  const say = text ? text.children.find(n => /\bsay\b/.test(n.className)) : null; // 0462: an open card has its facts in a table instead
+  return { card: classes(row), say: say ? say.attrs?.['aria-label'] ?? say.textContent : null, // 0443: a closed card's long sentence is the accessible name of its short words
+    sayClass: say ? classes(say) : null, stage: (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null,
     acts: p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent) };
 }
 
@@ -89,11 +89,12 @@ test('0203 AC3: a ticket that\'s shipping, by anyone, shows as shipping whether 
 
 test('0203 AC4: an approved ticket auto-ship doesn\'t cover looks the same whether speck run is on or off', async () => {
   const off = await fake(null), on = await fake(RUN);
-  await openQueueRows(off); // 0434: what's under a Build card's two lines shows while it's open
-  await openQueueRows(on);
-  for (const id of ['0705', '0706', '0707']) {
+  for (const id of ['0705', '0706', '0707']) { // 0462: the sentence is in a closed card's line
     assert.deepEqual(shows(off, id), shows(on, id), id);
     assert.equal(shows(off, id).say, 'Approved · waiting for you to ship it', id);
   }
+  await openQueueRows(off); // 0434: what's under a Build card's two lines shows while it's open
+  await openQueueRows(on);
+  for (const id of ['0705', '0706', '0707']) assert.deepEqual(shows(off, id), shows(on, id), id);
   assert.deepEqual(shows(off, '0705').acts, ['Build finished without shipping']);
 });
