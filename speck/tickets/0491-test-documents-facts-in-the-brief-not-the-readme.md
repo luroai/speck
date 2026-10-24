@@ -48,7 +48,11 @@ Facts are tested in the brief, and the README is checked by review, apart from t
 - docs-0267 now rewords and breaks the brief and the release notes rather than the README.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's README is now checked by the reviewer reading it, not by tests, apart from four things that break installs or the page if they're wrong: the setup prompt, the version on its status line, the demo pictures and whether its links work. The commands and settings that tests used to look for in the README are now looked for in the product brief, which gained the few it didn't name yet, such as `speck keys`. New tickets get the same rule: the ticket, build and review instructions say a README fact is checked by review.
+
+To see it, change a sentence or a section in the README: no test fails. Break a link in it, or the setup prompt, and one does.
+
+Worth keeping an eye on: the README's separate terminal install command is no longer tested (a follow-up suggests adding it back), and the draft release ticket 0452 still asks for a test of the README's "Built with speck" figures, which under this rule would be checked by review.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +62,10 @@ Facts are tested in the brief, and the README is checked by review, apart from t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Test the README's terminal install command: saved to `speck/ideas/2026-10-24-test-the-readme-s-terminal-install-command.md`.
+  - 0452 (draft, release 0.15.0): its AC5 asks for the README's "Built with speck" figures to be tested, and its AC3 for the README's status line and setup prompt. Under this rule AC5's README part ends with `(checked by review)`; the user should adjust it before setting it ready.
+  - Tidy-up: some test files that lost their README check still import `fs` or `path` only for their other tests; nothing unused was left behind that fails, but a later pass could drop any import no longer used.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -126,6 +134,76 @@ Facts are tested in the brief, and the README is checked by review, apart from t
     ],
     "escalation_question": "",
     "summary": "The migration largely works, and the reported tests pass. However, some remaining tests still constrain README content beyond the four exceptions the ticket permits. Restrict those checks before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b55c750a215b3a1c875417dbe26bd7ba7e23963d",
+    "session": "continued",
+    "thread_id": "01a16f8d-6d44-7f52-8b9d-be5de2fb227b",
+    "builder_response": "- Tests run: speck test --files test/docs-0491.test.mjs test/readme-links-0491.test.mjs test/agents-0398.test.mjs test/build-0116.test.mjs test/builder-model-0311.test.mjs test/builder-switch-0293.test.mjs test/config-0386.test.mjs test/core.test.mjs test/docs-0267.test.mjs test/docs-0488.test.mjs test/docs-0491.test.mjs test/foreman-answer-0318.test.mjs test/foreman-fix-0286.test.mjs test/foreman-provider-0392.test.mjs test/install-0253.test.mjs test/keys-0389.test.mjs test/licence-0090.test.mjs test/lint-0121.test.mjs test/luro-0082.test.mjs test/panel-0133.test.mjs test/panel-0451.test.mjs test/pr-ship-0296.test.mjs test/private-words-0084.test.mjs test/product-0068.test.mjs test/providers-0401.test.mjs test/readme-0089.test.mjs test/readme-0250.test.mjs test/readme-links-0491.test.mjs test/release-0092.test.mjs test/release-0106.test.mjs test/release-0210.test.mjs test/release-0226.test.mjs test/release-0236.test.mjs test/release-0243.test.mjs test/release-0248.test.mjs test/release-0254.test.mjs test/release-0282.test.mjs test/release-0297.test.mjs test/release-0298.test.mjs test/release-0307.test.mjs test/release-0329.test.mjs test/release-0336.test.mjs test/release-0339.test.mjs test/release-0343.test.mjs test/release-0346.test.mjs test/release-0360.test.mjs test/release-0367.test.mjs test/release-0375.test.mjs test/release-0380.test.mjs test/release-0394.test.mjs test/repo-speck-0122.test.mjs test/review-0280.test.mjs test/review-cursor-0332.test.mjs test/review-provider-0390.test.mjs test/run-0194.test.mjs test/run-provider-0391.test.mjs test/settings-agents-0399.test.mjs test/settings-builder-effort-0402.test.mjs test/settings-roles-0400.test.mjs test/setup-0088.test.mjs \n  (the ticket's own test files and every existing test file it changed: 638 tests, 0 failing)\n- F1: fixed. The README checks are now held to AC2's four exceptions:\n  - install-0253: removed the check on the README's terminal install command, and took the README out of \"every speck npx command … uses the latest release\" (renamed \"outside the README, the changelog and release notes\"). Its README checks are now only the setup prompt (AC1, AC4).\n  - Release tests: removed every whole-README doesNotMatch for a fixed release (in 0106, 0210, 0226, 0236, 0243, 0248, 0254, 0282, 0297, 0298, 0307, 0329, 0336, 0339, 0343, 0346, 0360, 0367, 0375, 0380 and 0394), and release-0254's \"no install command in the README names a fixed release\" test. setupPromptProblems still checks that the prompt installs only the latest release.\n  - Release tests that looked for the version anywhere in the README (0092, 0106, 0210, 0226, 0236, 0243, 0248, 0254, 0282) now look for it on the status line (`Status: <version>`), as the later ones do.\n  - docs-0491's allowed list: install-0253 is now \"the setup prompt\", and the release tests \"the status line's version and the setup prompt\", with nothing else in them. docs-0267 AC2's pattern follows install-0253's new test name.\n  - The ticket's Notes no longer say the install checks were kept.\n",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 373503,
+      "cached_input_tokens": 286976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1275,
+      "reasoning_output_tokens": 74
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T20:17:49.233Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md, docs/brief.md's 'Criteria about documents' paragraph and templates/reviewer-prompt.md specify the four README exceptions and retain testing for other documents. Both 0491 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/docs-0491.test.mjs checks README readers against ALLOWED. install-0253 now reads the README only for its setup prompt; release tests retain setup-prompt and status-version checks. The allowed-list and link-check tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "test/docs-0491.test.mjs's MOVED list checks migrated commands and settings in docs/brief.md; existing tests retain reference-document checks. Both 0491 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied round-two run covers the ticket's tests and changed existing test files: 638 tests, zero failures, three skips. The earlier related-test run also passed. Shipping retains the whole-suite check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/docs-0491.test.mjs",
+        "issue": "The previous allowed list admitted README install-command checks beyond the four permitted exceptions. Those checks have now been removed, and the allowed-list descriptions match the remaining checks.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Reference facts are now tested in the brief, while README checks cover only the permitted exceptions. The previous issue is resolved, the reported tests pass, and no blocking concerns remain."
   }
 }
 ```
