@@ -276,7 +276,7 @@ function fileTicketedIdeas(repo) {
   }
 }
 
-// 0351: keep outputs/, where document tasks write, out of git. Adds /outputs/ to the root .gitignore unless a line already ignores it.
+// 0351: keep outputs/, where task tickets leave their results, out of git. Adds /outputs/ to the root .gitignore unless a line already ignores it.
 export function ignoreOutputs(repo) {
   const file = path.join(repo, '.gitignore');
   const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';

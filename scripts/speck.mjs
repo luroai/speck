@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ideaCounts } from './idea-counts.mjs';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketTask, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketKind, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdPr, prShown } from './pull-request.mjs';
@@ -435,7 +435,7 @@ export function statusData(repo) {
       builder: ticketAgents(t.fm, cfg).builder, builder_label: providerLabelHere(ticketAgents(t.fm, cfg).builder),
       reviewer: ticketAgents(t.fm, cfg).reviewer,
       type: ticketType(t),
-      task: ticketTask(t), // 0350
+      kind: ticketKind(t), task: undefined, // 0350, 0492: its kind, not the old task line it may still have
       priority: ticketPriority(t),
       path: posix(path.relative(t.at || repo, t.file)),
       worktree: t.at || null,
@@ -456,7 +456,7 @@ export function statusData(repo) {
       lint_messages: { errors: lint.errors, warnings: lint.warnings },
       review_model: reviewerSettings(t.fm, cfg).model, // 0382: the model its review runs on, the ticket's or the config's, or null
       // 0167: whether speck ship --auto would ship it once approved, so the panel knows an approved one is waiting for you
-      auto_ship: autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketTask(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0) === '', // 0356
+      auto_ship: autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0) === '', // 0356
       rounds: ticketRounds(t.raw).rounds.map(r => ({
         round: r?.meta?.round ?? null,
         reviewer: r?.meta?.reviewer ?? null,
@@ -563,7 +563,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
                                       doesn't read code)
   speck picture <id> <file> "<caption>"  keep a picture of a visual change with the ticket's review pack
                                       (--clear instead of a file and caption: remove its pictures)
-  speck output <id>                   print a document task's folder in the main checkout's outputs/, making it if missing
+  speck output <id>                   print a task ticket's folder in the main checkout's outputs/, making it if missing
   speck merge-check <id>              what merging the base branch into the ticket's branch would conflict on, as JSON
   speck changes <id> "<note>"         send changes you want back to an approved ticket's build: speck run resumes
                                       it to make them, and it's reviewed and approved again before it ships

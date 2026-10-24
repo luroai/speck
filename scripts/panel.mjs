@@ -512,7 +512,7 @@ export async function panelServer() {
       res.writeHead(200, { 'Content-Type': found.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...(stopping ? { Connection: 'close' } : {}) });
       return res.end(found.body);
     }
-    // 0354: a file in a document task's output folder, linked from its review pack. Only from inside that folder: a path
+    // 0354: a file in a task's output folder, linked from its review pack. Only from inside that folder: a path
     // that leads outside it, by .. or by a link, isn't found. A page the build wrote is sandboxed, so it can't act as the panel.
     const output = where.match(/^\/api\/tickets\/(\d{1,4})\/output\/(.+)$/);
     if (output) {

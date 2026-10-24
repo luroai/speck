@@ -24,8 +24,8 @@ const CASES = [
     t: T('0805', 'reviewing', { type: 'bug', started: ago(5999), self_check: 'no changes', rounds: [round(1, 10)], build_exit: { at: ago(30), code: 1 } }) },
   { id: '0806', on: false, short: 'Turn on Auto-build', sentence: 'Approved · turn on Auto-build to ship it',
     t: T('0806', 'approved', approved({ type: 'fix', auto_ship: true, build_exit: { at: ago(30), code: 0 } })) },
-  { id: '0807', on: true, short: 'Read the document', sentence: 'Finished · read the document',
-    t: T('0807', 'approved', approved({ task: 'document', type: 'bug', auto_ship: false, build_exit: { at: ago(30), code: 0, message: 'Done.' } })) },
+  { id: '0807', on: true, short: 'Read the result', sentence: 'Finished · read the result',
+    t: T('0807', 'approved', approved({ kind: 'task', type: 'bug', auto_ship: false, build_exit: { at: ago(30), code: 0, message: 'Done.' } })) },
 ];
 // The ones that stay as they are.
 const SAME = [

@@ -7,7 +7,7 @@ import { PACK, DOCS, pane, docButtons } from './support/documents.mjs';
 
 const MESSAGE = 'line one of the log\nline two of the log';
 const LOG = { text: 'the full log', truncated: false };
-const finished = (o = {}) => T('0001', 'approved', { task: 'document', auto_ship: false, rounds: [round(1, 1)], ...exitOf(MESSAGE), ...o });
+const finished = (o = {}) => T('0001', 'approved', { kind: 'task', auto_ship: false, rounds: [round(1, 1)], ...exitOf(MESSAGE), ...o });
 const code = (o = {}) => T('0002', 'approved', { auto_ship: false, rounds: [round(1, 1)], ...exitOf(MESSAGE), ...o });
 const state = (...tickets) => ({ tickets, ideas: [] });
 const rowOf = (p, id) => queueRows(p).find(r => r.textContent.includes(id));
@@ -34,10 +34,10 @@ test('0361 AC1: a finished document task keeps its id, title, tags and progress,
   const p = await load([state(finished())]);
   const row = rowOf(p, '0001');
   assert.ok(row.textContent.includes('0001') && row.textContent.includes('Ticket 0001'), 'id and title');
-  assert.ok(p.all(row).some(n => n.className === 'tag document'), 'its document tag');
+  assert.ok(p.all(row).some(n => n.className === 'tag task'), 'its task tag');
   const progress = say(row);
   assert.ok(progress, 'its progress');
-  assert.ok(progress.textContent.startsWith('Read the document'), progress.textContent); // 0443: closed, in short words
+  assert.ok(progress.textContent.startsWith('Read the result'), progress.textContent); // 0443: closed, in short words
   assert.ok(!row.textContent.includes('Approved · waiting for you to ship it'));
   assert.ok(p.all(row).some(n => /\bstage\b/.test(n.className || '') && n.textContent === 'Ship'), 'its stage as now');
   noExit(p, row);
@@ -48,8 +48,8 @@ test('0361 AC1: open, it still has no exit line or log box', async () => {
   const row = rowOf(p, '0001');
   assert.match(row.className, /\bopen\b/);
   // 0462: open, its Now cell says it in short words, with the sentence as their tooltip
-  assert.equal(nowOf(row).textContent, 'Read the document');
-  assert.equal(nowOf(row).title, 'Finished · read the document');
+  assert.equal(nowOf(row).textContent, 'Read the result');
+  assert.equal(nowOf(row).title, 'Finished · read the result');
   noExit(p, row);
 });
 
@@ -106,7 +106,7 @@ test('0361 AC4: a document task blocked, building, reviewing, shipping or stoppe
   for (const [name, t, label] of cases) {
     const p = await load([state(t)]);
     const row = rowOf(p, '0001');
-    assert.ok(!row.textContent.includes('Finished · read the document'), name);
+    assert.ok(!row.textContent.includes('Finished · read the result'), name);
     assert.equal(buttons(p, row, 'Review pack').length, 0, `${name}: no Review pack button while closed`);
     if (label) {
       const o = await opened([state(t), LOG]), open = rowOf(o, '0001'); // 0434: its line shows while it's open
