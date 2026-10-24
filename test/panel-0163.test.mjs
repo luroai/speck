@@ -28,7 +28,7 @@ const state = (tickets, run = RUN) => ({ tickets, ideas: [], resume_command: '',
 const runOf = p => p.runSwitch();
 const headerOf = p => p.byId('run');
 const badgeIn = p => p.all(headerOf(p)).find(n => n.tagName === 'canvas');
-const labelIn = p => ({ textContent: headerOf(p).attrs['aria-label'].replace(/^speck: /, '') }); // 0413: the word on speck's screen, in its name
+const labelIn = p => ({ textContent: headerOf(p).title.replace(/^speck: /, '').split(' · ')[0] }); // 0413: the word on speck's screen, in its tooltip (0485)
 const shows = async (tickets, run = RUN) => { const p = switchPage([state(tickets, run)]); await p.settle(); return p; };
 
 test('0163 AC1: while Auto-build is on and a ticket is building, reviewing or shipping, the button reads "Auto-build on" (0199)', async () => {
