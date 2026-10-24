@@ -42,7 +42,7 @@
   #full-ticket .facts .value.now.to-ship { color: var(--ok); }
   #full-ticket .facts .value.bug { color: var(--bug); }
   #full-ticket .facts .value.fix { color: var(--fix); }
-  #full-ticket .facts .value.document { color: var(--idea); }
+  #full-ticket .facts .value.task { color: var(--idea); }
   /* The full ticket, over the whole panel (0423). While it's open, the page behind it holds still, under a backdrop. */
   html.held { overflow: hidden; }
   #full-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: pinch-zoom; }
@@ -70,7 +70,7 @@
   #full-ticket .track .step.ship { margin: 0; padding: 3px 0 0; border-right: none; border-bottom: none; border-left: none; background: none; cursor: auto; min-height: 0; } /* not the review pack's Ship button */
   #full-ticket h4, #full-ticket > .md .md-h1, #full-ticket > .md .md-h2, #full-ticket > .md .md-h3 { margin: 28px 0 8px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
-  /* 0362: a document task's Markdown file, over the whole panel, its path and Close above its text in a centred column.
+  /* 0362: a task's Markdown file, over the whole panel, its path and Close above its text in a centred column.
      0366: the Foreman's detail opens in the same pop-up. */
   #doc-view { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #doc-view[hidden], #foreman[hidden] { display: none; }
@@ -119,7 +119,7 @@
   #full-ticket .md ul, #full-ticket .md ol, #full-ticket ol.criteria, #full-ticket .criteria ul, #full-ticket .criteria ol, #doc-view .md ul, #doc-view .md ol { margin: 0 0 10px; padding-left: 1.6em; list-style-position: outside; }
   #full-ticket li ul, #full-ticket li ol, #doc-view li ul, #doc-view li ol { margin: 4px 0 0; }
   #full-ticket h4:first-child, #full-ticket .md > :first-child, #doc-view .md > :first-child { margin-top: 0; }
-  /* 0445: a document task's document set out as the full ticket is: its first heading is its title, in the title's
+  /* 0445: a task's Markdown file set out as the full ticket is: its first heading is its title, in the title's
      size, its other headings as a review pack's are, and its text, tables, code and lists in the ticket's sizes. */
   #doc-view .md .md-h1, #doc-view .md .md-h2, #doc-view .md .md-h3 { margin: 28px 0 8px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
   #doc-view .md .doc-title { margin: 0 0 14px; font-size: 26px; line-height: 1.25; font-weight: 600; }
@@ -146,11 +146,11 @@
   #full-ticket .pack-buttons, #doc-view .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
   #full-ticket .ask-changes, #doc-view .ask-changes { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
   #full-ticket .ask-changes:disabled, #doc-view .ask-changes:disabled { cursor: default; opacity: .6; }
-  /* 0359: a document task's files, as buttons at the top of its review pack */
+  /* 0359: a task's files, as buttons at the top of its review pack */
   #full-ticket .pack-documents { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
   #full-ticket .pack-document { font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
   #full-ticket .pack-document:hover { background: var(--panel); }
-  /* 0354: the button back from a document task's file to its review pack */
+  /* 0354: the button back from a task's file to its review pack */
   #full-ticket .md a, #full-ticket .criteria a, #doc-view .md a { color: var(--run); }
   /* 0294: the pictures of a visual change in its review pack, each opening full size when pressed */
   #full-ticket .pack-pictures { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 0 0 8px; }

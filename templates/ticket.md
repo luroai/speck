@@ -5,7 +5,7 @@ status: draft            # draft | ready | building | reviewing | blocked | appr
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
-task: code               # code | document (what the build makes: a code change or a document)
+kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)
 type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
 builder: ""              # blank: the builder your settings give when the build starts
 reviewer: ""             # blank: the reviewer your settings give when each review round starts

@@ -1,6 +1,6 @@
 'use strict';
 // 0473: the panel's pop-ups, which the page loads from /panel-popups.js after its own script and before Settings: the full
-// ticket in the side pane, with a review pack, a document's pop-up and the Pipeline log. They open, draw, update and
+// ticket in the side pane, with a review pack, a task's file in a pop-up and the Pipeline log. They open, draw, update and
 // close using the page's helpers, such as el and $, and the page's render draws them (renderFull, renderForeman).
 // What the pop-ups show, and the requests they make, kept between redraws.
 let fullId = null; // the id of the ticket in the side pane, or null
@@ -91,7 +91,7 @@ function picturesPart(pictures) {
     return el('figure', null, null, a, el('figcaption', null, p.caption));
   }))];
 }
-// 0354: a document task's files the server listed with the pack, each with its path from the project root, served by the panel.
+// 0354: a task's files the server listed with the pack, each with its path from the project root, served by the panel.
 const packDocuments = list => (Array.isArray(list) ? list : []).filter(d => d && typeof d.path === 'string' && typeof d.url === 'string' && /^\/api\/tickets\/\d+\/output\/./.test(d.url));
 const isMarkdown = d => /\.(md|markdown)$/i.test(d.path);
 // 0359: each file as a button at the top of the pack, labelled with its path. A button has no address, so a browser that
@@ -199,7 +199,7 @@ function packPane(t) {
     if (packOf.pictures.length) { const at = blocks.findIndex(n => n.className === 'ac-table'); blocks.splice(at < 0 ? blocks.length : at + 1, 0, ...picturesPart(packOf.pictures)); }
     for (const n of blocks) body.appendChild(n);
   }
-  // 0359: a document task's files go at the top, above Ship.
+  // 0359: a task's files go at the top, above Ship.
   const documents = packOf.state === 'ok' && packOf.documents.length ? documentsPart(packOf.documents) : [];
   return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close), ...documents, ...shipPart(t), body];
 }

@@ -14,7 +14,7 @@ const LONG = 'a-reviewer-model-with-a-very-long-name-6.1-sol';
 const TICKETS = [
   T('0901', 'building', { started: ago(65), build_running: true, builder: 'claude', priority: 1, size: 'M', risk: 'high', type: 'bug' }),
   T('0902', 'reviewing', { started: ago(65), build_running: true, self_check: 'no changes', review_running: 1, reviewer: 'codex', review_model: LONG, type: 'fix', priority: 0 }),
-  T('0903', 'approved', { started: ago(900), approved: ago(60), self_check: 'no changes', rounds: [round(1, 10)], auto_ship: false, task: 'document', builder: 'claude' }),
+  T('0903', 'approved', { started: ago(900), approved: ago(60), self_check: 'no changes', rounds: [round(1, 10)], auto_ship: false, kind: 'task', builder: 'claude' }),
   T('0904', 'reviewing', { started: ago(200), build_running: true, self_check: 'no changes', rounds: [{ ...round(1, 10), verdict: 'request_changes' }], review_running: null, builder: 'cursor' }),
   T('0905', 'blocked', { started: ago(300), self_check: 'no changes', rounds: [{ ...round(1, 10), verdict: 'request_changes' }], blocked_question: 'Which one?', builder: 'claude' }),
   T('0906', 'building', { started: ago(65), build_running: true, self_check: 'no changes', builder: 'claude' }),
@@ -36,7 +36,7 @@ test('0462 AC1: an open in-flight ticket shows six labelled cells under its trac
   const want = {
     '0901': [['Now', 'Writing'], ['Builder', 'Claude'], ['Time', '01:05'], ['Priority', 'P1'], ['Size · risk', 'M · high'], ['Type', 'bug']],
     '0902': [['Now', 'Reviewing'], ['Reviewer', LONG], ['Time', '01:05'], ['Priority', 'P0'], ['Size · risk', 'S · low'], ['Type', 'fix']],
-    '0903': [['Now', 'Ready to ship'], ['Builder', 'Claude'], ['Waiting'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'document']],
+    '0903': [['Now', 'Ready to ship'], ['Builder', 'Claude'], ['Waiting'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'task']],
     '0904': [['Now', 'Fixing'], ['Builder', 'Cursor'], ['Time'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
     '0905': [['Now', 'Has a question'], ['Builder', 'Claude'], ['Time'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
     '0906': [['Now', 'Checking'], ['Builder', 'Claude'], ['Time'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
@@ -60,7 +60,7 @@ test('0462 AC1: an open in-flight ticket shows six labelled cells under its trac
   // colours: bug, fix and document in their tags' colours, code plain
   assert.match(cells(factsOf(card(p, '0901')))[5][2], /\bbug\b/);
   assert.match(cells(factsOf(card(p, '0902')))[5][2], /\bfix\b/);
-  assert.match(cells(factsOf(card(p, '0903')))[5][2], /\bdocument\b/);
+  assert.match(cells(factsOf(card(p, '0903')))[5][2], /\btask\b/);
   assert.equal(cells(factsOf(card(p, '0904')))[5][2], 'value');
   // the moving lights in Now while an agent is at work, not while it waits
   const lit = id => p.all(factsOf(card(p, id)).children[0]).some(n => n.className === 'lights');
@@ -76,7 +76,7 @@ test('0462 AC1: the table is three equal columns, with lines between the cells a
   assert.equal(val('.q .facts', 'grid-template-columns'), 'repeat(3, minmax(0, 1fr))');
   for (const side of ['border-top', 'border-left']) assert.deepEqual(tokens(val('.q .facts', side)), ['--line'], `round it: ${side}`);
   for (const side of ['border-right', 'border-bottom']) assert.deepEqual(tokens(val('.q .facts .fact', side)), ['--line'], `between cells: ${side}`);
-  for (const [k, t] of [['bug', '--bug'], ['fix', '--fix'], ['document', '--idea']]) {
+  for (const [k, t] of [['bug', '--bug'], ['fix', '--fix'], ['task', '--idea']]) {
     assert.deepEqual(tokens(val(`.q .facts .value.${k}`, 'color')), [t], k);
     assert.deepEqual(tokens(get(all.find(r => !r.at.length && r.sel.split(',').map(s => s.trim()).includes(`.tag.${k}`)), 'color')), [t], `the ${k} tag`);
   }

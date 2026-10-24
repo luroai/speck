@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { STATUSES, EFFORTS, TYPES, TASKS, blank, contentLines, ticketType, ticketTask, ticketOutput, ticketPriority, validPriority, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
+import { STATUSES, EFFORTS, TYPES, KINDS, OLD_TASKS, blank, contentLines, ticketType, ticketKind, kindFromTask, ticketOutput, ticketPriority, validPriority, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
 import { knownEffort } from './codex-models.mjs';
 import { ticketSameModelProblem } from './same-model.mjs';
 
@@ -17,8 +17,11 @@ export function lintTicket(ticket, cfg) {
   if (fm.size === 'L') errors.push('size L can never be ready: split it into sibling tickets.');
   if (!['low', 'high'].includes(fm.risk)) errors.push(`risk must be low or high (got "${fm.risk}").`);
   if (ticketType(ticket) !== null && !TYPES.includes(fm.type)) errors.push(`type must be blank, bug or fix (got "${fm.type}").`);
-  if (!TASKS.includes(ticketTask(ticket))) errors.push(`task must be blank, ${TASKS.join(' or ')} (got ${JSON.stringify(fm.task)}).`);
-  if (ticketTask(ticket) === 'document') { const o = outputProblem(ticketOutput(ticket)); if (o) errors.push(o); }
+  const kind = ticketKind(ticket);
+  if (!KINDS.includes(kind)) errors.push(kindFromTask(ticket)
+    ? `task must be blank, ${OLD_TASKS.join(' or ')}, the old way of writing kind (got ${JSON.stringify(fm.task)}). Write kind: code or kind: task instead.`
+    : `kind must be code or task (got ${JSON.stringify(fm.kind)}).`);
+  if (kind === 'task') { const o = outputProblem(ticketOutput(ticket)); if (o) errors.push(o); }
   if (!validPriority(ticketPriority(ticket), fm.type))
     errors.push(fm.priority === 0
       ? 'priority must be blank or a whole number from 1 to 5 (got 0): priority 0 is only for a fix ticket.'
@@ -51,9 +54,9 @@ export function lintTicket(ticket, cfg) {
   return { errors, warnings, acceptanceCriteria: ac };
 }
 
-// 0351: what's wrong with a document task's output, or null. It names a folder inside outputs/ at the project root.
+// 0351: what's wrong with a task ticket's output, or null. It names a folder inside outputs/ at the project root.
 export function outputProblem(v) {
-  if (v === null) return 'A document ticket needs an output: the folder its document goes in, inside outputs/ (for example `output: emails`).';
+  if (v === null) return 'A task ticket needs an output: the folder its result goes in, inside outputs/ (for example `output: emails`).';
   if (typeof v !== 'string') return `output must be a folder inside outputs/, such as emails or strategy-2027/pricing/ (got ${JSON.stringify(v)}).`;
   const p = v.trim().replace(/\\/g, '/');
   if (p.startsWith('/') || /^[a-z]:/i.test(p)) return `output "${v}" must be relative to outputs/ at the project root, not an absolute path.`;

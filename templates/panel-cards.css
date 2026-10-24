@@ -297,7 +297,7 @@
   .q .facts .value.now.to-ship, .item.ticket .facts .value.now.to-ship, #shipped .facts .value.now.to-ship { color: var(--ok); }
   .q .facts .value.bug, .item.ticket .facts .value.bug, #shipped .facts .value.bug { color: var(--bug); }
   .q .facts .value.fix, .item.ticket .facts .value.fix, #shipped .facts .value.fix { color: var(--fix); }
-  .q .facts .value.document, .item.ticket .facts .value.document, #shipped .facts .value.document { color: var(--idea); }
+  .q .facts .value.task, .item.ticket .facts .value.task, #shipped .facts .value.task { color: var(--idea); }
   /* 0463: the same track and table on an open ticket that hasn't started. A draft's priority opens the menu that sets it,
      underlined as a linked id is, with room for its menu */
   .item.ticket .facts .value.pick { overflow: visible; }

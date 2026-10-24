@@ -19,8 +19,8 @@ const statusOf = (cwd, id = '0001') => JSON.parse(runIn(cwd, 'status', '--json')
 
 test('0355 AC1: autoShipWhyNot holds back a document task whatever auto_ship and auto_ship_risk say', () => {
   for (const cfg of [{ auto_ship: true, auto_ship_risk: ['low', 'high'] }, { auto_ship: false }, { auto_ship: true, auto_ship_risk: [] }]) {
-    const why = autoShipWhyNot(cfg, '0007', 'low', [], 'document');
-    assert.match(why, /0007 is a document task, and a document task waits for you to ship it/, JSON.stringify(cfg));
+    const why = autoShipWhyNot(cfg, '0007', 'low', [], 'task'); // 0492: kind task, not task document
+    assert.match(why, /0007 is a task, and a task waits for you to ship it/, JSON.stringify(cfg));
   }
   assert.equal(autoShipWhyNot({ auto_ship: true, auto_ship_risk: ['low'] }, '0007', 'low', [], 'code'), '');
   assert.equal(autoShipWhyNot({ auto_ship: true, auto_ship_risk: ['low'] }, '0007', 'low', []), '', 'no task is a code ticket');
@@ -31,7 +31,7 @@ test('0355 AC1: speck ship --auto refuses a document task, saying it waits for y
   const before = { main: r.sha('main'), branch: r.sha(DOC_BRANCH) };
   const out = r.run('ship', '1', '--auto');
   assert.equal(out.status, 12, out.stdout + out.stderr);
-  assert.match(out.stderr, /Not shipping automatically: ticket 0001 is a document task, and a document task waits for you to ship it\./);
+  assert.match(out.stderr, /Not shipping automatically: ticket 0001 is a task, and a task waits for you to ship it\./);
   assert.deepEqual({ main: r.sha('main'), branch: r.sha(DOC_BRANCH) }, before, 'nothing shipped');
   assert.equal(r.statusIn(r.wt), 'approved');
   const t = statusOf(r.dir);
@@ -56,7 +56,7 @@ test('0355 AC3: speck ship refuses a document task whose branch changes files ou
   const before = { main: r.sha('main'), branch: r.sha(DOC_BRANCH) };
   const out = r.run('ship', '1');
   assert.notEqual(out.status, 0);
-  assert.match(out.stderr, /document task/);
+  assert.match(out.stderr, /is a task/);
   assert.match(out.stderr, /extra\.txt/);
   assert.match(out.stderr, /shared\.txt/);
   assert.deepEqual({ main: r.sha('main'), branch: r.sha(DOC_BRANCH) }, before, 'nothing shipped');
@@ -87,7 +87,7 @@ test('0355 AC2: in pull request mode, speck ship merges a document task\'s pull 
 
 test('0355 AC3: in pull request mode, a document task whose branch changes files outside speck/ gets no pull request and doesn\'t ship', () => {
   const r = docPrRepo({ outside: ['extra.txt'] });
-  assert.throws(() => openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh }), /document task.*extra\.txt/, 'no pull request is opened for it');
+  assert.throws(() => openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh }), /is a task.*extra\.txt/, 'no pull request is opened for it');
   const main = r.sha('main');
   const out = r.cli(r.dir, 'ship', '1');
   assert.notEqual(out.status, 0);

@@ -189,10 +189,20 @@ function fieldValue(ticket, key) {
 // A ticket's type: null or its value ("bug" or "fix", a fix for a broken base branch, are the only valid ones).
 export const TYPES = ['bug', 'fix'];
 export const ticketType = ticket => fieldValue(ticket, 'type');
-// 0350: a ticket's task: what its build makes. Missing or blank means "code".
-export const TASKS = ['code', 'document'];
-export const ticketTask = ticket => fieldValue(ticket, 'task') ?? 'code';
-// 0351: a document task's folder, relative to outputs/ at the project root. null when it's missing or blank.
+// 0492: a ticket's kind: what its build does, change the project's code or do a task that leaves its result in
+// outputs/. Missing or blank means "code". A ticket with no kind line reads its old `task:` line (0350), `code` as
+// code and `document` as a task, and any other value as it is, for lint to refuse. Where it has both, kind wins.
+export const KINDS = ['code', 'task'];
+export const OLD_TASKS = ['code', 'document'];
+// True when the ticket has no kind of its own, so its old task line (or nothing) decides.
+export const kindFromTask = ticket => fieldValue(ticket, 'kind') === null;
+export function ticketKind(ticket) {
+  const kind = fieldValue(ticket, 'kind');
+  if (kind !== null) return kind;
+  const task = fieldValue(ticket, 'task');
+  return task === null || task === 'code' ? 'code' : task === 'document' ? 'task' : task;
+}
+// 0351: a task ticket's folder, relative to outputs/ at the project root. null when it's missing or blank.
 export const ticketOutput = ticket => fieldValue(ticket, 'output');
 // A ticket's priority: null (none) or its value, which is valid only as a whole number from 1 to 5, or 0 on a fix ticket.
 export const ticketPriority = ticket => fieldValue(ticket, 'priority');

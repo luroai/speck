@@ -13,6 +13,7 @@ const approveVerdict = { verdict: 'approve', criteria: [{ id: 1, status: 'pass',
 const body = `## Problem\nThe team needs a pricing plan.\n## Outcome\nA pricing plan in outputs/plans.\n## Acceptance criteria\n1. The plan names three tiers.\n## Out of scope\n- Launch dates\n`;
 export const DOC_BRANCH = 'speck/0001-write-a-pricing-plan';
 
+// 0492: made a task by the old task: document line in place of its kind line.
 // An approved document task (ticket 0001) on its own branch, checked out in a worktree, with main in the main checkout.
 // `test` is the test command. `outside` names files outside speck/ the branch also changes, before the review.
 // `auto` turns auto_ship on for both risks. Each kind is built once per test file and copied (copy.mjs).
@@ -40,7 +41,7 @@ function build(dir, { test, outside, auto }) {
   fs.writeFileSync(cfgFile, cfg);
   const file = path.join(dir, run('new', 'Write a pricing plan').stdout.trim());
   const [head] = fs.readFileSync(file, 'utf8').split('## Problem');
-  fs.writeFileSync(file, head.replace(/^task: .*$/m, 'task: document\noutput: plans') + body);
+  fs.writeFileSync(file, head.replace(/^kind: .*$/m, 'task: document\noutput: plans') + body);
   fs.writeFileSync(path.join(dir, 'shared.txt'), 'base\n');
   g('add', '-A'); g('commit', '-qm', 'base');
   g('checkout', '-qb', DOC_BRANCH);
