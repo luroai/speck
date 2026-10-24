@@ -29,7 +29,7 @@ const rgba = hex => [1, 3, 5, 7].map(i => (hex.length > i ? parseInt(hex.slice(i
 const over = (top, under) => [0, 1, 2].map(i => top[i] * top[3] + under[i] * (1 - top[3])).concat(1);
 const lum = c => { const [r, g, b] = c.slice(0, 3).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const contrast = (fg, bg) => { const back = rgba(bg), front = over(rgba(fg), back); const [x, y] = [lum(front), lum(back)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-const SURFACES = ['--bg', '--panel', '--raise', '--input', '--accent-bg', '--idea-bg', '--inbox-bg', '--bad-bg'];
+const SURFACES = ['--bg', '--panel', '--raise', '--input', '--accent-bg', '--ok-bg', '--inbox-bg', '--bad-bg'];
 const meets = (look, colour, need) => SURFACES.every(s => contrast(colour, look[s]) >= need);
 
 // The nearest shade: the colour's HSL lightness moved, a quarter of a percent at a time, until it meets `need` on every
@@ -155,9 +155,9 @@ test('0426 AC3: needs you, waiting for you, passing checks, links, the focus rin
   uses('.q.blocked', 'border-color', '--bad');
   uses('.q .top .stage.bad', 'color', '--bad');
   uses('.tag.high', 'color', '--bad');
-  // waiting for you: magenta
-  uses('.q.to-ship', 'border-color', '--idea');
-  uses('.q .top .say.to-ship', 'color', '--idea');
+  // waiting for you: green (0440: magenta was too near the red)
+  uses('.q.to-ship', 'border-color', '--ok');
+  uses('.q .top .say.to-ship', 'color', '--ok');
   // passing checks: green
   uses('.next', 'color', '--ok');
   // links and the focus ring: blue
