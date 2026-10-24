@@ -46,7 +46,7 @@ speck's docs describe speck as the one watching the pipeline, with the new setti
 - Pictures: none, because only the wording of the docs changes, not how anything looks.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's guides no longer talk about a separate "Foreman". The README, the design brief and the setup and watching instructions now say speck itself watches the work, call the settings group Watching, and use the new setting names (watch, watch_agent, watch_model, watch_effort) and the new commands for answering or dismissing speck's questions. They also say the old names still work, so older setups aren't left out. To see it, read the README's panel section, or the part about questions speck answers for you. Nothing speck does has changed: only the words describing it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +56,7 @@ speck's docs describe speck as the one watching the pipeline, with the new setti
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (tidy-ups only, so no inbox notes): the cache files speck run writes (`run.foreman.json`, `run.foreman-did.jsonl`, `run.foreman-agent.json`, `run.foreman-answer.*`) and the agent's environment variable still have foreman in their names; the brief now names only their folder. Renaming them would let the brief name them again.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -124,6 +125,76 @@ speck's docs describe speck as the one watching the pipeline, with the new setti
     ],
     "escalation_question": "",
     "summary": "The documents consistently call the watcher speck and explain the new settings and commands. The reported tests pass, but several assertions depend on exact prose or sentence structure. Those must be loosened before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "699d8d3523057e60e83943d079974abaed19f8b8",
+    "session": "continued",
+    "thread_id": "01a16f7b-4ffa-7a10-8fcd-30c90b3640c9",
+    "builder_response": "- Tests run: test/docs-0488.test.mjs test/foreman-0285.test.mjs test/foreman-agent-0287.test.mjs test/foreman-answer-0318.test.mjs test/foreman-fix-0286.test.mjs test/foreman-provider-0392.test.mjs test/release-0298.test.mjs test/setup-0334.test.mjs test/docs-0267.test.mjs, with the repo's checks.\n- F1: fixed. test/docs-0488.test.mjs: AC1 now only checks that no line has \"foreman\" once the old setting names and `speck foreman …` code spans are taken out (no \"still\" or sentence split); the config set row test checks only that the row names the four new and four old setting names; the '`watch` set to fix' check is gone. test/foreman-0285.test.mjs checks only that the brief's status row names `speck/.cache/runs/`. test/setup-0334.test.mjs AC1 checks only that the all-Cursor bullet has `speck config set watch_agent <name>`. The rest is left to review.\n",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 325024,
+      "cached_input_tokens": 274944,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1318,
+      "reasoning_output_tokens": 45
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T19:56:36.326Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Repository search confirms the specified documents contain 'foreman' only in old setting names and command aliases, with compatibility explained. The revised 0488 AC1 test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md, docs/brief.md and the setup and watch skills use the new settings, commands and skill name. The brief's config set row explicitly says old names are still read. All three 0488 AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Reviewed README.md's Header and Settings bullets and docs/brief.md's panel row: they naturally describe speck watching, the Watching group and blocked questions in British English. These passages are unchanged since round 1."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The branch diff leaves CHANGELOG.md and docs/releases/ unchanged. The latest recorded test run reports 207 passed, zero failed and three skipped; the earlier related run also had zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/docs-0488.test.mjs; test/foreman-0285.test.mjs; test/setup-0334.test.mjs",
+        "issue": "The identified assertions tied tests to prose wording and sentence structure.",
+        "suggested_fix": "Completed: the revised assertions check names, commands and paths without the identified prose requirements.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The docs consistently describe speck as watching the pipeline and explain the new names and backwards compatibility. The brittle prose checks have been fixed, and the reported tests pass. Ready for the owner's merge decision."
   }
 }
 ```
