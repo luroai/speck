@@ -13,9 +13,10 @@ const clock = () => {
 export const MIN = 60000;
 export const building = () => [T('0362', 'building'), T('0363', 'building')];
 export const board = (tickets, f = {}, o = {}) => state(foreman(f), { tickets, ...o });
-// The page with its boards. `random` is a number, or a function giving Math.random's next answer.
-export function speckPage(boards, { random = null, reduced = false } = {}) {
-  const c = clock(), globals = { Date: c.D };
+// The page with its boards. `random` is a number, or a function giving Math.random's next answer. `globals`: more of
+// the page's globals, such as an EventSource (0446).
+export function speckPage(boards, { random = null, reduced = false, globals: more = {} } = {}) {
+  const c = clock(), globals = { Date: c.D, ...more };
   if (random !== null) globals.Math = Object.assign(Object.create(Math), { random: typeof random === 'function' ? random : () => random });
   if (reduced) Object.assign(globals, { matchMedia: q => ({ matches: /reduced-motion/.test(q), addEventListener() {} }), devicePixelRatio: 1 });
   const p = screenPage(boards, globals);
