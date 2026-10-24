@@ -51,7 +51,8 @@ test('0419 AC2: a closed Build ticket is its id and title, then its stage senten
   await p.settle();
   const b = card(p, '0501');
   assert.deepEqual(linesOf(b), ['line', 'progress']);
-  assert.equal(topOf(b).children[0].textContent, '0501Writing its code');
+  assert.equal(topOf(b).children[0].textContent, '0501Writing its code1', 'its id, title and chip (0468: 0502 waits on it)');
+  assert.equal(chipSaid(p, b), '1 ticket waits on this');
   assert.equal(detailsOf(b).textContent, ' Build · 19:18');
   assert.equal(detailsOf(b).children[0].attrs['aria-label'], 'Writing tests and code');
   const q = card(p, '0502');
