@@ -40,6 +40,8 @@ The check still guards 0447's rules for `speck test --related`, without dependin
 - From the inbox note, raised while building 0447. Measured on 2026-10-24 on main: 0437's change picks 98 test files, so two more tests that name the brief fail it.
 - Today: `measuredRepo()` and the AC3 test in `test/related-0447.test.mjs` copy the live `test/` folder. history-0085 forbids commit ids in tests, so the check can't pin the folder to a commit.
 - Failing before this build: none
+- Measured on 2026-10-24 while building: no support module names `docs/brief.md` or `scripts/turns.mjs`, so with the quarter rule off 0437's change still picks the same 98 tests and the old count check passed. The check therefore also measures a change to `scripts/speck.mjs`, which more than a quarter of the support modules name (with that rule off it picks 417 tests rather than 84). The check asserts that neither change brings a test in through a support module, rather than counting.
+- Self-check: kept the measured file names out of `test/support/related.mjs`, so that module, which names none of them, brings no test in through itself.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

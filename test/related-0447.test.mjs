@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { gIn } from './support/ship.mjs';
 import { ROOT } from './support/panel.mjs';
-import { repo, write } from './support/related.mjs';
+import { checkMeasured, measuredRepo as measuredRepo_, repo, write } from './support/related.mjs';
 import { relatedTests } from '../scripts/related.mjs';
 
 const BRIEF = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
@@ -112,24 +112,14 @@ test('0447 AC2: a change to a skill\'s SKILL.md brings in only the tests that na
   assert.ok(relatedTests(dir, 'main').every(c => c.because === 'skills/speck-build/SKILL.md' && !c.through));
 });
 
-// This repo's test/ folder, with 0437's three changed files and the CLI, in a repo of its own.
-function measuredRepo() {
-  const dir = repo({ 'scripts/turns.mjs': '', 'scripts/speck.mjs': '', 'skills/speck-build/SKILL.md': '', 'docs/brief.md': '' });
-  fs.cpSync(path.join(ROOT, 'test'), path.join(dir, 'test'), { recursive: true, filter: src => !src.includes(`${path.sep}node_modules`) });
-  gIn(dir, 'add', '-A'); gIn(dir, 'commit', '-qm', 'tests');
-  gIn(dir, 'branch', '-qf', 'main', 'HEAD');
-  return dir;
-}
+// 0437's change in a copy of this repo's test/ folder, and a change to the CLI, which more than a quarter of its
+// support modules name.
+const MEASURED = { change: ['scripts/turns.mjs', 'skills/speck-build/SKILL.md', 'docs/brief.md'], names: /(?<![\w.-])turns\.mjs/, cli: ['scripts/speck.mjs'] };
+const measuredRepo = () => measuredRepo_(ROOT, [...MEASURED.change, ...MEASURED.cli]);
 
-test('0447 AC3: 0437\'s change picks fewer than 100 test files, every one naming scripts/turns.mjs among them', () => {
-  const dir = measuredRepo();
-  change(dir, 'scripts/turns.mjs', 'skills/speck-build/SKILL.md', 'docs/brief.md');
-  const chosen = picked(dir);
-  assert.ok(chosen.length < 100, `picked ${chosen.length}`);
-  const turns = fs.readdirSync(path.join(dir, 'test'), { recursive: true }).map(f => `test/${f}`)
-    .filter(f => /\.test\.mjs$/.test(f) && !f.startsWith('test/support/') && /(?<![\w.-])turns\.mjs/.test(fs.readFileSync(path.join(dir, f), 'utf8')));
-  assert.ok(turns.length > 0);
-  for (const f of turns) assert.ok(chosen.includes(f), `${f} names scripts/turns.mjs`);
+test('0447 AC3: 0437\'s change brings in no test through a support module, every one naming scripts/turns.mjs among them', () => {
+  // Checked without counting the tests it picks, so it holds as the suite grows (0482).
+  checkMeasured(measuredRepo(), relatedTests, MEASURED);
 });
 
 test('0447 AC1: in this repo, a change to scripts/speck.mjs brings in no test through a support module', () => {
