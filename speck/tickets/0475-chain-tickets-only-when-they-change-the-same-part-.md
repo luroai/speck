@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0452"]                # ticket ids that must be done first
+after: []                # ticket ids that must be done first
 created: 2026-10-24
 
 ---
@@ -38,10 +38,10 @@ The ticket skill chains tickets only when they're likely to change the same part
 - Splitting the panel's files (0472 to 0474), which makes this step chain less often.
 
 ## Notes
-- Asked for by the user on 2026-10-24, to be done after 0.15.0 goes out, so that more tickets build side by side. The 0.15.0 panel work (0453 to 0471) was one chain of about 19 tickets, built one at a time for 5 to 6 hours with 4 build slots.
+- Asked for by the user on 2026-10-24, so that more tickets build side by side. The 0.15.0 panel work (0453 to 0471) was one chain of about 19 tickets, built one at a time for 5 to 6 hours with 4 build slots.
 - Today: step 6 of `skills/speck-ticket/SKILL.md`, "Chain tickets that change the same files" (0205), which came from 0188 and 0189 clashing at ship on 2026-10-15.
 - The risk: tickets left unchained that do clash cost a merge round when the second ships, as about a quarter of 0450 to 0467 did, at about a minute of review each. The step should chain when in doubt.
-- Waits for 0452, the 0.15.0 release.
+- Moved into 0.15.0 by the user on 2026-10-24, to build alongside the file splits (0472 to 0474): it changes only the ticket skill and its installed copies, which no other open ticket changes. It doesn't re-chain the tickets already queued.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
