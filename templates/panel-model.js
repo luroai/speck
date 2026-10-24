@@ -19,13 +19,28 @@ function progress(t) {
 // ('bad', 'to-ship' or '' for the normal text colour), and whether an agent is at work on it, which gives its card the
 // border of its stage (0171).
 // `shipping` is true while a ship of it is running, whoever started it.
-// An approved ticket that isn't shipping waits for you, in purple, whether or not its build has exited yet. One that is
+// An approved ticket that isn't shipping waits for you, in green (0440), whether or not its build has exited yet. One that is
 // shipping is at work, in the normal text colour. 0196: so is one auto-ship will ship once its build has ended, and
 // one whose build is closing out says it waits to ship, in the normal text colour, unless it's waiting for you.
-// 0203: while speck run is off, one auto-ship covers waits for you to turn Auto-build on, in purple.
+// 0203: while speck run is off, one auto-ship covers waits for you to turn Auto-build on, in green.
 // 0223: the review round a building or reviewing ticket's reviewer is running, or null.
 const roundUnderReview = t => ((t.status === 'building' || t.status === 'reviewing') && Number.isInteger(t.review_running) && t.review_running > 0 ? t.review_running : null);
+// 0443: a long sentence in short words, for a closed card's status line on a phone: the sentence is their tooltip and
+// accessible name. A sentence not here is short already, or gives way to the grid of lights.
+const SHORT = {
+  'Approved · waiting for you to ship it': 'Ready to ship',
+  'Approved · waiting to ship': 'Shipping next',
+  'Blocked · it has a question for you': 'Has a question',
+  'Blocked · the Foreman will take its recommendation': 'Foreman will answer',
+  'The build stopped': 'Build stopped',
+  'Approved · turn on Auto-build to ship it': 'Turn on Auto-build',
+  'Finished · read the document': 'Read the document',
+};
 function doing(t, shipping) {
+  const d = doingNow(t, shipping);
+  return { ...d, short: Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null };
+}
+function doingNow(t, shipping) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
   if (t.ship_waiting) return { sentence: 'Approved · waiting to ship', tone: '', moving: true };
   const approved = t.status === 'approved' || t.status === 'done';
@@ -214,7 +229,7 @@ function panelModel(state) {
         : others ? 'It will be shipped again when main or its branch has a new commit' : null;
       const exit_label = shipping || ship_waiting || run_waiting ? null : auto_failed || blocked_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
-      // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138),
+      // An approved ticket whose build has exited is waiting for you to ship it, so it's green (purple until 0440) rather than red (0138),
       // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
       const to_ship = t.status === 'approved' && !auto_failed && (exit_label !== null || run_waiting || (t.auto_ship === false && !shipping));
       // 0361: a document task whose build has finished is done, and its document waits in its review pack: its row

@@ -67,28 +67,28 @@ test('0138 AC1: the open row is tinted purple, and nothing in it is red', async 
   assert.ok(!p.all(row).some(isRed), 'nothing red');
 });
 
-test('0138 AC1: the CSS draws each of those in purple', () => {
+test('0138 AC1: the CSS draws each of those in purple (green since 0440)', () => {
   // 0167: its border all round and its tint, open or closed, in place of a left edge
-  assert.equal(ruleVar('.q.to-ship', 'border-color'), '--idea', 'the border');
-  assert.equal(ruleVar('.q.to-ship', 'background'), '--idea-bg', 'the tint');
-  assert.equal(ruleVar('.q .top .stage.to-ship', 'color'), '--idea', 'the current step\'s name (0156)');
-  assert.equal(ruleVar('.act.to-ship', 'color'), '--idea', 'the label line');
-  assert.equal(ruleVar('.question.exit.to-ship', 'border-left-color'), '--idea', 'the message\'s edge');
+  assert.equal(ruleVar('.q.to-ship', 'border-color'), '--ok', 'the border');
+  assert.equal(ruleVar('.q.to-ship', 'background'), '--ok-bg', 'the tint');
+  assert.equal(ruleVar('.q .top .stage.to-ship', 'color'), '--ok', 'the current step\'s name (0156)');
+  assert.equal(ruleVar('.act.to-ship', 'color'), '--ok', 'the label line');
+  assert.equal(ruleVar('.question.exit.to-ship', 'border-left-color'), '--ok', 'the message\'s edge');
   // The tint comes after .q.open, so it wins over the plain open fill.
   assert.ok(css().indexOf('.q.to-ship {') > css().indexOf('.q.open {'), '.q.to-ship comes after .q.open');
 });
 
-test('0138 AC2: the purple reads clearly in light and dark, and is visibly different from red and amber', () => {
+test('0138 AC2: the purple (green since 0440) reads clearly in light and dark, and is visibly different from red and amber', () => {
   for (const [look, v, tints] of [['light', light(), lightTints()], ['dark', dark(), dark()]]) {
-    const purpleHex = v.get('--idea'), bg = v.get('--bg'), panel = v.get('--panel'), tint = tints.get('--idea-bg');
+    const purpleHex = v.get('--ok'), bg = v.get('--bg'), panel = v.get('--panel'), tint = tints.get('--ok-bg');
     assert.ok(purpleHex && bg && panel && tint, `${look}: every colour is there`);
-    for (const [name, back] of [['--bg', bg], ['--panel', panel], ['--idea-bg', tint]])
-      assert.ok(contrast(purpleHex, back) >= 3, `${look}: --idea (${purpleHex}) on ${name} (${back}) is at least 3:1 (${contrast(purpleHex, back).toFixed(2)})`);
+    for (const [name, back] of [['--bg', bg], ['--panel', panel], ['--ok-bg', tint]])
+      assert.ok(contrast(purpleHex, back) >= 3, `${look}: --ok (${purpleHex}) on ${name} (${back}) is at least 3:1 (${contrast(purpleHex, back).toFixed(2)})`);
     assert.ok(contrast(v.get('--text'), tint) >= 4.5, `${look}: text on the open tint is at least 4.5:1`);
-    // 0426: Cursor's magenta and red are about 20° of hue apart, so --idea keeps at least 20° from --bad, and 60° from
-    // --warn, and the open tint at least 15° from the red tint
-    for (const [other, gap] of [['--bad', 20], ['--warn', 60]])
-      assert.ok(hueGap(purpleHex, v.get(other)) >= gap, `${look}: --idea (${purpleHex}) is at least ${gap}° of hue from ${other} (${v.get(other)}): ${hueGap(purpleHex, v.get(other)).toFixed(0)}°`);
+    // 0440: Cursor's green, at least 60° of hue from --bad and --warn (back from 0426's 20°, when it was Cursor's
+    // magenta), and the open tint at least 15° from the red tint
+    for (const [other, gap] of [['--bad', 60], ['--warn', 60]])
+      assert.ok(hueGap(purpleHex, v.get(other)) >= gap, `${look}: --ok (${purpleHex}) is at least ${gap}° of hue from ${other} (${v.get(other)}): ${hueGap(purpleHex, v.get(other)).toFixed(0)}°`);
     assert.ok(hueGap(tint, tints.get('--bad-bg')) >= 15, `${look}: the open tint is a different hue from the red tint`);
   }
 });

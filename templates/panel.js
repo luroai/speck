@@ -880,7 +880,7 @@ function shapingToggle(m) {
   $('shaping-section').className = `shaping ${shapingView}`;
 }
 // A queue row: the ticket, its progress when it's in flight (0156), then what's under it. A blocked ticket is red, and so
-// is one whose build has exited, unless it's approved: then it's waiting for you to ship it, and purple.
+// is one whose build has exited, unless it's approved: then it's waiting for you to ship it, and green (0440).
 function queueItem(t) {
   const id = String(t.id), isOpen = openQueue.has(id), d = t.inFlight ? doing(t, t.shipping || shippingId === id) : null;
   const stage = d && !t.red && !t.to_ship ? stageOf(t, d) : null; // 0171: a running ticket's border shows its stage
@@ -947,13 +947,23 @@ function queueItem(t) {
 function progressOf(t, d, isOpen) {
   const tone = d.tone ? ` ${d.tone}` : '', now = t.steps.find(s => s.state === 'now');
   const ships = d.sentence === 'Shipping', counter = queueCounter(t);
-  const line = detailsLine(ships ? 'progress ship-line' : 'progress', [d.working ? null : el('span', `say${tone}`, d.sentence),
+  const line = detailsLine(ships ? 'progress ship-line' : 'progress', [d.working ? null : say(d, tone, isOpen),
     ships ? null : d.round !== null && d.round !== undefined ? el('span', `stage${tone}`, `Review ${d.round}`) : now ? el('span', `stage${tone}`, now.label) : null,
     d.by ? el('span', 'by', d.by) : null,
     counter ? el('span', 'sub', counter) : null, ...(isOpen ? tagsOf(t, false) : [typeTag(t), taskTag(t)])]);
   // a space after it, not a dot. The line starts with an element, as detailsLine puts text only after a dot.
   if (d.working) { const first = line.children[0] || null; line.insertBefore(lights(d.sentence), first); line.insertBefore(document.createTextNode(' '), first); }
   return line;
+}
+// 0443: what a ticket no agent is working on is doing, in words: closed, a long sentence in short words, with the
+// sentence as their tooltip and accessible name; open, the sentence.
+function say(d, tone, isOpen) {
+  if (isOpen || !d.short) return el('span', `say${tone}`, d.sentence);
+  const s = el('span', `say${tone}`, d.short);
+  s.setAttribute('role', 'img');
+  s.setAttribute('aria-label', d.sentence);
+  s.title = d.sentence;
+  return s;
 }
 // 0434: a 4 × 4 grid of dots with lights moving across it, its name and tooltip the sentence it stands for. The lights
 // move by CSS, only when the browser allows motion; with reduced motion one diagonal of dots stays lit.
