@@ -267,12 +267,12 @@ test('0318 AC5: a question being dealt with at the same moment is refused, and o
 test('0318 AC4: the README, the brief and the Foreman\'s skill name the commands, and the brief the file a reply is kept in', () => {
   const read = f => fs.readFileSync(path.join(path.dirname(CLI), '..', f), 'utf8');
   for (const f of ['README.md', 'docs/brief.md']) {
-    assert.ok(read(f).includes('speck foreman answer <id> "<answer>"'), f);
-    assert.ok(read(f).includes('speck foreman dismiss <id>'), f);
+    assert.ok(read(f).includes('speck answer <id> "<answer>"'), f); // 0488: the new commands
+    assert.ok(read(f).includes('speck dismiss <id>'), f);
   }
-  assert.ok(read('docs/brief.md').includes('speck/.cache/runs/run.foreman-answer.<id>.<time>.json'));
-  assert.ok(read('docs/brief.md').includes('speck(<id>): Foreman: answer') && read('docs/brief.md').includes('speck(<id>): Foreman: dismiss'));
-  for (const command of ['speck foreman answer', 'speck foreman dismiss']) assert.ok(read('skills/speck-watch/SKILL.md').includes(command), command);
+  assert.match(read('docs/brief.md'), /^\| `speck answer <id> "<answer>"`, `speck dismiss <id>` \|[^\n]*`speck\/\.cache\/runs\/`/m);
+  assert.ok(read('docs/brief.md').includes('speck(<id>): watch: answer') && read('docs/brief.md').includes('speck(<id>): watch: dismiss'));
+  for (const command of ['speck answer', 'speck dismiss']) assert.ok(read('skills/speck-watch/SKILL.md').includes(command), command);
   const help = spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' });
   assert.match(help.stdout + help.stderr, /speck answer <id> "<text>"/);
 });
