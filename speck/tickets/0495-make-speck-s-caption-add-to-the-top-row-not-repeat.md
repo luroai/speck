@@ -41,6 +41,8 @@ The caption under speck always says something the top row doesn't: which tickets
 - Today: `speckRests` in `templates/panel-header.js` (0414, 0436).
 - Waits for nothing: no open ticket changes that file. 0452 waits for this one.
 - Failing before this build: none
+- Self-check: a waiting reason over several lines now shows on one line with single spaces (it left gaps before); a test covers it.
+- Updated the 0414, 0436 and 0446 screen tests to the new captions this ticket sets, and their test boards now give the Foreman's builds, blocked tickets and base branch from the board's tickets.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

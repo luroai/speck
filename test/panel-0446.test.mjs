@@ -33,7 +33,7 @@ function page(boards) {
 test('0446 AC1: of the events while the page was hidden, only the latest plays when it comes back, then speck shows the pipeline', async () => {
   const p = page([start(), ships, blocks, asks, asks]);
   await p.send();
-  shows(p, 'watch', 'WATCHING 2 BUILDS');
+  shows(p, 'watch', 'WATCHING 0362 AND 2 MORE');
   await p.hide();
   await p.send(); p.go(5000);
   await p.send(); p.go(5000);
@@ -44,9 +44,9 @@ test('0446 AC1: of the events while the page was hidden, only the latest plays w
   p.go(5800);
   shows(p, 'flag', '0364 IS READY TO SHIP');
   p.go(400);
-  shows(p, 'ask', '1 NEEDS YOU'); // neither the ship nor the question before it plays
+  shows(p, 'ask', '0363 HAS A QUESTION'); // neither the ship nor the question before it plays
   p.go(60000);
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
 
 test('0446 AC1: an event from a minute or more before the page came back doesn\'t play', async () => {
@@ -57,7 +57,7 @@ test('0446 AC1: an event from a minute or more before the page came back doesn\'
   await p.send(); p.go(60000);
   await p.show();
   await p.send();
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
 
 test('0446 AC1: one 59 seconds old still plays', async () => {
@@ -79,7 +79,7 @@ test('0446 AC1: the changes in the first board after the page comes back, when i
   await p.send(); // the board, with a ship, a question and an approval since
   shows(p, 'flag', '0364 IS READY TO SHIP');
   p.go(6200);
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
 
 test('0446 AC1: none of them plays when the last board before was a minute or more before the page came back', async () => {
@@ -89,7 +89,7 @@ test('0446 AC1: none of them plays when the last board before was a minute or mo
   p.go(8 * 3600000); // a night asleep
   await p.show();
   await p.send();
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
 
 test('0446 AC1: an event kept when the page came back gives way to the later changes in the next board', async () => {
@@ -101,7 +101,7 @@ test('0446 AC1: an event kept when the page came back gives way to the later cha
   await p.send(); // then the question and the approval, on the new stream
   shows(p, 'flag', '0364 IS READY TO SHIP');
   p.go(6200);
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
 
 test('0446 AC2: while the page stays visible, every event plays, one after another', async () => {
@@ -114,7 +114,7 @@ test('0446 AC2: while the page stays visible, every event plays, one after anoth
   p.go(6100);
   shows(p, 'flag', '0364 IS READY TO SHIP');
   p.go(6100);
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
 
 test('0446 AC2: after the page has been hidden and shown, events play as before', async () => {
@@ -142,7 +142,7 @@ test('0446 AC1: after a night asleep, a ship the board dates 10 seconds before t
   await p.send();
   shows(p, 'celebrating', '0362 SHIPPED'); // the latest by its date, not the question from an hour before
   p.go(6200);
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
 
 test('0446 AC1: after a night asleep, a ship the board dates 2 minutes before the page came back doesn\'t play', async () => {
@@ -152,7 +152,7 @@ test('0446 AC1: after a night asleep, a ship the board dates 2 minutes before th
   p.go(H8);
   await p.show();
   await p.send();
-  shows(p, 'watch', 'WATCHING 2 BUILDS');
+  shows(p, 'watch', 'WATCHING 0363 AND 0364');
 });
 
 test('0446 AC1: an event heard while hidden that the board dates over a minute before the page came back doesn\'t play', async () => {
@@ -165,7 +165,7 @@ test('0446 AC1: an event heard while hidden that the board dates over a minute b
   p.go(1000);
   await p.show();
   await p.send();
-  shows(p, 'watch', 'WATCHING 2 BUILDS');
+  shows(p, 'watch', 'WATCHING 0363 AND 0364');
 });
 
 test('0446 AC2: a change the first board after a night asleep dates from after the page came back plays as usual, after the one missed', async () => {
@@ -181,7 +181,7 @@ test('0446 AC2: a change the first board after a night asleep dates from after t
   p.go(6100);
   shows(p, 'flag', '0364 IS READY TO SHIP'); // approved after the page came back
   p.go(6100);
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
 
 const looking = started => board([...building(), T('0364', 'reviewing')], { agent: { running: { id: '0363', what: 'its ship was refused', started }, waiting: [], did: [], asks: [] } });
@@ -222,9 +222,9 @@ test('0446 AC1: nothing missed plays before the first board after the page came 
   await p.send(); // the ship, heard while hidden
   p.go(19000);
   await p.show();
-  shows(p, 'watch', 'WATCHING 1 BUILD'); // a frame before the board: the ship waits
+  shows(p, 'watch', 'WATCHING 0363 AND 0364'); // a frame before the board: the ship waits
   await p.send(); // the question, from while the page was hidden
   shows(p, 'ask', '0363 HAS A QUESTION');
   p.go(6200);
-  shows(p, 'ask', '1 NEEDS YOU');
+  shows(p, 'ask', '0363 HAS A QUESTION');
 });
