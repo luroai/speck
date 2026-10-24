@@ -36,14 +36,12 @@ async function opened(f, tickets = []) {
   return p;
 }
 
-test('0317 AC1: with Fixing fix, the header says "Fixing on" beside the status word, and not otherwise', async () => {
-  for (const [fixing, on] of [['fix', true], ['tell', false], ['off', false]]) {
+test('0317 AC1: with Fixing fix, the header keeps the status word, and 0451: its name no longer says "fixing on"', async () => {
+  for (const fixing of ['fix', 'tell', 'off']) {
     const p = fakePage([state(view([], { fixing }))]);
     await p.settle();
-    // 0413: "FIXING ON" is drawn at the right of speck's screen's top row, and its name says so
-    const name = header(p).attrs['aria-label'];
-    assert.match(name, /^The Foreman: Idle/, 'the status word is as it was');
-    assert.equal(/, fixing on$/.test(name), on, `with ${fixing}`);
+    // 0451: speck's screen shows the time where "FIXING ON" was, and its name is the status word alone
+    assert.equal(header(p).attrs['aria-label'], 'The Foreman: Idle', `with ${fixing}`);
   }
 });
 
