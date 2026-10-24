@@ -7,7 +7,7 @@ import { page, panelRepo, fm, good, freePort, startPanel, stop, findChrome, brow
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const LANE = { plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
-const DOT = { plan: 'var(--bezel-step)', build: 'var(--blue)', shipped: 'var(--purple)' };
+const DOT = { plan: 'var(--line)', build: 'var(--blue)', shipped: 'var(--purple)' };
 
 test('0478 AC1 AC2 AC3: the lane cards share one frame, in the screen\'s frame colour and corners, with the title row in it', () => {
   const html = page();
@@ -16,25 +16,16 @@ test('0478 AC1 AC2 AC3: the lane cards share one frame, in the screen\'s frame c
     assert.match(sec, /^\s*<h2 class="lane-title">[^<]+<\/h2>/, `${lane}: its name opens the card`);
     if (lane !== 'plan') assert.match(sec, /<\/h2>\s*<div class="lane-n"/, `${lane}: its line follows its name, in the title row`);
   }
-  // One frame for every lane: drawn once, for every card, in the screen's frame colour, its fill cut to inside the card's
-  // padding, so its corners are the card's less that padding
-  const frame = cssRules('main > section');
-  assert.equal(cssValue(frame, 'background-color'), 'var(--bezel)', 'the frame is --bezel');
-  assert.equal(cssValue(frame, 'background-clip'), 'content-box', 'inside the gap round it');
-  const [rx, ry] = cssValue(frame, 'border-radius').split('/').map(parseFloat), [py, px] = cssValue(frame, 'padding').split(' ').map(parseFloat);
-  const corner = parseFloat(cssValue(cssRules('.bezel'), 'border-radius'));
-  assert.deepEqual([rx - px, ry - py], [corner, corner], 'with the screen\'s corners');
+  // 0480: the frame's colour and corners are a light card's now, checked in panel-0480.test.mjs
   for (const id of Object.values(LANE)) assert.deepEqual(cssRules(`#${id}`), [], `${id} has no frame of its own (AC3)`);
   // The title in the header's lettering, with a dot in its stage's colour
   const title = cssRules('.lane-title');
   assert.equal(cssValue(title, 'font-family'), cssValue(cssRules('.bezel .name'), 'font-family'), 'Doto, as "speck"');
   assert.equal(cssValue(title, 'font-weight'), cssValue(cssRules('.bezel .name'), 'font-weight'), 'at "speck"\'s weight');
-  assert.equal(cssValue(title, 'color'), 'var(--bezel-ink)', 'in the frame\'s light ink');
+  assert.equal(cssValue(title, 'color'), 'var(--text)', '0480: in the text colour, on the light card');
   for (const [lane, id] of Object.entries(LANE)) assert.equal(cssValue(cssRules(`#${id} .lane-title::before`), 'background'), DOT[lane], `${lane}'s dot`);
-  // 0461's grey for a step not reached is --line, which the dark look sets to this: the frame is dark in both looks
-  assert.match(page() + cssRules(':root').join(';'), /--bezel-step:\s*#e4e4e462/i, 'Plan\'s dot is the grey a step not reached has on a dark ground');
   const line = cssRules('.lane-n');
-  assert.equal(cssValue(line, 'color'), 'var(--bezel-muted)', 'the lane\'s line in the frame\'s muted ink');
+  assert.equal(cssValue(line, 'color'), 'var(--muted)', '0480: the lane\'s line in the muted colour');
   assert.equal(cssValue(line, 'text-overflow'), 'ellipsis', 'cut short with …');
 });
 
@@ -62,7 +53,7 @@ const MEASURE = `(async () => {
   const bz = document.querySelector('.bezel').getBoundingClientRect(), glass = document.querySelector('.bezel .glass').getBoundingClientRect();
   const out = { vw: innerWidth, bezel: { colour: getComputedStyle(document.querySelector('.bezel')).backgroundColor, radius: getComputedStyle(document.querySelector('.bezel')).borderTopLeftRadius,
     side: glass.left - bz.left, bottom: bz.bottom - glass.bottom, titleTop: document.querySelector('.bezel .name').getBoundingClientRect().top - bz.top },
-    want: { blue: val('--blue'), purple: val('--purple'), grey: val('--bezel-step'), ink: val('--bezel-ink'), muted: val('--bezel-muted'), panel: val('--panel') }, lanes: [] };
+    want: { blue: val('--blue'), purple: val('--purple'), grey: val('--line'), ink: val('--text'), muted: val('--muted'), panel: val('--panel') }, lanes: [] };
   for (const lane of ['plan', 'build', 'shipped']) {
     document.getElementById('tab-' + lane).click(); ${REST_LANES};
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -101,10 +92,7 @@ for (const theme of ['light', 'dark']) {
         const at = `${theme}, ${width} px`;
         for (const l of m.lanes) {
           const w = `${at}, ${l.lane}`;
-          // AC1: the screen's frame colour and corners, its tickets inside it on the lane's own background
-          assert.equal(l.frame.colour, m.bezel.colour, `${w}: the frame is the screen's frame colour`);
-          assert.equal(l.frame.clip, 'content-box', `${w}: the fill is the frame, inside the card's padding`);
-          assert.deepEqual(l.frame.radius, [parseFloat(m.bezel.radius), parseFloat(m.bezel.radius)], `${w}: with the screen's corners`);
+          // AC1: its tickets inside it on the lane's own background (0480: the card's colour and corners are checked in panel-0480.test.mjs)
           assert.ok(l.sides.left > 0 && l.sides.left < m.bezel.side, `${w}: its left side (${l.sides.left}) is thinner than the screen's (${m.bezel.side})`);
           assert.ok(l.sides.right > 0 && l.sides.right < m.bezel.side, `${w}: its right side (${l.sides.right}) is thinner than the screen's`);
           assert.ok(l.sides.bottom > 0 && l.sides.bottom < m.bezel.bottom, `${w}: its bottom (${l.sides.bottom}) is thinner than the screen's (${m.bezel.bottom})`);
@@ -113,14 +101,14 @@ for (const theme of ['light', 'dark']) {
           // AC2: the dot-matrix title in the frame's ink, its stage's dot before it, its line at the row's right end
           assert.match(l.title.family, /^"?Doto"?/, `${w}: in Doto`);
           assert.equal(l.title.weight, '900', `${w}: at "speck"'s weight`);
-          assert.equal(l.title.colour, m.want.ink, `${w}: in the frame's light ink`);
+          assert.equal(l.title.colour, m.want.ink, `${w}: in the text colour (0480)`);
           assert.equal(l.dot.colour, { plan: m.want.grey, build: m.want.blue, shipped: m.want.purple }[l.lane], `${w}: its stage's dot`);
           assert.ok(l.dot.width > 0, `${w}: the dot shows`);
           assert.equal(l.title.lines, 1, `${w}: the title on one line`);
           if (l.line && l.line.shown) {
-            assert.equal(l.line.colour, m.want.muted, `${w}: the lane's line in the frame's muted ink`);
+            assert.equal(l.line.colour, m.want.muted, `${w}: the lane's line in the muted colour (0480)`);
             assert.ok(l.line.left >= l.title.right && near(l.line.top + (l.line.bottom - l.line.top) / 2, l.title.top + (l.title.bottom - l.title.top) / 2, 4), `${w}: the lane's line on the title row, after the title`);
-            assert.ok(l.line.right <= l.frame.right && near(l.line.right, l.inside.right, 3), `${w}: at the row's right end`);
+            assert.ok(l.line.right <= l.frame.right && near(l.line.right, l.inside.right - 14, 3), `${w}: at the row's right end, inside its 14 px padding (0480)`);
             assert.equal(l.line.wrap, 'nowrap', `${w}: on one line`);
             if (l.lane === 'shipped') assert.ok(l.line.cut && l.line.overflow === 'ellipsis', `${w}: a line too long for the row gives way with …`);
           }

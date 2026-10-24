@@ -1,23 +1,25 @@
 /* The panel's styles (0472: a file for each area of the panel): the cards in Plan, Build and Shipped and everything
    in them, the build log included. */
-  /* 0478: each lane is a card in a dark frame like speck's screen above it, a second screen: the frame is the screen's
-     colour and corners, and the same for every lane, but thinner, 4 px at the sides and bottom where the screen's is
-     9 px. Its title row has the lane's name in the header's dot-matrix lettering, a dot in its stage's colour before it
-     (0461's: grey for a step not reached, blue for Build and purple for Ship), and the lane's line at its right end
-     (0425: Build's and Shipped's counts), cut short with "…" before the name gives way. The tickets sit inside it on
-     the lane's own background. The card still fills the column and slides as a whole (0476), with no border (0418):
-     its padding is the gap round the frame, as the header's 16 px sides, and its fill is cut to inside that padding,
-     with corners that are the card's less that gap, so the frame's are 12 px as the screen's. */
-  main > section { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); column-gap: 10px; padding: 8px 16px; color: var(--bezel-ink); background-color: var(--bezel); background-clip: content-box; border-radius: 28px / 20px; }
-  .lane-title { grid-row: 1; grid-column: 1; display: inline-flex; align-items: center; gap: .25em; min-width: 0; margin: 0; padding: 7px 0 6px 6px; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 22px; line-height: 1; white-space: nowrap; color: var(--bezel-ink); }
+  /* 0478: each lane is a card with its name in the header's dot-matrix lettering. 0480: a light card, not a dark frame,
+     so speck's screen is the only dark frame on the page: the lane's own background with a hairline edge in the line
+     colour and a card's 12 px corners (0428). Its title row has the lane's name in the text colour, a dot in its stage's
+     colour before it (0461's: grey for a step not reached, blue for Build and purple for Ship), and the lane's line at
+     its right end in the muted colour (0425: Build's and Shipped's counts), cut short with "…" before the name gives
+     way, with a thin line under the row. The card still fills the column and slides as a whole (0476), with no border
+     of its own (0418): its padding is the gap round the card, as the header's 16 px sides, and its fill is cut to inside
+     that padding, with corners that are the card's less that gap. The edge is drawn over its contents, so a list
+     scrolled under it never hides it, and its contents sit inside it. */
+  main > section { position: relative; isolation: isolate; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); column-gap: 10px; padding: 8px 16px; color: var(--text); background-color: var(--panel); background-clip: content-box; border-radius: 28px / 20px; }
+  main > section::before { content: ""; position: absolute; inset: 8px 16px; z-index: 1; border: .5px solid var(--line); border-radius: 12px; pointer-events: none; }
+  .lane-title { grid-row: 1; grid-column: 1; display: inline-flex; align-items: center; gap: .25em; min-width: 0; margin: 0; padding: 7px 0 6px 14px; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 22px; line-height: 1; white-space: nowrap; color: var(--text); }
   .lane-title::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; } /* decoration: no text, so a screen reader passes over it */
-  #shaping-section .lane-title::before { background: var(--bezel-step); }
+  #shaping-section .lane-title::before { background: var(--line); }
   #build-section .lane-title::before { background: var(--blue); }
   #shipped-section .lane-title::before { background: var(--purple); }
-  .lane-n { grid-row: 1; grid-column: 2; align-self: center; min-width: 0; padding: 7px 6px 6px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; line-height: 1.5; text-align: right; color: var(--bezel-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  main > section > .sh { grid-row: 2; grid-column: 1 / -1; margin: 0 4px; color: var(--text); background: var(--panel); border-radius: 8px 8px 0 0; } /* the frame's 12 px less its 4 px side (0438) */
-  .lane-list { grid-row: 3; grid-column: 1 / -1; min-height: 0; margin: 0 4px 4px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); border-radius: 0 0 8px 8px; }
-  .lane-n + .lane-list { border-radius: 8px; }
+  .lane-n { grid-row: 1; grid-column: 2; align-self: center; min-width: 0; padding: 7px 14px 6px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; line-height: 1.5; text-align: right; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  main > section > .sh { grid-row: 2; grid-column: 1 / -1; margin: 0 1px; color: var(--text); background: var(--panel); border-top: 1px solid var(--line-soft); }
+  .lane-list { grid-row: 3; grid-column: 1 / -1; min-height: 0; margin: 0 1px 1px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); border-radius: 0 0 11px 11px; } /* the card's 12 px less the pixel its edge sits in, so what's in it stays on whole pixels (0453) */
+  .lane-n + .lane-list { border-top: 1px solid var(--line-soft); }
   .group { padding: 7px 14px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
   .group.attn { color: var(--warn); }
   .group.run { color: var(--run); }

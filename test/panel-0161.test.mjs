@@ -48,9 +48,9 @@ const contrast = (a, b, base = '#ffffff') => {
 // The backgrounds text and controls sit on: the page, the sections, raised rows and the open items' tints.
 const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--ok-bg', '--inbox-bg', '--bad-bg'];
 // 0413: what sits in speck's screen's dark frame (its rules start ".bezel") sits on the frame's colour, not the surfaces.
-// 0478: so does what's in a lane's frame: the lane's own fill is the frame, and its title row sits on it. 0479: and what's
-// in the Pipeline log's frame, its title row and the frame round its log.
-const onFrame = sel => sel.split(',').every(s => /^(?:\.bezel\b|main > section$|\.lane-title\b|#[\w-]+-section \.lane-title\b|\.lane-n$|#foreman (?:\.top|\.fm-body|\.stale|\.close|\.reload|:focus-visible)\b)/.test(s.trim()));
+// 0479: so does what's in the Pipeline log's frame, its title row and the frame round its log. (0480: a lane is a light
+// card, so its title row sits on the surfaces, as 0478's dark frame had it not.)
+const onFrame = sel => sel.split(',').every(s => /^(?:\.bezel\b|#foreman (?:\.top|\.fm-body|\.stale|\.close|\.reload|:focus-visible)\b)/.test(s.trim()));
 // 0455: and what's in a ticket's build log (its rules start ".q .log") sits on the log's own black, in every look. 0459:
 // so does what's in the pipeline log (".foreman .run-log").
 const inLog = sel => sel.split(',').every(s => /^(?:\.q \.log|\.foreman \.run-log)\b/.test(s.trim()));
