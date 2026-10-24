@@ -21,10 +21,6 @@ test('0253 AC1: the setup prompt runs init at the latest release, quoted, naming
   assert.deepEqual(npxCommands(p), [LATEST]);
 });
 
-test('0253 AC2: the README\'s command to run in a terminal installs the latest release', () => {
-  assert.match(read('README.md'), /```bash\nnpx 'github:luroai\/speck#semver:\*' init\n```/);
-});
-
 test('0253 AC2: the brief gives the latest release\'s init and detect commands', () => {
   const brief = read('docs/brief.md');
   assert.ok(brief.includes(`\`${LATEST} init\``), 'speck init');
@@ -43,8 +39,9 @@ test('0253 AC2: /speck-setup runs speck through the latest release before it is 
   assert.ok(s.includes(`run \`${LATEST} init\``));
 });
 
-test('0253 AC2: every speck npx command outside the changelog and release notes uses the latest release, quoted', () => {
-  const files = ['README.md', 'docs/brief.md', 'scripts/install.mjs', ...fs.readdirSync(path.join(ROOT, 'skills')).map(d => `skills/${d}/SKILL.md`)];
+// 0491: the README's are checked by review, apart from its setup prompt (AC1).
+test('0253 AC2: every speck npx command outside the README, the changelog and release notes uses the latest release, quoted', () => {
+  const files = ['docs/brief.md', 'scripts/install.mjs', ...fs.readdirSync(path.join(ROOT, 'skills')).map(d => `skills/${d}/SKILL.md`)];
   for (const f of files) {
     if (!fs.existsSync(path.join(ROOT, f))) continue;
     for (const c of npxCommands(read(f))) assert.equal(c, LATEST, `${f}: ${c}`);

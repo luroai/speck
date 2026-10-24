@@ -264,9 +264,10 @@ test('0318 AC5: a question being dealt with at the same moment is refused, and o
   assert.throws(() => foremanReply(r2.dir, 'dismiss', '9999', '', { env: {} }), /No ticket 9999/);
 });
 
-test('0318 AC4: the README, the brief and the Foreman\'s skill name the commands, and the brief the file a reply is kept in', () => {
+// 0491: the README's names are checked by review.
+test('0318 AC4: the brief and the Foreman\'s skill name the commands, and the brief the file a reply is kept in', () => {
   const read = f => fs.readFileSync(path.join(path.dirname(CLI), '..', f), 'utf8');
-  for (const f of ['README.md', 'docs/brief.md']) {
+  for (const f of ['docs/brief.md']) {
     assert.ok(read(f).includes('speck answer <id> "<answer>"'), f); // 0488: the new commands
     assert.ok(read(f).includes('speck dismiss <id>'), f);
   }

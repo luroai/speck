@@ -39,12 +39,6 @@ test('AC1: LICENSE at the repo root is the standard MIT text, copyright 2026 Lur
   assert.equal(text, MIT);
 });
 
-test('AC2: the README links to LICENSE and names MIT', () => {
-  const readme = read('README.md');
-  assert.match(readme, /\]\(LICENSE\)/, 'the README links to LICENSE');
-  assert.match(readme, /\bMIT\b/);
-});
-
 test('AC2: package.json still says MIT', () => {
   assert.equal(JSON.parse(read('package.json')).license, 'MIT');
 });

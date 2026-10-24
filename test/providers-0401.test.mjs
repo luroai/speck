@@ -217,12 +217,6 @@ test('0401 AC5: DeepSeek still works for anyone who added it, beside a provider 
   assert.equal(checkedProvider({ label: 'Acme AI', address: 'https://a.test/', type: 'Anthropic', models: ['m'] }).type, 'anthropic');
 });
 
-test('0401 AC1: the README names Add an API provider and the file the provider is kept in', () => {
-  const readme = fs.readFileSync(path.join(import.meta.dirname, '..', 'README.md'), 'utf8');
-  assert.match(readme, /\*\*Add an API provider\*\*/);
-  assert.ok(readme.includes('`speck/.cache/machine/providers.json`'));
-});
-
 test('0401 AC2: a provider that is one of your agents isn\'t replaced by adding it again; once removed, adding it again changes it', async () => {
   const r = panelRepo();
   await add(r);

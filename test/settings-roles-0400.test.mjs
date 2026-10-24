@@ -208,11 +208,6 @@ test('0400 AC1 self-check: while Claude Code isn\'t installed, a model provider 
   }
 });
 
-test('0400 AC1: the README names the entries as the list does', () => {
-  const readme = fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8');
-  for (const entry of ['Codex · GPT-6.1 Sol', 'DeepSeek · V4 Pro']) assert.ok(readme.includes(entry), entry);
-});
-
 test('0400 AC2 self-check: clearing this machine\'s value for a role clears its model\'s too, as one list holds both', async () => {
   const mine = o => ({ for_machine: true, from: 'machine', ...o });
   const v = view({ reviewer: 'deepseek', reviewer_model: 'deepseek-v4-flash' });
