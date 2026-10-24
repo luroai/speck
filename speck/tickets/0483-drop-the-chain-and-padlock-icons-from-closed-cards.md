@@ -39,6 +39,7 @@ A closed card shows its dependencies only with the chip, and its title gets the 
 
 ## Notes
 - From the inbox note, raised by the builder while taking 0468's pictures. Decided while ticketing on 2026-10-24: open cards keep their icons, as the note suggests, and the chain highlight stays as it is.
+- Failing before this build: none
 - Today: `chainIcon` and the Plan and Build cards' updates in `templates/panel.js` (the queue's update adds the icon after the id whether the card is open or closed), and `.chain, .lock` in `templates/panel-cards.css`.
 
 ## In plain words
