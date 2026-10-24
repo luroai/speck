@@ -47,12 +47,12 @@ test('0317 AC1: with Fixing fix, the header keeps the status word, and 0451: its
 
 test('0317 AC1: the board says which setting Fixing has, and speck status says Fixing is on', async () => {
   // 0458: the Foreman's detail shows only the log now, so this is the board's, which speck status says
-  for (const fixing of ['fix', 'tell', 'off']) assert.match(view([], { fixing }).fixing_says, new RegExp(`^${fixing}\\. The Foreman`));
+  for (const fixing of ['fix', 'tell', 'off']) assert.match(view([], { fixing }).fixing_says, new RegExp(`^${fixing}\\. speck `));
   assert.equal(view([], { fixing: 'constructor' }).fixing_says, '', 'a setting speck doesn\'t know isn\'t said');
   const lines = foremanLines(view([], { fixing: 'fix' }));
-  assert.equal(lines[0], 'FOREMAN: Idle · Fixing on');
+  assert.equal(lines[0], 'SPECK: Idle · Fixing on');
   assert.match(lines[1], /^ {2}Fixing: fix\. /);
-  assert.equal(foremanLines(view([], { fixing: 'tell' }))[0], 'FOREMAN: Idle');
+  assert.equal(foremanLines(view([], { fixing: 'tell' }))[0], 'SPECK: Idle');
 });
 
 test('0317 AC2: the board says the Foreman will take a recommendation only with Fixing fix, nothing you\'d notice, a clear winner, a build it can resume and no earlier choice', () => {
@@ -106,8 +106,8 @@ test('0317 AC2: speck status says the same for each blocked ticket', () => {
   assert.match(r.run('status').stdout, /\n {8}→ Waiting for you\n/);
   setFixing(r, 'fix');
   const out = r.run('status').stdout;
-  assert.ok(out.includes(`\n        → The Foreman will take its recommendation: ${OPTION}\n`), out);
-  assert.match(out, /^FOREMAN: Off · Fixing on$/m);
+  assert.ok(out.includes(`\n        → speck will take its recommendation: ${OPTION}\n`), out);
+  assert.match(out, /^SPECK: Off · Fixing on$/m);
 });
 
 test('0317 AC3: once the Foreman goes with it, the board, card and speck status say so with the option and time, until the ticket moves on', async () => {
@@ -124,8 +124,8 @@ test('0317 AC3: once the Foreman goes with it, the board, card and speck status 
   await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   assert.ok(rowOf(p, '0001').textContent.includes(`The Foreman went with the recommendation: ${OPTION} · ${time}`), rowOf(p, '0001').textContent);
   const out = r.run('status').stdout;
-  assert.ok(out.includes(`        ✓ The Foreman went with the recommendation: ${OPTION} (${time})\n`), out);
-  assert.ok(out.includes(`  The Foreman went with the recommendation for 0001: ${OPTION} (${time})\n`), out);
+  assert.ok(out.includes(`        ✓ speck went with the recommendation: ${OPTION} (${time})\n`), out);
+  assert.ok(out.includes(`  speck went with the recommendation for 0001: ${OPTION} (${time})\n`), out);
   fs.writeFileSync(r.file, r.ticket().replace(/^status: .*$/m, 'status: reviewing'));
   assert.ok(shown(r).went_with, 'still carrying on with it in review');
   fs.writeFileSync(r.file, r.ticket().replace(/^status: .*$/m, `status: reviewing\napproved: "${new Date(at.getTime() + 120000).toISOString()}"`));
@@ -148,7 +148,7 @@ test('0317 AC3: the board lists the recommendations the Foreman took in the last
 test('0317 AC4: the Foreman\'s choice is recorded as the Foreman\'s, the button\'s as yours, and each is shown as such', async () => {
   const r = blockedRepo(), said = [];
   foremanFixQueue({ repo: r.dir, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: 'fix' }), say: m => said.push(m) }).check(statusData(r.dir).tickets);
-  assert.match(r.ticket(), /Went with the recommendation: .*\(chosen by the Foreman, as foreman_fixing is fix, /);
+  assert.match(r.ticket(), /Went with the recommendation: .*\(chosen by speck, as foreman_fixing is fix, /);
   assert.equal(shown(r).went_with.by, 'foreman');
   const u = blockedRepo();
   assert.equal(goWith(u.dir, '0001', new Date()).status, 200);

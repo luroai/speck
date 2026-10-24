@@ -102,7 +102,7 @@ test('0398 AC2: removing an agent the builder, reviewer or Foreman uses is refus
   const env = envOf({ claude: READY.claude, codex: READY.codex });
   let out = speck(r.dir, env, 'agents', 'remove', 'claude');
   assert.equal(out.status, 1);
-  assert.match(out.stderr, /Claude Code is the builder and Foreman, so it wasn't removed/);
+  assert.match(out.stderr, /Claude Code is the builder and the agent speck watches with, so it wasn't removed/);
   out = speck(r.dir, env, 'agents', 'remove', 'codex');
   assert.equal(out.status, 1);
   assert.match(out.stderr, /Codex is the reviewer/);

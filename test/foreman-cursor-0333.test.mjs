@@ -36,7 +36,7 @@ test('0333 AC1: speck config set foreman cursor and the Settings view accept cur
   const out = r.run('config', 'set', 'foreman', 'cursor');
   assert.equal(out.status, 0, out.stderr);
   assert.equal(loadConfig(r.dir).foreman, 'cursor');
-  const g = panelSettings(r.dir).groups.find(x => x.title === 'Foreman');
+  const g = panelSettings(r.dir).groups.find(x => x.title === 'Watching');
   const foreman = g.settings.find(s => s.key === 'foreman');
   assert.ok(foreman.choices.includes('cursor'), String(foreman.choices));
   assert.match(foreman.explain, /cursor/);
@@ -47,7 +47,7 @@ test('0333 AC2: with foreman cursor, the Foreman starts with Cursor\'s CLI headl
   assert.deepEqual(foremanArgv({ foreman: 'cursor', foreman_model: 'gpt-5-high' }, 'B', 'agent'), ['agent', ...HEADLESS, '--model', 'gpt-5-high', 'B']);
   const effort = foremanArgv({ foreman: 'cursor', foreman_effort: 'high' }, 'B', 'agent');
   assert.ok(!effort.some(w => /effort/.test(w)), 'foreman_effort isn\'t passed to Cursor');
-  assert.equal(skillPath('cursor'), '.claude/skills/speck-foreman/SKILL.md');
+  assert.equal(skillPath('cursor'), '.claude/skills/speck-watch/SKILL.md');
 });
 
 test('0333 AC2: the Foreman finds Cursor\'s CLI as agent, or as cursor-agent when only that is installed', () => {
@@ -66,8 +66,8 @@ test('0333 AC2: speck run\'s Foreman queue starts a Cursor Foreman with its brie
   const argv = starts[0];
   assert.ok(['agent', 'cursor-agent'].includes(argv[0]), argv[0]);
   assert.deepEqual(argv.slice(1, 8), [...HEADLESS, '--model', 'm1']);
-  assert.match(argv.at(-1), /You are speck's Foreman\. Work on ticket 0001/);
-  assert.match(argv.at(-1), /\.claude\/skills\/speck-foreman\/SKILL\.md/);
+  assert.match(argv.at(-1), /You are speck, watching the pipeline\. Work on ticket 0001/);
+  assert.match(argv.at(-1), /\.claude\/skills\/speck-watch\/SKILL\.md/);
 });
 
 test('0333 AC3: with foreman blank and a Cursor builder, the Foreman runs on Cursor', () => {

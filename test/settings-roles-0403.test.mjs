@@ -28,7 +28,7 @@ const YOURS = { list: true, agents: ['claude', 'codex', 'cursor', 'deepseek'].ma
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, for_machine: true, from: 'repo', repo_value: value, ...o });
 const EFFORTS = { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] };
 const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_model = '', reviewer_model = '', foreman_model = '', cursor } = {}) => ({ groups: [
-  { title: 'Foreman', settings: [S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('foreman_model', foreman_model), S('foreman_effort', '', EFFORTS)] },
+  { title: 'Watching', settings: [S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('foreman_model', foreman_model), S('foreman_effort', '', EFFORTS)] },
   { title: 'Building and reviewing', settings: [
     S('builder', builder, { choices: ['claude', 'codex', 'cursor', 'deepseek'], build_command: { value: '', own: { claude: '', codex: '', cursor: '' }, each_ticket: true } }),
     S('builder_model', builder_model), S('builder_effort', '', EFFORTS), S('reviewer', reviewer, { choices: ['codex', 'claude', 'claude-subagent', 'cursor', 'deepseek'] }),

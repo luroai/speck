@@ -245,7 +245,7 @@ function renderSettings() {
       const rows = [];
       for (const x of Array.isArray(g.settings) ? g.settings : []) if (!roleModelKey(x.key)) rows.push(settingRow(x, settingTips.size));
       pairSettings(rows); // 0381
-      if (g.title === 'Foreman') { foremanRows = rows; continue; }
+      if (g.title === 'Watching') { foremanRows = rows; continue; } // 0486: the server's title, was Foreman
       // 0273: a box like the panel's sections, with a heading bar
       kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
     }

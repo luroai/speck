@@ -63,7 +63,7 @@ test('0399 AC1: removing an agent a role uses is refused, naming the role, and r
   assert.equal(readYourAgents(r.dir), null, 'nothing changed');
   assert.ok(refused.body.your_agents.agents.find(a => a.id === 'codex').yours);
   const both = await panelAgentRequest(r.dir, 'claude', 'remove', { find: find() });
-  assert.match(both.body.error, /Claude Code is the builder and Foreman/);
+  assert.match(both.body.error, /Claude Code is the builder and the agent speck watches with/);
   const found = structuredClone(AGENTS_FOUND);
   found.agents.find(a => a.id === 'cursor').installed = found.agents.find(a => a.id === 'cursor').signed_in = true;
   delete found.agents.find(a => a.id === 'cursor').why;

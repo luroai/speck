@@ -90,9 +90,9 @@ test('0318 AC2: answering records it in the Notes, clears the question and has s
   const before = r.head();
   const out = reply(r, 'answer', 'Keep it,\nand fix it.');
   assert.match(out, /resumes its build with your answer/);
-  assert.match(r.ticket(), /^- You answered the Foreman \(2026-10-19 09:30 UTC\): Keep it, and fix it\. Its question: Should it keep the old test\?$/m);
+  assert.match(r.ticket(), /^- You answered speck \(2026-10-19 09:30 UTC\): Keep it, and fix it\. Its question: Should it keep the old test\?$/m);
   assert.notEqual(r.head(), before, 'committed');
-  assert.match(r.g('log', '-1', '--format=%s'), /^speck\(0001\): Foreman: answer$/);
+  assert.match(r.g('log', '-1', '--format=%s'), /^speck\(0001\): watch: answer$/);
   assert.match(r.ticket(), /^status: building$/m, 'the status is left for the build');
   assert.deepEqual(asks(r), [], 'the question is cleared');
   check();
@@ -110,7 +110,7 @@ test('0318 AC2: answering records it in the Notes, clears the question and has s
 test('0318 AC2: answering a question about an approved ticket auto_ship covers has speck run ship it again, once', () => {
   const { r, a, check } = asked('approved');
   reply(r, 'answer', 'The network is back, ship it.', { tickets: [{ id: '0001', auto_ship: true }] });
-  assert.match(r.ticket(), /You answered the Foreman .*: The network is back, ship it\./);
+  assert.match(r.ticket(), /You answered speck .*: The network is back, ship it\./);
   check('approved');
   assert.deepEqual(a.again, ['0001']);
   assert.equal(a.resumed.length, 0);
@@ -154,7 +154,7 @@ test('0318 AC3: dismissing clears the question, records it and leaves the ticket
   const { r, a, check } = asked();
   const out = reply(r, 'dismiss');
   assert.match(out, /Dismissed/);
-  assert.match(r.ticket(), /^- You dismissed the Foreman's question \(2026-10-19 09:30 UTC\): Should it keep the old test\?$/m);
+  assert.match(r.ticket(), /^- You dismissed speck's question \(2026-10-19 09:30 UTC\): Should it keep the old test\?$/m);
   assert.match(r.ticket(), /^status: building$/m);
   assert.deepEqual(asks(r), []);
   const f = foremanView({ run: ON, record: { lock: process.pid }, tickets: [T('0001', 'building')], agent: agentView(r.runs, [T('0001', 'building')]) });
@@ -191,7 +191,7 @@ test('0318 AC2 AC3: the panel server answers and dismisses through the same code
   const { r } = asked();
   const out = panelForemanReply(r.dir, '0001', 'answer', JSON.stringify({ text: 'Keep it.' }), { now: NOW, env: {} });
   assert.equal(out.status, 200);
-  assert.match(r.ticket(), /You answered the Foreman .*: Keep it\./);
+  assert.match(r.ticket(), /You answered speck .*: Keep it\./);
   const again = panelForemanReply(r.dir, '0001', 'dismiss', '', { now: NOW, env: {} });
   assert.equal(again.status, 409);
   assert.match(again.body.error, /already been dealt with/);
@@ -207,7 +207,7 @@ test('0318 AC2: the real panel server reads the answer from the request and refu
     assert.equal(refused.status, 403, 'only the page it sent');
     const out = await post(p.port, '/api/foreman/0001/answer', { token, body: JSON.stringify({ text: 'Keep it.' }) });
     assert.equal(out.status, 200, out.body);
-    assert.match(r.ticket(), /You answered the Foreman .*: Keep it\./);
+    assert.match(r.ticket(), /You answered speck .*: Keep it\./);
     const again = await post(p.port, '/api/foreman/0001/dismiss', { token });
     assert.equal(again.status, 409);
     assert.match(JSON.parse(again.body).error, /already been dealt with/);
@@ -220,12 +220,12 @@ test('0318 AC4: speck foreman answer and speck foreman dismiss do the same from 
   const a = run('answer', '0001', 'Keep it.');
   assert.equal(a.status, 0, a.stderr);
   assert.match(a.stdout, /resumes its build with your answer/);
-  assert.match(r.ticket(), /You answered the Foreman .*: Keep it\./);
+  assert.match(r.ticket(), /You answered speck .*: Keep it\./);
 
   const { r: r2 } = asked();
   const d = spawnSync(process.execPath, [CLI, 'foreman', 'dismiss', '0001'], { cwd: r2.dir, encoding: 'utf8', env: { ...process.env, SPECK_FOREMAN_RUN: '' } });
   assert.equal(d.status, 0, d.stderr);
-  assert.match(r2.ticket(), /You dismissed the Foreman's question/);
+  assert.match(r2.ticket(), /You dismissed speck's question/);
   assert.doesNotMatch(d.stderr, /at .*\.mjs:\d+/, 'no stack trace');
 });
 
@@ -233,8 +233,8 @@ test('0318 AC4: speck status says how to answer or dismiss it', () => {
   const { r } = asked();
   const f = foremanView({ run: ON, record: { lock: process.pid }, tickets: [T('0001', 'building')], agent: agentView(r.runs, [T('0001', 'building')]) });
   const lines = foremanLines(f).join('\n');
-  assert.match(lines, /speck foreman answer 0001/);
-  assert.match(lines, /speck foreman dismiss 0001/);
+  assert.match(lines, /speck answer 0001/);
+  assert.match(lines, /speck dismiss 0001/);
 });
 
 test('0318 AC4: the Foreman agent can\'t answer or dismiss its own question', () => {
@@ -272,16 +272,16 @@ test('0318 AC4: the README, the brief and the Foreman\'s skill name the commands
   }
   assert.ok(read('docs/brief.md').includes('speck/.cache/runs/run.foreman-answer.<id>.<time>.json'));
   assert.ok(read('docs/brief.md').includes('speck(<id>): Foreman: answer') && read('docs/brief.md').includes('speck(<id>): Foreman: dismiss'));
-  for (const command of ['speck foreman answer', 'speck foreman dismiss']) assert.ok(read('skills/speck-foreman/SKILL.md').includes(command), command);
+  for (const command of ['speck foreman answer', 'speck foreman dismiss']) assert.ok(read('skills/speck-watch/SKILL.md').includes(command), command);
   const help = spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' });
-  assert.match(help.stdout + help.stderr, /speck foreman answer <id> "<text>"/);
+  assert.match(help.stdout + help.stderr, /speck answer <id> "<text>"/);
 });
 
 test('0318 AC4: an answer starting with -- is kept, and a question with no time is refused, changing nothing', () => {
   const { r } = asked();
   const a = spawnSync(process.execPath, [CLI, 'foreman', 'answer', '0001', '--force', 'it'], { cwd: r.dir, encoding: 'utf8', env: { ...process.env, SPECK_FOREMAN_RUN: '' } });
   assert.equal(a.status, 0, a.stderr);
-  assert.match(r.ticket(), /You answered the Foreman .*: --force it\./);
+  assert.match(r.ticket(), /You answered speck .*: --force it\./);
 
   const { r: r2 } = asked();
   const did = path.join(r2.runs, 'run.foreman-did.jsonl'), ask = JSON.parse(fs.readFileSync(did, 'utf8').trim());

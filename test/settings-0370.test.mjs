@@ -38,7 +38,7 @@ const view = ({ builder = 'claude', reviewer = 'codex', foreman = 'claude' } = {
   { title: 'Shipping', settings: [S('auto_ship', false, { choices: ['true', 'false'] }), S('auto_ship_risk', ['low'], { choices: ['low', 'high'] })] },
   { title: 'Limits', settings: [S('limits.max_review_rounds', 3),
     S('max_parallel_builds', 1, { for_machine: true, from: 'repo', repo_value: 1 }), S('base_branch', 'main')] },
-  { title: 'Foreman', settings: [S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), S('foreman_model', '')] }],
+  { title: 'Watching', settings: [S('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor'] }), S('foreman_model', '')] }],
   builder_models: { builder, models: listOf(builder) }, reviewer_models: { reviewer, models: listOf(reviewer) },
   foreman_models: { foreman, models: listOf(foreman) }, claude_models: CLAUDE_MODELS });
 

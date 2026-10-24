@@ -28,7 +28,7 @@ const row = (key, value, o = {}) => ({ key, value, default: false, explain: `Wha
 // A Settings view, as GET /api/settings gives it, with `yours` as its Your agents.
 export const settingsWithAgents = yours => ({ groups: [
   { title: 'Building and reviewing', settings: [row('builder', 'claude', { choices: ['claude', 'codex', 'cursor', 'deepseek'] }), row('max_parallel_builds', 4)] },
-  { title: 'Foreman', settings: [row('foreman', '', { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] })] }],
+  { title: 'Watching', settings: [row('foreman', '', { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] })] }],
   builder_models: { builder: 'claude', models: CLAUDE_MODELS }, claude_models: CLAUDE_MODELS,
   providers: [{ name: 'deepseek', label: 'DeepSeek', models: [], default_model: 'deepseek-v4-pro', key_set: true }], your_agents: yours });
 

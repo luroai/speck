@@ -35,9 +35,9 @@ const SHORT = { after: 'other tickets', slots: 'build slots', switching: 'new co
 export const FIXING = Object.freeze(['off', 'tell', 'fix']);
 // 0317: what each setting has the Foreman do, as its detail and `speck status` say it.
 export const FIXING_SAYS = Object.freeze({
-  off: 'off. The Foreman leaves blocked questions to you, without counting them under Needs you.',
-  tell: 'tell. The Foreman leaves blocked questions to you, and counts them under Needs you.',
-  fix: 'fix. The Foreman takes the recommendation of a blocked question that changes nothing you\'d notice and has a clear winner, once per ticket.',
+  off: 'off. speck leaves blocked questions to you, without counting them under Needs you.',
+  tell: 'tell. speck leaves blocked questions to you, and counts them under Needs you.',
+  fix: 'fix. speck takes the recommendation of a blocked question that changes nothing you\'d notice and has a clear winner, once per ticket.',
 });
 export const fixingOf = cfg => (cfg && FIXING.includes(cfg.foreman_fixing) ? cfg.foreman_fixing : 'tell');
 // 0286: whether the Foreman may take a blocked ticket's recommendation, from what `speck status --json` gives (0283):
@@ -117,18 +117,18 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
 // Blocked tickets aren't repeated: speck status lists them with their questions.
 // 0317: with Fixing on, the status says so and what Fixing does, and the recommendations the Foreman took lately follow.
 export function foremanLines(v) {
-  const lines = [`FOREMAN: ${v.word}${v.fixing === 'fix' ? ' · Fixing on' : ''}`, ...(v.fixing === 'fix' ? [`  Fixing: ${FIXING_SAYS.fix}`] : [])];
+  const lines = [`SPECK: ${v.word}${v.fixing === 'fix' ? ' · Fixing on' : ''}`, ...(v.fixing === 'fix' ? [`  Fixing: ${FIXING_SAYS.fix}`] : [])];
   for (const h of v.held || []) lines.push(`  ${h}`); // 0299: once, before the tickets it holds up
   for (const r of v.ready) lines.push(`  ${r.id} ready, not building: ${r.why}`);
   for (const w of v.ship ? v.ship.waiting : []) lines.push(`  ${w.id} waiting to ship: ${w.why}`);
   const a = v.agent; // 0287: the Foreman agent
-  if (a?.running) lines.push(`  The Foreman is looking into ${a.running.id}: ${a.running.what}`);
-  for (const q of a?.asks || []) lines.push(`  The Foreman asks you about ${q.id}: ${q.question}`, `    Answer with speck foreman answer ${q.id} "<your answer>", or dismiss it with speck foreman dismiss ${q.id}`); // 0318
+  if (a?.running) lines.push(`  speck is looking into ${a.running.id}: ${a.running.what}`);
+  for (const q of a?.asks || []) lines.push(`  speck asks you about ${q.id}: ${q.question}`, `    Answer with speck answer ${q.id} "<your answer>", or dismiss it with speck dismiss ${q.id}`); // 0318
   // 0328: a question is asked about its ticket, followed by what became of it once it no longer waits for you
   for (const d of a?.did || []) {
     const said = typeof d.outcome === 'string' && d.outcome ? ` ${d.outcome}` : '';
-    lines.push(`  The Foreman ${d.did} ${d.action === 'ask' ? 'about' : 'for'} ${d.id}${d.text ? `: ${d.text}` : ''}. Why: ${said && d.why ? sentence(d.why) : d.why}${said}`);
+    lines.push(`  speck ${d.did} ${d.action === 'ask' ? 'about' : 'for'} ${d.id}${d.text ? `: ${d.text}` : ''}. Why: ${said && d.why ? sentence(d.why) : d.why}${said}`);
   }
-  for (const w of v.took || []) lines.push(`  The Foreman went with the recommendation for ${w.id}: ${w.option} (${w.at.slice(0, 16).replace('T', ' ')} UTC)`);
+  for (const w of v.took || []) lines.push(`  speck went with the recommendation for ${w.id}: ${w.option} (${w.at.slice(0, 16).replace('T', ' ')} UTC)`);
   return lines;
 }
