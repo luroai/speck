@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0470", "0478"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T16:16:16.318Z"
-approved: "2026-10-24T16:24:29.249Z"
+approved: "2026-10-24T16:30:18.123Z"
 
 ---
 # 0479 · Frame the Pipeline log like a lane card that fills the screen
@@ -59,12 +59,14 @@ Pressing speck's screen now opens the Pipeline log as one dark framed card, like
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): changes requested: F1 The title does not inherit the frame's light ink as claimed: the global .title rule explicitly sets color: var(--text).
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 3, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 120,971
-- Elapsed since build started: 8 min
+- Reviewer tokens: 810,416
+- Elapsed since build started: 14 min
 - Changed lines: 36 (limit 5000)
 - Follow-ups: none.
 
@@ -126,6 +128,148 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The Pipeline log now fills a stationary frame matching the lane cards, with only its log scrolling. The reload notice fits inside the frame, and existing controls and log behaviour are preserved. Browser checks and regression tests passed; no blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · changes_requested · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "435cc3e504dcba1bb3a74128606587a58ac2f7f4",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16eb9-ec41-76a2-a599-f0e62bead2cb",
+    "builder_response": "- Tests run (speck test --related): test/pack-0363.test.mjs test/pack-0362.test.mjs test/foreman-asked-0328.test.mjs test/foreman-0299.test.mjs test/foreman-0285.test.mjs test/foreman-0317.test.mjs test/foreman-answer-0318.test.mjs test/panel-0379.test.mjs test/panel-0434.test.mjs test/panel-0161.test.mjs test/panel-0364.test.mjs test/panel-0410.test.mjs test/panel-0368.test.mjs test/panel-0366.test.mjs test/panel-0428.test.mjs test/panel-0424.test.mjs test/panel-0413.test.mjs test/panel-0427.test.mjs test/panel-0417.test.mjs test/panel-0426.test.mjs test/panel-0445.test.mjs test/panel-0453.test.mjs test/panel-0454.test.mjs test/pipeline-0415.test.mjs test/panel-0472.test.mjs test/pipeline-0479.test.mjs test/pipeline-0458.test.mjs test/panel-0473.test.mjs test/pipeline-0459.test.mjs test/pipeline-0470.test.mjs  test/panel-0167.test.mjs test/panel-0478.test.mjs test/panel-0438.test.mjs, plus the related files and the checks it adds\n- Ship's whole-suite run failed 0167 AC3: \"ids, titles, Plan tabs and links are in the normal text colours\". The branch was already up to date with main, so this ticket's change caused it: the rule `#foreman .top .title` set `color: var(--bezel-ink)`, and 0167 lets a .title rule use only neutral colours.\n- Fix: the title rule no longer sets a colour. It inherits --bezel-ink from `#foreman .top`, so the title looks the same, and 0167 passes unchanged. No test was changed in this round.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 283823,
+      "cached_input_tokens": 227200,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1280,
+      "reasoning_output_tokens": 22
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T16:29:11.592Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The frame, dimensions, dot and lettering remain covered by passing 0479 browser tests. However, removing the title colour exposes templates/panel-base.css:85's .title { color: var(--text) }. The title therefore does not inherit --bezel-ink and becomes dark text on the dark frame in light mode."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The layout rules are unchanged. The passing 0479 AC1 and AC2 browser test verifies 200 lines at both required sizes and additional sizes from 320 × 480, with only the log scrolling."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0479 AC3 browser test verifies the stale message and Reload page button inside the frame, with the log shrinking and growing without outer scrolling."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Close, Escape, outside click, focus and log logic are unchanged. The relevant regression tests and newest-line browser check pass. Latest recorded run: 421 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-popups.css:95",
+        "issue": "The title does not inherit the frame's light ink as claimed: the global .title rule explicitly sets color: var(--text). In light mode this makes Pipeline log nearly black on the dark bezel. Current browser assertions check its font but miss its computed colour.",
+        "suggested_fix": "Explicitly make this title inherit its parent's colour, and add a browser assertion that its computed colour matches the frame's --bezel-ink in both themes. Keep the existing 0167 test passing.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The stationary frame and scrolling still work, but the latest fix makes the title hard to read in light mode. Restore its light colour and check that colour in the browser before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "19acfd42177c9e55964b2b583d01e23529c00b6d",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16eb9-ec41-76a2-a599-f0e62bead2cb",
+    "builder_response": "- Tests run (speck test --related): test/foreman-0285.test.mjs test/pack-0362.test.mjs test/foreman-asked-0328.test.mjs test/foreman-0299.test.mjs test/foreman-0317.test.mjs test/foreman-answer-0318.test.mjs test/pack-0363.test.mjs test/panel-0161.test.mjs test/panel-0364.test.mjs test/panel-0379.test.mjs test/panel-0410.test.mjs test/panel-0413.test.mjs test/panel-0428.test.mjs test/panel-0424.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0434.test.mjs test/panel-0454.test.mjs test/panel-0453.test.mjs test/pipeline-0415.test.mjs test/panel-0473.test.mjs test/panel-0472.test.mjs test/pipeline-0470.test.mjs test/pipeline-0459.test.mjs test/pipeline-0458.test.mjs test/panel-0366.test.mjs test/pipeline-0479.test.mjs test/panel-0417.test.mjs test/panel-0368.test.mjs test/panel-0445.test.mjs  test/panel-0167.test.mjs test/panel-0478.test.mjs test/panel-0438.test.mjs, plus the related files and the checks it adds\n- F1: fixed. `#foreman .top .title` now sets `color: inherit`, over the global `.title { color: var(--text) }`, so it takes `#foreman .top`'s --bezel-ink. 0167 passes, since inherit names no colour. Added to the 0479 AC1 and AC2 browser test: the title's computed colour equals --bezel-ink at both sizes in both looks. It failed on the previous commit's CSS and passes now.\n",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 402556,
+      "cached_input_tokens": 342144,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1786,
+      "reasoning_output_tokens": 22
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T16:30:16.054Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-popups.css provides the centred lane-style frame, safe-area spacing, red dot, Doto title and right-aligned Close. Passing 0479 browser tests verify these features, now including the title's computed light-ink colour in both themes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0479 AC1 and AC2 browser test checks 200 lines at 390 × 844 and 1200 × 800, plus sizes starting at 320 × 480, verifying that only the log scrolls and the frame fills the available height."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0479 AC3 browser test verifies the stale-page message and Reload page button sit inside the frame, with the log shrinking and growing while the frame stays fixed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0479 AC4 test covers Close, Escape, outside click and focus restoration. Existing log regression coverage and the newest-line browser assertion remain intact. Latest recorded run: 421 passed, zero failed, three skipped, including unchanged 0167 coverage."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-popups.css:95",
+        "issue": "The title previously used the global dark text colour in light mode instead of the frame's light ink.",
+        "suggested_fix": "Addressed with color: inherit and a real-browser assertion comparing the title's computed colour with --bezel-ink in both themes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The title colour is fixed and covered by a browser check. The framed log, scrolling, reload notice and existing controls meet the ticket's criteria. No blocking concerns remain."
   }
 }
 ```
