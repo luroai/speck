@@ -1,7 +1,7 @@
 ---
 id: "0447"
 title: "Keep related tests from picking the whole suite"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-keep-related-tests-from-picking-the-whole-s
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T07:45:31.476Z"
+approved: "2026-10-24T07:57:43.023Z"
 
 ---
 # 0447 · Keep related tests from picking the whole suite
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck test --related` (0437) brings in a test through a module under `test/support/` when the module names a changed file. Nearly every support module names `scripts/speck.mjs`, the CLI they run, so any change to it picks almost the whole suite (374 of 390 test files for 0437), and a change to one `SKILL.md` picks every test naming any skill.
@@ -52,9 +53,14 @@ Before its first review, a build runs the existing tests that cover what it chan
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 131,671
+- Elapsed since build started: 12 min
+- Changed lines: 63 (limit 5000)
 Follow-ups:
 - The AC3 count (96 today, limit 100) grows with every test that names `docs/brief.md`, so it will start failing an unrelated ship. Saved to the inbox: `speck/ideas/2026-10-24-keep-the-related-tests-count-check-from-failing-as-tests-grow.md`.
 
