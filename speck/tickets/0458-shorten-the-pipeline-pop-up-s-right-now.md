@@ -1,7 +1,7 @@
 ---
 id: "0458"
 title: Show only the pipeline log when the screen is pressed                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:21:17.863Z"
+approved: "2026-10-24T09:29:45.492Z"
 
 ---
 # 0458 · Show only the pipeline log when the screen is pressed
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Pressing speck's screen opens the Pipeline pop-up, whose Right now section lists what's building, waiting, shipping and blocked, recommendations taken and what the Foreman looked into, some of it from 100 tickets ago. The user doesn't use it, and it pushes the log they do want further down.
@@ -58,9 +59,14 @@ Worth a look: anyone who used Right now to see why a ready ticket isn't building
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 148,173
+- Elapsed since build started: 8 min
+- Changed lines: 67 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-ups, no inbox note): the board's `foreman` object still carries what only Right now drew in the panel (`fixing_says`, `took`, `held`, the agent's `did`), as `speck status` uses most of it. A later ticket could trim what the panel is sent. The `where` argument of the panel's Foreman answer box now only ever gets `card`.
 
