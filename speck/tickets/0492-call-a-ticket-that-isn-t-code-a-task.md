@@ -1,7 +1,7 @@
 ---
 id: "0492"
 title: "Call a ticket that isn't code a task"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T20:02:10.113Z"
+approved: "2026-10-24T20:14:54.830Z"
 
 ---
 # 0492 · Call a ticket that isn't code a task
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket that isn't a code change is called a "document task" (`task: document`), but its build can do any job whose result it leaves in `outputs/`: an email draft, a plan, a report or research. "Document" undersells it, and the same word also means the README and `docs/` in speck's rules for acceptance criteria.
@@ -57,9 +58,15 @@ Worth keeping an eye on: the skills, the brief and the README still say "documen
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new assertion pins templates/reviewer-document.md to the exact heading “## The result”.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 604,095
+- Elapsed since build started: 13 min
+- Changed lines: 167 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-ups only, no inbox notes): internal names still say document, such as `documentSection`, `documentLines`, `panelDocuments`, `documentFile`, `templates/reviewer-document.md`, `doc_finished` and the `.pack-document` CSS classes; and the older tests' titles still say "document task". None of them is shown to people.
 
