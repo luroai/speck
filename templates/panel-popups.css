@@ -4,7 +4,7 @@
   .foreman { font-size: 14px; overflow-anchor: none; } /* 0415: the page keeps a reader's place in the log itself */
   /* 0459: the log is a terminal, as a ticket's build log is (0455), filling the pop-up under its heading, its oldest
      line at the top. Each line's time is in a column of its own and its text past it, as a build log's (0422) */
-  .foreman .run-log { box-sizing: border-box; margin: 0; padding: 6px 10px; height: max(12em, calc(100vh - 9em)); height: max(12em, calc(100dvh - 9em - env(safe-area-inset-top) - env(safe-area-inset-bottom))); overflow-y: auto; overflow-anchor: none;
+  .foreman .run-log { box-sizing: border-box; margin: 0; padding: 6px 10px; overflow-y: auto; overflow-anchor: none;
     background: var(--log-bg); border: 1px solid var(--line); list-style: none; color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; }
   .foreman ol.run-log { font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; }
   .foreman div.run-log { font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; }
@@ -54,7 +54,7 @@
   #full-ticket[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
-  #doc-view .top, #foreman .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
+  #doc-view .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .close, #doc-view .close, #foreman .close { margin-left: auto; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
@@ -72,16 +72,36 @@
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
   /* 0362: a document task's Markdown file, over the whole panel, its path and Close above its text in a centred column.
      0366: the Foreman's detail opens in the same pop-up. */
-  #doc-view, #foreman { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #doc-view { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #doc-view[hidden], #foreman[hidden] { display: none; }
-  #doc-view .top, #doc-view .doc-actions, #doc-view .md, #foreman .top, #foreman .fm-body { max-width: 760px; margin: 0 auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); } /* 0453: on a whole pixel, as Settings' column is (0281) */
-  #doc-view .top, #foreman .top { margin-bottom: 10px; }
-  #doc-view .top .title, #foreman .top .title { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; overflow-wrap: anywhere; }
-  #foreman .top .title { font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 20px; line-height: 1; white-space: nowrap; color: var(--text); } /* 0470: in the header's lettering (.bezel .name) */
+  #doc-view .top, #doc-view .doc-actions, #doc-view .md { max-width: 760px; margin: 0 auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); } /* 0453: on a whole pixel, as Settings' column is (0281) */
+  #doc-view .top { margin-bottom: 10px; }
+  #doc-view .top .title { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; overflow-wrap: anywhere; }
   /* 0379: each pop-up's top line, with its Close, stays at the top while the rest scrolls under it. The pop-up's own top
      padding, the room for a phone's notch, is in the line instead, so nothing shows through above it. Above a setting's
      explanation (z-index 2), which scrolls under it too. */
-  #full-ticket .top, #doc-view .top, #foreman .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
+  #full-ticket .top, #doc-view .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
+  /* 0479: the Pipeline log is one card in a dark frame that fills the window, as a lane's (0478): the frame is the
+     screen's colour and corners, 4 px at the sides and bottom, in a column as wide as the lanes' (720 px less their
+     16 px sides, on whole pixels as the lanes' are, 0453), clear of a phone's notch and home indicator. Its title row has
+     speck's red dot and "Pipeline log" in the header's dot-matrix lettering, with Close at its end. The pop-up and the
+     frame hold still and only the log box scrolls: it takes the room the title row and a stale page's line leave. On a
+     window too short for 12 lines of log, the pop-up scrolls instead, its title row staying at the top (0470). */
+  #foreman { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(12em, 1fr); overflow-y: auto; overscroll-behavior: contain; background: var(--panel);
+    padding: calc(8px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    padding-left: max(16px, env(safe-area-inset-left), calc(16px + round(down, calc((100% - 720px) / 2), 1px))); padding-right: max(16px, env(safe-area-inset-right), calc(16px + round(up, calc((100% - 720px) / 2), 1px))); }
+  #foreman[hidden] { display: none; }
+  #foreman .top { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; min-width: 0; margin: 0; padding: 7px 6px 6px 10px; color: var(--bezel-ink); background: var(--bezel); border-radius: 12px 12px 0 0; }
+  #foreman .top .title { display: inline-flex; align-items: center; gap: .25em; min-width: 0; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 22px; line-height: 1; white-space: nowrap; color: inherit; } /* 0470: in the header's lettering (.bezel .name). In the title row's light ink, over every .title's text colour */
+  #foreman .top .title::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; background: var(--lcd-red); } /* speck's own dot, as the header's: decoration, so a screen reader passes over it */
+  #foreman .fm-body { display: flex; flex-direction: column; min-height: 0; padding: 0 4px 4px; color: var(--bezel-ink); background: var(--bezel); border-radius: 0 0 12px 12px; }
+  #foreman .fm-stale { flex: none; padding: 0 6px 6px; }
+  #foreman .fm-log { flex: 1 1 0; display: flex; flex-direction: column; min-height: 0; }
+  #foreman .fm-log > .run-log { flex: 1 1 0; height: auto; min-height: 0; }
+  #foreman .stale { color: var(--bezel-ink); }
+  #foreman .close, #foreman .reload { color: var(--bezel-muted); background: transparent; border-color: var(--bezel-muted); }
+  #foreman .close:hover, #foreman .reload:hover { color: var(--bezel-ink); border-color: var(--bezel-ink); }
+  #foreman :focus-visible { outline-color: var(--bezel-ink); }
   #full-ticket ol.criteria > li { margin-bottom: 6px; }
   /* Each section's Markdown. Its headings rank below the section's own (h4) and are no taller than body text. */
   #full-ticket .md p, #full-ticket .criteria p, #doc-view .md p { margin: 0 0 8px; }
