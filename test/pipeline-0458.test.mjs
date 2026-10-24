@@ -3,7 +3,8 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, T, openQueueRows } from './support/panel.mjs';
+import vm from 'node:vm';
+import { fakePage, T, openQueueRows, model } from './support/panel.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
 
 const ON = { on: true, pid: 4242 };
@@ -138,5 +139,6 @@ test('0458 AC4: the log still shows in the pop-up, as /api/run-log gives it', as
   p.press(p.byId('run'));
   await p.settle();
   const ol = p.all(pop(p)).find(n => n.tagName === 'ol');
-  assert.deepEqual(ol && ol.children.map(li => li.textContent), LOG.lines);
+  const summary = vm.runInNewContext(`${model()}\nrunLogSummary`, {}); // 0459: each line's summary, the newest at the bottom
+  assert.deepEqual(ol && ol.children.map(li => li.textContent), LOG.lines.slice().reverse().map(summary));
 });
