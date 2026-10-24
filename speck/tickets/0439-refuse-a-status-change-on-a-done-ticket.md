@@ -42,6 +42,7 @@ A done ticket's status can't be changed by `speck set` or the panel, so shipped 
 - `speck cancel` already refuses a done ticket: "delivered work is part of the record".
 - Waits for nothing: no open ticket changes these files.
 - Failing before this build: none
+- Self-check: no changes. `scripts/speck.mjs` and `scripts/panel.mjs` were both at the 600-line limit, so the checks share existing lines; the panel's Set ready and Back to Plan are exported so the tests call them directly.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

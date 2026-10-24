@@ -79,6 +79,8 @@ test('0108 AC1: a ticket set ready from speck/tickets/done/ is committed as move
   const r = setRepo();
   assert.equal(r.run('set', '1', 'status', 'done').status, 0);
   const filed = 'speck/tickets/done/' + path.basename(r.rel);
+  // A done ticket's status can't change (0439), so this one is a draft filed there.
+  fs.writeFileSync(path.join(r.dir, filed), fs.readFileSync(path.join(r.dir, filed), 'utf8').replace(/^status: done/m, 'status: draft'));
   r.g('add', 'speck'); r.g('commit', '-qm', 'filed');
   assert.equal(r.run('set', '1', 'status', 'ready').status, 0);
   const files = r.show('HEAD');
