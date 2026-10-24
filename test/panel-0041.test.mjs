@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { T, fm, charAt, fakePage, full, click, items, top, toggles, queueRows, page, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
+import { chipSaid } from './support/dep-chip.mjs';
 
 // ---------- 0041: tickets that start a dependency chain, and tickets waiting on others ----------
 
@@ -44,12 +45,10 @@ test('0041 AC1: a ticket that starts a chain shows a chain icon after its id and
   const s = shaping(p, '0001');
   const icon = iconOf(p, s);
   assert.ok(icon && /\bchain\b/.test(icon.className), 'Shaping: a chain icon after its id');
-  assert.ok(nodes(p, s, 'checks')[0].textContent.includes('unlocks 0002, 0003'), 'Shaping: unlocks the unfinished tickets that list it, in JSON order');
-  assert.ok(!nodes(p, s, 'checks')[0].textContent.includes('0004'), 'a done ticket waiting on it does not count');
-  assert.ok(!nodes(p, s, 'checks')[0].textContent.includes('0005'), 'a cancelled one does not count either');
+  assert.equal(chipSaid(p, s), '2 tickets wait on this', 'Shaping: the unfinished tickets that list it (0468: in its chip); a done or cancelled one does not count');
   const q = queued(p, '0006');
   assert.ok(/\bchain\b/.test(iconOf(p, q).className), 'queue: a ready ticket that starts a chain has the icon');
-  assert.ok(nodes(p, q, 'act')[0].textContent.includes('unlocks 0007'), 'queue: unlocks under its title');
+  assert.equal(chipSaid(p, q), '1 ticket waits on this', 'queue: its chip (0468)');
   assert.match(rule('.chain'), /var\(--muted\)/, 'the chain icon is in the muted colour, as the speck red is only for the speck (0167)');
 });
 
@@ -71,10 +70,11 @@ test('0041 AC2: a waiting ticket shows a dimmed padlock after its id, with "wait
   await p.settle();
   const s = shaping(p, '0003');
   assert.ok(/\block\b/.test(iconOf(p, s).className), 'Shaping: a padlock after its id');
-  assert.ok(nodes(p, s, 'checks')[0].textContent.includes('after 0001, 0099'), 'Shaping: after its ids (0419)');
+  assert.equal(chipSaid(p, s), 'Waits on 2 tickets', 'Shaping: its chip (0468)');
   const q = queued(p, '0007');
   assert.ok(/\block\b/.test(iconOf(p, q).className), 'queue: a padlock right after the id');
-  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · waiting on 0006', 'queue: the text it already shows (0434: its tags only while it\'s open)');
+  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued', 'queue: the text it already shows (0434: its tags only while it\'s open; 0468: its ids in its chip)');
+  assert.equal(chipSaid(p, q), 'Waits on 1 ticket');
   assert.ok(/\block\b/.test(iconOf(p, shaping(p, '0009')).className), 'waiting on an in-flight ticket');
   assert.match(rule('.lock'), /color:\s*var\(--faint\)/, 'the padlock is dimmed');
 });
@@ -107,7 +107,8 @@ test('0041 AC4: when the chain\'s first ticket is done, the next refresh takes t
   const q = queued(p, '0002');
   assert.ok(/\bchain\b/.test(iconOf(p, q).className), 'it starts the chain now');
   assert.equal(iconOf(p, q).title, 'Starts a chain: unlocks 0003');
-  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · unlocks 0003');
+  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued');
+  assert.equal(chipSaid(p, q), '1 ticket waits on this', '0468: its chip');
   assert.equal(nodes(p, q, 'lock').length, 0, 'no padlock');
   assert.ok(/\block\b/.test(iconOf(p, shaping(p, '0003')).className), 'the next one still waits');
 
@@ -211,7 +212,7 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
     assert.equal(await b.js(`getComputedStyle(document.querySelector('#queue .q .chain')).color`), await b.js(`(() => { const s = document.createElement('span'); s.style.color = 'var(--muted)'; document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c; })()`), 'the muted colour (0167)');
     assert.ok(await b.js(`document.querySelector('#queue .q .chain').getBoundingClientRect().width > 0`), 'the icon takes up room');
     assert.equal(await b.js(`document.querySelector('#shaping .item .lock').title`), 'Waiting on 0001');
-    assert.ok(await b.js(`[...document.querySelectorAll('#shaping .item')][0].textContent.includes('after 0001')`));
+    assert.equal(await b.js(`document.querySelector('#shaping .item .dep-chip').title`), 'Waits on 1 ticket'); // 0468
     await b.js(openLane('plan')); // 0410
     await b.move(await centre('#shaping .item .title'));
     await b.until(`document.querySelector('#queue .q').classList.contains('hl')`, 'the chain to light up');

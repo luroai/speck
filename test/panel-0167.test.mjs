@@ -50,7 +50,7 @@ test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours,
   const coloured = [];
   for (const r of plain()) {
     // 0426: links in a ticket's text are in Cursor's blue, --run (below)
-    if (!selectors(r).some(s => /\.(id|title|goto|toggle)(?![\w-])/.test(lastCompound(s)))) continue;
+    if (!selectors(r).some(s => /\.(id|title|dep-chip|toggle)(?![\w-])/.test(lastCompound(s)))) continue; // 0468: and a dependency chip
     for (const k of ['color', 'border-color']) {
       const t = tokens(get(r, k));
       if (r.sel === '.toggle.on' && k === 'color') { assert.deepEqual(t, ['--panel'], 'the selected tab\'s text is the background it is filled against (0450)'); continue; }
@@ -61,7 +61,6 @@ test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours,
   const links = plain().filter(r => selectors(r).some(s => /(^|\s)a(:hover)?$/.test(s)));
   assert.ok(links.length, 'rules for links');
   for (const r of links) for (const k of ['color', 'border-color']) if (get(r, k)) assert.deepEqual(tokens(get(r, k)), ['--run'], `${r.sel}: links are in Cursor's blue (0426)`);
-  assert.match(get(rule('.goto'), 'text-decoration') || '', /underline/, 'a linked id is underlined');
   assert.doesNotMatch(get(rule('#shipped .line .title'), 'text-decoration') || '', /underline/, 'a shipped title isn\'t underlined since 0466: it opens its card, as a Build title does');
   assert.deepEqual(tokens(get(rule('.toggle.on'), 'border-color')), ['--text'], 'the selected tab has a border in the text colour');
   assert.deepEqual(tokens(get(rule('.toggle.on'), 'background')), ['--text'], 'and, since 0450, is filled with it');
@@ -227,9 +226,10 @@ for (const theme of ['light', 'dark']) {
         return { text: n.textContent, color: s.color, line: s.textDecorationLine, border: s.borderTopColor, back: s.backgroundColor }; })`);
       for (const n of await style('#queue .id, #shipped .id')) assert.equal(n.color, c.muted, `id ${n.text}`);
       for (const n of await style('#shipped .line .title')) assert.deepEqual([n.color, n.line], [c.text, 'none'], `shipped title ${n.text} (not underlined since 0466)`);
-      const gotos = await style('#shaping .goto');
-      assert.ok(gotos.length >= 1, 'a linked id');
-      for (const n of gotos) assert.deepEqual([n.color, n.line], [c.text, 'underline'], `linked id ${n.text}`);
+      // 0468: a closed card's linked ids are in its dependency chip, in the muted colour of every id
+      const chips = await style('#shaping .dep-chip');
+      assert.ok(chips.length >= 1, 'a dependency chip');
+      for (const n of chips) assert.equal(n.color, c.muted, `chip ${n.text}`);
       for (const view of ['tickets', 'ideas', 'inbox']) {
         await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`); await settle(b);
         const [on] = await style('#shaping-toggle .toggle.on');

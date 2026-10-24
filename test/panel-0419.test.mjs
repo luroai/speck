@@ -2,6 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, openQueueRows, factsOf } from './support/panel.mjs';
+import { chipSaid } from './support/dep-chip.mjs';
 
 // ---------- 0419: a closed Plan or Build ticket is a title line and one line of details ----------
 
@@ -29,21 +30,23 @@ const board = () => ({
 });
 const page = (s = board()) => fakePage([s], { Date: stoppedClock(NOW) });
 
-test('0419 AC1: a closed Plan ticket is its id and title, then its priority, size, risk, criteria, lint result and what it waits on, separated by " · "', async () => {
+// 0468: what it waits on or unlocks is in a chip at the end of its title line, not its details line.
+test('0419 AC1: a closed Plan ticket is its id and title, then its priority, size, risk, criteria and lint result, separated by " · "', async () => {
   const p = page();
   await p.settle();
   const t = card(p, '0419');
   assert.deepEqual(linesOf(t), ['line', 'checks'], 'a title line and a details line');
-  assert.equal(topOf(t).children[0].textContent, '0419Fit a closed ticket on two lines', 'the id and the title');
-  assert.equal(detailsOf(t).textContent, 'P3 · M · low · 3 criteria · lint passes · after 0418');
-  assert.equal(detailsOf(card(p, '0418')).textContent, 'P2 · S · low · 2 criteria · lint passes · unlocks 0419', 'one that waits on nothing has no "after"');
+  assert.equal(topOf(t).children[0].textContent, '0419Fit a closed ticket on two lines1', 'the id, the title and its chip');
+  assert.equal(chipSaid(p, t), 'Waits on 1 ticket');
+  assert.equal(detailsOf(t).textContent, 'P3 · M · low · 3 criteria · lint passes');
+  assert.equal(detailsOf(card(p, '0418')).textContent, 'P2 · S · low · 2 criteria · lint passes');
+  assert.equal(chipSaid(p, card(p, '0418')), '1 ticket waits on this');
   assert.equal(detailsOf(card(p, '0430')).textContent, 'P4 · S · high · bug · 2 criteria · lint: 2 errors · 1 warning');
-  assert.ok(!t.textContent.includes('waiting on'), 'Plan says "after", not "waiting on"');
 });
 
 // 0434: a closed Build ticket's stage sentence is a grid of lights while an agent is at work on it, and its priority,
 // size and risk show only while it's open.
-test('0419 AC2: a closed Build ticket is its id and title, then its stage sentence, stage and timer; a queued one starts "Queued · waiting on <ids>"', async () => {
+test('0419 AC2: a closed Build ticket is its id and title, then its stage sentence, stage and timer; a queued one starts "Queued"', async () => {
   const p = page();
   await p.settle();
   const b = card(p, '0501');
@@ -53,12 +56,14 @@ test('0419 AC2: a closed Build ticket is its id and title, then its stage senten
   assert.equal(detailsOf(b).children[0].attrs['aria-label'], 'Writing tests and code');
   const q = card(p, '0502');
   assert.deepEqual(linesOf(q), ['line', 'act']);
-  assert.equal(detailsOf(q).textContent, 'Queued · waiting on 0501, 0503');
-  assert.equal(detailsOf(card(p, '0503')).textContent, 'Queued · unlocks 0502');
+  assert.equal(detailsOf(q).textContent, 'Queued'); // 0468: what it waits on or unlocks is in its chip
+  assert.equal(chipSaid(p, q), 'Waits on 2 tickets');
+  assert.equal(detailsOf(card(p, '0503')).textContent, 'Queued');
+  assert.equal(chipSaid(p, card(p, '0503')), '1 ticket waits on this');
   for (const id of ['0501', '0502', '0503']) assert.deepEqual(card(p, id).children.map(c => c.className), ['top'], `${id}: nothing under the two lines`);
 });
 
-test('0419 AC3: the priority opens its menu, size and risk explain themselves, and each id after "after" or "waiting on" is a Go to ticket link', async () => {
+test('0419 AC3: the priority opens its menu, and size and risk explain themselves', async () => {
   const p = page();
   await p.settle();
   const tags = n => p.all(detailsOf(n)).filter(x => /\btag\b/.test(x.className));
@@ -80,10 +85,7 @@ test('0419 AC3: the priority opens its menu, size and risk explain themselves, a
   // 0462: in its facts' cells, as plain values
   const cells = factsOf(card(p, '0501'));
   assert.deepEqual([cells[3], cells[4]], [['Priority', 'P3'], ['Size · risk', 'M · low']]);
-  // the ids are Go to ticket links, in Plan and in Build
-  const gotos = n => p.all(detailsOf(n)).filter(x => x.className === 'goto').map(x => x.attrs['aria-label']);
-  assert.deepEqual(gotos(card(p, '0419')), ['Go to ticket 0418']);
-  assert.deepEqual(gotos(card(p, '0502')), ['Go to ticket 0501', 'Go to ticket 0503']);
+  // 0468: the ids that were Go to ticket links here are in a closed card's chip, and an open card's box (0154, 0467)
 });
 
 test('0419 AC4: a question, a recommendation, a Ship hint and a message still show under the two lines, while the card is open (0434)', async () => {
