@@ -1,7 +1,7 @@
 ---
 id: "0465"
 title: "Lay out the full ticket's top like its open card"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0465 · Lay out the full ticket's top like its open card
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The full ticket, opened over the whole panel, shows a ticket's tags under its title, while its card (after 0461 to 0464) shows a step track and an even table of facts. The two views of one ticket don't match.
