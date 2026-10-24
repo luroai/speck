@@ -17,9 +17,9 @@
   #build-section .lane-title::before { background: var(--blue); }
   #shipped-section .lane-title::before { background: var(--purple); }
   .lane-n { grid-row: 1; grid-column: 2; align-self: center; min-width: 0; padding: 7px 14px 6px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; line-height: 1.5; text-align: right; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  main > section > .sh { grid-row: 2; grid-column: 1 / -1; margin: 0 .5px; color: var(--text); background: var(--panel); border-top: .5px solid var(--line-soft); }
-  .lane-list { grid-row: 3; grid-column: 1 / -1; min-height: 0; margin: 0 .5px .5px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); border-radius: 0 0 11.5px 11.5px; } /* the card's 12 px less its edge */
-  .lane-n + .lane-list { border-top: .5px solid var(--line-soft); }
+  main > section > .sh { grid-row: 2; grid-column: 1 / -1; margin: 0 1px; color: var(--text); background: var(--panel); border-top: 1px solid var(--line-soft); }
+  .lane-list { grid-row: 3; grid-column: 1 / -1; min-height: 0; margin: 0 1px 1px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); border-radius: 0 0 11px 11px; } /* the card's 12 px less the pixel its edge sits in, so what's in it stays on whole pixels (0453) */
+  .lane-n + .lane-list { border-top: 1px solid var(--line-soft); }
   .group { padding: 7px 14px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
   .group.attn { color: var(--warn); }
   .group.run { color: var(--run); }
