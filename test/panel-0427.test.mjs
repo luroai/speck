@@ -58,7 +58,8 @@ test('0427 AC2: ids, the build log, code and figures use Cursor\'s monospace', (
   assert.equal(get(rule('code, .mono, .id'), 'font-family'), MONO, 'code and ids');
   assert.equal(get(rule('#full-ticket .top .id'), 'font-family'), MONO, 'the id at the top of the full ticket');
   assert.equal(get(rule('.q .log'), 'font'), `12px/1.5 ${MONO}`, 'the build log');
-  for (const sel of ['td.num', '#shipped .fig .v', '.stat .count', '.foreman ol.run-log', '.tag']) assert.equal(family(rule(sel)), MONO, sel);
+  // 0464: a shipped card's figures are in the facts table, as an in-flight ticket's are, no longer in monospace
+  for (const sel of ['td.num', '.stat .count', '.foreman ol.run-log', '.tag']) assert.equal(family(rule(sel)), MONO, sel);
 });
 
 test('0427 AC3: headings, tab names and ticket titles are the interface font at 600, and the old fonts are gone', () => {
@@ -77,7 +78,7 @@ test('0427 AC4: no label is in spaced capitals: buttons and labels are sentence 
     const ls = get(r, 'letter-spacing');
     if (ls !== undefined) assert.ok(parseFloat(ls) <= 0, `${r.sel}: letter-spacing ${ls}`);
   }
-  for (const sel of ['.full-open', '.toggle', '.set-ready', '.q .stop-build', '.q .back-to-plan', '.resume .copy', '.group', '.detail h4', '#shipped .fig .k',
+  for (const sel of ['.full-open', '.toggle', '.set-ready', '.q .stop-build', '.q .back-to-plan', '.resume .copy', '.group', '.detail h4',
     '#full-ticket .close, #doc-view .close, #foreman .close, #settings .close', '#full-ticket .ship, #doc-view .ship', '#settings .save-all']) {
     assert.equal(family(rule(sel)), UI, `${sel}: the interface font`);
   }

@@ -82,7 +82,7 @@ test('0420 AC2: a small Details button ends the second line, opens and closes th
   assert.equal(d.attrs['aria-expanded'], 'false');
   p.press(d);
   await p.settle();
-  assert.deepEqual(kids(cardOf(p, '0401')), ['name', 'sum', 'figs', 'full-cell']);
+  assert.deepEqual(kids(cardOf(p, '0401')), ['name', 'steps', 'full-cell']); // 0464: its steps and facts
   assert.equal(detailsOf(p, '0401').attrs['aria-expanded'], 'true');
   assert.ok(p.all(cardOf(p, '0401')).some(n => n.textContent === 'Review pack'));
   p.press(detailsOf(p, '0401'));

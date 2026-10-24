@@ -34,8 +34,9 @@ const STATE = () => ({
 
 const cardOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const byClass = (p, node, cls) => p.all(node).filter(n => (n.className || '').split(' ').includes(cls));
-// A card's figures, as [label, value, tooltip] for each.
-const figures = (p, card) => byClass(p, card, 'fig').map(f => [byClass(p, f, 'k')[0].textContent, byClass(p, f, 'v')[0].textContent, byClass(p, f, 'v')[0].title || null]);
+// A card's figures, as [label, value, tooltip] for each, the tooltip only when it says more than the value. 0464: in
+// the facts table, after when it shipped.
+const figures = (p, card) => byClass(p, card, 'fact').slice(1).map(f => { const v = f.children[1]; return [f.children[0].textContent, v.textContent, v.title !== v.textContent ? v.title : null]; });
 
 // 0420: the first three stats are one line, so the three under More stats are the tiles left.
 test('0157 AC2: each stat is a tile with its number, then a short label, then the tickets its median covers', async () => {
@@ -79,20 +80,20 @@ test('0157 AC4: under the title, the ship time: the time alone today, the day be
   assert.deepEqual(when('0404'), [], 'no ship time: no line');
   await openDetails(p);
   const kids = cardOf(p, '0401').children.map(n => n.className);
-  assert.deepEqual(kids, ['name', 'sum', 'figs', 'full-cell'], 'title, then one line of when it shipped and its figures (0162, 0420), then its figures, then Review pack');
+  assert.deepEqual(kids, ['name', 'steps', 'full-cell'], 'title, then its steps and facts (0464), then Review pack');
 });
 
-test('0157 AC4: the figures are label and value pairs, missing ones left out, big token counts shortened with the exact number as a tooltip', async () => {
+test('0157 AC4: the figures are label and value pairs, missing ones a dash (0464), big token counts shortened with the exact number as a tooltip', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
   await openDetails(p); // 0162: they are under Details
-  assert.deepEqual(figures(p, cardOf(p, '0401')), [['Time', '10 min', null], ['Review rounds', '2', null], ['Reviewer tokens', '108k', '108,234'],
-    ['Builder tokens', '2.4M', '2,412,345'], ['Builder cost', '$3.46', null]]);
-  assert.deepEqual(figures(p, cardOf(p, '0402')), [['Time', '30 min', null], ['Review rounds', '1', null], ['Reviewer tokens', '9,999', null], ['Builder tokens', '10k', '10,000']]);
-  assert.deepEqual(figures(p, cardOf(p, '0403')), [['Time', '53 min', null], ['Review rounds', '1', null], ['Reviewer tokens', '500', null]]);
-  assert.deepEqual(figures(p, cardOf(p, '0404')), [], 'none recorded: none shown');
-  assert.deepEqual(figures(p, cardOf(p, '0405')), [['Time', '22 min', null], ['Review rounds', '1', null], ['Reviewer tokens', '1M', '999,600']]);
-  assert.ok(!shippedRows(p).some(r => byClass(p, r, 'figs').some(f => f.textContent.includes(' · '))), 'no run of figures separated by dots among the labelled ones (0162 adds one line of them above)');
+  assert.deepEqual(figures(p, cardOf(p, '0401')), [['Time', '10 min', null], ['Review rounds', '2', null], ['Builder cost', '$3.46', null],
+    ['Builder tokens', '2.4M', '2,412,345'], ['Reviewer tokens', '108k', '108,234']]);
+  assert.deepEqual(figures(p, cardOf(p, '0402')), [['Time', '30 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Builder tokens', '10k', '10,000'], ['Reviewer tokens', '9,999', null]]);
+  assert.deepEqual(figures(p, cardOf(p, '0403')), [['Time', '53 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '500', null]]);
+  assert.deepEqual(figures(p, cardOf(p, '0404')).map(f => f[1]), ['—', '—', '—', '—', '—'], 'none recorded: a dash for each');
+  assert.deepEqual(figures(p, cardOf(p, '0405')), [['Time', '22 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '1M', '999,600']]);
+  assert.ok(!shippedRows(p).some(r => byClass(p, r, 'facts').some(f => f.textContent.includes(' · '))), 'no run of figures separated by dots among the labelled ones (0162 adds one line of them above)');
 });
 
 test('0157 AC4: the Review pack button is the card\'s last part and opens its pack as before', async () => {
@@ -263,8 +264,8 @@ for (const width of [375, 1280]) {
 test('0157 AC4: in the browser, a shortened token count has the exact number as its tooltip', skip, async () => {
   await withPanel(async b => {
     await b.js(OPEN_ALL);
-    const v = await b.js(`[...document.querySelectorAll('#shipped .fig .v')].filter(n => n.title).map(n => [n.textContent, n.title])`);
-    assert.deepEqual(v, [['108k', '108,234'], ['2.4M', '2,412,345'], ['10k', '10,000'], ['1M', '999,600']]);
+    const v = await b.js(`[...document.querySelectorAll('#shipped .fact .value')].filter(n => n.title !== n.textContent && /tokens/.test(n.previousElementSibling.textContent)).map(n => [n.textContent, n.title])`);
+    assert.deepEqual(v, [['2.4M', '2,412,345'], ['108k', '108,234'], ['10k', '10,000'], ['1M', '999,600']]);
   });
 });
 

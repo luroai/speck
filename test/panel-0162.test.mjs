@@ -142,14 +142,15 @@ test('0162 AC4: Details shows the labelled figures and the Review pack button, a
   p.press(byClass(p, cardOf(p, '0401'), 'details')[0]);
   await p.settle();
   let a = cardOf(p, '0401');
-  assert.deepEqual(a.children.map(n => n.className), ['name', 'sum', 'figs', 'full-cell']);
-  assert.deepEqual(byClass(p, a, 'fig').map(f => [byClass(p, f, 'k')[0].textContent, byClass(p, f, 'v')[0].textContent]),
-    [['Time', '15 min'], ['Review rounds', '2'], ['Reviewer tokens', '108k'], ['Builder tokens', '2.4M'], ['Builder cost', '$2.91']]);
+  // 0464: its steps and its facts in a table, in place of its line
+  assert.deepEqual(a.children.map(n => n.className), ['name', 'steps', 'full-cell']);
+  assert.deepEqual(byClass(p, a, 'fact').map(f => [f.children[0].textContent, f.children[1].textContent]),
+    [['Shipped', byClass(p, a, 'fact')[0].children[1].textContent], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
   assert.equal(byClass(p, a, 'details')[0].attrs['aria-expanded'], 'true');
   assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'sum'], 'only the card tapped opens');
   await refresh(p);
   a = cardOf(p, '0401');
-  assert.deepEqual(a.children.map(n => n.className), ['name', 'sum', 'figs', 'full-cell'], 'still open after the next poll');
+  assert.deepEqual(a.children.map(n => n.className), ['name', 'steps', 'full-cell'], 'still open after the next poll');
   const pack = p.all(a).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
   p.press(pack);
   await p.settle();
@@ -165,7 +166,7 @@ test('0162 AC4: a card with no figures still has Details, which shows Review pac
   await p.settle();
   p.press(byClass(p, cardOf(p, '0403'), 'details')[0]);
   await p.settle();
-  assert.deepEqual(cardOf(p, '0403').children.map(n => n.className), ['name', 'sum', 'full-cell']);
+  assert.deepEqual(cardOf(p, '0403').children.map(n => n.className), ['name', 'steps', 'full-cell']);
 });
 
 test('0162 AC4: tapping the title still opens the full ticket, and doesn\'t open Details', async () => {
@@ -260,8 +261,8 @@ for (const width of [375, 1280]) {
       await b.js(openLane('shipped')); // 0410
       const card = `[...document.querySelectorAll('#shipped tr')].find(n => n.querySelector('.id').textContent === '0401')`;
       const look = () => b.js(`(() => { const c = ${card}, r = c.getBoundingClientRect(), fl = c.querySelector('.figline'), d = c.querySelector('.details');
-        const lh = parseFloat(getComputedStyle(fl).lineHeight) || parseFloat(getComputedStyle(fl).fontSize) * 1.5;
-        return { height: r.height, figLines: Math.round(fl.getBoundingClientRect().height / lh), figs: !!c.querySelector('.figs'), pack: !!c.querySelector('.full-cell .full-open'),
+        const lh = fl && (parseFloat(getComputedStyle(fl).lineHeight) || parseFloat(getComputedStyle(fl).fontSize) * 1.5);
+        return { height: r.height, figLines: fl ? Math.round(fl.getBoundingClientRect().height / lh) : 0, figs: !!c.querySelector('.facts'), pack: !!c.querySelector('.full-cell .full-open'),
           details: d.getBoundingClientRect().height, title: getComputedStyle(c.querySelector('.title-link')).color }; })()`);
       const closed = await look();
       assert.equal(closed.figLines, 1, 'the figures on one line');
