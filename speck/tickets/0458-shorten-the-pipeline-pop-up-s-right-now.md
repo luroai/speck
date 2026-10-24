@@ -1,9 +1,9 @@
 ---
 id: "0458"
-title: "Shorten the Pipeline pop-up's Right now"                # one outcome, no "and"
+title: Show only the pipeline log when the screen is pressed                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
-size: M                  # S | M  (L is never ready; split it)
+size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 task: code               # code | document (what the build makes: a code change or a document)
 type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
@@ -16,30 +16,30 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 
 ---
-# 0458 · Shorten the Pipeline pop-up's Right now
+# 0458 · Show only the pipeline log when the screen is pressed
 
 **Status:** 📝 draft
 
 ## Problem
-Pressing speck's screen opens the Pipeline pop-up, whose Right now section says what's building, waiting, shipping and blocked in full sentences, with a sentence for every empty section too. On a phone that's a lot of reading to find out what's going on.
+Pressing speck's screen opens the Pipeline pop-up, whose Right now section lists what's building, waiting, shipping and blocked, recommendations taken and what the Foreman looked into, some of it from 100 tickets ago. The user doesn't use it, and it pushes the log they do want further down.
 
 ## Outcome
-Right now says what's happening in a few short lines.
+Pressing speck's screen shows the pipeline log and nothing else.
 
 ## Acceptance criteria
-1. Each line in Right now about a ticket starts with its id and is at most 48 characters, such as `0454 waiting on 0453` or `0442 can't ship: main's tests fail`. No line shows a session id, a process id, a file path or a command.
-2. A section with nothing in it isn't shown. When every section is empty, Right now shows the one line `Nothing happening.`
-3. A blocked ticket's or the Foreman's question is still shown in full, with its Answer and Dismiss buttons. A stale page still shows its Reload page button.
-4. Opening, closing and focus work as before (0415). No test that passed before this change fails.
+1. Pressing the screen opens the Pipeline pop-up with only its title, Close and the log in it: no Right now section, and none of its headings (Building, Ready, not building, Shipping, Blocked, Recommendations taken, Looked into) or their lines.
+2. While the page is running older code than the panel, a Reload page button still shows above the log, and pressing it reloads the page.
+3. A Foreman's question keeps its Answer and Dismiss buttons on its ticket's card (0318), and a blocked ticket's question stays on its card.
+4. The pop-up opens, closes and gives focus back as before (0415). No test that passed before this change fails.
 
 ## Out of scope
-- The Log section under it (0459).
+- How the log looks and what its lines say (0459, 0460).
 - The words on speck's screen itself (0413, 0414).
 
 ## Notes
-- Asked for by the user on 2026-10-24: "a version where it has that update, but maybe like just shorter words … let's just go from there." A first try, to be tuned once it's been used.
-- Today: `renderForeman` in `templates/panel.js` draws Right now from the board's `foreman` object (0285, 0287, 0299, 0317, 0318, 0328, 0366), with `Nothing is building.`-style lines for empty sections and the server's full `why` sentences.
-- Exactly what each short line says is the builder's call, within criterion 1.
+- Asked for by the user on 2026-10-24: "when you click the LCD screen, you just see the pipeline log", because Right now showed information from 0344, "over 100 tickets … ago", that they've not used.
+- Today: `renderForeman` in `templates/panel.js` draws Right now from the board's `foreman` object (0285, 0287, 0299, 0317, 0318, 0328, 0366). Whether the server keeps sending what only Right now used is the builder's call.
+- The screen's tooltip says "what speck run is doing, what is waiting, and its log": it should no longer promise what's gone.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
