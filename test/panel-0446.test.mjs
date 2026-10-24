@@ -120,3 +120,56 @@ test('0446 AC2: after the page has been hidden and shown, events play as before'
   p.go(6100);
   shows(p, 'ask', '0363 HAS A QUESTION');
 });
+
+// When the board says each change happened: `ms` after the test's clock started.
+const AT = ms => new Date(Date.parse('2026-10-23T12:00:00Z') + ms).toISOString();
+const H8 = 8 * 3600000;
+
+test('0446 AC1: after a night asleep, a ship the board dates 10 seconds before the page came back plays', async () => {
+  const p = page([start(), board([T('0362', 'done', { finished: AT(H8 - 10000) }), T('0363', 'blocked', { blocked_at: AT(H8 - 3600000) }), T('0364', 'reviewing')], { word: 'Needs you 1' })]);
+  await p.send();
+  await p.hide();
+  p.go(H8);
+  await p.show();
+  await p.send();
+  shows(p, 'celebrating', '0362 SHIPPED'); // the latest by its date, not the question from an hour before
+  p.go(6200);
+  shows(p, 'ask', '1 NEEDS YOU');
+});
+
+test('0446 AC1: after a night asleep, a ship the board dates 2 minutes before the page came back doesn\'t play', async () => {
+  const p = page([start(), board([T('0362', 'done', { finished: AT(H8 - 120000) }), T('0363', 'building'), T('0364', 'reviewing')], { word: 'Building 2' })]);
+  await p.send();
+  await p.hide();
+  p.go(H8);
+  await p.show();
+  await p.send();
+  shows(p, 'watch', 'WATCHING 2 BUILDS');
+});
+
+test('0446 AC1: an event heard while hidden that the board dates over a minute before the page came back doesn\'t play', async () => {
+  const p = page([start(), board([T('0362', 'done', { finished: AT(0) }), T('0363', 'building'), T('0364', 'reviewing')], { word: 'Building 2' })]);
+  await p.send();
+  await p.hide();
+  p.go(90000);
+  await p.send(); // heard now, but it shipped 90 seconds ago
+  p.go(1000);
+  await p.show();
+  shows(p, 'watch', 'WATCHING 2 BUILDS');
+});
+
+test('0446 AC2: a change the first board after a night asleep dates from after the page came back plays as usual, after the one missed', async () => {
+  const p = page([start(), board([T('0362', 'done', { finished: AT(H8 - 5000) }), T('0363', 'blocked', { blocked_at: AT(H8 - 4000) }),
+    T('0364', 'approved', { auto_ship: false, approved: AT(H8 + 5000) })], { word: 'Needs you 1' })]);
+  await p.send();
+  await p.hide();
+  p.go(H8);
+  await p.show();
+  p.go(10000); // the board comes 10 seconds later
+  await p.send();
+  shows(p, 'ask', '0363 HAS A QUESTION'); // the latest missed, not the ship before it
+  p.go(6100);
+  shows(p, 'flag', '0364 IS READY TO SHIP'); // approved after the page came back
+  p.go(6100);
+  shows(p, 'ask', '1 NEEDS YOU');
+});
