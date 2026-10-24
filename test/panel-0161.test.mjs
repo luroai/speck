@@ -401,7 +401,7 @@ test('0161 AC4: in a real browser, each button, link and tab reached with Tab sh
         }
       }
       assert.ok(seen.length >= 10, `${theme}: Tab reaches the controls (${seen.length})`);
-      for (const kind of ['BUTTON.toggle', 'BUTTON.settings-open', 'SPAN.title-link', 'BUTTON.full-open', 'BUTTON.goto']) {
+      for (const kind of ['BUTTON.toggle', 'BUTTON.settings-open', 'SPAN.title', 'BUTTON.full-open', 'BUTTON.goto']) {
         assert.ok(seen.some(f => f.what.startsWith(kind)), `${theme}: Tab reaches a ${kind}: ${seen.map(f => f.what).join(' | ')}`);
       }
       for (const f of seen) {

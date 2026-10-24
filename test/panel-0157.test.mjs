@@ -55,17 +55,19 @@ test('0157 AC2: each stat is a tile with its number, then a short label, then th
   assert.equal(parts[0][1][2], '1', 'median review rounds: 1, 1, 1, 2');
 });
 
-test('0157 AC3: a card has the id, then the title that opens the full ticket, with a bug or fix tag after them (0420)', async () => {
+test('0157 AC3: a card has the id, then the title that opens the card (0466), with a bug or fix tag after them (0420)', async () => {
   const p = fakePage([STATE(), STATE()]);
   await p.settle();
   const card = cardOf(p, '0402');
   const line = byClass(p, card, 'line')[0];
-  assert.deepEqual(line.children.map(n => [n.className, n.textContent]), [['id', '0402'], ['title-link', LONGEST], ['tags tag-row', 'bug']]);
+  assert.deepEqual(line.children.map(n => [n.className, n.textContent]), [['id', '0402'], ['title', LONGEST], ['tags tag-row', 'bug']]);
   assert.deepEqual(byClass(p, card, 'tag').map(n => n.textContent), ['bug'], 'the type tag');
   assert.ok(!byClass(p, cardOf(p, '0401'), 'tag').length, 'no tag row without a type');
   p.press(line.children[1]);
   await p.settle();
-  assert.equal(p.byId('full-ticket').hidden, false, 'the title opens the full ticket');
+  assert.match(cardOf(p, '0402').className, /\bopen\b/, 'the title opens the card in place (0466)');
+  p.press(p.all(cardOf(p, '0402')).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
+  assert.equal(p.byId('full-ticket').hidden, false, 'and its Full ticket opens the full ticket');
   assert.ok(p.byId('full-ticket').textContent.includes('0402'));
 });
 
@@ -80,7 +82,7 @@ test('0157 AC4: under the title, the ship time: the time alone today, the day be
   assert.deepEqual(when('0404'), [], 'no ship time: no line');
   await openDetails(p);
   const kids = cardOf(p, '0401').children.map(n => n.className);
-  assert.deepEqual(kids, ['name', 'steps', 'full-cell'], 'title, then its steps and facts (0464), then Review pack');
+  assert.deepEqual(kids, ['name', 'steps', 'full-cell'], 'title, then its steps and facts (0464), then Full ticket and Review pack (0466)');
 });
 
 test('0157 AC4: the figures are label and value pairs, missing ones a dash (0464), big token counts shortened with the exact number as a tooltip', async () => {
@@ -101,7 +103,7 @@ test('0157 AC4: the Review pack button is the card\'s last part and opens its pa
   await p.settle();
   await openDetails(p); // 0162: Review pack is under Details
   const card = cardOf(p, '0401'), last = card.children.at(-1);
-  const b = p.all(last).find(n => n.tagName === 'button');
+  const b = p.all(last).filter(n => n.tagName === 'button').at(-1); // 0466: after Full ticket
   assert.equal(b.textContent, 'Review pack');
   p.press(b);
   await p.settle();
@@ -155,8 +157,8 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-// 0162: shows the three stats More stats holds, and each card's Details.
-const OPEN_ALL = `(() => { document.getElementById('more-stats').click(); for (const d of document.querySelectorAll('#shipped .details')) d.click(); })()`;
+// 0162: shows the three stats More stats holds, and opens each card (0466: by its title).
+const OPEN_ALL = `(() => { document.getElementById('more-stats').click(); for (const d of document.querySelectorAll('#shipped .line .title')) d.click(); })()`;
 // The stats tiles: where each sits, its size, how many lines its label takes, and its count's size and colour.
 const TILES = `[...document.querySelectorAll('section.shipped .stat')].map(n => {
   const r = n.getBoundingClientRect(), label = n.querySelector('.label'), ls = getComputedStyle(label), count = n.querySelector('.count');
@@ -204,7 +206,7 @@ const CARDS = `(() => {
   return cards.map((n, i) => {
     const s = getComputedStyle(n), r = n.getBoundingClientRect(), next = cards[i + 1];
     const side = k => ({ width: parseFloat(s['border' + k + 'Width']), style: s['border' + k + 'Style'], color: s['border' + k + 'Color'], contrast: contrast(s['border' + k + 'Color'], back) });
-    const idN = n.querySelector('.line .id'), t = n.querySelector('.line .title-link'), range = document.createRange();
+    const idN = n.querySelector('.line .id'), t = n.querySelector('.line .title'), range = document.createRange();
     range.selectNodeContents(t);
     const lines = [];
     for (const q of range.getClientRects()) {
@@ -215,7 +217,7 @@ const CARDS = `(() => {
     const figs = n.querySelector('.facts'); // 0464: the figures are in the facts table
     return { id: idN.textContent, top: side('Top'), right: side('Right'), bottom: side('Bottom'), left: side('Left'), gap: next ? next.getBoundingClientRect().top - r.bottom : null,
       idSize: getComputedStyle(idN).fontSize, titleSize: getComputedStyle(t).fontSize, idRect: rect(idN), lines, when: rect(n.querySelector('.when')),
-      figs: rect(figs), figsDisplay: figs && getComputedStyle(figs).display, figCells: figs ? [...figs.children].map(rect) : [], pack: rect(n.querySelector('.full-cell .full-open')) };
+      figs: rect(figs), figsDisplay: figs && getComputedStyle(figs).display, figCells: figs ? [...figs.children].map(rect) : [], pack: rect(n.querySelector('.full-cell .full-open:last-child')) }; // Review pack, after Full ticket (0466)
   });
 })()`;
 

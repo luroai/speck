@@ -24,7 +24,7 @@ function livePage(s) {
   const p = fakePage([], {
     fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: 'built', truncated: false } : clone(box.state)) }),
   }, { made: focusable });
-  for (const id of ['full-ticket', 'shaping-section', 'build-section']) focusable(p.byId(id));
+  for (const id of ['full-ticket', 'shaping-section', 'build-section', 'shipped-section']) focusable(p.byId(id));
   p.set = next => { box.state = next; };
   p.focused = () => focused;
   return p;
@@ -144,16 +144,24 @@ test('0326 AC3: the Plan and Build sections can take the focus', () => {
   assert.match(html, /<section id="build-section" [^>]*tabindex="-1"/);
 });
 
-test('0326 AC4: opening from a Shipped title and closing moves the focus nowhere new', async () => {
+// 0466: a shipped ticket opens from its card's Full ticket button too, so the focus goes back to it, as it does in Plan and Build.
+const openFromShipped = async p => {
+  const row = () => p.byId('shipped').children.find(r => p.all(r).some(n => n.className === 'id' && n._text === '0005'));
+  if (!/\bopen\b/.test(row().className)) p.press(p.all(row()).find(n => n.className === 'title'));
+  await p.settle();
+  click(fullOf(p, row()));
+  return row;
+};
+
+test('0326 AC4 (0466): opening from a Shipped card\'s Full ticket and closing puts the focus back on that button', async () => {
   const p = livePage(board());
   await p.settle();
-  const shipRow = p.byId('shipped').children.find(r => p.all(r).some(n => n.className === 'id' && n._text === '0005'));
-  click(p.all(shipRow).find(n => n.className === 'title-link'));
+  const row = await openFromShipped(p);
   assert.ok(paneOpen(p));
   assert.equal(p.focused(), pane(p), 'the pane takes the focus, as before');
   p.key('Escape');
   assert.ok(!paneOpen(p));
-  assert.equal(p.focused(), pane(p), 'nothing else takes it');
+  assert.equal(p.focused(), fullOf(p, row()), 'back on the Shipped card\'s Full ticket button');
 });
 
 test('0326 AC4: a Full ticket opening followed by another opening clears the first, and a second Escape does nothing more', async () => {
@@ -163,10 +171,10 @@ test('0326 AC4: a Full ticket opening followed by another opening clears the fir
   p.key('Escape');
   const b = fullOf(p, itemOf(p, '0001'));
   assert.equal(p.focused(), b);
-  const shipRow = p.byId('shipped').children.find(r => p.all(r).some(n => n.className === 'id' && n._text === '0005'));
-  click(p.all(shipRow).find(n => n.className === 'title-link'));
+  const row = await openFromShipped(p);
   p.key('Escape');
-  assert.equal(p.focused(), pane(p), 'the Shipped opening doesn\'t send it back to the Plan button');
+  assert.equal(p.focused(), fullOf(p, row()), 'the Shipped opening sends it back to its own button, not the Plan one');
+  pane(p).focus();
   p.key('Escape');
   assert.equal(p.focused(), pane(p), 'and an Escape with nothing open moves nothing');
 });

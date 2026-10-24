@@ -64,7 +64,7 @@ test('0457 AC1 AC2 AC3 AC4: on a phone at a pixel ratio of 3, in both looks, no 
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 900, deviceScaleFactor: DPR, mobile: true });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`document.readyState === 'complete' && !!document.querySelector('#shipped .details')`, 'the panel');
+    await b.until(`document.readyState === 'complete' && !!document.querySelector('#shipped .line .title')`, 'the panel');
     await b.js(`document.fonts.ready.then(() => true)`);
     for (const look of ['light', 'dark']) {
       await b.js(`document.documentElement.dataset.theme = '${look}', true`);

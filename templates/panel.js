@@ -130,7 +130,7 @@ const open = new Set(); // ids of the open tickets
 const openIdeas = new Set(); // paths of the open ideas
 const openInbox = new Set(); // paths of the open inbox notes
 const openQueue = new Set(); // ids of the open queue tickets
-const openShipped = new Set(); // ids of the shipped cards whose Details are open (0162)
+const openShipped = new Set(); // ids of the shipped cards that are open (0162, 0466)
 let moreStats = false; // whether Shipped shows all six stats (0162)
 const logs = new Map(); // id → the log shown for an open queue ticket ({ text, truncated, build, at }), or { failed: true } before any arrived
 const logEarly = new Map(); // id → the updates its stream sent while its log was still being asked for (0189)
@@ -309,23 +309,25 @@ function tokenCount(n) {
   if (short !== null) v.title = exact;
   return v;
 }
-// 0137: a Shipped row's title, which opens the full ticket as Full ticket does.
-// 0141: not a link, so no browser can follow it to another address or reload the page. Tab, Enter and Space work as on a button.
-function fullLink(t) {
-  const a = el('span', 'title-link', (t.title || '').trim() || `Ticket ${t.id}`); // a blank title would leave nothing to click
+// 0466: a Shipped card's title, which opens and closes the card as the rest of its top row does. Tab, Enter and Space
+// work as on a button (0141), and the focus stays on it once the card is drawn again.
+function shippedTitle(t, isOpen) {
+  const a = el('span', 'title', (t.title || '').trim() || `Ticket ${t.id}`); // a blank title would leave nothing to press
   a.tabIndex = 0;
   a.setAttribute('role', 'button');
-  a.addEventListener('click', e => {
-    e.stopPropagation();
-    openFull(t);
-  });
-  a.addEventListener('keydown', e => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault(); // Space would scroll the page
-    e.stopPropagation();
-    a.click(); // a click, as a button's keys make one, so an open priority menu only closes
-  });
+  a.setAttribute('aria-expanded', String(isOpen));
+  a.shippedOf = String(t.id);
+  a.addEventListener('keydown', pressWithKeys);
   return a;
+}
+// Opens or closes a shipped card. When its title had the focus, the title drawn in its place takes it.
+function toggleShipped(id) {
+  const had = document.activeElement && document.activeElement.shippedOf === id;
+  flip(openShipped, id);
+  if (!had) return;
+  const find = n => { if (n.shippedOf === id) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
+  const title = find($('shipped'));
+  if (title && title.focus) title.focus({ preventScroll: true });
 }
 function openFull(t, from = null) {
   fullId = String(t.id);
@@ -754,13 +756,15 @@ const paneCounter = () => (paneFrom === 'queue' && paneTicket.inFlight && !packO
 function closeFull() { fullId = null; packOf = null; focusBack = true; render(); } // 0362: the pop-up goes with it (renderFull)
 // 0326: once the pane has closed and the board is drawn, the focus goes back to the Full ticket button that opened it,
 // the one drawn in its place since, or, when its ticket has none on the board now, to the top of the list it was in.
+// 0466: a shipped one's, or the Shipped lane.
 function returnFocus() {
   const from = fullFrom;
   focusBack = false;
   fullFrom = null;
   if (!from) return;
   const find = n => { if (n.fullOf === from.id) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
-  const to = find($(from.list)) || find($(from.list === 'queue' ? 'shaping' : 'queue')) || $(from.list === 'queue' ? 'build-section' : 'shaping-section');
+  const to = from.list === 'shipped' ? find($('shipped')) || $('shipped-section') // 0466
+    : find($(from.list)) || find($(from.list === 'queue' ? 'shaping' : 'queue')) || $(from.list === 'queue' ? 'build-section' : 'shaping-section');
   openTab(laneOf(to)); // 0410: the tab holding it opens first
   if (to.focus) to.focus({ preventScroll: true }); // 0441: the list stays where it was, as 0060 asks, even with the button out of view
 }
@@ -1701,9 +1705,9 @@ function render() {
   $('queue-n').hidden = !m.queue.length;
 
   // 0157: each shipped ticket is a card. 0420: its id and title, with a bug or fix tag after the title, then one line:
-  // when it shipped (the time, or the day before today) and (0162) its figures, separated by " · ", and a Details button.
-  // 0464: open, the line gives way to the step track and facts table an open ticket in flight has, every step done, and
-  // Review pack and Details under them. The shipped time turns from the time alone to date and time after midnight, so
+  // when it shipped (the time, or the day before today) and (0162) its figures, separated by " · ".
+  // 0464: open, the line gives way to the step track and facts table an open ticket in flight has, every step done.
+  // 0466: its top row opens and closes it, as a Build ticket's does, and open, Full ticket and Review pack are under it. The shipped time turns from the time alone to date and time after midnight, so
   // it is put right on a kept card.
   // In the line, a ticket shipped before today shows its day alone ("20 Oct"), so the line fits a 420 px pane; its
   // tooltip says when it shipped, with the time, and its figures.
@@ -1714,20 +1718,23 @@ function render() {
     const id = String(t.id), isOpen = openShipped.has(id);
     const line = [t.minutes !== null ? `${t.minutes} min` : null, t.roundCount > 0 ? plural(t.roundCount, 'round') : null,
       t.builderCost !== null ? dollars(t.builderCost) : null].filter(Boolean).join(' · ');
-    const details = el('button', 'full-open details', 'Details');
-    details.type = 'button';
-    details.setAttribute('aria-expanded', String(isOpen));
-    details.addEventListener('click', e => { e.stopPropagation(); flip(openShipped, id); });
     const tags = [typeTag(t), taskTag(t)].filter(Boolean);
-    const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), titled(fullLink(t)), tags.length ? el('span', 'tags tag-row', null, ...tags) : null));
+    const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), titled(shippedTitle(t, isOpen)), tags.length ? el('span', 'tags tag-row', null, ...tags) : null));
     const parts = [t.end !== null ? el('span', 'when', day(t.when)) : null, line ? el('span', 'figline', line) : null].filter(Boolean);
     // 0204: merged, but the push of the base branch failed: what speck ship said, which says how to fix it.
     const unpushed = t.unpushed ? el('td', 'unpushed', null, el('div', 'unpushed-head', 'Merged, but not pushed'), t.unpushed_message ? el('div', 'unpushed-said', t.unpushed_message) : null) : null;
-    if (isOpen) return el('tr', 'open', null, name, el('td', 'steps', null, trackOf({ steps: shippedSteps(t) }), shippedFacts(t, day)), unpushed,
-      el('td', 'full-cell', null, packButton(t), details));
-    const meta = parts.length ? detailsLine('meta', parts) : null;
+    const meta = !isOpen && parts.length ? detailsLine('meta', parts) : null;
     if (meta) meta.title = metaTip(t, line);
-    return el('tr', null, null, name, el('td', 'sum', null, meta, details), unpushed);
+    const under = isOpen ? el('td', 'full-cell', null, fullButton(t, 'shipped'), packButton(t)) : null;
+    const tr = isOpen ? el('tr', 'open', null, name, el('td', 'steps', null, trackOf({ steps: shippedSteps(t) }), shippedFacts(t, day)), unpushed, under)
+      : el('tr', null, null, name, meta ? el('td', 'sum', null, meta) : null, unpushed);
+    // Only the top row opens and closes it, not the warning or buttons under it, and a click that ends selecting text in
+    // it leaves it as it is, as in Build.
+    tr.addEventListener('click', e => {
+      if ([unpushed, under].some(n => n && within(e.target, n))) return;
+      if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleShipped(id);
+    });
+    return tr;
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => {
     const meta = child(child(tr, 'sum') || tr, 'meta'), w = meta && child(meta, 'when');
     if (w) { setText(w, day(t.when)); meta.title = metaTip(t, child(meta, 'figline')?.textContent); }

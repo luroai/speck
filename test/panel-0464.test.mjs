@@ -23,16 +23,16 @@ const page = (states = [board()]) => fakePage(states, { Date: stoppedClock(NOW) 
 
 const cardOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const kids = n => n.children.map(c => c.className);
-const detailsOf = (p, id) => p.all(cardOf(p, id)).find(n => n.tagName === 'button' && /\bdetails\b/.test(n.className || ''));
+const titleOf = (p, id) => p.all(cardOf(p, id)).find(n => n.className === 'title'); // 0466: it opens the card, where Details did
 const stepsOf = (p, id) => cardOf(p, id).children.find(c => c.className === 'steps');
 const trackOf = (p, id) => stepsOf(p, id).children[0];
 const factsOf = (p, id) => stepsOf(p, id).children[1];
 const cells = f => f.children.map(c => [c.children[0].textContent, c.children[1].textContent]);
 async function open(p, ...ids) {
-  for (const id of ids) { p.press(detailsOf(p, id)); await p.settle(); }
+  for (const id of ids) { p.press(titleOf(p, id)); await p.settle(); }
 }
 
-test('0464 AC1: Details shows, under the title, the five steps all done, Review naming its last round, then the table', async () => {
+test('0464 AC1: opening the card shows, under the title, the five steps all done, Review naming its last round, then the table', async () => {
   const p = page();
   await p.settle();
   await open(p, '0901', '0902', '0903');
@@ -92,7 +92,7 @@ test('0464 AC2: a kept open card\'s Shipped cell still turns from the time alone
   assert.equal(factsOf(p, '0901').children[0].children[1].title, '23 Oct, 11:50');
 });
 
-test('0464 AC3: the labelled figures are gone, Review pack is under the table, Details closes it, and a closed card keeps its line', async () => {
+test('0464 AC3: the labelled figures are gone, Review pack is under the table, the title closes it (0466), and a closed card keeps its line', async () => {
   const p = page();
   await p.settle();
   assert.deepEqual(kids(cardOf(p, '0901')), ['name', 'sum'], 'closed: its title and its one line');
@@ -102,14 +102,14 @@ test('0464 AC3: the labelled figures are gone, Review pack is under the table, D
   assert.ok(!p.all(c).some(n => /^(figs|fig|meta)$/.test(n.className || '')), 'no labelled figures, and no line');
   const bottom = c.children[2];
   assert.equal(bottom.className, 'full-cell');
-  assert.deepEqual(bottom.children.map(n => n.textContent), ['Review pack', 'Details'], 'Review pack under the table, then Details');
-  assert.equal(detailsOf(p, '0901').attrs['aria-expanded'], 'true');
+  assert.deepEqual(bottom.children.map(n => n.textContent), ['Full ticket', 'Review pack'], 'Review pack under the table, after Full ticket (0466)');
+  assert.equal(titleOf(p, '0901').attrs['aria-expanded'], 'true');
   assert.deepEqual(kids(cardOf(p, '0902')), ['name', 'sum'], 'only the card tapped opens');
   await open(p, '0905');
   assert.deepEqual(kids(cardOf(p, '0905')), ['name', 'steps', 'unpushed', 'full-cell'], 'one not pushed says so under its table, above Review pack');
-  p.press(detailsOf(p, '0901'));
+  p.press(titleOf(p, '0901'));
   await p.settle();
-  assert.deepEqual(kids(cardOf(p, '0901')), ['name', 'sum'], 'Details again closes it');
+  assert.deepEqual(kids(cardOf(p, '0901')), ['name', 'sum'], 'its title again closes it');
 });
 
 test('0464 AC4: a screen reader reads each cell as its label, then its value', async () => {
@@ -141,9 +141,9 @@ const MEASURE = `(async () => {
   return { want, grey, cards: [...document.querySelectorAll('#shipped tr.open')].map(c => {
     const f = c.querySelector('.facts'), t = c.querySelector('.track'), title = c.querySelector('.line'), pack = c.querySelector('.full-cell');
     const box = f.getBoundingClientRect(), card = c.getBoundingClientRect();
-    const row = pack.getBoundingClientRect(), last = pack.lastElementChild.getBoundingClientRect();
+    const row = pack.getBoundingClientRect(), first = pack.firstElementChild.getBoundingClientRect();
     return { id: c.querySelector('.id').textContent, box: [box.left, box.right, box.top, box.bottom], card: [card.left, card.right], scroll: [f.scrollWidth, f.clientWidth],
-      row: [row.left, row.right], details: [pack.lastElementChild.textContent, last.right],
+      row: [row.left, row.right], first: [pack.firstElementChild.textContent, first.left],
       order: [title.getBoundingClientRect().bottom, t.getBoundingClientRect().top, t.getBoundingClientRect().bottom, box.top, box.bottom, pack.getBoundingClientRect().top],
       steps: [...t.children].map(s => getComputedStyle(s).borderTopColor),
       cells: [...f.children].map(n => { const b = n.getBoundingClientRect(), l = n.children[0], v = n.children[1], lb = l.getBoundingClientRect(), vb = v.getBoundingClientRect();
@@ -167,7 +167,7 @@ test('0464 AC1 and AC3: in a real browser at 320 and 390 px, an open shipped car
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
       await b.until(`document.querySelectorAll('#shipped tr').length === ${TICKETS.length}`, 'the panel');
       await b.js(openLane('shipped'));
-      await b.js(`[...document.querySelectorAll('#shipped .details')].forEach(d => d.click()), true`);
+      await b.js(`[...document.querySelectorAll('#shipped .line .title')].forEach(d => d.click()), true`); // 0466
       await b.until(`document.querySelectorAll('#shipped tr.open').length === ${TICKETS.length}`, 'every card open');
       const { want, grey, cards } = await b.js(MEASURE);
       assert.equal(new Set(want).size, 5, 'five step colours');
@@ -178,7 +178,7 @@ test('0464 AC1 and AC3: in a real browser at 320 and 390 px, an open shipped car
         for (let i = 1; i < c.order.length; i++) assert.ok(c.order[i] >= c.order[i - 1] - 0.5, `${where}: title, track, table, then Review pack, in order (${c.order})`);
         assert.ok(c.box[0] >= c.card[0] && c.box[1] <= c.card[1], `${where}: inside its card`);
         assert.ok(Math.abs(c.row[0] - c.box[0]) < 0.5 && Math.abs(c.row[1] - c.box[1]) < 0.5, `${where}: Review pack's row as wide as the table (${c.row})`);
-        assert.ok(c.details[0] === 'Details' && Math.abs(c.details[1] - c.row[1]) < 0.5, `${where}: Details at the end of that row`);
+        assert.ok(c.first[0] === 'Full ticket' && Math.abs(c.first[1] - c.row[0]) < 0.5, `${where}: Full ticket at the start of that row (0466)`);
         assert.ok(c.scroll[0] <= c.scroll[1] + 0.5, `${where}: nothing past the table`);
         const [first] = c.cells;
         for (const [i, cell] of c.cells.entries()) {

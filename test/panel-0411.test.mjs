@@ -58,7 +58,7 @@ test('0411 AC2: each of the ten opens its full ticket with its whole text, and i
   await openDetails(p);
   for (const id of want) {
     const row = shippedRows(p).find(r => r.textContent.includes(id));
-    p.press(p.all(row).find(n => /\btitle-link\b/.test(n.className || '')));
+    p.press(p.all(row).find(n => n.tagName === 'button' && n.textContent === 'Full ticket')); // 0466: in its open card
     await p.settle();
     const text = p.byId('full-ticket').textContent, t = b.tickets.find(x => x.id === id);
     assert.ok(text.includes(t.notes.trim()) && text.includes(t.problem.trim()), `${id}: the full ticket has its whole notes and problem`);
