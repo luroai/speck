@@ -99,12 +99,13 @@ function shippedAt(ms, now) {
   const d = new Date(ms), pad = n => String(n).padStart(2, '0'), hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   return sameDay(d, new Date(now)) ? hm : `${d.getDate()} ${MONTHS[d.getMonth()]}, ${hm}`;
 }
-// 0449: how long ago a ticket shipped, for an empty Build lane: "12 min ago" within the hour, "today 08:10" earlier
-// today, or its day ("22 Oct") before today.
+// 0449: how long ago a ticket shipped, for an empty Build lane: "12 min ago" within the hour today, "today 08:10"
+// earlier today, or its day ("22 Oct") before today, however few minutes ago that was.
 function shippedAgo(ms, now) {
   const mins = Math.floor((now - ms) / 60000), d = new Date(ms), pad = n => String(n).padStart(2, '0');
+  if (!sameDay(d, new Date(now))) return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
   if (mins < 60) return mins < 1 ? 'just now' : `${mins} min ago`;
-  return sameDay(d, new Date(now)) ? `today ${pad(d.getHours())}:${pad(d.getMinutes())}` : `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `today ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 // Links through after: among the tickets that aren't done or cancelled. For each id: the ones that list it in after:
 // (unlocks, in JSON order, each once) and every ticket linked to it in either direction, through others too (linked).

@@ -65,6 +65,13 @@ test('0449 AC2: earlier today it gives the time, and before today the date', asy
   assert.equal(lines(q)[2][1], '0 shipped today');
 });
 
+test('0449 AC2: a ticket shipped just before midnight shows its date once the day has changed', async () => {
+  const p = pageOf(STATE([shippedAt('0432', at(23, 58, 23))]), new Date(2026, 9, 24, 0, 10, 0).getTime());
+  await p.settle();
+  assert.equal(lines(p)[1][1], 'Last shipped 0432 · 23 Oct');
+  assert.equal(lines(p)[2][1], '0 shipped today');
+});
+
 test('0449 AC2: with nothing shipped yet, it leaves those lines out', async () => {
   for (const tickets of [[], [T('0403', 'done')]]) { // a done ticket with no shipped time is no help either
     const p = pageOf(STATE(tickets));
