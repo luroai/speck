@@ -40,6 +40,7 @@ speck's docs describe speck as the one watching the pipeline, with the new setti
 - Asked for by the user on 2026-10-24: "we need to remove the concept of a foreman now, as we have a single speck watching." The user agreed to call it speck, the settings `watch`, `watch_agent`, `watch_model` and `watch_effort`, and the Settings group Watching.
 - Today: README's Foreman and Settings bullets (lines 130 to 165), the brief's `speck panel`, `speck config set`, `speck foreman` and `speck status` rows, `skills/speck-setup/SKILL.md` (its Foreman agent questions) and the agent's skill, moved to `skills/speck-watch/SKILL.md` by 0486.
 - Waits for 0487, which names the settings this describes, and through it 0485 and 0486.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
