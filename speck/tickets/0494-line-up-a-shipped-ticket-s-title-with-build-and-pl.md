@@ -39,6 +39,7 @@ A collapsed shipped ticket's title starts as far from the top of its card as a B
 - From the user's phone screenshot on 2026-10-24. Measured on the live panel with a touch screen at 390 px: the shipped title's box is 44 px tall, with its text centred in it.
 - Shipped cards are styled by `#shipped tr` and `#shipped .line .title` in `templates/panel-cards.css`.
 - Waits for nothing: no open ticket changes that file. 0452 waits for this one.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
