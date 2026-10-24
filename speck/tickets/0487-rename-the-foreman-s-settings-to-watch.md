@@ -45,7 +45,11 @@ The settings are called `watch`, `watch_agent`, `watch_model` and `watch_effort`
 - Self-check: no changes. The readers of these settings (fixingOf, foremanAgentOf, foremanArgv) take a config object with either name, the new one winning, so a config read some other way than loadConfig keeps working.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The settings for what speck does when work stops are now called `watch`, `watch_agent`, `watch_model` and `watch_effort`, in place of the old Foreman names. Settings shows the new names in its Watching group, `speck config` lists them, and a new project's config file has them.
+
+A config that still uses the old names keeps working exactly as before: speck reads them as the new ones, and if a file has both, the new name wins. Nothing rewrites your file until you change one of these settings, and then it's saved under the new name and the old line goes.
+
+To see it, open Settings and look at the Watching group, or run `speck config show`. Worth knowing: the README, the brief and the skills still use the old names until 0488 updates them.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +59,9 @@ The settings are called `watch`, `watch_agent`, `watch_model` and `watch_effort`
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up: `speck status` still says "Fixing on" and "Fixing: …" for `watch: fix` (inbox: speck/ideas/2026-10-24-name-watch-in-speck-status-s-fixing-line.md).
+- Follow-up, skipped as a duplicate: the speck-watch skill's description still names `foreman_fixing` (covered by 0488, which updates every skill).
+- Known limit: internal names (`by: 'foreman'`, the settings API's `foreman_models`, the panel's `#foreman` element) keep the old word, as none is a setting's name.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +130,76 @@ The settings are called `watch`, `watch_agent`, `watch_model` and `watch_effort`
     ],
     "escalation_question": "",
     "summary": "The rename and backwards compatibility appear to work, and the reported tests pass. One existing test was accidentally weakened during migration: it now compares default model lists instead of checking agent switching. Fix that test before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8770184c20c262ab9bc9dc30e7487b554a7e6086",
+    "session": "continued",
+    "thread_id": "01a16f6f-febc-7ea2-83b2-bf94a6449e24",
+    "builder_response": "- Tests run: test/watch-settings-0487.test.mjs test/settings-models-0369.test.mjs test/settings-builder-effort-0402.test.mjs test/agents-0398.test.mjs test/providers-0401.test.mjs test/settings-agents-0404.test.mjs test/settings-agents-0399.test.mjs test/settings-provider-0393.test.mjs test/settings-agents-0408.test.mjs test/settings-roles-0403.test.mjs test/speck-name-0485.test.mjs test/settings-roles-0400.test.mjs test/watch-0486.test.mjs (plus the repo checks). 228 pass, 0 fail.\n- F1: fixed. test/settings-models-0369.test.mjs: the Watching fixture row and the changeTo call use watch_agent, and the AC3 test now also asserts the listed watch_model slugs are the chosen agent's own models (read(to)). Checked it bites: with the changeTo call put back to 'foreman', that test fails. Also moved the stale 'foreman' fixture rows in test/settings-builder-effort-0402.test.mjs and test/support/your-agents.mjs to watch_agent. A sweep of the tests for the quoted 'foreman' finds no other setting-key use: the rest are the panel's #foreman element, the speck foreman command and by: 'foreman'.\n",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 472731,
+      "cached_input_tokens": 384896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1626,
+      "reasoning_output_tokens": 122
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T19:44:05.618Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "core.mjs loadConfig and machine.mjs machineConfig normalise both configuration layers. foremanAgentOf, foremanArgv and fixingOf read the new names with existing defaults. All 0487 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "core.mjs renameOld and setting prefer new names; config.mjs cmdConfig and dropOldNames translate old-name writes and remove old lines. All 0487 AC2 compatibility, precedence and save tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "settings.mjs and panel-settings.js show and save the new keys. Passing 0487 AC3 and role tests cover models and effort. The corrected 0369 AC3 test now switches watch_agent and checks the chosen agent's actual model slugs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/config.yml contains the new names and comments; setting-related messages use watch names. All 0487 AC4 tests passed. Round 1 reported 1710 passes without failures; round 2 reports 228 passes without failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/settings-models-0369.test.mjs",
+        "issue": "The agent-switching test previously used the obsolete setting key and could pass by comparing default model lists.",
+        "suggested_fix": "Completed: the fixture and changeTo call use watch_agent, and the test asserts the selected agent's model slugs. Stale fixtures in settings-builder-effort-0402.test.mjs and support/your-agents.mjs were also corrected.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The settings now use watch names while existing configurations remain compatible. The weakened test has been corrected, and all reported checks pass. The change is ready for the owner's merge decision."
   }
 }
 ```
