@@ -103,6 +103,9 @@ test('0153 AC3: an auto-ship that ended without shipping says so, with speck shi
   assert.equal(m.queue[0].shipping, false);
   const p = page(state);
   await p.settle();
+  // 0462: the current step and the sentence are in a closed card's line; an open one has its facts in a table
+  assert.match(stageOf(row(p)).className, /\bbad\b/);
+  assert.equal(sayOf(row(p)).className, 'say bad', 'it needs you, in its sentence (0416: with no badge)');
   await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const r = row(p), all = texts(p, r);
   const at = l => all.indexOf(l);
@@ -111,8 +114,6 @@ test('0153 AC3: an auto-ship that ended without shipping says so, with speck shi
   assert.ok(at(SHIP_IT) > at(MESSAGE), 'then how to ship it');
   assert.ok(!all.includes('Build finished without shipping'), 'the auto-ship label stands in for the build\'s');
   assert.ok(p.all(r).some(isRed), 'the ship failed, so it is red');
-  assert.match(stageOf(r).className, /\bbad\b/);
-  assert.equal(sayOf(r).className, 'say bad', 'it needs you, in its sentence (0416: with no badge)');
 });
 
 test('0153 AC3: with no message (a killed auto-ship), it says so without one', async () => {

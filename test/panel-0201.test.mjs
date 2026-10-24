@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, round, panelModel, deferred } from './support/panel.mjs';
+import { T, fakePage, queueRows, round, panelModel, deferred, nowOf } from './support/panel.mjs';
 
 const ago = (s, now = Date.now()) => new Date(now - s * 1000).toISOString();
 const PACK = '## 0805 · Ticket 0805\n**Verdict:** ✅ Approved by reviewer\n';
@@ -83,7 +83,7 @@ test('0201 AC3: a ship from the review pack\'s Ship button the server hasn\'t an
   p.press(p.all(p.byId('full-ticket')).find(n => n.tagName === 'button' && n.textContent === 'Ship'));
   await p.settle();
   const row = rowOf(p, '0805');
-  assert.equal(lineOf(row), 'Shipping');
+  assert.equal(nowOf(row).textContent, 'Shipping', 'in the open card\'s Now cell (0462)');
   assert.equal(count(row.textContent, /Shipping/g), 1, row.textContent);
   assert.ok(!p.all(row).some(n => /^stage\b/.test(n.className || '')), 'no step name');
   answer.resolve({ ok: true, status: 200, json: async () => ({ ok: true, message: 'Shipped.' }) });

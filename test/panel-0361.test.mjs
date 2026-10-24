@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, round, fakePage, queueRows, exitOf, findText } from './support/panel.mjs';
+import { T, round, fakePage, queueRows, exitOf, findText, nowOf } from './support/panel.mjs';
 import { PACK, DOCS, pane, docButtons } from './support/documents.mjs';
 
 const MESSAGE = 'line one of the log\nline two of the log';
@@ -47,7 +47,9 @@ test('0361 AC1: open, it still has no exit line or log box', async () => {
   const p = await opened([state(finished()), LOG]);
   const row = rowOf(p, '0001');
   assert.match(row.className, /\bopen\b/);
-  assert.ok(say(row).textContent.startsWith('Finished · read the document'));
+  // 0462: open, its Now cell says it in short words, with the sentence as their tooltip
+  assert.equal(nowOf(row).textContent, 'Read the document');
+  assert.equal(nowOf(row).title, 'Finished · read the document');
   noExit(p, row);
 });
 

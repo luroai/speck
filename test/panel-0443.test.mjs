@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, round, fakePage, queueRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, round, fakePage, queueRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, nowOf } from './support/panel.mjs';
 
 // ---------- 0443: a closed Build ticket's long status in short words, so its stage and time fit on a phone ----------
 
@@ -77,6 +77,7 @@ test('0443 AC2: the full sentence is the short words\' tooltip and accessible na
   }
 });
 
+// 0462: open, its facts' Now cell says it in short words too, with the sentence as their tooltip
 test('0443 AC2: an open ticket shows the full sentence', async () => {
   for (const on of [true, false]) {
     const p = page(on);
@@ -85,9 +86,9 @@ test('0443 AC2: an open ticket shows the full sentence', async () => {
       click(card(p, c.id).children[0]);
       await p.settle();
       assert.match(card(p, c.id).className, /\bopen\b/);
-      const say = sayOf(p, card(p, c.id));
-      assert.equal(say.textContent, c.sentence, `${c.id}: open, the sentence`);
-      assert.equal(say.attrs?.['aria-label'], undefined, `${c.id}: named by its own words`);
+      const now = nowOf(card(p, c.id));
+      assert.equal(now.textContent, c.short, `${c.id}: open, the short words`);
+      assert.equal(now.title, c.sentence, `${c.id}: open, the sentence as their tooltip`);
       // and closed again, the short words
       click(card(p, c.id).children[0]);
       await p.settle();
