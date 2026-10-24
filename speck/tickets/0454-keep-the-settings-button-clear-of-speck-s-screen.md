@@ -1,7 +1,7 @@
 ---
 id: "0454"
 title: "Keep the Settings button clear of speck's screen"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0454 · Keep the Settings button clear of speck's screen
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 On a phone, the Settings button in the screen frame's title row touches the top of speck's screen. On a touch screen the button grows to 44 px and is pulled out of the row with negative margins, so its bottom edge sits on the screen.
