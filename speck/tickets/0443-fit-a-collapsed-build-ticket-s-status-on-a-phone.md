@@ -1,7 +1,7 @@
 ---
 id: "0443"
 title: "Fit a collapsed Build ticket's status on a phone"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-fit-a-closed-card-s-stage-and-time-on-a-pho
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T07:32:32.904Z"
+approved: "2026-10-24T07:45:27.095Z"
 
 ---
 # 0443 · Fit a collapsed Build ticket's status on a phone
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0434, a collapsed Build ticket's status line is one line, cut off with an ellipsis. On a phone, a long status such as `Approved · waiting for you to ship it` or `Blocked · the Foreman will take its recommendation` pushes the stage and time out of sight.
@@ -49,9 +50,14 @@ A closed ticket in the Build lane now says what it's waiting for in a few words,
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 151,638
+- Elapsed since build started: 13 min
+- Changed lines: 30 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - On a phone, a closed card with a long status line still cuts off a trailing bug, fix or document tag with the line's ellipsis, sometimes to just `…` (AC3 names only the words, stage and time). Saved to the inbox: speck/ideas/2026-10-24-keep-a-closed-card-s-bug-or-document-tag-whole-on-a-phone.md.
