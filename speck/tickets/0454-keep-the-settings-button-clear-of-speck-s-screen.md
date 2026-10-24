@@ -1,7 +1,7 @@
 ---
 id: "0454"
 title: "Keep the Settings button clear of speck's screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0453"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T09:34:10.913Z"
+approved: "2026-10-24T09:41:25.029Z"
 
 ---
 # 0454 · Keep the Settings button clear of speck's screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On a phone, the Settings button in the screen frame's title row touches the top of speck's screen. On a touch screen the button grows to 44 px and is pulled out of the row with negative margins, so its bottom edge sits on the screen.
@@ -49,9 +50,14 @@ On a phone, the Settings button at the top right of speck's screen frame no long
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 126,064
+- Elapsed since build started: 7 min
+- Changed lines: 3 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. On a touch screen the button still reaches 2 px past the screen's right edge (its -2px right margin, kept as the frame's alignment is 0438's): only a note on a known limit.
 
