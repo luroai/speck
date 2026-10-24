@@ -1,7 +1,7 @@
 ---
 id: "0494"
 title: "Line up a shipped ticket's title with Build and Plan on a phone"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T20:47:56.137Z"
 
 ---
 # 0494 · Line up a shipped ticket's title with Build and Plan on a phone
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 On a phone, a collapsed shipped ticket's title sits lower in its card than a Build or Plan ticket's. The title is a link to the full ticket, and on a touch screen it's a 44 px tall target with its text centred in it, so the text starts about 11 px further down. With a mouse, the three line up.
