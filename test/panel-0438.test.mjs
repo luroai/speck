@@ -40,6 +40,7 @@ const measure = `(() => {
   const fs = getComputedStyle(frame), gs = getComputedStyle(glass), after = getComputedStyle(glass, '::after');
   return { frame: r(frame), glass: r(glass), canvas: r(document.querySelector('#screen')), tabs: { left: r(strip).left + parseFloat(ss.paddingLeft), right: r(strip).right - parseFloat(ss.paddingRight) }, // 0477: the lanes' strip's row
     cards: [...document.querySelectorAll('#queue .q')].map(r), frameRadius: parseFloat(fs.borderTopLeftRadius), glassRadii: [gs.borderTopLeftRadius, gs.borderTopRightRadius, gs.borderBottomLeftRadius, gs.borderBottomRightRadius].map(parseFloat),
+    lane: (() => { const s = document.getElementById('build-section'), b = r(s), st = getComputedStyle(s); return { left: b.left + parseFloat(st.paddingLeft), right: b.right - parseFloat(st.paddingRight) }; })(), // 0478: Build's frame
     afterRadius: parseFloat(after.borderTopLeftRadius), clips: gs.overflow, glassBorder: parseFloat(gs.borderTopWidth), width: innerWidth, page: document.documentElement.scrollWidth };
 })()`;
 
@@ -63,7 +64,9 @@ test('0438 AC2: at every width, the frame\'s edges line up with the tab row\'s a
     const m = await b.js(measure), at = `${w} px: ${JSON.stringify(m)}`;
     assert.ok(m.page <= m.width, `no sideways scrolling: ${at}`);
     assert.ok(Math.abs(m.frame.left - m.tabs.left) <= 1 && Math.abs(m.frame.right - m.tabs.right) <= 1, `the frame lines up with the tab row: ${at}`);
-    for (const c of m.cards) assert.ok(Math.abs(m.frame.left - c.left) <= 1 && Math.abs(m.frame.right - c.right) <= 1, `the frame lines up with the cards: ${at}`);
+    // 0478: the cards sit inside their lane's frame, which lines up with speck's
+    assert.ok(Math.abs(m.frame.left - m.lane.left) <= 1 && Math.abs(m.frame.right - m.lane.right) <= 1, `the frame lines up with the lane's frame: ${at}`);
+    for (const c of m.cards) assert.ok(c.left > m.lane.left && c.right < m.lane.right, `the cards are inside the lane's frame: ${at}`);
     assert.ok(m.glass.width <= 520, `the screen is at most 520 px: ${at}`);
     assert.ok(Math.abs((m.glass.left - m.frame.left) - (m.frame.right - m.glass.right)) <= 1, `the screen is centred in the frame: ${at}`);
   }
