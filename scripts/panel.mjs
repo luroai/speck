@@ -61,12 +61,12 @@ function setRefusal(t, cfg, key, value) {
 // The panel's one write: set a draft ticket to ready, as `speck set <id> status ready` does, and commit only that
 // ticket, since `speck start` needs it committed. Every refusal comes before the first write. Returns
 // { status, body } for the server to send.
-function panelSetReady(repo, id) {
+export function panelSetReady(repo, id) {
   const cfg = loadConfig(repo);
   let t;
   try { t = findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
   const pad = t.fm.id;
-  if (t.fm.status !== 'draft') return { status: 409, body: { error: `Ticket ${pad} is "${t.fm.status}", not a draft, so it can't be set ready from here.` } };
+  if (t.fm.status !== 'draft') return t.fm.status === 'done' ? setRefusal(t, cfg, 'status', 'ready') : { status: 409, body: { error: `Ticket ${pad} is "${t.fm.status}", not a draft, so it can't be set ready from here.` } };
   // `speck set` would move a draft filed with the finished tickets back to speck/tickets/, and this commit holds one file.
   if (path.dirname(path.resolve(t.file)) !== path.resolve(repo, 'speck', 'tickets'))
     return { status: 409, body: { error: `Ticket ${pad} is a draft filed in speck/tickets/done/, so it can't be set ready from here. Run \`speck set ${pad} status ready\`, which moves it back to speck/tickets/, then commit it.` } };
@@ -86,7 +86,7 @@ function panelSetReady(repo, id) {
 // The panel's Back to Plan button: the reverse of Set ready. Sets a ready ticket back to draft, as
 // `speck set <id> status draft` does, and commits only that ticket, so `speck run` no longer starts it. Every refusal
 // comes before the first write.
-function panelBackToPlan(repo, id) {
+export function panelBackToPlan(repo, id) {
   const cfg = loadConfig(repo);
   let t;
   try { t = findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
@@ -95,7 +95,7 @@ function panelBackToPlan(repo, id) {
   // build speck run has launched may not have set it building yet.
   const shown = ticketShown(repo, pad) || { status: t.fm.status };
   if (shown.status !== 'ready' || t.fm.status !== 'ready')
-    return { status: 409, body: { error: `Ticket ${pad} is "${shown.status !== 'ready' ? shown.status : t.fm.status}", not waiting in the queue, so it can't go back to Plan from here.` } };
+    return t.fm.status === 'done' ? setRefusal(t, cfg, 'status', 'draft') : { status: 409, body: { error: `Ticket ${pad} is "${shown.status !== 'ready' ? shown.status : t.fm.status}", not waiting in the queue, so it can't go back to Plan from here.` } };
   if (shown.build_running)
     return { status: 409, body: { error: `speck run has just started building ticket ${pad}, so it can't go back to Plan. Once it shows as building, Stop build ends it.` } };
   if (shown.worktree)
