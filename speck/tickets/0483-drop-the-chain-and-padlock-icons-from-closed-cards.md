@@ -1,7 +1,7 @@
 ---
 id: "0483"
 title: "Drop the chain and padlock icons from closed cards"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-24-drop-the-chain-and-padlock-icons-from-closed-cards.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T18:33:27.080Z"
 
 ---
 # 0483 · Drop the chain and padlock icons from closed cards
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A closed Plan or Build card shows a chain or padlock icon after its id and, since 0468, a dependency chip at the end of its title row. The two say the same thing twice, and the chain icon (others wait on this ticket) looks like the chip's link icon (this ticket waits on others) while meaning the opposite, so someone scanning the board on a phone can read them the wrong way round.
