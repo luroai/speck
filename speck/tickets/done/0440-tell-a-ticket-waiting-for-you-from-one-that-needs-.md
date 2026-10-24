@@ -1,7 +1,7 @@
 ---
 id: "0440"
 title: "Tell a ticket waiting for you from one that needs you"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T07:32:34.098Z"
 approved: "2026-10-24T07:44:56.144Z"
+finished: "2026-10-24T07:49:54.533Z"
 
 ---
 # 0440 · Tell a ticket waiting for you from one that needs you
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0426, a ticket waiting for you to ship it is Cursor's magenta and one that needs you is Cursor's red. They're only about 30° apart in hue, so at a glance they look the same, and 0138's check that they differ was eased from 60° to 20° to let them through.
