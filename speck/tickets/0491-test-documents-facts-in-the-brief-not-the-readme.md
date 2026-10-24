@@ -42,6 +42,7 @@ Facts are tested in the brief, and the README is checked by review, apart from t
 - Today: the rule is in `skills/speck-ticket/SKILL.md` (step 4, Acceptance criteria), `docs/brief.md` ("Criteria about documents") and `templates/reviewer-prompt.md` (point 2). `skills/speck-build/SKILL.md` names only `(checked by review)` criteria.
 - Measured on 2026-10-24: 58 test files read `README.md`, most of them `release-*.test.mjs` (settings each release added) and `readme-0250.test.mjs` (a command or setting for each step and clever bit). Keep `readme-0089` (setup prompt), `readme-0249` and `readme-0306` (pictures), and the status-line checks in the release tests.
 - Waits for 0488, which changes the README's and the brief's Foreman wording and the tests that check it.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
