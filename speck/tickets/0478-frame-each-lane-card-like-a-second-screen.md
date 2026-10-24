@@ -1,7 +1,7 @@
 ---
 id: "0478"
 title: "Frame each lane card like a second screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0477"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T15:54:21.320Z"
+approved: "2026-10-24T16:05:16.956Z"
 
 ---
 # 0478 · Frame each lane card like a second screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0476, each lane is a card you slide between, but it doesn't look like part of the same device as speck's screen above it. The user wants the panel to read as two screens: speck's screen on top for the overall view, and a second one under it where the tickets live.
@@ -57,9 +58,14 @@ To see it, open the panel and swipe or tap between the lanes: the whole framed c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 151,011
+- Elapsed since build started: 11 min
+- Changed lines: 25 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Inbox: speck/ideas/2026-10-24-give-the-tickets-more-room-inside-a-lane-s-frame.md (tickets are 40 px narrower at 320 px inside the frame).
