@@ -163,9 +163,9 @@ export function checkSetTicket(t, cfg, key, value) {
   if (key === 'priority' && value === '0' && ticketType(t) !== 'fix')
     throw new SpeckError(`priority must be a whole number from 1 to 5 (got "0"): priority 0 is only for a fix ticket, and ${t.fm.id} isn't one.`);
   if (key !== 'status') return;
+  if (t.fm.status === 'done') throw new SpeckError(`Ticket ${t.fm.id} is done and shipped, so its status can't change.`); // shipped work stays shipped (0439)
   if (!STATUSES.includes(value)) throw new SpeckError(`status must be one of ${STATUSES.join(', ')}.`);
-  // Cancelling records why, so it has its own command; `set` would lose the reason.
-  if (value === 'cancelled') throw new SpeckError(`Use \`speck cancel ${t.fm.id} "<reason>"\` instead: cancelling records the reason.`);
+  if (value === 'cancelled') throw new SpeckError(`Use \`speck cancel ${t.fm.id} "<reason>"\` instead: cancelling records the reason.`); // `set` would lose it
   if (value === 'ready') {
     const { errors } = lintTicket(t, cfg);
     if (errors.length) throw new SpeckError(`Not ready:\n${errors.map(e => `  ✗ ${e}`).join('\n')}`);
