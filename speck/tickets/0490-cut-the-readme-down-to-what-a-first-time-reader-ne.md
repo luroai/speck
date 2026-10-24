@@ -42,6 +42,8 @@ The README is short enough to read on a phone, describes the panel as it is now,
 - After 0491, only a few tests read the README (the setup prompt, the status line, the pictures and its links), so cutting text doesn't mean moving tests.
 - Waits for 0489, which rewrites the opening above this, and through it 0491.
 - Failing before this build: none
+- Self-check: narrowed two claims in the cut README (speck's agent looks into stops only with `watch: fix`; an idea is saved when you ask, not as you talk), and dropped a new link to a brief heading that broke when the brief's headings are reworded (0267).
+- Pictures: none, because the change only cuts and rewrites README text, with no picture, layout or styling change, and no Markdown renderer is installed here to show it as GitHub would.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

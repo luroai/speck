@@ -36,237 +36,101 @@ Your agent checks what's there, explains each choice in plain words and waits fo
 
 ## How it works
 
-speck takes every change from an idea to shipped code in the same steps, and waits for you at two of them.
-
-If you can write a good ticket, you can ship.
+speck takes every change from an idea to shipped code in the same steps, and waits for you at two of them. Every change is a small numbered ticket in your repo, sized for one agent in one sitting. If you can write a good ticket, you can ship.
 
 ```
 idea → ticket → [you: ready] → agent builds → second agent reviews, turn by turn → approved → [you: ship, or auto-ship]
 ```
 
-Every change is a small numbered ticket in your repo, sized for one agent in one sitting. In the commands below, `speck` stands for `node .speck/scripts/speck.mjs`, which `init` puts in your project.
-
 ### Your first decision: what gets built
 
-Talk ideas through with your agent. It writes them up as small tickets, each with a short list of what done looks like.
-
-`/speck-capture` saves an idea, or the whole conversation, to `speck/ideas/`. `/speck-ticket` turns it into numbered draft tickets in `speck/tickets/`, each with a problem, an outcome and its acceptance criteria. Your agent checks each one against the size rules in `speck/config.yml` (`limits.max_acceptance_criteria`, `limits.max_changed_lines`), for overlap with what's already there and for criteria that could be read two ways. speck makes you split anything bigger: a ticket of size `L` can never be ready.
-
-Read a draft, then set it ready with Set ready in `speck panel`, or with `speck set <id> status ready`. That's Gate 1. Setting it ready lints the ticket and commits it on the base branch, and only then can a build pick it up. A ticket can wait on others with `after:` in its frontmatter, and starts only once they've shipped.
+Talk ideas through with your agent. `/speck-capture` saves an idea to `speck/ideas/`, and `/speck-ticket` turns it into small draft tickets in `speck/tickets/`, each with a problem, an outcome and a short list of what done looks like. Read a draft, then set it ready in the panel, or with `speck set <id> status ready`. That's Gate 1: only a ready ticket gets built.
 
 ### Everything in between
 
-speck builds each ticket tests first, checks its own work, then has a second AI review it. Each ticket is built in its own git worktree, and no agent ever approves its own work.
-
-`speck run` watches for ready tickets and starts `/speck-build <id>` for each, highest priority first, using `build_command` in `speck/config.yml`, or, when that's blank with `builder: codex` or `builder: cursor`, or exactly Claude Code's own command with `builder: claude`, the command of the builder each ticket records: Codex's, Cursor's, Claude Code's or a model provider's. It builds one at a time unless you raise `max_parallel_builds`. You can also start a build yourself with `/speck-build <id>`: `speck run` counts it towards `max_parallel_builds` and watches it as it does its own.
-
-A model provider's models can build too, through your own API key for that provider. DeepSeek is tested: save this machine's key with `speck keys set deepseek`, which asks for it without showing it, then set `builder: deepseek`, in `speck/config.yml` with `build_command` blank or a ticket's own. Each build follows `/speck-build` as a Claude Code build does, on `builder_model`, such as `deepseek-v4-flash`, or `deepseek-v4-pro` when that's blank, and is stopped, resumed and handed back the same way. speck runs the provider's models through Claude Code, so Claude Code must be installed, but Claude Code gets only the provider's address and your key for it: it never sends a request to Anthropic, and it doesn't use your Claude sign-in, your own Claude Code settings, your MCP servers or your connectors. It reads the repo's own Claude Code settings, its `CLAUDE.md`, which imports `AGENTS.md`, and speck's skills, as a Claude Code build does. The commands the build runs still run as you, as any build's do, so the reviewer it starts uses its own sign-in. Without the key or Claude Code, `speck run` leaves the ticket ready and says why, and `speck doctor` checks both.
-
-A build runs `speck start <id>`, which makes the ticket's branch in its own git worktree beside your checkout (with `worktrees: true`) and sets it to `building`. It writes a test for each acceptance criterion and checks that the tests fail, then writes the simplest code that makes them pass. A criterion about how a document reads ends with "(checked by review)" and gets no test: the reviewer checks it by reading the document. A build runs the ticket's own tests; the whole suite runs when a ticket ships. If the change goes over `limits.max_changed_lines`, it stops and proposes a split rather than pushing on. Before the first review round it runs a self-check, going over its change the way an adversarial reviewer would: unusual input, stale state, error paths, claims in docs and scope.
-
-Then `/speck-review` starts the review loop. The builder (Claude Code by default, set as `builder`) hands the ticket, the diff and the test output to an independent reviewer (Codex by default, set as `reviewer`), which runs read-only. They take turns until the reviewer approves or a question comes back to you. When it approves, the ticket is `approved` and waits on its branch.
+`speck run` starts a build for each ready ticket, each in its own git worktree, so your checkout stays yours. The builder writes a test for each acceptance criterion, then the code, then checks its own work. A second AI reviews it, and they take turns until the reviewer approves or a question comes back to you. No agent ever approves its own work.
 
 ### Your second decision: what ships
 
-Read a one-page review pack, then ship. Or let low-risk work ship itself.
-
-Every approved ticket has a review pack (`speck pack <id>`, or the ticket in the panel), written for someone who doesn't read code. When a ticket changes how something looks, the build takes pictures of the result in a real browser, and the pack shows them. Read it, then run `/speck-ship <id>` or click the Ship button in the review pack. That's Gate 2. Agents never merge or ship unless you do one of those, or you turn on `auto_ship` in `speck/config.yml`. With `auto_ship` on, `speck run` ships each approved ticket whose risk is listed in `auto_ship_risk` (`[low]` by default) as soon as the reviewer approves it, while it's on. With `ship_mode: pr`, once a ticket is approved, speck pushes the ticket's branch and opens a GitHub pull request for it with `gh`, with its review pack, and the panel shows the link. Shipping then merges that pull request on GitHub once its checks pass, instead of merging locally, and tidies up as a local ship does, so speck never pushes straight to the base branch. If you merge it on GitHub yourself, shipping it, or `speck run`, only tidies up.
-
-Shipping runs `speck ship <id>`. It refuses, changing nothing, unless the reviewer approved the ticket, nothing outside `speck/` changed after that approval, the working tree is clean and the whole test suite passes on the ticket merged with the base branch as it is now. Then, with the default `ship_mode: local`, it sets the ticket to `done`, merges the branch into `main`, pushes it if you have a remote, and deletes the branch. No GitHub needed. Everything happens in your local repo. With `ship_mode: pr`, it files the ticket as `done` on its own branch, merges the ticket's pull request on GitHub instead, and brings your local `main` up to date from GitHub.
-
-## What a review pack looks like
-
-A review pack is the one page you read before you decide whether to ship a ticket.
-
-Every approved ticket has a **review pack** written for someone who doesn't read code:
-- each acceptance criterion with ✅/❌ and the reviewer's evidence;
-- a plain-English summary;
-- risk flags (sensitive files touched, size);
-- the review history;
-- actuals: review rounds, reviewer tokens and elapsed time.
+Every approved ticket has a one-page **review pack**, written for someone who doesn't read code: each acceptance criterion with ✅/❌ and the reviewer's evidence, a plain-English summary, risk flags, the review history and what it took. Read it, then ship it with the Ship button in the panel or `/speck-ship <id>`. That's Gate 2. Or turn on `auto_ship` and let low-risk work ship itself once it's approved.
 
 ## The clever bits
 
-These are the jobs speck takes off your hands, from raising its own fix tickets to keeping the receipts.
-
-**It raises its own fix tickets.** If `main` breaks, the build that finds it writes a priority-0 fix ticket and sends it to the front of the queue, instead of patching it inside someone else's work. When `speck ship` finds the base branch's own tests failing, the build creates the ticket with `speck new "<title>" --type=fix`, which sets priority 0, and runs `speck set <fix-id> status ready`, unless an open fix ticket already covers the failure. Its own ticket stays `approved`, and the ship queue tries it again once the fix has shipped.
-
-**It files its own follow-ups.** A build that spots a bug or a better idea saves it to your inbox, after checking it isn't there already. Each is a note in `speck/ideas/` with `Status: inbox` and the ticket it came from, checked first against every idea and ticket, open or done. `/speck-ticket` triages the inbox down to at most three decisions.
-
-**Ideas only become tickets in conversation.** Say "capture this" and your agent saves the idea, or the whole conversation, in your repo with `/speck-capture`. It becomes tickets only when you talk it through with your agent, through `/speck-ticket`, which writes each one as a `draft`. The panel shows your ideas but has no button that turns one into a ticket.
-
-**It asks, then moves on.** When a build needs your call, it stops with one plain question, the options and its recommendation. It writes the question under `## Blocked question` in the ticket, with whether any option changes what you'd notice and whether its recommendation is a clear winner or a close call, which the panel shows on the question, and sets it to `blocked`, and `speck run` carries on with the next ticket. Answer it, then run `/speck-build <id>` to resume it; the panel shows the command that reopens the build's own session (`resume_command`). With `watch: fix` in `speck/config.yml`, speck answers a question itself when no option changes what you'd notice and its recommendation is a clear winner: it takes the recommendation, notes in the ticket that speck chose it, and starts the build again. It does this once per ticket, and leaves every other question for you. The default, `tell`, leaves them all for you, and `off` also stops speck counting them under Needs you.
-
-**It shows where everything stands at a glance.** While `speck run` is on, speck watches the pipeline and keeps it moving. The panel's header shows what it's doing in a word or two, such as Building, Shipping or Needs you, so you can tell whether anything is waiting for you. Press it for the detail.
-
-**It looks into stops it has no steps for.** With `watch: fix`, when a ship is refused for a reason `speck run` doesn't hand back to the build, or a build ends with its ticket neither approved nor blocked, `speck run` starts speck's own agent with a short brief: the ticket, what happened and the last lines of its log. The agent looks into it and does one thing: resumes the build with an instruction, has `speck run` ship it again once, makes a draft fix ticket, or asks you one question. It never sets a ticket ready, approves work, ships anything `auto_ship` doesn't cover or changes code. What it did, and why, goes in the ticket's Notes and `speck status`. Only one runs at a time, and it looks into a ticket once for the same commits. It runs on `watch_agent` (`claude`, `codex`, `cursor` or a model provider, such as `deepseek`; blank uses the builder when that's Codex, Cursor or a model provider, and Claude Code otherwise), with `watch_model` and `watch_effort`, blank for the agent's own defaults. Cursor and model providers aren't given `watch_effort`. On a model provider, it runs on `watch_model`, or the provider's default model when that's blank, through Claude Code with only the provider's address and this machine's key for it, and may do only what it may on Claude Code. Without the key or Claude Code, `speck run` doesn't start it and says why.
-
-**It sorts out its own merge conflicts.** When `main` has moved on, the build merges it in, keeps what both sides meant and has the merge reviewed again before it ships. When a ship from the queue hits a conflict, `speck run` hands the ticket back to its build's session. `speck merge-check <id>` sorts each conflicting file into a class (`added-lines`, `lockfile`, `ticket` or `logic`), the build resolves each by its class, and the reviewer checks the merge in a merge round. Merge rounds have their own limit, `max_merge_rounds`. After two hand-backs without a ship, the build blocks the ticket with a question instead.
-
-**It fits in your pocket.** Put the panel behind a private tunnel and add it to your phone's home screen. It opens as an app, so you can set tickets ready and ship from anywhere. Start it with `speck panel --url https://<hostname>`, the address your tunnel gives it (see [The panel](#the-panel)).
-
-**It keeps the receipts.** Every ticket keeps how long it took and how many review rounds it needed, and the panel shows what builds cost. Each round's full record is saved in the ticket's `## Review rounds`, and approval adds the review rounds, reviewer, reviewer tokens, elapsed time and changed lines to its `## Delivery log`. Builds that `speck run` starts also record the builder's tokens, and its cost when the builder reports one, as Claude Code does. The code, the tickets and the tests say what the product does, so there's no separate spec to keep up to date.
+- **It raises its own fix tickets.** If `main` breaks, the build that finds it writes a priority-0 fix ticket and sends it to the front of the queue, instead of patching it inside someone else's work.
+- **It files its own follow-ups.** A build that spots a bug or a better idea saves it to your inbox, after checking it isn't there already.
+- **Ideas only become tickets in conversation.** Your agent saves an idea when you ask it to, and turns it into tickets only when you talk it through.
+- **It asks, then moves on.** When a build needs your call, it stops with one plain question and its recommendation, and speck carries on with the next ticket.
+- **It shows where everything stands at a glance.** The panel's screen says what speck is doing in a word or two, such as Building, Shipping or Needs you.
+- **It looks into stops it has no steps for.** With `watch: fix`, when a build or a ship stops for a reason speck doesn't expect, its own agent looks into it and does one thing about it, or asks you.
+- **It sorts out its own merge conflicts.** When `main` has moved on, the build merges it in, keeps what both sides meant and has the merge reviewed again.
+- **It fits in your pocket.** Put the panel behind a private tunnel and add it to your phone's home screen (see [The panel](#the-panel)).
+- **It keeps the receipts.** Every ticket keeps its review rounds, how long it took and what it cost, and the tickets and tests say what the product does, so there's no separate spec to keep up to date.
 
 ## Under the hood
 
-These sections explain how speck works inside: the review loop, where it keeps its state, which tests run when, and how builds and ships are queued.
+The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. `speck/config.yml` holds the project's settings, and your own choices, such as who builds and reviews, can be kept for this machine only.
 
-[`docs/brief.md`](docs/brief.md) has the full design.
+**Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them, and pick each role's agent and model, in the panel's Settings. API keys stay on this machine, out of git.
 
-### The review loop
-
-The builder owns the loop. It starts the reviewer with the ticket, the diff against the base branch and a summary of the test output. The reviewer returns a structured verdict: a `pass`, `fail` or `unclear` for each acceptance criterion with its evidence, findings marked `blocking` or `minor`, and `approve`, `changes_requested` or `escalate`. The builder answers each blocking finding as `fixed`, `disputed` with a reason, or `needs_pm` for a question only you can answer. The next round resumes the same reviewer session (for Codex, `codex exec resume`), so the reviewer remembers its earlier findings and re-checks each fix and dispute.
-
-The loop ends when the reviewer approves with no blocking findings and every criterion passing. It blocks the ticket with one question for you after `max_review_rounds`, default 3, unless the last round left no more than one blocking finding open, which earns one extra round. It escalates to you sooner when the same finding is disputed in two consecutive rounds (`escalate_after_repeat_disputes`), when the reviewer escalates, or on `needs_pm`. Minor findings never block: they go into the ticket's Delivery log, and those worth a ticket into your inbox. A reviewer from the builder's own family, such as `claude` or `claude-subagent` reviewing a Claude build, is allowed only when `builder_model` and the reviewer's model are both set and differ, unless you set `allow_same_model_review: true`.
-
-### Where state lives
-
-The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. A ticket's status, priority, size, risk, builder, reviewer and `after:` list are in its frontmatter. Each review round is a collapsed block in the ticket's `## Review rounds`, which only speck writes, with a one-line summary in its `## Review log`. Its `## Delivery log` keeps the actuals and follow-ups. Shipped and cancelled tickets move to `speck/tickets/done/`, keeping all of it. `speck/.cache/`, which git ignores, holds working files for reviews in progress, recorded test results, `speck run`'s logs, the record of flaky tests and this machine's own settings, in `speck/.cache/machine/config.yml`.
-
-**Your own settings.** Who builds, reviews and watches the pipeline, and how, is yours rather than the project's: `builder`, `builder_model`, `builder_effort`, `build_command`, `resume_command`, `reviewer`, `reviewer_model`, `reviewer_effort`, `allow_same_model_review`, `auto_ship`, `auto_ship_risk`, `watch`, `watch_agent`, `watch_model`, `watch_effort`, `max_parallel_builds` and `max_parallel_tests`. Their old names, `foreman_fixing`, `foreman`, `foreman_model` and `foreman_effort`, are still read, and `speck config set` saves one under its new name. `speck config set <key> <value>` saves one of them for this machine only, in `speck/.cache/machine/config.yml` in the main checkout, which git ignores, so changing it makes no commit and nothing goes out with the next ship. Every speck command, in the main checkout and every worktree, uses this machine's value over `speck/config.yml`'s, and a build already running picks it up the next time it reads its settings. `speck/config.yml` keeps the project's own settings, such as `commands`, `limits` and `base_branch`, and the defaults for your own settings that anyone without their own uses. To change one of those defaults for everyone, run `speck config set --repo <key> <value>` and commit `speck/config.yml`. `speck config show` marks each value that comes from this machine.
-
-**Model providers' API keys.** speck can keep an API key for each model provider it knows, for this machine only. The providers tested with speck so far: DeepSeek. Run `speck keys set deepseek` and paste the key when asked: it isn't shown as you type, and you can pipe it in instead, as in `speck keys set deepseek < key.txt`, but never put it on the command line, where speck refuses it. The key is kept in `speck/.cache/machine/keys.json` in the main checkout, which git ignores and only you can read or write, so every worktree of the repo uses the same key. speck never prints or logs it, and never writes it to a ticket, a review pack, a run record or `speck/config.yml`. `speck keys` lists each provider and whether its key is set, and `speck keys remove deepseek` deletes it.
-
-**Your agents.** speck keeps a list of the agents you've set up on this machine: any of Claude Code, Codex, Cursor and the model providers it knows, such as DeepSeek. `speck init` makes it the first time it runs its checks on a machine, from every agent it finds installed and signed in and every provider whose key is set, and says which it added. It leaves an existing list as it is. `speck agents` shows every agent speck knows, whether it's one of yours, whether it's installed and signed in, or for a provider whether its key is set, and its models. `speck agents add <agent>` adds one, refusing an agent that isn't installed or a provider without its key, and `speck agents remove <agent>` takes one off, refusing the agent your builder, reviewer or speck uses. The list is kept in `speck/.cache/machine/agents.json` in the main checkout, which git ignores, so changing it makes no commit. Until a machine has a list, every agent that's installed and signed in, and every provider whose key is set, counts as yours.
-
-In the panel's Settings view, the builder, the reviewer and speck each have one list of your agents' models, grouped by agent, such as "Codex · GPT-6.1 Sol" or "DeepSeek · V4 Pro", with each agent's own default as an entry. Choosing one sets the agent and its model together, saved for this machine. Effort is offered beside it only for Claude Code and Codex, which take one. The reviewer's list has the Claude subagent, run in the builder's session, under Claude Code, and speck's has the builder's agent, which is a blank `watch_agent`. A role whose agent is no longer one of yours says so. While Claude Code isn't installed, Settings doesn't offer a model provider and says why.
-
-Settings' **Your agents** group, under Auto-build, lists each of your agents: whether it's installed and signed in, or for a provider whether this machine has its key, and a button to remove it, which is refused for the agent your builder, reviewer or speck uses, saying which. **Add an agent** offers every agent speck knows that isn't one of yours: Claude Code, Codex or Cursor once it's installed, with how to install one that isn't. A model provider, DeepSeek included, is offered there, with **Add**, only once this machine has its key: after you removed it from your agents with its key kept, or set its key with `speck keys set`. Otherwise you add it with **Add an API provider**. For a provider speck already knows, such as DeepSeek, its name and key are enough: speck uses its own address and models for it. A provider's own row has a field to replace its key. The field never shows a saved key, and saving one keeps it for this machine as `speck keys set` does. Adding or removing an agent, or saving a key, changes only this machine's list and keys, without a commit.
-
-**Add an API provider**, under Add an agent, adds any provider with an OpenAI- or Anthropic-compatible API: its name, base URL, API type, key and at least one model name, the first being the one speck uses unless you pick another. The base URL must start with `https://`, unless it's on this machine. Saving it adds it to your agents and to each role's list, by the name you gave it. The provider is kept in `speck/.cache/machine/providers.json` in the main checkout and its key with the others, both where git ignores them, with no commit. speck builds, reviews and watches the pipeline with an Anthropic-type provider as it does with DeepSeek. An OpenAI-type provider is saved and listed, but speck doesn't run it yet, and says so. To change one, remove it and add it again with the same name.
-
-### Which tests run when
-
-A build never runs the whole suite. Before it changes anything, it reads the result recorded for the same code with `speck test --recorded` and writes the tests already failing as `Failing before this build:` in the ticket's Notes. After that it runs only test files, with `speck test --files <file>…`: the ticket's own while it builds, and before every review round the ticket's own, any existing ones it changed and those of any test that failed last time. Every such run also runs the project's quick checks of rules for the whole repo, the test files listed in `commands.checks`. The reviewer sees a summary of that run. The whole suite runs in `speck ship`, on the ticket merged with the base branch, which is what lands. A full run on code that hasn't changed reuses the recorded result, and a test that fails in a full run then passes on a second try is logged as flaky.
-
-### Builds and the ship queue
-
-`speck run` keeps up to `max_parallel_builds` builds going, 1 unless you raise it for the project or for this machine, each on its own branch in its own worktree, so a build never touches your checkout and you keep writing ideas and tickets on the base branch. Builds end at `approved`. One ship queue in `speck run` ships approved tickets one at a time, so ships never race each other for `main`, and each ship tests the ticket as it would land on the base branch as it is then. If that fails, the queue hands the ticket back to its build: to merge `main` in, to fix tests that fail with `main`'s newer changes, or to raise a fix ticket when `main`'s own tests fail. While the queue is paused because `main`'s own tests fail, it still ships approved fix tickets. When `main` on your remote has moved on while yours has commits of its own, `speck ship` merges the remote's in first, or stops, changing nothing, when it can't do that cleanly. A build that was killed before it finished is resumed once. Only one `speck run` works in a repo at a time: starting another, from a terminal or the Settings view's switch, is refused with a message naming the one that's running. `speck pause <id>`, `speck play <id>` and `speck stop <id>` hold, carry on or end a build.
+A build runs only the tests its change touches. The whole suite runs when a ticket ships, on the ticket merged with `main` as it is then, and one ship queue ships approved tickets one at a time, so ships never race each other. [`docs/brief.md`](docs/brief.md) has the full design.
 
 ## Who it's for
 
-speck is for people who decide what gets built and don't want to read every line of code, and for engineers who want a light review loop.
-
 Most AI coding tools sell speed or autonomy. speck gives you the speed and keeps the judgement with you: what's worth building, what "done" means and whether it's good enough to ship.
-
-You think in outcomes, not diffs. You're a PM, a founder, or the person on the team who always has the spec. You have more ideas than evenings, a coding agent you already trust with real work, and no wish to read every line it writes. You set speck up by talking to your agent, write tickets, set them ready and walk away.
-
-It's also for engineers who want a light, auditable loop: ticket, build, independent review, merge. It's not for large multi-team specs, or work that needs design documents spanning many changes.
 
 Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
 
 ## The panel
 
-The panel shows your tickets, builds and shipped work in your browser, and lets you set tickets ready and ship them from there.
+The panel is a phone-width column you keep beside your agent, or open on your phone. Start it with `node .speck/scripts/speck.mjs panel`, at `http://127.0.0.1:4777`. It runs on your machine and reads the files in your repo.
 
-`node .speck/scripts/speck.mjs panel` opens a control panel in your browser, at `http://127.0.0.1:4777`. It runs on your machine and reads the files in your repo.
+- **speck's screen**, at the top, says what's happening: Building, Shipping, Idle, or Needs you when a ticket is waiting on your answer. Press it for the detail.
+- **Plan, Build and Shipped** are cards you swipe between. Plan has your drafts, ideas and inbox. Build has the queue, each build's log, blocked questions and approved tickets' review packs with their Ship button. Shipped shows what's shipped and what it took.
+- **Settings**, from the button in the header, turns `speck run` on and off, picks your builder and reviewer, and holds the settings people tune.
 
-- **Plan:** your draft tickets, ideas and inbox, in full. Set a draft ready or change its priority with a click.
-- **Build:** the queue, with each build's log as it runs. Stop a build, see which builds are paused (`speck pause <id>` and `speck play <id>` hold and carry them on), and see blocked tickets with their questions and how to resume them. Read an approved ticket's review pack, and ship it from there with its Ship button, which asks first and does what `/speck-ship` does. A ticket an agent is working on shows a small grid of moving lights, and a ticket being shipped says "Shipping" once, whoever started it. An auto-ship that didn't finish says so.
-- **Header:** speck's screen shows what `speck run` is doing in a word or two: Off, Idle, Building, Shipping, Waiting with its reason, or Needs you when a ticket is blocked, with the time at its right. Each blocked ticket says whether speck will take its recommendation, which doesn't count under Needs you, or it's waiting for you, and a ticket whose build carries on with a recommendation says who went with it, speck or you, and when. Press the screen to see why each ready ticket isn't building, what shipping is waiting for, each blocked ticket's question, and what speck has looked into, what it did and why, with any question it asks you, which also counts under Needs you. It also shows which setting `watch` has and the recommendations speck took in the last 24 hours. A question speck asks you shows there and on its ticket's card with an Answer box and a Dismiss button: an answer is noted in the ticket's Notes and `speck run` carries the work on with it, resuming the build or shipping an approved ticket `auto_ship` covers again, and dismissing it notes that and leaves the ticket as it is. Each question can be answered or dismissed once, and `speck answer <id> "<answer>"` and `speck dismiss <id>` do the same from the command line. `speck status` shows the same. When the panel is running newer code than the page shows, it offers to reload the page.
-- **Settings:** from the Settings button in the header. Its first group, Watching, has the switch that turns `speck run` on or off, `watch`, and `watch_agent`, `watch_model` and `watch_effort` for the agent speck runs on when it looks into a stop. Then come the settings people tune, each with its value and an explanation. Change them and save them all with one button. A change that lets more tickets ship without you asks first, naming them. Your own settings are saved for this machine only, without a commit, and the rest are committed to `speck/config.yml`.
-- **Shipped:** what's shipped and when, with the median time, review rounds and tokens per ticket, for the reviewer and the builder.
-
-To use the panel from your phone, put it behind a private tunnel that makes you log in, such as `tailscale serve` or Cloudflare Tunnel with Cloudflare Access, and start it with that address: `node .speck/scripts/speck.mjs panel --url https://<hostname>`. The panel then also serves that one address and accepts its button presses. Add it to your phone's home screen to open it full screen as an app called speck, with speck's logo as its icon. Never expose it openly: anyone who can load the page can start builds and ship.
+To use it from your phone, put it behind a private tunnel that makes you log in, such as `tailscale serve` or Cloudflare Tunnel with Cloudflare Access, and start it with `node .speck/scripts/speck.mjs panel --url https://<hostname>`. Add it to your home screen to open it as an app. Never expose it openly: anyone who can load the page can start builds and ship.
 
 ## Requirements
 
-speck needs the following on your machine.
-
-- macOS or Linux
-- [Claude Code](https://claude.com/claude-code), or another builder: any coding agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as [Codex](https://github.com/openai/codex) or [Cursor](https://cursor.com/docs/cli/installation). Switch it in the panel's Settings view or with `speck config set builder <name>`, which sets `build_command` to match for Claude Code, Codex and Cursor. Claude Code is the default and the one most tested.
-- git
-- Node.js 20 or newer, which your agent can install for you
-- Optional: [Codex CLI](https://github.com/openai/codex) as the reviewer (the default). Otherwise [Claude Code](https://claude.com/claude-code) (`reviewer: claude`), any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
-
-Not yet: Windows (speck says so and suggests WSL), Jira or GitHub Issues sync, and hosted or cloud builds.
+- macOS or Linux, git, and Node.js 20 or newer, which your agent can install for you
+- [Claude Code](https://claude.com/claude-code) as the builder (the default), or another agent such as [Codex](https://github.com/openai/codex) or [Cursor](https://cursor.com/docs/cli/installation)
+- Optional: [Codex CLI](https://github.com/openai/codex) as the reviewer (the default). Otherwise Claude Code, Cursor, a model provider or any agent with a non-interactive mode (see below)
+- Not yet: Windows (speck says so and suggests WSL), Jira or GitHub Issues sync, and hosted or cloud builds
 
 ## Without an agent
 
-You can install speck yourself, without an agent, with one command.
-
-Run this in the folder of the project you want to build:
+Run this in the folder of the project you want to build. It sets up `speck/`, adds the skills for Claude Code, Codex and other agents, and checks that git, your builder and your reviewer are ready:
 
 ```bash
 npx 'github:luroai/speck#semver:*' init
 ```
 
-This one command:
-- sets up `speck/` (config, ideas and tickets);
-- adds the speck skills to `.claude/skills/` and `.agents/skills/`, so Claude Code, Codex, cptr and other agents all find them;
-- puts the `speck` command in `.speck/`;
-- checks that git, your builder and your reviewer are installed and signed in, and tells you in plain English how to fix anything that isn't.
-
-Commit the new files, and everyone working on the repo gets speck too. To update speck, run the same command again. It refreshes the skills and keeps your config and tickets.
-
-To re-check your setup at any time: `node .speck/scripts/speck.mjs doctor`.
+Commit the new files, and everyone working on the repo gets speck too. Run the same command again to update speck, or `node .speck/scripts/speck.mjs doctor` to re-check your setup.
 
 ## Commands
 
-These tables list speck's commands: the skills you run in your agent, and the commands you run in your terminal.
+In your agent, `/speck-capture`, `/speck-ticket`, `/speck-build <id>` and `/speck-ship <id>` take a change from idea to shipped, and `/speck-status` shows where everything stands. Only you run `/speck-ship`.
 
-In your agent:
-
-| Skill | What it does |
-|---|---|
-| `/speck-setup` | Takes you through setting speck up in a conversation: checks what's there, explains each choice (base branch, test command, builder and reviewer, whether `speck run` builds skip permission prompts, whether to ship through pull requests with `ship_mode`), goes through the settings in the panel's Settings view, such as `auto_ship` and the ticket size limits, asks before changing anything, and finishes once `speck doctor` passes. It's hidden from the `/` menu: the setup prompt above starts it |
-| `/speck-capture` | Saves an idea or the current conversation to `speck/ideas/` |
-| `/speck-ticket` | Turns an idea into small, numbered draft tickets that pass the size rules, or triages the inbox down to at most three decisions |
-| `/speck-build <id>` | Builds one ready ticket: tests from the acceptance criteria, then code, then the review loop. Ends with the ticket `approved`, for `speck run` to ship if `auto_ship` allows it |
-| `/speck-ship <id>` | Ships an approved ticket (Gate 2): final checks and tests, then merges into `main`, pushes and deletes the branch, or with `ship_mode: pr` merges its pull request and tidies up. Only you run this, or click the Ship button in the ticket's review pack in the panel |
-| `/speck-status` | Tickets by status: approved (waiting for you) first, then blocked questions |
-| `/speck-review <id>` | Re-runs the review loop on its own |
-
-In your terminal, as `node .speck/scripts/speck.mjs <command>` (`speck help` lists them all):
+In your terminal, `speck` stands for `node .speck/scripts/speck.mjs`, which `init` puts in your project. `speck help` lists every command:
 
 | Command | What it does |
 |---|---|
-| `set <id> status ready` | Approves a ticket for building: `node .speck/scripts/speck.mjs set <id> status ready` (Gate 1). Run it on the base branch: it commits the ticket, and only that file. `set` also changes a ticket's priority, size, title and other fields |
-| `run` | Starts `/speck-build` in a non-interactive session for each ticket once it's committed as ready on the base branch, one at a time unless you raise `max_parallel_builds`, using `build_command` in `speck/config.yml`, or, when that's blank or exactly Claude Code's own command, the command of the builder each ticket records: Codex's, Cursor's, Claude Code's or a model provider's. The default skips all permission prompts. A build that was killed before it finished is resumed once |
+| `set <id> status ready` | Approves a ticket for building (Gate 1). `set` also changes its priority, size and other fields |
+| `run` | Builds each ready ticket, and ships approved ones `auto_ship` covers |
 | `panel` | The control panel in your browser |
-| `pause <id>` / `play <id>` / `stop <id>` | Hold a running build where it is, carry it on, or end it and block its ticket, keeping its branch and work if it had started. A ticket stopped before its build started is built again with `/speck-build <id>` |
+| `pause <id>` / `play <id>` / `stop <id>` | Hold a running build, carry it on, or end it and block its ticket |
 | `status` | Tickets by status, blocked first (`--json` for programs) |
 | `pack <id>` | The review pack for a ticket |
 | `cancel <id> "<reason>"` | Cancels a ticket you've decided against, keeping the reason |
-| `config set <key> <value>` | Changes one setting, checking it first. One of your own settings is saved for this machine only, committing nothing, and any other setting is changed in `speck/config.yml` (see "Your own settings" above). `config set --repo <key> <value>` changes `speck/config.yml`'s value instead, and `config set --machine <key> ""` removes this machine's value. `config set builder <name>` sets `build_command` to that builder's own too, for `claude`, `codex` or `cursor`, and `--replace` lets it replace one set by hand. It clears `builder_model` when the new builder doesn't offer it, as `speck agents` lists its models, or they can't be read |
-| `config show` | The main settings by group, with each one's value, whether it's the default and what it does |
-| `keys` | Lists each model provider speck knows, such as DeepSeek, and whether this machine has its API key. `keys set <provider>` saves a key, read from the input without showing it, and `keys remove <provider>` deletes it (see "Model providers' API keys" above) |
-| `agents` | Lists every agent speck knows, Claude Code, Codex, Cursor and each model provider such as DeepSeek: whether it's one of yours, whether it's installed and signed in or has its key, and its models (`--json` for programs). `agents add <agent>` and `agents remove <agent>` change this machine's list of your agents (see "Your agents" above) |
+| `config set <key> <value>` | Changes one setting. Your own are saved for this machine only, the rest in `speck/config.yml` |
+| `config show` | The main settings by group, with each one's value and what it does |
+| `keys` | Model providers' API keys on this machine: `keys set <provider>` and `keys remove <provider>` |
+| `agents` | The agents speck knows, and which are yours: `agents add <agent>` and `agents remove <agent>` |
 | `doctor` | Checks that git, your builder and your reviewer are ready |
 
 ## Using another reviewer
 
-Any agent that can run non-interactively can review. Give it a name and a command in `speck/config.yml`, and `speck review` runs it and records its verdict:
-
-```yaml
-reviewer: cursor
-reviewer_options:
-  cursor:
-    command: "agent -p --mode ask --trust --output-format json --model {model}"
-```
-
-To let later rounds continue the reviewer's own session instead of resending everything, add `session_id_path` (where the session id is in its output) and a `resume_command` with `{session}`. `{model}` and `{effort}` come from `reviewer_model` and `reviewer_effort`; if one is blank, it's left out with its flag. The reviewer is asked to stay read-only, but speck doesn't sandbox it, so use the tool's read-only mode. Flags change, so check your tool's current ones.
-
-Claude Code needs no command: set `reviewer: claude` and speck runs it for you, whatever the builder, so a Codex or Cursor build can be reviewed by Claude. It runs without a person in Claude Code's `dontAsk` permission mode, which runs read-only commands and denies anything else rather than asking, with its file-writing tools taken away, without your own Claude Code settings, so no allow rule in them lets it change files, and without your MCP servers or connectors. Later rounds resume the same session. Set `allow_same_model_review: true` if Claude is also the builder, unless `builder_model` and `reviewer_model` are both set and differ.
-
-Cursor needs no command either: set `reviewer: cursor` and speck runs Cursor's CLI, `agent`, or `cursor-agent` when only that is installed, without a person in its read-only ask mode, with `--trust` so it doesn't stop at Cursor's Workspace Trust prompt in a folder it hasn't been told to trust. It runs on `reviewer_model`, or Cursor's own default when that's blank. Cursor's model names carry the effort, such as `claude-opus-5-5-high`, so `reviewer_effort` isn't passed. Later rounds carry on the same Cursor chat. A `command` of your own under `reviewer_options.cursor` replaces it, as the example above does.
-
-A model provider's models can review too, through your own API key for that provider. DeepSeek is tested: save this machine's key with `speck keys set deepseek`, which asks for it without showing it, then set `reviewer: deepseek`. It runs on `reviewer_model`, such as `deepseek-v4-flash`, or `deepseek-v4-pro` when that's blank, and `reviewer_effort` isn't passed. speck runs the provider's models through Claude Code, so Claude Code must be installed, but the reviewer gets only the provider's address and your key for it: it never sends a request to Anthropic, and it can't reach your Claude sign-in, your Claude Code settings or your connectors. It's read-only, as the Claude reviewer is, and later rounds resume the same session. DeepSeek is a family of its own, so it can review any builder's work.
-
-## Repo layout
-
-This is where speck keeps its files in your repo.
-
-```
-.claude/skills/speck-*/      # the skills, for Claude Code (installed by init)
-.agents/skills/speck-*/      # the same skills, for Codex, cptr and other agents
-.speck/                      # the speck command and templates (installed by init)
-speck/
-  config.yml                 # test command, limits, and the defaults for your own settings
-  ideas/                     # captured ideas, and the inbox of follow-ups from builds
-  tickets/0007-<slug>.md     # numbered tickets; status in frontmatter, every review round at the end
-  tickets/done/              # shipped and cancelled tickets
-```
+Claude Code, Cursor and model providers such as DeepSeek need no setup: set `reviewer: claude`, `reviewer: cursor` or `reviewer: deepseek` and speck runs them read-only. Any other agent that can run non-interactively can review too, with a name and a command under `reviewer_options` in `speck/config.yml`, as [the brief](docs/brief.md) shows.
 
 ## Built with speck
 
