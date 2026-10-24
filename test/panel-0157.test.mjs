@@ -200,7 +200,7 @@ for (const [width, perRow] of [[375, 3], [700, 3], [1280, 3]]) { // three to a r
 const CARDS = `(() => {
   const lum = c => { const [r, g, b] = c.match(/[\\d.]+/g).slice(0, 3).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-  const back = getComputedStyle(${SECTION}).backgroundColor;
+  const back = getComputedStyle(document.getElementById('shipped-list')).backgroundColor; // 0478: the lane's list, inside its frame
   const cards = [...document.querySelectorAll('#shipped tr')];
   const rect = n => { if (!n) return null; const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom }; };
   return cards.map((n, i) => {

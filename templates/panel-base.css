@@ -17,6 +17,7 @@
     /* 0302: the LCD screen, from the design (docs/design/lcd/), lighter since 0308: speck's screen since 0413 */
     --lcd-bg: #e6e9db; --lcd-off: #dde1cf; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .14);
     --bezel: #262722; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1; /* 0413: the screen's dark frame, from the design's console */
+    --bezel-step: #e4e4e462; /* 0478: Plan's dot on a lane's frame: 0461's grey for a step not reached, --line, as the dark look has it, since the frame is dark in both looks */
     --dot: #b0412e; /* 0303: the speck in the header's mark */
     --inbox: #4c7f8c; /* the inbox's own colour: Cursor's cyan */
     --bug: #86371b; /* the bug tag's own colour: Cursor's orange */
@@ -63,8 +64,7 @@
   main > section { flex: 0 0 100%; width: 100%; min-width: 0; touch-action: pan-y pinch-zoom; }
   main[data-slide] > section { transform: translateX(calc(var(--lane, 1) * -100% + var(--drag, 0px))); }
   main > section[hidden] { display: none; }
-  main[data-slide] > section[hidden] { display: flex; }
-  .lane-title { flex: none; margin: 0; padding: 10px 16px 4px; font-size: 18px; font-weight: 600; line-height: 1.3; }
+  main[data-slide] > section[hidden] { display: grid; } /* 0478: a grid, laid out in panel-cards.css */
   .sh { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-bottom: .5px solid var(--line); }
   .sh h2 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 18px; font-weight: 600; }
   .sh .n { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; color: var(--muted); font-size: 12px; }

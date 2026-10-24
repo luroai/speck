@@ -40,6 +40,7 @@ test('0427 AC1 and AC2: every font list in the stylesheet is the interface font,
     const f = family(r);
     if (r.sel === '.bezel .name') { assert.equal(f, DOTO, 'speck\'s title stays Doto'); continue; }
     if (r.sel === '#foreman .top .title') { assert.equal(f, DOTO, '0470: so is the Pipeline log pop-up\'s'); continue; }
+    if (r.sel === '.lane-title') { assert.equal(f, DOTO, '0478: and each lane\'s, in its frame'); continue; }
     if (r.sel === '@font-face') continue;
     assert.ok(f === UI || f === MONO, `${r.sel}: ${f}`);
   }

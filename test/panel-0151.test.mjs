@@ -186,7 +186,7 @@ for (const width of [375, 1280]) {
 const CARDS = `(() => {
   const lum = c => { const [r, g, b] = c.match(/[\\d.]+/g).slice(0, 3).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-  const back = getComputedStyle(document.getElementById('shaping-section')).backgroundColor;
+  const back = getComputedStyle(document.querySelector('#shaping-section .lane-list')).backgroundColor; // 0478: the lane's list, inside its frame
   const items = [...document.querySelectorAll('#shaping .item')];
   return items.map((n, i) => {
     const s = getComputedStyle(n), r = n.getBoundingClientRect(), next = items[i + 1];
