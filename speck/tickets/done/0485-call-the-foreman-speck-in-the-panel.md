@@ -1,7 +1,7 @@
 ---
 id: "0485"
 title: "Call the Foreman speck in the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0484"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T19:09:01.422Z"
 approved: "2026-10-24T19:23:19.400Z"
+finished: "2026-10-24T19:26:23.258Z"
 
 ---
 # 0485 · Call the Foreman speck in the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel talks about "the Foreman" as if it were a second character, while the one thing watching the pipeline is speck, on its screen. Two names for one watcher make the panel harder to follow.
