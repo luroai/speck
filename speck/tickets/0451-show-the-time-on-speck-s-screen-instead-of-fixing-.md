@@ -1,7 +1,7 @@
 ---
 id: "0451"
 title: "Show the time on speck's screen instead of Fixing on"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0451 · Show the time on speck's screen instead of Fixing on
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The top right of speck's screen shows `FIXING ON` while `foreman_fixing` is `fix`. It's a setting's name rather than anything happening, and it confuses more than it tells.
