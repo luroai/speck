@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, openLane, MONO_UI } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, openLane } from './support/panel.mjs';
 
 // ---------- 0151: each Plan ticket a clear card ----------
 
@@ -86,7 +86,8 @@ const TITLES = `[...document.querySelectorAll('#shaping .item.ticket')].map(item
       || lines.some(l => l.left < box.left || l.right > box.right + 0.5 || l.bottom > box.bottom + 0.5) };
 })`;
 
-for (const [width, most] of [[375, 2], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
+// 0441: 3 lines at 375 px, as the longest title takes in a proportional font with Arial's widths
+for (const [width, most] of [[375, 3], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
   test(`0151 AC1: at ${width} px, an open ticket's id is 14 px and its title 17 px, never cut off, on at most ${most} ${most === 1 ? 'line' : 'lines'} starting under the title`, skip, async () => {
     assert.equal(LONGEST.length, 68);
     await withPanel(async b => {
@@ -96,12 +97,11 @@ for (const [width, most] of [[375, 2], [699, 3], [700, 3], [1000, 3], [1279, 3],
       assert.equal(await b.js(`document.querySelectorAll('#shaping .item.ticket.open').length`), 3, 'every ticket open');
       const titles = await b.js(TITLES);
       assert.deepEqual(titles.map(t => t.title), [LONGEST, LONG, 'Short']);
-      const lines = most + (await b.js(MONO_UI) ? 1 : 0); // 0427: a bold title in a monospace system font can take a line more
       for (const t of titles) {
         assert.equal(t.idSize, '14px', `${t.title}: the id`);
         assert.equal(t.titleSize, '17px', `${t.title}: the title`);
         assert.ok(!t.cut, `${t.title} is cut off`);
-        assert.ok(t.lines.length >= 1 && t.lines.length <= lines, `${t.title} is on ${t.lines.length} lines`);
+        assert.ok(t.lines.length >= 1 && t.lines.length <= most, `${t.title} is on ${t.lines.length} lines`);
         const [first] = t.lines;
         assert.ok(first.top < t.id.bottom && first.bottom > t.id.top, `${t.title} starts on the id's line`);
         for (const l of t.lines) {
