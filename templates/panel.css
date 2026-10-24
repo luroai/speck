@@ -216,7 +216,7 @@
   .q .top .lights .d3 { background: var(--run); }
   /* 0434: a closed ticket's title is one line, cut off with an ellipsis when it doesn't fit, and a closed Build ticket's
      status line is one line too. An open one wraps as needed. */
-  .item.ticket:not(.open) .line .title, .q:not(.open) .top .line .title, #shipped tr:not(.open) .line .title-link { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.ticket:not(.open) .line .title, .q:not(.open) .top .line .title, #shipped tr:not(.open) .line .title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* 0435: a closed idea's or inbox note's title too, so the card is its title line and its second line */
   .item.idea:not(.open) .line .title, .item.inbox:not(.open) .line .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item.idea:not(.open) .head .line, .item.inbox:not(.open) .head .line { min-width: 0; } /* its grid column no wider than the card */
@@ -276,15 +276,14 @@
   #shipped-stats .part { white-space: nowrap; }
   #shipped-stats .num { font-weight: 600; color: var(--text); }
   #shipped-stats[hidden] { display: none; }
-  .full-open.more-stats, #shipped .details { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
+  .full-open.more-stats { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
   .more-stats[hidden] { display: none; }
   /* 0420: a shipped ticket is its title line, with any bug or fix tag after the title, and one line of smaller type:
-     when it shipped and its figures, separated by " · ", with a small Details button at its end. Details and More
-     stats are plain words in a thin box, so these lines fit on one line in a 420 px pane with a scroll bar. */
+     when it shipped and its figures, separated by " · ". More stats is plain words in a thin box, so these lines fit
+     on one line in a 420 px pane with a scroll bar. 0466: its top row opens and closes it, as a Build ticket's does. */
   #shipped .sum { display: flex; align-items: flex-end; gap: 6px; margin-top: 2px; }
   #shipped .meta { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
   #shipped .meta > * { white-space: nowrap; } /* whole, so a line too long for a phone wraps between its time and figures */
-  #shipped .details { margin-left: auto; }
   section.shipped table { display: block; }
   #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
   #shipped .empty { padding: 0 4px; }
@@ -292,7 +291,7 @@
   #shipped td { display: block; padding: 0; border: 0; }
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
   #shipped .line .id { flex: none; font-size: 14px; line-height: 14px; }
-  #shipped .line .title-link { flex: 0 1 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-weight: 600; font-size: 17px; line-height: 22px; overflow-wrap: anywhere; }
+  #shipped .line .title { flex: 0 1 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-weight: 600; font-size: 17px; line-height: 22px; overflow-wrap: anywhere; }
   /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the card taller */
   #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
   #shipped .line .tags .tag { font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; line-height: 16px; padding: 0 5px; }
@@ -302,9 +301,8 @@
   #shipped td.unpushed { margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--bad); }
   #shipped .unpushed-head { color: var(--bad); font-weight: 600; }
   #shipped .unpushed-said { margin-top: 2px; font-size: 12px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
-  /* 0464: an open one's track and table (0461, 0462) under its title, then Review pack, with Details at the row's end */
+  /* 0464: an open one's track and table (0461, 0462) under its title, then (0466) Full ticket and Review pack */
   #shipped .full-cell { display: flex; align-items: center; gap: 6px; width: auto; margin-top: 8px; }
-  #shipped .full-cell .details { margin-left: auto; }
   table { width: 100%; border-collapse: collapse; }
   td { padding: 6px 14px; border-bottom: .5px solid var(--line-soft); font-size: 12px; }
   tr:last-child td { border-bottom: 0; }
@@ -452,8 +450,8 @@
   .q .full-open { margin: 6px 8px 2px 0; padding: 1px 10px; font-size: 12px; line-height: 16px; }
   .q .full-open:hover { border-color: var(--text); }
   td.full-cell { width: 1%; padding-left: 0; }
-  td .title-link { color: var(--text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
-  td .title-link:hover { text-decoration-thickness: 2px; }
+  #shipped tr { cursor: pointer; } /* 0466: its top row opens and closes it, as .q .top does, */
+  #shipped td.unpushed, #shipped td.full-cell { cursor: auto; } /* and what's under it doesn't */
   td .full-open { margin: 0; padding: 0 8px; font-size: 12px; white-space: nowrap; }
   /* 0423: over the whole panel, as Settings is (0368), its text in a centred column at most 720 px wide. The room beside
      the column is padding, so the Ship button and the rest line up with the text. The left side's is rounded down to a
@@ -790,8 +788,8 @@
 
     /* Shipped */
     .more-stats { min-width: 44px; min-height: 44px; }
-    td .title-link { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
-    #shipped tr:not(.open) .line .title-link { display: block; min-width: 44px; line-height: 44px; } /* 0434: a block, so its title can end in an ellipsis */
+    #shipped .line .title { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
+    #shipped tr:not(.open) .line .title { display: block; min-width: 44px; line-height: 44px; } /* 0434: a block, so its title can end in an ellipsis */
     td .full-open { min-height: 44px; }
 
     /* The full ticket and review pack */

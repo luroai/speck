@@ -348,10 +348,16 @@ export const readT = (r, name) => fs.readFileSync(path.join(r.dir, 'speck', 'tic
 export const button = row => (function find(n) { if (n.tagName === 'button') return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 
 export const shippedRows = p => p.byId('shipped').children.filter(n => n.tagName === 'tr');
-// 0162: opens every Shipped card's Details, which hold its labelled figures and its Review pack button.
+// 0466: a Shipped card's Full ticket button, after opening the card by its title as the user does. `row` gives the card,
+// as opening it draws it again.
+export function shippedFull(p, row) {
+  if (!/\bopen\b/.test(row().className)) p.press(p.all(row()).find(n => n.className === 'title'));
+  return p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Full ticket');
+}
+// 0162: opens every Shipped card, which holds its labelled figures and its Review pack button. 0466: by its title.
 export async function openDetails(p) {
   for (let i = 0; i < shippedRows(p).length; i++) {
-    const d = p.all(shippedRows(p)[i]).find(n => n.tagName === 'button' && /\bdetails\b/.test(n.className || ''));
+    const d = p.all(shippedRows(p)[i]).find(n => n.className === 'title' && n.attrs && n.attrs.role === 'button');
     if (d && d.attrs['aria-expanded'] === 'false') { p.press(d); await p.settle(); }
   }
 }

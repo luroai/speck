@@ -116,7 +116,7 @@ test('0162 AC3: with nothing shipped there are no stats and no More stats button
 
 // ---------- AC4 ----------
 
-test('0162 AC4: a shipped card shows its id and title, its ship time and one line of figures, then a Details button', async () => {
+test('0162 AC4: a shipped card shows its id and title, its ship time and one line of figures, and its title opens it (0466: no Details button)', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
   const a = cardOf(p, '0401');
@@ -126,27 +126,24 @@ test('0162 AC4: a shipped card shows its id and title, its ship time and one lin
   assert.equal(byClass(p, cardOf(p, '0402'), 'figline')[0].textContent, '30 min · 1 round');
   assert.deepEqual(byClass(p, cardOf(p, '0403'), 'figline'), [], 'no figures: no line of them');
   for (const id of ['0401', '0402', '0403']) {
-    const d = byClass(p, cardOf(p, id), 'details');
-    assert.equal(d.length, 1, `${id}: a Details button`);
-    assert.equal(d[0].tagName, 'button');
-    assert.equal(d[0].textContent, 'Details');
-    assert.equal(d[0].attrs['aria-expanded'], 'false');
+    assert.deepEqual(p.all(cardOf(p, id)).filter(n => n.tagName === 'button').map(n => n.textContent), [], `${id}: no Details button (0466)`);
+    assert.equal(byClass(p, cardOf(p, id), 'title')[0].attrs['aria-expanded'], 'false', `${id}: its title opens it`);
   }
-  assert.deepEqual(byClass(p, a, 'facts'), [], 'the labelled figures wait for Details (0464: in the facts table)');
+  assert.deepEqual(byClass(p, a, 'facts'), [], 'the labelled figures wait for it to open (0464: in the facts table)');
   assert.ok(!p.all(a).some(n => n.textContent === 'Review pack'), 'and so does Review pack');
 });
 
-test('0162 AC4: Details shows the labelled figures and the Review pack button, and hides them again', async () => {
+test('0162 AC4: opening the card shows the labelled figures and the Review pack button, and closing it hides them again', async () => {
   const p = fakePage([STATE(), STATE(), { pack: '# Review pack\n\nAll good.\n' }]);
   await p.settle();
-  p.press(byClass(p, cardOf(p, '0401'), 'details')[0]);
+  p.press(byClass(p, cardOf(p, '0401'), 'title')[0]); // 0466: its title, where Details was
   await p.settle();
   let a = cardOf(p, '0401');
   // 0464: its steps and its facts in a table, in place of its line
   assert.deepEqual(a.children.map(n => n.className), ['name', 'steps', 'full-cell']);
   assert.deepEqual(byClass(p, a, 'fact').map(f => [f.children[0].textContent, f.children[1].textContent]),
     [['Shipped', byClass(p, a, 'fact')[0].children[1].textContent], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
-  assert.equal(byClass(p, a, 'details')[0].attrs['aria-expanded'], 'true');
+  assert.equal(byClass(p, a, 'title')[0].attrs['aria-expanded'], 'true');
   assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'sum'], 'only the card tapped opens');
   await refresh(p);
   a = cardOf(p, '0401');
@@ -156,27 +153,27 @@ test('0162 AC4: Details shows the labelled figures and the Review pack button, a
   await p.settle();
   assert.ok(p.calls.some(c => /\/api\/tickets\/0401\/pack$/.test(c.url)), 'Review pack opens the pack as before');
   assert.ok(p.byId('full-ticket').textContent.includes('All good.'));
-  p.press(byClass(p, cardOf(p, '0401'), 'details')[0]);
+  p.press(byClass(p, cardOf(p, '0401'), 'title')[0]);
   await p.settle();
-  assert.deepEqual(cardOf(p, '0401').children.map(n => n.className), ['name', 'sum'], 'Details again hides them');
+  assert.deepEqual(cardOf(p, '0401').children.map(n => n.className), ['name', 'sum'], 'its title again hides them');
 });
 
-test('0162 AC4: a card with no figures still has Details, which shows Review pack', async () => {
+test('0162 AC4: a card with no figures still opens, showing Review pack', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
-  p.press(byClass(p, cardOf(p, '0403'), 'details')[0]);
+  assert.deepEqual(cardOf(p, '0403').children.map(n => n.className), ['name'], 'closed: no line, and no Details (0466)');
+  p.press(byClass(p, cardOf(p, '0403'), 'title')[0]);
   await p.settle();
   assert.deepEqual(cardOf(p, '0403').children.map(n => n.className), ['name', 'steps', 'full-cell']);
 });
 
-test('0162 AC4: tapping the title still opens the full ticket, and doesn\'t open Details', async () => {
+test('0162 AC4 (0466): tapping the title opens the card, not the full ticket', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
-  p.press(byClass(p, cardOf(p, '0402'), 'title-link')[0]);
+  p.press(byClass(p, cardOf(p, '0402'), 'title')[0]);
   await p.settle();
-  assert.equal(p.byId('full-ticket').hidden, false);
-  assert.ok(p.byId('full-ticket').textContent.includes('0402'));
-  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'sum']);
+  assert.equal(p.byId('full-ticket').hidden, true);
+  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'steps', 'full-cell']);
 });
 
 // ---------- in a real browser ----------
@@ -256,24 +253,24 @@ for (const width of [375, 1280]) {
     }, { width });
   });
 
-  test(`0162 AC4: at ${width} px a shipped card is compact until Details opens it`, skip, async () => {
+  test(`0162 AC4: at ${width} px a shipped card is compact until its title opens it`, skip, async () => {
     await withPanel(async b => {
       await b.js(openLane('shipped')); // 0410
       const card = `[...document.querySelectorAll('#shipped tr')].find(n => n.querySelector('.id').textContent === '0401')`;
-      const look = () => b.js(`(() => { const c = ${card}, r = c.getBoundingClientRect(), fl = c.querySelector('.figline'), d = c.querySelector('.details');
+      const look = () => b.js(`(() => { const c = ${card}, r = c.getBoundingClientRect(), fl = c.querySelector('.figline'), d = c.querySelector('.line .title');
         const lh = fl && (parseFloat(getComputedStyle(fl).lineHeight) || parseFloat(getComputedStyle(fl).fontSize) * 1.5);
         return { height: r.height, figLines: fl ? Math.round(fl.getBoundingClientRect().height / lh) : 0, figs: !!c.querySelector('.facts'), pack: !!c.querySelector('.full-cell .full-open'),
-          details: d.getBoundingClientRect().height, title: getComputedStyle(c.querySelector('.title-link')).color }; })()`);
+          details: d.getBoundingClientRect().height, title: getComputedStyle(d).color }; })()`);
       const closed = await look();
       assert.equal(closed.figLines, 1, 'the figures on one line');
       assert.ok(!closed.figs && !closed.pack);
-      if (width < 700) assert.ok(closed.details >= 43.5, `Details is ${closed.details} px high`);
+      if (width < 700) assert.ok(closed.details >= 43.5, `its title is ${closed.details} px high`);
       const text = await b.js(`(() => { const s = document.createElement('span'); s.style.color = 'var(--text)'; document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c; })()`);
       assert.equal(closed.title, text, 'the title in the text colour, not the accent');
-      await b.js(`${card}.querySelector('.details').click()`);
+      await b.js(`${card}.querySelector('.line .title').click()`);
       await settle(b);
       const open = await look();
-      assert.ok(open.figs && open.pack, 'Details shows the figures and Review pack');
+      assert.ok(open.figs && open.pack, 'opening it shows the figures and Review pack');
       assert.ok(open.height > closed.height);
     }, { width });
   });

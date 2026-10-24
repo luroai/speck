@@ -50,7 +50,7 @@ test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours,
   const coloured = [];
   for (const r of plain()) {
     // 0426: links in a ticket's text are in Cursor's blue, --run (below)
-    if (!selectors(r).some(s => /\.(id|title|title-link|goto|toggle)(?![\w-])/.test(lastCompound(s)))) continue;
+    if (!selectors(r).some(s => /\.(id|title|goto|toggle)(?![\w-])/.test(lastCompound(s)))) continue;
     for (const k of ['color', 'border-color']) {
       const t = tokens(get(r, k));
       if (r.sel === '.toggle.on' && k === 'color') { assert.deepEqual(t, ['--panel'], 'the selected tab\'s text is the background it is filled against (0450)'); continue; }
@@ -62,7 +62,7 @@ test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours,
   assert.ok(links.length, 'rules for links');
   for (const r of links) for (const k of ['color', 'border-color']) if (get(r, k)) assert.deepEqual(tokens(get(r, k)), ['--run'], `${r.sel}: links are in Cursor's blue (0426)`);
   assert.match(get(rule('.goto'), 'text-decoration') || '', /underline/, 'a linked id is underlined');
-  assert.match(get(rule('td .title-link'), 'text-decoration') || '', /underline/, 'a shipped title is underlined');
+  assert.doesNotMatch(get(rule('#shipped .line .title'), 'text-decoration') || '', /underline/, 'a shipped title isn\'t underlined since 0466: it opens its card, as a Build title does');
   assert.deepEqual(tokens(get(rule('.toggle.on'), 'border-color')), ['--text'], 'the selected tab has a border in the text colour');
   assert.deepEqual(tokens(get(rule('.toggle.on'), 'background')), ['--text'], 'and, since 0450, is filled with it');
   for (const sel of ['.item.idea .id', '.item.inbox .id']) assert.equal(rule(sel), undefined, `${sel} keeps the muted colour of every id`);
@@ -226,7 +226,7 @@ for (const theme of ['light', 'dark']) {
       const style = sel => b.js(`[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => { const s = getComputedStyle(n);
         return { text: n.textContent, color: s.color, line: s.textDecorationLine, border: s.borderTopColor, back: s.backgroundColor }; })`);
       for (const n of await style('#queue .id, #shipped .id')) assert.equal(n.color, c.muted, `id ${n.text}`);
-      for (const n of await style('#shipped .title-link')) assert.deepEqual([n.color, n.line], [c.text, 'underline'], `shipped title ${n.text}`);
+      for (const n of await style('#shipped .line .title')) assert.deepEqual([n.color, n.line], [c.text, 'none'], `shipped title ${n.text} (not underlined since 0466)`);
       const gotos = await style('#shaping .goto');
       assert.ok(gotos.length >= 1, 'a linked id');
       for (const n of gotos) assert.deepEqual([n.color, n.line], [c.text, 'underline'], `linked id ${n.text}`);

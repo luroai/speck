@@ -120,13 +120,13 @@ test('0434 AC4: a closed ticket\'s title is one line, cut off with an ellipsis, 
   await p.settle();
   const plan = topOf(card(p, '0801')).children[0].children.find(n => n.className === 'title');
   const build = topOf(card(p, '0426')).children[0].children.find(n => n.className === 'title');
-  const shipped = p.all(shippedRows(p).find(r => idOf(p, r) === '0911')).find(n => n.className === 'title-link');
+  const shipped = p.all(shippedRows(p).find(r => idOf(p, r) === '0911')).find(n => n.className === 'title');
   for (const [n, where] of [[plan, 'Plan'], [build, 'Build'], [shipped, 'Shipped']]) {
     assert.equal(n.textContent, LONG, `${where}: the whole title is its text, and so its accessible name`);
     assert.equal(n.title, LONG, `${where}: its tooltip`);
   }
   const style = css();
-  const rule = /\.item\.ticket:not\(\.open\) \.line \.title, \.q:not\(\.open\) \.top \.line \.title, #shipped tr:not\(\.open\) \.line \.title-link \{([^}]*)\}/.exec(style);
+  const rule = /\.item\.ticket:not\(\.open\) \.line \.title, \.q:not\(\.open\) \.top \.line \.title, #shipped tr:not\(\.open\) \.line \.title \{([^}]*)\}/.exec(style);
   assert.ok(rule, 'one rule for a closed ticket\'s title in each lane');
   assert.match(rule[1], /white-space: nowrap;/);
   assert.match(rule[1], /overflow: hidden;/);
@@ -135,7 +135,7 @@ test('0434 AC4: a closed ticket\'s title is one line, cut off with an ellipsis, 
   click(topOf(card(p, '0801')));
   click(topOf(card(p, '0426')));
   await p.settle();
-  click(p.all(shippedRows(p).find(r => idOf(p, r) === '0911')).find(n => n.className === 'full-open details'));
+  p.press(p.all(shippedRows(p).find(r => idOf(p, r) === '0911')).find(n => n.className === 'title')); // 0466: its title opens it
   await p.settle();
   assert.match(card(p, '0801').className, /\bopen\b/);
   assert.match(card(p, '0426').className, /\bopen\b/);
