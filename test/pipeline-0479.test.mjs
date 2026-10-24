@@ -103,7 +103,7 @@ const MEASURE = `(() => {
   const se = document.scrollingElement;
   return { w: innerWidth, h: innerHeight, top: r(top), body: r(body), log: r(log), title: r(t), close: r(close), stale: stale.hidden ? null : r(stale),
     laneFrame: lane ? { left: lane.b.left + parseFloat(ls.paddingLeft), right: lane.b.right - parseFloat(ls.paddingRight) } : null,
-    laneSide: parseFloat(getComputedStyle(document.querySelector('.lane-list')).marginLeft),
+    laneSide: 4, // 0480: the lanes are light cards now, so the log keeps 0478's 4 px frame of its own
     bezel, topBg: cs.backgroundColor, bodyBg: bs.backgroundColor, corners: [cs.borderTopLeftRadius, cs.borderTopRightRadius, bs.borderBottomLeftRadius, bs.borderBottomRightRadius],
     side: [parseFloat(bs.paddingLeft), parseFloat(bs.paddingRight), parseFloat(bs.paddingBottom)],
     titleFont: getComputedStyle(t).fontFamily, titleWeight: getComputedStyle(t).fontWeight, nameFont: getComputedStyle(document.querySelector('.bezel .name')).fontFamily,
