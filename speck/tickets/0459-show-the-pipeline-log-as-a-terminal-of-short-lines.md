@@ -1,7 +1,7 @@
 ---
 id: "0459"
 title: "Show the pipeline log as a terminal of short lines"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0457", "0458", "0460"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T10:17:36.223Z"
+approved: "2026-10-24T10:26:17.321Z"
 
 ---
 # 0459 · Show the pipeline log as a terminal of short lines
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Pipeline pop-up's log lists speck run's raw lines, newest first, on the page's own background, with no times. Many lines are long sentences with session ids and file paths, so it doesn't read as a log of what the pipeline is doing.
@@ -56,9 +57,15 @@ Worth a look: lines speck run writes that aren't one of the usual kinds show the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The existing log box is never reused in a real browser because HTML element tagName is uppercase ('OL').
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 341,767
+- Elapsed since build started: 9 min
+- Changed lines: 132 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox notes):
   - Each new line redraws the whole log, so text selected in it is lost when a line arrives (as before this ticket).
