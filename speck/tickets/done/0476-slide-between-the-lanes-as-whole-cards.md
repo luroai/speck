@@ -1,7 +1,7 @@
 ---
 id: "0476"
 title: "Slide between the lanes as whole cards"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0469"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T14:55:29.527Z"
 approved: "2026-10-24T15:26:40.669Z"
+finished: "2026-10-24T15:29:54.651Z"
 
 ---
 # 0476 · Slide between the lanes as whole cards
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a phone, the user moves between Plan, Build and Shipped only by pressing the tabs, and the lane under them swaps at once, with nothing to show the lanes sit side by side. Swiping is what a phone's hand expects, and lanes laid out as a row of cards would make it easy to add more lanes later.
