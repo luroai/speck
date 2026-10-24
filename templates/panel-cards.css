@@ -419,6 +419,10 @@
   /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
      gap before a tag stays wide, and its words, stage and time fit on a phone */
   .q:not(.open) .top .progress .sep:not(:has(+ .tag)) { padding: 0; }
+  /* 0484: when the line doesn't fit, its words (or, while an agent is at work, the reviewer's model) give up room first:
+     the page script sets their width to what the stage, time and tag leave, and they end in … there. Clipped across
+     only, so nothing is cut off below and they keep their baseline. */
+  .q:not(.open) .top .progress > :is(.say, .by) { display: inline-block; overflow-x: clip; text-overflow: ellipsis; }
   /* The priority's 44 px box takes no more room in the line than its two characters do */
   .item.ticket .head .checks .prio { padding: 0; margin: 0 calc(1ch - 22px); font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
   /* 0463: in a draft's facts table, the priority's 44 px box starts at the value's left, and its negative margins give

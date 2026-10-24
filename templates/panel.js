@@ -392,11 +392,26 @@ function wholeButtons(again = false) {
     wholeSized.add(b);
   });
 }
+// 0484: a closed Build card's status line keeps its stage, time and any bug, fix or document tag whole: when it doesn't
+// fit, its words (or, while an agent is at work, the reviewer's model) are cut short to the room the rest leaves them.
+// The line's last part says how far it reaches, as a tag's tap area on a touch screen reaches past it.
+function fitWords() {
+  const lines = [...document.querySelectorAll('#queue .q:not(.open) .top .progress')].map(line => [line, [...line.children].find(n => /^(say|by)\b/.test(n.className))]).filter(([, w]) => w);
+  for (const [, w] of lines) w.style.maxWidth = '';
+  const room = lines.map(([line, w]) => {
+    const last = line.lastElementChild;
+    if (!line.clientWidth || !last || typeof last.getBoundingClientRect !== 'function') return null;
+    const over = last.getBoundingClientRect().right - (line.getBoundingClientRect().right - (parseFloat(getComputedStyle(line).paddingRight) || 0));
+    return over > 0 ? Math.max(0, Math.floor(w.getBoundingClientRect().width - over)) : null;
+  });
+  lines.forEach(([, w], i) => { if (room[i] !== null) w.style.maxWidth = `${room[i]}px`; });
+}
 if (typeof MutationObserver === 'function' && document.body) {
-  new MutationObserver(() => wholeButtons()).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'aria-selected', 'open'] });
-  addEventListener('resize', () => wholeButtons(true));
-  document.fonts?.addEventListener?.('loadingdone', () => wholeButtons(true));
+  new MutationObserver(() => { wholeButtons(); fitWords(); }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'aria-selected', 'open'] });
+  addEventListener('resize', () => { wholeButtons(true); fitWords(); });
+  document.fonts?.addEventListener?.('loadingdone', () => { wholeButtons(true); fitWords(); });
   wholeButtons();
+  fitWords();
 }
 $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render(); });
 // 0396: a switch, a button kept between redraws so it keeps focus, showing its state beside a sliding knob.
