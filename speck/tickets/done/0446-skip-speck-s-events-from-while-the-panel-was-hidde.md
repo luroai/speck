@@ -1,7 +1,7 @@
 ---
 id: "0446"
 title: "Skip speck's events from while the panel was hidden"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T07:45:23.994Z"
 approved: "2026-10-24T08:11:42.440Z"
+finished: "2026-10-24T08:22:33.578Z"
 
 ---
 # 0446 · Skip speck's events from while the panel was hidden
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the panel's tab has been hidden or the screen asleep, speck plays every pipeline event it missed, one after another, when you come back. After a night's builds that's a long queue of celebrations and question marks about things already past.
