@@ -39,6 +39,7 @@ The phone's top bar follows the look chosen in Settings.
 - For release 0.15.0 (0452). The user asked on 2026-10-24 for everything relevant to the release to be ticketed.
 - From the builder's note on 0149. The `theme-color` tags and the script that sets the look before the page is drawn are in `templates/panel.html`.
 - Waits for nothing.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
