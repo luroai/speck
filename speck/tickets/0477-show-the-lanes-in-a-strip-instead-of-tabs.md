@@ -38,6 +38,7 @@ A thin strip under speck's screen shows every lane and which is in view, in plac
 
 ## Notes
 - Asked for by the user on 2026-10-24: "that also means that the tabs at the top need to be different … the whole pane would be a card, and at the top of the card would be the title."
+- Mock-up the user approved on 2026-10-24, with 0476 to 0478 together: https://claude.ai/artifact/3sE9DU2PdnsvR6p1tLNw8j.
 - Earlier: 0066 (cancelled: "Changed my mind: keeping the current panel layout") would have swiped between Shaping and Queue, before the tabs. `speck/ideas/done/2026-10-08-speck-board.md` decided the panel isn't a kanban board, as only the two ends of the pipeline are human. This keeps that: one lane in view at a time, a view of the same pipeline, with no dragging cards between lanes.
 - Decided by the user on 2026-10-24: the panel stays thin, a phone screen or a side panel beside an agent chat, "a bolt-on thing to the side, not an actual product on its own". A wider window doesn't show more lanes.
 - 0457 joined the open tab to the lane under it like a folder's tab; this replaces the tabs, so that look goes too.
