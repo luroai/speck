@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
+import { T, fakePage, queueRows, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles, nowOf } from './support/panel.mjs';
 
 // ---------- 0156: a running build's progress shown with the speck going round an ensō ----------
 // Since 0168 the builder badge stood in for the ensō and the stage dots (test/panel-0168.test.mjs); the sentence and the
@@ -91,8 +91,9 @@ test('0156 AC2 and AC3: a ship the panel itself started says "Shipping" in the n
   p.press(ship);
   await p.settle();
   const row = rowOf(p, '0405');
-  assert.equal(find(p, row, /\bsay\b/)[0].textContent, 'Shipping');
-  assert.equal(find(p, row, /\bsay\b/)[0].className, 'say', 'no longer purple: it is at work, not waiting');
+  // 0462: the open card says it in its Now cell
+  assert.equal(nowOf(row).textContent, 'Shipping');
+  assert.equal(nowOf(row).className, 'value now', 'no longer purple: it is at work, not waiting');
   assert.equal(find(p, row, /^stage\b/).length, 0, 'no stage\'s name while it ships (0201)');
 });
 

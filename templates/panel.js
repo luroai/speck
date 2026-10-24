@@ -918,8 +918,8 @@ function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : stage ? ` at-${stage}` : !t.inFlight ? ' queued' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   // 0419: the id and title, then one details line: what it's doing, or that it's queued, then its priority, size and risk.
   // 0434: its priority, size and risk only while it's open.
-  // 0461: an open one in flight shows its five steps as a track under its title.
-  const top = el('div', 'top', null, titleLine(t, !t.inFlight), t.inFlight && isOpen ? trackOf(t) : null, t.inFlight ? progressOf(t, d, isOpen) : queuedLine(t, isOpen));
+  // 0461: an open one in flight shows its five steps as a track under its title. 0462: and its facts in a table under it.
+  const top = el('div', 'top', null, titleLine(t, !t.inFlight), t.inFlight && isOpen ? trackOf(t) : null, t.inFlight ? isOpen ? factsOf(t, d) : progressOf(t, d) : queuedLine(t, isOpen));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
@@ -982,21 +982,45 @@ function trackOf(t) {
   return el('div', `track${t.red ? ' stopped' : ''}`, null, ...steps);
 }
 // 0168: an in-flight ticket's progress, under its title: what it's doing in a sentence and the current stage's name, in
-// words only since 0416, then its timer (0058), then its priority, size and risk while it's open (0434), and any bug, fix or
-// document tag.
+// words only since 0416, then its timer (0058), then any bug, fix or document tag. 0462: only while it's closed; open,
+// its facts are in a table (factsOf).
 // 0201: a shipping ticket says so once, with no stage's name. 0434: then its timer, and not how long its ship has run.
 // 0434: while its builder or reviewer is at work, a grid of moving lights in place of the sentence, and a round under
 // review names the round and its reviewer, such as "Review 1 · <its model>".
-function progressOf(t, d, isOpen) {
+function progressOf(t, d) {
   const tone = d.tone ? ` ${d.tone}` : '', now = t.steps.find(s => s.state === 'now');
   const ships = d.sentence === 'Shipping', counter = queueCounter(t);
-  const line = detailsLine(ships ? 'progress ship-line' : 'progress', [d.working ? null : say(d, tone, isOpen),
+  const line = detailsLine(ships ? 'progress ship-line' : 'progress', [d.working ? null : say(d, tone, false),
     ships ? null : d.round !== null && d.round !== undefined ? el('span', `stage${tone}`, `Review ${d.round}`) : now ? el('span', `stage${tone}`, now.label) : null,
     d.by ? el('span', 'by', d.by) : null,
-    counter ? el('span', 'sub', counter) : null, ...(isOpen ? tagsOf(t, false) : [typeTag(t), taskTag(t)])]);
+    counter ? el('span', 'sub', counter) : null, typeTag(t), taskTag(t)]);
   // a space after it, not a dot. The line starts with an element, as detailsLine puts text only after a dot.
   if (d.working) { const first = line.children[0] || null; line.insertBefore(lights(d.sentence), first); line.insertBefore(document.createTextNode(' '), first); }
   return line;
+}
+// 0462: an open in-flight ticket's facts, under its track: six cells in three columns and two rows, each its label above
+// its value. A value is one line, cut short with … when it's too long, and its whole text is its tooltip. A screen
+// reader reads each cell as its label, then its value. The Time cell's value is the counter the clock puts right.
+const hidden = n => { n.setAttribute('aria-hidden', 'true'); return n; }; // the cell's value says it already
+function factsOf(t, d) {
+  const who = workerOf(t, d), counter = queueCounter(t);
+  const waiting = t.status === 'approved' && !d.moving && d.sentence !== 'Approved · waiting to ship'; // waiting for you, not for speck run
+  const size = t.size ? String(t.size) : '–', risk = t.risk ? String(t.risk) : '–';
+  const kind = t.type === 'bug' || t.type === 'fix' ? t.type : t.task === 'document' ? 'document' : 'code';
+  const priority = t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : '–';
+  const cell = (label, value, cls, tip = value, lit = null) => {
+    const v = el('dd', cls ? `value ${cls}` : 'value', null, lit, el('span', cls === 'time' ? 'sub' : 'text', value));
+    v.title = tip;
+    return el('div', 'fact', null, el('dt', 'label', label), v);
+  };
+  const tone = d.tone ? ` ${d.tone}` : '';
+  return el('dl', 'facts', null,
+    cell('Now', d.word, `now${tone}`, d.sentence, d.working ? hidden(lights(d.sentence)) : null),
+    cell(who.label, who.value, null),
+    cell(waiting ? 'Waiting' : 'Time', counter || '–', 'time'),
+    cell('Priority', priority, null),
+    cell('Size · risk', `${size} · ${risk}`, null),
+    cell('Type', kind, kind === 'code' ? null : kind));
 }
 // 0443: what a ticket no agent is working on is doing, in words: closed, a long sentence in short words, with the
 // sentence as their tooltip and accessible name; open, the sentence.
@@ -1348,11 +1372,19 @@ const child = (node, cls) => [...node.children].find(n => n.className === cls); 
 // What a kept queue row shows from the clock or from other tickets, put right on its node: the counter, and for a
 // ready ticket its chain icon and Queued line. Only the parts that change are replaced.
 // An in-flight row's details line, and its counter (0419: in that line, when it has one).
-const progressLine = q => [...child(q, 'top').children].find(n => /^progress\b/.test(n.className)) || null;
-const counterOf = q => { const p = progressLine(q); return p ? child(p, 'sub') || null : null; };
+// 0462: an open one's counter is in its facts' Time cell.
+const progressLine = q => [...child(q, 'top').children].find(n => /^(progress|facts)\b/.test(n.className)) || null;
+const timeOf = p => { const v = [...p.children].map(c => c.children[1]).find(v => v && v.className === 'value time'); return v ? child(v, 'sub') || null : null; };
+// Puts a counter right, and in a Time cell its tooltip too, which is a dash when it has no counter.
+function putCounter(sub, text) {
+  const cell = sub.parentNode && sub.parentNode.className === 'value time' ? sub.parentNode : null;
+  setText(sub, cell ? text || '–' : text);
+  if (cell) cell.title = sub.textContent;
+}
+const counterOf = q => { const p = progressLine(q); return !p ? null : p.className === 'facts' ? timeOf(p) : child(p, 'sub') || null; };
 function queueUpdate(q, t) {
   const sub = counterOf(q);
-  if (sub) setText(sub, queueCounter(t));
+  if (sub) putCounter(sub, queueCounter(t));
   if (t.inFlight) return;
   const top = child(q, 'top'), row = child(top, 'line'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
   if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
@@ -1373,7 +1405,7 @@ function startCounters(list) {
   if (counters.length && counterTimer === null) counterTimer = setInterval(tickCounters, COUNTER_MS);
 }
 function tickCounters() {
-  for (const [sub, since, paused] of counters) setText(sub, `${paused ? 'Paused · ' : ''}${counter(Date.now() - since)}`);
+  for (const [sub, since, paused] of counters) putCounter(sub, `${paused ? 'Paused · ' : ''}${counter(Date.now() - since)}`);
 }
 // Under a blocked question: the command that reopens the build's session, with a button that copies it.
 function resumeLine(t) {
