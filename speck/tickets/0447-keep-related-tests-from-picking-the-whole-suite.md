@@ -40,6 +40,7 @@ started: "2026-10-24T07:45:31.476Z"
 - For release 0.15.0 (0452). The user asked on 2026-10-24 for everything relevant to the release to be ticketed.
 - From my own note on 0437's first `--related` run. `speck test` is in `scripts/turns.mjs`.
 - Waits for nothing: no open ticket changes these files.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
