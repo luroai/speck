@@ -46,6 +46,8 @@ Each lane is a whole card, with its title at its top and its tickets under it, a
 - Today: `openTab` in `templates/panel.js` (0410, 0425) shows one lane under the tabs; each lane's list scrolls on its own (`.lane-list`). Built for release 0.15.0.
 - Waits for 0469, and through it the file splits (0472 to 0474): 0469 changes the tabs' and cards' spacing, which this rebuilds. Re-chained by the user on 2026-10-24 so it builds side by side with 0471, which changes only the word in the screen's title row.
 - Failing before this build: none
+- Self-check: the lanes' box is clipped rather than hidden, so nothing can scroll it sideways, with a test that scrolls a ticket into view partway through a slide; swipes in the tests that only need to change lane now also go past a third of the card, so a busy machine can't make them miss.
+- Older tests changed to fit the slide (the behaviour they check is the same): tests that press a tab and measure the lane straight away now bring the slide to its end first (`REST_LANES` in `test/support/panel.mjs`, used by `openLane` and in 0140, 0165, 0417 and 0418); 0134 and 0425 expect each lane's new name at the top of its card; 0060's point outside the pane is lower, in Plan's list, since the name moves the list down.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

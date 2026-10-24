@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, round } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, round, REST_LANES } from './support/panel.mjs';
 
 // ---------- 0418: one column at every width, and no border round a lane ----------
 
@@ -65,6 +65,7 @@ const LAYOUT = `(async () => {
   const lanes = [];
   for (const tab of document.querySelectorAll('#tabs .tab')) {
     tab.click();
+    ${REST_LANES}; // 0476: at rest
     for (const h of document.querySelectorAll('#shaping .item:not(.open) .head, #queue .q:not(.open) .top')) h.click();
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     const section = [...document.querySelectorAll('main > section')].find(n => !n.hidden);
@@ -75,6 +76,7 @@ const LAYOUT = `(async () => {
       tickets: tickets.map(n => ({ id: n.className || n.tagName.toLowerCase(), ...box(n), list: inside(n.parentElement) })) });
   }
   document.getElementById('tab-build').click();
+  ${REST_LANES};
   return { vw: document.documentElement.clientWidth, ...frame(true), lanes };
 })()`;
 
@@ -127,9 +129,11 @@ const BORDERS = `(() => {
   const tickets = [];
   for (const tab of document.querySelectorAll('#tabs .tab')) {
     tab.click();
+    ${REST_LANES}; // 0476: at rest
     for (const n of document.querySelectorAll('main > section:not([hidden]) :is(.item, .q, #shipped tr)')) tickets.push({ id: n.className || n.tagName, sides: sides(n) });
   }
   document.getElementById('tab-build').click();
+  ${REST_LANES};
   return { lanes, tickets };
 })()`;
 

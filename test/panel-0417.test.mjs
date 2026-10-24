@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, round, openLane, styles } from './support/panel.mjs';
+import { ROOT, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, round, openLane, styles, REST_LANES } from './support/panel.mjs';
 
 // ---------- 0417: finger-sized controls on touch screens only ----------
 
@@ -134,6 +134,7 @@ async function view(b, width, touch) {
 // Opens the lane, then every Plan item or Build row in it, and gives each shown control in it with its size and minimums.
 const CONTROLS = lane => `(async () => {
   document.getElementById('tab-${lane}').click();
+  ${REST_LANES}; // 0476: at rest
   for (const h of document.querySelectorAll('#shaping .item:not(.open) .head, #queue .q:not(.open) .top')) h.click();
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   const shown = n => { const r = n.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(n).visibility === 'visible'; };
