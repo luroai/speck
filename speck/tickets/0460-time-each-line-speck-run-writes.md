@@ -1,7 +1,7 @@
 ---
 id: "0460"
 title: "Time each line speck run writes"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T09:21:18.556Z"
 ---
 # 0460 · Time each line speck run writes
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck run's output, which the panel shows as the pipeline log from `speck/.cache/runs/run.log`, has no times, so you can't tell when anything in the pipeline happened.
@@ -46,7 +46,7 @@ Each line speck run writes says when it was written.
 - Self-check: no changes (checked console.warn and console.info aren't used, an empty message, the `speck` bin and the worker's own process).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Every line in the panel's pipeline log, and in speck run's output in a terminal, now starts with the time it was written, such as `14:32:05`, just as each ticket's build log does. A message that runs over several lines has the time on its first line only. To see it, turn speck run on in the panel and open the pipeline log. Lines written before this change keep no time, so an older log mixes timed and untimed lines until it moves on.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,4 +55,63 @@ Each line speck run writes says when it was written.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9048c4394816758c3d3c0355bf353e8378528866",
+    "session": "fresh",
+    "thread_id": "01a16d3c-1048-7940-b174-752fa5bdef0d",
+    "builder_response": "- Tests run: `speck test --related test/run-times-0460.test.mjs test/flaky-0207.test.mjs test/panel-0220.test.mjs` (the ticket's own file, the two existing files it changed, and the 18 related files it brought in; with the `commands.checks` files).\n- Earlier, with all 57 test files that start or read speck run, two CPU-time checks failed under that load (`build-log-0176` \"the board stays quick to read\", `quick-waits-0232` AC3); run alone straight after, both passed.\n- `test/flaky-0207.test.mjs` and `test/panel-0220.test.mjs` matched `^speck run: watching` in run.log; that line now starts with its time, so both expect `HH:MM:SS ` before it.\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 174524,
+      "cached_input_tokens": 130688,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 759,
+      "reasoning_output_tokens": 59
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T09:27:23.094Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run-times.mjs timeRunOutput prefixes console.log and console.error using local clock fields. scripts/run.mjs enables it in cmdRun and runWorker. Passing 0460 tests cover formatting and CLI refusals; the changed panel tests verify timed output in run.log."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "timedMessage prefixes the message once, preserving embedded newlines. Passing 0460 AC2 tests exercise multiline console output and an actual two-line CLI refusal."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "No code rewrites existing logs; panelRunOn retains append mode. The passing 0460 AC2 AC3 integration test confirms existing content remains unchanged. The reported test run, verified in /tmp/speck-0460-tests.txt, has 254 passes, three skips and no failures."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "speck run now adds local times to its messages, including errors and output after switching to new code. Multiline messages receive one timestamp, and existing log entries remain unchanged. The relevant tests pass; no blocking concerns found."
+  }
+}
+```
+
+</details>
