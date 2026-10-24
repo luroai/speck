@@ -404,7 +404,7 @@ const running = new Set(); // every Chromium started and not yet exited, with it
 async function launch() {
   // Named speck-keep-*, so tmp.mjs leaves it in place between tests, until the file's process exits.
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-keep-chrome-'));
-  const chrome = spawn(findChrome(), ['--headless', '--no-sandbox', '--disable-gpu', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--window-size=1280,900', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
+  const chrome = spawn(findChrome(), ['--headless', '--no-sandbox', '--disable-gpu', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--window-size=1280,900', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, FONTCONFIG_FILE: proportionalFonts(profile) } });
   const me = { chrome, profile };
   running.add(me);
   exitOnSignals();
@@ -427,6 +427,19 @@ async function launch() {
   try { ({ ws, send } = await devtools(browserUrl)); } catch (e) { await close(); throw e; }
   const alive = () => chrome.exitCode === null && chrome.signalCode === null && ws.readyState === WebSocket.OPEN;
   return { chrome, port: new URL(browserUrl).port, send, alive, close };
+}
+// 0441: a fontconfig file for Chromium, in its profile, that keeps the machine's own settings and then prefers
+// Liberation Sans for system-ui and sans-serif, and Liberation Serif for serif. On a machine with only the Liberation
+// fonts, fontconfig finds none of the families it prefers for those, and gives Liberation Mono, so the panel's interface
+// font would be a monospace there, as nobody sees it. Where fontconfig isn't used, as on macOS, the file does nothing.
+function proportionalFonts(profile) {
+  const file = path.join(profile, 'fonts.conf');
+  const prefer = (generic, family) => `  <alias binding="strong"><family>${generic}</family><prefer><family>${family}</family></prefer></alias>\n`;
+  const own = process.env.FONTCONFIG_FILE || '/etc/fonts/fonts.conf';
+  fs.writeFileSync(file, `<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">\n<fontconfig>\n`
+    + `  <include ignore_missing="yes">${own.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</include>\n`
+    + prefer('system-ui', 'Liberation Sans') + prefer('sans-serif', 'Liberation Sans') + prefer('serif', 'Liberation Serif') + '</fontconfig>\n');
+  return file;
 }
 // A file starts Chromium at most once: a page asked for after it has exited, killed by a test for example, fails.
 async function sharedChromium() {
@@ -500,10 +513,11 @@ export async function browserPage(url) {
   return { js, until, loaded, drag, move, close, send, browser: c.send, pid: c.chrome.pid };
 }
 // 0410: the script that opens a lane's tab ('plan', 'build' or 'shipped') in a real browser, as only the open one shows.
-// 0427: in a real browser, whether the panel's interface font (system-ui) is a monospace there, as it is on a machine
-// with only the Liberation fonts: an i and an m are the same width only in one. Its bold titles are then wider than in a
-// proportional system font, and a long one can take a line more.
-export const MONO_UI = `(() => { const w = t => { const s = document.createElement('span'); s.style.font = '17px system-ui'; s.textContent = t; document.body.appendChild(s); const x = s.getBoundingClientRect().width; s.remove(); return x; }; return w('iiii') === w('mmmm'); })()`;
+// 0427: in a real browser, whether the panel's interface font (system-ui) is a monospace there: an i and an m are the
+// same width only in one. 0441: never in the tests' browser, whose fontconfig file prefers a proportional font. It
+// measures on a canvas, as a span added to the panel's body is a flex item as wide as the page, whatever its text.
+export const monoFont = font => `(() => { const c = document.createElement('canvas').getContext('2d'); c.font = ${JSON.stringify(font)}; return c.measureText('iiii').width === c.measureText('mmmm').width; })()`;
+export const MONO_UI = monoFont('17px system-ui');
 export const openLane = lane => `document.getElementById('tab-${lane}').click(), true`;
 // The page point at a character offset in the first text node of the element a selector finds.
 export const charAt = (sel, offset) => `(() => { const t = document.querySelector(${JSON.stringify(sel)}).firstChild; const r = document.createRange();

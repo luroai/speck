@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { findChrome, browserPage, T, MONO_UI } from './support/panel.mjs';
+import { findChrome, browserPage, T } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 
 // ---------- 0155: each Build queue ticket a clear card ----------
@@ -206,11 +206,10 @@ for (const [width, most] of [[375, 2], [699, 3], [700, 3], [1000, 3], [1279, 3],
       // 0434: a closed card's title is one line, cut off when it doesn't fit
       await open(b, '0306');
       await open(b, '0301');
-      const lines = most + (await b.js(MONO_UI) ? 1 : 0); // 0427: a bold title in a monospace system font can take a line more
       const ready = await b.js(LAYOUT('0306'));
-      assert.ok(ready.lines.length >= 1 && ready.lines.length <= lines, `0306: the title is on ${ready.lines.length} lines`);
+      assert.ok(ready.lines.length >= 1 && ready.lines.length <= most, `0306: the title is on ${ready.lines.length} lines`);
       const flying = await b.js(LAYOUT('0301'));
-      assert.ok(flying.lines.length >= 1 && flying.lines.length <= lines && !flying.cut, `0301: the title is on ${flying.lines.length} lines, uncut`);
+      assert.ok(flying.lines.length >= 1 && flying.lines.length <= most && !flying.cut, `0301: the title is on ${flying.lines.length} lines, uncut`);
     }, { width });
   });
 }
