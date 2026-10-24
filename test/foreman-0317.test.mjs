@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fakePage, T, click, gitEnv, ROOT, openQueueRows } from './support/panel.mjs';
+import { fakePage, T, click, gitEnv, ROOT, openQueueRows, nowOf } from './support/panel.mjs';
 import { OPTION, blockedRepo } from './support/blocked.mjs';
 import { statusData, loadConfig } from '../scripts/speck.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
@@ -84,7 +84,9 @@ test('0317 AC2: a blocked card says the Foreman will take its recommendation, an
   const one = rowOf(p, '0001').textContent;
   assert.ok(one.includes(`The Foreman will take its recommendation: ${OPTION}`), one);
   assert.doesNotMatch(one, /Waiting for you|Answer the question, then run|question for you/);
-  assert.ok(one.includes('Blocked · the Foreman will take its recommendation'), one);
+  // 0462: open, its facts' Now cell says it in short words, with the sentence as their tooltip
+  assert.equal(nowOf(rowOf(p, '0001')).textContent, 'Foreman will answer');
+  assert.equal(nowOf(rowOf(p, '0001')).title, 'Blocked · the Foreman will take its recommendation');
   for (const id of ['0002', '0003']) {
     assert.match(rowOf(p, id).textContent, /Waiting for you\. Answer the question, then run \/speck-build /);
     assert.doesNotMatch(rowOf(p, id).textContent, /The Foreman will/);

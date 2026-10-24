@@ -419,6 +419,19 @@
   .q .track .step.now.approve { color: var(--ok); }
   .q .track .step.now.ship { color: var(--purple-text); }
   .q .track.stopped .step.now { border-top-color: var(--bad); color: var(--bad); } /* blocked, or its build stopped */
+  /* 0462: an open in-flight ticket's facts, under its track: six even cells in three columns and two rows, with lines
+     between them and round them. Each is its label above its value, each on one line, cut short with … */
+  .q .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 4px; border-top: .5px solid var(--line); border-left: .5px solid var(--line); }
+  .q .facts .fact { min-width: 0; padding: 4px 6px; border-right: .5px solid var(--line); border-bottom: .5px solid var(--line); }
+  .q .facts .label, .q .facts .value { display: block; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q .facts .label { font-size: 12px; line-height: 14px; color: var(--muted); }
+  .q .facts .value { font-size: 12px; line-height: 16px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .q .facts .value .lights { margin: 1.75px 5px 0 0; vertical-align: top; } /* at the line's top, so the line keeps its height */
+  .q .facts .value.now.bad { color: var(--bad); }
+  .q .facts .value.now.to-ship { color: var(--ok); }
+  .q .facts .value.bug { color: var(--bug); }
+  .q .facts .value.fix { color: var(--fix); }
+  .q .facts .value.document { color: var(--idea); }
   /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
   .goto { font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .goto:hover { text-decoration-style: solid; }
