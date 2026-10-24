@@ -49,7 +49,9 @@ const contrast = (a, b, base = '#ffffff') => {
 const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--ok-bg', '--inbox-bg', '--bad-bg'];
 // 0413: what sits in speck's screen's dark frame (its rules start ".bezel") sits on the frame's colour, not the surfaces.
 const onFrame = sel => sel.split(',').every(s => /^\.bezel\b/.test(s.trim()));
-const behind = sel => (onFrame(sel) ? ['--bezel'] : SURFACES);
+// 0455: and what's in a ticket's build log (its rules start ".q .log") sits on the log's own black, in every look.
+const inLog = sel => sel.split(',').every(s => /^\.q \.log\b/.test(s.trim()));
+const behind = sel => (onFrame(sel) ? ['--bezel'] : inLog(sel) ? ['--log-bg'] : SURFACES);
 // Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
 // stage dots and the ensō's speck went in 0168.)
 const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.bezel .name::before']; // 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title
