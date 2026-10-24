@@ -1,7 +1,7 @@
 ---
 id: "0452"
 title: "Prepare release 0.15.0"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-24
 ---
 # 0452 · Prepare release 0.15.0
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 0.14.0, speck's panel has been rebuilt round speck itself, as the Foreman on an LCD screen at the top, with tabs, shorter tickets and Cursor's look, and builds have got faster. None of it is in a release yet, so projects that install speck don't get it.
