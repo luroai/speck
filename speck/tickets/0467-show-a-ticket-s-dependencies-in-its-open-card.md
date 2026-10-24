@@ -42,6 +42,7 @@ An open ticket shows its dependencies in a small, even box under its facts table
 - Statuses: shipped is `done`; building is `building`, `reviewing`, `blocked` or `approved`; queued is the rest.
 - Today: `ticketHead` and `queuedLine` in `templates/panel.js` draw the ids with `idLinks` and `noteIds`; `goTo` goes to a ticket (0154).
 - Waits for 0466, the last ticket before it that changes `templates/panel.js` and `templates/panel.css`, and so 0463 and 0465, which this builds on.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
