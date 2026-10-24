@@ -81,10 +81,10 @@ test('0053 AC4: everything else in the row stays where it is', async () => {
   const waiting = rowOf(p, '0004');
   assert.deepEqual(shape(waiting), ['top']); // 0419: the Queued line is the top row's details line
   assert.equal(topOf(waiting).children[1].textContent, 'Queued'); // 0468: what it waits on is in its chip
-  assert.ok(p.all(topOf(waiting)).some(n => n.className === 'lock'), 'the padlock in the top row');
+  assert.ok(!p.all(topOf(waiting)).some(n => n.className === 'lock'), '0483: closed, no padlock in the top row');
   const chain = rowOf(p, '0005');
   assert.equal(topOf(chain).children[1].textContent, 'Queued');
-  assert.ok(p.all(topOf(chain)).some(n => n.className === 'chain'), 'the chain icon in the top row');
+  assert.ok(!p.all(topOf(chain)).some(n => n.className === 'chain'), '0483: closed, no chain icon in the top row');
   // Opened, the rest keeps its place (0421: with no path line).
   await open(p, '0001');
   assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'full-open', 'log']); // Full ticket: 0063
