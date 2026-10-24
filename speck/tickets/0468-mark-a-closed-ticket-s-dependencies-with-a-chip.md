@@ -1,7 +1,7 @@
 ---
 id: "0468"
 title: "Mark a closed ticket's dependencies with a chip"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0467"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T13:07:10.567Z"
+approved: "2026-10-24T13:32:18.788Z"
 
 ---
 # 0468 · Mark a closed ticket's dependencies with a chip
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A closed ticket in Plan or Build names the tickets it waits on, or unlocks, as text in its second line, which runs long and wraps on a phone when there are many.
@@ -55,9 +56,15 @@ Worth a look: closed cards still show the chain or padlock icon after the id as 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Closed in-flight Build tickets never show a dependency chip.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 618,417
+- Elapsed since build started: 25 min
+- Changed lines: 110 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Idea: drop the chain and padlock icons from closed cards, now that the chip says the same (speck/ideas/2026-10-24-drop-the-chain-and-padlock-icons-from-closed-cards.md).
