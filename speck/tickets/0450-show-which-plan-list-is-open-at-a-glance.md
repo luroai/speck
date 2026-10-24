@@ -1,7 +1,7 @@
 ---
 id: "0450"
 title: "Show which Plan list is open at a glance"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0444"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T08:18:18.708Z"
+approved: "2026-10-24T08:25:45.529Z"
 
 ---
 # 0450 · Show which Plan list is open at a glance
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In Plan, the selected one of Tickets, Ideas and Inbox differs from the others only by a slightly darker border, so you can't tell which list is open.
@@ -50,9 +51,14 @@ In Plan, the button for the list you have open (Tickets, Ideas or Inbox) is now 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 89,032
+- Elapsed since build started: 7 min
+- Changed lines: 3 (limit 5000)
 Follow-ups (tidy-ups, no inbox note):
 - 0426's test keeps its own copy of the contrast helpers now in test/support/contrast.mjs; it could import them.
 - The comment on `.tab[aria-selected="true"]` in templates/panel.css says the chosen tab is set apart "as the chosen toggle is", which is no longer true now the toggle is filled (the tabs are 0425's).
