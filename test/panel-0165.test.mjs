@@ -121,8 +121,9 @@ for (const width of [375, 1280]) {
       for (const where of ['plan', 'queue']) all.push(...(await b.js(BOXES(WHERE[where]))).map(t => ({ ...t, where })));
       await openPane(b);
       all.push(...(await b.js(BOXES(WHERE.pane))).map(t => ({ ...t, where: 'pane' })));
+      // 0465: the pane has no tags, as its facts are in its table, as an open card's are
       assert.deepEqual(all.map(t => `${t.where} ${t.text}`), ['plan P1', 'plan M', 'plan high', 'plan bug', 'plan P3', 'plan S', 'plan low', 'plan fix',
-        'queue bug', 'pane bug', 'pane P0', 'pane M', 'pane low']);
+        'queue bug']);
       for (const t of all) {
         const first = all.find(x => (x.where === 'pane') === (t.where === 'pane'));
         assert.ok(Math.abs(t.height - first.height) < 0.5, `${t.where} ${t.text} is ${t.height} px high, not ${first.height}`);
@@ -307,8 +308,7 @@ test('0165 AC4: on a draft in Plan the priority tag opens the priority menu, not
     await key(b, 'Escape');
     assert.equal(await b.js(`!!document.querySelector('.prio-menu')`), false);
     await openPane(b);
-    await mouse(b, await b.js(centre(WHERE.pane, 1)));
-    assert.equal((await b.js(TIP))?.text, MEANING.P0);
+    assert.deepEqual(await texts(b, WHERE.pane), [], '0465: the pane has no priority tag, as its priority is in its table');
   });
 });
 
@@ -359,6 +359,7 @@ test('0165 AC4: the Plan priority tag keeps its pointer, and the tags that show 
   });
 });
 
+// 0465: the pane's risk is in its table, as on its open card, with no tag and so no tip that auto_ship changes
 test('0165 AC2: an open full ticket pane updates its risk tip and label when only the ticket\'s auto_ship changes', async () => {
   const board = autoShip => STATE({ tickets: [full('0203', { risk: 'low', auto_ship: autoShip })] });
   const p = fakePage([board(true), board(false)]);
@@ -366,11 +367,11 @@ test('0165 AC2: an open full ticket pane updates its risk tip and label when onl
   p.press(top(items(p)[0]));
   p.press(p.all(items(p)[0]).find(n => n.className === 'full-open'));
   assert.equal(p.calls.length, 1, 'opening it asked for nothing more');
-  const risk = () => p.all(p.byId('full-ticket')).find(n => isTag(n) && n._text === 'low');
-  assert.equal(risk().attrs['aria-label'], MEANING.low);
+  const risk = () => p.all(p.byId('full-ticket')).find(n => n.className === 'fact' && n.children[0].textContent === 'Size · risk');
+  assert.equal(risk().children[1].textContent, 'S · low');
+  assert.ok(!p.all(p.byId('full-ticket')).some(isTag), 'no tags');
   p.timers.shift()(); // the next refresh
   await p.settle();
-  assert.equal(risk().attrs['aria-label'], 'Low risk: waits for you to ship it');
-  p.press(risk());
-  assert.equal(p.byId('tag-tip').textContent, 'Low risk: waits for you to ship it');
+  assert.equal(risk().children[1].textContent, 'S · low', 'the same risk');
+  assert.ok(!p.all(p.byId('full-ticket')).some(isTag), 'still no tags');
 });

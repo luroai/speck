@@ -350,17 +350,17 @@ async function everyView(b, theme) {
   await b.js(`document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
   await b.until(`!document.querySelector('.prio-menu')`, 'the priority menu to close');
   await b.js(`document.querySelector('#shaping .full-open').click()`);
-  await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .tag')`, 'the full ticket');
+  await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .facts')`, 'the full ticket'); // 0465: its table, in place of its tags
   checkTexts(await b.js(TEXTS), `${theme}, the full ticket`);
   checkEdges(await b.js(EDGES), `${theme}, the full ticket`);
   tags.push(...(await b.js(TAGS)).filter(t => t.where === 'pane'));
-  // 0420: a shipped ticket's tag is a small box in its title's line, so the full ticket's are the boxed ones left to check
-  assert.ok(tags.some(t => t.where === 'pane'), `${theme}: tags in pane`);
+  // 0420: a shipped ticket's tag is a small box in its title's line, so the full ticket's were the boxed ones left to
+  // check. 0465: its tags are in its table now, as its card's are, so no boxed tag is left on show.
+  assert.deepEqual(tags, [], `${theme}: no boxed tags`);
   for (const t of tags) {
     assert.equal(t.size, 14, `${theme}: the ${t.text} tag in ${t.where} is 14 px`);
     assert.ok(t.height >= 28, `${theme}: the ${t.text} tag in ${t.where} is ${t.height} px tall`);
   }
-  assert.equal(new Set(tags.map(t => Math.round(t.height))).size, 1, `${theme}: every tag is the same height: ${JSON.stringify(tags)}`);
   await b.js(`document.querySelector('#full-ticket .close').click()`);
   for (const list of ['ideas', 'inbox']) {
     await b.js(`document.querySelector('#shaping-toggle .toggle.${list}').click()`);
