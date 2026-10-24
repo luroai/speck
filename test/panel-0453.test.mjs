@@ -133,8 +133,9 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
   } finally { await b.close(); await stop(panel); }
 });
 
-// AC3: the open tab's edge is the text colour all round, as before, though the tab before it draws the side they share.
-test('0453 AC3: the open tab is edged in the text colour on all four sides', { skip }, async () => {
+// AC3: the open tab's edge is the text colour, as before, though the tab before it draws the side they share. 0457: its
+// bottom edge is the lane's colour, so the tab and its lane are one sheet.
+test('0453 AC3: the open tab is edged in the text colour on its top and sides', { skip }, async () => {
   const r = repo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
@@ -147,7 +148,7 @@ test('0453 AC3: the open tab is edged in the text colour on all four sides', { s
       const got = await b.js(`(() => { const t = document.getElementById('tab-${lane}'), prev = t.previousElementSibling, cs = getComputedStyle(t), text = getComputedStyle(document.body).color;
         const ink = n => { const c = document.createElement('span'); c.style.color = n; document.body.append(c); const v = getComputedStyle(c).color; c.remove(); return v; };
         const want = ink('var(--text)');
-        return { top: cs.borderTopColor === want, right: cs.borderRightColor === want, bottom: cs.borderBottomColor === want,
+        return { top: cs.borderTopColor === want, right: cs.borderRightColor === want, bottom: cs.borderBottomColor === ink('var(--panel)'),
           left: prev ? getComputedStyle(prev).borderRightColor === want : cs.borderLeftColor === want }; })()`);
       assert.deepEqual(got, { top: true, right: true, bottom: true, left: true }, `${lane}'s tab`);
     }
