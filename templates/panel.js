@@ -953,7 +953,7 @@ function queueItem(t) {
   // 0434: its priority, size and risk only while it's open.
   // 0461: an open one in flight shows its five steps as a track under its title. 0462: and its facts in a table under it.
   // 0463: and so does an open queued one, its steps all grey.
-  const top = el('div', 'top', null, titleLine(t, !t.inFlight, !t.inFlight && !isOpen), isOpen ? trackOf(t.inFlight ? t : { steps: NOT_STARTED }) : null,
+  const top = el('div', 'top', null, titleLine(t, !t.inFlight, !isOpen), isOpen ? trackOf(t.inFlight ? t : { steps: NOT_STARTED }) : null,
     t.inFlight ? isOpen ? factsOf(t, d) : progressOf(t, d) : isOpen ? waitingFacts(t, 'Queued', 'Waiting on', false) : queuedLine(t));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
@@ -1514,21 +1514,22 @@ function queueUpdate(q, t) {
   const sub = counterOf(q);
   if (sub) putCounter(sub, queueCounter(t));
   if (openQueue.has(String(t.id))) putDeps(q, child(q, 'top'), t); // 0467
-  if (t.inFlight) return;
-  const top = child(q, 'top'), row = child(top, 'line'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
-  if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
-    if (icon) row.insertBefore(icon, old || child(row, 'title')); // the icon comes right after the id
-    if (old) row.removeChild(old);
-  }
-  // 0463: an open one's facts table, in place of its line
-  const isOpen = openQueue.has(String(t.id)), act = child(top, isOpen ? 'facts' : 'act'), line = isOpen ? waitingFacts(t, 'Queued', 'Waiting on', false) : queuedLine(t);
-  if (act.textContent !== line.textContent) { top.insertBefore(line, act); top.removeChild(act); }
-  // 0468: a closed one's chip
+  const isOpen = openQueue.has(String(t.id)), top = child(q, 'top'), row = child(top, 'line');
+  // 0468: a closed one's chip, in flight too
   const chip = isOpen ? null : depChip(t), was = child(row, 'dep-chip');
   if (!was || !chip || was.title !== chip.title) {
     if (chip) row.appendChild(chip);
     if (was) row.removeChild(was);
   }
+  if (t.inFlight) return;
+  const icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
+  if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
+    if (icon) row.insertBefore(icon, old || child(row, 'title')); // the icon comes right after the id
+    if (old) row.removeChild(old);
+  }
+  // 0463: an open one's facts table, in place of its line
+  const act = child(top, isOpen ? 'facts' : 'act'), line = isOpen ? waitingFacts(t, 'Queued', 'Waiting on', false) : queuedLine(t);
+  if (act.textContent !== line.textContent) { top.insertBefore(line, act); top.removeChild(act); }
 }
 // The counters run on their own 1-second timer, apart from the state updates and render(), so they move on between updates.
 // Each tick puts only the counters right, and the timer is cleared once no in-flight ticket in the queue has a started.

@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, boardPage, items, queueRows, top, click, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, full, boardPage, items, queueRows, click, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
 
 // ---------- 0468: a closed ticket's dependencies are one small chip at the end of its title row ----------
 
@@ -29,6 +29,7 @@ const card = (p, id) => [...items(p), ...queueRows(p)].find(n => idOf(p, n) === 
 const topOf = n => n.children[0];
 const lineOf = n => topOf(n).children[0];
 const chipOf = (p, n) => p.all(lineOf(n)).find(x => x.className === 'dep-chip') || null;
+const chipSaid = (p, n) => chipOf(p, n)?.title ?? null;
 const secondLine = n => topOf(n).children[1];
 
 test('0468 AC1: a closed ticket waiting on unshipped ones ends its title row with a link chip and how many', async () => {
@@ -99,6 +100,29 @@ test('0468 AC2: the chip follows the board: a new ticket waiting on one changes 
   assert.equal(card(p, '0600'), kept, 'the same card, changed in place');
   assert.equal(chipOf(p, card(p, '0600')).title, '5 tickets wait on this');
   assert.equal(p.all(lineOf(card(p, '0600'))).filter(x => x.className === 'dep-chip').length, 1, 'one chip');
+});
+
+test('0468 AC1: a closed Build ticket in flight shows its chip too, and a kept one follows the board', async () => {
+  const at = new Date().toISOString();
+  const tickets = extra => [T('0900', 'building', { title: 'Being built', started: at, build_running: true }),
+    ...['0901', '0902', '0903', '0904', ...extra].map(id => T(id, 'ready', { after: ['0900'], waiting_on: ['0900'] })),
+    T('0910', 'reviewing', { title: 'Under review', started: at, build_running: true }), T('0911', 'ready', { after: ['0910'], waiting_on: ['0910'] })];
+  const p = boardPage([board(tickets([])), board(tickets(['0905']))]);
+  await p.settle();
+  const chip = chipOf(p, card(p, '0900'));
+  assert.ok(chip, 'a building ticket four wait on has a chip');
+  assert.deepEqual(chip.children[0].children.map(c => [c.className, c.textContent]), [['dep-icon arrow', ''], ['dep-count', '4']]);
+  assert.equal(chip.title, '4 tickets wait on this');
+  assert.equal(chipSaid(p, card(p, '0910')), '1 ticket waits on this');
+  const kept = card(p, '0900');
+  p.timers.shift()(); // the next board, with one more waiting on it
+  await p.settle();
+  assert.equal(card(p, '0900'), kept, 'the same card, changed in place');
+  assert.equal(chipSaid(p, card(p, '0900')), '5 tickets wait on this');
+  assert.equal(p.all(lineOf(card(p, '0900'))).filter(x => x.className === 'dep-chip').length, 1, 'one chip');
+  click(topOf(card(p, '0900')));
+  await p.settle();
+  assert.equal(chipOf(p, card(p, '0900')), null, 'open, it has none');
 });
 
 test('0468 AC3: the after, unlocks and waiting on ids are gone from closed cards\' second lines', async () => {
