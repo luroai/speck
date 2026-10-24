@@ -1,7 +1,7 @@
 ---
 id: "0480"
 title: "Set each lane in a light card instead of a dark frame"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:03:26.428Z"
+approved: "2026-10-24T18:12:52.470Z"
 
 ---
 # 0480 · Set each lane in a light card instead of a dark frame
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0478 each lane sits in a dark frame as heavy as speck's screen above it. On a phone the two black slabs compete, so the screen no longer stands out, and the frame's title bar and edges take room from the tickets.
@@ -52,9 +53,14 @@ Plan, Build and Shipped now each sit in a light card with a thin grey edge, inst
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 113,842
+- Elapsed since build started: 9 min
+- Changed lines: 33 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. The Pipeline log (0479) keeps its dark frame by this ticket's scope; whether it should follow the lanes is the user's call.
 
