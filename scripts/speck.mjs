@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// speck: Ship code you can't read, and still trust it.
+// speck: Plan in ten minutes. Come back to it shipped.
 // Deterministic helpers used by the speck skills. No dependencies.
 
 import fs from 'node:fs';
@@ -520,7 +520,7 @@ function cmdStatus(args = []) {
   console.log(`\nIDEAS (${waiting + inbox + ticketed}: ${waiting} waiting, ${inbox} in the inbox, ${ticketed} ticketed) in speck/ideas/`);
 }
 
-const HELP = `speck: Ship code you can't read, and still trust it.
+const HELP = `speck: Plan in ten minutes. Come back to it shipped.
 
   speck init                          set up speck in this repo, or update it (re-run any time)
   speck doctor                        check that Node.js, git, the builder and the reviewer are ready
