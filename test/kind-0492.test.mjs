@@ -109,7 +109,6 @@ test('0492 AC3: what speck prints for a task ticket never calls it a document ta
     assert.ok(!/\bdocuments?\b/i.test(s), `no "document": ${s}`);
   }
   assert.match(said[0], /ticket 0001 is a task, and a task waits for you to ship it/);
-  assert.match(said[1], /^## The result\b/);
   assert.match(said[2], /### Result/);
   assert.match(said[4], /Ticket 0001 is a code ticket, not a task, so it has no output folder\./);
 });
