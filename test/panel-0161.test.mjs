@@ -289,7 +289,7 @@ const TEXTS = `(() => { ${LIB}
 // The edge of every control and card on show against what's next to it: each border side with a width, or its fill.
 const EDGES = `(() => { ${LIB}
   const out = [];
-  const sel = 'button:not(.goto):not(.prio-menu button), .tag:not(:is(.checks, .progress, .act) .tag), .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge. 0419: a card's tags are words
+  const sel = 'button:not(.prio-menu button):not(.dep-chip), .dep-pill, .tag:not(:is(.checks, .progress, .act) .tag), .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge. 0419: a card's tags are words. 0468: a chip's edge is its pill's
   for (const el of document.querySelectorAll(sel)) {
     if (!shown(el)) continue;
     const s = getComputedStyle(el), next = behind(el.parentElement);
@@ -401,7 +401,7 @@ test('0161 AC4: in a real browser, each button, link and tab reached with Tab sh
         }
       }
       assert.ok(seen.length >= 10, `${theme}: Tab reaches the controls (${seen.length})`);
-      for (const kind of ['BUTTON.toggle', 'BUTTON.settings-open', 'SPAN.title', 'BUTTON.full-open', 'BUTTON.goto']) {
+      for (const kind of ['BUTTON.toggle', 'BUTTON.settings-open', 'SPAN.title', 'BUTTON.full-open', 'BUTTON.dep-chip']) {
         assert.ok(seen.some(f => f.what.startsWith(kind)), `${theme}: Tab reaches a ${kind}: ${seen.map(f => f.what).join(' | ')}`);
       }
       for (const f of seen) {

@@ -222,14 +222,13 @@
   .item.idea:not(.open) .head .line, .item.inbox:not(.open) .head .line { min-width: 0; } /* its grid column no wider than the card */
   .q:not(.open) .top .progress, .q:not(.open) .top .act { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* 0419: a Plan or Build ticket is its title line and one details line, in smaller type, its parts separated by " · ".
-     Each part stays whole, so the line wraps between parts, and only when it doesn't fit; a list of linked ids too
-     long for a line wraps between its ids. */
+     Each part stays whole, so the line wraps between parts, and only when it doesn't fit. */
   .item.ticket, .q { padding: 6px 10px; }
   .item.ticket .head { display: block; margin: -6px -10px; padding: 6px 10px; }
   .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
   .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
   .item.ticket .head .checks, .q .top .progress, .q .top .act { display: block; font-family: inherit; font-size: 12px; line-height: 14px; color: var(--muted); }
-  .item.ticket .head .checks > :not(.ids), .q .top .progress > :not(.ids), .q .top .act > :not(.ids) { white-space: nowrap; }
+  .item.ticket .head .checks > *, .q .top .progress > *, .q .top .act > * { white-space: nowrap; }
   .item.ticket .head .checks .prio { vertical-align: top; } /* 0441: at the line's top, as the tags in it are */
   .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; padding: 0; border: 0; line-height: inherit; vertical-align: top; } /* inline, as a box beside a dot would let the line break before the dot. 0441: at the line's top, as on its baseline the monospace's line box reaches a pixel past the line's */
   @media (prefers-reduced-motion: no-preference) {
@@ -384,6 +383,18 @@
   .lock { color: var(--faint); }
   .lock::before { content: ''; position: absolute; left: 3px; top: 0; width: 6px; height: 5px; border: 1.5px solid currentColor; border-bottom: 0; }
   .lock::after { content: ''; position: absolute; left: 2px; top: 4px; width: 8px; height: 6px; background: currentColor; }
+  /* 0468: a closed ticket's dependency chip, at the end of its title line: a link icon and how many it waits on, or an
+     arrow and how many wait on it. It never shrinks or wraps, so the title gives way and ends in its ellipsis */
+  .dep-chip { flex: none; align-self: center; display: inline-flex; align-items: center; justify-content: center; padding: 0; font: inherit; font-size: 12px; line-height: 14px;
+    font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); background: none; border: 0; cursor: pointer; }
+  .dep-pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border: .5px solid var(--line); border-radius: 8px; }
+  .dep-chip:hover { color: var(--text); } .dep-chip:hover .dep-pill { border-color: var(--text); }
+  .dep-icon { display: inline-block; position: relative; width: 11px; height: 10px; }
+  .dep-icon.link { transform: rotate(-35deg); }
+  .dep-icon.link::before, .dep-icon.link::after { content: ''; position: absolute; top: 3px; width: 6px; height: 4px; border: 1.5px solid currentColor; border-radius: 2px; }
+  .dep-icon.link::before { left: 0; } .dep-icon.link::after { left: 4px; }
+  .dep-icon.arrow::before { content: ''; position: absolute; left: 0; top: 4px; width: 8px; height: 1.5px; background: currentColor; }
+  .dep-icon.arrow::after { content: ''; position: absolute; left: 5px; top: 2px; width: 4px; height: 4px; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); }
   /* 0185: a hovered ticket and those linked to it get a ring in the text colour inside their border, and keep their fill and
      text colours. The rest are left exactly as they are, rather than set back with the hover's own fill. */
   .item.hl, .q.hl { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
@@ -467,10 +478,7 @@
   .deps .slot .sid { max-width: 100%; margin-top: 2px; font-size: 12px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: clip; font-variant-numeric: tabular-nums; }
   .deps .slot.self .sid { font-weight: 600; }
   .deps .slot.more .sid { color: var(--muted); }
-  /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
-  .goto { font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
-  .goto:hover { text-decoration-style: solid; }
-  /* It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
+  /* 0154: a ticket gone to from a dependency box (0467) lights briefly. It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
   @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
 
   /* The full ticket, over the whole panel (0423). While it's open, the page behind it holds still, under a backdrop. */
@@ -783,19 +791,10 @@
     .prio-menu button { min-width: 44px; min-height: 44px; }
     .set-ready, .full-open { min-width: 44px; min-height: 44px; }
     .deps .chip, .deps .slot { min-height: 44px; } /* 0467 */
-    /* 0164: each id reads as running text, on the line's baseline with its comma straight after it. Its tap area is
-       at least 44 px each way, but its negative margins give back what it reaches past the text, so nothing moves. */
-    .goto { display: inline-block; vertical-align: baseline; line-height: 16px; min-width: 44px; min-height: 44px; padding: 14px 8px; margin: -14px -8px; text-align: center; }
-    /* A note on several lines has them closer together than that, so each id's text, and the band of its own line,
-       sit above every tap area in the note: a tap there reaches that id, not one on the line above or below. */
-    .item .checks, .act { isolation: isolate; }
-    .goto > span { position: relative; z-index: 1; }
-    .goto > span::before { content: ''; position: absolute; inset: -1px -5px; } /* not into the next id's: a comma and a space away */
-    /* 0441: in a proportional font a comma and a space are narrower than two of those reaches, so the space is wider */
-    .ids { word-spacing: 4px; }
+    .dep-chip { min-width: 44px; min-height: 44px; margin: -13px 0; } /* 0468: its pill in the middle, and the title line no taller */
 
-    /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' and linked
-       ids' tap areas in it stay apart */
+    /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' tap areas in
+       it stay apart */
     .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; }
     .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { padding: 0 12px; }
     .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline-block; } /* a box, for its tap area */
