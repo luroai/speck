@@ -61,13 +61,13 @@ function detailsLine(cls, parts) {
   parts.filter(Boolean).forEach((p, i) => { if (i) { line.appendChild(el('span', 'sep', ' ·')); line.appendChild(document.createTextNode(' ')); } line.appendChild(p); });
   return line;
 }
-// Its priority, size and risk, then a bug, fix or document tag, as words in the details line.
+// Its priority, size and risk, then a bug, fix or task tag, as words in the details line.
 const tagsOf = (t, pick) => [...fieldTags(t, pick), typeTag(t), taskTag(t)];
 // A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
 const typeTag = t => (t.type === 'bug' || t.type === 'fix'
   ? explained(el('span', `tag ${t.type}`, t.type), t.type === 'bug' ? 'Bug: fixes a defect' : 'Fix: fixes a broken main, built before anything else') : null);
-// 0350: a "document" tag for a ticket whose task is to write a document, or nothing for a code ticket.
-const taskTag = t => (t.task === 'document' ? explained(el('span', 'tag document', 'document'), 'Document: the build writes a document, not code') : null);
+// 0350, 0492: a "task" tag for a task ticket, whose build does a task rather than change code, or nothing for a code ticket.
+const taskTag = t => (t.kind === 'task' ? explained(el('span', 'tag task', 'task'), 'Task: the build does a task and leaves its result in outputs/, not code') : null);
 // A ticket's priority, size and risk tags, each only when it has that field. `pick`: the priority tag opens the menu
 // that sets it (a draft in the Tickets list).
 function fieldTags(t, pick) {
@@ -392,7 +392,7 @@ function wholeButtons(again = false) {
     wholeSized.add(b);
   });
 }
-// 0484: a closed Build card's status line keeps its stage, time and any bug, fix or document tag whole: when it doesn't
+// 0484: a closed Build card's status line keeps its stage, time and any bug, fix or task tag whole: when it doesn't
 // fit, its words (or, while an agent is at work, the reviewer's model) are cut short to the room the rest leaves them.
 // The line's last part says how far it reaches, as a tag's tap area on a touch screen reaches past it.
 function fitWords() {
@@ -568,7 +568,7 @@ function queueItem(t) {
     if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message));
   }
   if (t.ship_hint) q.appendChild(el('div', 'act', t.ship_hint));
-  const pack = t.status === 'approved' || t.shipping || t.doc_finished; // 0361: a finished document is in its review pack
+  const pack = t.status === 'approved' || t.shipping || t.doc_finished; // 0361: a finished task's result is in its review pack
   // 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
   // build carries on with a recommendation says who went with it, until it moves on
   if (t.status === 'blocked' && t.foreman_will === true) q.appendChild(el('div', 'act foreman-will', `speck will take its recommendation: ${t.blocked_recommendation}`));
@@ -597,7 +597,7 @@ function trackOf(t) {
   return el('div', `track${t.red ? ' stopped' : ''}`, null, ...steps);
 }
 // 0168: an in-flight ticket's progress, under its title: what it's doing in a sentence and the current stage's name, in
-// words only since 0416, then its timer (0058), then any bug, fix or document tag. 0462: only while it's closed; open,
+// words only since 0416, then its timer (0058), then any bug, fix or task tag. 0462: only while it's closed; open,
 // its facts are in a table (factsOf).
 // 0201: a shipping ticket says so once, with no stage's name. 0434: then its timer, and not how long its ship has run.
 // 0434: while its builder or reviewer is at work, a grid of moving lights in place of the sentence, and a round under
@@ -638,7 +638,7 @@ function factCell(label, value, cls, tip = value, lit = null, parts = null) {
 // as a draft's priority tag does.
 function lastFacts(t, pick) {
   const size = t.size ? String(t.size) : '–', risk = t.risk ? String(t.risk) : '–';
-  const kind = t.type === 'bug' || t.type === 'fix' ? t.type : t.task === 'document' ? 'document' : 'code';
+  const kind = t.type === 'bug' || t.type === 'fix' ? t.type : t.kind === 'task' ? 'task' : 'code';
   const priority = t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : '–';
   const set = pick && priority !== '–' ? priorityPicker(t, el('span', 'set-prio', priority)) : null; // plain text, not a tag
   return [factCell('Priority', priority, set ? 'pick' : null, priority, null, set ? [set] : null),
@@ -1037,7 +1037,7 @@ function setLogText(box, text) {
   box.replaceChildren(...next.map((l, i) => logRow(l, i < next.length - 1, plain)));
 }
 const queueCounter = t => (t.counter !== null ? `${t.paused ? 'Paused · ' : ''}${t.counter}` : t.paused ? 'Paused' : '');
-// A closed ready ticket's details line (0419): Queued, then any bug, fix or document tag (0468: the tickets it waits on
+// A closed ready ticket's details line (0419): Queued, then any bug, fix or task tag (0468: the tickets it waits on
 // or unlocks are in its chip). 0463: open, its facts are in a table (waitingFacts).
 const queuedLine = t => detailsLine('act', [el('b', null, 'Queued'), typeTag(t), taskTag(t)]);
 // Puts new text in a node with one text node by replacing only the characters that differ, in place, so a selection in

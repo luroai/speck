@@ -9,7 +9,7 @@ import { reviewRepo, speck, ROOT } from './support/speck.mjs';
 import { stripRounds } from '../scripts/review.mjs';
 import { testOutput } from '../scripts/tap.mjs';
 
-const docRepo = (output = 'memos/pricing/') => reviewRepo({ ticketFields: `task: document\noutput: ${output}` });
+const docRepo = (output = 'memos/pricing/') => reviewRepo({ ticketFields: `kind: task\noutput: ${output}` });
 const folder = r => path.join(fs.realpathSync(r.dir), 'outputs', 'memos', 'pricing') + path.sep;
 
 test('0353 AC1: a document task\'s prompt names its folder\'s absolute path and lists every file in it', () => {
@@ -67,7 +67,7 @@ test('0353 AC2: a document task\'s prompt tells the reviewer to read the documen
   const r = docRepo();
   const p = r.run('prompt', '1');
   assert.equal(p.status, 0, p.stderr);
-  assert.match(p.stdout, /document task/i);
+  assert.match(p.stdout, /This ticket is a task/); // 0492: a task, not a document task
   assert.match(p.stdout, /cite/i);
   assert.match(p.stdout, /missing test/i);
 });

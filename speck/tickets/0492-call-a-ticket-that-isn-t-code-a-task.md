@@ -44,6 +44,7 @@ A ticket is code or a task, `kind: code | task`, and everything speck shows peop
 - One ticket has `task: document` today: `speck/tickets/done/0358-…`. Every other ticket file has `task: code`.
 - Unchained: 0489 changes only the first line of `speck help` and the comment at the top of `scripts/speck.mjs`, and 0491 the reviewer prompt's point 2 in `templates/reviewer-prompt.md`, not `reviewer-document.md`.
 - Failing before this build: none
+- Self-check: `speck status --json` dropped the raw `task` field an old ticket carries, so it gives only `kind`; the full-ticket pop-up's starting accessible name `Document` became `Result`. Old tests that asserted the old words (0350, 0353, 0355, 0359, 0361, 0443, 0462, 0463, 0484) now assert the new ones; the fixtures in `test/support/documents.mjs` and `test/support/doc-ship.mjs` make their ticket a task with the old `task: document` line, so the old line stays covered.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -34,7 +34,7 @@ const SHORT = {
   'Blocked · speck will take its recommendation': 'speck will answer',
   'The build stopped': 'Build stopped',
   'Approved · turn on Auto-build to ship it': 'Turn on Auto-build',
-  'Finished · read the document': 'Read the document',
+  'Finished · read the result': 'Read the result',
 };
 function doing(t, shipping) {
   const d = doingNow(t, shipping);
@@ -67,7 +67,7 @@ function doingNow(t, shipping) {
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
   if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');
-  if (t.doc_finished) return at('Finished · read the document'); // 0361
+  if (t.doc_finished) return at('Finished · read the result'); // 0361, 0492
   if (approved) return at(autoShips ? 'Approved · waiting to ship' : 'Approved · waiting for you to ship it');
   const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
   let sentence = now === 1 ? 'Checking its own work' : 'Writing tests and code';
@@ -304,9 +304,9 @@ function panelModel(state) {
       // An approved ticket whose build has exited is waiting for you to ship it, so it's green (purple until 0440) rather than red (0138),
       // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
       const to_ship = t.status === 'approved' && !auto_failed && (exit_label !== null || run_waiting || (t.auto_ship === false && !shipping));
-      // 0361: a document task whose build has finished is done, and its document waits in its review pack: its row
+      // 0361: a task whose build has finished is done, and its result waits in its review pack: its row
       // says so, with no exit line or log box.
-      const doc_finished = t.task === 'document' && exit_label === 'Build finished without shipping';
+      const doc_finished = t.kind === 'task' && exit_label === 'Build finished without shipping';
       // A build speck run launched and is running can be stopped from its row, which says when it's paused.
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
       const paused = pausable && t.paused === true;

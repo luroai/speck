@@ -85,19 +85,19 @@ test('0359 AC4: speck pack puts a document task\'s Document section straight aft
   assert.equal(out.status, 0, out.stderr);
   const lines = out.stdout.split('\n');
   const summary = lines.findIndex(l => l.startsWith('**Summary:**'));
-  const doc = lines.indexOf('### Document');
+  const doc = lines.indexOf('### Result');
   const ac = lines.indexOf('### Acceptance criteria');
   assert.ok(summary >= 0 && doc >= 0 && ac >= 0, out.stdout);
-  assert.ok(summary < doc && doc < ac, 'summary, then Document, then the criteria');
-  assert.ok(lines.slice(summary + 1, doc).every(l => l === ''), 'nothing between the summary and the Document section');
+  assert.ok(summary < doc && doc < ac, 'summary, then Result (Document until 0492), then the criteria');
+  assert.ok(lines.slice(summary + 1, doc).every(l => l === ''), 'nothing between the summary and the Result section');
   assert.ok(lines.slice(doc, ac).some(l => l.includes('`outputs/memos/pricing/memo.md`')), 'the files are in it');
-  assert.equal(lines.filter(l => l === '### Document').length, 1, 'once');
+  assert.equal(lines.filter(l => l === '### Result').length, 1, 'once');
 });
 
 test('0359 AC4: an empty or missing output folder\'s line is there too, before the criteria', () => {
   const r = docRepo({ files: false });
   const pack = reviewPack(r.dir, '1');
-  assert.ok(pack.indexOf('### Document') > pack.indexOf('**Summary:**'));
-  assert.ok(pack.indexOf('### Document') < pack.indexOf('### Acceptance criteria'));
+  assert.ok(pack.indexOf('### Result') > pack.indexOf('**Summary:**'));
+  assert.ok(pack.indexOf('### Result') < pack.indexOf('### Acceptance criteria'));
   assert.ok(!fs.existsSync(`${r.dir}/outputs`), 'speck pack makes no folder');
 });
