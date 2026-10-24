@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0457", "0458", "0460"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T10:17:36.223Z"
-approved: "2026-10-24T10:26:17.321Z"
+approved: "2026-10-24T10:30:21.467Z"
 
 ---
 # 0459 · Show the pipeline log as a terminal of short lines
@@ -59,12 +59,13 @@ Worth a look: lines speck run writes that aren't one of the usual kinds show the
 ## Review log
 Round 1 (codex): changes requested: F1 The existing log box is never reused in a real browser because HTML element tagName is uppercase ('OL').
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 341,767
-- Elapsed since build started: 9 min
+- Reviewer tokens: 681,187
+- Elapsed since build started: 13 min
 - Changed lines: 132 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox notes):
@@ -208,6 +209,77 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The pipeline log now displays short, timed summaries in a terminal box, with new messages at the bottom. The browser scroll bug is fixed and covered by a regression test. All acceptance criteria pass, with no blocking concerns remaining."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "745a71645290fd24cabb3dc50d3556507e0ebe9e",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16d70-e5f3-7f20-bbb0-c92b1a5f70de",
+    "builder_response": "- Tests run: test/panel-0161.test.mjs test/panel-0366.test.mjs test/pipeline-0459.test.mjs test/pipeline-0415.test.mjs test/pipeline-0458.test.mjs (with the repo's checks): 173 pass, 0 fail.\n- Why ship failed: main was already merged (git merge main: already up to date), so the two failing tests failed on this ticket's own change; they weren't in the --related run because they don't name a changed file.\n  - 0161 AC1 checks every text colour against the backgrounds it can sit on. It knew a build log's rules (\".q .log\") sit on --log-bg, but not the pipeline log's new rules (\".foreman .run-log\"), so it checked the log's muted time colour against the page's light background (2.12:1). Changed its `inLog` to count \".foreman .run-log\" rules as on the log's black too, as 0455 did for the build log. The colours themselves are the build log's, which pass on --log-bg.\n  - 0366 AC4 expected the pop-up's text to read \"secondfirst\" (newest first). The ticket puts the newest at the bottom, so it now expects \"firstsecond\".\n- No code changed: only these two tests, to the behaviour the ticket asks for.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 337219,
+      "cached_input_tokens": 289920,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2201,
+      "reasoning_output_tokens": 123
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T10:30:19.474Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.css retains the build log's background, text colours and four-sided border. Passing 0459 AC1 tests check these styles. The updated panel-0161 contrast test correctly checks pipeline text against its actual --log-bg background."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runLogRow and the .ln/.timed CSS retain the timestamp column and hanging indentation. Passing 0459 AC2 tests cover timed and untimed lines and wrapping styles."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runLogSummary, runPlain and runLogLine remain unchanged. Passing 0459 AC3 tests exercise the required message forms, 48-character truncation and filtering of technical details."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests cover chronological order, retention of 200 lines, refresh updates, following new messages, scroll preservation with uppercase browser tag names, the empty state and reading only run.log. panel-0366 now correctly expects oldest-first order while retaining its focus and Close-button checks. Reported tests: 173 passed, none failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js:1998",
+        "issue": "The original lowercase tagName comparison replaced the log box on browser updates and lost the reader's scroll position.",
+        "suggested_fix": "Implemented and retained: a case-insensitive comparison reuses the box, with a passing regression test using uppercase browser tag names.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change remains ready for approval. Both additional test updates accurately reflect the requested black log background and oldest-first order; they preserve the checks that matter. All criteria pass, with no open blocking findings."
   }
 }
 ```
