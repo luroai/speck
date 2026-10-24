@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0444"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T08:18:18.708Z"
-approved: "2026-10-24T08:25:45.529Z"
+approved: "2026-10-24T08:32:09.592Z"
 
 ---
 # 0450 · Show which Plan list is open at a glance
@@ -52,12 +52,13 @@ In Plan, the button for the list you have open (Tickets, Ideas or Inbox) is now 
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 89,032
-- Elapsed since build started: 7 min
+- Reviewer tokens: 264,201
+- Elapsed since build started: 14 min
 - Changed lines: 3 (limit 5000)
 Follow-ups (tidy-ups, no inbox note):
 - 0426's test keeps its own copy of the contrast helpers now in test/support/contrast.mjs; it could import them.
@@ -116,6 +117,63 @@ Follow-ups (tidy-ups, no inbox note):
     "findings": [],
     "escalation_question": "",
     "summary": "The open Plan list now has a clear filled button in both looks, and screen readers can identify the selection. Tests cover switching lists and the required contrast. The change stays within scope; no blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "50b1af7a196d4b49101f8c67b8c7061e3358a70e",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16d03-9353-74f2-be6a-f3f61553ce3e",
+    "builder_response": "- Tests failed together at ship: 0038 AC4, 0167 AC3 (the stylesheet check and the light and dark real-browser checks) and 0033 AC3. Merging main brought no conflicts and nothing in main caused them: each pinned the selected toggle's text to var(--text), which 0450's AC1 replaces (fill in the text colour, text in the background colour). My first build's `--related` run didn't bring them in, as they read the stylesheet through the support helper rather than naming templates/panel.css.\n- What changed: only those tests, each brought up to 0450's look, as they were \"since 0167\". None is loosened: each now also checks the fill, and the toggle's text must be exactly --panel (0167's stylesheet check makes that one exception to its \"neutral colours only\" rule, for `.toggle.on`'s colour alone, and asserts it). 0167's browser check now compares the selected toggle's computed background, text and border with --text, --panel and --text. No product code changed since the approval.\n- Tests run: test/panel-0038.test.mjs test/panel-0167.test.mjs test/panel.test.mjs test/panel-0450.test.mjs (the checks too): 184 pass, 0 fail, 3 skipped (the 0078 split check and the like, which skip on main).\n",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 174298,
+      "cached_input_tokens": 129280,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 871,
+      "reasoning_output_tokens": 16
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T08:32:06.270Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.css .toggle.on retains the required inverted fill, with other toggles outlined. Passing 0450 AC1 tests cover selection and styling; updated 0167 AC3 browser tests verify computed fill, text and border for all three lists in both looks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.js shapingToggle sets aria-pressed to match the open list. The passing 0450 AC2 test exercises all three selections."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both 0450 AC3 tests pass, checking the required 3:1 fill contrast and 4.5:1 text contrast using each look's tokens and alpha compositing."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still meets all three requirements. Updated older tests enforce the new filled selection while preserving their other checks. The recorded run has 184 passes and no failures. No blocking concerns."
   }
 }
 ```
