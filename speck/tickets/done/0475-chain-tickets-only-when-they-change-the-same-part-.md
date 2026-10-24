@@ -1,7 +1,7 @@
 ---
 id: "0475"
 title: "Chain tickets only when they change the same part of a file"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T13:47:26.942Z"
 approved: "2026-10-24T13:49:20.502Z"
+finished: "2026-10-24T13:52:36.016Z"
 
 ---
 # 0475 · Chain tickets only when they change the same part of a file
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The ticket skill chains a new ticket after every open ticket that changes the same files, so they're built one after another. Two tickets that change different parts of one file, which git usually merges cleanly, still wait for each other, and most of a release's panel tickets end up in one long chain while the other build slots sit idle.
