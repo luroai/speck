@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fakePage, T, full, click, top, items, queueRows, openQueueRows, findChrome, browserPage, styles } from './support/panel.mjs';
+import { page, fakePage, T, full, click, top, items, queueRows, openQueueRows, findChrome, browserPage, styles, factsOf } from './support/panel.mjs';
 
 const css = () => styles();
 const rule = sel => (css().match(new RegExp(`\\n\\s*${sel.replace(/[.:#]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[1] || '';
@@ -23,12 +23,13 @@ const openPane = (p, id) => {
 test('0213 AC1: a P0 tag gets the p0 class in Plan, the Build queue and the full ticket pane', async () => {
   const p = fakePage([STATE(), STATE(), STATE()]);
   await p.settle();
-  await openQueueRows(p); // 0434: a Build card's tags show while it's open
-  for (const [where, rows] of [['Plan', items(p)], ['the Build queue', queueRows(p)]]) {
-    const tags = rows.flatMap(r => prioTags(p, r)).filter(t => t.text === 'P0');
-    assert.equal(tags.length, 1, `one P0 tag in ${where}`);
-    assert.deepEqual(tags[0].cls, ['tag', 'p0'], where);
-  }
+  const tags = items(p).flatMap(r => prioTags(p, r)).filter(t => t.text === 'P0');
+  assert.equal(tags.length, 1, 'one P0 tag in Plan');
+  assert.deepEqual(tags[0].cls, ['tag', 'p0'], 'Plan');
+  // 0434: a Build card's priority showed while it was open. 0463: open, it's in its facts table, as plain text
+  await openQueueRows(p);
+  assert.equal(queueRows(p).flatMap(r => prioTags(p, r)).length, 0, 'no priority tag in the Build queue');
+  assert.deepEqual(factsOf(withId(p, queueRows(p), '0004'))[3], ['Priority', 'P0'], 'the Build queue');
   assert.deepEqual(openPane(p, '0001').map(t => t.cls), [['tag', 'p0']], 'the full ticket pane');
 });
 
@@ -46,22 +47,19 @@ test('0213 AC1: a P0 tag\'s text and border are in --bad, which the light and th
 test('0213 AC2: a P1 tag stays in --text and P2 to P5 tags stay plain grey tags', async () => {
   assert.match(rule('.tag.p1'), /color:\s*var\(--text\);\s*border-color:\s*var\(--text\)/);
   assert.match(rule('.tag'), /color:\s*var\(--muted-large\)/); // 0426: Cursor's muted, as a tag is 14 px
-  const s = () => ({ ideas: [], tickets: [1, 2, 3, 4, 5].map(n => T(`000${n}`, 'ready', { priority: n })) });
+  // 0463: in Plan, as the Build queue has no priority tag
+  const s = () => ({ ideas: [], tickets: [1, 2, 3, 4, 5].map(n => full(`000${n}`, { priority: n })) });
   const p = fakePage([s(), s(), s()]);
   await p.settle();
-  await openQueueRows(p); // 0434: a Build card's tags show while it's open
-  const tags = queueRows(p).flatMap(r => prioTags(p, r));
+  const tags = items(p).flatMap(r => prioTags(p, r));
   assert.deepEqual(tags.map(t => [t.text, t.cls]), [['P1', ['tag', 'p1']], ...[2, 3, 4, 5].map(n => [`P${n}`, ['tag']])]);
 });
 
 test('0213 AC3: a P0 tag\'s tip, screen-reader wording and tab stop are as before, and its rule changes only colours', async () => {
   const p = fakePage([STATE(), STATE(), STATE()]);
   await p.settle();
-  await openQueueRows(p); // 0434: a Build card's tags show while it's open
+  // 0463: in the full ticket pane, as the Build queue has no priority tag
   const want = { text: 'P0', tip: 'Priority 0: built before any other ticket', label: 'Priority 0: built before any other ticket', tab: 0 };
-  const queue = queueRows(p).flatMap(r => prioTags(p, r)).find(t => t.text === 'P0');
-  const { cls, ...rest } = queue;
-  assert.deepEqual(rest, want, 'the Build queue');
   const { cls: c2, ...pane } = openPane(p, '0001')[0];
   assert.deepEqual(pane, want, 'the full ticket pane');
   const props = rule('.tag.p0').split(';').map(s => s.split(':')[0].trim()).filter(Boolean);

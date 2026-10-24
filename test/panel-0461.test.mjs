@@ -51,7 +51,10 @@ test('0461 AC1: an open in-flight ticket shows a track of its five steps under i
     if (labels[id]) assert.deepEqual(track.children.map(s => s.textContent), labels[id], `${id}: its steps' names`);
   }
   assert.ok(has(card(p, '0907'), 'open'), '0907: open');
-  assert.equal(trackOf(p, card(p, '0907')), null, '0907: queued, no track');
+  // 0463: an open queued one has a track too, with no step reached
+  const queued = trackOf(p, card(p, '0907'));
+  assert.ok(queued, '0907: queued, a track');
+  assert.deepEqual(queued.children.map(s => s.className), KEYS.map(k => `step ${k}`), '0907: every step grey');
 });
 
 test('0461 AC2: each step is marked done, now or not reached, and a blocked or stopped ticket\'s track says so', async () => {
@@ -163,7 +166,6 @@ test('0461 AC4: in a real browser at 320 px, each track keeps to one row in both
       await b.js(`document.documentElement.dataset.theme = '${theme}', true`);
       const cards = await b.js(MEASURE);
       for (const c of cards) {
-        if (c.id === '0907') { assert.ok(c.none, `${theme}: the queued ticket has no track`); continue; }
         assert.ok(!c.none, `${theme} ${c.id}: a track`);
         assert.ok(c.box[0] >= c.card[0] && c.box[1] <= c.card[1], `${theme} ${c.id}: inside its card`);
         assert.ok(c.scroll[0] <= c.scroll[1] + 0.5, `${theme} ${c.id}: nothing past the track (${c.scroll.join(' > ')})`);
@@ -179,6 +181,8 @@ test('0461 AC4: in a real browser at 320 px, each track keeps to one row in both
         const bg = c.bg[3] === 0 ? null : c.bg;
         assert.ok(bg, `${theme} ${c.id}: an open card has a fill`);
         const now = c.steps.find(s => s.weight === '600');
+        // 0463: a queued ticket's track too, with no step reached, so none is bold and every bar is the same grey
+        if (c.id === '0907') { assert.ok(!now && new Set(c.steps.map(s => s.bar.join())).size === 1, `${theme}: the queued ticket's steps are all grey`); continue; }
         assert.ok(now, `${theme} ${c.id}: its current step is bold`);
         assert.ok(drawn(now.bar, bg) >= 3, `${theme} ${c.id}: ${now.text}'s bar is ${drawn(now.bar, bg).toFixed(2)}:1`);
         assert.ok(drawn(now.color, bg) >= 7, `${theme} ${c.id}: ${now.text}'s name is ${drawn(now.color, bg).toFixed(2)}:1`);

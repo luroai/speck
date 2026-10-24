@@ -253,11 +253,12 @@ test('0041 review F1: text selected in an open ticket stays selected when only i
   assert.ok(kept(), 'the details stayed on the page');
   assert.equal(shaping(p, '0001'), item);
   assert.equal(iconOf(p, item), null, 'the icon went in the same refresh');
-  assert.ok(!nodes(p, item, 'checks')[0].textContent.includes('unlocks'));
+  assert.equal(nodes(p, item, 'checks').length, 0, '0463: open, its facts are in a table, with no line saying what it unlocks');
+  assert.equal(nodes(p, item, 'facts').length, 1);
   await refresh(p);
   assert.ok(kept(), 'and through a new ticket waiting on it');
   assert.equal(iconOf(p, item).title, 'Starts a chain: unlocks 0003');
-  assert.ok(nodes(p, item, 'checks')[0].textContent.includes('unlocks 0003'));
+  assert.equal(nodes(p, item, 'facts').length, 1);
   assert.ok(/\bopen\b/.test(item.className));
   click(top(item));
   assert.ok(!/\bopen\b/.test(shaping(p, '0001').className), 'the new top row still opens and closes it');
@@ -296,10 +297,10 @@ test('0041 review F1: in a real browser, text selected in an open ticket stays s
     const selected = await b.js('getSelection().toString()');
     assert.equal(selected, 'A problem statement ');
     next(false); // 0003 no longer waits on 0002
-    await b.until(`!document.querySelector('${item} .chain') && !document.querySelector('${item} .checks').textContent.includes('unlocks')`, 'the chain icon to go');
+    await b.until(`!document.querySelector('${item} .chain') && !!document.querySelector('${item} .facts')`, 'the chain icon to go'); // 0463: open, its facts are in a table
     assert.equal(await b.js('getSelection().toString()'), selected, 'the selection survived');
     next(true);
-    await b.until(`!!document.querySelector('${item} .chain') && document.querySelector('${item} .checks').textContent.includes('unlocks 0003')`, 'polling to carry on and the icon to come back');
+    await b.until(`!!document.querySelector('${item} .chain') && !!document.querySelector('${item} .facts')`, 'polling to carry on and the icon to come back');
     assert.equal(await b.js('getSelection().toString()'), selected, 'and survived again');
     assert.ok(await b.js(`document.querySelector('${item}').classList.contains('open')`));
     assert.ok(await b.js(`document.getElementById('offline').hidden`), 'still connected');

@@ -154,15 +154,17 @@ for (const theme of ['light', 'dark']) {
       const red = await b.js(RGB('var(--bad)'));
       assert.notEqual(red, await b.js(RGB('var(--warn)')));
       const colours = sel => b.js(`[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => [getComputedStyle(n).color, getComputedStyle(n).borderTopColor])`);
-      await b.js(`document.querySelector('#queue .q .top').click()`); // 0434: a Build ticket shows its risk while it's open
+      // 0434: a Build ticket shows its risk while it's open. 0463: in its facts table, as plain text, so the queue has no tag
+      await b.js(`document.querySelector('#queue .q .top').click()`);
       await settle(b);
       const plan = await colours('#shaping .tag.high'), queue = await colours('#queue .tag.high');
+      assert.equal(queue.length, 0, 'no risk tag in the Build queue');
       await b.js(`${ITEM('0201')}.querySelector('.head').click()`);
       await settle(b);
       await b.js(`${ITEM('0201')}.querySelector('.full-open').click()`);
       await b.until(`!document.getElementById('full-ticket').hidden`, 'the full ticket');
       const pane = await colours('#full-ticket .tag.high');
-      for (const [where, found] of [['Plan', plan], ['the Build queue', queue], ['the full ticket pane', pane]]) {
+      for (const [where, found] of [['Plan', plan], ['the full ticket pane', pane]]) {
         assert.equal(found.length, 1, `one high risk tag in ${where}`);
         assert.deepEqual(found[0], [red, red], where);
       }

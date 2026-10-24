@@ -77,7 +77,8 @@ async function openAll(b) {
   await settle(b);
 }
 const tab = async (b, view) => { await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`); await settle(b); };
-const openPrio = async b => { await b.js(`document.querySelector('#shaping .tag.pick').click()`); await settle(b); };
+// 0463: an open draft's priority is in its facts' Priority cell
+const openPrio = async b => { await b.js(`document.querySelector('#shaping .tag.pick, #shaping .set-prio').click()`); await settle(b); };
 const openFull = async b => { await b.js(`document.querySelector('#shaping .item.open .full-open').click()`); await b.until(`!document.getElementById('full-ticket').hidden`, 'the full ticket'); };
 const openPack = async b => {
   await b.js(`[...document.querySelectorAll('#queue .full-open')].find(x => x.textContent === 'Review pack').click()`);
@@ -260,13 +261,13 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
 const CONTROLS = `(() => {
   const shown = n => { const r = n.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(n).visibility === 'visible'; };
   const pointer = n => n && n.nodeType === 1 && getComputedStyle(n).cursor === 'pointer';
-  const set = new Set(document.querySelectorAll('button, a[href], summary, select, input, .tag.pick, .head, .q .top'));
+  const set = new Set(document.querySelectorAll('button, a[href], summary, select, input, .tag.pick, .set-prio, .head, .q .top'));
   for (const n of document.querySelectorAll('body *')) if (pointer(n) && !pointer(n.parentElement)) set.add(n);
   const prose = n => !!n.closest('#full-ticket .md, #full-ticket .criteria') && n.tagName === 'A';
   // 0151: the priority tag looks as high as the other tags, and its tap area is the box around it, which a tap anywhere
   // in reaches the tag (test/panel-0151.test.mjs checks that).
   return [...set].filter(n => shown(n) && !prose(n)).map(n => {
-    const r = (n.matches('.tag.pick') ? n.closest('.prio') : n).getBoundingClientRect();
+    const r = (n.matches('.tag.pick, .set-prio') ? n.closest('.prio') : n).getBoundingClientRect();
     return { what: n.tagName.toLowerCase() + '.' + String(n.className).trim().split(/\\s+/).join('.') + ' "' + n.textContent.trim().slice(0, 20) + '"', width: r.width, height: r.height };
   });
 })()`;
@@ -302,7 +303,7 @@ for (const width of [375, 699]) {
       await check('the review pack pane');
       // The controls the ticket names were all among those checked.
       for (const c of ['button.set-ready', 'button.on', 'button.stop-build', 'button.full-open',
-        'button.ship', 'button.toggle.tickets.on', 'button.settings-open', 'span.tag.p1.pick', 'button.copy', 'button.close', 'span.title-link', 'summary.']) {
+        'button.ship', 'button.toggle.tickets.on', 'button.settings-open', 'span.tag.p1.pick', 'span.set-prio.pick', 'button.copy', 'button.close', 'span.title-link', 'summary.']) {
         assert.ok(seen.has(c), `${c} was checked (saw ${[...seen].join(', ')})`);
       }
       assert.ok([...seen].some(c => c === 'button.'), "speck run's on/off button was checked");
