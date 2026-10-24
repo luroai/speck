@@ -67,7 +67,7 @@ const PACK = `{ id: '0002', state: 'ok', text: '# Review pack\\n\\nIt passed.', 
 // Each view with buttons, opened in turn: [name, script that opens it, what shows once it's open].
 const VIEWS = [
   ['Plan, a ticket open', `${openLane('plan')}, document.querySelector('#shaping .item .head').click(), true`, `!!document.querySelector('#shaping .item.open .full-open')`],
-  ['Plan, the priority menu', `document.querySelector('#shaping .tag.pick').click(), true`, `!!document.querySelector('.prio-menu button')`],
+  ['Plan, the priority menu', `document.querySelector('#shaping .tag.pick, #shaping .set-prio').click(), true`, `!!document.querySelector('.prio-menu button')`],
   ['Build, a ticket open', `document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), ${openLane('build')}, document.querySelector('#queue .q .top').click(), true`, `!!document.querySelector('#queue .q.open .full-open')`],
   ['Shipped, Details open', `${openLane('shipped')}, document.querySelector('#shipped .details').click(), true`, `!!document.querySelector('#shipped .figs')`],
   ['the full ticket', `${openLane('plan')}, document.querySelector('#shaping .item.open .full-open').click(), true`, `!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .close')`],

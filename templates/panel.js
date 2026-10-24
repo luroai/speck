@@ -184,15 +184,16 @@ function ticketItem(t) {
 // A ticket's top row. When only its chain changes, through other tickets, a new top row replaces the old one and the
 // details stay on the page.
 // 0419: its details line is its priority, size and risk, its criteria and lint result, then the tickets it waits on
-// after "after", or those it unlocks when it starts a chain.
+// after "after", or those it unlocks when it starts a chain. 0463: only while it's closed; open, its steps and facts
+// are in a track and a table, as an open one in flight's are.
 function ticketHead(t) {
   const criteria = list(t.acceptance_criteria);
   const lint = t.lint || { errors: 0, warnings: 0 };
-  const head = el('div', 'head', null, titleLine(t, true), detailsLine('checks', [...tagsOf(t, true),
+  const head = el('div', 'head', null, titleLine(t, true), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [detailsLine('checks', [...tagsOf(t, true),
     el('span', null, plural(criteria.length, 'criterion', 'criteria')),
     lint.errors ? check('bad', false, `lint: ${plural(lint.errors, 'error')}`) : check('ok', true, 'lint passes'),
     lint.warnings ? check('warn', false, plural(lint.warnings, 'warning')) : null,
-    t.chain ? el('span', 'ids', 'unlocks ', ...idLinks(t.unlocks)) : t.waiting_on.length ? el('span', 'ids', 'after ', ...idLinks(t.waiting_on)) : null]));
+    t.chain ? el('span', 'ids', 'unlocks ', ...idLinks(t.unlocks)) : t.waiting_on.length ? el('span', 'ids', 'after ', ...idLinks(t.waiting_on)) : null])]);
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
   return head;
@@ -919,7 +920,9 @@ function queueItem(t) {
   // 0419: the id and title, then one details line: what it's doing, or that it's queued, then its priority, size and risk.
   // 0434: its priority, size and risk only while it's open.
   // 0461: an open one in flight shows its five steps as a track under its title. 0462: and its facts in a table under it.
-  const top = el('div', 'top', null, titleLine(t, !t.inFlight), t.inFlight && isOpen ? trackOf(t) : null, t.inFlight ? isOpen ? factsOf(t, d) : progressOf(t, d) : queuedLine(t, isOpen));
+  // 0463: and so does an open queued one, its steps all grey.
+  const top = el('div', 'top', null, titleLine(t, !t.inFlight), isOpen ? trackOf(t.inFlight ? t : { steps: NOT_STARTED }) : null,
+    t.inFlight ? isOpen ? factsOf(t, d) : progressOf(t, d) : isOpen ? waitingFacts(t, 'Queued', 'Waiting on', false) : queuedLine(t));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
@@ -973,6 +976,7 @@ function queueItem(t) {
 // 0461: a ticket's five steps, each a bar with its name under it, in its own colour once it's reached. A blocked
 // ticket's, or one whose build stopped, has its current step in crimson.
 const STEP_KEYS = ['build', 'check', 'review', 'approve', 'ship'];
+const NOT_STARTED = ['Build', 'Self-check', 'Review', 'Approve', 'Ship'].map(label => ({ label, state: '' })); // 0463: none reached
 function trackOf(t) {
   const steps = (Array.isArray(t.steps) ? t.steps : []).slice(0, STEP_KEYS.length).map((s, i) => {
     const n = el('span', `step ${STEP_KEYS[i]}${s.state ? ` ${s.state}` : ''}`, s.label);
@@ -1005,22 +1009,44 @@ const hidden = n => { n.setAttribute('aria-hidden', 'true'); return n; }; // the
 function factsOf(t, d) {
   const who = workerOf(t, d), counter = queueCounter(t);
   const waiting = t.status === 'approved' && !d.moving && d.sentence !== 'Approved · waiting to ship'; // waiting for you, not for speck run
+  const tone = d.tone ? ` ${d.tone}` : '';
+  return el('dl', 'facts', null,
+    factCell('Now', d.word, `now${tone}`, d.sentence, d.working ? hidden(lights(d.sentence)) : null),
+    factCell(who.label, who.value, null),
+    factCell(waiting ? 'Waiting' : 'Time', counter || '–', 'time'),
+    ...lastFacts(t, null));
+}
+// A cell of a facts table: its label, then its value, whose tooltip is `tip`. `lit`: anything before the value's text.
+// `parts`: what the value shows in place of its text, which is still its tooltip.
+function factCell(label, value, cls, tip = value, lit = null, parts = null) {
+  const v = el('dd', cls ? `value ${cls}` : 'value', null, lit, ...parts || [el('span', cls === 'time' ? 'sub' : 'text', value)]);
+  v.title = tip;
+  return el('div', 'fact', null, el('dt', 'label', label), v);
+}
+// The table's bottom row: its priority, size and risk, and its kind. `pick`: its priority opens the menu that sets it,
+// as a draft's priority tag does.
+function lastFacts(t, pick) {
   const size = t.size ? String(t.size) : '–', risk = t.risk ? String(t.risk) : '–';
   const kind = t.type === 'bug' || t.type === 'fix' ? t.type : t.task === 'document' ? 'document' : 'code';
   const priority = t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : '–';
-  const cell = (label, value, cls, tip = value, lit = null) => {
-    const v = el('dd', cls ? `value ${cls}` : 'value', null, lit, el('span', cls === 'time' ? 'sub' : 'text', value));
-    v.title = tip;
-    return el('div', 'fact', null, el('dt', 'label', label), v);
-  };
-  const tone = d.tone ? ` ${d.tone}` : '';
+  const set = pick && priority !== '–' ? priorityPicker(t, el('span', 'set-prio', priority)) : null; // plain text, not a tag
+  return [factCell('Priority', priority, set ? 'pick' : null, priority, null, set ? [set] : null),
+    factCell('Size · risk', `${size} · ${risk}`, null),
+    factCell('Type', kind, kind === 'code' ? null : kind)];
+}
+// 0463: an open ticket that hasn't started: the same table, with `status` where one in flight has Now, then how many of
+// the tickets it waits on haven't shipped (`after`: that cell's label), and its lint result, its errors and warnings in
+// their colours. `pick`: its priority opens the menu that sets it, as on a draft.
+function waitingFacts(t, status, after, pick) {
+  const left = list(t.waiting_on).length, of = Math.max(list(t.after).length, left);
+  const lint = t.lint || { errors: 0, warnings: 0 };
+  const bits = [lint.errors ? el('span', 'bad', plural(lint.errors, 'error')) : null, lint.warnings ? el('span', 'warn', plural(lint.warnings, 'warning')) : null].filter(Boolean);
+  const lintText = bits.length ? bits.map(b => b.textContent).join(' · ') : 'passes';
   return el('dl', 'facts', null,
-    cell('Now', d.word, `now${tone}`, d.sentence, d.working ? hidden(lights(d.sentence)) : null),
-    cell(who.label, who.value, null),
-    cell(waiting ? 'Waiting' : 'Time', counter || '–', 'time'),
-    cell('Priority', priority, null),
-    cell('Size · risk', `${size} · ${risk}`, null),
-    cell('Type', kind, kind === 'code' ? null : kind));
+    factCell('Status', status, null),
+    factCell(after, !left ? '—' : of > 1 ? `${left} left of ${of}` : `${left} left`, null),
+    factCell('Lint', lintText, null, lintText, null, bits.length ? bits.flatMap((b, i) => (i ? [document.createTextNode(' · '), b] : [b])) : null),
+    ...lastFacts(t, pick));
 }
 // 0443: what a ticket no agent is working on is doing, in words: closed, a long sentence in short words, with the
 // sentence as their tooltip and accessible name; open, the sentence.
@@ -1343,11 +1369,11 @@ function setLogText(box, text) {
   box.replaceChildren(...next.map((l, i) => logRow(l, i < next.length - 1, plain)));
 }
 const queueCounter = t => (t.counter !== null ? `${t.paused ? 'Paused · ' : ''}${t.counter}` : t.paused ? 'Paused' : '');
-// A ready ticket's details line (0419): Queued, the tickets it waits on or unlocks, then its priority, size and risk
-// while it's open (0434), and any bug, fix or document tag.
-function queuedLine(t, isOpen) {
+// A closed ready ticket's details line (0419): Queued, the tickets it waits on or unlocks, then any bug, fix or document
+// tag. 0463: open, its facts are in a table (waitingFacts).
+function queuedLine(t) {
   const note = t.chain ? 'unlocks ' : t.waiting_on.length ? 'waiting on ' : null;
-  const line = detailsLine('act', [el('b', null, 'Queued'), note ? el('span', 'ids', note, ...idLinks(noteIds(t))) : null, ...(isOpen ? tagsOf(t, false) : [typeTag(t), taskTag(t)])]);
+  const line = detailsLine('act', [el('b', null, 'Queued'), note ? el('span', 'ids', note, ...idLinks(noteIds(t))) : null, typeTag(t), taskTag(t)]);
   line.links = shownLinks(t).join(','); // which ids are buttons, as the text alone doesn't say
   return line;
 }
@@ -1391,7 +1417,8 @@ function queueUpdate(q, t) {
     if (icon) row.insertBefore(icon, old || child(row, 'title')); // the icon comes right after the id
     if (old) row.removeChild(old);
   }
-  const act = child(top, 'act'), line = queuedLine(t, openQueue.has(String(t.id)));
+  // 0463: an open one's facts table, in place of its line
+  const isOpen = openQueue.has(String(t.id)), act = child(top, isOpen ? 'facts' : 'act'), line = isOpen ? waitingFacts(t, 'Queued', 'Waiting on', false) : queuedLine(t);
   if (act.textContent !== line.textContent || act.links !== line.links) { top.insertBefore(line, act); top.removeChild(act); }
 }
 // The counters run on their own 1-second timer, apart from the state updates and render(), so they move on between updates.

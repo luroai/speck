@@ -10,7 +10,8 @@ import { fm, panelRepo, freePort, startPanel, stop, request, post, tokenOf, head
 const priorityPath = (id, n) => `/api/tickets/${id}/priority/${n}`;
 const itemOf = (p, id) => items(p).find(n => n.textContent.startsWith(id));
 const isOpen = item => /\bopen\b/.test(item.className);
-const pTag = (p, n) => p.all(n).find(x => /\btag\b/.test(x.className) && /^P/.test(x._text));
+// 0463: on an open draft, its priority is in its facts' Priority cell, still opening the menu
+const pTag = (p, n) => p.all(n).find(x => /\b(tag|set-prio)\b/.test(x.className) && /^P/.test(x._text));
 const menuOf = (p, n) => p.all(n).find(x => /\bprio-menu\b/.test(x.className || ''));
 const choices = (p, n) => p.all(menuOf(p, n)).filter(x => x.tagName === 'button');
 const refusal = (p, item) => (item.children.find(x => /\bprio-refused\b/.test(x.className || '')) || {}).textContent;
@@ -33,18 +34,12 @@ test('0077 AC1: only a draft\'s priority tag in the Tickets list is clickable; n
   assert.match(tag.className, /\bpick\b/, 'the draft\'s tag is clickable');
   assert.ok(tag.listeners.click, 'with a click handler');
   assert.equal(pTag(p, itemOf(p, '0002')), undefined, 'a draft with no priority shows no tag');
-  // 0434: the queue shows the tag while its ticket is open. 0462: one in flight shows its priority in its facts instead
-  queueRows(p).find(r => r.textContent.startsWith('0004')).children[0].listeners.click();
-  await p.settle();
-  assert.deepEqual(factsOf(queueRows(p).find(r => r.textContent.startsWith('0004')))[3], ['Priority', 'P2']);
-  for (const id of ['0003']) {
+  // 0434: the queue shows the tag while its ticket is open. 0462: one in flight shows its priority in its facts instead,
+  // and 0463: so does a queued one, as plain text
+  for (const id of ['0004', '0003']) {
     queueRows(p).find(r => r.textContent.startsWith(id)).children[0].listeners.click();
     await p.settle();
-    const row = queueRows(p).find(r => r.textContent.startsWith(id)), t = pTag(p, row);
-    assert.ok(t, `${row.textContent}: the queue shows the tag`);
-    assert.equal(t.className, 'tag', 'as today');
-    p.press(t); // since 0165 it shows its tip, but it opens no menu (checked below) and leaves the row as it is
-    assert.ok(/\bopen\b/.test(row.className), 'the row stays open');
+    assert.deepEqual(factsOf(queueRows(p).find(r => r.textContent.startsWith(id)))[3], ['Priority', 'P2'], id);
   }
   for (const row of [...queueRows(p), ...shippedRows(p)]) assert.equal(p.all(row).filter(x => /\b(pick|prio-menu)\b/.test(x.className || '')).length, 0);
   // The P1 tag keeps its own colour.
