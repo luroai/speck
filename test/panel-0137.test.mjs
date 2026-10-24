@@ -89,8 +89,9 @@ test('0137 AC3: each Shipped row has exactly one button, Details, which shows Re
   // 0162: Details is the card's one button, and opening it shows Review pack.
   for (const id of ['0009', '0010']) assert.deepEqual(buttonsOf(p, rowOf(p, id)).map(b => b.textContent), ['Details'], id);
   await openDetails(p);
-  for (const id of ['0009', '0010']) assert.deepEqual(buttonsOf(p, rowOf(p, id)).map(b => b.textContent), ['Details', 'Review pack'], id);
-  p.press(buttonsOf(p, rowOf(p, '0010'))[1]);
+  // 0464: Review pack under the facts table, with Details at the end of its row
+  for (const id of ['0009', '0010']) assert.deepEqual(buttonsOf(p, rowOf(p, id)).map(b => b.textContent), ['Review pack', 'Details'], id);
+  p.press(buttonsOf(p, rowOf(p, '0010'))[0]);
   await p.settle();
   assert.equal(paneId(p), '0010');
   assert.ok(pane(p).textContent.includes('Approved by reviewer'), 'the pack shows');
