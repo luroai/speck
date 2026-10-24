@@ -1,7 +1,7 @@
 ---
 id: "0445"
 title: "Set a document task's document out like the full ticket"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-set-a-document-task-s-document-out-the-same
 after: ["0442"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T08:46:32.853Z"
+approved: "2026-10-24T08:51:10.590Z"
 
 ---
 # 0445 · Set a document task's document out like the full ticket
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0424 set the full ticket and the review pack out as a document, but a document task's document, in its own pop-up, kept the old sizes, so the three read differently.
@@ -48,9 +49,14 @@ A document that a document task writes now reads like the full ticket when you o
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 169,535
+- Elapsed since build started: 5 min
+- Changed lines: 25 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (tidy-ups and known limits, no inbox notes):
 - The document's headings repeat the section heading rule's values in a rule of their own, because 0427's test pins that rule's selector list. They could share it if that test were loosened.
