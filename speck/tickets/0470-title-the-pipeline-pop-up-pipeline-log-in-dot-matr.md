@@ -1,7 +1,7 @@
 ---
 id: "0470"
 title: "Title the Pipeline pop-up Pipeline log in dot-matrix letters"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0474"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T14:36:41.315Z"
+approved: "2026-10-24T14:44:42.540Z"
 
 ---
 # 0470 · Title the Pipeline pop-up Pipeline log in dot-matrix letters
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Pressing speck's screen opens a pop-up titled `Pipeline` in small monospace text, with a separate `Log` heading on the line under it. Since 0458 the log is all it shows, so the two headings split one name over two lines, and the small title doesn't match speck's header.
@@ -50,9 +51,15 @@ Pressing speck's screen now opens a pop-up with one title, "Pipeline log", on it
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new brief test requires the exact prose ‘opens the Pipeline log pop-up’.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 317,642
+- Elapsed since build started: 8 min
+- Changed lines: 19 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. The document pop-up's title keeps its small monospace style, which this ticket puts out of scope.
 
