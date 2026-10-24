@@ -42,6 +42,7 @@ An empty Build lane says it's clear once, shows what was shipped lately, and poi
 - Today: `fill('queue', …, 'Nothing in flight or ready.')` and `#queue-n` in `templates/panel.js`.
 - Waits for 0445 (`templates/panel.css`) and 0451 (`templates/panel.js`).
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
