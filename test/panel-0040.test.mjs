@@ -86,7 +86,7 @@ test('0040 AC3: a selection in an open idea\'s note survives a refresh in which 
   assert.ok(kept(), 'the note holding the selection stayed on the page');
   assert.deepEqual(items(p).map(n => textOf(p, n, 'span').find(t => t === 'Zero' || t === 'Alpha' || t === 'Beta')), ['Zero', 'Alpha', 'Beta'], 'the new idea shows');
   assert.ok(items(p)[2].textContent.includes('parked'), "the other idea's change shows");
-  assert.ok(queueText(p).some(t => t.includes('Blocked · it has a question for you')), 'the queue change shows'); // 0434: its question shows once its card is open
+  assert.ok(queueText(p).some(t => t.includes('Has a question')), 'the queue change shows'); // 0434: its question shows once its card is open. 0443: closed, in short words
   assert.ok(toggles(p)[1].textContent.includes('3'), 'the ideas count shows');
   await refresh(p);
   assert.ok(kept(), 'and through a second refresh');

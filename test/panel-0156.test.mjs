@@ -31,7 +31,7 @@ const SAYS = {
 const MOVING = ['0401', '0402', '0403', '0408'];
 // 0434: while its builder or reviewer is at work, a grid of lights stands in for the sentence, which is its name.
 const WORKING = ['0401', '0402', '0403'];
-const sentenceIn = n => (n.className === 'lights' ? n.attrs['aria-label'] : n.textContent);
+const sentenceIn = n => n.attrs?.['aria-label'] ?? n.textContent; // 0443: a closed card's long sentence is the accessible name of its short words
 
 function fake(tickets = TICKETS) {
   return fakePage([], {
@@ -79,7 +79,7 @@ test('0156 AC2 and AC3: a ship the panel itself started says "Shipping" in the n
     confirm: () => true,
   });
   await p.settle();
-  assert.equal(find(p, rowOf(p, '0405'), /\bsay\b/)[0].textContent, 'Approved · waiting for you to ship it');
+  assert.equal(sentenceIn(find(p, rowOf(p, '0405'), /\bsay\b/)[0]), 'Approved · waiting for you to ship it');
   assert.equal(find(p, rowOf(p, '0405'), /\bsay\b/)[0].className, 'say to-ship');
   // Open the card, then its review pack, and press Ship.
   p.press(topOf(rowOf(p, '0405')));

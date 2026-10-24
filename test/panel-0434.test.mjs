@@ -55,7 +55,7 @@ test('0434 AC1: a ticket no agent is working on shows no grid', async () => {
   const p = page();
   await p.settle();
   for (const id of ['0905', '0906', '0907', '0908', '0909', '0426', '0910']) assert.equal(gridOf(p, card(p, id)), null, `${id}: no grid`);
-  assert.ok(statusOf(card(p, '0906')).textContent.startsWith('Blocked · it has a question for you'), 'words instead');
+  assert.ok(statusOf(card(p, '0906')).textContent.startsWith('Has a question'), 'words instead'); // 0443: in short words
 });
 
 const css = () => styles().replace(/\/\*[\s\S]*?\*\//g, '');
