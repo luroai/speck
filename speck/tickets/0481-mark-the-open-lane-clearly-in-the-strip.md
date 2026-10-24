@@ -41,6 +41,7 @@ The open lane in the strip is plain to see at a glance, in both looks.
 - Asked for by the user on 2026-10-24: "I need the Plan / Build / Shipped tabs at the top to be more highlighted. I can't tell which is selected."
 - Today: `.tab` and `.tab[aria-selected="true"]` in `templates/panel-header.css` (0477): the open lane's name is in `--text` and the others in `--muted`, both at weight 600. 0457's folder-tab look for the open tab went with 0477's strip.
 - Failing before this build: none
+- Self-check: no changes (the bar is drawn only from aria-selected, which every way of changing lane already sets; in forced colours the bar keeps the system text colour and the other names have no border to show)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

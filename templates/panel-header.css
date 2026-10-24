@@ -29,6 +29,11 @@
   .tab { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 6px; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 10px 12px; font: inherit; color: var(--muted); background: transparent; border: 0; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
   .tab:hover, .tab[aria-selected="true"] { color: var(--text); }
   .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 14px; font-weight: 600; line-height: 1; }
+  /* 0481: a bar under the open lane's name, as wide as it and in its colour, so which lane is open shows without its
+     colour (0161). Every name's box is the same height, the open one's bar taking 2 px of the others' padding, so
+     nothing moves when the lane changes. */
+  .tab .tab-name { padding-bottom: 4px; }
+  .tab[aria-selected="true"] .tab-name { padding-bottom: 2px; border-bottom: 2px solid currentColor; }
   .tab .needs { flex: none; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; line-height: 1; }
   .tab .needs { color: var(--bad); }
   .tab .needs:empty { display: none; }
