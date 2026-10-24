@@ -98,7 +98,7 @@ test('0201 AC4: cards at every other stage still show their sentence and step na
     const text = textOf(rowOf(p, id));
     assert.equal(text.className, 'progress', id);
     // 0434: while its builder or reviewer is at work, a grid of lights named for the sentence stands in for it
-    assert.deepEqual(text.children.filter(n => /^(say|lights|stage|ship-at)\b/.test(n.className || '')).map(n => [n.className.split(' ')[0], n.className === 'lights' ? n.attrs['aria-label'] : n.textContent]),
+    assert.deepEqual(text.children.filter(n => /^(say|lights|stage|ship-at)\b/.test(n.className || '')).map(n => [n.className.split(' ')[0], n.attrs?.['aria-label'] ?? n.textContent]),
       [[id === '0805' ? 'say' : 'lights', say], ['stage', stage]], id);
   }
 });

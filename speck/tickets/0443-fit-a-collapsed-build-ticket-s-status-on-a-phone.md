@@ -40,6 +40,7 @@ A collapsed Build ticket's status uses short words, so its stage and time always
 - From the builder's note on 0434. The sentences come from `doing()` in `templates/panel-model.js`.
 - Waits for nothing: no open ticket changes `doing()`.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

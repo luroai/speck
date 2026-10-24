@@ -37,7 +37,7 @@ test('0361 AC1: a finished document task keeps its id, title, tags and progress,
   assert.ok(p.all(row).some(n => n.className === 'tag document'), 'its document tag');
   const progress = say(row);
   assert.ok(progress, 'its progress');
-  assert.ok(progress.textContent.startsWith('Finished · read the document'), progress.textContent);
+  assert.ok(progress.textContent.startsWith('Read the document'), progress.textContent); // 0443: closed, in short words
   assert.ok(!row.textContent.includes('Approved · waiting for you to ship it'));
   assert.ok(p.all(row).some(n => /\bstage\b/.test(n.className || '') && n.textContent === 'Ship'), 'its stage as now');
   noExit(p, row);
@@ -84,7 +84,7 @@ test('0361 AC3: open, it has the Full ticket and Review pack buttons and the bui
 
 test('0361 AC4: a code ticket waiting to be shipped keeps its line, log box and sentence, and no closed Review pack button', async () => {
   const closed = await load([state(code())]);
-  assert.ok(say(rowOf(closed, '0002')).textContent.startsWith('Approved · waiting for you to ship it'));
+  assert.ok(say(rowOf(closed, '0002')).textContent.startsWith('Ready to ship')); // 0443: closed, in short words
   assert.equal(buttons(closed, rowOf(closed, '0002'), 'Review pack').length, 0);
   const p = await opened([state(code()), LOG], '0002'); // 0434: its line and log box show while it's open
   const row = rowOf(p, '0002');

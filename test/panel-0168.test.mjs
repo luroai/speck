@@ -55,7 +55,7 @@ test('0168 AC1: each in-flight card has a row under its title with the sentence 
     const text = rows[0];
     assert.equal(text.className, stage ? 'progress' : 'progress ship-line');
     // 0434: while its builder or reviewer is at work, a grid of lights named for the sentence stands in for it
-    const shown = text.children.filter(n => n.className && n.className !== 'sep').map(n => [n.className.split(' ')[0], n.className === 'lights' ? n.attrs['aria-label'] : n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
+    const shown = text.children.filter(n => n.className && n.className !== 'sep').map(n => [n.className.split(' ')[0], n.attrs?.['aria-label'] ?? n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
     const say = WORKING.includes(id) ? 'lights' : 'say';
     assert.deepEqual(shown.slice(0, 2), [[say, sentence], stage ? ['stage', stage] : ['sub', 'MM:SS']], `${id}: the sentence and the stage, or (0434) a shipping card's one time`);
     // 0419: then the timer, on the same line (0434: after the reviewer's name while it reviews, and no tags while it's closed)
