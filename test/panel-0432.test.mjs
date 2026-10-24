@@ -24,7 +24,7 @@ test('0432 AC1: the Settings script is in templates/panel-settings.js, which the
   assert.doesNotMatch(html, /\$\('settings-open'\)\.addEventListener/, 'its button is wired up in its own file');
   const scripts = [...html.matchAll(/<script\b[^>]*>/g)].map(m => m[0]);
   assert.deepEqual(scripts, ['<script id="theme-start">', '<script src="/panel-model.js">', '<script src="/lcd.js">', '<script src="/panel.js" data-page="{{page}}" data-token="{{token}}">',
-    '<script src="/panel-popups.js">', '<script src="/panel-settings.js">'], 'after the page\'s own script, which it uses (0433: which it loads from /panel.js, 0473: and its pop-ups\')');
+    '<script src="/panel-header.js">', '<script src="/panel-popups.js">', '<script src="/panel-settings.js">'], 'after the page\'s own script, which it uses (0433: which it loads from /panel.js, 0473: and its pop-ups\', 0474: and its header\'s)');
   // 0433: the page starts once it has all loaded, Settings included.
   assert.match(pageScript(), /document\.addEventListener\('DOMContentLoaded', \(\) => \{[\s\S]*connect\(\);\n\}\);\n$/, 'the page starts only once Settings is in');
 });
