@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-24T18:03:26.428Z"
-approved: "2026-10-24T18:12:52.470Z"
+approved: "2026-10-24T18:17:56.207Z"
 
 ---
 # 0480 · Set each lane in a light card instead of a dark frame
@@ -54,12 +54,13 @@ Plan, Build and Shipped now each sit in a light card with a thin grey edge, inst
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 113,842
-- Elapsed since build started: 9 min
+- Reviewer tokens: 352,229
+- Elapsed since build started: 14 min
 - Changed lines: 33 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. The Pipeline log (0479) keeps its dark frame by this ticket's scope; whether it should follow the lanes is the user's call.
@@ -122,6 +123,68 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The lanes now use lightly edged cards, leaving the main screen visually prominent and giving every ticket list more height on a phone. Both themes meet the contrast checks, and navigation and scroll behaviour remain covered by passing tests. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "165df8fd28f76f7fd2359de6bfd463a8b81dfb5a",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16f1d-1c65-78a1-8ba9-f6d880a27b2e",
+    "builder_response": "- Tests run: test/panel-0453.test.mjs test/panel-0455.test.mjs test/panel-0480.test.mjs test/panel-0478.test.mjs test/panel-0481.test.mjs test/panel-0161.test.mjs test/panel-0476.test.mjs test/panel-0477.test.mjs test/panel-0438.test.mjs test/panel-0418.test.mjs test/panel-0427.test.mjs test/panel-0413.test.mjs test/pipeline-0479.test.mjs test/panel-0140.test.mjs test/panel-0151.test.mjs test/panel-0155.test.mjs test/panel-0167.test.mjs test/panel-0160.test.mjs test/panel-0425.test.mjs\n- Handed back by ship: on the ticket merged with main, 0453 AC1 AC3 (Plan's \"Tickets\" toggle's right edge at 107.5 px, at 1x) and 0455 AC1–AC3 (a build log's right edge at 354.5 px) failed. Cause: this ticket's own change. The lane's `.sh` and list sat .5 px inside the card (`margin: 0 .5px`) and under a .5 px separator, so everything in them was on half pixels, which 0453 and 0455 forbid.\n- Merged main (0481, the strip's open lane: no conflicts, it touches panel-header.css and its own test).\n- Changed in templates/panel-cards.css: `.sh` and `.lane-list` margins are now 1 px (sides and bottom), the separator under the title row is 1 px of `--line-soft`, and the list's bottom corners are 11 px (the card's 12 px less that pixel). The card's own edge stays the .5 px hairline drawn by `main > section::before`, which takes no room in the layout. Pictures retaken.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 237035,
+      "cached_input_tokens": 172288,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1352,
+      "reasoning_output_tokens": 33
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T18:17:52.611Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css retains --panel fill, a .5px --line edge, 12px corners and 16px side gaps. Passing panel-0480 browser tests verify all lanes in both themes and exclude frame colours."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing panel-0480 tests verify Doto titles, stage dots, text and muted colours, contrast and the --line-soft separator in both themes. The separator is now 1px, still within the tested thin-line requirement. panel-0478 verifies row alignment; panel-0161 covers text contrast."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing panel-0480 AC3 browser test still confirms taller ticket lists in all three lanes at 390 × 844 against the previous layout, using identical tickets."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Recorded output confirms passing 0476 navigation and scroll-position tests, 0477 strip tests and merged 0481 indicator tests. Unchanged 0453 and 0455 browser tests now pass with whole-pixel content placement. The run reports 289 passes, zero failures and three unrelated skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The light cards still meet all requirements. The revised spacing fixes the pixel-alignment regressions while retaining taller ticket lists. The merged strip indicator remains intact, and the relevant tests pass without weakening the regression checks."
   }
 }
 ```
