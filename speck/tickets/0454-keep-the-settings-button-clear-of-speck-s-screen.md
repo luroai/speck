@@ -1,7 +1,7 @@
 ---
 id: "0454"
 title: "Keep the Settings button clear of speck's screen"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-24T09:34:10.913Z"
 ---
 # 0454 · Keep the Settings button clear of speck's screen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On a phone, the Settings button in the screen frame's title row touches the top of speck's screen. On a touch screen the button grows to 44 px and is pulled out of the row with negative margins, so its bottom edge sits on the screen.
@@ -43,7 +43,7 @@ The Settings button sits inside the frame's title row with a clear gap above spe
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a phone, the Settings button at the top right of speck's screen frame no longer sits on the screen itself: there's now a small gap between them, as there already was with a mouse. The button keeps its finger-sized tap area, and the title row is a little taller to hold it. To see it, open the panel on a phone and look at the top of the frame. Tapping the screen still opens the pipeline, and tapping the button still opens Settings.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,3 +53,63 @@ The Settings button sits inside the frame's title row with a clear gap above spe
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. On a touch screen the button still reaches 2 px past the screen's right edge (its -2px right margin, kept as the frame's alignment is 0438's): only a note on a known limit.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ecbbc04d1390ef8f67effdbb3968e36c20e7feac",
+    "session": "fresh",
+    "thread_id": "01a16d48-b910-77b0-91d6-658e2b505ed8",
+    "builder_response": "- Tests run: test/panel-0454.test.mjs, with --related (test/panel-0281.test.mjs, test/panel-0416.test.mjs, test/panel-0430.test.mjs, test/panel-0444.test.mjs) and the commands.checks files.\n- The change: the touch-screen rule for `.bezel .settings-open` in templates/panel.css drops its -4px top and bottom margins (keeping the -2px right margin, as the frame's alignment is 0438's and out of scope), so the title row grows to 48 px and its 4 px bottom padding stays between the button and the screen.\n- The tests use a real browser, as the criteria are about layout and real presses: with touch emulation (pointer: coarse) and with a mouse, at 8 widths. AC1 failed before the fix (a gap of 0 px at 320 px).\n- Pictures of the title row on a phone, light and dark, are kept with the review pack.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 125503,
+      "cached_input_tokens": 87296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 561,
+      "reasoning_output_tokens": 17
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-24T09:41:15.877Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.css removes vertical negative margins from the touch Settings button; .bezel .print retains 4 px bottom padding. Both AC1 browser tests passed, measuring separation and overlap at eight widths from 320 to 1600 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The touch rule retains 44 × 44 px dimensions, and the mouse rule remains 30 × 30 px. Both AC2 browser tests passed, checking dimensions and containment within the title row at all eight widths."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both AC3 browser tests passed with real taps or mouse clicks at phone and desktop widths. They check hit targets across the screen and button, then verify that pressing them opens the pipeline log and Settings respectively."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The Settings button now leaves a clear 4 px gap above the screen on touch devices while keeping its full tap target. Mouse sizing and both controls’ behaviour are preserved. All six ticket tests passed; no blocking concerns found."
+  }
+}
+```
+
+</details>
