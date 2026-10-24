@@ -1,7 +1,7 @@
 ---
 id: "0445"
 title: "Set a document task's document out like the full ticket"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-23-set-a-document-task-s-document-out-the-same-way.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0442"]                # ticket ids that must be done first
 created: 2026-10-24
+started: "2026-10-24T08:46:32.853Z"
 
 ---
 # 0445 · Set a document task's document out like the full ticket
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 0424 set the full ticket and the review pack out as a document, but a document task's document, in its own pop-up, kept the old sizes, so the three read differently.
