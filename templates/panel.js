@@ -1731,12 +1731,15 @@ const speckPoses = () => ({ ...LCD.STATES, watch: watchPose, ask: LCD.PANEL.bad,
 // 0414: what speck does, from what the page has seen of the pipeline. Each board is compared with the one before it
 // (noteBoard): what changed queues an event, played one after another, or starts the laptop while drafts are written.
 // Between them speck follows the Foreman's word (speckRests). 0436: and passes the time during a long wait.
-const SPECK = { push: 3200, event: 6000, writing: 30000, nap: 15 * 60000, watch: 2 * 60000, pastime: 60000, turn: 3 * 60000 };
+const SPECK = { push: 3200, event: 6000, writing: 30000, nap: 15 * 60000, watch: 2 * 60000, pastime: 60000, turn: 3 * 60000, missed: 60000 };
 // 0436: the pastimes, tea, chess, messy and sweeping, with their captions while Idle and while waiting on the pipeline.
 const IDLE_MOODS = [['eating', 'TEA, WHILE IT IS QUIET'], ['playing', 'NOTHING READY. CHESS?'], ['messy', 'CRUMBS IN THE WORKTREE'], ['cleaning', 'SWEEPING OLD BRANCHES']];
 const PASTIMES = [['eating', 'A CUP OF TEA'], ['playing', 'A QUICK GAME OF CHESS'], ['messy', 'CRUMBS ON THE CLIPBOARD'], ['cleaning', 'A QUICK SWEEP']];
-// rest: when the word's rhythm started, which of its turns has picked a pastime, and which one (0436).
-const speckDo = { seen: null, queue: [], playing: null, writing: null, word: null, rest: null, last: null, woke: false, n: 0 };
+// rest: when the word's rhythm started, which of its turns has picked a pastime, and which one (0436). 0446: st and
+// seenAt, the last board noted and when; hiddenAt, when the page was hidden; back, set when it's shown again until the
+// next board is noted.
+const speckDo = { seen: null, queue: [], playing: null, writing: null, word: null, rest: null, last: null, woke: false, n: 0,
+  st: null, seenAt: null, hiddenAt: null, back: null };
 // 0436: a pastime at random, never the one before.
 function pickPastime(d) {
   const all = IDLE_MOODS.map((_, i) => i).filter(i => i !== d.last);
@@ -1750,6 +1753,8 @@ function noteBoard(st, f, word) {
   const d = speckDo, now = Date.now();
   if (word !== d.word) { d.word = word; d.woke = false; d.rest = { since: now, turn: -1, i: null }; }
   if (!st || !Array.isArray(st.tickets)) return;
+  const fresh = st !== d.st;
+  d.st = st;
   const tickets = new Map(st.tickets.filter(t => t && typeof t === 'object' && t.id != null).map(t => [String(t.id), t]));
   const ids = [...tickets.keys()].sort(byId), ag = f.agent && typeof f.agent === 'object' ? f.agent : {};
   const asks = (Array.isArray(ag.asks) ? ag.asks : []).filter(a => a && a.id != null).map(a => ({ id: String(a.id), key: `${a.id} ${a.at}` }));
@@ -1757,10 +1762,14 @@ function noteBoard(st, f, word) {
   if (f.ship && typeof f.ship.running === 'string') shipping.add(f.ship.running);
   const seen = { tickets: new Map(ids.map(id => [id, { status: tickets.get(id).status, text: draftText(tickets.get(id)) }])), asks: new Set(asks.map(a => a.key)),
     running: ag.running && ag.running.id != null ? String(ag.running.id) : null, shipping };
-  const was = d.seen;
+  const was = d.seen, wasAt = d.seenAt;
   d.seen = seen;
+  if (fresh) d.seenAt = now;
+  const back = fresh ? d.back : null;
+  if (back) d.back = null;
   if (!was) return; // what happened before the page loaded doesn't play
-  const play = (pose, cap, ms) => { d.queue.push({ pose, cap, ms, key: `e${++d.n}` }); };
+  const from = d.queue.length;
+  const play = (pose, cap, ms) => { d.queue.push({ pose, cap, ms, key: `e${++d.n}`, at: now }); };
   const became = (id, status) => was.tickets.has(id) && was.tickets.get(id).status !== status && tickets.get(id).status === status;
   const runOn = !!(st.run && st.run.on);
   for (const id of ids) if (became(id, 'done')) play('celebrating', `${id} SHIPPED`, SPECK.event);
@@ -1769,8 +1778,33 @@ function noteBoard(st, f, word) {
   for (const a of asks) if (!was.asks.has(a.key)) play('ask', `${a.id} HAS A QUESTION`, SPECK.event);
   for (const id of ids) if (became(id, 'approved') && !(tickets.get(id).auto_ship === true && runOn)) play('flag', `${id} IS READY TO SHIP`, SPECK.event);
   if (seen.running && seen.running !== was.running) play('confused', `LOOKING INTO ${seen.running}`, SPECK.event);
+  // 0446: the first board after the page is shown again holds what changed while it had no stream. Each change came
+  // after the board before it, which is all that's known of when, so only the latest plays, in place of the one kept
+  // when the page was shown, and only when that board came less than a minute before.
+  if (back && d.queue.length > from) {
+    const missed = d.queue.splice(from), kept = back.kept ? d.queue.indexOf(back.kept) : -1;
+    if (!back.kept || kept >= 0) { // a kept one that has started playing stays the only one
+      if (kept >= 0) d.queue.splice(kept, 1);
+      if (wasAt !== null && back.at - wasAt < SPECK.missed) d.queue.push(missed[missed.length - 1]);
+    }
+  }
   const drafts = ids.filter(id => tickets.get(id).status === 'draft' && (!was.tickets.has(id) || (was.tickets.get(id).status === 'draft' && was.tickets.get(id).text !== seen.tickets.get(id).text)));
   if (drafts.length) d.writing = { id: drafts[drafts.length - 1], until: now + SPECK.writing };
+}
+// 0446: the page hidden (visible false) or shown again. Of the events from while it was hidden, only the latest plays,
+// and only when it came less than a minute before the page was shown; the next board's changes count as from then too.
+function speckShown(visible) {
+  const d = speckDo, now = Date.now();
+  if (!visible) { if (d.hiddenAt === null) d.hiddenAt = now; return; }
+  if (d.hiddenAt === null) return;
+  const since = d.hiddenAt, missed = [...(d.playing ? [d.playing] : []), ...d.queue].filter(e => e.at >= since);
+  d.hiddenAt = null;
+  if (d.playing && d.playing.at >= since) d.playing = null;
+  d.queue = d.queue.filter(e => e.at < since);
+  const last = missed[missed.length - 1];
+  let kept = null;
+  if (last && now - last.at < SPECK.missed) { const { until, ...e } = last; d.queue.push(kept = e); }
+  d.back = { at: now, kept };
 }
 // What speck does at `now`: { pose, cap }, with a `key` of its own for each event.
 function speckNow(now) {
@@ -2092,6 +2126,6 @@ function connect() {
 // 0432, 0433: the page starts once the whole page has loaded, after the Settings script it loads from /panel-settings.js
 // has run, so nothing it hears first finds Settings missing.
 document.addEventListener('DOMContentLoaded', () => {
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') connect(); });
+  document.addEventListener('visibilitychange', () => { const on = document.visibilityState === 'visible'; speckShown(on); if (on) connect(); });
   connect();
 });
