@@ -354,7 +354,7 @@
   /* Shaping: tickets, ideas and the inbox, one list at a time. The selected tab has a border in the text colour (0167). */
   .toggles { display: flex; gap: 6px; } /* 0428: apart, so each rounded toggle shows its own four edges */
   .toggle { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; padding: 1px 10px; background: transparent; border: .5px solid var(--line); color: var(--muted); cursor: pointer; }
-  .toggle.on { color: var(--text); border-color: var(--text); position: relative; z-index: 1; }
+  .toggle.on { color: var(--panel); background: var(--text); border-color: var(--text); position: relative; z-index: 1; } /* 0450: filled, so the open list shows at a glance; its text is the section's background */
   /* 0164: only where the main pointer can hover, as a phone keeps a tapped card's :hover until the next tap */
   @media (hover: hover) { .item:hover { background: var(--raise); } }
   /* The light tints. 0167: the open item in Shaping or the queue is set apart by a raised fill and a border in the text
