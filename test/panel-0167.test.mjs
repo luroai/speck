@@ -53,6 +53,7 @@ test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours,
     if (!selectors(r).some(s => /\.(id|title|title-link|goto|toggle)(?![\w-])/.test(lastCompound(s)))) continue;
     for (const k of ['color', 'border-color']) {
       const t = tokens(get(r, k));
+      if (r.sel === '.toggle.on' && k === 'color') { assert.deepEqual(t, ['--panel'], 'the selected tab\'s text is the background it is filled against (0450)'); continue; }
       if (t.some(x => !NEUTRAL.includes(x))) coloured.push(`${r.sel} { ${k}: ${get(r, k)} }`);
     }
   }
@@ -63,6 +64,7 @@ test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours,
   assert.match(get(rule('.goto'), 'text-decoration') || '', /underline/, 'a linked id is underlined');
   assert.match(get(rule('td .title-link'), 'text-decoration') || '', /underline/, 'a shipped title is underlined');
   assert.deepEqual(tokens(get(rule('.toggle.on'), 'border-color')), ['--text'], 'the selected tab has a border in the text colour');
+  assert.deepEqual(tokens(get(rule('.toggle.on'), 'background')), ['--text'], 'and, since 0450, is filled with it');
   for (const sel of ['.item.idea .id', '.item.inbox .id']) assert.equal(rule(sel), undefined, `${sel} keeps the muted colour of every id`);
 });
 
@@ -222,7 +224,7 @@ for (const theme of ['light', 'dark']) {
     await withPanel(async b => {
       const c = await colours(b);
       const style = sel => b.js(`[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => { const s = getComputedStyle(n);
-        return { text: n.textContent, color: s.color, line: s.textDecorationLine, border: s.borderTopColor }; })`);
+        return { text: n.textContent, color: s.color, line: s.textDecorationLine, border: s.borderTopColor, back: s.backgroundColor }; })`);
       for (const n of await style('#queue .id, #shipped .id')) assert.equal(n.color, c.muted, `id ${n.text}`);
       for (const n of await style('#shipped .title-link')) assert.deepEqual([n.color, n.line], [c.text, 'underline'], `shipped title ${n.text}`);
       const gotos = await style('#shaping .goto');
@@ -231,7 +233,7 @@ for (const theme of ['light', 'dark']) {
       for (const view of ['tickets', 'ideas', 'inbox']) {
         await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`); await settle(b);
         const [on] = await style('#shaping-toggle .toggle.on');
-        assert.deepEqual([on.color, on.border], [c.text, c.text], `the ${view} tab, selected`);
+        assert.deepEqual([on.back, on.color, on.border], [c.text, c.panel, c.text], `the ${view} tab, selected: filled with the text colour since 0450`);
         for (const n of await style('#shaping .id')) assert.equal(n.color, c.muted, `${view} id ${n.text}`);
       }
     }, theme);

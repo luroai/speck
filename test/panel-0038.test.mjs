@@ -117,8 +117,9 @@ test('0038 AC4: Inbox keeps a colour of its own, and since 0167 its tab, section
     assert.ok(m, `${selector} sets ${prop} from a colour variable`);
     return m[1];
   };
-  // 0167: the selected tab is in the text colour, and the section and its items have no stripe.
-  assert.deepEqual([colour('.toggle.on', 'color'), colour('.toggle.on', 'border-color')], ['text', 'text']);
+  // 0167: the selected tab is in the text colour, and the section and its items have no stripe. 0450: filled with the
+  // text colour, its text in the section's background.
+  assert.deepEqual([colour('.toggle.on', 'background'), colour('.toggle.on', 'color'), colour('.toggle.on', 'border-color')], ['text', 'panel', 'text']);
   assert.doesNotMatch(css, /#shaping-section\.inbox \{|\.item\.inbox(\.open)? \{|\.item\.inbox \.id \{/, 'no rule of its own');
   const name = 'inbox';
   assert.ok(vars[name], `--${name} is defined`);
