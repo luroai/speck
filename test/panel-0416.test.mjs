@@ -93,7 +93,7 @@ test('0416 AC2: each card says its stage in the same words, with its stage name 
     if (tone === 'to-ship') assert.ok(classes(row).includes('to-ship'), `${t.id}: a purple card`);
     if (tone === 'bad') assert.ok(classes(row).includes('blocked'), `${t.id}: a crimson card`);
   }
-  assert.match(css(), /\.q \.top \.say\.to-ship \{ color: var\(--idea\); \}/, 'purple');
+  assert.match(css(), /\.q \.top \.say\.to-ship \{ color: var\(--ok\); \}/, 'green (0440)');
   assert.match(css(), /\.q \.top \.say\.bad \{ color: var\(--bad\); \}/, 'crimson');
 });
 

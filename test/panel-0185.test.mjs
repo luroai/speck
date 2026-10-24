@@ -76,7 +76,7 @@ test('0185 AC2: the ring and the text on a ticket keep 7:1 against its fill, in 
   const ch = (hex, i) => { const v = parseInt(hex.slice(i, i + 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
   const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
   for (const [name, look] of Object.entries({ light, dark }))
-    for (const fill of ['--bg', '--panel', '--raise', '--bad-bg', '--idea-bg'])
+    for (const fill of ['--bg', '--panel', '--raise', '--bad-bg', '--ok-bg'])
       assert.ok(contrast(look['--text'], look[fill]) >= 7, `${name}: --text on ${fill} is ${contrast(look['--text'], look[fill]).toFixed(2)}:1`);
 });
 
