@@ -218,7 +218,8 @@
   .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
   .item.ticket .head .checks, .q .top .progress, .q .top .act { display: block; font-family: inherit; font-size: 12px; line-height: 14px; color: var(--muted); }
   .item.ticket .head .checks > :not(.ids), .q .top .progress > :not(.ids), .q .top .act > :not(.ids) { white-space: nowrap; }
-  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; padding: 0; border: 0; line-height: inherit; vertical-align: baseline; } /* inline, as a box beside a dot would let the line break before the dot */
+  .item.ticket .head .checks .prio { vertical-align: top; } /* 0441: at the line's top, as the tags in it are */
+  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; padding: 0; border: 0; line-height: inherit; vertical-align: top; } /* inline, as a box beside a dot would let the line break before the dot. 0441: at the line's top, as on its baseline the monospace's line box reaches a pixel past the line's */
   /* the spaces either side of a dot a little narrower than a whole character, so a line such as "Writing tests and code
      · Build · 19:18 · P3 · M · low" fits a 420 px pane */
   .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { letter-spacing: -3px; }
@@ -698,12 +699,14 @@
     .set-ready, .full-open { min-width: 44px; min-height: 44px; }
     /* 0164: each id reads as running text, on the line's baseline with its comma straight after it. Its tap area is
        at least 44 px each way, but its negative margins give back what it reaches past the text, so nothing moves. */
-    .goto { display: inline-block; vertical-align: baseline; line-height: 16px; min-height: 44px; padding: 14px 8px; margin: -14px -8px; }
+    .goto { display: inline-block; vertical-align: baseline; line-height: 16px; min-width: 44px; min-height: 44px; padding: 14px 8px; margin: -14px -8px; text-align: center; }
     /* A note on several lines has them closer together than that, so each id's text, and the band of its own line,
        sit above every tap area in the note: a tap there reaches that id, not one on the line above or below. */
     .item .checks, .act { isolation: isolate; }
     .goto > span { position: relative; z-index: 1; }
-    .goto > span::before { content: ''; position: absolute; inset: -1px -6px; } /* not into the next id's: a comma and a space away */
+    .goto > span::before { content: ''; position: absolute; inset: -1px -5px; } /* not into the next id's: a comma and a space away */
+    /* 0441: in a proportional font a comma and a space are narrower than two of those reaches, so the space is wider */
+    .ids { word-spacing: 4px; }
 
     /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' and linked
        ids' tap areas in it stay apart */

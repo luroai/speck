@@ -107,7 +107,7 @@ test('0419 AC4: a question, a recommendation, a Ship hint and a message still sh
 // ---------- in a real browser: a 420 px side pane with a mouse ----------
 
 // Enough tickets to wait on that the details need three lines or more at 420 px, while the card is open (0434).
-const LONG_WAIT = Array.from({ length: 14 }, (_, i) => String(901 + i).padStart(4, '0'));
+const LONG_WAIT = Array.from({ length: 20 }, (_, i) => String(901 + i).padStart(4, '0')); // 0441: enough for three lines of details in a proportional font
 const PANE = {
   run: { on: true },
   tickets: [
