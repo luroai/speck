@@ -484,7 +484,7 @@ export async function panelServer() {
       const told = String(req.headers['x-speck-board'] ?? '');
       return askState(res, /^\d{1,15}$/.test(told) ? Number(told) : null, String(req.headers['x-speck-have'] ?? ''));
     }
-    if (where === '/api/panel') return send(res, 200, 'application/json', JSON.stringify({ repo: fs.realpathSync(repo) })); // 0509: which repo's panel this is
+    if (where === '/api/panel') return send(res, 200, 'application/json', JSON.stringify({ repo: fs.realpathSync(repo), url: url ? url.origin : null })); // 0509: which repo's panel, and its --url
     if (where === '/api/run-log') { const out = runLogAnswer(runs); return send(res, out.status, 'application/json', JSON.stringify(out.body)); } // 0415: always run.log
     const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log(\/close)?$/);
     if (log) {

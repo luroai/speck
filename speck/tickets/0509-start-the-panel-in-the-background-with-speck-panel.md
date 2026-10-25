@@ -1,7 +1,7 @@
 ---
 id: "0509"
 title: "Start the panel in the background with speck panel --background"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-25T22:08:49.534Z"
 ---
 # 0509 · Start the panel in the background with speck panel --background
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck panel` runs in the foreground until Ctrl+C. An agent that starts it at the end of setup has to hold a terminal open or run it in the background by its own means, which some agents end along with their session, and nothing says how to stop a panel started that way.
@@ -55,3 +55,76 @@ started: "2026-10-25T22:08:49.534Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1fa89b6f5e14b5af7d29f5c4f2bb93d75507c7a5",
+    "session": "fresh",
+    "thread_id": "01a17521-882f-7ee3-86fd-6b7fe5af6c4a",
+    "builder_response": "- Tests run: `speck test --related test/panel-background-0509.test.mjs` (the ticket's own file plus 160 related files; checks included). 1683 pass, 0 fail, 3 skipped.\n- New module scripts/panel-background.mjs holds --background and --stop; scripts/panel.mjs only dispatches to it, adds GET /api/panel (which repo's panel answers on a port) and changes the started line when in the background. panel.mjs and speck.mjs stay at the 600-line limit, so two comments were condensed.\n- Pictures: none, nothing visible in the panel changes.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 120286,
+      "cached_input_tokens": 71552,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 771,
+      "reasoning_output_tokens": 77
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-25T22:15:17.919Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/panel-background.mjs startAway detaches the process, redirects output and polls readiness. Passed test '0509 AC1, AC3, AC4' checks a real panel after its launching shell exits, with --port and --url."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "startAway reuses an existing panel but prints addresses derived from the new command's --url, without checking which URL the existing server accepts. The passed AC2 reuse test covers only a local address."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "stopAway finds background records and stops their processes. Passed AC3 tests exercise stopping a real background panel, reporting none running, leaving a foreground panel alone and stopping it with SIGINT."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passed AC4 tests check panel.log output and the option names in help and docs/brief.md. Supplied related-test results report 1683 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/panel-background.mjs",
+        "issue": "startAway's already-running branch reports the requested --url as a working address even when the existing panel does not serve it. Start a panel without --url, then repeat --background on the same port with --url https://speck.example.ts.net: the command exits successfully and advertises that address, but panelServer's existing hosts set rejects that hostname with HTTP 403. Repeating with a different URL has the same problem.",
+        "suggested_fix": "Have the identity endpoint report the existing panel's configured addresses and print those when reusing it. Add a real-panel test that repeats --background with a different --url and verifies that every advertised address is accepted by the existing server.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Background starting, logging and stopping work in the tested cases. One fix is needed: reusing a running panel can advertise a tunnel address that the panel refuses to serve."
+  }
+}
+```
+
+</details>

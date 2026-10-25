@@ -60,8 +60,31 @@ test('0509 AC2: --background again on the same port starts nothing and prints th
     assert.equal(second.status, 0, second.stderr);
     assert.match(second.stdout, new RegExp(`http://127\\.0\\.0\\.1:${port}/`));
     assert.equal(fs.readFileSync(path.join(dir, 'speck', '.cache', `panel-${port}.json`), 'utf8'), record);
+    // With a --url the running panel doesn't serve, it prints only the addresses that panel accepts, and says why.
+    const other = speckIn(dir, 'panel', '--background', '--port', String(port), '--url', 'https://speck.example.ts.net');
+    assert.equal(other.status, 0, other.stderr);
+    const said = other.stdout.split('\n')[0];
+    assert.doesNotMatch(said, /speck\.example\.ts\.net/);
+    assert.match(other.stdout, /speck panel --stop/);
+    for (const [, host] of said.matchAll(/https?:\/\/([^/\s]+)\//g)) assert.equal((await request(port, { host })).status, 200, host);
     const log = fs.readFileSync(path.join(dir, 'speck', '.cache', 'panel.log'), 'utf8');
     assert.equal(log.match(/speck panel: http/g).length, 1, log);
+  } finally { speckIn(dir, 'panel', '--stop'); }
+});
+
+test('0509 AC2: --background again names the --url address the running panel serves, which it accepts', async () => {
+  const { dir } = panelRepo();
+  const { port, r } = await background(dir, ['--url', 'https://speck.example.ts.net']);
+  try {
+    assert.equal(r.status, 0, r.stderr);
+    for (const extra of [[], ['--url', 'https://other.example.ts.net']]) {
+      const again = speckIn(dir, 'panel', '--background', '--port', String(port), ...extra);
+      assert.equal(again.status, 0, again.stderr);
+      const said = again.stdout.split('\n')[0];
+      assert.match(said, new RegExp(`http://127\\.0\\.0\\.1:${port}/ and https://speck\\.example\\.ts\\.net/`));
+      assert.doesNotMatch(said, /other\.example/);
+      assert.equal((await request(port, { host: 'speck.example.ts.net' })).status, 200);
+    }
   } finally { speckIn(dir, 'panel', '--stop'); }
 });
 

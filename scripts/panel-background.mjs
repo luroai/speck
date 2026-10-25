@@ -24,20 +24,24 @@ function readRecord(file) {
   catch { return null; }
 }
 const forget = file => { try { fs.unlinkSync(file); } catch { /* already gone */ } };
-const addresses = (port, url) => `http://127.0.0.1:${port}/${url ? ` and ${url.origin}/` : ''}`;
+const addresses = (port, origin) => `http://127.0.0.1:${port}/${origin ? ` and ${origin}/` : ''}`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// Whether this repo's panel answers on the port: its /api/panel names the same folder.
+// This repo's panel on the port, as { url }, the origin its --url serves or null, or null when it isn't answering there:
+// its /api/panel names the same folder.
 export function panelAnswers(repo, port) {
   return new Promise(resolve => {
     const req = http.get({ host: '127.0.0.1', port, path: '/api/panel', headers: { Host: `127.0.0.1:${port}` }, timeout: ASK_MS }, res => {
       let body = '';
       res.setEncoding('utf8').on('data', d => { body += d; });
-      res.on('end', () => { try { resolve(res.statusCode === 200 && JSON.parse(body).repo === fs.realpathSync(repo)); } catch { resolve(false); } });
-      res.on('error', () => resolve(false));
+      res.on('end', () => {
+        try { const a = JSON.parse(body); resolve(res.statusCode === 200 && a.repo === fs.realpathSync(repo) ? { url: typeof a.url === 'string' ? a.url : null } : null); }
+        catch { resolve(null); }
+      });
+      res.on('error', () => resolve(null));
     });
     req.on('timeout', () => req.destroy());
-    req.on('error', () => resolve(false));
+    req.on('error', () => resolve(null));
   });
 }
 
@@ -52,8 +56,12 @@ export function panelAway(args, port, url) {
 
 async function startAway(args, port, url) {
   const repo = findRepoRoot(), file = recordFile(repo, port), log = path.join(cacheRoot(repo), 'panel.log');
-  if (await panelAnswers(repo, port)) {
-    console.log(`speck panel: already running at ${addresses(port, url)}`);
+  const running = await panelAnswers(repo, port);
+  if (running) {
+    // The addresses the running panel serves, which can differ from this command's --url: say so rather than give one it refuses.
+    console.log(`speck panel: already running at ${addresses(port, running.url)}`);
+    if ((url?.origin ?? null) !== running.url)
+      console.log(`It serves ${running.url ? running.url : 'no --url address'}, not ${url ? url.origin : 'without --url'}: run speck panel --stop, then start it again to change that.`);
     return;
   }
   let from = 0, fd, child;
@@ -76,13 +84,13 @@ async function startAway(args, port, url) {
       throw new SpeckError(exited.message || said() || `The panel stopped with exit code ${exited.code} before it was serving. Its output is in speck/.cache/panel.log.`, exited.code > 0 ? exited.code : 1);
     }
     if (await panelAnswers(repo, port)) {
-      console.log(`speck panel: ${addresses(port, url)} (running in the background: stop it with speck panel --stop; its output is in speck/.cache/panel.log)`);
+      console.log(`speck panel: ${addresses(port, url?.origin)} (running in the background: stop it with speck panel --stop; its output is in speck/.cache/panel.log)`);
       process.exit(0); // the child's exit listener would otherwise hold this process
     }
   }
   try { process.kill(-child.pid, 'SIGTERM'); } catch { /* already gone */ }
   forget(file);
-  throw new SpeckError(`The panel didn't answer at ${addresses(port, url)} within ${START_MS / 1000} seconds, so it was stopped. Its output is in speck/.cache/panel.log.`);
+  throw new SpeckError(`The panel didn't answer at ${addresses(port, url?.origin)} within ${START_MS / 1000} seconds, so it was stopped. Its output is in speck/.cache/panel.log.`);
 }
 
 async function stopAway(port) {
