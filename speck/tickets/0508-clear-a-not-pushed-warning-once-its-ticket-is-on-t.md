@@ -40,6 +40,8 @@ A not-pushed warning clears once its ticket is on the remote as done, whatever h
 - Asked for by the user on 2026-10-25, after the eight warnings for 0262 and 0361 to 0367 reappeared once the history rewrite gave their commits new ids. Their stale records were moved out of `speck/.cache/runs/` by hand that day.
 - Today: `shipState` and `notPushed` in `scripts/ship.mjs` (0204), which check `git merge-base --is-ancestor <sha> refs/remotes/<remote>/<base>`.
 - Failing before this build: none
+- Self-check: no changes. `ls-tree` lists only the current folder's part of a tree unless given `--full-tree`, found while making the tests pass; the check moved to `scripts/not-pushed.mjs` to keep `scripts/ship.mjs` under 600 lines.
+- Pictures: none, because nothing changes how the panel looks: a warning that should have cleared now clears.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
