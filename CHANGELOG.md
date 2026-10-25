@@ -1,5 +1,98 @@
 # Changelog
 
+## 0.15.0 · 25 October 2026
+
+What's new since 0.14.0. A minor release that rebuilds the panel round speck itself. What used to be called the Foreman is now just speck: it lives on a little LCD screen at the top of the panel and acts out what the pipeline is doing, and pressing the screen opens the pipeline log. Under it, Plan, Build and Shipped are cards you swipe between, each ticket is two short lines until you open it, and the panel takes Cursor's colours, fonts and corners. Settings now sets up your agents and any API provider, builds run fewer tests before their first review, and a ticket that isn't code is now called a task. Old setting names, commands and ticket lines keep working.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.15.0 init`.
+
+### speck's screen
+
+- The top of the panel is speck's own LCD screen in a dark, rounded frame, in place of the old name row and scrolling notice board. The frame's top row says "speck" in large dot-matrix letters with a red dot before it, then the project and base branch, with the Settings button at the right. The screen's top row gives the pipeline's status, such as Idle, Building 2 or Needs you 1, and its top right shows the time, with a blinking colon. When something needs you, the frame's edge turns red.
+- speck acts out the pipeline under that row. It plays a short animation with a caption when a ticket starts shipping, ships, gets a question or is ready for you to ship, and when it asks you something or starts looking into a ticket. It sits at its laptop while tickets are written, watches with a clipboard while builds run, is grumpy while the pipeline waits, sleeps while `speck run` is off, and takes a short break, such as tea, chess or a sweep, every few minutes of a long build or wait. When nothing happens, it changes pastime every few minutes and dozes off after 15.
+- The line under speck adds to the top row instead of repeating it: the tickets with questions, the tickets building, the branch a ticket is shipping to, why speck is waiting, or to turn Auto-build on.
+- When you come back to a panel that was hidden, speck plays at most the latest event, and only if it happened in the last minute, rather than every event it missed.
+- With reduced motion turned on, speck holds still and the clock's colon doesn't blink, but the captions still change.
+
+### The pipeline log
+
+- Pressing speck's screen opens the Pipeline log: a dark framed card that fills the screen, with "Pipeline log" in dot-matrix letters and Close at the top. Only the log scrolls. It shows what `speck run` has been doing as a terminal of short, timed lines, such as "0457 build started" or "0457 shipped", newest at the bottom, with failed builds and tickets that didn't ship in red. It follows new lines as they arrive, and stays put while you've scrolled up.
+- The old Right now list is gone from the pop-up. Questions and their Answer and Dismiss buttons stay on the tickets' cards, and `speck status` still lists everything Right now did.
+- Every line `speck run` writes, in a terminal and in the panel's log, now starts with the time it was written, such as `14:32:05`.
+
+### Plan, Build and Shipped
+
+- The panel is one column at every width, 720 px wide at most, the same in a phone, a narrow side pane or a wide window. Only one lane shows at a time, and Build opens first. The page doesn't scroll: only the open lane's list does.
+- Plan, Build and Shipped are cards side by side. Swipe left or right on a phone, scroll sideways on a trackpad, use the left and right arrow keys, or tap a lane's name in the strip under speck's screen. The open lane's name is darker, with a short line under it, and Build's count of things that need you sits beside its name all the time.
+- Each lane is a light card with its name in dot-matrix letters, a coloured dot (grey for Plan, blue for Build, purple for Shipped) and its count, such as "1 in flight · 8 queued", beside it.
+- When nothing is building or waiting, Build says "Nothing building", which ticket shipped last and when, and how many shipped today, with a Go to Plan button or a hint to capture an idea or make a ticket.
+- Shipped lists the latest ten tickets instead of five. Its stats are one line, such as "34 today · median 10 min, $1.85", with More stats at the end.
+- In Plan, the list you have open (Tickets, Ideas or Inbox) is filled in solid, and a screen reader says which is selected.
+
+### Tickets in the lanes
+
+- Every closed ticket is two short lines: its title, cut short with "…" when it's long, and a short status line. Priority, size and risk are plain words, and the dots between the parts have a clear gap either side. A ticket says what it's doing in words, such as "Writing tests and code", "Ready to ship" or "Has a question", with the full sentence when you hover. While a builder or reviewer works on it, the status line starts with a small grid of moving lights, and shows the stage, the reviewer's model and one time. On a phone, a bug, fix or task tag stays whole and the words are shortened instead.
+- Idea and inbox notes in Plan are two lines too: the title, then when it was captured. The file path shows only once you open one.
+- A ticket waiting for you to ship it is now green, so you can tell it from one that needs you, which stays red. A ticket that's shipping has a purple edge.
+- A closed ticket's dependencies show as a small chip at the end of its title row: how many unshipped tickets it waits on, or how many wait on it.
+- An open ticket, in any lane, shows its steps as a row of five bars (Build, Self-check, Review, Approve and Ship) and its facts in a small table under them. A ticket in flight colours each step it's passed, and its table says what it's doing, who's working on it and its timer. One that hasn't started has grey steps, with its status, how many of its dependencies haven't shipped, its lint result and its priority, size and risk. A shipped one has every step coloured, with when it shipped, how long it took, its review rounds and its cost and tokens.
+- An open ticket shows what it depends on in a box: a "Waits on" box with a count, a bar and the tickets still to ship, or a "Chain" box with the tickets before and after it. Pressing a number takes you to that ticket.
+- A shipped ticket opens in place, as Plan and Build tickets do, with Full ticket and Review pack buttons. The Details button is gone.
+- An open Build ticket's Full ticket, Review pack and Stop build are small buttons on one line, and the worktree folder line is gone. Its build log looks like a terminal: a black box with each line's time in a column of its own, and tool calls, messages and failures in their own colours.
+
+### The full ticket and review packs
+
+- The full ticket and a review pack open over the whole panel, as Settings does, with the text in a centred column. Close it with Close or Escape.
+- They read like a document: a large title, the same step track and facts table as the open card, clear section headings, and bigger, more widely spaced text. A task's result opened from its review pack is set out the same way. A review pack's Result column is wide enough to read.
+
+### The look
+
+- Appearance has three choices: System, Light and Dark. System follows your computer's setting and switches when it does. When the panel runs as an app on a phone's home screen, the phone's top bar matches the look you chose.
+- The panel uses Cursor's colours, fonts and rounded corners, so it sits beside Cursor as if it were part of it: Cursor's greys, your computer's own interface font, Cursor's monospace for ticket numbers, logs and figures, and labels in sentence case. Every button has an outline on all four sides.
+- With a mouse or trackpad, the panel has the same roomier layout as on a phone or touch screen: taller cards, and bigger tabs and Settings button, so it looks the same in a desktop pane.
+
+### Settings
+
+- Appearance and Auto-build are switches at the top. A setting's explanation opens from its "i" button, closes on a click outside it, and says what speck uses when it isn't set and whether a change is saved for your machine only or for the whole project, with a commit.
+- A new Your agents group lists the agents you use on this machine, whether each is installed and signed in or has its key, and lets you add or remove one. Add an agent offers the agents you haven't added, and an Add an API provider form takes any provider's name, web address, API style (OpenAI or Anthropic), key and model names. Anthropic-style providers build, review and run as DeepSeek does. OpenAI-style ones are saved and listed, but can't run yet. To add DeepSeek, type DeepSeek as the name and paste your key. The old API keys box is gone.
+- The builder, reviewer and speck's own agent each have one list of the models of your agents, grouped by agent, with each agent's default named, such as "Claude Code · Sonnet (default)". Picking one sets the agent and its model together, for your machine only. One "i" button explains the role and its effort together.
+- The builder now has an effort list too, while it's Claude Code or Codex, saved for this machine as `builder_effort`. Every build `speck run` starts or resumes then thinks that hard.
+- Parallel builds and test runs, and the ticket size limits, sit at the end of the Building and reviewing box. The Foreman group is now called Watching.
+- Settings opens at once with your values. Your agents and the model lists fill in as the agents answer, without moving anything.
+
+### Your agents on the command line
+
+- `speck agents` shows every agent speck knows, whether it's yours, whether it's installed and signed in (or has its key) and its models. `speck agents add <agent>` and `speck agents remove <agent>` change this machine's list, without a commit. speck won't add one that isn't installed or has no key, or remove one a role uses.
+- `speck init` and the setup fill the list with the agents they find, when this machine has none yet. Until you have a list, every agent that's ready counts as yours, as before.
+
+### speck watches the pipeline
+
+- The Foreman is now speck itself, everywhere: in the panel, in `speck run`'s and `speck status`'s messages, and in the docs.
+- Its settings are now `watch` (`off`, `tell` or `fix`), `watch_agent`, `watch_model` and `watch_effort`, in place of `foreman_fixing`, `foreman`, `foreman_model` and `foreman_effort`. The old names still work, and the new name wins where a file has both. Nothing rewrites your config until you change one of these settings, which then saves it under the new name.
+- Answer speck's questions with `speck answer <id> "<answer>"` and dismiss them with `speck dismiss <id>`. The old `speck foreman answer` and `speck foreman dismiss` still work.
+- With `watch: fix`, `speck status` says "watch: fix" in place of Fixing.
+
+### Tasks
+
+- A ticket whose build does a job rather than changing code, such as drafting an email or writing a plan, is now called a task. New tickets say `kind: code`, and you write `kind: task` for a task. A ticket that still says `task: document` keeps working as a task, and speck never rewrites it. In the panel, its tag reads "task", and its finished card reads "Read the result".
+
+### Tickets and builds
+
+- A shipped ticket's status can no longer be changed by mistake: `speck set` and the panel's buttons refuse, saying it's done and shipped. Its other details can still be changed.
+- Before a build's first review, it now runs the existing tests that name a file it changed, as well as its own, so a change that breaks an older test is caught before review rather than at shipping. `speck test --related` runs them, listing each test it chose and the changed file that brought it in.
+- When you shape tickets, speck makes one wait for another only when both are likely to change the same part of a file, so more tickets build side by side.
+
+### The README
+
+- The README is half as long, with a new tagline, "Plan in ten minutes. Come back to it shipped.", a new opening about planning in short bursts then walking away, a picture of the new panel in light and dark, and advice on which agents to use: Claude Code to build and Codex to review, so far.
+
+### Behind the scenes
+
+- The panel's styles and script are split into a file for each area, so changes to different parts of the panel build side by side. Nothing looks different.
+- speck's own test suite is quicker, its panel tests use an ordinary proportional font, and fewer of its checks fail by chance on a busy machine.
+
 ## 0.14.0 · 23 October 2026
 
 What's new since 0.13.1. A minor release that adds model providers, through your own API key for each. DeepSeek is the first, and the only one tested with speck so far. Save this machine's DeepSeek key once, and DeepSeek can build your tickets, review them and run the Foreman, chosen from the command line or in Settings. Nothing changes unless you choose it.
