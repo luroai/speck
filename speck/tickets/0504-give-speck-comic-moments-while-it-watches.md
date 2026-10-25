@@ -1,7 +1,7 @@
 ---
 id: "0504"
 title: "Give speck comic moments while it watches"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-25
 ---
 # 0504 · Give speck comic moments while it watches
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 After 0503, speck's beats are habits. The user wants humour in what speck does while it watches, so the screen is worth glancing at.
