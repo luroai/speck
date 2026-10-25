@@ -44,9 +44,9 @@ test('0488 AC2: the agent\'s skill and the setup skill name the new commands and
   for (const name of ['speck config set watch_agent <name>', 'speck config set watch_model <name>', 'speck config set watch_effort <effort>', '`watch: fix`']) assert.ok(setup.includes(name), name);
 });
 
-test('0488 AC4: CHANGELOG.md and docs/releases/ don\'t change', t => {
-  const base = spawnSync('git', ['merge-base', 'HEAD', 'main'], { cwd: ROOT, encoding: 'utf8' });
-  if (base.status !== 0) return t.skip('no main branch in this checkout');
-  const diff = spawnSync('git', ['diff', '--name-only', base.stdout.trim(), '--', 'CHANGELOG.md', 'docs/releases'], { cwd: ROOT, encoding: 'utf8' });
-  assert.equal(diff.stdout, '');
+// 0452 (release 0.15.0) changes both, so this checks only that 0488's own commits left them alone.
+test('0488 AC4: 0488 didn\'t change CHANGELOG.md or docs/releases/', t => {
+  const log = spawnSync('git', ['log', '--format=%H %s', 'HEAD', '--', 'CHANGELOG.md', 'docs/releases'], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  if (log.status !== 0) return t.skip('no history in this checkout');
+  assert.deepEqual(log.stdout.split('\n').filter(l => / speck\(0488\):/.test(l)), []);
 });

@@ -43,6 +43,10 @@ speck 0.15.0 is ready to tag, with its changelog and release notes.
 - Same shape as 0394 (release 0.14.0).
 - Waits for 0439 to 0451 and 0453 to 0479, and the README's new opening and shorter sections (0489, 0490), added by the user on 2026-10-24, and the fixes for a test that fails under load and for `speck status`'s Fixing line (0500, 0501), added by the user on 2026-10-25 before releasing.
 - Failing before this build: none
+- AC5's README figures aren't tested in the README, as 0491 left the rule: `test/release-0452.test.mjs` checks the figures worked out from `speck/tickets/done/` at the commit this was built from (484 shipped, 16 cancelled, 13 minutes, 1 round, 245 in round 1), and the reviewer checks the README gives them.
+- The changelog and release notes describe each change as it stands now, so later tickets win where they replaced an earlier one: the Foreman is called speck (0485 to 0488), the lanes are light cards rather than dark frames (0480) in a strip rather than tabs (0477), and 0457's joined tab went with the tabs.
+- Self-check: narrowed two claims: the roomier layout with a mouse (0469) no longer says finger-sized, and speck's breaks (0436) happen during a long build or wait, not only a wait. `test/release-0394.test.mjs`'s checks of the current version now follow `package.json`, as 0394 did for 0380. `test/docs-0491.test.mjs` lets `test/release-0452.test.mjs` read the README for its status line and setup prompt, as it does every release test, and `test/docs-0488.test.mjs`'s check that the changelog and release notes didn't change now looks only at 0488's own commits, as a release changes both.
+- Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
