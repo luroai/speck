@@ -1,7 +1,7 @@
 ---
 id: "0500"
 title: "Keep the 0484 copy test passing when the machine is busy"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-25T12:40:38.279Z"
 ---
 # 0500 · Keep the 0484 copy test passing when the machine is busy
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A test in `test/panel-0484.test.mjs` expects a blocked bug ticket's line to read `speck will answer · Review 2 · 99:5x · bug`, but the ticket starts 5,990 seconds before the file loads, so the time only reads 99:5x for 10 seconds. When several test files run at once, the real panel takes longer than that to start, the time reads 100:00 and the test fails though nothing is wrong. `speck ship` runs the whole suite, so it can hand a ticket back for no reason, the 0.15.0 release included.
@@ -44,7 +44,7 @@ The 0484 checks of a closed card's line pass however long the panel takes to sta
 - AC1 checked for real: `SPECK_TEST_0500_DELAY=60 node --test --test-name-pattern="AC2: at 320|copies" test/panel-0484.test.mjs` waits 60 s before each panel starts; both checks of the blocked ticket's time passed.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in the panel. One of speck's own checks of a blocked ticket's card used to fail when the computer was busy, because it expected the card's timer to show a time that's only right for ten seconds. It now reads the timer against the clock, so a slow start no longer fails it, and it still fails if the card's words, stage, timer format or tag change. A ship that runs the whole suite on a busy machine should no longer be handed back for this.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,4 +53,63 @@ The 0484 checks of a closed card's line pass however long the panel takes to sta
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none. 0443's file also starts tickets 5,999 seconds back, but it checks only that a time shows, not which one.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8956ee28e494c374754dce6064e9daf7fb8eeef3",
+    "session": "fresh",
+    "thread_id": "01a17318-e9e5-72b3-85f7-887766c2a262",
+    "builder_response": "- Tests run: test/panel-0500.test.mjs test/panel-0484.test.mjs (with `--related`, which also ran the repo's checks)\n- Round 1. AC1 was also checked for real by delaying each panel start 60 s (`SPECK_TEST_0500_DELAY=60 node --test --test-name-pattern=\"AC2: at 320|copies\" test/panel-0484.test.mjs`): both checks of the blocked ticket's time passed. AC3: the related run passed; the 3 skips are 0078's own checks, skipped on main.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 126101,
+      "cached_input_tokens": 89344,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 764,
+      "reasoning_output_tokens": 72
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-25T12:46:35.940Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-0484.test.mjs: open() supports the reported 60-second startup delay, and both bugLine() checks allow elapsed time since file load. The passing 0500 AC1 test also exercises delays of 60 seconds and longer using the panel's counter."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel-0500.test.mjs: passing AC2 mutation checks reject changed words, stage, time formats and tags. timeLine() enforces exact surrounding text, minutes past an hour, valid two-digit seconds and elapsed-time bounds; both original assertions use it."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "/tmp/speck-0500-tests.txt records 117 passes, zero failures and three skips, including all six 0484 tests. The committed change is limited to this ticket, its tests and its test helper; panel behaviour is unchanged."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The tests now allow the timer to advance beyond 99:59 when startup is slow, while still catching changes to the line's words, stage, time format and tag. The related tests passed, with no blocking concerns found."
+  }
+}
+```
+
+</details>
