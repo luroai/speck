@@ -39,6 +39,7 @@ speck has four comic moments to mix in while it watches.
 - The prototype is `docs/design/lcd/watching.html` (open it from that folder; it loads `templates/lcd.js`, and `?beat=<name>` plays one beat on repeat). Agreed with the user on 2026-10-25, also at https://claude.ai/artifact/FsG1NCryHWmFYfP9871Adx. Its timings, sizes and wording are the reference; the builder may tidy its code. Its beats here are `bubble`, `spider`, `balance` and `dance`.
 - Waits for 0503, in the same code.
 - Failing before this build: none
+- Self-check: the clipboard lands on the floor to speck's right rather than its left, where three builds' TVs stand and it would sit on the nearest one; the balance's wobble stops once the clipboard slides off rather than starting again as it comes back; the spider fades in and out with the beat like the other props. 0502's hop test samples ten minutes rather than two, as with more beats it often saw no read during a tick (12 in 40 runs failed, 4 in 40 before this change).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

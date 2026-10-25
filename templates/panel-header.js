@@ -146,12 +146,14 @@ const watchPose = (() => {
     pen.lw = 1.4; pen.line(ix0, iy1, ix1, iy1, FAINT);
     if (st.prog > .02) pen.line(ix0, iy1, ix0 + (ix1 - ix0) * st.prog, iy1, INK);
   }
-  // The beats: their weight and how long each lasts, in ms. `own`: it has its own reaction to a tick, so speck doesn't hop.
-  // 0503: eight small habits join 0502's three.
+  // The beats: their weight and how long each lasts, in ms. `own`: it has its own reaction to a tick, or is too taken up
+  // to notice one, so speck doesn't hop. 0503: eight small habits join 0502's three. 0504: and four comic moments.
   const BEATS = { scan: { w: 3, d: [5200, 7000] }, read: { w: 2, d: [4600, 5400], own: true }, lean: { w: 2, d: [3600, 4400] },
     popcorn: { w: 2, d: [5200, 6200] }, clock: { w: 1, d: [3600, 4200] }, yoyo: { w: 1, d: [4800, 5600] }, hum: { w: 1, d: [4200, 5200] },
     mote: { w: 1, d: [5200, 6000] }, sneeze: { w: 1, d: [3800, 4400], own: true }, doze: { w: 1, d: [5000, 5800], own: true },
-    hiccup: { w: 1, d: [4200, 5000], own: true } };
+    hiccup: { w: 1, d: [4200, 5000], own: true },
+    bubble: { w: 1, d: [4600, 5400], own: true }, spider: { w: 1, d: [5000, 5800], own: true },
+    balance: { w: 1, d: [6000, 6800], own: true }, dance: { w: 1, d: [5400, 6200], own: true } };
   // The beats from the pose's start: the first is always keeping an eye on the builds, so the still frame is too. A pose
   // started again (its time going back) starts a fresh plan.
   let plan = { start: [0, 6000], kind: ['scan'], last: 0 };
@@ -177,6 +179,8 @@ const watchPose = (() => {
   const lookAt = (x, y) => ({ lookX: Math.max(-1, Math.min(1, (x - BX) / 55)), lookY: Math.max(-1, Math.min(1, (y + 26) / 40)) });
   const tvLook = m => lookAt(m.cx, -LEG - m.h / 2);
   const LEFT = rim(Math.PI - .25); // its free shoulder, on the left
+  // 0504: where the clipboard lands when it slides off its head: on the floor to its right, clear of the TVs on its left
+  const FLOOR = { x: BX + 30, y: -6.5, a: Math.PI / 2 };
   function pose(t) {
     const { INK, FAINT, OFF, F5 } = LCD, ms = tvs(), b = beatAt(t), k = b.k;
     const env = sine(Math.min(1, k * b.d / BLEND, (1 - k) * b.d / BLEND));
@@ -185,6 +189,7 @@ const watchPose = (() => {
     const R = { x: 0, y: 0, rot: 0, sy: 1 + .015 * Math.sin(t / 640), lookX: rl.lookX, lookY: rl.lookY, raise: 0, lid: 1, droop: 0, ear: 0 };
     const O = {}, props = []; // this beat's own pose, mixed in by env, and what it draws
     let eye = null, hand = null, ticks = b.reads % 5; // four ticks, then a fresh page; where its free hand goes
+    let balance = null; // while balancing: how far through, and the wobble
     if (b.kind === 'scan') { // its eye goes from TV to TV, then round the room
       const spots = [...ms.map(tvLook), { lookX: .1, lookY: -.55 }, { lookX: .7, lookY: .05 }];
       const n = spots.length, q = k * n, a = Math.floor(q) % n, c = (a + 1) % n, f = sine(seg(q % 1, .75, 1));
@@ -265,6 +270,35 @@ const watchPose = (() => {
         if (k >= h && k < h + .16) { const u = seg(k, h, h + .16); props.push({ key: 'hic' + h, a: Math.sin(u * Math.PI) * 1.5, draw(pen) { pen.text('HIC', B.x + 26 + u * 4, -51 - u * 5, { font: F5 }); } }); }
       }
       if (k > .8) { eye = 'sheepish'; O.lookX = .6; O.lookY = .25; }
+    } else if (b.kind === 'bubble') { // a bubble grows out of the gap at its top, wobbling, then pops in its face
+      const grow = seg(k, .12, .68), popped = k >= .68;
+      O.lookX = -.35; O.lookY = -1; eye = grow > .6 ? 'wide' : null;
+      if (popped && k < .8) { O.y = -3 * Math.sin(seg(k, .68, .76) * Math.PI); O.ear = 2.5 * Math.sin((t - b.s) / 50); eye = 'closed'; }
+      if (k >= .8) { eye = 'sheepish'; O.lookX = .5; O.lookY = .1; }
+      props.push({ key: 'bubble', a: env, draw(pen) {
+        const bx = B.x - 9, by = B.y - 44;
+        if (!popped && grow > 0) { const r = 1 + 9 * grow, w = 1 + .08 * Math.sin(t / 70); pen.lw = 1.2; pen.ring(bx - r * .4, by - r * .8, r * w, 0, Math.PI * 2, INK, r / w); pen.dotAt(bx - r * .7, by - r * 1.2, INK); }
+        else if (popped && k < .8) { const u = seg(k, .68, .8); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; pen.dotAt(bx - 4 + Math.cos(a) * (6 + 10 * u), by - 8 + Math.sin(a) * (6 + 10 * u), u < .5 ? INK : FAINT); } }
+      } });
+    } else if (b.kind === 'spider') { // a spider lowers itself between speck and the TVs; it leans back wide-eyed, then gives it a flat look
+      const down = sine(seg(k, .08, .38)), up = sine(seg(k, .72, .92)), sy = lerp(-70, -34, down * (1 - up)), sx = BX - 29 + 1.5 * Math.sin(t / 400);
+      const L = lookAt(BX - 29, sy); O.lookX = L.lookX; O.lookY = L.lookY;
+      if (k > .36 && k < .74) { eye = 'wide'; O.rot = .09; O.x = 4; O.ear = 2 * Math.sin((t - b.s) / 60); }
+      if (k > .74) eye = 'flat';
+      props.push({ key: 'spider', a: env, draw(pen) {
+        pen.lw = 1; pen.line(sx, -72, sx, sy - 2, FAINT); pen.disc(sx, sy, 1.8, INK);
+        for (const d of [-1, 1]) for (let i = 0; i < 3; i++) pen.line(sx + d * 1.5, sy - 1 + i * 1.2, sx + d * 4, sy - 2 + i * 2.2, INK);
+      } });
+    } else if (b.kind === 'balance') { // the clipboard on its head, a wobble to keep it there, then it slides off
+      O.lookY = -1; O.lookX = 0; eye = 'focus';
+      const wob = k < .74 ? Math.sin((t - b.s) / 330) * seg(k, .25, .7) : 0;
+      O.rot = -.1 * wob; O.x = 2 * wob;
+      if (k >= .74 && k < .95) { eye = 'sheepish'; O.lookX = .7; O.lookY = .8; }
+      balance = { k, wob };
+    } else if (b.kind === 'dance') { // a little dance while nobody's looking, until it notices you, freezes, and goes back to watching
+      if (k < .68) { const ph = (t - b.s) / 300; O.x = 3 * Math.sin(ph); O.rot = .08 * Math.sin(ph); O.y = -1.6 * Math.abs(Math.cos(ph)); eye = 'bliss'; O.lookX = .2; O.lookY = -.2; }
+      else if (k < .86) { eye = 'wide'; O.lookX = 0; O.lookY = 0; O.sy = 1.03; }
+      else { eye = 'sheepish'; const L = tvLook(ms[ms.length - 1]); O.lookX = L.lookX; O.lookY = L.lookY; }
     }
     const P = {};
     for (const n of Object.keys(R)) P[n] = n in O ? lerp(R[n], O[n], env) : R[n];
@@ -276,12 +310,27 @@ const watchPose = (() => {
     });
     // the clipboard, in the hand on its right, lifted to read
     const cx = lerp(19, 15, P.raise), cy = lerp(-21, -35, P.raise), w = 13, h = 16, tilt = lerp(.08, -.12, P.raise);
-    const arms = [{ s: rim(.35), h: { x: cx + 1, y: cy + h * .55 } }];
+    // 0504: balancing, from its hand to its head, a wobble, a slide off onto the floor, then back in its hand
+    let clip = null;
+    if (balance) {
+      const { k, wob } = balance, inHand = { x: BX + P.x + cx + w / 2, y: P.y + cy + h / 2, a: tilt };
+      const onHead = { x: BX + P.x + wob * 3, y: P.y - 47, a: Math.PI / 2 + .25 * wob };
+      const mix = (A, Z, u) => ({ x: lerp(A.x, Z.x, u), y: lerp(A.y, Z.y, u), a: lerp(A.a, Z.a, u) });
+      if (k < .1) clip = inHand;
+      else if (k < .22) clip = mix(inHand, onHead, sine(seg(k, .1, .22)));
+      else if (k < .7) clip = onHead;
+      else if (k < .8) { const u = seg(k, .7, .8); clip = mix(onHead, FLOOR, u * u); clip.y -= 8 * Math.sin(u * Math.PI); clip.a += 1.2 * Math.sin(u * Math.PI); }
+      else if (k < .93) clip = FLOOR;
+      else clip = mix(FLOOR, inHand, sine(seg(k, .93, 1)));
+    }
+    const held = !balance || balance.k < .12 || balance.k > .97; // the clipboard's arm folds away while it's on its head or the floor
+    const arms = held ? [{ s: rim(.35), h: { x: cx + 1, y: cy + h * .55 } }] : [];
     if (hand && env > .02) arms.push({ s: LEFT, h: { x: lerp(LEFT.x, hand.x, Math.min(1, env * 1.4)), y: lerp(LEFT.y, hand.y, Math.min(1, env * 1.4)) } }); // the free hand, reaching out
     const B = { t, x: BX + P.x, y: P.y, rot: P.rot, sy: P.sy, lookX: P.lookX, lookY: P.lookY, eye: P.eye, lid: P.lid, droop: P.droop, ear: P.ear, arms };
     props.unshift(...ms.map((m, j) => ({ key: `tv${j}`, layer: 'back', draw(pen) { drawTV(pen, m, j, t); } })));
     props.push({ key: 'clip', draw(pen) {
-      pen.save(); pen.translate(B.x + cx + w / 2, B.y + cy + h / 2); pen.rotate(tilt);
+      pen.save();
+      if (clip) { pen.translate(clip.x, clip.y); pen.rotate(clip.a); } else { pen.translate(B.x + cx + w / 2, B.y + cy + h / 2); pen.rotate(tilt); }
       const q = [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]];
       pen.lw = 1.4; pen.fillPoly(q, OFF); pen.poly(q, INK);
       pen.fillPoly([[-2.5, -h / 2 - 2.5], [2.5, -h / 2 - 2.5], [2.5, -h / 2 + 1.5], [-2.5, -h / 2 + 1.5]], INK);

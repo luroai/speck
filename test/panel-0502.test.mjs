@@ -92,7 +92,7 @@ test('0502 AC2: when a bar fills, speck hops and looks at that TV, except while 
   const { pose, parts } = await watching('Building 3');
   let hops = 0, reads = 0;
   pose(0);
-  for (let t = 0; t < 120000; t += 50) {
+  for (let t = 0; t < 600000; t += 50) { // 0504: ten minutes, so a read with a tick is seen however rare the extra beats make it
     const F = pose(t), b = parts.beatAt(t);
     const just = [0, 1, 2].filter(j => { const st = parts.tvState(j, t); return st.done && st.since < 500; });
     const fresh = just.filter(j => parts.tvState(j, t).since > 150 && parts.tvState(j, t).since < 350);
