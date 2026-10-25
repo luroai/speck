@@ -42,6 +42,7 @@ speck 0.16.0 is ready to tag, with its changelog and release notes.
 - What's new since `v0.15.0`, for the changelog: speck watches a little retro TV for each build, with 21 things it does at random while it watches, from ticking off its checklist and popcorn to Pong, a spider and a drumroll (0502 to 0505); and `speck ship` refuses to publish a private word or your home folder's path in anything under `speck/`, writing home paths as `~/` (0506); and a not-pushed warning clears once its ticket is on the remote, even if its commit was rewritten (0508); `speck panel --background` and `--stop` (0509); and setup ending with the panel open, in the agent's own browser where it has one, and `speck run` on (0510). Check each against `git log v0.15.0..HEAD`.
 - Same shape as 0452 (release 0.15.0).
 - Waits for 0502 to 0506, and 0508 to 0510, added by the user on 2026-10-25.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
