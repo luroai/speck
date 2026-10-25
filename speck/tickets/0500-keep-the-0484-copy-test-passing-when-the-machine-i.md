@@ -40,6 +40,8 @@ The 0484 checks of a closed card's line pass however long the panel takes to sta
 - Today: tickets 0901 and 0905 in the file's board start `ago(5990)`, and the checks match `99:5\d` (lines 131 and 191).
 - Asked for by the user on 2026-10-25, before releasing 0.15.0.
 - Failing before this build: not checked
+- Self-check: the first related run caught that the source check of 0484's file counted `timeLine(` rather than its two checks of the line; it now checks the helper is built on `timeLine` and both checks use it. Also blanks a time of any number of minutes in the copy check, so 99:59 against 100:00 between its two reads can't fail it.
+- AC1 checked for real: `SPECK_TEST_0500_DELAY=60 node --test --test-name-pattern="AC2: at 320|copies" test/panel-0484.test.mjs` waits 60 s before each panel starts; both checks of the blocked ticket's time passed.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
