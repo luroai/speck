@@ -537,8 +537,8 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
-  speck panel [--port <n>]           a control panel in your browser, at http://127.0.0.1:4777
-                                      --url https://<hostname>: also serves it at that address, behind a private tunnel
+  speck panel [--port <n>]           a control panel in your browser, at http://127.0.0.1:4777 (--url https://<hostname>: also
+                                      there, behind a private tunnel; --background: on its own, until speck panel --stop)
   speck run                           start a build for each ready ticket as it becomes ready, and ship approved ones auto_ship covers, until stopped
   speck pause <id>                    hold a build speck run launched where it is, until it's played
   speck play <id>                     carry a paused build on from where it was paused
