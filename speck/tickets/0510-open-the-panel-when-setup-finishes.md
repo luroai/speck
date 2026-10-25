@@ -42,6 +42,7 @@ Setup finishes with the panel running and open in front of the user, in the agen
 - From the idea, ticketed with the user on 2026-10-25. Its open questions, decided with the user: setup turns `speck run` on ("Speck run should be on I think"), which builds nothing until a ticket is set ready; and in a plain terminal it opens the machine's browser when there is one, else gives the address.
 - Today: section 8, "Finish", in `skills/speck-setup/SKILL.md`.
 - Waits for 0509, the command this uses.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
