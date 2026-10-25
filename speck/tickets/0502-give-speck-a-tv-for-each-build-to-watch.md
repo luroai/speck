@@ -1,7 +1,7 @@
 ---
 id: "0502"
 title: "Give speck a TV for each build to watch"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-25T21:37:40.384Z"
 ---
 # 0502 · Give speck a TV for each build to watch
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 While builds run, speck spends most of its time in the watching pose, and today that pose is one 7.2-second loop: glance about, read the clipboard, tick a line. Watched for minutes at a time, it repeats, and nothing on the screen shows what speck is watching.
@@ -47,7 +47,9 @@ speck watches a little retro TV for each build, and does something different eve
 - Today: `watchPose` and `speckPoses` in `templates/panel-header.js` (0414), the rhythm in `speckRests`, and the screen code in `templates/lcd.js`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+While builds run, speck now stands beside a little retro TV for each build (up to three, or one while something ships). Each TV scrolls a pretend log over a progress bar, and shows a tick when the bar fills, at which speck hops round to look. In between, speck keeps an eye on the TVs, ticks lines off its clipboard (four, then a fresh page) and leans in for a closer look, never doing the same thing twice in a row.
+
+To see it, open the panel while speck run is building. With reduced motion on, it shows one still picture of speck beside the TVs. The TVs are decoration: they don't show a build's real progress.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +59,74 @@ speck watches a little retro TV for each build, and does something different eve
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - `speck test --related` didn't bring in the screen's tests (0413, 0414, 0416, 0436, 0438, 0446, 0451, 0495), which load the header through a support file; the build ran them by hand. Skipped as a duplicate of speck/ideas/2026-10-24-bring-in-page-tests-for-a-panel-script-change.md.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "49b029740c8ca8813629e2ce995dd053e64835a7",
+    "session": "fresh",
+    "thread_id": "01a17505-b095-7c22-b490-fe8671925793",
+    "builder_response": "- Tests run: test/panel-0502.test.mjs, test/panel-0413.test.mjs, test/panel-0414.test.mjs, test/panel-0416.test.mjs, test/panel-0436.test.mjs, test/panel-0438.test.mjs, test/panel-0446.test.mjs, test/panel-0451.test.mjs, test/panel-0495.test.mjs (the screen's tests, which load the header through a support file), plus what `speck test --related` brought in (panel-0433, panel-0473, panel-0474) and the checks.\n- Round 1. The new watch pose replaces `watchPose` in templates/panel-header.js, from docs/design/lcd/watching.html: the TVs, the resting pose and this ticket's three beats (scan, read, lean). The other beats and the TVs' effects for them (snow, Pong, mirror, roll, forced progress) are left for 0503–0505.\n- Tidied from the prototype: picks use Math.random once per beat (no retry loop), excluding the beat before; the first beat is always `scan` with a fixed 6 s, so the reduced-motion still frame is always the same; a fresh plan starts when the pose starts again. The three-TV row sits 1 scene unit further left so speck's lean never shares a dot with the nearest TV.\n- AC1's real-browser check: pictures in the review pack, taken from a real panel in Chromium at 390 px with 1, 2 and 3 builds (light), 3 builds dark at 390 and 320 px.\n",
+    "seconds": 60,
+    "usage": {
+      "input_tokens": 571740,
+      "cached_input_tokens": 516480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1809,
+      "reasoning_output_tokens": 178
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-25T21:45:29.558Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "watchPose's tvs, tvGeom and drawTV implement the required counts and retro details. Passing AC1 tests check counts and rendered separation. Reviewed review-pack pictures 1–3 at 390 px and picture 5 at 320 px: the TVs fit beside speck."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "tvState and drawTV implement independent cycles, moving logs, typed newest lines and drawn ticks; pose adds the hop and gaze reaction except during read. All three AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Reviewed scan, read and lean against docs/design/lcd/watching.html's newWatch: timings, movements and blending match. beatAt excludes the previous beat and selects by weight. Passing AC3 tests cover durations, resting blends and checklist accumulation; LCD.builder supplies blinking."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests check arm lengths across beats and the reduced-motion still frame. speckRests, captions, other poses and LCD.Cast's transition blending are unchanged; the existing screen and 0436 rhythm tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0502-tests.txt: 245 tests, 242 passed, three skipped, zero failures. The diff changes only the watch pose, its new tests and ticket records."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "speck now watches up to three retro TVs with animated logs and progress, alternating between scanning, checking its clipboard and leaning closer. The narrow-screen pictures and passing tests support the requested behaviour. No blocking issues found."
+  }
+}
+```
+
+</details>
