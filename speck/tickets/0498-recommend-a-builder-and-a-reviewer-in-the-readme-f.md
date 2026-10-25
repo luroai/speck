@@ -1,7 +1,7 @@
 ---
 id: "0498"
 title: Recommend agents in the README from testing so far                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0497"]                # ticket ids that must be done first
 created: 2026-10-25
+started: "2026-10-25T10:28:57.095Z"
 
 ---
 # 0498 · Recommend agents in the README from testing so far
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The README lists the agents speck works with but doesn't say which to pick, and says only that Claude Code is "the agent speck is most tested with". A new user can't tell that one agent works but two is better, or which pairing has done best in testing, and might pick Grok to review without knowing it's slow at it.
