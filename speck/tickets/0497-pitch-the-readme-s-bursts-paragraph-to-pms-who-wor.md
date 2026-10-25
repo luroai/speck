@@ -1,7 +1,7 @@
 ---
 id: "0497"
 title: "Pitch the README's bursts paragraph to PMs who work with tech teams"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0496"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T10:24:05.325Z"
+approved: "2026-10-25T10:25:14.568Z"
 
 ---
 # 0497 · Pitch the README's bursts paragraph to PMs who work with tech teams
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The README's third paragraph sells speck through a phone ("check the panel on your phone afterwards"), and who speck is for sits apart, lower down, in one thin line. The people speck is built for, PMs and others who've worked alongside tech teams without writing the code, should see themselves straight away, with the bursts of ticketing up a batch, walking away and coming back that they'll recognise.
@@ -54,9 +55,14 @@ The README's opening now says straight away who speck is for: it was built by a 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 83,216
+- Elapsed since build started: 1 min
+- Changed lines: 4 (limit 5000)
 Follow-ups: none.
 
 ## Review rounds
