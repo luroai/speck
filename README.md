@@ -6,7 +6,7 @@ speck gives you a team you can trust. You spend your time where it counts: decid
 
 speck isn't only for code. A ticket can be a task instead, such as drafting an email, writing a plan or pulling together research. speck has your agent do it, a second AI checks it against what you asked for, and the result waits for you in `outputs/`.
 
-It fits the way you really work, in bursts. Ticket up some work before a meeting, check the panel on your phone afterwards, and set the next batch going before bed. speck stops only when it needs you, with one plain question.
+speck was built by a product manager, for product managers and anyone who has spent years working alongside tech teams without writing the code themselves. You already know how to shape a piece of work and tell when it's done. speck fits the way that work really happens, in bursts between everything else: ticket up a batch before a meeting, come back afterwards to see what's shipped, and set the next batch going before you log off. speck stops only when it needs you, with one plain question. Engineers use speck too.
 
 You don't need to read the code to check the work. Every ticket comes with a one-page review pack in plain English, with the reviewer's evidence for each criterion. Nothing ships until you say so, or until you let speck ship low-risk work by itself.
 
@@ -16,8 +16,6 @@ You don't need to read the code to check the work. Every ticket comes with a one
 </picture>
 
 Use the agents you already have: Claude Code, Codex or Cursor, or a model provider you have an API key for, such as DeepSeek. speck doesn't let a model review its own work unless you allow it.
-
-speck was built by a product manager, for people who decide what gets built but don't write the code. Engineers use it too.
 
 > Status: 0.14.0, a public preview. It works end to end on a local machine. Expect rough edges.
 
