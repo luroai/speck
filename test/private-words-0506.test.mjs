@@ -10,6 +10,12 @@ import { filesNaming } from './support/private-words.mjs';
 import { tildePaths } from '../scripts/private-words.mjs';
 import { shipQueue } from '../scripts/ship-queue.mjs';
 import { handBackMessage } from '../scripts/hand-back.mjs';
+import { askForChanges } from '../scripts/changes.mjs';
+import { changesRepo, reviewLog } from './support/changes.mjs';
+import { remoteMoves } from './support/ship.mjs';
+import { gitEnv } from './support/speck.mjs';
+
+Object.assign(process.env, gitEnv); // askForChanges commits in this process
 
 // ---------- 0506: keep private words and the home folder's path out of what speck writes under speck/ ----------
 
@@ -64,6 +70,15 @@ test('0506 AC1: a review round\'s verdict, findings and evidence, the notes, sel
   assert.match(after, /- Checked ~\/projects\/app$/m);
 });
 
+test('0506 AC1: changes the user asks for are written into the Review log with ~/ paths', () => {
+  const r = changesRepo();
+  const home = os.homedir();
+  askForChanges(r.wt, '1', `Fix the wording in ${home}/projects/app/README.md.`, new Date('2026-10-25T10:00:00Z'));
+  const log = reviewLog(r.ticket());
+  assert.match(log, /~\/projects\/app\/README\.md/);
+  assert.ok(!r.ticket().includes(`${home}/`), 'no home folder path in the committed ticket');
+});
+
 // The ticket on its branch with `lines` added to its notes, committed.
 function withNotes(r, lines) {
   const file = path.join(r.wt, TICKET);
@@ -86,6 +101,30 @@ test('0506 AC2: speck ship refuses, changing nothing, when a file under speck/ h
   assert.doesNotMatch(msg, /zorblax/i, 'the word isn\'t repeated');
   assert.match(msg, /[Tt]ake each one out/);
   assert.deepEqual(r.snapshot(), before, 'nothing changed');
+});
+
+test('0506 AC2: a file under speck/ holding a NUL byte is still checked', () => {
+  const { env: e } = fakeHome('zorblax\n');
+  const r = shipRepo();
+  fs.writeFileSync(path.join(r.wt, 'speck', 'blob.bin'), Buffer.from('a\0b\nzorblax\n'));
+  gIn(r.wt, 'add', 'speck/blob.bin');
+  gIn(r.wt, 'commit', '-qm', 'blob');
+  const out = speck(r.dir, e, 'ship', '1');
+  assert.equal(out.status, 17, out.stdout + out.stderr);
+  assert.match(out.stdout + out.stderr, /speck\/blob\.bin line 2\b/);
+});
+
+test('0506 AC2: the refusal comes before ship catches up with a remote that has moved on, so the base branch is untouched', () => {
+  const { home, env: e } = fakeHome();
+  const r = shipRepo();
+  withNotes(r, [`- Looked in ${home}/x.`]);
+  remoteMoves(r, 'remote.txt', 'remote\n');
+  fs.writeFileSync(path.join(r.dir, 'other.txt'), 'local\n');
+  r.g('commit', '-qam', 'local commit');
+  const before = r.snapshot();
+  const out = speck(r.dir, e, 'ship', '1');
+  assert.equal(out.status, 17, out.stdout + out.stderr);
+  assert.deepEqual(r.snapshot(), before, 'no catch-up merge was kept');
 });
 
 test('0506 AC2: without a private-words file, ship checks only the home folder path', () => {
