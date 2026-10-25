@@ -45,7 +45,7 @@ started: "2026-10-25T22:08:49.534Z"
 - Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now start the control panel so it keeps running by itself: `speck panel --background` starts it, waits until it's answering, prints its address and gives you your terminal back. Closing that terminal doesn't stop it. `speck panel --stop` stops it again. If the panel is already running on that port, starting it again does nothing and just prints where it is. To see it, run `speck panel --background`, close the terminal, open the address in your browser, then run `speck panel --stop`. What the panel would have printed goes to `speck/.cache/panel.log`, so look there if it seems stuck. Running it the old way, in the foreground until Ctrl+C, works as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,7 +54,7 @@ started: "2026-10-25T22:08:49.534Z"
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +123,76 @@ started: "2026-10-25T22:08:49.534Z"
     ],
     "escalation_question": "",
     "summary": "Background starting, logging and stopping work in the tested cases. One fix is needed: reusing a running panel can advertise a tunnel address that the panel refuses to serve."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6b7ac05078a478ae831160bd4e9361c3a3acca4d",
+    "session": "continued",
+    "thread_id": "01a17521-882f-7ee3-86fd-6b7fe5af6c4a",
+    "builder_response": "- Tests run: test/panel-background-0509.test.mjs (with the commands.checks files). 114 pass, 0 fail.\n- F1: fixed. GET /api/panel now also gives the running panel's --url origin (scripts/panel.mjs). panelAnswers returns { url } or null, and startAway's already-running branch prints the addresses the running panel serves, plus a line saying it serves a different --url (or none) and to --stop and start again to change it (scripts/panel-background.mjs). New real-panel test '0509 AC2: --background again names the --url address the running panel serves, which it accepts' repeats --background with no --url and with a different --url against a panel started with --url, and checks the printed addresses; the existing reuse test now also repeats with a --url the panel doesn't serve and requests every printed address with its Host header, checking each answers 200. The brief's row says it prints the addresses that panel serves.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 242429,
+      "cached_input_tokens": 178560,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1350,
+      "reasoning_output_tokens": 77
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-25T22:16:53.233Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/panel-background.mjs startAway detaches the process, redirects output and waits for readiness. Passed real-panel test '0509 AC1, AC3, AC4' verifies addresses with --port and --url and continued serving after the launching shell exits."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "startAway now prints the running panel's URL from /api/panel. Passed AC2 tests verify reuse without another startup, mismatched URL handling, acceptance of advertised Host headers and refusal of an occupied port."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "stopAway stops recorded background panels. Passed AC3 tests verify stopping a real background panel, reporting none running, preserving a foreground panel and stopping that foreground panel with SIGINT."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passed AC4 tests verify panel.log output and option names in help and the brief. The current test log confirms 114 passed, zero failed and three skipped; the previous related-test run also had no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/panel-background.mjs",
+        "issue": "Reusing a running panel previously advertised the newly requested URL even when that panel would reject it. The code now reports the existing panel's configured addresses, and real-panel regression tests cover differing URL options.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel starts independently, keeps a log and can be stopped with the new command. Reusing it now reports the addresses it actually serves. All criteria pass, with no remaining blocking findings."
   }
 }
 ```
