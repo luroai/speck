@@ -1,7 +1,7 @@
 ---
 id: "0506"
 title: "Keep private words out of what speck writes under speck/"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-25
 ---
 # 0506 · Keep private words out of what speck writes under speck/
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A shipped ticket published the user's machine username: a reviewer quoted an absolute path under the user's home folder as its evidence, and speck wrote that into the ticket's review rounds. Nothing caught it. The private-words test skips `speck/`, so a test result can be reused while only `speck/` changes (0112), and `speck lint` checks a ticket for private words and the home folder's path (0083, 0121) only when it's linted, before the build, not the review rounds, notes and logs written into it afterwards. The user had to rewrite the repo's public history on 2026-10-25 to remove it.
