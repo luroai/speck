@@ -1,7 +1,7 @@
 ---
 id: "0500"
 title: "Keep the 0484 copy test passing when the machine is busy"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-24-fix-the-0484-copy-test-that-fails-under-load.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-25
+started: "2026-10-25T12:40:38.279Z"
 
 ---
 # 0500 · Keep the 0484 copy test passing when the machine is busy
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A test in `test/panel-0484.test.mjs` expects a blocked bug ticket's line to read `speck will answer · Review 2 · 99:5x · bug`, but the ticket starts 5,990 seconds before the file loads, so the time only reads 99:5x for 10 seconds. When several test files run at once, the real panel takes longer than that to start, the time reads 100:00 and the test fails though nothing is wrong. `speck ship` runs the whole suite, so it can hand a ticket back for no reason, the 0.15.0 release included.
