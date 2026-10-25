@@ -1,7 +1,7 @@
 ---
 id: "0504"
 title: "Give speck comic moments while it watches"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0503"]                # ticket ids that must be done first
 created: 2026-10-25
+started: "2026-10-25T22:18:46.825Z"
 
 ---
 # 0504 · Give speck comic moments while it watches
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 After 0503, speck's beats are habits. The user wants humour in what speck does while it watches, so the screen is worth glancing at.
