@@ -10,6 +10,7 @@ import { fullPrompt, historyPrompt, reviewerChanged, roundOneFile, runCommandRev
 import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 import { documentSection } from './output.mjs';
+import { tildePaths } from './private-words.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
 import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
 
@@ -175,11 +176,12 @@ export function ticketNext(raw, all, cfg) {
 }
 
 // Round 1 also sets a building ticket to reviewing, and any round an approved one, in the same write, so a refused verdict changes nothing.
+// 0506: any path under the home folder in the ticket, such as a reviewer's evidence, is written as a `~/` path.
 export function saveRound(repo, id, verdict, meta) {
   const t = findTicket(repo, id);
   const round = rounds(repo, id).length + 1;
   const record = { meta: { round, ...meta, saved_at: new Date().toISOString() }, verdict: validateVerdict({ ...verdict, round }) };
-  fs.writeFileSync(t.file, appendRounds(startReviewing(t.raw, round), [record]));
+  fs.writeFileSync(t.file, tildePaths(appendRounds(startReviewing(t.raw, round), [record])));
   return record;
 }
 

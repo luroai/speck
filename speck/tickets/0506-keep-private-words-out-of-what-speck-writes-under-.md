@@ -41,6 +41,7 @@ Nothing speck commits under `speck/` publishes a private word or the user's home
 - Asked for by the user on 2026-10-25, before posting speck on Reddit: "fix the private words check". The leak was in `speck/tickets/done/0358-…`, in a review round's evidence.
 - Today: `homePathWarnings` and the private-words check in `scripts/lint.mjs` (0083, 0121), which this can reuse; review rounds are written by `scripts/review.mjs`; ship's checks are in `scripts/ship.mjs`; the ship queue's hand-backs in `scripts/ship-queue.mjs`.
 - Failing before this build: none
+- Self-check: added a test for the facts in the brief and the build skill (exit 17, the private-words file, the "Private words" steps); a third private-words hand-back blocks as "Handed back again" does.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

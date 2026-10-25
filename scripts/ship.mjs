@@ -14,6 +14,7 @@ import { shipFolders, putBranchBack } from './ship-folders.mjs';
 import { remoteBaseCatchUp } from './ship-remote.mjs';
 import { prMode } from './pull-request.mjs';
 import { shipPrTicket } from './pr-ship.mjs';
+import { privateLinesInSpeck } from './private-words.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
@@ -50,6 +51,11 @@ export function shipChecks(repo, cfg, pad, branch) { // 0295: and before opening
     if (outside.length)
       throw new SpeckError(`Ticket ${pad} is a task, so its branch should change only files under speck/, but it changes ${outside.join(', ')}. Nothing was shipped. Take those changes off its branch, get it reviewed, then ship again.`);
   }
+  // 0506: what the ship publishes under speck/, such as review rounds quoting a reviewer's evidence, isn't checked by
+  // the tests (0112) or by speck lint once the build has started, so it's checked here. Exit 17 hands it back (ship-queue).
+  const leaks = privateLinesInSpeck(repo, cfg.base_branch, branch);
+  if (leaks.length)
+    throw new SpeckError(`Files under speck/ that ${branch} adds or changes hold your private words or your home folder's path, so nothing was shipped:\n${leaks.map(l => `  ${l.file} line ${l.line}: ${l.what === 'word' ? 'one of your private words (from ~/.config/speck/private-words)' : "your home folder's path"}`).join('\n')}\nTake each one out (write a path under your home folder as a \`~/\` path), commit it on ${branch}, then ship again.`, 17);
 }
 
 // Runs the tests in `repo`: { ok, output }, output being what a failing run wrote. `branch` is the one the flaky log
