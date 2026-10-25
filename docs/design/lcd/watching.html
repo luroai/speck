@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- The prototype of speck's watching animation, agreed with the user on 2026-10-25 (0502 to 0505). Open it from this folder:
+     it loads the real screen code from templates/lcd.js. ?beat=<name> plays one beat on repeat. -->
+<title>speck watching</title></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@900&display=swap">
+<style>
+  /* Layout: speck's screen in its dark frame, as the panel's header has it, with a few controls and what speck is doing under it */
+  :root {
+    --bg: #f3f3f3; --ink: #141414eb; --muted: #141414ba; --line: #14141426; --raise: #fcfcfc;
+    --bezel: #262722; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1;
+    --lcd-bg: #e6e9db; --lcd-off: #dde1cf; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .14);
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; --mono: "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141414; --ink: #e4e4e4eb; --muted: #e4e4e4b8; --line: #e4e4e426; --raise: #1c1c1c; --bezel: #080907; color-scheme: dark } }
+  :root[data-theme="dark"] { --bg: #141414; --ink: #e4e4e4eb; --muted: #e4e4e4b8; --line: #e4e4e426; --raise: #1c1c1c; --bezel: #080907; color-scheme: dark }
+  body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); }
+  .wrap { max-width: 560px; margin: 0 auto; padding-block: 20px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
+  .bezel { padding: 5px 7px 7px; background: var(--bezel); color: var(--bezel-ink); border-radius: 12px; }
+  .print { display: flex; align-items: center; gap: 10px; padding: 0 2px 4px; }
+  .name { display: inline-flex; align-items: center; gap: .25em; font: 900 32px/1 "Doto", ui-monospace, monospace; }
+  .name::before { content: ""; width: .375em; height: .375em; border-radius: 50%; background: var(--lcd-red); }
+  .repo { flex: 1; text-align: right; font-size: 12px; color: var(--bezel-muted); }
+  .glass { position: relative; border-radius: 4px; overflow: hidden; border: .5px solid var(--bezel-muted); background: var(--lcd-bg); }
+  .glass::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 8px #0000004d; pointer-events: none; border-radius: inherit; }
+  .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 72; image-rendering: pixelated; }
+  .now { margin: 0; font: 13px/1.4 var(--mono); color: var(--muted); min-height: 1.4em; }
+  .now b { color: var(--ink); font-weight: 500; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .row > span { font-size: 13px; color: var(--muted); min-width: 4.5em; }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--raise); }
+  .seg button { min-width: 44px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font: 600 13px var(--sans); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .seg button:focus-visible { outline: 2px solid #3c7cab; outline-offset: 1px; }
+  .beats { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+  .beats li { display: flex; gap: 8px; }
+  .beats li::before { content: ""; flex: none; width: 6px; height: 6px; margin-top: .55em; border-radius: 50%; background: var(--line); }
+  .beats li.on { color: var(--ink); }
+  .beats li.on::before { background: var(--lcd-red); }
+  .row select { flex: 1 1 0; width: 0; min-width: 0; }
+  select { min-height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--raise); color: var(--ink); font: 14px var(--sans); max-width: 100%; }
+  select:focus-visible { outline: 2px solid #3c7cab; outline-offset: 1px; }
+  .beats li { cursor: pointer; }
+  .beats li:hover { color: var(--ink); }
+  h2 { margin: 6px 0 0; font: 600 13px var(--sans); color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <div class="bezel">
+    <div class="print"><span class="name">speck</span><span class="repo">speck · main</span></div>
+    <div class="glass"><canvas id="screen" aria-label="speck's screen, watching the builds"></canvas></div>
+  </div>
+  <p class="now" id="now"></p>
+  <div class="row"><span>Version</span><div class="seg" role="group" aria-label="Version"><button type="button" data-v="new" aria-pressed="true">New</button><button type="button" data-v="old" aria-pressed="false">Today</button></div></div>
+  <div class="row"><span>Builds</span><div class="seg" role="group" aria-label="Builds"><button type="button" data-n="1" aria-pressed="true">1</button><button type="button" data-n="2" aria-pressed="false">2</button><button type="button" data-n="3" aria-pressed="false">3</button></div></div>
+  <div class="row"><span>Speed</span><div class="seg" role="group" aria-label="Speed"><button type="button" data-s="1" aria-pressed="true">1×</button><button type="button" data-s="3" aria-pressed="false">3×</button></div></div>
+  <div class="row"><span>Beat</span><select id="pick" aria-label="Which beat to play"><option value="">Random, as the panel would</option></select></div>
+  <h2>What speck does while it watches</h2>
+  <ul class="beats" id="beats"></ul>
+</div>
+
+<script src="../../../templates/lcd.js"></script>
+<script>
+(() => {
+  const LCD = window.SpeckLCD, { INK, FAINT, OFF, F5 } = LCD;
+  const S = { cols: 160, rows: 72, top: 11, floor: 61, line: 63, cap: 65 };
+  const opt = { v: 'new', n: 1, s: 1 };
+  const clamp01 = x => Math.max(0, Math.min(1, x)), lerp = (a, b, k) => a + (b - a) * k;
+  const sine = k => -(Math.cos(Math.PI * clamp01(k)) - 1) / 2;
+  const seg = (p, a, b) => clamp01((p - a) / (b - a));
+  const rnd = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const rim = a => ({ x: 20 * Math.cos(a), y: -24 + 20 * Math.sin(a) });
+  const ptl = (a, b, k) => ({ x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) });
+
+  // ---- The scene: speck on the right, a little CRT television for each build on the left ----
+  const BX = 14; // speck's place on the floor
+  const TVS = { 1: [{ cx: -46, w: 36, h: 25 }], 2: [{ cx: -62, w: 27, h: 20 }, { cx: -32, w: 27, h: 20 }], 3: [{ cx: -70, w: 21, h: 17 }, { cx: -47, w: 21, h: 17 }, { cx: -24, w: 21, h: 17 }] };
+  const tvs = () => TVS[opt.n];
+  const LEG = 3.5; // the TV stands on two short legs
+  // Each TV's parts, in scene units: its box, its screen (left of the knobs) and the tips of its rabbit ears.
+  function tvGeom(m, wig = 0) {
+    const x0 = m.cx - m.w / 2, y1 = -LEG, y0 = y1 - m.h, knobs = Math.max(6, m.w * .24);
+    const sx0 = x0 + 2.5, sx1 = x0 + m.w - knobs, sy0 = y0 + 2.5, sy1 = y1 - 2.5;
+    const top = { x: m.cx + 1, y: y0 }, ear = m.h * .55;
+    const tipL = { x: top.x - ear * Math.sin(.5 + wig), y: top.y - ear * Math.cos(.5 + wig) };
+    const tipR = { x: top.x + ear * Math.sin(.42 - wig * .7), y: top.y - ear * Math.cos(.42 - wig * .7) };
+    return { x0, y0, y1, knobs, sx0, sx1, sy0, sy1, top, tipL, tipR };
+  }
+  // Pong's ball and paddles on a TV's screen at time t.
+  const clampY = (y, a, b, h) => Math.max(a, Math.min(b - h, y));
+  function pongBall(g, t) {
+    const ix0 = g.sx0 + 3.5, ix1 = g.sx1 - 3.5, iy0 = g.sy0 + 2.5, iy1 = g.sy1 - 2.5, W = ix1 - ix0, H = iy1 - iy0;
+    const tri = (v, L) => { const q = ((v % (2 * L)) + 2 * L) % (2 * L); return q < L ? q : 2 * L - q; };
+    const x = ix0 + tri(t / 60, W), y = iy0 + tri(t / 85, H), ph = Math.max(3, H * .32);
+    return { x, y, ly: y - ph / 2 + 1.5 * Math.sin(t / 200), ry: y - ph / 2 - 1.5 * Math.sin(t / 230) };
+  }
+  // Each build's TV fills a progress bar at its own pace, then shows a tick for a moment as a step finishes.
+  const period = j => 10000 + rnd(j + 5) * 8000, DONE = 1100;
+  function tvState(j, t) {
+    const P = period(j), u = (t + rnd(j + 9) * P) % P;
+    return { prog: clamp01(u / (P - DONE)), done: u >= P - DONE, since: u - (P - DONE) };
+  }
+  function drawTV(pen, m, j, t, fx) {
+    const st = fx.force && fx.force.j === j ? fx.force.st : tvState(j, t), g = tvGeom(m, fx.tv === j ? fx.wig : 0);
+    // rabbit ears, behind the box
+    pen.lw = 1.2; pen.line(g.top.x, g.top.y, g.tipL.x, g.tipL.y); pen.line(g.top.x, g.top.y, g.tipR.x, g.tipR.y);
+    pen.disc(g.tipL.x, g.tipL.y, 1, INK); pen.disc(g.tipR.x, g.tipR.y, 1, INK);
+    pen.disc(g.top.x, g.top.y, 2.2, INK, 1.4);
+    // legs and the box, with rounded corners
+    pen.lw = 1.5; pen.line(g.x0 + 4, g.y1, g.x0 + 2.5, 0); pen.line(g.x0 + m.w - 4, g.y1, g.x0 + m.w - 2.5, 0);
+    const r = 2.5, box = [[g.x0 + r, g.y0], [g.x0 + m.w - r, g.y0], [g.x0 + m.w, g.y0 + r], [g.x0 + m.w, g.y1 - r], [g.x0 + m.w - r, g.y1], [g.x0 + r, g.y1], [g.x0, g.y1 - r], [g.x0, g.y0 + r]];
+    pen.lw = 1.8; pen.fillPoly(box, OFF); pen.poly(box, INK);
+    // the knobs and a speaker grille, on the right
+    const kx = g.x0 + m.w - g.knobs / 2 - .5, kr = Math.max(1.4, g.knobs * .2);
+    pen.lw = 1.2; pen.ring(kx, g.y0 + m.h * .28, kr); pen.ring(kx, g.y0 + m.h * .55, kr);
+    for (let i = 0; i < 3; i++) pen.line(kx - kr, g.y1 - 3 - i * 2, kx + kr, g.y1 - 3 - i * 2, FAINT);
+    // the curved glass: a rounded screen
+    const c = 2, scr = [[g.sx0 + c, g.sy0], [g.sx1 - c, g.sy0], [g.sx1, g.sy0 + c], [g.sx1, g.sy1 - c], [g.sx1 - c, g.sy1], [g.sx0 + c, g.sy1], [g.sx0, g.sy1 - c], [g.sx0, g.sy0 + c]];
+    pen.lw = 1.2; pen.poly(scr, INK);
+    const ix0 = g.sx0 + 2.5, ix1 = g.sx1 - 2.5, iy0 = g.sy0 + 2.5, iy1 = g.sy1 - 2.5;
+    if (fx.static === j) { // snow
+      const f = Math.floor(t / 70);
+      for (let y = iy0; y <= iy1; y += 1.4) for (let x = ix0; x <= ix1; x += 1.4) { const q = rnd(f * 7.3 + x * 3.1 + y * 17.7); if (q > .55) pen.dotAt(x, y, q > .85 ? INK : FAINT); }
+      return;
+    }
+    if (fx.pong === j) { // Pong: two paddles and a ball
+      const b = pongBall(g, t), ph = Math.max(3, (iy1 - iy0) * .32);
+      pen.lw = 1.8; pen.line(ix0, clampY(b.ly, iy0, iy1, ph), ix0, clampY(b.ly, iy0, iy1, ph) + ph); pen.line(ix1, clampY(b.ry, iy0, iy1, ph), ix1, clampY(b.ry, iy0, iy1, ph) + ph);
+      for (let y = iy0; y < iy1; y += 2) pen.dotAt((ix0 + ix1) / 2, y, FAINT);
+      pen.disc(b.x, b.y, 1.4, INK);
+      return;
+    }
+    if (fx.mirror === j && fx.me) { // a tiny speck, copying speck
+      const me = fx.me, cx = (ix0 + ix1) / 2 + (me.x - BX) * .25, by = iy1 + 2 + (me.y || 0) * .35, r = (iy1 - iy0) * .4;
+      pen.save(); pen.translate(cx, by); pen.rotate(-(me.rot || 0)); pen.lw = 1.1;
+      pen.ring(0, -r - 1, r); pen.disc(-r * .62, -r * 1.95, r * .26, INK); pen.disc(r * .62, -r * 1.95, r * .26, INK);
+      pen.disc(-(me.lookX || 0) * r * .4, -r - 1 + (me.lookY || 0) * r * .3, Math.max(.8, r * .25), LCD.RED);
+      pen.restore();
+      return;
+    }
+    if (st.done) { // a step finished: a tick, drawn in
+      const k = clamp01(st.since / 300), cx = (ix0 + ix1) / 2, cy = (iy0 + iy1) / 2, s = Math.min(ix1 - ix0, iy1 - iy0) / 12;
+      const A = [cx - 5 * s, cy], B = [cx - 1.5 * s, cy + 3.5 * s], C = [cx + 6 * s, cy - 4.5 * s];
+      pen.lw = 1.8;
+      if (k > 0) pen.line(A[0], A[1], lerp(A[0], B[0], Math.min(1, k * 2)), lerp(A[1], B[1], Math.min(1, k * 2)));
+      if (k > .5) pen.line(B[0], B[1], lerp(B[0], C[0], (k - .5) * 2), lerp(B[1], C[1], (k - .5) * 2));
+      return;
+    }
+    // the build's log scrolling up, its newest line being typed, and its progress bar
+    const rows = Math.max(1, Math.floor((iy1 - iy0 - 3) / 2.6)), tt = fx.frozen === j ? fx.frozenAt : t, sc = Math.floor(tt / 420 + j * 13);
+    for (let rr = 0; rr < rows; rr++) {
+      const n = sc + rr, last = rr === rows - 1, full = 2 + rnd(n + j * 31) * (ix1 - ix0 - 2);
+      const len = last ? full * clamp01((tt % 420) / 420 * 1.6) : full, H = iy1 - iy0 - 2;
+      const y = fx.roll === j ? iy0 + ((rr * 2.6 + fx.rollOff * H) % H) : iy0 + rr * 2.6;
+      if (len > 1) pen.line(ix0, y, ix0 + len, y, last ? INK : FAINT);
+    }
+    if (fx.roll === j) { const H = iy1 - iy0 - 2, by = iy0 + ((fx.rollOff * H + H * .6) % H); pen.lw = 2.2; pen.line(ix0 - 1, by, ix1 + 1, by, INK); pen.lw = 1.4; }
+    pen.lw = 1.4; pen.line(ix0, iy1, ix1, iy1, FAINT);
+    if (st.prog > .02) pen.line(ix0, iy1, ix0 + (ix1 - ix0) * st.prog, iy1, INK);
+  }
+
+  // ---- What speck does: a beat at a time, picked at random and never the same twice running ----
+  const BEATS = {
+    scan: { w: 3, d: [5200, 7000], label: 'Keeping an eye on the builds' },
+    read: { w: 2, d: [4600, 5400], label: 'Ticking a line off the checklist' },
+    lean: { w: 2, d: [3600, 4400], label: 'Leaning in for a closer look' },
+    popcorn: { w: 2, d: [5200, 6200], label: 'Popcorn, tossed up and caught' },
+    tune: { w: 1, d: [5000, 5800], label: 'Tuning a snowy TV by waggling its own ear' },
+    hiccup: { w: 1, d: [4200, 5000], label: 'Hiccups' },
+    mirror: { w: 1, d: [5600, 6400], label: 'A tiny speck on the TV copying its every move' },
+    bubble: { w: 1, d: [4600, 5400], label: 'Blowing a bubble that pops in its face' },
+    spider: { w: 1, d: [5000, 5800], label: 'A spider dropping in to say hello' },
+    pong: { w: 1, d: [5600, 6600], label: 'The TV flicks over to Pong' },
+    vhold: { w: 1, d: [5000, 5800], label: 'A TV picture rolls, and speck tilts to follow it' },
+    peek: { w: 1, d: [5600, 6400], label: 'Too tense to watch: peeking round the clipboard as a step nearly finishes' },
+    drumroll: { w: 1, d: [5000, 5800], label: 'A drumroll for a step that’s nearly done, then TA-DA' },
+    balance: { w: 1, d: [6000, 6800], label: 'Balancing the clipboard on its head, until it slides off' },
+    dance: { w: 1, d: [5400, 6200], label: 'A little dance, until it notices you watching' },
+    clock: { w: 1, d: [3600, 4200], label: 'Checking the clock in the corner of its own screen' },
+    yoyo: { w: 1, d: [4800, 5600], label: 'Playing with a yo-yo' },
+    hum: { w: 1, d: [4200, 5200], label: 'Humming along' },
+    mote: { w: 1, d: [5200, 6000], label: 'Following a speck of dust' },
+    sneeze: { w: 1, d: [3800, 4400], label: 'A sneeze that shakes its ears' },
+    doze: { w: 1, d: [5000, 5800], label: 'Nodding off, until a build wakes it' },
+  };
+  const KINDS = Object.keys(BEATS);
+  const plan = { start: [0], kind: [] };
+  let pick = null, lastT = 0; // pick: one beat played over and over, for testing
+  function beatAt(t) {
+    while (plan.start[plan.start.length - 1] <= t) {
+      const i = plan.kind.length, prev = plan.kind[i - 1];
+      const live = pick ? [pick] : KINDS.filter(k => BEATS[k].w > 0), tot = live.reduce((s, k) => s + BEATS[k].w, 0);
+      let kind = live[0];
+      for (let tries = 0; live.length > 1; tries++) {
+        let r = rnd(i * 3.7 + 1 + tries * 11) * tot;
+        kind = live.find(k => (r -= BEATS[k].w) < 0) || live[0];
+        if (kind !== prev) break;
+      }
+      const [a, b] = BEATS[kind].d;
+      plan.kind.push(kind); plan.start.push(plan.start[i] + a + rnd(i + 77) * (b - a));
+    }
+    let i = plan.kind.length - 1;
+    while (plan.start[i] > t) i--;
+    const s = plan.start[i], e = plan.start[i + 1];
+    return { i, kind: plan.kind[i], k: (t - s) / (e - s), d: e - s, s };
+  }
+  const readsBefore = i => { let n = 0; for (let j = 0; j < i; j++) if (plan.kind[j] === 'read') n++; return n; };
+
+  // Where speck's eye goes to look at a point in the scene.
+  const lookAt = (x, y) => ({ lookX: Math.max(-1, Math.min(1, (x - BX) / 55)), lookY: Math.max(-1, Math.min(1, (y + 26) / 40)) });
+  const tvLook = m => lookAt(m.cx, -LEG - m.h / 2);
+  const LEFT = rim(Math.PI - .25); // its free shoulder, on the left
+
+  function newWatch(t) {
+    const ms = tvs(), b = beatAt(t), k = b.k;
+    const env = sine(Math.min(1, k * b.d / 450, (1 - k) * b.d / 450));
+    // At rest it watches one build's TV, moving on to the next now and then.
+    const focus = ms[Math.floor(t / 3100) % ms.length], rl = tvLook(focus);
+    const R = { x: 0, y: 0, rot: 0, sy: 1 + .015 * Math.sin(t / 640), lookX: rl.lookX, lookY: rl.lookY, lid: 1, droop: 0, ear: 0, raise: 0, hide: 0 };
+    const O = {}; // this beat's own pose, mixed in by env
+    const props = [], fx = { static: -1, frozen: -1, tv: -1, wig: 0, mirror: -1, pong: -1, me: null, roll: -1, rollOff: 0, force: null };
+    let clipAt = null; // where the clipboard is when it isn't in its hand
+    let eye = null, hand = null, handWorld = null, ticks = readsBefore(b.i) % 5;
+    const near = ms[ms.length - 1], nearAt = ms.length - 1; // the TV nearest speck
+
+    if (b.kind === 'scan') { // eye moves from TV to TV, then round the room
+      const spots = [...ms.map(tvLook), { lookX: .1, lookY: -.55 }, { lookX: .7, lookY: .05 }];
+      const n = spots.length, q = k * n, a = Math.floor(q) % n, c = (a + 1) % n, f = sine(seg(q % 1, .75, 1));
+      O.lookX = lerp(spots[a].lookX, spots[c].lookX, f); O.lookY = lerp(spots[a].lookY, spots[c].lookY, f); O.x = O.lookX * 2;
+    } else if (b.kind === 'read') { // lifts the clipboard, reads, ticks a line
+      O.raise = 1; O.lookX = .8; O.lookY = .55 + .05 * Math.sin(t / 300); O.rot = .03;
+      if (k > .68) ticks = (readsBefore(b.i) + 1) % 5;
+      if (k > .66 && k < .74) O.y = -1.5 * Math.sin(seg(k, .66, .74) * Math.PI);
+    } else if (b.kind === 'lean') { // leans towards a TV, squints, nods
+      const m = ms[(b.i + 1) % ms.length], L = tvLook(m);
+      O.x = -5; O.rot = -.09; eye = 'focus'; O.lookX = Math.max(-1, L.lookX - .15); O.lookY = L.lookY;
+      O.y = -1.6 * Math.abs(Math.sin(seg(k, .5, .8) * Math.PI * 2));
+    } else if (b.kind === 'popcorn') { // a bucket in its free hand; now and then a piece goes up and into the gap at its top
+      hand = { x: -22, y: -16 };
+      O.lookX = rl.lookX; O.lookY = rl.lookY;
+      const toss = 1500, n = Math.floor((t - b.s) / toss), u = ((t - b.s) % toss) / toss;
+      if (k > .1 && k < .88 && u < .55) { // a kernel in the air
+        const a = u / .55, from = { x: -22, y: -18 }, to = { x: -8.3, y: -42 };
+        const kx = lerp(from.x, to.x, a), ky = lerp(from.y, to.y, a) - 16 * Math.sin(a * Math.PI);
+        O.lookX = .1 + lerp(-.6, -.1, a); O.lookY = lerp(.2, -1, a);
+        props.push({ key: 'kernel', draw(pen) { pen.disc(B.x + kx, B.y + ky, 1.3, INK); } });
+      } else if (k > .1 && k < .88 && u < .75) { eye = 'bliss'; O.y = -1; }
+      props.push({ key: 'bucket', a: env, draw(pen) {
+        const x = B.x + hand.x, y = B.y + hand.y + 2, q = [[x - 6, y - 5], [x + 6, y - 5], [x + 4.5, y + 7], [x - 4.5, y + 7]];
+        pen.lw = 1.4; pen.fillPoly(q, OFF); pen.poly(q, INK);
+        for (const sx of [-2, 2]) pen.line(x + sx, y - 5, x + sx * .8, y + 7, FAINT);
+        for (let i = 0; i < 5; i++) pen.disc(x - 4.5 + i * 2.3, y - 6 - (i % 2) * 1.2, 1.3, INK);
+      } });
+    } else if (b.kind === 'tune') { // its nearest TV goes to snow; it waggles its own ear and the TV's rabbit ears follow
+      const L = tvLook(near);
+      O.lookX = L.lookX; O.lookY = L.lookY;
+      if (k > .08 && k < .62) fx.static = nearAt;
+      if (k > .08 && k < .22) eye = 'wide';
+      if (k >= .22 && k < .62) { eye = 'focus'; O.ear = 3 * Math.sin((t - b.s) / 85); fx.tv = nearAt; fx.wig = .22 * Math.sin((t - b.s) / 85); O.rot = .03 * Math.sin((t - b.s) / 170); }
+      if (k >= .62 && k < .78) { eye = 'bliss'; O.y = -2.2 * Math.sin(seg(k, .62, .7) * Math.PI); }
+    } else if (b.kind === 'hiccup') { // three hiccups, each a little jump, then a sheepish look round
+      for (const h of [.18, .42, .66]) if (k >= h && k < h + .06) {
+        const u = seg(k, h, h + .06); O.y = -3.5 * Math.sin(u * Math.PI); O.sy = 1 + .07 * Math.sin(u * Math.PI); eye = 'wide';
+      }
+      for (const h of [.18, .42, .66]) if (k >= h && k < h + .16) { const u = seg(k, h, h + .16); props.push({ key: 'hic' + h, a: Math.sin(u * Math.PI) * 1.5, draw(pen) { pen.text('HIC', B.x + 26 + u * 4, -56 - u * 6, { font: F5 }); } }); }
+      if (k > .8) { eye = 'sheepish'; O.lookX = .6; O.lookY = .25; }
+    } else if (b.kind === 'mirror') { // the nearest TV shows a tiny speck; it copies everything speck does
+      const L = tvLook(near);
+      O.lookX = L.lookX; O.lookY = L.lookY;
+      if (k > .1 && k < .86) fx.mirror = nearAt;
+      if (k > .22) { O.x = -4; O.rot = -.07; eye = 'focus'; }
+      if (k > .5 && k < .6) O.rot = .07; // it leans the other way, to test it
+      if (k > .64 && k < .72) { O.y = -3 * Math.sin(seg(k, .64, .72) * Math.PI); eye = 'wide'; }
+    } else if (b.kind === 'bubble') { // a bubble grows out of the gap at its top, wobbling, then pops in its face
+      const grow = seg(k, .12, .68), popped = k >= .68;
+      O.lookX = -.35; O.lookY = -1; eye = grow > .6 ? 'wide' : null;
+      if (popped && k < .8) { O.y = -3 * Math.sin(seg(k, .68, .76) * Math.PI); O.ear = 2.5 * Math.sin((t - b.s) / 50); eye = 'closed'; }
+      if (k >= .8) { eye = 'sheepish'; O.lookX = .5; O.lookY = .1; }
+      props.push({ key: 'bubble', a: env, draw(pen) {
+        const bx = B.x - 9, by = B.y - 44;
+        if (!popped && grow > 0) { const r = 1 + 9 * grow, w = 1 + .08 * Math.sin(t / 70); pen.lw = 1.2; pen.ring(bx - r * .4, by - r * .8, r * w, 0, Math.PI * 2, INK, r / w); pen.dotAt(bx - r * .7, by - r * 1.2, INK); }
+        else if (popped && k < .8) { const u = seg(k, .68, .8); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; pen.dotAt(bx - 4 + Math.cos(a) * (6 + 10 * u), by - 8 + Math.sin(a) * (6 + 10 * u), u < .5 ? INK : FAINT); } }
+      } });
+    } else if (b.kind === 'spider') { // a tiny spider lowers itself in front of its eye; it leans back, ear twitching
+      const down = sine(seg(k, .08, .38)), up = sine(seg(k, .72, .92)), sy = lerp(-70, -34, down * (1 - up)), sx = B0x => B0x - 29 + 1.5 * Math.sin(t / 400);
+      const L = lookAt(BX - 29, sy); O.lookX = L.lookX; O.lookY = L.lookY;
+      if (k > .36 && k < .74) { eye = 'wide'; O.rot = .09; O.x = 4; O.ear = 2 * Math.sin((t - b.s) / 60); }
+      if (k > .74) eye = 'flat';
+      props.push({ key: 'spider', draw(pen) {
+        const x = sx(BX), y = sy;
+        pen.lw = 1; pen.line(x, -72, x, y - 2, FAINT); pen.disc(x, y, 1.8, INK);
+        for (const d of [-1, 1]) for (let i = 0; i < 3; i++) pen.line(x + d * 1.5, y - 1 + i * 1.2, x + d * 4, y - 2 + i * 2.2, INK);
+      } });
+    } else if (b.kind === 'pong') { // the nearest TV flicks over to Pong; its eye follows the ball
+      if (k > .08 && k < .12 || k > .86 && k < .9) fx.static = nearAt;
+      else if (k >= .12 && k <= .86) fx.pong = nearAt;
+      const g = tvGeom(near), ball = pongBall(g, t);
+      if (fx.pong === nearAt) { const L = lookAt(ball.x, ball.y); O.lookX = L.lookX; O.lookY = L.lookY; O.x = -3; eye = k > .5 && k < .7 ? 'focus' : null; O.rot = -.04 + .03 * Math.sin(t / 300); }
+    } else if (b.kind === 'clock') { // looks up at the time in the top right of its own screen
+      const up = sine(seg(k, .1, .3)) * (1 - sine(seg(k, .7, .9)));
+      O.lookX = lerp(rl.lookX, 1, up); O.lookY = lerp(rl.lookY, -1, up); O.rot = .06 * up; O.sy = 1 + .02 * up;
+      if (k > .38 && k < .62) props.push({ key: 'bang', a: Math.sin(seg(k, .38, .62) * Math.PI) * 1.6, draw(pen) { pen.text('!', B.x + 24, -60, { font: F5 }); } });
+    } else if (b.kind === 'yoyo') { // a yo-yo on a string from its free hand
+      hand = { x: -24, y: -22 + 1.5 * Math.sin((t - b.s) / 300 * Math.PI) };
+      const u = ((t - b.s) % 1200) / 1200, drop = Math.sin(u * Math.PI) ** 1.4, yy = lerp(hand.y + 3, -4, drop * Math.min(1, env * 1.5));
+      const L = lookAt(BX - 24, yy); O.lookX = L.lookX; O.lookY = L.lookY;
+      props.push({ key: 'yoyo', a: env, draw(pen) {
+        const x = B.x + hand.x, y0 = B.y + hand.y, y = B.y + yy;
+        pen.lw = 1; pen.line(x, y0, x, y - 2.5, FAINT); pen.lw = 1.3;
+        pen.disc(x, y, 3, OFF); pen.ring(x, y, 3);
+        const a = t / 60; pen.line(x - 2.2 * Math.cos(a), y - 2.2 * Math.sin(a), x + 2.2 * Math.cos(a), y + 2.2 * Math.sin(a));
+      } });
+    } else if (b.kind === 'hum') { // bobs along, notes drifting up
+      O.y = -1.8 * Math.abs(Math.sin(t / 280)); O.rot = .05 * Math.sin(t / 560); eye = Math.sin(t / 1400) > .2 ? 'bliss' : null; O.lookX = .2; O.lookY = -.1;
+      for (let n = 0; n < 4; n++) {
+        const life = 1800, born = Math.floor(t / 600) * 600 - n * 600, age = (t - born) / life;
+        if (age < 0 || age > 1 || born < b.s) continue;
+        const nx = BX + 16 + age * 14 + Math.sin(born) * 4, ny = -50 - age * 16;
+        props.push({ key: 'note' + n, a: Math.sin(age * Math.PI) * env, draw(pen) { pen.lw = 1.3; pen.disc(nx, ny, 1.6, INK, 1.3); pen.line(nx + 1.4, ny, nx + 1.4, ny - 6); pen.line(nx + 1.4, ny - 6, nx + 4, ny - 4.5); } });
+      }
+    } else if (b.kind === 'mote') { // a speck of dust drifts in, lands on its ear, and off it goes
+      let mx, my, a = 1;
+      if (k < .62) { const u = k / .62; mx = lerp(96, BX + 13, u); my = -58 + 10 * Math.sin(u * 7) + lerp(0, 12, u); }
+      else if (k < .8) { mx = BX + 13; my = -47; }
+      else { const u = (k - .8) / .2; mx = BX + 13 - u * 40; my = -47 - u * 22 - 6 * Math.sin(u * 6); a = 1 - u; }
+      const L = lookAt(mx, my); O.lookX = L.lookX; O.lookY = L.lookY;
+      if (k >= .62 && k < .8) { eye = 'wide'; O.ear = 2.5 * Math.sin(seg(k, .66, .8) * Math.PI * 3); O.lookX = .45; O.lookY = -1; }
+      props.push({ key: 'mote', a: a * Math.min(1, env * 2), draw(pen) { pen.disc(mx, my, 1.1, INK); } });
+    } else if (b.kind === 'sneeze') { // a tickle, a breath in, a sneeze that shakes its ears, then a sheepish look round
+      const inhale = sine(seg(k, .1, .5)), at = seg(k, .5, .62);
+      if (k < .5) { O.rot = .09 * inhale; O.sy = 1 + .05 * inhale; O.lid = 1 - .5 * inhale; eye = 'focus'; O.lookY = -.4 * inhale; O.lookX = rl.lookX * (1 - inhale); O.y = -.6 * Math.sin(t / 40) * inhale; }
+      else if (k < .75) { O.rot = -.13 * (1 - at * .4); O.sy = .95; O.y = 1; eye = 'closed'; O.ear = 3 * Math.sin((t - b.s) / 50); O.lookX = -.4; O.lookY = .3; }
+      else { eye = 'sheepish'; O.lookX = .6; O.lookY = .2; }
+      if (k > .5 && k < .82) {
+        const u = seg(k, .5, .82);
+        props.push({ key: 'achoo', a: Math.sin(u * Math.PI) * 1.4, draw(pen) {
+          pen.text('ACHOO', B.x - 22 - u * 4, -60, { font: F5 });
+          for (let i = 0; i < 6; i++) pen.dotAt(B.x - 18 - u * (14 + rnd(i) * 20), -36 + (rnd(i + 3) - .5) * 18 * u, FAINT);
+        } });
+      }
+    } else if (b.kind === 'vhold') { // the nearest TV's picture rolls; speck tilts its whole self to keep up, then wobbles
+      const L = tvLook(near);
+      O.lookX = L.lookX; O.lookY = L.lookY; eye = 'focus';
+      if (k > .1 && k < .72) { fx.roll = nearAt; fx.rollOff = (t - b.s) / 260; O.rot = -.13 * Math.sin((t - b.s) / 260 * Math.PI * .5); O.x = -2; }
+      if (k >= .72 && k < .9) { eye = 'flat'; O.rot = .05 * Math.sin((t - b.s) / 70) * (1 - seg(k, .72, .9)); O.sy = .97; }
+    } else if (b.kind === 'peek') { // a step is nearly done; it can't look, hides behind the clipboard and peeks
+      const L = tvLook(near), done = k >= .76;
+      fx.force = { j: nearAt, st: done ? { prog: 1, done: true, since: (k - .76) * b.d } : { prog: lerp(.82, .985, seg(k, .05, .76)), done: false, since: 0 } };
+      if (!done) {
+        O.hide = 1; O.lookX = .9; O.lookY = .1; eye = 'flat'; O.sy = .97;
+        for (const pk of [.32, .55]) if (k > pk && k < pk + .09) { O.hide = .35; O.lookX = L.lookX; O.lookY = L.lookY; eye = 'wide'; }
+        O.y = .5 * Math.sin(t / 45) * (k > .6 ? 1 : 0); // trembling
+      } else { O.lookX = L.lookX; O.lookY = L.lookY; eye = 'bliss'; O.y = -3 * Math.sin(seg(k, .76, .86) * Math.PI); }
+    } else if (b.kind === 'drumroll') { // drums on the floor with its feet as a bar fills, then TA-DA
+      const L = tvLook(near), done = k >= .7;
+      fx.force = { j: nearAt, st: done ? { prog: 1, done: true, since: (k - .7) * b.d } : { prog: lerp(.86, .995, seg(k, .08, .7)), done: false, since: 0 } };
+      O.lookX = L.lookX; O.lookY = L.lookY;
+      if (!done && k > .08) { O.y = -1.2 * Math.abs(Math.sin(t / 40)); eye = 'focus'; props.push({ key: 'drr', a: env, draw(pen) { pen.text('DRRR', B.x + 6 + (Math.floor(t / 60) % 2), -60, { font: F5 }); } }); }
+      if (done) { const u = seg(k, .7, .95); O.y = -4 * Math.sin(seg(k, .7, .8) * Math.PI); eye = 'bliss'; O.rot = .06; props.push({ key: 'tada', a: Math.sin(u * Math.PI) * 1.6, draw(pen) { pen.text('TA-DA', B.x + 4, -60 - u * 3, { font: F5 }); } }); }
+    } else if (b.kind === 'balance') { // puts the clipboard on its head, wobbles to keep it there, then it slides off
+      O.lookY = -1; O.lookX = 0; eye = 'focus';
+      const wob = Math.sin((t - b.s) / 330) * seg(k, .25, .7);
+      O.rot = -.1 * wob; O.x = 2 * wob;
+      if (k >= .74 && k < .95) { eye = 'sheepish'; O.lookX = -.7; O.lookY = .8; O.rot = 0; O.x = 0; }
+      clipAt = { k, wob };
+    } else if (b.kind === 'dance') { // dances when it thinks nobody's looking, then notices you, freezes, and goes back to watching
+      if (k < .68) { const ph = (t - b.s) / 300; O.x = 3 * Math.sin(ph); O.rot = .08 * Math.sin(ph); O.y = -1.6 * Math.abs(Math.cos(ph)); eye = 'bliss'; O.lookX = .2; O.lookY = -.2; }
+      else if (k < .86) { eye = 'wide'; O.lookX = 0; O.lookY = 0; O.sy = 1.03; }
+      else { eye = 'sheepish'; const L = tvLook(near); O.lookX = L.lookX; O.lookY = L.lookY; }
+    } else if (b.kind === 'doze') { // eyelid slides down, head droops, then a build finishing makes it jump
+      const sleepy = sine(seg(k, .05, .62)), jolt = seg(k, .64, .72);
+      O.lid = k < .64 ? lerp(1, .22, sleepy) : 1; O.droop = k < .64 ? 3 * sleepy : 0; O.sy = k < .64 ? 1 - .03 * sleepy : 1; O.lookY = .35;
+      if (k >= .64 && k < .86) { eye = 'wide'; O.y = -4 * Math.sin(jolt * Math.PI); const L = tvLook(ms[0]); O.lookX = L.lookX; O.lookY = L.lookY; }
+      if (k > .25 && k < .62) { const zk = (t / 900) % 1; props.push({ key: 'z', a: Math.sin(zk * Math.PI) * env, draw(pen) { pen.text('z', BX + 20 + zk * 6, -54 - zk * 8, { font: F5 }); } }); }
+    }
+
+    // mix the beat into the resting pose
+    const P = {};
+    for (const n of Object.keys(R)) P[n] = n in O ? lerp(R[n], O[n], env) : R[n];
+    P.eye = env > .5 && eye ? eye : 'open';
+    if (handWorld) { // into the body's own frame, which turns about its feet and stretches with its breath
+      const dx = handWorld.x - (BX + P.x), dy = handWorld.y - P.y, c = Math.cos(-P.rot), sn = Math.sin(-P.rot);
+      hand = { x: dx * c - dy * sn, y: (dx * sn + dy * c) / P.sy };
+    }
+    // a build finishing: a little hop and a wide eye, unless it's dozing (that's the doze's own jolt), reading or sneezing
+    if (!['doze', 'read', 'sneeze', 'tune', 'hiccup', 'bubble', 'spider', 'mirror', 'pong', 'vhold', 'peek', 'drumroll', 'balance', 'dance'].includes(b.kind)) for (let j = 0; j < ms.length; j++) {
+      const st = tvState(j, t);
+      if (st.done && st.since < 500) { P.y -= 3 * Math.sin(st.since / 500 * Math.PI); P.eye = 'wide'; const L = tvLook(ms[j]); P.lookX = L.lookX; P.lookY = L.lookY; }
+    }
+    // the clipboard, in the hand on its right, lifted to read
+    const cx = lerp(lerp(19, 15, P.raise), 3, P.hide), cy = lerp(lerp(-21, -35, P.raise), -40, P.hide), w = 13, h = 16, tilt = lerp(lerp(.08, -.12, P.raise), 0, P.hide);
+    // balancing: from its hand to its head, a wobble, a slide off onto the floor, then back in its hand
+    let clip = null, held = true;
+    if (clipAt) {
+      const k = clipAt.k, inHand = { x: BX + P.x + cx + w / 2, y: P.y + cy + h / 2, a: tilt }, onHead = { x: BX + P.x + clipAt.wob * 3, y: P.y - 47, a: Math.PI / 2 + .25 * clipAt.wob }, floor = { x: BX - 26, y: -2.5, a: Math.PI / 2 };
+      const mix = (A, Bp, u) => ({ x: lerp(A.x, Bp.x, u), y: lerp(A.y, Bp.y, u), a: lerp(A.a, Bp.a, u) });
+      if (k < .1) clip = inHand;
+      else if (k < .22) clip = mix(inHand, onHead, sine(seg(k, .1, .22)));
+      else if (k < .7) clip = onHead;
+      else if (k < .8) { const u = seg(k, .7, .8); clip = mix(onHead, floor, u * u); clip.y -= 8 * Math.sin(u * Math.PI); clip.a += u * 1.2; }
+      else if (k < .93) clip = floor;
+      else clip = mix(floor, inHand, sine(seg(k, .93, 1)));
+      held = k < .12 || k > .97;
+    }
+    const arms = held ? [{ s: rim(.35), h: { x: cx + 1, y: cy + h * .55 } }] : [];
+    if (hand && env > .02) arms.push({ s: LEFT, h: ptl(LEFT, hand, Math.min(1, env * 1.4)) });
+    const B = { t, x: BX + P.x, y: P.y, rot: P.rot, sy: P.sy, lookX: P.lookX, lookY: P.lookY, eye: P.eye, lid: P.lid, droop: P.droop, ear: P.ear, arms };
+    props.push({ key: 'clip', draw(pen) {
+      pen.save();
+      if (clip) { pen.translate(clip.x, clip.y); pen.rotate(clip.a); } else { pen.translate(B.x + cx + w / 2, B.y + cy + h / 2); pen.rotate(tilt); }
+      const q = [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]];
+      pen.lw = 1.4; pen.fillPoly(q, OFF); pen.poly(q, INK);
+      pen.fillPoly([[-2.5, -h / 2 - 2.5], [2.5, -h / 2 - 2.5], [2.5, -h / 2 + 1.5], [-2.5, -h / 2 + 1.5]], INK);
+      for (let i = 0; i < 4; i++) { const ly = -h / 2 + 5 + i * 3; pen.line(-1.5, ly, w / 2 - 2.5, ly, i < ticks ? INK : FAINT); if (i < ticks) pen.dotAt(-4, ly, INK); }
+      pen.restore();
+    } });
+    fx.me = B;
+    ms.forEach((m, j) => props.push({ key: 'tv' + j, layer: 'back', draw(pen) { drawTV(pen, m, j, t, fx); } }));
+    return { F: { B, props }, beat: b };
+  }
+
+  // ---- Today's watch, for comparison (templates/panel-header.js, 0414) ----
+  const ease = k => -(Math.cos(Math.PI * clamp01(k)) - 1) / 2;
+  function oldWatch(t) {
+    const p = (t % 7200) / 7200, reading = p > .58 && p < .86;
+    const G = [-.6, 0, .55, 0], gi = Math.floor(t / 1500), gk = ease(((t % 1500) / 1500) / .25);
+    let lookX = G[(gi + 3) % 4] + (G[gi % 4] - G[(gi + 3) % 4]) * gk, lookY = .05;
+    if (reading) { const k = ease(Math.min((p - .58) / .05, (.86 - p) / .05)); lookX = lookX + (.85 - lookX) * k; lookY = .05 + .45 * k; }
+    const ticks = Math.floor(t / 7200) % 4 + (p > .74 ? 1 : 0);
+    return { F: { B: { t, x: -7, lookX, lookY, sy: 1 + .015 * Math.sin(t / 640), arms: [{ s: rim(.4), h: { x: 25, y: -19 } }] }, props: [{ key: 'clip', draw(pen) {
+      const x = 17, y = -36, w = 15, h = 22, q = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+      pen.lw = 1.4; pen.fillPoly(q, OFF); pen.poly(q, INK);
+      pen.fillPoly([[x + 4.5, y - 3], [x + w - 4.5, y - 3], [x + w - 4.5, y + 2], [x + 4.5, y + 2]], INK);
+      for (let i = 0; i < 4; i++) { const ly = y + 6 + i * 4.2; pen.line(x + 6, ly, x + w - 3, ly, i < ticks ? INK : FAINT); if (i < ticks) pen.dotAt(x + 3.2, ly, INK); }
+    } }] }, beat: null };
+  }
+
+  // ---- The screen, laid out as the panel's ----
+  let clock = 0, last = null, shown = '';
+  function frame(s, now) {
+    const dt = last === null ? 0 : now - last; last = now; clock += dt * opt.s;
+    const t = clock + 200, p = s.pen(), cols = S.cols; lastT = t;
+    const at = new Date(), two = n => String(n).padStart(2, '0');
+    const time = `${two(at.getHours())}${at.getMilliseconds() < 500 ? ':' : ' '}${two(at.getMinutes())}`;
+    p.text(time, cols - 4, 2, { font: F5, align: 'right', valign: 'top' });
+    p.text(`BUILDING ${opt.n}`, 4, 2, { font: F5, align: 'left', valign: 'top' });
+    for (let i = 1; i < cols; i += 2) { p.put(i, S.top, FAINT); p.put(i, S.line, FAINT); }
+    for (let i = 22; i < cols - 21; i += 3) p.put(i, S.floor, FAINT);
+    const r = opt.v === 'new' ? newWatch(t) : oldWatch(t);
+    const sp = s.pen(.75, cols / 2, S.floor - 1); sp.clip = [0, S.top + 1, cols, S.floor + 1];
+    LCD.render(sp, r.F);
+    const cap = opt.n === 1 ? 'WATCHING 1 BUILD' : `WATCHING ${opt.n} BUILDS`, CW = cap.length * 6 - 1;
+    p.text(cap, Math.max(4, Math.round(cols / 2 - CW / 2)), S.cap, { font: F5, align: 'left', valign: 'top' });
+    const label = r.beat ? r.beat.kind : 'old';
+    if (label !== shown) { shown = label; showBeat(r.beat); }
+  }
+
+  // ---- The controls and the list of beats ----
+  const nowEl = document.getElementById('now'), list = document.getElementById('beats');
+  const sel = document.getElementById('pick');
+  function choose(k) { // play one beat over and over from now, or go back to random
+    pick = k && BEATS[k] ? k : null; sel.value = pick || '';
+    plan.start = [lastT]; plan.kind = []; shown = ''; opt.v = 'new';
+    document.querySelectorAll('[data-v]').forEach(o => o.setAttribute('aria-pressed', String(o.dataset.v === 'new')));
+  }
+  KINDS.forEach(k => {
+    const li = document.createElement('li'); li.dataset.k = k; li.textContent = BEATS[k].label; li.addEventListener('click', () => choose(k)); list.appendChild(li);
+    const o = document.createElement('option'); o.value = k; o.textContent = BEATS[k].label; sel.appendChild(o);
+  });
+  sel.addEventListener('change', () => choose(sel.value));
+  const extra = document.createElement('li'); extra.dataset.k = 'react'; extra.textContent = 'Whenever a build finishes a step, its TV shows a tick and speck hops round to look'; list.appendChild(extra);
+  function showBeat(b) {
+    nowEl.innerHTML = b ? `${pick ? 'Playing on repeat' : 'Now'}: <b>${BEATS[b.kind].label}</b>` : 'Today: glancing about, reading the clipboard, every 7.2 seconds';
+    for (const li of list.children) li.classList.toggle('on', !!b && li.dataset.k === b.kind);
+  }
+  function group(attr, key, cast) {
+    document.querySelectorAll(`[data-${attr}]`).forEach(btn => btn.addEventListener('click', () => {
+      opt[key] = cast(btn.dataset[attr]);
+      document.querySelectorAll(`[data-${attr}]`).forEach(o => o.setAttribute('aria-pressed', String(o === btn)));
+      shown = '';
+    }));
+  }
+  group('v', 'v', String); group('n', 'n', Number); group('s', 's', Number);
+  // ?beat=<name> plays one beat over and over, for checking it
+  const only = new URLSearchParams(location.search).get('beat');
+  if (only && BEATS[only]) choose(only);
+  new LCD.Screen(document.getElementById('screen'), { cols: S.cols, rows: S.rows, still: false, crisp: [S.line + 1], draw: frame });
+})();
+</script>
+</body></html>

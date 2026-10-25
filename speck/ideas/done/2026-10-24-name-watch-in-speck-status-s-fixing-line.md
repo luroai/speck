@@ -1,6 +1,6 @@
 # Name watch in speck status's Fixing line
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: ticketed (0501)
 From ticket: 0487
 
 ## What

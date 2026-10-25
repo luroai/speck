@@ -1,6 +1,6 @@
 # Fix the 0484 copy test that fails under load
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: ticketed (0500)
 From ticket: 0485
 
 ## What
