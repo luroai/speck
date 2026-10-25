@@ -1,7 +1,7 @@
 ---
 id: "0507"
 title: "Prepare release 0.16.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0502", "0503", "0504", "0505", "0506", "0508", "0509", "0510"]         
 created: 2026-10-25
 started: "2026-10-25T23:37:58.835Z"
 approved: "2026-10-25T23:41:42.546Z"
+finished: "2026-10-25T23:45:22.017Z"
 
 ---
 # 0507 · Prepare release 0.16.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0.15.0, speck has a new watching animation, the scene it's in most of the time while builds run, and a ship check that keeps private words and home folder paths out of what it publishes. None of it is in a release yet, so projects that install speck don't get it.
