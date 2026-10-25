@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0502", "0503", "0504", "0505", "0506"]                # ticket ids that must be done first
+after: ["0502", "0503", "0504", "0505", "0506", "0508"]                # ticket ids that must be done first
 created: 2026-10-25
 
 ---
@@ -38,9 +38,9 @@ speck 0.16.0 is ready to tag, with its changelog and release notes.
 
 ## Notes
 - Asked for by the user on 2026-10-25: "Set all tickets in plan as ready, then create a release."
-- What's new since `v0.15.0`, for the changelog: speck watches a little retro TV for each build, with 21 things it does at random while it watches, from ticking off its checklist and popcorn to Pong, a spider and a drumroll (0502 to 0505); and `speck ship` refuses to publish a private word or your home folder's path in anything under `speck/`, writing home paths as `~/` (0506). Check each against `git log v0.15.0..HEAD`.
+- What's new since `v0.15.0`, for the changelog: speck watches a little retro TV for each build, with 21 things it does at random while it watches, from ticking off its checklist and popcorn to Pong, a spider and a drumroll (0502 to 0505); and `speck ship` refuses to publish a private word or your home folder's path in anything under `speck/`, writing home paths as `~/` (0506); and a not-pushed warning clears once its ticket is on the remote, even if its commit was rewritten (0508). Check each against `git log v0.15.0..HEAD`.
 - Same shape as 0452 (release 0.15.0).
-- Waits for 0502 to 0506.
+- Waits for 0502 to 0506, and 0508, added by the user on 2026-10-25.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
