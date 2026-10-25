@@ -1,7 +1,7 @@
 ---
 id: "0503"
 title: "Give speck small habits while it watches"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0502"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T21:49:17.209Z"
+approved: "2026-10-25T22:14:51.240Z"
 
 ---
 # 0503 · Give speck small habits while it watches
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0502, speck has three things to do while it watches. Over a long build it would still repeat itself often.
@@ -52,9 +53,14 @@ Worth knowing: when speck wakes with a jump from nodding off, that's part of the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 217,793
+- Elapsed since build started: 26 min
+- Changed lines: 89 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none to the inbox):
 - Nodding off ends with a jump at a fixed point in the beat, as in the prototype, rather than when one of the TVs actually shows a tick. It could be timed to the next tick, if that matters.
