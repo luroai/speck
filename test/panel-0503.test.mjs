@@ -34,7 +34,7 @@ const extras = F => F.props.filter(p => !/^tv\d$/.test(p.key) && p.key !== 'clip
 
 test('0503 AC2: the eight habits are picked at random with 0502\'s beats, by weight, never the same twice running', async () => {
   const { pose, parts } = await watching(2);
-  assert.deepEqual(Object.keys(parts.BEATS).sort(), ['lean', 'read', 'scan', ...NEW].sort());
+  assert.deepEqual(Object.keys(parts.BEATS).filter(k => !['bubble', 'spider', 'balance', 'dance'].includes(k)).sort(), ['lean', 'read', 'scan', ...NEW].sort()); // 0504 adds four more
   pose(0);
   const seen = [];
   for (let t = 0; t < 12000000; t += 200) { const b = parts.beatAt(t); if (b.i === seen.length) seen.push(b); }
@@ -79,7 +79,8 @@ test('0503 AC2: no arm reaches beyond its usual length, and nothing a habit draw
 
 test('0503 AC3: a step finishing makes speck hop and look, except while nodding off, sneezing or hiccupping', async () => {
   const { pose, parts } = await watching(3);
-  assert.deepEqual(Object.keys(parts.BEATS).filter(k => parts.BEATS[k].own).sort(), ['doze', 'hiccup', 'read', 'sneeze']);
+  const comic = ['bubble', 'spider', 'balance', 'dance']; // 0504: its comic moments keep their own reactions too
+  assert.deepEqual(Object.keys(parts.BEATS).filter(k => parts.BEATS[k].own && !comic.includes(k)).sort(), ['doze', 'hiccup', 'read', 'sneeze']);
   const hops = {}, kept = {};
   sample(pose, parts, 3000000, 50, (F, b, t) => {
     if (!NEW.includes(b.kind)) return;
