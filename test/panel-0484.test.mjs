@@ -2,15 +2,21 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T, round, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { timeLine } from './support/time-line-0500.mjs';
 
 // ---------- 0484: a closed Build card's bug, fix or document tag shows whole on a phone ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const NOW = Date.now(); // the real browser's clock too
 const ago = s => new Date(NOW - s * 1000).toISOString();
+// 0500: the blocked bug ticket's line, its time read against the clock: at least the 5,990 seconds its ticket started
+// before this file loaded, and no more than the time since then allows, however long the panel took to start.
+const bugLine = (text, message) => timeLine(text, { before: 'speck will answer · Review 2', after: 'bug', least: 5990, most: 5990 + Math.ceil((Date.now() - NOW) / 1000) + 1 }, message);
+// SPECK_TEST_0500_DELAY: seconds to wait before starting each panel, to check the line's time when it starts late (0500).
+const DELAY = Number(process.env.SPECK_TEST_0500_DELAY) || 0;
 const approved = o => ({ started: ago(1212), approved: ago(60), self_check: 'no changes', rounds: [round(1, 10)], ...o });
 
-// 0901: a blocked bug ticket whose line is "speck will answer · Review 2 · 99:5x · bug"; 0902: a finished document
+// 0901: a blocked bug ticket whose line is "speck will answer · Review 2 · MM:SS · bug", its time counting up from 5,990 seconds; 0902: a finished document
 // task; 0903: a fix ticket waiting for you; 0904: one under review, its grid of lights and its reviewer's long model in
 // the line; 0905: no tag.
 const TICKETS = [
@@ -73,6 +79,7 @@ const SPOTS = `(async () => {
 })()`;
 
 async function open(width, touch = true) {
+  if (DELAY) await new Promise(r => setTimeout(r, DELAY * 1000));
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -128,7 +135,7 @@ test('0484 AC2: at 320 px and 375 px, in both looks, the blocked bug ticket\'s l
         await resize(b, width);
         const lines = await b.js(LINES);
         const bug = lines.find(l => l.id === '0901'), doc = lines.find(l => l.id === '0902');
-        assert.match(bug.text, /^speck will answer · Review 2 · 99:5\d · bug$/, `${theme}, ${width} px: the blocked bug ticket's line`);
+        bugLine(bug.text, `${theme}, ${width} px: the blocked bug ticket's line`);
         assert.match(doc.text, /^Read the result · \S.* · \d+:\d{2} · task$/, `${theme}, ${width} px: the document task's line`);
         for (const l of [bug, doc]) {
           const [words, ...rest] = l.parts;
@@ -188,10 +195,10 @@ test('0484 AC3: a closed card\'s line, its words cut short or not, copies as it 
     const after = await b.js(COPY);
     const bug = after.find(([id]) => id === '0901');
     assert.equal(bug[1], bug[2]);
-    assert.match(bug[1], /^speck will answer · Review 2 · 99:5\d · bug$/, 'the cut line copies whole, on one line');
+    bugLine(bug[1], 'the cut line copies whole, on one line');
     assert.equal(await b.js(WITHOUT), 1);
     const before = await b.js(COPY);
-    const sameTime = x => x.map(([id, sel, text]) => [id, sel.replace(/\d\d:\d\d/g, 'MM:SS'), text.replace(/\d\d:\d\d/g, 'MM:SS')]); // its clock ticks between
+    const sameTime = x => x.map(([id, sel, text]) => [id, sel.replace(/\d+:\d\d/g, 'MM:SS'), text.replace(/\d+:\d\d/g, 'MM:SS')]); // its clock ticks between
     assert.deepEqual(sameTime(after), sameTime(before), 'every closed card copies as before');
   } finally { await b.close(); await stop(panel); }
 });
