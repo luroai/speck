@@ -42,8 +42,8 @@ export function privateWordList() {
 }
 
 // 0506: each line of a file under speck/ that `branch` adds or changes against `base` that holds a private word (in
-// any case) or the home folder's path, as { file, line, what }, what being 'word' or 'home'. Deleted and binary files
-// are skipped. Throws a plain error when the private-words file can't be read or git can't list the files.
+// any case) or the home folder's path, as { file, line, what }, what being 'word' or 'home'. Deleted files are skipped,
+// and a binary one is read as text. Throws a plain error when the private-words file or a file can't be read.
 export function privateLinesInSpeck(repo, base, branch) {
   const list = privateWordList();
   if (list.error) throw new SpeckError(`Can't read ~/.config/speck/private-words (${list.error}), so the files under speck/ couldn't be checked for your private words. Make it a readable file, or remove it to skip the check.`);
@@ -54,7 +54,7 @@ export function privateLinesInSpeck(repo, base, branch) {
   const found = [];
   for (const file of r.stdout.split('\0').filter(Boolean)) {
     const show = sh('git', ['show', `${branch}:${file}`], { cwd: repo });
-    if (show.status !== 0 || show.stdout.includes('\0')) continue;
+    if (show.status !== 0) throw new SpeckError(`Couldn't read ${file} on ${branch} to check it for your private words: ${(show.stderr || '').trim()}`);
     show.stdout.split('\n').forEach((l, i) => {
       if (list.words.some(w => l.toLowerCase().includes(w))) found.push({ file, line: i + 1, what: 'word' });
       else if (re && re.test(l)) found.push({ file, line: i + 1, what: 'home' });

@@ -1,7 +1,7 @@
 ---
 id: "0506"
 title: "Keep private words out of what speck writes under speck/"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-25T13:44:12.901Z"
 ---
 # 0506 · Keep private words out of what speck writes under speck/
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A shipped ticket published the user's machine username: a reviewer quoted an absolute path under the user's home folder as its evidence, and speck wrote that into the ticket's review rounds. Nothing caught it. The private-words test skips `speck/`, so a test result can be reused while only `speck/` changes (0112), and `speck lint` checks a ticket for private words and the home folder's path (0083, 0121) only when it's linted, before the build, not the review rounds, notes and logs written into it afterwards. The user had to rewrite the repo's public history on 2026-10-25 to remove it.
@@ -54,3 +54,92 @@ Nothing speck commits under `speck/` publishes a private word or the user's home
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "014a384af507cbed2a37f433956272bb554b28a0",
+    "session": "fresh",
+    "thread_id": "01a17353-0f70-7cc0-b180-e92a3221bb33",
+    "builder_response": "- Tests run: `speck test --related test/private-words-0506.test.mjs` (the ticket's own file plus every existing test file naming a changed file: 1262 tests, 0 failing).\n- New module scripts/private-words.mjs shares the home-path pattern and private-words list with scripts/lint.mjs (lint's messages unchanged).\n- AC1: saveRound and speck close run the whole ticket text through tildePaths, so rounds, notes, self-check and logs get `~/` paths.\n- AC2: shipChecks (used by speck ship and pull-request ship) refuses with exit 17 before anything changes.\n- AC3: exit 17 maps to hand-back kind `private`, with new \"Private words\" steps in the build skill.\n- Known limit, not in scope: pr-queue.mjs (pull request mode) still hands back only conflicts.\n",
+    "seconds": 51,
+    "usage": {
+      "input_tokens": 166431,
+      "cached_input_tokens": 114432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1429,
+      "reasoning_output_tokens": 302
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-25T13:50:36.437Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "saveRound in scripts/review.mjs and cmdClose in scripts/close.mjs normalise paths, covered by the passing AC1 tests. However, askForChanges in scripts/changes.mjs writes and commits user text to the Review log without normalising home paths."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The passing AC2 tests cover ordinary text files. privateLinesInSpeck in scripts/private-words.mjs skips files containing NUL bytes and failed git show calls. Also, shipTicket calls remoteBaseCatchUp before shipChecks; that catch-up can permanently merge commits into the base branch before the privacy refusal."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/ship-queue.mjs maps exit 17 to the private hand-back; scripts/hand-back.mjs supplies the repair instructions. The passing AC3 queue test exercises the callback and message."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 tests exercise a successful clean ship and confirm filesNaming still skips speck/. The reported related test run has 1259 passes, three skips and no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/changes.mjs",
+        "issue": "askForChanges commits a user's note directly into the Review log. A note containing an absolute home path therefore publishes that path in a commit, even if a later review normalises the current ticket.",
+        "suggested_fix": "Apply tildePaths before writing the updated ticket and add a test passing a home path through speck changes.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/private-words.mjs:57",
+        "issue": "The ship guard silently skips an entire file when it contains a NUL byte or git show fails. A changed file containing a private word alongside a NUL byte can ship, contrary to the requirement to check any changed file under speck/.",
+        "suggested_fix": "Scan files containing NUL bytes for the prohibited text, and refuse safely when a file cannot be read. Add regression coverage for both cases.",
+        "state": "open"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs:227",
+        "issue": "The privacy check runs after remoteBaseCatchUp. When local and remote base branches have diverged, that function commits and retains their merge before the privacy guard refuses, so the refusal does not leave everything unchanged.",
+        "suggested_fix": "Run the privacy guard before any branch-changing catch-up operation. Test a privacy refusal with diverged local and remote base branches and verify their refs and checkouts remain unchanged.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The main review and shipping paths work in the reported tests, but privacy gaps remain: change-request notes can commit home paths, some files bypass scanning, and a refused ship can still change the base branch. These need fixing before merge."
+  }
+}
+```
+
+</details>

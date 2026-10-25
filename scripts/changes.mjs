@@ -13,6 +13,7 @@ import { ticketsRounds } from './review.mjs';
 import { shipState } from './ship.mjs';
 import { runState } from './run-switch.mjs';
 import { changesLine, changesPending, oneLine } from './changes-asked.mjs';
+import { tildePaths } from './private-words.mjs';
 
 // A ticket's run record from speck run, or null when it has none or it can't be read.
 function readRecord(file) {
@@ -54,7 +55,7 @@ export function askForChanges(repo, id, note, now = new Date()) {
 
   const rel = path.relative(at, t.file);
   // Throws before anything is written when the ticket has no Review log heading.
-  const updated = replaceSection(t.raw, 'Review log', old => [old, changesLine(text, all.length, now)].filter(Boolean).join('\n'), rel);
+  const updated = tildePaths(replaceSection(t.raw, 'Review log', old => [old, changesLine(text, all.length, now)].filter(Boolean).join('\n'), rel)); // 0506
   let commit;
   try { fs.writeFileSync(t.file, updated); commit = commitTicketOnly(at, t.file, t.raw, `speck(${pad}): changes asked for`); }
   catch (e) { commit = { status: 1, stderr: e.message }; try { fs.writeFileSync(t.file, t.raw); } catch { /* never written */ } }
