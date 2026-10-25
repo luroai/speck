@@ -39,6 +39,7 @@ started: "2026-10-25T12:40:34.799Z"
 - From the inbox note, raised while building 0487.
 - Today: the lines in `scripts/foreman.mjs` (`FIXING_SAYS`, and the status lines near its 0317 comment). Tests that match `Fixing` in status output: `test/foreman-0317.test.mjs`, `test/pipeline-0458.test.mjs`.
 - Asked for by the user on 2026-10-25, before releasing 0.15.0.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
