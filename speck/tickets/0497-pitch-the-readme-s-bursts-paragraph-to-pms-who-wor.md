@@ -42,6 +42,7 @@ The README's opening says speck was built by a PM for PMs and non-technical peop
 - Wording agreed with the user on 2026-10-25, to use as it is unless review finds a fact wrong:
   > speck was built by a product manager, for product managers and anyone who has spent years working alongside tech teams without writing the code themselves. You already know how to shape a piece of work and tell when it's done. speck fits the way that work really happens, in bursts between everything else: ticket up a batch before a meeting, come back afterwards to see what's shipped, and set the next batch going before you log off. speck stops only when it needs you, with one plain question. Engineers use speck too.
 - Waits for 0496: both change the README's opening paragraphs, on lines next to each other.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
