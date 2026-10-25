@@ -1,7 +1,7 @@
 ---
 id: "0508"
 title: "Clear a not-pushed warning once its ticket is on the remote"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-25T22:05:42.084Z"
 ---
 # 0508 · Clear a not-pushed warning once its ticket is on the remote
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A ship that merged but couldn't push leaves a record naming the commit it merged, and the panel shows that ticket at the top of Shipped as "Merged, but not pushed" until that commit is on the remote's copy of the base branch (0204). If the commit stops existing, because the history was rewritten or the remote squashed it, the warning comes back for good, though the ticket is on the remote. On 2026-10-25 a history rewrite brought back eight warnings from 22 October, for tickets that had been pushed long before.
@@ -44,7 +44,11 @@ A not-pushed warning clears once its ticket is on the remote as done, whatever h
 - Pictures: none, because nothing changes how the panel looks: a warning that should have cleared now clears.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a ship merged a ticket but couldn't push it, the panel warns "Merged, but not pushed" at the top of Shipped. That warning now also goes away once the remote has the ticket marked as done, so rewriting the history or squashing on the remote no longer brings old warnings back for tickets that were pushed long ago.
+
+To see it: a ticket whose warning came back after a history rewrite drops out of the warning once git has fetched the remote. A ship that really hasn't reached the remote still warns as before.
+
+Worth knowing: speck goes by the remote as git last fetched it, so the warning clears only after a fetch or push.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,4 +57,63 @@ A not-pushed warning clears once its ticket is on the remote as done, whatever h
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e9ed15b7eb6b3d35128728da0924c31324c503e9",
+    "session": "fresh",
+    "thread_id": "01a1751b-7bb1-70f2-9871-57778099f14e",
+    "builder_response": "- Tests run: test/ship-0508.test.mjs, with --related: test/kind-0492.test.mjs test/pr-done-0315.test.mjs test/repo-copy-0230.test.mjs test/ship-0204.test.mjs test/ship-0355.test.mjs, and the commands.checks files.\n- The not-pushed check moved from scripts/ship.mjs to scripts/not-pushed.mjs, unchanged apart from the new done-ticket check, to keep ship.mjs under 600 lines (0078).\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 165733,
+      "cached_input_tokens": 126976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 660,
+      "reasoning_output_tokens": 31
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-25T22:08:41.820Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/not-pushed.mjs checks the fetched remote branch for the matching done-ticket file with status done after the ancestry check fails. Both AC1 tests in test/ship-0508.test.mjs passed, covering missing and unpushed commits. scripts/ship.mjs shipState supplies this result to status/panel, ship and ship-queue callers."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 tests passed for absent tickets, wrong folders, other ticket numbers, non-done statuses, malformed files, missing commits and missing remote refs. notPushed retains the warning when neither remote condition holds."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The AC3 test passed for a recorded commit already on the remote branch. The existing ancestry check remains intact. Verified test output reports 164 passed, 0 failed and 3 skipped across 167 tests, including the existing 0204 coverage."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The warning now clears when the fetched remote branch contains the ticket as done, even after its original commit disappears. It still shows when the ship has not reached the remote. The tests cover both behaviours and passed; no blocking concerns found."
+  }
+}
+```
+
+</details>
