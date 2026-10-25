@@ -1,7 +1,7 @@
 ---
 id: "0509"
 title: "Start the panel in the background with speck panel --background"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-25
 ---
 # 0509 · Start the panel in the background with speck panel --background
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck panel` runs in the foreground until Ctrl+C. An agent that starts it at the end of setup has to hold a terminal open or run it in the background by its own means, which some agents end along with their session, and nothing says how to stop a panel started that way.
