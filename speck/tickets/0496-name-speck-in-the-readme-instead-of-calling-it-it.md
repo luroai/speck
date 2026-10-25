@@ -46,6 +46,9 @@ Wherever the README says what speck does, it names speck, and where an agent doe
 - Sentences it covers today: "It isn't only code." (opening), every bullet of The clever bits except "Ideas only become tickets in conversation" (including "It fits in your pocket"), "It runs on your machine" (The panel) and "It sets up `speck/`" (Without an agent).
 - Asked for by the user on 2026-10-25.
 - Failing before this build: none
+- No new tests: criteria 1–4 are about how the README reads and end with (checked by review); criterion 5 is checked by running every existing test file that names the README (`speck test --related`). A reviewer can check the rest by reading the README diff.
+- Self-check: no changes. The status line's "It works end to end" is left as it is, as 0452 owns the status line.
+- Pictures: none, because the change is wording only and doesn't change how anything looks.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
