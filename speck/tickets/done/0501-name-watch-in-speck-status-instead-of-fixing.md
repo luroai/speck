@@ -1,7 +1,7 @@
 ---
 id: "0501"
 title: "Name watch in speck status instead of Fixing"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T12:40:34.799Z"
 approved: "2026-10-25T12:42:50.559Z"
+finished: "2026-10-25T12:46:30.294Z"
 
 ---
 # 0501 · Name watch in speck status instead of Fixing
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck status` still prints `· Fixing on` after the Foreman's word and a `Fixing: fix. …` line when `watch` is `fix`. Since 0487 the setting is called `watch`, and nothing else calls it Fixing, so someone reading `speck status` can't tell which setting the line is about. It's the last of the old names in what speck prints.
