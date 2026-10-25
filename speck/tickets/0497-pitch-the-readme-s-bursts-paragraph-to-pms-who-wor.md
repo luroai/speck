@@ -43,6 +43,9 @@ The README's opening says speck was built by a PM for PMs and non-technical peop
   > speck was built by a product manager, for product managers and anyone who has spent years working alongside tech teams without writing the code themselves. You already know how to shape a piece of work and tell when it's done. speck fits the way that work really happens, in bursts between everything else: ticket up a batch before a meeting, come back afterwards to see what's shipped, and set the next batch going before you log off. speck stops only when it needs you, with one plain question. Engineers use speck too.
 - Waits for 0496: both change the README's opening paragraphs, on lines next to each other.
 - Failing before this build: none
+- No new tests: criteria 1 to 4 are about how the README reads (checked by review), and criterion 5 is checked by running the existing test files that name the README. A reviewer can check it by reading the README's opening paragraphs.
+- Self-check: no changes. The agreed wording is used as it is. Its bursts part ends with speck stopping only when it needs you, with one plain question; the closing "Engineers use speck too." follows it, as criterion 4 keeps engineers in the paragraph.
+- Pictures: none, because the change is a README copy change with no layout change.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
