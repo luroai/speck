@@ -51,6 +51,9 @@ The README says one agent works but two different agents are best for adversaria
 - Waits for 0497: this changes the agents paragraph and Get started, near the lines 0497 changes.
 - Asked for by the user on 2026-10-25.
 - Failing before this build: none
+- No new tests: AC1–3 are checked by review (README wording), and AC4 is the existing suite. A reviewer can check by reading README's Get started and Under the hood's **Which to choose.**
+- Self-check: no changes
+- Pictures: none, because the change is README wording only, with no new layout or images
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
