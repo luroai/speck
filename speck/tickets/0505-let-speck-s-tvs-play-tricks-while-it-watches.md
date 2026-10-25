@@ -1,7 +1,7 @@
 ---
 id: "0505"
 title: "Let speck's TVs play tricks while it watches"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-25
 ---
 # 0505 · Let speck's TVs play tricks while it watches
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 After 0504, the TVs only scroll their logs. The user liked the beats where the TVs themselves join in, which make the scene change as well as speck.
