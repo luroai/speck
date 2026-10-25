@@ -78,14 +78,21 @@ test('0502 AC2: each TV\'s bar fills at its own pace, 10 to 18 seconds, then a t
 
 test('0502 AC2: the screen shows the log and its bar, then the tick, drawn in', async () => {
   const { pose, parts } = await watching('Building 1');
-  let t = 0;
-  while (t < 5000 || !parts.tvState(0, t).done || parts.tvState(0, t - 10).done) t += 10;
-  const F = (at) => dotsOf(pose(at), ['tv0']);
+  // 0505: a tick the TV's own, not one where a trick of its own shows something else on it; frames always forwards
+  const TRICKS = ['tune', 'mirror', 'pong', 'vhold', 'peek', 'drumroll'];
   pose(0);
-  const log = F(t - 3000), early = F(t + 60), drawn = F(t + 500);
-  assert.notDeepEqual(F(t - 3000), F(t - 2000), 'the log moves');
-  assert.ok(drawn.length > early.length, 'the tick draws in');
-  assert.notDeepEqual(drawn, log, 'a tick instead of the log');
+  for (let t = 5000, seen = 0; seen < 3; t += 10) {
+    if (!parts.tvState(0, t).done || parts.tvState(0, t - 10).done) continue;
+    const at = [t - 3000, t - 2000, t + 60, t + 500], f = [];
+    for (const x of at) { if (TRICKS.includes(parts.beatAt(x).kind)) break; f.push(dotsOf(pose(x), ['tv0'])); }
+    t += 600;
+    if (f.length < at.length) continue;
+    const [log, later, early, drawn] = f;
+    assert.notDeepEqual(log, later, 'the log moves');
+    assert.ok(drawn.length > early.length, 'the tick draws in');
+    assert.notDeepEqual(drawn, log, 'a tick instead of the log');
+    seen++;
+  }
 });
 
 test('0502 AC2: when a bar fills, speck hops and looks at that TV, except while ticking off its checklist', async () => {
@@ -112,7 +119,7 @@ test('0502 AC3: one beat after another, 3.5 to 7 seconds each, by weight, never 
   const { pose, parts } = await watching('Building 2');
   pose(0);
   const seen = [];
-  for (let t = 0; t < 2000000; t += 100) { const b = parts.beatAt(t); if (b.i === seen.length) seen.push(b); }
+  for (let t = 0; t < 12000000; t += 200) { const b = parts.beatAt(t); if (b.i === seen.length) seen.push(b); } // 0505: longer, as more beats make each rarer
   assert.equal(seen[0].kind, 'scan', 'it starts by keeping an eye on the builds');
   for (const k of ['lean', 'read', 'scan']) assert.ok(seen.some(b => b.kind === k), `${k} is one of them`); // 0503 adds more
   for (let i = 1; i < seen.length; i++) assert.notEqual(seen[i].kind, seen[i - 1].kind, `beat ${i} isn't the one before`);
@@ -142,7 +149,7 @@ test('0502 AC3: the checklist\'s ticks add up to four, then a fresh page', async
   pose(0);
   const after = [];
   let last = -1;
-  for (let t = 0; t < 900000; t += 100) {
+  for (let t = 0; t < 2400000; t += 100) { // 0505: longer, so ten reads are seen however many beats there are
     const b = parts.beatAt(t);
     if (b.kind === 'read' && b.k > .9 && b.i !== last) { last = b.i; after.push(pose(t).ticks); }
   }
