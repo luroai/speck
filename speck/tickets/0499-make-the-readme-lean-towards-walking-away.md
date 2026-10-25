@@ -1,7 +1,7 @@
 ---
 id: "0499"
 title: "Make the README lean towards walking away"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0498"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T12:23:10.121Z"
+approved: "2026-10-25T12:24:45.940Z"
 
 ---
 # 0499 · Make the README lean towards walking away
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The README says two things at once: plan, walk away and come back to it shipped, and also that nothing ships until you say so and the judgement stays with you. A reader can't tell which speck is, and auto-ship, the thing that makes "come back to it shipped" true, isn't mentioned until How it works, and then only as a setting.
@@ -60,9 +61,14 @@ The README now tells one story: plan the work, walk away and come back to it shi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 117,277
+- Elapsed since build started: 2 min
+- Changed lines: 12 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
