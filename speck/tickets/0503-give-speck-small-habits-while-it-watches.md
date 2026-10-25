@@ -38,6 +38,7 @@ speck has eight small habits to mix in while it watches.
 ## Notes
 - The prototype is `docs/design/lcd/watching.html` (open it from that folder; it loads `templates/lcd.js`, and `?beat=<name>` plays one beat on repeat). Agreed with the user on 2026-10-25, also at https://claude.ai/artifact/FsG1NCryHWmFYfP9871Adx. Its timings, sizes and wording are the reference; the builder may tidy its code. Its beats here are `popcorn`, `clock`, `yoyo`, `hum`, `mote`, `sneeze`, `doze` and `hiccup`.
 - Waits for 0502, which adds the beats these join, in the same code.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
