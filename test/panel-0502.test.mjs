@@ -99,6 +99,7 @@ test('0502 AC2: when a bar fills, speck hops and looks at that TV, except while 
     if (just.length !== 1 || fresh.length !== 1) continue;
     const m = parts.tvs()[fresh[0]], want = Math.max(-1, Math.min(1, (m.cx - 14) / 55));
     if (b.kind === 'read') { reads++; assert.notEqual(F.B.eye, 'wide', 'reading has its own reaction'); continue; }
+    if (parts.BEATS[b.kind].own) continue; // 0503: nodding off, sneezing and hiccupping have their own reactions too
     hops++;
     assert.ok(F.B.y < -1, `a hop at ${t}`);
     assert.equal(F.B.eye, 'wide');
@@ -113,7 +114,7 @@ test('0502 AC3: one beat after another, 3.5 to 7 seconds each, by weight, never 
   const seen = [];
   for (let t = 0; t < 2000000; t += 100) { const b = parts.beatAt(t); if (b.i === seen.length) seen.push(b); }
   assert.equal(seen[0].kind, 'scan', 'it starts by keeping an eye on the builds');
-  assert.deepEqual([...new Set(seen.map(b => b.kind))].sort(), ['lean', 'read', 'scan']);
+  for (const k of ['lean', 'read', 'scan']) assert.ok(seen.some(b => b.kind === k), `${k} is one of them`); // 0503 adds more
   for (let i = 1; i < seen.length; i++) assert.notEqual(seen[i].kind, seen[i - 1].kind, `beat ${i} isn't the one before`);
   for (const b of seen) assert.ok(b.d >= 3500 && b.d <= 7000, `${b.kind} lasts ${b.d} ms`);
   const n = k => seen.filter(b => b.kind === k).length;
