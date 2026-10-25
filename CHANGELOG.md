@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.16.0 · 25 October 2026
+
+What's new since 0.15.0. A minor release that gives speck something to watch. While builds run, speck now stands beside a little retro TV for each build and does something different every few seconds, from ticking off its checklist to Pong and a drumroll. Shipping now refuses to publish your private words or your home folder's path in a ticket, the panel can run on its own in the background, and setup ends with the panel open and `speck run` on.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.16.0 init`.
+- Setup now finishes by starting the panel with `speck panel --background` and opening it: in your agent's own browser when it has one, such as Cursor's browser or Claude Code desktop's browser pane, otherwise in your computer's browser, or, on a machine with no screen, by giving you its address and pointing to the README's private tunnel section. It also turns `speck run` on, so a ticket starts building as soon as you set it ready, and tells you the switch at the top of Settings turns it off. If either won't start, setup says why and finishes anyway. Its next steps mention setting a ticket ready from the panel as well as with `speck set`.
+
+### speck's TVs
+
+- While builds run or a ticket ships, speck stands to the right of a little retro TV for each build, up to three, or one while shipping, with its clipboard. Each TV scrolls a pretend log over a progress bar that fills at its own pace. When a bar fills, the TV shows a tick and speck hops round to look at it. The TVs are decoration: they don't show a build's real progress.
+- Between watching one TV and the next, speck does one of 21 things, picked at random and never the same twice running:
+  - keeping an eye on the builds, ticking lines off its checklist (four, then a fresh page) and leaning in for a closer look;
+  - small habits: popcorn tossed into the top of its head, checking the clock with a `!`, a yo-yo, humming, following a speck of dust onto its ear, a sneeze with `ACHOO`, nodding off until a build finishing makes it jump, and three hiccups with `HIC`;
+  - comic moments: a bubble that pops in its face, a spider lowering itself on a thread, balancing its clipboard on its head until it slides onto the floor, and a little dance until it notices you watching;
+  - TV tricks on the nearest TV, which speck reacts to: snow that speck tunes by waggling its ear while the aerials waggle along, a tiny speck on the screen copying its every move, Pong with speck's eye following the ball, a rolling picture it tilts to follow, hiding behind its clipboard and peeking as a bar nears full, and a drumroll with `DRRR`, then `TA-DA` as the tick lands.
+- During a beat with its own reaction, such as nodding off, the spider or a TV trick, speck doesn't hop when a bar fills. In the peek and the drumroll, that TV's bar jumps to nearly full and goes back to its own pace afterwards. With reduced motion turned on, the screen holds one still picture of speck beside the TVs.
+
+### Shipping
+
+- `speck ship` refuses, changing nothing, when a file under `speck/` that the ticket adds or changes holds one of the words in `~/.config/speck/private-words` or your home folder's path. It names each file and line without repeating the word, and says to take it out. Without a private-words file, it checks only for your home folder's path. When `speck run` ships the ticket, it hands the ticket back to its build to take them out, then ships it once that's done. In pull request mode the refusal waits for you.
+- When speck writes a review round's verdict and findings, the changes you asked for, or a build's logs into a ticket, it writes any path in your home folder as a `~/` path.
+- A "Merged, but not pushed" warning in Shipped now goes away once the remote, as git last fetched it, has the ticket marked as done, even when the history was rewritten or the remote squashed the commit it recorded.
+
+### The panel
+
+- `speck panel --background`, with `--port` and `--url` as before, starts the panel on its own, prints its address once it answers and gives you your terminal back. It keeps running after you close that terminal. If this project's panel is already running on that port, it starts nothing and prints the address. `speck panel --stop` stops it, or says none is running. What the panel would have printed goes to `speck/.cache/panel.log`. `speck panel` without them runs in the foreground until Ctrl+C, as before.
+
 ## 0.15.0 · 25 October 2026
 
 What's new since 0.14.0. A minor release that rebuilds the panel round speck itself. What used to be called the Foreman is now just speck: it lives on a little LCD screen at the top of the panel and acts out what the pipeline is doing, and pressing the screen opens the pipeline log. Under it, Plan, Build and Shipped are cards you swipe between, each ticket is two short lines until you open it, and the panel takes Cursor's colours, fonts and corners. Settings now sets up your agents and any API provider, builds run fewer tests before their first review, and a ticket that isn't code is now called a task. Old setting names, commands and ticket lines keep working.
