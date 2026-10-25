@@ -8,7 +8,7 @@ speck isn't only for code. A ticket can be a task instead, such as drafting an e
 
 speck was built by a product manager, for product managers and anyone who has spent years working alongside tech teams without writing the code themselves. You already know how to shape a piece of work and tell when it's done. speck fits the way that work really happens, in bursts between everything else: ticket up a batch before a meeting, come back afterwards to see what's shipped, and set the next batch going before you log off. speck stops only when it needs you, with one plain question. Engineers use speck too.
 
-You don't need to read the code to check the work. Every ticket comes with a one-page review pack in plain English, with the reviewer's evidence for each criterion. Nothing ships until you say so, or until you let speck ship low-risk work by itself.
+You don't need to read the code to check the work. Every ticket comes with a one-page review pack in plain English, with the reviewer's evidence for each criterion. Ship the first few yourself from their review packs. Once you're confident, turn on auto-ship, and speck ships approved work while you're away.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-dark.png">
@@ -34,10 +34,10 @@ Your agent checks what's there, explains each choice in plain words and waits fo
 
 ## How it works
 
-speck takes every change from an idea to shipped code in the same steps, and waits for you at two of them. Every change is a small numbered ticket in your repo, sized for one agent in one sitting. If you can write a good ticket, you can ship.
+speck takes every change from an idea to shipped code in the same steps, and waits for you at two of them, until you trust it with the second. Every change is a small numbered ticket in your repo, sized for one agent in one sitting. If you can write a good ticket, you can ship.
 
 ```
-idea → ticket → [you: ready] → agent builds → second agent reviews, turn by turn → approved → [you: ship, or auto-ship]
+idea → ticket → [you: ready] → agent builds → second agent reviews, turn by turn → approved → [you: ship, then auto-ship]
 ```
 
 ### Your first decision: what gets built
@@ -50,7 +50,9 @@ Talk ideas through with your agent. `/speck-capture` saves an idea to `speck/ide
 
 ### Your second decision: what ships
 
-Every approved ticket has a one-page **review pack**, written for someone who doesn't read code: each acceptance criterion with ✅/❌ and the reviewer's evidence, a plain-English summary, risk flags, the review history and what it took. Read it, then ship it with the Ship button in the panel or `/speck-ship <id>`. That's Gate 2. Or turn on `auto_ship` and let low-risk work ship itself once it's approved.
+Every approved ticket has a one-page **review pack**, written for someone who doesn't read code: each acceptance criterion with ✅/❌ and the reviewer's evidence, a plain-English summary, risk flags, the review history and what it took. Start by reading it and shipping by hand, with the Ship button in the panel or `/speck-ship <id>`. That's Gate 2.
+
+Once you trust the work, turn on auto-ship, in the panel's Settings or with `speck config set auto_ship true`, and `speck run` ships each approved ticket one at a time, while you're away. Auto-ship stays off until you turn it on, and covers low-risk tickets unless you change `auto_ship_risk`. A task never ships by itself: reading its result is its review, so it waits for you. The review pack is still there whenever you want to check the work.
 
 ## The clever bits
 
@@ -80,7 +82,7 @@ A build runs only the tests its change touches. The whole suite runs when a tick
 
 ## Who it's for
 
-Most AI coding tools sell speed or autonomy. speck gives you the speed and keeps the judgement with you: what's worth building, what "done" means and whether it's good enough to ship.
+Most AI coding tools sell speed or autonomy. speck gives you both, and keeps the judgement that matters with you: what's worth building and what "done" means. A second AI checks every change against it, so you can ship by hand while you build trust, then let speck ship while you get on with something else.
 
 Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
 
