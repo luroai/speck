@@ -1,7 +1,7 @@
 ---
 id: "0504"
 title: "Give speck comic moments while it watches"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0503"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T22:18:46.825Z"
+approved: "2026-10-25T22:34:52.073Z"
 
 ---
 # 0504 · Give speck comic moments while it watches
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0503, speck's beats are habits. The user wants humour in what speck does while it watches, so the screen is worth glancing at.
@@ -52,9 +53,14 @@ Worth knowing: the clipboard lands on the floor to speck's right, not its left a
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 149,469
+- Elapsed since build started: 16 min
+- Changed lines: 59 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox notes): the watch pose's tests draw beats with the real Math.random, so the ones that need two random events to coincide (a read during a tick, each beat seen during a tick) pass only because they sample long enough. Seeding Math.random in those tests would make them certain and quicker. 0502's hop test was already failing about one run in ten before this build; it now samples ten minutes and passed 60 runs in a row.
 
