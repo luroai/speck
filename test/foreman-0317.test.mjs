@@ -50,8 +50,8 @@ test('0317 AC1: the board says which setting Fixing has, and speck status says F
   for (const fixing of ['fix', 'tell', 'off']) assert.match(view([], { fixing }).fixing_says, new RegExp(`^${fixing}\\. speck `));
   assert.equal(view([], { fixing: 'constructor' }).fixing_says, '', 'a setting speck doesn\'t know isn\'t said');
   const lines = foremanLines(view([], { fixing: 'fix' }));
-  assert.equal(lines[0], 'SPECK: Idle · Fixing on');
-  assert.match(lines[1], /^ {2}Fixing: fix\. /);
+  assert.equal(lines[0], 'SPECK: Idle · watch: fix'); // 0501: was Fixing on
+  assert.match(lines[1], /^ {2}watch: fix\. /);
   assert.equal(foremanLines(view([], { fixing: 'tell' }))[0], 'SPECK: Idle');
 });
 
@@ -107,7 +107,7 @@ test('0317 AC2: speck status says the same for each blocked ticket', () => {
   setFixing(r, 'fix');
   const out = r.run('status').stdout;
   assert.ok(out.includes(`\n        → speck will take its recommendation: ${OPTION}\n`), out);
-  assert.match(out, /^SPECK: Off · Fixing on$/m);
+  assert.match(out, /^SPECK: Off · watch: fix$/m); // 0501: was Fixing on
 });
 
 test('0317 AC3: once the Foreman goes with it, the board, card and speck status say so with the option and time, until the ticket moves on', async () => {
