@@ -59,7 +59,7 @@ const ALLOWED = {
   'test/readme-0249.test.mjs': 'the <picture> block and its images',
   'test/readme-links-0491.test.mjs': "that the README's links and anchors resolve",
   ...Object.fromEntries(['0092', '0106', '0210', '0226', '0236', '0243', '0248', '0254', '0282', '0297', '0298', '0307',
-    '0329', '0336', '0339', '0343', '0346', '0360', '0367', '0375', '0380', '0394'].map(id => [`test/release-${id}.test.mjs`, VERSION])),
+    '0329', '0336', '0339', '0343', '0346', '0360', '0367', '0375', '0380', '0394', '0452'].map(id => [`test/release-${id}.test.mjs`, VERSION])),
 };
 
 const testSources = () => ['test', 'test/support'].flatMap(dir => fs.readdirSync(path.join(ROOT, dir))
