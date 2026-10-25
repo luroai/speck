@@ -50,6 +50,8 @@ The README leans one way, towards walking away and coming back to finished work,
 - Waits for 0498, the last of the README tickets before it: all of them change the opening paragraphs.
 - Asked for by the user on 2026-10-25.
 - Failing before this build: none
+- No tests: every criterion but 5 is checked by review, and the change is to the README only. A reviewer can check it by reading the opening, How it works and Who it's for.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
