@@ -1,11 +1,10 @@
 // A ticket's lint: the errors that stop it being set ready, and the warnings worth a look.
 
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { STATUSES, EFFORTS, TYPES, KINDS, OLD_TASKS, blank, contentLines, ticketType, ticketKind, kindFromTask, ticketOutput, ticketPriority, validPriority, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
 import { knownEffort } from './codex-models.mjs';
 import { ticketSameModelProblem } from './same-model.mjs';
+import { homeFolder, homePathPattern, privateWordList } from './private-words.mjs';
 
 export function lintTicket(ticket, cfg) {
   const errors = [], warnings = [];
@@ -87,16 +86,11 @@ function asksWholeSuite(criterion) {
 }
 
 // Tickets are committed and often published, so warn about each line holding the user's home folder path, which
-// usually contains their username. The path must stand on its own: not inside a longer path (/mnt/home/ann) or a
-// longer name (/home/ann2). A home folder that can't be found, isn't absolute or is the root checks nothing.
+// usually contains their username. A home folder that can't be found, isn't absolute or is the root checks nothing.
 function homePathWarnings(text) {
-  let home = '';
-  try { home = os.homedir(); } catch { /* no home folder */ }
-  home = (home || '').replace(/[\\/]+$/, '');
-  if (!home || !path.isAbsolute(home)) return [];
-  const esc = home.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const name = '[\\p{L}\\p{N}\\p{M}_-]'; // a character that could continue a folder name, in any script
-  const re = new RegExp(`(?<!${name}|\\.)${esc}(?!${name}|\\.${name})`, 'u');
+  const home = homeFolder();
+  if (!home) return [];
+  const re = homePathPattern(home);
   return text.split('\n').flatMap((l, i) => re.test(l)
     ? [`Line ${i + 1} contains your home folder's path (${home}). Write it as a \`~/\` path instead, so it doesn't publish your username.`]
     : []);
@@ -106,16 +100,8 @@ function homePathWarnings(text) {
 // (blank lines and # lines skipped). Each line of the ticket holding one, in any case and matched literally, is an
 // error that names the line but not the word. A missing file checks nothing; one that can't be read is a warning.
 function privateWordProblems(text) {
-  let home = '';
-  try { home = os.homedir(); } catch { /* no home folder */ }
-  if (!home) return { errors: [], warnings: [] };
-  let list;
-  try { list = fs.readFileSync(path.join(home, '.config', 'speck', 'private-words'), 'utf8'); }
-  catch (e) {
-    if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return { errors: [], warnings: [] };
-    return { errors: [], warnings: [`Can't read ~/.config/speck/private-words (${e.code || e.message}), so this ticket wasn't checked for your private words. Make it a readable file, or remove it to skip the check.`] };
-  }
-  const words = list.split('\n').map(l => l.trim().toLowerCase()).filter(l => l && !l.startsWith('#'));
+  const { words, error } = privateWordList();
+  if (error) return { errors: [], warnings: [`Can't read ~/.config/speck/private-words (${error}), so this ticket wasn't checked for your private words. Make it a readable file, or remove it to skip the check.`] };
   if (!words.length) return { errors: [], warnings: [] };
   const errors = text.split('\n').flatMap((l, i) => words.some(w => l.toLowerCase().includes(w))
     ? [`Line ${i + 1} contains one of your private words (from ~/.config/speck/private-words). Take it out before setting the ticket ready.`]

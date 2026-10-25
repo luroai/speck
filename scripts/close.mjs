@@ -7,6 +7,7 @@ import { rounds, ticketNext } from './review.mjs';
 import { changesAsked } from './changes-asked.mjs';
 import { who, reviewTotals, roundsLine } from './pack.mjs';
 import { prMode, openAndKeep } from './pull-request.mjs';
+import { tildePaths } from './private-words.mjs';
 
 // ---------- close (write the logs, set approved and commit, once the reviewer has approved) ----------
 
@@ -110,7 +111,7 @@ export function cmdClose(args) {
   const fresh = old => old.replace(/^- (Review rounds|Reviewer|Reviewer tokens|Elapsed since build started|Elapsed|Changed lines): .*(\n|$)/gm, '').trim();
   text = replaceSection(text, 'Delivery log', old => `${figures}${fresh(old) ? `\n${fresh(old)}` : ''}`, rel);
   const original = t.raw;
-  t.raw = text;
+  t.raw = tildePaths(text); // 0506: the logs, notes and self-check write a path under the home folder as a `~/` path
   writeField(t, 'status', 'approved');
   // Only the ticket file is committed, so nothing else can ride along with the approval.
   const commit = commitTicketOnly(repo, t.file, original, `speck(${pad}): approved`);
