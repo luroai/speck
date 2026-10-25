@@ -40,6 +40,7 @@ started: "2026-10-25T22:08:49.534Z"
 ## Notes
 - From the idea, ticketed with the user on 2026-10-25.
 - Today: `speck panel` in `scripts/panel.mjs`, which already hands over to a new server process when its code changes (`startPanelServer`) and refuses a port in use; the usage line in `scripts/speck.mjs`. `speck run`'s switch in the panel starts `speck run` in the background, writing to `speck/.cache/runs/run.log` (0128), which this can follow.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
