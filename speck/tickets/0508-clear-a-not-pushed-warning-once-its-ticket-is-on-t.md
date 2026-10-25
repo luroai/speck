@@ -1,7 +1,7 @@
 ---
 id: "0508"
 title: "Clear a not-pushed warning once its ticket is on the remote"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T22:05:42.084Z"
+approved: "2026-10-25T22:08:49.522Z"
 
 ---
 # 0508 · Clear a not-pushed warning once its ticket is on the remote
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ship that merged but couldn't push leaves a record naming the commit it merged, and the panel shows that ticket at the top of Shipped as "Merged, but not pushed" until that commit is on the remote's copy of the base branch (0204). If the commit stops existing, because the history was rewritten or the remote squashed it, the warning comes back for good, though the ticket is on the remote. On 2026-10-25 a history rewrite brought back eight warnings from 22 October, for tickets that had been pushed long before.
@@ -54,9 +55,14 @@ Worth knowing: speck goes by the remote as git last fetched it, so the warning c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 166,393
+- Elapsed since build started: 3 min
+- Changed lines: 42 (limit 5000)
 Follow-ups: none.
 
 ## Review rounds
