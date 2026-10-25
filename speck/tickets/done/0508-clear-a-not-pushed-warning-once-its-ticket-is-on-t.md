@@ -1,7 +1,7 @@
 ---
 id: "0508"
 title: "Clear a not-pushed warning once its ticket is on the remote"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T22:05:42.084Z"
 approved: "2026-10-25T22:08:49.522Z"
+finished: "2026-10-25T22:12:51.304Z"
 
 ---
 # 0508 · Clear a not-pushed warning once its ticket is on the remote
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ship that merged but couldn't push leaves a record naming the commit it merged, and the panel shows that ticket at the top of Shipped as "Merged, but not pushed" until that commit is on the remote's copy of the base branch (0204). If the commit stops existing, because the history was rewritten or the remote squashed it, the warning comes back for good, though the ticket is on the remote. On 2026-10-25 a history rewrite brought back eight warnings from 22 October, for tickets that had been pushed long before.
