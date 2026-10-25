@@ -15,6 +15,7 @@ import { remoteBaseCatchUp } from './ship-remote.mjs';
 import { prMode } from './pull-request.mjs';
 import { shipPrTicket } from './pr-ship.mjs';
 import { privateLinesInSpeck } from './private-words.mjs';
+import { notPushed } from './not-pushed.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
@@ -440,7 +441,8 @@ function shipRunning(rec, pad) {
 // What the panel shows of a ticket's ship, from `runs` (the main checkout's speck/.cache/runs/): { running: true, auto,
 // started } while one runs, { running: false, auto: true, started, ended, message } for an auto-ship that ended without
 // shipping (ended and message are null when it was killed), { running: false, auto, started, ended, message, unpushed: true }
-// for a ship that merged but couldn't push, until the commit it merged has reached the remote (0204), or null.
+// for a ship that merged but couldn't push, until the commit it merged, or the ticket as done, has reached the remote
+// (0204, 0508), or null.
 export function shipState(runs, id) {
   id = String(id ?? '');
   if (!/^\d+$/.test(id)) return null;
@@ -450,21 +452,11 @@ export function shipState(runs, id) {
   if (shipRunning(rec, pad)) return { running: true, auto, started: rec.started };
   const text = v => (typeof v === 'string' && v !== '' ? v : null);
   if (rec.unpushed && typeof rec.unpushed === 'object') {
-    if (!notPushed(runs, rec.unpushed)) return null;
+    if (!notPushed(runs, rec.unpushed, pad)) return null;
     return { running: false, auto, started: rec.started, ended: text(rec.ended), message: text(rec.message), unpushed: true };
   }
   if (!auto) return null;
   return { running: false, auto, started: rec.started, ended: text(rec.ended), message: text(rec.message) };
-}
-
-// True while `unpushed`'s commit isn't yet on its remote's copy of the base branch, as git last saw it: a push or fetch
-// updates that, so the record clears once the commit has gone, by whatever push. An unreadable record counts as pushed.
-function notPushed(runs, { remote, base, sha } = {}) {
-  const name = v => typeof v === 'string' && /^[\w./-]+$/.test(v) && !v.startsWith('-');
-  if (!name(remote) || !name(base) || !/^[0-9a-f]{7,64}$/.test(String(sha))) return false;
-  const tracked = `refs/remotes/${remote}/${base}`;
-  if (sh('git', ['rev-parse', '--verify', '-q', tracked], { cwd: runs }).status !== 0) return true;
-  return sh('git', ['merge-base', '--is-ancestor', sha, tracked], { cwd: runs }).status !== 0;
 }
 
 // True while a ship of any ticket but `pad` runs in the repo, whoever started it, from the ship records in `runs`.
