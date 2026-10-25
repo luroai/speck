@@ -65,8 +65,8 @@ export function launchShip(repo, id, log, done) {
 
 // The refusals a ticket's build has steps for, by the exit code of the ship, so speck run hands the ticket back (0194):
 // a conflict, the tests failing on the ticket merged with the base branch while the base branch's own pass, and the
-// base branch's own tests failing.
-const HAND_BACK = { 13: 'conflict', 16: 'tests', 14: 'base' };
+// base branch's own tests failing. 0506: and files under speck/ holding private words or the home folder's path.
+const HAND_BACK = { 13: 'conflict', 16: 'tests', 14: 'base', 17: 'private' };
 
 // speck run's queue. check(tickets), on each of speck run's checks, starts the next ship if one may start now. running()
 // is the ticket whose ship it has going, or null (0247). note() is what speck run adds when it stops. `launch` starts
