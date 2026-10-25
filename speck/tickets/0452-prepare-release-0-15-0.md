@@ -1,7 +1,7 @@
 ---
 id: "0452"
 title: "Prepare release 0.15.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0439", "0440", "0441", "0442", "0443", "0444", "0445", "0446", "0447", "0448", "0449", "0450", "0451", "0453", "0454", "0455", "0456", "0457", "0458", "0459", "0460", "0461", "0462", "0463", "0464", "0465", "0466", "0467", "0468", "0469", "0470", "0471", "0472", "0473", "0474", "0476", "0475", "0477", "0478", "0479", "0489", "0490", "0494", "0495", "0500", "0501"]                # ticket ids that must be done first
 created: 2026-10-24
 started: "2026-10-25T12:50:50.278Z"
+approved: "2026-10-25T12:57:25.415Z"
 
 ---
 # 0452 · Prepare release 0.15.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0.14.0, speck's panel has been rebuilt round speck itself, as the Foreman on an LCD screen at the top, with tabs, shorter tickets and Cursor's look, and builds have got faster. None of it is in a release yet, so projects that install speck don't get it.
@@ -55,9 +56,14 @@ speck is ready to go out as version 0.15.0, a minor release that rebuilds the pa
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 230,244
+- Elapsed since build started: 7 min
+- Changed lines: 138 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
