@@ -1,7 +1,7 @@
 ---
 id: "0510"
 title: "Open the panel when setup finishes"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-20-start-and-open-the-panel-when-setup-finishe
 after: ["0509"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T22:22:13.436Z"
+approved: "2026-10-25T22:26:48.795Z"
 
 ---
 # 0510 · Open the panel when setup finishes
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Setup ends by running `speck doctor` and saying what to do next, but the panel isn't on screen, and someone new has to find out how to start it. In Cursor on 2026-10-20, the agent opened the panel in Cursor's own browser after setup by itself, and the user found that "awesome". Speck's own setup doesn't do it, so other agents and setups end without it.
@@ -52,9 +53,15 @@ When setup finishes, speck's panel is now running and open in front of you: in y
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new tests enforce exact document wording.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 277,124
+- Elapsed since build started: 5 min
+- Changed lines: 14 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: a command to turn `speck run` on in the background, instead of setup's shell line (speck/ideas/2026-10-25-turn-speck-run-on-in-the-background-from-the-command-line.md).
 
