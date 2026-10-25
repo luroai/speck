@@ -1,7 +1,7 @@
 ---
 id: "0497"
 title: "Pitch the README's bursts paragraph to PMs who work with tech teams"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-25T10:24:05.325Z"
 ---
 # 0497 · Pitch the README's bursts paragraph to PMs who work with tech teams
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The README's third paragraph sells speck through a phone ("check the panel on your phone afterwards"), and who speck is for sits apart, lower down, in one thin line. The people speck is built for, PMs and others who've worked alongside tech teams without writing the code, should see themselves straight away, with the bursts of ticketing up a batch, walking away and coming back that they'll recognise.
@@ -48,7 +48,7 @@ The README's opening says speck was built by a PM for PMs and non-technical peop
 - Pictures: none, because the change is a README copy change with no layout change.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The README's opening now says straight away who speck is for: it was built by a product manager, for product managers and anyone who has worked alongside tech teams without writing the code. The same paragraph describes working in bursts, without mentioning a phone, and still says engineers use speck too. The old one-line note about who speck is for, lower down, is gone. Open the README on GitHub to read it: it's the third paragraph.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,4 +57,73 @@ The README's opening says speck was built by a PM for PMs and non-technical peop
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "44a774fe079c11f6201dd6ba6c01e41b58b83a72",
+    "session": "fresh",
+    "thread_id": "01a17297-75af-71a1-8e49-ee7f3ebf129a",
+    "builder_response": "- Tests run: `speck test --related` with no ticket test files (criteria 1 to 4 are checked by review); it chose every existing test file that names README.md (docs-0491, install-0253, readme-0089, readme-0249, readme-0250, readme-links-0491, the release-* files, repo-speck-0122, retry-0228, setup-0107) plus the commands.checks files. 356 tests, 0 failing.\n- The new paragraph is the wording the user agreed on 2026-10-25 (ticket Notes), used as it is. The bursts part ends with \"speck stops only when it needs you, with one plain question.\"; \"Engineers use speck too.\" closes the paragraph, as criterion 4 asks the paragraph to keep it.\n- The separate line \"speck was built by a product manager, for people who decide what gets built but don't write the code. Engineers use it too.\" is removed. The phone in The clever bits and The panel section are out of scope and unchanged.\n",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 82608,
+      "cached_input_tokens": 49024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 608,
+      "reasoning_output_tokens": 23
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-25T10:25:08.457Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md:9 replaces the bursts paragraph with the agreed wording identifying its PM creator and intended audience of PMs and people experienced alongside tech teams."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md:9 describes ticketing a batch before a meeting, returning afterwards to see what shipped and starting the next batch. The bursts passage ends with stopping when needed, with one plain question; the engineers sentence follows, as clarified in the ticket Notes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md:9 contains no phone reference."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "README.md:9 retains 'Engineers use speck too.' The diff removes the separate audience paragraph beneath the agents paragraph."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0497-tests.txt confirms 356 tests: 353 passed, 3 skipped, 0 failed. Existing README-related tests and repository checks ran; no tests or executable code changed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The README now speaks directly to PMs and people who work alongside tech teams, using the agreed wording about working in bursts. It retains engineers as an audience and removes the phone reference from this paragraph. The change stays within scope, and the relevant tests pass."
+  }
+}
+```
+
+</details>
