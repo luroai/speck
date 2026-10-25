@@ -1,7 +1,7 @@
 ---
 id: "0510"
 title: "Open the panel when setup finishes"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0509"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T22:22:13.436Z"
 approved: "2026-10-25T22:26:48.795Z"
+finished: "2026-10-25T22:30:44.762Z"
 
 ---
 # 0510 · Open the panel when setup finishes
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Setup ends by running `speck doctor` and saying what to do next, but the panel isn't on screen, and someone new has to find out how to start it. In Cursor on 2026-10-20, the agent opened the panel in Cursor's own browser after setup by itself, and the user found that "awesome". Speck's own setup doesn't do it, so other agents and setups end without it.
