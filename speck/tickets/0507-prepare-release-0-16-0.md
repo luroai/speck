@@ -1,7 +1,7 @@
 ---
 id: "0507"
 title: "Prepare release 0.16.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0502", "0503", "0504", "0505", "0506", "0508", "0509", "0510"]                # ticket ids that must be done first
 created: 2026-10-25
+started: "2026-10-25T23:37:58.835Z"
 
 ---
 # 0507 · Prepare release 0.16.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0.15.0, speck has a new watching animation, the scene it's in most of the time while builds run, and a ship check that keeps private words and home folder paths out of what it publishes. None of it is in a release yet, so projects that install speck don't get it.
