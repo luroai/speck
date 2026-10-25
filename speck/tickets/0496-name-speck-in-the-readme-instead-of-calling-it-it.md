@@ -45,6 +45,7 @@ Wherever the README says what speck does, it names speck, and where an agent doe
 - Repeating "speck" down The clever bits is fine: the user asked for speck to be named each time.
 - Sentences it covers today: "It isn't only code." (opening), every bullet of The clever bits except "Ideas only become tickets in conversation" (including "It fits in your pocket"), "It runs on your machine" (The panel) and "It sets up `speck/`" (Without an agent).
 - Asked for by the user on 2026-10-25.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
