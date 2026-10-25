@@ -38,6 +38,7 @@ speck's TVs play six tricks, and speck reacts to each.
 ## Notes
 - The prototype is `docs/design/lcd/watching.html` (open it from that folder; it loads `templates/lcd.js`, and `?beat=<name>` plays one beat on repeat). Agreed with the user on 2026-10-25, also at https://claude.ai/artifact/FsG1NCryHWmFYfP9871Adx. Its timings, sizes and wording are the reference; the builder may tidy its code. Its beats here are `tune`, `mirror`, `pong`, `vhold`, `peek` and `drumroll`.
 - Waits for 0504, in the same code.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
