@@ -1,7 +1,7 @@
 ---
 id: "0505"
 title: "Let speck's TVs play tricks while it watches"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0504"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T22:38:37.501Z"
 approved: "2026-10-25T23:33:48.593Z"
+finished: "2026-10-25T23:37:46.153Z"
 
 ---
 # 0505 · Let speck's TVs play tricks while it watches
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 After 0504, the TVs only scroll their logs. The user liked the beats where the TVs themselves join in, which make the scene change as well as speck.
