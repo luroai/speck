@@ -39,6 +39,7 @@ The 0484 checks of a closed card's line pass however long the panel takes to sta
 - From the inbox note, raised while building 0485: seen twice in 0485's related test run (`speck will answer · Review 2 · 100:00 · bug`), while the file passed on its own.
 - Today: tickets 0901 and 0905 in the file's board start `ago(5990)`, and the checks match `99:5\d` (lines 131 and 191).
 - Asked for by the user on 2026-10-25, before releasing 0.15.0.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
