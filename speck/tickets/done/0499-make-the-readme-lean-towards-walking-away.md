@@ -1,7 +1,7 @@
 ---
 id: "0499"
 title: "Make the README lean towards walking away"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0498"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T12:23:10.121Z"
 approved: "2026-10-25T12:24:45.940Z"
+finished: "2026-10-25T12:28:17.815Z"
 
 ---
 # 0499 · Make the README lean towards walking away
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The README says two things at once: plan, walk away and come back to it shipped, and also that nothing ships until you say so and the judgement stays with you. A reader can't tell which speck is, and auto-ship, the thing that makes "come back to it shipped" true, isn't mentioned until How it works, and then only as a setting.
