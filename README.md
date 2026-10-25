@@ -21,7 +21,7 @@ Use the agents you already have: Claude Code, Codex or Cursor, or a model provid
 
 ## Get started
 
-Paste this prompt into your coding agent, opened in the folder of the project you want to build, or in an empty folder for a new one. [Claude Code](https://claude.com/claude-code) is the agent speck is most tested with.
+Paste this prompt into your coding agent, opened in the folder of the project you want to build, or in an empty folder for a new one. [Claude Code](https://claude.com/claude-code) is the best builder in testing so far.
 
 ```text
 Set up speck in this folder. If Node.js 20 or newer isn't installed, offer to
@@ -69,6 +69,12 @@ Every approved ticket has a one-page **review pack**, written for someone who do
 The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. `speck/config.yml` holds the project's settings, and your own choices, such as who builds and reviews, can be kept for this machine only.
 
 **Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them, and pick each role's agent and model, in the panel's Settings. API keys stay on this machine, out of git.
+
+**Which to choose.** speck works with one agent building and reviewing (set `allow_same_model_review: true`), but two different agents are best: a second model reviews adversarially and catches what the builder misses. The best options from testing so far:
+
+- **Builder: Claude Code.** Claude Code builds speck itself.
+- **Reviewer: Codex, with gpt-6.1-sol.** Codex has reviewed almost every speck ticket, usually in under a minute a round.
+- **Grok through Cursor** worked well as a builder in a short test, but is slow as a reviewer: it found the same problems as Codex but took 4 to 11 minutes a round.
 
 A build runs only the tests its change touches. The whole suite runs when a ticket ships, on the ticket merged with `main` as it is then, and one ship queue ships approved tickets one at a time, so ships never race each other. [`docs/brief.md`](docs/brief.md) has the full design.
 
