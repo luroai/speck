@@ -46,7 +46,7 @@ approved: "2026-10-25T22:17:03.896Z"
 - Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
-You can now start the control panel so it keeps running by itself: `speck panel --background` starts it, waits until it's answering, prints its address and gives you your terminal back. Closing that terminal doesn't stop it. `speck panel --stop` stops it again. If the panel is already running on that port, starting it again does nothing and just prints where it is. To see it, run `speck panel --background`, close the terminal, open the address in your browser, then run `speck panel --stop`. What the panel would have printed goes to `speck/.cache/panel.log`, so look there if it seems stuck. Running it the old way, in the foreground until Ctrl+C, works as before.
+You can now start the control panel so it keeps running by itself: `speck panel --background` starts it, waits until it's answering, prints its address and gives you your terminal back. Closing that terminal doesn't stop it. `speck panel --stop` stops it again. If the panel is already running on that port, starting it again does nothing and just prints where it is. To see it, run `speck panel --background`, close the terminal, open the address in your browser, then run `speck panel --stop`. What the panel would have printed goes to a log file in speck's cache folder, so look there if it seems stuck. Running it the old way, in the foreground until Ctrl+C, works as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
