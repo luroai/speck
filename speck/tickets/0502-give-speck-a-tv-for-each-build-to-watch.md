@@ -43,6 +43,7 @@ speck watches a little retro TV for each build, and does something different eve
 - The prototype is `docs/design/lcd/watching.html` (open it from that folder; it loads `templates/lcd.js`, and `?beat=<name>` plays one beat on repeat). Agreed with the user on 2026-10-25, also at https://claude.ai/artifact/FsG1NCryHWmFYfP9871Adx. Its timings, sizes and wording are the reference; the builder may tidy its code.
 - Waits for 0452, so the animation goes in 0.16.0 rather than half of it in 0.15.0 (decided with the user on 2026-10-25).
 - Failing before this build: none
+- Self-check: a beat asked for before the pose's start (a negative time) no longer fails; the three-TV row sits 1 unit further left than the prototype's, so speck's lean never touches the nearest TV by a dot.
 - Today: `watchPose` and `speckPoses` in `templates/panel-header.js` (0414), the rhythm in `speckRests`, and the screen code in `templates/lcd.js`.
 
 ## In plain words
