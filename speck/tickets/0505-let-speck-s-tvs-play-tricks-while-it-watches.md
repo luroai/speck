@@ -1,7 +1,7 @@
 ---
 id: "0505"
 title: "Let speck's TVs play tricks while it watches"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0504"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T22:38:37.501Z"
+approved: "2026-10-25T23:33:48.593Z"
 
 ---
 # 0505 · Let speck's TVs play tricks while it watches
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0504, the TVs only scroll their logs. The user liked the beats where the TVs themselves join in, which make the scene change as well as speck.
@@ -52,9 +53,14 @@ Worth knowing: in the peek and the drumroll, that TV's bar jumps to nearly full 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 173,910
+- Elapsed since build started: 55 min
+- Changed lines: 106 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox notes): in the peek and the drumroll, the nearest TV's bar jumps to the trick's near-full bar as it starts and back to its own as it ends, as the prototype does; blending it would be smoother. The watch pose's tests still draw beats with the real Math.random (noted in 0504), and with 24 beats several older tests now sample longer to see each one; seeding Math.random would make them certain and quicker.
 
