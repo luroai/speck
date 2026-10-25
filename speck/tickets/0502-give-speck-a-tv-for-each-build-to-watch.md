@@ -1,7 +1,7 @@
 ---
 id: "0502"
 title: "Give speck a TV for each build to watch"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,13 +12,13 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: []                # ticket ids that must be done first
+after: ["0452"]                # ticket ids that must be done first
 created: 2026-10-25
 
 ---
 # 0502 · Give speck a TV for each build to watch
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 While builds run, speck spends most of its time in the watching pose, and today that pose is one 7.2-second loop: glance about, read the clipboard, tick a line. Watched for minutes at a time, it repeats, and nothing on the screen shows what speck is watching.
@@ -40,6 +40,7 @@ speck watches a little retro TV for each build, and does something different eve
 ## Notes
 - Asked for by the user on 2026-10-24 and 2026-10-25: "a new watching animation … this is the one state that you're mainly going to see Speck doing … multiple elements so it gives the impression that it isn't repetitive", the computer to "look more like a retro machine or tv box to go with the dot matrix retro theme", and "nothing with extending arms".
 - The prototype is `docs/design/lcd/watching.html` (open it from that folder; it loads `templates/lcd.js`, and `?beat=<name>` plays one beat on repeat). Agreed with the user on 2026-10-25, also at https://claude.ai/artifact/FsG1NCryHWmFYfP9871Adx. Its timings, sizes and wording are the reference; the builder may tidy its code.
+- Waits for 0452, so the animation goes in 0.16.0 rather than half of it in 0.15.0 (decided with the user on 2026-10-25).
 - Today: `watchPose` and `speckPoses` in `templates/panel-header.js` (0414), the rhythm in `speckRests`, and the screen code in `templates/lcd.js`.
 
 ## In plain words
