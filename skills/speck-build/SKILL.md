@@ -92,6 +92,7 @@ When a ship that `speck run`'s queue started is refused in a way this ticket's b
 - A conflict merging it into the base branch (`speck ship` exited 13): follow "Conflict".
 - The tests failed on the ticket as it would land, merged with the base branch, while the base branch's own tests pass, or while the base branch is failing but those tests pass there (exited 16): follow "Tests fail together".
 - The base branch's own tests are failing (exited 14): follow "Base branch failing".
+- Files under `speck/` that its branch adds or changes hold one of the user's private words or their home folder's path (exited 17): follow "Private words".
 - The message says `speck run` has handed it back twice already without it shipping: follow "Handed back again".
 - The user read the approved result and sent changes back with `speck changes`: follow "Changes asked for".
 
@@ -131,6 +132,14 @@ The user read the approved result and asked for changes. The message gives their
 1. Make the changes the note asks for, within the ticket's scope. A task changes its files in its folder in `outputs/` (`speck output <id>`). Add or change tests as in sections 2 and 3, run the round's test files (`speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`) and commit (`speck(<id>): changes asked for by the user`).
 2. Run the review loop again as in section 4, with a response file saying what you changed for the note and which test files you ran. `speck review` accepts the `approved` ticket and sets it to `reviewing`, and the reviewer's round is given the note to check as well as the acceptance criteria. It counts as a merge round, a re-review after an approval: it doesn't count towards `max_review_rounds`, and `max_merge_rounds` limits it.
 3. Once `speck next <id>` says `ship`, update the ticket's `## In plain words` if the change alters it, commit, run `speck close <id>`, and stop. It then waits to be shipped as before. On `block`, block the ticket (section 6).
+
+### Private words
+
+`speck ship`'s message names each file under `speck/` and each line in it that holds one of the words in `~/.config/speck/private-words` or the user's home folder's path, without repeating the word. Work in the ticket's worktree, and change only those lines.
+
+1. Take each one out: write a path under the home folder as a `~/` path, and reword a line with a private word so it doesn't need it. This is the one time you change a line in the ticket's `## Review rounds` by hand: change only the words in it, and keep its JSON valid.
+2. Commit the files, staged by name (`speck(<id>): private words out`). Change nothing outside `speck/`, so the ticket stays approved without another review round.
+3. Stop: `speck run`'s ship queue ships it once its branch has the new commit.
 
 ### Base branch failing
 
@@ -174,5 +183,5 @@ Use this when the review loop says `block`, the size guard trips, or a product q
 - Never commit, stage or change files in the main checkout, before or after `speck start`, except to pull the base branch in section 1, to create and set ready a fix ticket in "Base branch failing" (section 5) and, when `worktrees` is off, to build on the ticket's branch there. That checkout belongs to the user and to other sessions.
 - Stage only the files you created or changed, by name (`git add <path> …`). Never use `git add -A`, `git add .` or `git commit -a`: other sessions may have files in the same checkout, and those commands would sweep them into your commit. If files you didn't create or change appear, leave them alone (don't commit, move or delete them) and mention them to the user when you report back.
 - Wait for every command you start. Run every test run (`speck test`, with or without `--files`) and every review round in the foreground, and wait for it to finish, however long it takes: give it the longest time limit your shell tool allows. Never end your turn while a command you started is still running in the background. A build that `speck run` started ends when your turn ends, and whatever is still running is stopped with it, so the build stops partway with the ticket left `building` or `reviewing`.
-- Never edit a ticket's `## Review rounds` section by hand. Only speck writes it.
+- Never edit a ticket's `## Review rounds` section by hand, except as "Private words" in section 5 says. Only speck writes it.
 - Keep to the ticket. If you find other problems, list them in the Delivery log as follow-up ideas. Don't fix them.

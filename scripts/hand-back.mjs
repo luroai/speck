@@ -18,7 +18,7 @@ import { providerStartWords } from './provider-build.mjs';
 const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
 
 // The steps in /speck-build's section 5 for each kind of hand-back (0194).
-const HAND_BACK_STEPS = { conflict: 'Conflict', tests: 'Tests fail together', base: 'Base branch failing', changes: 'Changes asked for' };
+const HAND_BACK_STEPS = { conflict: 'Conflict', tests: 'Tests fail together', base: 'Base branch failing', changes: 'Changes asked for', private: 'Private words' };
 
 // What a build's session is told when speck run hands its ticket back (0194): what the ship found, in speck ship's own
 // words, and which of /speck-build's steps to follow. `count` is how many conflict or failing-test hand-backs this one
@@ -30,9 +30,11 @@ export function handBackMessage({ id, kind, why, base, count }) {
     conflict: `merging it into ${base} hit a conflict`,
     tests: `the tests failed on it as it would land, merged with ${base} as it is now, while ${base}'s own tests pass: its own change broke them, or it doesn't work with ${base}'s newer changes`,
     base: `${base}'s own tests are failing`,
+    private: `files under speck/ that its branch adds or changes hold the user's private words or home folder's path`,
   }[kind];
   const head = `speck run's ship queue tried to ship ticket ${id}, and ${what}, so nothing was shipped. speck ship said: ${why}`;
   if (kind === 'base') return `${head}\nFollow the "Base branch failing" steps in section 5 of /speck-build for ${id}. Leave ${id} approved: once ${base} has a new commit, speck run's ship queue tries it again.`;
+  if (kind === 'private' && count <= 2) return `${head}\nFollow the "Private words" steps in section 5 of /speck-build for ${id}, in its worktree. ${id} stays approved: once its branch has the new commit, speck run's ship queue tries it again.`;
   if (count > 2) return `${head}\nspeck run has handed ${id} back twice already without it shipping, so don't merge again: follow the "Handed back again" steps in section 5 of /speck-build for ${id}.`;
   return `${head}\nFollow the "${HAND_BACK_STEPS[kind]}" steps in section 5 of /speck-build for ${id}, in its worktree, until it's approved again. Then stop: speck run's ship queue ships it.`;
 }
