@@ -1,7 +1,7 @@
 ---
 id: "0507"
 title: "Prepare release 0.16.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0502", "0503", "0504", "0505", "0506", "0508", "0509", "0510"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T23:37:58.835Z"
+approved: "2026-10-25T23:41:42.546Z"
 
 ---
 # 0507 · Prepare release 0.16.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0.15.0, speck has a new watching animation, the scene it's in most of the time while builds run, and a ship check that keeps private words and home folder paths out of what it publishes. None of it is in a release yet, so projects that install speck don't get it.
@@ -56,9 +57,14 @@ speck is ready to go out as version 0.16.0, a minor release. Its headline is spe
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 156,987
+- Elapsed since build started: 4 min
+- Changed lines: 64 (limit 5000)
 Follow-ups: none.
 
 ## Review rounds
