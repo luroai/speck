@@ -21,6 +21,7 @@ import { foremanView, readForeman, fixingOf } from './foreman.mjs';
 import { agentView } from './foreman-agent.mjs';
 import { panelForemanReply } from './foreman-answer.mjs';
 import { goWith } from './go-with.mjs';
+import { panelAway } from './panel-background.mjs'; // 0509: --background and --stop
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch and a setting) ----------
 
@@ -146,8 +147,7 @@ function panelSetPriority(repo, id, value) {
   return { status: 200, body: { ok: true, id: pad } };
 }
 
-// True only for the token this server made, compared in constant time.
-// Compared as bytes, since a header with non-ASCII characters can match in length but not in bytes.
+// True only for the token this server made, compared in constant time and as bytes (non-ASCII can match in length only).
 function sameToken(given, token) {
   if (typeof given !== 'string') return false;
   const a = Buffer.from(given), b = Buffer.from(token);
@@ -166,13 +166,12 @@ function panelLog(repo, id) {
   return { text: lines.slice(-PANEL_LOG_LINES).join('\n'), truncated: lines.length > PANEL_LOG_LINES };
 }
 
-// `speck panel`. The process you start only launches the first server process and waits until the last one has gone.
-// Everything else, serving, watching the code and restarting, happens in server processes, each running the code as it
-// was when it started: when the code changes, a server starts its successor on the new code, hands it the port and stops.
+// `speck panel`. The process you start only launches the first server process and waits until the last one has gone. Everything
+// else, serving, watching the code and restarting, happens in server processes, each on the code as it was when it started.
 export function cmdPanel(args) {
   findRepoRoot(); // plain errors before anything starts
-  panelPort(args);
-  panelUrl(args);
+  const port = panelPort(args), url = panelUrl(args);
+  if (args.includes('--background') || args.includes('--stop')) return panelAway(args, port, url);
   // Made once, when `speck panel` starts, and passed down through every restart, so an open page's token keeps working.
   const { child } = startPanelServer(args, crypto.randomBytes(32).toString('hex'), null, 'pipe');
   // Each server process writes its exit code to this pipe as it exits, and the pipe closes once they all have.
@@ -230,12 +229,12 @@ function codeHash() {
 // server on the new code (see cmdPanel).
 export async function panelServer() {
   const env = process.env;
-  const args = JSON.parse(env.SPECK_PANEL_ARGS || '[]'), handover = env.SPECK_PANEL_HANDOVER === '1';
+  const args = JSON.parse(env.SPECK_PANEL_ARGS || '[]'), handover = env.SPECK_PANEL_HANDOVER === '1', away = env.SPECK_PANEL_AWAY === '1';
   // A web page elsewhere can send a POST here (the Host check doesn't stop a form post to 127.0.0.1), but can't read
   // this token, which goes only into the page, and its Origin gives it away. Taken out of the environment, so the
   // commands this runs don't get it.
   const token = env.SPECK_PANEL_TOKEN, running = env.SPECK_PANEL_CODE || codeHash();
-  for (const k of ['SPECK_PANEL_ARGS', 'SPECK_PANEL_HANDOVER', 'SPECK_PANEL_TOKEN', 'SPECK_PANEL_CODE', 'SPECK_PANEL_CODE_URL']) delete env[k];
+  for (const k of ['SPECK_PANEL_ARGS', 'SPECK_PANEL_HANDOVER', 'SPECK_PANEL_TOKEN', 'SPECK_PANEL_CODE', 'SPECK_PANEL_CODE_URL', 'SPECK_PANEL_AWAY']) delete env[k];
   if (!token || !process.send) throw new SpeckError('Start the panel with: speck panel');
   let successor = null; // the server starting on new code, until it's ready or fails
   // The pipe to cmdPanel: this writes its exit code there, and stops once cmdPanel has gone (Ctrl+C or a kill).
@@ -485,6 +484,7 @@ export async function panelServer() {
       const told = String(req.headers['x-speck-board'] ?? '');
       return askState(res, /^\d{1,15}$/.test(told) ? Number(told) : null, String(req.headers['x-speck-have'] ?? ''));
     }
+    if (where === '/api/panel') return send(res, 200, 'application/json', JSON.stringify({ repo: fs.realpathSync(repo), url: url ? url.origin : null })); // 0509: which repo's panel, and its --url
     if (where === '/api/run-log') { const out = runLogAnswer(runs); return send(res, out.status, 'application/json', JSON.stringify(out.body)); } // 0415: always run.log
     const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log(\/close)?$/);
     if (log) {
@@ -540,7 +540,7 @@ export async function panelServer() {
     server.listen(where, resolve);
   });
   server.on('error', e => console.error(`speck panel: ${e.message}`));
-  if (!handover) console.log(`speck panel: http://127.0.0.1:${port}/${url ? ` and ${url.origin}/` : ''} (press Ctrl+C to stop)`);
+  if (!handover) console.log(`speck panel: http://127.0.0.1:${port}/${url ? ` and ${url.origin}/` : ''} ${away ? '(in the background: stop it with speck panel --stop)' : '(press Ctrl+C to stop)'}`);
   process.send('ready');
 
   // Stops taking connections, closes the idle ones at once and the rest once answered (each answer then says
