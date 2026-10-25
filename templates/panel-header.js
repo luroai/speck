@@ -104,20 +104,30 @@ const watchPose = (() => {
   const TVS = { 1: [{ cx: -46, w: 36, h: 25 }], 2: [{ cx: -62, w: 27, h: 20 }, { cx: -32, w: 27, h: 20 }], 3: [{ cx: -71, w: 21, h: 17 }, { cx: -48, w: 21, h: 17 }, { cx: -25, w: 21, h: 17 }] };
   // A TV for each build the word names, up to three; one while shipping.
   const tvs = () => { const m = /^Building (\d+)$/.exec(speckDo.word || ''); return TVS[m ? Math.max(1, Math.min(3, Number(m[1]))) : 1]; };
-  // A TV's parts, in scene units: its box, its screen (left of the dials) and its rabbit ears' tips.
-  function tvGeom(m) {
+  // A TV's parts, in scene units: its box, its screen (left of the dials) and its rabbit ears' tips, waggled by `wig` (0505).
+  function tvGeom(m, wig = 0) {
     const x0 = m.cx - m.w / 2, y1 = -LEG, y0 = y1 - m.h, knobs = Math.max(6, m.w * .24), top = { x: m.cx + 1, y: y0 }, ear = m.h * .55;
     return { x0, y0, y1, knobs, sx0: x0 + 2.5, sx1: x0 + m.w - knobs, sy0: y0 + 2.5, sy1: y1 - 2.5, top,
-      tipL: { x: top.x - ear * Math.sin(.5), y: top.y - ear * Math.cos(.5) }, tipR: { x: top.x + ear * Math.sin(.42), y: top.y - ear * Math.cos(.42) } };
+      tipL: { x: top.x - ear * Math.sin(.5 + wig), y: top.y - ear * Math.cos(.5 + wig) }, tipR: { x: top.x + ear * Math.sin(.42 - wig * .7), y: top.y - ear * Math.cos(.42 - wig * .7) } };
   }
+  // 0505: Pong's ball and paddles on a TV's screen at time t.
+  function pongBall(g, t) {
+    const ix0 = g.sx0 + 3.5, ix1 = g.sx1 - 3.5, iy0 = g.sy0 + 2.5, iy1 = g.sy1 - 2.5, W = ix1 - ix0, H = iy1 - iy0;
+    const tri = (v, L) => { const q = ((v % (2 * L)) + 2 * L) % (2 * L); return q < L ? q : 2 * L - q; };
+    const x = ix0 + tri(t / 60, W), y = iy0 + tri(t / 85, H), ph = Math.max(3, H * .32);
+    return { x, y, ly: y - ph / 2 + 1.5 * Math.sin(t / 200), ry: y - ph / 2 - 1.5 * Math.sin(t / 230) };
+  }
+  const clampY = (y, a, b, h) => Math.max(a, Math.min(b - h, y));
   // Each TV's bar fills at its own pace, 10 to 18 seconds, then a tick shows for DONE ms.
   const period = j => 10000 + rnd(j + 5) * 8000;
   function tvState(j, t) {
     const P = period(j), u = (t + rnd(j + 9) * P) % P;
     return { prog: clamp01(u / (P - DONE)), done: u >= P - DONE, since: u - (P - DONE) };
   }
-  function drawTV(pen, m, j, t) {
-    const { INK, FAINT, OFF } = LCD, st = tvState(j, t), g = tvGeom(m);
+  // What a TV shows (0505): `st`, its bar; `show`, its log (or tick), snow, Pong or a tiny speck (`me`); `wig`, its
+  // ears waggling; `roll`, its picture rolling by that much.
+  function drawTV(pen, m, j, t, sc) {
+    const { INK, FAINT, OFF } = LCD, st = sc.st, g = tvGeom(m, sc.wig);
     pen.lw = 1.2; pen.line(g.top.x, g.top.y, g.tipL.x, g.tipL.y); pen.line(g.top.x, g.top.y, g.tipR.x, g.tipR.y); // rabbit ears, behind the box
     pen.disc(g.tipL.x, g.tipL.y, 1, INK); pen.disc(g.tipR.x, g.tipR.y, 1, INK); pen.disc(g.top.x, g.top.y, 2.2, INK, 1.4);
     pen.lw = 1.5; pen.line(g.x0 + 4, g.y1, g.x0 + 2.5, 0); pen.line(g.x0 + m.w - 4, g.y1, g.x0 + m.w - 2.5, 0); // two short legs
@@ -129,6 +139,26 @@ const watchPose = (() => {
     const c = 2, scr = [[g.sx0 + c, g.sy0], [g.sx1 - c, g.sy0], [g.sx1, g.sy0 + c], [g.sx1, g.sy1 - c], [g.sx1 - c, g.sy1], [g.sx0 + c, g.sy1], [g.sx0, g.sy1 - c], [g.sx0, g.sy0 + c]];
     pen.lw = 1.2; pen.poly(scr, INK); // the curved screen
     const ix0 = g.sx0 + 2.5, ix1 = g.sx1 - 2.5, iy0 = g.sy0 + 2.5, iy1 = g.sy1 - 2.5;
+    if (sc.show === 'snow') {
+      const f = Math.floor(t / 70);
+      for (let y = iy0; y <= iy1; y += 1.4) for (let x = ix0; x <= ix1; x += 1.4) { const q = rnd(f * 7.3 + x * 3.1 + y * 17.7); if (q > .55) pen.dotAt(x, y, q > .85 ? INK : FAINT); }
+      return;
+    }
+    if (sc.show === 'pong') { // two paddles, a dotted net and the ball
+      const b = pongBall(g, t), ph = Math.max(3, (iy1 - iy0) * .32), ly = clampY(b.ly, iy0, iy1, ph), ry = clampY(b.ry, iy0, iy1, ph);
+      pen.lw = 1.8; pen.line(ix0, ly, ix0, ly + ph); pen.line(ix1, ry, ix1, ry + ph);
+      for (let y = iy0; y < iy1; y += 2) pen.dotAt((ix0 + ix1) / 2, y, FAINT);
+      pen.disc(b.x, b.y, 1.4, INK);
+      return;
+    }
+    if (sc.show === 'mirror') { // a tiny speck, copying speck
+      const me = sc.me, cx = (ix0 + ix1) / 2 + (me.x - BX) * .25, by = iy1 + 2 + me.y * .35, r = (iy1 - iy0) * .4;
+      pen.save(); pen.translate(cx, by); pen.rotate(-me.rot); pen.lw = 1.1;
+      pen.ring(0, -r - 1, r); pen.disc(-r * .62, -r * 1.95, r * .26, INK); pen.disc(r * .62, -r * 1.95, r * .26, INK);
+      pen.disc(-me.lookX * r * .4, -r - 1 + me.lookY * r * .3, Math.max(.8, r * .25), LCD.RED);
+      pen.restore();
+      return;
+    }
     if (st.done) { // a tick, drawn in
       const k = clamp01(st.since / 300), cx = (ix0 + ix1) / 2, cy = (iy0 + iy1) / 2, s = Math.min(ix1 - ix0, iy1 - iy0) / 12;
       const A = [cx - 5 * s, cy], B = [cx - 1.5 * s, cy + 3.5 * s], C = [cx + 6 * s, cy - 4.5 * s];
@@ -138,22 +168,28 @@ const watchPose = (() => {
       return;
     }
     // the log scrolling up, its newest line being typed, over the progress bar
-    const rows = Math.max(1, Math.floor((iy1 - iy0 - 3) / 2.6)), sc = Math.floor(t / 420 + j * 13);
+    const rows = Math.max(1, Math.floor((iy1 - iy0 - 3) / 2.6)), row = Math.floor(t / 420 + j * 13);
+    const H = iy1 - iy0 - 2; // 0505: how far it rolls before it comes round again
     for (let rr = 0; rr < rows; rr++) {
-      const n = sc + rr, last = rr === rows - 1, full = 2 + rnd(n + j * 31) * (ix1 - ix0 - 2), len = last ? full * clamp01((t % 420) / 420 * 1.6) : full;
-      if (len > 1) pen.line(ix0, iy0 + rr * 2.6, ix0 + len, iy0 + rr * 2.6, last ? INK : FAINT);
+      const n = row + rr, last = rr === rows - 1, full = 2 + rnd(n + j * 31) * (ix1 - ix0 - 2), len = last ? full * clamp01((t % 420) / 420 * 1.6) : full;
+      const y = sc.roll === null ? iy0 + rr * 2.6 : iy0 + (rr * 2.6 + sc.roll * H) % H;
+      if (len > 1) pen.line(ix0, y, ix0 + len, y, last ? INK : FAINT);
     }
+    if (sc.roll !== null) { const by = iy0 + (sc.roll * H + H * .6) % H; pen.lw = 2.2; pen.line(ix0 - 1, by, ix1 + 1, by, INK); } // the black bar
     pen.lw = 1.4; pen.line(ix0, iy1, ix1, iy1, FAINT);
     if (st.prog > .02) pen.line(ix0, iy1, ix0 + (ix1 - ix0) * st.prog, iy1, INK);
   }
   // The beats: their weight and how long each lasts, in ms. `own`: it has its own reaction to a tick, or is too taken up
-  // to notice one, so speck doesn't hop. 0503: eight small habits join 0502's three. 0504: and four comic moments.
+  // to notice one, so speck doesn't hop. 0503: eight small habits join 0502's three. 0504: and four comic moments. 0505:
+  // and six tricks its nearest TV plays.
   const BEATS = { scan: { w: 3, d: [5200, 7000] }, read: { w: 2, d: [4600, 5400], own: true }, lean: { w: 2, d: [3600, 4400] },
     popcorn: { w: 2, d: [5200, 6200] }, clock: { w: 1, d: [3600, 4200] }, yoyo: { w: 1, d: [4800, 5600] }, hum: { w: 1, d: [4200, 5200] },
     mote: { w: 1, d: [5200, 6000] }, sneeze: { w: 1, d: [3800, 4400], own: true }, doze: { w: 1, d: [5000, 5800], own: true },
     hiccup: { w: 1, d: [4200, 5000], own: true },
     bubble: { w: 1, d: [4600, 5400], own: true }, spider: { w: 1, d: [5000, 5800], own: true },
-    balance: { w: 1, d: [6000, 6800], own: true }, dance: { w: 1, d: [5400, 6200], own: true } };
+    balance: { w: 1, d: [6000, 6800], own: true }, dance: { w: 1, d: [5400, 6200], own: true },
+    tune: { w: 1, d: [5000, 5800], own: true }, mirror: { w: 1, d: [5600, 6400], own: true }, pong: { w: 1, d: [5600, 6600], own: true },
+    vhold: { w: 1, d: [5000, 5800], own: true }, peek: { w: 1, d: [5600, 6400], own: true }, drumroll: { w: 1, d: [5000, 5800], own: true } };
   // The beats from the pose's start: the first is always keeping an eye on the builds, so the still frame is too. A pose
   // started again (its time going back) starts a fresh plan.
   let plan = { start: [0, 6000], kind: ['scan'], last: 0 };
@@ -186,10 +222,12 @@ const watchPose = (() => {
     const env = sine(Math.min(1, k * b.d / BLEND, (1 - k) * b.d / BLEND));
     // At rest it breathes and watches one build's TV, moving on to the next every few seconds.
     const rl = tvLook(ms[Math.floor(t / FOCUS) % ms.length]);
-    const R = { x: 0, y: 0, rot: 0, sy: 1 + .015 * Math.sin(t / 640), lookX: rl.lookX, lookY: rl.lookY, raise: 0, lid: 1, droop: 0, ear: 0 };
+    const R = { x: 0, y: 0, rot: 0, sy: 1 + .015 * Math.sin(t / 640), lookX: rl.lookX, lookY: rl.lookY, raise: 0, hide: 0, lid: 1, droop: 0, ear: 0 };
     const O = {}, props = []; // this beat's own pose, mixed in by env, and what it draws
     let eye = null, hand = null, ticks = b.reads % 5; // four ticks, then a fresh page; where its free hand goes
     let balance = null; // while balancing: how far through, and the wobble
+    // 0505: what each TV shows; a trick changes only the TV nearest speck, the last
+    const screens = ms.map((m, j) => ({ st: tvState(j, t), show: 'log', wig: 0, roll: null, me: null })), near = ms[ms.length - 1], tv = screens[ms.length - 1];
     if (b.kind === 'scan') { // its eye goes from TV to TV, then round the room
       const spots = [...ms.map(tvLook), { lookX: .1, lookY: -.55 }, { lookX: .7, lookY: .05 }];
       const n = spots.length, q = k * n, a = Math.floor(q) % n, c = (a + 1) % n, f = sine(seg(q % 1, .75, 1));
@@ -299,6 +337,40 @@ const watchPose = (() => {
       if (k < .68) { const ph = (t - b.s) / 300; O.x = 3 * Math.sin(ph); O.rot = .08 * Math.sin(ph); O.y = -1.6 * Math.abs(Math.cos(ph)); eye = 'bliss'; O.lookX = .2; O.lookY = -.2; }
       else if (k < .86) { eye = 'wide'; O.lookX = 0; O.lookY = 0; O.sy = 1.03; }
       else { eye = 'sheepish'; const L = tvLook(ms[ms.length - 1]); O.lookX = L.lookX; O.lookY = L.lookY; }
+    } else if (b.kind === 'tune') { // the TV goes to snow; it waggles its own ear and the TV's rabbit ears waggle with it
+      const L = tvLook(near); O.lookX = L.lookX; O.lookY = L.lookY;
+      if (k > .08 && k < .62) tv.show = 'snow';
+      if (k > .08 && k < .22) eye = 'wide';
+      if (k >= .22 && k < .62) { eye = 'focus'; O.ear = 3 * Math.sin((t - b.s) / 85); tv.wig = .22 * Math.sin((t - b.s) / 85); O.rot = .03 * Math.sin((t - b.s) / 170); }
+      if (k >= .62 && k < .78) { eye = 'bliss'; O.y = -2.2 * Math.sin(seg(k, .62, .7) * Math.PI); }
+    } else if (b.kind === 'mirror') { // the TV shows a tiny speck, which copies everything speck does
+      const L = tvLook(near); O.lookX = L.lookX; O.lookY = L.lookY;
+      if (k > .1 && k < .86) tv.show = 'mirror';
+      if (k > .22) { O.x = -4; O.rot = -.07; eye = 'focus'; }
+      if (k > .5 && k < .6) O.rot = .07; // it leans the other way, to test it
+      if (k > .64 && k < .72) { O.y = -3 * Math.sin(seg(k, .64, .72) * Math.PI); eye = 'wide'; }
+    } else if (b.kind === 'pong') { // the TV flicks over to Pong, with static either side; its eye follows the ball
+      if (k > .08 && k < .12 || k > .86 && k < .9) tv.show = 'snow';
+      else if (k >= .12 && k <= .86) tv.show = 'pong';
+      if (tv.show === 'pong') { const ball = pongBall(tvGeom(near), t), L = lookAt(ball.x, ball.y); O.lookX = L.lookX; O.lookY = L.lookY; O.x = -3; eye = k > .5 && k < .7 ? 'focus' : null; O.rot = -.04 + .03 * Math.sin(t / 300); }
+    } else if (b.kind === 'vhold') { // the TV's picture rolls, a black bar sliding through; speck tilts to follow it, then wobbles upright
+      const L = tvLook(near); O.lookX = L.lookX; O.lookY = L.lookY; eye = 'focus';
+      if (k > .1 && k < .72) { tv.roll = (t - b.s) / 260; O.rot = -.13 * Math.sin((t - b.s) / 260 * Math.PI * .5); O.x = -2; }
+      if (k >= .72 && k < .9) { eye = 'flat'; O.rot = .05 * Math.sin((t - b.s) / 70) * (1 - seg(k, .72, .9)); O.sy = .97; }
+    } else if (b.kind === 'peek') { // too tense to watch the bar nearly full: it hides behind the clipboard, peeks twice, then hops at the tick
+      const L = tvLook(near), done = k >= .76;
+      tv.st = done ? { prog: 1, done: true, since: (k - .76) * b.d } : { prog: lerp(.82, .985, seg(k, .05, .76)), done: false, since: 0 };
+      if (!done) {
+        O.hide = 1; O.lookX = .9; O.lookY = .1; eye = 'flat'; O.sy = .97;
+        for (const pk of [.32, .55]) if (k > pk && k < pk + .09) { O.hide = .35; O.lookX = L.lookX; O.lookY = L.lookY; eye = 'wide'; }
+        O.y = k > .6 ? .5 * Math.sin(t / 45) : 0; // trembling
+      } else { O.lookX = L.lookX; O.lookY = L.lookY; eye = 'bliss'; O.y = -3 * Math.sin(seg(k, .76, .86) * Math.PI); }
+    } else if (b.kind === 'drumroll') { // a drumroll with its feet as the bar nears full, then TA-DA at the tick
+      const L = tvLook(near), done = k >= .7;
+      tv.st = done ? { prog: 1, done: true, since: (k - .7) * b.d } : { prog: lerp(.86, .995, seg(k, .08, .7)), done: false, since: 0 };
+      O.lookX = L.lookX; O.lookY = L.lookY;
+      if (!done && k > .08) { O.y = -1.2 * Math.abs(Math.sin(t / 40)); eye = 'focus'; props.push({ key: 'drr', a: env, draw(pen) { pen.text('DRRR', B.x + 6 + (Math.floor(t / 60) % 2), -56, { font: F5 }); } }); }
+      if (done) { const u = seg(k, .7, .95); O.y = -4 * Math.sin(seg(k, .7, .8) * Math.PI); eye = 'bliss'; O.rot = .06; props.push({ key: 'tada', a: Math.sin(u * Math.PI) * 1.6, draw(pen) { pen.text('TA-DA', B.x + 4, -56 - u * 3, { font: F5 }); } }); }
     }
     const P = {};
     for (const n of Object.keys(R)) P[n] = n in O ? lerp(R[n], O[n], env) : R[n];
@@ -308,8 +380,9 @@ const watchPose = (() => {
       const st = tvState(j, t);
       if (st.done && st.since < 500) { P.y -= 3 * Math.sin(st.since / 500 * Math.PI); P.eye = 'wide'; const L = tvLook(m); P.lookX = L.lookX; P.lookY = L.lookY; }
     });
-    // the clipboard, in the hand on its right, lifted to read
-    const cx = lerp(19, 15, P.raise), cy = lerp(-21, -35, P.raise), w = 13, h = 16, tilt = lerp(.08, -.12, P.raise);
+    // the clipboard, in the hand on its right, lifted to read, or held up in front of it to hide behind (0505: a unit
+    // nearer than the prototype has it, so that arm stays no longer than its usual length)
+    const cx = lerp(lerp(19, 15, P.raise), 4, P.hide), cy = lerp(lerp(-21, -35, P.raise), -40, P.hide), w = 13, h = 16, tilt = lerp(lerp(.08, -.12, P.raise), 0, P.hide);
     // 0504: balancing, from its hand to its head, a wobble, a slide off onto the floor, then back in its hand
     let clip = null;
     if (balance) {
@@ -327,7 +400,8 @@ const watchPose = (() => {
     const arms = held ? [{ s: rim(.35), h: { x: cx + 1, y: cy + h * .55 } }] : [];
     if (hand && env > .02) arms.push({ s: LEFT, h: { x: lerp(LEFT.x, hand.x, Math.min(1, env * 1.4)), y: lerp(LEFT.y, hand.y, Math.min(1, env * 1.4)) } }); // the free hand, reaching out
     const B = { t, x: BX + P.x, y: P.y, rot: P.rot, sy: P.sy, lookX: P.lookX, lookY: P.lookY, eye: P.eye, lid: P.lid, droop: P.droop, ear: P.ear, arms };
-    props.unshift(...ms.map((m, j) => ({ key: `tv${j}`, layer: 'back', draw(pen) { drawTV(pen, m, j, t); } })));
+    if (tv.show === 'mirror') tv.me = B;
+    props.unshift(...ms.map((m, j) => ({ key: `tv${j}`, layer: 'back', draw(pen) { drawTV(pen, m, j, t, screens[j]); } })));
     props.push({ key: 'clip', draw(pen) {
       pen.save();
       if (clip) { pen.translate(clip.x, clip.y); pen.rotate(clip.a); } else { pen.translate(B.x + cx + w / 2, B.y + cy + h / 2); pen.rotate(tilt); }
@@ -337,9 +411,9 @@ const watchPose = (() => {
       for (let i = 0; i < 4; i++) { const ly = -h / 2 + 5 + i * 3; pen.line(-1.5, ly, w / 2 - 2.5, ly, i < ticks ? INK : FAINT); if (i < ticks) pen.dotAt(-4, ly, INK); }
       pen.restore();
     } });
-    return { B, props, beat: b.kind, ticks };
+    return { B, props, beat: b.kind, ticks, screens };
   }
-  pose.parts = { BEATS, TVS, tvState, tvGeom, beatAt, tvs }; // for the tests
+  pose.parts = { BEATS, TVS, tvState, tvGeom, beatAt, tvs, pongBall }; // for the tests
   return pose;
 })();
 const speckPoses = () => ({ ...LCD.STATES, watch: watchPose, ask: LCD.PANEL.bad, flag: LCD.PANEL.wait, ship: LCD.PANEL.ship });

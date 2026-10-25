@@ -34,7 +34,7 @@ const extras = F => F.props.filter(p => !/^tv\d$/.test(p.key) && p.key !== 'clip
 
 test('0503 AC2: the eight habits are picked at random with 0502\'s beats, by weight, never the same twice running', async () => {
   const { pose, parts } = await watching(2);
-  assert.deepEqual(Object.keys(parts.BEATS).filter(k => !['bubble', 'spider', 'balance', 'dance'].includes(k)).sort(), ['lean', 'read', 'scan', ...NEW].sort()); // 0504 adds four more
+  assert.deepEqual(Object.keys(parts.BEATS).filter(k => !['bubble', 'spider', 'balance', 'dance', 'tune', 'mirror', 'pong', 'vhold', 'peek', 'drumroll'].includes(k)).sort(), ['lean', 'read', 'scan', ...NEW].sort()); // 0504 adds four more, 0505 six
   pose(0);
   const seen = [];
   for (let t = 0; t < 12000000; t += 200) { const b = parts.beatAt(t); if (b.i === seen.length) seen.push(b); }
@@ -66,7 +66,7 @@ test('0503 AC2: no arm reaches beyond its usual length, and nothing a habit draw
   for (const p of [...Object.values(LCD.STATES), ...Object.values(LCD.PANEL)]) for (let t = 0; t < 8000; t += 40) for (const a of [...(p(t).B.arms || []), ...(p(t).B.backArms || [])]) usual = Math.max(usual, armLen(a));
   for (const n of [1, 3]) {
     const { pose, parts } = await watching(n), met = new Set();
-    sample(pose, parts, 900000, 30, (F, b, t) => {
+    sample(pose, parts, 1500000, 30, (F, b, t) => { // 0505: longer, so each is seen however many beats there are
       if (!NEW.includes(b.kind)) return;
       met.add(b.kind);
       for (const a of F.B.arms) assert.ok(armLen(a) <= usual + 1e-9, `${b.kind} at ${t}: an arm ${armLen(a).toFixed(1)} long, more than ${usual.toFixed(1)}`);
@@ -79,7 +79,7 @@ test('0503 AC2: no arm reaches beyond its usual length, and nothing a habit draw
 
 test('0503 AC3: a step finishing makes speck hop and look, except while nodding off, sneezing or hiccupping', async () => {
   const { pose, parts } = await watching(3);
-  const comic = ['bubble', 'spider', 'balance', 'dance']; // 0504: its comic moments keep their own reactions too
+  const comic = ['bubble', 'spider', 'balance', 'dance', 'tune', 'mirror', 'pong', 'vhold', 'peek', 'drumroll']; // 0504: its comic moments keep their own reactions too, as do 0505's TV tricks
   assert.deepEqual(Object.keys(parts.BEATS).filter(k => parts.BEATS[k].own && !comic.includes(k)).sort(), ['doze', 'hiccup', 'read', 'sneeze']);
   const hops = {}, kept = {};
   sample(pose, parts, 3000000, 50, (F, b, t) => {
