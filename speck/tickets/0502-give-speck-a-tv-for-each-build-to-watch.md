@@ -1,7 +1,7 @@
 ---
 id: "0502"
 title: "Give speck a TV for each build to watch"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0452"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T21:37:40.384Z"
+approved: "2026-10-25T21:45:42.655Z"
 
 ---
 # 0502 · Give speck a TV for each build to watch
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 While builds run, speck spends most of its time in the watching pose, and today that pose is one 7.2-second loop: glance about, read the clipboard, tick a line. Watched for minutes at a time, it repeats, and nothing on the screen shows what speck is watching.
@@ -55,9 +56,14 @@ To see it, open the panel while speck run is building. With reduced motion on, i
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 573,549
+- Elapsed since build started: 8 min
+- Changed lines: 146 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - `speck test --related` didn't bring in the screen's tests (0413, 0414, 0416, 0436, 0438, 0446, 0451, 0495), which load the header through a support file; the build ran them by hand. Skipped as a duplicate of speck/ideas/2026-10-24-bring-in-page-tests-for-a-panel-script-change.md.
