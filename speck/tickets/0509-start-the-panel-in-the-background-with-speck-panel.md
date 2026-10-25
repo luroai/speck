@@ -1,7 +1,7 @@
 ---
 id: "0509"
 title: "Start the panel in the background with speck panel --background"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-20-start-and-open-the-panel-when-setup-finishe
 after: []                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T22:08:49.534Z"
+approved: "2026-10-25T22:17:03.896Z"
 
 ---
 # 0509 · Start the panel in the background with speck panel --background
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck panel` runs in the foreground until Ctrl+C. An agent that starts it at the end of setup has to hold a terminal open or run it in the background by its own means, which some agents end along with their session, and nothing says how to stop a panel started that way.
@@ -51,9 +52,15 @@ You can now start the control panel so it keeps running by itself: `speck panel 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 startAway's already-running branch reports the requested --url as a working address even when the existing panel does not serve it.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 364,836
+- Elapsed since build started: 8 min
+- Changed lines: 147 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
