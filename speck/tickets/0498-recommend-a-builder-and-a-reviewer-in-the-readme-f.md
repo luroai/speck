@@ -50,6 +50,7 @@ The README says one agent works but two different agents are best for adversaria
 - Checked 2026-10-23 by the user: on the same review prompt, Codex gpt-6.1-sol took 30 s; grok-4.7-high-fast 313 to 417 s and grok-4.7-medium-fast 275 s, all finding the same blocking bug. Grok built a small ticket in 2 minutes in a scratch-repo test.
 - Waits for 0497: this changes the agents paragraph and Get started, near the lines 0497 changes.
 - Asked for by the user on 2026-10-25.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
