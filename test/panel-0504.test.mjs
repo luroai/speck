@@ -66,7 +66,7 @@ test('0504 AC2: no arm reaches beyond its usual length, and the clipboard\'s arm
   for (const n of [1, 3]) {
     const { pose, parts } = await watching(n), met = new Set();
     let onHead = 0, onFloor = 0;
-    sample(pose, parts, 900000, 30, (F, b, t) => {
+    sample(pose, parts, 1500000, 30, (F, b, t) => { // 0505: longer, so each is seen however many beats there are
       if (!NEW.includes(b.kind)) return;
       met.add(b.kind);
       for (const a of F.B.arms) assert.ok(armLen(a) <= usual + 1e-9, `${b.kind} at ${t}: an arm ${armLen(a).toFixed(1)} long, more than ${usual.toFixed(1)}`);

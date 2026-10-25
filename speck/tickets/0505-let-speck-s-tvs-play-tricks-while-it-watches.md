@@ -39,6 +39,7 @@ speck's TVs play six tricks, and speck reacts to each.
 - The prototype is `docs/design/lcd/watching.html` (open it from that folder; it loads `templates/lcd.js`, and `?beat=<name>` plays one beat on repeat). Agreed with the user on 2026-10-25, also at https://claude.ai/artifact/FsG1NCryHWmFYfP9871Adx. Its timings, sizes and wording are the reference; the builder may tidy its code. Its beats here are `tune`, `mirror`, `pong`, `vhold`, `peek` and `drumroll`.
 - Waits for 0504, in the same code.
 - Failing before this build: none
+- Self-check: hiding behind the clipboard holds it a unit nearer than the prototype, as its arm was 20.4 long against 20.1 in speck's other poses; DRRR and TA-DA sit four units lower, as at the prototype's height TA-DA's rise reached the dotted line at the top of the scene. Four older tests sample longer (0502's beat weights and checklist ticks, 0503's and 0504's every-beat-seen arms tests), as with six more beats each beat is rarer and they failed now and then; 0502's log-then-tick test skips a tick a trick hides.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
