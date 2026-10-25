@@ -43,6 +43,7 @@ Setup finishes with the panel running and open in front of the user, in the agen
 - Today: section 8, "Finish", in `skills/speck-setup/SKILL.md`.
 - Waits for 0509, the command this uses.
 - Failing before this build: none
+- Self-check: setup now says so when `speck run` was already on, rather than telling the user to turn it on later; the brief's setup row says what Finish now does; the test checks the README link against package.json rather than reading the README, which only allowed tests may.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
