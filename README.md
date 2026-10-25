@@ -4,7 +4,7 @@
 
 speck gives you a team you can trust. You spend your time where it counts: deciding what needs doing and what done looks like, in a quick conversation with your coding agent. Then you walk away. Your agents build each change tests first, a second AI reviews it, and speck ships it, the same way every time.
 
-It isn't only code. A ticket can be a task instead, such as drafting an email, writing a plan or pulling together research. An agent does it, a second AI checks it against what you asked for, and the result waits for you in `outputs/`.
+speck isn't only for code. A ticket can be a task instead, such as drafting an email, writing a plan or pulling together research. speck has your agent do it, a second AI checks it against what you asked for, and the result waits for you in `outputs/`.
 
 It fits the way you really work, in bursts. Ticket up some work before a meeting, check the panel on your phone afterwards, and set the next batch going before bed. speck stops only when it needs you, with one plain question.
 
@@ -56,15 +56,15 @@ Every approved ticket has a one-page **review pack**, written for someone who do
 
 ## The clever bits
 
-- **It raises its own fix tickets.** If `main` breaks, the build that finds it writes a priority-0 fix ticket and sends it to the front of the queue, instead of patching it inside someone else's work.
-- **It files its own follow-ups.** A build that spots a bug or a better idea saves it to your inbox, after checking it isn't there already.
+- **speck raises its own fix tickets.** If `main` breaks, speck has the build that finds it write a priority-0 fix ticket and send it to the front of the queue, instead of patching it inside someone else's work.
+- **speck files its own follow-ups.** When a build spots a bug or a better idea, speck has it save the idea to your inbox, after checking it isn't there already.
 - **Ideas only become tickets in conversation.** Your agent saves an idea when you ask it to, and turns it into tickets only when you talk it through.
-- **It asks, then moves on.** When a build needs your call, it stops with one plain question and its recommendation, and speck carries on with the next ticket.
-- **It shows where everything stands at a glance.** The panel's screen says what speck is doing in a word or two, such as Building, Shipping or Needs you.
-- **It looks into stops it has no steps for.** With `watch: fix`, when a build or a ship stops for a reason speck doesn't expect, its own agent looks into it and does one thing about it, or asks you.
-- **It sorts out its own merge conflicts.** When `main` has moved on, the build merges it in, keeps what both sides meant and has the merge reviewed again.
-- **It fits in your pocket.** Put the panel behind a private tunnel and add it to your phone's home screen (see [The panel](#the-panel)).
-- **It keeps the receipts.** Every ticket keeps its review rounds, how long it took and what it cost, and the tickets and tests say what the product does, so there's no separate spec to keep up to date.
+- **speck asks, then moves on.** When a build needs your call, speck has it stop with one plain question and its recommendation, and carries on with the next ticket.
+- **speck shows where everything stands at a glance.** The panel's screen says what speck is doing in a word or two, such as Building, Shipping or Needs you.
+- **speck looks into stops it has no steps for.** With `watch: fix`, when a build or a ship stops for a reason speck doesn't expect, speck has its own agent look into it and do one thing about it, or ask you.
+- **speck sorts out its own merge conflicts.** When `main` has moved on, speck has the build merge it in, keep what both sides meant and have the merge reviewed again.
+- **speck fits in your pocket.** Put the panel behind a private tunnel and add it to your phone's home screen (see [The panel](#the-panel)).
+- **speck keeps the receipts.** Every ticket keeps its review rounds, how long it took and what it cost, and the tickets and tests say what the product does, so there's no separate spec to keep up to date.
 
 ## Under the hood
 
@@ -82,7 +82,7 @@ Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremo
 
 ## The panel
 
-The panel is a phone-width column you keep beside your agent, or open on your phone. Start it with `node .speck/scripts/speck.mjs panel`, at `http://127.0.0.1:4777`. It runs on your machine and reads the files in your repo.
+The panel is a phone-width column you keep beside your agent, or open on your phone. Start it with `node .speck/scripts/speck.mjs panel`, at `http://127.0.0.1:4777`. The panel runs on your machine and reads the files in your repo.
 
 - **speck's screen**, at the top, says what's happening: Building, Shipping, Idle, or Needs you when a ticket is waiting on your answer. Press it for the detail.
 - **Plan, Build and Shipped** are cards you swipe between. Plan has your drafts, ideas and inbox. Build has the queue, each build's log, blocked questions and approved tickets' review packs with their Ship button. Shipped shows what's shipped and what it took.
@@ -99,7 +99,7 @@ To use it from your phone, put it behind a private tunnel that makes you log in,
 
 ## Without an agent
 
-Run this in the folder of the project you want to build. It sets up `speck/`, adds the skills for Claude Code, Codex and other agents, and checks that git, your builder and your reviewer are ready:
+Run this in the folder of the project you want to build. The `init` command sets up `speck/`, adds the skills for Claude Code, Codex and other agents, and checks that git, your builder and your reviewer are ready:
 
 ```bash
 npx 'github:luroai/speck#semver:*' init
