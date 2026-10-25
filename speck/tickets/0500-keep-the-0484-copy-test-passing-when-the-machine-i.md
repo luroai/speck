@@ -1,7 +1,7 @@
 ---
 id: "0500"
 title: "Keep the 0484 copy test passing when the machine is busy"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-24-fix-the-0484-copy-test-that-fails-under-loa
 after: []                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T12:40:38.279Z"
+approved: "2026-10-25T12:46:55.952Z"
 
 ---
 # 0500 · Keep the 0484 copy test passing when the machine is busy
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A test in `test/panel-0484.test.mjs` expects a blocked bug ticket's line to read `speck will answer · Review 2 · 99:5x · bug`, but the ticket starts 5,990 seconds before the file loads, so the time only reads 99:5x for 10 seconds. When several test files run at once, the real panel takes longer than that to start, the time reads 100:00 and the test fails though nothing is wrong. `speck ship` runs the whole suite, so it can hand a ticket back for no reason, the 0.15.0 release included.
@@ -50,9 +51,14 @@ Nothing changes in the panel. One of speck's own checks of a blocked ticket's ca
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 126,865
+- Elapsed since build started: 6 min
+- Changed lines: 0 (limit 5000)
 Follow-ups: none. 0443's file also starts tickets 5,999 seconds back, but it checks only that a time shows, not which one.
 
 ## Review rounds
