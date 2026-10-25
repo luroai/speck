@@ -1,7 +1,7 @@
 ---
 id: "0497"
 title: "Pitch the README's bursts paragraph to PMs who work with tech teams"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0496"]                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T10:24:05.325Z"
 approved: "2026-10-25T10:25:14.568Z"
+finished: "2026-10-25T10:28:46.088Z"
 
 ---
 # 0497 · Pitch the README's bursts paragraph to PMs who work with tech teams
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The README's third paragraph sells speck through a phone ("check the panel on your phone afterwards"), and who speck is for sits apart, lower down, in one thin line. The people speck is built for, PMs and others who've worked alongside tech teams without writing the code, should see themselves straight away, with the bursts of ticketing up a batch, walking away and coming back that they'll recognise.
