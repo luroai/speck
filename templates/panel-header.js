@@ -90,28 +90,134 @@ function screenFrame(s, t) {
 let CAP_FONT = null;
 const capFont = () => CAP_FONT || (CAP_FONT = { ...LCD.F5, g: { ...LCD.F5.g, '…': ['.....', '.....', '.....', '.....', '.....', '.....', '#.#.#'] } });
 // 0414: speck's poses: the landing page's states (its `building` is the laptop), three of the panel's, and the
-// console mock's clipboard, `watch`.
+// console mock's clipboard, `watch` (0502: speck watching a TV for each build).
 const rim = a => ({ x: 20 * Math.cos(a), y: -24 + 20 * Math.sin(a) });
-const ease = k => -(Math.cos(Math.PI * Math.max(0, Math.min(1, k))) - 1) / 2;
-// Watching the floor: a clipboard in one hand, glancing about, now and then reading it and ticking a line off.
-function watchPose(t) {
-  const { INK, FAINT, OFF } = LCD;
-  const p = (t % 7200) / 7200, reading = p > .58 && p < .86;
-  const G = [-.6, 0, .55, 0], gi = Math.floor(t / 1500), gk = ease(((t % 1500) / 1500) / .25);
-  let lookX = G[(gi + 3) % 4] + (G[gi % 4] - G[(gi + 3) % 4]) * gk, lookY = .05;
-  if (reading) { const k = ease(Math.min((p - .58) / .05, (.86 - p) / .05)); lookX = lookX + (.85 - lookX) * k; lookY = .05 + .45 * k; }
-  const ticks = Math.floor(t / 7200) % 4 + (p > .74 ? 1 : 0);
-  return { B: { t, x: -7, lookX, lookY, sy: 1 + .015 * Math.sin(t / 640), arms: [{ s: rim(.4), h: { x: 25, y: -19 } }] }, props: [{ key: 'clip', draw(pen) {
-    const x = 17, y = -36, w = 15, h = 22, q = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
-    pen.lw = 1.4; pen.fillPoly(q, OFF); pen.poly(q, INK);
-    pen.fillPoly([[x + 4.5, y - 3], [x + w - 4.5, y - 3], [x + w - 4.5, y + 2], [x + 4.5, y + 2]], INK);
-    for (let i = 0; i < 4; i++) {
-      const ly = y + 6 + i * 4.2;
-      pen.line(x + 6, ly, x + w - 3, ly, i < ticks ? INK : FAINT);
-      if (i < ticks) pen.dotAt(x + 3.2, ly, INK);
+// 0502: watching the builds, as the prototype in docs/design/lcd/watching.html has it. speck stands on the right with
+// its clipboard and a little retro TV for each build on its left, up to three, or one while shipping. Each TV scrolls
+// a log over a progress bar, and shows a tick for a moment when the bar fills. speck plays one beat after another,
+// picked at random by weight and never the same twice running, each blending in and out of its resting pose.
+const watchPose = (() => {
+  const clamp01 = x => Math.max(0, Math.min(1, x)), lerp = (a, b, k) => a + (b - a) * k;
+  const sine = k => -(Math.cos(Math.PI * clamp01(k)) - 1) / 2, seg = (p, a, b) => clamp01((p - a) / (b - a));
+  const rnd = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const BX = 14, LEG = 3.5, DONE = 1100, BLEND = 450, FOCUS = 3100; // speck's place on the floor; the TVs' legs; a tick's time
+  const TVS = { 1: [{ cx: -46, w: 36, h: 25 }], 2: [{ cx: -62, w: 27, h: 20 }, { cx: -32, w: 27, h: 20 }], 3: [{ cx: -71, w: 21, h: 17 }, { cx: -48, w: 21, h: 17 }, { cx: -25, w: 21, h: 17 }] };
+  // A TV for each build the word names, up to three; one while shipping.
+  const tvs = () => { const m = /^Building (\d+)$/.exec(speckDo.word || ''); return TVS[m ? Math.max(1, Math.min(3, Number(m[1]))) : 1]; };
+  // A TV's parts, in scene units: its box, its screen (left of the dials) and its rabbit ears' tips.
+  function tvGeom(m) {
+    const x0 = m.cx - m.w / 2, y1 = -LEG, y0 = y1 - m.h, knobs = Math.max(6, m.w * .24), top = { x: m.cx + 1, y: y0 }, ear = m.h * .55;
+    return { x0, y0, y1, knobs, sx0: x0 + 2.5, sx1: x0 + m.w - knobs, sy0: y0 + 2.5, sy1: y1 - 2.5, top,
+      tipL: { x: top.x - ear * Math.sin(.5), y: top.y - ear * Math.cos(.5) }, tipR: { x: top.x + ear * Math.sin(.42), y: top.y - ear * Math.cos(.42) } };
+  }
+  // Each TV's bar fills at its own pace, 10 to 18 seconds, then a tick shows for DONE ms.
+  const period = j => 10000 + rnd(j + 5) * 8000;
+  function tvState(j, t) {
+    const P = period(j), u = (t + rnd(j + 9) * P) % P;
+    return { prog: clamp01(u / (P - DONE)), done: u >= P - DONE, since: u - (P - DONE) };
+  }
+  function drawTV(pen, m, j, t) {
+    const { INK, FAINT, OFF } = LCD, st = tvState(j, t), g = tvGeom(m);
+    pen.lw = 1.2; pen.line(g.top.x, g.top.y, g.tipL.x, g.tipL.y); pen.line(g.top.x, g.top.y, g.tipR.x, g.tipR.y); // rabbit ears, behind the box
+    pen.disc(g.tipL.x, g.tipL.y, 1, INK); pen.disc(g.tipR.x, g.tipR.y, 1, INK); pen.disc(g.top.x, g.top.y, 2.2, INK, 1.4);
+    pen.lw = 1.5; pen.line(g.x0 + 4, g.y1, g.x0 + 2.5, 0); pen.line(g.x0 + m.w - 4, g.y1, g.x0 + m.w - 2.5, 0); // two short legs
+    const r = 2.5, box = [[g.x0 + r, g.y0], [g.x0 + m.w - r, g.y0], [g.x0 + m.w, g.y0 + r], [g.x0 + m.w, g.y1 - r], [g.x0 + m.w - r, g.y1], [g.x0 + r, g.y1], [g.x0, g.y1 - r], [g.x0, g.y0 + r]];
+    pen.lw = 1.8; pen.fillPoly(box, OFF); pen.poly(box, INK); // the box, with rounded corners
+    const kx = g.x0 + m.w - g.knobs / 2 - .5, kr = Math.max(1.4, g.knobs * .2); // two dials and a speaker grille, on its right
+    pen.lw = 1.2; pen.ring(kx, g.y0 + m.h * .28, kr); pen.ring(kx, g.y0 + m.h * .55, kr);
+    for (let i = 0; i < 3; i++) pen.line(kx - kr, g.y1 - 3 - i * 2, kx + kr, g.y1 - 3 - i * 2, FAINT);
+    const c = 2, scr = [[g.sx0 + c, g.sy0], [g.sx1 - c, g.sy0], [g.sx1, g.sy0 + c], [g.sx1, g.sy1 - c], [g.sx1 - c, g.sy1], [g.sx0 + c, g.sy1], [g.sx0, g.sy1 - c], [g.sx0, g.sy0 + c]];
+    pen.lw = 1.2; pen.poly(scr, INK); // the curved screen
+    const ix0 = g.sx0 + 2.5, ix1 = g.sx1 - 2.5, iy0 = g.sy0 + 2.5, iy1 = g.sy1 - 2.5;
+    if (st.done) { // a tick, drawn in
+      const k = clamp01(st.since / 300), cx = (ix0 + ix1) / 2, cy = (iy0 + iy1) / 2, s = Math.min(ix1 - ix0, iy1 - iy0) / 12;
+      const A = [cx - 5 * s, cy], B = [cx - 1.5 * s, cy + 3.5 * s], C = [cx + 6 * s, cy - 4.5 * s];
+      pen.lw = 1.8;
+      if (k > 0) pen.line(A[0], A[1], lerp(A[0], B[0], Math.min(1, k * 2)), lerp(A[1], B[1], Math.min(1, k * 2)));
+      if (k > .5) pen.line(B[0], B[1], lerp(B[0], C[0], (k - .5) * 2), lerp(B[1], C[1], (k - .5) * 2));
+      return;
     }
-  } }] };
-}
+    // the log scrolling up, its newest line being typed, over the progress bar
+    const rows = Math.max(1, Math.floor((iy1 - iy0 - 3) / 2.6)), sc = Math.floor(t / 420 + j * 13);
+    for (let rr = 0; rr < rows; rr++) {
+      const n = sc + rr, last = rr === rows - 1, full = 2 + rnd(n + j * 31) * (ix1 - ix0 - 2), len = last ? full * clamp01((t % 420) / 420 * 1.6) : full;
+      if (len > 1) pen.line(ix0, iy0 + rr * 2.6, ix0 + len, iy0 + rr * 2.6, last ? INK : FAINT);
+    }
+    pen.lw = 1.4; pen.line(ix0, iy1, ix1, iy1, FAINT);
+    if (st.prog > .02) pen.line(ix0, iy1, ix0 + (ix1 - ix0) * st.prog, iy1, INK);
+  }
+  // The beats: their weight and how long each lasts, in ms. `own`: it has its own reaction to a tick, so speck doesn't hop.
+  const BEATS = { scan: { w: 3, d: [5200, 7000] }, read: { w: 2, d: [4600, 5400], own: true }, lean: { w: 2, d: [3600, 4400] } };
+  // The beats from the pose's start: the first is always keeping an eye on the builds, so the still frame is too. A pose
+  // started again (its time going back) starts a fresh plan.
+  let plan = { start: [0, 6000], kind: ['scan'], last: 0 };
+  function beatAt(t) {
+    t = Math.max(0, t);
+    if (t < plan.last) plan = { start: [0, 6000], kind: ['scan'], last: 0 };
+    plan.last = t;
+    while (plan.start[plan.start.length - 1] <= t) {
+      const i = plan.kind.length, live = Object.keys(BEATS).filter(k => BEATS[k].w > 0 && k !== plan.kind[i - 1]);
+      let r = Math.random() * live.reduce((s, k) => s + BEATS[k].w, 0), kind = live[live.length - 1];
+      for (const k of live) if ((r -= BEATS[k].w) < 0) { kind = k; break; }
+      const [a, b] = BEATS[kind].d;
+      plan.kind.push(kind); plan.start.push(plan.start[i] + a + Math.random() * (b - a));
+    }
+    let i = plan.kind.length - 1;
+    while (plan.start[i] > t) i--;
+    const s = plan.start[i], e = plan.start[i + 1];
+    let reads = 0;
+    for (let j = 0; j < i; j++) if (plan.kind[j] === 'read') reads++;
+    return { i, kind: plan.kind[i], k: (t - s) / (e - s), d: e - s, s, reads };
+  }
+  // Where speck's eye goes to look at a point in the scene, and at a TV.
+  const lookAt = (x, y) => ({ lookX: Math.max(-1, Math.min(1, (x - BX) / 55)), lookY: Math.max(-1, Math.min(1, (y + 26) / 40)) });
+  const tvLook = m => lookAt(m.cx, -LEG - m.h / 2);
+  function pose(t) {
+    const { INK, FAINT, OFF } = LCD, ms = tvs(), b = beatAt(t), k = b.k;
+    const env = sine(Math.min(1, k * b.d / BLEND, (1 - k) * b.d / BLEND));
+    // At rest it breathes and watches one build's TV, moving on to the next every few seconds.
+    const rl = tvLook(ms[Math.floor(t / FOCUS) % ms.length]);
+    const R = { x: 0, y: 0, rot: 0, sy: 1 + .015 * Math.sin(t / 640), lookX: rl.lookX, lookY: rl.lookY, raise: 0 };
+    const O = {}; // this beat's own pose, mixed in by env
+    let eye = null, ticks = b.reads % 5; // four ticks, then a fresh page
+    if (b.kind === 'scan') { // its eye goes from TV to TV, then round the room
+      const spots = [...ms.map(tvLook), { lookX: .1, lookY: -.55 }, { lookX: .7, lookY: .05 }];
+      const n = spots.length, q = k * n, a = Math.floor(q) % n, c = (a + 1) % n, f = sine(seg(q % 1, .75, 1));
+      O.lookX = lerp(spots[a].lookX, spots[c].lookX, f); O.lookY = lerp(spots[a].lookY, spots[c].lookY, f); O.x = O.lookX * 2;
+    } else if (b.kind === 'read') { // lifts the clipboard, reads, ticks a line
+      O.raise = 1; O.lookX = .8; O.lookY = .55 + .05 * Math.sin(t / 300); O.rot = .03;
+      if (k > .68) ticks = (b.reads + 1) % 5;
+      if (k > .66 && k < .74) O.y = -1.5 * Math.sin(seg(k, .66, .74) * Math.PI);
+    } else if (b.kind === 'lean') { // leans towards a TV, squints, nods
+      const L = tvLook(ms[(b.i + 1) % ms.length]);
+      O.x = -5; O.rot = -.09; eye = 'focus'; O.lookX = Math.max(-1, L.lookX - .15); O.lookY = L.lookY;
+      O.y = -1.6 * Math.abs(Math.sin(seg(k, .5, .8) * Math.PI * 2));
+    }
+    const P = {};
+    for (const n of Object.keys(R)) P[n] = n in O ? lerp(R[n], O[n], env) : R[n];
+    P.eye = env > .5 && eye ? eye : 'open';
+    // a bar filling: a little hop, a wide eye and a look at that TV, unless the beat has its own reaction
+    if (!BEATS[b.kind].own) ms.forEach((m, j) => {
+      const st = tvState(j, t);
+      if (st.done && st.since < 500) { P.y -= 3 * Math.sin(st.since / 500 * Math.PI); P.eye = 'wide'; const L = tvLook(m); P.lookX = L.lookX; P.lookY = L.lookY; }
+    });
+    // the clipboard, in the hand on its right, lifted to read
+    const cx = lerp(19, 15, P.raise), cy = lerp(-21, -35, P.raise), w = 13, h = 16, tilt = lerp(.08, -.12, P.raise);
+    const B = { t, x: BX + P.x, y: P.y, rot: P.rot, sy: P.sy, lookX: P.lookX, lookY: P.lookY, eye: P.eye, arms: [{ s: rim(.35), h: { x: cx + 1, y: cy + h * .55 } }] };
+    const props = ms.map((m, j) => ({ key: `tv${j}`, layer: 'back', draw(pen) { drawTV(pen, m, j, t); } }));
+    props.push({ key: 'clip', draw(pen) {
+      pen.save(); pen.translate(B.x + cx + w / 2, B.y + cy + h / 2); pen.rotate(tilt);
+      const q = [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]];
+      pen.lw = 1.4; pen.fillPoly(q, OFF); pen.poly(q, INK);
+      pen.fillPoly([[-2.5, -h / 2 - 2.5], [2.5, -h / 2 - 2.5], [2.5, -h / 2 + 1.5], [-2.5, -h / 2 + 1.5]], INK);
+      for (let i = 0; i < 4; i++) { const ly = -h / 2 + 5 + i * 3; pen.line(-1.5, ly, w / 2 - 2.5, ly, i < ticks ? INK : FAINT); if (i < ticks) pen.dotAt(-4, ly, INK); }
+      pen.restore();
+    } });
+    return { B, props, beat: b.kind, ticks };
+  }
+  pose.parts = { BEATS, TVS, tvState, tvGeom, beatAt, tvs }; // for the tests
+  return pose;
+})();
 const speckPoses = () => ({ ...LCD.STATES, watch: watchPose, ask: LCD.PANEL.bad, flag: LCD.PANEL.wait, ship: LCD.PANEL.ship });
 // 0414: what speck does, from what the page has seen of the pipeline. Each board is compared with the one before it
 // (noteBoard): what changed queues an event, played one after another, or starts the laptop while drafts are written.
