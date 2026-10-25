@@ -118,9 +118,10 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
 
 // The Foreman for `speck status`: its status, then each ready ticket's reason and shipping's state, one per line.
 // Blocked tickets aren't repeated: speck status lists them with their questions.
-// 0317: with Fixing on, the status says so and what Fixing does, and the recommendations the Foreman took lately follow.
+// 0317: with watch fix, the status says so and what fix does, and the recommendations the Foreman took lately follow.
+// 0501: it names the watch setting, which was called Fixing.
 export function foremanLines(v) {
-  const lines = [`SPECK: ${v.word}${v.fixing === 'fix' ? ' · Fixing on' : ''}`, ...(v.fixing === 'fix' ? [`  Fixing: ${FIXING_SAYS.fix}`] : [])];
+  const lines = [`SPECK: ${v.word}${v.fixing === 'fix' ? ' · watch: fix' : ''}`, ...(v.fixing === 'fix' ? [`  watch: ${FIXING_SAYS.fix}`] : [])];
   for (const h of v.held || []) lines.push(`  ${h}`); // 0299: once, before the tickets it holds up
   for (const r of v.ready) lines.push(`  ${r.id} ready, not building: ${r.why}`);
   for (const w of v.ship ? v.ship.waiting : []) lines.push(`  ${w.id} waiting to ship: ${w.why}`);
