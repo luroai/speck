@@ -1,7 +1,7 @@
 ---
 id: "0501"
 title: "Name watch in speck status instead of Fixing"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-25T12:40:34.799Z"
 ---
 # 0501 · Name watch in speck status instead of Fixing
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck status` still prints `· Fixing on` after the Foreman's word and a `Fixing: fix. …` line when `watch` is `fix`. Since 0487 the setting is called `watch`, and nothing else calls it Fixing, so someone reading `speck status` can't tell which setting the line is about. It's the last of the old names in what speck prints.
@@ -44,7 +44,7 @@ started: "2026-10-25T12:40:34.799Z"
 - Pictures: none, because nothing in the panel changes; only the `speck status` text does.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When the watch setting is on fix, speck's status now says "watch: fix" on its first line and starts the line under it with "watch:", instead of the old name, Fixing. To see it, set watch to fix and run speck status. Nothing else changes: with watch on tell or off the first line is just the status word, and the panel still says Fixing for a build that's fixing review findings.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,4 +53,65 @@ started: "2026-10-25T12:40:34.799Z"
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+Follow-ups: none. Old release notes and the changelog still say Fixing, as history.
+
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1d8de501e4000bb78d51b2d20652e771dc379c4a",
+    "session": "fresh",
+    "thread_id": "01a17315-31c7-7b71-b3b0-2b62d25b9b24",
+    "builder_response": "- Tests run: `speck test --related test/status-0501.test.mjs test/foreman-0317.test.mjs` (the ticket's own file, the changed 0317 file, and every test file naming scripts/foreman.mjs, with the repo checks).\n- Changed `foremanLines` in scripts/foreman.mjs to print `· watch: fix` and `  watch: <FIXING_SAYS.fix>`; updated the two 0317 assertions that matched the old \"Fixing on\" wording, since the ticket changes that output.\n- Old release notes and the changelog still say \"Fixing\" as history; left alone.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 119117,
+      "cached_input_tokens": 84224,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 645,
+      "reasoning_output_tokens": 11
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-25T12:42:44.192Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/foreman.mjs: foremanLines prints the requested first two lines and retains FIXING_SAYS.fix unchanged. Passing test ‘0501 AC1’ checks both lines."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanLines adds the suffix only for fix. Passing test ‘0501 AC2’ checks tell and off both display ‘SPECK: Idle’ alone."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing test ‘0501 AC3’ checks generated lines and actual status output for the absence of Fixing. templates/panel-model.js retains its Fixing stage unchanged. The recorded related run reports 298 passed, 3 skipped and no failures; the production change only alters the two status labels."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Status now names watch: fix and keeps the existing explanation. Tell and off retain their current display, and the panel’s Fixing stage is unchanged. The relevant tests pass. No blocking concerns found."
+  }
+}
+```
+
+</details>
