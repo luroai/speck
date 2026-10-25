@@ -49,6 +49,7 @@ The README leans one way, towards walking away and coming back to finished work,
 - Checked 2026-10-25: auto-ship is off by default, `auto_ship_risk` is `[low]` by default, and a task never ships by itself (`docs/brief.md`, principle 4). It can be turned on in the panel's Settings or with `speck config set auto_ship true`.
 - Waits for 0498, the last of the README tickets before it: all of them change the opening paragraphs.
 - Asked for by the user on 2026-10-25.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
