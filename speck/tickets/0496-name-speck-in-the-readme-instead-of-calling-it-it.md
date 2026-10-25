@@ -1,7 +1,7 @@
 ---
 id: "0496"
 title: "Name speck in the README instead of calling it It"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-25
+started: "2026-10-25T10:19:06.105Z"
 
 ---
 # 0496 · Name speck in the README instead of calling it It
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The README keeps calling speck "It": "It isn't only code", "It raises its own fix tickets", "It asks, then moves on" and so on. A first-time reader loses track of who is doing the work, and the pitch reads flatter than it should.
