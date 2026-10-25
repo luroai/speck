@@ -1,7 +1,7 @@
 ---
 id: "0506"
 title: "Keep private words out of what speck writes under speck/"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-25
 started: "2026-10-25T13:44:12.901Z"
+approved: "2026-10-25T13:53:06.251Z"
 
 ---
 # 0506 · Keep private words out of what speck writes under speck/
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A shipped ticket published the user's machine username: a reviewer quoted an absolute path under the user's home folder as its evidence, and speck wrote that into the ticket's review rounds. Nothing caught it. The private-words test skips `speck/`, so a test result can be reused while only `speck/` changes (0112), and `speck lint` checks a ticket for private words and the home folder's path (0083, 0121) only when it's linted, before the build, not the review rounds, notes and logs written into it afterwards. The user had to rewrite the repo's public history on 2026-10-25 to remove it.
@@ -52,9 +53,15 @@ To see it, add a word to `~/.config/speck/private-words`, put it in an approved 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 askForChanges commits a user's note directly into the Review log.; F2 The ship guard silently skips an entire file when it contains a NUL byte or git show fails.; F3 The privacy check runs after remoteBaseCatchUp.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 454,374
+- Elapsed since build started: 9 min
+- Changed lines: 135 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): pull request mode's queue hands back only conflicts, not exit 17 (speck/ideas/2026-10-25-hand-back-a-pull-request-refused-for-private-words.md).
 - Known limit: other places that write into a ticket (the Foreman's notes, go-with, paused time) don't rewrite home paths; ship's check still catches any they leave.
