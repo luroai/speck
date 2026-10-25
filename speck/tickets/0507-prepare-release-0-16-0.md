@@ -43,6 +43,11 @@ speck 0.16.0 is ready to tag, with its changelog and release notes.
 - Same shape as 0452 (release 0.15.0).
 - Waits for 0502 to 0506, and 0508 to 0510, added by the user on 2026-10-25.
 - Failing before this build: none
+- AC5's README figures aren't tested in the README, as 0491 left the rule: `test/release-0507.test.mjs` checks the figures worked out from `speck/tickets/done/` at the commit this was built from (493 shipped, 16 cancelled, 13 minutes, 1 round, 251 in round 1), and the reviewer checks the README gives them.
+- `test/release-0452.test.mjs`'s checks of the current version now follow `package.json`, as 0452 did for 0394, and `test/docs-0491.test.mjs` lets `test/release-0507.test.mjs` read the README for its status line and setup prompt, as it does every release test.
+- The 21 things speck does while it watches: 0502's 3 beats, 0503's 8, 0504's 4 and 0505's 6.
+- Self-check: no changes. Each claim was checked against the shipped tickets and the code (the ship check, `~/` paths in review, close and changes, and `speck panel --background`'s log file).
+- Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
