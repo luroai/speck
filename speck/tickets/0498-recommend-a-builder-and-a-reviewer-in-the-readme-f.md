@@ -1,7 +1,7 @@
 ---
 id: "0498"
 title: Recommend agents in the README from testing so far                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-25T10:28:57.095Z"
 ---
 # 0498 · Recommend agents in the README from testing so far
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The README lists the agents speck works with but doesn't say which to pick, and says only that Claude Code is "the agent speck is most tested with". A new user can't tell that one agent works but two is better, or which pairing has done best in testing, and might pick Grok to review without knowing it's slow at it.
@@ -56,7 +56,7 @@ The README says one agent works but two different agents are best for adversaria
 - Pictures: none, because the change is README wording only, with no new layout or images
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The README now helps new users pick their agents. It says one agent can build and review on its own, but two different agents work best, because the second one reviews the work with fresh eyes. It recommends Claude Code to build and Codex to review, and warns that Grok through Cursor builds well but reviews slowly. Get started now calls Claude Code the best builder so far. To see it, read Get started and the "Which to choose" part of Under the hood. Keep an eye on the recommendations as more agents are tried: they reflect testing up to now.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -65,4 +65,68 @@ The README says one agent works but two different agents are best for adversaria
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4bc7220059b8585981dfcfaab208bfc60787d3b7",
+    "session": "fresh",
+    "thread_id": "01a1729b-ca92-7a20-9380-04dd1fa4236f",
+    "builder_response": "- Tests run: `speck test --related test/luro-0082.test.mjs` (31 files: every test file naming README.md, plus the commands.checks files). 353 pass, 0 fail, 3 skipped.\n- No new tests: AC1–3 end with \"(checked by review)\" (README wording, which the build rules forbid testing), and AC4 is the existing suite.\n- The **Which to choose.** paragraph and list use the wording agreed with the user in the ticket's Notes, placed after **Your agents.** under Under the hood. Get started now says Claude Code \"is the best builder in testing so far\".\n",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 48771,
+      "cached_input_tokens": 19456,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 491,
+      "reasoning_output_tokens": 21
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-25T10:29:50.490Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md, Under the hood's 'Which to choose' paragraph, explicitly describes one agent with allow_same_model_review: true and recommends two different agents so a second model catches what the builder misses."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md, 'Which to choose' list, recommends Claude Code for building and Codex with gpt-6.1-sol for reviewing. It describes Grok through Cursor as a capable builder whose reviews found the same problems but took 4 to 11 minutes, against Codex's usually under a minute."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md, Get started, replaces the previous 'most tested with' sentence with 'Claude Code is the best builder in testing so far.'"
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0498-tests.txt: 356 tests, 353 passed, 3 skipped and 0 failed. The diff changes only README wording and the ticket's build records; no tests or executable code changed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The README now gives concise guidance on choosing a builder and reviewer, including the tested pairing and Grok's slower reviews. The wording meets all criteria, stays within scope, and the related tests pass."
+  }
+}
+```
+
+</details>
