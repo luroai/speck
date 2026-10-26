@@ -42,6 +42,7 @@ A sideways trackpad scroll keeps changing lane on each gesture, without a click 
 - Checked 2026-10-26: the wheel handler in `templates/panel-header.js` (0476) sets `wheelDone` after one lane change and only clears it after 150 ms with no `wheel` events. Each further `deltaX` event (including trackpad inertia) resets that quiet timer while `wheelDone` stays true, so a second intentional swipe is ignored for as long as events keep arriving. A click that stops those events would let the timer fire and match the "click then one swipe" symptom.
 - Checked 2026-10-26: whether Cursor's pane also drops wheel delivery until a click after a lane change can't be seen on this box (only Cursor's command-line agent is installed, with no editor pane to scroll in). Nothing found says it does; criterion 1 must hold either way.
 - Changes `templates/panel-header.js`. No open ticket changes that file (0512 and 0513 do not).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
