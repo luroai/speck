@@ -1,7 +1,7 @@
 ---
 id: "0513"
 title: "Grey the dot by speck's name while Auto-build is off"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T10:30:39.377Z"
+approved: "2026-10-26T10:39:25.022Z"
 
 ---
 # 0513 · Grey the dot by speck's name while Auto-build is off
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The dot before "speck" in the header is speck's red whether or not `speck run` is on, so it looks live even when Auto-build is off and nothing will build. A red light that's always on says nothing.
@@ -50,9 +51,14 @@ The little dot before "speck" at the top of the panel now works like a power lig
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 185,225
+- Elapsed since build started: 9 min
+- Changed lines: 2 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
