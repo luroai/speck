@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.17.0 · 26 October 2026
+
+What's new since 0.16.1. A minor release that joins up your projects: when more than one speck project has its panel running on the same computer, you can switch between them from any panel's header, at the address you already have open. Swiping between lanes is also quicker.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.17.0 init`.
+
+### The panel
+
+- While two or more speck panels are running on the same computer, each panel's header has a small arrow beside the project's name. It lists every running project by its folder name, with the one you're looking at marked. With only one panel running, there's no arrow.
+- Picking another project shows its panel at the address you're already on, including the phone's home-screen app and a `--url` address, where the other project's panel needs no `--url` of its own. Its board, live updates, review packs, buttons and Settings all work as if you'd opened it directly, and change only that project. Each project is still run entirely by its own `speck panel`.
+- The list keeps itself up to date: a panel that starts appears within 10 seconds, and one that stops, with `speck panel --stop`, Ctrl+C or otherwise, leaves within 10 seconds, with no reload. If the project you're looking at stops, a notice under the header says so, and the arrow still takes you to the others.
+- Only the running panels in the list can be reached through another panel, and each still needs its own key, as when you open it directly.
+- Lane swipes are snappier. A sideways trackpad swipe changes lane after 20 px rather than 40 px, and the new lane comes to rest in 120 ms rather than 200 ms, whether you swipe, use the arrow keys or tap a lane's name. On a touch screen, the card follows your finger sooner, and a slow drag changes lane past a quarter of the card rather than a third. The panel no longer redraws the lists while the card slides, so the slide starts straight away even with a long Shipped list. With reduced motion, a lane still changes without sliding.
+
 ## 0.16.1 · 26 October 2026
 
 What's fixed since 0.16.0. A bug-fix release: speck watches your builds more calmly, trackpad swipes between lanes keep working without a click in between, the dot by speck's name goes grey while Auto-build is off, and Settings can turn same-model review on or off.
