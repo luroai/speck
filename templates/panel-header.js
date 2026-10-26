@@ -616,7 +616,52 @@ function drawHeader(f, stale) {
   run.setAttribute('aria-label', 'speck\'s screen'); // 0485: its word is in its tooltip. 0451: Settings says whether fixing is on
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = `speck: ${word} · ${stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: speck run\'s log'}`;
+  drawProjects(); // 0516
 }
+// 0516: the project menu. While two or more speck panels are running on this machine, a menu after the project's name
+// in the title row lists every running panel's project, by its folder name (and its port, when two share a name), with
+// the one shown chosen. Choosing another shows that project's panel here, at this address: the panel serving this address
+// passes the page's requests on to it from then on. While the project shown has stopped, the page says so, and the
+// menu lists the ones still running.
+let projectsGoneList = null, projectsDrawn = null; // the panels still running while the one shown has stopped; what the menu was drawn from
+// The project shown, by the name the menu last gave it.
+function projectShown() {
+  const p = state && state.projects, me = p && Array.isArray(p.list) ? p.list.find(x => x.port === p.self) : null;
+  return me ? String(me.name) : 'This project';
+}
+function projectsGone(gone) {
+  projectsGoneList = gone && Array.isArray(gone.list) ? gone.list : null;
+  if (projectsGoneList) {
+    $('offline').hidden = false;
+    $('offline').textContent = `${projectShown()}'s panel has stopped, so this shows the last state received. Pick another project from the menu at the top, or start its panel again with speck panel.`;
+  }
+  drawProjects();
+}
+function drawProjects() {
+  const projects = state && state.projects, list = projectsGoneList || (projects && Array.isArray(projects.list) ? projects.list : []);
+  const self = projectsGoneList ? null : projects && projects.self, show = list.length > (projectsGoneList ? 0 : 1);
+  $('project-pick').hidden = !show;
+  const drawn = JSON.stringify([show && list, self]);
+  if (!show || drawn === projectsDrawn) return;
+  projectsDrawn = drawn;
+  const named = new Map();
+  for (const p of list) named.set(p.name, (named.get(p.name) || 0) + 1);
+  const option = (value, text, chosen) => { const o = el('option', null, text); o.value = value; o.selected = chosen; return o; };
+  const options = list.map(p => option(String(p.port), named.get(p.name) > 1 ? `${p.name} · ${p.port}` : String(p.name), p.port === self));
+  if (projectsGoneList) { const o = option('', `${projectShown()} (stopped)`, true); o.disabled = true; options.unshift(o); }
+  $('project').replaceChildren(...options);
+}
+async function chooseProject(port) {
+  if (!/^\d{1,5}$/.test(port)) return;
+  let res = null, body = null;
+  try { res = await fetch(`/api/projects/${port}`, { method: 'POST' }); body = await res.json(); } catch { /* answered below */ }
+  if (res && res.ok) return location.reload();
+  $('offline').hidden = false;
+  $('offline').textContent = `Couldn't show that project: ${(body && body.error) || "can't reach speck panel."}`;
+  projectsDrawn = null;
+  drawProjects(); // the menu goes back to the project shown
+}
+$('project').addEventListener('change', () => chooseProject($('project').value));
 // 0410: Plan, Build and Shipped are tabs under the header, and only the open one's lane shows. 0477: they're a strip
 // of the lanes' names, still tabs to a screen reader. Build opens with the
 // page. Each lane's list keeps its own scroll position, put back when its tab opens again.

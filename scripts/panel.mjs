@@ -22,6 +22,7 @@ import { agentView } from './foreman-agent.mjs';
 import { panelForemanReply } from './foreman-answer.mjs';
 import { goWith } from './go-with.mjs';
 import { panelAway } from './panel-background.mjs'; // 0509: --background and --stop
+import { panelProjects } from './panel-projects.mjs'; // 0516: the project menu, and showing another panel's project here
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch and a setting) ----------
 
@@ -166,8 +167,7 @@ function panelLog(repo, id) {
   return { text: lines.slice(-PANEL_LOG_LINES).join('\n'), truncated: lines.length > PANEL_LOG_LINES };
 }
 
-// `speck panel`. The process you start only launches the first server process and waits until the last one has gone. Everything
-// else, serving, watching the code and restarting, happens in server processes, each on the code as it was when it started.
+// `speck panel`. The process you start only launches the first server process and waits until the last one has gone. Everything else, serving, watching the code and restarting, happens in server processes, each on the code as it was when it started.
 export function cmdPanel(args) {
   findRepoRoot(); // plain errors before anything starts
   const port = panelPort(args), url = panelUrl(args);
@@ -238,7 +238,7 @@ export async function panelServer() {
   if (!token || !process.send) throw new SpeckError('Start the panel with: speck panel');
   let successor = null; // the server starting on new code, until it's ready or fails
   // The pipe to cmdPanel: this writes its exit code there, and stops once cmdPanel has gone (Ctrl+C or a kill).
-  process.on('exit', c => { if (successor) successor.kill('SIGKILL'); try { fs.writeSync(4, `${c}\n`); } catch { /* cmdPanel has gone */ } });
+  process.on('exit', c => { if (successor) successor.kill('SIGKILL'); if (projects) projects.stop(); try { fs.writeSync(4, `${c}\n`); } catch { /* cmdPanel has gone */ } });
   const life = new net.Socket({ fd: 4, readable: true, writable: false, allowHalfOpen: true });
   life.on('end', () => process.exit(0));
   life.on('error', () => process.exit(0));
@@ -247,9 +247,9 @@ export async function panelServer() {
   const repo = findRepoRoot();
   const port = panelPort(args), url = panelUrl(args);
   const cfg = loadConfig(repo);
-  const repoName = htmlEscape(path.basename(worktreeList(repo)[0]?.path || repo)), base = htmlEscape(cfg.base_branch);
+  const name = path.basename(worktreeList(repo)[0]?.path || repo), repoName = htmlEscape(name), base = htmlEscape(cfg.base_branch);
   let restartError = null; // the last failed restart, shown on the page until a restart works or the code is put back
-  let stopping = false;
+  let stopping = false, projects = null; // projects: 0516's, once this is serving
   let shipping = null; // the id of the ticket a Ship button is shipping, until speck ship has finished
   let switching = false; // true while the speck run switch is turning it on or off
   const pageFile = path.join(TEMPLATES, 'panel.html'), styleNames = ['panel-base.css', 'panel-header.css', 'panel-cards.css', 'panel-popups.css', 'panel-settings.css'], stylesFiles = styleNames.map(f => path.join(TEMPLATES, f)), modelFile = path.join(TEMPLATES, 'panel-model.js'), settingsFile = path.join(TEMPLATES, 'panel-settings.js'), scriptFile = path.join(TEMPLATES, 'panel.js'), popupsFile = path.join(TEMPLATES, 'panel-popups.js'), headerFile = path.join(TEMPLATES, 'panel-header.js');
@@ -291,7 +291,7 @@ export async function panelServer() {
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
       const run = panelRunState(repo, runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets), base: baseNow() });
-      const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...runLogPart(runs), ...pageNow() }); // 0415: run_log
+      const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...runLogPart(runs), ...pageNow(), ...(projects ? projects.part() : {}) }); // 0415: run_log. 0516: projects
       return { status: 200, body: snap.body, snap };
     }
     catch (e) { return { status: 500, body: JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) }) }; }
@@ -337,6 +337,7 @@ export async function panelServer() {
   const wrote = (res, out) => { writes++; changed(); send(res, out.status, 'application/json', JSON.stringify(out.body)); };
   const server = http.createServer((req, res) => {
     if (!hosts.has(String(req.headers.host || '').toLowerCase())) return send(res, 403, 'text/plain', 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
+    if (projects && projects.route(req, res)) return; // 0516: the menu's, or another panel's project shown here
     const where = req.url.split('?')[0];
     const ready = where.match(/^\/api\/tickets\/(\d{1,4})\/ready$/);
     if (req.method === 'POST' && ready) {
@@ -540,11 +541,11 @@ export async function panelServer() {
     server.listen(where, resolve);
   });
   server.on('error', e => console.error(`speck panel: ${e.message}`));
+  projects = panelProjects({ port, name, repo: fs.realpathSync(repo), origins, changed });
   if (!handover) console.log(`speck panel: http://127.0.0.1:${port}/${url ? ` and ${url.origin}/` : ''} ${away ? '(in the background: stop it with speck panel --stop)' : '(press Ctrl+C to stop)'}`);
   process.send('ready');
 
-  // Stops taking connections, closes the idle ones at once and the rest once answered (each answer then says
-  // Connection: close), so the browser's next request reaches the new server, then exits.
+  // Stops taking connections, closes the idle ones at once and the rest once answered (each answer then says Connection: close), so the browser's next request reaches the new server, then exits.
   const stop = () => {
     stopping = true;
     clearInterval(watcher);
@@ -553,8 +554,7 @@ export async function panelServer() {
     server.close(() => process.exit(0));
     server.closeIdleConnections();
   };
-  // Starts a server on the new code and hands over to it once it's ready. If it can't start, this one keeps serving and
-  // says why, until a later change.
+  // Starts a server on the new code and hands over to it once it's ready. If it can't start, this one keeps serving and says why, until a later change.
   const restart = () => {
     if (codeHash() === running) { if (restartError) { restartError = null; changed(); } return; } // back to the code that's running: nothing to do
     const { child } = startPanelServer(args, token, server, 4);
