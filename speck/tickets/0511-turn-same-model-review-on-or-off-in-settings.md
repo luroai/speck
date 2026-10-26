@@ -1,7 +1,7 @@
 ---
 id: "0511"
 title: "Turn same-model review on or off in Settings"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-26
 ---
 # 0511 · Turn same-model review on or off in Settings
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Settings shows `allow_same_model_review` but won't change it: since 0258 it's read-only there, because turning it on weakens the independent review. To pick a reviewer running the same model as the builder, the user has to edit `speck/config.yml` or run `speck config set`, which is the only setting in the builder and reviewer group that works that way.
