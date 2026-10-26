@@ -1,7 +1,7 @@
 ---
 id: "0521"
 title: "Label ideas an agent raised in Capture"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ approved: "2026-10-26T22:47:28.374Z"
 ---
 # 0521 · Label ideas an agent raised in Capture
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 Both the user and agents put ideas in speck: the user by asking for one to be captured, and agents by raising follow-ups from builds on their own. In Capture (0520) they sit in one list, and the user can't tell at a glance which ideas are theirs and which an agent suggested.
@@ -47,7 +47,7 @@ Every idea an agent raised is labelled as an agent's in Capture.
 - Failing before this build: none
 - Self-check: no changes
 ## In plain words
-In the panel's Capture lane, an idea an agent came up with by itself, such as a follow-up from a build, now has a small "agent" label on its card. Your own ideas have no label. Hover over or tap the label to see what it means. Ideas saved before this change are labelled too: the ones that came from a build count as an agent's, and the rest count as yours. To see it, open Capture and look at the cards that say "From" a ticket. From now on, each new idea note says who raised it. When you ask an agent to capture something, the note says it's yours.
+In the panel's Capture lane, an idea an agent came up with by itself, such as a follow-up from a build, now has a small blue "agent" label on its card. Your own ideas have no label. Hover over or tap the label to see what it means. Ideas saved before this change are labelled too: the ones that came from a build count as an agent's, and the rest count as yours. To see it, open Capture and look at the cards that say "From" a ticket. From now on, each new idea note says who raised it. When you ask an agent to capture something, the note says it's yours.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -128,6 +128,73 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Capture now labels ideas raised by agents and explains the label on hover or tap. User ideas remain unlabelled, older notes are classified sensibly, and Capture remains read-only and newest first. The tests cover the change and pass. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "383488de57269a23f810a47a894dbfae948be027",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a17a65-4407-74f0-bbcc-b4583af0cce8",
+    "builder_response": "- Tests run: test/panel-0521.test.mjs test/panel-0161.test.mjs test/panel-0214.test.mjs test/panel-0435.test.mjs test/panel-0520.test.mjs (153 tests, 0 failed).\n- Handed back by speck ship: tests failed on the branch as it would land. main had nothing new to merge (`git merge main`: already up to date), so the failures came from this ticket's change.\n- 0161 AC1 (static and in a real browser): the agent tag used --inbox (#4c7f8c), 4.01:1 on --bg in the light look, under 0161's 7:1 for a tag rule without its own size. Fixed: `.tag.agent` now uses --run (#285372 light, #97b2cc dark), which passes both 0161 tests in light and dark.\n- 0214 AC4, 0435 AC2 and AC3: these read the card's whole second row (`.checks`) as text and expected only its date line, so the agent tag's word \"agent\" was appended to it (\"From 0139 · captured 9 Octagent\"). The tag stays in `.checks` because 0161 requires a tag on show to sit in `.checks` (as a ticket card's tags do) and 0435 AC5 requires the closed card to be two rows; I tried moving it out of `.checks` and both of those failed. So I narrowed the two older tests to leave out `.tag` children when reading the row: they still check the date line's exact text and that it is the row's only non-tag part. They predate this ticket's tag (AC2 adds a tag to that row by design), so I think the tests, not the code, needed the change. Please reject this if you disagree.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 177560,
+      "cached_input_tokens": 133632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1275,
+      "reasoning_output_tokens": 10
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T22:54:18.991Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The capture skill specifies Raised by: you for user requests and agent for independently raised ideas. The build skill includes Raised by: agent in follow-up notes. Both AC1 format tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel.js noteItem adds agentTag to closed agent cards using the existing explained helper for hover and tap. panel-base.css now uses --run for contrast. AC2 tests and the reported 0161 contrast checks passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel-model.js raisedByAgent honours explicit attribution and falls back to From ticket for older notes. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Capture retains its date sorting and read-only behaviour. AC4 passed. Changes to panel-0214 and panel-0435 exclude tags from date-text assertions while retaining their expected text and card interaction checks."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported run covered all five relevant test files: 153 tests, 150 passed, 3 skipped, no failures. The contrast regression is fixed; older text assertions were appropriately adapted to the required new tag."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The agent labels work as requested, and their colour now passes the contrast checks. The adjusted older tests still check the date information while allowing the new label beside it. No blocking concerns remain."
   }
 }
 ```
