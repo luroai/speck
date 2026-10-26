@@ -47,7 +47,7 @@ Every closed card in every lane is the same height, and a closed Plan card's sec
 - Self-check: on a touch screen a Plan label's 44 px tap area reached up into the title line, so a tap on the title showed a tip (0164's test); it now reaches from its row's top to the card's bottom, and only halfway into the gap beside it. The priority's 44 px box reached over the size label beside it; it now reaches left of the priority instead. A building card's 2 px border made it 2 px taller; its padding is a pixel less. Build's bug, fix or task tag is now the same small box as Plan's labels, as 0165 has Plan's and Build's tags match.
 - Changed older tests beyond AC5's list (judgement call for the reviewer): 0165 AC1 checked a 44 by 44 px tap area centred on every Plan tag, which can't fit with the small gap AC1 asks for and the user's "no need for the wide spacing"; it now checks a closed Plan label's tap area from its row's top to the card's bottom, and the priority's 44 px box. 0040 AC2 checked that a closed draft's lint change shows; it now checks a priority change.
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Closed cards in Plan, Build and Shipped are now all the same height, and shorter than Plan's and Build's were, with no blank space under their second line. A closed Plan card's second line is now just its priority, size, risk and type as small boxed labels, close together. Its criteria count and lint result show once you open it. Tapping the priority still changes it, and tapping or hovering over the other labels still explains them. To see it, open the panel on a phone and swipe between the lanes: every closed card should line up at the same height. Worth keeping an eye on: on a touch screen the labels are closer together than before, so their tap areas are smaller, and Build's bug, fix or task tag is now a small box too.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,7 +56,9 @@ Every closed card in every lane is the same height, and a closed Plan card's sec
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (none sent to the inbox):
+  - Known limit: on a touch screen a closed Plan label's tap area is about 35 px tall (from its row's top to the card's bottom) and stops halfway into the 4 px gap beside it, rather than 44 by 44 px, so the small gap and the title's own tap area both fit. The priority keeps its 44 px box, which reaches left of it.
+  - Tidy-up: docs/design/lcd/panel-mock.html still draws a Plan card with its criteria count and "lint passes".
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -130,6 +132,81 @@ Every closed card in every lane is the same height, and a closed Plan card's sec
     ],
     "escalation_question": "",
     "summary": "The compact labels and equal closed-card heights are supported by meaningful browser tests across all requested widths and both looks. One CSS rule also changes open cards, which the ticket excludes; restrict that rule before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c14794f9b991a05e1ecd0a1bfe19b2b2655e7c06",
+    "session": "continued",
+    "thread_id": "01a17a39-4cb0-7f41-8349-9afa68036b65",
+    "builder_response": "- Tests run: test/panel-0519.test.mjs test/panel-0039.test.mjs test/panel-0040.test.mjs test/panel-0151.test.mjs test/panel-0165.test.mjs test/panel-0419.test.mjs test/panel-0442.test.mjs test/panel.test.mjs\n- F1: fixed. The padding rule in templates/panel-cards.css is now `.q:is(.at-build, .at-check, .at-review, .at-ship):not(.open)`, so open cards keep 6px 10px. New browser test \"0519 AC4: a card an agent is at work on loses a pixel of padding for its thicker border only while it's closed\" checks 5px 9px closed and 6px 10px open.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 280105,
+      "cached_input_tokens": 224768,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1504,
+      "reasoning_output_tokens": 218
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T22:00:22.749Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.js ticketHead renders only priority, size, risk and optional type labels when closed. Passing 0519 AC1 tests cover label contents, boxes, gaps, omitted criteria/lint and retained open-card readiness."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0519 AC2 tests exercise the priority menu, priority update request and explanation handlers. Browser coverage verifies tapping the priority label opens its menu."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel-cards.css provides closed-title ellipsis and non-wrapping second rows. Passing 0519 AC3/AC4 browser tests check single-line titles and details, clipping and remaining space below the row."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing browser tests measure equal heights across Plan, Build and Shipped at 320, 375 and 420 px in both looks, including the specified task, blocked bug and long-title fixtures. The new passing regression test verifies open Build cards retain their original padding."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Current test output records 220 passes, zero failures and three skips. The changed older tests retain meaningful checks while accommodating the new closed Plan details."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css:276",
+        "issue": "The padding adjustment previously affected open Build cards. It now includes :not(.open), preserving their original padding.",
+        "suggested_fix": "Completed; the new browser regression test verifies closed and open padding separately.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Closed cards now have consistent heights and compact Plan labels, with priority changes and explanations preserved. Browser tests cover every requested width and both looks. The open-card padding issue is fixed; no blocking concerns remain."
   }
 }
 ```
