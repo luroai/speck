@@ -139,3 +139,13 @@ test('0519 AC1 and AC2: in a real browser, a closed Plan card\'s labels are smal
     await b.until(`!!document.querySelector('#shaping .prio-menu')`, `the priority menu at ${width} px`);
   }
 }));
+
+test('0519 AC4: a card an agent is at work on loses a pixel of padding for its thicker border only while it\'s closed', skip, () => inPanel(async (b, go) => {
+  await go(420, 'light');
+  await b.js(openLane('build'));
+  const pad = () => b.js(`getComputedStyle([...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0911')).padding`);
+  assert.equal(await pad(), '5px 9px', 'closed');
+  await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0911').querySelector('.top').click(), true`);
+  await b.until(`[...document.querySelectorAll('#queue .q.open')].some(q => q.querySelector('.id').textContent === '0911')`, '0911 to open');
+  assert.equal(await pad(), '6px 10px', 'open, as before');
+}));
