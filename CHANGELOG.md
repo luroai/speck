@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.16.1 · 26 October 2026
+
+What's fixed since 0.16.0. A bug-fix release: speck watches your builds more calmly, trackpad swipes between lanes keep working without a click in between, the dot by speck's name goes grey while Auto-build is off, and Settings can turn same-model review on or off.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.16.1 init`.
+
+### speck's TVs
+
+- speck now mostly sits and watches. After each thing it does, it spends 15 to 35 seconds just watching, breathing and blinking, and moves its gaze from one build's TV to the next about every 6 seconds. Before, one thing followed straight after another, so with several builds running it never kept still.
+- The comic moments and TV tricks (the bubble, the spider, balancing its clipboard, the dance, tuning the snow, the tiny speck on the screen, Pong, the rolling picture, the peek and the drumroll) come at most once every 2 minutes, and nothing comes round again until at least 5 other things have played.
+- Each TV's bar takes 20 to 40 seconds to fill, rather than 10 to 18. When one fills, speck looks over at that TV, and hops only if it hasn't hopped in the last 30 seconds.
+- What each thing speck does looks like, and the still picture with reduced motion on, are unchanged.
+
+### The panel
+
+- Swiping sideways on a laptop trackpad keeps changing lane, swipe after swipe, including in a narrow Cursor browser pane. Before, one swipe changed lane, then the next did nothing until you clicked the panel. A swipe the other way changes lane at once, and a swipe the same way changes it again after a short pause. One long glide still changes lane only once, and the arrow keys and the lane strip work as before.
+- The dot before "speck" in the header is red while Auto-build (`speck run`) is on and grey while it's off, like a power light, in the light and dark looks. It changes at the next refresh when you turn Auto-build on or off, from Settings or a terminal, with no reload. Before, it was red whether or not anything would build.
+
+### Settings
+
+- `allow_same_model_review` is now an on/off switch under Building and reviewing, beside the reviewer's settings, rather than read-only. It's saved for this machine only, as `speck config set --machine` saves it. Turning it on asks first, because a reviewer running the same model as the builder is no longer an independent review, and nothing is saved if you cancel. With it on, Save accepts a reviewer running the same model as `builder_model`. Turning it off doesn't ask, but Save refuses it while the builder and reviewer would run the same model, unless the same Save picks another reviewer. `speck config set allow_same_model_review` works as before.
+
 ## 0.16.0 · 25 October 2026
 
 What's new since 0.15.0. A minor release that gives speck something to watch. While builds run, speck now stands beside a little retro TV for each build and does something different every few seconds, from ticking off its checklist to Pong and a drumroll. Shipping now refuses to publish your private words or your home folder's path in a ticket, the panel can run on its own in the background, and setup ends with the panel open and `speck run` on.
