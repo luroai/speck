@@ -67,14 +67,18 @@
 <div class="run-error" id="run-error" hidden></div>
 
 <nav class="tabs" id="tabs" role="tablist" aria-label="Lanes">
+  <button class="tab" id="tab-capture" type="button" role="tab" aria-selected="false" aria-controls="capture-section"><span class="tab-name">Capture</span></button>
   <button class="tab" id="tab-plan" type="button" role="tab" aria-selected="false" aria-controls="shaping-section"><span class="tab-name">Plan</span></button>
   <button class="tab" id="tab-build" type="button" role="tab" aria-selected="true" aria-controls="build-section"><span class="tab-name">Build</span><span class="needs" id="build-needs"></span></button>
   <button class="tab" id="tab-shipped" type="button" role="tab" aria-selected="false" aria-controls="shipped-section"><span class="tab-name">Shipped</span></button>
 </nav>
 <main>
+  <section id="capture-section" class="shaping capture" role="tabpanel" aria-labelledby="tab-capture" tabindex="-1" hidden>
+    <h2 class="lane-title">Capture</h2>
+    <div id="capture" class="lane-list"></div>
+  </section>
   <section id="shaping-section" class="shaping tickets" role="tabpanel" aria-labelledby="tab-plan" tabindex="-1" hidden>
     <h2 class="lane-title">Plan</h2>
-    <div class="sh"><span class="toggles" id="shaping-toggle"></span></div>
     <div id="shaping" class="lane-list"></div>
   </section>
   <section id="build-section" role="tabpanel" aria-labelledby="tab-build" tabindex="-1">

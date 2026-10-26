@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, boardPage, full, items, top, toggles, queueRows, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
+import { T, fakePage, boardPage, full, items, top, queueRows, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0154: go to a linked ticket by tapping its id ----------
 
@@ -156,13 +156,9 @@ test('0154 AC3: an id whose ticket isn\'t on the page is plain text, not a butto
   await p.settle();
   assert.deepEqual(gotos(p, queued(p, '0004')).map(b => b.textContent), ['0001'], 'a shipped ticket\'s id is not a button');
   assert.ok(p.all(queued(p, '0004')).some(n => n.tagName === 'span' && n.textContent === '0009'), 'but it is still shown');
-  // Plan showing ideas: the drafts aren't on the page, so the queue's links to them are plain text.
-  toggles(p).find(b => /\bideas\b/.test(b.className)).listeners.click();
-  assert.deepEqual(gotos(p, queued(p, '0002')), [], 'a draft on a Plan tab that isn\'t showing');
-  assert.ok(p.all(queued(p, '0002')).some(n => n.tagName === 'span' && n.textContent === '0001'));
-  assert.deepEqual(gotos(p, queued(p, '0006')).map(b => b.textContent), ['0005'], 'a queued ticket\'s link stays a button');
-  toggles(p).find(b => /\btickets\b/.test(b.className)).listeners.click();
-  assert.deepEqual(gotos(p, queued(p, '0002')).map(b => b.textContent), ['0001'], 'back to a button when the drafts are showing again');
+  // 0520: Plan's Tickets, Ideas and Inbox buttons are gone, so Plan always lists its drafts and a link to one stays a button.
+  assert.deepEqual(gotos(p, queued(p, '0002')).map(b => b.textContent), ['0001'], 'a draft in Plan is a button');
+  assert.deepEqual(gotos(p, queued(p, '0006')).map(b => b.textContent), ['0005'], 'and so is a queued ticket\'s link');
 });
 
 test('0154 AC3: a link to a ticket that has left the page since its box was built is plain text after the refresh', async () => {

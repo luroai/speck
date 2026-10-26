@@ -13,8 +13,8 @@ const board = (foreman = null) => ({
   ideas: [],
   ...(foreman ? { foreman } : {}),
 });
-const TAB = { plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
-const LANE = { plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
+const TAB = { capture: 'tab-capture', plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
+const LANE = { capture: 'capture-section', plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
 // A fake page whose /api/state answers with `p.state` at that moment, where each tab can take the focus.
 function livePage(s) {
   const box = { state: s };
@@ -110,7 +110,7 @@ test('0425 AC4: the tabs are still buttons Tab reaches and Enter or Space press,
 test('0425 AC4: the left and right arrow keys still open the tab beside it, round the ends, with the focus on it', async () => {
   const p = livePage(board());
   await p.settle();
-  for (const [from, key, to] of [['build', 'ArrowRight', 'shipped'], ['shipped', 'ArrowRight', 'plan'], ['plan', 'ArrowLeft', 'shipped'], ['shipped', 'ArrowLeft', 'build']]) {
+  for (const [from, key, to] of [['build', 'ArrowRight', 'shipped'], ['shipped', 'ArrowRight', 'capture'], ['capture', 'ArrowLeft', 'shipped'], ['shipped', 'ArrowLeft', 'build']]) {
     p.byId(TAB[from]).listeners.keydown({ key, preventDefault() {} });
     assert.deepEqual(open(p), [to], `${key} on ${from}`);
     assert.equal(p.focused(), p.byId(TAB[to]), `${key} on ${from}: the focus is on ${to}`);

@@ -57,11 +57,12 @@ const inLog = sel => sel.split(',').every(s => /^(?:\.q \.log|\.foreman \.run-lo
 const behind = sel => (onFrame(sel) ? ['--bezel'] : inLog(sel) ? ['--log-bg'] : SURFACES);
 // Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
 // stage dots and the ensō's speck went in 0168.)
-const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.bezel .name::before', '.bezel[data-run="off"] .name::before', '.lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before', '#foreman .top .title::before']; // 0478: nor do the dots before each lane's title. 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title, grey or not (0513)
-// Every control and card with an edge of its own, by its main rule.
-const EDGED = ['.tag', '.toggle', '.bezel .settings-open', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
+const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.bezel .name::before', '.bezel[data-run="off"] .name::before', '.lane-title::before', '#capture-section .lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before', '#foreman .top .title::before']; // 0478: nor do the dots before each lane's title (0520: Capture's too). 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title, grey or not (0513)
+// Every control and card with an edge of its own, by its main rule. 0520: Plan's Tickets, Ideas and Inbox buttons
+// (.toggle) are gone.
+const EDGED = ['.tag', '.bezel .settings-open', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
   '#full-ticket .close', '#full-ticket .ship', '.prio-menu', '.item', '.q', '#shipped tr', 'section'];
-const CONTROL = /(?:^|[^\w-])(?:\.(?:tag|toggle|settings-open|run-state|set-ready|full-open|stop-build|back-to-plan|copy|close|ship|prio-menu|item|q)|section)(?![\w-])/;
+const CONTROL = /(?:^|[^\w-])(?:\.(?:tag|settings-open|run-state|set-ready|full-open|stop-build|back-to-plan|copy|close|ship|prio-menu|item|q)|section)(?![\w-])/;
 // 0443: what's inside a :not() or :has() is no part of the element the selector picks
 const lastCompound = s => s.replace(/\((?:[^()]|\([^()]*\))*\)/g, '()').trim().split(/\s+|>|\+|~/).filter(Boolean).pop() || '';
 const size = r => {
@@ -228,7 +229,7 @@ const STATE = {
     T('0007', 'approved', { title: 'To ship', started: ago(60), approved: ago(10), rounds: [round(1, 1000)] }),
     T('0008', 'done', { title: 'Shipped', type: 'bug', started: ago(300), approved: ago(200), finished: ago(100), rounds: [round(1, 2000)] }),
   ],
-  ideas: [idea('2026-10-14-an-idea', 'new'), idea('2026-10-14-a-note', 'inbox', '# A note\n\nStatus: inbox\nFrom ticket: 0008\n\nSome text.\n')],
+  ideas: [idea('2026-10-14-an-idea', 'idea'), idea('2026-10-14-a-note', 'inbox', '# A note\n\nStatus: inbox\nFrom ticket: 0008\n\nSome text.\n')],
 };
 const stub = theme => `(() => {
   try { localStorage.setItem('speck-theme', ${JSON.stringify(theme)}); } catch {}
@@ -338,17 +339,17 @@ async function everyView(b, theme) {
   await b.until(`document.querySelectorAll('#queue .q.open').length === 3`, 'the open queue tickets');
   // 0410: each lane in turn, as only the open one shows
   const tags = [];
-  for (const lane of ['plan', 'build', 'shipped']) {
+  for (const lane of ['capture', 'plan', 'build', 'shipped']) { // 0520: and Capture, its notes closed
     await b.js(openLane(lane));
-    checkTexts(await b.js(TEXTS), `${theme}, ${lane}, with Plan's tickets and Build open`);
-    checkEdges(await b.js(EDGES), `${theme}, ${lane}, with Plan's tickets and Build open`, 5); // Shipped has fewer controls than the others
+    checkTexts(await b.js(TEXTS), `${theme}, ${lane}, with Plan's tickets and Build open`, lane === 'capture' ? 10 : 21); // 0520: Capture holds two closed notes
+    checkEdges(await b.js(EDGES), `${theme}, ${lane}, with Plan's tickets and Build open`, lane === 'capture' ? 2 : 5); // Shipped has fewer controls than the others, and Capture (0520) only its notes
     tags.push(...await b.js(TAGS));
   }
   await b.js(openLane('plan'));
   await b.js(`document.querySelector('#shaping .tag.pick').click()`);
   await b.until(`!!document.querySelector('.prio-menu')`, 'the priority menu');
   checkTexts(await b.js(TEXTS), `${theme}, the priority menu`);
-  checkEdges(await b.js(EDGES), `${theme}, the priority menu`);
+  checkEdges(await b.js(EDGES), `${theme}, the priority menu`, 7); // 0520: less Plan's three Tickets, Ideas and Inbox buttons
   await b.js(`document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
   await b.until(`!document.querySelector('.prio-menu')`, 'the priority menu to close');
   await b.js(`document.querySelector('#shaping .full-open').click()`);
@@ -364,13 +365,14 @@ async function everyView(b, theme) {
     assert.ok(t.height >= 28, `${theme}: the ${t.text} tag in ${t.where} is ${t.height} px tall`);
   }
   await b.js(`document.querySelector('#full-ticket .close').click()`);
-  for (const list of ['ideas', 'inbox']) {
-    await b.js(`document.querySelector('#shaping-toggle .toggle.${list}').click()`);
-    await b.until(`!!document.querySelector('#shaping .item.${list === 'ideas' ? 'idea' : 'inbox'} .head')`, list);
-    await b.js(`document.querySelector('#shaping .item .head').click()`);
-    await b.until(`!!document.querySelector('#shaping .item.open')`, `the open ${list} item`);
-    checkTexts(await b.js(TEXTS), `${theme}, ${list}`, 10); // 0410: Plan alone shows now
-    checkEdges(await b.js(EDGES), `${theme}, ${list}`, 5);
+  // 0520: ideas and inbox notes are in Capture, each opened in turn
+  await b.js(openLane('capture'));
+  for (const list of ['idea', 'inbox']) {
+    await b.until(`!!document.querySelector('#capture .item.${list} .head')`, list);
+    await b.js(`document.querySelector('#capture .item.${list}:not(.open) .head').click()`);
+    await b.until(`!!document.querySelector('#capture .item.${list}.open')`, `the open ${list} note`);
+    checkTexts(await b.js(TEXTS), `${theme}, ${list}`, 10); // 0410: Capture alone shows
+    checkEdges(await b.js(EDGES), `${theme}, ${list}`, 2);
   }
 }
 
@@ -387,7 +389,7 @@ test('0161 AC4: in a real browser, each button, link and tab reached with Tab sh
     await withPanel(theme, async b => {
       const seen = [];
       // 0410: from the top of each lane in turn, as only the open one shows
-      for (const lane of ['plan', 'build', 'shipped']) {
+      for (const lane of ['capture', 'plan', 'build', 'shipped']) {
         await b.js(`${openLane(lane)} && document.activeElement.blur()`);
         for (let i = 0; i < 40; i++) { // since 0165 each tag is a stop too
           await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
@@ -403,7 +405,8 @@ test('0161 AC4: in a real browser, each button, link and tab reached with Tab sh
         }
       }
       assert.ok(seen.length >= 10, `${theme}: Tab reaches the controls (${seen.length})`);
-      for (const kind of ['BUTTON.toggle', 'BUTTON.settings-open', 'SPAN.title', 'BUTTON.full-open', 'BUTTON.dep-chip']) {
+      // 0520: Plan's Tickets, Ideas and Inbox buttons (BUTTON.toggle) are gone; the lanes' names are buttons Tab reaches
+      for (const kind of ['BUTTON.tab', 'BUTTON.settings-open', 'SPAN.title', 'BUTTON.full-open', 'BUTTON.dep-chip']) {
         assert.ok(seen.some(f => f.what.startsWith(kind)), `${theme}: Tab reaches a ${kind}: ${seen.map(f => f.what).join(' | ')}`);
       }
       for (const f of seen) {

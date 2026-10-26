@@ -24,10 +24,10 @@ const PACK = [
   '| 1 | request_changes | Two findings about the layout of the review pack on a narrow screen. |',
   '| 2 | approve | none |',
 ].join('\n');
-const NOTE = '# A note with a table\n\nStatus: new\n\n| Name | Value |\n| --- | --- |\n| First | One thing written out at some length so it wraps |\n| Second | Two |\n';
+const NOTE = '# A note with a table\n\nStatus: idea\n\n| Name | Value |\n| --- | --- |\n| First | One thing written out at some length so it wraps |\n| Second | Two |\n';
 const STATE = {
   tickets: [T('0005', 'approved', { started: ago(40), approved: ago(30), rounds: [round(1, 1000)] })],
-  ideas: [idea('2026-10-13-a-table', 'new', NOTE)],
+  ideas: [idea('2026-10-13-a-table', 'idea', NOTE)],
 };
 
 // ---------- the page's own nodes, without a browser ----------
@@ -92,10 +92,9 @@ async function withPack(width, fn) {
       if (i >= 100) throw new Error('timed out waiting for the panel');
       await new Promise(res => setTimeout(res, 100));
     }
-    await b.js(openLane('plan')); // 0410: the idea's table is in Plan, beside the pane
-    await b.js(`document.querySelector('#shaping-toggle .toggle.ideas').click()`);
-    await b.until(`!!document.querySelector('#shaping .item .head')`, 'the idea');
-    await b.js(`document.querySelector('#shaping .item .head').click()`);
+    await b.js(openLane('capture')); // 0410: the idea's table is beside the pane; 0520: in Capture
+    await b.until(`!!document.querySelector('#capture .item .head')`, 'the idea');
+    await b.js(`document.querySelector('#capture .item .head').click()`);
     await b.until(`!!document.querySelector('.shaping .md table')`, 'the idea\'s note');
     await b.js(`document.querySelector('#queue .q .top').click()`);
     await b.until(`[...document.querySelectorAll('#queue .full-open')].some(x => x.textContent === 'Review pack')`, 'the Review pack button');
