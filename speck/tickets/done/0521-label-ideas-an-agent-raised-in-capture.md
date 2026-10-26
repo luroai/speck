@@ -1,7 +1,7 @@
 ---
 id: "0521"
 title: "Label ideas an agent raised in Capture"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0520"]                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T22:41:59.431Z"
 approved: "2026-10-26T22:54:22.652Z"
+finished: "2026-10-26T22:59:30.303Z"
 
 ---
 # 0521 · Label ideas an agent raised in Capture
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Both the user and agents put ideas in speck: the user by asking for one to be captured, and agents by raising follow-ups from builds on their own. In Capture (0520) they sit in one list, and the user can't tell at a glance which ideas are theirs and which an agent suggested.
