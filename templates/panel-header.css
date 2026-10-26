@@ -11,6 +11,7 @@
   .bezel .print { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 0 4px 2px; }
   .bezel .name { flex: none; display: inline-flex; align-items: center; gap: .25em; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 32px; line-height: 1; color: var(--bezel-ink); }
   .bezel .name::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; background: var(--lcd-red); } /* decoration: no text, so a screen reader passes over it */
+  .bezel[data-run="off"] .name::before { background: var(--bezel-muted); } /* 0513: grey while speck run is off, like a power light */
   .bezel .repo { flex: 1 1 auto; min-width: 0; text-align: right; font: 400 12px/1.5 -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; color: var(--bezel-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bezel .repo code { font-size: inherit; color: inherit; }
   .bezel .settings-open { flex: none; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: .5px solid var(--bezel-muted); background: transparent; color: var(--bezel-muted); cursor: pointer; }
