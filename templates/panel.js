@@ -25,8 +25,6 @@ function el(tag, cls, text, ...kids) {
   return node;
 }
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many || one + 's'}`;
-const mark = (cls, ok) => el('span', cls, null, el('span', ok ? 'tick' : 'sq'));
-function check(cls, ok, text) { const s = mark(cls, ok); s.appendChild(el('span', null, text)); return s; }
 // A chain icon on a ticket that starts a chain, a padlock on one waiting on others, or nothing. Hover text says which.
 function chainIcon(t) {
   const icon = t.chain ? el('span', 'chain') : t.waiting_on.length ? el('span', 'lock') : null;
@@ -185,16 +183,11 @@ function ticketItem(t) {
 }
 // A ticket's top row. When only its chain changes, through other tickets, a new top row replaces the old one and the
 // details stay on the page.
-// 0419: its details line is its priority, size and risk, then its criteria and lint result (0468: the tickets it waits
-// on or unlocks are in its chip). 0463: only while it's closed; open, its steps and facts
-// are in a track and a table, as an open one in flight's are.
+// 0519: its second row is its priority, size and risk, then its bug, fix or task tag, each a small boxed label, side by
+// side (0468: the tickets it waits on or unlocks are in its chip). 0463: only while it's closed; open, its steps and
+// facts are in a track and a table, as an open one in flight's are, and its criteria and lint result in its readiness.
 function ticketHead(t) {
-  const criteria = list(t.acceptance_criteria);
-  const lint = t.lint || { errors: 0, warnings: 0 };
-  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [detailsLine('checks', [...tagsOf(t, true),
-    el('span', null, plural(criteria.length, 'criterion', 'criteria')),
-    lint.errors ? check('bad', false, `lint: ${plural(lint.errors, 'error')}`) : check('ok', true, 'lint passes'),
-    lint.warnings ? check('warn', false, plural(lint.warnings, 'warning')) : null])]);
+  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [el('div', 'checks', null, ...tagsOf(t, true))]);
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
   return head;
