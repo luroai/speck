@@ -233,7 +233,7 @@ export async function panelServer() {
   // A web page elsewhere can send a POST here (the Host check doesn't stop a form post to 127.0.0.1), but can't read
   // this token, which goes only into the page, and its Origin gives it away. Taken out of the environment, so the
   // commands this runs don't get it.
-  const token = env.SPECK_PANEL_TOKEN, running = env.SPECK_PANEL_CODE || codeHash();
+  const token = env.SPECK_PANEL_TOKEN, running = env.SPECK_PANEL_CODE || codeHash()
   for (const k of ['SPECK_PANEL_ARGS', 'SPECK_PANEL_HANDOVER', 'SPECK_PANEL_TOKEN', 'SPECK_PANEL_CODE', 'SPECK_PANEL_CODE_URL', 'SPECK_PANEL_AWAY']) delete env[k];
   if (!token || !process.send) throw new SpeckError('Start the panel with: speck panel');
   let successor = null; // the server starting on new code, until it's ready or fails
@@ -247,7 +247,7 @@ export async function panelServer() {
   const repo = findRepoRoot();
   const port = panelPort(args), url = panelUrl(args);
   const cfg = loadConfig(repo);
-  const name = path.basename(worktreeList(repo)[0]?.path || repo), repoName = htmlEscape(name), base = htmlEscape(cfg.base_branch);
+  const name = path.basename(worktreeList(repo)[0]?.path || repo), repoName = htmlEscape(name), panelId = crypto.createHash('sha256').update(`${fs.realpathSync(repo)}\0${port}`).digest('hex').slice(0, 16), base = htmlEscape(cfg.base_branch);
   let restartError = null; // the last failed restart, shown on the page until a restart works or the code is put back
   let stopping = false, projects = null; // projects: 0516's, once this is serving
   let shipping = null; // the id of the ticket a Ship button is shipping, until speck ship has finished
@@ -257,7 +257,7 @@ export async function panelServer() {
   // its model, since 0432 its Settings, since 0433 the rest of its script, since 0473 its pop-ups and since 0474 its header. /api/state gives the stamp of the code now, so a page sent before any of them changed can say it's out of date.
   const readOr = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } }, stampOf = html => crypto.createHash('sha256').update(running).update('\0').update(html).update('\0').update(stylesFiles.map(readOr).join('\0')).update('\0').update(readOr(modelFile)).update('\0').update(readOr(settingsFile)).update('\0').update(readOr(scriptFile)).update('\0').update(readOr(popupsFile)).update('\0').update(readOr(headerFile)).digest('hex').slice(0, 16);
   const page = () => { const html = fs.readFileSync(pageFile, 'utf8'); return html.replace('{{page}}', () => stampOf(html))
-    .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token); };
+    .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token).replace('{{panel}}', () => panelId); };
   const pageNow = () => { try { return { page: stampOf(fs.readFileSync(pageFile, 'utf8')) }; } catch { return {}; } };
   // With --url, its one address too: the tunnel in front of the panel sends its hostname as the Host, with no port.
   const origins = new Set([`http://127.0.0.1:${port}`, `http://localhost:${port}`, ...(url ? [url.origin] : [])]);
@@ -541,7 +541,7 @@ export async function panelServer() {
     server.listen(where, resolve);
   });
   server.on('error', e => console.error(`speck panel: ${e.message}`));
-  projects = panelProjects({ port, name, repo: fs.realpathSync(repo), origins, changed });
+  projects = panelProjects({ port, name, repo: fs.realpathSync(repo), origins, changed, id: panelId });
   if (!handover) console.log(`speck panel: http://127.0.0.1:${port}/${url ? ` and ${url.origin}/` : ''} ${away ? '(in the background: stop it with speck panel --stop)' : '(press Ctrl+C to stop)'}`);
   process.send('ready');
 
