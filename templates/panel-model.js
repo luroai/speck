@@ -233,6 +233,12 @@ function panelModel(state) {
   const statusOf = i => String(i.status || '').trim();
   // The id on an inbox note's `From ticket:` line (0036), or null when it has none.
   const fromTicket = body => ((typeof body === 'string' ? body : '').match(/^From ticket:[ \t]*(\S+)/m) || [])[1] || null;
+  // 0521: whether an agent raised the note: its `Raised by:` line says agent or you, and a note without one, or with
+  // any other value, counts as an agent's when it has a `From ticket:` line, as a build's follow-ups always have.
+  const raisedByAgent = body => {
+    const by = ((typeof body === 'string' ? body : '').match(/^Raised by:[ \t]*(\S+)[ \t]*$/m) || [])[1];
+    return by === 'agent' ? true : by === 'you' ? false : fromTicket(body) !== null;
+  };
   const is = (...statuses) => t => statuses.includes(t.status);
   const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
   const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
@@ -273,8 +279,8 @@ function panelModel(state) {
     // Follow-ups waiting in the inbox, in JSON order.
     inbox: ideas.filter(i => statusOf(i) === 'inbox').map(i => ({ ...i, from: fromTicket(i.body) })),
     // 0520: Capture's list: every note whose status is idea or inbox, newest captured first by its `Captured:` line's
-    // date, those without one last, otherwise in JSON order.
-    capture: ideas.filter(i => ['idea', 'inbox'].includes(statusOf(i))).map((i, at) => ({ ...i, from: statusOf(i) === 'inbox' ? fromTicket(i.body) : null, at, on: capturedAt(i.body) }))
+    // date, those without one last, otherwise in JSON order. 0521: each says whether an agent raised it.
+    capture: ideas.filter(i => ['idea', 'inbox'].includes(statusOf(i))).map((i, at) => ({ ...i, from: statusOf(i) === 'inbox' ? fromTicket(i.body) : null, agent: raisedByAgent(i.body), at, on: capturedAt(i.body) }))
       .sort((a, b) => (a.on === null) - (b.on === null) || (b.on || '').localeCompare(a.on || '') || a.at - b.at).map(({ at, on, ...i }) => i),
     // One list: in-flight tickets, then ready ones in JSON order, the order speck run starts them. 0200: in-flight ones
     // go in the order their builds started, so each keeps its place until it ships; one with no start time goes after, by id.

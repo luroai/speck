@@ -64,6 +64,8 @@ const tagsOf = (t, pick) => [...fieldTags(t, pick), typeTag(t), taskTag(t)];
 // A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
 const typeTag = t => (t.type === 'bug' || t.type === 'fix'
   ? explained(el('span', `tag ${t.type}`, t.type), t.type === 'bug' ? 'Bug: fixes a defect' : 'Fix: fixes a broken main, built before anything else') : null);
+// 0521: an "agent" tag for an idea note an agent raised itself, such as a build's follow-up.
+const agentTag = () => explained(el('span', 'tag agent', 'agent'), 'Agent: an agent raised this idea itself, not you');
 // 0350, 0492: a "task" tag for a task ticket, whose build does a task rather than change code, or nothing for a code ticket.
 const taskTag = t => (t.kind === 'task' ? explained(el('span', 'tag task', 'task'), 'Task: the build does a task and leaves its result in outputs/, not code') : null);
 // A ticket's priority, size and risk tags, each only when it has that field. `pick`: the priority tag opens the menu
@@ -487,10 +489,11 @@ function capturedOn(body) {
   return `${d} ${MONTHS[mo - 1]}${y === new Date().getFullYear() ? '' : ` ${y}`}`;
 }
 // A collapsed idea or inbox card is its title and one short line (0435); open, the note's path is above its text.
+// 0521: closed, a note an agent raised has an agent tag after that line, as a ticket has its task tag.
 function noteItem(i, kind, open, second) {
   const isOpen = open.has(i.path);
   const head = el('div', 'head', null, el('div', 'line', null, titled(el('span', 'title', i.title))), el('span'),
-    el('div', 'checks', null, el('span', null, second)));
+    el('div', 'checks', null, el('span', null, second), !isOpen && i.agent === true ? agentTag() : null));
   head.addEventListener('click', () => flip(open, i.path));
   return el('div', `item ${kind}${isOpen ? ' open' : ''}`, null, head,
     isOpen ? el('div', 'detail', null, el('div', null, null, el('div', 'path mono', i.path), noteOf(i))) : null);
