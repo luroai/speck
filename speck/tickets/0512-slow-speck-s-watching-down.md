@@ -39,6 +39,7 @@ speck mostly sits and watches, calmly, and its beats and comic moments come now 
 ## Notes
 - Asked for by the user on 2026-10-26.
 - Today: `BEATS` and `beatAt` in `templates/panel-header.js` (0502 to 0505) pick beats back to back, never the same twice running; `period` there sets each TV's bar at 10 to 18 seconds; the step-finished hop is under "a bar filling".
+- Failing before this build: none
 - The numbers are a first setting, to tune by watching it: the prototype `docs/design/lcd/watching.html` shows the beats themselves.
 
 ## In plain words
