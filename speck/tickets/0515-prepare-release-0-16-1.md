@@ -1,7 +1,7 @@
 ---
 id: "0515"
 title: "Prepare release 0.16.1"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-26-prepare-release-0-16-1.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0514"]                # ticket ids that must be done first
 created: 2026-10-26
+started: "2026-10-26T14:47:39.378Z"
 
 ---
 # 0515 · Prepare release 0.16.1
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0.16.0, Settings can turn same-model review on or off, speck's watching is slower, the Auto-build-off dot is grey, and a trackpad lane-swipe fix is on the way. Anyone following the setup prompt, or updating speck on another machine, still gets 0.16.0 without them.
