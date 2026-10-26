@@ -15,4 +15,5 @@ With several projects on speck (speck itself, the landing site, later others), e
 - Machine-wide build limit: one build at a time applies per project, so several projects can still run several builds at once. Five builds ran this machine out of memory on 10 October. The panel is the natural place to see a limit across projects, but each `speck run` would need to respect it.
 - Aimed at 0.4.0, with "one thing starts everything". Not before the polish work is done.
 - Possible first step (2026-10-13): a project switcher in the panel header that lists the other panels running on this machine, each on its own port, and links to them. Each project keeps its own panel process, so it's much smaller than one panel for everything. It needs to work through a tunnel too, where each panel has its own hostname rather than a port.
+- 2026-10-26: the project switcher (the first step above) is ticketed as 0516. One panel for every project stays here as an idea.
 - Open questions: how projects get on the list (added by hand, or added when speck runs in them)? Is the limit across projects a setting in the home folder too?
