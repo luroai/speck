@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T21:31:19.850Z"
-approved: "2026-10-26T22:08:51.974Z"
+approved: "2026-10-26T22:15:00.320Z"
 
 ---
 # 0519 · Keep every closed card the same height
@@ -57,13 +57,14 @@ Closed cards in Plan, Build and Shipped are now all the same height, and shorter
 Round 1 (codex): changes requested: F1 The new padding rule for .q:is(.at-build, .at-check, .at-review, .at-ship) also changes open Build cards, reducing their padding from 6px 10px to 5px 9px.
 Round 2 (codex): approve.
 Round 3 (codex, merge round): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3, 1 of them a merge round
+- Review rounds: 4, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 855,895
-- Elapsed since build started: 38 min
-- Changed lines: 62 (limit 5000)
+- Reviewer tokens: 1,387,460
+- Elapsed since build started: 44 min
+- Changed lines: 63 (limit 5000)
 - Follow-ups (none sent to the inbox):
   - Known limit: on a touch screen a closed Plan label's tap area is about 35 px tall (from its row's top to the card's bottom) and stops halfway into the 4 px gap beside it, rather than 44 by 44 px, so the small gap and the title's own tap area both fit. The priority keeps its 44 px box, which reaches left of it.
   - Tidy-up: docs/design/lcd/panel-mock.html still draws a Plan card with its criteria count and "lint passes".
@@ -291,6 +292,82 @@ Round 3 (codex, merge round): approve.
     ],
     "escalation_question": "",
     "summary": "The Build clipping fix preserves equal card heights and tag touch areas, and the previously failing overflow tests now pass. Compact Plan labels and existing interactions remain covered. No blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1c30e65b0c115061e4f07373a419215bd9b9bb7c",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a17a39-4cb0-7f41-8349-9afa68036b65",
+    "builder_response": "- Tests run: test/panel-0039.test.mjs test/panel-0040.test.mjs test/panel-0041.test.mjs test/panel-0050.test.mjs test/panel-0051.test.mjs test/panel-0052.test.mjs test/panel-0053.test.mjs test/panel-0054.test.mjs test/panel-0055.test.mjs test/panel-0058.test.mjs test/panel-0060.test.mjs test/panel-0061.test.mjs test/panel-0062.test.mjs test/panel-0063.test.mjs test/panel-0069.test.mjs test/panel-0077.test.mjs test/panel-0128.test.mjs test/panel-0132.test.mjs test/panel-0138.test.mjs test/panel-0140.test.mjs test/panel-0141.test.mjs test/panel-0142.test.mjs test/panel-0143.test.mjs test/panel-0151.test.mjs test/panel-0153.test.mjs test/panel-0154.test.mjs test/panel-0155.test.mjs test/panel-0156.test.mjs test/panel-0158.test.mjs test/panel-0160.test.mjs test/panel-0161.test.mjs test/panel-0162.test.mjs test/panel-0164.test.mjs test/panel-0165.test.mjs test/panel-0167.test.mjs test/panel-0168.test.mjs test/panel-0171.test.mjs test/panel-0178.test.mjs test/panel-0185.test.mjs test/panel-0187.test.mjs test/panel-0190.test.mjs test/panel-0196.test.mjs test/panel-0201.test.mjs test/panel-0203.test.mjs test/panel-0213.test.mjs test/panel-0224.test.mjs test/panel-0257.test.mjs test/panel-0258.test.mjs test/panel-0261.test.mjs test/panel-0273.test.mjs test/panel-0281.test.mjs test/panel-0361.test.mjs test/panel-0372.test.mjs test/panel-0410.test.mjs test/panel-0411.test.mjs test/panel-0416.test.mjs test/panel-0417.test.mjs test/panel-0418.test.mjs test/panel-0419.test.mjs test/panel-0420.test.mjs test/panel-0421.test.mjs test/panel-0422.test.mjs test/panel-0424.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0431.test.mjs test/panel-0434.test.mjs test/panel-0435.test.mjs test/panel-0438.test.mjs test/panel-0440.test.mjs test/panel-0442.test.mjs test/panel-0443.test.mjs test/panel-0444.test.mjs test/panel-0453.test.mjs test/panel-0454.test.mjs test/panel-0455.test.mjs test/panel-0461.test.mjs test/panel-0462.test.mjs test/panel-0463.test.mjs test/panel-0464.test.mjs test/panel-0465.test.mjs test/panel-0468.test.mjs test/panel-0469.test.mjs test/panel-0472.test.mjs test/panel-0473.test.mjs test/panel-0476.test.mjs test/panel-0477.test.mjs test/panel-0478.test.mjs test/panel-0480.test.mjs test/panel-0481.test.mjs test/panel-0484.test.mjs test/panel-0494.test.mjs test/panel-0500.test.mjs test/panel-0513.test.mjs test/panel-0519.test.mjs test/panel.test.mjs test/tap-0209.test.mjs test/tap-0221.test.mjs with --related (962 pass, 0 fail, 3 skipped as before)\n- Ship refused: 0051 AC2-AC5 and 0055 AC1-AC4 failed, both on selecting a closed Build card's title by dragging in a real browser (an empty selection where 'Expor' and 'A buil' were expected). main had nothing new to merge in (\"Already up to date\"), so no files conflicted and nothing was resolved. The cause was last round's change: the closed status line is now a 44 px box that reaches 10 px up behind the title line, and as it comes later in the page it was on top of the title's lower part, so a press there landed in the status line rather than the title.\n- What I changed (templates/panel-cards.css only): `.q:not(.open) .top .line { position: relative; }`, which puts a closed Build card's title line above the status line reaching behind it. A tag's touch area (z-index 1 on a touch screen) is still above both, so 0190 and 0224 still pass. Layout is unchanged.\n- This time I ran a wider set: every panel test file the earlier list covered, plus every browser test that touches the Build lane (99 files).\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 528986,
+      "cached_input_tokens": 463232,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2579,
+      "reasoning_output_tokens": 218
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T22:14:58.334Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "ticketHead still renders only priority, size, risk and optional type labels for closed Plan cards. Passing 0519 tests cover label contents, boxes, spacing and retained criteria/lint information when open."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0519 tests cover priority menu interaction, the update request and label explanations. Existing 0190 and 0224 browser tests confirm Build tag touch areas still work after the stacking fix."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Closed-card ellipsis and non-wrapping row rules remain intact. Passing 0519 browser measurements verify single-line titles and details without excess space below them; the new position: relative rule changes stacking without changing layout."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The 0519 browser test passes at 320, 375 and 420 px in both looks across all three lanes, including the required task, blocked bug and long-title fixtures. Open-card padding remains unchanged and tested."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified current output reports 962 passes, zero failures and three skips. Previously failing browser selection tests 0051 AC2-AC5 and 0055 AC1-AC4 now pass, alongside touch-area and card-height tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css:276",
+        "issue": "The padding adjustment remains restricted to closed Build cards, preserving open-card padding.",
+        "suggested_fix": "Completed and covered by the passing open/closed padding regression test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The title stacking fix restores text selection while preserving tag touch areas and equal card heights. All requested behaviour remains covered, and the wider test run reports no failures. No blocking concerns remain."
   }
 }
 ```
