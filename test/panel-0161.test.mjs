@@ -57,7 +57,7 @@ const inLog = sel => sel.split(',').every(s => /^(?:\.q \.log|\.foreman \.run-lo
 const behind = sel => (onFrame(sel) ? ['--bezel'] : inLog(sel) ? ['--log-bg'] : SURFACES);
 // Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
 // stage dots and the ensō's speck went in 0168.)
-const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.bezel .name::before', '.lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before', '#foreman .top .title::before']; // 0478: nor do the dots before each lane's title. 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title
+const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.bezel .name::before', '.bezel[data-run="off"] .name::before', '.lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before', '#foreman .top .title::before']; // 0478: nor do the dots before each lane's title. 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title, grey or not (0513)
 // Every control and card with an edge of its own, by its main rule.
 const EDGED = ['.tag', '.toggle', '.bezel .settings-open', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
   '#full-ticket .close', '#full-ticket .ship', '.prio-menu', '.item', '.q', '#shipped tr', 'section'];
