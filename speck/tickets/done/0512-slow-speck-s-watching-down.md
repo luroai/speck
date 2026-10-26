@@ -1,7 +1,7 @@
 ---
 id: "0512"
 title: "Slow speck's watching down"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T10:29:20.829Z"
 approved: "2026-10-26T10:47:30.506Z"
+finished: "2026-10-26T10:51:31.859Z"
 
 ---
 # 0512 · Slow speck's watching down
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 While builds run, speck plays one watching beat straight after another, each 3.5 to 7 seconds long, with no plain watching in between. It hops whenever any TV's bar fills, and each bar fills every 10 to 18 seconds, so with three builds it hops every few seconds. The user, watching 0.16.0: "The cycling of the animations happens too quickly. It makes it look like Speck has ADHD."
