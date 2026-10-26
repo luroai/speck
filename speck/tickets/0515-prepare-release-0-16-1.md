@@ -1,7 +1,7 @@
 ---
 id: "0515"
 title: "Prepare release 0.16.1"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-26T14:47:39.378Z"
 ---
 # 0515 · Prepare release 0.16.1
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0.16.0, Settings can turn same-model review on or off, speck's watching is slower, the Auto-build-off dot is grey, and a trackpad lane-swipe fix is on the way. Anyone following the setup prompt, or updating speck on another machine, still gets 0.16.0 without them.
@@ -53,7 +53,9 @@ speck is ready to be released as 0.16.1.
 - Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is now ready to go out as version 0.16.1, a small bug-fix release. It gathers the four fixes since 0.16.0: a calmer speck while builds run, trackpad swipes between lanes that keep working without a click, a dot by speck's name that goes grey while Auto-build is off, and a switch in Settings for letting the reviewer use the same model as the builder. The changelog, the release page's notes, the version shown when you install speck and the "Built with speck" figures in the README are all updated.
+
+Once this lands, the release page and its tag should appear by themselves. Check the repository's Actions tab afterwards: if they didn't, the ticket's Notes give the one command to publish it by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,4 +64,73 @@ speck is ready to be released as 0.16.1.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none. After it ships, check that the `v0.16.1` tag and GitHub release appeared.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3695d3cb4716c1643b6361deb2b35a102f8c8212",
+    "session": "fresh",
+    "thread_id": "01a178b1-61f8-7c21-be85-36becb21f9a4",
+    "builder_response": "- Tests run: test/release-0515.test.mjs test/release-0507.test.mjs test/docs-0491.test.mjs, with `--related` (938 tests, 935 pass, 3 skipped, 0 fail).\n- Shipped since v0.16.0: 0511, 0512, 0513, 0514 (git log v0.16.0..HEAD, \"speck(<id>): ship\").\n- README figures recomputed with test/support/figures.mjs at 7fefb3d9 (main's head when built): 498 shipped, 16 cancelled, 13 min, 1 round, 254 first round.\n- test/release-0507.test.mjs's current-version checks now follow package.json, as 0507 did for 0452.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 205524,
+      "cached_input_tokens": 154880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 886,
+      "reasoning_output_tokens": 37
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T14:51:22.515Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.16.1. Both 0515 AC1 tests passed, including running init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.16.1 above 0.16.0 and describes the changes from shipped tickets 0511–0514. Git history confirms no other tickets shipped since v0.16.0. The passing AC2 preservation test confirms older sections are unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say '0.16.1, a public preview'. Passing AC3 tests verify their versions and that the setup prompt retains the quoted latest-release install command."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.16.1.md introduces the bug-fix release, explains all four shipped changes, gives the per-project update command and upgrade implications, and names no person. Passing AC4 tests check commands, settings and the changelog anchor."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent recalculation using builtWithSpeckFigures over current done tickets gives 498 shipped, 16 cancelled, 13 median minutes, 1 median round and 254 first-round approvals, matching README.md. AC5 tests passed. The full supplied output confirms 935 passes, 3 skips and no failures."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release version, changelog, release notes and published figures are consistent with the shipped work. Tests cover the release checks and report no failures. No blocking concerns found; tagging and publishing remain for the release workflow after merge."
+  }
+}
+```
+
+</details>
