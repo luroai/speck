@@ -1,7 +1,7 @@
 ---
 id: "0513"
 title: "Grey the dot by speck's name while Auto-build is off"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-26
+started: "2026-10-26T10:30:39.377Z"
 
 ---
 # 0513 · Grey the dot by speck's name while Auto-build is off
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The dot before "speck" in the header is speck's red whether or not `speck run` is on, so it looks live even when Auto-build is off and nothing will build. A red light that's always on says nothing.
