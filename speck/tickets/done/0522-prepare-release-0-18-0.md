@@ -1,7 +1,7 @@
 ---
 id: "0522"
 title: "Prepare release 0.18.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0519","0520","0521"]                # ticket ids that must be done firs
 created: 2026-10-26
 started: "2026-10-26T22:59:46.286Z"
 approved: "2026-10-26T23:03:23.849Z"
+finished: "2026-10-26T23:07:22.676Z"
 
 ---
 # 0522 · Prepare release 0.18.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0.17.0, every closed card in the panel is the same height, with a Plan card's priority, size, risk and type as small labels (0519), ideas and the inbox have their own Capture lane left of Plan (0520), and ideas an agent raised are labelled as an agent's there (0521). Anyone following the setup prompt, or updating speck in another project, still gets 0.17.0 without them.
