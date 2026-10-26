@@ -1,7 +1,7 @@
 ---
 id: "0522"
 title: "Prepare release 0.18.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-26T22:59:46.286Z"
 ---
 # 0522 · Prepare release 0.18.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0.17.0, every closed card in the panel is the same height, with a Plan card's priority, size, risk and type as small labels (0519), ideas and the inbox have their own Capture lane left of Plan (0520), and ideas an agent raised are labelled as an agent's there (0521). Anyone following the setup prompt, or updating speck in another project, still gets 0.17.0 without them.
@@ -53,7 +53,9 @@ speck is ready to be released as 0.18.0.
 - Self-check: no changes. Each claim in the changelog and release notes checked against 0519, 0520 and 0521.
 - Pictures: none, because nothing anyone sees in the panel changes.
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is now ready to go out as version 0.18.0. It gathers the three changes since 0.17.0: a new Capture lane, left of Plan, holding every idea and inbox note so Plan holds only tickets; an "agent" label on ideas an agent came up with by itself; and closed cards that are all the same height, with a Plan card's priority, size, risk and type as small labels. The changelog, the release page's notes, the version shown when you install speck and the "Built with speck" figures in the README are all updated.
+
+Once this lands, the release page and its tag should appear by themselves. Check the repository's Actions tab afterwards: if they didn't, the ticket's Notes give the one command to publish it by hand. Other projects keep 0.17.0, with ideas still in Plan, until you update them.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -63,3 +65,72 @@ speck is ready to be released as 0.18.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c2c28783a05094f8e0bc72a19083b4fcb56746af",
+    "session": "fresh",
+    "thread_id": "01a17a73-bcc1-7181-9975-1807e07524f4",
+    "builder_response": "- Tests run: test/release-0522.test.mjs test/release-0518.test.mjs test/docs-0491.test.mjs, with `--related` (every test file naming CHANGELOG.md, README.md, docs/brief.md or package.json) and the repo checks: 973 tests, 970 pass, 3 skipped, 0 fail.\n- Shipped since v0.17.0: 0519, 0520 and 0521 only (`git log v0.17.0..main`). The changelog and release notes describe those three.\n- README figures worked out from speck/tickets/done/ at \"speck(0521): Label ideas an agent raised in Capture\": 505 shipped, 16 cancelled, 13 minutes, 1 round, 257 in round 1.\n- test/release-0518.test.mjs's current-version checks now follow package.json, as 0518 did for 0515.\n",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 154918,
+      "cached_input_tokens": 106752,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 845,
+      "reasoning_output_tokens": 36
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T23:03:17.417Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.18.0. Passing release-0522 AC1 tests check the version and execute speck init to verify its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.18.0 above 0.17.0 and describes shipped tickets 0519–0521 in plain English. Git history confirms these are the shipped changes since v0.17.0. Passing AC2 tests verify release facts and preservation of earlier sections."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines both say 0.18.0, a public preview. The README setup prompt retains the quoted semver:* install command. Passing AC3 tests check versions and the setup prompt."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.18.0.md explains the three shipped changes, their benefits, installation in each project and upgrading from 0.17.0, including the move to Capture. It names no person. Passing AC4 tests check install facts and the changelog anchor; document review confirms the claims match shipped tickets."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent calculation from the current done tickets gives 505 shipped, 16 cancelled, 13 median minutes, 1 median review round and 257 first-round approvals, matching README.md. The recorded run reports 970 passes, 3 skips and no failures, including the version/changelog consistency test."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release version, changelog, release notes and README figures are consistent and supported by the shipped tickets. The relevant tests pass, and the setup prompt still installs the latest release. No blocking concerns found."
+  }
+}
+```
+
+</details>
