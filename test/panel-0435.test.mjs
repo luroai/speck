@@ -32,7 +32,8 @@ const page = () => fakePage([STATE()], { Date: stoppedClock(NOW) });
 const cards = async kind => { const p = page(); await p.settle(); return { p, cards: notes(p).filter(n => new RegExp(`\\b${kind}\\b`).test(n.className)) }; };
 const titled = (c, name) => c.find(n => lineOf(n).textContent === `Note ${name}`);
 const lineOf = c => top(c).children[0];
-const secondOf = c => top(c).children.find(n => /\bchecks\b/.test(n.className)).textContent;
+// 0521: an agent tag after the second line's text is no part of it.
+const secondOf = c => top(c).children.find(n => /\bchecks\b/.test(n.className)).children.filter(n => !/\btag\b/.test(n.className)).map(n => n.textContent).join('');
 
 test('0435 AC1: an idea card is its title with no label, then when it was captured and any status but idea, in smaller type', async () => {
   const { cards: c } = await cards('idea');
