@@ -130,7 +130,7 @@
   /* 0435: a closed idea's or inbox note's title too, so the card is its title line and its second line */
   .item.idea:not(.open) .line .title, .item.inbox:not(.open) .line .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item.idea:not(.open) .head .line, .item.inbox:not(.open) .head .line { min-width: 0; } /* its grid column no wider than the card */
-  .q:not(.open) .top .progress, .q:not(.open) .top .act { white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; } /* 0519: clipped across only, so a tag's tap area isn't cut off */
+  .q:not(.open) .top .progress, .q:not(.open) .top .act { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* 0419: a Plan or Build ticket is its title line and one line of details, in smaller type: a Build ticket's parts
      separated by " · ", and (0519) a Plan ticket's labels side by side. */
   .item.ticket, .q { padding: 6px 10px; }
@@ -422,7 +422,13 @@
   .q .top .progress .sep, .q .top .act .sep { padding: 0 12px; }
   /* 0519: every closed card is as tall as its 44 px top row: its title line, then a second row of 24 px (22 px in
      Shipped, whose title line is 22 px), so the cards in every lane are the same height, with no room under the row */
-  .q:not(.open) .top .progress, .q:not(.open) .top .act, .item.ticket:not(.open) .head .checks { height: 24px; line-height: 24px; }
+  .item.ticket:not(.open) .head .checks { height: 24px; line-height: 24px; }
+  /* A closed Build card's status line is cut off at its edges, so it's a 44 px line, for its tag's 44 px tap area, that
+     reaches 10 px up behind the title line and 10 px down past the card's padding, taking only 24 px of the card's
+     height, its text where a 24 px line's is. Its tag, 16 px and its two borders high, is in the line's exact middle, so
+     its tap area is inside the line. */
+  .q:not(.open) .top .progress, .q:not(.open) .top .act { height: 44px; line-height: 44px; margin: -10px 0; }
+  .q:not(.open) .top :is(.progress, .act) .tag { vertical-align: top; margin-top: calc(14px - var(--label-border)); }
   #shipped tr:not(.open) .sum { align-items: center; height: 22px; margin-top: 0; }
   #shipped tr:not(.open) .meta { line-height: 22px; white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; }
   /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
