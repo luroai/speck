@@ -1,7 +1,7 @@
 ---
 id: "0514"
 title: "Keep trackpad lane swipes working after each swipe"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-26T10:45:32.928Z"
 ---
 # 0514 · Keep trackpad lane swipes working after each swipe
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On a laptop trackpad in Cursor's panel pane, a sideways scroll changes lane once, then further left/right swipes do nothing until you click the panel. After that click, one swipe works again, and you have to click once more for the next. Swiping between Plan, Build and Shipped should not need a click between each change.
@@ -57,3 +57,76 @@ A sideways trackpad scroll keeps changing lane on each gesture, without a click 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d77498547e13d4f371964f1e6ae4700b8ec5c4da",
+    "session": "fresh",
+    "thread_id": "01a177d3-73d3-78d0-a192-c50c443e8a76",
+    "builder_response": "- Tests run: test/panel-0514.test.mjs test/panel-0476.test.mjs, plus every test file `--related` chose for templates/panel-header.js (and the commands.checks files).\n- No pictures: nothing changes how the panel looks.\n- Design: the old handler cleared its \"done\" flag only after 150 ms with no wheel events, so a new swipe that started while the last one's glide was still sending events was ignored. The handler now works from each event's timeStamp rather than a timer, and after a lane change counts a new scroll three ways: after a 150 ms gap; 40 px the other way (a glide never reverses; any step the same way resets that count, so end-of-glide jitter can't add up); or a scroll the same way that speeds up again (each step at least twice the glide's slowest plus 4 px, 40 px of them) once the glide has slowed to a third of its fastest step.\n",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 90866,
+      "cached_input_tokens": 55424,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1177,
+      "reasoning_output_tokens": 189
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T10:49:07.653Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/panel-0514.test.mjs: both AC1 tests exercise successive wheel gestures through the page handler without intervening input; both passed. Cursor-specific event delivery remains unverified."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 tests cover pauses from 16 ms to ten minutes and vertical scrolling between gestures; both passed."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "templates/panel-header.js: the wheel handler's low/push heuristic can trigger twice during one continuous scroll. Executing the actual handler with deltaX values [20,20,30,8,22,22,16,10,5,2,1], spaced 16 ms apart, produced two stepLane(1) calls. The passing AC3 tests miss this slowdown followed by acceleration."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied related-test run reports 138 passes, zero failures and three skips. Existing tests were not changed, and the implementation stays within the wheel handler."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "A continuous swipe can skip two lanes when the fingers slow down and then accelerate. With events [20,20,30,8,22,22,16,10,5,2,1] at 16 ms intervals, the first 40 px changes lane, 30 then 8 arms the slowdown detector, and the following two 22 px events trigger another change. From Plan this skips through Build to Shipped without a second gesture, violating AC3.",
+        "suggested_fix": "Revise gesture detection so a temporary slowdown and acceleration within one swipe cannot trigger another lane change. Add this sequence as a regression test starting from Plan, while retaining the successive-gesture tests.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Repeated swipes work in the supplied tests, but one swipe can now skip across two lanes if its speed varies. Fix that regression before merge. Behaviour inside Cursor itself remains unverified."
+  }
+}
+```
+
+</details>

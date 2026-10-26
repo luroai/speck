@@ -42,18 +42,26 @@ test('0514 AC1: a sideways scroll that changes lane is followed by one the other
   assert.equal(lane(p), 'shipped', 'and a third');
 });
 
-test('0514 AC1: a swipe that stops the last one\'s glide while it is still going changes lane, either way', async () => {
+test('0514 AC1: a swipe the other way that stops the last one\'s glide while it is still going changes lane back', async () => {
   const p = await pad();
   p.scroll(swipe(6));
   assert.equal(lane(p), 'shipped', 'a scroll right');
   p.scroll(swipe(4), { way: -1 });
   assert.equal(lane(p), 'build', 'one back, during the first one\'s glide');
-  p.scroll(swipe(3), { way: -1 });
-  assert.equal(lane(p), 'plan', 'another the same way, during that one\'s glide');
-  p.scroll(swipe(5));
-  assert.equal(lane(p), 'build', 'and back again');
-  p.scroll(swipe(8));
-  assert.equal(lane(p), 'shipped', 'and on again the same way');
+  p.scroll(swipe(2));
+  assert.equal(lane(p), 'shipped', 'and a third, during that one\'s glide');
+  p.scroll(swipe(0), { way: -1 });
+  assert.equal(lane(p), 'build', 'and a fourth, as the fingers of the third lift');
+});
+
+test('0514 AC1: a swipe the same way, once the last one\'s glide has slowed right down, changes lane without a pause', async () => {
+  const p = await pad();
+  p.scroll(swipe(14), { way: -1 });
+  assert.equal(lane(p), 'plan', 'a scroll left');
+  p.scroll(swipe(14));
+  assert.equal(lane(p), 'build', 'one back, the next frame after the glide\'s last step');
+  p.scroll(swipe(16));
+  assert.equal(lane(p), 'shipped', 'and on the same way, with that one\'s glide slowed right down but still going');
 });
 
 // ---------- AC2 ----------
@@ -93,6 +101,7 @@ test('0514 AC3: one continuous glide changes lane only once, however long, with 
     'a long, fast one': [5, 12, 25, 40, 60, 70, 65, 50, ...glide().map(d => d * 4), ...glide()],
     'one that wobbles under the fingers': [4, 10, 20, 14, 25, 12, 30, 18, 24, ...glide()],
     'a glide with jitter at its end': [...swipe(), 1, -1, 2, 1, -0.5, 1, 2, 1, 1, -1, 2, 1, 2, 1, 1, 2, 1, 1],
+    'one that slows for a moment and speeds up again': [20, 20, 30, 8, 22, 22, 16, 10, 5, 2, 1],
     'a slow one that crawls on': [2, 3, 4, 5, 6, 6, 5, 6, 7, 6, 5, 6, 5, 4, 3, 2, 2, 1, 2, 1, 1],
   };
   for (const [what, deltas] of Object.entries(glides)) {
