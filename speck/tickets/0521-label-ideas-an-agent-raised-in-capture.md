@@ -43,6 +43,7 @@ Every idea an agent raised is labelled as an agent's in Capture.
 - The label means the agent raised the idea, not that an agent wrote the file: the user's own ideas are written by an agent too, on their say-so.
 - Today: build follow-ups have `Status: inbox` and a `From ticket:` line (`skills/speck-build/SKILL.md`, section 5 step 1); `/speck-capture` writes `Captured: <date> · Status: idea` (`skills/speck-capture/SKILL.md`). The panel reads notes through `scripts/idea-counts.mjs` and shows them with `noteItem` in `templates/panel.js`.
 - After 0520, which makes the Capture lane this labels.
+- Failing before this build: none
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
