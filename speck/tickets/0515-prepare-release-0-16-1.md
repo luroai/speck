@@ -1,7 +1,7 @@
 ---
 id: "0515"
 title: "Prepare release 0.16.1"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-26-prepare-release-0-16-1.md"               # 
 after: ["0514"]                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T14:47:39.378Z"
+approved: "2026-10-26T14:51:31.143Z"
 
 ---
 # 0515 · Prepare release 0.16.1
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0.16.0, Settings can turn same-model review on or off, speck's watching is slower, the Auto-build-off dot is grey, and a trackpad lane-swipe fix is on the way. Anyone following the setup prompt, or updating speck on another machine, still gets 0.16.0 without them.
@@ -61,9 +62,14 @@ Once this lands, the release page and its tag should appear by themselves. Check
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 206,410
+- Elapsed since build started: 4 min
+- Changed lines: 57 (limit 5000)
 - Follow-ups: none. After it ships, check that the `v0.16.1` tag and GitHub release appeared.
 
 ## Review rounds
