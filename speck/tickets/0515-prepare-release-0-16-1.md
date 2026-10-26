@@ -46,6 +46,11 @@ speck is ready to be released as 0.16.1.
 - Checked 2026-10-26: `package.json` is `0.16.0`. 0346 prepared the 0.10.3 patch the same way.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- AC5's README figures aren't tested in the README, as 0491 left the rule: `test/release-0515.test.mjs` checks the figures worked out from `speck/tickets/done/` at the commit this was built from (498 shipped, 16 cancelled, 13 minutes, 1 round, 254 in round 1), and the reviewer checks the README gives them.
+- `test/release-0507.test.mjs`'s checks of the current version now follow `package.json`, as 0507 did for 0452, and `test/docs-0491.test.mjs` lets `test/release-0515.test.mjs` read the README for its status line and setup prompt, as it does every release test.
+- Shipped since `v0.16.0`: 0511, 0512, 0513 and 0514, and no others.
+- Self-check: dropped an upgrade note saying to reload an open panel, as the panel already picks up its own new code; each other claim checked against the four shipped tickets.
+- Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

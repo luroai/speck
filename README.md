@@ -17,7 +17,7 @@ You don't need to read the code to check the work. Every ticket comes with a one
 
 Use the agents you already have: Claude Code, Codex or Cursor, or a model provider you have an API key for, such as DeepSeek. speck doesn't let a model review its own work unless you allow it.
 
-> Status: 0.16.0, a public preview. It works end to end on a local machine. Expect rough edges.
+> Status: 0.16.1, a public preview. It works end to end on a local machine. Expect rough edges.
 
 ## Get started
 
@@ -142,9 +142,9 @@ Claude Code, Cursor and model providers such as DeepSeek need no setup: set `rev
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **493 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **498 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
 - **13 minutes** median from a build starting to its ticket shipping, leaving out time it waited for you or the machine was asleep.
-- **1 review round** median. 251 tickets were approved in the first round.
+- **1 review round** median. 254 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 
