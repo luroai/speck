@@ -1,34 +1,9 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, full } from './support/panel.mjs';
+import { lane, pad, glide, swipe } from './support/lanes.mjs';
 
 // ---------- 0514: a sideways trackpad scroll changes lane on each scroll, without a click between ----------
-
-const TAB = { plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
-const board = () => ({ tickets: [full('0001', { title: 'A draft' }), T('0003', 'ready'), full('0005', { status: 'done', finished: new Date().toISOString() })], ideas: [] });
-const lane = p => Object.keys(TAB).filter(l => (p.byId(TAB[l]).attrs || {})['aria-selected'] === 'true').join();
-
-// The page, with a trackpad over its lanes: each scroll sends wheel events as a browser does, one a frame (16 ms), each
-// with the time it happened. `pause` is how long it waits before the scroll's first event.
-async function pad(globals) {
-  const p = fakePage([board()], globals);
-  await p.settle();
-  let now = 1000;
-  const lanes = p.byId('lanes');
-  p.wheel = (deltaX, deltaY = 0, gap = 16) => {
-    now += gap;
-    lanes.listeners.wheel({ deltaX, deltaY, timeStamp: now, target: lanes, cancelable: true, preventDefault() {} });
-  };
-  p.now = () => now;
-  p.scroll = (deltas, { pause = 16, way = 1 } = {}) => deltas.forEach((d, i) => p.wheel(way * d, 0, i ? 16 : pause));
-  return p;
-}
-// A swipe as a trackpad sends it: the fingers speeding up and slowing down, then its glide after they lift, slowing
-// down until it stops. `cut` stops the glide after that many of its events, as the next swipe's fingers do.
-const fingers = [3, 7, 12, 18, 22, 20, 16];
-const glide = (cut = Infinity) => { const g = []; for (let d = 14; d >= 1 && g.length < cut; d *= 0.9) g.push(Math.round(d * 10) / 10); return g; };
-const swipe = cut => [...fingers, ...glide(cut)];
 
 // ---------- AC1 ----------
 
@@ -140,10 +115,10 @@ test('0514 AC3: steps held up while the page changes lane don\'t count as a paus
   assert.equal(lane(p), 'build', 'a swipe right from Plan, held up the same way, stops at Build');
 });
 
-test('0514 AC3: a short sideways scroll, under 40 px, changes nothing, nor does a second one after a pause', async () => {
+test('0514 AC3: a short sideways scroll, under 20 px (0517: 40 px before), changes nothing, nor does a second one after a pause', async () => {
   const p = await pad();
-  p.scroll([5, 10, 12, 8, 3]);
-  p.scroll([5, 10, 12, 8, 3], { pause: 200 });
+  p.scroll([3, 5, 6, 4, 1]);
+  p.scroll([3, 5, 6, 4, 1], { pause: 200 });
   assert.equal(lane(p), 'build');
 });
 
