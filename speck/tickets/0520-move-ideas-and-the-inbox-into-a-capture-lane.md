@@ -46,6 +46,7 @@ The panel has a Capture lane, left of Plan, holding every idea and inbox note, a
 - Today: Plan's buttons are `shapingToggle` and `shapingView` in `templates/panel.js`, with `ideaItem`, `inboxItem` and `noteItem`; the lanes are `LANES` and `TAB_ORDER` in `templates/panel-header.js` (0476, 0477); the page is `templates/panel.html`.
 - After 0519, which also changes Plan's closed cards in `templates/panel.js` and `templates/panel-cards.css`.
 - Failing before this build: none
+- Self-check: an impossible Captured date (such as 2026-02-30 or 2026-13-01) now sorts with the undated notes, as its card says "No capture date"; tests of three lanes and of Plan's Tickets, Ideas and Inbox buttons changed to four lanes and Capture (AC1, AC5).
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 

@@ -1,9 +1,9 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, full, idea, click, toggles, items, top, openLane } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, full, idea, click, items, notes, top, openLane } from './support/panel.mjs';
 
-// ---------- 0214: Plan's idea and inbox cards get a ticket card's larger title ----------
+// ---------- 0214: Plan's idea and inbox cards get a ticket card's larger title (0520: in Capture now) ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
@@ -13,7 +13,7 @@ const LONG = 'Let the panel say which of the reviewer findings were fixed, which
 const STATE = {
   run: { on: false },
   tickets: [full('0201', { title: 'A ticket' })],
-  ideas: [{ ...idea('2026-10-15-a-long-idea', 'new'), title: LONG }, idea('2026-10-15-short', 'new'),
+  ideas: [{ ...idea('2026-10-15-a-long-idea', 'idea'), title: LONG }, idea('2026-10-15-short', 'idea'),
     { ...idea('2026-10-15-a-long-follow-up', 'inbox', '# A long follow-up\n\nStatus: inbox\nFrom ticket: 0139\n\nSome text.\n'), title: LONG },
     idea('2026-10-15-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0140\n\nSome text.\n')],
 };
@@ -21,16 +21,17 @@ const STATE = {
 // ----- AC2 and AC4: the cards' parts, without a browser -----
 
 const lineOf = item => top(item).children[0];
-const VIEWS = [['ideas', 1], ['inbox', 2]];
+// 0520: ideas and inbox notes are one list in Capture, each card marked with its kind
+const VIEWS = [['ideas', 'idea'], ['inbox', 'inbox']];
+const cardsOf = (p, kind) => notes(p).filter(n => new RegExp(`\\b${kind}\\b`).test(n.className));
 
-for (const [view, at] of VIEWS) {
+for (const [view, kind] of VIEWS) {
   test(`0214 AC2: in ${view}, a card's title is on a line like a ticket's id and title, with no label before it since 0435`, async () => {
     const p = fakePage([JSON.parse(JSON.stringify(STATE))]);
     await p.settle();
     const ticketLine = lineOf(items(p)[0]);
     assert.deepEqual(ticketLine.children.map(n => n.className), ['id', 'title']);
-    click(toggles(p)[at]);
-    const cards = items(p);
+    const cards = cardsOf(p, kind);
     assert.equal(cards.length, 2);
     for (const card of cards) {
       const line = lineOf(card);
@@ -43,16 +44,15 @@ for (const [view, at] of VIEWS) {
   test(`0214 AC4: in ${view}, a card still opens and closes, and the row under the title keeps its ${view === 'ideas' ? 'status' : 'from ticket'}, without the path since 0435`, async () => {
     const p = fakePage([JSON.parse(JSON.stringify(STATE))]);
     await p.settle();
-    click(toggles(p)[at]);
-    const checks = items(p).map(n => top(n).children.find(c => /\bchecks\b/.test(c.className)).children.map(c => c.textContent));
-    if (view === 'ideas') assert.deepEqual(checks, [['No capture date · new'], ['No capture date · new']]);
+    const checks = cardsOf(p, kind).map(n => top(n).children.find(c => /\bchecks\b/.test(c.className)).children.map(c => c.textContent));
+    if (view === 'ideas') assert.deepEqual(checks, [['No capture date'], ['No capture date']]); // 0520: only notes whose status is idea, which isn't repeated
     else assert.deepEqual(checks, [['From 0139 · No capture date'], ['From 0140 · No capture date']]);
-    click(top(items(p)[0]));
-    assert.match(items(p)[0].className, /\bopen\b/);
-    assert.match(items(p)[0].textContent, /Status: /);
-    click(top(items(p)[0]));
-    assert.doesNotMatch(items(p)[0].className, /\bopen\b/);
-    assert.doesNotMatch(items(p)[0].textContent, /Status: /);
+    click(top(cardsOf(p, kind)[0]));
+    assert.match(cardsOf(p, kind)[0].className, /\bopen\b/);
+    assert.match(cardsOf(p, kind)[0].textContent, /Status: /);
+    click(top(cardsOf(p, kind)[0]));
+    assert.doesNotMatch(cardsOf(p, kind)[0].className, /\bopen\b/);
+    assert.doesNotMatch(cardsOf(p, kind)[0].textContent, /Status: /);
   });
 }
 
@@ -72,9 +72,9 @@ const stub = `(() => {
   };
 })();`;
 
-// Each card in Plan's list showing: its label's and title's sizes, the title's lines, where the label is, and whether
-// any of the title is hidden.
-const CARDS = `[...document.querySelectorAll('#shaping .item')].map(item => {
+// Each card showing that the selector picks (Plan's, or 0520: Capture's of one kind): its label's and title's sizes,
+// the title's lines, where the label is, and whether any of the title is hidden.
+const CARDS = sel => `[...document.querySelectorAll('${sel}')].map(item => {
   const id = item.querySelector('.id'), t = item.querySelector('.title'), s = getComputedStyle(t), range = document.createRange();
   range.selectNodeContents(t);
   const lines = [];
@@ -103,15 +103,15 @@ test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox titles are 17 px, 
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
       await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#shaping .item.ticket')`, 'the panel');
       await b.js(openLane('plan')); // 0410
-      const [ticket] = await b.js(CARDS);
+      const [ticket] = await b.js(CARDS('#shaping .item'));
       assert.deepEqual([ticket.idSize, ticket.titleSize], ['14px', '17px'], `${width} px: the ticket`);
-      for (const [view] of VIEWS) {
-        await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`);
-        await b.until(`!!document.querySelector('#shaping .item.${view === 'ideas' ? 'idea' : 'inbox'}')`, view);
+      await b.js(openLane('capture')); // 0520
+      for (const [view, kind] of VIEWS) {
+        await b.until(`!!document.querySelector('#capture .item.${kind}')`, view);
         // 0435: a closed card's title is cut to one line, so these are opened, where a title wraps
-        await b.js(`document.querySelectorAll('#shaping .item .head').forEach(h => h.click()), true`);
-        await b.until(`document.querySelectorAll('#shaping .item.open').length === 2`, `${view}, open`);
-        const cards = await b.js(CARDS);
+        await b.js(`document.querySelectorAll('#capture .item.${kind}:not(.open) .head').forEach(h => h.click()), true`);
+        await b.until(`document.querySelectorAll('#capture .item.${kind}.open').length === 2`, `${view}, open`);
+        const cards = await b.js(CARDS(`#capture .item.${kind}`));
         assert.equal(cards.length, 2, `${width} px, ${view}`);
         for (const c of cards) {
           const where = `${width} px, ${view}, ${c.title.slice(0, 20)}`;

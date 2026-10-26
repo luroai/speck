@@ -80,13 +80,13 @@ test('0427 AC4: no label is in spaced capitals: buttons and labels are sentence 
     const ls = get(r, 'letter-spacing');
     if (ls !== undefined) assert.ok(parseFloat(ls) <= 0, `${r.sel}: letter-spacing ${ls}`);
   }
-  for (const sel of ['.full-open', '.toggle', '.set-ready', '.q .stop-build', '.q .back-to-plan', '.resume .copy', '.group', '.detail h4',
+  for (const sel of ['.full-open', '.set-ready', '.q .stop-build', '.q .back-to-plan', '.resume .copy', '.group', '.detail h4',
     '#full-ticket .close, #doc-view .close, #foreman .close', '#settings .close', '#full-ticket .ship, #doc-view .ship', '#settings .save-all']) { // 0472: Settings' Close in its own file
     assert.equal(family(rule(sel)), UI, `${sel}: the interface font`);
-  }
+  } // 0520: Plan's Tickets, Ideas and Inbox buttons (.toggle, labelled `${label} · ${n}`) are gone
   // The words themselves are already sentence case: the capitals were only the stylesheet's.
   const script = pageScript() + popupsScript(); // 0473: the pop-ups' words are in their own file
-  for (const words of ["'full-open', 'Full ticket'", "'full-open', 'Review pack'", '`${label} · ${n}`', "'Ask for changes'", "'Set ready'"]) assert.ok(script.includes(words), words);
+  for (const words of ["'full-open', 'Full ticket'", "'full-open', 'Review pack'", "'Ask for changes'", "'Set ready'"]) assert.ok(script.includes(words), words);
   assert.match(script, /'More stats'/);
 });
 

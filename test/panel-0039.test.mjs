@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fm, panelRepo, freePort, startPanel, stop, page, fakePage, full, idea, click, toggles, items, top, button, findChrome, browserPage, charAt, openLane, styles } from './support/panel.mjs';
+import { fm, panelRepo, freePort, startPanel, stop, page, fakePage, full, idea, click, items, notes, top, button, findChrome, browserPage, charAt, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0039: an open item closes only from its top row ----------
 
@@ -65,24 +65,23 @@ test('0039 AC3: an idea opens and closes from its top row (title, then its captu
   const state = { tickets: [], ideas: [idea('Fresh', 'idea', 'Line one.\nLine two.\n')] };
   const p = fakePage([state]);
   await p.settle();
-  click(toggles(p)[1]);
-  const head = top(items(p)[0]);
+  const head = top(notes(p)[0]);
   assert.ok(head, 'the idea has a top row');
   for (const s of ['Fresh', 'No capture date']) assert.ok(p.all(head).some(n => n.textContent === s), `the top row holds ${s}`);
   for (const i of p.all(head).keys()) {
-    press(p.all(top(items(p)[0]))[i]);
-    assert.ok(isOpen(items(p)[0]), `opens from top-row node ${i}`);
-    press(p.all(top(items(p)[0]))[i]);
-    assert.ok(!isOpen(items(p)[0]), `closes from top-row node ${i}`);
+    press(p.all(top(notes(p)[0]))[i]);
+    assert.ok(isOpen(notes(p)[0]), `opens from top-row node ${i}`);
+    press(p.all(top(notes(p)[0]))[i]);
+    assert.ok(!isOpen(notes(p)[0]), `closes from top-row node ${i}`);
   }
-  press(top(items(p)[0]));
-  for (const n of p.all(detailOf(items(p)[0]))) {
+  press(top(notes(p)[0]));
+  for (const n of p.all(detailOf(notes(p)[0]))) {
     press(n);
-    assert.ok(isOpen(items(p)[0]), `still open after a click on ${n.tagName}`);
+    assert.ok(isOpen(notes(p)[0]), `still open after a click on ${n.tagName}`);
   }
-  assert.ok(items(p)[0].textContent.includes('Line two.'));
-  press(items(p)[0]);
-  assert.ok(isOpen(items(p)[0]), 'a click on the item outside its top row leaves it open');
+  assert.ok(notes(p)[0].textContent.includes('Line two.'));
+  press(notes(p)[0]);
+  assert.ok(isOpen(notes(p)[0]), 'a click on the item outside its top row leaves it open');
 });
 
 test('0039 AC4: the click a selecting drag ends with, on a ticket\'s details or an idea\'s note, leaves it open', async () => {
@@ -95,12 +94,11 @@ test('0039 AC4: the click a selecting drag ends with, on a ticket\'s details or 
   assert.ok(isOpen(items(p)[0]), 'selecting within a section');
   press(detailOf(items(p)[0]));
   assert.ok(isOpen(items(p)[0]), 'selecting across sections');
-  click(toggles(p)[1]);
-  press(top(items(p)[0]));
-  press(p.all(items(p)[0]).find(n => n.tagName === 'p')); // the note's text, formatted since 0142
-  assert.ok(isOpen(items(p)[0]), 'selecting within the note');
-  press(detailOf(items(p)[0]));
-  assert.ok(isOpen(items(p)[0]), 'selecting to the edge of the note');
+  press(top(notes(p)[0])); // 0520: the idea is in Capture
+  press(p.all(notes(p)[0]).find(n => n.tagName === 'p')); // the note's text, formatted since 0142
+  assert.ok(isOpen(notes(p)[0]), 'selecting within the note');
+  press(detailOf(notes(p)[0]));
+  assert.ok(isOpen(notes(p)[0]), 'selecting to the edge of the note');
 });
 
 test('0039 AC5: several items can be open at once, and what is open survives the 2-second refresh', async () => {
@@ -109,12 +107,10 @@ test('0039 AC5: several items can be open at once, and what is open survives the
   await p.settle();
   press(top(items(p)[0])); press(top(items(p)[2]));
   assert.deepEqual(items(p).map(isOpen), [true, false, true]);
-  click(toggles(p)[1]);
-  press(top(items(p)[0])); press(top(items(p)[1]));
-  assert.deepEqual(items(p).map(isOpen), [true, true]);
+  press(top(notes(p)[0])); press(top(notes(p)[1])); // 0520: the ideas are in Capture
+  assert.deepEqual(notes(p).map(isOpen), [true, true]);
   p.timers.shift()(); await p.settle();
-  assert.deepEqual(items(p).map(isOpen), [true, true], 'ideas stay open through a refresh');
-  click(toggles(p)[0]);
+  assert.deepEqual(notes(p).map(isOpen), [true, true], 'ideas stay open through a refresh');
   assert.deepEqual(items(p).map(isOpen), [true, false, true], 'tickets stay open too');
   press(top(items(p)[0]));
   p.timers.shift()(); await p.settle();
@@ -145,15 +141,17 @@ test('0039 AC4: in a real browser, dragging to select text in a ticket\'s detail
     assert.match(await b.js('getSelection().toString()'), /long problem[\s\S]*Users ca/, 'a selection across sections');
     assert.ok(await b.js(`document.querySelector('${item}').classList.contains('open')`), 'still open');
 
-    await b.js(`document.querySelectorAll('#shaping-toggle button')[1].click()`);
-    await b.until(`!!document.querySelector('${item}.idea .title')`, 'the idea');
-    await b.js(`document.querySelector('${item} .title').click()`);
-    await b.until(`!!document.querySelector('${item}.open .note')`, 'the idea to open');
-    const note = `${item} .note p:last-child`; // its last paragraph: the note is formatted since 0142
+    await b.js('getSelection().removeAllRanges()');
+    await b.js(openLane('capture')); // 0520: ideas are in Capture
+    const idea = '#capture .item';
+    await b.until(`!!document.querySelector('${idea}.idea .title')`, 'the idea');
+    await b.js(`document.querySelector('${idea} .title').click()`);
+    await b.until(`!!document.querySelector('${idea}.open .note')`, 'the idea to open');
+    const note = `${idea} .note p:last-child`; // its last paragraph: the note is formatted since 0142
     const start = await b.js(`document.querySelector('${note}').textContent.indexOf('The note')`);
     await b.drag(await b.js(charAt(note, start)), await b.js(charAt(note, start + 30)));
     assert.equal(await b.js('getSelection().toString()'), 'The note text, long enough to ');
-    assert.ok(await b.js(`document.querySelector('${item}').classList.contains('open')`), 'the idea stays open');
+    assert.ok(await b.js(`document.querySelector('${idea}').classList.contains('open')`), 'the idea stays open');
   } finally {
     await b.close();
     await stop(panel);

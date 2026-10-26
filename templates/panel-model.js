@@ -214,8 +214,13 @@ function counter(ms) {
   const s = Math.max(0, Math.floor(ms / 1000)), pad = n => String(n).padStart(2, '0');
   return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
 }
-// 0520: a note's `Captured: <YYYY-MM-DD>` date, as written, or null when the line is missing or holds no date.
-const capturedAt = body => ((typeof body === 'string' ? body : '').match(/^Captured:[ \t]*(\d{4}-\d{2}-\d{2})(?![\d-])/m) || [])[1] || null;
+// 0520: a note's `Captured: <YYYY-MM-DD>` date, as written, or null when the line is missing or holds no real date
+// (such as 2026-02-30), as its card says.
+function capturedAt(body) {
+  const d = ((typeof body === 'string' ? body : '').match(/^Captured:[ \t]*(\d{4}-\d{2}-\d{2})(?![\d-])/m) || [])[1];
+  const at = d ? Date.parse(`${d}T00:00:00Z`) : NaN;
+  return Number.isFinite(at) && new Date(at).toISOString().startsWith(d) ? d : null;
+}
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
   const links = chains(tickets), byId = new Map(tickets.map(t => [String(t.id), t]));

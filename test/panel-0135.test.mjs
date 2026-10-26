@@ -11,7 +11,8 @@ const staticHtml = () => page().replace(/<script>[\s\S]*?<\/script>/g, '').repla
 // 0162 removed.
 // 0410: the headings are the tabs' names now, Build's and Shipped's counts beside them, and Build's "<n> needs you".
 // 0425: the counts are the first line of their lane, so Build's tab holds its needs-you number alone.
-const BEFORE = [['Plan', ['H2']], ['Build', ['H2', 'needs']], ['Shipped', ['H2']]];
+// 0520: and Capture's, first, holds its name alone.
+const BEFORE = [['Capture', ['H2']], ['Plan', ['H2']], ['Build', ['H2', 'needs']], ['Shipped', ['H2']]];
 
 test('0135 AC1-AC2: in a real browser, each section header starts with its heading and shows only what it did before 0134', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
@@ -29,7 +30,7 @@ test('0135 AC1-AC2: in a real browser, each section header starts with its headi
         leftmost: [...sh.children].every(c => { const r = c.getBoundingClientRect(), h = h2.getBoundingClientRect(); // 0418: or under it, as a tab's count is
           return c === h2 || r.width === 0 || r.left >= h.right || (r.top >= h.bottom - 0.5 && r.left >= h.left - 0.5); }) };
     })`);
-    assert.deepEqual(heads.map(h => h.text), ['Plan', 'Build', 'Shipped'], 'AC2: the headings are exactly Plan, Build and Shipped');
+    assert.deepEqual(heads.map(h => h.text), ['Capture', 'Plan', 'Build', 'Shipped'], 'AC2: the headings are exactly Capture (0520), Plan, Build and Shipped');
     for (const [i, [name, kids]] of BEFORE.entries()) {
       const h = heads[i];
       assert.ok(h.first, `${name}: the h2 is the header's first element`);
@@ -43,13 +44,13 @@ test('0135 AC1-AC2: in a real browser, each section header starts with its headi
 
 test('0135 AC2: in the static HTML, each section heading is still exactly Plan, Build or Shipped', () => {
   const html = staticHtml();
-  for (const name of ['Plan', 'Build', 'Shipped']) assert.match(html, new RegExp(`role="tab"[^>]*><span class="tab-name">${name}</span>`), name); // 0410
+  for (const name of ['Capture', 'Plan', 'Build', 'Shipped']) assert.match(html, new RegExp(`role="tab"[^>]*><span class="tab-name">${name}</span>`), name); // 0410
 });
 
 test('0135 AC3: no number span in a section header, and no .sh .num rule; td.num is unchanged', () => {
   const html = staticHtml();
   const headers = [...html.matchAll(/<button [^>]*role="tab"[^>]*>([\s\S]*?)<\/button>/g)].map(m => m[1]); // 0410: the tabs
-  assert.equal(headers.length, 3, 'three section headers');
+  assert.equal(headers.length, 4, 'four section headers (0520: with Capture)');
   for (const h of headers) assert.doesNotMatch(h, /<span class="num"/, h);
   assert.doesNotMatch(css(), /\.sh\s+\.num\b/);
   assert.ok(css().includes('  td.num { color: var(--muted); text-align: right; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; white-space: nowrap; }'), 'the td.num rule is as it was, at 12 px (0161), in Cursor\'s monospace (0427)');

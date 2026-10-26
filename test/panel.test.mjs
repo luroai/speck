@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, popupsScript, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage, styles } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, popupsScript, panelModel, T, round, fakePage, deferred, full, idea, click, items, notes, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage, styles } from './support/panel.mjs';
 import { chipSaid } from './support/dep-chip.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
@@ -264,12 +264,11 @@ test('0031 AC5: a title like <b>x</b> is rendered as those characters, in every 
   for (const s of [evil, '<img src=x onerror=alert(1)>', '<u>problem</u>', '<u>notes</u>'])
     assert.ok(p.byId('full-ticket').textContent.includes(s), s);
   assert.ok(!p.all(p.byId('full-ticket')).some(n => ['b', 'img', 'u'].includes(n.tagName)));
-  // Ideas are behind the Ideas toggle (0033): title and note are text.
-  p.all(p.byId('shaping-toggle')).filter(n => n.listeners.click)[1].listeners.click();
-  assert.ok(p.byId('shaping').textContent.includes('<i>idea</i>'));
-  p.all(p.byId('shaping')).find(n => n.listeners.click).listeners.click();
-  assert.ok(p.byId('shaping').textContent.includes('<s>body</s>'));
-  assert.ok(!p.all(p.byId('shaping')).some(n => ['i', 's'].includes(n.tagName)));
+  // Ideas are in Capture (0520; behind Plan's Ideas toggle before): title and note are text.
+  assert.ok(p.byId('capture').textContent.includes('<i>idea</i>'));
+  p.all(p.byId('capture')).find(n => n.listeners.click).listeners.click();
+  assert.ok(p.byId('capture').textContent.includes('<s>body</s>'));
+  assert.ok(!p.all(p.byId('capture')).some(n => ['i', 's'].includes(n.tagName)));
 });
 
 test('0031 AC4: the page shows when it is disconnected, keeps polling and recovers by itself', async () => {
@@ -384,38 +383,26 @@ test('0033 AC2: the page header shows the base branch (0413: after the project a
   assert.equal(p.byId('offline').hidden, false, 'the message under the header says it is disconnected');
 });
 
-test('0033 AC3: Shaping has a Tickets / Ideas toggle, Tickets first, one list at a time, kept through refreshes', async () => {
+// 0520: Plan's Tickets / Ideas toggle is gone: Plan lists the tickets and Capture the ideas, each through refreshes.
+test('0033 AC3 (0520): Plan lists only tickets and Capture only ideas, kept through refreshes', async () => {
   const state = { tickets: [full('0001'), full('0002')], ideas: [idea('Board', 'idea')] };
   const p = fakePage([state, state, state]);
   await p.settle();
-  const [tickets, ideas] = toggles(p);
-  assert.match(tickets.textContent, /^Tickets/);
-  assert.match(ideas.textContent, /^Ideas/);
-  assert.match(tickets.className, /\bon\b/, 'Tickets selected on load');
-  assert.doesNotMatch(ideas.className, /\bon\b/);
-  assert.match(p.byId('shaping-section').className, /\btickets\b/);
   assert.deepEqual(items(p).map(n => /\bticket\b/.test(n.className)), [true, true], 'only tickets');
   assert.doesNotMatch(p.byId('shaping').textContent, /Board/);
-
-  click(ideas);
-  assert.match(p.byId('shaping-section').className, /\bideas\b/);
-  assert.match(toggles(p)[1].className, /\bon\b/);
-  assert.deepEqual(items(p).map(n => /\bidea\b/.test(n.className)), [true], 'only ideas');
-  assert.doesNotMatch(p.byId('shaping').textContent, /0001/);
+  assert.deepEqual(notes(p).map(n => /\bidea\b/.test(n.className)), [true], 'only ideas');
+  assert.doesNotMatch(p.byId('capture').textContent, /0001/);
 
   p.timers.shift()(); await p.settle(); // the 2-second refresh
-  assert.match(p.byId('shaping-section').className, /\bideas\b/, 'still on Ideas after a refresh');
-  assert.match(p.byId('shaping').textContent, /Board/);
-  click(toggles(p)[0]);
-  assert.match(p.byId('shaping').textContent, /0001/);
+  assert.match(p.byId('capture').textContent, /Board/, 'still there after a refresh');
   p.timers.shift()(); await p.settle();
-  assert.match(p.byId('shaping-section').className, /\btickets\b/);
+  assert.match(p.byId('shaping').textContent, /0001/);
+  assert.deepEqual(notes(p).length, 1);
 });
 
-test('0033 AC3: since 0167, tickets and ideas share one plain look: the selected toggle in the text colour, and no coloured section edge or item stripe', () => {
+test('0033 AC3: since 0167, tickets and ideas share one plain look, with no coloured section edge or item stripe', () => {
   const css = styles();
-  // 0450: filled with the text colour, its text in the section's background
-  assert.match(css, /\n\s*\.toggle\.on \{[^}]*color: var\(--panel\);[^}]*background: var\(--text\);[^}]*border-color: var\(--text\)/);
+  // 0520: Plan's Tickets, Ideas and Inbox buttons are gone, so there's no selected toggle to colour
   assert.doesNotMatch(css, /#shaping-section\.(tickets|ideas) \{/);
   assert.doesNotMatch(css, /\.item\.(ticket|idea) \{[^}]*border-left/);
 });
@@ -467,23 +454,23 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
 });
 
 test('0033 AC5: the Ideas list shows every idea not yet ticketed (0056), and clicking one shows its note as text', async () => {
-  const state = { tickets: [], ideas: [idea('Done one', 'ticketed (0001)'), idea('Fresh', 'idea'), idea('No status', null, 'Just <i>text</i>.\n'), idea('Later', 'ticketed')] };
+  // 0520: in Capture, which lists only notes whose status is idea or inbox, so one with no status isn't listed
+  const state = { tickets: [], ideas: [idea('Done one', 'ticketed (0001)'), idea('Fresh', 'idea'), idea('No status', null), idea('Also fresh', 'idea', 'Just <i>text</i>.\n'), idea('Later', 'ticketed')] };
   const p = fakePage([state, state]);
   await p.settle();
-  click(toggles(p)[1]);
-  const list = items(p);
+  const list = notes(p);
   const titles = list.map(n => top(n).children[0].textContent);
-  assert.deepEqual(titles.map(t => t.replace(/^idea/, '')), ['Fresh', 'No status']);
-  // 0435: under each, when it was captured, and its status only when that isn't idea
+  assert.deepEqual(titles.map(t => t.replace(/^idea/, '')), ['Fresh', 'Also fresh']);
+  // 0435: under each, when it was captured
   assert.deepEqual(list.map(n => top(n).children.find(c => /\bchecks\b/.test(c.className)).textContent), ['No capture date', 'No capture date']);
   assert.ok(!list[1].textContent.includes('Just'), 'closed by default');
   click(top(list[1]));
-  assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'the note, as text');
-  assert.ok(!p.all(items(p)[1]).some(n => n.tagName === 'i'));
+  assert.ok(notes(p)[1].textContent.includes('Just <i>text</i>.'), 'the note, as text');
+  assert.ok(!p.all(notes(p)[1]).some(n => n.tagName === 'i'));
   p.timers.shift()(); await p.settle();
-  assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'still open after a refresh');
-  click(top(items(p)[1]));
-  assert.ok(!items(p)[1].textContent.includes('Just'), 'clicking again closes it');
+  assert.ok(notes(p)[1].textContent.includes('Just <i>text</i>.'), 'still open after a refresh');
+  click(top(notes(p)[1]));
+  assert.ok(!notes(p)[1].textContent.includes('Just'), 'clicking again closes it');
 });
 
 // ---------- 0034: the queue as one list with progress bars ----------

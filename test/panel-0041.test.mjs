@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, charAt, fakePage, boardPage, full, click, items, top, toggles, queueRows, page, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
+import { T, fm, charAt, fakePage, boardPage, full, click, items, top, queueRows, page, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 import { chipSaid } from './support/dep-chip.mjs';
 
 // ---------- 0041: tickets that start a dependency chain, and tickets waiting on others ----------
@@ -193,14 +193,17 @@ test('0041: odd links: built-in names as ids, a ticket after itself, repeated an
   assert.deepEqual([...d('constructor').linked].sort(), ['__proto__', 'constructor']);
 });
 
-test('0041 AC5: a hovered ticket that leaves the page, such as when Shaping shows ideas, stops lighting its chain', async () => {
-  const p = fakePage([groups()]);
+test('0041 AC5: a hovered ticket that leaves the page stops lighting its chain', async () => {
+  // 0520: Plan no longer switches to its ideas, so the hovered draft leaves the page by being cancelled.
+  const gone = groups();
+  gone.tickets.find(t => t.id === '0003').status = 'cancelled';
+  const p = fakePage([groups(), gone]);
   await p.settle();
   shaping(p, '0003').listeners.mouseenter();
   assert.equal(look(p)['0004'], 'hl');
-  click(toggles(p)[1]);
+  p.timers.shift()(); await p.settle();
+  assert.ok(!shaping(p, '0003'), 'the draft has left the page');
   assert.ok(queueRows(p).every(n => !lit(n) && !dim(n)), 'the queue is back to normal');
-  click(toggles(p)[0]);
   assert.ok(Object.values(look(p)).every(v => v === ''));
 });
 

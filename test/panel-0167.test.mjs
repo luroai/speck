@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, panelModel, T, full, idea, round } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, panelModel, T, full, idea, round, openLane } from './support/panel.mjs';
 import { good, fm, startRepo } from './support/speck.mjs';
 import { rules, selectors, tokens, get, rule } from './support/css.mjs';
 
@@ -46,14 +46,14 @@ test('0167 AC2: the speck red is used only for the speck itself', () => {
   assert.deepEqual(dots, [], 'nothing');
 });
 
-test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours, with underlines or borders to show what can be clicked', () => {
+test('0167 AC3: ids, titles and links are in the normal text colours, with underlines or borders to show what can be clicked', () => {
   const coloured = [];
   for (const r of plain()) {
     // 0426: links in a ticket's text are in Cursor's blue, --run (below)
-    if (!selectors(r).some(s => /\.(id|title|dep-chip|toggle)(?![\w-])/.test(lastCompound(s)))) continue; // 0468: and a dependency chip
+    // 0520: Plan's Tickets, Ideas and Inbox buttons (.toggle) are gone
+    if (!selectors(r).some(s => /\.(id|title|dep-chip)(?![\w-])/.test(lastCompound(s)))) continue; // 0468: and a dependency chip
     for (const k of ['color', 'border-color']) {
       const t = tokens(get(r, k));
-      if (r.sel === '.toggle.on' && k === 'color') { assert.deepEqual(t, ['--panel'], 'the selected tab\'s text is the background it is filled against (0450)'); continue; }
       if (t.some(x => !NEUTRAL.includes(x))) coloured.push(`${r.sel} { ${k}: ${get(r, k)} }`);
     }
   }
@@ -62,8 +62,7 @@ test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours,
   assert.ok(links.length, 'rules for links');
   for (const r of links) for (const k of ['color', 'border-color']) if (get(r, k)) assert.deepEqual(tokens(get(r, k)), ['--run'], `${r.sel}: links are in Cursor's blue (0426)`);
   assert.doesNotMatch(get(rule('#shipped .line .title'), 'text-decoration') || '', /underline/, 'a shipped title isn\'t underlined since 0466: it opens its card, as a Build title does');
-  assert.deepEqual(tokens(get(rule('.toggle.on'), 'border-color')), ['--text'], 'the selected tab has a border in the text colour');
-  assert.deepEqual(tokens(get(rule('.toggle.on'), 'background')), ['--text'], 'and, since 0450, is filled with it');
+  assert.equal(rule('.toggle.on'), undefined, '0520: Plan\'s Tickets, Ideas and Inbox buttons are gone');
   for (const sel of ['.item.idea .id', '.item.inbox .id']) assert.equal(rule(sel), undefined, `${sel} keeps the muted colour of every id`);
 });
 
@@ -124,7 +123,7 @@ const STATE = {
     T('0401', 'done', { title: 'A shipped ticket', started: ago(1500), finished: ago(600), rounds: [round(1, 500)] }),
     T('0402', 'done', { title: 'Another shipped ticket', started: ago(5000), finished: ago(1800), rounds: [round(1, 500)] }),
   ],
-  ideas: [idea('2026-10-14-an-idea', 'new'),
+  ideas: [idea('2026-10-14-an-idea', 'idea'),
     idea('2026-10-14-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0161\n\nSome text.\n')],
 };
 // Each queue card's state colour: its border and its background, or none.
@@ -181,14 +180,17 @@ for (const theme of ['light', 'dark']) {
     await withPanel(async b => {
       const c = await colours(b);
       for (const s of await b.js(LOOK('main > section'))) assert.ok(s.sides.every(([, w, st]) => w === 0 && st === 'none'), `section ${s.cls} has no border (0418)`);
-      for (const view of ['tickets', 'ideas', 'inbox']) {
-        await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`); await settle(b);
-        for (const s of await b.js(LOOK('#shaping-section'))) assert.ok(s.sides.every(([, w, st]) => w === 0 && st === 'none'), `Plan showing ${view} has no border (0418)`);
-        const cards = await b.js(LOOK('#shaping .item'));
-        assert.ok(cards.length >= 1, `${view}: some cards`);
-        for (const card of cards) sameAllRound(card, c.line, `${view} ${card.id}`);
-        await b.js(`document.querySelector('#shaping .item .head').click()`); await settle(b);
-        for (const card of await b.js(LOOK('#shaping .item.open'))) sameAllRound(card, c.text, `${view} ${card.id}, open`);
+      // 0520: Plan's tickets, and the ideas and inbox notes in Capture
+      for (const [view, list, kind] of [['plan', 'shaping', 'ticket'], ['capture', 'capture', 'idea'], ['capture', 'capture', 'inbox']]) {
+        await b.js(openLane(view)); await settle(b);
+        for (const s of await b.js(LOOK(`#${list}-section`))) assert.ok(s.sides.every(([, w, st]) => w === 0 && st === 'none'), `${view} has no border (0418)`);
+        const cards = await b.js(LOOK(`#${list} .item.${kind}`));
+        assert.ok(cards.length >= 1, `${kind}: some cards`);
+        for (const card of cards) sameAllRound(card, c.line, `${kind} ${card.id}`);
+        await b.js(`document.querySelector('#${list} .item.${kind} .head').click()`); await settle(b);
+        const open = await b.js(LOOK(`#${list} .item.${kind}.open`));
+        assert.ok(open.length >= 1, `${kind}: an open card`);
+        for (const card of open) sameAllRound(card, c.text, `${kind} ${card.id}, open`);
       }
       for (const card of await b.js(LOOK('#shipped tr'))) sameAllRound(card, c.line, `shipped ${card.id}`);
     }, theme);
@@ -230,11 +232,10 @@ for (const theme of ['light', 'dark']) {
       const chips = await style('#shaping .dep-chip');
       assert.ok(chips.length >= 1, 'a dependency chip');
       for (const n of chips) assert.equal(n.color, c.muted, `chip ${n.text}`);
-      for (const view of ['tickets', 'ideas', 'inbox']) {
-        await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`); await settle(b);
-        const [on] = await style('#shaping-toggle .toggle.on');
-        assert.deepEqual([on.back, on.color, on.border], [c.text, c.panel, c.text], `the ${view} tab, selected: filled with the text colour since 0450`);
-        for (const n of await style('#shaping .id')) assert.equal(n.color, c.muted, `${view} id ${n.text}`);
+      // 0520: Plan's Tickets, Ideas and Inbox buttons are gone; the ids in Plan and Capture are muted
+      for (const [view, list] of [['plan', 'shaping'], ['capture', 'capture']]) {
+        await b.js(openLane(view)); await settle(b);
+        for (const n of await style(`#${list} .id`)) assert.equal(n.color, c.muted, `${view} id ${n.text}`);
       }
     }, theme);
   });
