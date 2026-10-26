@@ -1,7 +1,7 @@
 ---
 id: "0516"
 title: "Switch to another project's panel from the header"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/2026-10-11-show-all-your-projects-in-one-panel.md"         
 after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T15:16:51.305Z"
+approved: "2026-10-26T15:52:04.608Z"
 
 ---
 # 0516 · Switch to another project's panel from the header
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each speck project has its own panel on its own web address, and the panel's home-screen app belongs to one address. Someone with several projects on speck (speck, speck-site, carbon) has to keep a separate address, or a separate app, for each, and has no way to get from one project's panel to another's.
@@ -60,9 +61,15 @@ Worth keeping an eye on: the choice belongs to the address, not the tab. When yo
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The project-selection cookie is shared by every tab at the address, but choosing a project reloads only the tab making the choice.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 463,568
+- Elapsed since build started: 35 min
+- Changed lines: 238 (limit 5000)
 Follow-ups:
 - Inbox: speck/ideas/2026-10-26-steady-two-browser-tests-under-a-busy-run.md (0372 AC2 and 0476 AC2 fail under a near-whole-suite run, and pass alone).
 - Known limit: a tab left idle at the address keeps showing its project until its next request, then reloads to the one chosen in another tab. Telling the other tabs straight away (for example over a BroadcastChannel) would make that instant.
