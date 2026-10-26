@@ -125,9 +125,12 @@ test('0517 AC3: a redraw held by a slide a finger catches is made once the finge
   assert.equal(line(p), '0 in flight · 1 queued');
 });
 
-// In a real browser, with 500 tickets in Shipped and 30 in Plan, on a CPU slowed down 6 times, as a laptop's is next to
-// the test machine: the time from a lane change to the end of the first frame of its slide, laid out.
-test('0517 AC3: in a real browser with 500 shipped tickets, a slide\'s first frame comes within 50 ms of the lane change', skip, async () => {
+// In a real browser, with 500 tickets in Shipped and 30 in Plan: the time from a lane change to the end of the first
+// frame of its slide, laid out, the first change (which lays the cards out for the first time) included. The time
+// depends on how busy the machine is, so the test also checks what ran in that frame: the page's redraw (which starts
+// by working out the board, panelModel) and the buttons' measuring (wholeButtons) didn't, and both ran once the card was
+// at rest. Before 0517 both ran in that frame.
+test('0517 AC3: in a real browser with 500 shipped tickets, a slide\'s first frame comes within 50 ms of the lane change, with no redraw in it', skip, async () => {
   const r = panelRepo();
   for (let n = 0; n < 500; n++) r.write(`${2000 + n}-done.md`, fm({ id: `"${2000 + n}"`, title: `Shipped ticket ${n}`, status: 'done' }), good, 'speck/tickets/done');
   for (let n = 0; n < 30; n++) r.write(`${1000 + n}-draft.md`, fm({ id: `"${1000 + n}"`, title: `Draft ticket ${n}`, status: 'draft' }), good);
@@ -136,21 +139,25 @@ test('0517 AC3: in a real browser with 500 shipped tickets, a slide\'s first fra
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 700, deviceScaleFactor: 1, mobile: true });
     await b.until(`document.querySelectorAll('#shipped tr').length >= 10 && document.querySelectorAll('#shaping .item').length >= 30`, 'the board', 20000);
-    await b.send('Emulation.setCPUThrottlingRate', { rate: 6 });
+    await b.js(`(() => { window.work = [];
+      for (const name of ['panelModel', 'wholeButtons']) { const f = window[name]; window[name] = function (...a) { work.push([name, performance.now()]); return f.apply(this, a); }; }
+      return 1; })()`);
     const times = [];
-    // The first lane change lays the cards out for the first time, so it isn't timed.
     for (const [to, change] of [['shipped', `document.getElementById('tab-shipped').click()`], ['build', `document.getElementById('tab-build').click()`],
       ['shipped', `document.getElementById('tab-shipped').click()`], ['plan', `document.getElementById('tab-plan').click()`],
       ['build', `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))`],
       ['shipped', `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))`]]) {
-      const ms = await b.js(`new Promise(done => { const t0 = performance.now(); ${change};
-        requestAnimationFrame(() => { document.getElementById('${LANE_IDS[to]}').getBoundingClientRect(); document.getElementById('shipped-section').getBoundingClientRect(); done(performance.now() - t0); }); })`);
+      const [t0, t1] = await b.js(`new Promise(done => { work.length = 0; const t0 = performance.now(); ${change};
+        requestAnimationFrame(() => { document.getElementById('${LANE_IDS[to]}').getBoundingClientRect(); document.getElementById('shipped-section').getBoundingClientRect(); done([t0, performance.now()]); }); })`);
       assert.equal(await b.js(`document.getElementById('tab-${to}').getAttribute('aria-selected')`), 'true', `to ${to}`);
-      times.push(Math.round(ms));
+      times.push(Math.round(t1 - t0));
       await b.until(`!document.querySelector('main').dataset.slide`, 'the slide to end', 5000);
+      await b.until(`work.some(([n]) => n === 'panelModel') && work.some(([n]) => n === 'wholeButtons')`, `to ${to}: the redraw and the measuring once the card is at rest`, 5000);
+      const early = await b.js(`work.filter(([, t]) => t <= ${t1}).map(([n, t]) => n + ' at ' + Math.round(t - ${t0}) + ' ms')`);
+      assert.deepEqual(early, [], `to ${to}: nothing redrawn or measured before the slide's first frame was laid out (${Math.round(t1 - t0)} ms)`);
     }
-    assert.ok(times.slice(1).every(t => t <= 50), `each slide's first frame within 50 ms of the lane change: ${times.slice(1).join(', ')} ms`);
-  } finally { await b.send('Emulation.setCPUThrottlingRate', { rate: 1 }).catch(() => {}); await b.close(); await stop(panel); }
+    assert.ok(times.every(t => t <= 50), `each slide's first frame within 50 ms of the lane change, the first included: ${times.join(', ')} ms`);
+  } finally { await b.close(); await stop(panel); }
 });
 const LANE_IDS = { plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
 
