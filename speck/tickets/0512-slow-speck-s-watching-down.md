@@ -41,6 +41,9 @@ speck mostly sits and watches, calmly, and its beats and comic moments come now 
 - Today: `BEATS` and `beatAt` in `templates/panel-header.js` (0502 to 0505) pick beats back to back, never the same twice running; `period` there sets each TV's bar at 10 to 18 seconds; the step-finished hop is under "a bar filling".
 - Failing before this build: none
 - The numbers are a first setting, to tune by watching it: the prototype `docs/design/lcd/watching.html` shows the beats themselves.
+- Old tests: the tests of 0502 to 0505 check the old rhythm as well as what each beat does (bars of 10 to 18 seconds, beats back to back, a hop at every bar, comic moments as common as habits, and windows sized for that). Their `watching()` helpers now set the rhythm from before 0512 (`test/support/watch-rhythm.mjs`), so they still check what each beat does, unchanged; this ticket's tests check the new rhythm. No assertion in them was changed.
+- Self-check: a frame now says which TV speck hops at (`hop`), as a beat's own wide eye looked like a hop to the test; hop decisions are made when a bar filling is seen, so a beat with its own reaction ending just as a bar fills still lets it hop.
+- Pictures: none, because the change is to timing only: any one frame looks as it did before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
