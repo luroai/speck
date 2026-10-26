@@ -63,7 +63,7 @@ function chosen(req, port) {
 // The panel at `port`'s side of it: its record, the menu's part of /api/state, and route(), which answers the
 // requests that are the menu's or another panel's. `origins` are the addresses this panel serves; `changed` tells
 // the page's stream when the running panels change.
-export function panelProjects({ port, name, repo, origins, changed }) {
+export function panelProjects({ port, name, repo, origins, changed, id }) {
   const unregister = registerPanel({ port, name, repo });
   let cached = null, cachedAt = 0;
   const list = () => { if (!cached || Date.now() - cachedAt > LIST_MS) { cached = runningPanels(); cachedAt = Date.now(); } return cached; };
@@ -78,6 +78,7 @@ export function panelProjects({ port, name, repo, origins, changed }) {
   // POST /api/projects/<port>: show that panel's project at this address, or this one's own again. Only from a page
   // at this address, as its Origin says: it may be another panel's page, carrying that panel's key, not this one's.
   function choose(req, res, to) {
+    res.removeHeader('X-Speck-Panel'); // the address's own answer, whichever panel's page asked
     if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed.' }, { Allow: 'POST' });
     if (!ours(req)) return json(res, 403, { error: 'Forbidden: only a panel page at this address can do that. Reload it.' });
     if (to === port) return json(res, 200, { ok: true }, { 'Set-Cookie': clear });
@@ -99,18 +100,19 @@ export function panelProjects({ port, name, repo, origins, changed }) {
       answer.pipe(res);
       answer.on('error', () => res.destroy());
     });
-    up.on('error', () => { if (!res.headersSent) gone(req, res); else res.destroy(); });
+    up.on('error', () => { if (!res.headersSent) gone(req, res, to); else res.destroy(); });
     res.on('close', () => { if (!res.writableFinished) up.destroy(); });
     req.pipe(up);
   }
 
-  // The chosen panel has stopped. The page's stream is told so, with the panels still running, and tries again every
+  // The chosen panel, on `to`, has stopped. The page's stream is told so, with the panels still running, and tries again every
   // few seconds, so it's back once that panel is; a reload shows this panel's own project again.
-  function gone(req, res) {
+  function gone(req, res, to) {
+    res.removeHeader('X-Speck-Panel'); // the address's own answer: the page stays, saying its panel has stopped
     const where = req.url.split('?')[0];
     if (where === '/api/events') {
       res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
-      return res.end(`retry: ${GONE_RETRY_MS}\nevent: gone\ndata: ${JSON.stringify({ list: list() })}\n\n`);
+      return res.end(`retry: ${GONE_RETRY_MS}\nevent: gone\ndata: ${JSON.stringify({ port: to, list: list() })}\n\n`);
     }
     return json(res, 502, { error: 'This project\'s panel has stopped. Pick another project, or start its panel again with speck panel.', gone: true });
   }
@@ -119,7 +121,10 @@ export function panelProjects({ port, name, repo, origins, changed }) {
     // { projects: { self, list } } while two or more panels are running, for /api/state; otherwise nothing.
     part: () => { const l = list(); return l.length > 1 ? { projects: { self: port, list: l } } : {}; },
     // True when it has answered the request, or passed it on; false when this panel serves it as its own.
+    // Every answer says which panel gave it (X-Speck-Panel), so a page sent by one panel that gets an answer from
+    // another, as another tab at the address has chosen another project since, reloads rather than show it.
     route(req, res) {
+      res.setHeader('X-Speck-Panel', id);
       if (req.headers['x-speck-via']) return false; // passed on by another panel: its own, as asked
       const where = req.url.split('?')[0], pick = where.match(/^\/api\/projects\/(\d{1,5})$/);
       if (pick) { choose(req, res, +pick[1]); return true; }
@@ -128,7 +133,7 @@ export function panelProjects({ port, name, repo, origins, changed }) {
       cached = null;
       if (running(to)) { pass(req, res, to); return true; }
       if (where === '/' && req.method === 'GET') { res.setHeader('Set-Cookie', clear); return false; }
-      gone(req, res);
+      gone(req, res, to);
       return true;
     },
     stop() { clearInterval(watcher); unregister(); },

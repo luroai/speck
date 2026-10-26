@@ -126,7 +126,7 @@ test('0516 AC3: the menu follows the panels running without a reload, and says s
   s.emit('message', '2'); await p.settle();
   assert.deepEqual(optionsOf(p).map(o => o.text), ['speck', 'carbon', 'site'], 'a panel that starts joins the menu');
   // carbon's panel stops: the panel at the address says so on the page's stream, with the panels still running.
-  s.emit('gone', JSON.stringify({ list: [{ port: 4777, name: 'speck' }, { port: 4779, name: 'site' }] }));
+  s.emit('gone', JSON.stringify({ port: 4778, list: [{ port: 4777, name: 'speck' }, { port: 4779, name: 'site' }] }));
   await p.settle();
   assert.equal(p.byId('offline').hidden, false);
   assert.match(p.byId('offline').textContent, /^carbon's panel has stopped/);
@@ -136,7 +136,7 @@ test('0516 AC3: the menu follows the panels running without a reload, and says s
     { value: '4777', text: 'speck', selected: false, disabled: false },
     { value: '4779', text: 'site', selected: false, disabled: false },
   ]);
-  s.emit('gone', JSON.stringify({ list: [{ port: 4777, name: 'speck' }] }));
+  s.emit('gone', JSON.stringify({ port: 4778, list: [{ port: 4777, name: 'speck' }] }));
   await p.settle();
   assert.deepEqual(optionsOf(p).map(o => o.text), ['carbon (stopped)', 'speck'], 'and it still follows them, down to one');
   // Its panel is back: the next board shows, without the notice.
@@ -247,7 +247,7 @@ test('0516 AC4: a request passed on by a panel is never passed on again', async 
   const sent = [];
   const fake = { headers: { 'x-speck-via': '4777', cookie: 'speck-shown-4900=4901' }, url: '/api/state', method: 'GET' };
   const pp = panelProjects({ port: 4900, name: 'x', repo: '/x', origins: new Set(), changed: () => {} });
-  try { assert.equal(pp.route(fake, { writeHead: (...w) => sent.push(w), end() {} }), false, 'served as its own'); }
+  try { assert.equal(pp.route(fake, { setHeader() {}, writeHead: (...w) => sent.push(w), end() {} }), false, 'served as its own'); }
   finally { pp.stop(); }
   assert.deepEqual(sent, []);
   assert.equal(fs.existsSync(path.join(dir, '4900.json')), false, 'and its record went as it stopped');
@@ -270,6 +270,7 @@ test('0516 AC3: a panel that starts joins the menu, and one killed or stopped wi
       const events = await ask(a.port, { pathName: '/api/events', cookie, firstChunk: true });
       assert.match(events.body, /^retry: \d+\nevent: gone\ndata: /m);
       const gone = JSON.parse(events.body.match(/^data: (.*)$/m)[1]);
+      assert.equal(gone.port, c.port, 'naming the panel that stopped');
       assert.ok(gone.list.some(p => p.port === a.port) && !gone.list.some(p => p.port === c.port));
       const st = await ask(a.port, { pathName: '/api/state', cookie });
       assert.equal(st.status, 502);
@@ -288,4 +289,53 @@ test('0516 AC1 self-check: with no home folder to keep the records in, a panel s
     assert.deepEqual(pp.part(), {});
     pp.stop();
   } finally { os.homedir = home; process.env.SPECK_PANELS_DIR = was; }
+});
+
+// ---------- review round 1, F1: the choice is the address's, shared by its tabs ----------
+
+test('0516 AC2 F1: every answer names the panel that gave it, as each page knows its own, so another tab can tell', async () => {
+  const pageA = await ask(a.port), cookie = await showB(`127.0.0.1:${a.port}`, originA());
+  const pageB = await ask(a.port, { cookie });
+  const idOf = html => (html.match(/<meta name="speck-panel" id="speck-panel" content="([0-9a-f]{16})">/) || [])[1];
+  assert.ok(idOf(pageA.body) && idOf(pageB.body) && idOf(pageA.body) !== idOf(pageB.body), 'each page carries its own panel\'s id');
+  assert.ok(!tokenB.includes(idOf(pageB.body)), 'which isn\'t its key');
+  assert.equal(pageA.headers['x-speck-panel'], idOf(pageA.body));
+  for (const pathName of ['/api/state', '/api/settings?quick=1', '/api/tickets/1/pack', '/panel.js']) {
+    assert.equal((await ask(a.port, { pathName })).headers['x-speck-panel'], idOf(pageA.body), `${pathName} from this panel`);
+    assert.equal((await ask(a.port, { pathName, cookie })).headers['x-speck-panel'], idOf(pageB.body), `${pathName} from the one chosen since`);
+  }
+  const refused = await ask(a.port, { method: 'POST', pathName: '/api/tickets/1/ready', origin: originA(), token: tokenA, cookie });
+  assert.equal(refused.status, 403, 'a write from the first tab, with its own key, is refused by the other panel');
+  assert.equal(refused.headers['x-speck-panel'], idOf(pageB.body), 'and names it, so the page reloads');
+  const events = await ask(a.port, { pathName: '/api/events', cookie, firstChunk: true });
+  assert.equal(events.headers['x-speck-panel'], idOf(pageB.body), 'as does the stream');
+});
+
+test('0516 AC2 F1: a page answered by another panel than its own reloads rather than show the answer', async () => {
+  let reloaded = 0, answers = 0;
+  const from = id => ({ get: k => (/^x-speck-panel$/i.test(k) ? id : null) });
+  const fetch = async () => (answers++ ? { ok: true, status: 200, headers: from('bbbbbbbbbbbbbbbb'), json: async () => board({ projects: projects(2, [1, 'other'], [2, 'b']) }) }
+    : { ok: true, status: 200, headers: from('aaaaaaaaaaaaaaaa'), json: async () => board({ projects: projects(1, [1, 'mine'], [2, 'b']) }) });
+  const { EventSource, sources } = manualSources();
+  const p = fakePage([], { fetch, EventSource, location: { reload: () => { reloaded++; } } });
+  p.byId('speck-panel').content = 'aaaaaaaaaaaaaaaa'; // as the server puts it in the page
+  const s = sources[0];
+  s.emit('open'); s.emit('message', '1'); await p.settle();
+  assert.equal(reloaded, 0, 'its own panel\'s answer shows');
+  assert.deepEqual(optionsOf(p).map(o => o.text), ['mine', 'b']);
+  s.emit('message', '2'); await p.settle();
+  assert.equal(reloaded, 1, 'another panel\'s answer reloads the page');
+  assert.deepEqual(optionsOf(p).map(o => o.text), ['mine', 'b'], 'without showing it');
+});
+
+test('0516 AC3 F1: a stopped notice for a project another tab chose reloads the page, rather than say its own has stopped', async () => {
+  let reloaded = 0;
+  const { EventSource, sources } = manualSources();
+  const p = fakePage([board({ projects: projects(4777, [4777, 'speck'], [4778, 'carbon']) })], { EventSource, location: { reload: () => { reloaded++; } } });
+  const s = sources[0];
+  s.emit('open'); s.emit('message', '1'); await p.settle();
+  s.emit('gone', JSON.stringify({ port: 4778, list: [{ port: 4777, name: 'speck' }] }));
+  await p.settle();
+  assert.equal(reloaded, 1);
+  assert.equal(p.byId('offline').hidden, true);
 });

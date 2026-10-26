@@ -623,6 +623,18 @@ function drawHeader(f, stale) {
 // the one shown chosen. Choosing another shows that project's panel here, at this address: the panel serving this address
 // passes the page's requests on to it from then on. While the project shown has stopped, the page says so, and the
 // menu lists the ones still running.
+// The panel that sent this page is in its speck-panel tag. Once another tab at this address chooses another project,
+// this page's next answer comes from that project's panel: rather than show it under this project's name, or send it
+// this one's key, the page reloads.
+if (typeof globalThis.fetch === 'function') {
+  const fetchFrom = globalThis.fetch.bind(globalThis);
+  globalThis.fetch = async (...args) => {
+    const res = await fetchFrom(...args), from = res && res.headers && typeof res.headers.get === 'function' ? res.headers.get('X-Speck-Panel') : null;
+    const own = $('speck-panel').content;
+    if (from && own && from !== own) { location.reload(); return new Promise(() => {}); } // answered by the reload
+    return res;
+  };
+}
 let projectsGoneList = null, projectsDrawn = null; // the panels still running while the one shown has stopped; what the menu was drawn from
 // The project shown, by the name the menu last gave it.
 function projectShown() {
@@ -630,6 +642,9 @@ function projectShown() {
   return me ? String(me.name) : 'This project';
 }
 function projectsGone(gone) {
+  // Another tab at this address chose a project that has stopped since: not this page's, so it reloads to show the address's own.
+  const self = state && state.projects && state.projects.self;
+  if (gone && Number.isInteger(gone.port) && Number.isInteger(self) && gone.port !== self) return location.reload();
   projectsGoneList = gone && Array.isArray(gone.list) ? gone.list : null;
   if (projectsGoneList) {
     $('offline').hidden = false;

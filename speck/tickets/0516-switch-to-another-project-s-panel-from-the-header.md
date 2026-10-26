@@ -1,7 +1,7 @@
 ---
 id: "0516"
 title: "Switch to another project's panel from the header"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-26T15:16:51.305Z"
 ---
 # 0516 · Switch to another project's panel from the header
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Each speck project has its own panel on its own web address, and the panel's home-screen app belongs to one address. Someone with several projects on speck (speck, speck-site, carbon) has to keep a separate address, or a separate app, for each, and has no way to get from one project's panel to another's.
@@ -60,3 +60,81 @@ From one panel, at the address it was opened at, including its home-screen app, 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "48a00f0f188f80fe2d57e81604ffae83431f2746",
+    "session": "fresh",
+    "thread_id": "01a178dc-2841-7811-a613-1c7fea32cf1a",
+    "builder_response": "- Tests run: `speck test --related test/panel-0516.test.mjs` (test/support/tmp.mjs changed, so it brought in nearly every test file: 4132 tests, all passing).\n- Design: each panel writes a record of itself (pid, port, folder name, path) to ~/.config/speck/panels/<port>.json (SPECK_PANELS_DIR in tests) once serving, and deletes it on exit unless a newer process on the port wrote it (restart on new code). Dead pids are dropped from the list. The menu choice is a cookie named for the address's own port (`speck-shown-<port>`), set by POST /api/projects/<port>, which only accepts this address's Origins and only running panels. With the cookie, the panel at the address passes every request on to 127.0.0.1:<chosen port>, rewriting only Host and (when it's one of its own) Origin, adding X-Speck-Via so it is never passed on again; the chosen panel checks its own key as for a direct request. The list reaches the page in /api/state (`projects`, only while 2+ run), refreshed by a 2 s watch of the records. When the chosen panel has stopped, /api/events answers with a `gone` event plus the running list (retrying every 3 s), other requests get 502, and a reload of / shows the address's own project and clears the cookie.\n- The menu is a native select under a 44 px caret after the project's name, so the existing `.repo` markup (pinned by earlier tests) is unchanged.\n- Pictures of the header (light/dark) and the stopped notice (light/dark) are in the review pack.\n",
+    "seconds": 76,
+    "usage": {
+      "input_tokens": 170995,
+      "cached_input_tokens": 121856,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1574,
+      "reasoning_output_tokens": 591
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T15:38:52.812Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panelProjects.part() supplies the running projects; drawProjects() renders and marks them. The AC1 fake-page and real-panel tests passed."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Single-page switching is covered by passing AC2 tests, including --url and project-specific writes. However, choose() stores the selection in a shared cookie while existing pages retain their previous project's header, token and event stream. Switching in one tab breaks other tabs at that address."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelProjects watches records every two seconds and supplies stopped-project events with three-second retries. Passing AC3 tests cover menu updates, stopped notices, SIGKILL and Ctrl+C; existing background-panel tests cover --stop."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "route() restricts forwarding to registered running ports; pass() preserves the target's token checks. Passing AC4 tests cover unlisted ports, absent or incorrect keys, foreign Origins and Hosts, and forwarding loops."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied test result reports 4,129 passes, three skips and no failures. The changed tests exercise behaviour without weakening existing assertions."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/panel-projects.mjs",
+        "issue": "The project-selection cookie is shared by every tab at the address, but choosing a project reloads only the tab making the choice. Another open tab retains its original header, token and live event stream while its subsequent board, review-pack and settings requests are routed to the newly selected project. It can therefore display another project's information under the old project's name, and its write buttons fail with the old token. The single-page tests do not exercise this.",
+        "suggested_fix": "Keep each page's project selection consistent across its requests and event stream, or coordinate selection changes so every affected page reloads before fetching or displaying another project's information. Add a regression test with two pages at the same address, switching one and checking the other's board, settings, stream and writes.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Switching works in one page, including through an external address, and the access-control tests pass. However, switching in one tab silently redirects other open tabs' requests while they still show the previous project's identity. This needs fixing before merge."
+  }
+}
+```
+
+</details>
