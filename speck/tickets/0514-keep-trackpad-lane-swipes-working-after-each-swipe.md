@@ -31,7 +31,7 @@ A sideways trackpad scroll keeps changing lane on each gesture, without a click 
 
 ## Acceptance criteria
 1. With the panel open (including in a narrow Cursor browser pane), a sideways trackpad scroll that changes lane from Build to Shipped (or Plan) is followed by another sideways scroll the other way that changes lane back, with no click, tap or key press between them. The same holds for a third scroll after that.
-2. A pause of any length between two sideways scrolls still lets the second one change lane. Scrolling a lane's list up and down between two sideways scrolls still leaves the next sideways scroll able to change lane.
+2. A pause of 50 ms or more between two sideways scrolls still lets the second one change lane, and a scroll the other way changes lane after any pause or none. Scrolling a lane's list up and down between two sideways scrolls still leaves the next sideways scroll able to change lane.
 3. A single continuous trackpad glide still changes lane only once, as 0476 intended, so inertia after the fingers lift does not skip across every lane. Arrow keys and tapping the strip still change lane as they do today.
 4. No test that passed before this change fails, except a check that a second trackpad scroll within the old quiet window is ignored, which is changed to check criterion 1.
 
@@ -45,7 +45,7 @@ A sideways trackpad scroll keeps changing lane on each gesture, without a click 
 - Checked 2026-10-26: whether Cursor's pane also drops wheel delivery until a click after a lane change can't be seen on this box (only Cursor's command-line agent is installed, with no editor pane to scroll in). Nothing found says it does; criterion 1 must hold either way.
 - Changes `templates/panel-header.js`. No open ticket changes that file (0512 and 0513 do not).
 - Failing before this build: none
-- Self-check: no changes. Checked: a scroll whose events carry no change sideways is skipped as before; jitter the other way at a glide's end is undone by the next step the same way, so it never adds up to 40 px; a discrete tilt wheel still changes lane once a notch only after a 150 ms pause, as before; nothing is kept between page loads.
+- Self-check: no changes. Checked: a scroll whose events carry no change sideways is skipped as before; jitter the other way at a glide's end is undone by the next step the same way, so it never adds up to 40 px; a discrete tilt wheel changes lane once a notch, now after a 50 ms pause rather than 150 ms; nothing is kept between page loads.
 - AC4: no existing test checked that a second trackpad scroll within the quiet window is ignored, so none was changed.
 - Went with the recommendation: allow it: a pause of 50 ms or more (chosen by the user in the panel, 2026-10-26 14:37 UTC).
 
