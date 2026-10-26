@@ -39,6 +39,7 @@ Settings shows `allow_same_model_review` but won't change it: since 0258 it's re
 ## Notes
 - Asked for by the user on 2026-10-26: "I need the setting allow same model review to be toggle-able in the settings. Currently it is not."
 - Today: `EDITABLE` in `scripts/settings.mjs` leaves it out on purpose (0258: "allow_same_model_review weakens the independent review"); its explanation is in `SETTING_GROUPS` there, and Save's same-model check near `cfg.allow_same_model_review` in the same file. The dialog can follow 0259's for `auto_ship`, which asks before a change that lets more tickets ship by themselves, in `templates/panel-settings.js`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
