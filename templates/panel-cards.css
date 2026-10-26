@@ -429,6 +429,7 @@
      its tap area is inside the line. */
   .q:not(.open) .top .progress, .q:not(.open) .top .act { height: 44px; line-height: 44px; margin: -10px 0; }
   .q:not(.open) .top :is(.progress, .act) .tag { vertical-align: top; margin-top: calc(14px - var(--label-border)); }
+  .q:not(.open) .top .line { position: relative; } /* above the status line reaching behind it, so its title is still pressed and selected; a tag's tap area (z-index 1 on a touch screen) is above both */
   #shipped tr:not(.open) .sum { align-items: center; height: 22px; margin-top: 0; }
   #shipped tr:not(.open) .meta { line-height: 22px; white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; }
   /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
