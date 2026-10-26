@@ -1,7 +1,7 @@
 ---
 id: "0520"
 title: Give ideas their own Capture lane                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0519"]                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T22:18:48.074Z"
+approved: "2026-10-26T22:37:43.995Z"
 
 ---
 # 0520 · Give ideas their own Capture lane
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Plan's Tickets, Ideas and Inbox buttons take a whole row at the top of the lane, on a phone where space is short, and show only one of the three lists at a time. Ideas and inbox notes are the roughest stage of the work, and they belong in a lane of their own, to the left of Plan.
@@ -56,9 +57,14 @@ To see it, open the panel and swipe right from Plan, or tap Capture in the strip
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 373,645
+- Elapsed since build started: 19 min
+- Changed lines: 99 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none sent to the inbox. Noticed while moving the tests over: while a draft's priority menu is open, tapping a lane's name only closes the menu, so it takes a second tap to change lane. 0077 chose that on purpose (a click outside the menu only closes it), so it isn't a new idea.
 
