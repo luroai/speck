@@ -720,17 +720,29 @@ if (lanesBox.addEventListener) {
   };
   lanesBox.addEventListener('touchend', lift);
   lanesBox.addEventListener('touchcancel', lift);
-  // A sideways scroll on a trackpad changes lane once it has gone 40 px, and once only, until it stops: a pause of
-  // 150 ms, as its glide after the fingers lift keeps it going.
-  let wheelSum = 0, wheelDone = false, wheelQuiet = 0;
+  // A sideways scroll on a trackpad changes lane once it has gone 40 px, and once only: its glide after the fingers lift
+  // keeps it going the same way, slowing down. 0514: the next scroll changes lane again, with or without a pause, as the
+  // next swipe's fingers stop the glide: one after a pause of 150 ms, one the other way (40 px of it, as a glide never
+  // turns back) and one the same way that speeds up again once the glide has slowed to a third of its fastest. `way` is
+  // the way the last change went (0 before one), `sum` how far it has gone towards the next, `top` and `low` the glide's
+  // fastest and, once it has slowed, slowest step, and `push` how far a scroll that has sped up again has gone.
+  let wheel = { way: 0, sum: 0, at: -Infinity };
+  const wheelStep = way => { wheel = { way, sum: 0, top: 0, low: 0, push: 0, at: wheel.at }; stepLane(way); };
   lanesBox.addEventListener('wheel', e => {
     if (e.ctrlKey || Math.abs(e.deltaX) <= Math.abs(e.deltaY) || scrollsSideways(e.target)) return;
     if (e.cancelable) e.preventDefault();
-    clearTimeout(wheelQuiet);
-    wheelQuiet = setTimeout(() => { wheelSum = 0; wheelDone = false; }, 150);
-    if (wheelDone) return;
-    wheelSum += e.deltaX;
-    if (Math.abs(wheelSum) >= 40) { wheelDone = true; stepLane(Math.sign(wheelSum)); }
+    const w = e.timeStamp - wheel.at >= 150 ? (wheel = { way: 0, sum: 0 }) : wheel, dx = e.deltaX, a = Math.abs(dx);
+    w.at = e.timeStamp;
+    if (Math.sign(dx) !== w.way) {
+      w.sum += dx;
+      if (Math.abs(w.sum) >= 40) wheelStep(Math.sign(w.sum));
+      return;
+    }
+    w.sum = 0;
+    if (!w.low) { w.top = Math.max(w.top, a); if (a <= w.top / 3) w.low = a; return; }
+    w.low = Math.min(w.low, a);
+    w.push = a >= 2 * w.low + 4 ? w.push + a : 0;
+    if (w.push >= 40) wheelStep(w.way);
   }, { passive: false });
 }
 // The left and right arrow keys, pressed anywhere but in a text field or on a tab (which has its own), with nothing
