@@ -44,7 +44,7 @@ for (const [view, kind] of VIEWS) {
   test(`0214 AC4: in ${view}, a card still opens and closes, and the row under the title keeps its ${view === 'ideas' ? 'status' : 'from ticket'}, without the path since 0435`, async () => {
     const p = fakePage([JSON.parse(JSON.stringify(STATE))]);
     await p.settle();
-    const checks = cardsOf(p, kind).map(n => top(n).children.find(c => /\bchecks\b/.test(c.className)).children.map(c => c.textContent));
+    const checks = cardsOf(p, kind).map(n => top(n).children.find(c => /\bchecks\b/.test(c.className)).children.filter(c => !/\btag\b/.test(c.className)).map(c => c.textContent)); // 0521: not an agent tag
     if (view === 'ideas') assert.deepEqual(checks, [['No capture date'], ['No capture date']]); // 0520: only notes whose status is idea, which isn't repeated
     else assert.deepEqual(checks, [['From 0139 · No capture date'], ['From 0140 · No capture date']]);
     click(top(cardsOf(p, kind)[0]));

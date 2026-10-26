@@ -61,13 +61,14 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
    - Write each one as its own note, `speck/ideas/<YYYY-MM-DD>-<slug>.md`, with today's date and a short slug of its title. If that file already exists, add `-2`, `-3` and so on to the slug rather than overwriting it.
    - Tidy-ups (such as unused code) and notes on known limits go only in the Delivery log. If none qualify, write no note.
    - First check each one against every idea note in `speck/ideas/` and `speck/ideas/done/`, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria), as `/speck-capture` does. Skip any that clearly duplicates one of them, but don't stop to ask the user: an auto-ship build mustn't wait. Under the Delivery log's follow-ups, list each skipped follow-up and its match (an idea's path or a ticket's id).
-   - Use the `/speck-capture` format, with `Status: inbox` and a `From ticket:` line. Keep it under 30 lines:
+   - Use the `/speck-capture` format, with `Status: inbox`, a `From ticket:` line and `Raised by: agent`. Keep it under 30 lines:
 
      ```markdown
      # <the follow-up in a few words>
 
      Captured: <date> · Status: inbox
      From ticket: <id>
+     Raised by: agent
 
      ## What
      <what should change, in 1–3 sentences>
