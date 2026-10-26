@@ -734,14 +734,18 @@ const lanesBox = document.querySelector?.('main') || $('lanes');
 const SLIDE_MS = 120; // how long a card takes to come to rest (0517: 200 before)
 let slides = []; // the slide's animations, one for each card, while the row comes to rest
 // 0517: a redraw never holds up a slide. One asked for while the row comes to rest, by the lane change itself or the
-// refresh, is made once it's there: render() asks slideHolds() first.
-let heldRender = false;
-function slideHolds() {
-  heldRender = slides.length > 0;
-  return heldRender;
+// refresh, is made once it's there: render(), and the buttons' measuring after a change to the page, ask slideHolds()
+// first, and are held, once each, until then.
+const held = new Set();
+function slideHolds(redraw) {
+  if (!slides.length) { held.delete(redraw); return false; }
+  held.add(redraw);
+  return true;
 }
 function rested() {
-  if (heldRender) { heldRender = false; render(); }
+  const redraws = [...held];
+  held.clear();
+  for (const redraw of redraws) redraw();
 }
 function placeLanes(drag = 0) {
   if (!lanesBox.style) return;
