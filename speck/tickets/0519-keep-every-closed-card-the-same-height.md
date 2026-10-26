@@ -43,6 +43,7 @@ Every closed card in every lane is the same height, and a closed Plan card's sec
 - Asked for 2026-10-26: "did we not make the tickets stay consistent with heights … we need to make it all uniform please", with a screenshot of carbon's Plan lane on a phone: 0007, 0008 and 0010 on two lines with space under them, 0009 on three. Then: "The data we need to show on the second row really is Priority. Size. Risk. Type … in little labels or boxes … no need for the wide spacing. I'd still like to update priorities. I don't need to know criteria or whether lint passes."
 - Today: 0419 lets Plan's details line wrap "only when it doesn't fit", with ` · ` between its parts; 0484 cuts Build's status words short with `…` and keeps the stage, time and tag whole; 0420 and 0494 set out Shipped's closed card. A ticket's type is `type:` (bug or fix) or `kind: task`.
 - Cards: `templates/panel-cards.css`, and the closed cards in `templates/panel.js` (`ticketItem`, the Build queue's and Shipped's rows).
+- Failing before this build: none
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
