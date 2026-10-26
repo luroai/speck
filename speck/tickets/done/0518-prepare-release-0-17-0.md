@@ -1,7 +1,7 @@
 ---
 id: "0518"
 title: "Prepare release 0.17.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0517"]                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T16:39:50.128Z"
 approved: "2026-10-26T16:42:55.540Z"
+finished: "2026-10-26T16:46:39.788Z"
 
 ---
 # 0518 · Prepare release 0.17.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0.16.1, the panel can switch between every speck project running on the machine from its header (0516), and lane swipes are snappier (0517). The switcher only lists a project whose own copy of speck has it, so carbon and speck-site can't join it until there's a release to update to: anyone following the setup prompt, or updating speck in another project, still gets 0.16.1.
