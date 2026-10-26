@@ -43,6 +43,8 @@ A sideways trackpad scroll keeps changing lane on each gesture, without a click 
 - Checked 2026-10-26: whether Cursor's pane also drops wheel delivery until a click after a lane change can't be seen on this box (only Cursor's command-line agent is installed, with no editor pane to scroll in). Nothing found says it does; criterion 1 must hold either way.
 - Changes `templates/panel-header.js`. No open ticket changes that file (0512 and 0513 do not).
 - Failing before this build: none
+- Self-check: no changes. Checked: a scroll whose events carry no change sideways is skipped as before; jitter the other way at a glide's end is undone by the next step the same way, so it never adds up to 40 px; a discrete tilt wheel still changes lane once a notch only after a 150 ms pause, as before; nothing is kept between page loads.
+- AC4: no existing test checked that a second trackpad scroll within the quiet window is ignored, so none was changed.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
