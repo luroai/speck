@@ -1,7 +1,7 @@
 ---
 id: "0514"
 title: "Keep trackpad lane swipes working after each swipe"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-10-26T10:45:32.928Z"
 blocked_at: ""
 waited_seconds: 13541
 approved: "2026-10-26T14:43:34.755Z"
+finished: "2026-10-26T14:47:17.062Z"
 
 ---
 # 0514 · Keep trackpad lane swipes working after each swipe
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a laptop trackpad in Cursor's panel pane, a sideways scroll changes lane once, then further left/right swipes do nothing until you click the panel. After that click, one swipe works again, and you have to click once more for the next. Swiping between Plan, Build and Shipped should not need a click between each change.
