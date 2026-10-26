@@ -1,7 +1,7 @@
 ---
 id: "0511"
 title: "Turn same-model review on or off in Settings"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T10:29:19.449Z"
+approved: "2026-10-26T10:35:22.015Z"
 
 ---
 # 0511 · Turn same-model review on or off in Settings
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings shows `allow_same_model_review` but won't change it: since 0258 it's read-only there, because turning it on weakens the independent review. To pick a reviewer running the same model as the builder, the user has to edit `speck/config.yml` or run `speck config set`, which is the only setting in the builder and reviewer group that works that way.
@@ -54,9 +55,14 @@ To see it, open Settings, find allow_same_model_review under Building and review
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 189,386
+- Elapsed since build started: 6 min
+- Changed lines: 29 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: the question before turning it on is the page's own. A request sent to the panel with its token, outside the Settings view, can turn it on without one, unlike 0259's auto_ship check. No inbox note: the ticket asked only for the dialog.
 
