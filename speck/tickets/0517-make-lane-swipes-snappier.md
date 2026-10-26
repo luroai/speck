@@ -1,7 +1,7 @@
 ---
 id: "0517"
 title: "Make lane swipes snappier"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0516"]                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T16:17:47.800Z"
+approved: "2026-10-26T16:35:38.145Z"
 
 ---
 # 0517 · Make lane swipes snappier
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Moving between Plan, Build and Shipped by swiping left or right still feels slow to the user (2026-10-26), after 0514 made each trackpad swipe change lane. A trackpad swipe has to travel 40 px before anything happens, the card then takes 200 ms to slide, and the panel redraws every lane as the slide starts, which can hold up its first frames.
@@ -60,9 +61,15 @@ Worth keeping an eye on: with the shorter trackpad distance, a small accidental 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The browser performance test deliberately discards the first lane change with times.slice(1).
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 458,881
+- Elapsed since build started: 18 min
+- Changed lines: 63 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-26-show-only-the-cards-a-slide-passes.md (a slide's first frame still lays out all three cards).
