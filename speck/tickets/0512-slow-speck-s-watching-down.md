@@ -46,7 +46,9 @@ speck mostly sits and watches, calmly, and its beats and comic moments come now 
 - Pictures: none, because the change is to timing only: any one frame looks as it did before.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+While builds run, speck now mostly sits and watches. After each little thing it does, it spends 15 to 35 seconds just watching, breathing and blinking, and moves its gaze from one TV to the next about every 6 seconds. The comic moments and TV tricks come at most once every two minutes, and nothing comes round again until five other things have played, even after a cup of tea or a game of chess. Each TV's bar now takes 20 to 40 seconds to fill, and speck hops at most once every 30 seconds; otherwise it just looks over at that TV.
+
+To see it, open the panel while a build runs and watch speck for a few minutes. The numbers are a first setting: if it now feels too still, or still too busy, they're easy to tune.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +58,10 @@ speck mostly sits and watches, calmly, and its beats and comic moments come now 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - With three builds, speck's eye looks the same at the two TVs furthest from it, so its turn from one to the other at rest doesn't show. Inbox: `speck/ideas/2026-10-26-let-speck-s-eye-tell-the-two-far-tvs-apart.md`.
+  - Tidy-up: the prototype `docs/design/lcd/watching.html` still plays beats back to back with 10 to 18 second bars; worth bringing in line when it's next used to tune the rhythm.
+  - The changelog's 0.16.0 section describes the old rhythm ("does something different every few seconds"); the next release's notes should say speck now mostly sits and watches.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -124,6 +130,76 @@ speck mostly sits and watches, calmly, and its beats and comic moments come now 
     ],
     "escalation_question": "",
     "summary": "The slower timing works during uninterrupted watching, and the reported tests pass. However, each return from a pastime forgets which beats just played and resets the comic cooldown. Preserve that history across pauses before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "915d4cd087e38cdea8720cb2ed5e67cd4ab5e7a3",
+    "session": "continued",
+    "thread_id": "01a177cd-9554-7443-85df-0eb501783208",
+    "builder_response": "- Tests run: test/panel-0512.test.mjs test/panel-0502.test.mjs test/panel-0503.test.mjs test/panel-0504.test.mjs test/panel-0505.test.mjs, with the commands.checks files.\n- F1: fixed. `fresh(was, t)` in templates/panel-header.js: when the watch pose starts again (its time going back, as when the cast comes back from a pastime), the new plan keeps the last `again` beats played (`before`, used with the plan's own beats for the five-beat rule), and its last comic moment and last hop, shifted so that only time spent watching counts (from the time it starts again at, so the cast's 200 ms start isn't lost). A plan started again begins with a quiet spell rather than scan, as scan may be among the last five. A first watch, or the pre-0512 rhythm the old tests use, starts as before. New test \"0512 AC2: across speck's pastimes too…\" drives the real LCD.Cast through 40 two-minute watches and one-minute pastimes (including the frames that fade the watch pose out) and checks the five-beat rule and two minutes of watching between comic moments across them; it fails with the old reset.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 362899,
+      "cached_input_tokens": 307584,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1920,
+      "reasoning_output_tokens": 132
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T10:47:05.805Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-header.js: RHYTHM, beatAt and pose provide random 15–35 second quiet spells, six-second TV focus and breathing, while retaining beat durations. Blinking remains in templates/lcd.js. Both 0512 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "watchPose.fresh now carries recent beats and comic cooldown across pose restarts; beatAt excludes the last five beats and enforces comic spacing. Both AC2 tests passed, including 40 watch/pastime cycles through LCD.Cast with transition frames."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "watchPose.period sets 20–40 second bar periods; pose directs attention at filled bars, and hopsAt enforces the 30-second hop cooldown. All three AC3 tests passed. fresh also preserves the hop cooldown across restarts."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "speckRests retains the two-minute watch/one-minute pastime cycle, and beat implementations remain unchanged. Existing 0502–0505 tests retain their assertions using the previous rhythm. The reduced-motion test passed. Reported validation: 145 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "Watch/pastime transitions previously cleared recent-beat history and comic cooldown.",
+        "suggested_fix": "Implemented: preserve recent beats and cooldowns across pose restarts, with a regression test covering repeated LCD.Cast transitions.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The slower watching rhythm now preserves its memory across pastime breaks, preventing early beat repeats and overly frequent comic moments. All criteria pass, and the reported tests have no failures. Ready for the product owner to consider merging."
   }
 }
 ```
