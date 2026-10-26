@@ -47,6 +47,11 @@ speck is ready to be released as 0.17.0.
 - Checked 2026-10-26: `package.json` is `0.16.1`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- AC5's README figures aren't tested in the README, as 0491 left the rule: `test/release-0518.test.mjs` checks the figures worked out from `speck/tickets/done/` at the commit this was built from (501 shipped, 16 cancelled, 13 minutes, 1 round, 255 in round 1), and the reviewer checks the README gives them.
+- `test/release-0515.test.mjs`'s checks of the current version now follow `package.json`, as 0515 did for 0507, and `test/docs-0491.test.mjs` lets `test/release-0518.test.mjs` read the README for its status line and setup prompt, as it does every release test.
+- Shipped since `v0.16.1`: 0516 and 0517, and no others.
+- Self-check: the upgrade note no longer says to restart a running panel after updating, as a running panel restarts on its new code by itself and registers for the switcher then; dropped an unbacked line about ports. Each other claim checked against 0516 and 0517.
+- Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
