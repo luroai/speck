@@ -138,10 +138,8 @@ function closeTip() {
 }
 const within = (n, box) => { for (; n; n = n.parentNode) if (n === box) return true; return false; };
 // View state only, kept across refreshes and never sent to the server.
-let shapingView = 'tickets'; // which Shaping list is showing: 'tickets', 'ideas' or 'inbox'
 const open = new Set(); // ids of the open tickets
-const openIdeas = new Set(); // paths of the open ideas
-const openInbox = new Set(); // paths of the open inbox notes
+const openNotes = new Set(); // paths of the open notes in Capture (0520)
 const openQueue = new Set(); // ids of the open queue tickets
 const openShipped = new Set(); // ids of the shipped cards that are open (0162, 0466)
 let moreStats = false; // whether Shipped shows all six stats (0162)
@@ -497,27 +495,15 @@ function noteItem(i, kind, open, second) {
   return el('div', `item ${kind}${isOpen ? ' open' : ''}`, null, head,
     isOpen ? el('div', 'detail', null, el('div', null, null, el('div', 'path mono', i.path), noteOf(i))) : null);
 }
-function ideaItem(i) {
-  const on = capturedOn(i.body), status = String(i.status || '').trim();
-  return noteItem(i, 'idea', openIdeas, [on ? `Captured ${on}` : 'No capture date', status && status !== 'idea' ? status : null].filter(Boolean).join(' · '));
-}
-function inboxItem(i) {
+// 0520: Capture lists ideas and inbox notes together, each card as it was in Plan's Ideas or Inbox list. Reading is all
+// it does: a note is changed only in chat.
+function captureItem(i) {
   const on = capturedOn(i.body);
-  return noteItem(i, 'inbox', openInbox, i.from ? `From ${i.from} · ${on ? `captured ${on}` : 'No capture date'}` : on ? `Captured ${on}` : 'No capture date');
+  if (String(i.status).trim() === 'idea') return noteItem(i, 'idea', openNotes, on ? `Captured ${on}` : 'No capture date');
+  return noteItem(i, 'inbox', openNotes, i.from ? `From ${i.from} · ${on ? `captured ${on}` : 'No capture date'}` : on ? `Captured ${on}` : 'No capture date');
 }
 // An opened idea's or inbox note's whole text, its Markdown formatted as in the review pack, tables included.
 const noteOf = i => el('div', 'note md', null, ...mdBlocks(markdown(typeof i.body === 'string' ? i.body : '', { tables: true })));
-function shapingToggle(m) {
-  const button = (view, label, n) => {
-    const b = el('button', `toggle ${view}${shapingView === view ? ' on' : ''}`, `${label} · ${n}`);
-    b.type = 'button';
-    b.setAttribute('aria-pressed', String(shapingView === view)); // 0450: a screen reader hears which list is open
-    b.addEventListener('click', () => { shapingView = view; render(); });
-    return b;
-  };
-  $('shaping-toggle').replaceChildren(button('tickets', 'Tickets', m.drafts.length), button('ideas', 'Ideas', m.ideas.length), button('inbox', 'Inbox', m.inbox.length));
-  $('shaping-section').className = `shaping ${shapingView}`;
-}
 // A queue row: the ticket, its progress when it's in flight (0156), then what's under it. A blocked ticket is red, and so
 // is one whose build has exited, unless it's approved: then it's waiting for you to ship it, and green (0440).
 function queueItem(t) {
@@ -1197,7 +1183,6 @@ function idleLane(m) {
     next = el('button', 'full-open go-plan', `Go to Plan · ${plural(m.drafts.length, 'draft')}`);
     next.type = 'button';
     next.addEventListener('click', () => {
-      shapingView = 'tickets';
       openTab('plan');
       render();
       if ($('tab-plan').focus) $('tab-plan').focus();
@@ -1213,7 +1198,7 @@ function idleClock(node, t) {
   if (idleTimer !== null) { clearInterval(idleTimer); idleTimer = null; }
   if (node) idleTimer = setInterval(() => setText(node, `Last shipped ${t.id} · ${shippedAgo(t.end, Date.now())}`), IDLE_MS);
 }
-// The items built by the last render, for each box, by key ('t:<id>' or 'i:<path>' in Shaping, the id elsewhere), each
+// The items built by the last render, for each box, by key ('t:<id>' in Shaping, a note's path in Capture, the id elsewhere), each
 // with everything it shows. An item whose own data and view state are unchanged keeps its node, so text selected in it,
 // and a box's scroll position, survive the refresh. What it shows from other items or the clock (`derived`) is put
 // right with `update`, on the node it keeps.
@@ -1239,9 +1224,8 @@ function render() {
   if (!state || slideHolds(render)) return; // 0517: made once a slide has come to rest
   const m = panelModel(state);
   // A menu whose ticket isn't showing any more is closed, so it can't catch the next click.
-  if (priorityMenu !== null && (shapingView !== 'tickets' || !m.drafts.some(t => String(t.id) === priorityMenu))) priorityMenu = null;
-  shapingToggle(m);
-  onPage = new Set([...(shapingView === 'tickets' ? m.drafts : []), ...m.queue].map(t => String(t.id)));
+  if (priorityMenu !== null && !m.drafts.some(t => String(t.id) === priorityMenu)) priorityMenu = null;
+  onPage = new Set([...m.drafts, ...m.queue].map(t => String(t.id)));
   // A refused stop's reason goes once its ticket has no Stop build button, so a later build of it doesn't show it.
   for (const id of stopRefused.keys()) if (!m.queue.some(t => String(t.id) === id && t.pausable)) stopRefused.delete(id);
   // The same for a refused Back to Plan once its ticket isn't ready in the queue.
@@ -1253,9 +1237,8 @@ function render() {
   for (const ids of [askDrafts, askRefused]) for (const id of ids.keys()) if (!foremanAskOf(id)) ids.delete(id);
   const typing = typeof document.activeElement === 'object' && document.activeElement && document.activeElement.askKey ? document.activeElement : null;
   askBoxes.clear();
-  if (shapingView === 'inbox') fill('shaping', keptItems('shaping', m.inbox, i => `n:${i.path}`, i => openInbox.has(i.path), inboxItem), 'Inbox is empty.');
-  else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
-  else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
+  fill('capture', keptItems('capture', m.capture, i => i.path, i => openNotes.has(i.path), captureItem), 'Nothing captured.');
+  fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
     t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), 'No draft tickets.');
   renderFull(m);

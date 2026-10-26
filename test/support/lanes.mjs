@@ -1,7 +1,7 @@
 // 0514, 0517: the page with a trackpad or a finger over its lanes, run without a browser.
 import { T, fakePage, full } from './panel.mjs';
 
-export const TAB = { plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
+export const TAB = { capture: 'tab-capture', plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
 export const board = () => ({ tickets: [full('0001', { title: 'A draft' }), T('0003', 'ready'), full('0005', { status: 'done', finished: new Date().toISOString() })], ideas: [] });
 export const lane = p => Object.keys(TAB).filter(l => (p.byId(TAB[l]).attrs || {})['aria-selected'] === 'true').join();
 
@@ -44,7 +44,7 @@ export async function slidingPage({ width = 400, reduce = { on: false }, boards 
   lanes.clientWidth = width;
   lanes.animate = () => {};
   p.slides = [];
-  for (const id of ['shaping-section', 'build-section', 'shipped-section']) {
+  for (const id of ['capture-section', 'shaping-section', 'build-section', 'shipped-section']) {
     p.byId(id).animate = (frames, opts) => {
       const a = { id, frames, opts, cancelled: false };
       a.finished = new Promise((resolve, reject) => { a.end = resolve; a.cancel = () => { a.cancelled = true; reject(new Error('cancelled')); }; });

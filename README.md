@@ -91,7 +91,7 @@ Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremo
 The panel is a phone-width column you keep beside your agent, or open on your phone. Start it with `node .speck/scripts/speck.mjs panel`, at `http://127.0.0.1:4777`. The panel runs on your machine and reads the files in your repo.
 
 - **speck's screen**, at the top, says what's happening: Building, Shipping, Idle, or Needs you when a ticket is waiting on your answer. Press it for the detail.
-- **Plan, Build and Shipped** are cards you swipe between. Plan has your drafts, ideas and inbox. Build has the queue, each build's log, blocked questions and approved tickets' review packs with their Ship button. Shipped shows what's shipped and what it took.
+- **Capture, Plan, Build and Shipped** are cards you swipe between. Capture lists your ideas and inbox notes to read. Plan has your draft tickets. Build has the queue, each build's log, blocked questions and approved tickets' review packs with their Ship button. Shipped shows what's shipped and what it took.
 - **Settings**, from the button in the header, turns `speck run` on and off, picks your builder and reviewer, and holds the settings people tune.
 
 To use it from your phone, put it behind a private tunnel that makes you log in, such as `tailscale serve` or Cloudflare Tunnel with Cloudflare Access, and start it with `node .speck/scripts/speck.mjs panel --url https://<hostname>`. Add it to your home screen to open it as an app. Never expose it openly: anyone who can load the page can start builds and ship.
