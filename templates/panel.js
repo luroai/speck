@@ -374,9 +374,10 @@ function holdPage(on) {
 }
 // 0453: a phone draws a side of a button's border only when that edge is on a whole pixel (0281), so each button with a
 // border is made a whole number of pixels wide, and what follows it in its row starts on a whole pixel too. It's done
-// as soon as the page changes, before it's drawn, so new words never squeeze into an old width, and again for every
-// button when the window's size or the fonts change. `wholeOf` keeps what each button showed when it was measured, so
-// one is measured again only when its words or classes change.
+// as soon as the page changes, before it's drawn (0517: or, while the lanes slide, once the card is at rest), so new
+// words never squeeze into an old width, and again for every button when the window's size or the fonts change.
+// `wholeOf` keeps what each button showed when it was measured, so one is measured again only when its words or
+// classes change.
 const wholeOf = new WeakMap(), wholeSized = new WeakSet();
 function wholeButtons(again = false) {
   const sig = b => `${b.className}\n${b.textContent}`;
@@ -407,7 +408,9 @@ function fitWords() {
   lines.forEach(([, w], i) => { if (room[i] !== null) w.style.maxWidth = `${room[i]}px`; });
 }
 if (typeof MutationObserver === 'function' && document.body) {
-  new MutationObserver(() => { wholeButtons(); fitWords(); }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'aria-selected', 'open'] });
+  // 0517: held while the lanes slide, so it never holds one up (slideHolds is the header's, which loads after this)
+  const fit = () => { if (typeof slideHolds !== 'function' || !slideHolds(fit)) { wholeButtons(); fitWords(); } };
+  new MutationObserver(fit).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'aria-selected', 'open'] });
   addEventListener('resize', () => { wholeButtons(true); fitWords(); });
   document.fonts?.addEventListener?.('loadingdone', () => { wholeButtons(true); fitWords(); });
   wholeButtons();
@@ -1240,7 +1243,7 @@ function keptItems(box, list, keyOf, viewOf, make, { own = x => x, derived = () 
 
 let state = null;
 function render() {
-  if (!state) return;
+  if (!state || slideHolds(render)) return; // 0517: made once a slide has come to rest
   const m = panelModel(state);
   // A menu whose ticket isn't showing any more is closed, so it can't catch the next click.
   if (priorityMenu !== null && (shapingView !== 'tickets' || !m.drafts.some(t => String(t.id) === priorityMenu))) priorityMenu = null;

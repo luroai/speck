@@ -731,8 +731,22 @@ for (const [i, l] of TAB_ORDER.entries()) {
 // how far a finger has moved the row from there. A swipe, a sideways scroll on a trackpad, the left and right arrow keys
 // or a tab bring another card into view.
 const lanesBox = document.querySelector?.('main') || $('lanes');
-const SLIDE_MS = 200; // how long a card takes to come to rest
+const SLIDE_MS = 120; // how long a card takes to come to rest (0517: 200 before)
 let slides = []; // the slide's animations, one for each card, while the row comes to rest
+// 0517: a redraw never holds up a slide. One asked for while the row comes to rest, by the lane change itself or the
+// refresh, is made once it's there: render(), and the buttons' measuring after a change to the page, ask slideHolds()
+// first, and are held, once each, until then.
+const held = new Set();
+function slideHolds(redraw) {
+  if (!slides.length) { held.delete(redraw); return false; }
+  held.add(redraw);
+  return true;
+}
+function rested() {
+  const redraws = [...held];
+  held.clear();
+  for (const redraw of redraws) redraw();
+}
 function placeLanes(drag = 0) {
   if (!lanesBox.style) return;
   lanesBox.style.setProperty('--lane', String(TAB_ORDER.indexOf(openLane)));
@@ -757,10 +771,10 @@ function slideFrom(from) {
   slides = [];
   placeLanes();
   const to = -TAB_ORDER.indexOf(openLane) * lanesBox.clientWidth;
-  if (reducedMotion() || Math.abs(from - to) < 1 || typeof lanesBox.animate !== 'function') { delete lanesBox.dataset.slide; return; }
+  if (reducedMotion() || Math.abs(from - to) < 1 || typeof lanesBox.animate !== 'function') { delete lanesBox.dataset.slide; rested(); return; }
   showRow('settle');
   const mine = slides = TAB_ORDER.map(l => $(LANES[l][1]).animate([{ transform: `translateX(${from}px)` }, { transform: `translateX(${to}px)` }], { duration: SLIDE_MS, easing: 'cubic-bezier(.25, .8, .35, 1)' }));
-  mine[0].finished.then(() => { if (slides === mine) { slides = []; delete lanesBox.dataset.slide; } }, () => {});
+  mine[0].finished.then(() => { if (slides === mine) { slides = []; delete lanesBox.dataset.slide; rested(); } }, () => {});
 }
 // The lane beside the open one, `step` along the row (-1 left, 1 right), opened if there is one there. The ends don't
 // wrap round, as a card can't be swiped past the last one. Without one, the row slides back to the open card.
@@ -776,10 +790,11 @@ function scrollsSideways(n) {
   }
   return false;
 }
-// A touch is followed sideways or left to the browser to scroll up and down, by the way it has gone more once it's gone
-// 10 px. Followed sideways, the row moves with the finger (a third as far past either end), and on lifting it a quick
-// flick changes lane however short it was, and a slower drag past a third of the card's width does. The lists only
-// scroll up and down themselves (touch-action: pan-y), so the browser never holds on to a sideways touch.
+// A touch is followed sideways or left to the browser to scroll up and down, by the way it has gone 6 px more than the
+// other (0517: once it had gone 10 px before). Followed sideways, the row moves with the finger (a third as far past
+// either end), and on lifting it a quick flick changes lane however short it was, and a slower drag past a quarter of
+// the card's width does (0517: a third before). The lists only scroll up and down themselves (touch-action: pan-y), so
+// the browser never holds on to a sideways touch.
 let touch = null; // { x, y, way: null | 'x' | 'y', drag, base, shown, at: [[time, x]…] } while a finger is down, or null
 const FLICK = 0.3; // px per ms
 if (lanesBox.addEventListener) {
@@ -794,8 +809,9 @@ if (lanesBox.addEventListener) {
     if (e.touches.length !== 1) { touch = null; slideFrom(rowAt()); return; }
     const t = e.touches[0], dx = t.clientX - touch.x, dy = t.clientY - touch.y;
     if (!touch.way) {
-      if (Math.max(Math.abs(dx), Math.abs(dy)) < 10) return;
-      touch.way = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      const lead = Math.abs(dx) - Math.abs(dy);
+      if (Math.abs(lead) < 6) return;
+      touch.way = lead > 0 ? 'x' : 'y';
       if (touch.way === 'y') return;
       // A card still coming to rest stops where the finger catches it
       touch.base = slides.length ? rowAt() + TAB_ORDER.indexOf(openLane) * lanesBox.clientWidth : 0;
@@ -820,15 +836,15 @@ if (lanesBox.addEventListener) {
     const speed = t1 > t0 && e.timeStamp - t1 <= 100 ? (x1 - x0) / (t1 - t0) : 0;
     const step = e.type === 'touchcancel' ? 0
       : Math.abs(speed) >= FLICK && Math.sign(speed) === Math.sign(was.drag) ? -Math.sign(speed)
-        : Math.abs(was.drag) > lanesBox.clientWidth / 3 ? -Math.sign(was.drag) : 0;
+        : Math.abs(was.drag) > lanesBox.clientWidth / 4 ? -Math.sign(was.drag) : 0;
     if (step) stepLane(step); else slideFrom(rowAt());
   };
   lanesBox.addEventListener('touchend', lift);
   lanesBox.addEventListener('touchcancel', lift);
-  // A sideways scroll on a trackpad changes lane once it has gone 40 px, and once only: its glide after the fingers lift
-  // keeps it going the same way. 0514: the next scroll changes lane again, as the next swipe's fingers stop the glide:
-  // one after a pause of 50 ms (three frames with no step sideways), and one the other way, 40 px of it, with no pause,
-  // as a glide never turns back. How fast it goes says nothing, as fingers slow down and speed up within one swipe.
+  // A sideways scroll on a trackpad changes lane once it has gone 20 px (0517: 40 px before), and once only: its glide
+  // after the fingers lift keeps it going the same way. 0514: the next scroll changes lane again, as the next swipe's
+  // fingers stop the glide: one after a pause of 50 ms (three frames with no step sideways), and one the other way, 20 px
+  // of it, with no pause, as a glide never turns back. How fast it goes says nothing, as fingers slow down and speed up within one swipe.
   // `way` is the way the last change went (0 before one, and after a pause), `sum` how far it has gone towards the next
   // and `at` when its last step was, or when the page had finished changing lane, so a step held up meanwhile isn't
   // taken for one after a pause.
@@ -836,11 +852,11 @@ if (lanesBox.addEventListener) {
   lanesBox.addEventListener('wheel', e => {
     if (e.ctrlKey || Math.abs(e.deltaX) <= Math.abs(e.deltaY) || scrollsSideways(e.target)) return;
     if (e.cancelable) e.preventDefault();
-    if (e.timeStamp - wheel.at >= 50) wheel = { way: 0, sum: 0 };
-    wheel.at = e.timeStamp;
+    if (e.timeStamp - wheel.at >= 50) wheel = { way: 0, sum: 0, at: e.timeStamp };
+    wheel.at = Math.max(wheel.at, e.timeStamp); // 0517: a step held up after a change never moves it back
     if (Math.sign(e.deltaX) === wheel.way) { wheel.sum = 0; return; } // the glide, which undoes any jitter the other way
     wheel.sum += e.deltaX;
-    if (Math.abs(wheel.sum) < 40) return;
+    if (Math.abs(wheel.sum) < 20) return;
     wheel = { way: Math.sign(wheel.sum), sum: 0, at: wheel.at };
     stepLane(wheel.way);
     if (globalThis.performance) wheel.at = Math.max(wheel.at, performance.now());
