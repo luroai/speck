@@ -1,7 +1,7 @@
 ---
 id: "0517"
 title: "Make lane swipes snappier"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-26
 ---
 # 0517 · Make lane swipes snappier
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Moving between Plan, Build and Shipped by swiping left or right still feels slow to the user (2026-10-26), after 0514 made each trackpad swipe change lane. A trackpad swipe has to travel 40 px before anything happens, the card then takes 200 ms to slide, and the panel redraws every lane as the slide starts, which can hold up its first frames.
