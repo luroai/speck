@@ -44,6 +44,8 @@ A left or right swipe changes lane as soon as it's clearly meant, and the new la
 - Today, in `templates/panel-header.js`: the wheel handler's 40 px, `SLIDE_MS` (200), the touch handlers' 10 px and `lanesBox.clientWidth / 3`, and `stepLane`, which calls `render()` (in `templates/panel.js`) straight after `openTab` starts the slide. During a slide every lane is laid out (`showRow`), Shipped included.
 - 0476 set "at most 250 ms after the finger lifts" and the 10 px and a-third rules. This replaces those numbers, and the tests that pinned them change with them.
 - Failing before this build: none
+- Self-check: with the trackpad's step down to 20 px, a lane change now comes partway through a swipe's finger steps, and a step the browser held up while the page changed lane could set back when the last step was, so the rest of the swipe changed lane again (0514's held-up test caught it); the last step's time now never goes back.
+- Pictures: none, because nothing looks different at rest: the change is in how far a swipe goes before the lane changes and how long the slide takes.
 - Waits for 0516, which also changes `templates/panel-header.js` and may change how `templates/panel.js` refreshes the page for the project being shown.
 
 ## In plain words

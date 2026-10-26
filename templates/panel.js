@@ -1240,7 +1240,7 @@ function keptItems(box, list, keyOf, viewOf, make, { own = x => x, derived = () 
 
 let state = null;
 function render() {
-  if (!state) return;
+  if (!state || slideHolds()) return; // 0517: made once a slide has come to rest
   const m = panelModel(state);
   // A menu whose ticket isn't showing any more is closed, so it can't catch the next click.
   if (priorityMenu !== null && (shapingView !== 'tickets' || !m.drafts.some(t => String(t.id) === priorityMenu))) priorityMenu = null;

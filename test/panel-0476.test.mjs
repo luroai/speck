@@ -53,16 +53,17 @@ async function finger(b, points, { gap = 0, lift = true } = {}) {
   for (const p of points.slice(1)) { if (gap) await pause(gap); await touch('touchMove', at(p)); }
   if (lift) await touch('touchEnd', []);
 }
-// The open card comes to rest: the slide under way ends within 250 ms, by its own timing, and then the card is at rest.
+// The open card comes to rest: the slide under way ends within 120 ms (0517: 250 ms before), by its own timing, and then
+// the card is at rest.
 async function settles(b, lane, what) {
   const left = await b.js(`Math.max(0, ...document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.parentElement === document.querySelector('main')).map(a => a.effect.getComputedTiming().endTime - (a.currentTime || 0)))`);
-  assert.ok(left <= 250, `${what}: the slide ends within 250 ms (${left} ms)`);
+  assert.ok(left <= 120, `${what}: the slide ends within 120 ms (${left} ms)`);
   await b.until(`!document.querySelector('main').dataset.slide`, `${what}: the slide to end`, 3000);
   await atRest(b, lane, what);
 }
 // Points from one place to another in `n` equal steps.
 const path = ([x0, y0], [x1, y1], n) => Array.from({ length: n + 1 }, (_, i) => [x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n]);
-// A quick swipe to the lane on the left (1) or the right (-1) that's also further than a third of the card, so it changes
+// A quick swipe to the lane on the left (1) or the right (-1) that's also further than a quarter of the card, so it changes
 // lane however quickly the browser gets it.
 const swipe = (b, [x, y], w, dir) => finger(b, path([x - (dir * w) / 5, y], [x + (dir * w) / 4, y], 4));
 // A point in the middle of the open lane's list.
@@ -114,7 +115,7 @@ test('0476 AC1: the arrow keys change lane anywhere but in a text field or a tab
 
 // ---------- AC2, AC3 and AC4: in a real browser, with a simulated finger ----------
 
-test('0476 AC2: a swipe moves the card with the finger and comes to rest on one whole card within 250 ms; a flick changes lane however short, a slow drag past a third', skip, async () => {
+test('0476 AC2: a swipe moves the card with the finger and comes to rest on one whole card within 120 ms (0517); a flick changes lane however short, a slow drag past a quarter', skip, async () => {
   const b = await phone(390);
   try {
     await atRest(b, 'build', 'as the page opens');
@@ -126,10 +127,10 @@ test('0476 AC2: a swipe moves the card with the finger and comes to rest on one 
     assert.deepEqual([held[2].shows, held[2].left], [true, held[2].column - 60], 'and the next card shows beside it, in line');
     assert.deepEqual([held[0].shows, held[0].left], [true, -held[0].column - 60], 'and the one before it, in line');
     await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await settles(b, 'build', 'a slow drag under a third of the card');
-    // A slow drag past a third
-    await finger(b, path([x + 80, y], [x + 80 - w / 3 - 20, y], 10), { gap: 50 });
-    await settles(b, 'shipped', 'a slow drag left past a third');
+    await settles(b, 'build', 'a slow drag under a quarter of the card');
+    // A slow drag past a quarter (0517: a third before)
+    await finger(b, path([x + 80, y], [x + 80 - w / 4 - 20, y], 10), { gap: 50 });
+    await settles(b, 'shipped', 'a slow drag left past a quarter');
     // A quick flick, a sixth of the card's width
     await finger(b, path([x, y], [x + w / 6, y], 3));
     await settles(b, 'build', 'a short quick flick right');
@@ -144,8 +145,11 @@ test('0476 AC2: a sideways scroll on a trackpad and the arrow keys change lane i
   const b = await phone(390);
   try {
     const w = await b.width(), [x, y] = await middle(b);
+    // 0517: each step 16 ms after the one before, as a trackpad sends them, by its time, so a busy machine sending them
+    // further apart doesn't make each one a scroll of its own
     const wheel = async dx => {
-      for (let i = 0; i < 6; i++) await b.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x, y, deltaX: dx, deltaY: 0 });
+      const start = Date.now() / 1000;
+      for (let i = 0; i < 6; i++) await b.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x, y, deltaX: dx, deltaY: 0, timestamp: start + i * 0.016 });
     };
     await wheel(30);
     await settles(b, 'shipped', 'a sideways scroll right changes lane once');
@@ -176,12 +180,12 @@ test('0476 AC2: a sideways scroll on a trackpad and the arrow keys change lane i
   } finally { await b.end(); }
 });
 
-test('0476 AC3: a touch follows only the way it went in its first 10 px, a swipe straight after a scroll slides at once, and one in something that scrolls sideways scrolls that', skip, async () => {
+test('0476 AC3: a touch follows only the way it first went 6 px more than the other (0517: its first 10 px before), a swipe straight after a scroll slides at once, and one in something that scrolls sideways scrolls that', skip, async () => {
   const b = await phone(390);
   try {
     const w = await b.width(), [x, y] = await middle(b);
     // Up and down first: then sideways goes nowhere, and the list scrolled. (The browser itself holds back a touch's
-    // moves until it has gone 15 px, so each way is taken a little further than 10 px before it turns.)
+    // moves until it has gone 15 px, so each way is taken a little further than that before it turns.)
     await finger(b, [...path([x, y], [x + 2, y - 24], 4), ...path([x + 2, y - 24], [x - 150, y - 30], 6)], { gap: 16, lift: false });
     assert.equal((await b.cards())[1].left, 0, 'a touch that went up first doesn\'t move the card sideways');
     await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
@@ -276,7 +280,7 @@ for (const width of [390, 1400]) {
       const cards = await b.cards();
       assert.deepEqual(cards.map(c => [c.shows, c.width, c.left]), [-1, 0, 1].map(j => [true, Math.round(box.width), j * Math.round(box.width) - 40]), `while a finger drags, the three cards show in a row, each as wide as the column (${JSON.stringify(cards)})`);
       await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-      await settles(b, 'build', 'after a drag under a third');
+      await settles(b, 'build', 'after a drag under a quarter');
       const shows = await b.js(`[...document.querySelectorAll('main > section')].filter(s => { const r = s.getBoundingClientRect(); return s.getClientRects().length > 0 && getComputedStyle(s).visibility === 'visible' && r.right > 0 && r.left < innerWidth; }).length`);
       assert.equal(shows, 1, 'one lane shows on the page');
       const w = await b.width(), [x, y] = await middle(b);
