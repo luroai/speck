@@ -17,14 +17,15 @@ const press = n => {
 const isOpen = item => /\bopen\b/.test(item.className);
 const detailOf = item => item.children.find(n => /\bdetail\b/.test(n.className));
 
-test('0039 AC1: a draft opens and closes from anywhere in its top row: id, title, tags, criteria count and lint line', async () => {
+// 0519: a closed one's top row is its id, title and labels; its criteria count and lint result are in its readiness.
+test('0039 AC1: a draft opens and closes from anywhere in its top row: id, title and tags', async () => {
   const state = { tickets: [full('0001', { priority: 1, lint: { errors: 1, warnings: 1 } })], ideas: [] };
   const p = fakePage([state]);
   await p.settle();
   const head = top(items(p)[0]);
   assert.ok(head, 'the ticket has a top row');
   const inHead = p.all(head);
-  for (const s of ['0001', 'Ticket 0001', 'P1', 'S', 'low', 'criteria', 'lint: 1 error', '1 warning'])
+  for (const s of ['0001', 'Ticket 0001', 'P1', 'S', 'low'])
     assert.ok(inHead.some(n => n.textContent === s || n.textContent.includes(s)), `the top row holds ${s}`);
   for (const i of inHead.keys()) {
     if (/\bpick\b/.test(inHead[i].className)) continue; // since 0077 the priority tag opens its menu instead (covered there)

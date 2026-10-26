@@ -104,18 +104,24 @@ const openPane = async b => {
 
 // ---------- AC1 ----------
 
-// Each tag's visible box, and whether the points of a 44 by 44 px square centred on it reach that tag.
+// Each tag's visible box, and whether the points of a 44 by 44 px square centred on it reach that tag. 0519: in a closed
+// card's second row, a row 24 px high, the points of its tap area there: from the row's top to the card's bottom, and
+// across the tag's own width; for the priority, the corners of its 44 by 44 px box, which reaches left of it.
 const BOXES = sel => `${laneFor(sel)} [...document.querySelectorAll(${JSON.stringify(sel)})].map(n => {
   n.scrollIntoView({ block: 'center' });
   const r = n.getBoundingClientRect(), s = getComputedStyle(n), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-  const points = [[cx - 21.5, cy - 21.5], [cx + 21.5, cy - 21.5], [cx - 21.5, cy + 21.5], [cx + 21.5, cy + 21.5], [cx, cy - 21.5], [cx, cy + 21.5], [cx - 21.5, cy], [cx + 21.5, cy]];
+  const row = n.closest('.item:not(.open) .head .checks');
+  const p = row && n.classList.contains('pick') ? n.closest('.prio').getBoundingClientRect() : null;
+  const points = p ? (p.width >= 43.5 && p.height >= 43.5 ? [[p.left + 1, p.top + 1], [p.right - 1, p.top + 1], [p.left + 1, p.bottom - 1], [p.right - 1, p.bottom - 1], [cx, cy]] : [['its box is', p.width, 'by', p.height]])
+    : row ? [[cx, row.getBoundingClientRect().top + 1], [cx, n.closest('.item, .q').getBoundingClientRect().bottom - 2.5], [r.left + 1, cy], [r.right - 1, cy], [cx, cy]]
+    : [[cx - 21.5, cy - 21.5], [cx + 21.5, cy - 21.5], [cx - 21.5, cy + 21.5], [cx + 21.5, cy + 21.5], [cx, cy - 21.5], [cx, cy + 21.5], [cx - 21.5, cy], [cx + 21.5, cy]];
   return { text: n.textContent, height: r.height, top: r.top, left: r.left, right: r.right, font: s.fontSize, line: s.lineHeight, padding: s.paddingLeft,
     misses: points.filter(([x, y]) => { const hit = document.elementFromPoint(x, y); return !(hit === n || n.contains(hit)); }) };
 })`;
 
 for (const width of [375, 1280]) {
   // 0419: a Plan or Build card's tags are words in its details line, so they match each other, and the pane's match each other.
-  test(`0165 AC1: at ${width} px, every tag in Plan and the Build queue, and every tag in the full ticket pane, has the same visible size and even gaps${width < 700 ? ', with a 44 by 44 px tap area each' : ''}`, skip, async () => {
+  test(`0165 AC1: at ${width} px, every tag in Plan and the Build queue, and every tag in the full ticket pane, has the same visible size and even gaps${width < 700 ? ', with a 44 by 44 px tap area each (0519: in a closed Plan card\'s second row, from the row\'s top to the card\'s bottom)' : ''}`, skip, async () => {
     await withPanel(async b => {
       const all = [];
       for (const where of ['plan', 'queue']) all.push(...(await b.js(BOXES(WHERE[where]))).map(t => ({ ...t, where })));
@@ -129,7 +135,7 @@ for (const width of [375, 1280]) {
         assert.ok(Math.abs(t.height - first.height) < 0.5, `${t.where} ${t.text} is ${t.height} px high, not ${first.height}`);
         assert.equal(t.font, first.font, `${t.where} ${t.text}: text size`);
         assert.equal(t.padding, first.padding, `${t.where} ${t.text}: padding`);
-        if (width < 700) assert.deepEqual(t.misses, [], `${t.where} ${t.text}: these points of its 44 px tap area miss it`);
+        if (width < 700) assert.deepEqual(t.misses, [], `${t.where} ${t.text}: these points of its tap area miss it`);
       }
       // The gaps between the tags in each row are equal, in every part of the page.
       const rows = new Map();

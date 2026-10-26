@@ -172,11 +172,12 @@ for (const theme of ['light', 'dark']) {
 }
 
 for (const width of [375, 1280]) {
-  test(`0151 AC3: at ${width} px, the criteria count and lint result follow the tags, in the same line (0419; 0468: what it waits on is in its chip)`, skip, async () => {
+  // 0519: a closed ticket's second row is its labels alone; its criteria count and lint result are in its readiness
+  test(`0151 AC3: at ${width} px, the tags are in one line under the title, with no criteria count or lint result (0419; 0468: what it waits on is in its chip)`, skip, async () => {
     await withPanel(async b => {
       const got = await b.js(`(() => { const item = ${ITEM('0202')}, checks = item.querySelector('.checks');
         return { text: checks.textContent, tagsIn: [...item.querySelectorAll('.head .tag')].every(n => checks.contains(n)) }; })()`);
-      assert.match(got.text, /^P2 · S · low · 2 criteria · lint passes$/);
+      assert.equal(got.text, 'P2Slow');
       assert.ok(got.tagsIn, 'the tags are in the same line');
     }, { width });
   });
