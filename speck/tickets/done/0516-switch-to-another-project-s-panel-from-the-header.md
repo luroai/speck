@@ -1,7 +1,7 @@
 ---
 id: "0516"
 title: "Switch to another project's panel from the header"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T15:16:51.305Z"
 approved: "2026-10-26T15:52:04.608Z"
+finished: "2026-10-26T15:55:51.893Z"
 
 ---
 # 0516 · Switch to another project's panel from the header
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Each speck project has its own panel on its own web address, and the panel's home-screen app belongs to one address. Someone with several projects on speck (speck, speck-site, carbon) has to keep a separate address, or a separate app, for each, and has no way to get from one project's panel to another's.
