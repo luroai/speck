@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T21:31:19.850Z"
-approved: "2026-10-26T22:00:32.833Z"
+approved: "2026-10-26T22:08:51.974Z"
 
 ---
 # 0519 · Keep every closed card the same height
@@ -56,13 +56,14 @@ Closed cards in Plan, Build and Shipped are now all the same height, and shorter
 ## Review log
 Round 1 (codex): changes requested: F1 The new padding rule for .q:is(.at-build, .at-check, .at-review, .at-ship) also changes open Build cards, reducing their padding from 6px 10px to 5px 9px.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 453,831
-- Elapsed since build started: 29 min
-- Changed lines: 58 (limit 5000)
+- Reviewer tokens: 855,895
+- Elapsed since build started: 38 min
+- Changed lines: 62 (limit 5000)
 - Follow-ups (none sent to the inbox):
   - Known limit: on a touch screen a closed Plan label's tap area is about 35 px tall (from its row's top to the card's bottom) and stops halfway into the 4 px gap beside it, rather than 44 by 44 px, so the small gap and the title's own tap area both fit. The priority keeps its 44 px box, which reaches left of it.
   - Tidy-up: docs/design/lcd/panel-mock.html still draws a Plan card with its criteria count and "lint passes".
@@ -214,6 +215,82 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Closed cards now have consistent heights and compact Plan labels, with priority changes and explanations preserved. Browser tests cover every requested width and both looks. The open-card padding issue is fixed; no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9101952e05b46c21304ba7e01653b2fd495cff1a",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a17a39-4cb0-7f41-8349-9afa68036b65",
+    "builder_response": "- Tests run: test/panel-0039.test.mjs test/panel-0060.test.mjs test/panel-0040.test.mjs test/panel-0128.test.mjs test/panel-0041.test.mjs test/panel-0053.test.mjs test/panel-0063.test.mjs test/panel-0143.test.mjs test/panel-0142.test.mjs test/panel-0061.test.mjs test/panel-0062.test.mjs test/panel-0156.test.mjs test/panel-0054.test.mjs test/panel-0155.test.mjs test/panel-0132.test.mjs test/panel-0168.test.mjs test/panel-0178.test.mjs test/panel-0058.test.mjs test/panel-0196.test.mjs test/panel-0257.test.mjs test/panel-0203.test.mjs test/panel-0162.test.mjs test/panel-0261.test.mjs test/panel-0361.test.mjs test/panel-0213.test.mjs test/panel-0138.test.mjs test/panel-0077.test.mjs test/panel-0140.test.mjs test/panel-0141.test.mjs test/panel-0427.test.mjs test/panel-0153.test.mjs test/panel-0171.test.mjs test/panel-0435.test.mjs test/panel-0426.test.mjs test/panel-0158.test.mjs test/panel-0442.test.mjs test/panel-0417.test.mjs test/panel-0469.test.mjs test/panel-0154.test.mjs test/panel-0165.test.mjs test/panel-0151.test.mjs test/panel-0461.test.mjs test/panel-0444.test.mjs test/panel-0519.test.mjs test/panel-0258.test.mjs test/panel-0473.test.mjs test/panel-0164.test.mjs test/panel-0484.test.mjs test/panel-0463.test.mjs test/panel-0187.test.mjs test/panel-0201.test.mjs test/panel-0167.test.mjs test/panel-0069.test.mjs test/panel-0190.test.mjs test/panel-0224.test.mjs test/panel-0185.test.mjs test/panel.test.mjs test/panel-0161.test.mjs test/tap-0221.test.mjs test/panel-0273.test.mjs test/panel-0411.test.mjs test/panel-0281.test.mjs test/panel-0431.test.mjs test/panel-0424.test.mjs test/panel-0372.test.mjs test/panel-0416.test.mjs test/panel-0418.test.mjs test/panel-0428.test.mjs test/panel-0419.test.mjs test/panel-0440.test.mjs test/panel-0420.test.mjs test/panel-0462.test.mjs test/panel-0453.test.mjs test/panel-0472.test.mjs test/panel-0500.test.mjs test/tap-0209.test.mjs with --related (794 pass, 0 fail, 3 skipped as before)\n- Ship refused: 0156 AC3 to AC5 (at 375 and 1280 px, light and dark) failed with \"0401: its status line stays inside the card\". main was already merged in (\"Already up to date\"), so the failure came from this ticket alone, not from main's newer changes: no files conflicted and nothing was resolved.\n- Why: 0156 checks that a closed Build card's status line clips with overflow-x hidden and an ellipsis. In round 1 I'd changed it to overflow-x: clip, so the 24 px line wouldn't cut off its tag's 44 px touch area (0190, 0224). With hidden, overflow-y is clipped too.\n- What I changed (templates/panel-cards.css only): the closed Build status line is overflow: hidden again. To keep its tag's 44 px touch area inside it, it's now a 44 px line (height and line-height 44 px) with margin -10px top and bottom, so it still takes only 24 px of the card (cards stay 58 px) and its text sits where it did. Its tag is vertical-align: top with margin-top calc(14px - var(--label-border)), which puts the tag (16 px plus its two borders) in the line's exact middle, so the ±21.5 px touch area fits inside. Plan's and Shipped's rows are unchanged.\n- Checked: 0156, 0190, 0224, 0434, 0443, 0484, 0165, 0164, 0494, 0419 and 0519 all pass, along with every other file in the list above.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 400018,
+      "cached_input_tokens": 338816,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2046,
+      "reasoning_output_tokens": 218
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T22:08:50.006Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.js ticketHead still renders only priority, size, risk and optional type labels when closed. Passing 0519 AC1 tests verify content, boxed styling, gaps and retained open-card readiness."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0519 AC2 tests cover the priority menu, update request and explanation handlers. Browser tests verify priority interaction; existing Build touch-area tests 0190 and 0224 also pass after the clipping change."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel-cards.css retains single-line titles with ellipsis and non-wrapping details. The revised closed Build row uses negative margins to retain its previous layout height while clipping overflow. The 0519 browser measurements and existing 0156 overflow tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0519 browser tests verify equal closed-card heights at 320, 375 and 420 px in both looks, including the specified task, blocked bug and long-title fixtures. The open-card padding regression test also passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The latest recorded run has 794 passes, zero failures and three skips. Previously failing 0156 checks now pass without weakening their assertions; the clipping fix is confined to closed Build rows."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css:276",
+        "issue": "The padding adjustment remains restricted to closed Build cards with :not(.open), preserving open-card padding.",
+        "suggested_fix": "Completed and covered by the passing open/closed browser regression test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Build clipping fix preserves equal card heights and tag touch areas, and the previously failing overflow tests now pass. Compact Plan labels and existing interactions remain covered. No blocking concerns remain."
   }
 }
 ```
