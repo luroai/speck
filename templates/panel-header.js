@@ -95,12 +95,14 @@ const rim = a => ({ x: 20 * Math.cos(a), y: -24 + 20 * Math.sin(a) });
 // 0502: watching the builds, as the prototype in docs/design/lcd/watching.html has it. speck stands on the right with
 // its clipboard and a little retro TV for each build on its left, up to three, or one while shipping. Each TV scrolls
 // a log over a progress bar, and shows a tick for a moment when the bar fills. speck plays one beat after another,
-// picked at random by weight and never the same twice running, each blending in and out of its resting pose.
+// picked at random by weight, each blending in and out of its resting pose. 0512: with a quiet spell of plain watching
+// between each beat and the next, no beat again until five others have played, and a comic moment or TV trick at most
+// once every two minutes.
 const watchPose = (() => {
   const clamp01 = x => Math.max(0, Math.min(1, x)), lerp = (a, b, k) => a + (b - a) * k;
   const sine = k => -(Math.cos(Math.PI * clamp01(k)) - 1) / 2, seg = (p, a, b) => clamp01((p - a) / (b - a));
   const rnd = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-  const BX = 14, LEG = 3.5, DONE = 1100, BLEND = 450, FOCUS = 3100; // speck's place on the floor; the TVs' legs; a tick's time
+  const BX = 14, LEG = 3.5, DONE = 1100, BLEND = 450; // speck's place on the floor; the TVs' legs; a tick's time
   const TVS = { 1: [{ cx: -46, w: 36, h: 25 }], 2: [{ cx: -62, w: 27, h: 20 }, { cx: -32, w: 27, h: 20 }], 3: [{ cx: -71, w: 21, h: 17 }, { cx: -48, w: 21, h: 17 }, { cx: -25, w: 21, h: 17 }] };
   // A TV for each build the word names, up to three; one while shipping.
   const tvs = () => { const m = /^Building (\d+)$/.exec(speckDo.word || ''); return TVS[m ? Math.max(1, Math.min(3, Number(m[1]))) : 1]; };
@@ -118,8 +120,14 @@ const watchPose = (() => {
     return { x, y, ly: y - ph / 2 + 1.5 * Math.sin(t / 200), ry: y - ph / 2 - 1.5 * Math.sin(t / 230) };
   }
   const clampY = (y, a, b, h) => Math.max(a, Math.min(b - h, y));
-  // Each TV's bar fills at its own pace, 10 to 18 seconds, then a tick shows for DONE ms.
-  const period = j => 10000 + rnd(j + 5) * 8000;
+  // 0512: its rhythm. `bar`: how long each TV's bar takes to fill; `quiet`: the spell of plain watching between beats
+  // (none: one beat straight after another); `focus`: how long it watches each TV at rest; `comic`: the least time
+  // from one comic moment or TV trick to the next; `again`: how many other beats play before one comes again; `hop`:
+  // the least time from one hop at a bar filling to the next. The tests can set it, starting a fresh plan.
+  const RHYTHM = { bar: [20000, 40000], quiet: [15000, 35000], focus: 6000, comic: 120000, again: 5, hop: 30000 };
+  const rhythm = { ...RHYTHM };
+  // Each TV's bar fills at its own pace, then a tick shows for DONE ms.
+  const period = j => rhythm.bar[0] + rnd(j + 5) * (rhythm.bar[1] - rhythm.bar[0]);
   function tvState(j, t) {
     const P = period(j), u = (t + rnd(j + 9) * P) % P;
     return { prog: clamp01(u / (P - DONE)), done: u >= P - DONE, since: u - (P - DONE) };
@@ -190,26 +198,59 @@ const watchPose = (() => {
     balance: { w: 1, d: [6000, 6800], own: true }, dance: { w: 1, d: [5400, 6200], own: true },
     tune: { w: 1, d: [5000, 5800], own: true }, mirror: { w: 1, d: [5600, 6400], own: true }, pong: { w: 1, d: [5600, 6600], own: true },
     vhold: { w: 1, d: [5000, 5800], own: true }, peek: { w: 1, d: [5600, 6400], own: true }, drumroll: { w: 1, d: [5000, 5800], own: true } };
+  // 0512: `watch` is the quiet spell between beats: plain watching, never picked as a beat, with no reaction of its own.
+  const own = k => k !== 'watch' && BEATS[k].own;
+  const COMICS = ['bubble', 'spider', 'balance', 'dance', 'tune', 'mirror', 'pong', 'vhold', 'peek', 'drumroll'];
   // The beats from the pose's start: the first is always keeping an eye on the builds, so the still frame is too. A pose
   // started again (its time going back) starts a fresh plan.
-  let plan = { start: [0, 6000], kind: ['scan'], last: 0 };
+  // 0512: a quiet spell follows each beat; the beat after it is picked from those not among the last `again`, and not
+  // a comic one within `comic` of the last. A pose started again, as when speck comes back from a pastime, starts with
+  // a quiet spell and carries on from the plan before: its recent beats, its last comic one and its last hop, counting
+  // only the time spent watching, from t, the time it starts again at.
+  function fresh(was, t = 0) {
+    if (!was || !rhythm.quiet) return { start: [0, 6000], kind: ['scan'], last: 0, before: [], comic: -Infinity, hops: { last: -Infinity, list: [] } };
+    const [a, b] = rhythm.quiet;
+    return { start: [0, a + Math.random() * (b - a)], kind: ['watch'], last: 0, before: [...was.before, ...was.kind.filter(k => k !== 'watch')].slice(-rhythm.again),
+      comic: was.comic - was.last + t, hops: { last: was.hops.last - was.last + t, list: [] } };
+  }
+  let plan = fresh();
   function beatAt(t) {
     t = Math.max(0, t);
-    if (t < plan.last) plan = { start: [0, 6000], kind: ['scan'], last: 0 };
+    if (t < plan.last) plan = fresh(plan, t);
     plan.last = t;
     while (plan.start[plan.start.length - 1] <= t) {
-      const i = plan.kind.length, live = Object.keys(BEATS).filter(k => BEATS[k].w > 0 && k !== plan.kind[i - 1]);
-      let r = Math.random() * live.reduce((s, k) => s + BEATS[k].w, 0), kind = live[live.length - 1];
-      for (const k of live) if ((r -= BEATS[k].w) < 0) { kind = k; break; }
-      const [a, b] = BEATS[kind].d;
-      plan.kind.push(kind); plan.start.push(plan.start[i] + a + Math.random() * (b - a));
+      const i = plan.kind.length, s = plan.start[i];
+      let kind = 'watch';
+      if (plan.kind[i - 1] === 'watch' || !rhythm.quiet) {
+        const recent = [...plan.before, ...plan.kind.filter(k => k !== 'watch')].slice(-rhythm.again);
+        const live = Object.keys(BEATS).filter(k => BEATS[k].w > 0 && !recent.includes(k) && !(COMICS.includes(k) && s - plan.comic < rhythm.comic));
+        let r = Math.random() * live.reduce((n, k) => n + BEATS[k].w, 0);
+        kind = live[live.length - 1];
+        for (const k of live) if ((r -= BEATS[k].w) < 0) { kind = k; break; }
+        if (COMICS.includes(kind)) plan.comic = s;
+      }
+      const [a, b] = kind === 'watch' ? rhythm.quiet : BEATS[kind].d;
+      plan.kind.push(kind); plan.start.push(s + a + Math.random() * (b - a));
     }
+    return beatIn(t);
+  }
+  // The beat at t, in the plan as it stands.
+  function beatIn(t) {
     let i = plan.kind.length - 1;
     while (plan.start[i] > t) i--;
     const s = plan.start[i], e = plan.start[i + 1];
     let reads = 0;
     for (let j = 0; j < i; j++) if (plan.kind[j] === 'read') reads++;
     return { i, kind: plan.kind[i], k: (t - s) / (e - s), d: e - s, s, reads };
+  }
+  // 0512: whether speck hops at TV j's bar, which filled at f, seen during a beat without its own reaction: it does
+  // unless it hopped at another less than `hop` before. Kept with the plan, so a pose started again starts afresh.
+  function hopsAt(j, f) {
+    const h = plan.hops, P = period(j), key = `${j}:${Math.round((f + rnd(j + 9) * P) / P)}`;
+    if (h.list.includes(key)) return true;
+    if (f - h.last < rhythm.hop) return false;
+    h.list = [...h.list.slice(-5), key]; h.last = f;
+    return true;
   }
   // Where speck's eye goes to look at a point in the scene, and at a TV.
   const lookAt = (x, y) => ({ lookX: Math.max(-1, Math.min(1, (x - BX) / 55)), lookY: Math.max(-1, Math.min(1, (y + 26) / 40)) });
@@ -221,7 +262,7 @@ const watchPose = (() => {
     const { INK, FAINT, OFF, F5 } = LCD, ms = tvs(), b = beatAt(t), k = b.k;
     const env = sine(Math.min(1, k * b.d / BLEND, (1 - k) * b.d / BLEND));
     // At rest it breathes and watches one build's TV, moving on to the next every few seconds.
-    const rl = tvLook(ms[Math.floor(t / FOCUS) % ms.length]);
+    const rl = tvLook(ms[Math.floor(t / rhythm.focus) % ms.length]);
     const R = { x: 0, y: 0, rot: 0, sy: 1 + .015 * Math.sin(t / 640), lookX: rl.lookX, lookY: rl.lookY, raise: 0, hide: 0, lid: 1, droop: 0, ear: 0 };
     const O = {}, props = []; // this beat's own pose, mixed in by env, and what it draws
     let eye = null, hand = null, ticks = b.reads % 5; // four ticks, then a fresh page; where its free hand goes
@@ -375,11 +416,14 @@ const watchPose = (() => {
     const P = {};
     for (const n of Object.keys(R)) P[n] = n in O ? lerp(R[n], O[n], env) : R[n];
     P.eye = env > .5 && eye ? eye : 'open';
-    // a bar filling: a little hop, a wide eye and a look at that TV, unless the beat has its own reaction
-    if (!BEATS[b.kind].own) ms.forEach((m, j) => {
-      const st = tvState(j, t);
-      if (st.done && st.since < 500) { P.y -= 3 * Math.sin(st.since / 500 * Math.PI); P.eye = 'wide'; const L = tvLook(m); P.lookX = L.lookX; P.lookY = L.lookY; }
-    });
+    // a bar filling: a look at that TV, unless the beat has its own reaction, and a little hop and a wide eye, unless
+    // it hopped in the last `hop` ms (0512)
+    let hop = null; // 0512: the TV it hops at, if any
+    if (!own(b.kind)) ms.map((m, j) => ({ m, j, st: tvState(j, t) })).filter(x => x.st.done && x.st.since < 500)
+      .sort((x, y) => y.st.since - x.st.since).forEach(({ m, j, st }) => {
+        const L = tvLook(m); P.lookX = L.lookX; P.lookY = L.lookY;
+        if (hopsAt(j, t - st.since)) { hop = j; P.y -= 3 * Math.sin(st.since / 500 * Math.PI); P.eye = 'wide'; }
+      });
     // the clipboard, in the hand on its right, lifted to read, or held up in front of it to hide behind (0505: a unit
     // nearer than the prototype has it, so that arm stays no longer than its usual length)
     const cx = lerp(lerp(19, 15, P.raise), 4, P.hide), cy = lerp(lerp(-21, -35, P.raise), -40, P.hide), w = 13, h = 16, tilt = lerp(lerp(.08, -.12, P.raise), 0, P.hide);
@@ -411,9 +455,10 @@ const watchPose = (() => {
       for (let i = 0; i < 4; i++) { const ly = -h / 2 + 5 + i * 3; pen.line(-1.5, ly, w / 2 - 2.5, ly, i < ticks ? INK : FAINT); if (i < ticks) pen.dotAt(-4, ly, INK); }
       pen.restore();
     } });
-    return { B, props, beat: b.kind, ticks, screens };
+    return { B, props, beat: b.kind, ticks, screens, hop };
   }
-  pose.parts = { BEATS, TVS, tvState, tvGeom, beatAt, tvs, pongBall }; // for the tests
+  const setRhythm = r => { Object.assign(rhythm, RHYTHM, r); plan = fresh(); };
+  pose.parts = { BEATS, COMICS, TVS, tvState, tvGeom, beatAt, tvs, pongBall, period, rhythm, setRhythm }; // for the tests
   return pose;
 })();
 const speckPoses = () => ({ ...LCD.STATES, watch: watchPose, ask: LCD.PANEL.bad, flag: LCD.PANEL.wait, ship: LCD.PANEL.ship });
