@@ -765,17 +765,25 @@ if (lanesBox.addEventListener) {
   };
   lanesBox.addEventListener('touchend', lift);
   lanesBox.addEventListener('touchcancel', lift);
-  // A sideways scroll on a trackpad changes lane once it has gone 40 px, and once only, until it stops: a pause of
-  // 150 ms, as its glide after the fingers lift keeps it going.
-  let wheelSum = 0, wheelDone = false, wheelQuiet = 0;
+  // A sideways scroll on a trackpad changes lane once it has gone 40 px, and once only: its glide after the fingers lift
+  // keeps it going the same way. 0514: the next scroll changes lane again, as the next swipe's fingers stop the glide:
+  // one after a pause of 50 ms (three frames with no step sideways), and one the other way, 40 px of it, with no pause,
+  // as a glide never turns back. How fast it goes says nothing, as fingers slow down and speed up within one swipe.
+  // `way` is the way the last change went (0 before one, and after a pause), `sum` how far it has gone towards the next
+  // and `at` when its last step was, or when the page had finished changing lane, so a step held up meanwhile isn't
+  // taken for one after a pause.
+  let wheel = { way: 0, sum: 0, at: -Infinity };
   lanesBox.addEventListener('wheel', e => {
     if (e.ctrlKey || Math.abs(e.deltaX) <= Math.abs(e.deltaY) || scrollsSideways(e.target)) return;
     if (e.cancelable) e.preventDefault();
-    clearTimeout(wheelQuiet);
-    wheelQuiet = setTimeout(() => { wheelSum = 0; wheelDone = false; }, 150);
-    if (wheelDone) return;
-    wheelSum += e.deltaX;
-    if (Math.abs(wheelSum) >= 40) { wheelDone = true; stepLane(Math.sign(wheelSum)); }
+    if (e.timeStamp - wheel.at >= 50) wheel = { way: 0, sum: 0 };
+    wheel.at = e.timeStamp;
+    if (Math.sign(e.deltaX) === wheel.way) { wheel.sum = 0; return; } // the glide, which undoes any jitter the other way
+    wheel.sum += e.deltaX;
+    if (Math.abs(wheel.sum) < 40) return;
+    wheel = { way: Math.sign(wheel.sum), sum: 0, at: wheel.at };
+    stepLane(wheel.way);
+    if (globalThis.performance) wheel.at = Math.max(wheel.at, performance.now());
   }, { passive: false });
 }
 // The left and right arrow keys, pressed anywhere but in a text field or on a tab (which has its own), with nothing
