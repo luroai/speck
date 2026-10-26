@@ -1,7 +1,7 @@
 ---
 id: "0514"
 title: "Keep trackpad lane swipes working after each swipe"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,13 +15,13 @@ source: "speck/ideas/done/2026-10-26-keep-trackpad-lane-swipes-working-after-eac
 after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T10:45:32.928Z"
-blocked_at: ""
+blocked_at: "2026-10-26T14:40:08.923Z"
 waited_seconds: 13452
 
 ---
 # 0514 · Keep trackpad lane swipes working after each swipe
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 On a laptop trackpad in Cursor's panel pane, a sideways scroll changes lane once, then further left/right swipes do nothing until you click the panel. After that click, one swipe works again, and you have to click once more for the next. Swiping between Plan, Build and Shipped should not need a click between each change.
@@ -54,9 +54,9 @@ A sideways trackpad scroll keeps changing lane on each gesture, without a click 
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-Criterion 2 now reads "a pause of 50 ms or more", as you chose, and the code and tests already do that, but the reviewer has used all 3 of its rounds, so speck won't run a fourth to check the change against the new wording and approve it. Will you raise "Review rounds" (limits.max_review_rounds) from 3 to 4 in the panel's Settings, so one more round can approve it, then run /speck-build 0514 (recommended: nothing in the code needs changing, only the reviewer's sign-off), or leave the ticket blocked?
+You chose to raise the review rounds to 4, but the setting is still 3: going with the recommendation records the choice and can't change it, and the build may not change that limit itself. Please set "Review rounds" to 4 in the panel's Settings (or run `speck config set limits.max_review_rounds 4` in the main checkout), then run /speck-build 0514, so one more round can check the change against the new criterion 2. Or leave the ticket blocked.
 
-Recommended: raise review rounds to 4 for one more round
+Recommended: set review rounds to 4 yourself in Settings, then resume
 Changes what you'd notice: yes
 Clear winner: yes
 
