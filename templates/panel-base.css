@@ -76,6 +76,7 @@
   .tag.bug { color: var(--bug); border-color: var(--bug); }
   .tag.fix { color: var(--fix); border-color: var(--fix); }
   .tag.task { color: var(--idea); border-color: var(--idea); }
+  .tag.agent { color: var(--inbox); border-color: var(--inbox); } /* 0521: an idea an agent raised, in the inbox's colour */
   /* 0165: a tag's tip, which says what it means, next to the tag */
   #tag-tip { position: fixed; top: 0; left: 0; z-index: 11; max-width: min(300px, calc(100vw - 16px)); padding: 6px 10px; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--panel); border: .5px solid var(--line); box-shadow: 0 4px 12px rgba(20, 20, 19, .12); }
   #tag-tip[hidden] { display: none; }

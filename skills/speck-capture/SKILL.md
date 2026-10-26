@@ -37,6 +37,7 @@ Then ask whether to add to the existing item, go ahead anyway or stop. Write not
    # <Idea title>
 
    Captured: <date> · Status: idea
+   Raised by: you
 
    ## What
    <what the user wants, in 1–3 sentences>
@@ -47,6 +48,8 @@ Then ask whether to add to the existing item, go ahead anyway or stop. Write not
    ## Notes
    - <decisions, constraints, links and open questions from the conversation>
    ```
+
+   `Raised by:` says who raised the idea, not who wrote the file: `you` when the user asked for it to be captured, as here, even though you write it. Write `Raised by: agent` instead only for an idea you raised yourself without being asked, such as something you noticed during other work.
 
 4. Don't invent requirements the user didn't state. List unknowns under Notes as questions.
 5. Reply with the file path, the overlap check's one-line result (for example "No overlap with existing ideas or tickets."), and one line on what's needed to turn it into a ticket. Don't commit unless the user asks.
