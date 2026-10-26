@@ -1,4 +1,4 @@
-/* The panel's styles (0472: a file for each area of the panel): the cards in Plan, Build and Shipped and everything
+/* The panel's styles (0472: a file for each area of the panel): the cards in Capture, Plan, Build and Shipped and everything
    in them, the build log included. */
   /* 0478: each lane is a card with its name in the header's dot-matrix lettering. 0480: a light card, not a dark frame,
      so speck's screen is the only dark frame on the page: the lane's own background with a hairline edge in the line
@@ -13,13 +13,12 @@
   main > section::before { content: ""; position: absolute; inset: 8px 16px; z-index: 1; border: .5px solid var(--line); border-radius: 12px; pointer-events: none; }
   .lane-title { grid-row: 1; grid-column: 1; display: inline-flex; align-items: center; gap: .25em; min-width: 0; margin: 0; padding: 7px 0 6px 14px; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 22px; line-height: 1; white-space: nowrap; color: var(--text); }
   .lane-title::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; } /* decoration: no text, so a screen reader passes over it */
-  #shaping-section .lane-title::before { background: var(--line); }
+  #capture-section .lane-title::before, #shaping-section .lane-title::before { background: var(--line); }
   #build-section .lane-title::before { background: var(--blue); }
   #shipped-section .lane-title::before { background: var(--purple); }
   .lane-n { grid-row: 1; grid-column: 2; align-self: center; min-width: 0; padding: 7px 14px 6px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; line-height: 1.5; text-align: right; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  main > section > .sh { grid-row: 2; grid-column: 1 / -1; margin: 0 1px; color: var(--text); background: var(--panel); border-top: 1px solid var(--line-soft); }
   .lane-list { grid-row: 3; grid-column: 1 / -1; min-height: 0; margin: 0 1px 1px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); border-radius: 0 0 11px 11px; } /* the card's 12 px less the pixel its edge sits in, so what's in it stays on whole pixels (0453) */
-  .lane-n + .lane-list { border-top: 1px solid var(--line-soft); }
+  .lane-n + .lane-list, .lane-title + .lane-list { border-top: 1px solid var(--line-soft); } /* 0520: Plan's and Capture's lists start under their titles */
   .group { padding: 7px 14px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
   .group.attn { color: var(--warn); }
   .group.run { color: var(--run); }
@@ -35,8 +34,8 @@
 
   /* Shaping */
   /* 0151: each item is a card of its own, with space between cards */
-  #shaping { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
-  #shaping .empty { padding: 0 4px; }
+  #shaping, #capture { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
+  #shaping .empty, #capture .empty { padding: 0 4px; }
   .item { padding: 10px 14px; border: 1px solid var(--line); }
   .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
   .item .head { margin: -10px -14px; padding: 10px 14px; } /* the item's padding opens and closes it too */
@@ -227,10 +226,6 @@
   .question { white-space: pre-wrap; overflow-wrap: anywhere; }
   .ready div { overflow-wrap: anywhere; }
 
-  /* Shaping: tickets, ideas and the inbox, one list at a time. The selected tab has a border in the text colour (0167). */
-  .toggles { display: flex; gap: 6px; } /* 0428: apart, so each rounded toggle shows its own four edges */
-  .toggle { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; padding: 1px 10px; background: transparent; border: .5px solid var(--line); color: var(--muted); cursor: pointer; }
-  .toggle.on { color: var(--panel); background: var(--text); border-color: var(--text); position: relative; z-index: 1; } /* 0450: filled, so the open list shows at a glance; its text is the section's background */
   /* 0164: only where the main pointer can hover, as a phone keeps a tapped card's :hover until the next tap */
   @media (hover: hover) { .item:hover { background: var(--raise); } }
   .q.open { background: var(--raise); border-color: var(--text); }
@@ -404,8 +399,6 @@
 
   /* 0417: every button and clickable control at least 44 px each way. 0469: with a mouse too, at any width, so the panel
      looks the same with a mouse as on a touch screen */
-  .toggle { min-width: 44px; min-height: 44px; }
-
   /* Shaping */
   .head { min-height: 44px; }
   /* 0151: the priority tag looks like the others, and its tap area is the 44 px box around it */
@@ -478,7 +471,7 @@
      is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
-    .prio-menu button, .set-ready, .q .stop-build, .q .back-to-plan, .q .go-with, .resume .copy, .foreman-ask .ask-reply, .toggle, .full-open { border-width: 1px; }
+    .prio-menu button, .set-ready, .q .stop-build, .q .back-to-plan, .q .go-with, .resume .copy, .foreman-ask .ask-reply, .full-open { border-width: 1px; }
     .item.ticket .head .checks, .q .top .progress, .q .top .act { --label-border: 1px; } /* 0519: the labels' border, as a whole pixel */
     .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { border-width: 1px; }
   }

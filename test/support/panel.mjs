@@ -295,8 +295,8 @@ export const full = (id, o = {}) => T(id, 'draft', { problem: `Problem of ${id}.
   self_check: 'no changes', lint_messages: { errors: [], warnings: [] }, after: [], ...o });
 export const idea = (name, status, body = `# ${name}\n\nStatus: ${status}\n\nSome <b>text</b>.\n`) => ({ path: `speck/ideas/${name}.md`, title: name, status, body });
 export const click = n => n.listeners.click({ stopPropagation() {} });
-export const toggles = p => p.all(p.byId('shaping-toggle')).filter(n => n.listeners.click);
 export const items = p => p.byId('shaping').children.filter(n => /\bitem\b/.test(n.className));
+export const notes = p => p.byId('capture').children.filter(n => /\bitem\b/.test(n.className)); // 0520: Capture's cards
 export const top = item => item.children.find(n => /\bhead\b/.test(n.className)); // an item's top row, which opens and closes it (0039)
 
 export const queueRows = p => p.byId('queue').children.filter(n => /\bq\b/.test(n.className));
