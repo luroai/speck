@@ -82,8 +82,8 @@ test('0442 AC1: in the interface font, each " · " in a status line, a shipped t
     assert.match(await b.js(`getComputedStyle(document.body).fontFamily`), /system-ui/, 'the panel is in the interface font');
     for (const look of ['light', 'dark']) {
       await b.js(`(document.documentElement.dataset.theme = ${JSON.stringify(look)}, true)`);
-      const seen = { plan: 0, build: 0, shipped: 0 };
-      for (const lane of ['plan', 'build', 'shipped']) {
+      const seen = { build: 0, shipped: 0 };
+      for (const lane of ['build', 'shipped']) { // 0519: a closed Plan card's second row is labels, with no " · " 
         await b.js(openLane(lane));
         // open one ticket too, so an open card's line, with its priority, size and risk, is measured as well
         if (lane === 'build') await b.js(`(document.querySelector('#queue .q .top').click(), true)`);
