@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.18.0 · 26 October 2026
+
+What's new since 0.17.0. A minor release that tidies the panel: ideas and the inbox move out of Plan into a Capture lane of their own, ideas an agent raised are labelled as an agent's, and every closed card is the same height.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.18.0 init`.
+
+### The panel
+
+- A new Capture lane sits left of Plan, so the lanes are Capture, Plan, Build and Shipped. It lists every idea and inbox note together, newest captured first, and a note opens to its whole text when you tap it. Notes that have become tickets or been dropped aren't listed. With none, it says "Nothing captured." Capture has no buttons: you still change notes by talking to your agent. The panel still opens on Build, and swiping, the arrow keys and the strip move between all four lanes.
+- Plan lists only draft tickets. Its Tickets, Ideas and Inbox buttons are gone, so its list starts straight under its title.
+- In Capture, an idea an agent raised by itself, such as a build's follow-up, has a small `agent` tag on its card, explained on hover or tap. Your own ideas have no tag. Notes saved before this release are labelled too: one that came from a ticket counts as an agent's, and the rest as yours.
+- Every closed card in Plan, Build and Shipped is the same height. Its title stays on one line, cut short with `…` when it's too long, and its second line never wraps.
+- A closed Plan card's second line shows only its priority, size and risk, and its type when it has one (bug, fix or task), as small boxed labels side by side. Its criteria count and lint result show once you open it. The priority label still changes the priority, and the others still explain themselves on hover or tap.
+
+### Ideas
+
+- Each new idea note says who raised it, on a `Raised by:` line under its `Captured:` line: `you` when you asked for it to be captured, `agent` when an agent raised it itself. `/speck-capture` and `/speck-build` write it.
+
 ## 0.17.0 · 26 October 2026
 
 What's new since 0.16.1. A minor release that joins up your projects: when more than one speck project has its panel running on the same computer, you can switch between them from any panel's header, at the address you already have open. Swiping between lanes is also quicker.
