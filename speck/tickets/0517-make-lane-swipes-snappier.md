@@ -43,6 +43,7 @@ A left or right swipe changes lane as soon as it's clearly meant, and the new la
 - Asked for 2026-10-26: "I also need the left/right swipes to be snappier. Still not moving as fast as I need." The user swipes on a laptop trackpad in Cursor's panel pane (0514) and uses the panel's home-screen app on a phone.
 - Today, in `templates/panel-header.js`: the wheel handler's 40 px, `SLIDE_MS` (200), the touch handlers' 10 px and `lanesBox.clientWidth / 3`, and `stepLane`, which calls `render()` (in `templates/panel.js`) straight after `openTab` starts the slide. During a slide every lane is laid out (`showRow`), Shipped included.
 - 0476 set "at most 250 ms after the finger lifts" and the 10 px and a-third rules. This replaces those numbers, and the tests that pinned them change with them.
+- Failing before this build: none
 - Waits for 0516, which also changes `templates/panel-header.js` and may change how `templates/panel.js` refreshes the page for the project being shown.
 
 ## In plain words
