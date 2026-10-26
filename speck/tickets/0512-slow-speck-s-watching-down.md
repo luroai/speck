@@ -1,7 +1,7 @@
 ---
 id: "0512"
 title: "Slow speck's watching down"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T10:29:20.829Z"
+approved: "2026-10-26T10:47:30.506Z"
 
 ---
 # 0512 · Slow speck's watching down
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 While builds run, speck plays one watching beat straight after another, each 3.5 to 7 seconds long, with no plain watching in between. It hops whenever any TV's bar fills, and each bar fills every 10 to 18 seconds, so with three builds it hops every few seconds. The user, watching 0.16.0: "The cycling of the animations happens too quickly. It makes it look like Speck has ADHD."
@@ -54,9 +55,15 @@ To see it, open the panel while a build runs and watch speck for a few minutes. 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Returning from a pastime clears the recent-beat history, so scan can repeat before five other beats have played.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 621,637
+- Elapsed since build started: 18 min
+- Changed lines: 83 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - With three builds, speck's eye looks the same at the two TVs furthest from it, so its turn from one to the other at rest doesn't show. Inbox: `speck/ideas/2026-10-26-let-speck-s-eye-tell-the-two-far-tvs-apart.md`.
