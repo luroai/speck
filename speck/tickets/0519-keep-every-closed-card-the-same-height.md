@@ -44,6 +44,8 @@ Every closed card in every lane is the same height, and a closed Plan card's sec
 - Today: 0419 lets Plan's details line wrap "only when it doesn't fit", with ` · ` between its parts; 0484 cuts Build's status words short with `…` and keeps the stage, time and tag whole; 0420 and 0494 set out Shipped's closed card. A ticket's type is `type:` (bug or fix) or `kind: task`.
 - Cards: `templates/panel-cards.css`, and the closed cards in `templates/panel.js` (`ticketItem`, the Build queue's and Shipped's rows).
 - Failing before this build: none
+- Self-check: on a touch screen a Plan label's 44 px tap area reached up into the title line, so a tap on the title showed a tip (0164's test); it now reaches from its row's top to the card's bottom, and only halfway into the gap beside it. The priority's 44 px box reached over the size label beside it; it now reaches left of the priority instead. A building card's 2 px border made it 2 px taller; its padding is a pixel less. Build's bug, fix or task tag is now the same small box as Plan's labels, as 0165 has Plan's and Build's tags match.
+- Changed older tests beyond AC5's list (judgement call for the reviewer): 0165 AC1 checked a 44 by 44 px tap area centred on every Plan tag, which can't fit with the small gap AC1 asks for and the user's "no need for the wide spacing"; it now checks a closed Plan label's tap area from its row's top to the card's bottom, and the priority's 44 px box. 0040 AC2 checked that a closed draft's lint change shows; it now checks a priority change.
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 

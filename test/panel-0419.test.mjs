@@ -31,17 +31,18 @@ const board = () => ({
 const page = (s = board()) => fakePage([s], { Date: stoppedClock(NOW) });
 
 // 0468: what it waits on or unlocks is in a chip at the end of its title line, not its details line.
-test('0419 AC1: a closed Plan ticket is its id and title, then its priority, size, risk, criteria and lint result, separated by " · "', async () => {
+// 0519: its second row is its priority, size, risk and type as labels, with no " · ", criteria count or lint result.
+test('0419 AC1: a closed Plan ticket is its id and title, then its priority, size, risk and type', async () => {
   const p = page();
   await p.settle();
   const t = card(p, '0419');
   assert.deepEqual(linesOf(t), ['line', 'checks'], 'a title line and a details line');
   assert.equal(topOf(t).children[0].textContent, '0419Fit a closed ticket on two lines1', 'the id, the title and its chip');
   assert.equal(chipSaid(p, t), 'Waits on 1 ticket');
-  assert.equal(detailsOf(t).textContent, 'P3 · M · low · 3 criteria · lint passes');
-  assert.equal(detailsOf(card(p, '0418')).textContent, 'P2 · S · low · 2 criteria · lint passes');
+  assert.equal(detailsOf(t).textContent, 'P3Mlow');
+  assert.equal(detailsOf(card(p, '0418')).textContent, 'P2Slow');
   assert.equal(chipSaid(p, card(p, '0418')), '1 ticket waits on this');
-  assert.equal(detailsOf(card(p, '0430')).textContent, 'P4 · S · high · bug · 2 criteria · lint: 2 errors · 1 warning');
+  assert.equal(detailsOf(card(p, '0430')).textContent, 'P4Shighbug');
 });
 
 // 0434: a closed Build ticket's stage sentence is a grid of lights while an agent is at work on it, and its priority,
@@ -194,7 +195,7 @@ test('0419 AC1 and AC2: a ticket missing its priority, size or risk, or with no 
   const p = page({ run: { on: true }, tickets: [full('0801', bare), T('0802', 'building', { ...bare, started: 'not a date' }), T('0803', 'ready', bare),
     T('0804', 'reviewing', { priority: 2, size: '', risk: 'low', started: ago(5) })], ideas: [] });
   await p.settle();
-  assert.equal(detailsOf(card(p, '0801')).textContent, '2 criteria · lint passes');
+  assert.equal(detailsOf(card(p, '0801')).textContent, ''); // 0519: no labels, and no criteria count or lint result
   assert.equal(detailsOf(card(p, '0802')).textContent, ' Build');
   assert.equal(detailsOf(card(p, '0803')).textContent, 'Queued');
   assert.equal(detailsOf(card(p, '0804')).textContent, ' Review 1 · The reviewer · 00:05');

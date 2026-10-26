@@ -130,17 +130,21 @@
   /* 0435: a closed idea's or inbox note's title too, so the card is its title line and its second line */
   .item.idea:not(.open) .line .title, .item.inbox:not(.open) .line .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item.idea:not(.open) .head .line, .item.inbox:not(.open) .head .line { min-width: 0; } /* its grid column no wider than the card */
-  .q:not(.open) .top .progress, .q:not(.open) .top .act { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* 0419: a Plan or Build ticket is its title line and one details line, in smaller type, its parts separated by " · ".
-     Each part stays whole, so the line wraps between parts, and only when it doesn't fit. */
+  .q:not(.open) .top .progress, .q:not(.open) .top .act { white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; } /* 0519: clipped across only, so a tag's tap area isn't cut off */
+  /* 0419: a Plan or Build ticket is its title line and one line of details, in smaller type: a Build ticket's parts
+     separated by " · ", and (0519) a Plan ticket's labels side by side. */
   .item.ticket, .q { padding: 6px 10px; }
   .item.ticket .head { display: block; margin: -6px -10px; padding: 6px 10px; }
   .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
   .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
-  .item.ticket .head .checks, .q .top .progress, .q .top .act { display: block; font-family: inherit; font-size: 12px; line-height: 14px; color: var(--muted); }
-  .item.ticket .head .checks > *, .q .top .progress > *, .q .top .act > * { white-space: nowrap; }
-  .item.ticket .head .checks .prio { vertical-align: top; } /* 0441: at the line's top, as the tags in it are */
-  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; padding: 0; border: 0; line-height: inherit; vertical-align: top; } /* inline, as a box beside a dot would let the line break before the dot. 0441: at the line's top, as on its baseline the monospace's line box reaches a pixel past the line's */
+  .q .top .progress, .q .top .act { display: block; font-family: inherit; font-size: 12px; line-height: 14px; color: var(--muted); }
+  .q .top .progress > *, .q .top .act > * { white-space: nowrap; }
+  /* 0519: a closed Plan ticket's second row is its priority, size, risk and type, each a small boxed label, side by side
+     on one line that never wraps. A closed Build ticket's bug, fix or task tag is the same small box, as Shipped's is.
+     --label-border is the boxes' border: a whole pixel below a pixel ratio of 2 (below) */
+  .item.ticket .head .checks { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; font-size: 12px; line-height: 16px; color: var(--muted); white-space: nowrap; }
+  .item.ticket .head .checks, .q .top .progress, .q .top .act { --label-border: .5px; }
+  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { flex: none; display: inline-block; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; line-height: 16px; padding: 0 5px; vertical-align: middle; }
   @media (prefers-reduced-motion: no-preference) {
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
@@ -267,6 +271,8 @@
   .q.at-check { border-color: var(--inbox); border-width: 2px; }
   .q.at-review { border-color: var(--yellow); border-width: 2px; }
   .q.at-ship { border-color: var(--purple); border-width: 2px; } /* 0461: purple, as its Ship bar is */
+  /* 0519: a pixel less padding for its border's extra pixel, so it's as tall as every other card, its text where theirs is */
+  .q:is(.at-build, .at-check, .at-review, .at-ship) { padding: 5px 9px; }
   /* 0461: an open ticket's five steps, under its title: five equal bars in one row, each with its name under it. A
      step reached so far has its bar in its own colour, and the current one its name in it and bold. A name too long
      for its bar ends in an ellipsis. */
@@ -411,11 +417,13 @@
   .deps .chip, .deps .slot { min-height: 44px; } /* 0467 */
   .dep-chip { min-width: 44px; min-height: 44px; margin: -13px 0; } /* 0468: its pill in the middle, and the title line no taller */
 
-  /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' tap areas in
-     it stay apart */
-  .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; }
-  .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { padding: 0 12px; }
-  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline-block; } /* a box, for its tap area */
+  /* 0419: wide gaps either side of each " · " in a Build card's status line, so the tags' tap areas in it stay apart */
+  .q .top .progress .sep, .q .top .act .sep { padding: 0 12px; }
+  /* 0519: every closed card is as tall as its 44 px top row: its title line, then a second row of 24 px (22 px in
+     Shipped, whose title line is 22 px), so the cards in every lane are the same height, with no room under the row */
+  .q:not(.open) .top .progress, .q:not(.open) .top .act, .item.ticket:not(.open) .head .checks { height: 24px; line-height: 24px; }
+  #shipped tr:not(.open) .sum { align-items: center; height: 22px; margin-top: 0; }
+  #shipped tr:not(.open) .meta { line-height: 22px; white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; }
   /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
      gap before a tag stays wide, and its words, stage and time fit on a phone */
   .q:not(.open) .top .progress .sep:not(:has(+ .tag)) { padding: 0; }
@@ -423,8 +431,9 @@
      the page script sets their width to what the stage, time and tag leave, and they end in … there. Clipped across
      only, so nothing is cut off below and they keep their baseline. */
   .q:not(.open) .top .progress > :is(.say, .by) { display: inline-block; overflow-x: clip; text-overflow: ellipsis; }
-  /* The priority's 44 px box takes no more room in the line than its two characters do */
-  .item.ticket .head .checks .prio { padding: 0; margin: 0 calc(1ch - 22px); font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
+  /* The priority's 44 px box takes no more room in the row than its label does. 0519: it's first in the row, so its box
+     reaches left of the label, into the card's edge, and not over the label beside it */
+  .item.ticket .head .checks .prio { justify-content: flex-end; padding: 0; margin: -14px 0 -14px calc(2ch + 10px + 2 * var(--label-border) - 44px); font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
   /* 0463: in a draft's facts table, the priority's 44 px box starts at the value's left, and its negative margins give
      back what it reaches above and below the line, so the cell stays as tall as the others. A tap anywhere in it
      reaches the priority. */
@@ -452,6 +461,9 @@
     /* 0224: a linked id's tap area reaches past its text, so the tags beside it in the line (0419) are above it: a tap
        anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
     .q .top .tag:not(.pick) { z-index: 1; }
+    /* 0519: a closed Plan card's second row is only 24 px high, so a label's tap area reaches from the row's top to the
+       card's bottom, never into the title line above it, and only halfway into the gap beside it */
+    .item.ticket:not(.open) .head .checks .tag:not(.pick)::after { inset: -3.5px -2px -10.5px; }
   }
 
   /* 0453: every button's border at least a device pixel on each side, as 0281 gave Settings' info buttons: a half pixel
@@ -459,4 +471,6 @@
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
     .prio-menu button, .set-ready, .q .stop-build, .q .back-to-plan, .q .go-with, .resume .copy, .foreman-ask .ask-reply, .toggle, .full-open { border-width: 1px; }
+    .item.ticket .head .checks, .q .top .progress, .q .top .act { --label-border: 1px; } /* 0519: the labels' border, as a whole pixel */
+    .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { border-width: 1px; }
   }

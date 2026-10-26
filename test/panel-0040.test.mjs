@@ -50,7 +50,7 @@ test('0040 AC2: the selection survives while other tickets change, and those cha
   next.tickets.push(T('0005', 'done', { title: 'Newly shipped', finished: new Date().toISOString() })); // a new shipped ticket
   next.tickets.unshift(full('0000')); // a new draft before the open one
   const third = clone(next);
-  third.tickets[0].lint = { errors: 1, warnings: 0 }; // another draft's lint changes
+  third.tickets[0].priority = 4; // another draft's priority changes (0519: a closed card shows no lint result)
   third.tickets.push(full('0009'));
   const p = fakePage([s, next, third]);
   await p.settle();
@@ -64,7 +64,7 @@ test('0040 AC2: the selection survives while other tickets change, and those cha
   assert.ok(shippedRows(p).some(r => r.textContent.includes('Newly shipped')), 'the new shipped ticket shows');
   await refresh(p);
   assert.ok(kept(), 'and through another refresh with other changes');
-  assert.ok(items(p)[0].textContent.includes('lint: 1 error'), "the other draft's lint change shows");
+  assert.ok(items(p)[0].textContent.includes('P4'), "the other draft's priority change shows");
   assert.ok(items(p).some(n => n.textContent.includes('0009')), 'and the newer draft');
 });
 

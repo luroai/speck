@@ -436,8 +436,9 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
   const list = items(p);
   assert.deepEqual(list.map(n => n.textContent.slice(0, 4)), ['0003', '0001'], 'drafts only, in JSON order');
   const first = list[0].textContent;
-  for (const s of ['Third', 'P1', 'M', 'high', '2 criteria', 'lint: 1 error', '1 warning']) assert.ok(first.includes(s), s);
-  assert.ok(list[1].textContent.includes('3 criteria') && list[1].textContent.includes('lint passes'));
+  for (const s of ['Third', 'P1', 'M', 'high']) assert.ok(first.includes(s), s);
+  // 0519: a closed ticket's criteria count and lint result are in its readiness, once it's open
+  for (const n of list) assert.doesNotMatch(n.textContent, /criteri|lint/);
 
   click(top(list[0]));
   let open = items(p)[0].textContent;
@@ -456,6 +457,7 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
   click(top(items(p)[1]));
   open = items(p)[1].textContent;
   assert.ok(open.includes('lint passes'), 'no lint messages');
+  assert.ok(open.includes('3 criteria'), 'its criteria count');
   assert.ok(!open.includes('Problem of'), 'a missing section is not filled in');
   click(top(items(p)[0]));
   assert.ok(!items(p)[0].textContent.includes('Readiness'), 'clicking again closes it');
