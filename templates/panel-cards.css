@@ -271,8 +271,9 @@
   .q.at-check { border-color: var(--inbox); border-width: 2px; }
   .q.at-review { border-color: var(--yellow); border-width: 2px; }
   .q.at-ship { border-color: var(--purple); border-width: 2px; } /* 0461: purple, as its Ship bar is */
-  /* 0519: a pixel less padding for its border's extra pixel, so it's as tall as every other card, its text where theirs is */
-  .q:is(.at-build, .at-check, .at-review, .at-ship) { padding: 5px 9px; }
+  /* 0519: closed, a pixel less padding for its border's extra pixel, so it's as tall as every other closed card, its text
+     where theirs is */
+  .q:is(.at-build, .at-check, .at-review, .at-ship):not(.open) { padding: 5px 9px; }
   /* 0461: an open ticket's five steps, under its title: five equal bars in one row, each with its name under it. A
      step reached so far has its bar in its own colour, and the current one its name in it and bold. A name too long
      for its bar ends in an ellipsis. */
