@@ -13,6 +13,7 @@ async function watching(n = 1) {
   await p.settle();
   p.draw(1000, false);
   const pose = p.cast().poses.watch;
+  pose.parts.setRhythm(); // a fresh plan, as when speck first watches
   return { p, pose, parts: pose.parts };
 }
 // Every beat from the pose's start up to `until`, in order.
@@ -74,6 +75,34 @@ test('0512 AC2: a comic moment or TV trick at most once every 2 minutes, and no 
   assert.ok(Math.min(...gaps) < 200000, 'one comes soon after two minutes are up');
 });
 
+test('0512 AC2: across speck\'s pastimes too, no beat again until 5 others have played, and comic ones 2 minutes of watching apart', async () => {
+  const { p, parts } = await watching(2), cast = p.cast(), PASTIME = Object.keys(cast.poses).find(k => k !== 'watch' && k !== cast.cur);
+  assert.equal(cast.cur, 'watch');
+  const seen = [];
+  let now = 1e6, watched = 0;
+  cast.set(PASTIME, now - 60000); // so each spell of watching starts its own clock
+  for (let cycle = 0; cycle < 40; cycle++) {
+    cast.set('watch', now);
+    const from = now;
+    // the beats the watch pose plays, as the cast draws it: while watching, and while it fades into the pastime
+    const note = () => {
+      const b = parts.beatAt(now - from + 200);
+      if (!seen.length || seen.at(-1).cycle !== cycle || seen.at(-1).i !== b.i) seen.push({ cycle, i: b.i, kind: b.kind, at: watched + b.s - 200 });
+    };
+    for (; now - from < 120000; now += 200) { cast.frame(now); note(); }
+    cast.set(PASTIME, now);
+    for (const end = now + 60000, off = now; now < end; now += 100) { cast.frame(now); if (now - off < cast.D) note(); }
+    watched += 120000 + cast.D;
+  }
+  assert.ok(new Set(seen.map(b => b.cycle)).size === 40, 'speck came back to watching each time');
+  assert.ok(seen.filter(b => b.cycle > 0 && b.i === 0).every(b => b.kind === 'watch'), 'back from a pastime, it starts with a quiet spell');
+  const played = seen.filter(b => b.kind !== 'watch');
+  for (let i = 1; i < played.length; i++) assert.ok(!played.slice(Math.max(0, i - 5), i).some(b => b.kind === played[i].kind), `beat ${i}, ${played[i].kind}, isn't one of the 5 before it, across pastimes`);
+  const comic = played.filter(b => parts.COMICS.includes(b.kind));
+  for (let i = 1; i < comic.length; i++) assert.ok(comic[i].at - comic[i - 1].at >= 120000, `${comic[i - 1].kind} then ${comic[i].kind} ${comic[i].at - comic[i - 1].at} ms of watching apart`);
+  assert.ok(comic.length > 5, `${comic.length} comic moments seen`);
+});
+
 test('0512 AC3: each TV\'s bar takes 20 to 40 seconds to fill', async () => {
   const { parts } = await watching(3);
   const periods = [0, 1, 2].map(j => {
@@ -120,7 +149,7 @@ test('0512 AC3: a bar filling more than 30 seconds after the last hop, in a quie
     if (b.kind !== 'watch' || !st.done || st.since < 150 || st.since > 350) continue;
     const f = t - st.since;
     if (f - lastHop < 30000 && f !== lastHop) continue;
-    if (parts.beatAt(f).kind !== 'watch') continue;
+    if (b.s > f) continue; // the bar filled in this quiet spell (asking beatAt about an earlier time would start the plan again)
     assert.equal(F.hop, 0, `a hop at ${t}`);
     assert.equal(F.B.eye, 'wide');
     checked++;
