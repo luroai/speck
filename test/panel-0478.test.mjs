@@ -6,15 +6,15 @@ import { page, panelRepo, fm, good, freePort, startPanel, stop, findChrome, brow
 // ---------- 0478: each lane card framed like a second screen under speck's ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const LANE = { plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
-const DOT = { plan: 'var(--line)', build: 'var(--blue)', shipped: 'var(--purple)' };
+const LANE = { capture: 'capture-section', plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
+const DOT = { capture: 'var(--line)', plan: 'var(--line)', build: 'var(--blue)', shipped: 'var(--purple)' };
 
 test('0478 AC1 AC2 AC3: the lane cards share one frame, in the screen\'s frame colour and corners, with the title row in it', () => {
   const html = page();
   for (const [lane, id] of Object.entries(LANE)) {
     const sec = html.match(new RegExp(`<section id="${id}"[^>]*>([\\s\\S]*?)</section>`))[1];
     assert.match(sec, /^\s*<h2 class="lane-title">[^<]+<\/h2>/, `${lane}: its name opens the card`);
-    if (lane !== 'plan') assert.match(sec, /<\/h2>\s*<div class="lane-n"/, `${lane}: its line follows its name, in the title row`);
+    if (!['capture', 'plan'].includes(lane)) assert.match(sec, /<\/h2>\s*<div class="lane-n"/, `${lane}: its line follows its name, in the title row`);
   }
   // 0480: the frame's colour and corners are a light card's now, checked in panel-0480.test.mjs
   for (const id of Object.values(LANE)) assert.deepEqual(cssRules(`#${id}`), [], `${id} has no frame of its own (AC3)`);
@@ -54,7 +54,7 @@ const MEASURE = `(async () => {
   const out = { vw: innerWidth, bezel: { colour: getComputedStyle(document.querySelector('.bezel')).backgroundColor, radius: getComputedStyle(document.querySelector('.bezel')).borderTopLeftRadius,
     side: glass.left - bz.left, bottom: bz.bottom - glass.bottom, titleTop: document.querySelector('.bezel .name').getBoundingClientRect().top - bz.top },
     want: { blue: val('--blue'), purple: val('--purple'), grey: val('--line'), ink: val('--text'), muted: val('--muted'), panel: val('--panel') }, lanes: [] };
-  for (const lane of ['plan', 'build', 'shipped']) {
+  for (const lane of ['capture', 'plan', 'build', 'shipped']) {
     document.getElementById('tab-' + lane).click(); ${REST_LANES};
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     const s = document.querySelector('main > section:not([hidden])'), r = s.getBoundingClientRect(), f = getComputedStyle(s);
@@ -102,7 +102,7 @@ for (const theme of ['light', 'dark']) {
           assert.match(l.title.family, /^"?Doto"?/, `${w}: in Doto`);
           assert.equal(l.title.weight, '900', `${w}: at "speck"'s weight`);
           assert.equal(l.title.colour, m.want.ink, `${w}: in the text colour (0480)`);
-          assert.equal(l.dot.colour, { plan: m.want.grey, build: m.want.blue, shipped: m.want.purple }[l.lane], `${w}: its stage's dot`);
+          assert.equal(l.dot.colour, { capture: m.want.grey, plan: m.want.grey, build: m.want.blue, shipped: m.want.purple }[l.lane], `${w}: its stage's dot`);
           assert.ok(l.dot.width > 0, `${w}: the dot shows`);
           assert.equal(l.title.lines, 1, `${w}: the title on one line`);
           if (l.line && l.line.shown) {
@@ -120,7 +120,7 @@ for (const theme of ['light', 'dark']) {
         const [first, ...rest] = m.lanes;
         for (const l of rest) assert.deepEqual([l.frame.width, l.frame.height, l.frame.colour], [first.frame.width, first.frame.height, first.frame.colour], `${at}: ${l.lane}'s frame is the size and colour of ${first.lane}'s`);
         for (const l of rest) for (const k of ['left', 'right', 'bottom']) assert.ok(near(l.sides[k], first.sides[k], .5), `${at}: ${l.lane}'s ${k} side matches ${first.lane}'s`);
-        assert.deepEqual(m.lanes.map(l => l.name), ['Plan', 'Build', 'Shipped']);
+        assert.deepEqual(m.lanes.map(l => l.name), ['Capture', 'Plan', 'Build', 'Shipped']);
       }
     } finally { await b.end(); }
   });
@@ -132,7 +132,7 @@ test('0478 AC4: sliding between lanes moves the whole framed card, its title and
     await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 700, deviceScaleFactor: 1, mobile: true });
     // Partway through a slide, held still: each card's frame and title are where its card is
     const got = await b.js(`(() => {
-      const main = document.querySelector('main'); main.dataset.slide = 'drag'; main.style.setProperty('--lane', '1'); main.style.setProperty('--drag', '-120px');
+      const main = document.querySelector('main'); main.dataset.slide = 'drag'; main.style.setProperty('--lane', '2'); /* 0520: Build is the third card */ main.style.setProperty('--drag', '-120px');
       const out = [...main.children].map(s => { const r = s.getBoundingClientRect(), f = getComputedStyle(s), h = s.querySelector('.lane-title').getBoundingClientRect();
         return { id: s.id, left: r.left, frameLeft: r.left + parseFloat(f.paddingLeft), titleLeft: h.left }; });
       delete main.dataset.slide; main.style.removeProperty('--drag');

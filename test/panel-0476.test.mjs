@@ -6,9 +6,9 @@ import { T, fakePage, full, page, panelRepo, fm, good, freePort, startPanel, sto
 // ---------- 0476: the lanes as whole cards in a row, slid between by a swipe ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const LANE = { plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
-const TAB = { plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
-const LIST = { plan: 'shaping', build: 'queue', shipped: 'shipped-list' };
+const LANE = { capture: 'capture-section', plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
+const TAB = { capture: 'tab-capture', plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
+const LIST = { capture: 'capture', plan: 'shaping', build: 'queue', shipped: 'shipped-list' };
 const staticHtml = () => page().replace(/<script[^>]*>[\s\S]*?<\/script>/g, '');
 const board = () => ({ tickets: [full('0001', { title: 'A draft' }), T('0003', 'ready'), full('0005', { status: 'done', finished: new Date().toISOString() })], ideas: [] });
 const showing = p => Object.keys(LANE).filter(l => !p.byId(LANE[l]).hidden);
@@ -32,7 +32,7 @@ async function phone(width = 390) {
     await b.send('Emulation.setDeviceMetricsOverride', { width, height: 700, deviceScaleFactor: 1, mobile: width < 700 });
     await b.until(`document.querySelectorAll('#queue .q').length >= 30 && document.querySelectorAll('#shipped tr').length >= 5 && document.querySelectorAll('#shaping .item').length >= 20`, 'the board');
   } catch (e) { await b.end(); throw e; }
-  b.lane = () => b.js(`['plan', 'build', 'shipped'].find(l => document.querySelector('#tab-' + l).getAttribute('aria-selected') === 'true')`);
+  b.lane = () => b.js(`['capture', 'plan', 'build', 'shipped'].find(l => document.querySelector('#tab-' + l).getAttribute('aria-selected') === 'true')`);
   // Where each card is against the column: its left edge less the column's, its width and whether it shows.
   b.cards = () => b.js(`(() => { const m = document.querySelector('main').getBoundingClientRect();
     return ${JSON.stringify(Object.values(LANE))}.map(id => { const s = document.getElementById(id), r = s.getBoundingClientRect();
@@ -79,13 +79,13 @@ async function atRest(b, lane, what) {
 
 // ---------- AC1 ----------
 
-test('0476 AC1: Plan, Build and Shipped are three cards in one row in that order, each its lane\'s name at its top, over its lane line and tickets', async () => {
+test('0476 AC1: Capture (0520), Plan, Build and Shipped are four cards in one row in that order, each its lane\'s name at its top, over its lane line and tickets', async () => {
   const main = staticHtml().match(/<main>([\s\S]*?)<\/main>/);
   assert.ok(main, 'the lanes are in one box');
   const sections = [...main[1].matchAll(/<section id="([^"]+)"[^>]*>\s*<h2 class="lane-title">([^<]*)<\/h2>([\s\S]*?)<\/section>/g)];
-  assert.deepEqual(sections.map(s => [s[1], s[2]]), [['shaping-section', 'Plan'], ['build-section', 'Build'], ['shipped-section', 'Shipped']], 'each card\'s name is the first thing in it');
-  assert.match(sections[1][3], /id="queue-n"[\s\S]*id="queue"/, 'Build\'s lane line, then its tickets');
-  assert.match(sections[2][3], /id="shipped-n"[\s\S]*id="shipped-list"/, 'Shipped\'s lane line, then its tickets');
+  assert.deepEqual(sections.map(s => [s[1], s[2]]), [['capture-section', 'Capture'], ['shaping-section', 'Plan'], ['build-section', 'Build'], ['shipped-section', 'Shipped']], 'each card\'s name is the first thing in it');
+  assert.match(sections[2][3], /id="queue-n"[\s\S]*id="queue"/, 'Build\'s lane line, then its tickets');
+  assert.match(sections[3][3], /id="shipped-n"[\s\S]*id="shipped-list"/, 'Shipped\'s lane line, then its tickets');
   const p = fakePage([board()]);
   await p.settle();
   assert.deepEqual(showing(p), ['build'], 'one card in view: Build, as the page opens');
@@ -103,14 +103,16 @@ test('0476 AC1: the arrow keys change lane anywhere but in a text field or a tab
   press('ArrowLeft'); press('ArrowLeft');
   assert.deepEqual([showing(p), selected(p)], [['plan'], ['plan']], '← twice');
   press('ArrowLeft');
-  assert.deepEqual(showing(p), ['plan'], '← at the first lane stays there');
-  for (const tagName of ['INPUT', 'TEXTAREA', 'SELECT']) { press('ArrowRight', { target: { tagName } }); assert.deepEqual(showing(p), ['plan'], `in a ${tagName}`); }
+  assert.deepEqual([showing(p), selected(p)], [['capture'], ['capture']], '← three times (0520: Capture is the first lane)');
+  press('ArrowLeft');
+  assert.deepEqual(showing(p), ['capture'], '← at the first lane stays there');
+  for (const tagName of ['INPUT', 'TEXTAREA', 'SELECT']) { press('ArrowRight', { target: { tagName } }); assert.deepEqual(showing(p), ['capture'], `in a ${tagName}`); }
   press('ArrowRight', { target: { tagName: 'DIV', isContentEditable: true } });
   press('ArrowRight', { altKey: true });
   press('ArrowRight', { target: { tagName: 'BUTTON', getAttribute: k => (k === 'role' ? 'tab' : null) } });
-  assert.deepEqual(showing(p), ['plan'], 'nor in an editable box, with Alt held, or on a tab (whose own key handler moves it)');
+  assert.deepEqual(showing(p), ['capture'], 'nor in an editable box, with Alt held, or on a tab (whose own key handler moves it)');
   p.key('ArrowRight'); // a key with no target, as the fake page sends it
-  assert.deepEqual(showing(p), ['build']);
+  assert.deepEqual(showing(p), ['plan']);
 });
 
 // ---------- AC2, AC3 and AC4: in a real browser, with a simulated finger ----------
@@ -123,9 +125,9 @@ test('0476 AC2: a swipe moves the card with the finger and comes to rest on one 
     // A slow drag, held down: the card follows the finger.
     await finger(b, path([x, y], [x - 60, y], 6), { gap: 40, lift: false });
     const held = await b.cards();
-    assert.equal(held[1].left, -60, `the card moved with the finger (${JSON.stringify(held)})`);
-    assert.deepEqual([held[2].shows, held[2].left], [true, held[2].column - 60], 'and the next card shows beside it, in line');
-    assert.deepEqual([held[0].shows, held[0].left], [true, -held[0].column - 60], 'and the one before it, in line');
+    assert.equal(held[2].left, -60, `the card moved with the finger (${JSON.stringify(held)})`);
+    assert.deepEqual([held[3].shows, held[3].left], [true, held[3].column - 60], 'and the next card shows beside it, in line');
+    assert.deepEqual([held[1].shows, held[1].left], [true, -held[1].column - 60], 'and the one before it, in line');
     await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await settles(b, 'build', 'a slow drag under a quarter of the card');
     // A slow drag past a quarter (0517: a third before)
@@ -136,8 +138,10 @@ test('0476 AC2: a swipe moves the card with the finger and comes to rest on one 
     await settles(b, 'build', 'a short quick flick right');
     await finger(b, path([x, y], [x + w / 6, y], 3));
     await settles(b, 'plan', 'and another');
+    await finger(b, path([x, y], [x + w / 6, y], 3));
+    await settles(b, 'capture', 'and another, to Capture (0520)');
     await finger(b, path([x - 50, y], [x + 100, y], 3));
-    await settles(b, 'plan', 'a flick past the first card comes back to it');
+    await settles(b, 'capture', 'a flick past the first card comes back to it');
   } finally { await b.end(); }
 });
 
@@ -173,8 +177,8 @@ test('0476 AC2: a sideways scroll on a trackpad and the arrow keys change lane i
     const [x2, y2] = await middle(b);
     await finger(b, path([x2, y2], [x2 + 150, y2], 6), { gap: 40, lift: false });
     const held = await b.cards();
-    assert.equal(held[2].left, 0, 'reduced motion: the card stays put under the finger');
-    assert.equal(held[1].shows, false, 'and the card beside it stays hidden');
+    assert.equal(held[3].left, 0, 'reduced motion: the card stays put under the finger');
+    assert.equal(held[2].shows, false, 'and the card beside it stays hidden');
     await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await atRest(b, 'build', 'reduced motion: the swipe changes lane at once');
   } finally { await b.end(); }
@@ -187,7 +191,7 @@ test('0476 AC3: a touch follows only the way it first went 6 px more than the ot
     // Up and down first: then sideways goes nowhere, and the list scrolled. (The browser itself holds back a touch's
     // moves until it has gone 15 px, so each way is taken a little further than that before it turns.)
     await finger(b, [...path([x, y], [x + 2, y - 24], 4), ...path([x + 2, y - 24], [x - 150, y - 30], 6)], { gap: 16, lift: false });
-    assert.equal((await b.cards())[1].left, 0, 'a touch that went up first doesn\'t move the card sideways');
+    assert.equal((await b.cards())[2].left, 0, 'a touch that went up first doesn\'t move the card sideways');
     await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     assert.ok(await b.js(`document.getElementById('queue').scrollTop > 0`), 'it scrolled the list');
     await settles(b, 'build', 'after a touch that went up first');
@@ -195,7 +199,7 @@ test('0476 AC3: a touch follows only the way it first went 6 px more than the ot
     await b.js(`document.getElementById('queue').scrollTop = 0, 1`);
     await finger(b, [...path([x, y], [x - 24, y - 2], 4), ...path([x - 24, y - 2], [x - 40, y - 120], 6)], { gap: 16, lift: false });
     assert.equal(await b.js(`document.getElementById('queue').scrollTop`), 0, 'a touch that went sideways first doesn\'t scroll the list');
-    assert.ok((await b.cards())[1].left < -20, 'and moves the card');
+    assert.ok((await b.cards())[2].left < -20, 'and moves the card');
     await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await settles(b, 'build', 'after a short drag that went sideways first');
     // A quick scroll up the list that leaves it gliding, and a swipe straight after it.
@@ -278,7 +282,7 @@ for (const width of [390, 1400]) {
       const [x0, y0] = await middle(b);
       await finger(b, path([x0, y0], [x0 - 40, y0], 4), { gap: 40, lift: false });
       const cards = await b.cards();
-      assert.deepEqual(cards.map(c => [c.shows, c.width, c.left]), [-1, 0, 1].map(j => [true, Math.round(box.width), j * Math.round(box.width) - 40]), `while a finger drags, the three cards show in a row, each as wide as the column (${JSON.stringify(cards)})`);
+      assert.deepEqual(cards.map(c => [c.shows, c.width, c.left]), [-2, -1, 0, 1].map(j => [true, Math.round(box.width), j * Math.round(box.width) - 40]), `while a finger drags, the four cards (0520) show in a row, each as wide as the column (${JSON.stringify(cards)})`);
       await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       await settles(b, 'build', 'after a drag under a quarter');
       const shows = await b.js(`[...document.querySelectorAll('main > section')].filter(s => { const r = s.getBoundingClientRect(); return s.getClientRects().length > 0 && getComputedStyle(s).visibility === 'visible' && r.right > 0 && r.left < innerWidth; }).length`);

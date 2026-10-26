@@ -27,7 +27,7 @@ const STATE = {
     ...[1, 2, 3, 4, 5, 6].map(n => T(`010${n}`, 'done', { title: n === 1 ? LONG : n === 3 ? 'A' : `Shipped ${n}`, type: n === 2 ? 'fix' : '', started: ago(200 + n * 10), approved: ago(190 + n * 10),
       finished: ago(180 + n * 10), rounds: [round(1, 123456)], builder_tokens: 1234567, builder_cost_usd: 12.34 })),
   ],
-  ideas: [idea('2026-10-13-an-idea', 'new'), idea('2026-10-13-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0139\n\nSome text.\n')],
+  ideas: [idea('2026-10-13-an-idea', 'idea'), idea('2026-10-13-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0139\n\nSome text.\n')],
 };
 const PACK = `# Review pack: 0206\n\n| Round | Verdict | Findings | Tokens |\n| --- | --- | --- | --- |\n| 1 | request_changes | ${LONG} | 1,000 |\n| 2 | approve | none | 2,000 |\n\n`
   + `<details><summary>Findings, round 1</summary>\n\n- ${LONG}\n\n</details>\n\n\`\`\`\nnode .speck/scripts/speck.mjs ship 0206 --a-very-long-flag-that-runs-on-and-on-past-the-edge-of-a-phone\n\`\`\`\n`;
@@ -70,13 +70,12 @@ async function withPhone(fn, { width = 375, theme = 'light' } = {}) {
 }
 
 const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
-// Opens every Plan item in the current tab and every Build row.
+// Opens every Plan item, every Capture note (0520: the ideas and inbox notes Plan's Ideas and Inbox lists had) and every Build row.
 async function openAll(b) {
-  await b.js(`[...document.querySelectorAll('#shaping .item:not(.open) .head')].forEach(h => h.click())`);
+  await b.js(`[...document.querySelectorAll('#shaping .item:not(.open) .head, #capture .item:not(.open) .head')].forEach(h => h.click())`);
   await b.js(`[...document.querySelectorAll('#queue .q:not(.open) .top')].forEach(t => t.click())`);
   await settle(b);
 }
-const tab = async (b, view) => { await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`); await settle(b); };
 // 0463: an open draft's priority is in its facts' Priority cell
 const openPrio = async b => { await b.js(`document.querySelector('#shaping .tag.pick, #shaping .set-prio').click()`); await settle(b); };
 const openFull = async b => { await b.js(`document.querySelector('#shaping .item.open .full-open').click()`); await b.until(`!document.getElementById('full-ticket').hidden`, 'the full ticket'); };
@@ -120,7 +119,7 @@ const OVERFLOW = `(() => {
 async function overflow(b) {
   if (!(await b.js(`document.getElementById('full-ticket').hidden`))) return b.js(OVERFLOW);
   const out = [];
-  for (const lane of ['plan', 'build', 'shipped']) { await b.js(openLane(lane)); await settle(b); out.push(...(await b.js(OVERFLOW)).map(o => `${lane}: ${o}`)); }
+  for (const lane of ['capture', 'plan', 'build', 'shipped']) { await b.js(openLane(lane)); await settle(b); out.push(...(await b.js(OVERFLOW)).map(o => `${lane}: ${o}`)); }
   await b.js(openLane('build'));
   return out;
 }
@@ -132,13 +131,7 @@ for (const theme of ['light', 'dark']) {
       await openAll(b);
       await openPrio(b);
       assert.ok(await b.js(`!!document.querySelector('.prio-menu')`), 'the priority menu is open');
-      assert.deepEqual(await overflow(b), [], 'tickets and builds open, priority menu open');
-      for (const view of ['ideas', 'inbox']) {
-        await tab(b, view);
-        await openAll(b);
-        assert.deepEqual(await overflow(b), [], `${view} open`);
-      }
-      await tab(b, 'tickets');
+      assert.deepEqual(await overflow(b), [], 'tickets, notes and builds open, priority menu open'); // 0520: the notes are in Capture, opened with the rest
       await openFull(b);
       assert.deepEqual(await overflow(b), [], 'the full ticket pane');
       await closePane(b);
@@ -168,10 +161,10 @@ const SECTIONS = `(() => {
 })()`;
 
 for (const width of [375, 699]) {
-  test(`0140 AC2: at ${width} px, Plan, Build and Shipped are each full width, one at a time (0410)`, skip, async () => {
+  test(`0140 AC2: at ${width} px, Capture (0520), Plan, Build and Shipped are each full width, one at a time (0410)`, skip, async () => {
     await withPhone(async b => {
       const { main, heads, boxes } = await b.js(SECTIONS);
-      assert.deepEqual(heads, ['Plan', 'Build', 'Shipped']);
+      assert.deepEqual(heads, ['Capture', 'Plan', 'Build', 'Shipped']); // 0520: Capture first
       for (const [i, x] of boxes.entries()) assert.ok(Math.abs(x.left - main.left) < 1 && Math.abs(x.right - main.right) < 1, `${heads[i]} spans main's width: ${JSON.stringify(x)} in ${JSON.stringify(main)}`);
     }, { width });
   });
@@ -196,7 +189,7 @@ for (const width of [700, 1280]) {
   test(`0140 AC2: at ${width} px, each lane is full width (0410: one at a time), and the layout is exactly what it is without the phone rules`, skip, async () => {
     await withPhone(async b => {
       const { main, heads, boxes } = await b.js(SECTIONS);
-      assert.deepEqual(heads, ['Plan', 'Build', 'Shipped']);
+      assert.deepEqual(heads, ['Capture', 'Plan', 'Build', 'Shipped']); // 0520: Capture first
       for (const [i, x] of boxes.entries()) assert.ok(Math.abs(x.left - main.left) < 1 && Math.abs(x.right - main.right) < 1, `${heads[i]} spans main's width`);
       await openAll(b);
       await openPrio(b);
@@ -283,7 +276,9 @@ for (const width of [375, 699]) {
         // Pressing a tab closes an open priority menu, as any click does, so Plan comes last and its menu opens again.
         const covered = !(await b.js(`document.getElementById('full-ticket').hidden`)), menu = await b.js(`!!document.querySelector('.prio-menu')`);
         const all = [];
-        for (const lane of covered ? [null] : ['build', 'shipped', 'plan']) {
+        // 0520: the click that closes it opens no lane, so it's closed first, as pressing Plan's Ideas button did before
+        if (menu && !covered) await b.js(openLane('plan'));
+        for (const lane of covered ? [null] : ['build', 'shipped', 'capture', 'plan']) {
           if (lane) await b.js(openLane(lane));
           if (lane === 'plan' && menu) await openPrio(b);
           all.push(...await b.js(CONTROLS));
@@ -295,17 +290,17 @@ for (const width of [375, 699]) {
       await check('as first shown');
       await openAll(b);
       await openPrio(b);
-      await check('tickets and builds open, priority menu open');
-      for (const view of ['ideas', 'inbox']) { await tab(b, view); await openAll(b); await check(`${view} open`); }
-      await tab(b, 'tickets');
+      await check('tickets, notes and builds open, priority menu open'); // 0520: the notes are in Capture, opened with the rest
+      await b.js(openLane('plan')); // 0520: a click closes the priority menu, as pressing Plan's Tickets button did here before
       await openFull(b);
       await check('the full ticket pane');
       await closePane(b);
       await openPack(b);
       await check('the review pack pane');
-      // The controls the ticket names were all among those checked.
+      // The controls the ticket names were all among those checked. 0520: Plan's Tickets, Ideas and Inbox buttons are
+      // gone, so button.toggle.tickets.on is no longer one of them.
       for (const c of ['button.set-ready', 'button.on', 'button.stop-build', 'button.full-open',
-        'button.ship', 'button.toggle.tickets.on', 'button.settings-open', 'span.tag.p1.pick', 'span.set-prio.pick', 'button.copy', 'button.close', 'tr.', 'summary.']) { // tr.: a shipped card, which opens from anywhere on it since 0466
+        'button.ship', 'button.settings-open', 'span.tag.p1.pick', 'span.set-prio.pick', 'button.copy', 'button.close', 'tr.', 'summary.']) { // tr.: a shipped card, which opens from anywhere on it since 0466
         assert.ok(seen.has(c), `${c} was checked (saw ${[...seen].join(', ')})`);
       }
       assert.ok([...seen].some(c => c === 'button.'), "speck run's on/off button was checked");

@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, round, REST_LANES } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, round, REST_LANES } from './support/panel.mjs';
 
 // ---------- 0418: one column at every width, and no border round a lane ----------
 
@@ -9,7 +9,7 @@ const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_C
 
 const NOW = Date.now();
 const ago = m => new Date(NOW - m * 60000).toISOString();
-// A Plan ticket and an idea, a Build ticket in each state with its own tint or edge, and two shipped.
+// A Plan ticket and an idea (0520: in Capture), a Build ticket in each state with its own tint or edge, and two shipped.
 const STATE = {
   run: { on: true }, resume_command: 'claude --resume {session}',
   tickets: [
@@ -20,7 +20,7 @@ const STATE = {
     T('0206', 'approved', { started: ago(40), approved: ago(30), auto_ship: false, rounds: [round(1, 1000)] }),
     ...[1, 2].map(n => T(`010${n}`, 'done', { started: ago(200), approved: ago(190), finished: ago(180), rounds: [round(1, 1234)] })),
   ],
-  ideas: [],
+  ideas: [idea('2026-10-26-an-idea', 'idea')],
 };
 const stub = `(() => {
   const STATE = ${JSON.stringify(STATE)};
@@ -92,11 +92,11 @@ for (const w of WIDTHS) {
     assert.ok(l.bezel.bottom <= l.tabs.top + 1, 'the tabs are under the screen');
     assert.ok(l.tabs.bottom <= l.main.top + 1, 'the lanes are under the tabs');
     assert.ok(l.bezel.left >= l.tabs.left - 1 && l.bezel.right <= l.tabs.right + 1, 'the screen is inside the column');
-    assert.deepEqual(l.lanes.map(x => x.name), ['Plan', 'Build', 'Shipped']);
+    assert.deepEqual(l.lanes.map(x => x.name), ['Capture', 'Plan', 'Build', 'Shipped']); // 0520: Capture first
     for (const lane of l.lanes) {
       assert.ok(lane.section.top >= l.tabs.bottom - 1, `${lane.name} is under the tabs`);
       assert.ok(near(lane.section.left, l.main.left) || lane.section.left > l.main.left, `${lane.name} is inside the column`);
-      assert.ok(lane.tickets.length > 0, `${lane.name} has tickets`);
+      assert.ok(lane.tickets.length > 0, `${lane.name} has tickets`); // 0520: Capture's are notes
       for (const t of lane.tickets) assert.ok(near(t.left, t.list.left) && near(t.right, t.list.right), `${lane.name}: ${t.id} spans its list: ${JSON.stringify(t)}`);
       for (const [a, z] of lane.tickets.slice(0, -1).map((t, i) => [t, lane.tickets[i + 1]])) assert.ok(z.top >= a.bottom - 1, `${lane.name}: ${z.id} is under ${a.id}`);
       for (const parts of lane.details) {
@@ -141,9 +141,9 @@ for (const w of [375, 1280]) {
   test(`0418 AC3: at ${w} px, no lane has a border round it, and each ticket keeps its full border`, skip, async () => {
     await width(w);
     const { lanes, tickets } = await b.js(BORDERS);
-    assert.deepEqual(lanes.map(l => l.id), ['shaping-section', 'build-section', 'shipped-section']);
+    assert.deepEqual(lanes.map(l => l.id), ['capture-section', 'shaping-section', 'build-section', 'shipped-section']); // 0520: Capture first
     for (const l of lanes) assert.deepEqual(l.sides, [0, 0, 0, 0], `${l.id} has no border`);
-    assert.ok(tickets.length >= 7, 'every ticket was checked');
+    assert.ok(tickets.length >= 8, 'every ticket and the idea were checked'); // 0520: and Capture's note
     for (const t of tickets) assert.ok(t.sides.every(x => x >= 1), `${t.id} has a border on every side: ${t.sides}`);
   });
 }

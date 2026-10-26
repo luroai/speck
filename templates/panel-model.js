@@ -214,6 +214,13 @@ function counter(ms) {
   const s = Math.max(0, Math.floor(ms / 1000)), pad = n => String(n).padStart(2, '0');
   return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
 }
+// 0520: a note's `Captured: <YYYY-MM-DD>` date, as written, or null when the line is missing or holds no real date
+// (such as 2026-02-30), as its card says.
+function capturedAt(body) {
+  const d = ((typeof body === 'string' ? body : '').match(/^Captured:[ \t]*(\d{4}-\d{2}-\d{2})(?![\d-])/m) || [])[1];
+  const at = d ? Date.parse(`${d}T00:00:00Z`) : NaN;
+  return Number.isFinite(at) && new Date(at).toISOString().startsWith(d) ? d : null;
+}
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
   const links = chains(tickets), byId = new Map(tickets.map(t => [String(t.id), t]));
@@ -265,6 +272,10 @@ function panelModel(state) {
     ideas: ideas.filter(i => !['inbox', 'dropped'].includes(statusOf(i)) && !String(i.status || '').startsWith('ticketed')),
     // Follow-ups waiting in the inbox, in JSON order.
     inbox: ideas.filter(i => statusOf(i) === 'inbox').map(i => ({ ...i, from: fromTicket(i.body) })),
+    // 0520: Capture's list: every note whose status is idea or inbox, newest captured first by its `Captured:` line's
+    // date, those without one last, otherwise in JSON order.
+    capture: ideas.filter(i => ['idea', 'inbox'].includes(statusOf(i))).map((i, at) => ({ ...i, from: statusOf(i) === 'inbox' ? fromTicket(i.body) : null, at, on: capturedAt(i.body) }))
+      .sort((a, b) => (a.on === null) - (b.on === null) || (b.on || '').localeCompare(a.on || '') || a.at - b.at).map(({ at, on, ...i }) => i),
     // One list: in-flight tickets, then ready ones in JSON order, the order speck run starts them. 0200: in-flight ones
     // go in the order their builds started, so each keeps its place until it ships; one with no start time goes after, by id.
     queue: [...tickets.filter(t => IN_FLIGHT.includes(t.status) || (t.status === 'done' && beingShipped(t))).sort(byStart), ...tickets.filter(is('ready'))].map(chain).map(t => {

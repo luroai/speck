@@ -8,8 +8,8 @@ import { ROOT, T, fakePage, full, click, page, panelRepo, fm, good, freePort, st
 // ---------- 0477: the lanes in a thin strip under speck's screen, in place of the tabs ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const TAB = { plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
-const LANE = { plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
+const TAB = { capture: 'tab-capture', plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
+const LANE = { capture: 'capture-section', plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
 const clone = s => JSON.parse(JSON.stringify(s));
 const board = (foreman = null) => ({ tickets: [full('0001', { title: 'A draft' }), T('0003', 'ready')], ideas: [], ...(foreman ? { foreman } : {}) });
 const headerCss = () => fs.readFileSync(path.join(ROOT, 'templates', 'panel-header.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -32,7 +32,7 @@ test('0477 AC1: the lanes are a strip of their names in order, at most 32 px tal
   const [whole, inner] = nav();
   assert.match(whole, /role="tablist"/);
   assert.deepEqual([...inner.matchAll(/<button [^>]*id="([^"]+)"[^>]*><span class="tab-name">([^<]+)<\/span>/g)].map(m => [m[1], m[2]]),
-    [['tab-plan', 'Plan'], ['tab-build', 'Build'], ['tab-shipped', 'Shipped']], 'each lane in order, as its name');
+    [['tab-capture', 'Capture'], ['tab-plan', 'Plan'], ['tab-build', 'Build'], ['tab-shipped', 'Shipped']], 'each lane in order, as its name (0520: Capture first)');
   const strip = decls('.tabs');
   assert.match(strip, /(^|[\s;])height:\s*32px/, 'the strip is 32 px tall');
   assert.match(strip, /display:\s*flex/);
@@ -50,7 +50,7 @@ test('0477 AC2: Build shows how many tickets need you, in the colour the tab\'s 
   const p = livePage(board({ word: 'Needs you 3', tone: 'bad' }));
   await p.settle();
   const label = () => (p.byId('tab-build').attrs || {})['aria-label'];
-  for (const lane of ['build', 'plan', 'shipped', 'build']) {
+  for (const lane of ['build', 'plan', 'shipped', 'capture', 'build']) {
     click(p.byId(TAB[lane]));
     assert.deepEqual(open(p), [lane]);
     assert.equal(p.byId('build-needs').textContent, '3', `${lane} in view: the number`);
@@ -73,7 +73,7 @@ test('0477 AC3: each lane in the strip is a button Tab reaches, Enter or Space p
   const [whole, inner] = nav();
   assert.match(whole, /aria-label="Lanes"/);
   const buttons = [...inner.matchAll(/<button ([^>]*)>/g)].map(m => m[1]);
-  assert.equal(buttons.length, 3);
+  assert.equal(buttons.length, 4); // 0520: Capture, Plan, Build and Shipped
   for (const attrs of buttons) {
     assert.match(attrs, /\btype="button"/, attrs);
     assert.match(attrs, /\brole="tab"/, attrs);
@@ -82,7 +82,7 @@ test('0477 AC3: each lane in the strip is a button Tab reaches, Enter or Space p
   }
   const p = livePage(board());
   await p.settle();
-  for (const lane of ['plan', 'shipped', 'build']) {
+  for (const lane of ['plan', 'shipped', 'capture', 'build']) {
     click(p.byId(TAB[lane]));
     assert.deepEqual(open(p), [lane], `pressing ${lane}`);
     for (const l of Object.keys(TAB)) assert.equal(p.byId(TAB[l]).attrs['aria-selected'], String(l === lane), `pressing ${lane}: ${l} selected or not`);
@@ -147,15 +147,10 @@ test('0477 AC1, AC3, AC4: in a real browser the strip is one row at most 32 px t
     // With a two-digit needs-you number on Build, its widest, kept there when the page draws it again
     await b.js(`(() => { const n = document.getElementById('build-needs'), put = () => { if (n.textContent !== '12') n.textContent = '12'; };
       put(); new MutationObserver(put).observe(n, { childList: true, characterData: true, subtree: true }); return 1; })()`);
+    // AC4: 0520's Capture is the fourth lane, so the four real lanes are checked at every width
     for (const width of [320, 360, 414, 600, 900]) {
       await b.send('Emulation.setDeviceMetricsOverride', { width, height: 700, deviceScaleFactor: 1, mobile: width < 700 });
-      await check(await measure(), `${width} px`, 3);
-    }
-    // AC4: a fourth lane, added to the row as the others are, keeps the strip one row with the same styles
-    await b.js(`(() => { const t = document.getElementById('tab-shipped').cloneNode(true); t.id = 'tab-fourth'; t.setAttribute('aria-selected', 'false'); t.querySelector('.tab-name').textContent = 'Fourth'; document.getElementById('tabs').append(t); return 1; })()`);
-    for (const width of [320, 414, 900]) {
-      await b.send('Emulation.setDeviceMetricsOverride', { width, height: 700, deviceScaleFactor: 1, mobile: width < 700 });
-      await check(await measure(), `${width} px with a fourth lane`, 4);
+      await check(await measure(), `${width} px`, 4);
     }
   } finally { await b.close(); await stop(panel); }
 });

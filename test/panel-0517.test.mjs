@@ -56,7 +56,7 @@ test('0517 AC2: a lane change by trackpad, swipe, arrow key or a lane\'s name br
     change();
     assert.equal(lane(p), to, `${what}: changes lane`);
     const mine = p.slides.slice(from);
-    assert.equal(mine.length, 3, `${what}: the row slides`);
+    assert.equal(mine.length, 4, `${what}: the row slides`); // 0520: four cards
     for (const a of mine) assert.ok(a.opts.duration <= 120, `${what}: the slide lasts ${a.opts.duration} ms`);
     assert.ok(p.sliding(), `${what}: sliding`);
     await p.rest();
@@ -71,9 +71,9 @@ test('0517 AC2: with reduced motion, a lane still changes, without sliding', asy
   press(p, 'ArrowLeft');
   p.byId('tab-plan').listeners.click({ stopPropagation() {} });
   p.touch([[200, 300], [215, 300], [230, 300], [245, 300]]);
-  assert.equal(lane(p), 'plan', 'every way changes lane');
+  assert.equal(lane(p), 'capture', 'every way changes lane (0520: the flick from Plan to Capture)');
   p.touch([[200, 300], [215, 300], [230, 300], [245, 300]], { gap: 16 });
-  assert.equal(lane(p), 'plan', 'a flick past the first lane stays there');
+  assert.equal(lane(p), 'capture', 'a flick past the first lane stays there');
   assert.equal(p.slides.length, 0, 'nothing slid');
   assert.ok(!p.sliding());
 });
@@ -89,7 +89,7 @@ test('0517 AC3: the lane change\'s own redraw waits until the card has come to r
     p.byId('queue-n').textContent = 'not redrawn';
     change(p);
     assert.equal(lane(p), 'shipped', `${what}: changes lane`);
-    assert.equal(p.slides.length, 3, `${what}: the slide starts at once`);
+    assert.equal(p.slides.length, 4, `${what}: the slide starts at once`); // 0520: four cards
     await p.settle();
     assert.equal(line(p), 'not redrawn', `${what}: and nothing is redrawn while it slides`);
     await p.rest();

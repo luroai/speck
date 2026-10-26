@@ -1,7 +1,7 @@
 'use strict';
 // 0474: the panel's header, which the page loads from /panel-header.js after its own script and before the pop-ups: the
 // dark frame's title row, speck's screen (its poses, words and time, drawn by the design's renderer from lcd.js) and the
-// strip of the Plan, Build and Shipped lanes under it (0477). It uses the page's helpers ($, el, setText, within, foremanOf and the rest), and
+// strip of the Capture, Plan, Build and Shipped lanes under it (0477). It uses the page's helpers ($, el, setText, within, foremanOf and the rest), and
 // the page's render() calls drawHeader and drawTabs.
 
 // 0160: the header stays at the top of the screen. --head is its height on screen, so a ticket scrolled to sits below
@@ -677,14 +677,14 @@ async function chooseProject(port) {
   drawProjects(); // the menu goes back to the project shown
 }
 $('project').addEventListener('change', () => chooseProject($('project').value));
-// 0410: Plan, Build and Shipped are tabs under the header, and only the open one's lane shows. 0477: they're a strip
+// 0410: Plan, Build and Shipped are tabs under the header (0520: with Capture first), and only the open one's lane shows. 0477: they're a strip
 // of the lanes' names, still tabs to a screen reader. Build opens with the
 // page. Each lane's list keeps its own scroll position, put back when its tab opens again.
-const LANES = { plan: ['tab-plan', 'shaping-section', 'shaping'], build: ['tab-build', 'build-section', 'queue'], shipped: ['tab-shipped', 'shipped-section', 'shipped-list'] };
-const TAB_ORDER = ['plan', 'build', 'shipped'];
+const LANES = { capture: ['tab-capture', 'capture-section', 'capture'], plan: ['tab-plan', 'shaping-section', 'shaping'], build: ['tab-build', 'build-section', 'queue'], shipped: ['tab-shipped', 'shipped-section', 'shipped-list'] };
+const TAB_ORDER = ['capture', 'plan', 'build', 'shipped'];
 let openLane = 'build';
 const laneScroll = new Map(); // a closed lane's list's scroll position, by lane
-// The lane a node is in, by the list or section holding it: Plan for anything that isn't in Build or Shipped.
+// The lane a node is in, by the list or section holding it: Plan for anything that isn't in another lane.
 const laneOf = n => TAB_ORDER.find(l => within(n, $(LANES[l][1])) || within(n, $(LANES[l][2]))) || 'plan';
 function openTab(lane) {
   if (!LANES[lane]) return;
@@ -725,8 +725,8 @@ for (const [i, l] of TAB_ORDER.entries()) {
     if (to.focus) to.focus();
   });
 }
-// 0476: the lanes are three cards in one row, as wide as the column. At rest only the open one shows, as before; while
-// the row moves, all three show in their places (data-slide on the lanes' box: 'drag' while a finger moves it, 'settle'
+// 0476: the lanes are four cards (0520) in one row, as wide as the column. At rest only the open one shows, as before; while
+// the row moves, all four show in their places (data-slide on the lanes' box: 'drag' while a finger moves it, 'settle'
 // while it comes to rest), and the row is moved so the open card is in view: --lane is its place in the row, and --drag
 // how far a finger has moved the row from there. A swipe, a sideways scroll on a trackpad, the left and right arrow keys
 // or a tab bring another card into view.

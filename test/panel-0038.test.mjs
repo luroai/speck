@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { full, fakePage, page, panelModel, idea, click, toggles, items, top, styles } from './support/panel.mjs';
+import { full, fakePage, page, panelModel, idea, click, items, notes, top, styles } from './support/panel.mjs';
 
 // ---------- 0038: the inbox in Shaping ----------
 
@@ -15,39 +15,26 @@ const state = () => ({
 const refresh = async p => { p.timers.shift()(); await p.settle(); };
 const titleOf = n => top(n).children[0].textContent;
 
-test('0038 AC1: the toggle reads Tickets, Ideas and Inbox with counts, Tickets selected on load, one list at a time, kept through refreshes', async () => {
+test('0038 AC1 (0520: in Capture): Plan lists only tickets, Capture the ideas and the inbox together, kept through refreshes', async () => {
+  // 0520: Plan's Tickets, Ideas and Inbox buttons are gone; Capture holds ideas and inbox notes in one list, Plan only tickets.
   const s = state();
   const p = fakePage([s, s, s, s]);
   await p.settle();
-  assert.deepEqual(toggles(p).map(b => b.textContent), ['Tickets · 2', 'Ideas · 1', 'Inbox · 3']);
-  assert.match(toggles(p)[0].className, /\bon\b/, 'Tickets selected on load');
-  assert.ok(toggles(p).slice(1).every(b => !/\bon\b/.test(b.className)));
-  assert.ok(items(p).every(n => /\bticket\b/.test(n.className)), 'only tickets');
-
-  click(toggles(p)[2]);
-  assert.match(toggles(p)[2].className, /\bon\b/);
-  assert.match(p.byId('shaping-section').className, /\binbox\b/);
-  assert.deepEqual(items(p).map(n => /\binbox\b/.test(n.className)), [true, true, true], 'only the inbox');
-  assert.doesNotMatch(p.byId('shaping').textContent, /0001|Mine/);
+  assert.ok(items(p).every(n => /\bticket\b/.test(n.className)), 'only tickets in Plan');
+  assert.equal(items(p).length, 2);
+  assert.deepEqual(notes(p).map(n => /\binbox\b/.test(n.className)), [true, true, true, false], 'the inbox notes (captured) and the idea (no date, last)');
+  assert.doesNotMatch(p.byId('capture').textContent, /0001|Gone|Done/);
+  assert.deepEqual(notes(p).filter(n => /\bidea\b/.test(n.className)).map(titleOf), ['Mine'], 'ticketed ideas are left out too (0056)');
   await refresh(p);
-  assert.match(p.byId('shaping-section').className, /\binbox\b/, 'still on Inbox after a refresh');
-  assert.equal(items(p).length, 3);
-
-  click(toggles(p)[1]);
-  assert.deepEqual(items(p).map(titleOf).map(t => t.replace(/^idea/, '')), ['Mine'], 'ticketed ideas are left out too (0056)');
-  await refresh(p);
-  assert.match(p.byId('shaping-section').className, /\bideas\b/);
-  click(toggles(p)[0]);
-  await refresh(p);
-  assert.match(p.byId('shaping-section').className, /\btickets\b/);
+  assert.equal(notes(p).length, 4, 'still there after a refresh');
+  assert.equal(items(p).length, 2);
 });
 
 test('0038 AC2: Inbox lists every inbox idea in JSON order, with title, path and From ticket id', async () => {
   const s = state();
   const p = fakePage([s, s]);
   await p.settle();
-  click(toggles(p)[2]);
-  const list = items(p);
+  const list = notes(p).filter(n => /\binbox\b/.test(n.className));
   assert.deepEqual(list.map(titleOf).map(t => t.replace(/^inbox/, '')), ['Follow B', 'Follow A', 'Follow C'], 'JSON order');
   assert.ok(!list[0].textContent.includes('speck/ideas/Follow B.md'), 'no path while it\'s closed (0435)');
   assert.ok(list[0].textContent.includes('0031'), 'the From ticket id');
@@ -60,25 +47,25 @@ test('0038 AC2: clicking an inbox item shows its note as text, and clicking agai
   const s = state();
   const p = fakePage([s, s, s]);
   await p.settle();
-  click(toggles(p)[2]);
-  click(top(items(p)[1]));
-  assert.ok(items(p)[1].textContent.includes('Follow A <b>should</b> change.'), 'the note, as text');
-  assert.ok(!p.all(items(p)[1]).some(n => n.tagName === 'b'), 'not as markup');
-  assert.ok(!items(p)[0].textContent.includes('should'), 'only the clicked one opens');
+  click(top(notes(p)[1]));
+  assert.ok(notes(p)[1].textContent.includes('Follow A <b>should</b> change.'), 'the note, as text');
+  assert.ok(!p.all(notes(p)[1]).some(n => n.tagName === 'b'), 'not as markup');
+  assert.ok(!notes(p)[0].textContent.includes('should'), 'only the clicked one opens');
   await refresh(p);
-  assert.ok(items(p)[1].textContent.includes('should'), 'stays open through a refresh');
-  click(top(items(p)[1]));
-  assert.ok(!items(p)[1].textContent.includes('should'), 'clicking again closes it');
+  assert.ok(notes(p)[1].textContent.includes('should'), 'stays open through a refresh');
+  click(top(notes(p)[1]));
+  assert.ok(!notes(p)[1].textContent.includes('should'), 'clicking again closes it');
 });
 
-test('0038 AC2: an empty inbox says "Inbox is empty."', async () => {
+test('0038 AC2 (0520: in Capture): with no inbox note Capture lists only ideas, and with nothing says "Nothing captured."', async () => {
   const s = { tickets: [], ideas: [idea('Mine', 'idea'), idea('Gone', 'dropped')] };
   const p = fakePage([s]);
   await p.settle();
-  assert.equal(toggles(p)[2].textContent, 'Inbox · 0');
-  click(toggles(p)[2]);
-  assert.equal(items(p).length, 0);
-  assert.equal(p.byId('shaping').textContent, 'Inbox is empty.');
+  assert.ok(notes(p).length === 1 && notes(p).every(n => !/\binbox\b/.test(n.className)), 'no inbox card');
+  const q = fakePage([{ tickets: [], ideas: [idea('Gone', 'dropped')] }]);
+  await q.settle();
+  assert.equal(notes(q).length, 0);
+  assert.equal(q.byId('capture').textContent, 'Nothing captured.');
 });
 
 test('0038 AC2: the From ticket id is read from the note, and a missing or odd body gives none', () => {
@@ -98,10 +85,11 @@ test('0038 AC3: Ideas leaves out inbox and dropped ideas, its count matches its 
   const s = state();
   const p = fakePage([s]);
   await p.settle();
-  click(toggles(p)[1]);
-  assert.equal(toggles(p)[1].textContent, `Ideas · ${items(p).length}`);
-  assert.ok(items(p).every(n => /\bidea\b/.test(n.className) && !/\binbox\b/.test(n.className)));
-  assert.doesNotMatch(p.byId('shaping').textContent, /Gone|Follow/);
+  // 0520: no Ideas button to count; Capture's idea cards are the ideas, none an inbox card.
+  const ideas = notes(p).filter(n => /\bidea\b/.test(n.className));
+  assert.equal(ideas.length, 1);
+  assert.ok(ideas.every(n => !/\binbox\b/.test(n.className)));
+  assert.doesNotMatch(p.byId('capture').textContent, /Gone/);
 });
 
 test('0038 AC4: Inbox keeps a colour of its own, and since 0167 its tab, section and items are in the plain colours', () => {
@@ -117,9 +105,10 @@ test('0038 AC4: Inbox keeps a colour of its own, and since 0167 its tab, section
     assert.ok(m, `${selector} sets ${prop} from a colour variable`);
     return m[1];
   };
-  // 0167: the selected tab is in the text colour, and the section and its items have no stripe. 0450: filled with the
-  // text colour, its text in the section's background.
-  assert.deepEqual([colour('.toggle.on', 'background'), colour('.toggle.on', 'color'), colour('.toggle.on', 'border-color')], ['text', 'panel', 'text']);
+  // 0167: the section and its items have no stripe. 0520: Plan's Tickets, Ideas and Inbox buttons are gone; so is the
+  // selected one's rule.
+  void colour;
+  assert.doesNotMatch(css, /\.toggle\.on \{/, 'no rule left for the buttons');
   assert.doesNotMatch(css, /#shaping-section\.inbox \{|\.item\.inbox(\.open)? \{|\.item\.inbox \.id \{/, 'no rule of its own');
   const name = 'inbox';
   assert.ok(vars[name], `--${name} is defined`);

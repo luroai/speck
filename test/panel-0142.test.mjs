@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, click, toggles, items, top, findChrome, browserPage, charAt, page, openLane, styles } from './support/panel.mjs';
+import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, click, items, notes, top, findChrome, browserPage, charAt, page, openLane, styles } from './support/panel.mjs';
 
 const clone = s => JSON.parse(JSON.stringify(s));
 const tags = (p, n, tag) => p.all(n).filter(x => x.tagName === tag);
@@ -81,14 +81,13 @@ const NOTE = [
   '- another',
 ].join('\n');
 
-// Opens the first item in the Ideas (1) or Inbox (2) list and returns its note.
+// Opens an idea (1) or an inbox note (2), the only card in Capture (0520), and returns its note.
 async function openNote(list, body) {
   const s = { tickets: [], ideas: [idea('Note', list === 2 ? 'inbox' : 'idea', body)] };
   const p = fakePage([s, clone(s), clone(s)]);
   await p.settle();
-  click(toggles(p)[list]);
-  click(top(items(p)[0]));
-  const note = p.all(items(p)[0]).find(n => /\bnote\b/.test(n.className || ''));
+  click(top(notes(p)[0]));
+  const note = p.all(notes(p)[0]).find(n => /\bnote\b/.test(n.className || ''));
   assert.ok(note, 'the opened item shows its note');
   return { p, note };
 }
@@ -146,8 +145,9 @@ for (const [list, name] of [[1, 'idea'], [2, 'inbox note']]) {
 // Shaping list has been taken out (as 0040's tests check it).
 const held = (p, node) => {
   const chain = [];
-  for (let at = node; at; at = at.parentNode) { chain.push([at, at.detached || 0]); if (at === p.byId('shaping')) break; }
-  assert.equal(chain[chain.length - 1][0], p.byId('shaping'), 'the node is in the Shaping list');
+  const lists = [p.byId('shaping'), p.byId('capture')]; // 0520: or Capture's
+  for (let at = node; at; at = at.parentNode) { chain.push([at, at.detached || 0]); if (lists.includes(at)) break; }
+  assert.ok(lists.includes(chain[chain.length - 1][0]), 'the node is in the Shaping or Capture list');
   return () => chain.every(([n, d], i) => (n.detached || 0) === d && (i === chain.length - 1 || n.parentNode === chain[i + 1][0]));
 };
 
@@ -164,15 +164,14 @@ test('0142 AC4: text selected in an opened draft, idea or inbox note stays on th
   await refresh(p);
   await refresh(p);
   assert.ok(draft(), 'the draft\'s formatted text stayed on the page');
-  click(toggles(p)[1]);
-  click(top(items(p)[0]));
-  const ideaKept = held(p, tags(p, items(p)[0], 'td')[1]);
+  click(top(notes(p)[0])); // 0520: in Capture
+  const ideaKept = held(p, tags(p, notes(p)[0], 'td')[1]);
   await refresh(p);
   await refresh(p);
   assert.ok(ideaKept(), 'the idea\'s formatted text stayed on the page');
-  click(toggles(p)[2]);
-  click(top(items(p)[0]));
-  const inboxKept = held(p, tags(p, items(p)[0], 'li')[0]);
+  const inbox = () => notes(p).find(n => /\binbox\b/.test(n.className));
+  click(top(inbox()));
+  const inboxKept = held(p, tags(p, inbox(), 'li')[0]);
   await refresh(p);
   await refresh(p);
   assert.ok(inboxKept(), 'the inbox note\'s formatted text stayed on the page');
@@ -210,11 +209,12 @@ test('0142 AC4: in a browser, a selection in an opened draft\'s and idea\'s form
     assert.equal(await sel(), 'cannot', 'kept through refreshes');
 
     await b.js('getSelection().removeAllRanges()');
-    await b.js(`document.querySelectorAll('#shaping-toggle button')[1].click()`);
-    await b.until(`!!document.querySelector('${item}.idea .title')`, 'the idea');
-    await b.js(`document.querySelector('${item} .title').click()`);
-    await b.until(`!!document.querySelector('${item}.open .note td')`, 'the idea to open, formatted');
-    const cell = `${item}.open .note td`;
+    await b.js(openLane('capture')); // 0520: ideas are in Capture
+    const card = '#capture .item';
+    await b.until(`!!document.querySelector('${card}.idea .title')`, 'the idea');
+    await b.js(`document.querySelector('${card} .title').click()`);
+    await b.until(`!!document.querySelector('${card}.open .note td')`, 'the idea to open, formatted');
+    const cell = `${card}.open .note td`;
     await b.drag(await b.js(charAt(cell, 0)), await b.js(charAt(cell, 3)));
     assert.equal(await sel(), 'The');
     await wait(4500);

@@ -43,7 +43,6 @@ const BUTTONS = {
   'Stop build': ['button', '.q .stop-build'],
   'Back to Plan': ['button', '.q .back-to-plan'],
   'Go with the recommendation': ['button', '.q .go-with'],
-  'Plan\'s toggles': ['button', '.toggle'],
   'Set ready': ['button', '.set-ready'],
   'Full ticket elsewhere': ['button', '.full-open'],
   'More stats / Details': ['button', '.full-open', '.full-open.more-stats', '#shipped .details', 'td .full-open'],
@@ -62,11 +61,12 @@ const BUTTONS = {
   'Appearance\'s choices': ['button', '#settings .looks [role="radio"]'],
   'the priority menu\'s numbers': ['button', '.prio-menu button'],
   // 0477: the lanes' names in the strip under speck's screen are no longer boxed tabs
+  // 0520: Plan's Tickets, Ideas and Inbox buttons (.toggle) are gone
 };
 
 test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu have an 8 px corner radius', () => {
   for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], '8px', what);
-  for (const sel of ['select', 'textarea', '.tag', '.prio-menu', '.toggle'])
+  for (const sel of ['select', 'textarea', '.tag', '.prio-menu']) // 0520: Plan's toggles are gone
     assert.equal(resolve(['button', sel])['border-radius'], '8px', sel);
   for (const sel of ['input:not([type="checkbox"]):not([type="radio"])', 'textarea', 'select'])
     assert.ok(RS.some(r => !r.at.length && selectors(r).includes(sel) && r.decls.some(([k, v]) => k === 'border-radius' && v === '8px')), `${sel} is rounded`);
@@ -97,16 +97,14 @@ test('0428 AC3: every button has a border on all four sides, in a colour 0161 ch
   }
 });
 
-test('0428 AC3: the small buttons on an open card are boxed, and nothing pulls Plan\'s first toggle past its row', () => {
+test('0428 AC3: the small buttons on an open card are boxed', () => {
   for (const sel of ['.q .full-open', '.q .stop-build']) {
     const r = rule(sel);
     assert.ok(!r.decls.some(([k, v]) => k === 'border' && v === '0'), `${sel} doesn't take its border away`);
     assert.ok(!r.decls.some(([k]) => k === 'border-bottom'), `${sel} has no border on its bottom alone`);
   }
-  const t = resolve(['button', '.toggle']);
-  assert.ok(!t['margin-left'] || !/^-/.test(t['margin-left']), `.toggle has margin-left ${t['margin-left']}`);
-  assert.ok(!t.margin || !/-/.test(t.margin), `.toggle has margin ${t.margin}`);
-  assert.ok(parseFloat(resolve(['.toggles']).gap) > 0, 'the toggles have a gap between them, so each shows its own edges');
+  // 0520: Plan's Tickets, Ideas and Inbox buttons are gone, so no toggle is left to keep in its row
+  assert.equal(resolve(['.toggles']).gap, undefined, 'no rule for the toggles\' row');
 });
 
 test('0428 AC3: the focus ring is an outline, which follows each control\'s rounded corners', () => {

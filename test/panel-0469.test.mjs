@@ -74,9 +74,9 @@ const stub = `(() => {
 const VIEWS = [
   ['Plan, tickets closed', `${openLane('plan')}, true`, `!!document.querySelector('#shaping .item.ticket')`],
   ['Plan, tickets open', `[...document.querySelectorAll('#shaping .item:not(.open) .head')].forEach(h => h.click()), true`, `document.querySelectorAll('#shaping .item.open').length === 2`],
-  ['Plan, ideas', `[...document.querySelectorAll('#shaping-toggle button')][1].click(), true`, `!!document.querySelector('#shaping .item.idea')`],
-  ['Plan, an idea open', `document.querySelector('#shaping .item .head').click(), true`, `!!document.querySelector('#shaping .item.open')`],
-  ['Plan, the inbox', `[...document.querySelectorAll('#shaping-toggle button')].pop().click(), true`, `!!document.querySelector('#shaping .item.inbox')`],
+  // 0520: ideas and the inbox are in Capture, one list
+  ['Capture, closed', `${openLane('capture')}, true`, `!!document.querySelector('#capture .item.idea') && !!document.querySelector('#capture .item.inbox')`],
+  ['Capture, an idea open', `document.querySelector('#capture .item.idea .head').click(), true`, `!!document.querySelector('#capture .item.idea.open')`],
   ['Build, closed', `${openLane('build')}, true`, `document.querySelectorAll('#queue .q').length === 5`],
   ['Build, open', `[...document.querySelectorAll('#queue .q:not(.open) .top')].forEach(t => t.click()), true`, `document.querySelectorAll('#queue .q.open').length === 5`],
   ['Shipped, closed', `${openLane('shipped')}, true`, `document.querySelectorAll('#shipped tr').length === 2`],
