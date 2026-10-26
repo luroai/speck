@@ -45,6 +45,7 @@ The panel has a Capture lane, left of Plan, holding every idea and inbox note, a
 - Order decided by the user: newest first, by the `Captured:` date (an idea's status is read from that line, never its body).
 - Today: Plan's buttons are `shapingToggle` and `shapingView` in `templates/panel.js`, with `ideaItem`, `inboxItem` and `noteItem`; the lanes are `LANES` and `TAB_ORDER` in `templates/panel-header.js` (0476, 0477); the page is `templates/panel.html`.
 - After 0519, which also changes Plan's closed cards in `templates/panel.js` and `templates/panel-cards.css`.
+- Failing before this build: none
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
