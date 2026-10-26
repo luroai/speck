@@ -1,7 +1,7 @@
 ---
 id: "0519"
 title: "Keep every closed card the same height"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T21:31:19.850Z"
+approved: "2026-10-26T22:00:32.833Z"
 
 ---
 # 0519 · Keep every closed card the same height
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A closed card's height still depends on what's in it. Build's status line stays on one line (0484), but Plan's details line wraps when it doesn't fit, so a ticket with a `task` tag takes an extra line (carbon's 0009, 2026-10-26), and Plan's cards have empty space under their details. Plan's details also spend their room on the criteria count and lint result, which the user doesn't need on a closed card, spaced widely with ` · ` between them.
@@ -53,9 +54,15 @@ Closed cards in Plan, Build and Shipped are now all the same height, and shorter
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new padding rule for .q:is(.at-build, .at-check, .at-review, .at-ship) also changes open Build cards, reducing their padding from 6px 10px to 5px 9px.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 453,831
+- Elapsed since build started: 29 min
+- Changed lines: 58 (limit 5000)
 - Follow-ups (none sent to the inbox):
   - Known limit: on a touch screen a closed Plan label's tap area is about 35 px tall (from its row's top to the card's bottom) and stops halfway into the 4 px gap beside it, rather than 44 by 44 px, so the small gap and the title's own tap area both fit. The priority keeps its 44 px box, which reaches left of it.
   - Tidy-up: docs/design/lcd/panel-mock.html still draws a Plan card with its criteria count and "lint passes".
