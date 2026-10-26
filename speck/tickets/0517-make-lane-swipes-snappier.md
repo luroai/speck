@@ -50,7 +50,11 @@ A left or right swipe changes lane as soon as it's clearly meant, and the new la
 - Waits for 0516, which also changes `templates/panel-header.js` and may change how `templates/panel.js` refreshes the page for the project being shown.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Swiping between Plan, Build and Shipped reacts sooner and finishes faster. A trackpad swipe changes lane after half the distance it needed before, and on a touch screen the card starts following your finger sooner and a slow drag only needs to cover a quarter of the card rather than a third. The new lane slides in place in a little over half the time. The panel also no longer redraws the lists while the card is sliding: it waits until the card has stopped, so the slide starts straight away even with a long Shipped list.
+
+To see it, open the panel and swipe left and right on a trackpad, or on your phone, or press the left and right arrow keys. The slide should feel quick and start the moment the lane changes.
+
+Worth keeping an eye on: with the shorter trackpad distance, a small accidental sideways nudge while scrolling a list is more likely to change lane. Anything the panel would have redrawn during a slide, such as a newly shipped ticket, now appears a split second later, once the card stops.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +64,11 @@ A left or right swipe changes lane as soon as it's clearly meant, and the new la
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-26-show-only-the-cards-a-slide-passes.md (a slide's first frame still lays out all three cards).
+- Known limit: a touch that goes diagonally, without ever going 6 px more one way than the other, isn't followed either way, while the browser may scroll the list up and down. If it later goes 6 px more sideways, the card starts to follow it.
+- Known limit: the buttons' whole-pixel widths in the card sliding in are worked out once it's at rest, so a button may shift by under a pixel as the slide ends.
+- Known limit: the real-browser timing in 0517's AC3 test runs at full speed, where the old code also met 50 ms; what tells them apart is its check that no redraw or measuring ran in the first frame.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -133,6 +142,81 @@ A left or right swipe changes lane as soon as it's clearly meant, and the new la
     ],
     "escalation_question": "",
     "summary": "The shorter swipe distances, faster animations and deferred redraws are implemented and covered by passing tests. One performance gap remains: the browser test excludes the first lane change, so it does not yet show that the first swipe meets the promised response time."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3b45c41538b4ff5c0a4cf95de0d8a643e4e661df",
+    "session": "continued",
+    "thread_id": "01a1790a-b7d7-7662-988b-71b46fa75e35",
+    "builder_response": "- Tests run: test/panel-0517.test.mjs test/panel-0514.test.mjs test/panel-0476.test.mjs test/panel-0453.test.mjs test/panel-0281.test.mjs test/panel-0455.test.mjs test/panel-0423.test.mjs, via `speck test --related`, which added test/panel-0433.test.mjs, test/panel-0473.test.mjs and test/panel-0474.test.mjs, plus the configured checks. (0453, 0281, 0455 and 0423 check the buttons' whole-pixel widths and the words' fitting in a real browser, which this round now holds during a slide.)\n- F1: fixed. The browser test now times every lane change, the first included. Including it showed a real cost: the panel's MutationObserver (wholeButtons and fitWords in templates/panel.js) measures every button the first time its card shows, and it ran in the slide's first frame (30 ms of the first frame with the CPU slowed 6 times). It now asks slideHolds() first, as render() does, and runs once the card is at rest (rested() in templates/panel-header.js now runs each held redraw, once each). Because panel.js loads before panel-header.js, it checks slideHolds exists first.\n  The test no longer slows the CPU: under the load of a parallel run, slowed-down timings swung to 122 ms, which would fail ship at random. It times the first frame as the criterion says (within 50 ms, unslowed), and, since that alone passes on a fast machine either way, it also checks in the real browser what ran between the lane change and the end of the first frame laid out: neither the redraw (panelModel, which render() starts with) nor the measuring (wholeButtons) ran, and both ran once the card was at rest. I ran it against main's templates: it fails there (\"to shipped: nothing redrawn or measured before the slide's first frame was laid out\"), and passes on this branch, twice in the related run above.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 286109,
+      "cached_input_tokens": 224896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1904,
+      "reasoning_output_tokens": 216
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T16:35:12.619Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The wheel handler in templates/panel-header.js uses 20 px and monotonic timestamps. Passing 0517 AC1 and existing 0514 tests cover short scrolls, one change per swipe, glide suppression and subsequent swipes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "slideFrom() uses a 120 ms animation and skips sliding for reduced motion. Passing 0517 AC2 tests exercise trackpad, touch, arrows and lane names; updated 0476 browser tests verify settling."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "render() and the button-measuring observer defer work through slideHolds(), with rested() releasing it. Passing tests cover refreshes, interrupted slides and redraws. The browser test now asserts every measured first frame, including the first lane change, is within 50 ms with 500 shipped and 30 Plan tickets, while preserving and observing the actual rendering functions."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Touch handling uses a 6 px directional lead and a quarter-width slow-drag threshold. Passing 0517 AC4 tests cover those boundaries, short flicks and vertical scrolling; updated 0476 browser tests also pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded run confirms 166 passes, zero failures and three skips. It includes the existing browser tests for button widths and text fitting affected by this round's deferred measuring."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0517.test.mjs",
+        "issue": "The browser performance test previously excluded the first lane change from its timing assertion.",
+        "suggested_fix": "Completed: every lane change is now timed, including the first, and button measuring is deferred until the slide ends.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Swipes now respond over shorter distances and settle faster. Redrawing and button measuring wait until the slide ends. The browser test now covers the first lane change, all criteria pass, and no blocking concerns remain."
   }
 }
 ```
