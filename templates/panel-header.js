@@ -204,18 +204,25 @@ const watchPose = (() => {
   // The beats from the pose's start: the first is always keeping an eye on the builds, so the still frame is too. A pose
   // started again (its time going back) starts a fresh plan.
   // 0512: a quiet spell follows each beat; the beat after it is picked from those not among the last `again`, and not
-  // a comic one within `comic` of the last.
-  const fresh = () => ({ start: [0, 6000], kind: ['scan'], last: 0, comic: -Infinity, hops: { last: -Infinity, list: [] } });
+  // a comic one within `comic` of the last. A pose started again, as when speck comes back from a pastime, starts with
+  // a quiet spell and carries on from the plan before: its recent beats, its last comic one and its last hop, counting
+  // only the time spent watching, from t, the time it starts again at.
+  function fresh(was, t = 0) {
+    if (!was || !rhythm.quiet) return { start: [0, 6000], kind: ['scan'], last: 0, before: [], comic: -Infinity, hops: { last: -Infinity, list: [] } };
+    const [a, b] = rhythm.quiet;
+    return { start: [0, a + Math.random() * (b - a)], kind: ['watch'], last: 0, before: [...was.before, ...was.kind.filter(k => k !== 'watch')].slice(-rhythm.again),
+      comic: was.comic - was.last + t, hops: { last: was.hops.last - was.last + t, list: [] } };
+  }
   let plan = fresh();
   function beatAt(t) {
     t = Math.max(0, t);
-    if (t < plan.last) plan = fresh();
+    if (t < plan.last) plan = fresh(plan, t);
     plan.last = t;
     while (plan.start[plan.start.length - 1] <= t) {
       const i = plan.kind.length, s = plan.start[i];
       let kind = 'watch';
       if (plan.kind[i - 1] === 'watch' || !rhythm.quiet) {
-        const recent = plan.kind.filter(k => k !== 'watch').slice(-rhythm.again);
+        const recent = [...plan.before, ...plan.kind.filter(k => k !== 'watch')].slice(-rhythm.again);
         const live = Object.keys(BEATS).filter(k => BEATS[k].w > 0 && !recent.includes(k) && !(COMICS.includes(k) && s - plan.comic < rhythm.comic));
         let r = Math.random() * live.reduce((n, k) => n + BEATS[k].w, 0);
         kind = live[live.length - 1];

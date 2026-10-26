@@ -1,7 +1,7 @@
 ---
 id: "0512"
 title: "Slow speck's watching down"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-26T10:29:20.829Z"
 ---
 # 0512 · Slow speck's watching down
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 While builds run, speck plays one watching beat straight after another, each 3.5 to 7 seconds long, with no plain watching in between. It hops whenever any TV's bar fills, and each bar fills every 10 to 18 seconds, so with three builds it hops every few seconds. The user, watching 0.16.0: "The cycling of the animations happens too quickly. It makes it look like Speck has ADHD."
@@ -56,3 +56,76 @@ speck mostly sits and watches, calmly, and its beats and comic moments come now 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "078f7ceaf0662bb094799a1fcab0ff5a21c021a6",
+    "session": "fresh",
+    "thread_id": "01a177cd-9554-7443-85df-0eb501783208",
+    "builder_response": "- Tests run: test/panel-0512.test.mjs test/panel-0502.test.mjs test/panel-0503.test.mjs test/panel-0504.test.mjs test/panel-0505.test.mjs, with --related (which added panel-0433, 0473 and 0474) and the commands.checks files.\n- Round 1. The rhythm is one object (`rhythm` in watchPose, defaults in `RHYTHM`). The tests of 0502 to 0505 asserted the old rhythm itself (bars of 10 to 18 s, beats back to back, a hop at every bar, comic moments as frequent as habits, sampling windows sized for that), which AC1 to AC3 replace. Their `watching()` helpers now call `parts.setRhythm(BEFORE_0512)` (test/support/watch-rhythm.mjs), so every one of their assertions is unchanged and still checks what each beat does (AC4). The new tests check the new rhythm. Their reduced-motion test (0502 AC4) runs at the new default rhythm, unchanged.\n- The quiet spell is a `watch` entry in the plan, not in BEATS, so BEATS's keys are as before.\n",
+    "seconds": 50,
+    "usage": {
+      "input_tokens": 255439,
+      "cached_input_tokens": 206336,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1379,
+      "reasoning_output_tokens": 102
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T10:42:53.496Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "watchPose.beatAt inserts random 15–35 second watch entries; the two passing 0512 AC1 tests cover quiet durations, breathing, TV focus and unchanged beat lengths. Blinking remains in templates/lcd.js."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "templates/panel-header.js beatAt resets all history when pose time goes backwards. LCD.Cast restarts pose time after each pastime. With Math.random fixed at 0.5, the first watch plays scan, doze, hiccup and sneeze; returning from the pastime repeats scan after only three other beats. The passing AC2 test samples an uninterrupted pose and misses this."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "watchPose.period and hopsAt implement the new bar periods and hop cooldown. Three passing 0512 AC3 tests exercise bar filling, attention and allowed/suppressed hops."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "speckRests retains the 120-second watch/60-second pastime cycle. Beat implementations are unchanged; existing 0502–0505 assertions exercise them with the previous timing. The new reduced-motion test passes. Reported validation: 159 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "Returning from a pastime clears the recent-beat history, so scan can repeat before five other beats have played. The same reset also clears the comic cooldown, allowing comic moments less than two minutes apart across watch sessions. Current timing tests bypass the actual watch/pastime transitions.",
+        "suggested_fix": "Keep recent-beat history and comic cooldown across watch/pastime transitions, using elapsed time that survives pose restarts. Add a test exercising multiple real watch/pastime cycles and checking the five-beat exclusion and two-minute comic spacing across their boundaries.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The slower timing works during uninterrupted watching, and the reported tests pass. However, each return from a pastime forgets which beats just played and resets the comic cooldown. Preserve that history across pauses before merging."
+  }
+}
+```
+
+</details>
