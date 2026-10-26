@@ -567,6 +567,7 @@ function drawHeader(f, stale) {
   noteBoard(state, f, word); // 0414
   drawScreen(word);
   $('bezel').className = NEEDS_YOU.test(word) ? 'bezel needs' : 'bezel';
+  $('bezel').setAttribute('data-run', f.word === 'Off' ? 'off' : 'on'); // 0513: the dot by speck's name is grey while speck run is off
   run.setAttribute('aria-label', 'speck\'s screen'); // 0485: its word is in its tooltip. 0451: Settings says whether fixing is on
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = `speck: ${word} · ${stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: speck run\'s log'}`;

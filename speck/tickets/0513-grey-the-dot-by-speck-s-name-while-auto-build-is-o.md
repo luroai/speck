@@ -41,6 +41,7 @@ The dot by speck's name is red while Auto-build is on and grey while it's off, l
 - Today: `.bezel .name::before` in `templates/panel-header.css` is `var(--lcd-red)` (0438). `drawHeader` in `templates/panel-header.js` sets the frame's class from the Foreman's word (`bezel needs`), which an off state can follow.
 - Unchained from 0512, which changes the watching beats in `templates/panel-header.js`, not `drawHeader`.
 - Failing before this build: none
+- Self-check: added the grey dot's rule to 0161's list of backgrounds that hold no text, as 0438 did for the red one, after 0161 failed on it. A stale page whose run is off still greys the dot, as speck run is off; a server with no Foreman gives the word Off when run is off, so that greys it too.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
