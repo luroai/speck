@@ -40,6 +40,10 @@ Settings shows `allow_same_model_review` but won't change it: since 0258 it's re
 - Asked for by the user on 2026-10-26: "I need the setting allow same model review to be toggle-able in the settings. Currently it is not."
 - Today: `EDITABLE` in `scripts/settings.mjs` leaves it out on purpose (0258: "allow_same_model_review weakens the independent review"); its explanation is in `SETTING_GROUPS` there, and Save's same-model check near `cfg.allow_same_model_review` in the same file. The dialog can follow 0259's for `auto_ship`, which asks before a change that lets more tickets ship by themselves, in `templates/panel-settings.js`.
 - Failing before this build: none
+- Changed existing tests: three assertions in `test/panel-0258.test.mjs` pinned `allow_same_model_review` as read-only in the panel (the EDITABLE list, the editable check and the 403 list), which is the behaviour this ticket changes. Each now includes it, marked 0511; nothing else in them changed.
+- The switch is a true/false list, as `auto_ship`'s is, from the server's choices.
+- The dialog is the page's, as AC2 asks; the server doesn't ask for a confirmation token for it, unlike 0259's for `auto_ship`.
+- Self-check: turning it off is now checked against the builder and reviewer as they'd be once saved, so it's refused while the two would run the same model, unless the same Save picks a reviewer from another family (test added). Clearing this machine's value when speck/config.yml's is true asks first too.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

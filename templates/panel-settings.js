@@ -1137,6 +1137,13 @@ function shipsMore(changes) {
   const risks = ['low', 'high'].filter(r => will.risks.includes(r));
   return { risks: risks.join(','), words: `approved ${risks.map(r => `${r}-risk`).join(' and ')} tickets` };
 }
+// 0511: whether these changes turn allow_same_model_review on, from off as the view last read it. Clearing this
+// machine's value leaves speck/config.yml's.
+function allowsSameModel(changes) {
+  const x = settingRows().find(r => r.key === 'allow_same_model_review'), c = changes.find(c => c.key === 'allow_same_model_review');
+  if (!x || !c || x.value === true) return false;
+  return c.clear ? x.repo_value === true : c.value === 'true';
+}
 // 0274: Save sends every change in one request, and the server saves all of them or none. 0275: true once saved.
 // A Save pressed while one from the same view is being sent waits for that one.
 let settingsSending = null; // { view, done }
@@ -1163,6 +1170,14 @@ async function sendSettings() {
     const ask = `Let more tickets ship by themselves? With this change, speck run's ship queue will merge ${more.words} and push them to the base branch without waiting for you.`;
     if (typeof confirm !== 'function' || !confirm(ask)) { // cancelled: nothing is saved, and auto_ship and auto_ship_risk go back as they were
       for (const k of ['auto_ship', 'auto_ship_risk']) { settingTyped.delete(k); settingRefused.delete(k); settingClear.delete(k); }
+      renderSettings();
+      return;
+    }
+  }
+  if (allowsSameModel(changes)) { // 0511
+    const ask = 'Let the reviewer run the same model as the builder? With this on, a review is no longer by a different model, so it may catch less of what the builder missed.';
+    if (typeof confirm !== 'function' || !confirm(ask)) { // cancelled: nothing is saved, and it goes back as it was
+      settingTyped.delete('allow_same_model_review'); settingRefused.delete('allow_same_model_review'); settingClear.delete('allow_same_model_review');
       renderSettings();
       return;
     }

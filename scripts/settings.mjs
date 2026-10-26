@@ -78,10 +78,11 @@ const own = (o, k) => o !== null && typeof o === 'object' && !Array.isArray(o) &
 const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] : undefined, o);
 
 // 0258: the settings the panel can change, and 0259's auto_ship and auto_ship_risk, which it changes only once you've
-// confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: allow_same_model_review
-// weakens the independent review. 0279: and builder_model. 0293: and builder, which sets build_command with it.
+// confirmed a change that lets more tickets ship by themselves. The rest stay read-only there. 0279: and builder_model.
+// 0293: and builder, which sets build_command with it. 0511: and allow_same_model_review, which the view asks about
+// before turning it on, as it weakens the independent review.
 export const EDITABLE = Object.freeze(['builder', 'builder_model', 'builder_effort', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
-  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'watch', 'watch_agent', 'watch_model', 'watch_effort']);
+  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'watch', 'watch_agent', 'watch_model', 'watch_effort', 'allow_same_model_review']);
 const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
@@ -94,7 +95,7 @@ function choicesOf(key, file, providers = knownProviders()) {
   }
   if (key === 'builder') return [...new Set([...Object.keys(OWN_BUILD_COMMANDS), ...named])]; // 0293: the builders speck starts by itself
   if (key === 'reviewer_effort' || key === 'builder_effort') return ['', ...EFFORTS]; // 0402: and the builder's
-  if (key === 'auto_ship') return [true, false];
+  if (key === 'auto_ship' || key === 'allow_same_model_review') return [true, false]; // 0511
   if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
   if (key === 'watch') return [...FIXING]; // 0286
   if (key === 'ship_mode') return [...SHIP_MODES]; // 0295
@@ -435,8 +436,9 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
   // 0280: a reviewer of the builder's own family is refused only when the two would run the same model, or might, as
   // the settings would be once saved. So a change to builder_model or reviewer_model can be refused too.
   // 0293: and so can a change to builder, saying which reviewer would be from another family.
-  const models = checked.filter(c => ['builder', 'reviewer', 'builder_model', 'reviewer_model'].includes(c.key));
-  if (models.length && cfg.allow_same_model_review !== true) {
+  // 0511: allow_same_model_review as it would be once saved, so turning it off can be refused too.
+  const models = checked.filter(c => ['builder', 'reviewer', 'builder_model', 'reviewer_model', 'allow_same_model_review'].includes(c.key) && !(c.key === 'allow_same_model_review' && c.same));
+  if (models.length && will.allow_same_model_review !== true) {
     const problem = sameModelProblem(String(will.builder ?? ''), String(will.reviewer ?? ''), will, will.reviewer_model);
     const switching = models.some(c => c.key === 'builder' && !c.same);
     if (problem) return refusal(422, each(models, switching
