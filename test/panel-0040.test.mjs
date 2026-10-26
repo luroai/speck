@@ -3,17 +3,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, round, click, toggles, items, top, queueRows, stageOf, shippedRows, findChrome, browserPage, charAt, openLane, QUICK_PINGS } from './support/panel.mjs';
+import { T, fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, round, click, items, notes, top, queueRows, stageOf, shippedRows, findChrome, browserPage, charAt, openLane, QUICK_PINGS } from './support/panel.mjs';
 
 // ---------- 0040: selected text in an open ticket or idea survives the refresh ----------
 
 // A browser drops a selection when a node holding it is taken out of the page, even if it goes straight back in.
 // The fake page counts each node's removals in `detached`, so a selection in `node` survives while neither it nor any
-// node above it, up to the Shaping list, has been taken out since `held` was called.
+// node above it, up to the Shaping list (0520: or Capture's), has been taken out since `held` was called.
 const held = (p, node) => {
-  const chain = [];
-  for (let at = node; at; at = at.parentNode) { chain.push([at, at.detached || 0]); if (at === p.byId('shaping')) break; }
-  assert.equal(chain[chain.length - 1][0], p.byId('shaping'), 'the node is in the Shaping list');
+  const chain = [], lists = [p.byId('shaping'), p.byId('capture')];
+  for (let at = node; at; at = at.parentNode) { chain.push([at, at.detached || 0]); if (lists.includes(at)) break; }
+  assert.ok(lists.includes(chain[chain.length - 1][0]), 'the node is in the Shaping or Capture list');
   return () => chain.every(([n, d], i) => (n.detached || 0) === d && (i === chain.length - 1 || n.parentNode === chain[i + 1][0]));
 };
 const refresh = async p => { p.timers.shift()(); await p.settle(); };
@@ -71,23 +71,21 @@ test('0040 AC2: the selection survives while other tickets change, and those cha
 test('0040 AC3: a selection in an open idea\'s note survives a refresh in which that idea is unchanged, whatever else changes', async () => {
   const s = base();
   const next = clone(s);
-  next.ideas[1].status = 'parked'; next.ideas[1].body = 'Changed.';
+  next.ideas[1].title = 'Beta, renamed'; next.ideas[1].body = 'Changed.'; // 0520: a parked note isn't in Capture, so it's renamed
   next.ideas.unshift(idea('Zero', 'idea'));
   next.tickets[2].status = 'blocked'; next.tickets[2].blocked_question = 'Which way?';
   next.tickets[0].title = 'A renamed draft';
   const p = fakePage([s, next, clone(next)]);
   await p.settle();
-  click(toggles(p)[1]);
-  click(top(items(p)[0]));
-  const text = p.all(items(p)[0]).find(n => n.tagName === 'p' && n.textContent.includes('Alpha note text')); // formatted since 0142
+  click(top(notes(p)[0])); // 0520: in Capture
+  const text = p.all(notes(p)[0]).find(n => n.tagName === 'p' && n.textContent.includes('Alpha note text')); // formatted since 0142
   assert.ok(text);
   const kept = held(p, text);
   await refresh(p);
   assert.ok(kept(), 'the note holding the selection stayed on the page');
-  assert.deepEqual(items(p).map(n => textOf(p, n, 'span').find(t => t === 'Zero' || t === 'Alpha' || t === 'Beta')), ['Zero', 'Alpha', 'Beta'], 'the new idea shows');
-  assert.ok(items(p)[2].textContent.includes('parked'), "the other idea's change shows");
+  assert.deepEqual(notes(p).map(n => textOf(p, n, 'span').find(t => /^(Zero|Alpha|Beta)/.test(t))), ['Zero', 'Alpha', 'Beta, renamed'], 'the new idea shows, and the other idea\'s change');
   assert.ok(queueText(p).some(t => t.includes('Has a question')), 'the queue change shows'); // 0434: its question shows once its card is open. 0443: closed, in short words
-  assert.ok(toggles(p)[1].textContent.includes('3'), 'the ideas count shows');
+  assert.equal(notes(p).length, 3, 'every idea shows'); // 0520: no Ideas button to count them
   await refresh(p);
   assert.ok(kept(), 'and through a second refresh');
 });
@@ -99,19 +97,17 @@ test('0040 AC4: when the open ticket\'s or idea\'s own data changes, the new con
   next.ideas[0].body = '# Alpha\n\nStatus: idea\n\nA rewritten note.\n';
   const third = clone(next);
   third.tickets[0].outcome = 'A new outcome.'; // a field only the details show
-  third.ideas[0].status = 'parked';
+  third.ideas[0].title = 'Alpha, renamed'; // 0520: a parked note isn't in Capture
   const p = fakePage([s, next, third]);
   await p.settle();
   openTicket(p, '0001');
-  click(toggles(p)[1]); click(top(items(p)[0])); click(toggles(p)[0]);
+  click(top(notes(p)[0]));
   await refresh(p);
   assert.deepEqual(textOf(p, items(p)[0], 'p'), ['A reworded problem.', 'Outcome of 0001.']);
-  click(toggles(p)[1]);
-  assert.ok(items(p)[0].textContent.includes('A rewritten note.'));
-  assert.ok(!items(p)[0].textContent.includes('Alpha note text'));
+  assert.ok(notes(p)[0].textContent.includes('A rewritten note.'));
+  assert.ok(!notes(p)[0].textContent.includes('Alpha note text'));
   await refresh(p);
-  assert.ok(items(p)[0].textContent.includes('parked'));
-  click(toggles(p)[0]);
+  assert.ok(notes(p)[0].textContent.includes('Alpha, renamed'));
   assert.ok(items(p)[0].textContent.includes('A new outcome.'));
 });
 
@@ -190,7 +186,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
     // AC2: other tickets change, and the changes show.
     draft('0001', 'A new draft before it', 'Something else.');
     fs.writeFileSync(path.join(ideas, 'other.md'), '# Another idea\n\nStatus: idea\n\nMore.\n');
-    await b.until(`document.querySelectorAll('${item}').length === 2 && document.getElementById('shaping-toggle').textContent.includes('Ideas · 2')`, 'the new draft and idea');
+    await b.until(`document.querySelectorAll('${item}').length === 2 && document.querySelectorAll('#capture .item.idea').length === 2`, 'the new draft and idea');
     assert.equal(await sel(), 'Export button', 'kept while other items change');
     assert.ok(await b.js(`document.querySelector('${item}:nth-child(2)').classList.contains('open')`), 'the ticket is still open');
     // AC4: its own data changes, and the new content shows.
@@ -198,17 +194,18 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
     await b.until(`document.querySelector('${item}.open .detail p.text').textContent.includes('TSV')`, 'the changed problem');
 
     // AC3: an idea's note.
-    await b.js(`document.querySelectorAll('#shaping-toggle button')[1].click()`);
-    await b.until(`[...document.querySelectorAll('${item}.idea .title')].some(t => t.textContent === 'A parked idea')`, 'the idea');
-    await b.js(`[...document.querySelectorAll('${item}.idea .title')].find(t => t.textContent === 'A parked idea').click()`);
-    await b.until(`!!document.querySelector('${item}.open .note')`, 'the idea to open');
-    const note = `${item}.open .note p:last-child`; // its last paragraph: the note is formatted since 0142
+    await b.js(openLane('capture')); // 0520: ideas are in Capture
+    const card = '#capture .item';
+    await b.until(`[...document.querySelectorAll('${card}.idea .title')].some(t => t.textContent === 'A parked idea')`, 'the idea');
+    await b.js(`[...document.querySelectorAll('${card}.idea .title')].find(t => t.textContent === 'A parked idea').click()`);
+    await b.until(`!!document.querySelector('${card}.open .note')`, 'the idea to open');
+    const note = `${card}.open .note p:last-child`; // its last paragraph: the note is formatted since 0142
     const start = await b.js(`document.querySelector('${note}').textContent.indexOf('The note')`);
     await b.drag(await b.js(charAt(note, start)), await b.js(charAt(note, start + 8)));
     assert.equal(await sel(), 'The note');
     fs.writeFileSync(path.join(ideas, 'other.md'), '# Another idea, renamed\n\nStatus: idea\n\nMore.\n');
     draft('0003', 'A third draft', 'More.');
-    await b.until(`[...document.querySelectorAll('${item}.idea .title')].some(t => t.textContent === 'Another idea, renamed') && document.getElementById('shaping-toggle').textContent.includes('Tickets · 3')`, 'the other changes');
+    await b.until(`[...document.querySelectorAll('${card}.idea .title')].some(t => t.textContent === 'Another idea, renamed') && document.querySelectorAll('${item}').length === 3`, 'the other changes');
     assert.equal(await sel(), 'The note', 'kept while other things change');
     fs.writeFileSync(path.join(ideas, 'note.md'), '# A parked idea\n\nStatus: idea\n\nThe note text, rewritten.\n');
     await b.until(`document.querySelector('${note}').textContent.includes('rewritten')`, 'the changed note');
@@ -245,8 +242,8 @@ test('0040 AC1 and AC3: the same field values in another order count as unchange
   const kept = held(p, p.all(openTicket(p, '0001')).find(n => n.tagName === 'p'));
   await refresh(p);
   assert.ok(kept(), 'the ticket with its fields reordered keeps its node');
-  click(toggles(p)[1]); click(top(items(p)[0]));
-  const keptIdea = held(p, p.all(items(p)[0]).find(n => n.tagName === 'p')); // the note's text, formatted since 0142
+  click(top(notes(p)[0])); // 0520: in Capture
+  const keptIdea = held(p, p.all(notes(p)[0]).find(n => n.tagName === 'p')); // the note's text, formatted since 0142
   await refresh(p);
   await refresh(p);
   assert.ok(keptIdea(), 'the idea with its fields reordered keeps its node');

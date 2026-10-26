@@ -31,8 +31,9 @@ const rules = body => [...body.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(m => [m[1].
 const media = q => blocks(css()).filter(b => b.prelude === `@media ${q}`);
 
 // Every selector with a 44 px minimum (or a 44 px width and height) under 700 px before this ticket, less the ids
-// in a closed card's note, which 0468 replaced with a chip.
-const SIZED = ['.bezel .settings-open', '.tab', '.toggle', '.head', '.item.ticket .prio', '.prio-menu button', '.set-ready, .full-open',
+// in a closed card's note, which 0468 replaced with a chip, and Plan's Tickets, Ideas and Inbox buttons (.toggle), which
+// 0520 removed.
+const SIZED = ['.bezel .settings-open', '.tab', '.head', '.item.ticket .prio', '.prio-menu button', '.set-ready, .full-open',
   '.q .top', '.q .full-open', '.q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply', '.resume .copy',
   '.more-stats', '#shipped .line .title', 'td .full-open',
   '#full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close',
@@ -63,7 +64,7 @@ test('0417 AC2: the touch screen rules apply at any width and keep each 44 px mi
     const d = got.get(sel) || '';
     assert.ok(/min-height:\s*44px|(^|[\s;])height:\s*44px/.test(d), `${sel} is at least 44 px high on a touch screen: ${d}`);
   }
-  for (const sel of ['.toggle', '.prio-menu button', '.set-ready', '.full-open', '.resume .copy', '.more-stats', '#shipped .line .title', '.item.ticket .prio'])
+  for (const sel of ['.prio-menu button', '.set-ready', '.full-open', '.resume .copy', '.more-stats', '#shipped .line .title', '.item.ticket .prio'])
     assert.match(got.get(sel), /min-width:\s*44px/, `${sel} is at least 44 px wide on a touch screen`);
   // The tags' 44 px tap areas, and the gaps that keep them apart (0165)
   assert.match(got.get('.tag:not(.pick)::after') || '', /44px/);
@@ -143,7 +144,7 @@ const CONTROLS = lane => `(async () => {
     return { what: n.tagName.toLowerCase() + '.' + String(n.className).trim().split(/\\s+/).join('.'), width: r.width, height: r.height, minWidth: s.minWidth, minHeight: s.minHeight };
   });
 })()`;
-const LANES = ['plan', 'build', 'shipped'];
+const LANES = ['capture', 'plan', 'build', 'shipped']; // 0520: Capture first
 
 // 0469: a mouse has the touch screen's 44 px minimums too, so each control's are the same with either
 test('0417 AC1, AC3: in a 375 px window with no touch screen, each control has the 44 px minimums it has on a touch screen and the narrow layout still applies', skip, () => withPanel(async b => {
@@ -158,7 +159,7 @@ test('0417 AC1, AC3: in a 375 px window with no touch screen, each control has t
     }
     assert.deepEqual(big[1], big[0], 'the same minimums with a mouse as on a touch screen');
   }
-  assert.ok(seen.some(c => /toggle/.test(c.what)) && seen.some(c => /set-ready/.test(c.what)), 'the controls were there to check');
+  assert.ok(seen.some(c => /\btab\b/.test(c.what)) && seen.some(c => /set-ready/.test(c.what)), 'the controls were there to check'); // 0520: a lane's name, as Plan's buttons are gone
   const gear = await b.js(`(() => { const r = document.getElementById('settings-open').getBoundingClientRect(); return [r.width, r.height]; })()`);
   assert.deepEqual(gear, [44, 44], 'Settings has its 44 px button with a mouse too (0469)');
   // AC3: the narrow layout itself, which isn't about a control's size
@@ -175,11 +176,11 @@ for (const width of [375, 1280]) {
     for (const lane of LANES) {
       for (const c of await b.js(CONTROLS(lane))) {
         seen.add(c.what.split('.')[1] || c.what);
-        const minW = /^(button\.(toggle|set-ready|full-open|copy|more-stats|settings-open|prio)|span\.title)/.test(c.what);
+        const minW = /^(button\.(set-ready|full-open|copy|more-stats|settings-open|prio)|span\.title)/.test(c.what);
         if (c.height < 43.5 || (minW && c.width < 43.5)) small.push(`${lane}: ${c.what} ${Math.round(c.width)}x${Math.round(c.height)}`);
       }
     }
     assert.deepEqual(small, [], 'finger-sized on a touch screen');
-    for (const c of ['toggle', 'set-ready', 'settings-open', 'head', 'top']) assert.ok(seen.has(c), `${c} was checked`);
+    for (const c of ['tab', 'set-ready', 'settings-open', 'head', 'top']) assert.ok(seen.has(c), `${c} was checked`); // 0520: a lane's name, as Plan's buttons are gone
   }));
 }

@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { full, fakePage, panelModel, idea, click, toggles, items, top } from './support/panel.mjs';
+import { full, fakePage, panelModel, idea, click, notes, top } from './support/panel.mjs';
 
 // ---------- 0056: ticketed ideas leave the panel's Ideas list ----------
 
@@ -23,47 +23,46 @@ test('0056 AC1: a status that only mentions ticketed later, or in another case, 
   assert.deepEqual(m.ideas.map(i => i.title), ['Not yet', 'Upper'], 'only a status starting with `ticketed` is left out, as `speck status` counts it');
 });
 
-test('0056 AC1, AC2: the page lists only unticketed ideas and the toggle counts them, whatever number are ticketed', async () => {
-  const s = { tickets: [full('0001')], ideas: [idea('One', 'idea'), idea('Done A', 'ticketed (0002)'), idea('Two', null), idea('Done B', 'ticketed (0003)'), idea('Done C', 'ticketed'), idea('Three', 'parked'), idea('Note', 'inbox')] };
+test('0056 AC1, AC2 (0520: in Capture): the page lists no ticketed idea, whatever number are ticketed', async () => {
+  // 0520: Capture lists only notes whose status is idea or inbox, so the blank and parked ones are left out too, and
+  // there's no Ideas button to count them.
+  const s = { tickets: [full('0001')], ideas: [idea('One', 'idea'), idea('Done A', 'ticketed (0002)'), idea('Two', null), idea('Done B', 'ticketed (0003)'), idea('Done C', 'ticketed'), idea('Three', 'parked'), idea('Four', 'idea'), idea('Note', 'inbox')] };
   const p = fakePage([s]);
   await p.settle();
-  assert.equal(toggles(p)[1].textContent, 'Ideas · 3');
-  click(toggles(p)[1]);
-  assert.deepEqual(items(p).map(titleOf), ['One', 'Two', 'Three']);
-  assert.doesNotMatch(p.byId('shaping').textContent, /Done/);
+  assert.deepEqual(notes(p).filter(n => /\bidea\b/.test(n.className)).map(titleOf), ['One', 'Four']);
+  assert.doesNotMatch(p.byId('capture').textContent, /Done|Two|Three/);
 });
 
-test('0056 AC3: with every idea ticketed, the list says "No ideas waiting." and the count is 0', async () => {
+test('0056 AC3 (0520: in Capture): with every idea ticketed, Capture has no idea card, and with nothing else says "Nothing captured."', async () => {
   const s = { tickets: [], ideas: [idea('Done A', 'ticketed (0002)'), idea('Note', 'inbox'), idea('Gone', 'dropped')] };
   const p = fakePage([s]);
   await p.settle();
-  assert.equal(toggles(p)[1].textContent, 'Ideas · 0');
-  click(toggles(p)[1]);
-  assert.equal(items(p).length, 0);
-  assert.equal(p.byId('shaping').textContent, 'No ideas waiting.');
+  assert.deepEqual(notes(p).map(n => /\bidea\b/.test(n.className)), [false], 'only the inbox note');
+  const q = fakePage([{ tickets: [], ideas: [idea('Done A', 'ticketed (0002)'), idea('Gone', 'dropped')] }]);
+  await q.settle();
+  assert.equal(notes(q).length, 0);
+  assert.equal(q.byId('capture').textContent, 'Nothing captured.');
 });
 
-test('0056 AC3: with no ideas at all, the list says "No ideas waiting."', async () => {
+test('0056 AC3 (0520: in Capture): with no ideas at all, Capture says "Nothing captured."', async () => {
   const p = fakePage([{ tickets: [], ideas: [] }]);
   await p.settle();
-  click(toggles(p)[1]);
-  assert.equal(p.byId('shaping').textContent, 'No ideas waiting.');
+  assert.equal(p.byId('capture').textContent, 'Nothing captured.');
 });
 
 test('0056 AC4: an open idea that becomes ticketed leaves the list on the next refresh, and the other open ideas stay open', async () => {
-  const s = { tickets: [], ideas: [idea('Alpha', 'idea'), idea('Beta', 'idea'), idea('Gamma', null)] };
+  const s = { tickets: [], ideas: [idea('Alpha', 'idea'), idea('Beta', 'idea'), idea('Gamma', 'idea')] }; // 0520: Capture lists only idea and inbox notes
   const next = clone(s);
   next.ideas[1].status = 'ticketed (0009)';
   next.ideas[1].body = '# Beta\n\nStatus: ticketed (0009)\n';
   const p = fakePage([s, next, clone(next)]);
   await p.settle();
-  click(toggles(p)[1]);
-  for (let k = 0; k < 3; k++) click(top(items(p)[k]));
-  assert.ok(items(p).every(isOpen), 'all three open');
+  for (let k = 0; k < 3; k++) click(top(notes(p)[k]));
+  assert.ok(notes(p).every(isOpen), 'all three open');
   await refresh(p);
-  assert.deepEqual(items(p).map(titleOf), ['Alpha', 'Gamma'], 'Beta left the list');
-  assert.ok(items(p).every(isOpen), 'the others stayed open');
-  assert.equal(toggles(p)[1].textContent, 'Ideas · 2');
+  assert.deepEqual(notes(p).map(titleOf), ['Alpha', 'Gamma'], 'Beta left the list');
+  assert.ok(notes(p).every(isOpen), 'the others stayed open');
+  assert.equal(notes(p).length, 2);
   await refresh(p);
-  assert.ok(items(p).every(isOpen), 'and through another refresh');
+  assert.ok(notes(p).every(isOpen), 'and through another refresh');
 });

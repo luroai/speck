@@ -81,12 +81,13 @@ test('0134 AC3 (undone by 0135): no section heading has a number beside it', () 
 
 // AC4: the ids and visible text in the page's static HTML before this ticket. 0150 removed the connection pill, its id
 // and its "connecting…", and 0162 the three hints beside the section headings.
-const IDS = ['offline', 'restart', 'shaping-section', 'shaping-toggle', 'shaping', 'queue-n', 'queue', 'shipped-n', 'shipped-stats', 'shipped', 'full-backdrop', 'full-ticket'];
+// 0520: Plan's Tickets, Ideas and Inbox buttons are gone, with their row, shaping-toggle; Capture's card is new.
+const IDS = ['offline', 'restart', 'capture-section', 'capture', 'shaping-section', 'shaping', 'queue-n', 'queue', 'shipped-n', 'shipped-stats', 'shipped', 'full-backdrop', 'full-ticket'];
 // 0413: the title row of speck's screen's frame is speck, then the project and base branch.
 const TEXT = ['speck', '{{repo}} ·', '{{base}}',
   'Disconnected: can\'t reach speck panel. Showing the last state received. Retrying every 2 seconds…',
-  'Plan', 'Build', 'Shipped',
-  'Plan', 'Build', 'Shipped']; // 0476: each lane's name at the top of its card
+  'Capture', 'Plan', 'Build', 'Shipped', // 0520: and Capture first
+  'Capture', 'Plan', 'Build', 'Shipped']; // 0476: each lane's name at the top of its card
 
 test('0134 AC4: every static id is still there, and no visible text was added (0135 removed the section numbers)', () => {
   const html = staticHtml();
@@ -103,7 +104,7 @@ test('0134 AC2-AC3 (changed by 0427): in a real browser, headings are in the int
   try {
     await b.until(`!!document.querySelector('main .id')`, 'a ticket id');
     const heads = await b.js(`[...document.querySelectorAll('.tab .tab-name')].map(h => [h.textContent, getComputedStyle(h).fontFamily, h.previousElementSibling === null])`); // 0410: the tabs' names
-    assert.deepEqual(heads.map(h => [h[0], h[2]]), [['Plan', true], ['Build', true], ['Shipped', true]]);
+    assert.deepEqual(heads.map(h => [h[0], h[2]]), [['Capture', true], ['Plan', true], ['Build', true], ['Shipped', true]]); // 0520: Capture first
     for (const [name, family] of heads.map(h => [h[0], h[1]])) {
       assert.match(family, /\bsans-serif\b/, `${name} is in the interface font: ${family}`);
       assert.doesNotMatch(family, /monospace/, `${name} is not monospace: ${family}`);

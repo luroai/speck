@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, idea, click, toggles, items, top, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles } from './support/panel.mjs';
+import { fakePage, idea, click, notes, top, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles } from './support/panel.mjs';
 
 // ---------- 0435: a collapsed idea or inbox card is its title and one short line saying when it was captured ----------
 
@@ -28,41 +28,44 @@ const STATE = () => ({
   ],
 });
 const page = () => fakePage([STATE()], { Date: stoppedClock(NOW) });
-const cards = async (view, at) => { const p = page(); await p.settle(); click(toggles(p)[at]); return { p, cards: items(p) }; };
+// 0520: ideas and inbox notes are one list in Capture, newest captured first; `kind` picks out the idea or the inbox cards.
+const cards = async kind => { const p = page(); await p.settle(); return { p, cards: notes(p).filter(n => new RegExp(`\\b${kind}\\b`).test(n.className)) }; };
+const titled = (c, name) => c.find(n => lineOf(n).textContent === `Note ${name}`);
 const lineOf = c => top(c).children[0];
 const secondOf = c => top(c).children.find(n => /\bchecks\b/.test(n.className)).textContent;
 
 test('0435 AC1: an idea card is its title with no label, then when it was captured and any status but idea, in smaller type', async () => {
-  const { cards: c } = await cards('ideas', 1);
+  const { cards: c } = await cards('idea');
   assert.deepEqual(c.map(n => lineOf(n).children.map(x => x.className)), c.map(() => ['title']), 'no `idea` label before the title');
   assert.equal(lineOf(c[0]).textContent, 'Note 2026-10-08-plain');
   assert.equal(secondOf(c[0]), 'Captured 8 Oct');
-  assert.equal(secondOf(c[2]), 'Captured 8 Oct 2025', 'the year, when it isn\'t this year');
-  assert.equal(secondOf(c[3]), 'Captured 8 Oct · shaped', 'a status other than idea');
+  assert.equal(secondOf(titled(c, '2025-10-08-last-year')), 'Captured 8 Oct 2025', 'the year, when it isn\'t this year');
+  // 0520: Capture lists only notes whose status is idea or inbox, so no card shows another status.
+  assert.ok(!titled(c, '2026-10-08-shaped') && !titled(c, '2026-10-08-bad-date'), 'a note with another status isn\'t listed');
   const style = styles();
   assert.match(/\.item \.checks \{([^}]*)\}/.exec(style)[1], /font-size: 12px;/, 'smaller than the 17 px title');
 });
 
 test('0435 AC2: an inbox card is its title with no label, then the ticket it came from and when it was captured', async () => {
-  const { cards: c } = await cards('inbox', 2);
+  const { cards: c } = await cards('inbox');
   assert.deepEqual(c.map(n => lineOf(n).children.map(x => x.className)), c.map(() => ['title']), 'no `inbox` label before the title');
   assert.equal(secondOf(c[0]), 'From 0139 · captured 9 Oct');
   assert.equal(secondOf(c[2]), 'Captured 31 Dec 2025', 'no ticket named');
 });
 
 test('0435 AC3: a note with no Captured line, or one with no real date in it, says No capture date there', async () => {
-  const { cards: ideas } = await cards('ideas', 1);
-  assert.deepEqual(ideas.slice(4).map(secondOf), ['No capture date', 'No capture date · parked', 'No capture date']);
-  const { cards: inbox } = await cards('inbox', 2);
+  const { cards: ideas } = await cards('idea');
+  assert.deepEqual(['2026-10-08-no-date', '2026-10-08-not-a-day'].map(n => secondOf(titled(ideas, n))), ['No capture date', 'No capture date']);
+  const { cards: inbox } = await cards('inbox');
   assert.deepEqual(inbox.slice(3).map(secondOf), ['From 0140 · No capture date', 'No capture date']);
 });
 
 test('0435 AC4: a collapsed card shows no file path; an open one shows it in small type above the note\'s text', async () => {
-  for (const [view, at] of [['ideas', 1], ['inbox', 2]]) {
-    const { p, cards: c } = await cards(view, at);
+  for (const view of ['idea', 'inbox']) {
+    const { p, cards: c } = await cards(view);
     for (const n of c) assert.ok(!n.textContent.includes('speck/ideas/'), `${view}: no path while it's collapsed`);
     click(top(c[0]));
-    const open = items(p)[0];
+    const open = notes(p).find(n => /\bopen\b/.test(n.className));
     assert.match(open.className, /\bopen\b/);
     const path = p.all(open).find(n => /\bpath\b/.test(n.className || ''));
     assert.ok(path, `${view}: the path, open`);
@@ -82,14 +85,14 @@ const stub = `(() => {
   const json = b => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } });
   window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? json(STATE) : /\\/log$/.test(String(url)) ? json({ text: '' }) : opts.method === 'POST' ? json({}) : real(url, opts);
 })();`;
-// Each card in Plan's list: the rows its top row's parts take, the text lines of its second line, and the
+// Each card in Capture's list (0520): the rows its top row's parts take, the text lines of its second line, and the
 // gap between them.
 const CARDS = `(async () => {
   await document.fonts.ready;
   const lines = n => { const w = document.createTreeWalker(n, NodeFilter.SHOW_TEXT), out = [];
     for (let t; (t = w.nextNode());) { const r = document.createRange(); r.selectNodeContents(t); for (const x of r.getClientRects()) if (x.width > 0 && !out.some(b => Math.abs(b - x.top) <= 4)) out.push(x.top); }
     return out.length; };
-  return [...document.querySelectorAll('#shaping .item:not(.open)')].map(c => {
+  return [...document.querySelectorAll('#capture .item:not(.open)')].map(c => {
     const head = c.querySelector('.head'), title = head.querySelector('.title'), second = head.querySelector('.checks');
     const rows = [...head.children].filter(n => n.getBoundingClientRect().height > 0).map(n => Math.round(n.getBoundingClientRect().top));
     return { text: title.textContent, tip: title.title, children: c.children.length, rows: new Set(rows).size, titleLines: lines(title), secondLines: lines(second),
@@ -108,12 +111,11 @@ for (const touch of [true, false]) {
       await b.send('Page.enable');
       await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub });
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-      await b.until(`location.port === '${panel.port}' && !!document.getElementById('shaping-toggle')?.children[2]`, 'the panel');
+      await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#capture .item').length === 10`, 'the panel');
       assert.equal(await b.js(`matchMedia('(pointer: coarse)').matches`), touch, touch ? 'a touch screen' : 'a mouse');
-      await b.js(openLane('plan'));
-      for (const [at, n] of [[1, 7], [2, 5]]) {
-        await b.js(`document.getElementById('shaping-toggle').children[${at}].click(), true`);
-        await b.until(`document.querySelectorAll('#shaping .item').length === ${n}`, 'the cards');
+      await b.js(openLane('capture'));
+      { // 0520: the ideas and inbox notes, together in Capture
+        const n = 10;
         const seen = await b.js(CARDS);
         assert.equal(seen.length, n);
         for (const c of seen) {
@@ -127,10 +129,10 @@ for (const touch of [true, false]) {
         }
         assert.ok(seen.find(c => c.text === LONG).cut, 'a long title is cut off');
         // open, a long title wraps again
-        await b.js(`[...document.querySelectorAll('#shaping .item .head')].find(h => h.querySelector('.title').textContent === ${JSON.stringify(LONG)}).click(), true`);
-        await b.until(`!!document.querySelector('#shaping .item.open')`, 'the open card');
-        assert.ok(await b.js(`(() => { const t = document.querySelector('#shaping .item.open .title'); return t.getClientRects().length > 1 || t.getBoundingClientRect().height > parseFloat(getComputedStyle(t).lineHeight) * 1.5; })()`), 'open, the long title wraps');
-        await b.js(`document.querySelector('#shaping .item.open .head').click(), true`);
+        await b.js(`[...document.querySelectorAll('#capture .item .head')].find(h => h.querySelector('.title').textContent === ${JSON.stringify(LONG)}).click(), true`);
+        await b.until(`!!document.querySelector('#capture .item.open')`, 'the open card');
+        assert.ok(await b.js(`(() => { const t = document.querySelector('#capture .item.open .title'); return t.getClientRects().length > 1 || t.getBoundingClientRect().height > parseFloat(getComputedStyle(t).lineHeight) * 1.5; })()`), 'open, the long title wraps');
+        await b.js(`document.querySelector('#capture .item.open .head').click(), true`);
       }
     } finally { await b.close(); await stop(panel); }
   });

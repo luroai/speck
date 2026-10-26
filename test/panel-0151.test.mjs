@@ -19,7 +19,7 @@ const STATE = {
     full('0203', { title: 'Short', type: 'fix' }),
     T('0204', 'ready', { title: 'A risky one in the queue', risk: 'high' }),
   ],
-  ideas: [idea('2026-10-13-an-idea', 'new'), idea('2026-10-13-another-idea', 'new'),
+  ideas: [idea('2026-10-13-an-idea', 'idea'), idea('2026-10-13-another-idea', 'idea'),
     idea('2026-10-13-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0139\n\nSome text.\n'),
     idea('2026-10-13-a-second-follow-up', 'inbox', '# A second follow-up\n\nStatus: inbox\nFrom ticket: 0140\n\nSome text.\n')],
 };
@@ -57,7 +57,7 @@ async function withPanel(fn, { width = 1280, theme = 'light' } = {}) {
   } finally { await b.close(); await stop(panel); }
 }
 const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
-const tab = async (b, view) => { await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`); await settle(b); };
+const tab = async (b, lane) => { await b.js(openLane(lane)); await settle(b); }; // 0520: ideas and inbox notes are in Capture
 const click = async (b, [x, y]) => {
   for (const type of ['mousePressed', 'mouseReleased']) await b.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1 });
   await settle(b);
@@ -183,12 +183,12 @@ for (const width of [375, 1280]) {
   });
 }
 
-// Each item in the Plan list showing: its four borders, and the space to the next item.
-const CARDS = `(() => {
+// Each item in a lane's list showing (Plan's, or 0520: Capture's): its four borders, and the space to the next item.
+const CARDS = list => `(() => {
   const lum = c => { const [r, g, b] = c.match(/[\\d.]+/g).slice(0, 3).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-  const back = getComputedStyle(document.querySelector('#shaping-section .lane-list')).backgroundColor; // 0478: the lane's list, inside its frame
-  const items = [...document.querySelectorAll('#shaping .item')];
+  const back = getComputedStyle(document.querySelector('#${list}')).backgroundColor; // 0478: the lane's list, inside its frame
+  const items = [...document.querySelectorAll('#${list} .item')];
   return items.map((n, i) => {
     const s = getComputedStyle(n), r = n.getBoundingClientRect(), next = items[i + 1];
     const side = k => ({ width: parseFloat(s['border' + k + 'Width']), style: s['border' + k + 'Style'], color: s['border' + k + 'Color'], contrast: contrast(s['border' + k + 'Color'], back) });
@@ -199,13 +199,13 @@ const CARDS = `(() => {
 
 for (const theme of ['light', 'dark']) {
   for (const width of [375, 1280]) {
-    test(`0151 AC4: at ${width} px in the ${theme} look, every ticket, idea and inbox note in Plan is a bordered card, 8 px or more from the next`, skip, async () => {
+    test(`0151 AC4: at ${width} px in the ${theme} look, every ticket in Plan and idea and inbox note in Capture (0520) is a bordered card, 8 px or more from the next`, skip, async () => {
       await withPanel(async b => {
         const line = await b.js(RGB('var(--line)'));
-        for (const [view, count] of [['tickets', 3], ['ideas', 2], ['inbox', 2]]) {
+        for (const [view, list, count] of [['plan', 'shaping', 3], ['capture', 'capture', 4]]) {
           await tab(b, view);
-          if (view === 'tickets') { await b.js(`${ITEM('0202')}.querySelector('.head').click()`); await settle(b); } // an open card too
-          const cards = await b.js(CARDS);
+          if (view === 'plan') { await b.js(`${ITEM('0202')}.querySelector('.head').click()`); await settle(b); } // an open card too
+          const cards = await b.js(CARDS(list));
           assert.equal(cards.length, count, `${view}: ${count} cards`);
           for (const c of cards) {
             for (const k of ['top', 'right', 'bottom', 'left']) {

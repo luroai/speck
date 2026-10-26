@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf, readyPath, fm, fakePage, T, idea, findChrome, browserPage } from './support/panel.mjs';
+import { panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf, readyPath, fm, fakePage, T, idea, findChrome, browserPage, openLane } from './support/panel.mjs';
 import { hasStopped, portClosed, STOP_MS } from './support/stopped.mjs';
 
 // ---------- 0067: speck panel restarts by itself when its code changes ----------
@@ -92,24 +92,24 @@ test('0067 AC2: the token survives a restart, so Set ready works with the token 
 test('0067 AC2: in a real browser, an open page keeps its list across a restart and Set ready works without a reload', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
   r.write('0002-two.md', fm({ id: '"0002"', title: 'Two' }));
-  fs.writeFileSync(`${r.dir}/speck/ideas/2026-10-09-a.md`, '# An idea\n\nStatus: raw\n\nBody.\n');
+  fs.writeFileSync(`${r.dir}/speck/ideas/2026-10-09-a.md`, '# An idea\n\nStatus: idea\n\nBody.\n');
   const { c, port, p } = await served(r);
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`!!document.querySelector('#shaping .item')`, 'the drafts');
-    await b.js(`window.__notReloaded = true; [...document.querySelectorAll('#shaping-toggle button')].find(x => x.textContent.startsWith('Ideas')).click()`);
-    await b.until(`document.getElementById('shaping-section').className.includes('ideas')`, 'the Ideas list');
-    await b.js(`document.querySelector('#shaping .item .head').click()`);
-    const openBefore = await b.js(`document.querySelectorAll('#shaping .item.open').length`);
+    await b.js(`window.__notReloaded = true; ${openLane('capture')}`); // 0520: ideas are in the Capture lane
+    await b.until(`!!document.querySelector('#capture .item .head')`, 'the idea in Capture');
+    await b.js(`document.querySelector('#capture .item .head').click()`);
+    const openBefore = await b.js(`document.querySelectorAll('#capture .item.open').length`);
     assert.equal(openBefore, 1, 'the idea is open');
     edit(c, 'v2');
     await within(5000, async () => (await request(port)).headers['x-speck-test'] === 'v2', 'the restart');
     await wait(4500); // two polls on the new code
     assert.equal(await b.js('window.__notReloaded'), true, 'the page was not reloaded');
     assert.ok(await b.js(`document.getElementById('offline').hidden`), 'connected');
-    assert.ok(await b.js(`document.getElementById('shaping-section').className.includes('ideas')`), 'still on Ideas');
-    assert.equal(await b.js(`document.querySelectorAll('#shaping .item.open').length`), 1, 'the idea is still open');
-    await b.js(`[...document.querySelectorAll('#shaping-toggle button')].find(x => x.textContent.startsWith('Tickets')).click()`);
+    assert.equal(await b.js(`document.getElementById('tab-capture').getAttribute('aria-selected')`), 'true', 'still on Capture');
+    assert.equal(await b.js(`document.querySelectorAll('#capture .item.open').length`), 1, 'the idea is still open');
+    await b.js(openLane('plan'));
     await b.until(`!!document.querySelector('#shaping .item .head')`, 'the drafts again');
     await b.js(`document.querySelector('#shaping .item .head').click()`);
     await b.until(`!![...document.querySelectorAll('#shaping button')].find(x => x.textContent === 'Set ready')`, 'the Set ready button');

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, fakePage, full, T, click, items, notes, top, page, panelModel } from './support/panel.mjs';
-import { lane, pad, swipe } from './support/lanes.mjs';
+import { lane, pad, swipe, slidingPage } from './support/lanes.mjs';
 
 // ---------- 0520: ideas and inbox notes have their own Capture lane, left of Plan ----------
 
@@ -71,7 +71,6 @@ test('0520 AC1: a sideways trackpad scroll moves through all four lanes, stoppin
 });
 
 test('0520 AC1: a finger swipe moves from Plan to Capture and back', async () => {
-  const { slidingPage } = await import('./support/lanes.mjs');
   const p = await slidingPage();
   click(tab(p, 'plan'));
   await p.rest();
@@ -98,9 +97,9 @@ test('0520 AC2: Capture lists every idea and inbox note in one list, newest capt
 
 test('0520 AC2: the model\'s Capture list orders by the Captured line, not by order or body', () => {
   const m = panelModel()({ tickets: [], ideas: [
-    note('a', 'inbox', '2026-01-05'), note('b', 'idea', '2026-03-01', 'Captured: 2027-01-01 in the body, after the line'), note('c', 'idea', '2026-01-05'), note('d', 'idea', 'not-a-date'),
+    note('a', 'inbox', '2026-01-05'), note('b', 'idea', '2026-03-01', 'Captured: 2027-01-01 in the body, after the line'), note('c', 'idea', '2026-01-05'), note('d', 'idea', 'not-a-date'), note('e', 'idea', '2026-02-30'), note('f', 'inbox', '2026-13-01'),
   ] });
-  assert.deepEqual(m.capture.map(i => i.title), ['b', 'a', 'c', 'd'], 'the date on its Captured line; same day in the order given; no date last');
+  assert.deepEqual(m.capture.map(i => i.title), ['b', 'a', 'c', 'd', 'e', 'f'], 'the date on its Captured line; same day in the order given; no real date last');
 });
 
 test('0520 AC2: a closed card opens to the note\'s whole text and closes again', async () => {

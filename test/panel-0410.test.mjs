@@ -16,8 +16,8 @@ const board = (o = {}) => ({
   ideas: [],
   ...(o.foreman ? { foreman: o.foreman } : {}),
 });
-const LANE = { plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
-const TAB = { plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
+const LANE = { capture: 'capture-section', plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
+const TAB = { capture: 'tab-capture', plan: 'tab-plan', build: 'tab-build', shipped: 'tab-shipped' };
 // The lanes showing, and the tabs marked open.
 const showing = p => Object.keys(LANE).filter(l => !p.byId(LANE[l]).hidden);
 const selected = p => Object.keys(TAB).filter(l => (p.byId(TAB[l]).attrs || {})['aria-selected'] === 'true');
@@ -43,13 +43,13 @@ const staticHtml = () => page().replace(/<script>[\s\S]*?<\/script>/g, '').repla
 
 // ---------- AC1 ----------
 
-test('0410 AC1: three tabs under the header, Plan, Build and Shipped, and Build is open when the panel loads', async () => {
+test('0410 AC1: tabs under the header, Capture (0520), Plan, Build and Shipped, and Build is open when the panel loads', async () => {
   const html = staticHtml();
   const nav = html.match(/<\/header>[\s\S]*?(<nav [^>]*role="tablist"[^>]*>[\s\S]*?<\/nav>)\s*<main>/);
   assert.ok(nav, 'a tab row between the header and the lanes');
   const tabs = [...nav[1].matchAll(/<button ([^>]*)>([\s\S]*?)<\/button>/g)];
-  assert.deepEqual(tabs.map(t => (t[1].match(/\bid="([^"]+)"/) || [])[1]), ['tab-plan', 'tab-build', 'tab-shipped']);
-  assert.deepEqual(tabs.map(t => t[2].replace(/<[^>]*>/g, '')), ['Plan', 'Build', 'Shipped']);
+  assert.deepEqual(tabs.map(t => (t[1].match(/\bid="([^"]+)"/) || [])[1]), ['tab-capture', 'tab-plan', 'tab-build', 'tab-shipped']);
+  assert.deepEqual(tabs.map(t => t[2].replace(/<[^>]*>/g, '')), ['Capture', 'Plan', 'Build', 'Shipped']);
   const p = livePage(board());
   await p.settle();
   openIs(p, 'build', 'on load');
@@ -94,7 +94,7 @@ test('0410 AC1: the tabs are buttons Tab reaches, and Enter and Space press them
 test('0410 AC1: the left and right arrow keys open the tab beside it, round the ends, with the focus on it', async () => {
   const p = livePage(board());
   await p.settle();
-  for (const [from, key, to] of [['build', 'ArrowRight', 'shipped'], ['shipped', 'ArrowRight', 'plan'], ['plan', 'ArrowLeft', 'shipped'], ['shipped', 'ArrowLeft', 'build'], ['build', 'ArrowLeft', 'plan']]) {
+  for (const [from, key, to] of [['build', 'ArrowRight', 'shipped'], ['shipped', 'ArrowRight', 'capture'], ['capture', 'ArrowLeft', 'shipped'], ['shipped', 'ArrowLeft', 'build'], ['build', 'ArrowLeft', 'plan'], ['plan', 'ArrowLeft', 'capture'], ['capture', 'ArrowRight', 'plan']]) {
     arrow(p, from, key);
     openIs(p, to, `${key} on ${from}`);
     assert.equal(p.focused(), p.byId(TAB[to]), `${key} on ${from}: the focus is on ${to}'s tab`);

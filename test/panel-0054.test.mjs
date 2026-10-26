@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fm, page, panelRepo, freePort, startPanel, stop, fakePage, full, idea, click, toggles, items, top, button, findChrome, browserPage, charAt } from './support/panel.mjs';
+import { fm, page, panelRepo, freePort, startPanel, stop, fakePage, full, idea, click, items, top, button, findChrome, browserPage, charAt } from './support/panel.mjs';
 
 // ---------- 0054: a short ticket in Shaping, with the full ticket in a side pane ----------
 
@@ -100,9 +100,10 @@ test('0054 AC4: the pane stays through the refresh, shows new data, and closes w
   showFull(p, '0001');
   await refresh(p);
   assert.ok(paneOpen(p) && pane(p).textContent.includes('First criterion.'), 'still showing the same ticket');
-  click(toggles(p)[1]);
-  assert.ok(paneOpen(p), 'showing the Ideas list leaves it');
-  click(toggles(p)[0]);
+  // 0520: Plan's Tickets, Ideas and Inbox buttons are gone; opening the Capture lane leaves the pane.
+  click(p.byId('tab-capture'));
+  assert.ok(paneOpen(p), 'showing the Capture lane leaves it');
+  click(p.byId('tab-plan'));
   await refresh(p);
   assert.ok(pane(p).textContent.includes('First criterion, reworded.') && !pane(p).textContent.includes('Second criterion.'), 'the new content shows');
   await refresh(p);
