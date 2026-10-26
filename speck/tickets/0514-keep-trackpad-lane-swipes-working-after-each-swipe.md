@@ -1,7 +1,7 @@
 ---
 id: "0514"
 title: "Keep trackpad lane swipes working after each swipe"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,13 +15,13 @@ source: "speck/ideas/done/2026-10-26-keep-trackpad-lane-swipes-working-after-eac
 after: []                # ticket ids that must be done first
 created: 2026-10-26
 started: "2026-10-26T10:45:32.928Z"
-blocked_at: "2026-10-26T14:38:39.205Z"
-waited_seconds: 13379
+blocked_at: ""
+waited_seconds: 13452
 
 ---
 # 0514 · Keep trackpad lane swipes working after each swipe
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 On a laptop trackpad in Cursor's panel pane, a sideways scroll changes lane once, then further left/right swipes do nothing until you click the panel. After that click, one swipe works again, and you have to click once more for the next. Swiping between Plan, Build and Shipped should not need a click between each change.
@@ -48,6 +48,7 @@ A sideways trackpad scroll keeps changing lane on each gesture, without a click 
 - Self-check: no changes. Checked: a scroll whose events carry no change sideways is skipped as before; jitter the other way at a glide's end is undone by the next step the same way, so it never adds up to 40 px; a discrete tilt wheel changes lane once a notch, now after a 50 ms pause rather than 150 ms; nothing is kept between page loads.
 - AC4: no existing test checked that a second trackpad scroll within the quiet window is ignored, so none was changed.
 - Went with the recommendation: allow it: a pause of 50 ms or more (chosen by the user in the panel, 2026-10-26 14:37 UTC).
+- Went with the recommendation: raise review rounds to 4 for one more round (chosen by the user in the panel, 2026-10-26 14:39 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
