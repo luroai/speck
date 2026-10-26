@@ -130,3 +130,81 @@ A sideways trackpad scroll keeps changing lane on each gesture, without a click 
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "20be0b4947fb12c738eff085088efdddae571b9d",
+    "session": "continued",
+    "thread_id": "01a177d3-73d3-78d0-a192-c50c443e8a76",
+    "builder_response": "- Tests run: test/panel-0514.test.mjs test/panel-0476.test.mjs (with the commands.checks files).\n- F1: fixed. In templates/panel-header.js's wheel handler, a scroll the same way now counts as new only once the glide has slowed steadily: five steps in a row, none faster than the one before, down to a quarter of its fastest step (which now starts from the step that changed lane). A dip and a speed-up within one swipe no longer re-arms it. Your sequence [20,20,30,8,22,22,16,10,5,2,1] is in the AC3 glides test, from Plan and from Shipped, and changes lane once. The trade-off: a same-way swipe while the last glide is still going fast is ignored, as before this ticket; the other way still always works (AC1), and a same-way swipe once the glide has nearly stopped, or after any pause, works (new AC1 test and the AC2 tests). The AC1 cut-glide test now checks reversals only.\n",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 172420,
+      "cached_input_tokens": 130176,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2364,
+      "reasoning_output_tokens": 307
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T10:51:45.949Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The three AC1 tests in test/panel-0514.test.mjs passed, covering successive reversals without other input and same-direction swipes after sufficient deceleration. Cursor-specific delivery remains unverified."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The passing AC2 pause test always completes the full synthetic glide first. The current handler ignores a same-direction second swipe after a short pause if the first gesture has not armed low: [20,20,30,24], then a 100 ms gap, then [20,20] produces no second change."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The original F1 sequence now produces one change, but executing the current handler with [20,20,30,24,18,12,8,6,22,22,16,10,5,2,1] at 16 ms intervals still produces two stepLane(1) calls during a continuous slowdown and acceleration. Keyboard and strip tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied run reports 124 passes, zero failures and three skips. Existing test files remain unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "The fix handles the exact previous example but retains the underlying false detection. A continuous swipe with deltas [20,20,30,24,18,12,8,6,22,22,16,10,5,2,1], 16 ms apart, triggers twice. Five decreasing steps can occur while fingers remain down; they do not establish that a gesture ended.",
+        "suggested_fix": "Revise the gesture boundary approach rather than only extending the deceleration threshold. Add this continuous slowdown-and-acceleration sequence to the regression tests and preserve one lane change.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "The stricter detector ignores same-direction second gestures after short pauses unless the previous gesture decelerated sufficiently. This contradicts AC2's 'pause of any length'. For example, [20,20,30,24], a 100 ms pause, then [20,20] changes lane only once. The pause test misses this because it always supplies a complete decaying glide before pausing.",
+        "suggested_fix": "Cover pauses after a truncated glide, starting from Plan so a second same-direction change is observable, and make those gestures work as AC2 requires. If reliable gesture separation requires a product trade-off, explicitly escalate that decision instead of narrowing the tests.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The original example is fixed, but varying speed within one swipe can still skip two lanes. The stricter detection also ignores some second swipes after short pauses. The passing tests do not cover these cases."
+  }
+}
+```
+
+</details>

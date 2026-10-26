@@ -11,8 +11,8 @@ const lane = p => Object.keys(TAB).filter(l => (p.byId(TAB[l]).attrs || {})['ari
 
 // The page, with a trackpad over its lanes: each scroll sends wheel events as a browser does, one a frame (16 ms), each
 // with the time it happened. `pause` is how long it waits before the scroll's first event.
-async function pad() {
-  const p = fakePage([board()]);
+async function pad(globals) {
+  const p = fakePage([board()], globals);
   await p.settle();
   let now = 1000;
   const lanes = p.byId('lanes');
@@ -20,6 +20,7 @@ async function pad() {
     now += gap;
     lanes.listeners.wheel({ deltaX, deltaY, timeStamp: now, target: lanes, cancelable: true, preventDefault() {} });
   };
+  p.now = () => now;
   p.scroll = (deltas, { pause = 16, way = 1 } = {}) => deltas.forEach((d, i) => p.wheel(way * d, 0, i ? 16 : pause));
   return p;
 }
@@ -54,30 +55,36 @@ test('0514 AC1: a swipe the other way that stops the last one\'s glide while it 
   assert.equal(lane(p), 'build', 'and a fourth, as the fingers of the third lift');
 });
 
-test('0514 AC1: a swipe the same way, once the last one\'s glide has slowed right down, changes lane without a pause', async () => {
-  const p = await pad();
-  p.scroll(swipe(14), { way: -1 });
-  assert.equal(lane(p), 'plan', 'a scroll left');
-  p.scroll(swipe(14));
-  assert.equal(lane(p), 'build', 'one back, the next frame after the glide\'s last step');
-  p.scroll(swipe(16));
-  assert.equal(lane(p), 'shipped', 'and on the same way, with that one\'s glide slowed right down but still going');
-});
-
 // ---------- AC2 ----------
 
-test('0514 AC2: a pause of any length between two sideways scrolls still lets the second one change lane', async () => {
-  for (const pause of [16, 40, 100, 149, 150, 400, 5000, 600000]) {
+test('0514 AC2: a pause of any length between two sideways scrolls still lets the second one change lane, either way, however the first one ended', async () => {
+  // From a pause of 50 ms: anything shorter is the time between two frames of one scroll.
+  for (const pause of [50, 100, 149, 150, 400, 5000, 600000]) {
+    for (const [what, first] of [['its glide run out', swipe()], ['cut short in its glide', swipe(2)], ['stopped under the fingers', [20, 20, 30, 24]]]) {
+      const p = await pad();
+      p.scroll(first, { way: -1 });
+      assert.equal(lane(p), 'plan', `${what}: a scroll left`);
+      p.scroll([20, 20], { pause });
+      assert.equal(lane(p), 'build', `${what}: a second, right, after ${pause} ms`);
+      p.scroll(first, { pause });
+      p.scroll([20, 20], { pause });
+      assert.equal(lane(p), 'shipped', `${what}: the same way, after ${pause} ms`);
+      p.scroll(first, { pause, way: -1 });
+      assert.equal(lane(p), 'build', `${what}: and back, after ${pause} ms`);
+    }
+  }
+});
+
+test('0514 AC2: a scroll the other way changes lane after any pause, however short, as a glide never turns back', async () => {
+  for (const pause of [8, 16, 30, 49]) {
     const p = await pad();
-    p.scroll(swipe());
-    p.scroll(swipe(), { pause });
-    assert.equal(lane(p), 'shipped', `a scroll right, then a second the same way after ${pause} ms goes no further than the last lane`);
-    p.scroll(swipe(), { pause, way: -1 });
+    p.scroll(swipe(3));
+    p.scroll(swipe(3), { pause, way: -1 });
     assert.equal(lane(p), 'build', `back, after ${pause} ms`);
-    p.scroll(swipe(), { pause, way: -1 });
-    assert.equal(lane(p), 'plan', `on the same way, after ${pause} ms`);
-    p.scroll(swipe(), { pause });
-    assert.equal(lane(p), 'build', `and back, after ${pause} ms`);
+    p.scroll(swipe(3), { pause, way: -1 });
+    assert.equal(lane(p), 'build', `on the same way after only ${pause} ms counts as the same scroll`);
+    p.scroll(swipe(3), { pause });
+    assert.equal(lane(p), 'shipped', `and back again, after ${pause} ms`);
   }
 });
 
@@ -102,6 +109,7 @@ test('0514 AC3: one continuous glide changes lane only once, however long, with 
     'one that wobbles under the fingers': [4, 10, 20, 14, 25, 12, 30, 18, 24, ...glide()],
     'a glide with jitter at its end': [...swipe(), 1, -1, 2, 1, -0.5, 1, 2, 1, 1, -1, 2, 1, 2, 1, 1, 2, 1, 1],
     'one that slows for a moment and speeds up again': [20, 20, 30, 8, 22, 22, 16, 10, 5, 2, 1],
+    'one that slows down and speeds up again over a few frames': [20, 20, 30, 24, 18, 12, 8, 6, 22, 22, 16, 10, 5, 2, 1],
     'a slow one that crawls on': [2, 3, 4, 5, 6, 6, 5, 6, 7, 6, 5, 6, 5, 4, 3, 2, 2, 1, 2, 1, 1],
   };
   for (const [what, deltas] of Object.entries(glides)) {
@@ -113,6 +121,23 @@ test('0514 AC3: one continuous glide changes lane only once, however long, with 
       assert.equal(lane(p), 'build', `${what}, ${way > 0 ? 'right from Plan' : 'left from Shipped'}: one lane`);
     }
   }
+});
+
+test('0514 AC3: steps held up while the page changes lane don\'t count as a pause, so the rest of the swipe changes nothing', async () => {
+  let p = null;
+  const slow = { now: () => p.now() + 110 }; // the page takes 110 ms to change lane, and the browser holds the steps meanwhile
+  p = await pad({ performance: slow });
+  p.scroll([3, 7, 12, 18]);
+  assert.equal(lane(p), 'shipped', 'the swipe changes lane');
+  p.wheel(22 + 20 + 16, 0, 120); // the steps held up, as one, timed by the last of them
+  p.scroll(glide());
+  p.scroll(swipe(), { way: -1, pause: 1000 });
+  p.scroll([3, 7, 12, 18], { way: -1, pause: 1000 });
+  assert.equal(lane(p), 'plan', 'and from Shipped, two scrolls left go to Plan');
+  p.scroll([3, 7, 12, 18]);
+  p.wheel(58, 0, 120);
+  p.scroll(glide());
+  assert.equal(lane(p), 'build', 'a swipe right from Plan, held up the same way, stops at Build');
 });
 
 test('0514 AC3: a short sideways scroll, under 40 px, changes nothing, nor does a second one after a pause', async () => {
