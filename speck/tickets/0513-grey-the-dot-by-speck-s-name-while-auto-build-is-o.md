@@ -40,6 +40,7 @@ The dot by speck's name is red while Auto-build is on and grey while it's off, l
 - Asked for by the user on 2026-10-26: "When auto build is off, the red dot next to the speck title should be off too, maybe grey instead of red."
 - Today: `.bezel .name::before` in `templates/panel-header.css` is `var(--lcd-red)` (0438). `drawHeader` in `templates/panel-header.js` sets the frame's class from the Foreman's word (`bezel needs`), which an off state can follow.
 - Unchained from 0512, which changes the watching beats in `templates/panel-header.js`, not `drawHeader`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
