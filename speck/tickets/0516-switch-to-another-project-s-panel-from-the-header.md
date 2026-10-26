@@ -46,6 +46,7 @@ From one panel, at the address it was opened at, including its home-screen app, 
 - risk: high because it changes who can reach a panel: each panel today answers only its own Host and Origin (`hosts` and `origins` in `scripts/panel.mjs`) and needs the token its page carries.
 - The list of running panels lives in the user's home folder (for example `~/.config/speck/panels/`), as `~/.config/speck/private-words` does, never in a repo: it holds folder paths.
 - Failing before this build: none
+- Self-check: a panel with no home folder to keep its record in now still starts (alone in the menu) rather than failing; added a test for it.
 - Header: `templates/panel.html`, `templates/panel-header.js` and `templates/panel-header.css`. Server: `scripts/panel.mjs` (at the 600-line limit for `scripts/`) and `scripts/panel-background.mjs`.
 
 ## In plain words

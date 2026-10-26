@@ -1511,6 +1511,7 @@ async function load(version) {
       if (!(body && body.error)) retry = version;
     } else {
       state = body; have = now; showRestartError(body.restart_error);
+      projectsGone(null); // 0516: its panel is back
       if (slow !== null) { clearTimeout(slow); slow = null; }
       setConnected(true);
     }
@@ -1545,6 +1546,7 @@ function connect() {
     streamName = /^[0-9a-f]{32}$/.test(e.data) ? e.data : null;
     for (const id of openQueue) if (queueIds.has(id)) loadLog(id);
   });
+  s.addEventListener('gone', e => { if (source !== s) return; heard(); let g = null; try { g = JSON.parse(e.data); } catch { /* not a list */ } projectsGone(g || { list: [] }); }); // 0516: the project shown has stopped
   s.addEventListener('log', e => { if (source !== s) return; let u = null; try { u = JSON.parse(e.data); } catch { /* not an update */ } logUpdate(u); });
   s.addEventListener('ping', () => {
     if (source !== s) return;
