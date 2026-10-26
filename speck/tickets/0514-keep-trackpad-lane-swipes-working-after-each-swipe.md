@@ -52,7 +52,7 @@ A sideways trackpad scroll keeps changing lane on each gesture, without a click 
 - Raised `limits.max_review_rounds` to 4 in the main checkout and this worktree (2026-10-26, user: get 0514 moving again).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a laptop trackpad, swiping left or right across the panel's lanes (Plan, Build, Shipped and so on) now keeps working swipe after swipe, without needing a click in between. Swipe the other way and the lane changes at once; swipe the same way again after a short pause and it changes again. Check it in the panel with a trackpad: change lane, then swipe again without clicking. Arrow keys and the lane strip still work as before. The fix was checked with simulated trackpad scrolls; a live check inside Cursor's panel pane is still worth a quick try if something feels stuck.
 
 ## Blocked question
 You chose to raise the review rounds to 4, but the setting is still 3: going with the recommendation records the choice and can't change it, and the build may not change that limit itself. Please set "Review rounds" to 4 in the panel's Settings (or run `speck config set limits.max_review_rounds 4` in the main checkout), then run /speck-build 0514, so one more round can check the change against the new criterion 2. Or leave the ticket blocked.
@@ -66,6 +66,9 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+- Known limit: live trackpad delivery inside Cursor's panel pane was not re-checked in this build; coverage is simulated wheel events.
+- Follow-ups skipped: allowing one more review round without editing config (already shipped as 0242 / idea done 2026-10-09).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -290,6 +293,84 @@ Clear winner: yes
     ],
     "escalation_question": "May AC2 allow same-direction swipes less than 50 ms apart to count as one gesture, while reversals continue to work without a pause?",
     "summary": "The accidental double-change examples are fixed, and all supplied tests pass. Rapid same-direction swipes are deliberately ignored unless separated by at least 50 ms. That narrows the ticket's promise and needs your decision before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "50096d7e1dd59e78b40ce91e68cba4c954d9c775",
+    "session": "continued",
+    "thread_id": "01a177d3-73d3-78d0-a192-c50c443e8a76",
+    "builder_response": "- Tests run: test/panel-0514.test.mjs test/panel-0476.test.mjs (and the commands.checks files speck test --files adds). 125 passed, 0 failed, 3 skipped.\n\n- The blocked question is settled: `limits.max_review_rounds` is now 4 in the main checkout and this worktree, so this round can run. Criterion 2 already reads \"a pause of 50 ms or more…, and a scroll the other way changes lane after any pause or none,\" matching the code and tests from the earlier go-with-recommendation. No code change in this round; please re-check AC2 against that wording and approve if it holds.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 371872,
+      "cached_input_tokens": 318592,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3897,
+      "reasoning_output_tokens": 321
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-26T14:42:49.633Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The AC1 tests in test/panel-0514.test.mjs passed, exercising successive lane reversals without clicks, taps or keys. Cursor-specific event delivery remains unverified."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The updated criterion explicitly permits the 50 ms threshold. The wheel handler implements it, and passing AC2 tests cover pauses from 50 ms to ten minutes after full and truncated glides, rapid reversals, and intervening vertical scrolling."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests cover continuous glides, both F1 regression sequences, jitter, delayed rendering, arrow keys and strip clicks. Speed-based rearming remains removed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied test run reports 125 passes, zero failures and three skips. No implementation or test changes were made this round."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "Speed-based rearming previously allowed one swipe to change lane twice.",
+        "suggested_fix": "Completed: speed-based rearming was removed and both reported sequences have passing regression coverage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "The 50 ms minimum pause previously contradicted criterion 2.",
+        "suggested_fix": "Completed: the recorded owner decision and updated criterion explicitly allow the implemented threshold.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved against the updated requirements. Reversals work without a click, and same-direction swipes work after a pause of at least 50 ms. The reported double-change regressions are covered and all supplied tests pass. Testing inside Cursor itself remains outstanding."
   }
 }
 ```
