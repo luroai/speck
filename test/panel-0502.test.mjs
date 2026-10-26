@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { T } from './support/panel.mjs';
 import { building, board, speckPage, shows } from './support/screen-speck.mjs';
 import { LCD } from './support/screen.mjs';
+import { BEFORE_0512 } from './support/watch-rhythm.mjs';
 
 // ---------- 0502: speck watches a little retro TV for each build ----------
 
@@ -16,6 +17,7 @@ async function watching(word = 'Building 1', o = {}) {
   await p.settle();
   p.draw(1000, false);
   const pose = p.cast().poses.watch;
+  pose.parts.setRhythm(BEFORE_0512); // 0512: these tests check what each beat does, at the rhythm they were written for
   return { p, pose, parts: pose.parts };
 }
 // The lit dots of a frame's props with the given keys, or of speck itself (`body`), on the panel's 160 × 72 screen.

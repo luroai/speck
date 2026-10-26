@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { T } from './support/panel.mjs';
 import { board, speckPage } from './support/screen-speck.mjs';
 import { LCD } from './support/screen.mjs';
+import { BEFORE_0512 } from './support/watch-rhythm.mjs';
 
 // ---------- 0503: speck's eight small habits while it watches ----------
 
@@ -15,6 +16,7 @@ async function watching(n = 1, o = {}) {
   await p.settle();
   p.draw(1000, false);
   const pose = p.cast().poses.watch;
+  pose.parts.setRhythm(BEFORE_0512); // 0512: these tests check what each beat does, at the rhythm they were written for
   return { p, pose, parts: pose.parts };
 }
 // Frames from the pose's start, every `step` ms, always forwards (going back starts a fresh plan), with their beat.
