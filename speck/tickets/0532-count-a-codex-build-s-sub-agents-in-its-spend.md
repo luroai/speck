@@ -1,7 +1,7 @@
 ---
 id: "0532"
 title: "Count a Codex build's sub-agents in its spend"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T18:30:44.379Z"
+approved: "2026-10-27T18:35:38.500Z"
 
 ---
 # 0532 · Count a Codex build's sub-agents in its spend
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A Codex build that fans work out to Codex sub-agents records only its own thread's tokens, so its ticket's spend is understated. In a test on 27 October, a run with two small sub-agents recorded 75,480 tokens and left out another 30,488 (29%). A research ticket that fans out across many cases would be understated by far more.
@@ -54,9 +55,14 @@ To see it, let a Codex build that uses helper agents finish under `speck run`, t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 140,036
+- Elapsed since build started: 5 min
+- Changed lines: 122 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox notes):
   - Known limit: finding a build's sub-agents reads the first line of every rollout file in the Codex sessions folder, once when the build ends. It grows with Codex history; limiting it to day folders from the build's start onwards would keep it small.
