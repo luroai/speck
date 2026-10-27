@@ -41,6 +41,7 @@ A shipped ticket in the panel shows its total AI cost: builder, reviewer and wat
 ## Notes
 - Facts are built in `shippedFacts` in `templates/panel.js`, the line near the `builderCost` use around line 1284, the stats in the Shipped header around line 1328, and the figures in `templates/panel-model.js` and `scripts/board-feed.mjs` (the Shipped cut-down keeps only what those use).
 - Keep the panel's phone-width layout: the facts grid gains two cells.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
