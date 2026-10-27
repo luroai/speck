@@ -145,3 +145,86 @@ There's no way to see what AI work has cost, per ticket or per week or month, wi
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "62557dedbdceebc17506443ee53780fc39964cdf",
+    "session": "continued",
+    "thread_id": "01a17d76-5ff9-72f2-bd45-5e422fab06a3",
+    "builder_response": "- Tests run: test/spend-0527.test.mjs test/total-cost-0526.test.mjs (the commands.checks files run too).\n- F1: fixed. `usageSplit` in scripts/spend.mjs splits an older round's `meta.usage` when it has no `meta.tokens`. Codex's `input_tokens` and Cursor's `inputTokens` include the cached input, so that comes out of them as cached input. Claude Code's `input_tokens` leave the cache out. Either way the split adds up to the input plus output that `roundSpent` counts, so `speck status` and `speck spend` still agree. The old-round AC2 test now checks the split columns, and a new AC2 test covers each reviewer's usage shape and the totals agreeing.\n",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 252675,
+      "cached_input_tokens": 194176,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1663,
+      "reasoning_output_tokens": 190
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7271,
+      "cached": 105344,
+      "write": 0,
+      "output": 723
+    },
+    "cost_usd": 0.0323064,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T13:05:51.394Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "spendReport and spendLines produce ticket costs, tokens and totals through the shared spendParts/sumParts calculation. All three AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "usageSplit now preserves legacy input/output and inclusive cached input, but drops Claude's cache_read_input_tokens and every agent's cache writes. The new AC2 test explicitly expects zero cached tokens despite recording 4,000."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "spendParts retains individual end times and spendReport groups them by local Monday or calendar month. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "spendOptions validates real dates and their ordering; spendReport filters inclusively before grouping. Both AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdSpend serialises the selected report with null unknown costs and totals. The brief command table includes all required flags. Both AC5 tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/spend.mjs",
+        "issue": "The legacy token breakdown fix remains incomplete. usageSplit ignores Claude's cache_read_input_tokens and hard-codes write: 0 for every agent. Recorded cache reads and writes therefore appear as zero in --by=model. The new test enshrines this error: its Claude fixture records 4,000 cached tokens but expects cached: 0. Preserving the previous legacy total calculation does not satisfy AC2's required breakdown.",
+        "suggested_fix": "Preserve all available legacy token categories using the agent's usage shape, including Claude cache reads and each agent's cache writes. Update the shared legacy total calculation consistently so status and spend still agree. Correct the Claude assertion and add non-zero cache-write fixtures.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Ticket totals, date grouping, filtering and JSON output remain covered by passing tests. The model breakdown still hides recorded cache usage in older review rounds, so the previous finding needs another fix."
+  }
+}
+```
+
+</details>
