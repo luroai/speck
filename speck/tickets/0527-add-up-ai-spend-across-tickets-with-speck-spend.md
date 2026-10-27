@@ -49,7 +49,11 @@ There's no way to see what AI work has cost, per ticket or per week or month, wi
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+There's a new command, `speck spend`, that adds up what your tickets have cost in AI. By default it lists each ticket that spent anything, with what its builder, reviewer and watch agent cost, its total and its tokens, then a line of totals. You can ask for the same spend by model, by week or by month instead, narrow it to a range of days, or get it as JSON.
+
+To see it, run `speck spend` in a project that has built a few tickets, then try `speck spend --by=week`. A cost speck couldn't price shows as "unknown" rather than $0. A total that leaves some of it out says "at least", as the panel does.
+
+Worth keeping an eye on: older tickets built before speck recorded models show under "unknown model". For older review rounds, the totals now count their cached tokens too, so a few older tickets' token totals in the panel are a little higher than before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +63,9 @@ There's no way to see what AI work has cost, per ticket or per week or month, wi
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none sent to the inbox.
+- Known limit: a build record from before 0530 kept no models, so its tokens count under "unknown model" in `--by=model`'s Tokens column, with nothing in the four split columns. Recovering older spend is 0528's `--backfill`.
+- Behaviour change from review round 2: a review round saved before 0529 now counts its usage's cache reads and cache writes in `total_tokens` too, in `speck status --json` as well as `speck spend`, so the two agree.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -223,6 +230,89 @@ There's no way to see what AI work has cost, per ticket or per week or month, wi
     ],
     "escalation_question": "",
     "summary": "Ticket totals, date grouping, filtering and JSON output remain covered by passing tests. The model breakdown still hides recorded cache usage in older review rounds, so the previous finding needs another fix."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "79df99a8d0ba97d688834f087d83e89a3ffbdd49",
+    "session": "continued",
+    "thread_id": "01a17d76-5ff9-72f2-bd45-5e422fab06a3",
+    "builder_response": "- Tests run: test/spend-0527.test.mjs test/total-cost-0526.test.mjs (the commands.checks files run too).\n- F1: fixed. `roundSplit` in scripts/spend.mjs splits an older round's `meta.usage` with `roundTokens` (round-cost.mjs), shaped by its reviewer: Codex (its `reviewer` is codex, or its usage has `cached_input_tokens`), Cursor or Claude Code. Cache reads and cache writes are both kept. A usage it can't split, such as cached input larger than the input, falls back to input and output. `roundSpent`, which `speck status`'s `total_tokens` uses, now counts the same split, so the two still agree. The AC2 test now has non-zero cache writes for all three shapes and Claude's 4,000 cache reads. It also checks that `speck status --json`'s `total_tokens` equals `speck spend`'s.\n",
+    "seconds": 10,
+    "usage": {
+      "input_tokens": 378546,
+      "cached_input_tokens": 314112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2235,
+      "reasoning_output_tokens": 190
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5935,
+      "cached": 119936,
+      "write": 0,
+      "output": 572
+    },
+    "cost_usd": 0.0295836,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T13:07:01.773Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "spendReport and spendLines provide ticket rows, component costs, tokens and totals, including unknown costs and the empty state. The AC1 tests passed; status and spend share spendParts/sumParts."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Model grouping sums split tokens and costs across spend parts. roundSplit now uses roundTokens to retain legacy cache reads and writes. Passing AC2 tests cover all three agent usage shapes, unknown models and legacy reviewer_model fallback."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "spendParts preserves individual end times; spendReport groups by local Monday or calendar month. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "spendOptions validates dates and ordering; spendReport applies inclusive day filters before grouping. Both AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdSpend serialises the selected report with null unknown costs and a totals object. The brief command table lists all required flags. Both AC5 tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/spend.mjs",
+        "issue": "Legacy review rounds previously lost their recorded token breakdown, including cache reads and writes. The current roundSplit implementation preserves these categories and roundSpent uses the same calculation.",
+        "suggested_fix": "Completed. Regression tests now assert non-zero cache writes for all three agent formats, Claude cache reads, and agreement with status totals.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The command reports AI spend by ticket, model, week or month, with date filters and JSON output. The legacy token breakdown issue is fixed, all criteria pass, and no blocking concerns remain."
   }
 }
 ```
