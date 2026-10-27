@@ -210,18 +210,37 @@ function roundSpent(r) {
   return { tokens: counts.every(n => n === null) ? null : counts.reduce((n, x) => n + (x ?? 0), 0), cost_usd: num(meta.cost_usd) };
 }
 
-// 0526: ticket `id`'s total AI spend, from the builds and watch agent runs kept in `runs` and its saved review rounds:
-// the sum of the known costs, or null when none is known, the sum of the known tokens, or null when none is known, and
-// each part whose cost the total leaves out, in part, because a build, round or run of it has tokens but no cost:
-// 'builder', 'reviewer' or 'watch'.
-export function totalSpent(runs, id, rounds) {
+// 0527: each build, review round and watch agent run of ticket `id` that spent anything: {part, ended, tokens, cost_usd,
+// models}, part 'builder', 'reviewer' or 'watch', ended the time it ended (a build's exited, a round's saved_at, a watch
+// run's ended) or null when it's not known, and models each model it ran on as {model, tokens, cost_usd}, the model null
+// when it isn't known and the tokens null when they weren't split.
+export function spendParts(runs, id, rounds) {
+  const rec = /^[\w-]+$/.test(String(id ?? '')) ? readRecord(runs, String(id)) : null;
+  const time = v => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null);
+  const builds = buildsOf(runs, id).map((b, i, all) => ({ part: 'builder', ...b, ended: time(i === all.length - 1 ? rec?.exited : b.ended) }));
+  const reviews = (Array.isArray(rounds) ? rounds : []).map(r => {
+    const meta = plain(r) && plain(r.meta) ? r.meta : {}, spent = roundSpent(r), t = plain(meta.tokens) ? meta.tokens : null;
+    const split = t ? Object.fromEntries(['input', 'cached', 'write', 'output'].map(k => [k, num(t[k]) ?? 0])) : null;
+    return { part: 'reviewer', ended: time(meta.saved_at), ...spent, models: [{ model: usable(meta.model) ?? usable(meta.reviewer_model), tokens: split, cost_usd: spent.cost_usd }] };
+  });
+  const watch = watchOf(runs, id).map(x => ({ part: 'watch', ended: time(x.ended), tokens: num(x.tokens), cost_usd: num(x.cost_usd), models: modelsOf(x.models) }));
+  return [...builds, ...reviews, ...watch].filter(x => x.tokens !== null || x.cost_usd !== null)
+    .map(x => ({ ...x, models: x.models?.length ? x.models : [{ model: null, tokens: null, cost_usd: x.cost_usd }] }));
+}
+
+// 0527: the sums of `parts` (spendParts'): the sum of the known costs, or null when none is known, the sum of the known
+// tokens, or null when none is known, and each part whose cost the total leaves out, in part, because a build, round
+// or run of it has tokens but no cost: 'builder', 'reviewer' or 'watch', in that order.
+export function sumParts(parts) {
   const add = (t, v) => (v === null ? t : Math.round(((t ?? 0) + v) * 1e10) / 1e10);
-  const parts = [['builder', buildsOf(runs, id)], ['reviewer', (Array.isArray(rounds) ? rounds : []).map(roundSpent)], ['watch', watchOf(runs, id)]];
   let cost = null, tokens = null;
-  const unknown = [];
-  for (const [name, list] of parts) {
-    for (const x of list) { cost = add(cost, num(x.cost_usd)); tokens = add(tokens, num(x.tokens)); }
-    if (list.some(x => num(x.cost_usd) === null && num(x.tokens) > 0)) unknown.push(name);
-  }
+  for (const x of parts) { cost = add(cost, num(x.cost_usd)); tokens = add(tokens, num(x.tokens)); }
+  const unknown = ['builder', 'reviewer', 'watch'].filter(p => parts.some(x => x.part === p && num(x.cost_usd) === null && num(x.tokens) > 0));
   return { total_cost_usd: cost, total_tokens: tokens, total_cost_unknown: unknown };
+}
+
+// 0526: ticket `id`'s total AI spend, from the builds and watch agent runs kept in `runs` and its saved review rounds:
+// sumParts of its spendParts (0527), so speck status and speck spend never disagree.
+export function totalSpent(runs, id, rounds) {
+  return sumParts(spendParts(runs, id, rounds));
 }

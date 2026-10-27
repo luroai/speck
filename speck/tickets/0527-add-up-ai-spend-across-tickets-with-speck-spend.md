@@ -42,6 +42,11 @@ There's no way to see what AI work has cost, per ticket or per week or month, wi
 - Use the same per-ticket figures as `speck status --json` (0526's `total_cost_usd` and `total_tokens`), so the two never disagree.
 - `--by=week`, `--by=month`, `--since` and `--until` need the time each part of the spend ended: a build's `exited` in its run record, a round's `saved_at`, and the times 0523, 0525 and 0528 keep.
 - Failing before this build: none
+- AC1, AC5 reading: a cost none of which is known is "unknown" (null in JSON). One that's partly known, such as a builder with one build priced and one not, shows the known part as "at least $X", as the panel already does (0526), and is a number in JSON with `cost_unknown: true`. So each ticket's total is the same `total_cost_usd` that `speck status --json` gives.
+- A part with no end time, such as a build record with no `exited`, counts in the views without dates, falls under "unknown date" in `--by=week` and `--by=month`, and is left out once `--since` or `--until` is given.
+- An old review round with no `model` counts under its `reviewer_model` when that names a model, or else under "unknown model".
+- `speck.mjs` is at its 600-line limit, so `cmdPrices` and the new `cmdSpend` are imported through `core.mjs`, which frees the line that `speck spend`'s help needs.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
