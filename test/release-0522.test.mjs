@@ -16,16 +16,21 @@ const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const notes = () => read('docs/releases/v0.18.0.md');
 const INSTALL = /npx github:luroai\/speck#v0\.18\.0 init/;
 
-test('0522 AC1: package.json is version 0.18.0', () => {
-  assert.equal(JSON.parse(read('package.json')).version, '0.18.0');
+// 0531 (release 0.19.0) made the checks below that named 0.18.0 as the current version check the current version instead.
+const version = () => JSON.parse(read('package.json')).version;
+const esc = v => v.replace(/\./g, '\\.');
+
+test('0522 AC1: package.json has the current release version', () => {
+  assert.match(version(), /^\d+\.\d+\.\d+$/);
+  assert.ok(changelogSection(read('CHANGELOG.md'), version()), 'with a changelog section of its own');
 });
 
-test('0522 AC1: speck init prints speck 0.18.0', () => {
+test('0522 AC1: speck init prints speck and the current version', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   const r = spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^speck 0\.18\.0: /m);
+  assert.match(r.stdout, new RegExp(`^speck ${esc(version())}: `, 'm'));
 });
 
 // Where the section sits and that it describes each change are about how the changelog reads: checked by review.
@@ -48,8 +53,8 @@ test('0522 AC2: CHANGELOG.md\'s 0.17.0 and earlier sections are as v0.17.0 left 
 });
 
 // Only the version is a fact: the rest of the status line's wording is checked by review.
-test('0522 AC3: the README\'s and the brief\'s status lines name 0.18.0', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), /Status: 0\.18\.0\b/, f);
+test('0522 AC3: the README\'s and the brief\'s status lines name the current version', () => {
+  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), new RegExp(`Status: ${esc(version())}\\b`), f);
 });
 
 test('0522 AC3: the setup prompt still installs the latest release, as 0253 left it', () => {
@@ -87,7 +92,6 @@ test('0522 AC5: the Built with speck figures 0.18.0 was built from match the don
   assert.deepEqual(builtWithSpeckFigures(doneTicketsAt(commit)), { shipped: 505, cancelled: 16, medianMinutes: 13, medianRounds: 1, firstRound: 257 });
 });
 
-test('0522 AC5: package.json and the newest changelog section name 0.18.0', () => {
+test('0522 AC5: package.json and the newest changelog section name the same version', () => {
   assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md') }), []);
-  assert.equal(JSON.parse(read('package.json')).version, '0.18.0');
 });

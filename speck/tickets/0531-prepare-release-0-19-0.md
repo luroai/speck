@@ -47,6 +47,12 @@ speck is ready to be released as 0.19.0.
 - Checked 2026-10-27: `package.json` is `0.18.0`.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - Failing before this build: none
+- Shipped since `v0.18.0`: 0523 to 0530, and no others.
+- `npm run prices` ran on 2026-10-27 and wrote the same table 0524 had taken that morning (taken 2026-10-27), so `scripts/prices.json` has no diff. `test/release-0531.test.mjs` checks the table's date is on or after the day this was built, so a later release's refresh doesn't break it.
+- AC5's README figures aren't tested in the README, as 0491 left the rule: `test/release-0531.test.mjs` checks the figures worked out from `speck/tickets/done/` at the commit this was built from (514 shipped, 16 cancelled, 13 minutes, 1 round, 260 in round 1), and the reviewer checks the README gives them.
+- `test/release-0522.test.mjs`'s checks of the current version now follow `package.json`, as 0522 did for 0518, and `test/docs-0491.test.mjs` lets `test/release-0531.test.mjs` read the README for its status line and setup prompt, as it does every release test.
+- Self-check: no changes. Each claim in the changelog and release notes checked against 0523 to 0530, the `speck status --json` field names against its output, and `speck prices` against a known model and `auto`.
+- Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
