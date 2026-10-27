@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.20.0 · 27 October 2026
+
+What's new since 0.19.0. A minor release that makes a ticket's spend complete when its build hands work out to other agents: helper agents a build starts, and Codex runs started in a ticket's own folder, now count in what the ticket cost. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.20.0 init`.
+
+### Recording spend
+
+- A Codex build's tokens and cost now include the sub-agents it started, and the sub-agents they started in turn, each read from its own session file in `~/.codex/sessions/` (or `$CODEX_HOME/sessions/`) and priced at the model it ran on. Before, only the build's own thread counted, so such builds looked cheaper than they were. When a sub-agent's model has no rates, the build's cost is unknown rather than too low. speck's watch agent, when it runs on Codex, is counted the same way.
+- A Claude Code build's spend is now checked against a real build that started sub-agents: its recorded tokens already included them, and still do.
+- When a build ends, `speck run` also counts each Codex session started in the ticket's worktree, however it was started, for example by a Claude Code builder running `codex exec` itself to hand off some research. Each session counts once, with its sub-agents, and one already counted as the ticket's build, review round or watch agent run isn't counted again. A ticket built with `worktrees` off has no worktree, so none is counted.
+- `speck status --json` gives each ticket's `delegated_tokens` and `delegated_cost_usd` for those sessions, null when it has none. Its `total_cost_usd` and `total_tokens` include them, and `total_cost_unknown` names `delegated` when one of them has no known cost.
+
+### Adding up spend
+
+- `speck spend` counts those sessions as a part of their own, `delegated`, and shows a Delegated column when any ticket listed has some. A ticket's total cost in the panel includes them.
+
 ## 0.19.0 · 27 October 2026
 
 What's new since 0.18.0. A minor release about what your AI work costs: speck now records the tokens and cost of every build, review round and watch agent run, on any agent and model, shows each shipped ticket's total cost in the panel, and adds spend up for you with a new `speck spend` command. Costs speck works out itself are estimates at API list prices.
