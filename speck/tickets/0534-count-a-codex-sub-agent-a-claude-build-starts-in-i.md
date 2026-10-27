@@ -1,7 +1,7 @@
 ---
 id: "0534"
 title: "Count Codex sessions started in a ticket's worktree in its spend"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-27T18:47:24.053Z"
 ---
 # 0534 · Count Codex sessions started in a ticket's worktree in its spend
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Some research works better on Codex: in a test on 27 October, Opus was poor at finding LinkedIn contacts and Codex was better. So a Claude Code build will hand that part of a ticket to Codex, running `codex exec` itself, on a model such as `gpt-6.1-sol`. speck never sees a Codex process the builder starts, so the ticket's spend leaves it out and the user can't see what that research costs.
@@ -64,3 +64,89 @@ A Codex session started inside a ticket's worktree counts in that ticket's spend
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4f0b93781f7c72ee90040b2194d71fd698b1eae3",
+    "session": "fresh",
+    "thread_id": "01a17eb7-03df-7d52-9870-4bb2ea7f8d36",
+    "builder_response": "- Tests run: `speck test --related test/spend-0534.test.mjs` (the ticket's own file, plus the 192 existing test files that name a changed file, with the `commands.checks` files): 1983 tests, 0 failing.\n- Notes for the reviewer:\n  - The scan is `codexSessionsIn` in `scripts/round-cost.mjs`; the record, exclusions and sums are `recordDelegatedSpend`, `countedThreads`, `delegatedSpent` and the `delegated` part in `scripts/spend.mjs`. `speck run` calls it at the end of `recordExit` in `scripts/run.mjs`, inside its own try/catch.\n  - Sub-agent sessions (with a parent thread) are never counted as delegated sessions on their own. They count with the session that started them (codexSubagents), or belong to an excluded build/round, which covers AC2's \"or as a sub-agent of one\".\n  - `recordWatchSpend` now also keeps a Codex watch run's thread, so AC2 can exclude it.\n  - `speck spend` shows a Delegated column only when a ticket shown has delegated spend, so tables without any read as before (0527's tests).\n  - The worktree is found with `ticketsElsewhere`, which leaves out the main checkout, so with `worktrees` off nothing is counted (stated in the brief).\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 223695,
+      "cached_input_tokens": 162688,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1045,
+      "reasoning_output_tokens": 173
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 61007,
+      "cached": 162688,
+      "write": 0,
+      "output": 1045
+    },
+    "cost_usd": 0.1487328,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T18:55:13.109Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The passing AC1 tests cover ordinary sessions and descendants with a usable parent. However, scripts/round-cost.mjs:180 unconditionally excludes sub-agent sessions, and :185–186 excludes parents without usage. A valid child with usage is therefore lost when its parent's file is missing, malformed or has no usage."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "countedThreads and delegatedOf in scripts/spend.mjs exclude recorded threads and repeated delegated records. Both AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "delegatedSpent, spendParts and sumParts feed statusData and spendReport. Both AC3 tests passed, covering totals, null values and unknown delegated costs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "sessionMetas and sessionUsage catch file errors; run.mjs catches delegated recording errors separately from saving the exit. Both AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/brief.md's speck run entry describes counting Codex sessions in the worktree. The AC5 test checks document facts. Reported related tests had zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/round-cost.mjs:180",
+        "issue": "Sub-agent sessions are discarded even when nothing else counts them. For example, a parent session in the worktree with no token_count and a child with valid usage produces no delegated spend: the parent fails sessionUsage and the child is unconditionally skipped. A missing or malformed parent file has the same effect. This loses real spend required by AC1.",
+        "suggested_fix": "Exclude a sub-agent only when its usage is included through a recorded ancestor or an excluded build, review or watch session. Otherwise record its eligible usage and descendants once. Add regression tests for a child with usage whose parent has no usage or an unreadable/missing file.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change records ordinary delegated Codex spend and includes it in status and spend totals. The reported tests pass, but valid sub-agent spend can disappear when its parent's usage is unavailable. Fix that accounting gap before merge."
+  }
+}
+```
+
+</details>

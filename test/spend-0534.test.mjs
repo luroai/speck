@@ -80,6 +80,31 @@ test('0534 AC1: a session\'s sub-agents count with it, each at its own model (05
   close(rows[0].models.find(m => m.model === 'gpt-test').cost_usd, price(own) + price(deep));
 });
 
+test('0534 AC1: a sub-agent with usage counts when its parent has none, or its parent\'s file is missing or can\'t be parsed', () => {
+  const s = setup();
+  s.h.add('EMPTY', { cwd: s.wt }); // a parent with no token_count yet
+  s.h.add('E1', { cwd: s.wt, parent: 'EMPTY', usages: [usage(1000, 0, 100)] });
+  s.h.add('E2', { cwd: s.wt, parent: 'E1', usages: [usage(500, 0, 50)] });
+  s.h.add('HALF', { text: `${JSON.stringify({ type: 'session_meta', payload: { id: 'HALF', cwd: s.wt, source: 'exec' } })}\n{"type":"event_msg","payload":{"type":"token_count","info":{"total_` });
+  s.h.add('H1', { cwd: s.wt, parent: 'HALF', usages: [usage(3000, 0, 300)] });
+  s.h.add('M1', { cwd: s.wt, parent: 'MISSING', usages: [usage(2000, 0, 200)] }); // its parent has no file
+  s.h.add('BROKEN', { text: 'not json\n' });
+  s.h.add('B1', { cwd: s.wt, parent: 'BROKEN', usages: [usage(4000, 0, 400)] });
+  record0(s);
+  const by = Object.fromEntries(kept(s.runs).map(x => [x.thread, x.tokens]));
+  assert.deepEqual(by, { EMPTY: 1100 + 550, HALF: 3300, M1: 2200, B1: 4400 });
+  assert.deepEqual(record0(s), [], 'and once');
+  close(delegatedSpent(s.runs, '0001').cost_usd, [usage(1000, 0, 100), usage(500, 0, 50), usage(3000, 0, 300), usage(2000, 0, 200), usage(4000, 0, 400)].reduce((t, u) => t + price(u), 0));
+});
+
+test('0534 AC1: a session with no usage, and no sub-agent with any, records nothing until it has some', () => {
+  const s = setup();
+  s.h.add('LATER', { cwd: s.wt });
+  assert.deepEqual(record0(s), []);
+  s.h.add('LATER', { cwd: s.wt, usages: [usage(1000, 0, 100)] });
+  assert.deepEqual(record0(s).map(x => x.tokens), [1100]);
+});
+
 test('0534 AC1: a session run outside the worktree, in another ticket\'s worktree or with no cwd, isn\'t counted', () => {
   const s = setup();
   s.h.add('OUT', { cwd: s.base, usages: [usage(100, 0, 10)] });
