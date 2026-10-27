@@ -295,22 +295,27 @@ function countedThreads(runs, id, rounds) {
 }
 
 // 0534: keeps what each Codex session started in ticket `id`'s worktree `worktree` spent (codexSessionsIn), with its
-// sub-agents (codexSubagents), counted and priced as a Codex build's are, leaving out each session countedThreads
-// names, so each counts once however many builds of the ticket end. `rounds` are the ticket's saved review rounds and
-// `home` Codex's home, $CODEX_HOME or ~/.codex when it isn't given. Returns what it kept.
+// sub-agents (codexSubagents), counted and priced as a Codex build's are, so each counts once however many builds of the
+// ticket end. A session countedThreads names, or one started by such a session, however deep, isn't counted. Of the
+// rest, a sub-agent whose parent is also one of them counts with it, so it's kept with the first that isn't, even when
+// that one has no usage itself. `rounds` are the ticket's saved review rounds and `home` Codex's home, $CODEX_HOME or
+// ~/.codex when it isn't given. Returns what it kept.
 export function recordDelegatedSpend(runs, id, { worktree, rounds, home } = {}) {
   id = String(id ?? '');
   if (!/^[\w-]+$/.test(id) || typeof worktree !== 'string' || !worktree) return [];
   const counted = countedThreads(runs, id, rounds), kept = [];
   const n = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
-  for (const s of codexSessionsIn(worktree, home)) {
-    if (counted.has(s.thread)) continue;
-    const split = roundTokens(s.usage, { codex: true }), cost = priced(s.model, split);
-    const own = { tokens: n(s.usage.input_tokens) + n(s.usage.output_tokens), cost_usd: cost, models: [{ model: s.model, tokens: split, cost_usd: cost }] };
-    const entry = { id, thread: s.thread, ended: s.ended, ...withSubagents(own, codexSubagents(s.thread, home)) };
+  const sessions = codexSessionsIn(worktree, home);
+  const open = new Set(sessions.filter(s => ![s.thread, ...s.ancestors].some(t => counted.has(t))).map(s => s.thread));
+  for (const s of sessions) {
+    if (!open.has(s.thread) || s.ancestors.some(t => open.has(t))) continue;
+    const subs = codexSubagents(s.thread, home);
+    if (!s.usage && !subs.length) continue;
+    const split = s.usage && roundTokens(s.usage, { codex: true }), cost = priced(s.model, split);
+    const own = s.usage ? { tokens: n(s.usage.input_tokens) + n(s.usage.output_tokens), cost_usd: cost, models: [{ model: s.model, tokens: split, cost_usd: cost }] } : { tokens: 0, cost_usd: 0, models: [] };
+    const entry = { id, thread: s.thread, ended: s.ended, ...withSubagents(own, subs) };
     fs.mkdirSync(runs, { recursive: true });
     fs.appendFileSync(path.join(runs, DELEGATED_SPEND), `${JSON.stringify(entry)}\n`);
-    counted.add(s.thread);
     kept.push(entry);
   }
   return kept;

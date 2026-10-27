@@ -162,9 +162,9 @@ function sessionUsage(files) {
 }
 
 // 0534: each Codex session whose session_meta gives as its cwd the folder `dir` or one inside it, in `home`'s sessions
-// folder: [{thread, ended, model, usage}], ended the time its file last changed. A sub-agent session (one naming the
-// thread that started it) is left out, as it counts with the session that started it (codexSubagents), and so is a
-// session with no usage yet, or whose files can't be read or parsed.
+// folder: [{thread, ancestors, ended, model, usage}], ancestors the threads that started it, nearest first, as their
+// session files name them, ended the time its files last changed, and model and usage as sessionUsage gives them, both
+// null for a session with no usage yet. A file that can't be read or parsed is left out.
 export function codexSessionsIn(dir, home = CODEX_HOME()) {
   const real = p => { try { return fs.realpathSync(p); } catch { return path.resolve(p); } };
   let root;
@@ -174,16 +174,25 @@ export function codexSessionsIn(dir, home = CODEX_HOME()) {
     const rel = path.relative(root, real(cwd));
     return rel === '' || (rel.split(path.sep)[0] !== '..' && !path.isAbsolute(rel));
   };
-  const files = new Map(); // thread -> its files
+  const parents = new Map(), files = new Map(); // thread -> the thread that started it; thread -> its files here
   for (const { file, meta } of sessionMetas(home)) {
-    const id = usable(meta.payload.id);
-    if (!id || !/^[\w-]+$/.test(id) || meta.payload.source?.subagent || !inside(meta.payload.cwd)) continue;
+    const id = usable(meta.payload.id), parent = usable(meta.payload.source?.subagent?.thread_spawn?.parent_thread_id);
+    if (!id || !/^[\w-]+$/.test(id)) continue;
+    if (parent) parents.set(id, parent);
+    if (!inside(meta.payload.cwd)) continue;
     if (!files.has(id)) files.set(id, []);
     files.get(id).push(file);
   }
+  const ancestorsOf = thread => {
+    const up = [], seen = new Set([thread]);
+    for (let t = parents.get(thread); t && !seen.has(t); t = parents.get(t)) { seen.add(t); up.push(t); }
+    return up;
+  };
   return [...files].flatMap(([thread, list]) => {
     const best = sessionUsage(list);
-    return best ? [{ thread, ended: new Date(best.at).toISOString(), model: best.model, usage: best.usage }] : [];
+    const at = best?.at ?? Math.max(...list.map(f => { try { return fs.statSync(f).mtimeMs; } catch { return -Infinity; } }));
+    if (!Number.isFinite(at)) return [];
+    return [{ thread, ancestors: ancestorsOf(thread), ended: new Date(at).toISOString(), model: best?.model ?? null, usage: best?.usage ?? null }];
   });
 }
 
