@@ -1,7 +1,7 @@
 ---
 id: "0523"
 title: "Count every build of a ticket in its builder spend"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T11:10:32.309Z"
+approved: "2026-10-27T11:13:51.908Z"
 
 ---
 # 0523 · Count every build of a ticket in its builder spend
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket that `speck run` builds more than once, such as one set ready again after a build that stopped, shows only its latest build's spend: each new build's run record and log replace the last one's. Seven tickets in this repo have lost an earlier build's spend this way, so their builder cost is too low.
@@ -55,9 +56,14 @@ When `speck run` builds a ticket more than once, for example after you set it re
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 143,432
+- Elapsed since build started: 3 min
+- Changed lines: 51 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. Each earlier build is kept in the run record's `earlier_builds` with the time it ended, ready for 0525, 0527, 0528 and 0530 to read or add to.
 
