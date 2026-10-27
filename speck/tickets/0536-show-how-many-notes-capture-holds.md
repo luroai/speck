@@ -43,6 +43,7 @@ Capture shows how many notes it lists, under its title, as Build and Shipped do.
 - Asked for by the user 2026-10-27: "there is no kind of indication of how many tickets there are in the list".
 - Today: Build's count is `#queue-n` and Shipped's `#shipped-n`, both `.lane-n` in `templates/panel.html`, filled in `render()` / `renderFull()` in `templates/panel.js`. Capture's list is `m.capture` from `templates/panel-model.js`.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
