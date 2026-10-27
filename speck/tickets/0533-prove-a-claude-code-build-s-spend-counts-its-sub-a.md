@@ -40,7 +40,7 @@ A Claude Code build's recorded spend is known to include its sub-agents, backed 
 ## Notes
 - Take the fixture from a small, cheap real run (for example sub-agents on `haiku` writing a paragraph each) and strip anything private from it. The test reads the fixture and runs no real agent.
 - Build 0520's log has sub-agent events (`"subagent_type":"fork"`) and one model in its `result` line's `modelUsage`. Its streamed per-message usage can't be summed to check the total, which is why this ticket compares against the transcripts.
-- Unverified: that Claude Code's `result` line totals sub-agent usage. It's expected from how Claude Code reports a session's cost, but not checked (that check is this ticket).
+- Checked 2026-10-27: Claude Code's `result` line totals sub-agent usage. A `claude -p --output-format stream-json` run on `haiku` that started two `general-purpose` sub-agents recorded 82,874 tokens from its `result` line's `modelUsage`, exactly what `sessionSpend` counts over its transcript and both `subagents/*.jsonl` (about 16,500 tokens each); its `usage` alone covered only the last turn. The `result` line also has `subagent_stats` with `spawned: 2`.
 - after 0532: both may change `builderSpend` in `scripts/spend.mjs` and the same sentence of the brief.
 
 ## In plain words
