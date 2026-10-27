@@ -48,7 +48,7 @@ A Codex session started inside a ticket's worktree counts in that ticket's spend
 - `speck run` sets `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` for Claude builds, so the builder runs Codex in the foreground. A Claude Code Bash call times out after 10 minutes at most, so a long research run may need splitting, for example one call per case.
 - Tests use session files written in a temporary `CODEX_HOME`. They never run real Codex.
 - Checked 2026-10-27: a `codex exec` session file's first line is `session_meta`, whose payload has `cwd` (the folder it ran in), `timestamp`, `originator: "codex_exec"` and `source: "exec"`, and its file name ends `-<thread id>.jsonl` (local test, codex-cli 0.159.0). `gpt-6.1-sol` is in `codex debug models` and has rates in `scripts/prices.json` ($2 per million input tokens, $10 per million output).
-- Unverified: which sandbox and config settings Codex needs to search the web from `codex exec` for this kind of research (not tried). That's for the ticket that does the research, not this one.
+- Checked 2026-10-27: which sandbox and config settings Codex needs to search the web from `codex exec` is still not tried, and this ticket doesn't need it. `codex --help` (codex-cli 0.159.0) lists `--search` for live web search, but `codex exec --help` doesn't, so the research ticket must find how `codex exec` turns it on.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
