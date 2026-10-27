@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { priceTable, findRates, costOf } from './prices.mjs';
-import { roundTokens, codexModel } from './round-cost.mjs';
+import { roundTokens, codexModel, codexSubagents } from './round-cost.mjs';
 
 const usable = v => (typeof v === 'string' && v.trim() && v !== 'default' ? v.trim() : null);
 
@@ -40,7 +40,9 @@ function priced(model, tokens) {
 // and outputTokens (0530). Neither says what it cost, so each is priced from the price table (0530) at its model's
 // rates: for Codex the `-m` its `command` gives, or else the one its session file records for its thread (the log's,
 // or `session`), and for Cursor the `--model` its command gives. cost_usd is null when the model has no rates, such as
-// Cursor's auto. Its models is that one model, split as a review round's tokens are (round-cost.mjs).
+// Cursor's auto. Its models is that one model, split as a review round's tokens are (round-cost.mjs). 0532: a Codex
+// build's spend adds each sub-agent its thread started, and theirs (codexSubagents): its tokens, its own model in
+// models, and its cost at that model's rates, the build's cost null when any thread's is.
 export function builderSpend(text, { command, session } = {}) {
   const lines = String(text ?? '').split('\n');
   let e = null;
@@ -54,8 +56,24 @@ export function builderSpend(text, { command, session } = {}) {
   const one = (model, split, tokens) => { const cost = priced(model, split); return { tokens, cost_usd: cost, models: [{ model, tokens: split, cost_usd: cost }] }; };
   if (e.type === 'turn.completed') {
     if (!obj(e.usage)) return null;
-    const model = commandModel(command, ['-m', '--model']) || codexModel(threadOf(lines) ?? session);
-    return one(model, roundTokens(e.usage, { codex: true }), n(e.usage.input_tokens) + n(e.usage.output_tokens));
+    const thread = threadOf(lines) ?? session;
+    const model = commandModel(command, ['-m', '--model']) || codexModel(thread);
+    const own = one(model, roundTokens(e.usage, { codex: true }), n(e.usage.input_tokens) + n(e.usage.output_tokens));
+    const subs = codexSubagents(thread);
+    if (!subs.length) return own;
+    // 0532: with each sub-agent the build started, priced at its own model and summed with any thread on the same one.
+    const models = own.models.map(m => ({ ...m, tokens: m.tokens && { ...m.tokens } }));
+    let tokens = own.tokens;
+    for (const s of subs) {
+      const split = roundTokens(s.usage, { codex: true }), cost = priced(s.model, split);
+      tokens += n(s.usage.input_tokens) + n(s.usage.output_tokens);
+      const m = models.find(x => x.model === s.model);
+      if (!m) { models.push({ model: s.model, tokens: split, cost_usd: cost }); continue; }
+      m.tokens = m.tokens && split ? Object.fromEntries(Object.keys(m.tokens).map(k => [k, m.tokens[k] + split[k]])) : m.tokens ?? split;
+      m.cost_usd = m.cost_usd === null || cost === null ? null : Math.round((m.cost_usd + cost) * 1e10) / 1e10;
+    }
+    const cost = models.some(m => m.cost_usd === null) ? null : Math.round(models.reduce((t, m) => t + m.cost_usd, 0) * 1e10) / 1e10;
+    return { tokens, cost_usd: cost, models };
   }
   if (obj(e.usage) && 'inputTokens' in e.usage)
     return one(commandModel(command, ['--model']), roundTokens(e.usage), n(e.usage.inputTokens) + n(e.usage.cacheWriteTokens) + n(e.usage.outputTokens));

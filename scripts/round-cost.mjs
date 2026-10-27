@@ -45,10 +45,11 @@ function claudeModel(modelUsage) {
   return ms.reduce((a, b) => ((num(b[1].costUSD) ?? 0) > (num(a[1].costUSD) ?? 0) ? b : a))[0];
 }
 
-// The model Codex's session file records for thread `thread`, in `home`'s sessions folder
-// (sessions/YYYY/MM/DD/rollout-<time>-<thread>.jsonl): the last turn's, or null when there's no such file or model.
-export function codexModel(thread, home = process.env.CODEX_HOME || path.join(os.homedir(), '.codex')) {
-  if (typeof thread !== 'string' || !/^[\w-]+$/.test(thread)) return null;
+const CODEX_HOME = () => process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
+
+// Every rollout file in `home`'s sessions folder (sessions/YYYY/MM/DD/rollout-<time>-<thread>.jsonl), or only those for
+// thread `thread` when it's given.
+function rollouts(home, thread) {
   const files = [];
   const walk = (dir, depth) => {
     let names;
@@ -56,22 +57,93 @@ export function codexModel(thread, home = process.env.CODEX_HOME || path.join(os
     for (const d of names) {
       const p = path.join(dir, d.name);
       if (d.isDirectory() && depth < 3) walk(p, depth + 1);
-      else if (d.isFile() && d.name.startsWith('rollout-') && d.name.endsWith(`-${thread}.jsonl`)) files.push(p);
+      else if (d.isFile() && d.name.startsWith('rollout-') && d.name.endsWith(thread ? `-${thread}.jsonl` : '.jsonl')) files.push(p);
     }
   };
   walk(path.join(home, 'sessions'), 0);
+  return files;
+}
+
+// The model a session file's text records: its last turn's, or null.
+function lastModel(text) {
+  let found = null;
+  for (const line of text.split('\n')) {
+    if (!line.includes('"turn_context"')) continue;
+    try { const o = JSON.parse(line); if (o?.type === 'turn_context' && usable(o.payload?.model)) found = o.payload.model.trim(); } catch { /* not an event */ }
+  }
+  return found;
+}
+
+// The model Codex's session file records for thread `thread`, in `home`'s sessions folder
+// (sessions/YYYY/MM/DD/rollout-<time>-<thread>.jsonl): the last turn's, or null when there's no such file or model.
+export function codexModel(thread, home = CODEX_HOME()) {
+  if (typeof thread !== 'string' || !/^[\w-]+$/.test(thread)) return null;
   let model = null, newest = -Infinity;
-  for (const f of files) {
+  for (const f of rollouts(home, thread)) {
     let text, at;
     try { text = fs.readFileSync(f, 'utf8'); at = fs.statSync(f).mtimeMs; } catch { continue; }
-    let found = null;
-    for (const line of text.split('\n')) {
-      if (!line.includes('"turn_context"')) continue;
-      try { const o = JSON.parse(line); if (o?.type === 'turn_context' && usable(o.payload?.model)) found = o.payload.model.trim(); } catch { /* not an event */ }
-    }
+    const found = lastModel(text);
     if (found && at >= newest) { model = found; newest = at; }
   }
   return model;
+}
+
+// The first line of `file`, read a piece at a time so a long session file isn't read whole, or null when it can't be
+// read or has no line within 4 MB.
+function firstLine(file) {
+  let fd;
+  try {
+    fd = fs.openSync(file, 'r');
+    const parts = [], buf = Buffer.alloc(65536);
+    for (let pos = 0, size = 0; size < 4 << 20;) {
+      const got = fs.readSync(fd, buf, 0, buf.length, pos);
+      if (!got) break;
+      const nl = buf.subarray(0, got).indexOf(10);
+      parts.push(Buffer.from(buf.subarray(0, nl < 0 ? got : nl)));
+      if (nl >= 0) return Buffer.concat(parts).toString('utf8');
+      pos += got; size += got;
+    }
+    return parts.length && size < 4 << 20 ? Buffer.concat(parts).toString('utf8') : null;
+  } catch { return null; } finally { if (fd !== undefined) try { fs.closeSync(fd); } catch { /* closed */ } }
+}
+
+// 0532: every sub-agent session in `home`'s sessions folder that thread `thread` started, and those they started in
+// turn, however deep, each once and never `thread` itself: [{thread, model, usage}], model the one its session file
+// records and usage its last token_count's total_token_usage. A sub-agent's session_meta names the thread that started
+// it as source.subagent.thread_spawn.parent_thread_id. A file that can't be read or parsed, or that has no usage yet, is
+// left out, and when a session has several files, the newest one with usage counts.
+export function codexSubagents(thread, home = CODEX_HOME()) {
+  if (typeof thread !== 'string' || !/^[\w-]+$/.test(thread)) return [];
+  const children = new Map(); // parent thread -> [{id, file}]
+  for (const file of rollouts(home)) {
+    let meta;
+    try { meta = JSON.parse(firstLine(file) ?? ''); } catch { continue; }
+    const id = usable(meta?.payload?.id), parent = usable(meta?.payload?.source?.subagent?.thread_spawn?.parent_thread_id);
+    if (meta?.type !== 'session_meta' || !id || !parent) continue;
+    if (!children.has(parent)) children.set(parent, []);
+    children.get(parent).push({ id, file });
+  }
+  const seen = new Set([thread]), found = [], queue = [thread];
+  while (queue.length) {
+    const ids = new Map();
+    for (const c of children.get(queue.shift()) ?? []) if (!seen.has(c.id)) { if (!ids.has(c.id)) ids.set(c.id, []); ids.get(c.id).push(c.file); }
+    for (const [id, files] of ids) {
+      seen.add(id); queue.push(id);
+      let best = null;
+      for (const f of files) {
+        let text, at;
+        try { text = fs.readFileSync(f, 'utf8'); at = fs.statSync(f).mtimeMs; } catch { continue; }
+        let usage = null;
+        for (const line of text.split('\n')) {
+          if (!line.includes('"token_count"')) continue;
+          try { const o = JSON.parse(line); const u = o?.payload?.type === 'token_count' ? o.payload.info?.total_token_usage : null; if (plain(u)) usage = u; } catch { /* not an event */ }
+        }
+        if (usage && roundTokens(usage, { codex: true }) && (!best || at >= best.at)) best = { at, model: lastModel(text), usage };
+      }
+      if (best) found.push({ thread: id, model: best.model, usage: best.usage });
+    }
+  }
+  return found;
 }
 
 // What a round cost at `model`'s rates in the price table, or null when it has none or the table can't be read.
