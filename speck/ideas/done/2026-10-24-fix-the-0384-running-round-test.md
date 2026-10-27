@@ -1,6 +1,6 @@
 # Fix the 0384 test of a running review round
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: ticketed (0540)
 Triaged: 1
 From ticket: 0439
 

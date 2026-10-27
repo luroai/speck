@@ -1,6 +1,6 @@
 # Turn speck run on in the background from the command line
 
-Captured: 2026-10-25 · Status: inbox
+Captured: 2026-10-25 · Status: ticketed (0544)
 From ticket: 0510
 
 ## What
