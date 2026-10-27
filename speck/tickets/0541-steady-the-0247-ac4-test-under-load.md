@@ -1,7 +1,7 @@
 ---
 id: "0541"
 title: "Steady the 0247 AC4 test under load"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-27-fix-the-0247-ac4-test-that-fails-under-load.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
+started: "2026-10-27T23:40:38.350Z"
 
 ---
 # 0541 · Steady the 0247 AC4 test under load
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The `0247 AC4` test in `test/run-0247.test.mjs` (new code that can't start leaves the old one running) failed once in a large parallel `speck test --related` run and passes when its file runs alone. A test that fails by chance can stop `speck ship` for a ticket that didn't break it.
