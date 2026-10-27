@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0538","0540","0541","0542","0543","0544","0546","0547"]                # ticket ids that must be done first
+after: ["0540","0541","0542","0543","0544","0546","0547","0548"]                # ticket ids that must be done first
 created: 2026-10-27
 
 ---
@@ -21,7 +21,7 @@ created: 2026-10-27
 **Status:** 📋 ready
 
 ## Problem
-Since 0.20.0, the panel's Capture lane shows how many notes it holds (0536), lists notes captured on the same day newest first (0537) and lets you star the notes you like (0538). `speck run --background` turns `speck run` on from the command line (0544), the facts grid names the builder's model (0545), each review round's tokens are counted as it saved them (0546), setup leaves shipping and limits at their defaults (0547), the panel loads its font and files from addresses relative to the page (0543), and four tests that failed by chance are steady (0540 to 0542). Anyone following the setup prompt, or updating speck in a project, still gets 0.20.0 without them.
+Since 0.20.0, the panel's Capture lane shows how many notes it holds (0536), lists notes captured on the same day newest first (0537) and lets you star the notes you like (0538). `speck run --background` turns `speck run` on from the command line (0544), the facts grid names the builder's model (0545), each review round's tokens are counted as it saved them (0546), setup leaves shipping and limits at their defaults (0547), a ticket's build log opens in a full-screen pop-up like the Pipeline log (0548), the panel loads its font and files from addresses relative to the page (0543), and four tests that failed by chance are steady (0540 to 0542). Anyone following the setup prompt, or updating speck in a project, still gets 0.20.0 without them.
 
 ## Outcome
 speck is ready to be released as 0.21.0.
@@ -36,12 +36,12 @@ speck is ready to be released as 0.21.0.
 ## Out of scope
 - Creating the `v0.21.0` tag and publishing the GitHub release: the workflow from 0240 does both from `docs/releases/v0.21.0.md` when this lands on `main`.
 - The landing page, which lives in its own repo.
-- The changes themselves: 0536 to 0538 and 0540 to 0547.
+- The changes themselves: 0536 to 0538 and 0540 to 0548.
 
 ## Notes
-- Asked for 2026-10-27: "Create another release ticket and set all tickets to ready." Then: "Ticket up everything in 2 and add it to the next release", which added 0540 to 0547.
+- Asked for 2026-10-27: "Create another release ticket and set all tickets to ready." Then: "Ticket up everything in 2 and add it to the next release", which added 0540 to 0547, and 0548, the full-screen build log.
 - A minor release, as 0537 adds a time to the `Captured:` line of new notes, 0538 lets the panel write a note's `Starred:` line, 0544 adds `speck run --background` and 0545 adds `builder_model` to `speck status --json`. Follows 0535 (0.20.0).
-- Covers every ticket shipped since `v0.20.0`: 0536 to 0538 and 0540 to 0547, which it waits for (`after:` names the last ticket of each chain: 0538, 0546, and the unchained 0540 to 0544 and 0547), and any other that ships before this is built.
+- Covers every ticket shipped since `v0.20.0`: 0536 to 0538 and 0540 to 0548, which it waits for (`after:` names the last ticket of each chain: 0546, 0548, and the unchained 0540 to 0544 and 0547), and any other that ships before this is built.
 - After it ships, check that the `v0.21.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.21.0 --target main --title "speck 0.21.0" --notes-file docs/releases/v0.21.0.md`.
 - Checked 2026-10-27: `package.json` is `0.20.0`.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
