@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { builderSpend, earlierBuilds, waitFields, addPaused, pausedSince } from './core.mjs';
+import { logSpend, earlierBuilds, waitFields, addPaused, pausedSince } from './core.mjs';
 import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
@@ -154,7 +154,7 @@ function runOn(worker) {
   let lastError = null;
 
   // Adds the exit to a build's run record, keeping what's there, so the board can tell a build that has finished, with
-  // what its builder spent (builderSpend) when its log says. Written to a temporary file and renamed into place, so
+  // what its builder spent (logSpend) when its log says. Written to a temporary file and renamed into place, so
   // nothing reading it sees half a record.
   const recordExit = (id, file, code) => {
     const tmp = `${file}.${process.pid}.tmp`;
@@ -162,7 +162,7 @@ function runOn(worker) {
       const rec = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (!rec || typeof rec !== 'object' || Array.isArray(rec)) throw new Error('it isn\'t a JSON object');
       let builder = null;
-      try { builder = builderSpend(fs.readFileSync(path.join(path.dirname(file), `${id}.log`), 'utf8')); } catch { /* no log */ }
+      builder = logSpend(path.dirname(file), id, rec); // 0530: read with the command it started with, for its model
       const { builder: _, ...kept } = rec;
       fs.writeFileSync(tmp, `${JSON.stringify({ ...kept, exited: new Date().toISOString(), exit_code: code, ...(builder ? { builder } : {}) }, null, 2)}\n`);
       fs.renameSync(tmp, file);

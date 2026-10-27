@@ -480,7 +480,7 @@ export function statusData(repo) {
       build_stopped_at: stop?.killed && !stop.counted && stop.since !== null ? new Date(stop.since).toISOString() : null,
       ship: shipState(runs, t.fm.id),
       pull_request: prShown(runs, t.fm.id, t.fm), // 0295: its pull request's link, or why it couldn't be opened
-      ...(spent => ({ builder_tokens: spent.tokens, builder_cost_usd: spent.cost_usd }))(builderSpent(runs, t.fm.id)), reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds), // 0529
+      ...(spent => ({ builder_tokens: spent.tokens, builder_cost_usd: spent.cost_usd, builder_models: spent.models ?? [] }))(builderSpent(runs, t.fm.id)), reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds), // 0529, 0530: builder_models
     });
   });
   entries.sort(byPriority);
