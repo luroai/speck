@@ -103,15 +103,19 @@ const modelsOf = v => (Array.isArray(v) ? v : []).filter(m => plain(m) && (typeo
 // A build's spend as a run record keeps it: {tokens, cost_usd}, with its models when it has any.
 const spendOf = b => (ms => ({ tokens: num(b.tokens), cost_usd: num(b.cost_usd), ...(ms.length ? { models: ms } : {}) }))(modelsOf(b.models));
 
+// A build's session, as {session} when it's a usable name, or {} (0528).
+const sessionOf = v => (typeof v === 'string' && /^[\w-]+$/.test(v) ? { session: v } : {});
+
 // The builds of a ticket before its latest, as its run record keeps them (earlier_builds): [{ended, tokens, cost_usd}],
-// with models when a build has them (0530), leaving out anything malformed.
+// with models when a build has them (0530) and its session when it kept one (0528), leaving out anything malformed.
 const earlierOf = rec => (Array.isArray(rec?.earlier_builds) ? rec.earlier_builds : [])
-  .filter(plain).map(b => ({ ended: typeof b.ended === 'string' ? b.ended : null, ...spendOf(b) }));
+  .filter(plain).map(b => ({ ended: typeof b.ended === 'string' ? b.ended : null, ...spendOf(b), ...sessionOf(b.session) }));
 
 // 0523: what a new build of ticket `id` carries forward before its run record and log are replaced: the earlier builds
 // its record kept, and the build it records, with the time it ended, when that one spent anything (its recorded
 // builder, or its log's when it stopped before its exit was saved). A resumed build has one record and its log's last
-// result line covers the whole session, so it counts once. [] when there's no record.
+// result line covers the whole session, so it counts once. [] when there's no record. 0528: each with its session, when
+// the record names one, so a session --backfill added isn't counted twice once a record keeps it.
 export function earlierBuilds(runs, id) {
   id = String(id ?? '');
   if (!/^[\w-]+$/.test(id)) return [];
@@ -122,15 +126,35 @@ export function earlierBuilds(runs, id) {
   const log = path.join(runs, `${id}.log`);
   if (!b) { try { if (!(fs.statSync(log).mtimeMs < Date.parse(rec.started))) b = logSpend(runs, id, rec); } catch { /* no log */ } }
   const last = b && (num(b.tokens) !== null || num(b.cost_usd) !== null)
-    ? [{ ended: typeof rec.exited === 'string' ? rec.exited : null, ...spendOf(b) }] : [];
+    ? [{ ended: typeof rec.exited === 'string' ? rec.exited : null, ...spendOf(b), ...sessionOf(rec.session) }] : [];
   return [...earlierOf(rec), ...last];
 }
 
-// Each build of ticket `id` its run record keeps, earlier ones first, as spendOf gives them, or [] with no record.
+// 0528: the run record of ticket `id` in `runs`, or null when there's none or it can't be read.
+export const runRecord = (runs, id) => (/^[\w-]+$/.test(String(id ?? '')) ? readRecord(runs, String(id)) : null);
+
+// 0528: each JSON object a line of `name` in `runs` holds, leaving out anything else, or [] when there's no such file.
+export function jsonLines(runs, name) {
+  let text = '';
+  try { text = fs.readFileSync(path.join(runs, name), 'utf8'); } catch { return []; }
+  return text.split('\n').flatMap(l => { try { const v = JSON.parse(l); return plain(v) ? [v] : []; } catch { return []; } });
+}
+const pad = id => String(id ?? '').padStart(4, '0');
+
+// 0528: what speck spend --backfill recovered, one JSON object a line: builds from Claude Code's transcripts
+// ({id, session, ended, tokens, cost_usd, models}) and the costs of review rounds saved without one ({id, round,
+// saved_at, model, tokens, cost_usd}). Watch agent runs it recovers go in WATCH_SPEND, as `backfill:<session>`.
+export const BACKFILL_BUILDS = 'run.backfill-builds.jsonl';
+export const BACKFILL_ROUNDS = 'run.backfill-rounds.jsonl';
+
+// Each build of ticket `id`, earlier ones first, as spendOf gives them with the time each ended and its session, or []
+// with none. 0528: the builds --backfill recovered come first, each once, leaving out a session its run record counts.
 const buildsOf = (runs, id) => {
-  id = String(id ?? '');
-  const rec = /^[\w-]+$/.test(id) ? readRecord(runs, id) : null;
-  return rec ? [...earlierOf(rec), spendOf(plain(rec.builder) ? rec.builder : {})] : [];
+  const rec = runRecord(runs, id);
+  const own = rec ? [...earlierOf(rec), { ...spendOf(plain(rec.builder) ? rec.builder : {}), ended: typeof rec.exited === 'string' ? rec.exited : null, ...sessionOf(rec.session) }] : [];
+  const counted = new Set(own.filter(b => b.session && (b.tokens !== null || b.cost_usd !== null)).map(b => b.session));
+  const back = /^[\w-]+$/.test(String(id ?? '')) ? jsonLines(runs, BACKFILL_BUILDS).filter(b => b.id === pad(id) && sessionOf(b.session).session && !counted.has(b.session) && counted.add(b.session)) : [];
+  return [...back.map(b => ({ ended: typeof b.ended === 'string' ? b.ended : null, ...spendOf(b), session: b.session })), ...own];
 };
 
 // What the builder of a ticket's builds launched by `speck run` spent, as speck run recorded it in the run record when
@@ -151,9 +175,25 @@ export function builderSpent(runs, id) {
   return { tokens: sum('tokens'), cost_usd: sum('cost_usd'), ...(models.size ? { models: [...models.values()] } : {}) };
 }
 
-// 0529: the sum of the known costs of a ticket's rounds, or null when none is known.
-export function reviewerCost(rounds) {
-  return (Array.isArray(rounds) ? rounds : []).reduce((t, r) => {
+// 0528: ticket `id`'s rounds, each saved without a cost given the model, tokens and cost --backfill found for it in
+// `runs`, matched by its number and the time it was saved.
+export function costedRounds(runs, id, rounds) {
+  const list = Array.isArray(rounds) ? rounds : [];
+  const kept = runs && /^[\w-]+$/.test(String(id ?? '')) ? jsonLines(runs, BACKFILL_ROUNDS).filter(x => x.id === pad(id)) : [];
+  if (!kept.length) return list;
+  return list.map(r => {
+    const meta = plain(r) && plain(r.meta) ? r.meta : null;
+    const b = meta && num(meta.cost_usd) === null && kept.find(x => x.round === meta.round && x.saved_at === (meta.saved_at ?? null));
+    if (!b) return r;
+    const tokens = plain(b.tokens) ? Object.fromEntries(['input', 'cached', 'write', 'output'].map(k => [k, num(b.tokens[k]) ?? 0])) : null;
+    return { ...r, meta: { ...meta, ...(usable(b.model) ? { model: b.model.trim() } : {}), ...(tokens ? { tokens } : {}), cost_usd: num(b.cost_usd) } };
+  });
+}
+
+// 0529: the sum of the known costs of a ticket's rounds, or null when none is known. 0528: with the costs --backfill
+// found, when it's given the runs folder and the ticket's id.
+export function reviewerCost(rounds, runs, id) {
+  return costedRounds(runs, id, rounds).reduce((t, r) => {
     const c = num(r?.meta?.cost_usd);
     return c === null ? t : Math.round(((t ?? 0) + c) * 1e10) / 1e10;
   }, null);
@@ -163,30 +203,40 @@ export function reviewerCost(rounds) {
 // ticket it looked into and `run` its token. Not <id>.json or <id>.log, so nothing takes it for a build's record.
 export const WATCH_SPEND = 'run.watch-spend.jsonl';
 
-const watchRuns = runs => {
-  let text = '';
-  try { text = fs.readFileSync(path.join(runs, WATCH_SPEND), 'utf8'); } catch { return []; }
-  return text.split('\n').flatMap(l => { try { const v = JSON.parse(l); return plain(v) && typeof v.id === 'string' && typeof v.run === 'string' ? [v] : []; } catch { return []; } });
-};
+export const watchRuns = runs => jsonLines(runs, WATCH_SPEND).filter(v => typeof v.id === 'string' && typeof v.run === 'string');
+
+// 0528: the session id a Claude Code stream-json log names first, or null.
+function logSession(text) {
+  for (const l of text.split('\n')) {
+    if (!l.includes('"session_id"')) continue;
+    try { const s = sessionOf(JSON.parse(l)?.session_id).session; if (s) return s; } catch { /* not an event */ }
+  }
+  return null;
+}
 
 // 0525: keeps what the watch agent run `run` that looked into ticket `id` spent, from its log `log`, read as a build's
 // is (builderSpend) with the `command` it started with, and the log's last change as the time it ended. Returns what it
 // kept, or null when the log has no final line reporting usage, such as a killed run's, or the run is already kept.
+// 0528: with the session its log names, so --backfill doesn't count that session again.
 export function recordWatchSpend(runs, { id, run, command, log }) {
   let text, ended;
   try { text = fs.readFileSync(log, 'utf8'); ended = fs.statSync(log).mtime.toISOString(); } catch { return null; }
   const spent = builderSpend(text, { command });
   if (!spent || watchRuns(runs).some(x => x.run === run)) return null;
-  const entry = { id: String(id), run: String(run), ended, ...spent };
+  const session = logSession(text);
+  const entry = { id: String(id), run: String(run), ...(session ? { session } : {}), ended, ...spent };
   fs.appendFileSync(path.join(runs, WATCH_SPEND), `${JSON.stringify(entry)}\n`);
   return entry;
 }
 
-// Each watch agent run that looked into ticket `id`, once.
+// Each watch agent run that looked into ticket `id`, once. 0528: one --backfill recovered (its run `backfill:<session>`)
+// is left out when speck run kept the same session itself.
 const watchOf = (runs, id) => {
   id = String(id ?? '');
-  const seen = new Set();
-  return /^[\w-]+$/.test(id) ? watchRuns(runs).filter(x => x.id === id && !seen.has(x.run) && seen.add(x.run)) : [];
+  if (!/^[\w-]+$/.test(id)) return [];
+  const all = watchRuns(runs).filter(x => x.id === id), seen = new Set();
+  const kept = new Set(all.filter(x => !x.run.startsWith('backfill:') && typeof x.session === 'string').map(x => x.session));
+  return all.filter(x => !(x.run.startsWith('backfill:') && kept.has(x.session)) && !seen.has(x.run) && seen.add(x.run));
 };
 
 // 0525: what the watch agent spent on ticket `id`, summed over its runs, each once: {tokens, cost_usd}, each null when
@@ -227,10 +277,9 @@ function roundSplit(meta) {
 // run's ended) or null when it's not known, and models each model it ran on as {model, tokens, cost_usd}, the model null
 // when it isn't known and the tokens null when they weren't split.
 export function spendParts(runs, id, rounds) {
-  const rec = /^[\w-]+$/.test(String(id ?? '')) ? readRecord(runs, String(id)) : null;
   const time = v => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null);
-  const builds = buildsOf(runs, id).map((b, i, all) => ({ part: 'builder', ...b, ended: time(i === all.length - 1 ? rec?.exited : b.ended) }));
-  const reviews = (Array.isArray(rounds) ? rounds : []).map(r => {
+  const builds = buildsOf(runs, id).map(({ session, ...b }) => ({ part: 'builder', ...b, ended: time(b.ended) }));
+  const reviews = costedRounds(runs, id, rounds).map(r => {
     const meta = plain(r) && plain(r.meta) ? r.meta : {}, spent = roundSpent(r);
     const split = roundSplit(meta);
     return { part: 'reviewer', ended: time(meta.saved_at), ...spent, models: [{ model: usable(meta.model) ?? usable(meta.reviewer_model), tokens: split, cost_usd: spent.cost_usd }] };

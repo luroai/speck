@@ -479,7 +479,7 @@ export function statusData(repo) {
       build_stopped_at: stop?.killed && !stop.counted && stop.since !== null ? new Date(stop.since).toISOString() : null,
       ship: shipState(runs, t.fm.id), watch_tokens: watch.tokens, watch_cost_usd: watch.cost_usd, // 0525: the watch agent's spend
       pull_request: prShown(runs, t.fm.id, t.fm), // 0295: its pull request's link, or why it couldn't be opened
-      builder_tokens: builder.tokens, builder_cost_usd: builder.cost_usd, builder_models: builder.models ?? [], reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds), ...totalSpent(runs, t.fm.id, ticketRounds(t.raw).rounds), // 0529, 0530: builder_models, 0526: total_cost_usd, total_tokens, total_cost_unknown
+      builder_tokens: builder.tokens, builder_cost_usd: builder.cost_usd, builder_models: builder.models ?? [], reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds, runs, t.fm.id), ...totalSpent(runs, t.fm.id, ticketRounds(t.raw).rounds), // 0529, 0530: builder_models, 0526: total_cost_usd, total_tokens, total_cost_unknown
     });
   });
   entries.sort(byPriority);
@@ -562,7 +562,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
                                       doesn't read code)
   speck picture <id> <file> "<caption>"  keep a picture of a visual change with the ticket's review pack (--clear instead of a file and caption: remove its pictures)
   speck prices <model>                the rates speck prices a model's tokens at, per million tokens, from the table that ships with this release
-  speck spend [--by=model|week|month] what the tickets spent on AI, by ticket, or by model, week or month; --since=/--until=<YYYY-MM-DD> count only spend that ended on or after, or on or before, a day; --json prints it as JSON
+  speck spend [--by=model|week|month] what the tickets spent on AI, by ticket, or by model, week or month; --since=/--until=<YYYY-MM-DD> count only spend that ended on or after, or on or before, a day; --json prints it as JSON; --backfill recovers past spend from Claude Code transcripts and saved review rounds
   speck output <id>                   print a task ticket's folder in the main checkout's outputs/, making it if missing
   speck merge-check <id>              what merging the base branch into the ticket's branch would conflict on, as JSON
   speck changes <id> "<note>"         send changes you want back to an approved ticket's build: speck run resumes
