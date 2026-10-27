@@ -43,6 +43,8 @@ A Claude Code build's recorded spend is known to include its sub-agents, backed 
 - Checked 2026-10-27: Claude Code's `result` line totals sub-agent usage. A `claude -p --output-format stream-json` run on `haiku` that started two `general-purpose` sub-agents recorded 82,874 tokens from its `result` line's `modelUsage`, exactly what `sessionSpend` counts over its transcript and both `subagents/*.jsonl` (about 16,500 tokens each); its `usage` alone covered only the last turn. The `result` line also has `subagent_stats` with `spawned: 2`.
 - after 0532: both may change `builderSpend` in `scripts/spend.mjs` and the same sentence of the brief.
 - Failing before this build: none
+- AC2 and AC3's tests passed before any code change: the `result` line's `modelUsage` already covers the sub-agents (the checked fact above), so `builderSpend` is unchanged and criterion 3 needs nothing added. The fixture keeps only the log's `user`, `assistant` and `result` lines and a trimmed `init` line, and only the transcripts' `user` and `assistant` lines, with paths rewritten; the stripped lines held system prompts, memory and request blobs, which the spend code doesn't read.
+- Self-check: no changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
