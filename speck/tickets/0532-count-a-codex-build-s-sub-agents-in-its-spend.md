@@ -43,6 +43,7 @@ A Codex build's recorded tokens and cost include every sub-agent its session sta
 - `builderSpend` and `codexModel` in `scripts/spend.mjs` and `scripts/round-cost.mjs` already read a Codex build's thread id and its session file. Sub-agent spend lands in the same build record, so `speck status --json`, `speck spend` and the panel pick it up without changes of their own.
 - Checked 2026-10-27: with codex-cli 0.159.0, `codex features list` shows `multi_agent` stable and on. A `codex exec --json` run that spawned two sub-agents printed one `turn.completed` whose usage (75,480 tokens) covered only the parent thread. Each sub-agent had its own `rollout-*-<thread>.jsonl` in `~/.codex/sessions/YYYY/MM/DD/`, whose `session_meta` has `source.subagent.thread_spawn.parent_thread_id` set to the parent's thread id and whose last `token_count` event has `total_token_usage` (15,271 and 15,217 tokens). Each records its own `"model"` (`gpt-6.1-sol`) (local test in the scratchpad).
 - Failing before this build: none
+- Self-check: no changes. Watch agent runs on Codex are read the same way, so their recorded spend includes their sub-agents too.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
