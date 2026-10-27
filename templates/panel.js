@@ -717,7 +717,17 @@ function shippedFacts(t, day) {
     factCell('Time', t.minutes !== null ? `${t.minutes} min` : '—', null),
     factCell('Review rounds', t.roundCount > 0 ? String(t.roundCount) : '—', null),
     factCell('Builder cost', t.builderCost !== null ? dollars(t.builderCost) : '—', null),
+    factCell('Reviewer cost', atLeast(t.reviewerCost, t.totalUnknown.includes('reviewer')) ?? '—', null), totalCell(t),
     tokens('Builder tokens', t.builderTokens, t.builderTokens !== null), tokens('Reviewer tokens', t.tokens, t.tokens > 0));
+}
+// 0526: its total cost, "at least" it when the total leaves out a part whose cost is unknown, as its tooltip names.
+// Its reviewer cost too says "at least" when a round's cost is unknown.
+const UNKNOWN = { builder: 'Builder cost unknown', reviewer: 'Reviewer cost unknown', watch: 'Watch agent cost unknown' };
+const atLeast = (n, partial) => (n === null ? null : `${partial ? 'at least ' : ''}${dollars(n)}`);
+const totalShown = t => atLeast(t.totalCost, t.totalUnknown.length > 0);
+function totalCell(t) {
+  const shown = totalShown(t), left = t.totalUnknown.map(x => UNKNOWN[x]).join(', ');
+  return factCell('Total cost', shown ?? '—', null, shown && left ? `${shown}: ${left}` : left || shown || '—');
 }
 // 0443: what a ticket no agent is working on is doing, in words: closed, a long sentence in short words, with the
 // sentence as their tooltip and accessible name; open, the sentence.
@@ -1281,7 +1291,7 @@ function render() {
   fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), t => openShipped.has(String(t.id)), t => {
     const id = String(t.id), isOpen = openShipped.has(id);
     const line = [t.minutes !== null ? `${t.minutes} min` : null, t.roundCount > 0 ? plural(t.roundCount, 'round') : null,
-      t.builderCost !== null ? dollars(t.builderCost) : null].filter(Boolean).join(' · ');
+      totalShown(t)].filter(Boolean).join(' · '); // 0526: its total cost, where its builder cost was
     const tags = [typeTag(t), taskTag(t)].filter(Boolean);
     const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), titled(shippedTitle(t, isOpen)), tags.length ? el('span', 'tags tag-row', null, ...tags) : null));
     const parts = [t.end !== null ? el('span', 'when', day(t.when)) : null, line ? el('span', 'figline', line) : null].filter(Boolean);
@@ -1332,6 +1342,12 @@ function render() {
     line.appendChild(part(`Median time to build, over ${plural(minutes.count, 'ticket')}`, 'median ', num(minutes.median), ' min'));
     line.appendChild(document.createTextNode(', '));
     line.appendChild(part(`Median builder cost, over ${plural(builderCost.count, 'ticket')}`, num(builderCost.median, true)));
+    // 0526: and the total cost of those with a known total, when there are any.
+    const { totalCost } = m.stats;
+    if (totalCost.count) {
+      line.appendChild(document.createTextNode(', '));
+      line.appendChild(part(`Total AI cost of the shipped tickets shown, over ${plural(totalCost.count, 'ticket')}${totalCost.partial ? ', at least: some of their costs are unknown' : ''}`, num(totalCost.sum, true), ' total'));
+    }
   }
   tiles('shipped-more', [stat(m.stats.rounds.median, 'median review rounds', m.stats.rounds), stat(m.stats.tokens.median, 'median reviewer tokens', m.stats.tokens),
     stat(m.stats.builderTokens.median, 'median builder tokens', m.stats.builderTokens)]);
