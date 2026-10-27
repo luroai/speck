@@ -29,7 +29,7 @@ Every build's spend records the model or models it ran on, with each model's tok
 ## Acceptance criteria
 1. A Claude Code build's spend keeps, for each model in its result's `modelUsage`, its tokens split into uncached input, cached input, cache writes and output, and its `costUSD`. The build's cost stays its `total_cost_usd`.
 2. A Codex build's spend keeps its model, its tokens split the same way from its last `turn.completed` line, and a cost priced from the price table (0524). Its model is the `-m` its command gives or, failing that, the one its session file in `~/.codex/sessions/` records.
-3. A Cursor build's spend keeps the model its `--model` gives, its tokens split from its result's `usage`, and a cost priced the same way. A build on `auto`, or on a model with no rates, keeps its tokens with an unknown cost, never $0.
+3. A Cursor build's spend keeps the model its `--model` gives, its tokens split from its result's `usage` as a Cursor review round's are (0529), and a cost priced the same way. Its `builder_tokens` counts cache reads once: `inputTokens` plus `cacheWriteTokens` plus `outputTokens`, not with `cacheReadTokens` added again as 0291's `builderSpend` does today. A build on `auto`, or on a model with no rates, keeps its tokens with an unknown cost, never $0.
 4. `speck status --json` gives each ticket's `builder_cost_usd` with its priced Codex and Cursor builds included, and `builder_models`, a list of the models its builds ran on, each with its tokens and its cost or null.
 5. A Claude Code build's `builder_tokens` and `builder_cost_usd` are the same as before this change.
 
@@ -39,6 +39,7 @@ Every build's spend records the model or models it ran on, with each model's tok
 
 ## Notes
 - `builderSpend` in `scripts/spend.mjs` reads the logs and keeps only totals today. It's called from `recordExit` in `scripts/run.mjs`, which 0523 changes, so this waits for 0523.
+- Checked 2026-10-27: Cursor's `inputTokens` already include `cacheReadTokens`: a short prompt gave 7,544 input and 6,016 cache reads, and one about 9,600 tokens longer gave 17,120 and 13,440, so input grew by the whole extra prompt although 7,424 of it was cache reads (Cursor CLI, run locally by 0529's first build).
 - Codex builds get `-m <builder_model>` (`scripts/build-model.mjs`, 0289). Cursor builds get `--model`, with `auto` when `builder_model` is blank (`scripts/cursor-build.mjs`).
 - Checked 2026-10-27: Claude Code's result `modelUsage` gives per model `inputTokens`, `outputTokens`, `cacheReadInputTokens`, `cacheCreationInputTokens` and `costUSD` (claude CLI, run locally). The Codex and Cursor output formats are the ones checked in 0529's Notes.
 
