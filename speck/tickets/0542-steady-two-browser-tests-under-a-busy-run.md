@@ -41,6 +41,7 @@ Two browser tests fail when nearly the whole suite runs at once, as `speck test 
 ## Notes
 - From 0516's build: both failed under that load and passed alone every time; 0476 AC2 also failed on the base code alone once.
 - Decided 2026-10-27: wait with a time limit rather than run these tests one at a time, as 0207 did for other chance failures.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
