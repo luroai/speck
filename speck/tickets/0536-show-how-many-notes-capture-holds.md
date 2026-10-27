@@ -1,7 +1,7 @@
 ---
 id: "0536"
 title: "Show how many notes Capture holds"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T23:32:44.719Z"
+approved: "2026-10-27T23:36:37.554Z"
 
 ---
 # 0536 · Show how many notes Capture holds
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Capture lists every idea and inbox note, but nothing says how many there are, so you have to scroll the whole lane to know how big the backlog is. Build and Shipped already show a count under their titles.
@@ -52,9 +53,14 @@ The Capture lane now says how many notes it holds, at the right of its title, as
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 119,659
+- Elapsed since build started: 4 min
+- Changed lines: 3 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
