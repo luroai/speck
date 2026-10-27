@@ -1,7 +1,7 @@
 ---
 id: "0546"
 title: "Count each review round's tokens as it saved them"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-27
 ---
 # 0546 · Count each review round's tokens as it saved them
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel's "Reviewer tokens" figure, and each round's `tokens` in `speck status --json`, add up the raw input and output a round's usage reports. A resumed Codex round's usage covers the whole session, so earlier rounds are counted again; a Claude round's cache reads and writes are left out; and a Cursor round's camelCase usage reads as 0. Anyone looking at what review costs sees the wrong number, and the ticket's total (0526) already counts it differently.
