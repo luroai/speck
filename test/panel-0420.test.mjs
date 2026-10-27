@@ -14,8 +14,8 @@ const LONG = 'A shipped ticket whose title is long enough that it has to wrap on
 const board = () => ({
   run: { on: false },
   tickets: [
-    T('0401', 'done', { title: 'Every figure', started: ago(1500), finished: ago(600), builder_tokens: 2412345, builder_cost_usd: 2.906, rounds: [round(1, 60000), round(2, 48234)] }),
-    T('0402', 'done', { title: 'A bug fix', type: 'bug', started: ago(3000), finished: ago(1200), rounds: [round(1, 500)], builder_cost_usd: 1.5 }),
+    T('0401', 'done', { title: 'Every figure', started: ago(1500), finished: ago(600), builder_tokens: 2412345, builder_cost_usd: 2.906, total_cost_usd: 2.906, rounds: [round(1, 60000), round(2, 48234)] }),
+    T('0402', 'done', { title: 'A bug fix', type: 'bug', started: ago(3000), finished: ago(1200), rounds: [round(1, 500)], builder_cost_usd: 1.5, total_cost_usd: 1.5 }),
     T('0403', 'done', { title: 'A fix of main', type: 'fix', priority: 0, finished: ago(1300) }),
     T('0404', 'done', { title: 'No ship time', started: ago(4000), rounds: [round(1, 500)] }),
     T('0405', 'done', { title: 'Nothing at all' }),
@@ -92,7 +92,7 @@ test('0420 AC3: the stats are one line, followed by More stats, which opens the 
   const p = page([board(), board()]);
   await p.settle();
   const stats = p.byId('shipped-stats');
-  assert.equal(stats.textContent, '5 today · median 13 min, $2.20');
+  assert.equal(stats.textContent, '5 today · median 13 min, $2.20, $4.41 total'); // 0526: and the total
   assert.match(html(), /<div class="stats-line" id="shipped-stats-line" hidden><div id="shipped-stats" hidden><\/div><button [^>]*id="more-stats"/, 'More stats follows the stats, in their line');
   assert.equal(p.byId('shipped-stats-line').hidden, false);
   const more = p.byId('more-stats');
@@ -169,7 +169,7 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
     // shipped minutes ago and yesterday, so both the time alone and the date and time show
     const s = board(), real = Date.now(), at = sec => new Date(real - sec * 1000).toISOString();
     for (const t of s.tickets) for (const k of ['started', 'finished']) if (t[k]) t[k] = at((NOW - Date.parse(t[k])) / 1000);
-    s.tickets.push(T('0408', 'done', { title: 'Shipped a while back', started: at(3 * 86400 + 900), finished: at(3 * 86400), rounds: [round(1, 500), round(2, 500), round(3, 500)], builder_cost_usd: 12.34 }));
+    s.tickets.push(T('0408', 'done', { title: 'Shipped a while back', started: at(3 * 86400 + 900), finished: at(3 * 86400), rounds: [round(1, 500), round(2, 500), round(3, 500)], builder_cost_usd: 12.34, total_cost_usd: 12.34 }));
     await b.send('Emulation.setDeviceMetricsOverride', { width: 420, height: 900, deviceScaleFactor: 1, mobile: false });
     await b.send('Emulation.setTouchEmulationEnabled', { enabled: false });
     await b.send('Page.enable');
