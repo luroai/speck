@@ -6,12 +6,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ideaCounts } from './idea-counts.mjs';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketKind, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, reviewerCost, watchSpent, totalSpent, pausedSince, waitFields } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketKind, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, reviewerCost, watchSpent, totalSpent, cmdSpend, cmdPrices, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdPr, prShown } from './pull-request.mjs';
 import { cmdPicture } from './pictures.mjs';
-import { cmdPrices } from './prices.mjs';
 import { cmdOutput } from './output.mjs';
 import { cmdDiffstat } from './diffstat.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
@@ -563,6 +562,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
                                       doesn't read code)
   speck picture <id> <file> "<caption>"  keep a picture of a visual change with the ticket's review pack (--clear instead of a file and caption: remove its pictures)
   speck prices <model>                the rates speck prices a model's tokens at, per million tokens, from the table that ships with this release
+  speck spend [--by=model|week|month] what the tickets spent on AI, by ticket, or by model, week or month; --since=/--until=<YYYY-MM-DD> count only spend that ended on or after, or on or before, a day; --json prints it as JSON
   speck output <id>                   print a task ticket's folder in the main checkout's outputs/, making it if missing
   speck merge-check <id>              what merging the base branch into the ticket's branch would conflict on, as JSON
   speck changes <id> "<note>"         send changes you want back to an approved ticket's build: speck run resumes
@@ -577,7 +577,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, prices: cmdPrices, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {
