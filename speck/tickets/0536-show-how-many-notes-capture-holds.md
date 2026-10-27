@@ -1,7 +1,7 @@
 ---
 id: "0536"
 title: "Show how many notes Capture holds"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-27T23:32:44.719Z"
 ---
 # 0536 · Show how many notes Capture holds
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Capture lists every idea and inbox note, but nothing says how many there are, so you have to scroll the whole lane to know how big the backlog is. Build and Shipped already show a count under their titles.
@@ -46,7 +46,7 @@ Capture shows how many notes it lists, under its title, as Build and Shipped do.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Capture lane now says how many notes it holds, at the right of its title, as Build and Shipped already do: "1 note" or, say, "34 notes". It counts only the ideas and inbox notes the lane lists, not ones already ticketed or dropped. Open Capture in the panel to see it; capture or drop a note and the number changes on the next update. When Capture is empty the number disappears and the lane says "Nothing captured." as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +56,81 @@ Capture shows how many notes it lists, under its title, as Build and Shipped do.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "573d0fcfc25d2e5901933cebe39c0474656451a0",
+    "session": "fresh",
+    "thread_id": "01a17fb8-aefb-7c03-895c-afa18f7212a4",
+    "builder_response": "- Tests run: `speck test --related test/panel-0536.test.mjs`, which ran test/panel-0536.test.mjs and the 18 related test files it lists at the top of the output (plus the checks files). Separately, every test file naming `lane-n` or `capture-section` passed too.\n- Pictures of Capture with its count, in the light and dark looks, are in the review pack.\n- AC4 is checked by review: the count line is the same `.lane-n` element, in the same place in the section, as Build's `#queue-n` and Shipped's `#shipped-n`, with no style of its own.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 119053,
+      "cached_input_tokens": 82432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 606,
+      "reasoning_output_tokens": 0
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 36621,
+      "cached": 82432,
+      "write": 0,
+      "output": 606
+    },
+    "cost_usd": 0.0875452,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T23:36:30.449Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js render() counts m.capture, filtered to idea/inbox in templates/panel-model.js. Passing AC1 tests cover singular, 35 notes and excluded statuses."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "render() hides capture-n when empty and retains 'Nothing captured.'. Passing AC2 test checks both."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 test runs the actual page scripts through successive board updates, covering additions, ticketing, dropping, emptying and repopulating Capture."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reviewed templates/panel.html: capture-n uses the same lane-n class and placement after the title as queue-n and shipped-n. templates/panel-cards.css applies shared layout and theme colours through var(--muted), with no Capture-specific count styling."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Recorded test output confirms 240 passed, zero failed and three skipped across 243 tests, including the ticket tests and related tests. The small implementation change presents no evident regression."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Capture now shows the number of idea and inbox notes, hides the count when empty, and updates it as notes enter or leave. It shares the existing lane count styling. Tests cover the required behaviour and pass; no blocking concerns found."
+  }
+}
+```
+
+</details>
