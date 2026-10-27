@@ -1,7 +1,7 @@
 ---
 id: "0535"
 title: "Prepare release 0.20.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0534"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T19:01:13.908Z"
 approved: "2026-10-27T19:04:14.671Z"
+finished: "2026-10-27T19:08:11.047Z"
 
 ---
 # 0535 · Prepare release 0.20.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0.19.0, a ticket's spend counts the sub-agents its build fans work out to: Codex builds' sub-agents (0532), Claude Code builds' sub-agents, now checked against a real build (0533), and Codex sessions a build starts in its ticket's worktree, such as research handed to Codex from a Claude build (0534). Anyone following the setup prompt, or updating speck in a project, still gets 0.19.0, whose spend leaves those out.
