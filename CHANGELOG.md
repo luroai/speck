@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.19.0 · 27 October 2026
+
+What's new since 0.18.0. A minor release about what your AI work costs: speck now records the tokens and cost of every build, review round and watch agent run, on any agent and model, shows each shipped ticket's total cost in the panel, and adds spend up for you with a new `speck spend` command. Costs speck works out itself are estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.19.0 init`.
+
+### Prices
+
+- speck ships a price table with each release, taken from LiteLLM's public list of model prices on the day of the release, so it can put a cost on agents that report only tokens, such as Codex and Cursor. speck never goes online for prices: they change only with a release.
+- `speck prices <model>` prints the rates speck would use for a model per million tokens, the entry it matched and the date the table was taken, or says it found none. A model with no rates, or Cursor's `auto`, gets an unknown cost, never $0.
+
+### Recording spend
+
+- Every review round now saves the model it ran on, its tokens and its cost. Claude rounds use the cost Claude reports; Codex and Cursor rounds are priced from the table.
+- Every build now saves which model or models did the work, with each model's tokens and cost. Codex and Cursor builds get a cost for the first time, and a Cursor build's tokens no longer count reused prompt text twice, so they're lower and more accurate.
+- A ticket that `speck run` builds more than once now adds up every build's spend, rather than showing only the last one's.
+- What the watch agent spends looking into a stopped ticket is now kept against that ticket.
+- `speck status --json` gives each ticket's `reviewer_cost_usd`, `watch_tokens`, `watch_cost_usd`, `builder_models`, `total_cost_usd` and `total_tokens`.
+
+### The panel
+
+- A shipped ticket's facts show `Reviewer cost` and `Total cost` beside `Builder cost`, and its closed card shows its total cost where it showed the builder's. When part of the spend has no known price, the total says "at least", and its tooltip names the part left out.
+- The stats above Shipped add the total cost of the shipped tickets the list shows, beside the median builder cost.
+
+### Adding up spend
+
+- `speck spend` lists each ticket with recorded spend: its builder, reviewer and watch agent cost, its total cost and its tokens, then a line of totals. A cost speck couldn't price shows as "unknown".
+- `--by=model`, `--by=week` and `--by=month` add the same spend up by model, by week or by calendar month instead. `--since=<YYYY-MM-DD>` and `--until=<YYYY-MM-DD>` narrow it to a range of days, and `--json` prints it as JSON.
+- `speck spend --backfill` recovers spend from before this release: builds and watch agent runs from the conversation records Claude Code keeps on your machine, and each earlier review round's cost from the tokens it saved. Running it again adds nothing.
+
 ## 0.18.0 · 26 October 2026
 
 What's new since 0.17.0. A minor release that tidies the panel: ideas and the inbox move out of Plan into a Capture lane of their own, ideas an agent raised are labelled as an agent's, and every closed card is the same height.
