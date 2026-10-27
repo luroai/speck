@@ -1,7 +1,7 @@
 ---
 id: "0524"
 title: Keep a current price table for AI models                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T11:10:34.384Z"
+approved: "2026-10-27T11:23:35.080Z"
 
 ---
 # 0524 · Keep a current price table for AI models
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck can only put a dollar figure on agents that report one, and only Claude Code does. Codex and Cursor report tokens alone. No speck user should have to look up model rates and type them in, and pricing has to work on a machine that can't reach the internet.
@@ -58,9 +59,14 @@ speck now carries a list of what each AI model charges, taken from a widely used
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 627,296
+- Elapsed since build started: 13 min
+- Changed lines: 3298 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: `speck/ideas/2026-10-27-fix-the-0247-ac4-test-that-fails-under-load.md` (a timing test that failed once under load in this build's related run).
