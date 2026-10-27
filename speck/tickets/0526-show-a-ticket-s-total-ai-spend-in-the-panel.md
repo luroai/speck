@@ -1,7 +1,7 @@
 ---
 id: "0526"
 title: "Show a ticket's total AI spend in the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-27T12:35:45.082Z"
 ---
 # 0526 · Show a ticket's total AI spend in the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel shows a shipped ticket's builder cost and its reviewer and builder tokens, but not what the ticket cost in all. Reviewer and watch agent spend (0529, 0525) never appear, so the figure you look at understates every ticket.
@@ -56,3 +56,97 @@ A shipped ticket in the panel shows its total AI cost: builder, reviewer and wat
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "79ed375ab00015be8e481e4a8ce30e6a16066b15",
+    "session": "fresh",
+    "thread_id": "01a17d69-2c99-7fa3-b945-555a80a0ee0a",
+    "builder_response": "- Tests run: test/total-cost-0526.test.mjs, the existing test files this ticket changed (test/build-log-0291.test.mjs test/panel-0134.test.mjs test/panel-0157.test.mjs test/panel-0178.test.mjs test/panel-0058.test.mjs test/panel-0140.test.mjs test/panel-0162.test.mjs test/panel-0188.test.mjs test/panel-0420.test.mjs test/panel-0246.test.mjs test/panel-0466.test.mjs test/panel-0411.test.mjs test/panel-0442.test.mjs test/panel-0465.test.mjs test/panel-0464.test.mjs test/panel.test.mjs test/spend-0120.test.mjs test/spend-0530.test.mjs test/spend-0523.test.mjs  ) and every related test file `speck test --related` chose.\n- Existing tests changed: the shipped facts table gains two cells (Reviewer cost, Total cost), the shipped line shows the total cost, and the stats line gains the total, so the tests that pinned the old six cells, the old line or the old stats text now include them. The 0464 and 0465 browser layout checks now find each cell's row as i - i % 3, since a shipped table has a third row.\n- AC5 reading: \"the shipped tickets shown\" is taken as the tickets the Shipped list shows (the latest ten, and any older one not pushed yet). See the ticket's Notes.\n- Visual change: four pictures kept with `speck picture` (Shipped lane closed and one card open, light and dark).\n",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 197893,
+      "cached_input_tokens": 142592,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1105,
+      "reasoning_output_tokens": 61
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 55301,
+      "cached": 142592,
+      "write": 0,
+      "output": 1105
+    },
+    "cost_usd": 0.1359112,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T12:50:44.845Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/spend.mjs totalSpent reads raw reviewer usage instead of the normalised meta.tokens saved by scripts/round-cost.mjs. Resumed Codex rounds are double-counted, Claude cache tokens are omitted, and Cursor tokens are ignored. The passing AC1 tests use only simple synthetic usage."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.js shippedFacts adds both cost cells and dashes; passing 0526 AC2 test exercises the rendered facts."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The rendering tests pass, but totalSpent cannot detect unknown reviewer costs when usage uses Cursor's camelCase fields. It also loses unknown builder/watch runs when their aggregate already contains a known cost."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "render uses totalShown in the shipped line; passing 0526 AC4 test checks complete, partial and missing totals."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "panelModel sums known totals over shipped; passing AC5 tests verify the latest ten, the sum, coverage tooltip and no-known-total case."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/spend.mjs",
+        "issue": "totalSpent derives reviewer tokens from raw input_tokens and output_tokens. Saved rounds already contain normalised meta.tokens, including cache usage and subtraction of previous Codex session usage. Reading raw usage produces incorrect totals and misses the unknown-cost warning for Cursor rounds.",
+        "suggested_fix": "Sum the saved normalised reviewer token components, with an appropriate fallback for older rounds. Add tests covering resumed Codex rounds, Claude cache usage and Cursor rounds with unknown cost.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/spend.mjs",
+        "issue": "builderSpent and watchSpent sum known costs before totalSpent checks for unknown costs. If one builder build or watch run has a known cost and another has tokens but unknown cost, the aggregate cost is non-null and the panel presents the incomplete total without 'at least' or the omitted-part tooltip.",
+        "suggested_fix": "Carry an unknown-cost indicator from individual builder builds and watch runs into totalSpent. Test mixed known and unknown costs within each part.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel displays the new costs and recent-spend statistics correctly, but reviewer token totals can be wrong, and some incomplete costs appear complete. Fix the calculations and missing-cost tracking before merge."
+  }
+}
+```
+
+</details>
