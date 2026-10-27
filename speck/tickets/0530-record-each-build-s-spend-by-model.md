@@ -41,6 +41,7 @@ Every build's spend records the model or models it ran on, with each model's tok
 ## Notes
 - `builderSpend` in `scripts/spend.mjs` reads the logs and keeps only totals today. It's called from `recordExit` in `scripts/run.mjs`, which 0523 changes, so this waits for 0523.
 - Checked 2026-10-27: Cursor's `inputTokens` already include `cacheReadTokens`: a short prompt gave 7,544 input and 6,016 cache reads, and one about 9,600 tokens longer gave 17,120 and 13,440, so input grew by the whole extra prompt although 7,424 of it was cache reads (Cursor CLI, run locally by 0529's first build).
+- Failing before this build: none
 - Codex builds get `-m <builder_model>` (`scripts/build-model.mjs`, 0289). Cursor builds get `--model`, with `auto` when `builder_model` is blank (`scripts/cursor-build.mjs`).
 - Checked 2026-10-27: Claude Code's result `modelUsage` gives per model `inputTokens`, `outputTokens`, `cacheReadInputTokens`, `cacheCreationInputTokens` and `costUSD` (claude CLI, run locally). The Codex and Cursor output formats are the ones checked in 0529's Notes.
 
