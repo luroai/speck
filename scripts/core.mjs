@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { applyMachineConfig } from './machine.mjs';
 export { lintTicket } from './lint.mjs';
-export { builderSpend, builderSpent, earlierBuilds, logSpend, reviewerCost, watchSpent, totalSpent } from './spend.mjs';
+export { builderSpend, builderSpent, earlierBuilds, logSpend, reviewerCost, watchSpent, delegatedSpent, recordDelegatedSpend, totalSpent } from './spend.mjs';
 export { cmdSpend } from './spend-view.mjs'; // 0527
 export { cmdPrices } from './prices.mjs';
 

@@ -115,11 +115,9 @@ function firstLine(file) {
 export function codexSubagents(thread, home = CODEX_HOME()) {
   if (typeof thread !== 'string' || !/^[\w-]+$/.test(thread)) return [];
   const children = new Map(); // parent thread -> [{id, file}]
-  for (const file of rollouts(home)) {
-    let meta;
-    try { meta = JSON.parse(firstLine(file) ?? ''); } catch { continue; }
-    const id = usable(meta?.payload?.id), parent = usable(meta?.payload?.source?.subagent?.thread_spawn?.parent_thread_id);
-    if (meta?.type !== 'session_meta' || !id || !parent) continue;
+  for (const { file, meta } of sessionMetas(home)) {
+    const id = usable(meta.payload?.id), parent = usable(meta.payload?.source?.subagent?.thread_spawn?.parent_thread_id);
+    if (!id || !parent) continue;
     if (!children.has(parent)) children.set(parent, []);
     children.get(parent).push({ id, file });
   }
@@ -129,21 +127,64 @@ export function codexSubagents(thread, home = CODEX_HOME()) {
     for (const c of children.get(queue.shift()) ?? []) if (!seen.has(c.id)) { if (!ids.has(c.id)) ids.set(c.id, []); ids.get(c.id).push(c.file); }
     for (const [id, files] of ids) {
       seen.add(id); queue.push(id);
-      let best = null;
-      for (const f of files) {
-        let text, at;
-        try { text = fs.readFileSync(f, 'utf8'); at = fs.statSync(f).mtimeMs; } catch { continue; }
-        let usage = null;
-        for (const line of text.split('\n')) {
-          if (!line.includes('"token_count"')) continue;
-          try { const o = JSON.parse(line); const u = o?.payload?.type === 'token_count' ? o.payload.info?.total_token_usage : null; if (plain(u)) usage = u; } catch { /* not an event */ }
-        }
-        if (usage && roundTokens(usage, { codex: true }) && (!best || at >= best.at)) best = { at, model: lastModel(text), usage };
-      }
+      const best = sessionUsage(files);
       if (best) found.push({ thread: id, model: best.model, usage: best.usage });
     }
   }
   return found;
+}
+
+// The session_meta line of each rollout file in `home`'s sessions folder: [{file, meta}], leaving out a file whose first
+// line can't be read or parsed or isn't a session_meta.
+function sessionMetas(home) {
+  return rollouts(home).flatMap(file => {
+    let meta;
+    try { meta = JSON.parse(firstLine(file) ?? ''); } catch { return []; }
+    return plain(meta) && meta.type === 'session_meta' && plain(meta.payload) ? [{ file, meta }] : [];
+  });
+}
+
+// What a session's files `files` record: {at, model, usage} from the newest one with usage, at its last change, model
+// the one it records and usage its last token_count's total_token_usage, or null when none can be read or has usage.
+function sessionUsage(files) {
+  let best = null;
+  for (const f of files) {
+    let text, at;
+    try { text = fs.readFileSync(f, 'utf8'); at = fs.statSync(f).mtimeMs; } catch { continue; }
+    let usage = null;
+    for (const line of text.split('\n')) {
+      if (!line.includes('"token_count"')) continue;
+      try { const o = JSON.parse(line); const u = o?.payload?.type === 'token_count' ? o.payload.info?.total_token_usage : null; if (plain(u)) usage = u; } catch { /* not an event */ }
+    }
+    if (usage && roundTokens(usage, { codex: true }) && (!best || at >= best.at)) best = { at, model: lastModel(text), usage };
+  }
+  return best;
+}
+
+// 0534: each Codex session whose session_meta gives as its cwd the folder `dir` or one inside it, in `home`'s sessions
+// folder: [{thread, ended, model, usage}], ended the time its file last changed. A sub-agent session (one naming the
+// thread that started it) is left out, as it counts with the session that started it (codexSubagents), and so is a
+// session with no usage yet, or whose files can't be read or parsed.
+export function codexSessionsIn(dir, home = CODEX_HOME()) {
+  const real = p => { try { return fs.realpathSync(p); } catch { return path.resolve(p); } };
+  let root;
+  try { root = fs.realpathSync(dir); } catch { return []; }
+  const inside = cwd => {
+    if (typeof cwd !== 'string' || !path.isAbsolute(cwd)) return false;
+    const rel = path.relative(root, real(cwd));
+    return rel === '' || (rel.split(path.sep)[0] !== '..' && !path.isAbsolute(rel));
+  };
+  const files = new Map(); // thread -> its files
+  for (const { file, meta } of sessionMetas(home)) {
+    const id = usable(meta.payload.id);
+    if (!id || !/^[\w-]+$/.test(id) || meta.payload.source?.subagent || !inside(meta.payload.cwd)) continue;
+    if (!files.has(id)) files.set(id, []);
+    files.get(id).push(file);
+  }
+  return [...files].flatMap(([thread, list]) => {
+    const best = sessionUsage(list);
+    return best ? [{ thread, ended: new Date(best.at).toISOString(), model: best.model, usage: best.usage }] : [];
+  });
 }
 
 // What a round cost at `model`'s rates in the price table, or null when it has none or the table can't be read.

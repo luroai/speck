@@ -51,6 +51,7 @@ A Codex session started inside a ticket's worktree counts in that ticket's spend
 - Checked 2026-10-27: which sandbox and config settings Codex needs to search the web from `codex exec` is still not tried, and this ticket doesn't need it. `codex --help` (codex-cli 0.159.0) lists `--search` for live web search, but `codex exec --help` doesn't, so the research ticket must find how `codex exec` turns it on.
 
 - Failing before this build: none
+- Self-check: no changes. A Codex review round that failed before saving its round leaves a session in the worktree with no thread_id kept, so it counts as delegated: it is real spend that nothing else records.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
