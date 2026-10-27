@@ -45,6 +45,9 @@ Spend recorded before 0523–0530 leaves out a ticket's earlier builds, builds w
 - Checked 2026-10-27: every one of the 477 run records' sessions has a transcript at `~/.claude/projects/<project folder>/<session>.jsonl`, plus 15 earlier `/speck-build` sessions that no record lists and about 12 watch agent sessions; each assistant line has `message.model`, `message.id` and `message.usage`, and a session's subagents are in `<session>/subagents/agent-*.jsonl` (local files).
 - The project folder name is the repo's absolute path with each `/` turned into `-`, such as `-home-me-projects-speck`. Checked 2026-10-27: Claude Code (2.1.310) turns every character that isn't a letter or digit into `-`, so `/tmp/tmp.0hUbzZi04k` is `-tmp-tmp-0hUbzZi04k` and `/home/me/projects/speck/.cc-ro-test` is `-home-me-projects-speck--cc-ro-test`.
 - Failing before this build: none
+- Design: what --backfill recovers is kept beside speck run's records in `speck/.cache/runs/`: builds in `run.backfill-builds.jsonl`, watch agent runs in `run.watch-spend.jsonl` as `backfill:<session>`, and round costs in `run.backfill-rounds.jsonl`, so no ticket file changes. Reading spend leaves out a backfilled session a run record later counts, so earlier builds now keep their session, and a watch run its session.
+- AC1 reading: a session the ticket's run record names but hasn't exited yet is still running, so it's left for speck run to record. An earlier build or watch run kept without a session counts the session of its ticket that ended within 5 minutes of it.
+- Self-check: a runs folder that can't be written to now gives a plain error saying what to do, and a test checks the brief and help name `speck spend --backfill` and `cleanupPeriodDays`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
