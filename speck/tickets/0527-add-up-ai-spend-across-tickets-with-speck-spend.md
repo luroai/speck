@@ -41,6 +41,7 @@ There's no way to see what AI work has cost, per ticket or per week or month, wi
 ## Notes
 - Use the same per-ticket figures as `speck status --json` (0526's `total_cost_usd` and `total_tokens`), so the two never disagree.
 - `--by=week`, `--by=month`, `--since` and `--until` need the time each part of the spend ended: a build's `exited` in its run record, a round's `saved_at`, and the times 0523, 0525 and 0528 keep.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
