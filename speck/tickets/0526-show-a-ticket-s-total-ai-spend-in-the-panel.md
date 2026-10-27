@@ -1,7 +1,7 @@
 ---
 id: "0526"
 title: "Show a ticket's total AI spend in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0525"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T12:35:45.082Z"
+approved: "2026-10-27T12:52:58.518Z"
 
 ---
 # 0526 · Show a ticket's total AI spend in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel shows a shipped ticket's builder cost and its reviewer and builder tokens, but not what the ticket cost in all. Reviewer and watch agent spend (0529, 0525) never appear, so the figure you look at understates every ticket.
@@ -56,9 +57,15 @@ Worth keeping an eye on: the total above the list covers only the tickets the li
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 totalSpent derives reviewer tokens from raw input_tokens and output_tokens.; F2 builderSpent and watchSpent sum known costs before totalSpent checks for unknown costs.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 537,081
+- Elapsed since build started: 17 min
+- Changed lines: 98 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-27-count-reviewer-tokens-as-each-round-saved-them.md (the existing Reviewer tokens figure reads raw usage, as review round 1's F1 found for the total).
