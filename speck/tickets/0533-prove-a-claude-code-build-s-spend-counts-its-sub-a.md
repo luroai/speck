@@ -1,7 +1,7 @@
 ---
 id: "0533"
 title: "Prove a Claude Code build's spend counts its sub-agents"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0532"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T18:40:15.395Z"
+approved: "2026-10-27T18:43:07.845Z"
 
 ---
 # 0533 · Prove a Claude Code build's spend counts its sub-agents
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Research tickets will have the Claude Code builder fan out to sub-agents with the Agent tool. speck records a Claude build's spend from the last `result` line of its log, which should cover the sub-agents too, but nobody has checked. If it doesn't, those tickets' costs are understated without anyone knowing.
@@ -53,12 +54,16 @@ Nothing changes in what speck records: a Claude Code build's cost already includ
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 200,087
+- Elapsed since build started: 3 min
+- Changed lines: 2 (limit 5000)
 Follow-ups (Delivery log only, no inbox notes):
 - Known limit: the fixture is a saved run from Claude Code as of 2026-10-27. If a later Claude Code stops including sub-agents in the `result` line's `modelUsage`, the test won't catch it; a fresh real run like the one in Notes would.
-
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
