@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T11:10:34.384Z"
-approved: "2026-10-27T11:23:35.080Z"
+approved: "2026-10-27T11:30:35.155Z"
 
 ---
 # 0524 · Keep a current price table for AI models
@@ -60,12 +60,13 @@ speck now carries a list of what each AI model charges, taken from a widely used
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 627,296
-- Elapsed since build started: 13 min
+- Reviewer tokens: 1,841,730
+- Elapsed since build started: 20 min
 - Changed lines: 3298 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -137,6 +138,73 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The change ships an offline price table, a release-time updater and a command to inspect model rates. Required name matching and cost calculations are covered by meaningful tests. Two unrelated timing tests passed when rerun separately. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "119ae0cb3b1a221c9f8c6ad97726cbbe75d0fabe",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a17d19-2455-7ee1-b584-b60a4af0b128",
+    "builder_response": "- Tests run: test/split-0270.test.mjs test/prices-0524.test.mjs test/split-0078.test.mjs test/review.test.mjs test/kind-0492.test.mjs test/worktrees.test.mjs (150 pass, 0 fail, 3 skipped).\n- Ship failed on `0270 AC2: no file under scripts/ is over 600 lines`: `test/split-0270.test.mjs` is a second copy of the 600-line rule that 0078 AC2 holds. The build's round exempted the generated `scripts/prices.json` (3,132 lines, one model to a line) from 0078's copy but missed this one, because it isn't in `commands.checks` and doesn't name a changed file, so `--related` didn't pick it up.\n- Fix: merged main into the branch (no conflicts; main's newer change was 0523's builder spend). Then `test/split-0270.test.mjs` leaves out `prices.json` the same way `test/split-0078.test.mjs` does, with the same comment. Every `.mjs` file under scripts/ is still checked, and `scripts/speck.mjs` is at 600 lines.\n- I also ran the other tests that scan every file under scripts/ (kind-0492, worktrees) to check that nothing else trips on the table.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 1213269,
+      "cached_input_tokens": 919040,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1165,
+      "reasoning_output_tokens": 58
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T11:30:28.949Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/prices.json, cutTable and updatePrices remain unchanged from round 1. The three AC1 tests passed again, covering table shape, rate extraction and replacement. Runtime pricing reads the local table only."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "docs/brief.md's Releases section requires npm run prices for release tickets; the AC2 command-presence test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "findRates remains unchanged. Both AC3 tests passed, covering the required exact names, Cursor suffix removal, maker prefixes and unknown costs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "costOf remains unchanged. The AC4 test passed using its own table, verifying $0.96 and all four token categories, including cache writes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdPrices and CLI dispatch remain unchanged. Both AC5 tests passed, covering rates, matched entry, date, unknown models and the brief's command table."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The offline pricing feature still meets every criterion after the merge. The shipping failure is addressed by exempting only the generated price table from the second line-limit check; all code remains checked. The latest test run had 150 passes, no failures and three skips. No blocking concerns remain."
   }
 }
 ```
