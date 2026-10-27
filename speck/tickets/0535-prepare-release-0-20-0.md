@@ -1,7 +1,7 @@
 ---
 id: "0535"
 title: "Prepare release 0.20.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0534"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T19:01:13.908Z"
+approved: "2026-10-27T19:04:14.671Z"
 
 ---
 # 0535 · Prepare release 0.20.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0.19.0, a ticket's spend counts the sub-agents its build fans work out to: Codex builds' sub-agents (0532), Claude Code builds' sub-agents, now checked against a real build (0533), and Codex sessions a build starts in its ticket's worktree, such as research handed to Codex from a Claude build (0534). Anyone following the setup prompt, or updating speck in a project, still gets 0.19.0, whose spend leaves those out.
@@ -57,9 +58,14 @@ speck is ready to go out as version 0.20.0. Once it lands, anyone installing or 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 155,054
+- Elapsed since build started: 3 min
+- Changed lines: 55 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
