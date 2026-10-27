@@ -1,7 +1,7 @@
 ---
 id: "0530"
 title: "Record each build's spend by model"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0529"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T12:13:53.436Z"
+approved: "2026-10-27T12:22:08.622Z"
 
 ---
 # 0530 · Record each build's spend by model
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A Codex or Cursor build records its tokens but no cost, and no build records which model did the work. In a project that builds with more than one agent, its builder spend can't be compared or added up model by model.
@@ -53,9 +54,15 @@ Each build now remembers which AI model did the work, and how many tokens and do
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new documentation test checks the exact prose fragment 'so theirs is left unknown'.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 519,208
+- Elapsed since build started: 8 min
+- Changed lines: 122 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, no inbox notes):
 - Known limit: a Claude Code result with `usage` but no `modelUsage` records no models, so its spend falls under no model. Claude Code always gives `modelUsage` today.
