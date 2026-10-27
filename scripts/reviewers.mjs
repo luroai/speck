@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { TEMPLATES, SpeckError, sh, git, reviewerSettings, settingsMeta, posix } from './core.mjs';
 import { cacheDir, reviewDiff, validateVerdict, saveRound, reviewerPrompt, verdictInProse } from './review.mjs';
 import { cursorCli } from './cursor-build.mjs';
+import { commandSpend } from './round-cost.mjs';
 import { knownProviders } from './custom-providers.mjs';
 import { providerNamed, providerReady, providerEnv } from './provider-review.mjs';
 import { withoutProviderBuild } from './provider-build.mjs';
@@ -242,9 +243,11 @@ export function runCommandReview(repo, id, name, command, s, providers = knownPr
   // An invalid verdict is the reviewer's failure too, so it gets the same stderr lines.
   try { validateVerdict(structuredClone(verdict)); } catch (e) { if (e instanceof SpeckError) throw new SpeckError(`${e.message} The ${name} reviewer's verdict wasn't recorded.${stderrNote}`); throw e; }
   const usage = envelope?.usage && typeof envelope.usage === 'object' ? { usage: envelope.usage } : {};
+  // 0529: a resumed session's total_cost_usd covers the whole session, so the round before is taken out of it.
+  const spend = commandSpend(envelope, { model: values.model, earlier: session === 'continued' ? s.prior.at(-1)?.meta : null });
   // A resumed run that doesn't report its session id keeps the one it resumed.
   const thread = (options.session_id_path ? atPath(envelope ?? jsonIn(r.stdout), options.session_id_path) : '') || (session === 'continued' ? lastThread : '');
   return saveRound(repo, id, verdict, { reviewer: name, ...settingsMeta(settings), reviewed_sha: s.head, ...(s.merge ? { merge: true } : {}), ...(s.extra ? { extra: true } : {}), session,
     ...(thread ? { thread_id: thread } : {}), ...(s.response ? { builder_response: s.response } : {}),
-    seconds: Math.round((Date.now() - started) / 1000), ...usage, ...s.testsSeen });
+    seconds: Math.round((Date.now() - started) / 1000), ...usage, ...spend, ...s.testsSeen });
 }

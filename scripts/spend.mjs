@@ -1,4 +1,4 @@
-// What a build's builder spent, from its log and from speck run's run record.
+// What a build's builder spent, from its log and from speck run's run record, and what a ticket's reviewer spent.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -75,4 +75,12 @@ export function builderSpent(runs, id) {
   const builds = [...earlierOf(rec), { tokens: num(b.tokens), cost_usd: num(b.cost_usd) }];
   const sum = k => builds.reduce((t, x) => (x[k] === null ? t : (t ?? 0) + x[k]), null);
   return { tokens: sum('tokens'), cost_usd: sum('cost_usd') };
+}
+
+// 0529: the sum of the known costs of a ticket's rounds, or null when none is known.
+export function reviewerCost(rounds) {
+  return (Array.isArray(rounds) ? rounds : []).reduce((t, r) => {
+    const c = num(r?.meta?.cost_usd);
+    return c === null ? t : Math.round(((t ?? 0) + c) * 1e10) / 1e10;
+  }, null);
 }
