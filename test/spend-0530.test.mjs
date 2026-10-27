@@ -177,5 +177,4 @@ test('0530 AC5: a Claude Code build\'s builder_tokens and builder_cost_usd are a
 test('0530 AC4: the brief names builder_cost_usd and builder_models in speck run\'s row', () => {
   const row = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8').split('\n').find(l => l.startsWith('| `speck run` |'));
   for (const fact of ['`builder_cost_usd`', '`builder_models`', '`speck status --json`', "Cursor's `auto`"]) assert.ok(row.includes(fact), fact);
-  assert.ok(!row.includes('so theirs is left unknown'), 'Codex and Cursor builds are priced now');
 });

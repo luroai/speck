@@ -1,7 +1,7 @@
 ---
 id: "0530"
 title: "Record each build's spend by model"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-27T12:13:53.436Z"
 ---
 # 0530 · Record each build's spend by model
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A Codex or Cursor build records its tokens but no cost, and no build records which model did the work. In a project that builds with more than one agent, its builder spend can't be compared or added up model by model.
@@ -57,3 +57,89 @@ Every build's spend records the model or models it ran on, with each model's tok
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2b705c970f0b40b518f90f75b7f12fa1e2799b8f",
+    "session": "fresh",
+    "thread_id": "01a17d4e-9fb9-78e0-9de6-eb08a62b5d2d",
+    "builder_response": "- Tests run: test/spend-0530.test.mjs test/build-log-0291.test.mjs test/spend-0120.test.mjs, with --related (every test file naming a changed file, plus the checks).\n- Existing tests changed: build-log-0291 and spend-0120 now expect the added `models` list, and Cursor's builder_tokens counting cache reads once (1,240 rather than 4,240), as AC3 asks.\n- A Claude Code result with only `usage` and no `modelUsage` gives no models (AC1 covers modelUsage only); its tokens and cost are as before (AC5).\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 199477,
+      "cached_input_tokens": 143616,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 919,
+      "reasoning_output_tokens": 107
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 55861,
+      "cached": 143616,
+      "write": 0,
+      "output": 919
+    },
+    "cost_usd": 0.1352736,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T12:21:30.284Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/spend.mjs builderSpend preserves each Claude model's token split and costUSD, retaining total_cost_usd. Both 0530 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "builderSpend uses commandModel, codexModel and roundTokens to price the last turn's usage. Passing 0530 AC2 tests cover command precedence, session lookup and unknown rates."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "builderSpend prices Cursor usage through roundTokens and counts inputTokens + cacheWriteTokens + outputTokens. Passing 0530 AC3 tests cover priced models, auto and missing rates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "run.mjs recordExit saves logSpend results; builderSpent aggregates model spend across builds; speck.mjs statusData exposes builder_models and builder_cost_usd. The 0530 AC4 behavioural tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Claude totals retain their previous calculation and total_cost_usd. The passing 0530 AC5 test checks modelUsage, usage-only results and aggregation with earlier builds."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/spend-0530.test.mjs:180",
+        "issue": "The new documentation test checks the exact prose fragment 'so theirs is left unknown'. The review rules explicitly prohibit tests of document wording. This assertion also cannot establish whether the brief accurately describes pricing.",
+        "suggested_fix": "Remove the assertion against that prose fragment. Retain tests of field and command names, and judge the explanation's accuracy by review.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The implementation records models and their spend, prices Codex and Cursor builds, and preserves Claude totals. The reported behavioural tests pass. One documentation test checks exact wording, which the review rules prohibit; remove that assertion before approval."
+  }
+}
+```
+
+</details>
