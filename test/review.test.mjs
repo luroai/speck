@@ -50,7 +50,9 @@ test('AC2: with nothing set, no model or effort is passed to codex', () => {
 test('AC2: no model name is hard-coded in speck code, templates or skills', () => {
   const MODEL = /\b(gpt-[\w.-]+|o[1-9](-mini|-pro)?|claude-(opus|sonnet|haiku|instant)[\w.-]*|(opus|sonnet|haiku)-?\d[\w.-]*|gemini-(?!cli\b)[\w.-]+|codex-mini[\w.-]*)\b/i;
   const files = d => fs.readdirSync(path.join(ROOT, d), { recursive: true }).map(f => path.join(ROOT, d, f)).filter(f => fs.statSync(f).isFile());
-  for (const f of [...files('scripts'), ...files('templates'), ...files('skills')]) {
+  // 0524: the price table is LiteLLM's list of models and their rates, made by npm run prices, not names written into speck
+  const table = path.join(ROOT, 'scripts', 'prices.json');
+  for (const f of [...files('scripts'), ...files('templates'), ...files('skills')].filter(f => f !== table)) {
     const hit = fs.readFileSync(f, 'utf8').match(MODEL);
     assert.equal(hit, null, `${path.relative(ROOT, f)} names a model: ${hit && hit[0]}`);
   }

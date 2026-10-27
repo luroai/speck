@@ -11,6 +11,7 @@ import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, c
 import { cmdPack } from './pack.mjs';
 import { cmdPr, prShown } from './pull-request.mjs';
 import { cmdPicture } from './pictures.mjs';
+import { cmdPrices } from './prices.mjs';
 import { cmdOutput } from './output.mjs';
 import { cmdDiffstat } from './diffstat.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
@@ -554,15 +555,14 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
   speck prompt <id> [--tests=f] [--response=f]  print the reviewer prompt (for subagent reviewers)
   speck reviewer-settings <id>        print and save the model and effort to start a reviewer with
-  speck review-running <id> [--ended] show the next round as running in the panel until speck record
-                                      (for subagent reviewers; --ended: the round was given up on)
+  speck review-running <id> [--ended] show the next round as running in the panel until speck record (for subagent reviewers; --ended: the round was given up on)
   speck diff <id>                     the changes since the reviewer's last round, as the reviewer sees them
   speck close <id>                    write the review and delivery logs, set approved and commit, once the reviewer approves
   speck next <id>                     what the builder should do next: review, fix, block or ship
   speck pack <id> [--plain]           print the review pack (--plain: a short one in plain English, for someone who
                                       doesn't read code)
-  speck picture <id> <file> "<caption>"  keep a picture of a visual change with the ticket's review pack
-                                      (--clear instead of a file and caption: remove its pictures)
+  speck picture <id> <file> "<caption>"  keep a picture of a visual change with the ticket's review pack (--clear instead of a file and caption: remove its pictures)
+  speck prices <model>                the rates speck prices a model's tokens at, per million tokens, from the table that ships with this release
   speck output <id>                   print a task ticket's folder in the main checkout's outputs/, making it if missing
   speck merge-check <id>              what merging the base branch into the ticket's branch would conflict on, as JSON
   speck changes <id> "<note>"         send changes you want back to an approved ticket's build: speck run resumes
@@ -577,7 +577,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, prices: cmdPrices, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {
