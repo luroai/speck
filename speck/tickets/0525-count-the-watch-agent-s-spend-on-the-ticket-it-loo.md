@@ -43,6 +43,8 @@ Each watch agent run's tokens and cost are added to the ticket it looked into.
 - The agent is started by `spawnAgent` in `scripts/foreman-agent.mjs`, which opens `run.watch.log` with `'w'`, and its state is in `run.foreman-agent.json`.
 - Checked 2026-10-27: the current `speck/.cache/runs/run.foreman-agent.log` starts with Claude Code's `system`/`init` line and has one `result` line, so `builderSpend` reads it as it reads a build log.
 - Failing before this build: none
+- Self-check: no changes (checked old running records with no command, killed and empty logs, a run recorded twice across speck runs, odd ids and malformed lines; kept speck.mjs within its 600-line limit)
+- Pictures: none, because nothing anyone sees changes (the panel is 0526).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

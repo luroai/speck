@@ -24,6 +24,7 @@ import { knownProviders, cantRun } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { PROVIDER_SCRIPT, CLAUDE_FLAGS, FOREMAN_MODE } from './provider-build.mjs';
 import { onPath } from './install.mjs';
+import { recordWatchSpend } from './spend.mjs';
 import { providerKey } from './keys.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
@@ -141,7 +142,7 @@ export function codeKey(repo, cfg, id) {
 
 const readObject = file => { try { const v = JSON.parse(fs.readFileSync(file, 'utf8')); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; } };
 
-// speck run's record of the Foreman agent: { running: { id, token, pid, key, what, started } | null, queue: [{ id, key,
+// speck run's record of the Foreman agent: { running: { id, token, pid, key, what, started, command } | null, queue: [{ id, key,
 // what, log }], tried: { <id>: key }, resumes: [{ id, message, by?, question?, status? }], answered: [askKey] }. 0318: answered
 // lists your answers to its questions already carried out, and a resume `by` 'user' carries one out.
 export function readAgentState(runs) {
@@ -243,6 +244,9 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     child = null;
     if (finished.has(r.token)) return;
     finished.add(r.token);
+    // 0525: what it spent, kept for its ticket before the next run replaces its log.
+    try { recordWatchSpend(runs(), { id: r.id, run: r.token, command: r.command, log: path.join(runs(), LOG) }); }
+    catch (e) { say(`${r.id}: speck couldn't keep what looking into it spent (${e.message}).`); }
     const mine = readActions(runs()).filter(a => a.run === r.token && a.id === r.id);
     for (const a of mine) {
       if (a.action === 'reship') { ships.again(a.id); say(`${a.id}: speck asked for its ship to be tried again: ${a.why}`); }
@@ -261,7 +265,8 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     // there for `speck foreman` to check.
     s.queue = s.queue.slice(1);
     s.tried[next.id] = next.key;
-    s.running = { id: next.id, token, pid: null, key: next.key, what: next.what, started: new Date().toISOString() };
+    s.running = { id: next.id, token, pid: null, key: next.key, what: next.what, started: new Date().toISOString(),
+      command: argv.filter(w => w !== brief) }; // 0525: for its model, when its spend is read
     if (!save(s)) return;
     const cant = cantStart(c); // 0392: a provider's without Claude Code or this machine's key for it
     if (cant) { s.running = null; save(s); return say(`${next.id}: speck couldn't start looking into it on ${label}: ${cant}`); }
