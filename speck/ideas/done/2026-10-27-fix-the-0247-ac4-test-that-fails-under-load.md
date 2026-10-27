@@ -1,6 +1,6 @@
 # Fix the 0247 AC4 test that fails under load
 
-Captured: 2026-10-27 · Status: inbox
+Captured: 2026-10-27 · Status: ticketed (0541)
 From ticket: 0524
 Raised by: agent
 

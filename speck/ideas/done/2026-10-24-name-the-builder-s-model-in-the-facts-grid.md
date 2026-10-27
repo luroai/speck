@@ -1,6 +1,6 @@
 # Name the builder's model in the facts grid
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: ticketed (0545)
 Triaged: 1
 From ticket: 0462
 

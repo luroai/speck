@@ -1,6 +1,6 @@
 # Build with any agent
 
-Captured: 2026-10-17 · Status: idea
+Captured: 2026-10-17 · Status: ticketed (0289, 0290)
 
 ## What
 Let people build with any coding agent, not just Claude Code, and switch the builder from the panel and in setup, without writing `build_command` by hand. speck knows the unattended build command each agent needs, and changing `builder` sets the matching one.

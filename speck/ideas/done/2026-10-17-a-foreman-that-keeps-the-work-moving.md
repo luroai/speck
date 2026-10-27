@@ -1,6 +1,6 @@
 # A foreman that keeps the work moving
 
-Captured: 2026-10-17 · Status: idea
+Captured: 2026-10-17 · Status: ticketed (0285, 0286, 0287)
 
 ## What
 A Foreman that keeps tickets moving after you've set them ready and walked away. It shows one status for the whole pipeline in the panel's header, and clears blockages itself instead of you messaging an agent "fix it". It's what `speck run` grows into: the panel's speck run switch moves into the Foreman's section of Settings, and its place in the header becomes the Foreman's status. "I think this would be the last piece of the puzzle in terms of setting some tickets up and walking away."

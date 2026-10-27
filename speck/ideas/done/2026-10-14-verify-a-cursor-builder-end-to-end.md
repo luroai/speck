@@ -1,6 +1,6 @@
 # Verify a Cursor builder end to end
 
-Captured: 2026-10-14 · Status: idea
+Captured: 2026-10-14 · Status: ticketed (0290, 0330)
 
 ## What
 Run a whole ticket through speck with Cursor as the builder, to prove speck works with an agent other than Claude Code.

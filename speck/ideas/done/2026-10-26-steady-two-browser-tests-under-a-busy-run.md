@@ -1,6 +1,6 @@
 # Steady two browser tests under a busy run
 
-Captured: 2026-10-26 · Status: inbox
+Captured: 2026-10-26 · Status: ticketed (0542)
 From ticket: 0516
 
 ## What

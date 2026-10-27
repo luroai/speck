@@ -1,6 +1,6 @@
 # Show images in review packs
 
-Captured: 2026-10-16 · Status: idea
+Captured: 2026-10-16 · Status: ticketed (0294)
 
 ## What
 Review packs need images where applicable. For a ticket that changes what something looks like, the pack shows a picture of the result, so you can judge it before you ship. For example, for 0249 it would have been useful to see the README with the images in it.

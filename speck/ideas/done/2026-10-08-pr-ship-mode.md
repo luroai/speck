@@ -1,6 +1,6 @@
 # PR ship mode for teams
 
-Captured: 2026-10-08 · Status: idea
+Captured: 2026-10-08 · Status: ticketed (0295, 0296, 0315)
 
 ## What
 A config setting, `ship: local | pr` (default `local`). In `pr` mode, the build opens a GitHub PR with the review pack once the reviewer approves, and sets the `speck/review` check. `/speck-ship <id>` then merges through GitHub (`gh pr merge`) instead of merging locally, or just tidies up if the user already merged in the GitHub app.
