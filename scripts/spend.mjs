@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { priceTable, findRates, costOf } from './prices.mjs';
-import { roundTokens, codexModel, codexSubagents } from './round-cost.mjs';
+import { roundTokens, codexModel, codexSubagents, codexSessionsIn } from './round-cost.mjs';
 
 const usable = v => (typeof v === 'string' && v.trim() && v !== 'default' ? v.trim() : null);
 
@@ -59,21 +59,7 @@ export function builderSpend(text, { command, session } = {}) {
     const thread = threadOf(lines) ?? session;
     const model = commandModel(command, ['-m', '--model']) || codexModel(thread);
     const own = one(model, roundTokens(e.usage, { codex: true }), n(e.usage.input_tokens) + n(e.usage.output_tokens));
-    const subs = codexSubagents(thread);
-    if (!subs.length) return own;
-    // 0532: with each sub-agent the build started, priced at its own model and summed with any thread on the same one.
-    const models = own.models.map(m => ({ ...m, tokens: m.tokens && { ...m.tokens } }));
-    let tokens = own.tokens;
-    for (const s of subs) {
-      const split = roundTokens(s.usage, { codex: true }), cost = priced(s.model, split);
-      tokens += n(s.usage.input_tokens) + n(s.usage.output_tokens);
-      const m = models.find(x => x.model === s.model);
-      if (!m) { models.push({ model: s.model, tokens: split, cost_usd: cost }); continue; }
-      m.tokens = m.tokens && split ? Object.fromEntries(Object.keys(m.tokens).map(k => [k, m.tokens[k] + split[k]])) : m.tokens ?? split;
-      m.cost_usd = m.cost_usd === null || cost === null ? null : Math.round((m.cost_usd + cost) * 1e10) / 1e10;
-    }
-    const cost = models.some(m => m.cost_usd === null) ? null : Math.round(models.reduce((t, m) => t + m.cost_usd, 0) * 1e10) / 1e10;
-    return { tokens, cost_usd: cost, models };
+    return withSubagents(own, codexSubagents(thread));
   }
   if (obj(e.usage) && 'inputTokens' in e.usage)
     return one(commandModel(command, ['--model']), roundTokens(e.usage), n(e.usage.inputTokens) + n(e.usage.cacheWriteTokens) + n(e.usage.outputTokens));
@@ -87,6 +73,26 @@ export function builderSpend(text, { command, session } = {}) {
     tokens = n(e.usage.input_tokens) + n(e.usage.cache_read_input_tokens) + n(e.usage.cache_creation_input_tokens) + n(e.usage.output_tokens);
   if (tokens === null) return null;
   return { tokens, cost_usd: num(e.total_cost_usd), ...(models ? { models } : {}) };
+}
+
+// 0532: Codex spend `own` ({tokens, cost_usd, models}) with each sub-agent in `subs` (codexSubagents') added: its tokens
+// (input and output), its own model in models, summed with any thread on the same one, and its cost at that model's
+// rates, the cost null when any thread's is. `own` itself when there are none.
+function withSubagents(own, subs) {
+  if (!subs.length) return own;
+  const n = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
+  const models = own.models.map(m => ({ ...m, tokens: m.tokens && { ...m.tokens } }));
+  let tokens = own.tokens;
+  for (const s of subs) {
+    const split = roundTokens(s.usage, { codex: true }), cost = priced(s.model, split);
+    tokens += n(s.usage.input_tokens) + n(s.usage.output_tokens);
+    const m = models.find(x => x.model === s.model);
+    if (!m) { models.push({ model: s.model, tokens: split, cost_usd: cost }); continue; }
+    m.tokens = m.tokens && split ? Object.fromEntries(Object.keys(m.tokens).map(k => [k, m.tokens[k] + split[k]])) : m.tokens ?? split;
+    m.cost_usd = m.cost_usd === null || cost === null ? null : Math.round((m.cost_usd + cost) * 1e10) / 1e10;
+  }
+  const cost = models.some(m => m.cost_usd === null) ? null : Math.round(models.reduce((t, m) => t + m.cost_usd, 0) * 1e10) / 1e10;
+  return { tokens, cost_usd: cost, models };
 }
 
 // The thread id on the first thread.started line of a Codex log's lines, or null.
@@ -235,14 +241,15 @@ function logSession(text) {
 // 0525: keeps what the watch agent run `run` that looked into ticket `id` spent, from its log `log`, read as a build's
 // is (builderSpend) with the `command` it started with, and the log's last change as the time it ended. Returns what it
 // kept, or null when the log has no final line reporting usage, such as a killed run's, or the run is already kept.
-// 0528: with the session its log names, so --backfill doesn't count that session again.
+// 0528: with the session its log names, so --backfill doesn't count that session again. 0534: and a Codex run's thread,
+// so it isn't counted again as a session started in a ticket's worktree.
 export function recordWatchSpend(runs, { id, run, command, log }) {
   let text, ended;
   try { text = fs.readFileSync(log, 'utf8'); ended = fs.statSync(log).mtime.toISOString(); } catch { return null; }
   const spent = builderSpend(text, { command });
   if (!spent || watchRuns(runs).some(x => x.run === run)) return null;
-  const session = logSession(text);
-  const entry = { id: String(id), run: String(run), ...(session ? { session } : {}), ended, ...spent };
+  const session = logSession(text), thread = threadOf(text.split('\n'));
+  const entry = { id: String(id), run: String(run), ...(session ? { session } : {}), ...(thread ? { thread } : {}), ended, ...spent };
   fs.appendFileSync(path.join(runs, WATCH_SPEND), `${JSON.stringify(entry)}\n`);
   return entry;
 }
@@ -262,6 +269,71 @@ const watchOf = (runs, id) => {
 export function watchSpent(runs, id) {
   const sum = { tokens: null, cost_usd: null };
   for (const x of watchOf(runs, id)) {
+    if (num(x.tokens) !== null) sum.tokens = (sum.tokens ?? 0) + x.tokens;
+    if (num(x.cost_usd) !== null) sum.cost_usd = Math.round(((sum.cost_usd ?? 0) + x.cost_usd) * 1e10) / 1e10;
+  }
+  return sum;
+}
+
+// 0534: what each Codex session started in a ticket's worktree spent, one JSON object a line: {id, thread, ended,
+// tokens, cost_usd, models}, `id` the ticket and `thread` the session's thread id. Kept when a build of it ends.
+export const DELEGATED_SPEND = 'run.delegated-spend.jsonl';
+
+export const delegatedRuns = runs => jsonLines(runs, DELEGATED_SPEND).filter(v => typeof v.id === 'string' && typeof v.thread === 'string');
+
+// 0534: the Codex threads already counted, which a session started in ticket `id`'s worktree mustn't be counted as
+// again: its builds' sessions (its run record's, its earlier builds', its log's and those --backfill recovered), its
+// review rounds' thread_id, and every watch agent run's and every session already kept as delegated spend.
+function countedThreads(runs, id, rounds) {
+  const rec = runRecord(runs, id);
+  let log = [];
+  try { log = fs.readFileSync(path.join(runs, `${id}.log`), 'utf8').split('\n'); } catch { /* no log */ }
+  return new Set([rec?.session, ...earlierOf(rec).map(b => b.session), threadOf(log),
+    ...jsonLines(runs, BACKFILL_BUILDS).filter(b => b.id === pad(id)).map(b => b.session),
+    ...(Array.isArray(rounds) ? rounds : []).map(r => (plain(r) && plain(r.meta) ? r.meta.thread_id : null)),
+    ...watchRuns(runs).flatMap(x => [x.session, x.thread]), ...delegatedRuns(runs).map(x => x.thread)].filter(t => typeof t === 'string' && t));
+}
+
+// 0534: keeps what each Codex session started in ticket `id`'s worktree `worktree` spent (codexSessionsIn), with its
+// sub-agents (codexSubagents), counted and priced as a Codex build's are, so each counts once however many builds of the
+// ticket end. A session countedThreads names, or one started by such a session, however deep, isn't counted. Of the
+// rest, a sub-agent whose parent is also one of them counts with it, so it's kept with the first that isn't, even when
+// that one has no usage itself. `rounds` are the ticket's saved review rounds and `home` Codex's home, $CODEX_HOME or
+// ~/.codex when it isn't given. Returns what it kept.
+export function recordDelegatedSpend(runs, id, { worktree, rounds, home } = {}) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id) || typeof worktree !== 'string' || !worktree) return [];
+  const counted = countedThreads(runs, id, rounds), kept = [];
+  const n = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
+  const sessions = codexSessionsIn(worktree, home);
+  const open = new Set(sessions.filter(s => ![s.thread, ...s.ancestors].some(t => counted.has(t))).map(s => s.thread));
+  for (const s of sessions) {
+    if (!open.has(s.thread) || s.ancestors.some(t => open.has(t))) continue;
+    const subs = codexSubagents(s.thread, home);
+    if (!s.usage && !subs.length) continue;
+    const split = s.usage && roundTokens(s.usage, { codex: true }), cost = priced(s.model, split);
+    const own = s.usage ? { tokens: n(s.usage.input_tokens) + n(s.usage.output_tokens), cost_usd: cost, models: [{ model: s.model, tokens: split, cost_usd: cost }] } : { tokens: 0, cost_usd: 0, models: [] };
+    const entry = { id, thread: s.thread, ended: s.ended, ...withSubagents(own, subs) };
+    fs.mkdirSync(runs, { recursive: true });
+    fs.appendFileSync(path.join(runs, DELEGATED_SPEND), `${JSON.stringify(entry)}\n`);
+    kept.push(entry);
+  }
+  return kept;
+}
+
+// 0534: each Codex session kept as ticket `id`'s delegated spend, each thread once.
+const delegatedOf = (runs, id) => {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return [];
+  const seen = new Set();
+  return delegatedRuns(runs).filter(x => x.id === id && !seen.has(x.thread) && seen.add(x.thread));
+};
+
+// 0534: what the Codex sessions started in ticket `id`'s worktree spent, summed: {tokens, cost_usd}, each null when no
+// session reports it, so both are null for a ticket with none.
+export function delegatedSpent(runs, id) {
+  const sum = { tokens: null, cost_usd: null };
+  for (const x of delegatedOf(runs, id)) {
     if (num(x.tokens) !== null) sum.tokens = (sum.tokens ?? 0) + x.tokens;
     if (num(x.cost_usd) !== null) sum.cost_usd = Math.round(((sum.cost_usd ?? 0) + x.cost_usd) * 1e10) / 1e10;
   }
@@ -293,7 +365,8 @@ function roundSplit(meta) {
 // 0527: each build, review round and watch agent run of ticket `id` that spent anything: {part, ended, tokens, cost_usd,
 // models}, part 'builder', 'reviewer' or 'watch', ended the time it ended (a build's exited, a round's saved_at, a watch
 // run's ended) or null when it's not known, and models each model it ran on as {model, tokens, cost_usd}, the model null
-// when it isn't known and the tokens null when they weren't split.
+// when it isn't known and the tokens null when they weren't split. 0534: and each Codex session started in its
+// worktree, part 'delegated', ended when its file last changed.
 export function spendParts(runs, id, rounds) {
   const time = v => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null);
   const builds = buildsOf(runs, id).map(({ session, ...b }) => ({ part: 'builder', ...b, ended: time(b.ended) }));
@@ -303,18 +376,19 @@ export function spendParts(runs, id, rounds) {
     return { part: 'reviewer', ended: time(meta.saved_at), ...spent, models: [{ model: usable(meta.model) ?? usable(meta.reviewer_model), tokens: split, cost_usd: spent.cost_usd }] };
   });
   const watch = watchOf(runs, id).map(x => ({ part: 'watch', ended: time(x.ended), tokens: num(x.tokens), cost_usd: num(x.cost_usd), models: modelsOf(x.models) }));
-  return [...builds, ...reviews, ...watch].filter(x => x.tokens !== null || x.cost_usd !== null)
+  const delegated = delegatedOf(runs, id).map(x => ({ part: 'delegated', ended: time(x.ended), tokens: num(x.tokens), cost_usd: num(x.cost_usd), models: modelsOf(x.models) }));
+  return [...builds, ...reviews, ...watch, ...delegated].filter(x => x.tokens !== null || x.cost_usd !== null)
     .map(x => ({ ...x, models: x.models?.length ? x.models : [{ model: null, tokens: null, cost_usd: x.cost_usd }] }));
 }
 
 // 0527: the sums of `parts` (spendParts'): the sum of the known costs, or null when none is known, the sum of the known
 // tokens, or null when none is known, and each part whose cost the total leaves out, in part, because a build, round
-// or run of it has tokens but no cost: 'builder', 'reviewer' or 'watch', in that order.
+// or run of it has tokens but no cost: 'builder', 'reviewer', 'watch' or 'delegated' (0534), in that order.
 export function sumParts(parts) {
   const add = (t, v) => (v === null ? t : Math.round(((t ?? 0) + v) * 1e10) / 1e10);
   let cost = null, tokens = null;
   for (const x of parts) { cost = add(cost, num(x.cost_usd)); tokens = add(tokens, num(x.tokens)); }
-  const unknown = ['builder', 'reviewer', 'watch'].filter(p => parts.some(x => x.part === p && num(x.cost_usd) === null && num(x.tokens) > 0));
+  const unknown = ['builder', 'reviewer', 'watch', 'delegated'].filter(p => parts.some(x => x.part === p && num(x.cost_usd) === null && num(x.tokens) > 0));
   return { total_cost_usd: cost, total_tokens: tokens, total_cost_unknown: unknown };
 }
 
