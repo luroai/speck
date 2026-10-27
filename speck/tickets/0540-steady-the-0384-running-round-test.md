@@ -1,7 +1,7 @@
 ---
 id: "0540"
 title: "Steady the 0384 running-round test"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-24-fix-the-0384-running-round-test.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
+started: "2026-10-27T23:40:38.719Z"
 
 ---
 # 0540 · Steady the 0384 running-round test
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The test "0384 AC3: the panel shows the round as running through every exit 12, until it is recorded" fails by chance: in 0439's build it failed in the related run and alone, and in 0524's build it failed in a large parallel run, yet it passes on its own today. A test that fails by chance can stop `speck ship` for a ticket that didn't break it, and costs builders time ruling out their own change.
