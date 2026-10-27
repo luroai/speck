@@ -1,7 +1,7 @@
 ---
 id: "0527"
 title: "Add up AI spend across tickets with speck spend"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0526"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T12:57:10.753Z"
+approved: "2026-10-27T13:07:17.400Z"
 
 ---
 # 0527 · Add up AI spend across tickets with speck spend
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 There's no way to see what AI work has cost, per ticket or per week or month, without adding up each ticket's figures by hand.
@@ -59,9 +60,16 @@ Worth keeping an eye on: older tickets built before speck recorded models show u
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 In spendParts, older review rounds with meta.usage but no meta.tokens receive models[0].tokens = null.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 776,119
+- Elapsed since build started: 10 min
+- Changed lines: 218 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none sent to the inbox.
 - Known limit: a build record from before 0530 kept no models, so its tokens count under "unknown model" in `--by=model`'s Tokens column, with nothing in the four split columns. Recovering older spend is 0528's `--backfill`.
