@@ -43,7 +43,8 @@ test('0078 AC1: the review, review pack, install and doctor, and ship code live 
 });
 
 test('0078 AC2: no file under scripts/ is over 600 lines', () => {
-  const all = fs.readdirSync(SCRIPTS, { recursive: true }).filter(f => fs.statSync(path.join(SCRIPTS, f)).isFile());
+  // 0524: prices.json is the price table npm run prices makes, one model to a line, not a module
+  const all = fs.readdirSync(SCRIPTS, { recursive: true }).filter(f => fs.statSync(path.join(SCRIPTS, f)).isFile() && f !== 'prices.json');
   assert.ok(all.length > 3, 'the split added modules');
   for (const f of all) assert.ok(lines(read(f)) <= 600, `scripts/${f} has ${lines(read(f))} lines`);
 });
