@@ -1,7 +1,7 @@
 ---
 id: "0529"
 title: Record what each review round costs                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0523", "0524"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T12:01:08.429Z"
 approved: "2026-10-27T12:09:46.788Z"
+finished: "2026-10-27T12:13:40.693Z"
 
 ---
 # 0529 · Record what each review round costs
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Review rounds record the reviewer's tokens but no cost, so a ticket's spend leaves out its reviewer. Codex and Cursor report no cost, and the Claude reviewer's `total_cost_usd` isn't saved. In this repo that's 852 Codex rounds with no cost.
