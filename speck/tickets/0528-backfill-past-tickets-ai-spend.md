@@ -43,7 +43,7 @@ Spend recorded before 0523–0530 leaves out a ticket's earlier builds, builds w
 - Run it before the transcripts it needs are deleted, or raise `cleanupPeriodDays` in your Claude Code settings first.
 - Checked 2026-10-27: `cleanupPeriodDays` defaults to 30 and deletes transcripts silently (https://code.claude.com/docs/en/settings-reference.md#cleanupperioddays). The oldest transcript here is from 2026-10-08.
 - Checked 2026-10-27: every one of the 477 run records' sessions has a transcript at `~/.claude/projects/<project folder>/<session>.jsonl`, plus 15 earlier `/speck-build` sessions that no record lists and about 12 watch agent sessions; each assistant line has `message.model`, `message.id` and `message.usage`, and a session's subagents are in `<session>/subagents/agent-*.jsonl` (local files).
-- The project folder name is the repo's absolute path with each `/` turned into `-`, such as `-home-me-projects-speck`. Unverified: how Claude Code names it for paths with other characters.
+- The project folder name is the repo's absolute path with each `/` turned into `-`, such as `-home-me-projects-speck`. Checked 2026-10-27: Claude Code (2.1.310) turns every character that isn't a letter or digit into `-`, so `/tmp/tmp.0hUbzZi04k` is `-tmp-tmp-0hUbzZi04k` and `/home/me/projects/speck/.cc-ro-test` is `-home-me-projects-speck--cc-ro-test`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
