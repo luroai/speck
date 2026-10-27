@@ -1,7 +1,7 @@
 ---
 id: "0542"
 title: "Steady two browser tests under a busy run"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-27
 ---
 # 0542 · Steady two browser tests under a busy run
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Two browser tests fail when nearly the whole suite runs at once, as `speck test --related` does after a change to a shared test helper: 0372 AC2 (the dark look is kept after a reload) failed with "Inspected target navigated or closed" while reloading, and 0476 AC2 (the trackpad and arrow keys change lane in the same time) got `plan` where it expected `build`. Both pass on their own. A failure like this at `speck ship` hands a ticket back for nothing.
