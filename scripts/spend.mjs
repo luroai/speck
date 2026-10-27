@@ -194,3 +194,23 @@ export function watchSpent(runs, id) {
   }
   return sum;
 }
+
+// 0526: a ticket's total AI spend from what its builder and watch agent spent ({tokens, cost_usd}) and its saved review
+// rounds: the sum of the known costs, or null when none is known, the sum of the known tokens, or null when none is
+// known, and each part whose cost is left out though it has tokens: 'builder', 'reviewer' (any round with tokens and no
+// cost) or 'watch'.
+export function totalSpent({ builder = {}, rounds = [], watch = {} } = {}) {
+  const add = (t, v) => (v === null ? t : Math.round(((t ?? 0) + v) * 1e10) / 1e10);
+  const parts = (Array.isArray(rounds) ? rounds : []).filter(plain).map(r => {
+    const u = plain(r.meta) && plain(r.meta.usage) ? r.meta.usage : {}, i = num(u.input_tokens), o = num(u.output_tokens);
+    return { tokens: i === null && o === null ? null : (i || 0) + (o || 0), cost_usd: plain(r.meta) ? num(r.meta.cost_usd) : null };
+  });
+  const seen = [['builder', [plain(builder) ? builder : {}]], ['reviewer', parts], ['watch', [plain(watch) ? watch : {}]]];
+  let cost = null, tokens = null;
+  const unknown = [];
+  for (const [name, list] of seen) {
+    for (const x of list) { cost = add(cost, num(x.cost_usd)); tokens = add(tokens, num(x.tokens)); }
+    if (list.some(x => num(x.cost_usd) === null && num(x.tokens) > 0)) unknown.push(name);
+  }
+  return { total_cost_usd: cost, total_tokens: tokens, total_cost_unknown: unknown };
+}

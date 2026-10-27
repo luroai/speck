@@ -11,7 +11,7 @@ const ago = s => new Date(Date.now() - s * 1000).toISOString();
 
 // Three shipped tickets: one with every figure and big token counts, one with some figures, one with none.
 const SHIPPED = () => [
-  T('0401', 'done', { title: 'Every figure', started: ago(1500), finished: ago(600), builder_tokens: 2412345, builder_cost_usd: 2.906,
+  T('0401', 'done', { title: 'Every figure', started: ago(1500), finished: ago(600), builder_tokens: 2412345, builder_cost_usd: 2.906, total_cost_usd: 2.906,
     rounds: [round(1, 60000), round(2, 48234)] }),
   T('0402', 'done', { title: 'Some figures', type: 'bug', started: ago(3000), finished: ago(1200), rounds: [round(1, 500)] }),
   T('0403', 'done', { title: 'No figures' }),
@@ -73,7 +73,7 @@ test('0162 AC2: a ticket in flight also brings the full layout back', async () =
 test('0162 AC3: Shipped shows three stats, and More stats shows and hides the other three', async () => {
   const p = fakePage([STATE(), STATE()]);
   await p.settle();
-  assert.match(p.byId('shipped-stats').textContent, /^\d+ today · median \d+ min, \$[\d.]+$/);
+  assert.match(p.byId('shipped-stats').textContent, /^\d+ today · median \d+ min, \$[\d.]+, \$[\d.]+ total$/);
   const more = p.byId('more-stats');
   assert.equal(more.hidden, false);
   assert.equal(more.textContent, 'More stats');
@@ -100,7 +100,7 @@ test('0162 AC3: every stat over 9,999 is shortened as the cards\' figures are, w
   assert.deepEqual(tiles(p, 'shipped-more'), [['1.5', 'median review rounds', null], ['54k', 'median reviewer tokens', '54,367'],
     ['2.4M', 'median builder tokens', '2,412,345']]);
   const line = q => [q.byId('shipped-stats').textContent.replace(/^\d+ today · /, ''), byClass(q, q.byId('shipped-stats'), 'num').slice(1).map(n => n.title || null)]; // one line since 0420
-  assert.deepEqual(line(p), ['median 23 min, $2.91', [null, null]]);
+  assert.deepEqual(line(p), ['median 23 min, $2.91, $2.91 total', [null, null, null]]); // 0526: and the total
   const big = fakePage([{ tickets: [T('0011', 'done', { started: ago(20000 * 60), finished: ago(0), builder_cost_usd: 12345.678 })], ideas: [] }]);
   await big.settle();
   assert.deepEqual(line(big), ['median 20k min, $12k', ['20,000', '$12,345.68']]);
@@ -142,7 +142,7 @@ test('0162 AC4: opening the card shows the labelled figures and the Review pack 
   // 0464: its steps and its facts in a table, in place of its line
   assert.deepEqual(a.children.map(n => n.className), ['name', 'steps', 'full-cell']);
   assert.deepEqual(byClass(p, a, 'fact').map(f => [f.children[0].textContent, f.children[1].textContent]),
-    [['Shipped', byClass(p, a, 'fact')[0].children[1].textContent], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
+    [['Shipped', byClass(p, a, 'fact')[0].children[1].textContent], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Reviewer cost', '—'], ['Total cost', '$2.91'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
   assert.equal(byClass(p, a, 'title')[0].attrs['aria-expanded'], 'true');
   assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'sum'], 'only the card tapped opens');
   await refresh(p);
@@ -239,7 +239,7 @@ for (const width of [375, 1280]) {
       const shown = () => b.js(`[...document.querySelectorAll('section.shipped .stat')].filter(n => n.getBoundingClientRect().height > 0).map(n => { const r = n.getBoundingClientRect(); return { top: Math.round(r.top), bottom: r.bottom, label: n.querySelector('.label').textContent }; })`);
       assert.deepEqual(await shown(), [], 'no tiles until More stats');
       const line = await b.js(`(() => { const r = document.getElementById('shipped-stats').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, right: r.right, text: document.getElementById('shipped-stats').innerText }; })()`);
-      assert.match(line.text, /^\d+ today · median \d+ min, \$[\d.]+$/);
+      assert.match(line.text, /^\d+ today · median \d+ min, \$[\d.]+, \$[\d.]+ total$/);
       const more = await b.js(`(() => { const r = document.getElementById('more-stats').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, height: r.height, text: document.getElementById('more-stats').innerText }; })()`);
       assert.ok(more.left >= line.right - 0.5 && more.top < line.bottom && more.bottom > line.top, 'More stats at the end of the line');
       assert.equal(more.text.toLowerCase(), 'more stats');

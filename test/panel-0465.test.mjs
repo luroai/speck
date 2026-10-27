@@ -76,7 +76,7 @@ test('0465 AC1: the full view shows its card\'s open track and table, cell for c
     assert.equal(kids[1].className, 'steps', `${id}: the track and table under the top`);
     const [t, f] = kids[1].children;
     assert.deepEqual(shape(t), shape(track), `${id}: the same track as its open card`);
-    assert.equal(f.children.length, 6, `${id}: six cells`);
+    assert.equal(f.children.length, id.startsWith('09') ? 8 : 6, `${id}: six cells, eight for a shipped one (0526)`);
     // a draft's priority opens its menu on its card; in the full view it's the value alone, as 0143 had it
     const asShown = (c, i) => (id === '0801' && i === 3 ? [c.children[0].textContent, c.children[1].textContent, c.children[1].title] : shape(c));
     assert.deepEqual(f.children.map(asShown), facts.children.map(asShown), `${id}: the same cells as its open card`);
@@ -105,8 +105,8 @@ test('0465 AC1: in flight as 0461 and 0462 set out, not started as 0463 does, an
     [['Now', 'Writing'], ['Builder', 'Claude'], ['Time', '01:05'], ['Priority', 'P1'], ['Size · risk', 'S · low'], ['Type', 'code']]]);
   assert.equal(seen['0813'][0], 'track stopped', 'a blocked one\'s current step in crimson');
   assert.deepEqual(seen['0814'][2].slice(0, 2), [['Now', 'Reviewing'], ['Reviewer', LONG]]);
-  assert.deepEqual(seen['0901'], ['track', done, [['Shipped', '11:50'], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]]);
-  assert.deepEqual(seen['0903'][2].map(c => c[1]), ['—', '—', '—', '—', '—', '—']);
+  assert.deepEqual(seen['0901'], ['track', done, [['Shipped', '11:50'], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Reviewer cost', '—'], ['Total cost', '—'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]]);
+  assert.deepEqual(seen['0903'][2].map(c => c[1]), ['—', '—', '—', '—', '—', '—', '—', '—']);
 });
 
 const plain = rules().filter(r => !r.at.length);
@@ -235,7 +235,7 @@ test('0465 AC4: in a real browser at 320 and 390 px and on a wide window, the fu
         }
         const [first] = m.cells;
         for (const [i, c] of m.cells.entries()) {
-          assert.ok(Math.abs(c.top - m.cells[i < 3 ? 0 : 3].top) < 0.5, `${at}: ${c.label} is in its row`);
+          assert.ok(Math.abs(c.top - m.cells[i - i % 3].top) < 0.5, `${at}: ${c.label} is in its row`);
           assert.ok(Math.abs(c.height - first.height) < 0.5 && Math.abs(c.width - first.width) < 1, `${at}: ${c.label} the same size as the others`);
           assert.ok(c.nowrap && c.valueHeight <= c.line + 0.5, `${at}: ${c.label}'s value on one line (${c.valueHeight} px)`);
         }

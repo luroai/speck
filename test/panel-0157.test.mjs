@@ -89,12 +89,12 @@ test('0157 AC4: the figures are label and value pairs, missing ones a dash (0464
   const p = fakePage([STATE()]);
   await p.settle();
   await openDetails(p); // 0162: they are under Details
-  assert.deepEqual(figures(p, cardOf(p, '0401')), [['Time', '10 min', null], ['Review rounds', '2', null], ['Builder cost', '$3.46', null],
+  assert.deepEqual(figures(p, cardOf(p, '0401')), [['Time', '10 min', null], ['Review rounds', '2', null], ['Builder cost', '$3.46', null], ['Reviewer cost', '—', null], ['Total cost', '—', null],
     ['Builder tokens', '2.4M', '2,412,345'], ['Reviewer tokens', '108k', '108,234']]);
-  assert.deepEqual(figures(p, cardOf(p, '0402')), [['Time', '30 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Builder tokens', '10k', '10,000'], ['Reviewer tokens', '9,999', null]]);
-  assert.deepEqual(figures(p, cardOf(p, '0403')), [['Time', '53 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '500', null]]);
-  assert.deepEqual(figures(p, cardOf(p, '0404')).map(f => f[1]), ['—', '—', '—', '—', '—'], 'none recorded: a dash for each');
-  assert.deepEqual(figures(p, cardOf(p, '0405')), [['Time', '22 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '1M', '999,600']]);
+  assert.deepEqual(figures(p, cardOf(p, '0402')), [['Time', '30 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '10k', '10,000'], ['Reviewer tokens', '9,999', null]]);
+  assert.deepEqual(figures(p, cardOf(p, '0403')), [['Time', '53 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '500', null]]);
+  assert.deepEqual(figures(p, cardOf(p, '0404')).map(f => f[1]), ['—', '—', '—', '—', '—', '—', '—'], 'none recorded: a dash for each');
+  assert.deepEqual(figures(p, cardOf(p, '0405')), [['Time', '22 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '1M', '999,600']]);
   assert.ok(!shippedRows(p).some(r => byClass(p, r, 'facts').some(f => f.textContent.includes(' · '))), 'no run of figures separated by dots among the labelled ones (0162 adds one line of them above)');
 });
 
@@ -253,7 +253,7 @@ for (const width of [375, 1280]) {
         const below = c.lines.at(-1).bottom;
         if (c.when) assert.ok(c.when.top >= below - 0.5, `${c.id}: the ship time under the title`);
         assert.ok(!c.when, `${c.id}: open, its line gives way to the table (0464)`);
-        assert.equal(c.figCells.length, 6, `${c.id}: six cells (0464)`);
+        assert.equal(c.figCells.length, 8, `${c.id}: eight cells (0464, 0526)`);
         if (c.figCells.length) {
           assert.equal(c.figsDisplay, 'grid', `${c.id}: the figures in a grid`);
           assert.ok(c.figs.top >= below - 0.5, `${c.id}: the figures under the title`);
