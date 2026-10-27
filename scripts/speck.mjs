@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ideaCounts } from './idea-counts.mjs';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketKind, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketKind, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, reviewerCost, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdPr, prShown } from './pull-request.mjs';
@@ -480,7 +480,7 @@ export function statusData(repo) {
       build_stopped_at: stop?.killed && !stop.counted && stop.since !== null ? new Date(stop.since).toISOString() : null,
       ship: shipState(runs, t.fm.id),
       pull_request: prShown(runs, t.fm.id, t.fm), // 0295: its pull request's link, or why it couldn't be opened
-      ...(spent => ({ builder_tokens: spent.tokens, builder_cost_usd: spent.cost_usd }))(builderSpent(runs, t.fm.id)),
+      ...(spent => ({ builder_tokens: spent.tokens, builder_cost_usd: spent.cost_usd }))(builderSpent(runs, t.fm.id)), reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds), // 0529
     });
   });
   entries.sort(byPriority);

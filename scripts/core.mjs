@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { applyMachineConfig } from './machine.mjs';
 export { lintTicket } from './lint.mjs';
-export { builderSpend, builderSpent, earlierBuilds } from './spend.mjs';
+export { builderSpend, builderSpent, earlierBuilds, reviewerCost } from './spend.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const TEMPLATES = path.join(ROOT, 'templates');

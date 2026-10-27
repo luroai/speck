@@ -49,6 +49,8 @@ Every review round saves its model, its tokens and its cost, whichever agent rev
 - You dismissed speck's question (2026-10-27 12:00 UTC): The build found Cursor's inputTokens already include cache reads, so AC1 would count them twice: may it change AC1's Cursor sentence to 'uncached input is inputTokens minus cacheReadTokens' and carry on? (Recommended: yes, and record 0291's builderSpend double count as a follow-up.)
 - Changed 2026-10-27, after that question: AC1's Cursor sentence now subtracts `cacheReadTokens` from `inputTokens`, as the build proposed. The same double count in `builderSpend` for Cursor builds is fixed by 0530, so no follow-up is needed for it.
 - Failing before this build: none
+- Codex reports a resumed session's totals, not the round's own: in this repo's rounds, each continued round's output_tokens grow by about one round's worth (0519: 975, 1504, 2046, 2579). So a resumed Codex round's tokens are its usage less that of the round whose session it resumed, as AC2 does for Claude's cost, and unknown when that round saved no usage. Whether Cursor does the same on a resumed chat isn't known, so its rounds are taken as they report.
+- Self-check: a resumed Codex round whose earlier round saved no usage was priced on the whole session's totals; it now saves unknown tokens and cost. Added the brief's sentence on round costs, with a test for the field it names.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
