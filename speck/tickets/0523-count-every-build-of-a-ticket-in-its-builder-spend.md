@@ -45,6 +45,8 @@ A ticket's builder tokens and cost cover every build `speck run` started for it.
 - Keep each build's figures with the time it ended, so 0527 can count them by week or month.
 - 0525, 0528 and 0530 add to the same per-ticket spend, so keep the earlier builds' figures somewhere they can add to as well.
 - Checked 2026-10-27: 477 run records in `speck/.cache/runs/`; 7 ticket ids have more than one `claude -p "/speck-build <id>"` session in this project's Claude Code transcripts (counted from `~/.claude/projects/<project folder>/*.jsonl`).
+- Failing before this build: none
+- Self-check: an earlier build whose exit wasn't recorded is counted from its log, but only when that log isn't older than its record, so an old log left when a new build couldn't open its own isn't counted twice.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
