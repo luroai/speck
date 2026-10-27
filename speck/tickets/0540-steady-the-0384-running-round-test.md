@@ -41,6 +41,7 @@ The test "0384 AC3: the panel shows the round as running through every exit 12, 
 - From 0439's build (2026-10-24): failed in the related run and alone, with 0439's changes stashed; speck's recorded base-branch result passed, so it may depend on where it runs, such as inside a build session. From 0524's build (2026-10-27): failed in the same large parallel run as 0247 AC4.
 - Checked 2026-10-27: passes when its file runs alone on `main` (2 tests, 0 failing).
 - Earlier steadying of chance failures: 0207, 0377.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
