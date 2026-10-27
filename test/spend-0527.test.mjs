@@ -103,18 +103,21 @@ test('0527 AC2: an old review round with no model of its own counts under its re
   assert.deepEqual(rows.map(x => x.tokens), [{ input: 40, cached: 0, write: 0, output: 2 }, { input: 7, cached: 0, write: 0, output: 1 }]);
 });
 
-test('0527 AC2: an old round\'s split takes the cached input out of the input as its reviewer counts it, and adds up to its tokens', () => {
+test('0527 AC2: an old round\'s usage is split as its reviewer reports it, cache reads and writes too, and speck status counts the same', () => {
   const r = runRepo({ tickets: [['0001', { title: 'Old' }]] });
   fs.appendFileSync(path.join(r.dir, 'speck', 'tickets', '0001-t.md'), rounds([
-    { model: 'gpt-6.1-sol', usage: { input_tokens: 1000, cached_input_tokens: 800, output_tokens: 20 }, cost_usd: 0.01 },
-    { model: 'cursor-x', usage: { inputTokens: 500, cacheReadTokens: 300, outputTokens: 5 }, cost_usd: 0.01 },
-    { model: 'claude-opus-5-5', usage: { input_tokens: 9, cache_read_input_tokens: 4000, output_tokens: 3 }, cost_usd: 0.01 }]));
+    { model: 'gpt-6.1-sol', usage: { input_tokens: 1000, cached_input_tokens: 800, cache_write_input_tokens: 40, output_tokens: 20 }, cost_usd: 0.01 },
+    { model: 'cursor-x', usage: { inputTokens: 500, cacheReadTokens: 300, cacheWriteTokens: 60, outputTokens: 5 }, cost_usd: 0.01 },
+    { model: 'claude-opus-5-5', usage: { input_tokens: 9, cache_read_input_tokens: 4000, cache_creation_input_tokens: 700, output_tokens: 3 }, cost_usd: 0.01 },
+    { reviewer: 'codex', model: 'gpt-6.1-sol', usage: { input_tokens: 50, output_tokens: 1 }, cost_usd: 0.01 }]));
   const rows = spendReport(r.dir, { by: 'model' }).rows;
   assert.deepEqual(rows.map(x => [x.model, x.tokens, x.total_tokens]), [
-    ['claude-opus-5-5', { input: 9, cached: 0, write: 0, output: 3 }, 12],
-    ['cursor-x', { input: 200, cached: 300, write: 0, output: 5 }, 505],
-    ['gpt-6.1-sol', { input: 200, cached: 800, write: 0, output: 20 }, 1020]]);
-  assert.equal(spendReport(r.dir).rows[0].tokens, 12 + 505 + 1020);
+    ['claude-opus-5-5', { input: 9, cached: 4000, write: 700, output: 3 }, 4712],
+    ['cursor-x', { input: 200, cached: 300, write: 60, output: 5 }, 565],
+    ['gpt-6.1-sol', { input: 250, cached: 800, write: 40, output: 21 }, 1111]]);
+  const total = 4712 + 565 + 1111;
+  assert.equal(spendReport(r.dir).rows[0].tokens, total);
+  assert.equal(statusData(r.dir).tickets.find(t => t.id === '0001').total_tokens, total);
 });
 
 // ---------- AC3 ----------

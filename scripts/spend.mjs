@@ -201,25 +201,25 @@ export function watchSpent(runs, id) {
 }
 
 // 0526: a saved review round's tokens: the tokens it saved (0529: uncached and cached input, cache writes and output),
-// or for a round saved before those, its usage's input and output, as Codex, Claude Code or Cursor names them. Null
-// when it has neither.
+// or for a round saved before those, its usage split as roundSplit gives it (0527). Null when it has neither.
 function roundSpent(r) {
-  const meta = plain(r) && plain(r.meta) ? r.meta : {}, t = plain(meta.tokens) ? meta.tokens : null, u = plain(meta.usage) ? meta.usage : {};
-  const counts = t ? ['input', 'cached', 'write', 'output'].map(k => num(t[k]))
-    : [num(u.input_tokens) ?? num(u.inputTokens), num(u.output_tokens) ?? num(u.outputTokens)];
-  return { tokens: counts.every(n => n === null) ? null : counts.reduce((n, x) => n + (x ?? 0), 0), cost_usd: num(meta.cost_usd) };
+  const meta = plain(r) && plain(r.meta) ? r.meta : {}, t = plain(meta.tokens) ? meta.tokens : null;
+  const counts = t ? ['input', 'cached', 'write', 'output'].map(k => num(t[k])) : Object.values(roundSplit(meta) ?? {});
+  return { tokens: !counts.length || counts.every(n => n === null) ? null : counts.reduce((n, x) => n + (x ?? 0), 0), cost_usd: num(meta.cost_usd) };
 }
 
-// 0527: a round saved before its tokens were (0529) split as its usage gives them, adding up to the tokens roundSpent
-// counts for it, its input and output: Codex's input_tokens and Cursor's inputTokens include the cached input, so it's
-// taken out of them as cached input. Claude Code's input_tokens leave the cache out, as roundSpent does. Null with no
-// usage.
-function usageSplit(u) {
-  if (!plain(u)) return null;
-  const cursor = 'inputTokens' in u, input = num(cursor ? u.inputTokens : u.input_tokens), output = num(cursor ? u.outputTokens : u.output_tokens);
-  if (input === null && output === null) return null;
-  const cached = Math.min(num(cursor ? u.cacheReadTokens : u.cached_input_tokens) ?? 0, input ?? 0);
-  return { input: (input ?? 0) - cached, cached, write: 0, output: output ?? 0 };
+// 0527: a saved round's tokens as {input, cached, write, output}: the ones it saved (0529), or for a round saved before
+// those, its usage's, as Codex, Claude Code or Cursor names them (roundTokens), cache reads and writes too. Codex's
+// usage names its cached input cached_input_tokens. A usage roundTokens can't split, such as one whose cached input is
+// more than its input, counts its input and output. Null with neither.
+function roundSplit(meta) {
+  const t = plain(meta.tokens) ? meta.tokens : null, u = plain(meta.usage) ? meta.usage : null;
+  if (t) return Object.fromEntries(['input', 'cached', 'write', 'output'].map(k => [k, num(t[k]) ?? 0]));
+  if (!u) return null;
+  const split = roundTokens(u, { codex: meta.reviewer === 'codex' || 'cached_input_tokens' in u });
+  if (split) return split;
+  const input = num(u.input_tokens) ?? num(u.inputTokens), output = num(u.output_tokens) ?? num(u.outputTokens);
+  return input === null && output === null ? null : { input: input ?? 0, cached: 0, write: 0, output: output ?? 0 };
 }
 
 // 0527: each build, review round and watch agent run of ticket `id` that spent anything: {part, ended, tokens, cost_usd,
@@ -231,8 +231,8 @@ export function spendParts(runs, id, rounds) {
   const time = v => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null);
   const builds = buildsOf(runs, id).map((b, i, all) => ({ part: 'builder', ...b, ended: time(i === all.length - 1 ? rec?.exited : b.ended) }));
   const reviews = (Array.isArray(rounds) ? rounds : []).map(r => {
-    const meta = plain(r) && plain(r.meta) ? r.meta : {}, spent = roundSpent(r), t = plain(meta.tokens) ? meta.tokens : null;
-    const split = t ? Object.fromEntries(['input', 'cached', 'write', 'output'].map(k => [k, num(t[k]) ?? 0])) : usageSplit(meta.usage);
+    const meta = plain(r) && plain(r.meta) ? r.meta : {}, spent = roundSpent(r);
+    const split = roundSplit(meta);
     return { part: 'reviewer', ended: time(meta.saved_at), ...spent, models: [{ model: usable(meta.model) ?? usable(meta.reviewer_model), tokens: split, cost_usd: spent.cost_usd }] };
   });
   const watch = watchOf(runs, id).map(x => ({ part: 'watch', ended: time(x.ended), tokens: num(x.tokens), cost_usd: num(x.cost_usd), models: modelsOf(x.models) }));
