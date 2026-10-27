@@ -1,7 +1,7 @@
 ---
 id: "0525"
 title: "Count the watch agent's spend on the ticket it looked into"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0530"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T12:26:19.201Z"
 approved: "2026-10-27T12:30:59.242Z"
+finished: "2026-10-27T12:35:19.286Z"
 
 ---
 # 0525 · Count the watch agent's spend on the ticket it looked into
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a build stops for a reason speck has no steps for, `speck run` starts the watch agent to look into it. What that agent spends isn't recorded anywhere, and its log (`run.watch.log`) is replaced on its next run.
