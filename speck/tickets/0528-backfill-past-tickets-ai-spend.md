@@ -1,7 +1,7 @@
 ---
 id: "0528"
 title: "Backfill past tickets' AI spend"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0527"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T13:15:07.695Z"
+approved: "2026-10-27T13:28:09.900Z"
 
 ---
 # 0528 · Backfill past tickets' AI spend
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Spend recorded before 0523–0530 leaves out a ticket's earlier builds, builds whose log had no result line (83 run records here have no spend), every watch agent run, and every review round's cost. Claude Code keeps each session's transcript, with every message's model and tokens, but by default only for 30 days, so build and watch agent spend can still be recovered, though not for long.
@@ -60,9 +61,15 @@ Worth keeping an eye on: these costs are estimates at list prices, so they can d
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 promptKind and backfill accept any session whose first prompt is /speck-build <id>, including interactive sessions.; F2 sessionSpend updates ended from every timestamped JSON object before checking whether it is a message.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 436,101
+- Elapsed since build started: 13 min
+- Changed lines: 357 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tried on a copy of this repo's run records (nothing real changed): 98 build sessions, 13 watch agent runs and 850 review rounds recovered, none with an unknown cost; a second run added nothing.
 - Known limit: a build that ran on a model provider (0392) keeps its transcripts in that provider's own Claude Code folder, which --backfill doesn't read; nor does it recover Codex or Cursor builds (out of scope).
