@@ -47,7 +47,7 @@ Every build's spend records the model or models it ran on, with each model's tok
 - Checked 2026-10-27: Claude Code's result `modelUsage` gives per model `inputTokens`, `outputTokens`, `cacheReadInputTokens`, `cacheCreationInputTokens` and `costUSD` (claude CLI, run locally). The Codex and Cursor output formats are the ones checked in 0529's Notes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Each build now remembers which AI model did the work, and how many tokens and dollars went to each model. Builds made with Codex or Cursor now get a cost too, estimated from speck's price table, where before they showed tokens only. A Cursor build's token count is also smaller and more accurate than before, as it no longer counts reused prompt text twice. To see it, let `speck run` build a ticket and look at `speck status --json`: the ticket's `builder_models` lists each model with its tokens and cost. A Cursor build on `auto`, or one on a model the price table doesn't know, shows its tokens with an unknown cost rather than $0. Builds that finished before this change have no per-model figures.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +57,10 @@ Every build's spend records the model or models it ran on, with each model's tok
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, no inbox notes):
+- Known limit: a Claude Code result with `usage` but no `modelUsage` records no models, so its spend falls under no model. Claude Code always gives `modelUsage` today.
+- Known limit: a Codex build's model is read from `-m`/`--model` or its session file, not from a `-c model=…` override in a custom `build_command`; the session file usually still names it.
+- Tidy-up: the Cursor log in `test/build-log-0291.test.mjs` has more cache reads than input, which Cursor never reports, so its split is unknown there.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +142,89 @@ Every build's spend records the model or models it ran on, with each model's tok
     ],
     "escalation_question": "",
     "summary": "The implementation records models and their spend, prices Codex and Cursor builds, and preserves Claude totals. The reported behavioural tests pass. One documentation test checks exact wording, which the review rules prohibit; remove that assertion before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6264842769e4f7f5e2e76d06107c6f08058cdff2",
+    "session": "continued",
+    "thread_id": "01a17d4e-9fb9-78e0-9de6-eb08a62b5d2d",
+    "builder_response": "- Tests run: test/spend-0530.test.mjs test/build-log-0291.test.mjs test/spend-0120.test.mjs (with the checks).\n- F1: fixed. Removed the assertion on the brief's prose; the test now checks only the field names, the command and `auto`.\n",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 317278,
+      "cached_input_tokens": 256512,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1534,
+      "reasoning_output_tokens": 107
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4905,
+      "cached": 112896,
+      "write": 0,
+      "output": 615
+    },
+    "cost_usd": 0.0272496,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T12:21:57.542Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/spend.mjs builderSpend retains each Claude model's four token counts and costUSD, while keeping total_cost_usd as the build cost. Both 0530 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "builderSpend prices the last turn.completed usage using the command's model or codexModel's session lookup. Passing 0530 AC2 tests cover token splitting, model precedence, session fallback and unknown rates."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "builderSpend uses Cursor's --model and roundTokens, counts cache reads once, and preserves null costs for auto and unpriced models. All three 0530 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "run.mjs recordExit saves logSpend results; builderSpent aggregates costs and models across builds; speck.mjs statusData exposes builder_cost_usd and builder_models. The 0530 AC4 behavioural tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "builderSpend preserves Claude's previous total-token calculation and total_cost_usd. The passing 0530 AC5 test covers modelUsage, usage-only results and earlier-build aggregation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/spend-0530.test.mjs:177",
+        "issue": "The prohibited assertion against an exact prose fragment has been removed. The remaining assertions check field, command and model names.",
+        "suggested_fix": "No further change needed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Builds now record spend by model, including estimated Codex and Cursor costs, while preserving Claude totals. All five criteria are met and the reported tests pass. The documentation test issue is resolved; no blocking concerns remain."
   }
 }
 ```
