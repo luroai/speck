@@ -1,7 +1,7 @@
 ---
 id: "0531"
 title: "Prepare release 0.19.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0528"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T13:32:37.023Z"
+approved: "2026-10-27T13:36:15.999Z"
 
 ---
 # 0531 · Prepare release 0.19.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0.18.0, speck records what each ticket's AI work cost, for builds, review rounds and the watch agent, on any agent and model (0523–0530): it prices tokens from a price table that ships with speck (0524), shows each shipped ticket's total cost in the panel (0526), adds spend up by ticket, model, week or month with `speck spend` (0527), and backfills earlier spend with `speck spend --backfill` (0528). Anyone following the setup prompt, or updating speck in a project, still gets 0.18.0 without them.
@@ -63,9 +64,14 @@ Once this lands, the release page and its tag should appear by themselves. Check
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 148,346
+- Elapsed since build started: 4 min
+- Changed lines: 72 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
