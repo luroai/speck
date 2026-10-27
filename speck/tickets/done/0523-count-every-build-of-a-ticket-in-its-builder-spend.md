@@ -1,7 +1,7 @@
 ---
 id: "0523"
 title: "Count every build of a ticket in its builder spend"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T11:10:32.309Z"
 approved: "2026-10-27T11:13:51.908Z"
+finished: "2026-10-27T11:19:05.792Z"
 
 ---
 # 0523 · Count every build of a ticket in its builder spend
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ticket that `speck run` builds more than once, such as one set ready again after a build that stopped, shows only its latest build's spend: each new build's run record and log replace the last one's. Seven tickets in this repo have lost an earlier build's spend this way, so their builder cost is too low.
