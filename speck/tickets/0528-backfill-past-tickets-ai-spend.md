@@ -1,7 +1,7 @@
 ---
 id: "0528"
 title: "Backfill past tickets' AI spend"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-27
 ---
 # 0528 · Backfill past tickets' AI spend
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Spend recorded before 0523–0530 leaves out a ticket's earlier builds, builds whose log had no result line (83 run records here have no spend), every watch agent run, and every review round's cost. Claude Code keeps each session's transcript, with every message's model and tokens, but by default only for 30 days, so build and watch agent spend can still be recovered, though not for long.
