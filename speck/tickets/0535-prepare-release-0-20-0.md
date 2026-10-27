@@ -1,7 +1,7 @@
 ---
 id: "0535"
 title: "Prepare release 0.20.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-27T19:01:13.908Z"
 ---
 # 0535 · Prepare release 0.20.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0.19.0, a ticket's spend counts the sub-agents its build fans work out to: Codex builds' sub-agents (0532), Claude Code builds' sub-agents, now checked against a real build (0533), and Codex sessions a build starts in its ticket's worktree, such as research handed to Codex from a Claude build (0534). Anyone following the setup prompt, or updating speck in a project, still gets 0.19.0, whose spend leaves those out.
@@ -51,7 +51,7 @@ speck is ready to be released as 0.20.0.
 - Self-check: narrowed two claims in the release notes: the share of tokens 0532's test left out (29%, not "nearly a third"), and that the new counting applies to builds that end after updating, not only to new tickets.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.20.0. Once it lands, anyone installing or updating speck gets the spend changes from the last three tickets: a ticket's cost now includes the helper agents its build starts, and Codex runs started in the ticket's own folder. The changelog, the release notes, the version in the README and the brief, and the README's "Built with speck" figures (518 tickets shipped) are all updated. To check it, read the 0.20.0 section at the top of the changelog and the release notes. Worth keeping an eye on: after it ships, check that the 0.20.0 release page appeared on GitHub.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,3 +61,81 @@ speck is ready to be released as 0.20.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e0838ffdbac8a9c364022235e73eca2fbb997dbf",
+    "session": "fresh",
+    "thread_id": "01a17ebf-3b58-7d01-a206-9578a0dd6534",
+    "builder_response": "- Tests run: test/release-0535.test.mjs test/release-0531.test.mjs test/docs-0491.test.mjs, with `--related` (113 related files, 1112 pass, 0 fail, 3 skipped).\n- Covers 0532, 0533 and 0534, the only tickets shipped since `v0.19.0` (`git log v0.19.0..main`).\n- `npm run prices` ran on 2026-10-27 and wrote a table identical to the one 0.19.0 shipped (same day, no rates changed), so `scripts/prices.json` has no diff; its `taken` is 2026-10-27.\n- \"Built with speck\" figures recomputed with test/support/figures.mjs from `speck/tickets/done/` at main's commit 719bb297: 518 shipped, 16 cancelled, 13 min median, 1 round median, 263 first-round approvals.\n- release-0531's checks naming 0.19.0 as the current version now check the current version, as 0531 did for 0522.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 154079,
+      "cached_input_tokens": 105344,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 975,
+      "reasoning_output_tokens": 20
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 48735,
+      "cached": 105344,
+      "write": 0,
+      "output": 975
+    },
+    "cost_usd": 0.1177544,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T19:04:07.127Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.20.0. Passing release-0535 AC1 tests check the version and invoke speck init to verify its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.20.0 above 0.19.0 and accurately describes shipped tickets 0532–0534, verified against their records and git log v0.19.0..main. The passing preservation test compares all earlier sections with the tag."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say '0.20.0, a public preview'. The setup prompt retains the quoted semver:* install command. Passing AC3 tests cover versions, setup and price-table date; scripts/prices.json records 2026-10-27. The builder reports that day's refresh produced identical rates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.20.0.md explains each shipped change, its benefit, per-project reinstallation, upgrade behaviour, worktree limitation and estimated API list prices. It contains no person's name and links to the correct changelog anchor. Passing AC4 tests check commands, pricing facts and the link."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recomputed figures from current done tickets: 518 shipped, 16 cancelled, 13-minute median, one review round median and 263 first-round approvals, matching README.md. The version/changelog test passes. The recorded related run reports 1112 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Release 0.20.0 is ready for the owner's merge decision. The notes accurately explain the improved spend accounting and update steps, the published figures match the ticket records, and the relevant tests pass. No blocking concerns found."
+  }
+}
+```
+
+</details>
