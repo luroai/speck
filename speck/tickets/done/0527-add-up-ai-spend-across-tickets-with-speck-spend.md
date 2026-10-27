@@ -1,7 +1,7 @@
 ---
 id: "0527"
 title: "Add up AI spend across tickets with speck spend"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0526"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T12:57:10.753Z"
 approved: "2026-10-27T13:07:17.400Z"
+finished: "2026-10-27T13:11:30.844Z"
 
 ---
 # 0527 · Add up AI spend across tickets with speck spend
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 There's no way to see what AI work has cost, per ticket or per week or month, without adding up each ticket's figures by hand.
