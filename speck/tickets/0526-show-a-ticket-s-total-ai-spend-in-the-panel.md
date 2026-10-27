@@ -46,7 +46,11 @@ A shipped ticket in the panel shows its total AI cost: builder, reviewer and wat
 - Self-check: the Total cost tooltip with no known part now names the parts alone (it read "—: …"), and Reviewer cost also says "at least" when one of its rounds has tokens but no cost.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A shipped ticket in the panel now shows what it cost in all, not just what the builder cost. Open a shipped ticket and its table has two new boxes, Reviewer cost and Total cost, next to Builder cost. The line under a closed shipped ticket shows the total where it used to show the builder's cost, and the stats above the Shipped list add the total for the tickets that list shows, for example "$2.20, $4.41 total".
+
+When part of a ticket's spend has no known price, such as a review by a model with no rates, the total says "at least $…", and hovering over it names the part left out. Older tickets shipped before costs were recorded show "—".
+
+Worth keeping an eye on: the total above the list covers only the tickets the list shows (the latest ten), not every ticket ever shipped.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,10 @@ A shipped ticket in the panel shows its total AI cost: builder, reviewer and wat
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-27-count-reviewer-tokens-as-each-round-saved-them.md (the existing Reviewer tokens figure reads raw usage, as review round 1's F1 found for the total).
+- Known limit: the panel doesn't show `total_tokens` anywhere yet; only `speck status --json` gives it.
+- Known limit: the total above Shipped covers the tickets the list shows (the latest ten and any older one not pushed), as the Notes explain; a total over every shipped ticket would need more room on the stats line.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -145,6 +153,97 @@ A shipped ticket in the panel shows its total AI cost: builder, reviewer and wat
     ],
     "escalation_question": "",
     "summary": "The panel displays the new costs and recent-spend statistics correctly, but reviewer token totals can be wrong, and some incomplete costs appear complete. Fix the calculations and missing-cost tracking before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4efc65817d48b1f46d4de2559c045e21e2714daa",
+    "session": "continued",
+    "thread_id": "01a17d69-2c99-7fa3-b945-555a80a0ee0a",
+    "builder_response": "- Tests run: test/build-log-0291.test.mjs test/panel-0134.test.mjs test/panel-0157.test.mjs test/panel-0178.test.mjs test/panel-0058.test.mjs test/panel-0140.test.mjs test/panel-0162.test.mjs test/panel-0188.test.mjs test/panel-0420.test.mjs test/panel-0246.test.mjs test/panel-0466.test.mjs test/panel-0411.test.mjs test/panel-0442.test.mjs test/panel-0465.test.mjs test/panel-0464.test.mjs test/panel.test.mjs test/spend-0120.test.mjs test/spend-0530.test.mjs test/spend-0523.test.mjs test/total-cost-0526.test.mjs  test/watch-spend-0525.test.mjs test/round-cost-0529.test.mjs\n- F1: fixed. scripts/spend.mjs roundSpent: a round's tokens are its saved meta.tokens (input, cached, write, output), so a resumed Codex round counts only its own and a Claude round's cache reads and writes count. A round saved before 0529, or with tokens saved as null, falls back to its usage, as input_tokens/output_tokens or Cursor's inputTokens/outputTokens, so a Cursor round with no cost is now left out and named. Tests: \"0526 AC1: a round's tokens are the ones it saved…\".\n- F2: fixed. totalSpent now takes the runs folder, the ticket id and its rounds, and reads each build (buildsOf: earlier builds and the latest, the same list builderSpent sums) and each watch agent run (watchOf: the same list watchSpent sums) one by one, so one build or run with tokens and no cost marks its part left out even when another's cost is known. builderSpent and watchSpent give the same results as before, now built on those helpers. Test: \"0526 AC1, AC3: a build or watch agent run with tokens but no cost leaves its part out…\".\n- docs/brief.md: says total_tokens counts each round's tokens as it saved them, and that total_cost_unknown names a part with any build, round or run lacking a cost.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 336228,
+      "cached_input_tokens": 264448,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1855,
+      "reasoning_output_tokens": 61
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 16479,
+      "cached": 121856,
+      "write": 0,
+      "output": 750
+    },
+    "cost_usd": 0.0526436,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T12:52:38.827Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs statusData exposes totalSpent results. scripts/spend.mjs now sums individual builds, saved reviewer token components and individual watch runs. Passing 0526 AC1 tests cover sums, nulls, cached tokens, resumed rounds and status output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.js shippedFacts shows Reviewer cost and Total cost beside Builder cost, with dashes for unknown values. The 0526 AC2 rendering test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "totalSpent detects unknown costs within individual builds, rounds and watch runs. totalCell displays 'at least' and names omitted parts. Passing AC3 tests cover partial costs and tooltips; the new mixed-run regression test covers F2."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.js render uses totalShown in the shipped line. The passing 0526 AC4 test checks complete, partial and absent totals."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "templates/panel-model.js sums known totals over the shipped list; panel.js places that sum beside median builder cost with coverage in its tooltip. Passing AC5 tests cover the latest ten, sum, coverage and absent totals."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/spend.mjs",
+        "issue": "Reviewer token totals previously used raw usage, causing incorrect counts and missed unknown-cost warnings.",
+        "suggested_fix": "Implemented: roundSpent uses saved normalised token components, with legacy usage fallback. Regression tests cover resumed Codex, Claude cache tokens and Cursor usage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/spend.mjs",
+        "issue": "Aggregated builder and watch costs previously concealed individual runs with unknown costs.",
+        "suggested_fix": "Implemented: totalSpent examines individual builds and watch runs before aggregation. The mixed known/unknown cost regression test passed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both calculation problems are fixed. The panel now shows combined AI spend and clearly marks incomplete totals. All five criteria pass, and the reported test run has no failures."
   }
 }
 ```
