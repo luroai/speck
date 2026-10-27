@@ -1,7 +1,7 @@
 ---
 id: "0544"
 title: "Start speck run in the background from the command line"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-27
 ---
 # 0544 · Start speck run in the background from the command line
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 There's no command to turn `speck run` on in the background, as the panel's switch does. Setup starts it with a shell line (`nohup … run >> run.log &`) and reads the log a few seconds later to guess whether it started, which depends on the agent's shell and on how long it waits. Other agents and scripts have no plain way to do it either.
