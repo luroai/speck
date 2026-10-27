@@ -50,6 +50,8 @@ A Codex session started inside a ticket's worktree counts in that ticket's spend
 - Checked 2026-10-27: a `codex exec` session file's first line is `session_meta`, whose payload has `cwd` (the folder it ran in), `timestamp`, `originator: "codex_exec"` and `source: "exec"`, and its file name ends `-<thread id>.jsonl` (local test, codex-cli 0.159.0). `gpt-6.1-sol` is in `codex debug models` and has rates in `scripts/prices.json` ($2 per million input tokens, $10 per million output).
 - Checked 2026-10-27: which sandbox and config settings Codex needs to search the web from `codex exec` is still not tried, and this ticket doesn't need it. `codex --help` (codex-cli 0.159.0) lists `--search` for live web search, but `codex exec --help` doesn't, so the research ticket must find how `codex exec` turns it on.
 
+- Failing before this build: none
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
