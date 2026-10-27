@@ -1,7 +1,7 @@
 ---
 id: "0533"
 title: "Prove a Claude Code build's spend counts its sub-agents"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0532"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T18:40:15.395Z"
 approved: "2026-10-27T18:43:07.845Z"
+finished: "2026-10-27T18:47:07.009Z"
 
 ---
 # 0533 · Prove a Claude Code build's spend counts its sub-agents
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Research tickets will have the Claude Code builder fan out to sub-agents with the Agent tool. speck records a Claude build's spend from the last `result` line of its log, which should cover the sub-agents too, but nobody has checked. If it doesn't, those tickets' costs are understated without anyone knowing.
