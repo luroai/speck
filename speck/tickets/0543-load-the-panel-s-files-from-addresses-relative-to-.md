@@ -42,6 +42,7 @@ Every file the panel's page links to, the font included, loads from an address r
 - Found 2026-10-19 from speck-site: `http://127.0.0.1:4779/fonts/Doto.ttf` serves the font, while the same path under cptr's proxy host answers `text/html` (cptr's app page).
 - Today: `templates/panel.html` links `/icon.svg`, `/manifest.webmanifest`, `/panel-base.css` and the other stylesheets, and `/panel-model.js` and the other scripts; `templates/panel-base.css` has `url("/fonts/Doto.ttf")`; the routes are in `scripts/panel.mjs` (`icons`, `/fonts/Doto.ttf`). A `url()` in a stylesheet resolves against the stylesheet's own address, which is at the page's level.
 - Builds on 0149 (home-screen app) and 0304 (Doto in the header).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
