@@ -114,17 +114,20 @@ test('0291 AC2: a Cursor shell call that fails without an exit code is shown as 
 
 // ---------- AC3 ----------
 
-test('0291 AC3: a Codex build\'s tokens come from its last turn, which covers the whole session, and its cost is unknown', () => {
+test('0291 AC3: a Codex build\'s tokens come from its last turn, which covers the whole session, and its cost is unknown without a model', () => {
   // input_tokens already includes the cached input, so it isn't added again.
-  assert.deepEqual(builderSpend(CODEX), { tokens: 14675, cost_usd: null });
+  // 0530: with no model it can be priced at, its cost is unknown.
+  assert.deepEqual(builderSpend(CODEX), { tokens: 14675, cost_usd: null, models: [{ model: null, tokens: { input: 2382, cached: 12288, write: 0, output: 5 }, cost_usd: null }] });
   const resumed = `${CODEX}\n${log([{ type: 'thread.started', thread_id: 't1' },
     { type: 'turn.completed', usage: { input_tokens: 29821, cached_input_tokens: 26752, output_tokens: 10 } }])}`;
-  assert.deepEqual(builderSpend(resumed), { tokens: 29831, cost_usd: null });
+  assert.equal(builderSpend(resumed).tokens, 29831);
 });
 
-test('0291 AC3: a Cursor build\'s tokens are its input, output and cache tokens, and its cost is unknown', () => {
-  assert.deepEqual(builderSpend(CURSOR), { tokens: 4240, cost_usd: null });
-  assert.deepEqual(builderSpend(log([{ type: 'result', usage: { inputTokens: 'x', outputTokens: -1, cacheReadTokens: 5 } }])), { tokens: 5, cost_usd: null });
+test('0291 AC3: a Cursor build\'s tokens are its input, output and cache tokens, and its cost is unknown without a model', () => {
+  // 0530: inputTokens already include the cache reads, so they aren't added again.
+  // This log's cache reads are more than its input, so its split is unknown.
+  assert.deepEqual(builderSpend(CURSOR), { tokens: 1240, cost_usd: null, models: [{ model: null, tokens: null, cost_usd: null }] });
+  assert.equal(builderSpend(log([{ type: 'result', usage: { inputTokens: 'x', outputTokens: -1, cacheReadTokens: 5 } }])).tokens, 0, 'odd values count as nothing');
 });
 
 test('0291 AC3: a Codex or Cursor log with no usage records nothing', () => {
@@ -141,7 +144,7 @@ test('0291 AC3: the panel shows a Codex or Cursor build\'s tokens, and no $0 cos
   await p.settle();
   await openDetails(p);
   const [row] = shippedRows(p);
-  assert.equal(figsOf(row), 'Time4 minReview rounds1Builder cost—Builder tokens4,240Reviewer tokens1,200', 'no cost recorded: a dash (0464)');
+  assert.equal(figsOf(row), 'Time4 minReview rounds1Builder cost—Builder tokens1,240Reviewer tokens1,200', 'no cost recorded: a dash (0464)');
   assert.ok(!p.all(row).some(n => /\$0/.test(n.textContent || '')), 'no $0 anywhere on the card');
 });
 // 0464: an open card's figures are in its facts table, after its Shipped cell, whose time depends on the clock
@@ -163,7 +166,8 @@ const CLAUDE = log([
 
 test('0291 AC4: a Claude Code log reads and counts as before', () => {
   assert.equal(readableLog(CLAUDE), 'Reading the ticket.\n\n→ Bash: Run the tests\n  ✗ Exit code 1\nDone.\n\nplain text line');
-  assert.deepEqual(builderSpend(CLAUDE), { tokens: 100, cost_usd: 1.5 });
+  const { models, ...spend } = builderSpend(CLAUDE); // 0530: models
+  assert.deepEqual(spend, { tokens: 100, cost_usd: 1.5 });
   // A Claude Code result whose text ends with the last message, but isn't it, is still shown.
   const ends = log([{ type: 'assistant', message: { content: [{ type: 'text', text: 'done.' }] } }, { type: 'result', subtype: 'success', result: 'All done.' }]);
   assert.equal(readableLog(ends), 'done.\n\nAll done.');
