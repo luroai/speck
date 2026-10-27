@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { applyMachineConfig } from './machine.mjs';
 export { lintTicket } from './lint.mjs';
 export { builderSpend, builderSpent, earlierBuilds, logSpend, reviewerCost, watchSpent, totalSpent } from './spend.mjs';
+export { cmdSpend } from './spend-view.mjs'; // 0527
+export { cmdPrices } from './prices.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const TEMPLATES = path.join(ROOT, 'templates');
