@@ -49,6 +49,7 @@ speck prices a model's tokens from a price table that ships with each release.
 - Checked 2026-10-27: OpenRouter's `https://openrouter.ai/api/v1/models` has rates too, but with names such as `anthropic/claude-opus-5.5` that don't match what Claude Code and Codex print (fetched live).
 - Checked 2026-10-27: `package.json` has only a `test` script, so `prices` is new.
 - Failing before this build: none
+- Self-check: plain errors when `npm run prices` can't reach the list or gets something that isn't JSON; the usage message names no model, so the repo's no-model-names check passes. The repo checks for model names and for 600-line files now leave out the generated `scripts/prices.json`, and two wrapped help entries in `scripts/speck.mjs` went onto one line each to keep it at 600 lines.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

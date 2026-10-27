@@ -14,7 +14,8 @@
     "skills/"
   ],
   "scripts": {
-    "test": "node test/support/suite.mjs"
+    "test": "node test/support/suite.mjs",
+    "prices": "node scripts/update-prices.mjs"
   },
   "engines": {
     "node": ">=20"
