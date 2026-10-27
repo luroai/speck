@@ -11,6 +11,7 @@ import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 import { documentSection } from './output.mjs';
 import { tildePaths } from './private-words.mjs';
+import { codexSpend } from './round-cost.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
 import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
 
@@ -340,9 +341,12 @@ function runCodexReview(repo, id, s) {
   const events = r.stdout.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return {}; } });
   const thread = events.find(e => e.type === 'thread.started')?.thread_id || (round > 1 ? lastThread : undefined);
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
+  // 0529: a resumed session's usage covers the whole session, so the round it resumed is taken out of it.
+  const resumed = lastThread ? [...prior].reverse().find(r => r.meta?.thread_id === lastThread)?.meta : null;
+  const spend = codexSpend(usage, { model: settings.model, thread, ...(resumed ? { before: resumed.usage ?? null } : {}) });
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
-  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), session: lastThread ? 'continued' : 'fresh', thread_id: thread, ...(response ? { builder_response: response } : {}), ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...testsSeen });
+  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), session: lastThread ? 'continued' : 'fresh', thread_id: thread, ...(response ? { builder_response: response } : {}), ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...spend, ...testsSeen });
 }
 
 function printRound(rec, cfg, all) {
@@ -451,7 +455,8 @@ export function cmdRecord(args) {
   const prior = rounds(repo, id);
   const merge = isMergeRound(prior);
   const extra = extraRound(prior, cfg, merge);
-  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), ...testsSeen });
+  // 0529: a subagent reports no usage, so its round's tokens and cost are unknown.
+  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, model: meta.reviewer_model && meta.reviewer_model !== 'default' ? meta.reviewer_model : null, tokens: null, cost_usd: null, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), ...testsSeen });
   endRound(repo, findTicket(repo, id).fm.id || id);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
