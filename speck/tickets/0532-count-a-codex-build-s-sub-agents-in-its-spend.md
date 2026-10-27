@@ -1,7 +1,7 @@
 ---
 id: "0532"
 title: "Count a Codex build's sub-agents in its spend"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
+started: "2026-10-27T18:30:44.379Z"
 
 ---
 # 0532 · Count a Codex build's sub-agents in its spend
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A Codex build that fans work out to Codex sub-agents records only its own thread's tokens, so its ticket's spend is understated. In a test on 27 October, a run with two small sub-agents recorded 75,480 tokens and left out another 30,488 (29%). A research ticket that fans out across many cases would be understated by far more.
