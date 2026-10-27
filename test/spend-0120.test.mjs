@@ -50,7 +50,8 @@ test('0120 AC1: tokens come from the final result\'s modelUsage, summed over mod
         b: { inputTokens: 100, outputTokens: 50, cacheReadInputTokens: 0, cacheCreationInputTokens: 0, costUSD: 0.02 } } }),
     '',
   ].join('\n');
-  assert.deepEqual(builderSpend(log), { tokens: 76 + 19935 + 2141794 + 73552 + 150, cost_usd: 1.42 });
+  const { models, ...spend } = builderSpend(log); // 0530: models
+  assert.deepEqual(spend, { tokens: 76 + 19935 + 2141794 + 73552 + 150, cost_usd: 1.42 });
 });
 
 test('0120 AC1: no result line, or a final one without usage, records nothing', () => {
