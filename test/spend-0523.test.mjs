@@ -33,7 +33,7 @@ test('0523 AC1: a new build that speck run starts adds its spend to the earlier 
   } finally { await stopRun(run); }
   const rec = record(r.dir, '0001');
   assert.deepEqual(rec.builder, { tokens: 300, cost_usd: 2.25 }, 'the new build\'s own spend');
-  assert.deepEqual(rec.earlier_builds, [{ ended: '2026-10-01T11:00:00.000Z', tokens: 1000, cost_usd: 1.5 }]);
+  assert.deepEqual(rec.earlier_builds, [{ ended: '2026-10-01T11:00:00.000Z', tokens: 1000, cost_usd: 1.5, session: 'old' }]);
   const s = statusOf(r.dir, '0001');
   assert.equal(s.builder_tokens, 1300);
   assert.ok(close(s.builder_cost_usd, 3.75), s.builder_cost_usd);

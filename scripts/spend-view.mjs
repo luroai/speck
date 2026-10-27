@@ -3,16 +3,17 @@
 import path from 'node:path';
 import { SpeckError, findRepoRoot, loadConfig, listTickets, ticketsElsewhere, ticketRounds, worktreeList, padId } from './core.mjs';
 import { spendParts, sumParts } from './spend.mjs';
+import { backfill, backfillLines } from './backfill.mjs';
 
 const VIEWS = ['ticket', 'model', 'week', 'month'];
-const USAGE = 'Usage: speck spend [--by=ticket|model|week|month] [--since=YYYY-MM-DD] [--until=YYYY-MM-DD] [--json]';
+const USAGE = 'Usage: speck spend [--by=ticket|model|week|month] [--since=YYYY-MM-DD] [--until=YYYY-MM-DD] [--json], or speck spend --backfill';
 
-// The main checkout's speck/.cache/runs/, where speck run keeps its records and logs.
-function runsOf(repo) {
-  let main = repo;
-  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
-  return path.join(main, 'speck', '.cache', 'runs');
+// The main checkout, where speck run starts builds, or `repo` when it isn't a git checkout.
+function mainOf(repo) {
+  try { return worktreeList(repo)[0]?.path || repo; } catch { return repo; }
 }
+// The main checkout's speck/.cache/runs/, where speck run keeps its records and logs.
+const runsOf = repo => path.join(mainOf(repo), 'speck', '.cache', 'runs');
 
 // Every ticket, from the worktree its branch is checked out in when it's there, as speck status reads them.
 function allTickets(repo) {
@@ -44,17 +45,19 @@ function dateArg(name, v) {
   return v;
 }
 
-// The options `args` give: {by, since, until, json}, or a SpeckError saying what's wrong.
+// The options `args` give: {by, since, until, json, backfill}, or a SpeckError saying what's wrong.
 export function spendOptions(args) {
-  const o = { by: 'ticket', since: null, until: null, json: false };
+  const o = { by: 'ticket', since: null, until: null, json: false, backfill: false };
   for (const a of args) {
     const [k, ...rest] = a.split('='), v = rest.length ? rest.join('=') : null;
     if (k === '--json' && v === null) o.json = true;
+    else if (k === '--backfill' && v === null) o.backfill = true;
     else if (k === '--by' && VIEWS.includes(v)) o.by = v;
     else if (k === '--by') throw new SpeckError(`--by=${v ?? ''} isn't a view: give ticket, model, week or month.\n${USAGE}`);
     else if (k === '--since' || k === '--until') o[k.slice(2)] = dateArg(k.slice(2), v);
     else throw new SpeckError(`Unknown option "${a}".\n${USAGE}`);
   }
+  if (o.backfill && args.length > 1) throw new SpeckError(`--backfill takes no other options: run speck spend --backfill on its own, then speck spend to see the spend.\n${USAGE}`);
   if (o.since && o.until && o.since > o.until) throw new SpeckError(`--since=${o.since} is after --until=${o.until}, so no day is in between: give a --since on or before the --until.`);
   return o;
 }
@@ -137,8 +140,20 @@ export function spendLines(report) {
   return lines;
 }
 
+// 0528: speck spend --backfill: recovers past spend for every ticket (backfill.mjs), from the transcripts of sessions
+// started in the main checkout. The lines it prints.
+export function backfillSpend(repo, homes = {}) {
+  const tickets = allTickets(repo).map(t => {
+    let rounds = [];
+    try { rounds = ticketRounds(t.raw).rounds; } catch { /* rounds it can't read are left as they are */ }
+    return { id: t.fm.id, rounds };
+  }).filter(t => /^\d+$/.test(String(t.id ?? '')));
+  return backfillLines(backfill({ repo: mainOf(repo), runs: runsOf(repo), tickets, ...homes }));
+}
+
 export function cmdSpend(args) {
   const opts = spendOptions(args);
+  if (opts.backfill) return console.log(backfillSpend(findRepoRoot()).join('\n'));
   const report = spendReport(findRepoRoot(), opts);
   console.log(opts.json ? JSON.stringify(report, null, 2) : spendLines(report).join('\n'));
 }
