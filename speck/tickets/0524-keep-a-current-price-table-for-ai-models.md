@@ -48,6 +48,7 @@ speck prices a model's tokens from a price table that ships with each release.
 - Checked 2026-10-27: `claude-opus-5-5` is $4 input, $0.20 cached, $5 cache writes and $20 output per million tokens; `gpt-6.1-sol` is $2, $0.10, $2.50 and $10; `deepseek-v4-pro` is present; there's no bare `grok-4.7`, only `xai/grok-4.7` and other provider-prefixed copies (same fetch).
 - Checked 2026-10-27: OpenRouter's `https://openrouter.ai/api/v1/models` has rates too, but with names such as `anthropic/claude-opus-5.5` that don't match what Claude Code and Codex print (fetched live).
 - Checked 2026-10-27: `package.json` has only a `test` script, so `prices` is new.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
