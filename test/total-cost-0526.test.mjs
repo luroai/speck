@@ -3,6 +3,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { totalSpent, recordWatchSpend } from '../scripts/spend.mjs';
 import { statusData, runsOf } from '../scripts/speck.mjs';
@@ -12,31 +13,60 @@ import { runRepo } from './support/run.mjs';
 const NOW = new Date(2026, 9, 27, 12, 0).getTime();
 const ago = s => new Date(NOW - s * 1000).toISOString();
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} is not ${b}`);
-// A saved review round, as the ticket's ## Review rounds keeps it: its tokens from usage, its cost when known.
-const saved = (input, output, cost_usd) => ({ meta: { usage: { input_tokens: input, output_tokens: output }, ...(cost_usd === undefined ? {} : { cost_usd }) } });
+// A saved review round, as the ticket's ## Review rounds keeps it: its usage, and its tokens and cost when known.
+const saved = (input, output, cost_usd, tokens) => ({ meta: { usage: { input_tokens: input, output_tokens: output }, ...(tokens ? { tokens } : {}), ...(cost_usd === undefined ? {} : { cost_usd }) } });
+// A runs folder keeping ticket 0001's builds, its latest last, and the watch agent's runs on it.
+function runsWith({ builds = [], watch = [] } = {}) {
+  const runs = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0526-'));
+  if (builds.length) fs.writeFileSync(path.join(runs, '0001.json'), JSON.stringify({ builder: builds.at(-1), earlier_builds: builds.slice(0, -1) }));
+  fs.writeFileSync(path.join(runs, 'run.watch-spend.jsonl'), watch.map((w, i) => JSON.stringify({ id: '0001', run: `r${i}`, ...w })).join('\n'));
+  return runs;
+}
 
 // ---------- AC1 ----------
 
 test('0526 AC1: the total sums the known builder, reviewer and watch agent costs and tokens', () => {
-  const t = totalSpent({ builder: { tokens: 1000, cost_usd: 1.5 }, rounds: [saved(100, 20, 0.1), saved(200, 30, 0.2)], watch: { tokens: 50, cost_usd: 0.05 } });
+  const runs = runsWith({ builds: [{ tokens: 400, cost_usd: 0.5 }, { tokens: 600, cost_usd: 1 }], watch: [{ tokens: 50, cost_usd: 0.05 }] });
+  const t = totalSpent(runs, '0001', [saved(100, 20, 0.1), saved(200, 30, 0.2)]);
   close(t.total_cost_usd, 1.85);
   assert.equal(t.total_tokens, 1000 + 120 + 230 + 50);
   assert.deepEqual(t.total_cost_unknown, []);
 });
 
+test('0526 AC1: a round\'s tokens are the ones it saved, cached input and cache writes too, or its usage as any reviewer names it', () => {
+  const runs = runsWith();
+  // 0529 saves a resumed Codex round's own tokens, less what the session used before; its usage is the session's.
+  assert.equal(totalSpent(runs, '0001', [saved(10000, 500, 0.01, { input: 1000, cached: 3000, write: 0, output: 200 })]).total_tokens, 4200);
+  // A Claude round's cache reads and writes count.
+  assert.equal(totalSpent(runs, '0001', [saved(40, 120, 0.02, { input: 40, cached: 9000, write: 700, output: 120 })]).total_tokens, 9860);
+  // A Cursor round saved before 0529, its usage in camelCase, with no cost: counted, and its cost left out.
+  const cursor = { meta: { usage: { inputTokens: 1000, outputTokens: 10 } } };
+  assert.deepEqual(totalSpent(runs, '0001', [cursor]), { total_cost_usd: null, total_tokens: 1010, total_cost_unknown: ['reviewer'] });
+  // Tokens saved as null, as when they couldn't be read, fall back to its usage.
+  assert.equal(totalSpent(runs, '0001', [{ meta: { tokens: null, usage: { input_tokens: 7, output_tokens: 3 }, cost_usd: 0 } }]).total_tokens, 10);
+});
+
 test('0526 AC1: with no part known the total cost and tokens are null; a part left out counts only what is known', () => {
-  assert.deepEqual(totalSpent({}), { total_cost_usd: null, total_tokens: null, total_cost_unknown: [] });
-  assert.deepEqual(totalSpent({ builder: { tokens: null, cost_usd: null }, rounds: [], watch: { tokens: null, cost_usd: null } }),
-    { total_cost_usd: null, total_tokens: null, total_cost_unknown: [] });
+  assert.deepEqual(totalSpent(runsWith(), '0001', []), { total_cost_usd: null, total_tokens: null, total_cost_unknown: [] });
+  assert.deepEqual(totalSpent(runsWith(), '0001'), { total_cost_usd: null, total_tokens: null, total_cost_unknown: [] });
+  assert.deepEqual(totalSpent(runsWith({ builds: [{ tokens: 5, cost_usd: 1 }] }), '../0001', []), { total_cost_usd: null, total_tokens: null, total_cost_unknown: [] });
   // Tokens but no cost: the cost stays unknown, the tokens count.
-  assert.deepEqual(totalSpent({ builder: { tokens: 900, cost_usd: null } }), { total_cost_usd: null, total_tokens: 900, total_cost_unknown: ['builder'] });
+  assert.deepEqual(totalSpent(runsWith({ builds: [{ tokens: 900, cost_usd: null }] }), '0001', []), { total_cost_usd: null, total_tokens: 900, total_cost_unknown: ['builder'] });
   // One reviewer round with tokens and no cost leaves the reviewer out, even when another round's cost is known.
-  const t = totalSpent({ builder: { tokens: 10, cost_usd: 2 }, rounds: [saved(100, 0, 0.5), saved(300, 0)], watch: { tokens: 7, cost_usd: null } });
+  const t = totalSpent(runsWith({ builds: [{ tokens: 10, cost_usd: 2 }], watch: [{ tokens: 7, cost_usd: null }] }), '0001', [saved(100, 0, 0.5), saved(300, 0)]);
   close(t.total_cost_usd, 2.5);
   assert.equal(t.total_tokens, 10 + 400 + 7);
   assert.deepEqual(t.total_cost_unknown, ['reviewer', 'watch']);
   // A round with no tokens and no cost, or something that isn't a round, leaves nothing out.
-  assert.deepEqual(totalSpent({ rounds: [saved(0, 0), null, 'x', { meta: { usage: { input_tokens: -5 } } }] }).total_cost_unknown, []);
+  assert.deepEqual(totalSpent(runsWith(), '0001', [saved(0, 0), null, 'x', { meta: { usage: { input_tokens: -5 } } }]).total_cost_unknown, []);
+});
+
+test('0526 AC1, AC3: a build or watch agent run with tokens but no cost leaves its part out, even when another one\'s cost is known', () => {
+  const runs = runsWith({ builds: [{ tokens: 500, cost_usd: null }, { tokens: 100, cost_usd: 1 }], watch: [{ tokens: 20, cost_usd: 0.1 }, { tokens: 30, cost_usd: null }] });
+  const t = totalSpent(runs, '0001', []);
+  close(t.total_cost_usd, 1.1);
+  assert.equal(t.total_tokens, 650);
+  assert.deepEqual(t.total_cost_unknown, ['builder', 'watch']);
 });
 
 test('0526 AC1: speck status --json gives each ticket\'s total_cost_usd and total_tokens', () => {

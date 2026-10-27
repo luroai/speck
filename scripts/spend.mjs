@@ -126,18 +126,20 @@ export function earlierBuilds(runs, id) {
   return [...earlierOf(rec), ...last];
 }
 
+// Each build of ticket `id` its run record keeps, earlier ones first, as spendOf gives them, or [] with no record.
+const buildsOf = (runs, id) => {
+  id = String(id ?? '');
+  const rec = /^[\w-]+$/.test(id) ? readRecord(runs, id) : null;
+  return rec ? [...earlierOf(rec), spendOf(plain(rec.builder) ? rec.builder : {})] : [];
+};
+
 // What the builder of a ticket's builds launched by `speck run` spent, as speck run recorded it in the run record when
 // each build ended: {tokens, cost_usd}. 0523: summed over the latest build and the earlier ones the record keeps, each
 // over the builds that report it, and null when none does. 0530: with models, when any build kept them: each model its
 // builds ran on, once, with its tokens and its cost summed the same way, the model null for one that isn't known.
 export function builderSpent(runs, id) {
-  id = String(id ?? '');
-  const none = { tokens: null, cost_usd: null };
-  if (!/^[\w-]+$/.test(id)) return none;
-  const rec = readRecord(runs, id);
-  if (!rec) return none;
-  const b = plain(rec.builder) ? rec.builder : {};
-  const builds = [...earlierOf(rec), spendOf(b)];
+  const builds = buildsOf(runs, id);
+  if (!builds.length) return { tokens: null, cost_usd: null };
   const sum = k => builds.reduce((t, x) => (x[k] === null ? t : (t ?? 0) + x[k]), null);
   const models = new Map();
   for (const m of builds.flatMap(x => x.models ?? [])) {
@@ -180,35 +182,44 @@ export function recordWatchSpend(runs, { id, run, command, log }) {
   return entry;
 }
 
+// Each watch agent run that looked into ticket `id`, once.
+const watchOf = (runs, id) => {
+  id = String(id ?? '');
+  const seen = new Set();
+  return /^[\w-]+$/.test(id) ? watchRuns(runs).filter(x => x.id === id && !seen.has(x.run) && seen.add(x.run)) : [];
+};
+
 // 0525: what the watch agent spent on ticket `id`, summed over its runs, each once: {tokens, cost_usd}, each null when
 // no run reports it, so both are null for a ticket it never looked into.
 export function watchSpent(runs, id) {
-  id = String(id ?? '');
-  const seen = new Set(), sum = { tokens: null, cost_usd: null };
-  if (!/^[\w-]+$/.test(id)) return sum;
-  for (const x of watchRuns(runs)) {
-    if (x.id !== id || seen.has(x.run)) continue;
-    seen.add(x.run);
+  const sum = { tokens: null, cost_usd: null };
+  for (const x of watchOf(runs, id)) {
     if (num(x.tokens) !== null) sum.tokens = (sum.tokens ?? 0) + x.tokens;
     if (num(x.cost_usd) !== null) sum.cost_usd = Math.round(((sum.cost_usd ?? 0) + x.cost_usd) * 1e10) / 1e10;
   }
   return sum;
 }
 
-// 0526: a ticket's total AI spend from what its builder and watch agent spent ({tokens, cost_usd}) and its saved review
-// rounds: the sum of the known costs, or null when none is known, the sum of the known tokens, or null when none is
-// known, and each part whose cost is left out though it has tokens: 'builder', 'reviewer' (any round with tokens and no
-// cost) or 'watch'.
-export function totalSpent({ builder = {}, rounds = [], watch = {} } = {}) {
+// 0526: a saved review round's tokens: the tokens it saved (0529: uncached and cached input, cache writes and output),
+// or for a round saved before those, its usage's input and output, as Codex, Claude Code or Cursor names them. Null
+// when it has neither.
+function roundSpent(r) {
+  const meta = plain(r) && plain(r.meta) ? r.meta : {}, t = plain(meta.tokens) ? meta.tokens : null, u = plain(meta.usage) ? meta.usage : {};
+  const counts = t ? ['input', 'cached', 'write', 'output'].map(k => num(t[k]))
+    : [num(u.input_tokens) ?? num(u.inputTokens), num(u.output_tokens) ?? num(u.outputTokens)];
+  return { tokens: counts.every(n => n === null) ? null : counts.reduce((n, x) => n + (x ?? 0), 0), cost_usd: num(meta.cost_usd) };
+}
+
+// 0526: ticket `id`'s total AI spend, from the builds and watch agent runs kept in `runs` and its saved review rounds:
+// the sum of the known costs, or null when none is known, the sum of the known tokens, or null when none is known, and
+// each part whose cost the total leaves out, in part, because a build, round or run of it has tokens but no cost:
+// 'builder', 'reviewer' or 'watch'.
+export function totalSpent(runs, id, rounds) {
   const add = (t, v) => (v === null ? t : Math.round(((t ?? 0) + v) * 1e10) / 1e10);
-  const parts = (Array.isArray(rounds) ? rounds : []).filter(plain).map(r => {
-    const u = plain(r.meta) && plain(r.meta.usage) ? r.meta.usage : {}, i = num(u.input_tokens), o = num(u.output_tokens);
-    return { tokens: i === null && o === null ? null : (i || 0) + (o || 0), cost_usd: plain(r.meta) ? num(r.meta.cost_usd) : null };
-  });
-  const seen = [['builder', [plain(builder) ? builder : {}]], ['reviewer', parts], ['watch', [plain(watch) ? watch : {}]]];
+  const parts = [['builder', buildsOf(runs, id)], ['reviewer', (Array.isArray(rounds) ? rounds : []).map(roundSpent)], ['watch', watchOf(runs, id)]];
   let cost = null, tokens = null;
   const unknown = [];
-  for (const [name, list] of seen) {
+  for (const [name, list] of parts) {
     for (const x of list) { cost = add(cost, num(x.cost_usd)); tokens = add(tokens, num(x.tokens)); }
     if (list.some(x => num(x.cost_usd) === null && num(x.tokens) > 0)) unknown.push(name);
   }

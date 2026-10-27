@@ -480,7 +480,7 @@ export function statusData(repo) {
       build_stopped_at: stop?.killed && !stop.counted && stop.since !== null ? new Date(stop.since).toISOString() : null,
       ship: shipState(runs, t.fm.id), watch_tokens: watch.tokens, watch_cost_usd: watch.cost_usd, // 0525: the watch agent's spend
       pull_request: prShown(runs, t.fm.id, t.fm), // 0295: its pull request's link, or why it couldn't be opened
-      builder_tokens: builder.tokens, builder_cost_usd: builder.cost_usd, builder_models: builder.models ?? [], reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds), ...totalSpent({ builder, rounds: ticketRounds(t.raw).rounds, watch }), // 0529, 0530: builder_models, 0526: total_cost_usd, total_tokens, total_cost_unknown
+      builder_tokens: builder.tokens, builder_cost_usd: builder.cost_usd, builder_models: builder.models ?? [], reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds), ...totalSpent(runs, t.fm.id, ticketRounds(t.raw).rounds), // 0529, 0530: builder_models, 0526: total_cost_usd, total_tokens, total_cost_unknown
     });
   });
   entries.sort(byPriority);
