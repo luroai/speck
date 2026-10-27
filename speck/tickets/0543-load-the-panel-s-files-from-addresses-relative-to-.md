@@ -1,7 +1,7 @@
 ---
 id: "0543"
 title: "Load the panel's files from addresses relative to the page"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-27
 ---
 # 0543 · Load the panel's files from addresses relative to the page
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Opened through a proxy that puts the panel under a path, such as cptr's built-in browser at `https://<host>/api/browser/frame/<id>/http/127.0.0.1:4779/`, the panel's header shows "speck" in a plain monospace font instead of Doto's dot-matrix lettering. The stylesheet loads the font from `/fonts/Doto.ttf`, which then points at the proxy's own site root, not the panel.
