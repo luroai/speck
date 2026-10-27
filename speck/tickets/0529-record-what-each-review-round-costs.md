@@ -45,6 +45,7 @@ Every review round saves its model, its tokens and its cost, whichever agent rev
 - Unverified: whether Codex's `output_tokens` already include `reasoning_output_tokens` (OpenAI's API counts reasoning in output). Don't count them twice.
 - Unverified: whether Cursor's `inputTokens` include `cacheReadTokens`. In the run checked, input was 7,678 and cache reads 6,016, which fits either reading. 0291's `builderSpend` adds them.
 - speck (2026-10-27 11:35 UTC) asked you: The build found Cursor's inputTokens already include cache reads, so AC1 would count them twice: may it change AC1's Cursor sentence to 'uncached input is inputTokens minus cacheReadTokens' and carry on? (Recommended: yes, and record 0291's builderSpend double count as a follow-up.). Why: The build stopped before starting because its test showed AC1's Cursor rule is wrong, and changing an approved criterion is the user's call.
+- You dismissed speck's question (2026-10-27 12:00 UTC): The build found Cursor's inputTokens already include cache reads, so AC1 would count them twice: may it change AC1's Cursor sentence to 'uncached input is inputTokens minus cacheReadTokens' and carry on? (Recommended: yes, and record 0291's builderSpend double count as a follow-up.)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
