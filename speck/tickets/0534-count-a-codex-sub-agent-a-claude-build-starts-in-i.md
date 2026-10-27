@@ -1,7 +1,7 @@
 ---
 id: "0534"
 title: "Count Codex sessions started in a ticket's worktree in its spend"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0532", "0533"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T18:47:24.053Z"
+approved: "2026-10-27T18:57:05.646Z"
 
 ---
 # 0534 · Count Codex sessions started in a ticket's worktree in its spend
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Some research works better on Codex: in a test on 27 October, Opus was poor at finding LinkedIn contacts and Codex was better. So a Claude Code build will hand that part of a ticket to Codex, running `codex exec` itself, on a model such as `gpt-6.1-sol`. speck never sees a Codex process the builder starts, so the ticket's spend leaves it out and the user can't see what that research costs.
@@ -60,9 +61,15 @@ When a builder hands part of a ticket to Codex, for example by running Codex its
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Sub-agent sessions are discarded even when nothing else counts them.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 584,445
+- Elapsed since build started: 10 min
+- Changed lines: 230 (limit 5000)
 - Follow-ups:
   - Each build's end reads every Codex session file's first line, and again per session found, even for builds that never ran Codex. Inbox: `speck/ideas/2026-10-27-read-only-recent-codex-sessions-when-a-build-ends.md`.
   - A delegated session is recorded once, so turns added to it on a later build (`codex exec resume`), or sub-agents added under it later, aren't counted. Inbox: `speck/ideas/2026-10-27-count-a-delegated-codex-session-s-later-turns.md`.
