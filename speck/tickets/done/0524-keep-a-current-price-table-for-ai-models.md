@@ -1,7 +1,7 @@
 ---
 id: "0524"
 title: Keep a current price table for AI models                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T11:10:34.384Z"
 approved: "2026-10-27T11:30:35.155Z"
+finished: "2026-10-27T11:34:22.131Z"
 
 ---
 # 0524 · Keep a current price table for AI models
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck can only put a dollar figure on agents that report one, and only Claude Code does. Codex and Cursor report tokens alone. No speck user should have to look up model rates and type them in, and pricing has to work on a machine that can't reach the internet.
