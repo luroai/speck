@@ -156,3 +156,41 @@ export function reviewerCost(rounds) {
     return c === null ? t : Math.round(((t ?? 0) + c) * 1e10) / 1e10;
   }, null);
 }
+
+// 0525: what each watch agent run spent, one JSON object a line: {id, run, ended, tokens, cost_usd, models?}, `id` the
+// ticket it looked into and `run` its token. Not <id>.json or <id>.log, so nothing takes it for a build's record.
+export const WATCH_SPEND = 'run.watch-spend.jsonl';
+
+const watchRuns = runs => {
+  let text = '';
+  try { text = fs.readFileSync(path.join(runs, WATCH_SPEND), 'utf8'); } catch { return []; }
+  return text.split('\n').flatMap(l => { try { const v = JSON.parse(l); return plain(v) && typeof v.id === 'string' && typeof v.run === 'string' ? [v] : []; } catch { return []; } });
+};
+
+// 0525: keeps what the watch agent run `run` that looked into ticket `id` spent, from its log `log`, read as a build's
+// is (builderSpend) with the `command` it started with, and the log's last change as the time it ended. Returns what it
+// kept, or null when the log has no final line reporting usage, such as a killed run's, or the run is already kept.
+export function recordWatchSpend(runs, { id, run, command, log }) {
+  let text, ended;
+  try { text = fs.readFileSync(log, 'utf8'); ended = fs.statSync(log).mtime.toISOString(); } catch { return null; }
+  const spent = builderSpend(text, { command });
+  if (!spent || watchRuns(runs).some(x => x.run === run)) return null;
+  const entry = { id: String(id), run: String(run), ended, ...spent };
+  fs.appendFileSync(path.join(runs, WATCH_SPEND), `${JSON.stringify(entry)}\n`);
+  return entry;
+}
+
+// 0525: what the watch agent spent on ticket `id`, summed over its runs, each once: {tokens, cost_usd}, each null when
+// no run reports it, so both are null for a ticket it never looked into.
+export function watchSpent(runs, id) {
+  id = String(id ?? '');
+  const seen = new Set(), sum = { tokens: null, cost_usd: null };
+  if (!/^[\w-]+$/.test(id)) return sum;
+  for (const x of watchRuns(runs)) {
+    if (x.id !== id || seen.has(x.run)) continue;
+    seen.add(x.run);
+    if (num(x.tokens) !== null) sum.tokens = (sum.tokens ?? 0) + x.tokens;
+    if (num(x.cost_usd) !== null) sum.cost_usd = Math.round(((sum.cost_usd ?? 0) + x.cost_usd) * 1e10) / 1e10;
+  }
+  return sum;
+}
