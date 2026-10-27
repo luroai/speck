@@ -47,6 +47,8 @@ speck is ready to be released as 0.20.0.
 - Checked 2026-10-27: `package.json` is `0.19.0`.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - Failing before this build: none
+- `npm run prices` on 2026-10-27 wrote a table identical to the one 0.19.0 shipped (taken the same day, no rates changed since), so `scripts/prices.json` is unchanged and its `taken` is 2026-10-27.
+- Self-check: narrowed two claims in the release notes: the share of tokens 0532's test left out (29%, not "nearly a third"), and that the new counting applies to builds that end after updating, not only to new tickets.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
