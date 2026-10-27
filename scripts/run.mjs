@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { logSpend, earlierBuilds, waitFields, addPaused, pausedSince } from './core.mjs';
+import { logSpend, earlierBuilds, recordDelegatedSpend, ticketsElsewhere, ticketRounds, waitFields, addPaused, pausedSince } from './core.mjs';
 import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
@@ -155,14 +155,13 @@ function runOn(worker) {
 
   // Adds the exit to a build's run record, keeping what's there, so the board can tell a build that has finished, with
   // what its builder spent (logSpend) when its log says. Written to a temporary file and renamed into place, so
-  // nothing reading it sees half a record.
+  // nothing reading it sees half a record. 0534: then keeps what Codex sessions run in the ticket's worktree spent.
   const recordExit = (id, file, code) => {
     const tmp = `${file}.${process.pid}.tmp`;
     try {
       const rec = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (!rec || typeof rec !== 'object' || Array.isArray(rec)) throw new Error('it isn\'t a JSON object');
-      let builder = null;
-      builder = logSpend(path.dirname(file), id, rec); // 0530: read with the command it started with, for its model
+      const builder = logSpend(path.dirname(file), id, rec); // 0530: read with the command it started with, for its model
       const { builder: _, ...kept } = rec;
       fs.writeFileSync(tmp, `${JSON.stringify({ ...kept, exited: new Date().toISOString(), exit_code: code, ...(builder ? { builder } : {}) }, null, 2)}\n`);
       fs.renameSync(tmp, file);
@@ -170,6 +169,7 @@ function runOn(worker) {
       fs.rmSync(tmp, { force: true, recursive: true });
       console.error(`${id}: couldn't save its exit in ${path.relative(repo, file)} (${e.message}), so the board won't show that this build has finished.`);
     }
+    try { const t = ticketsElsewhere(repo, cfg, id)[0]; if (t) recordDelegatedSpend(path.dirname(file), id, { worktree: t.at, rounds: ticketRounds(t.raw).rounds }); } catch (e) { console.error(`${id}: couldn't record what Codex sessions started in its worktree spent (${e.message}).`); }
   };
 
   // True for a build that was killed while its ticket is building or reviewing, which is left without an exit so the

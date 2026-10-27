@@ -115,11 +115,9 @@ function firstLine(file) {
 export function codexSubagents(thread, home = CODEX_HOME()) {
   if (typeof thread !== 'string' || !/^[\w-]+$/.test(thread)) return [];
   const children = new Map(); // parent thread -> [{id, file}]
-  for (const file of rollouts(home)) {
-    let meta;
-    try { meta = JSON.parse(firstLine(file) ?? ''); } catch { continue; }
-    const id = usable(meta?.payload?.id), parent = usable(meta?.payload?.source?.subagent?.thread_spawn?.parent_thread_id);
-    if (meta?.type !== 'session_meta' || !id || !parent) continue;
+  for (const { file, meta } of sessionMetas(home)) {
+    const id = usable(meta.payload?.id), parent = usable(meta.payload?.source?.subagent?.thread_spawn?.parent_thread_id);
+    if (!id || !parent) continue;
     if (!children.has(parent)) children.set(parent, []);
     children.get(parent).push({ id, file });
   }
@@ -129,21 +127,73 @@ export function codexSubagents(thread, home = CODEX_HOME()) {
     for (const c of children.get(queue.shift()) ?? []) if (!seen.has(c.id)) { if (!ids.has(c.id)) ids.set(c.id, []); ids.get(c.id).push(c.file); }
     for (const [id, files] of ids) {
       seen.add(id); queue.push(id);
-      let best = null;
-      for (const f of files) {
-        let text, at;
-        try { text = fs.readFileSync(f, 'utf8'); at = fs.statSync(f).mtimeMs; } catch { continue; }
-        let usage = null;
-        for (const line of text.split('\n')) {
-          if (!line.includes('"token_count"')) continue;
-          try { const o = JSON.parse(line); const u = o?.payload?.type === 'token_count' ? o.payload.info?.total_token_usage : null; if (plain(u)) usage = u; } catch { /* not an event */ }
-        }
-        if (usage && roundTokens(usage, { codex: true }) && (!best || at >= best.at)) best = { at, model: lastModel(text), usage };
-      }
+      const best = sessionUsage(files);
       if (best) found.push({ thread: id, model: best.model, usage: best.usage });
     }
   }
   return found;
+}
+
+// The session_meta line of each rollout file in `home`'s sessions folder: [{file, meta}], leaving out a file whose first
+// line can't be read or parsed or isn't a session_meta.
+function sessionMetas(home) {
+  return rollouts(home).flatMap(file => {
+    let meta;
+    try { meta = JSON.parse(firstLine(file) ?? ''); } catch { return []; }
+    return plain(meta) && meta.type === 'session_meta' && plain(meta.payload) ? [{ file, meta }] : [];
+  });
+}
+
+// What a session's files `files` record: {at, model, usage} from the newest one with usage, at its last change, model
+// the one it records and usage its last token_count's total_token_usage, or null when none can be read or has usage.
+function sessionUsage(files) {
+  let best = null;
+  for (const f of files) {
+    let text, at;
+    try { text = fs.readFileSync(f, 'utf8'); at = fs.statSync(f).mtimeMs; } catch { continue; }
+    let usage = null;
+    for (const line of text.split('\n')) {
+      if (!line.includes('"token_count"')) continue;
+      try { const o = JSON.parse(line); const u = o?.payload?.type === 'token_count' ? o.payload.info?.total_token_usage : null; if (plain(u)) usage = u; } catch { /* not an event */ }
+    }
+    if (usage && roundTokens(usage, { codex: true }) && (!best || at >= best.at)) best = { at, model: lastModel(text), usage };
+  }
+  return best;
+}
+
+// 0534: each Codex session whose session_meta gives as its cwd the folder `dir` or one inside it, in `home`'s sessions
+// folder: [{thread, ancestors, ended, model, usage}], ancestors the threads that started it, nearest first, as their
+// session files name them, ended the time its files last changed, and model and usage as sessionUsage gives them, both
+// null for a session with no usage yet. A file that can't be read or parsed is left out.
+export function codexSessionsIn(dir, home = CODEX_HOME()) {
+  const real = p => { try { return fs.realpathSync(p); } catch { return path.resolve(p); } };
+  let root;
+  try { root = fs.realpathSync(dir); } catch { return []; }
+  const inside = cwd => {
+    if (typeof cwd !== 'string' || !path.isAbsolute(cwd)) return false;
+    const rel = path.relative(root, real(cwd));
+    return rel === '' || (rel.split(path.sep)[0] !== '..' && !path.isAbsolute(rel));
+  };
+  const parents = new Map(), files = new Map(); // thread -> the thread that started it; thread -> its files here
+  for (const { file, meta } of sessionMetas(home)) {
+    const id = usable(meta.payload.id), parent = usable(meta.payload.source?.subagent?.thread_spawn?.parent_thread_id);
+    if (!id || !/^[\w-]+$/.test(id)) continue;
+    if (parent) parents.set(id, parent);
+    if (!inside(meta.payload.cwd)) continue;
+    if (!files.has(id)) files.set(id, []);
+    files.get(id).push(file);
+  }
+  const ancestorsOf = thread => {
+    const up = [], seen = new Set([thread]);
+    for (let t = parents.get(thread); t && !seen.has(t); t = parents.get(t)) { seen.add(t); up.push(t); }
+    return up;
+  };
+  return [...files].flatMap(([thread, list]) => {
+    const best = sessionUsage(list);
+    const at = best?.at ?? Math.max(...list.map(f => { try { return fs.statSync(f).mtimeMs; } catch { return -Infinity; } }));
+    if (!Number.isFinite(at)) return [];
+    return [{ thread, ancestors: ancestorsOf(thread), ended: new Date(at).toISOString(), model: best?.model ?? null, usage: best?.usage ?? null }];
+  });
 }
 
 // What a round cost at `model`'s rates in the price table, or null when it has none or the table can't be read.

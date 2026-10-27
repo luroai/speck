@@ -89,7 +89,7 @@ export function spendReport(repo, { by = 'ticket', since = null, until = null } 
   if (by === 'ticket') {
     rows = tickets.map(({ t, parts }) => {
       const s = sumParts(parts), of = p => costOf(parts.filter(x => x.part === p));
-      return { id: padId(t.fm.id), title: String(t.fm.title ?? ''), builder: of('builder'), reviewer: of('reviewer'), watch: of('watch'),
+      return { id: padId(t.fm.id), title: String(t.fm.title ?? ''), builder: of('builder'), reviewer: of('reviewer'), watch: of('watch'), delegated: of('delegated'),
         total: { cost_usd: s.total_cost_usd, cost_unknown: s.total_cost_unknown.length > 0 }, total_cost_unknown: s.total_cost_unknown, tokens: tokensOf(parts) };
     });
   } else if (by === 'model') {
@@ -126,9 +126,11 @@ export function spendLines(report) {
   const { by, since, until, rows, totals } = report;
   const range = since || until ? ` ${since ? `from ${since}` : ''}${since && until ? ' ' : ''}${until ? `to ${until}` : ''}` : '';
   if (!rows.length) return [`No AI spend recorded${range}.`];
+  // 0534: a Delegated column for Codex sessions started in a ticket's worktree, when any ticket shown has some.
+  const delegated = by === 'ticket' && rows.some(r => r.delegated && (r.delegated.cost_usd !== null || r.delegated.cost_unknown));
   const table = by === 'ticket'
-    ? [['Ticket', 'Title', 'Builder', 'Reviewer', 'Watch', 'Total', 'Tokens'],
-      ...rows.map(r => [r.id, r.title, shown(r.builder), shown(r.reviewer), shown(r.watch), shown(r.total), count(r.tokens)])]
+    ? [['Ticket', 'Title', 'Builder', 'Reviewer', 'Watch', ...(delegated ? ['Delegated'] : []), 'Total', 'Tokens'],
+      ...rows.map(r => [r.id, r.title, shown(r.builder), shown(r.reviewer), shown(r.watch), ...(delegated ? [shown(r.delegated)] : []), shown(r.total), count(r.tokens)])]
     : by === 'model'
       ? [['Model', 'Input', 'Cached input', 'Cache writes', 'Output', 'Tokens', 'Cost'],
         ...rows.map(r => [r.model, count(r.tokens.input), count(r.tokens.cached), count(r.tokens.write), count(r.tokens.output), count(r.total_tokens), shown(r)])]
