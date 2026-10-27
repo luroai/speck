@@ -54,7 +54,7 @@ A Codex session started inside a ticket's worktree counts in that ticket's spend
 - Self-check: no changes. A Codex review round that failed before saving its round leaves a session in the worktree with no thread_id kept, so it counts as delegated: it is real spend that nothing else records.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a builder hands part of a ticket to Codex, for example by running Codex itself to do some research, what that Codex run costs now counts in the ticket's spend. It's picked up when the build ends, from any Codex session that ran in the ticket's own folder, so the builder doesn't need to do anything special. The ticket's total cost in the panel includes it, and `speck spend` shows it as its own Delegated column when any ticket has some. To see it, have a build run Codex in its folder, then look at the ticket's total once the build ends. Worth knowing: it only works for tickets built in their own folder (the default), and a Codex session that's carried on in a later build only counts the part from before it was first recorded.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -63,7 +63,11 @@ A Codex session started inside a ticket's worktree counts in that ticket's spend
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Each build's end reads every Codex session file's first line, and again per session found, even for builds that never ran Codex. Inbox: `speck/ideas/2026-10-27-read-only-recent-codex-sessions-when-a-build-ends.md`.
+  - A delegated session is recorded once, so turns added to it on a later build (`codex exec resume`), or sub-agents added under it later, aren't counted. Inbox: `speck/ideas/2026-10-27-count-a-delegated-codex-session-s-later-turns.md`.
+  - Known limit: a Codex review round that fails before saving its round leaves no thread_id, so its session counts as delegated spend. It is real spend nothing else records.
+  - Known limit: with `worktrees` off there's no worktree, so nothing is counted.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -145,6 +149,89 @@ A Codex session started inside a ticket's worktree counts in that ticket's spend
     ],
     "escalation_question": "",
     "summary": "The change records ordinary delegated Codex spend and includes it in status and spend totals. The reported tests pass, but valid sub-agent spend can disappear when its parent's usage is unavailable. Fix that accounting gap before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6ae3762cdd6b5873cbf98ca35412c8f89c8d8693",
+    "session": "continued",
+    "thread_id": "01a17eb7-03df-7d52-9870-4bb2ea7f8d36",
+    "builder_response": "- Tests run: test/spend-0534.test.mjs test/spend-0532.test.mjs test/spend-0527.test.mjs test/watch-spend-0525.test.mjs (with the `commands.checks` files): 150 tests, 0 failing.\n- F1: fixed. `codexSessionsIn` (scripts/round-cost.mjs) now returns every session in the worktree, sub-agents included, each with its ancestors (read from every session file's session_meta, whatever its cwd) and with model/usage null when it has no usage yet. `recordDelegatedSpend` (scripts/spend.mjs) leaves out a session when it or any ancestor is already counted (a build, review round, watch run or kept delegated session). Of the rest, it keeps each one with no uncounted ancestor among them, counting its own usage when it has any plus every descendant through `codexSubagents`. A parent with no usage therefore still carries its sub-agents' spend, and a sub-agent whose parent's file is missing or unparseable counts on its own. A group with no usage at all records nothing until it has some. New tests: \"0534 AC1: a sub-agent with usage counts when its parent has none, or its parent's file is missing or can't be parsed\" and \"0534 AC1: a session with no usage, and no sub-agent with any, records nothing until it has some\".\n",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 358076,
+      "cached_input_tokens": 288896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1629,
+      "reasoning_output_tokens": 191
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8173,
+      "cached": 126208,
+      "write": 0,
+      "output": 584
+    },
+    "cost_usd": 0.0348068,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T18:56:43.319Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "codexSessionsIn identifies sessions within the worktree and tracks ancestry. recordDelegatedSpend includes descendants through codexSubagents, including when a parent has no usage or is unavailable. Passing AC1 tests cover discovery, pricing, descendants, outside-worktree exclusions and build-end recording."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "countedThreads excludes previously recorded sessions; recordDelegatedSpend checks both session and ancestor IDs and groups descendants under their eligible ancestor. Passing AC2 tests cover repeated recording and build, review and watch exclusions."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "delegatedSpent supplies status fields; spendParts and sumParts include delegated totals and unknown costs; spendReport exposes delegated separately. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Session discovery and usage parsing catch file errors, while run.mjs isolates delegated recording from exit handling. Both AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief's speck run entry describes counting Codex sessions started in the ticket's worktree. The document-fact test passed. This round reports 150 passing tests, zero failures and three skips; the first round's related tests also had zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/round-cost.mjs:168",
+        "issue": "Sub-agent spend was lost when its parent's usage was unavailable.",
+        "suggested_fix": "Implemented: retain eligible sub-agent sessions, track their ancestors and count usage through an eligible parent or independently when the parent is unavailable. New passing regression tests cover parents with no usage and missing or malformed parent files.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Codex sessions started in a ticket's worktree now contribute to its recorded spend and totals, with duplicate exclusions. The fix also preserves sub-agent spend when parent usage is unavailable. All criteria pass, and no blocking findings remain."
   }
 }
 ```
