@@ -1,7 +1,7 @@
 ---
 id: "0529"
 title: Record what each review round costs                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0523", "0524"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T12:01:08.429Z"
+approved: "2026-10-27T12:09:46.788Z"
 
 ---
 # 0529 · Record what each review round costs
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Review rounds record the reviewer's tokens but no cost, so a ticket's spend leaves out its reviewer. Codex and Cursor report no cost, and the Claude reviewer's `total_cost_usd` isn't saved. In this repo that's 852 Codex rounds with no cost.
@@ -59,9 +60,15 @@ Every review round now keeps a note of which AI model did the review, how many t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A resumed Codex round whose predecessor reported no usage is incorrectly charged for the whole session.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 413,958
+- Elapsed since build started: 9 min
+- Changed lines: 143 (limit 5000)
 - Follow-ups:
   - Inbox: speck/ideas/2026-10-27-check-a-resumed-cursor-review-round-s-usage.md (whether Cursor's usage on a resumed chat is the whole chat's, as Codex's is).
 - Known limit: a Codex round's model, when no reviewer_model is set, comes from Codex's session file on the machine that ran the round; without it the cost is unknown.
