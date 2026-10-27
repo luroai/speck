@@ -264,6 +264,9 @@ function panelModel(state) {
     return { ...t, end, unpushed, unpushed_message: unpushed && typeof t.ship.message === 'string' && t.ship.message ? t.ship.message : null, when: shippedAt(end, now), roundCount: total ? Number(total.rounds) || 0 : rounds(t).length,
       tokens: total ? Number(total.tokens) || 0 : rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
       builderTokens: spent(t.builder_tokens), builderCost: spent(t.builder_cost_usd),
+      // 0526: its reviewer's cost and its total, with the parts the total leaves out because their cost is unknown.
+      reviewerCost: spent(t.reviewer_cost_usd), totalCost: spent(t.total_cost_usd),
+      totalUnknown: (Array.isArray(t.total_cost_unknown) ? t.total_cost_unknown : []).filter(x => ['builder', 'reviewer', 'watch'].includes(x)),
       exactMinutes: took !== null ? took / 60000 : null,
       minutes: took !== null ? Math.round(took / 60000) : null };
   });
@@ -272,6 +275,8 @@ function panelModel(state) {
   const stat = (values, round) => { const m = median(values); return { median: m === null ? null : round(m), count: values.length }; };
   // Newest finished first; done tickets with no finished time keep their JSON order after those. Then the latest 10.
   const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
+  // The latest 10 (0411), as SHIPPED_SHOWN in scripts/board-feed.mjs, and any older one not pushed yet (0204).
+  const shipped = [...finished, ...done.filter(t => t.end === null)].filter((t, i) => i < 10 || t.unpushed);
   return {
     drafts: tickets.filter(is('draft')).map(chain),
     // The user's own ideas still to shape, in JSON order: inbox, dropped and ticketed notes are left out.
@@ -339,8 +344,7 @@ function panelModel(state) {
         shipping, ship_waiting, run_waiting, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
         since: inFlight && start !== null ? start + waited(t) : null, approved_at, held_at, counter: inFlight && start !== null ? counter((held_at ?? Date.now()) - start - waited(t)) : null };
     }),
-    // The latest 10 (0411), as SHIPPED_SHOWN in scripts/board-feed.mjs, and any older one not pushed yet (0204).
-    shipped: [...finished, ...done.filter(t => t.end === null)].filter((t, i) => i < 10 || t.unpushed),
+    shipped,
     shippedTotal: done.length,
     stats: {
       today: done.filter(t => t.end !== null && sameDay(new Date(t.end), new Date(now))).length,
@@ -349,6 +353,9 @@ function panelModel(state) {
       tokens: stat(done.filter(t => t.tokens > 0).map(t => t.tokens), Math.round),
       builderTokens: stat(done.filter(t => t.builderTokens !== null).map(t => t.builderTokens), Math.round),
       builderCost: stat(done.filter(t => t.builderCost !== null).map(t => t.builderCost), n => Math.round(n * 100) / 100),
+      // 0526: the total cost of the shipped tickets shown with a known total, how many, and whether any of those leaves a part out.
+      totalCost: (known => ({ sum: Math.round(known.reduce((n, t) => n + t.totalCost, 0) * 100) / 100, count: known.length,
+        partial: known.some(t => t.totalUnknown.length > 0) }))(shipped.filter(t => t.totalCost !== null)),
     },
   };
 }

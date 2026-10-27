@@ -95,8 +95,8 @@ test('0120 AC3: Shipped rows label the existing figure as reviewer tokens and sh
   await openDetails(p); // 0162: the labelled figures are under Details
   // 0157: label and value pairs, a token count from 10,000 up shortened.
   const [a, b] = shippedRows(p).map(figsOf);
-  assert.equal(a, 'Time4 minReview rounds1Builder cost$1.16Builder tokens2.3MReviewer tokens1,200');
-  assert.equal(b, 'Time8 minReview rounds1Builder cost—Builder tokens1,000Reviewer tokens300', 'a dash for what isn\'t recorded (0464)');
+  assert.equal(a, 'Time4 minReview rounds1Builder cost$1.16Reviewer cost—Total cost—Builder tokens2.3MReviewer tokens1,200');
+  assert.equal(b, 'Time8 minReview rounds1Builder cost—Reviewer cost—Total cost—Builder tokens1,000Reviewer tokens300', 'a dash for what isn\'t recorded (0464)');
 });
 
 test('0120 AC4: the stats add median builder tokens and cost, each over the done tickets with that data', async () => {
@@ -127,7 +127,7 @@ test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipp
   const p = fakePage([state]);
   await p.settle();
   await openDetails(p);
-  assert.equal(figsOf(shippedRows(p)[0]), 'Time4 minReview rounds2Builder cost—Builder tokens—Reviewer tokens1,500'); // as 0464 lays them out
+  assert.equal(figsOf(shippedRows(p)[0]), 'Time4 minReview rounds2Builder cost—Reviewer cost—Total cost—Builder tokens—Reviewer tokens1,500'); // as 0464 lays them out
   assert.equal(p.byId('shipped-stats').textContent, '1 today · median 4 min, –'); // one line since 0420
   assert.deepEqual(p.byId('shipped-more').children.map(c => c.textContent),
     ['2median review rounds1 ticket', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']); // as 0162 lays them out

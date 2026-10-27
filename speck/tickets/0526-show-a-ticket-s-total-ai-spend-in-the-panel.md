@@ -42,6 +42,8 @@ A shipped ticket in the panel shows its total AI cost: builder, reviewer and wat
 - Facts are built in `shippedFacts` in `templates/panel.js`, the line near the `builderCost` use around line 1284, the stats in the Shipped header around line 1328, and the figures in `templates/panel-model.js` and `scripts/board-feed.mjs` (the Shipped cut-down keeps only what those use).
 - Keep the panel's phone-width layout: the facts grid gains two cells.
 - Failing before this build: none
+- Read "the shipped tickets shown" in AC5 as the tickets the Shipped list shows (the latest ten, and any older one not pushed yet), not every shipped ticket: it keeps the figure to recent spend and short enough for the stats line at 420 px. The total joins that line after a comma ("…, $2.20, $4.41 total"), since a " · " separator and "in all" left too little room beside Fewer stats.
+- Self-check: the Total cost tooltip with no known part now names the parts alone (it read "—: …"), and Reviewer cost also says "at least" when one of its rounds has tokens but no cost.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

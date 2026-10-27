@@ -12,8 +12,8 @@ const NOW = new Date(2026, 9, 23, 12, 0).getTime();
 const ago = s => new Date(NOW - s * 1000).toISOString();
 
 const TICKETS = [
-  T('0901', 'done', { title: 'Every figure', started: ago(1500), finished: ago(600), builder_tokens: 2412345, builder_cost_usd: 2.906, rounds: [round(1, 60000), round(2, 48234)] }),
-  T('0902', 'done', { title: 'A bug fix', type: 'bug', started: ago(3000), finished: ago(1200), rounds: [round(1, 500)], builder_cost_usd: 1.5 }),
+  T('0901', 'done', { title: 'Every figure', started: ago(1500), finished: ago(600), builder_tokens: 2412345, builder_cost_usd: 2.906, total_cost_usd: 2.906, rounds: [round(1, 60000), round(2, 48234)] }),
+  T('0902', 'done', { title: 'A bug fix', type: 'bug', started: ago(3000), finished: ago(1200), rounds: [round(1, 500)], builder_cost_usd: 1.5, total_cost_usd: 1.5 }),
   T('0903', 'done', { title: 'Nothing at all' }),
   T('0905', 'done', { title: 'Merged, not pushed', started: ago(2000), finished: ago(1400), ship: { running: false, unpushed: true, message: 'Merged, but the push failed: run git push.' } }),
   T('0904', 'done', { title: 'A cost longer than its cell', started: ago(2000), finished: ago(1500), rounds: [round(1, 500)], builder_tokens: 900, builder_cost_usd: 123456789012345.67 }),
@@ -44,7 +44,7 @@ test('0464 AC1: opening the card shows, under the title, the five steps all done
     for (const s of track.children) assert.equal(s.title, s.textContent, `${id}: a step's tooltip is its whole name`);
     assert.equal(f.tagName, 'dl', `${id}: a list of labels and values`);
     assert.equal(f.className, 'facts');
-    assert.equal(f.children.length, 6, `${id}: six cells`);
+    assert.equal(f.children.length, 8, `${id}: eight cells (0526)`);
     for (const c of f.children) assert.match(c.children[1].className, /^value\b/);
   }
   assert.deepEqual(trackOf(p, '0901').children.map(s => s.textContent), ['Build', 'Self-check', 'Review 2', 'Approve', 'Ship']);
@@ -67,13 +67,13 @@ test('0464 AC2: the six cells are Shipped, Time, Review rounds, Builder cost, Bu
   const p = page();
   await p.settle();
   await open(p, '0901', '0902', '0903');
-  assert.deepEqual(cells(factsOf(p, '0901')), [['Shipped', '11:50'], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
-  assert.deepEqual(cells(factsOf(p, '0902')), [['Shipped', '11:40'], ['Time', '30 min'], ['Review rounds', '1'], ['Builder cost', '$1.50'], ['Builder tokens', '—'], ['Reviewer tokens', '500']]);
-  assert.deepEqual(cells(factsOf(p, '0903')), [['Shipped', '—'], ['Time', '—'], ['Review rounds', '—'], ['Builder cost', '—'], ['Builder tokens', '—'], ['Reviewer tokens', '—']]);
+  assert.deepEqual(cells(factsOf(p, '0901')), [['Shipped', '11:50'], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Reviewer cost', '—'], ['Total cost', '$2.91'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
+  assert.deepEqual(cells(factsOf(p, '0902')), [['Shipped', '11:40'], ['Time', '30 min'], ['Review rounds', '1'], ['Builder cost', '$1.50'], ['Reviewer cost', '—'], ['Total cost', '$1.50'], ['Builder tokens', '—'], ['Reviewer tokens', '500']]);
+  assert.deepEqual(cells(factsOf(p, '0903')), [['Shipped', '—'], ['Time', '—'], ['Review rounds', '—'], ['Builder cost', '—'], ['Reviewer cost', '—'], ['Total cost', '—'], ['Builder tokens', '—'], ['Reviewer tokens', '—']]);
   // each value's tooltip is all of it: the date and time it shipped, and a shortened count's exact number
   const tips = id => factsOf(p, id).children.map(c => c.children[1].title);
-  assert.deepEqual(tips('0901'), ['11:50', '15 min', '2', '$2.91', '2,412,345', '108,234']);
-  assert.deepEqual(tips('0903'), ['—', '—', '—', '—', '—', '—']);
+  assert.deepEqual(tips('0901'), ['11:50', '15 min', '2', '$2.91', '—', '$2.91', '2,412,345', '108,234']);
+  assert.deepEqual(tips('0903'), ['—', '—', '—', '—', '—', '—', '—', '—']);
 });
 
 test('0464 AC2: a kept open card\'s Shipped cell still turns from the time alone to the day after midnight', async () => {
@@ -182,7 +182,7 @@ test('0464 AC1 and AC3: in a real browser at 320 and 390 px, an open shipped car
         assert.ok(c.scroll[0] <= c.scroll[1] + 0.5, `${where}: nothing past the table`);
         const [first] = c.cells;
         for (const [i, cell] of c.cells.entries()) {
-          const rowFirst = c.cells[i < 3 ? 0 : 3];
+          const rowFirst = c.cells[i - i % 3];
           assert.ok(Math.abs(cell.top - rowFirst.top) < 0.5, `${where}: ${cell.label} is in its row`);
           assert.ok(Math.abs(cell.height - first.height) < 0.5, `${where}: ${cell.label} is as tall as the others`);
           assert.ok(Math.abs(cell.width - first.width) < 1, `${where}: ${cell.label} is as wide as the others`);
