@@ -34,6 +34,8 @@ test('0529 AC1: a resumed Codex round counts only what it used since the round i
   assert.deepEqual(roundTokens(codexUsage, { codex: true, before }), { input: 1000, cached: 3000, write: 0, output: 200 });
   // An earlier round with no usage saved, or larger counts than this one, leaves this round's tokens unknown.
   assert.equal(roundTokens(codexUsage, { codex: true, before: null }), null);
+  assert.equal(roundTokens(codexUsage, { codex: true, before: {} }), null);
+  assert.equal(roundTokens(codexUsage, { codex: true, before: { reasoning_output_tokens: 3 } }), null);
   assert.equal(roundTokens(before, { codex: true, before: codexUsage }), null);
 });
 
@@ -139,4 +141,21 @@ test('0529 AC4, AC5: reviewer_cost_usd sums only the known costs, and rounds sav
 
 test('0529 AC4: the brief names the status field that sums a ticket\'s round costs', () => {
   assert.match(fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8'), /`reviewer_cost_usd`/);
+});
+
+test('0529 AC1: a resumed Codex round whose earlier round reported no usage saves unknown tokens and cost', () => {
+  const r = reviewRepo();
+  const env = { SPECK_PRICES: prices, CODEX_HOME: codexHome('T1', ['gpt-test']) };
+  assert.equal(r.runEnv(env, 'review', '1').status, 10);
+  assert.deepEqual(r.roundFile(1).meta.usage, {});
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'fix\n');
+  r.git('add', '-A'); r.git('commit', '-qm', 'fix 1');
+  const resp = path.join(r.dir, '..', `resp-${path.basename(r.dir)}.md`);
+  fs.writeFileSync(resp, '- F1: fixed.\n');
+  assert.equal(r.runEnv({ ...env, FAKE_CODEX_EVENT: turn(codexUsage) }, 'review', '1', `--response=${resp}`).status, 10);
+  const m = r.roundFile(2).meta;
+  assert.equal(m.session, 'continued');
+  assert.equal(m.tokens, null);
+  assert.equal(m.cost_usd, null);
+  assert.deepEqual(m.usage, codexUsage);
 });
