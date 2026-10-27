@@ -1,7 +1,7 @@
 ---
 id: "0527"
 title: "Add up AI spend across tickets with speck spend"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0526"]                # ticket ids that must be done first
 created: 2026-10-27
+started: "2026-10-27T12:57:10.753Z"
 
 ---
 # 0527 · Add up AI spend across tickets with speck spend
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 There's no way to see what AI work has cost, per ticket or per week or month, without adding up each ticket's figures by hand.
