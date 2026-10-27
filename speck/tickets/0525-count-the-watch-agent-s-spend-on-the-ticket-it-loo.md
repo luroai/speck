@@ -1,7 +1,7 @@
 ---
 id: "0525"
 title: "Count the watch agent's spend on the ticket it looked into"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0530"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T12:26:19.201Z"
+approved: "2026-10-27T12:30:59.242Z"
 
 ---
 # 0525 · Count the watch agent's spend on the ticket it looked into
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build stops for a reason speck has no steps for, `speck run` starts the watch agent to look into it. What that agent spends isn't recorded anywhere, and its log (`run.watch.log`) is replaced on its next run.
@@ -53,9 +54,14 @@ When speck's own agent looks into a ticket whose work stopped, what that look co
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 115,414
+- Elapsed since build started: 5 min
+- Changed lines: 55 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none sent to the inbox. Showing it in the panel is 0526, and recovering earlier runs is 0528.
 - Known limit: a run's end time is its log's last write, which for a run that went quiet before ending is a little earlier than it actually ended.
