@@ -100,6 +100,21 @@ test('0527 AC2: an old review round with no model of its own counts under its re
     { reviewer_model: 'default', usage: { input_tokens: 7, output_tokens: 1 }, saved_at: at(10, 5, 10) }]));
   const rows = spendReport(r.dir, { by: 'model' }).rows;
   assert.deepEqual(rows.map(x => [x.model, x.total_tokens, x.cost_usd, x.cost_unknown]), [['gpt-6.1-sol', 42, 0.01, false], ['unknown model', 8, null, true]]);
+  assert.deepEqual(rows.map(x => x.tokens), [{ input: 40, cached: 0, write: 0, output: 2 }, { input: 7, cached: 0, write: 0, output: 1 }]);
+});
+
+test('0527 AC2: an old round\'s split takes the cached input out of the input as its reviewer counts it, and adds up to its tokens', () => {
+  const r = runRepo({ tickets: [['0001', { title: 'Old' }]] });
+  fs.appendFileSync(path.join(r.dir, 'speck', 'tickets', '0001-t.md'), rounds([
+    { model: 'gpt-6.1-sol', usage: { input_tokens: 1000, cached_input_tokens: 800, output_tokens: 20 }, cost_usd: 0.01 },
+    { model: 'cursor-x', usage: { inputTokens: 500, cacheReadTokens: 300, outputTokens: 5 }, cost_usd: 0.01 },
+    { model: 'claude-opus-5-5', usage: { input_tokens: 9, cache_read_input_tokens: 4000, output_tokens: 3 }, cost_usd: 0.01 }]));
+  const rows = spendReport(r.dir, { by: 'model' }).rows;
+  assert.deepEqual(rows.map(x => [x.model, x.tokens, x.total_tokens]), [
+    ['claude-opus-5-5', { input: 9, cached: 0, write: 0, output: 3 }, 12],
+    ['cursor-x', { input: 200, cached: 300, write: 0, output: 5 }, 505],
+    ['gpt-6.1-sol', { input: 200, cached: 800, write: 0, output: 20 }, 1020]]);
+  assert.equal(spendReport(r.dir).rows[0].tokens, 12 + 505 + 1020);
 });
 
 // ---------- AC3 ----------

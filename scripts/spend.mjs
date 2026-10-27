@@ -210,6 +210,18 @@ function roundSpent(r) {
   return { tokens: counts.every(n => n === null) ? null : counts.reduce((n, x) => n + (x ?? 0), 0), cost_usd: num(meta.cost_usd) };
 }
 
+// 0527: a round saved before its tokens were (0529) split as its usage gives them, adding up to the tokens roundSpent
+// counts for it, its input and output: Codex's input_tokens and Cursor's inputTokens include the cached input, so it's
+// taken out of them as cached input. Claude Code's input_tokens leave the cache out, as roundSpent does. Null with no
+// usage.
+function usageSplit(u) {
+  if (!plain(u)) return null;
+  const cursor = 'inputTokens' in u, input = num(cursor ? u.inputTokens : u.input_tokens), output = num(cursor ? u.outputTokens : u.output_tokens);
+  if (input === null && output === null) return null;
+  const cached = Math.min(num(cursor ? u.cacheReadTokens : u.cached_input_tokens) ?? 0, input ?? 0);
+  return { input: (input ?? 0) - cached, cached, write: 0, output: output ?? 0 };
+}
+
 // 0527: each build, review round and watch agent run of ticket `id` that spent anything: {part, ended, tokens, cost_usd,
 // models}, part 'builder', 'reviewer' or 'watch', ended the time it ended (a build's exited, a round's saved_at, a watch
 // run's ended) or null when it's not known, and models each model it ran on as {model, tokens, cost_usd}, the model null
@@ -220,7 +232,7 @@ export function spendParts(runs, id, rounds) {
   const builds = buildsOf(runs, id).map((b, i, all) => ({ part: 'builder', ...b, ended: time(i === all.length - 1 ? rec?.exited : b.ended) }));
   const reviews = (Array.isArray(rounds) ? rounds : []).map(r => {
     const meta = plain(r) && plain(r.meta) ? r.meta : {}, spent = roundSpent(r), t = plain(meta.tokens) ? meta.tokens : null;
-    const split = t ? Object.fromEntries(['input', 'cached', 'write', 'output'].map(k => [k, num(t[k]) ?? 0])) : null;
+    const split = t ? Object.fromEntries(['input', 'cached', 'write', 'output'].map(k => [k, num(t[k]) ?? 0])) : usageSplit(meta.usage);
     return { part: 'reviewer', ended: time(meta.saved_at), ...spent, models: [{ model: usable(meta.model) ?? usable(meta.reviewer_model), tokens: split, cost_usd: spent.cost_usd }] };
   });
   const watch = watchOf(runs, id).map(x => ({ part: 'watch', ended: time(x.ended), tokens: num(x.tokens), cost_usd: num(x.cost_usd), models: modelsOf(x.models) }));
