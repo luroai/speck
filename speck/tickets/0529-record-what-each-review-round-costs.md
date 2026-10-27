@@ -1,7 +1,7 @@
 ---
 id: "0529"
 title: Record what each review round costs                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-27T12:01:08.429Z"
 ---
 # 0529 · Record what each review round costs
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Review rounds record the reviewer's tokens but no cost, so a ticket's spend leaves out its reviewer. Codex and Cursor report no cost, and the Claude reviewer's `total_cost_usd` isn't saved. In this repo that's 852 Codex rounds with no cost.
@@ -63,3 +63,89 @@ Every review round saves its model, its tokens and its cost, whichever agent rev
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ac1f72ee4b20f00981246aa0ed8007d6958422a5",
+    "session": "fresh",
+    "thread_id": "01a17d42-ac42-7d42-93be-717ed9a12a59",
+    "builder_response": "- Tests run: test/round-cost-0529.test.mjs, with `speck test --related`, which also ran every existing test file that names a changed file (180 files, 0 failures).\n- Codex reports a resumed session's totals, not the round's own (see the ticket's Notes: 0519's continued rounds' output_tokens go 975, 1504, 2046, 2579). So a resumed Codex round's tokens, and so its cost, are its usage less the usage of the round whose session it resumed, as AC2 does for Claude's total_cost_usd. Without that, each continued Codex round would be priced on the whole session so far.\n- The raw `usage` each agent gives is still saved as before, so `speck status --json`'s per-round `tokens` and the Delivery log's reviewer tokens read as they do today (AC5). The new fields are `model`, `tokens` {input, cached, write, output}, `cost_usd` (null when unknown) and, for Claude Code rounds, `session_cost_usd` (the raw total_cost_usd, used by the next resumed round).\n- claude-subagent rounds (`speck record`) report no usage, so they save the reviewer_model when set and null tokens and cost.\n",
+    "seconds": 34,
+    "usage": {
+      "input_tokens": 155764,
+      "cached_input_tokens": 109184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 961,
+      "reasoning_output_tokens": 78
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 46580,
+      "cached": 109184,
+      "write": 0,
+      "output": 961
+    },
+    "cost_usd": 0.1136884,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-27T12:08:37.307Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "roundTokens in scripts/round-cost.mjs treats an empty earlier usage object as zero counts, so a resumed Codex round can save session totals as its own tokens. The resumed-round test checks before:null but misses before:{}."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "commandSpend saves total_cost_usd and subtracts the previous session_cost_usd on continuation. The reported passing Claude integration test exercises fresh and resumed rounds."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "codexSpend selects the configured model or codexModel's session-file model and uses the price table. Passing tests cover model precedence, session lookup and Cursor pricing."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing tests cover unknown models, Cursor auto, missing usage and reviewer_cost_usd aggregation. reviewerCost sums known saved costs and returns null when none exist."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing legacy-round test verifies that old records remain unchanged, retain their existing status representation and receive no retrospective cost."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/round-cost.mjs",
+        "issue": "A resumed Codex round whose predecessor reported no usage is incorrectly charged for the whole session. runCodexReview saves missing usage as {}, then passes that object as before. roundTokens accepts it and subtracts zero for every missing count. A direct read-only reproduction with before:{} returned the full current token totals instead of null.",
+        "suggested_fix": "Validate that the earlier usage contains usable token counts before calculating a delta; otherwise save null tokens and cost. Add a regression test that resumes a round whose saved usage is {}, preferably through the review adapter.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change records reviewer costs and exposes ticket totals, with passing tests for the main paths. One resumed Codex edge case still overstates spending when the previous round reported no usage. Fix that before merge."
+  }
+}
+```
+
+</details>

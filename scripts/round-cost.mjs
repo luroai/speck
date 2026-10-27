@@ -18,7 +18,8 @@ const shapeOf = (usage, codex) => (codex ? CODEX : 'inputTokens' in usage || 'ca
 // A round's tokens from the usage its agent reported: {input, cached, write, output}, with input the uncached input, or
 // null when it reported none. Codex's input_tokens and Cursor's inputTokens include the cached input, so it's taken
 // out of them. Claude Code's input_tokens leave it out already. `before`, for a Codex round that resumed an earlier
-// round's session, is that round's usage: Codex reports a resumed session's totals, so each count is less that one's.
+// round's session, is that round's usage: Codex reports a resumed session's totals, so each count is less that one's,
+// and the round's tokens are unknown when that round reported none.
 export function roundTokens(usage, { codex = false, before } = {}) {
   if (!plain(usage)) return null;
   const keys = shapeOf(usage, codex);
@@ -26,8 +27,9 @@ export function roundTokens(usage, { codex = false, before } = {}) {
   if (raw[0] === null && raw[3] === null) return null;
   raw = raw.map(v => v ?? 0);
   if (before !== undefined) {
-    if (!plain(before)) return null;
-    raw = raw.map((v, i) => v - (num(before[keys[i]]) ?? 0));
+    const was = plain(before) ? keys.map(k => num(before[k])) : [];
+    if (!was.length || (was[0] === null && was[3] === null)) return null;
+    raw = raw.map((v, i) => v - (was[i] ?? 0));
     if (raw.some(v => v < 0)) return null;
   }
   const [input, cached, write, output] = raw;
