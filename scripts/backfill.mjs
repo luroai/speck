@@ -43,17 +43,21 @@ function priced(model, tokens) {
   try { return costOf(findRates(priceTable(), model), tokens); } catch { return null; }
 }
 
-// What the session in transcript `file` spent: {prompt, ended, tokens, cost_usd, models}, over every message in it and
+// What the session in transcript `file` spent: {prompt, person, ended, tokens, cost_usd, models}, over every message in it and
 // in its subagents' transcripts (<session>/subagents/*.jsonl), each message counted once however many lines repeat it,
 // each count its largest, as a message's lines are written while it streams. models is each model with its tokens
 // split into {input, cached, write, output} and priced from the price table; cost_usd is their sum, or null when any
-// model has no rates. ended is the session's last message's time. Null when the file can't be read.
+// model has no rates. ended is the time of the session's last message, a user's or an assistant's, in it or a subagent.
+// person is true when it shows a person took part, so it's a session someone started rather than speck run: Claude Code
+// started in a terminal (its entrypoint `cli`), a turn a person typed (turnOrigin `human`), or a title Claude Code gave
+// it for its list of conversations (an `ai-title` line), which a `claude -p` session doesn't get. Null when the file
+// can't be read.
 export function sessionSpend(file) {
   const files = [file];
   const subs = path.join(file.replace(/\.jsonl$/, ''), 'subagents');
   try { for (const n of fs.readdirSync(subs).sort()) if (n.endsWith('.jsonl')) files.push(path.join(subs, n)); } catch { /* no subagents */ }
   const messages = new Map();
-  let prompt = null, ended = null, read = false;
+  let prompt = null, ended = null, read = false, person = false;
   files.forEach((f, fi) => {
     let text;
     try { text = fs.readFileSync(f, 'utf8'); } catch { return; }
@@ -63,8 +67,9 @@ export function sessionSpend(file) {
       let o;
       try { o = JSON.parse(line); } catch { return; }
       if (!plain(o)) return;
-      if (typeof o.timestamp === 'string' && !Number.isNaN(Date.parse(o.timestamp)) && (!ended || Date.parse(o.timestamp) > Date.parse(ended))) ended = o.timestamp;
-      const m = plain(o.message) ? o.message : null;
+      const m = plain(o.message) ? o.message : null, said = (o.type === 'user' || o.type === 'assistant') && m;
+      if (said && typeof o.timestamp === 'string' && !Number.isNaN(Date.parse(o.timestamp)) && (!ended || Date.parse(o.timestamp) > Date.parse(ended))) ended = o.timestamp;
+      if (fi === 0 && (o.type === 'ai-title' || o.entrypoint === 'cli' || o.turnOrigin === 'human')) person = true;
       if (fi === 0 && prompt === null && o.type === 'user' && !o.isMeta && m) prompt = textOf(m.content);
       if (o.type !== 'assistant' || !m || !usable(m.model) || m.model === '<synthetic>') return;
       const split = roundTokens(plain(m.usage) ? m.usage : null);
@@ -83,7 +88,7 @@ export function sessionSpend(file) {
   const models = [...byModel.entries()].filter(([, t]) => KEYS.some(k => t[k] > 0)).map(([model, tokens]) => ({ model, tokens, cost_usd: priced(model, tokens) }));
   const tokens = models.reduce((n, m) => n + KEYS.reduce((a, k) => a + m.tokens[k], 0), 0);
   const cost = models.some(m => m.cost_usd === null) ? null : Math.round(models.reduce((c, m) => c + m.cost_usd, 0) * 1e10) / 1e10;
-  return { prompt, ended, tokens, cost_usd: cost, models };
+  return { prompt, person, ended, tokens, cost_usd: cost, models };
 }
 
 // True when one of `ends` (times a build or run without a session ended) is within SAME_RUN_MS of `at`, taking it out
@@ -115,6 +120,7 @@ function roundSpend(meta, earlier, codexHome) {
 
 // Recovers past spend for `tickets` ([{id, rounds}]) of the project whose main checkout is `repo`, keeping it in `runs`:
 // each /speck-build session and watch agent session in the project's Claude Code transcripts that isn't counted yet,
+// leaving out one a person took part in (sessionSpend's person), as it can hold other work as well,
 // and a cost for each review round saved without one. A session is counted when its ticket's run record names it with
 // spend, an earlier build or watch run without a session ended within SAME_RUN_MS of its last message, or --backfill
 // kept it before; a build session its record names that hasn't exited yet is left for speck run to record. Returns
@@ -161,7 +167,7 @@ export function backfill({ repo, runs, tickets, claudeHome, codexHome }) {
     if (!/^[\w-]+$/.test(session)) continue;
     const spent = sessionSpend(path.join(dir, name));
     const what = spent && promptKind(spent.prompt);
-    if (!what || !spent.models.length) continue;
+    if (!what || spent.person || !spent.models.length) continue;
     const c = countedFor(what.kind, what.id), n = of(what.id);
     const already = c.sessions.has(session) || c.running === session || (what.kind === 'build' && keptBuilds.has(`${what.id} ${session}`))
       || (spent.ended && takeNear(c.ends, spent.ended));

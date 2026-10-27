@@ -124,6 +124,31 @@ test('0528 AC1: a build still running, or a session that isn\'t a /speck-build o
   assert.equal(promptKind('/speck-build __proto__'), null);
 });
 
+test('0528 AC1: a session a person started or typed in isn\'t added, as it can hold other work as well', () => {
+  const s = setup();
+  const typed = (name, extra, more = []) => s.session(name, [{ ...user(command('0001'), '2026-10-10T10:00:00.000Z'), ...extra },
+    said(`${name}1`, 'claude-opus-5-5', [1, 1, 1, 1], '2026-10-10T10:00:01.000Z'), ...more]);
+  typed('terminal', { entrypoint: 'cli' });
+  typed('app', {}, [{ type: 'ai-title', title: 'Build 0001', timestamp: '2026-10-10T10:00:02.000Z' }]);
+  typed('later', {}, [{ ...user('Now tidy up the README for me', '2026-10-10T11:00:00.000Z'), turnOrigin: 'human' }, said('later2', 'claude-opus-5-5', [1, 1, 1, 1], '2026-10-10T11:00:01.000Z')]);
+  typed('headless', { entrypoint: 'sdk-cli', turnOrigin: 'sdk' });
+  const lines = s.backfill();
+  assert.equal(builderSpent(s.runs, '0001').tokens, 4);
+  assert.match(lines[0], /^0001: added 1 build session,/);
+});
+
+test('0528 AC1: a housekeeping line after the last message doesn\'t move the spend\'s date', () => {
+  const s = setup();
+  // Sunday 11 October, then a queue line on Monday 12 October, in the next week.
+  s.session('late', [user(command('0001'), '2026-10-11T12:00:00.000Z'), said('l1', 'claude-opus-5-5', [1, 1, 1, 1], '2026-10-11T12:00:01.000Z'),
+    { type: 'queue-operation', operation: 'dequeue', timestamp: '2026-10-12T12:00:00.000Z' }, { type: 'last-prompt', timestamp: '2026-10-12T12:00:00.000Z' }]);
+  s.backfill();
+  const kept = JSON.parse(fs.readFileSync(path.join(s.runs, 'run.backfill-builds.jsonl'), 'utf8'));
+  assert.equal(kept.ended, '2026-10-11T12:00:01.000Z');
+  assert.equal(spendReport(s.r.dir, { until: '2026-10-11' }).rows.length, 1);
+  assert.equal(spendReport(s.r.dir, { since: '2026-10-12' }).rows.length, 0);
+});
+
 test('0528 AC1: the project folder is the checkout\'s path with each character that isn\'t a letter or digit as -', () => {
   assert.equal(transcriptsDir('/tmp/a.b/c_d-e', '/h'), path.join('/h', 'projects', '-tmp-a-b-c-d-e'));
 });
