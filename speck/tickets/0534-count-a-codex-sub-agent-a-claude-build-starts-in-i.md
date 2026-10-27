@@ -1,7 +1,7 @@
 ---
 id: "0534"
 title: "Count Codex sessions started in a ticket's worktree in its spend"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0532", "0533"]                # ticket ids that must be done first
 created: 2026-10-27
+started: "2026-10-27T18:47:24.053Z"
 
 ---
 # 0534 · Count Codex sessions started in a ticket's worktree in its spend
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Some research works better on Codex: in a test on 27 October, Opus was poor at finding LinkedIn contacts and Codex was better. So a Claude Code build will hand that part of a ticket to Codex, running `codex exec` itself, on a model such as `gpt-6.1-sol`. speck never sees a Codex process the builder starts, so the ticket's spend leaves it out and the user can't see what that research costs.
