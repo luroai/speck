@@ -35,16 +35,44 @@ export function builderSpend(text) {
   return { tokens, cost_usd: typeof cost === 'number' && Number.isFinite(cost) && cost >= 0 ? cost : null };
 }
 
-// What the builder of a build launched by `speck run` spent, as speck run recorded it in the run record when the build
-// ended: {tokens, cost_usd}, each null when it isn't recorded.
+const num = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+const plain = v => v && typeof v === 'object' && !Array.isArray(v);
+const readRecord = (runs, id) => { try { const r = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); return plain(r) ? r : null; } catch { return null; } };
+
+// The builds of a ticket before its latest, as its run record keeps them (earlier_builds): [{ended, tokens, cost_usd}],
+// leaving out anything malformed.
+const earlierOf = rec => (Array.isArray(rec?.earlier_builds) ? rec.earlier_builds : [])
+  .filter(plain).map(b => ({ ended: typeof b.ended === 'string' ? b.ended : null, tokens: num(b.tokens), cost_usd: num(b.cost_usd) }));
+
+// 0523: what a new build of ticket `id` carries forward before its run record and log are replaced: the earlier builds
+// its record kept, and the build it records, with the time it ended, when that one spent anything (its recorded
+// builder, or its log's when it stopped before its exit was saved). A resumed build has one record and its log's last
+// result line covers the whole session, so it counts once. [] when there's no record.
+export function earlierBuilds(runs, id) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return [];
+  const rec = readRecord(runs, id);
+  if (!rec) return [];
+  let b = plain(rec.builder) ? rec.builder : null;
+  // A log older than the record is an earlier build's, already counted, left when this one couldn't open its own.
+  const log = path.join(runs, `${id}.log`);
+  if (!b) { try { if (!(fs.statSync(log).mtimeMs < Date.parse(rec.started))) b = builderSpend(fs.readFileSync(log, 'utf8')); } catch { /* no log */ } }
+  const last = b && (num(b.tokens) !== null || num(b.cost_usd) !== null)
+    ? [{ ended: typeof rec.exited === 'string' ? rec.exited : null, tokens: num(b.tokens), cost_usd: num(b.cost_usd) }] : [];
+  return [...earlierOf(rec), ...last];
+}
+
+// What the builder of a ticket's builds launched by `speck run` spent, as speck run recorded it in the run record when
+// each build ended: {tokens, cost_usd}. 0523: summed over the latest build and the earlier ones the record keeps, each
+// over the builds that report it, and null when none does.
 export function builderSpent(runs, id) {
   id = String(id ?? '');
   const none = { tokens: null, cost_usd: null };
   if (!/^[\w-]+$/.test(id)) return none;
-  let rec;
-  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return none; }
-  const b = rec && typeof rec === 'object' ? rec.builder : null;
-  if (!b || typeof b !== 'object') return none;
-  const num = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
-  return { tokens: num(b.tokens), cost_usd: num(b.cost_usd) };
+  const rec = readRecord(runs, id);
+  if (!rec) return none;
+  const b = plain(rec.builder) ? rec.builder : {};
+  const builds = [...earlierOf(rec), { tokens: num(b.tokens), cost_usd: num(b.cost_usd) }];
+  const sum = k => builds.reduce((t, x) => (x[k] === null ? t : (t ?? 0) + x[k]), null);
+  return { tokens: sum('tokens'), cost_usd: sum('cost_usd') };
 }

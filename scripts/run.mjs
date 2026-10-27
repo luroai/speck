@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
+import { builderSpend, earlierBuilds, waitFields, addPaused, pausedSince } from './core.mjs';
 import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
@@ -320,7 +320,8 @@ function runOn(worker) {
     const argv = plan.words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, tag));
     const started = new Date().toISOString();
     const own = plan.agent === 'codex' ? { agent: 'codex', env_session: tag } : plan.agent ? { agent: plan.agent } : {};
-    const record = pid => `${JSON.stringify({ id, session, ...own, cwd: repo, started, pid, command: argv }, null, 2)}\n`;
+    const earlier = earlierBuilds(runsDir(repo), id), kept = earlier.length ? { earlier_builds: earlier } : {}; // 0523: as this build's record and log replace theirs
+    const record = pid => `${JSON.stringify({ id, session, ...own, cwd: repo, started, pid, command: argv, ...kept }, null, 2)}\n`;
     startBuild(id, argv, repo, session, 'w', record, tag);
   };
 
