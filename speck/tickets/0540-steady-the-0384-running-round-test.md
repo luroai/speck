@@ -1,7 +1,7 @@
 ---
 id: "0540"
 title: "Steady the 0384 running-round test"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-27
 ---
 # 0540 · Steady the 0384 running-round test
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The test "0384 AC3: the panel shows the round as running through every exit 12, until it is recorded" fails by chance: in 0439's build it failed in the related run and alone, and in 0524's build it failed in a large parallel run, yet it passes on its own today. A test that fails by chance can stop `speck ship` for a ticket that didn't break it, and costs builders time ruling out their own change.
