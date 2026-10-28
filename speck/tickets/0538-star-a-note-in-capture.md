@@ -45,6 +45,8 @@ You can star a note in Capture, and a starred note shows a filled star on its ca
 - Today: Capture's cards are `captureItem` and `noteItem` in `templates/panel.js`; the panel's routes are in `scripts/panel.mjs`; the board feed keeps ideas by path (`KEYED` in `scripts/board-feed.mjs`), so the star shows on the next board update.
 - After 0537, which changes Capture's sort and the note formats, and 0536, which changes Capture's lane in `templates/panel.html` and `templates/panel.js`; all three edit the brief's sentence on Capture.
 - Failing before this build: none
+- Self-check: an earlier star press answered late no longer undoes a later one; a board after the server's answer now wins over the pressed value; the focus goes back to the star after a press; the star is drawn rather than typed, as the panel's fonts have no star character; `Starred:` lines are read and written only in the note's header, before its first `## ` section.
+- `scripts/panel.mjs` was at its 600-line limit, so `panelUrl` (the `--url` parsing) moved, unchanged, to `scripts/panel-url.mjs` to make room for the star's route.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

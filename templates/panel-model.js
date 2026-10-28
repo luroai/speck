@@ -243,6 +243,12 @@ function panelModel(state) {
     const by = ((typeof body === 'string' ? body : '').match(/^Raised by:[ \t]*(\S+)[ \t]*$/m) || [])[1];
     return by === 'agent' ? true : by === 'you' ? false : fromTicket(body) !== null;
   };
+  // 0538: whether the note is starred: a `Starred: yes` line before its first `## ` section, as scripts/panel-star.mjs
+  // reads it. Without one, or with any other value, it isn't.
+  const starred = body => {
+    const lines = (typeof body === 'string' ? body : '').split('\n'), end = lines.findIndex(l => /^## /.test(l));
+    return lines.slice(0, end === -1 ? lines.length : end).some(l => /^Starred:[ \t]*yes[ \t]*\r?$/.test(l));
+  };
   const is = (...statuses) => t => statuses.includes(t.status);
   const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
   const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
@@ -289,8 +295,8 @@ function panelModel(state) {
     inbox: ideas.filter(i => statusOf(i) === 'inbox').map(i => ({ ...i, from: fromTicket(i.body) })),
     // 0520: Capture's list: every note whose status is idea or inbox, newest captured first by its `Captured:` line's
     // date, those without one last, otherwise in JSON order. 0537: on the same day, those with a time first, latest
-    // first. 0521: each says whether an agent raised it.
-    capture: ideas.filter(i => ['idea', 'inbox'].includes(statusOf(i))).map((i, at) => ({ ...i, from: statusOf(i) === 'inbox' ? fromTicket(i.body) : null, agent: raisedByAgent(i.body), at, ...capturedAt(i.body) }))
+    // first. 0521: each says whether an agent raised it. 0538: and whether it's starred, which doesn't move it.
+    capture: ideas.filter(i => ['idea', 'inbox'].includes(statusOf(i))).map((i, at) => ({ ...i, from: statusOf(i) === 'inbox' ? fromTicket(i.body) : null, agent: raisedByAgent(i.body), starred: starred(i.body), at, ...capturedAt(i.body) }))
       .sort((a, b) => (a.on === null) - (b.on === null) || (b.on || '').localeCompare(a.on || '') || (a.time === null) - (b.time === null) || (b.time || '').localeCompare(a.time || '') || a.at - b.at)
       .map(({ at, on, time, ...i }) => i),
     // One list: in-flight tickets, then ready ones in JSON order, the order speck run starts them. 0200: in-flight ones
