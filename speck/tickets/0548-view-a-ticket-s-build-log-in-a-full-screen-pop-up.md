@@ -1,7 +1,7 @@
 ---
 id: "0548"
 title: "View a ticket's build log in a full-screen pop-up"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0538","0545"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T13:31:38.597Z"
+approved: "2026-10-28T13:46:18.558Z"
 
 ---
 # 0548 · View a ticket's build log in a full-screen pop-up
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket's build log only shows in a small box with its own scrollbar inside its open card in Build, which is hard to read on a phone or when following a long build. The Pipeline log already has a full-screen pop-up that's easy to read, but it shows only `speck run`'s own log, never a ticket's build.
@@ -53,9 +54,14 @@ An open ticket in Build now has a Full log button beside its other buttons, just
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 194,233
+- Elapsed since build started: 15 min
+- Changed lines: 132 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none to the inbox. Known limit: the build log pop-up doesn't show the stale page's Reload page line that the Pipeline log shows.
 
