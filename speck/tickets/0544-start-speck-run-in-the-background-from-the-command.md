@@ -41,6 +41,7 @@ There's no command to turn `speck run` on in the background, as the panel's swit
 ## Notes
 - From 0510's build: speck had no command for this, so setup copies what the panel's switch does.
 - Today: the panel's switch starts it with `panelRunOn` in `scripts/panel-run.mjs` (detached, output to `run.log`, refusal from its own file, 0220); `speck panel --background` is `scripts/panel-background.mjs` (0509), whose messages this should match in style.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
