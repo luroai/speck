@@ -23,8 +23,10 @@ import { panelForemanReply } from './foreman-answer.mjs';
 import { goWith } from './go-with.mjs';
 import { panelAway } from './panel-background.mjs'; // 0509: --background and --stop
 import { panelProjects } from './panel-projects.mjs'; // 0516: the project menu, and showing another panel's project here
+import { panelStarNote } from './panel-star.mjs'; // 0538: the star on a note in Capture
+import { panelUrl } from './panel-url.mjs'; // 0538: moved out, to keep this under 600 lines
 
-// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch and a setting) ----------
+// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch, a setting and a note's star) ----------
 
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -35,23 +37,6 @@ function panelPort(args) {
   const v = args[i].startsWith('--port=') ? args[i].slice(7) : args[i + 1];
   if (!/^\d+$/.test(v ?? '') || +v < 1 || +v > 65535) throw new SpeckError(`--port must be a whole number from 1 to 65535 (got "${v ?? ''}").`);
   return +v;
-}
-
-// The one extra address `--url` gives, for reaching the panel through a private tunnel: { origin, host } with its
-// https origin and its Host header, or null without --url. Only https://<hostname>, with an optional trailing /.
-function panelUrl(args) {
-  const at = args.flatMap((a, i) => (a === '--url' || a.startsWith('--url=') ? [i] : []));
-  if (!at.length) return null;
-  const example = 'for example --url https://speck.example.ts.net';
-  if (at.length > 1) throw new SpeckError(`Give --url once: the panel serves one extra address (${example}).`);
-  const i = at[0];
-  const v = args[i].startsWith('--url=') ? args[i].slice(6) : args[i + 1];
-  const m = /^https:\/\/([a-z0-9.-]+)\/?$/i.exec(v ?? '');
-  let host = null;
-  try { if (m) host = new URL(v).hostname; } catch { /* not an address */ }
-  if (!host || host !== m[1].toLowerCase() || /^\.|\.\.|\.$/.test(host))
-    throw new SpeckError(`--url must be an https:// address with only a hostname, and at most a / after it: no http://, port, path, query or username (got "${v ?? ''}"). Give it as the address your private tunnel serves, ${example}`);
-  return { origin: `https://${host}`, host };
 }
 
 // `speck set`'s own checks, as the panel's 422 response, or null when they pass.
@@ -224,7 +209,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes, POST /api/keys/<provider> (0393), POST /api/agents/<agent>/add or /remove (0399), POST /api/providers (0401) and POST /api/run/on or /off. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes, POST /api/keys/<provider> (0393), POST /api/agents/<agent>/add or /remove (0399), POST /api/providers (0401), POST /api/ideas/<file>/star or /unstar (0538) and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html, panel.css (0430, split into a file for each area of the panel by 0472), panel-model.js (0431), panel-settings.js (0432), panel.js (0433), panel-popups.js (0473) or panel-header.js (0474) shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -365,6 +350,15 @@ export async function panelServer() {
         const out = panelSetPriority(repo, priority[1], priority[2]);
         return wrote(res, out);
       } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
+    }
+    const star = where.match(/^\/api\/ideas\/([^/]+)\/(star|unstar)$/); // 0538: no commit, so it needs no base branch
+    if (req.method === 'POST' && star) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      let name;
+      try { name = decodeURIComponent(star[1]); } catch { name = star[1]; }
+      try { return wrote(res, panelStarNote(repo, name, star[2] === 'star')); }
+      catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
     const setting = req.method === 'POST' && where.match(/^\/api\/settings\/([^/]+)\/([^/]*)$/); // 0258: one setting
     const saveAll = req.method === 'POST' && where === '/api/settings/save'; // 0274: the Settings view's one Save

@@ -123,13 +123,15 @@ test('0520 AC2: with no idea or inbox note, Capture says "Nothing captured."', a
 
 // ---------- AC3 ----------
 
-test('0520 AC3: Capture has no buttons, menus or fields, and reading its notes sends nothing to the server', async () => {
+// 0538: apart from each card's star, its one button.
+test('0520 AC3: Capture has no buttons, menus or fields but each card\'s star, and reading its notes sends nothing to the server', async () => {
   const p = await opened();
   const sent = p.calls.length;
   for (let i = 0; i < notes(p).length; i++) { click(top(notes(p)[i])); click(top(notes(p)[i])); click(top(notes(p)[i])); }
   await p.settle();
-  const tags = p.all(p.byId('capture-section')).map(n => n.tagName);
-  for (const t of ['button', 'input', 'select', 'textarea', 'a', 'form']) assert.ok(!tags.includes(t), `no ${t} in Capture`);
+  const nodes = [...p.all(p.byId('capture-section')), ...p.all(p.byId('capture'))], tags = nodes.map(n => n.tagName);
+  assert.deepEqual(nodes.filter(n => n.tagName === 'button').map(n => n.className.split(' ')[0]), notes(p).map(() => 'star'), 'only a star on each card');
+  for (const t of ['input', 'select', 'textarea', 'a', 'form']) assert.ok(!tags.includes(t), `no ${t} in Capture`);
   assert.ok(p.calls.slice(sent).every(c => !c.opts || !c.opts.method || c.opts.method === 'GET'), 'nothing written');
   assert.doesNotMatch(page().slice(page().indexOf('id="capture-section"'), page().indexOf('id="shaping-section"')), /<(button|input|select|textarea|form)\b/, 'nor in the page');
 });
