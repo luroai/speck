@@ -1,7 +1,7 @@
 ---
 id: "0538"
 title: "Star a note in Capture"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0537"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T10:44:00.141Z"
 approved: "2026-10-28T10:57:27.789Z"
+blocked_at: "2026-10-28T11:03:55.555Z"
 
 ---
 # 0538 · Star a note in Capture
 
-**Status:** 👍 approved
+**Status:** ⛔ blocked
 
 ## Problem
 Scrolling through Capture, you can't tell which notes you liked before, so the ideas you care about get lost among dozens of inbox notes and older ideas.
@@ -47,6 +48,7 @@ You can star a note in Capture, and a starred note shows a filled star on its ca
 - After 0537, which changes Capture's sort and the note formats, and 0536, which changes Capture's lane in `templates/panel.html` and `templates/panel.js`; all three edit the brief's sentence on Capture.
 - Failing before this build: none
 - Self-check: an earlier star press answered late no longer undoes a later one; a board after the server's answer now wins over the pressed value; the focus goes back to the star after a press; the star is drawn rather than typed, as the panel's fonts have no star character; `Starred:` lines are read and written only in the note's header, before its first `## ` section.
+- Handed back by speck run's ship queue 2026-10-28: 0039, 0140, 0161 and 0435's checks failed. Fixed all but 0039's: the star is now a 44 px boxed button, its top level with the title, using the panel's own focus ring. 0039 AC3 needs the user's answer above.
 - `scripts/panel.mjs` was at its 600-line limit, so `panelUrl` (the `--url` parsing) moved, unchanged, to `scripts/panel-url.mjs` to make room for the star's route.
 
 ## In plain words
@@ -57,7 +59,11 @@ To see it, open Capture in the panel and tap the star on any note. If a note was
 Worth knowing: starring edits the note file in your main checkout, so it shows up as an uncommitted change there until the note is next committed.
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+An older check (from ticket 0039) says that pressing anything on a note card's top row opens or closes the card. The star sits on that row and, as this ticket asks, doesn't open the card, so that check fails, and this ticket says no older check may change except 0520's. Which should give way? (a) Let 0039's check leave out the star, the one thing on the row that doesn't open the card (nothing you'd notice changes). (b) Move the star off the top row, which breaks a different older check (0435: a closed card has nothing but its top row), so that check would change instead. (c) Let pressing the star also open or close the card, which goes against this ticket's first criterion. I recommend (a): it keeps the star where it is and keeps the card the same height, and the star not opening the card is what you asked for.
+
+Recommended: (a) let 0039's check leave out the star
+Changes what you'd notice: yes
+Clear winner: yes
 
 ## Review log
 Round 1 (codex): approve.
