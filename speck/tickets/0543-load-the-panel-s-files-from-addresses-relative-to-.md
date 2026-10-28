@@ -1,7 +1,7 @@
 ---
 id: "0543"
 title: "Load the panel's files from addresses relative to the page"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-19-load-the-panel-s-font-and-icons-from-relati
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T23:40:40.767Z"
+blocked_at: "2026-10-28T00:29:47.890Z"
 
 ---
 # 0543 · Load the panel's files from addresses relative to the page
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 Opened through a proxy that puts the panel under a path, such as cptr's built-in browser at `https://<host>/api/browser/frame/<id>/http/127.0.0.1:4779/`, the panel's header shows "speck" in a plain monospace font instead of Doto's dot-matrix lettering. The stylesheet loads the font from `/fonts/Doto.ttf`, which then points at the proxy's own site root, not the panel.
@@ -50,7 +51,11 @@ Every file the panel's page links to, the font included, loads from an address r
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+The build is done and its tests pass, but Codex, the reviewer, has hit its usage limit until 03:41 UTC, so no review round can start. Should it wait for Codex and be resumed after 03:41, or be reviewed now by another reviewer (Claude Code, set as this ticket's reviewer)? I recommend waiting for Codex, so the review stays independent of the Claude builder.
+
+Recommended: wait for Codex and resume after 03:41 UTC
+Changes what you'd notice: no
+Clear winner: no
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
