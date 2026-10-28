@@ -48,7 +48,7 @@ Every build `speck run` starts or resumes uses the builder settings as they are 
 - `0232 AC3: 0176 AC3's check fails for a speck run whose checks cost more than 5% of one core…` is flaky under load: on main it failed 2 of 4 runs beside `run-0110` and `run-0047` alone (0.31 s a check against a 0.25 s floor when run by itself). It fails in this build's `--related` runs for the same reason, not because of this change.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Changing the builder's settings while speck run is on now takes effect from the next build, with no restart. That covers the builder, its model and effort, the build and resume commands, and how many builds run at once. Builds it carries on also pick up the change: a stopped build it resumes, a ticket handed back after a ship, and one carried on with a recommendation. To see it, lower the builder's effort in Settings while speck run is on, then set a ticket ready: its build starts with the new effort. If a change leaves speck run unable to start a build, such as a build command with a missing quote, its log says why once and it waits, then carries on once the setting is fixed. Builds already running keep the settings they started with. One thing to know: a Cursor build that's resumed keeps the model its chat started on, as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +58,10 @@ Every build `speck run` starts or resumes uses the builder settings as they are 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - The flaky timing check `0232 AC3` (0176 AC3's CPU cost check) failed in some of this build's `--related` runs and on main beside other `speck run` tests. Skipped as a duplicate of `speck/ideas/2026-10-28-steady-the-0232-ac3-cpu-cost-test-under-load.md`.
+  - Known limit: a resumed Cursor build keeps its chat's model (0290), so a builder_model change reaches only new Cursor builds.
+  - Known limit: speck run's starting notes (builder_model ignored, builders ignored by build_command) are still said only when it starts, not when the settings change.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -147,6 +151,97 @@ Every build `speck run` starts or resumes uses the builder settings as they are 
     ],
     "escalation_question": "",
     "summary": "The change refreshes settings for new builds and updates concurrency limits correctly. Approval is held because resumed Cursor builds still ignore a changed model, and two promised settings changes lack test coverage."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a37843565666fc9afb61760c8a77dc4f37650dcd",
+    "session": "continued",
+    "thread_id": "01a18201-e906-7263-8cc5-d05608917d5f",
+    "builder_response": "- Tests run: `speck test --related test/run-settings-0549.test.mjs` (the ticket's own file, every existing test file naming a changed file, and the checks). All passed this time, including the flaky `0232 AC3` timing check.\n- F1: disputed. Not passing builder_model on a Cursor resume is a deliberate earlier decision, not something this change left out. `test/run-cursor-0290.test.mjs:110` asserts that `resumeFor([], { ...CURSOR, builder_model: 'gpt-5' }, …)` gives `[cursorCli(), ...HEADLESS, '--resume', 'chat-7', message]`, with the message 'a chat keeps the model it started on'. Adding `--model` would fail that passing test, which AC5 forbids. Each resume does take the settings as they are now: `resumeFor` gets `s.cfg`/`s.words` from `settings()` at that moment. Cursor's resume command just reads no model from them, by design, and the same holds when speck run starts fresh. Changing that would be a product change to 0290, outside this ticket.\n- F2: fixed. Added three tests to `test/run-settings-0549.test.mjs`:\n  - A live builder switch in a real `speck run`: with builder_effort set to medium, switching `builder` to cursor (build_command stays the fake) starts the next build without `--effort`, which only Claude Code gets.\n  - A unit check that `liveSettings` follows builder claude → codex (blank build_command, Codex's own command) → claude.\n  - A live `resume_command` change: a go-with queue built while `resume_command` was `first-resume {session}`, then changed to `second-resume {session}`, says `second-resume sess-1` when it can't resume the build itself. With the old fixed `cfg`, neither would appear.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 454962,
+      "cached_input_tokens": 387584,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1791,
+      "reasoning_output_tokens": 106
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5848,
+      "cached": 125184,
+      "write": 0,
+      "output": 583
+    },
+    "cost_usd": 0.0300444,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T10:20:43.585Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "run.mjs tick reloads settings before launching builds. Passing AC1 tests cover refreshed model/effort arguments, live machine settings changes and clearing effort."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "resumeKilled and the hand-back, go-with and Foreman queues receive refreshed settings. Four passing AC2 tests exercise these paths. Existing test '0290 AC2: a killed or handed-back Cursor build carries on its chat' explicitly preserves Cursor's session model; this change maintains that contract."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests now cover live builder changes, switching command construction between Claude and Codex, refreshed resume_command hints, invalid command logging once, continued operation and recovery."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 integration test raises and lowers max_parallel_builds, verifies launches respect the updated limit and confirms existing processes remain alive."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Integration tests verify existing builds retain their starting arguments and continue running. Related test results report 504 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/hand-back.mjs",
+        "issue": "Previously flagged Cursor resumes retaining their session model. The existing 0290 test explicitly requires this behaviour, so changing it would alter the established contract rather than fix stale settings in this ticket.",
+        "suggested_fix": "No change required within this ticket.",
+        "state": "dispute_accepted"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/run-settings-0549.test.mjs",
+        "issue": "Previously missing coverage for successful live builder changes and refreshed resume_command behaviour is now present and exercises the relevant command construction and resume hint paths.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. New and resumed builds receive refreshed settings, invalid settings pause launches until corrected, and concurrency changes leave running builds alone. The added tests close the coverage gaps, and all related tests pass. Cursor retains its established session-model behaviour."
   }
 }
 ```
