@@ -1,7 +1,7 @@
 ---
 id: "0537"
 title: "Order same-day notes in Capture newest first"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0536"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T09:56:24.401Z"
+approved: "2026-10-28T10:06:26.035Z"
 
 ---
 # 0537 · Order same-day notes in Capture newest first
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Capture sorts notes newest first by their `Captured:` date, but that line holds only a day, so notes captured on the same day fall back to the order of their file names, which is alphabetical. On a busy day the note you captured a minute ago can sit below older ones, so the list doesn't look newest first.
@@ -55,9 +56,15 @@ Notes now record the time they were captured as well as the day, and Capture put
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 capturedAt only rejects digits or a colon immediately after HH:MM.; F2 AC4's tests omit the required local-time instruction and the brief's same-day ordering fact.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 314,286
+- Elapsed since build started: 10 min
+- Changed lines: 28 (limit 5000)
 - Follow-ups:
   - Inbox: `speck/ideas/2026-10-28-steady-the-0384-ac3-running-round-test-under-load.md`. "0384 AC3" failed under load in this build's related run, after 0540 steadied it, and passed alone.
   - Skipped as a duplicate: "0232 AC3" failed under load in the same run and passed alone, matching `speck/ideas/2026-10-28-steady-the-0232-ac3-cpu-cost-test-under-load.md`.
