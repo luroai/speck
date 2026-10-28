@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.21.0 · 28 October 2026
+
+What's new since 0.20.0. A minor release that makes Capture easier to work through, with a count, same-day notes in the order you captured them and a star for the notes you like, lets you turn `speck run` on from the command line, keeps private words out of every commit under `speck/`, and makes changes to the builder's settings apply without restarting `speck run`. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.21.0 init`.
+- Setup asks fewer questions. It no longer goes through shipping, how many builds and test runs happen at once, or the ticket size and review round limits one at a time: it leaves them at speck's defaults, says that `auto_ship` is off so nothing ships without you, and that you can change any of them later in the panel's Settings view or with `speck config set`. It still asks about the builder, the reviewer and speck's watch agent and their models, and still offers pull request mode when your base branch needs pull requests.
+- `speck run --background` turns `speck run` on in its own process, as the panel's switch does, adding its output to `speck/.cache/runs/run.log`. It returns once `speck run` is watching, with one line saying it's on and where its log is. If it's already running, it starts nothing and says so; if `speck run` refuses to start, for example off the base branch, it prints why and leaves nothing running. Setup now turns `speck run` on with it.
+
+### Capture
+
+- The Capture lane says how many notes it holds, such as "35 notes", at the right of its title, as Build and Shipped do. It counts the idea and inbox notes it lists, changes with the next board update, and is hidden when Capture is empty.
+- A note's `Captured:` line can give a 24-hour time after the date, as `Captured: 2026-10-27 14:32 · Status: idea`, and the capture and build skills now write it. Notes from the same day are listed latest time first; notes with no time, or a time that isn't real, follow them in the order they were listed before. Cards still show only the day.
+- Every note in Capture has a star. Pressing it marks a note you like by adding a `Starred: yes` line straight after its `Captured:` line, and pressing it again removes that line. Nothing else in the note changes, it doesn't move, and nothing is committed. The star is read from the note, so it shows after a reload and on any device. If the note was ticketed or dropped in the meantime, its card says why it couldn't be starred.
+
+### Building
+
+- Changes to `builder`, `builder_model`, `builder_effort`, `build_command`, `resume_command` and `max_parallel_builds` now apply from the next build `speck run` starts or resumes, without restarting it. Builds already running keep the settings they started with. If a change means a build can't start, such as a quote left open in `build_command`, `speck run` says why in its log once and waits until it's fixed.
+- An open ticket in Build has a Full log button that opens its build log in a pop-up over the whole panel, like the Pipeline log, titled with the ticket's number, such as "0548 build log". New lines appear as the build writes them, and it keeps your place when you've scrolled up.
+- A ticket's Builder fact names the model its builds run on beside the agent, such as `Claude · opus`, when one is set in `builder_model` or comes from a model provider you added. `speck status --json` gives it as each ticket's `builder_model`, null when none is set.
+
+### Spend
+
+- Each review round's `tokens` in `speck status --json`, the panel's "Reviewer tokens" and the Shipped lane's median of it now count the tokens the round saved, as the ticket's `total_tokens` does. A resumed Codex round no longer counts the session's earlier rounds again, a Claude round includes its cached input, and a Cursor round no longer shows 0. Rounds saved without their own tokens, as before 0.19.0, keep their figure.
+
+### Private words
+
+- `speck init` installs a git pre-commit hook, shared by all the repository's worktrees, that refuses a commit adding a line under `speck/` that holds a word from `~/.config/speck/private-words`, in any case, or your home folder's path. It names each file and line without repeating the word. `git commit --no-verify` skips it for one commit. If the repository already has its own pre-commit hook, or `core.hooksPath` is set, `speck init` leaves it alone and says the check isn't installed.
+
+### The panel
+
+- The panel links its stylesheets, scripts, font, icon and manifest relative to the page, so behind a proxy that serves it under a path, its header lettering, styles and home-screen app details load from the panel. Opened directly, it works as before.
+
+### Tests
+
+- Four of speck's own tests that failed now and then on a busy machine now wait for what they check, with a time limit: the review step showing a running round, `speck run` carrying on when its new code can't start, the look staying after a reload and changing lane with the trackpad and arrow keys. The first of them found a real cause: on a busy machine, the panel could briefly show nothing while a review round was starting. `speck review` now records the round as running as soon as it starts it, so the panel shows it from the start.
+
 ## 0.20.0 · 27 October 2026
 
 What's new since 0.19.0. A minor release that makes a ticket's spend complete when its build hands work out to other agents: helper agents a build starts, and Codex runs started in a ticket's own folder, now count in what the ticket cost. Costs speck works out itself are still estimates at API list prices.
