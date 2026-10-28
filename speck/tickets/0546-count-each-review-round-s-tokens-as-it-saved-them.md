@@ -1,7 +1,7 @@
 ---
 id: "0546"
 title: "Count each review round's tokens as it saved them"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-27-count-reviewer-tokens-as-each-round-saved-t
 after: ["0545"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T10:15:15.556Z"
+approved: "2026-10-28T10:24:10.223Z"
 
 ---
 # 0546 · Count each review round's tokens as it saved them
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's "Reviewer tokens" figure, and each round's `tokens` in `speck status --json`, add up the raw input and output a round's usage reports. A resumed Codex round's usage covers the whole session, so earlier rounds are counted again; a Claude round's cache reads and writes are left out; and a Cursor round's camelCase usage reads as 0. Anyone looking at what review costs sees the wrong number, and the ticket's total (0526) already counts it differently.
@@ -51,9 +52,14 @@ The "Reviewer tokens" figure on a shipped ticket in the panel, and the Shipped l
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 129,947
+- Elapsed since build started: 9 min
+- Changed lines: 16 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: the review pack's and Delivery log's "Reviewer tokens" line still sums each round's usage input and output (inbox: speck/ideas/2026-10-28-count-the-pack-s-reviewer-tokens-as-each-round-saved-them.md).
 
