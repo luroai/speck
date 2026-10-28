@@ -55,7 +55,7 @@ test('0537 AC2: the time decides the order, whatever the file names or the order
 });
 
 test('0537 AC3: a time that is not a real time sorts as no time', () => {
-  for (const bad of ['25:00', '9:5', '12:60', '9:05', '24:00', '12:5x', '12:345']) {
+  for (const bad of ['25:00', '9:5', '12:60', '9:05', '24:00', '12:5x', '12:345', '14:32x', '14:32.5', '14:32:10', '14:32pm']) {
     assert.deepEqual(order([
       note('untimed', 'idea', `${Y}-10-27`),
       note('bad', 'idea', `${Y}-10-27 ${bad}`),
@@ -76,4 +76,13 @@ test('0537 AC4: the capture and follow-up note formats write the time on the Cap
   assert.match(read('skills/speck-build/SKILL.md'), /^ *Captured: <YYYY-MM-DD HH:MM> · Status: inbox$/m);
   for (const f of ['skills/speck-capture/SKILL.md', 'skills/speck-build/SKILL.md'])
     assert.doesNotMatch(read(f), /Captured: <date>/, `${f} has no line without the time`);
+});
+
+test("0537 AC4: both skills say the time is 24-hour local time, and the brief says Capture orders a day's notes by it", () => {
+  const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+  for (const f of ['skills/speck-capture/SKILL.md', 'skills/speck-build/SKILL.md'])
+    assert.match(read(f), /`Captured:` line[^\n]*24-hour local time|`Captured:` gives[^\n]*24-hour local time/, `${f} says the time is 24-hour local time`);
+  const capture = read('docs/brief.md').match(/The panel shows Capture \(([^)]*)\)/)?.[1] || '';
+  assert.match(capture, /same day/, "the brief's Capture says how notes from the same day are ordered");
+  assert.match(capture, /time/, 'by the time on the Captured line');
 });
