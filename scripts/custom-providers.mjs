@@ -8,7 +8,7 @@ import path from 'node:path';
 import { SpeckError, findRepoRoot } from './core.mjs';
 import { machineConfigFile } from './machine.mjs';
 import { sharedCacheDir } from './turns.mjs';
-import { PROVIDERS, providerLabel } from './providers.mjs';
+import { PROVIDERS } from './providers.mjs';
 
 export const API_TYPES = Object.freeze(['anthropic', 'openai']);
 const TYPE_NAMES = { anthropic: 'Anthropic', openai: 'OpenAI' };
@@ -47,9 +47,6 @@ export function customProviders(repo) {
 export function knownProviders(repo = here()) {
   return [...PROVIDERS, ...customProviders(repo)];
 }
-
-// A provider's name as you gave it, such as DeepSeek, when `name` is exactly one's, in the repo speck is run in; null otherwise.
-export const providerLabelHere = name => providerLabel(name, knownProviders());
 
 // The name speck knows a provider by, from the name you gave it: "Moonshot AI" is moonshot-ai.
 export const providerId = label => String(label ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');

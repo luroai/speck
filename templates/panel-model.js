@@ -51,10 +51,12 @@ function wordOf(t, d, short) {
 }
 // 0462: who is at work on it, for an open card's Builder or Reviewer cell: the reviewer by its model, as the status line
 // names it, while it reviews a round, otherwise the builder by its own name. A dash for a ticket that names neither.
+// 0545: the builder's name and the model its builds run on, such as Claude · opus, when the board gives one.
 function workerOf(t, d) {
   if (d.round !== null && d.round !== undefined && d.by) return { label: 'Reviewer', value: d.by };
   const name = typeof t.builder_label === 'string' && t.builder_label.trim() ? t.builder_label.trim() : typeof t.builder === 'string' ? t.builder.trim() : '';
-  return { label: 'Builder', value: name ? `${name[0].toUpperCase()}${name.slice(1)}` : '–' };
+  const model = typeof t.builder_model === 'string' ? t.builder_model.trim() : '';
+  return { label: 'Builder', value: name ? `${name[0].toUpperCase()}${name.slice(1)}${model ? ` · ${model}` : ''}` : '–' };
 }
 function doingNow(t, shipping) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
