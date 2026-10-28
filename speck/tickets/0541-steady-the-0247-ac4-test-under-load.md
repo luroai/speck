@@ -1,7 +1,7 @@
 ---
 id: "0541"
 title: "Steady the 0247 AC4 test under load"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: "speck/ideas/done/2026-10-27-fix-the-0247-ac4-test-that-fails-under-load
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T23:40:38.350Z"
-blocked_at: "2026-10-28T00:15:02.229Z"
+blocked_at: ""
+waited_seconds: 34088
 
 ---
 # 0541 · Steady the 0247 AC4 test under load
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 The `0247 AC4` test in `test/run-0247.test.mjs` (new code that can't start leaves the old one running) failed once in a large parallel `speck test --related` run and passes when its file runs alone. A test that fails by chance can stop `speck ship` for a ticket that didn't break it.
@@ -44,6 +45,7 @@ The `0247 AC4` test in `test/run-0247.test.mjs` (new code that can't start leave
 - Failing before this build: none
 - Tests: no new test file. The change is to the two `0247 AC4` tests themselves, so each criterion is checked by runs recorded in the Delivery log: the file alone, the file while the whole suite runs, and the file with the switch code broken on purpose. A reviewer can check AC1 by reading the two tests: every wait has a time limit (`BUSY_MS`), and each check of which processes are left waits for them.
 - Self-check: no changes. `watching(run)` without a limit still waits 8 seconds, as `until` does, so the 0301 tests that share it are unchanged.
+- Went with the recommendation: wait for Codex after 3:41 AM (chosen by speck, as watch is fix, 2026-10-28 09:43 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
