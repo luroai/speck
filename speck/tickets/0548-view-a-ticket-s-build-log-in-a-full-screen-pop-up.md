@@ -1,7 +1,7 @@
 ---
 id: "0548"
 title: "View a ticket's build log in a full-screen pop-up"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0538","0545"]                # ticket ids that must be done first
 created: 2026-10-27
+started: "2026-10-28T13:31:38.597Z"
 
 ---
 # 0548 · View a ticket's build log in a full-screen pop-up
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A ticket's build log only shows in a small box with its own scrollbar inside its open card in Build, which is hard to read on a phone or when following a long build. The Pipeline log already has a full-screen pop-up that's easy to read, but it shows only `speck run`'s own log, never a ticket's build.
