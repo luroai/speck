@@ -89,7 +89,7 @@ export function panelRunOn(repo) {
       const run = runState(runsOf(repo));
       if (run.on && run.pid === child.pid && said()) finish({ status: 200, body: { ok: true, run } });
     }, RUN_SWITCH_POLL_MS);
-    timer = setTimeout(() => finish({ status: 500, body: { error: `speck run (process ${child.pid}) started but didn't take its lock and say it's watching within ${RUN_SWITCH_MS / 1000} seconds. Its output is in ${path.relative(repo, log)}.` } }), RUN_SWITCH_MS);
+    timer = setTimeout(() => finish({ status: 500, body: { error: `speck run (process ${child.pid}) started but didn't take its lock and say it's watching within ${RUN_SWITCH_MS / 1000} seconds. Its output is in ${path.relative(repo, log)}.`, pid: child.pid } }), RUN_SWITCH_MS);
   });
 }
 

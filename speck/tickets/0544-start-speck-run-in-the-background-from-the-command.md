@@ -42,6 +42,8 @@ There's no command to turn `speck run` on in the background, as the panel's swit
 - From 0510's build: speck had no command for this, so setup copies what the panel's switch does.
 - Today: the panel's switch starts it with `panelRunOn` in `scripts/panel-run.mjs` (detached, output to `run.log`, refusal from its own file, 0220); `speck panel --background` is `scripts/panel-background.mjs` (0509), whose messages this should match in style.
 - Failing before this build: none
+- Self-check: speck.mjs was over the 600-line limit, so `--background` loads its code only when given; the panel switch's time-out now names the process it started, so `--background` can stop it rather than leave it running. The time-out itself (10 seconds) has no test, to keep the suite quick.
+- Changed test: `test/setup-0510.test.mjs` 0510 AC3 checked for setup's `nohup` line, which AC4 here removes; it now checks for `speck run --background`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
