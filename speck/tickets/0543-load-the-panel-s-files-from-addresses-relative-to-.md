@@ -1,7 +1,7 @@
 ---
 id: "0543"
 title: "Load the panel's files from addresses relative to the page"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-10-27
 started: "2026-10-27T23:40:40.767Z"
 blocked_at: ""
 waited_seconds: 33370
+approved: "2026-10-28T09:55:57.801Z"
 
 ---
 # 0543 · Load the panel's files from addresses relative to the page
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Opened through a proxy that puts the panel under a path, such as cptr's built-in browser at `https://<host>/api/browser/frame/<id>/http/127.0.0.1:4779/`, the panel's header shows "speck" in a plain monospace font instead of Doto's dot-matrix lettering. The stylesheet loads the font from `/fonts/Doto.ttf`, which then points at the proxy's own site root, not the panel.
@@ -61,9 +62,14 @@ Changes what you'd notice: no
 Clear winner: no
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 121,184
+- Elapsed since build started: 615 min
+- Changed lines: 42 (limit 5000)
 - Follow-ups: test 0430's head check still searches for `/panel-settings.css`, so it no longer checks anything (reviewer's minor F1): saved to the inbox as speck/ideas/2026-10-28-make-0430-s-head-check-look-for-the-relative-stylesheet.md.
 - Under a proxy's path, the page's fetches and event stream (`/api/…`) still go to the site's root, as the ticket's out of scope says; no note made, as the ticket already names that as a later ticket.
 
