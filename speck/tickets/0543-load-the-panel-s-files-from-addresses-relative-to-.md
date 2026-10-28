@@ -1,7 +1,7 @@
 ---
 id: "0543"
 title: "Load the panel's files from addresses relative to the page"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: "speck/ideas/done/2026-10-19-load-the-panel-s-font-and-icons-from-relati
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T23:40:40.767Z"
-blocked_at: "2026-10-28T00:29:47.890Z"
+blocked_at: ""
+waited_seconds: 33370
 
 ---
 # 0543 · Load the panel's files from addresses relative to the page
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 Opened through a proxy that puts the panel under a path, such as cptr's built-in browser at `https://<host>/api/browser/frame/<id>/http/127.0.0.1:4779/`, the panel's header shows "speck" in a plain monospace font instead of Doto's dot-matrix lettering. The stylesheet loads the font from `/fonts/Doto.ttf`, which then points at the proxy's own site root, not the panel.
@@ -46,6 +47,7 @@ Every file the panel's page links to, the font included, loads from an address r
 - Failing before this build: none
 - Self-check: made the browser check wait for Chrome to read the manifest, as 0149's does, instead of asking once; kept the manifest's `id` relative too (`./`), so at the site's root it resolves to `/` as before and a home-screen app added earlier keeps its identity.
 - Existing tests that pinned the old `/…` addresses (0147, 0149, 0302, 0304, 0305, 0430–0433, 0472–0474, pipeline 0415, 0470, 0479 and `pageScripts` in `test/support/panel.mjs`) now expect the relative ones: the ticket changes exactly those addresses.
+- Went with the recommendation: wait for Codex and resume after 03:41 UTC (chosen by the user in the panel, 2026-10-28 09:45 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
