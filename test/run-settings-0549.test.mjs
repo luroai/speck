@@ -90,6 +90,13 @@ test('0549 AC1, AC3, AC5: speck run starts each build with the settings as they 
     assert.equal(r.calls()[2].args.includes('0003'), true);
     assert.equal(effort(r.calls()[2].args), null, 'set blank: started without it');
     assert.match(run.out(), /can start builds again/);
+
+    // A builder that builds with build_command as it is: builder_effort is passed only to Claude Code.
+    assert.equal(speck(r.dir, 'config', 'set', 'builder_effort', 'medium').status, 0);
+    setRepo(r.dir, 'builder', 'cursor');
+    addReady(r, '0004');
+    assert.ok(await until(() => r.calls().length === 4), run.out());
+    assert.equal(effort(r.calls()[3].args), null, 'started as the new builder');
   } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
 });
 
@@ -109,6 +116,31 @@ test('0549 AC4: a change to max_parallel_builds applies from the next check, wit
     assert.ok(r.calls().every(c => alive(c.pid)), 'none of the running builds stopped');
     assert.ok(await until(() => r.calls().length === 4, 8000), `started once fewer run: ${run.out()}`);
   } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
+});
+
+test('0549 AC3: a change of builder applies to the next build', () => {
+  let cfg = { ...CFG };
+  const live = liveSettings(() => cfg, () => {});
+  assert.equal(live().words[0], 'claude');
+  cfg = { ...CFG, builder: 'codex', build_command: '' };
+  assert.equal(live().words[0], 'codex', 'Codex\'s own command');
+  cfg = { ...CFG, builder: 'claude' };
+  assert.equal(live().words[0], 'claude', 'and back');
+});
+
+test('0549 AC3: a change to resume_command applies to what speck run says next about resuming a build by hand', () => {
+  const r = blockedRepo();
+  assert.equal(goWith(r.dir, '0001').status, 200);
+  // build_command without --session-id can't resume a session, so speck run says how to resume it by hand.
+  const s = changing(), said = [], log = console.log;
+  s.set({ build_command: 'my-build {id}', resume_command: 'first-resume {session}' });
+  const q = goWithQueue({ repo: r.dir, cfg: CFG, settings: s.settings, running: new Set(), startBuild: () => assert.fail('nothing can start'),
+    saveRecord: save, runs: () => r.runs });
+  s.set({ build_command: 'my-build {id}', resume_command: 'second-resume {session}' });
+  console.log = m => said.push(m);
+  try { q.check(statusData(r.dir).tickets); } finally { console.log = log; }
+  assert.match(said.join('\n'), /second-resume sess-1/);
+  assert.doesNotMatch(said.join('\n'), /first-resume/);
 });
 
 // A fake build that can be resumed: records its arguments in <out>/<n>.json and exits.
