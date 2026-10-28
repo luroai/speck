@@ -1,7 +1,7 @@
 ---
 id: "0550"
 title: "Refuse a commit that adds a private word under speck/"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-28
 started: "2026-10-28T13:26:41.669Z"
 approved: "2026-10-28T13:35:57.702Z"
+finished: "2026-10-28T13:41:14.676Z"
 
 ---
 # 0550 · Refuse a commit that adds a private word under speck/
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck checks for private words and the home folder's path only when a ticket is linted (0083, 0121) or shipped (0506). Notes and tickets that an agent commits straight to the base branch, such as a capture, a ticketing or a triage commit, are never checked. On 2026-10-27 an idea note committed that way published the user's own domain, which is on their private-words list, and nobody noticed until it was on GitHub.
