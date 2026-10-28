@@ -1,7 +1,7 @@
 ---
 id: "0550"
 title: "Refuse a commit that adds a private word under speck/"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-28
 started: "2026-10-28T13:26:41.669Z"
+approved: "2026-10-28T13:35:57.702Z"
 
 ---
 # 0550 · Refuse a commit that adds a private word under speck/
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck checks for private words and the home folder's path only when a ticket is linted (0083, 0121) or shipped (0506). Notes and tickets that an agent commits straight to the base branch, such as a capture, a ticketing or a triage commit, are never checked. On 2026-10-27 an idea note committed that way published the user's own domain, which is on their private-words list, and nobody noticed until it was on GitHub.
@@ -61,9 +62,16 @@ Worth keeping an eye on: if your project already has its own commit hook, speck 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The shared hook loads its checker from the current worktree and exits successfully if it is absent.; F2 The diff inherits diff.interHunkContext.; F3 The documentation test requires the private-words path, pre-commit mention and bypass command to occur on the same physical line.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 843,884
+- Elapsed since build started: 9 min
+- Changed lines: 126 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: a commit that finishes a merge with conflicts counts every line the merge brings in under speck/ as added, so lines already on the base branch are checked again. They were checked when first committed, so this only refuses words that predate the check.
 - Known limit: this repo's own main checkout gets the hook only once `speck init` is run there again.
