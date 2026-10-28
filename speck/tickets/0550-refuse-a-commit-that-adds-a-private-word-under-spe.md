@@ -51,7 +51,11 @@ In a project set up with `speck init`, a commit that adds a private word or the 
 - Self-check: added a test that an unreadable private-words file refuses a commit under speck/ with a plain message (and lets one outside speck/ through); checked an initial commit (no HEAD) is refused too.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck now stops a commit that would publish one of your private words, or your home folder's path, in its notes and tickets. Before, only setting a ticket ready and shipping checked; a note an agent committed straight to the main branch could slip through. Now every commit is checked, from any copy of the project, and a refused one names the file and line (never the word) and says to take it out.
+
+To see it, run speck's install again in your project, then try committing an idea note containing one of your private words: the commit is refused. Files outside speck's folder aren't checked, and you can skip the check for one commit if you really mean it.
+
+Worth keeping an eye on: if your project already has its own commit hook, speck leaves it alone and says once that the check isn't installed. Projects set up before this change only get the check after speck's install is run again.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,6 +65,9 @@ In a project set up with `speck init`, a commit that adds a private word or the 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limit: a commit that finishes a merge with conflicts counts every line the merge brings in under speck/ as added, so lines already on the base branch are checked again. They were checked when first committed, so this only refuses words that predate the check.
+- Known limit: this repo's own main checkout gets the hook only once `speck init` is run there again.
+- Follow-up (inbox): speck/ideas/2026-10-28-have-doctor-say-whether-the-commit-check-is-on.md
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -257,6 +264,105 @@ In a project set up with `speck init`, a commit that adds a private word or the 
     ],
     "escalation_question": "",
     "summary": "The line-number and documentation-test fixes work. One protection gap remains: installing speck in a linked worktree can leave other worktrees able to commit private words. That needs fixing before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "618efcc0ba939e0afcb7fb9912063fa1cf6bf4c7",
+    "session": "continued",
+    "thread_id": "01a182b6-1b2d-70c2-b816-e78ff9585896",
+    "builder_response": "- Tests run: test/commit-check-0550.test.mjs (plus the commands.checks files speck test runs itself)\n- F1: fixed. `installCommitHook` now also copies speck's scripts into the repository's shared git folder (`<git-common-dir>/speck/scripts/`, refreshed on every init that installs or keeps the hook). The hook runs the committing worktree's own `.speck/scripts/commit-check.mjs`, or that copy when the worktree's branch has none, so it no longer depends on the main checkout or on the checkout init ran in. It only warns and lets the commit through when neither exists. The \"0550 AC1 F1\" test now installs speck in a linked worktree only, then is refused committing a private word from another worktree and from the main checkout (neither has .speck/), and still after the installing worktree is removed and pruned.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 381933,
+      "cached_input_tokens": 326400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2691,
+      "reasoning_output_tokens": 321
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6112,
+      "cached": 100608,
+      "write": 0,
+      "output": 659
+    },
+    "cost_usd": 0.0288748,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T13:35:41.585Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "HOOK now falls back to scripts installed in the shared git folder. Passing AC1 integration tests cover private words, home paths, path commits and worktrees. The revised F1 regression covers installation in a linked worktree, commits from other checkouts lacking .speck/, and removal of the installing worktree. The F2 regression verifies correct line numbers with configured diff context."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 tests exercise clean additions, files outside speck/, retained and removed private words, and home-path checking without a private-words file."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "installCommitHook preserves existing hooks and core.hooksPath before copying scripts. Passing AC3 tests verify preservation, repeated installation and init's single-line explanation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md:174 documents refusal of added private words and home paths, plus git commit --no-verify. The passing AC4 test checks the documented hook and command without constraining layout."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied current results report 118 passes and zero failures. The initial related run also passed with zero failures; no existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/commit-check.mjs:HOOK and installCommitHook",
+        "issue": "Resolved: the fallback checker now lives in the repository's shared git folder, independent of any checkout. The revised passing regression exercises the previously uncovered installation arrangement.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/commit-check.mjs:stagedDiff and stagedPrivateLines",
+        "issue": "Resolved: inter-hunk context is explicitly disabled and context lines are counted defensively. The regression verifies the reported line numbers.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/commit-check-0550.test.mjs:AC4 test",
+        "issue": "Resolved: documentation assertions check facts without requiring a particular line or paragraph layout.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change now blocks private words and home paths added under speck/, including across worktrees, while allowing clean commits and preserving existing hooks. All three findings are resolved and the reported tests pass. It is ready for the owner's merge decision."
   }
 }
 ```
