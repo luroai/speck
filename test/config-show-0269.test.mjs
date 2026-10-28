@@ -89,8 +89,8 @@ test('0269 AC3: speck config set records a picked value, and setting the value a
   assert.equal(after.find(s => s.key === 'max_parallel_tests').value, 2);
 });
 
-test('0269 AC1, AC3: the setup skill names the command that shows the settings, each setting it goes through and how it records them', () => {
-  assert.ok(SKILL.includes('speck config show'));
+// 0547: setup no longer goes through these settings; it leaves them at speck's defaults (test/setup-0547.test.mjs).
+test('0269 AC1, AC3: the setup skill names each setting it leaves at its default and how they are changed later', () => {
   for (const k of ASKED) assert.ok(SKILL.includes(`\`${k}\``), k);
   assert.ok(SKILL.includes('speck config set'));
 });
