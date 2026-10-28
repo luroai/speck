@@ -215,9 +215,10 @@ function counter(ms) {
   return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
 }
 // 0520: a note's `Captured: <YYYY-MM-DD>` date, as written, or null when the line is missing or holds no real date
-// (such as 2026-02-30), as its card says. 0537: with the 24-hour `HH:MM` after it, when that's a real time, else null.
+// (such as 2026-02-30), as its card says. 0537: with the 24-hour `HH:MM` after it, when
+// that's a real time with only `·` or the line's end after it, else null.
 function capturedAt(body) {
-  const [, d, h, mi] = (typeof body === 'string' ? body : '').match(/^Captured:[ \t]*(\d{4}-\d{2}-\d{2})(?![\d-])(?:[ \t]+(\d{2}):(\d{2})(?![\d:]))?/m) || [];
+  const [, d, h, mi] = (typeof body === 'string' ? body : '').match(/^Captured:[ \t]*(\d{4}-\d{2}-\d{2})(?![\d-])(?:[ \t]+(\d{2}):(\d{2})(?=[ \t]*(?:·|$)))?/m) || [];
   const at = d ? Date.parse(`${d}T00:00:00Z`) : NaN;
   if (!(Number.isFinite(at) && new Date(at).toISOString().startsWith(d))) return { on: null, time: null };
   return { on: d, time: h !== undefined && +h < 24 && +mi < 60 ? `${h}:${mi}` : null };

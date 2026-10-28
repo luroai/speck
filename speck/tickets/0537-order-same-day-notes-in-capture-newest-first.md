@@ -1,7 +1,7 @@
 ---
 id: "0537"
 title: "Order same-day notes in Capture newest first"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-28T09:56:24.401Z"
 ---
 # 0537 · Order same-day notes in Capture newest first
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Capture sorts notes newest first by their `Captured:` date, but that line holds only a day, so notes captured on the same day fall back to the order of their file names, which is alphabetical. On a busy day the note you captured a minute ago can sit below older ones, so the list doesn't look newest first.
@@ -59,3 +59,97 @@ Notes say what time they were captured, and Capture lists notes from the same da
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1535057f9c2c0c89b584dc3bb8a99f32bc18265e",
+    "session": "fresh",
+    "thread_id": "01a181f7-74a3-7531-bae2-9eba6001a6ce",
+    "builder_response": "- Tests run: `speck test --related test/panel-0537.test.mjs test/panel-0521.test.mjs test/followups-0036.test.mjs` (the ticket's own file, the two existing files it changed, and every existing file naming a changed file).\n- Two tests failed in that run, both timing checks under load from running ~1,600 tests at once: `0232 AC3` (test/quick-waits-0232.test.mjs, CPU use of speck run's checks) and `0384 AC3` (test/review-wait-0384.test.mjs). Neither touches Capture, the note format or anything this ticket changed; both files pass when rerun alone (appended at the end of the test output).\n- test/panel-0521.test.mjs and test/followups-0036.test.mjs pinned the old `Captured: <date>` template, which AC4 changes; they now check `Captured: <YYYY-MM-DD HH:MM>`.\n- AC4's brief sentence is in the Capture part of the `speck panel` row in docs/brief.md.\n",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 111564,
+      "cached_input_tokens": 70784,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 926,
+      "reasoning_output_tokens": 34
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 40780,
+      "cached": 70784,
+      "write": 0,
+      "output": 926
+    },
+    "cost_usd": 0.0978984,
+    "tests": {
+      "failing": 2,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T10:04:39.378Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The two passing 0537 AC1 tests exercise ideaStatus and card rendering with a timed Captured line."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing 0537 AC2 tests exercise date precedence, descending times, midnight, stable untimed ordering, and missing or impossible dates."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "templates/panel-model.js capturedAt accepts malformed times such as 14:32x and 14:32.5 as 14:32. Direct execution confirmed both receive a sorting time instead of null."
+      },
+      {
+        "id": 4,
+        "status": "unclear",
+        "evidence": "Both skills specify the timestamp format and 24-hour local time; docs/brief.md describes same-day ordering. The passing AC4 test checks the template facts, but does not check the local-time instruction or the brief's ordering fact."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied output records passing ticket tests and successful isolated reruns of the two timing-related failures. The committed change provides no evidence of a regression in those unrelated behaviours."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-model.js",
+        "issue": "capturedAt only rejects digits or a colon immediately after HH:MM. Consequently malformed values such as 14:32x and 14:32.5 count as valid times and move ahead of untimed notes, contrary to AC3 and the ticket's exact-HH:MM rule.",
+        "suggested_fix": "Require the complete time token to be HH:MM, followed by the status delimiter or the end of the line. Add regression cases for suffix letters and fractional values.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0537.test.mjs",
+        "issue": "AC4's tests omit the required local-time instruction and the brief's same-day ordering fact. Those document facts are not marked checked by review, so the criterion lacks complete test coverage.",
+        "suggested_fix": "Add fact-based checks for the local-time instructions in both skills and the ordering fact in the brief, without pinning exact prose or paragraph order.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Normal timestamps sort correctly, and cards keep their existing date display. Changes are needed because malformed timestamps can still affect ordering, and the documentation checks do not cover all required facts."
+  }
+}
+```
+
+</details>
