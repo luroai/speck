@@ -1,7 +1,7 @@
 ---
 id: "0549"
 title: "Use the builder settings as they are when each build starts"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-28T09:44:54.157Z"
 ---
 # 0549 · Use the builder settings as they are when each build starts
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck run` reads the settings once, when it starts, and builds every launch command from that reading. A change made while it's on, in the panel's Settings view or with `speck config set`, doesn't reach the builds it starts until it's restarted. The user lowered `builder_effort` from `high` to `medium`, and later builds still ran at `high`, which cost real money. Nothing said the change hadn't taken effect.
@@ -58,3 +58,97 @@ Every build `speck run` starts or resumes uses the builder settings as they are 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "790cbc79c0706fbb2f6dae98fed6954ec02ebace",
+    "session": "fresh",
+    "thread_id": "01a18201-e906-7263-8cc5-d05608917d5f",
+    "builder_response": "- Tests run: `speck test --related test/run-settings-0549.test.mjs` (the ticket's own file, plus every existing test file naming a changed file, and the checks).\n- Approach: a new `scripts/run-settings.mjs` holds what `runOn` used to work out once at start (`builderSettings`), and `liveSettings` reads the config afresh on each of speck run's checks. `runOn` keeps the result in `now` (null while the settings can't start a build) and passes `settings: () => now` to the hand-back, go-with and Foreman agent queues, which now take `{ cfg, words, max }` from it each time they start a build. Their old `cfg`/`words`/`max` parameters stay as the default, so existing callers and tests are unchanged.\n- No picture: nothing anyone sees changes.\n- The one failing test, `0232 AC3: 0176 AC3's check fails…`, is flaky under load and fails on main too: 2 of 4 runs beside only `run-0110` and `run-0047`. It busy-loops 400 ms of wall-clock time per check and needs more than 0.25 s of CPU a check. Run alone it measures about 0.31 s a check on both main and this branch, so a loaded machine drops it below the floor. It isn't caused by this change. It's noted in the ticket's Notes and will be a follow-up.\n",
+    "seconds": 55,
+    "usage": {
+      "input_tokens": 323930,
+      "cached_input_tokens": 262400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1208,
+      "reasoning_output_tokens": 96
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 61530,
+      "cached": 262400,
+      "write": 0,
+      "output": 1208
+    },
+    "cost_usd": 0.16138,
+    "tests": {
+      "failing": 1,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T10:16:20.471Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "run.mjs tick refreshes loadConfig through liveSettings before launching. Passing AC1 tests exercise live effort changes, clearing effort, and model argument construction."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The queues receive current settings, and the four AC2 tests pass for Claude-style builds. However, hand-back.mjs resumeFor discards cfg for Cursor sessions, so changed builder_model never reaches their resume commands."
+      },
+      {
+        "id": 3,
+        "status": "unclear",
+        "evidence": "Passing AC3 integration coverage verifies invalid build_command logging, waiting and recovery. No test exercises a live resume_command change or a successful builder switch."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 integration test raises and lowers max_parallel_builds, verifies new launches respect it, and checks existing processes remain alive."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "AC1/AC3/AC5 and AC4 tests verify existing builds continue unchanged. Recorded results show 501 passes and one timing-test failure; its load-sensitive CPU assertion and unchanged implementation support the builder's explanation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/hand-back.mjs",
+        "issue": "Cursor resumes ignore the latest builder_model. resumeFor calls cursorResumeArgv without settings, and that function emits no --model argument. A direct check with builder_model set to new-model produced a resume command without it. Cursor chats retain their previous model, so resumed builds can continue using the expensive old model.",
+        "suggested_fix": "Pass the applicable current model into Cursor resume commands, including the supported blank/default behaviour. Add a regression test that changes the model before resuming an existing Cursor session.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/run-settings-0549.test.mjs",
+        "issue": "AC3's live resume_command changes and successful builder changes are untested. The existing builder edit only creates a mismatch, while resume tests change effort or model.",
+        "suggested_fix": "Add tests exercising a successful live builder switch and the intended effect of changing resume_command while speck run remains on. Verify the resulting command or hint actually uses the new setting.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change refreshes settings for new builds and updates concurrency limits correctly. Approval is held because resumed Cursor builds still ignore a changed model, and two promised settings changes lack test coverage."
+  }
+}
+```
+
+</details>
