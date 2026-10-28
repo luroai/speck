@@ -49,7 +49,7 @@ Notes say what time they were captured, and Capture lists notes from the same da
 - `ideaStatus` (`STATUS_LINE` in `scripts/core.mjs`) and `capturedOn` in `templates/panel.js` already match a line with text between the date and `· Status:`; the tests should prove it stays so.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Notes now record the time they were captured as well as the day, and Capture puts notes from the same day in order of that time, the latest at the top. Cards look the same: they still show only the day. Notes written before this change have no time, so on a given day they sit below the timed ones, in the order they were listed before. To see it, capture two ideas a few minutes apart and open Capture: the newer one is on top. Worth a look: a note whose time is written wrongly is simply treated as having no time.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,7 +58,9 @@ Notes say what time they were captured, and Capture lists notes from the same da
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Inbox: `speck/ideas/2026-10-28-steady-the-0384-ac3-running-round-test-under-load.md`. "0384 AC3" failed under load in this build's related run, after 0540 steadied it, and passed alone.
+  - Skipped as a duplicate: "0232 AC3" failed under load in the same run and passed alone, matching `speck/ideas/2026-10-28-steady-the-0232-ac3-cpu-cost-test-under-load.md`.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -148,6 +150,97 @@ Notes say what time they were captured, and Capture lists notes from the same da
     ],
     "escalation_question": "",
     "summary": "Normal timestamps sort correctly, and cards keep their existing date display. Changes are needed because malformed timestamps can still affect ordering, and the documentation checks do not cover all required facts."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "57dcc95f2d34836c9842868002cd8659fe4e3b8c",
+    "session": "continued",
+    "thread_id": "01a181f7-74a3-7531-bae2-9eba6001a6ce",
+    "builder_response": "- Tests run: test/panel-0537.test.mjs test/panel-0521.test.mjs test/followups-0036.test.mjs\n- F1: fixed. `capturedAt` in templates/panel-model.js now takes the time only when it's followed by optional spaces then `·` or the line's end (`(?=[ \\t]*(?:·|$))`). AC3's test adds `14:32x`, `14:32.5`, `14:32:10` and `14:32pm`, each sorting as no time.\n- F2: fixed. New test `0537 AC4: both skills say the time is 24-hour local time, and the brief says Capture orders a day's notes by it` checks that each skill says the `Captured:` time is 24-hour local time, and that the brief's Capture description mentions the same day and the time, without pinning the wording.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 200275,
+      "cached_input_tokens": 154624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1521,
+      "reasoning_output_tokens": 34
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4871,
+      "cached": 83840,
+      "write": 0,
+      "output": 595
+    },
+    "cost_usd": 0.024076,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T10:05:58.803Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Passing 0537 AC1 tests exercise status parsing and card rendering: timed notes retain their status and show Captured 27 Oct without the time."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelModel's capture comparator orders by date, then valid time descending, then original order. Passing AC2 tests cover filename independence, untimed notes, midnight, and absent or impossible dates."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "capturedAt now requires a delimiter or line end after HH:MM and validates hour and minute ranges. Passing AC3 tests cover malformed suffixes, seconds, invalid ranges and unchanged card dates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both skills specify YYYY-MM-DD HH:MM and 24-hour local time when writing the note; the brief describes same-day time ordering. Both AC4 tests pass and cover these facts."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The current run reports 130 passed, zero failed and three skipped. Earlier unrelated timing failures passed isolated reruns; no regression is evident from the changes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-model.js",
+        "issue": "Malformed timestamp suffixes previously counted as valid sorting times.",
+        "suggested_fix": "Implemented: require a delimiter or line end after HH:MM, with regression cases for malformed suffixes.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0537.test.mjs",
+        "issue": "AC4 previously lacked checks for local-time instructions and the brief's same-day ordering fact.",
+        "suggested_fix": "Implemented: added passing checks for both skills' local-time instructions and the brief's ordering facts.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Same-day notes now appear newest first using valid capture times, while cards retain their existing date display. Malformed times fall back to untimed ordering. Both previous findings are resolved, and the change is ready for the owner's merge decision."
   }
 }
 ```
