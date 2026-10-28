@@ -411,7 +411,7 @@ export function ticketRounds(text) {
 
 export const posix = p => p.split(path.sep).join('/');
 
-// An idea note's status line, as /speck-capture writes it: `Captured: <date> · Status: <value>`.
+// An idea note's status line, as /speck-capture writes it: `Captured: <YYYY-MM-DD HH:MM> · Status: <value>`.
 export const STATUS_LINE = /^((?:.*·[ \t]*)?Status:[ \t]*)(.*)$/m;
 export const ideaStatus = text => (text.match(STATUS_LINE) || [])[2]?.trim() ?? '';
 
