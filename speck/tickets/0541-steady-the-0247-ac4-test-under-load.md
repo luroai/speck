@@ -40,6 +40,7 @@ The `0247 AC4` test in `test/run-0247.test.mjs` (new code that can't start leave
 ## Notes
 - Seen in 0524's build: one failure in a run of 1,704 tests, none in two runs of its file alone.
 - Checked 2026-10-27: passes when run alone on `main` (2 tests, 0 failing).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
