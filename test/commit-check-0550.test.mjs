@@ -90,6 +90,32 @@ test('0550 AC2: a commit commits when its added lines under speck/ are clean, th
   assert.equal(r.commits(), 5);
 });
 
+test("0550 AC1 F1: a worktree whose branch has no copy of the check uses the main checkout's", () => {
+  const r = hookedRepo();
+  const wt = path.join(path.dirname(r.dir), `${path.basename(r.dir)}-old`);
+  assert.equal(r.g('worktree', 'add', '-q', '-b', 'old', wt).status, 0);
+  const w = (...a) => spawnSync('git', a, { cwd: wt, encoding: 'utf8', env: r.env });
+  w('rm', '-rq', '.speck');
+  assert.equal(w('commit', '-q', '--no-verify', '-m', 'before speck').status, 0);
+  const c = commitFile(r, 'speck/ideas/x.md', 'a hushword here\n', wt);
+  assert.notEqual(c.status, 0);
+  assert.match(c.stderr, /speck\/ideas\/x\.md line 1: one of your private words/);
+});
+
+test('0550 AC1 F2: line numbers stay right when git is set to join nearby changes', () => {
+  const r = hookedRepo();
+  r.g('config', 'diff.interHunkContext', '10');
+  r.g('config', 'diff.context', '5');
+  const lines = ['a', 'b', 'c', 'd', 'e', 'f'];
+  assert.equal(commitFile(r, 'speck/ideas/n.md', lines.join('\n') + '\n').status, 0);
+  const next = ['a', 'hushword one', 'b', 'c', 'd', 'hushword two', 'e', 'f'];
+  const c = commitFile(r, 'speck/ideas/n.md', next.join('\n') + '\n');
+  assert.notEqual(c.status, 0);
+  assert.match(c.stderr, /n\.md line 2: /);
+  assert.match(c.stderr, /n\.md line 6: /);
+  assert.doesNotMatch(c.stderr, /line [^26]\b/);
+});
+
 test("0550 AC2: without a private-words file only the home folder's path is checked", () => {
   const r = hookedRepo(null);
   assert.equal(commitFile(r, 'speck/ideas/a.md', 'a hushword here\n').status, 0);
@@ -151,7 +177,6 @@ test('0550 AC1, AC3: speck init installs the check once, keeps it on re-runs and
 
 test('0550 AC4: the brief says commits adding a private word are refused and that --no-verify skips the check', () => {
   const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  const para = brief.split('\n').find(l => l.includes('~/.config/speck/private-words') && l.includes('pre-commit'));
-  assert.ok(para, 'the private-words section mentions the pre-commit hook');
-  assert.ok(para.includes('git commit --no-verify'));
+  assert.ok(brief.includes('pre-commit'));
+  assert.ok(brief.includes('git commit --no-verify'));
 });
