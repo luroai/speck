@@ -1,7 +1,7 @@
 ---
 id: "0540"
 title: "Steady the 0384 running-round test"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-24-fix-the-0384-running-round-test.md"        
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T23:40:38.719Z"
+blocked_at: "2026-10-28T00:11:55.056Z"
 
 ---
 # 0540 · Steady the 0384 running-round test
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 The test "0384 AC3: the panel shows the round as running through every exit 12, until it is recorded" fails by chance: in 0439's build it failed in the related run and alone, and in 0524's build it failed in a large parallel run, yet it passes on its own today. A test that fails by chance can stop `speck ship` for a ticket that didn't break it, and costs builders time ruling out their own change.
@@ -48,7 +49,11 @@ The test "0384 AC3: the panel shows the round as running through every exit 12, 
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+The fix is built and its tests pass, but the reviewer (Codex) can't run: its usage limit is reached until 3:41 AM on 2026-10-28. Should I wait and run the review then, or have another reviewer, such as Cursor, review this ticket? I recommend waiting: the ticket is small and not urgent, and Codex reviews in under a minute where Cursor took 4 to 11.
+
+Recommended: wait for Codex's limit to reset
+Changes what you'd notice: no
+Clear winner: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -58,4 +63,5 @@ The test "0384 AC3: the panel shows the round as running through every exit 12, 
 - How AC2 was checked: with the record broken on purpose (`markRoundRunning` returning before it writes anything), 0384 AC3 and the new 0540 AC1 test both fail at once. With only the new line in `startRound` taken out, 0540 AC1 fails every time, because its wait is 1 ms.
 - AC3: `test/review-wait-0384.test.mjs` passed 5 runs in a row alone (14 of 14 each time) and 5 runs in a row while `npm test` ran in the same worktree (14 of 14 each time). With 24 busy CPU loops it also passed 0384 AC3 5 times out of 5.
 - Follow-up: once, with 24 busy CPU loops, "0384 AC2: speck review run twice at once starts one reviewer" failed in a full run of the file; it didn't happen again in 12 runs of that test alone, with or without this change, and the test doesn't read the record this ticket changed.
+- Follow-up: when Codex stopped at its usage limit, `speck review` said only "codex exited 1:" with nothing after it; the reason (the usage limit and when it resets) showed only when Codex was run by hand.
 - Suite runs here had other failures (0072, 0150, 0202, 0232 AC3, 0264 AC3) while other sessions kept the machine's load average between 50 and 80; each passed when its file ran on its own afterwards.
