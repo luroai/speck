@@ -76,10 +76,10 @@ async function openLog(b, width, height) {
   await b.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 600 });
   // As in 0470: a page opened from its file can't load its scripts, styles or font from the panel, so they're put in.
   const copy = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0479-')), 'panel.html');
-  fs.writeFileSync(copy, page().replace('<script src="/panel-settings.js"></script>', () => `<script>${settingsScript()}</script>`)
-    .replace('<script src="/panel.js" data-page="{{page}}" data-token="{{token}}"></script>', () => `<script data-page="{{page}}" data-token="{{token}}">${pageScript()}</script>`)
-    .replace('<script src="/panel-popups.js"></script>', () => `<script>${popupsScript()}</script>`)
-    .replace('<script src="/panel-header.js"></script>', () => `<script>${headerScript()}</script>`));
+  fs.writeFileSync(copy, page().replace('<script src="panel-settings.js"></script>', () => `<script>${settingsScript()}</script>`)
+    .replace('<script src="panel.js" data-page="{{page}}" data-token="{{token}}"></script>', () => `<script data-page="{{page}}" data-token="{{token}}">${pageScript()}</script>`)
+    .replace('<script src="panel-popups.js"></script>', () => `<script>${popupsScript()}</script>`)
+    .replace('<script src="panel-header.js"></script>', () => `<script>${headerScript()}</script>`));
   const url = pathToFileURL(copy).href, font = fs.readFileSync(path.join(ROOT, 'templates', 'fonts', 'Doto.ttf')).toString('base64');
   await b.send('Page.navigate', { url });
   await b.until(`location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`, 'the page');

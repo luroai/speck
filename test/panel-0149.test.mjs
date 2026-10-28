@@ -25,7 +25,7 @@ const head = () => (page().match(/<head>([\s\S]*?)<\/head>/) || [])[1] || '';
 const tags = name => [...head().matchAll(new RegExp(`<${name}\\b([^>]*)>`, 'g'))]
   .map(m => Object.fromEntries([...m[1].matchAll(/([\w-]+)="([^"]*)"/g)].map(a => [a[1], a[2]])));
 
-test('0149 AC1: /manifest.webmanifest names the app speck, opens it full screen at /, in the panel\'s colours', async () => {
+test('0149 AC1: /manifest.webmanifest names the app speck, opens it full screen at the page\'s own address (0543: ./), in the panel\'s colours', async () => {
   const { p, port } = await served();
   try {
     const res = await request(port, { pathName: '/manifest.webmanifest' });
@@ -34,8 +34,8 @@ test('0149 AC1: /manifest.webmanifest names the app speck, opens it full screen 
     const m = JSON.parse(res.body);
     assert.equal(m.name, 'speck');
     assert.equal(m.short_name, 'speck');
-    assert.equal(m.start_url, '/');
-    assert.equal(m.scope, '/');
+    assert.equal(m.start_url, './');
+    assert.equal(m.scope, './');
     assert.equal(m.display, 'standalone');
     assert.equal(m.background_color, colour('--bg'));
     assert.equal(m.theme_color, colour('--bg'));
@@ -49,7 +49,7 @@ test('0149 AC1: the manifest\'s icons are PNGs at 192 × 192 and 512 × 512, ser
     assert.deepEqual(m.icons.map(i => i.sizes).sort(), ['192x192', '512x512']);
     for (const icon of m.icons) {
       assert.equal(icon.type, 'image/png');
-      const res = await raw(port, icon.src);
+      const res = await raw(port, new URL(icon.src, 'http://x/manifest.webmanifest').pathname);
       assert.equal(res.status, 200, icon.src);
       assert.equal(res.headers['content-type'], 'image/png');
       const img = readPng(res.body);
@@ -63,10 +63,10 @@ test('0149 AC1: the manifest\'s icons are PNGs at 192 × 192 and 512 × 512, ser
 
 test('0149 AC2: the page links the manifest with the login cookies, and has the home-screen icon, title and colour', () => {
   const manifest = tags('link').filter(l => l.rel === 'manifest');
-  assert.deepEqual(manifest, [{ rel: 'manifest', href: '/manifest.webmanifest', crossorigin: 'use-credentials' }]);
+  assert.deepEqual(manifest, [{ rel: 'manifest', href: 'manifest.webmanifest', crossorigin: 'use-credentials' }]);
   const touch = tags('link').filter(l => l.rel === 'apple-touch-icon');
   assert.equal(touch.length, 1);
-  assert.equal(touch[0].href, '/apple-touch-icon.png');
+  assert.equal(touch[0].href, 'apple-touch-icon.png');
   const meta = n => tags('meta').filter(m => m.name === n);
   assert.equal(meta('apple-mobile-web-app-capable')[0]?.content, 'yes');
   assert.equal(meta('apple-mobile-web-app-title')[0]?.content, 'speck');
@@ -81,7 +81,7 @@ test('0149 AC2: the tab icon and the 180 × 180 apple-touch-icon are served', as
     const icons = tags('link').filter(l => l.rel === 'icon');
     assert.ok(icons.length >= 1, 'a tab icon');
     for (const l of icons) {
-      const res = await raw(port, l.href);
+      const res = await raw(port, `/${l.href}`);
       assert.equal(res.status, 200, l.href);
       assert.equal(res.headers['content-type'].split(';')[0], l.type, l.href);
     }

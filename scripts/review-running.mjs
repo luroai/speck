@@ -10,16 +10,18 @@ import { pidAlive } from './run.mjs';
 const fileOf = (runs, id) => path.join(runs, `${padId(id)}.review.json`);
 const safeId = id => /^[\w-]+$/.test(String(id ?? ''));
 
-// Records `round` of ticket `id` as running in this process until the returned function is called, which removes it.
-// It only feeds the panel, so a record that can't be written leaves the round to run without one.
-export function markRoundRunning(repo, id, round) {
+// Records `round` of ticket `id` as running in process `pid` (this one unless given) until the returned function is
+// called, which removes it if it's still that process's. It only feeds the panel, so a record that can't be written
+// leaves the round to run without one. 0540: `speck review` records the round's own process as soon as it starts it,
+// so the round shows as running even if `speck review` exits 12 before that process has got as far as recording it.
+export function markRoundRunning(repo, id, round, pid = process.pid) {
   const runs = runsOf(repo), file = fileOf(runs, id);
   try {
     fs.mkdirSync(runs, { recursive: true });
-    fs.writeFileSync(file, JSON.stringify({ id: padId(id), round, pid: process.pid, started: new Date().toISOString() }) + '\n');
+    fs.writeFileSync(file, JSON.stringify({ id: padId(id), round, pid, started: new Date().toISOString() }) + '\n');
   } catch { return () => {}; }
   return () => {
-    try { if (JSON.parse(fs.readFileSync(file, 'utf8')).pid === process.pid) fs.rmSync(file, { force: true }); } catch { /* gone already */ }
+    try { if (JSON.parse(fs.readFileSync(file, 'utf8')).pid === pid) fs.rmSync(file, { force: true }); } catch { /* gone already */ }
   };
 }
 

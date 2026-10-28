@@ -157,7 +157,7 @@ export const popupsScript = () => fs.readFileSync(POPUPS, 'utf8');
 // 0474: the header's script, from its own file.
 export const headerScript = () => fs.readFileSync(HEADER, 'utf8');
 // 0473: the scripts the page loads, as the tags in panel.html name them, in its order: [{ src, attrs }], src without its slash.
-export const pageScripts = (html = page()) => [...html.matchAll(/<script src="\/([^"]+)"([^>]*)><\/script>/g)].map(m => ({ src: m[1], attrs: m[2] }));
+export const pageScripts = (html = page()) => [...html.matchAll(/<script src="([^"]+)"([^>]*)><\/script>/g)].map(m => ({ src: m[1], attrs: m[2] }));
 
 // 0126: the panel's agreed colours. 0134 changed them to the zen look's, 0147 to the landing page's.
 export const PALETTE = '--bg: #f3f3f3; --panel: #fcfcfc; --raise: #f3f3f3; --line: #14141476; --line-soft: #14141413; --text: #141414EB; --muted: #141414BA; --faint: #141414BA; --accent: #cf2d56; --ok: #145a42; --warn: #6d4700; --bad: #96213f; --run: #285372; --idea: #833063';

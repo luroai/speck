@@ -315,10 +315,10 @@ test('0415 AC5: in a real browser at 320 px wide, the open pop-up doesn\'t scrol
     // 0432: nor /panel-settings.js, so it opens a copy of the page with the Settings script in its place, from its own file.
     // 0433: and the same for /panel.js, keeping what its tag gives it. 0473: and for /panel-popups.js, 0474: and /panel-header.js.
     const copy = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0415-')), 'panel.html');
-    fs.writeFileSync(copy, page().replace('<script src="/panel-settings.js"></script>', () => `<script>${settingsScript()}</script>`)
-      .replace('<script src="/panel.js" data-page="{{page}}" data-token="{{token}}"></script>', () => `<script data-page="{{page}}" data-token="{{token}}">${pageScript()}</script>`)
-      .replace('<script src="/panel-popups.js"></script>', () => `<script>${popupsScript()}</script>`)
-      .replace('<script src="/panel-header.js"></script>', () => `<script>${headerScript()}</script>`));
+    fs.writeFileSync(copy, page().replace('<script src="panel-settings.js"></script>', () => `<script>${settingsScript()}</script>`)
+      .replace('<script src="panel.js" data-page="{{page}}" data-token="{{token}}"></script>', () => `<script data-page="{{page}}" data-token="{{token}}">${pageScript()}</script>`)
+      .replace('<script src="panel-popups.js"></script>', () => `<script>${popupsScript()}</script>`)
+      .replace('<script src="panel-header.js"></script>', () => `<script>${headerScript()}</script>`));
     const url = pathToFileURL(copy).href;
     await b.send('Page.navigate', { url });
     await b.until(`location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`, 'the page');
