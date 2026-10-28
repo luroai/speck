@@ -1,7 +1,7 @@
 ---
 id: "0538"
 title: "Star a note in Capture"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,14 +15,14 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0537"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T10:44:00.141Z"
-approved: "2026-10-28T10:57:27.789Z"
+approved: "2026-10-28T13:27:02.842Z"
 blocked_at: ""
 waited_seconds: 8467
 
 ---
 # 0538 · Star a note in Capture
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 Scrolling through Capture, you can't tell which notes you liked before, so the ideas you care about get lost among dozens of inbox notes and older ideas.
@@ -69,13 +69,14 @@ Clear winner: yes
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 140,583
-- Elapsed since build started: 13 min
-- Changed lines: 198 (limit 5000)
+- Reviewer tokens: 400,000
+- Elapsed since build started: 163 min
+- Changed lines: 199 (limit 5000)
 - Follow-ups (Delivery log only, no inbox note): the README's line on Capture still says it lists notes "to read"; it could mention the star next time the README is edited.
 
 ## Review rounds
