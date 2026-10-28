@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { SpeckError } from './core.mjs';
 import { cacheDir } from './review.mjs';
 import { pidAlive } from './run-switch.mjs';
+import { markRoundRunning } from './review-running.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 export const STILL_RUNNING = 12;
@@ -86,6 +87,7 @@ export function startRound(repo, id, round, args, limitMs) {
     child.unref();
     if (!child.pid) throw new SpeckError(`Couldn't start review round ${round} of ${id}. No round was recorded. Run it again.`);
     publish(files.json, { round, pid: child.pid, started: new Date().toISOString() });
+    markRoundRunning(repo, id, round, child.pid); // 0540: the panel shows it running from now, not once the process gets to it
   } finally { fs.closeSync(out); fs.closeSync(err); }
 }
 
