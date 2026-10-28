@@ -1,7 +1,7 @@
 ---
 id: "0547"
 title: "Keep setup's defaults without asking"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T09:44:51.832Z"
 approved: "2026-10-28T09:51:26.890Z"
+finished: "2026-10-28T10:10:15.165Z"
 
 ---
 # 0547 · Keep setup's defaults without asking
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Setup goes through every shipping, parallel and ticket-limit setting one at a time. For someone setting speck up for the first time, that's a lot of questions about things they don't yet have a view on, and it slows down getting to the first ticket. Seen setting up in Cursor on 2026-10-20.
