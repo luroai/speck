@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { startBackground, stopStarted } from '../scripts/run-background.mjs';
 import { CLI, ROOT, env, runRepo, until, alive, killAll } from './support/run.mjs';
 
 // ---------- 0544: speck run --background turns speck run on in the background, as the panel's switch does ----------
@@ -64,6 +65,31 @@ test('0544 AC3: a lock held by a live process that isn\'t speck run is refused w
   assert.notEqual(res.status, 0);
   assert.match(res.stderr, new RegExp(`^speck run is already running in this repo \\(process ${process.pid}\\)`));
   assert.deepEqual(speckRuns(r.dir), []);
+});
+
+test('0544 AC3: a speck run that doesn\'t say it\'s watching in time has stopped before the command fails', async () => {
+  const r = runRepo({ tickets: [] });
+  await assert.rejects(startBackground(r.dir, { ms: 1 }), e => {
+    assert.match(e.message, /^speck run \(process (\d+)\) started but didn't take its lock and say it's watching within 0\.001 seconds/);
+    const pid = Number(e.message.match(/process (\d+)/)[1]);
+    // Checked once, on purpose: the command itself waits for it to go, so it must have gone when the command fails.
+    const goneWhenItFailed = !alive(pid);
+    assert.ok(goneWhenItFailed, 'stopped before the command fails');
+    return true;
+  });
+  assert.deepEqual(speckRuns(r.dir), []);
+});
+
+test('0544 AC3: one that ignores SIGTERM is killed, and the command waits until it has gone', async () => {
+  const p = spawn(process.execPath, ['-e', "process.on('SIGTERM', () => {}); console.log('ready'); setInterval(() => {}, 1000);"], { detached: true, stdio: ['ignore', 'pipe', 'ignore'] });
+  try {
+    await new Promise(res => p.stdout.once('data', res));
+    const started = Date.now();
+    await stopStarted(p.pid, 300);
+    const goneWhenItResolved = !alive(p.pid); // once, as above: stopStarted waits for it to go
+    assert.ok(goneWhenItResolved);
+    assert.ok(Date.now() - started >= 250, 'SIGTERM was given its time first');
+  } finally { killAll([p.pid]); }
 });
 
 test('0544 AC4: setup turns speck run on with speck run --background, with no nohup line', () => {
