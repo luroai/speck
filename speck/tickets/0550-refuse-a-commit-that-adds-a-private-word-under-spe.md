@@ -47,6 +47,8 @@ In a project set up with `speck init`, a commit that adds a private word or the 
 - Checked 2026-10-28: git runs the pre-commit hook from `core.hooksPath` when set, otherwise from the repository's hooks folder, shared by all its worktrees, and `git commit --no-verify` skips it (`git help githooks`, git 2.53.0).
 - Risk high: it changes how every commit works in a user's repository.
 - Failing before this build: none
+- `speck init --skip-checks` installs no hook, as it skips doctor's checks: every test fixture uses it, so their commits stay fast and aren't checked against the real home folder's words.
+- Self-check: added a test that an unreadable private-words file refuses a commit under speck/ with a plain message (and lets one outside speck/ through); checked an initial commit (no HEAD) is refused too.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

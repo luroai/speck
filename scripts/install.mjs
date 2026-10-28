@@ -8,6 +8,7 @@ import { splitCommand } from './reviewers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { providerKey } from './keys.mjs';
 import { fillLine } from './your-agents.mjs';
+import { installCommitHook } from './commit-check.mjs';
 
 // ---------- install and doctor ----------
 
@@ -341,6 +342,12 @@ export function cmdInit(args, platform = process.platform) {
 ${AGENTS_SECTION.trimEnd().split('\n').map(l => l && `        ${l}`).join('\n')}
 `);
   if (ignoreOutputs(repo)) console.log('updated .gitignore (keeps outputs/ out of git)');
+  // 0550: --skip-checks, which tests use, skips the commit check too, as it skips doctor's.
+  if (!args.includes('--skip-checks')) {
+    const hook = installCommitHook(repo);
+    if (hook.action === 'installed' || hook.action === 'updated') console.log("updated the git pre-commit hook (refuses a commit that adds a private word or your home folder's path under speck/)");
+    if (hook.action === 'skipped') console.log(`kept    your git hooks: the private-words check for commits isn't installed, because ${hook.why}.`);
+  }
   const claude = path.join(repo, 'CLAUDE.md');
   const claudeText = fs.existsSync(claude) ? fs.readFileSync(claude, 'utf8') : '';
   if (!claudeText.includes('@AGENTS.md') && !claudeText.includes('This repo uses speck')) {

@@ -41,6 +41,13 @@ export function privateWordList() {
   return { words: list.split('\n').map(l => l.trim().toLowerCase()).filter(l => l && !l.startsWith('#')) };
 }
 
+// 0550: what `line` holds: 'word' for one of `words` (lower-cased) in any case, 'home' for the home folder's path as
+// `re` (homePathPattern) finds it, or null for neither. Shared by ship and the commit check, so they agree.
+export function privateHit(line, words, re) {
+  if (words.some(w => line.toLowerCase().includes(w))) return 'word';
+  return re && re.test(line) ? 'home' : null;
+}
+
 // 0506: each line of a file under speck/ that `branch` adds or changes against `base` that holds a private word (in
 // any case) or the home folder's path, as { file, line, what }, what being 'word' or 'home'. Deleted files are skipped,
 // and a binary one is read as text. Throws a plain error when the private-words file or a file can't be read.
@@ -56,8 +63,8 @@ export function privateLinesInSpeck(repo, base, branch) {
     const show = sh('git', ['show', `${branch}:${file}`], { cwd: repo });
     if (show.status !== 0) throw new SpeckError(`Couldn't read ${file} on ${branch} to check it for your private words: ${(show.stderr || '').trim()}`);
     show.stdout.split('\n').forEach((l, i) => {
-      if (list.words.some(w => l.toLowerCase().includes(w))) found.push({ file, line: i + 1, what: 'word' });
-      else if (re && re.test(l)) found.push({ file, line: i + 1, what: 'home' });
+      const what = privateHit(l, list.words, re);
+      if (what) found.push({ file, line: i + 1, what });
     });
   }
   return found;
