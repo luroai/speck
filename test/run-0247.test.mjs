@@ -85,6 +85,11 @@ test('0247 AC1, AC2: it waits for the ship it started, naming it once, then swit
   } finally { await stop(run); }
 });
 
+// The AC4 tests start processes that load speck's code, which can take seconds on a busy machine, such as while the
+// whole suite runs alongside: each thing they check, they wait for up to this long rather than counting on how quickly
+// processes start, stop or write (0541).
+const BUSY_MS = 30000;
+
 // speck run's code broken so that, on new code, it fails getting ready after its code has loaded, adopting earlier
 // builds, so not as it imports.
 const failsPreparing = src => src.replace('const adoptEarlierBuilds = () => {', 'const adoptEarlierBuilds = () => { if (process.connected) throw new Error(\'broken start\');');
@@ -97,23 +102,25 @@ test('0247 AC4: new code that fails getting ready leaves the old one running, th
   const run = startRun(r.dir, cli);
   const fails = () => count(run.out(), 'couldn\'t switch to the new code: Error: broken start');
   try {
-    assert.ok(await watching(run), run.out());
+    assert.ok(await watching(run, BUSY_MS), run.out());
     // From the process you started, still running its own code, with a ticket ready to launch as it switches.
     setReady(r, '0001');
     edit(cli, 'run.mjs', failsPreparing);
-    assert.ok(await until(() => fails() === 1 && r.calls().length >= 1), run.out());
+    assert.ok(await until(() => fails() === 1 && r.calls().length >= 1, BUSY_MS), run.out());
     // From a speck run on new code, after a switch.
     edit(cli, 'run.mjs', src => src.replace(' if (process.connected) throw new Error(\'broken start\');', ''));
     edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
+    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`), BUSY_MS), run.out());
     setReady(r, '0002');
     edit(cli, 'run.mjs', failsPreparing);
-    assert.ok(await until(() => fails() === 2 && r.calls().length >= 2), run.out());
+    assert.ok(await until(() => fails() === 2 && r.calls().length >= 2, BUSY_MS), run.out());
+    // The new code that failed is stopped, leaving only the speck run that carried on.
+    assert.ok(await until(() => childrenOf(run.child.pid).length === 1, BUSY_MS), `${childrenOf(run.child.pid)}`);
+    // Nothing launches again or tries again meanwhile.
     await new Promise(res => setTimeout(res, 600));
     assert.deepEqual(r.calls().map(c => c.args[0]), ['0001', '0002'], `each ticket launched once:\n${run.out()}`);
     assert.equal(fails(), 2, run.out());
     assert.equal(run.child.exitCode, null);
-    assert.equal(childrenOf(run.child.pid).length, 1, 'only the speck run that carried on');
   } finally { await stop(run); }
 });
 
@@ -128,10 +135,13 @@ test('0247 AC4: new code that can\'t start leaves the old one running, said once
   const { cli } = cliCopy();
   const run = startRun(r.dir, cli);
   try {
-    assert.ok(await watching(run), run.out());
+    assert.ok(await watching(run, BUSY_MS), run.out());
     const host = run.child.pid;
     edit(cli, 'core.mjs', src => `${src}\nexport const broken = ;\n`);
-    assert.ok(await until(() => run.out().includes('couldn\'t switch to the new code')), run.out());
+    assert.ok(await until(() => run.out().includes('couldn\'t switch to the new code'), BUSY_MS), run.out());
+    // Nothing is left over from the try: the new code that failed is stopped.
+    assert.ok(await until(() => childrenOf(host).length === 0, BUSY_MS), `${childrenOf(host)}`);
+    // It says so only once.
     await new Promise(res => setTimeout(res, 800));
     const out = run.out();
     assert.equal(count(out, 'couldn\'t switch to the new code'), 1, out);
@@ -139,17 +149,16 @@ test('0247 AC4: new code that can\'t start leaves the old one running, said once
     assert.ok(!out.includes(SWITCHED), out);
     assert.equal(run.child.exitCode, null);
     assert.equal(lockPid(r.dir), host);
-    assert.deepEqual(childrenOf(host), [], 'nothing left over from the try');
 
     // Still the old speck run, watching: it launches a ticket set ready now.
     const t = path.join(r.dir, 'speck', 'tickets', '0001-t.md');
     fs.writeFileSync(t, fs.readFileSync(t, 'utf8').replace('status: draft', 'status: ready'));
     r.g('commit', '-qam', 'ready');
-    assert.ok(await until(() => r.calls().length === 1), run.out());
+    assert.ok(await until(() => r.calls().length === 1, BUSY_MS), run.out());
 
     edit(cli, 'core.mjs', src => src.replace('\nexport const broken = ;\n', '\n// mended\n'));
     edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
+    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`), BUSY_MS), run.out());
   } finally { await stop(run); }
 });
 
