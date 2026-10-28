@@ -24,7 +24,7 @@ export const edit = (cli, file, fn) => { const f = path.join(path.dirname(cli), 
 // The line speck run on new code says as it takes over, marked so the test knows which code said it.
 export const SWITCHED = 'speck run switched to the new code.';
 export const mark = tag => src => src.replace(/'speck run switched to the new code\.[^']*'/, `'${SWITCHED} ${tag}'`);
-export const watching = run => until(() => run.out().includes('speck run: watching for ready tickets'));
+export const watching = (run, ms) => until(() => run.out().includes('speck run: watching for ready tickets'), ms);
 
 // Sets a draft ticket ready and commits it, for speck run to launch.
 export const setReady = (r, id) => {
