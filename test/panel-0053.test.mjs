@@ -87,5 +87,5 @@ test('0053 AC4: everything else in the row stays where it is', async () => {
   assert.ok(!p.all(topOf(chain)).some(n => n.className === 'chain'), '0483: closed, no chain icon in the top row');
   // Opened, the rest keeps its place (0421: with no path line).
   await open(p, '0001');
-  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'full-open', 'log']); // Full ticket: 0063
+  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'full-open', 'full-open', 'log']); // Full ticket: 0063. Full log: 0548
 });

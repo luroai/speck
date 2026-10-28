@@ -8,6 +8,8 @@ let fullFrom = null; // 0326: { id, list } of the Full ticket button that opened
 let focusBack = false; // 0326: the pane has closed, so the next render puts the focus back
 let foremanOpen = false; // 0285: whether the Foreman's detail is open
 let runLog = null, runLogFor = null, runLogAsking = false, runLogShown, runLogDrawn = null; // 0415: runLogShown: the log's lines as drawn (runLogDrawn), joined, undefined when not drawn
+let buildLogOf = null; // 0548: the id of the ticket whose build log the Pipeline log's pop-up shows instead, or null
+let buildLogShown, buildLogDrawn = null, buildLogBuild = null; // 0548: as runLogShown and runLogDrawn, and the build they're from
 let packOf = null; // while the side pane shows a review pack instead: { id, state: 'loading' | 'ok' | 'none' | 'error', text }
 let shippingId = null; // the id whose Ship request hasn't been answered yet: one ship at a time
 const shipped = new Map(); // id → what speck ship printed when the panel shipped it
@@ -434,7 +436,9 @@ $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-bac
 // 0415: a click beside the Pipeline pop-up's column is a click outside it, as with Settings (0368).
 let foremanDownBeside = false;
 $('foreman').addEventListener('pointerdown', e => { foremanDownBeside = e.target === $('foreman') && besideColumn(e, $('foreman')); });
-$('foreman').addEventListener('click', e => { if (foremanOpen && foremanDownBeside && e.target === $('foreman') && besideColumn(e, $('foreman'))) closeForeman(); });
+$('foreman').addEventListener('click', e => {
+  if ((foremanOpen || buildLogOf !== null) && foremanDownBeside && e.target === $('foreman') && besideColumn(e, $('foreman'))) { if (foremanOpen) closeForeman(); else closeBuildLog(); }
+});
 $('run').addEventListener('click', e => {
   e.stopPropagation();
   if (foremanOpen) { closeForeman(); return; }
@@ -453,18 +457,18 @@ function closeForeman() {
 // While it's open the page behind is held (holdPage), so only the pop-up can be clicked, scrolled or reached with Tab.
 // 0415: the Pipeline pop-up, with speck run's output as its Log section. 0458: the log is all it shows, apart from a
 // stale page's Reload page button above it. 0470: titled Pipeline log, with no Log heading over the log box.
+// 0548: or, while buildLogOf is set, a ticket's build log in its place (renderBuildLog).
 function renderForeman(stale) {
-  const box = $('foreman'), was = !box.hidden && box.children.length > 0;
-  box.hidden = !foremanOpen;
+  const box = $('foreman'), shows = foremanOpen ? 'run' : buildLogOf !== null ? `build ${buildLogOf}` : null;
+  const was = !box.hidden && box.children.length > 0 && box.shows === shows;
+  box.hidden = shows === null;
+  box.shows = shows;
   holdPage(pageHeld());
-  if (!foremanOpen) { box.replaceChildren(); return; }
+  if (shows === null) { box.replaceChildren(); return; }
+  if (!foremanOpen) { renderBuildLog(was); return; }
   let body = was ? box.children[1] : null;
   if (!body) {
-    const close = el('button', 'close', 'Close');
-    close.type = 'button';
-    close.addEventListener('click', e => { e.stopPropagation(); closeForeman(); });
-    body = el('div', 'fm-body', null, el('div', 'fm-stale'), el('div', 'fm-log'));
-    box.replaceChildren(el('div', 'top', null, el('span', 'title', 'Pipeline log'), close), body);
+    body = popFrame('Pipeline log', closeForeman);
     runLogShown = undefined; runLogDrawn = null;
   }
   const top = body.children[0];
@@ -515,18 +519,25 @@ function drawRunLog() {
     sec.replaceChildren(el('div', 'run-log', null, el('p', 'none', lines && runLogFor === null ? 'Reading speck run\'s log…' : 'speck run hasn\'t written anything yet.')));
     return;
   }
-  const list = was && /^ol$/i.test(was.tagName || '') && Array.isArray(runLogDrawn) ? was : el('ol', 'run-log');
+  fillLog(sec, runLogDrawn, lines, runLogRow);
+  runLogDrawn = lines;
+}
+// 0548: puts a pop-up's log lines (oldest first) in its log box (sec): in the list drawn there, whose lines are `drawn`,
+// or, when there's none or `fresh`, a new one, each line made by `row`. `dropped` says how many lines dropped out at
+// the top (runLogDropped).
+function fillLog(sec, drawn, lines, row, fresh = false, dropped = runLogDropped) {
+  const was = sec.children[0];
+  const list = !fresh && was && /^ol$/i.test(was.tagName || '') && Array.isArray(drawn) ? was : el('ol', 'run-log');
   // A box at its bottom, or just drawn, shows the new lines. A reader scrolled up stays where they are: the first line
   // they can see is found again, past the lines that dropped out at the top, and the box scrolled so it's where it was.
   const follow = list !== was || atBottom(list), rect = n => (n && typeof n.getBoundingClientRect === 'function' ? n.getBoundingClientRect() : null);
   let anchor = null;
   if (!follow && rect(list)) {
     const seen = Array.from(list.children).findIndex(li => rect(li) && rect(li).bottom > rect(list).top);
-    const d = seen < 0 ? null : runLogDropped(runLogDrawn, lines);
+    const d = seen < 0 ? null : dropped(drawn, lines);
     if (d !== null && seen - d >= 0 && seen - d < lines.length) anchor = { at: seen - d, top: rect(list.children[seen]).top };
   }
-  runLogDrawn = lines;
-  list.replaceChildren(...lines.map(runLogRow));
+  list.replaceChildren(...lines.map(row));
   if (list !== was) sec.replaceChildren(list);
   const again = anchor && rect(list.children[anchor.at]);
   if (follow) list.scrollTop = list.scrollHeight;
@@ -545,6 +556,90 @@ function runLogDropped(was, now) {
     let same = true;
     for (let j = 0; same && d + j < was.length; j++) same = now[j] === was[d + j];
     if (same) return d;
+  }
+  return null;
+}
+// 0548: the pop-up's frame: its title row, with the title and Close, then its body, with room for a stale page's line
+// and the log box. Returns the body.
+function popFrame(title, close) {
+  const box = $('foreman'), shut = el('button', 'close', 'Close');
+  shut.type = 'button';
+  shut.addEventListener('click', e => { e.stopPropagation(); close(); });
+  const body = el('div', 'fm-body', null, el('div', 'fm-stale'), el('div', 'fm-log'));
+  box.setAttribute('aria-label', title);
+  box.replaceChildren(el('div', 'top', null, el('span', 'title', title), shut), body);
+  return body;
+}
+// 0548: opens an open Build card's build log in the Pipeline log's pop-up, leaving the card as it is.
+function buildLogButton(id) {
+  const b = el('button', 'full-open', 'Full log');
+  b.type = 'button';
+  b.setAttribute('aria-haspopup', 'dialog');
+  b.buildLogOf = id; // so the focus can come back to it, or to the one drawn in its place
+  b.addEventListener('click', e => {
+    e.stopPropagation();
+    buildLogOf = id;
+    render();
+  });
+  return b;
+}
+// 0548: closes it, with the focus back on the Full log button that opened it, or on the one drawn in its place since,
+// or, when its card has gone, on the Build lane.
+function closeBuildLog() {
+  const id = buildLogOf;
+  buildLogOf = null;
+  render();
+  const find = n => { if (n.buildLogOf === id) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
+  const to = find($('queue')) || $('build-section');
+  if (to.focus) to.focus({ preventScroll: true });
+}
+// 0548: the ticket's build log in the pop-up, titled "<id> build log", in place of the Pipeline log, which has no stale
+// page's line. Its frame is kept while it's open and only the log under it is drawn again.
+function renderBuildLog(was) {
+  const box = $('foreman');
+  if (!was) {
+    const body = popFrame(`${buildLogOf} build log`, closeBuildLog);
+    body.children[0].hidden = true;
+    buildLogShown = undefined; buildLogDrawn = null; buildLogBuild = null;
+  }
+  drawBuildLog();
+  if (!was) box.scrollTop = 0;
+  if (!was && box.focus) box.focus({ preventScroll: true });
+}
+// 0548: the lines its card's log box shows (logShown), each laid out as the Pipeline log's are, the newest at the
+// bottom. The page calls it with each new log (showLog). A log not loaded yet, or one that couldn't be, or an empty one,
+// says so in the card's words. A new build's log is drawn afresh, scrolled to its newest line.
+function drawBuildLog() {
+  const box = $('foreman'), sec = buildLogOf !== null && !foremanOpen && !box.hidden && box.children[1] ? box.children[1].children[1] : null;
+  if (!sec) return;
+  const log = logs.get(buildLogOf), text = logShown(log), build = log && !log.failed ? log.build : null;
+  const key = `${build}\n${text}`;
+  if (key === buildLogShown) return;
+  buildLogShown = key;
+  if (LOG_PLAIN.has(text)) {
+    buildLogDrawn = null;
+    sec.replaceChildren(el('div', 'run-log', null, el('p', 'none', text)));
+    return;
+  }
+  const lines = text.split('\n');
+  fillLog(sec, buildLogDrawn, lines, buildLogRow, build !== buildLogBuild, buildLogDropped);
+  buildLogDrawn = lines;
+  buildLogBuild = build;
+}
+// 0548: a build log's line, as the Pipeline log's (runLogRow): its time, then its text, coloured by its kind (logParts).
+function buildLogRow(line) {
+  const p = logParts(line, false);
+  return el('li', p.cls, null, p.at ? el('span', 'at', p.at) : null, document.createTextNode(p.text));
+}
+// 0548: as runLogDropped, for a build log, which may start with the note that earlier lines aren't shown, and whose last
+// line may have been written further since (logUpdate's drop), as the card's box allows (setLogText).
+function buildLogDropped(was, now) {
+  const w = was[0] === TRUNCATED ? 1 : 0, n = now[0] === TRUNCATED ? 1 : 0, a = was.slice(w), b = now.slice(n);
+  for (let d = 0; d < a.length; d++) {
+    if (a.length - d > b.length) continue;
+    let same = true;
+    for (let j = 0; same && d + j < a.length; j++) same = d + j === a.length - 1 ? b[j].startsWith(a[d + j]) : b[j] === a[d + j];
+    if (same) return d + w - n;
   }
   return null;
 }

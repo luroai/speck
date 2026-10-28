@@ -44,6 +44,7 @@ You can open any Build ticket's build log in a full-screen pop-up that looks and
 - Today: the Pipeline log pop-up is `renderForeman`, `drawRunLog` and `runLogRow` in `templates/panel-popups.js`, in `#foreman` in `templates/panel.html`, styled in `templates/panel-popups.css` (0415, 0459, 0470, 0479). A ticket's log is `logBox`, `loadLog`, `logUpdate` and `showLog` in `templates/panel.js`, read from `/api/tickets/<id>/log` and streamed on the board's event stream (0189). The open card's buttons are added in `queueItem`.
 - After 0545, which changes the open Build card's facts grid, and 0538; all three may edit the brief's sentence on the panel.
 - Failing before this build: none
+- Self-check: a scrolled-up reader lost their place once the log was cut short (its note at the top) or its last line was written further; the pop-up now matches lines as the card does. Full log sits before Stop build so Stop build stays last (0421), and the tests that list an open card's parts (0053, 0069, 0421) now include it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

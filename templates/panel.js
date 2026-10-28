@@ -362,7 +362,7 @@ function mdInline(nodes) {
 }
 // While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
 // 0366: the same while Settings or the Foreman's pop-up is open.
-const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen;
+const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen || buildLogOf !== null; // 0548: and a build log's pop-up
 let heldAt = null; // the page's scroll position when the pane opened, or null while it's closed
 function holdPage(on) {
   const root = document.documentElement;
@@ -435,6 +435,7 @@ document.addEventListener('keydown', e => {
   if (tipTag !== null) closeTip();
   else if (docOpen !== null) closeDoc(); // 0362: the pop-up, over everything else
   else if (foremanOpen && settingsView === null) closeForeman(); // 0285: the Foreman's detail
+  else if (buildLogOf !== null && settingsView === null) closeBuildLog(); // 0548: a build log's pop-up
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
   else if (settingsView !== null && settingTip !== null) { settingHoverWait++; showSettingTip(null, false); } // 0268: the explanation first, then the view. 0371: and no pause left to show it again
   else if (settingsView !== null) leaveSettings();
@@ -585,6 +586,7 @@ function queueItem(t) {
     if (isOpen) {
       q.appendChild(fullButton(t, 'queue'));
       q.appendChild(backToPlanButton(t));
+      q.appendChild(buildLogButton(id)); // 0548
       if (planRefused.has(id)) q.appendChild(el('div', 'plan-refused', planRefused.get(id)));
       q.appendChild(logBox(id));
     }
@@ -617,6 +619,7 @@ function queueItem(t) {
   if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? 'speck went with the recommendation' : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
   q.appendChild(fullButton(t, 'queue'));
   if (pack) q.appendChild(packButton(t));
+  q.appendChild(buildLogButton(id)); // 0548: with the card's other buttons, in the row above its log box, Stop build last (0421)
   if (t.pausable) {
     q.appendChild(stopButton(t));
     if (stopRefused.has(id)) q.appendChild(el('div', 'stop-refused', stopRefused.get(id)));
@@ -1033,6 +1036,7 @@ const replaced = (old, log) => !!old && !old.failed && !log.truncated && (old.tr
 // Puts the newest log in its box in place, without render(). A box at the bottom stays there, so the newest line is in
 // view, and so does a box whose log was replaced by a new build's. Otherwise the box stays where the reader left it.
 function showLog(id, toBottom) {
+  if (id === buildLogOf) drawBuildLog(); // 0548: and in its pop-up
   const box = logBoxes.get(id);
   if (!box) return;
   const follow = toBottom || atBottom(box);
