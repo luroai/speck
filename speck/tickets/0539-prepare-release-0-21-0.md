@@ -47,6 +47,8 @@ speck is ready to be released as 0.21.0.
 - Checked 2026-10-27: `package.json` is `0.20.0`.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - Failing before this build: none
+- Self-check: no changes. Checked each changelog and release-notes claim against the shipped tickets (0536 to 0538, 0540 to 0550; no other ticket shipped since v0.20.0), that 0529's saved round tokens arrived in 0.19.0, and that `speck init` writes `auto_ship: false`. Figures from main at "speck(0548): View a ticket's build log in a full-screen pop-up": 533 shipped, 16 cancelled, 13 minutes, 1 round, 271 first-round. Price table refreshed 2026-10-28 (3148 models).
+- Pictures: none, because the change is to docs and the version, not to how anything looks.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
