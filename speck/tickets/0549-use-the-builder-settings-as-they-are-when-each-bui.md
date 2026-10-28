@@ -1,7 +1,7 @@
 ---
 id: "0549"
 title: "Use the builder settings as they are when each build starts"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T09:44:54.157Z"
+approved: "2026-10-28T10:21:02.210Z"
 
 ---
 # 0549 · Use the builder settings as they are when each build starts
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck run` reads the settings once, when it starts, and builds every launch command from that reading. A change made while it's on, in the panel's Settings view or with `speck config set`, doesn't reach the builds it starts until it's restarted. The user lowered `builder_effort` from `high` to `medium`, and later builds still ran at `high`, which cost real money. Nothing said the change hadn't taken effect.
@@ -54,9 +55,15 @@ Changing the builder's settings while speck run is on now takes effect from the 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Cursor resumes ignore the latest builder_model.; F2 AC3's live resume_command changes and successful builder changes are untested.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 781,891
+- Elapsed since build started: 36 min
+- Changed lines: 140 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The flaky timing check `0232 AC3` (0176 AC3's CPU cost check) failed in some of this build's `--related` runs and on main beside other `speck run` tests. Skipped as a duplicate of `speck/ideas/2026-10-28-steady-the-0232-ac3-cpu-cost-test-under-load.md`.
