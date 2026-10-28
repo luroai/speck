@@ -1,7 +1,7 @@
 ---
 id: "0546"
 title: "Count each review round's tokens as it saved them"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-27-count-reviewer-tokens-as-each-round-saved-them.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0545"]                # ticket ids that must be done first
 created: 2026-10-27
+started: "2026-10-28T10:15:15.556Z"
 
 ---
 # 0546 · Count each review round's tokens as it saved them
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel's "Reviewer tokens" figure, and each round's `tokens` in `speck status --json`, add up the raw input and output a round's usage reports. A resumed Codex round's usage covers the whole session, so earlier rounds are counted again; a Claude round's cache reads and writes are left out; and a Cursor round's camelCase usage reads as 0. Anyone looking at what review costs sees the wrong number, and the ticket's total (0526) already counts it differently.
