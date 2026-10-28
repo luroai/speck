@@ -46,6 +46,7 @@ In a project set up with `speck init`, a commit that adds a private word or the 
 - speck's own automated commits (a build's, a ship's) go through the same check. They already write home paths as `~/` paths (0506), so they shouldn't be refused; if one is, its error should say why rather than fail without a reason.
 - Checked 2026-10-28: git runs the pre-commit hook from `core.hooksPath` when set, otherwise from the repository's hooks folder, shared by all its worktrees, and `git commit --no-verify` skips it (`git help githooks`, git 2.53.0).
 - Risk high: it changes how every commit works in a user's repository.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
