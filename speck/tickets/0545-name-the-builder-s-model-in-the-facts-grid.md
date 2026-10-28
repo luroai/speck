@@ -1,7 +1,7 @@
 ---
 id: "0545"
 title: "Name the builder's model in the facts grid"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-24-name-the-builder-s-model-in-the-facts-grid.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-27
+started: "2026-10-28T09:43:19.731Z"
 
 ---
 # 0545 · Name the builder's model in the facts grid
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 An open Build ticket's facts grid names the reviewer by its model while it reviews (such as `gpt-6.1-sol`), but the builder only by its agent's name (such as Claude). Someone watching a build can see which model reviews but not which one builds without looking it up in Settings.
