@@ -1,7 +1,7 @@
 ---
 id: "0537"
 title: "Order same-day notes in Capture newest first"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0536"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T09:56:24.401Z"
 approved: "2026-10-28T10:33:39.486Z"
+finished: "2026-10-28T10:43:50.208Z"
 
 ---
 # 0537 · Order same-day notes in Capture newest first
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Capture sorts notes newest first by their `Captured:` date, but that line holds only a day, so notes captured on the same day fall back to the order of their file names, which is alphabetical. On a busy day the note you captured a minute ago can sit below older ones, so the list doesn't look newest first.
