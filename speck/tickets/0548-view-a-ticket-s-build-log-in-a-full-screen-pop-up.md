@@ -1,7 +1,7 @@
 ---
 id: "0548"
 title: "View a ticket's build log in a full-screen pop-up"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-28T13:31:38.597Z"
 ---
 # 0548 · View a ticket's build log in a full-screen pop-up
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A ticket's build log only shows in a small box with its own scrollbar inside its open card in Build, which is hard to read on a phone or when following a long build. The Pipeline log already has a full-screen pop-up that's easy to read, but it shows only `speck run`'s own log, never a ticket's build.
@@ -47,7 +47,7 @@ You can open any Build ticket's build log in a full-screen pop-up that looks and
 - Self-check: a scrolled-up reader lost their place once the log was cut short (its note at the top) or its last line was written further; the pop-up now matches lines as the card does. Full log sits before Stop build so Stop build stays last (0421), and the tests that list an open card's parts (0053, 0069, 0421) now include it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+An open ticket in Build now has a Full log button beside its other buttons, just above its log. Pressing it opens that ticket's build log over the whole panel, in the same frame, lettering and colours as the Pipeline log, titled with the ticket's number, such as "0548 build log". New lines appear as the build writes them; it stays at the newest line unless you've scrolled up to read, and then keeps your place. Close, Escape or a click beside it closes it and takes you back to the button. To see it, open a ticket that's building in Build and press Full log. Worth knowing: when the panel is running newer code than the page, the Reload page notice shows only in the Pipeline log, not in a ticket's.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +57,81 @@ You can open any Build ticket's build log in a full-screen pop-up that looks and
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none to the inbox. Known limit: the build log pop-up doesn't show the stale page's Reload page line that the Pipeline log shows.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "05e0644245769753a982f893b264a0a6bdc54860",
+    "session": "fresh",
+    "thread_id": "01a182c2-4eb9-7b50-b2f0-a6a7f03aae6b",
+    "builder_response": "- Tests run: speck test --related test/build-log-0548.test.mjs test/panel-0053.test.mjs test/panel-0069.test.mjs test/panel-0421.test.mjs (the ticket's own file, the three existing files it changed, and every test file naming a file the branch changed)\n- Design: the pop-up reuses the Pipeline log's own `#foreman` element and frame (popFrame), so every style rule, phone and touch rule applies unchanged. renderForeman shows the Pipeline log while foremanOpen, else the ticket's build log while buildLogOf is set (renderBuildLog / drawBuildLog), with its aria-label set to match. Lines come from the same data the card's box shows (logs + logShown) and are redrawn from showLog, so stream updates reach it with no extra request. The Pipeline log's list-filling and scroll-keeping code was moved into fillLog unchanged, with drawRunLog calling it; buildLogDropped also allows the card's truncation note and a last line written further.\n- Full log sits with the card's other buttons in the row right above the log box, before Stop build so Stop build stays last (0421). Tests 0053, 0069 and 0421 that list an open card's parts were updated to include it.\n- Pictures (light/dark, phone/wide) are in the review pack.\n",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 193416,
+      "cached_input_tokens": 136960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 817,
+      "reasoning_output_tokens": 73
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56456,
+      "cached": 136960,
+      "write": 0,
+      "output": 817
+    },
+    "cost_usd": 0.134778,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T13:46:09.554Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js queueItem adds buildLogButton beside each open Build card's log. Passing AC1 tests verify placement, closed cards and the '<id> build log' title."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Reviewed renderForeman, popFrame, renderBuildLog and buildLogRow in templates/panel-popups.js: both logs use the same #foreman frame and responsive styles, including dot-matrix titles. drawBuildLog reads only logs.get(buildLogOf)."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "showLog updates drawBuildLog from the card's shared log data. Passing AC3 tests cover live lines, bottom following, preserving scroll position through truncation and line extension, build replacement, loading and errors."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "closeBuildLog restores focus; pageHeld and holdPage make the background inert and prevent scrolling. Passing AC4 tests exercise Close, Escape, outside clicks, focus return and preserving the open card and stream."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified saved test output: 1,208 passed, zero failed, three skipped. Updated existing tests retain their assertions while accounting for the additional button. No regression identified in the reviewed change."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Open Build cards now offer Full log, showing that ticket's live build output in the Pipeline log's full-screen layout. Loading messages, scrolling, closing and focus return are covered by passing tests. No blocking concerns found."
+  }
+}
+```
+
+</details>
