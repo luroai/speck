@@ -219,7 +219,7 @@ function spawnAgent(argv, cwd, log, env) {
 // and resumes builds it asked to, while a build slot is free. Each ticket is looked into at most once for the same
 // commits (codeKey). `ships` is speck run's ship queue, whose again(id) ships a ticket once more. 0392: `providers` are
 // the model providers speck knows, and `cantStart(cfg)` says why the Foreman can't start on one now.
-export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, running, startBuild, ships,
+export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, settings = () => ({ cfg, words, max }), running, startBuild, ships,
   start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState,
   withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`), providers = null, cantStart = c => foremanCantStart(repo, c, providers ? { providers } : {}) }) {
   let child = null; // the agent this speck run started: { token, exited }. While it runs, no other starts, whatever the record says
@@ -278,7 +278,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     say(`${next.id}: speck (${label}) is looking into it. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
   };
 
-  const resume = (s, t) => {
+  const resume = (s, t, { cfg, words }) => {
     const r = s.resumes.find(x => x.id === t.id);
     const file = path.join(runs(), `${t.id}.json`), rec = readObject(file);
     s.resumes = s.resumes.filter(x => x !== r);
@@ -332,8 +332,9 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     if (stale.length) { s.resumes = s.resumes.filter(x => !stale.includes(x)); changed = true; }
     for (const t of tickets) {
       if (!s.resumes.some(x => x.id === t.id) || running.has(t.id) || t.build_running) continue;
-      if (running.size >= max) break;
-      resume(s, t);
+      const now = settings(); // 0549: the builder settings as they are now, or null while they can't start a build
+      if (!now || running.size >= now.max) break;
+      resume(s, t, now);
       changed = true;
     }
     if (changed) save(s);

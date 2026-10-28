@@ -4,23 +4,20 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { logSpend, earlierBuilds, recordDelegatedSpend, ticketsElsewhere, ticketRounds, waitFields, addPaused, pausedSince } from './core.mjs';
-import { builderMismatch } from './install.mjs';
-import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
+import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
 import { goWithQueue } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
-import { codexBuilds, codexStartWords, fillSession, timedArgv } from './codex-build.mjs';
-import { cursorBuilds, cursorCli, cursorStartWords } from './cursor-build.mjs';
+import { fillSession, timedArgv } from './codex-build.mjs';
 import { countStop, sleepQueue, sleepWatch } from './stop-wait.mjs';
-import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
 import { saveForeman, switchingReady } from './foreman.mjs';
 import { prMode } from './pull-request.mjs';
 import { prQueue } from './pr-queue.mjs';
 import { buildEnv } from './build-env.mjs';
-import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND, providerBuilds } from './build-model.mjs';
-import { providerStartWords } from './provider-build.mjs';
+import { builderModelNote } from './build-model.mjs';
+import { builderSettings, liveSettings } from './run-settings.mjs';
 import { launchPlan, ignoredBuildersNote } from './ticket-builder.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
@@ -116,22 +113,11 @@ function runOn(worker) {
   const code = process.env.SPECK_RUN_CODE || codeHash(), { launched: before, running: carried } = handedOver();
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
-  const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
-  const codex = codexBuilds(cfg); // 0289: builder codex with build_command blank builds with speck's own Codex command
-  const cursor = cursorBuilds(cfg) ? cursorCli() : null; // 0290: and builder cursor with Cursor's CLI, found once
-  const provider = providerBuilds(cfg); // 0391: and a model provider, such as deepseek, through Claude Code
-  const own = { codex: 'Codex', cursor: 'Cursor' }[cfg.builder];
-  if (!command && !codex && !cursor && !provider)
-    throw new SpeckError(`No build_command is set in speck/config.yml, so speck run has nothing to start builds with. Add, for example:\n  build_command: '${own ? '' : DEFAULT_BUILD_COMMAND}'${own ? `\nA blank build_command starts each build with ${own}.` : ''}`);
-  let words;
-  if (codex) words = codexStartWords(cfg);
-  else if (cursor) words = cursorStartWords(cfg, cursor);
-  else if (provider) words = providerStartWords(cfg, provider);
-  else try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
-  const mismatch = builderMismatch(cfg);
-  if (mismatch) throw new SpeckError(`speck run won't start: ${mismatch.problem} ${mismatch.fix}`);
-  words = withBuilderModel(words, cfg); // 0279: every build it starts, resumes or hands back runs on builder_model
-  const max = maxParallelBuilds(cfg);
+  // 0549: the builder settings each build starts or resumes with, read afresh on each check (settings, below)
+  const { command, words, max } = builderSettings(cfg, { starting: true });
+  const live = liveSettings(() => loadConfig(repo));
+  let now = { cfg, command, words, max }, last = now; // last: the latest settings that could start a build
+  const settings = () => now;
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
   if (branch !== cfg.base_branch)
     throw new SpeckError(`This checkout is on "${branch}", not ${cfg.base_branch}. speck run starts builds from ${cfg.base_branch}, so switch to it, then run this again.`);
@@ -313,7 +299,7 @@ function runOn(worker) {
   // whose builder can't be started stays ready the same way.
   const failed = new Map();
   const launch = t => {
-    const plan = launchPlan(cfg, t, { command, words, repo, failed });
+    const plan = launchPlan(now.cfg, t, { command: now.command, words: now.words, repo, failed });
     if (!plan) return;
     const id = t.id, tag = plan.tag;
     const session = plan.agent === 'codex' ? null : tag;
@@ -331,7 +317,7 @@ function runOn(worker) {
   // Carries on a build that was killed, once: its own session, from the folder it started in, logging to the end of
   // its log. Its record keeps everything, with the time it was resumed added, so it's never resumed a second time.
   const resumeKilled = (id, rec) => {
-    const { argv, why } = resumeFor(words, cfg, id, rec);
+    const { argv, why } = resumeFor(now.words, now.cfg, id, rec);
     if (!argv) return reportStopped(id, rec, `speck run can't resume it: ${why}`);
     const recordFile = path.join(runsDir(repo), `${id}.json`);
     // 0217: the time it waited, stopped, is left out of its build time, counted while it can't be writing the ticket.
@@ -350,7 +336,7 @@ function runOn(worker) {
   const reportStopped = (id, rec, why) => {
     if (stoppedReported.has(id)) return;
     stoppedReported.add(id);
-    console.log(`${id} build (session ${rec.session ?? 'unknown'}) stopped unexpectedly, and ${why}. ${resumeHint(cfg, rec)}`);
+    console.log(`${id} build (session ${rec.session ?? 'unknown'}) stopped unexpectedly, and ${why}. ${resumeHint(last.cfg, rec)}`);
   };
 
   // Starts a build in its own process group, logging to <id>.log (opened with `flags`), and keeps its run record:
@@ -382,11 +368,11 @@ function runOn(worker) {
     }
   };
 
-  const handBacks = handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill });
-  const goWiths = goWithQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo) }); // 0284
+  const handBacks = handBackQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill });
+  const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo) }); // 0284
   const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344
   const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }); // 0286
-  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), words, cfg, max, running, startBuild, ships }); // 0287: the Foreman agent, for stops speck has no steps for
+  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), cfg, settings, running, startBuild, ships }); // 0287: the Foreman agent, for stops speck has no steps for
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => ships.running(), launched: () => [...launched], running: () => [...running],
     stopLoop: () => clearInterval(loop), handOver: () => { kept = []; }, stayed: () => { const ends = kept || []; kept = null; for (const end of ends) endOf(...end); } });
@@ -396,7 +382,7 @@ function runOn(worker) {
   const lock = worker ? process.ppid : process.pid;
   const holding = keepsLock(() => runsDir(repo), lock, stop); // 0321: one no longer holding the lock stops, leaving its builds and ship running
   const foreman = (tickets, ready, switching = null) => holding() && // 0321: only the speck run holding the lock writes it
-    saveForeman(runsDir(repo), { lock, max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) } }); // 0299; 0295: none waits to ship in pull request mode
+    saveForeman(runsDir(repo), { lock, max: last.max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) } }); // 0299; 0295: none waits to ship in pull request mode
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
     if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
@@ -434,6 +420,8 @@ function runOn(worker) {
       return foreman(tickets, switchingReady(tickets, running, ownWait), { builds, ship, why }); // 0299: each ticket's own reason first
     }
     for (const id of running) fill(id);
+    now = live(); // 0549: null while the settings can't start a build, which starts none until they can
+    if (now) last = now;
     checkAdopted();
     if ([...adopted.values()].some(b => b.seen)) { const tickets = readTickets(); if (tickets) releaseSeen(tickets); }
     const tickets = readTickets();
@@ -450,7 +438,7 @@ function runOn(worker) {
       const rec = buildKilled(runs, t.id);
       if (!rec) continue;
       if (Object.hasOwn(rec, 'resumed')) { reportStopped(t.id, rec, 'speck run had already resumed it once, so it won\'t resume it again'); continue; }
-      if (running.size < max) resumeKilled(t.id, rec);
+      if (now && running.size < now.max) resumeKilled(t.id, rec);
     }
     handBacks.check(tickets);
     const ready = []; // 0285: why each ready ticket it doesn't launch isn't building
@@ -460,7 +448,8 @@ function runOn(worker) {
       const own = ownWait(t);
       if (own) { wait(t, own.kind, own.why); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
-      if (running.size >= max) { wait(t, 'slots', `all ${max} build slot${max === 1 ? '' : 's'} in use`); continue; }
+      if (!now) { wait(t, 'builder', live.why()); continue; }
+      if (running.size >= now.max) { wait(t, 'slots', `all ${now.max} build slot${now.max === 1 ? '' : 's'} in use`); continue; }
       launch(t);
       if (!launched.has(t.id) && failed.has(t.id)) wait(t, failed.get(t.id).kind, failed.get(t.id).why);
     }
