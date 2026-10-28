@@ -54,7 +54,7 @@ You can star a note in Capture, and a starred note shows a filled star on its ca
 - Went with the recommendation: (a) let 0039's check leave out the star (chosen by the user in the panel, 2026-10-28 13:25 UTC).
 
 ## In plain words
-Every note in Capture now has a star at the right of its title. Tap it and the star fills in; tap it again and it empties. It's only a mark: the note doesn't move, nothing else about it changes, and nothing is committed. The star is saved in the note itself, so it still shows after a reload and on your phone.
+Every note in Capture now has a star in a small box at the right of its title. Tap it and the star fills in; tap it again and it empties. It's only a mark: the note doesn't move, nothing else about it changes, and nothing is committed. The star is saved in the note itself, so it still shows after a reload and on your phone.
 
 To see it, open Capture in the panel and tap the star on any note. If a note was ticketed or dropped in chat a moment before you tap, the card says why it couldn't be starred instead.
 
@@ -149,6 +149,81 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Capture now lets you star and unstar notes without opening them or changing their order. Stars persist in the note files, and refused changes show a reason on the card. The reviewed tests pass, and no blocking concerns were found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "622072579e307502b3883341dae56904101d2c01",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a18227-bea6-7c12-be99-a033e89fdf04",
+    "builder_response": "- Tests run: speck test --related test/panel-0039.test.mjs test/panel-0140.test.mjs test/panel-0161.test.mjs test/panel-0435.test.mjs test/panel-0520.test.mjs test/panel-0538.test.mjs test/panel-0067.test.mjs (1297 passed, 0 failed)\n- Why this round: speck run's ship queue handed it back (main had nothing new, so the failures were this ticket's). Failing were 0039 AC3, 0140 AC4 (x2), 0161 AC1-3 (light, dark) and AC4 (x2), and 0435 AC5 (x2).\n- 0140, 0161, 0435: the star is now a 44 px square button boxed with a --muted edge (--warn once starred), its top level with the title and reaching 20 px down beside the second line (margin-bottom -20px), so a closed card is still two rows and no taller. Its own 1 px focus outline is gone: the panel's 2 px :focus-visible ring applies (templates/panel-cards.css).\n- 0039 AC3: its test pressed every node on a note's top row and expected the card to toggle, but 0538 AC1 says the star must not. That contradicts AC5's \"only 0520's test changes\", so the ticket was blocked; the user chose option (a), recorded in the ticket's Notes: 0039's test now skips the star and what's inside it, and checks every other top-row node as before.\n- Pictures retaken (light and dark) with the boxed star.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 258016,
+      "cached_input_tokens": 196608,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1401,
+      "reasoning_output_tokens": 94
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8209,
+      "cached": 110080,
+      "write": 0,
+      "output": 545
+    },
+    "cost_usd": 0.032876,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T13:26:59.242Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js starButton stops click propagation and setStar toggles the mark. scripts/panel-star.mjs starredText inserts/removes the header line. Passing 0538 AC1 tests exercise UI toggling and file changes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel-model.js reads Starred: yes from the header. Passing 0538 AC2 tests cover other values, board updates, reloads and the real server's disk-to-board behaviour."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelStarNote changes only the Starred header lines and makes no commit; Capture sorting remains unchanged. Passing AC3 tests check other lines, status, commit history and order."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests cover missing/ineligible notes, displayed server reasons, accessible state and focus retention. Review confirms a native 44px button, the shared 2px focus ring, and distinct outlined/filled stars using light and dark theme colours."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The current recorded run reports 1,297 passed, zero failed and three skipped, including the previously failing files. The ticket records the user's authorisation to exclude the star from 0039's top-row toggle test; all other top-row nodes remain checked."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Starring persists correctly without moving notes or changing their status. The button now meets the panel's size and focus conventions, and the previously failing checks pass. The older card-opening test was adjusted as authorised by the user. No blocking concerns remain."
   }
 }
 ```
