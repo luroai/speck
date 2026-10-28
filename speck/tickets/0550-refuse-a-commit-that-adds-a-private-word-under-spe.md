@@ -163,3 +163,102 @@ In a project set up with `speck init`, a commit that adds a private word or the 
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "733f720e54e48e5cbf9e0c89462c1ac9e9966d05",
+    "session": "continued",
+    "thread_id": "01a182b6-1b2d-70c2-b816-e78ff9585896",
+    "builder_response": "- Tests run: test/commit-check-0550.test.mjs (plus the commands.checks files speck test runs itself)\n- F1: fixed. The hook now falls back to the main checkout's `.speck/scripts/commit-check.mjs` (found from `git rev-parse --path-format=absolute --git-common-dir`) when the worktree's branch has no copy, and only lets the commit through, with a warning saying so, when neither exists (speck removed). New test \"0550 AC1 F1\" commits a private word from a worktree whose branch has deleted .speck/ and is refused.\n- F2: fixed. `stagedDiff` passes `--inter-hunk-context=0`, and the parser also counts any context line it is shown. New test \"0550 AC1 F2\" sets diff.interHunkContext=10 and diff.context=5 and checks the reported lines are 2 and 6.\n- F3: fixed. The AC4 test now checks only that the brief contains `pre-commit` and `git commit --no-verify`, with no layout requirement.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 275213,
+      "cached_input_tokens": 225792,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2032,
+      "reasoning_output_tokens": 321
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7021,
+      "cached": 87424,
+      "write": 0,
+      "output": 785
+    },
+    "cost_usd": 0.0306344,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T13:34:34.203Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The passing AC1 and F2 tests cover ordinary commits, path commits, worktrees and configured diff context. However, HOOK still bypasses checking when init was run in a linked worktree and neither the committing worktree nor the main checkout has the checker."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 integration tests cover clean additions, changes outside speck/, unchanged and removed private words, and a missing private-words file."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "installCommitHook and the passing AC3 tests preserve existing hooks and core.hooksPath, avoid duplicate installation and check init's explanation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md:174 describes refused commits and the one-commit --no-verify bypass. The revised AC4 test checks documented facts without constraining layout."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied round-two results report 118 passes and zero failures; the previous related run also had zero failures. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/commit-check.mjs:HOOK",
+        "issue": "The fallback assumes speck was installed in the main checkout. If speck init runs in a linked worktree, its checker is installed there and the shared hook is installed successfully. A commit from another worktree lacking the checker also finds none in the main checkout, prints a warning and succeeds with private words. The new test covers installation in the main checkout only, so the every-worktree requirement remains unmet.",
+        "suggested_fix": "Make the shared hook resolve a checker installed independently of the committing branch and main checkout, including when init runs in a linked worktree. Add a regression test initialising there and attempting a private-word commit from another worktree without the checker.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/commit-check.mjs:stagedDiff and stagedPrivateLines",
+        "issue": "The incorrect line numbers caused by configured inter-hunk context are fixed: the diff explicitly disables it and the parser counts context lines defensively.",
+        "suggested_fix": "No further change required; the passing F2 regression checks lines 2 and 6 with Git context settings enabled.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/commit-check-0550.test.mjs:AC4 test",
+        "issue": "The revised documentation test checks the hook mention and bypass command without requiring a shared line or paragraph.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The line-number and documentation-test fixes work. One protection gap remains: installing speck in a linked worktree can leave other worktrees able to commit private words. That needs fixing before merge."
+  }
+}
+```
+
+</details>

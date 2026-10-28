@@ -90,16 +90,29 @@ test('0550 AC2: a commit commits when its added lines under speck/ are clean, th
   assert.equal(r.commits(), 5);
 });
 
-test("0550 AC1 F1: a worktree whose branch has no copy of the check uses the main checkout's", () => {
-  const r = hookedRepo();
-  const wt = path.join(path.dirname(r.dir), `${path.basename(r.dir)}-old`);
-  assert.equal(r.g('worktree', 'add', '-q', '-b', 'old', wt).status, 0);
-  const w = (...a) => spawnSync('git', a, { cwd: wt, encoding: 'utf8', env: r.env });
-  w('rm', '-rq', '.speck');
-  assert.equal(w('commit', '-q', '--no-verify', '-m', 'before speck').status, 0);
-  const c = commitFile(r, 'speck/ideas/x.md', 'a hushword here\n', wt);
-  assert.notEqual(c.status, 0);
-  assert.match(c.stderr, /speck\/ideas\/x\.md line 1: one of your private words/);
+test("0550 AC1 F1: a worktree whose branch has no copy of the check is still checked, wherever init ran", () => {
+  const h = fakeHome();
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0550-repo-')));
+  const g = (cwd, ...a) => spawnSync('git', a, { cwd, encoding: 'utf8', env: h.env });
+  g(dir, 'init', '-q', '-b', 'main');
+  write(dir, 'README', 'x\n');
+  g(dir, 'add', '.');
+  assert.equal(g(dir, 'commit', '-q', '-m', 'first').status, 0);
+  // speck is installed in a linked worktree only; neither the main checkout nor another worktree's branch has .speck/.
+  const a = `${dir}-a`, b = `${dir}-b`;
+  assert.equal(g(dir, 'worktree', 'add', '-q', '-b', 'a', a).status, 0);
+  assert.equal(g(dir, 'worktree', 'add', '-q', '-b', 'b', b).status, 0);
+  installTooling(a);
+  assert.equal(installCommitHook(a).action, 'installed');
+  for (const cwd of [b, dir]) {
+    const c = commitFile({ env: h.env }, 'speck/ideas/x.md', 'a hushword here\n', cwd);
+    assert.notEqual(c.status, 0, cwd);
+    assert.match(c.stderr, /speck\/ideas\/x\.md line 1: one of your private words/);
+  }
+  // Removing the worktree speck was installed in keeps the check.
+  fs.rmSync(a, { recursive: true, force: true });
+  g(dir, 'worktree', 'prune');
+  assert.notEqual(spawnSync('git', ['commit', '-q', '-m', 'x'], { cwd: b, encoding: 'utf8', env: h.env }).status, 0);
 });
 
 test('0550 AC1 F2: line numbers stay right when git is set to join nearby changes', () => {

@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SpeckError, sh } from './core.mjs';
+import { ROOT, SpeckError, sh } from './core.mjs';
 import { homeFolder, homePathPattern, privateHit, privateWordList } from './private-words.mjs';
 
 // The first lines of the hook. A pre-commit hook without the marker isn't speck's, so init leaves it alone.
@@ -12,11 +12,12 @@ const MARKER = "# speck: refuses a commit that adds a private word or your home 
 export const HOOK = `#!/bin/sh
 ${MARKER}
 # speck init writes this file. Skip it for one commit with \`git commit --no-verify\`.
-# It runs the worktree's own copy of the check, or the main checkout's when the worktree's branch has none.
+# It runs the worktree's own copy of the check, or the copy speck init keeps in the repository's git folder when the
+# worktree's branch has none.
 script="$(git rev-parse --show-toplevel)/.speck/scripts/commit-check.mjs"
-[ -f "$script" ] || script="$(git rev-parse --path-format=absolute --git-common-dir)/../.speck/scripts/commit-check.mjs"
+[ -f "$script" ] || script="$(git rev-parse --path-format=absolute --git-common-dir)/speck/scripts/commit-check.mjs"
 if [ ! -f "$script" ]; then
-  echo "speck: .speck/scripts/commit-check.mjs isn't here or in the main checkout, so this commit wasn't checked for your private words. Run speck init again to bring it back." >&2
+  echo "speck: commit-check.mjs isn't in .speck/scripts/ or the git folder, so this commit wasn't checked for your private words. Run speck init again to bring it back." >&2
   exit 0
 fi
 if ! command -v node >/dev/null 2>&1; then
@@ -68,7 +69,9 @@ ${found.map(f => `  ${f.file} line ${f.line}: ${f.what === 'word' ? 'one of your
 Take each one out (write a path under your home folder as a \`~/\` path), stage the file again, then commit.`;
 }
 
-// Installs the hook in the repository at `repo`, shared by all its worktrees, or says why not:
+// Installs the hook in the repository at `repo`, shared by all its worktrees, or says why not. It also keeps a copy of
+// speck's scripts in the git folder, so a worktree whose branch has no .speck/ is still checked (whichever checkout init
+// ran in). Re-running refreshes that copy.
 // { action: 'installed' | 'updated' | 'current' | 'skipped', why }.
 export function installCommitHook(repo) {
   const hooksPath = sh('git', ['config', '--get', 'core.hooksPath'], { cwd: repo });
@@ -79,6 +82,11 @@ export function installCommitHook(repo) {
   let old = null;
   try { old = fs.readFileSync(file, 'utf8'); } catch (e) { if (e.code !== 'ENOENT') return { action: 'skipped', why: `its pre-commit hook can't be read (${e.code || e.message})` }; }
   if (old !== null && !old.includes(MARKER)) return { action: 'skipped', why: 'the repository already has its own pre-commit hook' };
+  const common = sh('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: repo });
+  if (common.status !== 0) return { action: 'skipped', why: `git couldn't say where the repository's git folder is (${(common.stderr || '').trim()})` };
+  const copy = path.join(common.stdout.trim(), 'speck', 'scripts');
+  fs.rmSync(copy, { recursive: true, force: true });
+  fs.cpSync(path.join(ROOT, 'scripts'), copy, { recursive: true, dereference: true });
   if (old === HOOK) return { action: 'current' };
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, HOOK);
