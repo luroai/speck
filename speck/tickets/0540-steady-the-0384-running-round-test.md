@@ -42,6 +42,7 @@ The test "0384 AC3: the panel shows the round as running through every exit 12, 
 - Checked 2026-10-27: passes when its file runs alone on `main` (2 tests, 0 failing).
 - Earlier steadying of chance failures: 0207, 0377.
 - Failing before this build: none
+- Self-check: no changes. A record the starting command writes after the round's process has already ended names a process that has gone, so the panel doesn't show it running; a round's process that fails before its reviewer starts ends, with the same result.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -53,4 +54,8 @@ The test "0384 AC3: the panel shows the round as running through every exit 12, 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Cause (AC1): `speck review` starts the round in a process of its own and exits 12 once its wait (300 ms in the test) is up, but only that process recorded the round as running for the panel, after it had loaded speck and run the round's setup. On a busy machine that took longer than the wait, so straight after the first exit 12 the panel had nothing to show. Reproduced with 24 busy CPU loops: the test failed 5 times out of 5 at "running after the first exit 12". Fix: `speck review` now records the round as running, with its process's pid, as soon as it starts that process. The process still records it again and removes it when the round ends, as before.
+- How AC2 was checked: with the record broken on purpose (`markRoundRunning` returning before it writes anything), 0384 AC3 and the new 0540 AC1 test both fail at once. With only the new line in `startRound` taken out, 0540 AC1 fails every time, because its wait is 1 ms.
+- AC3: `test/review-wait-0384.test.mjs` passed 5 runs in a row alone (14 of 14 each time) and 5 runs in a row while `npm test` ran in the same worktree (14 of 14 each time). With 24 busy CPU loops it also passed 0384 AC3 5 times out of 5.
+- Follow-up: once, with 24 busy CPU loops, "0384 AC2: speck review run twice at once starts one reviewer" failed in a full run of the file; it didn't happen again in 12 runs of that test alone, with or without this change, and the test doesn't read the record this ticket changed.
+- Suite runs here had other failures (0072, 0150, 0202, 0232 AC3, 0264 AC3) while other sessions kept the machine's load average between 50 and 80; each passed when its file ran on its own afterwards.
