@@ -1,7 +1,7 @@
 ---
 id: "0538"
 title: "Star a note in Capture"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0537"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T10:44:00.141Z"
+approved: "2026-10-28T10:57:27.789Z"
 
 ---
 # 0538 · Star a note in Capture
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Scrolling through Capture, you can't tell which notes you liked before, so the ideas you care about get lost among dozens of inbox notes and older ideas.
@@ -59,9 +60,14 @@ Worth knowing: starring edits the note file in your main checkout, so it shows u
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 140,583
+- Elapsed since build started: 13 min
+- Changed lines: 198 (limit 5000)
 - Follow-ups (Delivery log only, no inbox note): the README's line on Capture still says it lists notes "to read"; it could mention the star next time the README is edited.
 
 ## Review rounds
