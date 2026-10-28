@@ -65,7 +65,7 @@ export function requestBody(req) {
 // line isn't read as part of a refusal from the next one), or 409 and its refusal, from a file of its own (0220), not run.log.
 const RUN_SWITCH_MS = 10000, RUN_SWITCH_POLL_MS = 50;
 
-export function panelRunOn(repo) {
+export function panelRunOn(repo, { ms = RUN_SWITCH_MS } = {}) {
   const still = stillStopping(repo);
   if (still) return Promise.resolve({ status: 409, body: { error: stillSays(still) } });
   const cli = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
@@ -89,7 +89,7 @@ export function panelRunOn(repo) {
       const run = runState(runsOf(repo));
       if (run.on && run.pid === child.pid && said()) finish({ status: 200, body: { ok: true, run } });
     }, RUN_SWITCH_POLL_MS);
-    timer = setTimeout(() => finish({ status: 500, body: { error: `speck run (process ${child.pid}) started but didn't take its lock and say it's watching within ${RUN_SWITCH_MS / 1000} seconds. Its output is in ${path.relative(repo, log)}.`, pid: child.pid } }), RUN_SWITCH_MS);
+    timer = setTimeout(() => finish({ status: 500, body: { error: `speck run (process ${child.pid}) started but didn't take its lock and say it's watching within ${ms / 1000} seconds. Its output is in ${path.relative(repo, log)}.`, pid: child.pid } }), ms);
   });
 }
 
