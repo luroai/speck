@@ -40,7 +40,7 @@ If they choose speck, name any work still in progress in the other workflow: for
 - a ban on git worktrees: `worktrees` is on by default, so each build would happen in its own worktree and break the rule. They could change the rule, or turn `worktrees` off.
 - a requirement that changes go through pull requests: with `ship_mode: local`, the default, shipping merges and pushes straight to the base branch, with no pull request, so every ship would break the rule. Pull request mode settles it: explain it and offer to turn it on, as section 3, step 3 describes.
 - a requirement for a particular reviewer: every review is done by the reviewer in `speck/config.yml`, so a different one would break the rule. If the required reviewer is one speck can run, they could set it as the reviewer (section 5); otherwise they could change the rule.
-- limits on unattended agents: `speck run` builds without anyone watching, and `auto_ship` ships as soon as the reviewer approves. They could change the rule, or keep `auto_ship` off (section 7) and leave `build_command` blank (section 6).
+- limits on unattended agents: `speck run` builds without anyone watching, and `auto_ship` ships as soon as the reviewer approves. They could change the rule, or keep `auto_ship` off, as it is by default, and leave `build_command` blank (section 6).
 
 For each clash, quote the rule, say what would happen and what the user could change: the rule itself (theirs to edit), or a speck setting. Change a speck setting only after the user agrees, with `speck config set`, once speck is installed. If nothing clashes, say so in one line.
 
@@ -64,7 +64,7 @@ If `speck.installed` is true, speck is already here. Say which version, and carr
    If `repo.has_commits` is false, speck needs a first commit to branch from. Check that a `.gitignore` keeps out files that shouldn't be committed, such as `.env` files with passwords or keys, and dependency folders like `node_modules/`. Ask before making a commit of their code, with the message `Set up speck`.
 3. **Base branch.** speck builds each ticket on its own branch and ships it into the base branch. Work out the likely one: `main` if `repo.main_exists`, `master` if `repo.master_exists` and not `main`, otherwise `repo.branch`. If both `main` and `master` exist, or `repo.branch` is null, ask which. Confirm the base branch with the user, then run `speck config set base_branch <name>`. Tell them that with `ship_mode: local`, the default, shipping pushes straight to that branch, without a pull request, so a branch that requires pull requests (a protection rule on GitHub, for example) will refuse it.
 
-   **Pull request mode.** If their base branch requires pull requests, a rule in the project says changes go through them, or the user says their team works through pull requests, don't warn that speck can't work there: explain pull request mode instead. Once the reviewer approves a ticket, speck pushes its branch to GitHub and opens a pull request into the base branch, with the ticket's review pack as its description. Shipping it, with `/speck-ship`, the panel's Ship button or, when `auto_ship` covers it, `speck run`'s ship queue, merges that pull request on GitHub once nothing there is in the way, such as a failing check or a review it still needs, and speck never pushes straight to the base branch. It needs `gh`, GitHub's command line tool, installed and signed in (`gh auth login`), and the base branch needs a remote on GitHub. Offer to turn it on with `speck config set ship_mode pr`, and run it only if they agree. If `gh` isn't installed or signed in, say so and offer to help set it up, asking before installing anything. Otherwise, the choice of `ship_mode` comes in section 7.
+   **Pull request mode.** If their base branch requires pull requests, a rule in the project says changes go through them, or the user says their team works through pull requests, don't warn that speck can't work there: explain pull request mode instead. Once the reviewer approves a ticket, speck pushes its branch to GitHub and opens a pull request into the base branch, with the ticket's review pack as its description. Shipping it, with `/speck-ship`, the panel's Ship button or, when `auto_ship` covers it, `speck run`'s ship queue, merges that pull request on GitHub once nothing there is in the way, such as a failing check or a review it still needs, and speck never pushes straight to the base branch. It needs `gh`, GitHub's command line tool, installed and signed in (`gh auth login`), and the base branch needs a remote on GitHub. Offer to turn it on with `speck config set ship_mode pr`, and run it only if they agree. If `gh` isn't installed or signed in, say so and offer to help set it up, asking before installing anything. Otherwise, `ship_mode` stays `local`.
 4. **Test command.** speck runs the tests before every review and refuses to ship until they pass. If `suggestions.test_command` has a command, explain where it came from and ask whether it's the right one. If it's null, ask the user how they run their tests, or whether they have none yet. Run it once to confirm, and show the result:
    - If it passes, run `speck config set commands.test "<command>"`.
    - If it fails, show the end of the output. Ask whether to set it anyway (speck won't ship until it passes) or try another command.
@@ -125,29 +125,11 @@ With Claude Code as the builder, the default passes `--dangerously-skip-permissi
 
 Then, in a new project, go back to section 4, step 5 for the first ticket. In an existing project that wanted a ticket to add a test runner, make it the same way. Otherwise continue with section 7.
 
-## 7. How much ships, runs and fits in a ticket
+## 7. Shipping, parallel builds and ticket limits
 
-`speck init` writes speck's general defaults for the settings below, which nobody chose for this project. Go through them now, so the user knows what each one does and picks its value. Run `speck config show`. It prints each setting of the panel's Settings view by group, with its value now, whether that's speck's default and what it does. Use its explanation for each setting rather than your own words, so setup and the panel say the same thing.
+`speck init` writes speck's defaults for how much ships without the user, how much runs at once and how big a ticket can be: `ship_mode`, `auto_ship`, `auto_ship_risk`, `max_parallel_builds`, `max_parallel_tests`, `limits.max_acceptance_criteria`, `limits.max_changed_lines` and `limits.max_review_rounds`. Leave them all as they are: don't ask about them and don't run `speck config set` for any of them. `ship_mode` stays `local`, unless the user turned on pull request mode in section 3, step 3. When speck was already set up, leave these settings as they are too, and don't list them for changing.
 
-Go through these settings, one at a time and in this order:
-
-- `ship_mode` (whether shipping merges locally or through a pull request on GitHub)
-- `auto_ship` and `auto_ship_risk` (how much ships without the user)
-- `max_parallel_builds` and `max_parallel_tests` (how much runs at once)
-- `limits.max_acceptance_criteria`, `limits.max_changed_lines` and `limits.max_review_rounds` (how big a ticket can be)
-
-For each one:
-
-1. Give its explanation from `speck config show` and its value now.
-2. Recommend a value for this project and say why in a sentence. For example: `ship_mode` at `local` for someone working alone, as there's nobody else to open a pull request for, and `pr` when their team works through pull requests; keep `auto_ship` off until they've shipped a few tickets themselves; one or two builds at once on a laptop; `max_parallel_tests` at 1 unless the tests are known to run side by side safely; a bigger `limits.max_changed_lines` for a project whose changes usually touch many files.
-3. Wait for their answer before the next setting.
-4. If they pick a different value, run `speck config set <key> <value>` and tell them the old and new value it prints. If they keep it as it is, don't run anything: the file stays as it was.
-
-**Pull request mode.** Ask whether to use pull request mode with `ship_mode`, on its own. If it was chosen in section 3, step 3, say so and move on. Before asking, explain it as section 3, step 3 does. Recommend `local` for someone working alone, and `pr` when they work with a team through pull requests or their base branch requires them. Set `pr` only if the user says yes and `gh` is installed and signed in.
-
-**Shipping without the user.** Ask about `auto_ship` and `auto_ship_risk` each on its own, never together with other settings or as part of a "keep the defaults" answer. Before asking, say plainly that a ticket `auto_ship` covers is merged and pushed to the base branch as soon as the reviewer approves it, without waiting for them, and that adding `high` to `auto_ship_risk` lets risky changes (such as auth, payments, data deletion or secrets) ship that way too. Turn `auto_ship` on, or add `high` to `auto_ship_risk`, only if the user says yes to that setting after hearing this. Recommend keeping `high` out of `auto_ship_risk`. If `auto_ship` is off and stays off, say that `auto_ship_risk` then has no effect, and ask whether to leave it as it is.
-
-**When speck was already set up.** If `speck.installed` was true when setup started, these settings may have been chosen before. Show all eight with their values from `speck config show` in one list, and ask which, if any, the user wants to change. Go through only those, as above, and leave the rest as they are. The rule on shipping without the user still holds for `auto_ship` and `auto_ship_risk`.
+Instead, tell the user in one or two sentences that these settings are at speck's defaults, that `auto_ship` is off so nothing ships without them, and that they can change any of them later in the panel's Settings view or with `speck config set`. If speck was already set up and `auto_ship` is on, say that instead: tickets it covers ship as soon as the reviewer approves them.
 
 Then continue with section 8.
 
