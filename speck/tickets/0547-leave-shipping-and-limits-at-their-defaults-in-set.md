@@ -42,6 +42,7 @@ Setup leaves the shipping, parallel and ticket-limit settings at speck's default
 - The user's idea, 2026-10-20: "Setup should just carry out the defaults for now, rather than asking what the user wants for each setting. Still ask about the specific models."
 - Reverses part of 0269, which added section 7's one-at-a-time questions.
 - Decided 2026-10-27: say in a line that the settings exist and where to change them; keep pull request mode only when the base branch needs it; leave `max_parallel_builds` at its default too.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
