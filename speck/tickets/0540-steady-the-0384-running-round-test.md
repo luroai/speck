@@ -1,7 +1,7 @@
 ---
 id: "0540"
 title: "Steady the 0384 running-round test"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: "speck/ideas/done/2026-10-24-fix-the-0384-running-round-test.md"        
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T23:40:38.719Z"
-blocked_at: "2026-10-28T00:11:55.056Z"
+blocked_at: ""
+waited_seconds: 34275
 
 ---
 # 0540 · Steady the 0384 running-round test
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 The test "0384 AC3: the panel shows the round as running through every exit 12, until it is recorded" fails by chance: in 0439's build it failed in the related run and alone, and in 0524's build it failed in a large parallel run, yet it passes on its own today. A test that fails by chance can stop `speck ship` for a ticket that didn't break it, and costs builders time ruling out their own change.
@@ -44,6 +45,7 @@ The test "0384 AC3: the panel shows the round as running through every exit 12, 
 - Earlier steadying of chance failures: 0207, 0377.
 - Failing before this build: none
 - Self-check: no changes. A record the starting command writes after the round's process has already ended names a process that has gone, so the panel doesn't show it running; a round's process that fails before its reviewer starts ends, with the same result.
+- Went with the recommendation: wait for Codex's limit to reset (chosen by speck, as watch is fix, 2026-10-28 09:43 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
