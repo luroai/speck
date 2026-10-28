@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { page, findChrome, browserPage, full, T, styles } from './support/panel.mjs';
 import fs from 'node:fs';
 import { sharedPanel } from './support/shared-panel.mjs';
+import { reload } from './support/reload.mjs';
 import { settingsPage, openSettings, saveButton, posted } from './support/settings.mjs';
 
 // ---------- 0372: move the light/dark control into Settings ----------
@@ -169,8 +170,9 @@ test('0372 AC2: in a real browser, choosing dark in Settings switches the page, 
   assert.equal(await b.js(`document.documentElement.dataset.theme`), 'dark');
   assert.notEqual(await b.js(bg), light, 'the page looks different');
   assert.equal(await b.js(`localStorage.getItem('speck-theme')`), 'dark');
-  await b.js(`location.reload(), true`);
-  await b.until(`document.readyState === 'complete' && document.documentElement.dataset.theme === 'dark'`, 'dark after a reload');
+  // 0542: waits for the reloaded panel to be ready, riding out the page changing over, before it reads the look
+  await reload(b, `!!document.querySelector('#run canvas')`, 'the reloaded panel');
+  assert.equal(await b.js(`document.documentElement.dataset.theme`), 'dark', 'dark after a reload');
   await b.js(`localStorage.removeItem('speck-theme'); true`);
 }, 1200));
 
