@@ -1,7 +1,7 @@
 ---
 id: "0538"
 title: "Star a note in Capture"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-10-28T10:44:00.141Z"
 approved: "2026-10-28T13:27:02.842Z"
 blocked_at: ""
 waited_seconds: 8467
+finished: "2026-10-28T13:31:17.761Z"
 
 ---
 # 0538 · Star a note in Capture
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Scrolling through Capture, you can't tell which notes you liked before, so the ideas you care about get lost among dozens of inbox notes and older ideas.
