@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0536"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T09:56:24.401Z"
-approved: "2026-10-28T10:06:26.035Z"
+approved: "2026-10-28T10:33:39.486Z"
 
 ---
 # 0537 · Order same-day notes in Capture newest first
@@ -58,12 +58,13 @@ Notes now record the time they were captured as well as the day, and Capture put
 ## Review log
 Round 1 (codex): changes requested: F1 capturedAt only rejects digits or a colon immediately after HH:MM.; F2 AC4's tests omit the required local-time instruction and the brief's same-day ordering fact.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 314,286
-- Elapsed since build started: 10 min
+- Reviewer tokens: 639,627
+- Elapsed since build started: 37 min
 - Changed lines: 28 (limit 5000)
 - Follow-ups:
   - Inbox: `speck/ideas/2026-10-28-steady-the-0384-ac3-running-round-test-under-load.md`. "0384 AC3" failed under load in this build's related run, after 0540 steadied it, and passed alone.
@@ -248,6 +249,98 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Same-day notes now appear newest first using valid capture times, while cards retain their existing date display. Malformed times fall back to untimed ordering. Both previous findings are resolved, and the change is ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e728c36b9cee5ba8925362b287b9c6a309719a91",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a181f7-74a3-7531-bae2-9eba6001a6ce",
+    "builder_response": "- Merge round: main merged into the ticket branch after `speck ship` hit a conflict.\n- docs/brief.md (class: logic, 1 conflict in the `speck panel` row): main added a sentence about `speck panel --background` turning `speck run` on; this ticket changed the Capture description in the same row. Resolved by taking main's row as it is and re-applying only this ticket's Capture wording (\"newest captured first by the date on its `Captured:` line, and notes from the same day by the time after that date, latest first\"). templates/panel-model.js merged on its own; the Capture sort and `capturedAt` are unchanged.\n- Tests run: test/panel-0537.test.mjs test/panel-0521.test.mjs test/followups-0036.test.mjs (130 pass, 0 fail).\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 323119,
+      "cached_input_tokens": 260224,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2222,
+      "reasoning_output_tokens": 34
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 17244,
+      "cached": 105600,
+      "write": 0,
+      "output": 701
+    },
+    "cost_usd": 0.052058,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T10:33:37.002Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Passing 0537 AC1 tests verify status parsing and unchanged card dates for timed notes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelModel's capture sort retains date precedence, descending valid times and stable untimed ordering. Passing AC2 tests cover these behaviours and invalid or missing dates."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "capturedAt retains strict HH:MM validation after the merge. Passing AC3 tests cover invalid ranges, malformed suffixes and unchanged card dates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both skills retain timestamp templates and local-time instructions; passing AC4 tests cover these and the brief's ordering fact. Comparing the resolved brief against merged main confirms only the intended Capture wording changed, preserving main's content."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The post-merge test output reports 130 passed, zero failed and three skipped. No regression is evident in the merged change."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-model.js",
+        "issue": "Malformed timestamp suffixes previously counted as valid sorting times.",
+        "suggested_fix": "Implemented and preserved through the merge: strict time boundaries and regression cases.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0537.test.mjs",
+        "issue": "AC4 previously lacked checks for local-time instructions and the brief's ordering fact.",
+        "suggested_fix": "Implemented and preserved through the merge: passing checks cover the required document facts.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved Capture behaviour and main's documentation changes. Same-day notes sort newest first, malformed times fall back to untimed ordering, and cards look unchanged. All reviewed criteria pass; no blocking concerns remain."
   }
 }
 ```
