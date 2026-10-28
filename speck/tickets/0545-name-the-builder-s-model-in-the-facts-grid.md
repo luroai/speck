@@ -43,6 +43,8 @@ The facts grid's Builder cell names the model the build runs on when speck knows
 - Decided 2026-10-27: with no model set, show only the agent's name.
 - Today: the cell is `workerOf` in `templates/panel-model.js`; the board's builder fields are set in `scripts/speck.mjs` (`builder`, `builder_label`); `builder_model` is read by `modelOf` in `scripts/build-model.mjs`; providers you add are in `scripts/custom-providers.mjs` (first model is the default).
 - Failing before this build: none
+- Self-check: added cases for a ticket built by another builder than the settings' (no builder_model), a build_command of your own (Codex, Cursor and providers get no model), a builder name that's no agent (`constructor`) and a builder_model of only spaces. Moved the board's builder fields into `boardBuilders` in build-model.mjs, as speck.mjs is at its 600-line limit, and dropped `providerLabelHere`, which nothing used after that.
+- Not from this build: `0384 AC3: the panel shows the round as running through every exit 12` in test/review-wait-0384.test.mjs fails on main too, most runs on this machine today (timing).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
