@@ -77,7 +77,7 @@ test('0147 AC4: no font is loaded from another host', () => {
   assert.doesNotMatch(html, /<link\b[^>]*https?:\/\//i);
   assert.doesNotMatch(css(), /@import/i);
   // 0304: the one font loaded is Doto, from the panel itself
-  assert.deepEqual([...css().matchAll(/url\(([^)]*)\)/gi)].map(m => m[1]), ['"/fonts/Doto.ttf"']);
+  assert.deepEqual([...css().matchAll(/url\(([^)]*)\)/gi)].map(m => m[1]), ['"fonts/Doto.ttf"']);
 });
 
 // AC5: each commit this ticket made (and, on its own branch, the uncommitted work) against the one before it.

@@ -24,7 +24,7 @@ test('0472 AC1: the styles are in a file for each area in templates/, and panel.
 
 test('0472 AC2: panel.html loads all five in the head, panel-base.css first', () => {
   const html = page();
-  const links = [...html.matchAll(/<link rel="stylesheet" href="\/([^"]+)">/g)].map(m => [m[1], m.index]);
+  const links = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)">/g)].map(m => [m[1], m.index]);
   assert.deepEqual(links.map(l => l[0]), AREAS);
   assert.ok(links.every(([, at]) => at < html.indexOf('</head>')), 'in the head, before the page shows');
   assert.doesNotMatch(html, /panel\.css|<style\b/i);

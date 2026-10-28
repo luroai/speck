@@ -28,7 +28,7 @@ test('0304 AC2: the panel serves Doto itself, from the repo\'s own copy, with it
   assert.match(fs.readFileSync(path.join(ROOT, 'templates', 'fonts', 'OFL.txt'), 'utf8'), /SIL OPEN FONT LICENSE Version 1\.1/);
   const f = face();
   assert.ok(f, 'an @font-face for Doto');
-  assert.match(get(f, 'src'), /^url\("\/fonts\/Doto\.ttf"\) format\("truetype"\)$/, 'loaded from the panel, not the internet');
+  assert.match(get(f, 'src'), /^url\("fonts\/Doto\.ttf"\) format\("truetype"\)$/, 'loaded from the panel, not the internet');
   assert.doesNotMatch((page() + styles()), /fonts\.(googleapis|gstatic)\.com/, 'nothing fetched from Google Fonts');
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   try {
