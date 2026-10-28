@@ -42,6 +42,8 @@ Two browser tests fail when nearly the whole suite runs at once, as `speck test 
 - From 0516's build: both failed under that load and passed alone every time; 0476 AC2 also failed on the base code alone once.
 - Decided 2026-10-27: wait with a time limit rather than run these tests one at a time, as 0207 did for other chance failures.
 - Failing before this build: none
+- Neither failure came back on the base code: 30 runs of both tests while the whole suite ran, and runs with 40 busy CPU loops, all passed. The fixes go after the two ways each can fail under load. 0372 reloaded from the page's own script and then checked it with calls that fail while the page is changing over ("Inspected target navigated or closed"). It now marks the page, reloads through DevTools, and waits up to 10 s for the reloaded panel to be ready (test/support/reload.mjs), retrying only the errors a page gives while it changes over. 0476 read the lane as soon as it had sent the finger, scroll or key, so a page that hadn't taken it yet read as the lane before. It now waits up to 3 s for the expected lane's tab to open before it checks the slide and the card.
+- Self-check: the quick tests of reload() first gave themselves 2 s, which a busy run can overrun, so they now allow 10 s and keep 300 ms only where the time limit itself is the check.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -54,3 +56,7 @@ Two browser tests fail when nearly the whole suite runs at once, as `speck test 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- AC3, checked by breaking the panel for a moment and running each test (then putting it back). 0372 AC2 failed when the page no longer read the stored look on load (expected 'dark', got 'light'). The trackpad and arrow-key test failed when a sideways scroll changed no lane ("timed out waiting for a sideways scroll right changes lane once: shipped's tab to open"), when the arrow keys changed no lane ("… ← with the focus on nothing: plan's tab to open") and when a scroll changed two lanes at once ("… and back: build's tab to open"). Both 0476 AC2 tests failed when a swipe changed no lane.
+- AC4, 2026-10-28: test/panel-0372.test.mjs (11 tests) and test/panel-0476.test.mjs (8 tests) each passed 5 runs out of 5 while `npm test` ran the whole suite at the same time, and 5 runs out of 5 alone. test/reload-0542.test.mjs passed 5 runs out of 5 alone.
+- AC5: the whole-suite run that ran alongside them had 6 failures, all timing tests in files this change doesn't touch: 0472 AC3, 0043 AC5, 0072, 0300 AC1/AC3, 0232 AC3 and 0384 AC3. A whole-suite run on the base code under the same extra load had 6 too, three of them the same (0472 AC3, 0232 AC3, 0384 AC3), with 0517 AC3, 0264 AC3 and 0202 in place of the others. `speck test --related` for this change passed (130 tests, 0 failures).
+
