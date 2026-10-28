@@ -44,6 +44,8 @@ Every build `speck run` starts or resumes uses the builder settings as they are 
 - Checked 2026-10-27: `runOn` in `scripts/run.mjs` calls `loadConfig(repo)` once and builds `words` (with `withBuilderModel`, which adds `--model` and `--effort`, 0279 and 0402) and `max` (`maxParallelBuilds`) from it; `handBackQueue`, `goWithQueue` and `foremanAgentQueue` are given that `cfg` and `words`. Codex builds take the effort from `codexStartWords` (`scripts/codex-build.mjs`). Machine settings are applied by `loadConfig` (`applyMachineConfig`).
 - The sleep queue and the watch fixes already read the settings each time (`readConfig: () => loadConfig(repo)`).
 - Failing before this build: none
+- Self-check: a killed build already resumed once was reported with the current settings, which are missing while they can't start a build; it now uses the last settings that could. The builder mismatch message no longer says "speck run won't start" when speck run is already running.
+- `0232 AC3: 0176 AC3's check fails for a speck run whose checks cost more than 5% of one core…` is flaky under load: on main it failed 2 of 4 runs beside `run-0110` and `run-0047` alone (0.31 s a check against a 0.25 s floor when run by itself). It fails in this build's `--related` runs for the same reason, not because of this change.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
