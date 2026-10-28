@@ -17,7 +17,7 @@ test('0302 AC1: the panel serves the design\'s renderer unchanged, from its own 
   const design = fs.readFileSync(path.join(ROOT, 'docs', 'design', 'lcd', 'lcd.js'));
   assert.equal(sha(design), SHA, 'the design file is the one the ticket names');
   assert.equal(sha(fs.readFileSync(path.join(ROOT, 'templates', 'lcd.js'))), SHA, 'the copy that ships with speck is the same file');
-  assert.match(page(), /<script src="\/lcd\.js"><\/script>\s*<script src="\/panel\.js"/, 'the page loads it before its own script');
+  assert.match(page(), /<script src="lcd\.js"><\/script>\s*<script src="panel\.js"/, 'the page loads it before its own script');
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   try {

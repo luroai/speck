@@ -43,6 +43,8 @@ Every file the panel's page links to, the font included, loads from an address r
 - Today: `templates/panel.html` links `/icon.svg`, `/manifest.webmanifest`, `/panel-base.css` and the other stylesheets, and `/panel-model.js` and the other scripts; `templates/panel-base.css` has `url("/fonts/Doto.ttf")`; the routes are in `scripts/panel.mjs` (`icons`, `/fonts/Doto.ttf`). A `url()` in a stylesheet resolves against the stylesheet's own address, which is at the page's level.
 - Builds on 0149 (home-screen app) and 0304 (Doto in the header).
 - Failing before this build: none
+- Self-check: made the browser check wait for Chrome to read the manifest, as 0149's does, instead of asking once; kept the manifest's `id` relative too (`./`), so at the site's root it resolves to `/` as before and a home-screen app added earlier keeps its identity.
+- Existing tests that pinned the old `/…` addresses (0147, 0149, 0302, 0304, 0305, 0430–0433, 0472–0474, pipeline 0415, 0470, 0479 and `pageScripts` in `test/support/panel.mjs`) now expect the relative ones: the ticket changes exactly those addresses.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
