@@ -1251,6 +1251,8 @@ function render() {
   const typing = typeof document.activeElement === 'object' && document.activeElement && document.activeElement.askKey ? document.activeElement : null;
   askBoxes.clear();
   fill('capture', keptItems('capture', m.capture, i => i.path, i => openNotes.has(i.path), captureItem), 'Nothing captured.');
+  $('capture-n').textContent = m.capture.length ? `${m.capture.length} note${m.capture.length === 1 ? '' : 's'}` : ''; // 0536
+  $('capture-n').hidden = !m.capture.length;
   fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
     t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), 'No draft tickets.');
