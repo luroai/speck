@@ -42,6 +42,7 @@ Notes say what time they were captured, and Capture lists notes from the same da
 ## Notes
 - Asked for by the user 2026-10-27: the Capture list doesn't look ordered newest first. Checked 2026-10-27 against the repo's own notes: the list is sorted by day, newest first, and five notes captured on 2026-10-27 are in alphabetical order of their file names (`panelModel`'s `capture` sort in `templates/panel-model.js`, which falls back to JSON order, which is `speck status --json`'s file-name order).
 - 0520's decision stands: order by the `Captured:` line, never the note's body or the file's dates (file dates change on checkout and on every edit, such as triage's `Triaged:` line).
+- Failing before this build: none
 - `ideaStatus` (`STATUS_LINE` in `scripts/core.mjs`) and `capturedOn` in `templates/panel.js` already match a line with text between the date and `· Status:`; the tests should prove it stays so.
 
 ## In plain words
