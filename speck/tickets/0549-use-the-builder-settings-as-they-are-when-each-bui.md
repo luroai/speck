@@ -43,6 +43,7 @@ Every build `speck run` starts or resumes uses the builder settings as they are 
 - Reported by the user 2026-10-27: "I set the builder effort to medium from high but high remained because I hadn't restarted speck run. This cost me real money." They asked for it to be set ready and included in the 0.21.0 release (0539).
 - Checked 2026-10-27: `runOn` in `scripts/run.mjs` calls `loadConfig(repo)` once and builds `words` (with `withBuilderModel`, which adds `--model` and `--effort`, 0279 and 0402) and `max` (`maxParallelBuilds`) from it; `handBackQueue`, `goWithQueue` and `foremanAgentQueue` are given that `cfg` and `words`. Codex builds take the effort from `codexStartWords` (`scripts/codex-build.mjs`). Machine settings are applied by `loadConfig` (`applyMachineConfig`).
 - The sleep queue and the watch fixes already read the settings each time (`readConfig: () => loadConfig(repo)`).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
