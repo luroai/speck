@@ -18,7 +18,7 @@ test('0170 AC4: the manifest and icons are still served', async () => {
     const m = await raw(p.port, '/manifest.webmanifest');
     assert.equal(m.status, 200);
     for (const icon of JSON.parse(m.body).icons) {
-      const res = await raw(p.port, icon.src);
+      const res = await raw(p.port, new URL(icon.src, 'http://x/manifest.webmanifest').pathname); // 0543: relative to the manifest
       assert.equal(res.status, 200, icon.src);
       assert.ok(res.body.equals(fs.readFileSync(path.join(ICONS, path.basename(icon.src)))), `${icon.src} is the file in templates/icons`);
     }

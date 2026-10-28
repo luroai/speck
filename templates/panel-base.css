@@ -43,7 +43,7 @@
   code, .mono, .id { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; }
   code { font-size: 12px; color: var(--muted); }
 
-  @font-face { font-family: "Doto"; src: url("/fonts/Doto.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
+  @font-face { font-family: "Doto"; src: url("fonts/Doto.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
 
   /* 0410: the page is the height of the screen and never scrolls. Under the header, Plan, Build and Shipped are tabs,
      one lane open at a time, and only the open lane's list scrolls. 0418: one column at every width, 720 px wide and
