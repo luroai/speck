@@ -1,7 +1,7 @@
 ---
 id: "0541"
 title: "Steady the 0247 AC4 test under load"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-10-27T23:40:38.350Z"
 blocked_at: ""
 waited_seconds: 34088
 approved: "2026-10-28T09:44:26.314Z"
+finished: "2026-10-28T10:05:18.373Z"
 
 ---
 # 0541 · Steady the 0247 AC4 test under load
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The `0247 AC4` test in `test/run-0247.test.mjs` (new code that can't start leaves the old one running) failed once in a large parallel `speck test --related` run and passes when its file runs alone. A test that fails by chance can stop `speck ship` for a ticket that didn't break it.
