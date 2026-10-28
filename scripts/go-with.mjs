@@ -103,7 +103,8 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
 // waiting, while a build slot is free, from the folder it started in, logging to the end of its log. Its record loses
 // its exit and go_with, keeping the choice as went_with, so the board shows the build running and it's resumed once.
 // A choice whose branch has moved since, or whose session is in use, was carried on by hand: it's dropped.
-export function goWithQueue({ cfg, words, max, running, startBuild, saveRecord: save, resumeHint: hint = resumeHint, runs, repo }) {
+// 0549: settings() gives the builder settings ({ cfg, words, max }) as they are now, or null while they can't start one.
+export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, max }), running, startBuild, saveRecord: save, resumeHint: hint = resumeHint, runs, repo }) {
   const check = tickets => {
     for (const t of tickets) {
       if ((t.status !== 'building' && t.status !== 'reviewing') || t.build_running || running.has(t.id)) continue;
@@ -116,11 +117,12 @@ export function goWithQueue({ cfg, words, max, running, startBuild, saveRecord: 
         console.log(`${t.id}: ${who} went with its recommendation, but its build has been carried on since, so speck run left it as it is.`);
         continue;
       }
-      if (running.size >= max) return;
-      const { argv, why } = resumeFor(words, cfg, t.id, rec, goWithMessage(t.id, g.option, rec.agent === 'codex' ? '$speck-build' : '/speck-build', g.by));
+      const s = settings();
+      if (!s || running.size >= s.max) return;
+      const { argv, why } = resumeFor(s.words, s.cfg, t.id, rec, goWithMessage(t.id, g.option, rec.agent === 'codex' ? '$speck-build' : '/speck-build', g.by));
       if (!argv) {
         try { save(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said again next check */ }
-        console.log(`${t.id}: ${who} went with its recommendation, but speck run can't resume its build session: ${why}. ${hint(cfg, rec)}, and tell it ${who} went with the recommendation.`);
+        console.log(`${t.id}: ${who} went with its recommendation, but speck run can't resume its build session: ${why}. ${hint(s.cfg, rec)}, and tell it ${who} went with the recommendation.`);
         continue;
       }
       const next = { ...resumedRecord(kept), went_with: g, resume_command: argv };
