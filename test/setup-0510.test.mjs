@@ -27,7 +27,7 @@ test('0510 AC2: setup opens the panel\'s address, and links to the README\'s pan
 });
 
 test('0510 AC3: setup turns speck run on in the background, writing to the log the switch uses', () => {
-  assert.match(read(SKILL), /`mkdir -p speck\/\.cache\/runs && nohup node \.speck\/scripts\/speck\.mjs run >> speck\/\.cache\/runs\/run\.log 2>&1 < \/dev\/null &`/);
+  assert.match(read(SKILL), /`speck run --background`/); // 0544: speck run --background writes the log the switch uses
   assert.match(read(path.join(ROOT, 'scripts', 'panel-run.mjs')), /path\.join\(runsDir\(repo\), 'run\.log'\)/, 'the panel\'s switch writes the same log');
 });
 

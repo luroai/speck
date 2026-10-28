@@ -19,7 +19,7 @@ import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdKeys } from './keys.mjs';
-import { providerLabelHere } from './custom-providers.mjs';
+import { boardBuilders } from './build-model.mjs';
 import { cmdAgents } from './your-agents.mjs';
 import { cmdConfig } from './config.mjs';
 import { cmdConfigShow } from './settings.mjs';
@@ -422,7 +422,7 @@ export function statusData(repo) {
   const tickets = statusTickets(repo, cfg);
   const done = new Set(tickets.filter(t => t.fm.status === 'done').map(t => padId(t.fm.id)));
   const runs = runsOf(repo);
-  const leads = groupLeader(), fixing = fixingOf(cfg);
+  const leads = groupLeader(), fixing = fixingOf(cfg), builderOf = boardBuilders(cfg, repo);
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
@@ -432,7 +432,7 @@ export function statusData(repo) {
     return withForeman(t, fixing, { // 0317
       ...t.fm,
       // 0388: the builder and reviewer it would use now: its own, or else the settings'. 0391: a provider's, by its name
-      builder: ticketAgents(t.fm, cfg).builder, builder_label: providerLabelHere(ticketAgents(t.fm, cfg).builder),
+      ...builderOf(t.fm), // 0545: and the model its builds run on
       reviewer: ticketAgents(t.fm, cfg).reviewer,
       type: ticketType(t),
       kind: ticketKind(t), task: undefined, // 0350, 0492: its kind, not the old task line it may still have
@@ -539,7 +539,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
   speck panel [--port <n>]           a control panel in your browser, at http://127.0.0.1:4777 (--url https://<hostname>: also
                                       there, behind a private tunnel; --background: on its own, until speck panel --stop)
-  speck run                           start a build for each ready ticket as it becomes ready, and ship approved ones auto_ship covers, until stopped
+  speck run [--background]            start a build for each ready ticket as it becomes ready, and ship approved ones auto_ship covers, until stopped (--background: on its own, as the panel's switch turns it on)
   speck pause <id>                    hold a build speck run launched where it is, until it's played
   speck play <id>                     carry a paused build on from where it was paused
   speck stop <id>                     end a build speck run launched for good, and block its ticket
@@ -576,7 +576,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck dismiss <id>                  dismiss speck's question about a ticket
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.

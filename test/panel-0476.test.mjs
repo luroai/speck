@@ -53,9 +53,13 @@ async function finger(b, points, { gap = 0, lift = true } = {}) {
   for (const p of points.slice(1)) { if (gap) await pause(gap); await touch('touchMove', at(p)); }
   if (lift) await touch('touchEnd', []);
 }
-// The open card comes to rest: the slide under way ends within 120 ms (0517: 250 ms before), by its own timing, and then
-// the card is at rest.
+// 0542: waits, up to 3 s, for `lane`'s tab to open, so a page too busy to have taken the finger, scroll or key yet isn't
+// read as the lane before it. A lane that never opens fails here, naming it.
+const opens = (b, lane, what) => b.until(`document.querySelector('#tab-${lane}').getAttribute('aria-selected') === 'true'`, `${what}: ${lane}'s tab to open`, 3000);
+// The open card comes to rest: once its tab has opened (0542), the slide under way ends within 120 ms (0517: 250 ms
+// before), by its own timing, and then the card is at rest.
 async function settles(b, lane, what) {
+  await opens(b, lane, what);
   const left = await b.js(`Math.max(0, ...document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.parentElement === document.querySelector('main')).map(a => a.effect.getComputedTiming().endTime - (a.currentTime || 0)))`);
   assert.ok(left <= 120, `${what}: the slide ends within 120 ms (${left} ms)`);
   await b.until(`!document.querySelector('main').dataset.slide`, `${what}: the slide to end`, 3000);
@@ -173,6 +177,7 @@ test('0476 AC2: a sideways scroll on a trackpad and the arrow keys change lane i
     // Reduced motion: the lane changes at once, with no slide and no card beside it showing on the way.
     await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
     await key('ArrowRight');
+    await opens(b, 'shipped', 'reduced motion');
     await atRest(b, 'shipped', 'reduced motion: at rest as soon as the key is pressed');
     const [x2, y2] = await middle(b);
     await finger(b, path([x2, y2], [x2 + 150, y2], 6), { gap: 40, lift: false });
@@ -180,6 +185,7 @@ test('0476 AC2: a sideways scroll on a trackpad and the arrow keys change lane i
     assert.equal(held[3].left, 0, 'reduced motion: the card stays put under the finger');
     assert.equal(held[2].shows, false, 'and the card beside it stays hidden');
     await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await opens(b, 'build', 'reduced motion: the swipe');
     await atRest(b, 'build', 'reduced motion: the swipe changes lane at once');
   } finally { await b.end(); }
 });

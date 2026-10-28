@@ -17,9 +17,9 @@ test('0431 AC1: the model is in templates/panel-model.js, which the page loads b
   const html = page();
   assert.doesNotMatch(html, /---- model|---- end model/);
   assert.doesNotMatch(html, /function panelModel\(|function progress\(|const IN_FLIGHT\b/);
-  const at = html.indexOf('<script src="/panel-model.js"></script>');
+  const at = html.indexOf('<script src="panel-model.js"></script>');
   assert.ok(at > 0, 'the page loads /panel-model.js');
-  assert.ok(at < html.indexOf('<script src="/panel.js"'), 'before the rest of its script (0433: which it loads from /panel.js)');
+  assert.ok(at < html.indexOf('<script src="panel.js"'), 'before the rest of its script (0433: which it loads from /panel.js)');
 });
 
 test('0431 AC2: the server answers /panel-model.js with the file as text/javascript, read afresh, a change makes an open page out of date, and other paths get the unknown answer', async () => {

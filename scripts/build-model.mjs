@@ -3,8 +3,9 @@
 // speck run starts with its own command are given it as -m <value> (codex-build.mjs), and Cursor builds as --model
 // <value> (cursor-build.mjs).
 
-import { findProvider } from './providers.mjs';
+import { findProvider, providerLabel } from './providers.mjs';
 import { knownProviders } from './custom-providers.mjs';
+import { ticketAgents } from './core.mjs';
 
 // The build_command that starts Claude Code builds, as speck/config.yml has it when speck sets it up.
 export const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
@@ -36,6 +37,28 @@ export const providerBuilds = (cfg, providers = knownProviders()) => {
   const p = typeof cfg?.builder === 'string' ? findProvider(cfg.builder, providers) : null;
   return p && p.name === cfg.builder && typeof cfg.build_command === 'string' && !cfg.build_command.trim() ? p : null;
 };
+
+// 0545: the model a ticket's builds run on, as far as speck knows it, for the board's builder_model: builder_model,
+// given only to the builder speck/config.yml names (0312), to Claude Code always and to Codex and Cursor when speck
+// starts their builds itself, or, for a model provider, the one speck uses from it. null when the agent picks its own.
+export function ticketBuilderModel(fm, cfg, providers = knownProviders()) {
+  const builder = ticketAgents(fm, cfg).builder, mine = builder === configBuilder(cfg) ? modelOf(cfg) : '';
+  const own = buildsEachTicket(cfg?.build_command ?? '');
+  const p = findProvider(builder, providers);
+  if (p && p.name === builder) return own ? mine || p.defaultModel || null : null;
+  if (builder === 'claude') return mine || null;
+  return (builder === 'codex' || builder === 'cursor') && own ? mine || null : null;
+}
+
+// 0545: a ticket's builder as the board gives it, for the providers known in `repo`: { builder, builder_label,
+// builder_model }, the label being a provider's name as you gave it (0391), and null for an agent of speck's own.
+export function boardBuilders(cfg, repo) {
+  const providers = knownProviders(repo);
+  return fm => {
+    const builder = ticketAgents(fm, cfg).builder;
+    return { builder, builder_label: providerLabel(builder, providers), builder_model: ticketBuilderModel(fm, cfg, providers) };
+  };
+}
 
 // 0290: the agent speck run's own command builds with, 'codex' or 'cursor' (0391: or a model provider's name), or null
 // when build_command is used.

@@ -14,7 +14,7 @@ test('0430 AC1: the styles are in templates/panel-base.css and the other areas\'
   assert.doesNotMatch(css, /<\/?style>/, 'the file is plain CSS');
   const html = page();
   assert.doesNotMatch(html, /<style\b/i);
-  assert.match(html, /<link rel="stylesheet" href="\/panel-base\.css">/);
+  assert.match(html, /<link rel="stylesheet" href="panel-base\.css">/);
   assert.ok(html.indexOf('/panel-settings.css') < html.indexOf('</head>'), 'loaded in the head, before the page shows');
 });
 
