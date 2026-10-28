@@ -41,6 +41,7 @@ Each review round's tokens are counted as the round saved them, as the ticket's 
 ## Notes
 - From review round 1 of 0526 (F1), which fixed this for `total_tokens` only.
 - Failing before this build: none
+- Self-check: no changes
 - Today: each round's `tokens` is set in `scripts/speck.mjs` (`rounds:` in the status entry) from `meta.usage`; a round's saved tokens come from `roundTokens` in `scripts/round-cost.mjs` (0529); the panel shows it in `templates/panel.js` ("Reviewer tokens").
 
 ## In plain words
