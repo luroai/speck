@@ -1,7 +1,7 @@
 ---
 id: "0542"
 title: "Steady two browser tests under a busy run"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-27T23:40:38.315Z"
 ---
 # 0542 · Steady two browser tests under a busy run
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Two browser tests fail when nearly the whole suite runs at once, as `speck test --related` does after a change to a shared test helper: 0372 AC2 (the dark look is kept after a reload) failed with "Inspected target navigated or closed" while reloading, and 0476 AC2 (the trackpad and arrow keys change lane in the same time) got `plan` where it expected `build`. Both pass on their own. A failure like this at `speck ship` hands a ticket back for nothing.
@@ -58,5 +58,91 @@ Two browser tests fail when nearly the whole suite runs at once, as `speck test 
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - AC3, checked by breaking the panel for a moment and running each test (then putting it back). 0372 AC2 failed when the page no longer read the stored look on load (expected 'dark', got 'light'). The trackpad and arrow-key test failed when a sideways scroll changed no lane ("timed out waiting for a sideways scroll right changes lane once: shipped's tab to open"), when the arrow keys changed no lane ("… ← with the focus on nothing: plan's tab to open") and when a scroll changed two lanes at once ("… and back: build's tab to open"). Both 0476 AC2 tests failed when a swipe changed no lane.
 - AC4, 2026-10-28: test/panel-0372.test.mjs (11 tests) and test/panel-0476.test.mjs (8 tests) each passed 5 runs out of 5 while `npm test` ran the whole suite at the same time, and 5 runs out of 5 alone. test/reload-0542.test.mjs passed 5 runs out of 5 alone.
+- AC4, round 1 (F1), 2026-10-28: a second whole-suite run with all three files run 5 times each alongside it. test/reload-0542.test.mjs (3 tests), test/panel-0372.test.mjs and test/panel-0476.test.mjs each passed 5 runs out of 5. That whole-suite run had 3 failures in files this change doesn't touch: 0109 AC1, 0232 AC3 and 0384 AC3, the last two also failing on the base code under load.
 - AC5: the whole-suite run that ran alongside them had 6 failures, all timing tests in files this change doesn't touch: 0472 AC3, 0043 AC5, 0072, 0300 AC1/AC3, 0232 AC3 and 0384 AC3. A whole-suite run on the base code under the same extra load had 6 too, three of them the same (0472 AC3, 0232 AC3, 0384 AC3), with 0517 AC3, 0264 AC3 and 0202 in place of the others. `speck test --related` for this change passed (130 tests, 0 failures).
 
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b43f71bfa9c5f5c60911d2a32e9a731f29409977",
+    "session": "fresh",
+    "thread_id": "01a181e9-d531-70a0-ae60-0df29d0ec017",
+    "builder_response": "- Tests run: test/reload-0542.test.mjs test/panel-0372.test.mjs test/panel-0476.test.mjs, with `speck test --related` (which also ran the repo's quick checks).\n- Neither failure came back on the base code, so the fixes go after the ways each can fail under load. 0372: the reload came from the page's own script, and the calls after it could fail while the page changed over. It now reloads through DevTools and waits, up to 10 s, for the reloaded page (marked beforehand, so the old page never counts) to be ready, retrying only page-changing-over errors (test/support/reload.mjs, with quick fake-browser tests in test/reload-0542.test.mjs). 0476: settles() now waits up to 3 s for the expected lane's tab to open before the 120 ms slide check and the at-rest check, and the two reduced-motion checks do the same before atRest.\n- AC3 and AC4: how they were checked, and the results, are in the ticket's Delivery log. AC5: no file outside test/ changed. The whole-suite run that ran alongside had 6 timing failures in files this change doesn't touch, and the base code had a similar set under the same extra load (Delivery log).\n",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 138035,
+      "cached_input_tokens": 95744,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1132,
+      "reasoning_output_tokens": 78
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 42291,
+      "cached": 95744,
+      "write": 0,
+      "output": 1132
+    },
+    "cost_usd": 0.1054764,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T09:49:55.648Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/reload.mjs marks the old page, reloads through DevTools and polls for the new page's readiness with a deadline. test/reload-0542.test.mjs covers readiness, navigation errors and timeout; 0372 AC2 passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/panel-0476.test.mjs: settles() waits for the expected tab through opens(), then waits for the slide to end before atRest(). Reduced-motion changes also call opens(). Both AC2 browser tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The Delivery log records failures after deliberately breaking theme restoration, wheel navigation, arrow-key navigation and swipes. The tests retain assertions for the expected theme, lane and card position."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "The Delivery log and /tmp/speck-0542-alone.txt record five standalone passes for all three test files. /tmp/speck-0542-busy.txt records five concurrent passes for the two browser files only. The new test/reload-0542.test.mjs has only one evidenced whole-suite run."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The related run passed 130 tests with no failures. The branch changes only the intended tests, reload helper and ticket. Reported whole-suite failures concern untouched timing tests, with comparable failures under load on the base code; final whole-suite verification remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0542-steady-two-browser-tests-under-a-busy-run.md",
+        "issue": "AC4 requires five concurrent passes for each changed test file, but the new reload test file has only standalone repeated-run evidence.",
+        "suggested_fix": "Run test/reload-0542.test.mjs five consecutive times while the whole suite runs concurrently, and record the results in the Delivery log.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The waits handle slow browser updates while retaining checks that catch broken behaviour. The two browser files passed the required repeated runs. One validation step remains: repeat the new reload helper tests five times while the whole suite is running and record the results."
+  }
+}
+```
+
+</details>
