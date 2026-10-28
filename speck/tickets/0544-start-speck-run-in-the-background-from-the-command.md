@@ -1,7 +1,7 @@
 ---
 id: "0544"
 title: "Start speck run in the background from the command line"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-25-turn-speck-run-on-in-the-background-from-th
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T09:43:27.204Z"
+approved: "2026-10-28T10:05:58.855Z"
 
 ---
 # 0544 · Start speck run in the background from the command line
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 There's no command to turn `speck run` on in the background, as the panel's switch does. Setup starts it with a shell line (`nohup … run >> run.log &`) and reads the log a few seconds later to guess whether it started, which depends on the agent's shell and on how long it waits. Other agents and scripts have no plain way to do it either.
@@ -52,9 +53,15 @@ There's now a command, `speck run --background`, that turns automatic building o
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 On startup timeout, startBackground sends SIGTERM and immediately throws; runBackground then calls process.exit.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 429,519
+- Elapsed since build started: 23 min
+- Changed lines: 66 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The panel's switch still leaves a speck run that timed out running: speck/ideas/2026-10-28-stop-speck-run-when-the-panel-switch-times-out.md.
