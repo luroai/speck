@@ -81,7 +81,9 @@ export function resumeFor(words, cfg, id, rec, message, providers = knownProvide
 // speck run's checks, resumes each waiting one while a build slot is free, and waiting(id) says whether one is waiting
 // for a ticket, so the queue doesn't ship it meanwhile (shipQueue's waiting). `running` is speck run's set of builds,
 // `startBuild` starts one as speck run does, and `runs()` is its runs folder.
-export function handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs, fill = () => null }) {
+// 0549: settings() gives the builder settings ({ cfg, words, max }) as they are now, or null while they can't start a
+// build, so each hand-back starts with them.
+export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, words, max }), running, startBuild, saveRecord, resumeHint, runs, fill = () => null }) {
   // A ship speck run started that needs work on its ticket, kept in the build's run record as hand_back, so a restart
   // still hands it back. Carried out by resumeHandBack, from check, once a build slot is free. A ticket whose build
   // session can't be resumed is said once, here, with what to do.
@@ -91,17 +93,18 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
     try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* no record */ }
     if (!rec || typeof rec !== 'object' || Array.isArray(rec)) rec = null;
     if (rec) rec = fill(h.id) ?? rec; // 0289: a Codex build's session, read from its log if it's not kept yet
-    const why = !rec ? 'it has no run record from speck run, so it wasn\'t built by speck run' : resumeFor(words, cfg, h.id, rec, '').why ?? null;
+    const s = settings(); // while they can't start a build, it's kept, and checked as it's handed back
+    const why = !rec ? 'it has no run record from speck run, so it wasn\'t built by speck run' : s ? resumeFor(s.words, s.cfg, h.id, rec, '').why ?? null : null;
     if (!why) try { return saveRecord(file, { ...rec, hand_back: { kind: h.kind, why: h.why, head: h.head, at: new Date().toISOString() } }); } catch (e) { return cantHandBack(h, rec, `its run record couldn't be saved (${e.message})`); }
     cantHandBack(h, rec, why);
   };
   const cantHandBack = (h, rec, why) =>
-    console.log(`${h.id} needs its build to follow the "${HAND_BACK_STEPS[h.kind]}" steps in /speck-build, but speck run can't resume its build session: ${why}. ${rec ? resumeHint(cfg, rec) : 'Resume the session that built it'}, and ask it to follow those steps.`);
+    console.log(`${h.id} needs its build to follow the "${HAND_BACK_STEPS[h.kind]}" steps in /speck-build, but speck run can't resume its build session: ${why}. ${rec ? resumeHint(settings()?.cfg ?? cfg, rec) : 'Resume the session that built it'}, and ask it to follow those steps.`);
 
   // Resumes the build's own session with the hand-back's message, from the folder it started in, logging to the end of
   // its log. Its record loses its exit while it runs, so the board shows the build running, and counts the hand-backs
   // for conflicts and failing tests, so the third asks the session to block the ticket instead.
-  const resumeHandBack = (id, file, rec) => {
+  const resumeHandBack = (id, file, rec, { cfg, words }) => {
     const { hand_back: h, exited: _e, exit_code: _c, ...kept } = rec;
     const count = (Number.isInteger(rec.hand_backs) ? rec.hand_backs : 0) + (h.kind === 'base' || h.kind === 'changes' ? 0 : 1);
     const { argv, why } = resumeFor(words, cfg, id, rec, handBackMessage({ id, kind: h.kind, why: String(h.why ?? ''), base: cfg.base_branch, count }));
@@ -139,8 +142,9 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
       if (!p) continue;
       if (!p.live) { const { hand_back: _, ...kept } = p.rec; try { saveRecord(p.file, kept); } catch { /* tried again next check */ } continue; }
       if (shipState(runs(), t.id)?.running) continue;
-      if (running.size >= max) return;
-      resumeHandBack(t.id, p.file, p.rec);
+      const s = settings();
+      if (!s || running.size >= s.max) return;
+      resumeHandBack(t.id, p.file, p.rec, s);
     }
   };
 
