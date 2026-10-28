@@ -1,7 +1,7 @@
 ---
 id: "0539"
 title: "Prepare release 0.21.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0540","0541","0542","0543","0544","0546","0547","0548","0549","0550"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T13:50:35.119Z"
+approved: "2026-10-28T13:54:28.465Z"
 
 ---
 # 0539 · Prepare release 0.21.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0.20.0, the panel's Capture lane shows how many notes it holds (0536), lists notes captured on the same day newest first (0537) and lets you star the notes you like (0538). `speck run --background` turns `speck run` on from the command line (0544), the facts grid names the builder's model (0545), each review round's tokens are counted as it saved them (0546), setup leaves shipping and limits at their defaults (0547), a ticket's build log opens in a full-screen pop-up like the Pipeline log (0548), changes to the builder's settings apply to the next build without restarting `speck run` (0549), the panel loads its font and files from addresses relative to the page (0543), four tests that failed by chance are steady (0540 to 0542), and a commit that adds a private word under `speck/` is refused (0550). Anyone following the setup prompt, or updating speck in a project, still gets 0.20.0 without them.
@@ -57,9 +58,14 @@ speck is ready to go out as version 0.21.0. Once it ships, anyone installing or 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 166,010
+- Elapsed since build started: 4 min
+- Changed lines: 107 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
