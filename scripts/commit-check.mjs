@@ -12,8 +12,13 @@ const MARKER = "# speck: refuses a commit that adds a private word or your home 
 export const HOOK = `#!/bin/sh
 ${MARKER}
 # speck init writes this file. Skip it for one commit with \`git commit --no-verify\`.
+# It runs the worktree's own copy of the check, or the main checkout's when the worktree's branch has none.
 script="$(git rev-parse --show-toplevel)/.speck/scripts/commit-check.mjs"
-[ -f "$script" ] || exit 0
+[ -f "$script" ] || script="$(git rev-parse --path-format=absolute --git-common-dir)/../.speck/scripts/commit-check.mjs"
+if [ ! -f "$script" ]; then
+  echo "speck: .speck/scripts/commit-check.mjs isn't here or in the main checkout, so this commit wasn't checked for your private words. Run speck init again to bring it back." >&2
+  exit 0
+fi
 if ! command -v node >/dev/null 2>&1; then
   echo "speck: node isn't on the PATH, so this commit wasn't checked for your private words." >&2
   exit 0
@@ -23,7 +28,7 @@ exec node "$script"
 
 // The diff of the staged `file` against HEAD, as git shows it whatever the user's settings.
 function stagedDiff(repo, file) {
-  const r = sh('git', ['diff', '--cached', '--no-color', '--no-ext-diff', '--no-textconv', '--text', '--no-renames', '-U0', '--', `:(literal)${file}`], { cwd: repo });
+  const r = sh('git', ['diff', '--cached', '--no-color', '--no-ext-diff', '--no-textconv', '--text', '--no-renames', '-U0', '--inter-hunk-context=0', '--', `:(literal)${file}`], { cwd: repo });
   if (r.status !== 0) throw new SpeckError(`Couldn't read the staged changes to ${file}: ${(r.stderr || '').trim()}`);
   return r.stdout;
 }
@@ -45,7 +50,9 @@ export function stagedPrivateLines(repo) {
     for (const l of stagedDiff(repo, file).split('\n')) {
       const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(l);
       if (hunk) { at = Number(hunk[1]); continue; }
-      if (!at || !l.startsWith('+')) continue;
+      if (!at) continue;
+      if (l.startsWith(' ')) { at++; continue; } // a line it keeps, should git show one
+      if (!l.startsWith('+')) continue;
       const what = privateHit(l.slice(1), list.words, re);
       if (what) found.push({ file, line: at, what });
       at++;
