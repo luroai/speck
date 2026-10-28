@@ -1,7 +1,7 @@
 ---
 id: "0540"
 title: "Steady the 0384 running-round test"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ waited_seconds: 34275
 ---
 # 0540 · Steady the 0384 running-round test
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The test "0384 AC3: the panel shows the round as running through every exit 12, until it is recorded" fails by chance: in 0439's build it failed in the related run and alone, and in 0524's build it failed in a large parallel run, yet it passes on its own today. A test that fails by chance can stop `speck ship` for a ticket that didn't break it, and costs builders time ruling out their own change.
@@ -48,14 +48,10 @@ The test "0384 AC3: the panel shows the round as running through every exit 12, 
 - Went with the recommendation: wait for Codex's limit to reset (chosen by speck, as watch is fix, 2026-10-28 09:43 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a review is still going after its first wait, the panel now always shows it as running. Before, on a busy machine, the panel could briefly show nothing, and one of speck's own tests failed by chance because of that. You'd see this in the panel's review step during a long review: it says the reviewer is at work from the moment the review starts. Nothing else about the review changes. Two follow-ups went to the inbox: speck doesn't say why Codex stopped when it hits its usage limit, and another review test failed once on a very busy machine.
 
 ## Blocked question
-The fix is built and its tests pass, but the reviewer (Codex) can't run: its usage limit is reached until 3:41 AM on 2026-10-28. Should I wait and run the review then, or have another reviewer, such as Cursor, review this ticket? I recommend waiting: the ticket is small and not urgent, and Codex reviews in under a minute where Cursor took 4 to 11.
-
-Recommended: wait for Codex's limit to reset
-Changes what you'd notice: no
-Clear winner: yes
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -67,3 +63,80 @@ Clear winner: yes
 - Follow-up: once, with 24 busy CPU loops, "0384 AC2: speck review run twice at once starts one reviewer" failed in a full run of the file; it didn't happen again in 12 runs of that test alone, with or without this change, and the test doesn't read the record this ticket changed.
 - Follow-up: when Codex stopped at its usage limit, `speck review` said only "codex exited 1:" with nothing after it; the reason (the usage limit and when it resets) showed only when Codex was run by hand.
 - Suite runs here had other failures (0072, 0150, 0202, 0232 AC3, 0264 AC3) while other sessions kept the machine's load average between 50 and 80; each passed when its file ran on its own afterwards.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "376aa115b2c3d7ec28ed01a2ee780bfa02b9d5ae",
+    "session": "fresh",
+    "thread_id": "01a181e4-a605-74c1-8fdb-2c1f4fa8980d",
+    "builder_response": "- Tests run: test/review-running-0540.test.mjs test/review-wait-0384.test.mjs (via `speck test --related`)\n- AC3's runs (5 alone, 5 alongside `npm test`) and AC2's deliberate break are recorded in the ticket's Delivery log; they were run by hand, as the criteria are about repeated runs rather than one test.\n- No visible change, so no pictures.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 138433,
+      "cached_input_tokens": 95232,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 737,
+      "reasoning_output_tokens": 31
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 43201,
+      "cached": 95232,
+      "write": 0,
+      "output": 737
+    },
+    "cost_usd": 0.1032952,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-28T09:44:00.929Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/review-wait.mjs:startRound now records the child PID immediately. The Delivery log explains the delayed worker startup and reproduction; 0540 AC1 passes in the saved test output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "0384 AC3 asserts running status after both exits 12 and passes. The Delivery log records deliberate mutations that made this test and 0540 AC1 fail."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The Delivery log records five consecutive file runs alone and five alongside npm test, all passing. The saved related-test output also confirms 0384 AC3 passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "reviewRound retains its existing cleanup. roundRunning still checks PID liveness and recorded rounds. Both new 0540 AC4 tests pass, covering completed and failed reviews; existing 0384 lifecycle tests also pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Saved related-test output reports 125 passed, zero failed and three skipped. The change is confined to running-round registration and its tests; whole-suite regression checking remains the shipping gate."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel now shows a review as running immediately after its process starts, closing the timing gap behind the intermittent failure. Tests preserve checks that the indicator stays visible while waiting and disappears after completion or failure. The recorded repeated runs pass, and no blocking issues were found."
+  }
+}
+```
+
+</details>
