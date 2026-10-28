@@ -1,7 +1,7 @@
 ---
 id: "0545"
 title: "Name the builder's model in the facts grid"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-24-name-the-builder-s-model-in-the-facts-grid.
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T09:43:19.731Z"
+approved: "2026-10-28T09:54:11.427Z"
 
 ---
 # 0545 · Name the builder's model in the facts grid
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 An open Build ticket's facts grid names the reviewer by its model while it reviews (such as `gpt-6.1-sol`), but the builder only by its agent's name (such as Claude). Someone watching a build can see which model reviews but not which one builds without looking it up in Settings.
@@ -53,9 +54,14 @@ When you open a ticket that's being built, the Builder box in its facts now name
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 186,433
+- Elapsed since build started: 11 min
+- Changed lines: 40 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups skipped as already covered: the flaky `0384 AC3` running-round test, which failed on main during this build, is ticket 0540.
 
