@@ -36,7 +36,7 @@ Then ask whether to add to the existing item, go ahead anyway or stop. Write not
    ```markdown
    # <Idea title>
 
-   Captured: <date> · Status: idea
+   Captured: <YYYY-MM-DD HH:MM> · Status: idea
    Raised by: you
 
    ## What
@@ -48,6 +48,8 @@ Then ask whether to add to the existing item, go ahead anyway or stop. Write not
    ## Notes
    - <decisions, constraints, links and open questions from the conversation>
    ```
+
+   `Captured:` gives the date and the time you write the note, in 24-hour local time, such as `Captured: 2026-10-27 14:32`: the panel's Capture list orders notes from the same day by that time, latest first.
 
    `Raised by:` says who raised the idea, not who wrote the file: `you` when the user asked for it to be captured, as here, even though you write it. Write `Raised by: agent` instead only for an idea you raised yourself without being asked, such as something you noticed during other work.
 

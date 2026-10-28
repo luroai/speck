@@ -26,12 +26,12 @@ const skill = name => fs.readFileSync(path.join(ROOT, 'skills', name, 'SKILL.md'
 
 test('0521 AC1: /speck-capture writes a Raised by line after Captured, you for the user\'s own ask and agent otherwise', () => {
   const s = skill('speck-capture');
-  assert.match(s, /Captured: <date> · Status: idea\n\s*Raised by: you\n/, 'the template has it on its own line after Captured');
+  assert.match(s, /Captured: <YYYY-MM-DD HH:MM> · Status: idea\n\s*Raised by: you\n/, 'the template has it on its own line after Captured');
   assert.match(s, /`Raised by: agent`/, 'and names the agent value for an idea an agent raised itself');
 });
 
 test('0521 AC1: /speck-build\'s follow-up notes say Raised by: agent after Captured and From ticket', () => {
-  assert.match(skill('speck-build'), /Captured: <date> · Status: inbox\n\s*From ticket: <id>\n\s*Raised by: agent\n/);
+  assert.match(skill('speck-build'), /Captured: <YYYY-MM-DD HH:MM> · Status: inbox\n\s*From ticket: <id>\n\s*Raised by: agent\n/);
 });
 
 // ---------- AC2 ----------

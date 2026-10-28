@@ -217,11 +217,13 @@ function counter(ms) {
   return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
 }
 // 0520: a note's `Captured: <YYYY-MM-DD>` date, as written, or null when the line is missing or holds no real date
-// (such as 2026-02-30), as its card says.
+// (such as 2026-02-30), as its card says. 0537: with the 24-hour `HH:MM` after it, when
+// that's a real time with only `·` or the line's end after it, else null.
 function capturedAt(body) {
-  const d = ((typeof body === 'string' ? body : '').match(/^Captured:[ \t]*(\d{4}-\d{2}-\d{2})(?![\d-])/m) || [])[1];
+  const [, d, h, mi] = (typeof body === 'string' ? body : '').match(/^Captured:[ \t]*(\d{4}-\d{2}-\d{2})(?![\d-])(?:[ \t]+(\d{2}):(\d{2})(?=[ \t]*(?:·|$)))?/m) || [];
   const at = d ? Date.parse(`${d}T00:00:00Z`) : NaN;
-  return Number.isFinite(at) && new Date(at).toISOString().startsWith(d) ? d : null;
+  if (!(Number.isFinite(at) && new Date(at).toISOString().startsWith(d))) return { on: null, time: null };
+  return { on: d, time: h !== undefined && +h < 24 && +mi < 60 ? `${h}:${mi}` : null };
 }
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
@@ -286,9 +288,11 @@ function panelModel(state) {
     // Follow-ups waiting in the inbox, in JSON order.
     inbox: ideas.filter(i => statusOf(i) === 'inbox').map(i => ({ ...i, from: fromTicket(i.body) })),
     // 0520: Capture's list: every note whose status is idea or inbox, newest captured first by its `Captured:` line's
-    // date, those without one last, otherwise in JSON order. 0521: each says whether an agent raised it.
-    capture: ideas.filter(i => ['idea', 'inbox'].includes(statusOf(i))).map((i, at) => ({ ...i, from: statusOf(i) === 'inbox' ? fromTicket(i.body) : null, agent: raisedByAgent(i.body), at, on: capturedAt(i.body) }))
-      .sort((a, b) => (a.on === null) - (b.on === null) || (b.on || '').localeCompare(a.on || '') || a.at - b.at).map(({ at, on, ...i }) => i),
+    // date, those without one last, otherwise in JSON order. 0537: on the same day, those with a time first, latest
+    // first. 0521: each says whether an agent raised it.
+    capture: ideas.filter(i => ['idea', 'inbox'].includes(statusOf(i))).map((i, at) => ({ ...i, from: statusOf(i) === 'inbox' ? fromTicket(i.body) : null, agent: raisedByAgent(i.body), at, ...capturedAt(i.body) }))
+      .sort((a, b) => (a.on === null) - (b.on === null) || (b.on || '').localeCompare(a.on || '') || (a.time === null) - (b.time === null) || (b.time || '').localeCompare(a.time || '') || a.at - b.at)
+      .map(({ at, on, time, ...i }) => i),
     // One list: in-flight tickets, then ready ones in JSON order, the order speck run starts them. 0200: in-flight ones
     // go in the order their builds started, so each keeps its place until it ships; one with no start time goes after, by id.
     queue: [...tickets.filter(t => IN_FLIGHT.includes(t.status) || (t.status === 'done' && beingShipped(t))).sort(byStart), ...tickets.filter(is('ready'))].map(chain).map(t => {

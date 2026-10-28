@@ -40,7 +40,7 @@ test('0036 AC2: the note follows the /speck-capture format with Status: inbox an
   assert.ok(block, 'step 1 shows the note shape');
   const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
   const at = re => lines.findIndex(l => re.test(l));
-  const order = [/^# </, /^Captured: <date> · Status: inbox$/, /^From ticket: <id>$/, /^## What$/, /^## Why$/, /^## Notes$/].map(at);
+  const order = [/^# </, /^Captured: <YYYY-MM-DD HH:MM> · Status: inbox$/, /^From ticket: <id>$/, /^## What$/, /^## Why$/, /^## Notes$/].map(at);
   order.forEach((i, n) => assert.ok(i >= 0, `line ${n} present`));
   assert.deepEqual([...order].sort((a, b) => a - b), order, 'heading, status, From ticket, What, Why, Notes in order');
   assert.equal(order[1], order[0] + 1, 'the status line comes straight after the heading');
