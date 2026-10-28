@@ -14,6 +14,9 @@
   .foreman .run-log .at { color: var(--log-muted); }
   .foreman .run-log .msg { color: var(--log-text); }
   .foreman .run-log .fail { color: var(--log-bad); }
+  .foreman .run-log .tool { color: var(--log-run); } /* 0548: a build log's tool calls and note, as in its card */
+  .foreman .run-log .note { color: var(--log-warn); }
+  .foreman .run-log .ln.gap { min-height: 1.5em; } /* 0548: a build log's blank line, a line high */
   .foreman p { margin: 2px 0; }
   .foreman .stale { color: var(--warn); }
   .foreman .reload { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }

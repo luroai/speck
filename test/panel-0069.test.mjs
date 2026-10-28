@@ -47,9 +47,9 @@ test('0069 AC1: the rest of the row shows as before: bar, counter and log (the w
   assert.ok(topOf(a).children.some(n => n.className === 'progress'), 'the progress, in the top row since 0156: in words only since 0416');
   assert.match(p.all(topOf(a)).find(n => n.className === 'sub').textContent, /^01:0\d$/, 'the counter in the top row');
   await open(p, '0001');
-  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'full-open', 'log'], 'no path line since 0421');
+  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'full-open', 'full-open', 'log'], 'no path line since 0421 (0548: Full log)');
   await open(p, '0002');
-  assert.deepEqual(shape(rowOf(p, '0002')), ['top', 'full-open', 'log']);
+  assert.deepEqual(shape(rowOf(p, '0002')), ['top', 'full-open', 'full-open', 'log']);
 });
 
 test('0069 AC1: a build exit message still shows, with no status line after it', async () => {
@@ -77,7 +77,7 @@ test('0069 AC2: a blocked ticket says "Answer the question, then run /speck-buil
   assert.match(row.children[2].textContent, /^cd \/tmp\/x && claude --resume abc/);
   assert.equal(row.children[3].textContent, 'Waiting for you. Answer the question, then run /speck-build 0004');
   assert.ok(!row.textContent.includes('blocked'), 'no status word');
-  assert.deepEqual(shape(rowOf(p, '0004')), ['top', 'question', 'resume', 'act', 'full-open', 'log'], 'open: the rest as before');
+  assert.deepEqual(shape(rowOf(p, '0004')), ['top', 'question', 'resume', 'act', 'full-open', 'full-open', 'log'], 'open: the rest as before (0548: and Full log)');
   await open(p, '0004');
   assert.deepEqual(shape(rowOf(p, '0004')), ['top'], '0434: closed, its two lines only');
 });

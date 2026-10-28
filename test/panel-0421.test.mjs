@@ -30,7 +30,7 @@ function page({ answer = () => ({ ok: true, status: 200, json: async () => ({ ok
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 const shape = row => row.children.map(n => n.className);
-const BUTTONS = ['full-open', 'stop-build'];
+const BUTTONS = ['full-open', 'full-open', 'stop-build']; // 0548: Full ticket, Full log, Stop build
 async function opened(p, id) { click(topOf(rowOf(p, id))); await p.settle(); return rowOf(p, id); }
 
 test('0421 AC1: an open ticket\'s card doesn\'t show its worktree path', async () => {
@@ -50,12 +50,12 @@ test('0421 AC2: Full ticket, Review pack and Stop build sit together, in that or
   await p.settle();
   const building = shape(await opened(p, '0901'));
   const i = building.indexOf('full-open');
-  assert.deepEqual(building.slice(i, i + 2), BUTTONS, 'Full ticket, then Stop build, side by side');
+  assert.deepEqual(building.slice(i, i + 3), BUTTONS, 'Full ticket, then Stop build, side by side (0548: Full log between them)');
   const row = rowOf(p, '0901');
-  assert.deepEqual(row.children.slice(i, i + 2).map(n => n.textContent), ['Full ticket', 'Stop build']);
+  assert.deepEqual(row.children.slice(i, i + 3).map(n => n.textContent), ['Full ticket', 'Full log', 'Stop build']);
   const approved = await opened(p, '0902'), at = shape(approved);
   const j = at.indexOf('full-open');
-  assert.deepEqual(approved.children.slice(j, j + 2).map(n => n.textContent), ['Full ticket', 'Review pack']);
+  assert.deepEqual(approved.children.slice(j, j + 3).map(n => n.textContent), ['Full ticket', 'Review pack', 'Full log']);
 });
 
 test('0421 AC3: Stop build still asks first, then stops the build, and shows why when the server refuses', async () => {
@@ -122,7 +122,7 @@ test('0421 AC2: with a mouse, an open card\'s buttons are small text buttons on 
     await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#queue .q').length === 4`, 'the panel');
     assert.equal(await b.js(`matchMedia('(pointer: coarse)').matches`), false, 'a mouse is the main pointer');
     await b.js(openLane('build'));
-    for (const [id, want] of [['0901', ['Full ticket', 'Stop build']], ['0902', ['Full ticket', 'Review pack']]]) {
+    for (const [id, want] of [['0901', ['Full ticket', 'Full log', 'Stop build']], ['0902', ['Full ticket', 'Review pack', 'Full log']]]) { // 0548: Full log
       await b.js(`[...document.querySelectorAll('#queue .q')].find(c => c.querySelector('.id').textContent === '${id}').querySelector('.top').click(), true`);
       await b.until(`[...document.querySelectorAll('#queue .q.open')].some(c => c.querySelector('.id').textContent === '${id}')`, `${id} to open`);
       const got = await b.js(BOXES(id));
