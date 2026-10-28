@@ -348,6 +348,16 @@ function roundSpent(r) {
   return { tokens: !counts.length || counts.every(n => n === null) ? null : counts.reduce((n, x) => n + (x ?? 0), 0), cost_usd: num(meta.cost_usd) };
 }
 
+// 0546: a saved review round's tokens as speck status --json gives them: the tokens it saved (0529), added up as the
+// ticket's total counts them, or for a round saved without them, its usage's input plus output, or 0.
+export function roundTokenCount(r) {
+  const meta = plain(r) && plain(r.meta) ? r.meta : {}, t = plain(meta.tokens) ? meta.tokens : null;
+  const counts = t ? ['input', 'cached', 'write', 'output'].map(k => num(t[k])) : [];
+  if (counts.some(n => n !== null)) return counts.reduce((n, x) => n + (x ?? 0), 0);
+  const u = plain(meta.usage) ? meta.usage : {};
+  return (num(u.input_tokens) ?? 0) + (num(u.output_tokens) ?? 0);
+}
+
 // 0527: a saved round's tokens as {input, cached, write, output}: the ones it saved (0529), or for a round saved before
 // those, its usage's, as Codex, Claude Code or Cursor names them (roundTokens), cache reads and writes too. Codex's
 // usage names its cached input cached_input_tokens. A usage roundTokens can't split, such as one whose cached input is
