@@ -142,6 +142,13 @@ const within = (n, box) => { for (; n; n = n.parentNode) if (n === box) return t
 // View state only, kept across refreshes and never sent to the server.
 const open = new Set(); // ids of the open tickets
 const openNotes = new Set(); // paths of the open notes in Capture (0520)
+// 0538: a star being set, by note path: what it's set to, shown until the board says so, or the server refuses. A
+// refusal's reason, by path, shown on its card until its star is pressed again or the note leaves Capture.
+// starLast: the last press of each star still waiting for the server's answer.
+// starAnswered: the board each answered star was shown on, after which the next board says what the note is.
+// starButtons: each note's star as last built, so a redraw can put the focus back on it.
+const starWanted = new Map(), starRefused = new Map(), starLast = new Map(), starAnswered = new Map(), starButtons = new Map();
+let starPresses = 0;
 const openQueue = new Set(); // ids of the open queue tickets
 const openShipped = new Set(); // ids of the shipped cards that are open (0162, 0466)
 let moreStats = false; // whether Shipped shows all six stats (0162)
@@ -490,16 +497,64 @@ function capturedOn(body) {
 }
 // A collapsed idea or inbox card is its title and one short line (0435); open, the note's path is above its text.
 // 0521: closed, a note an agent raised has an agent tag after that line, as a ticket has its task tag.
+// 0538: right of its title, its star, and under its top row the server's reason when a star was refused.
 function noteItem(i, kind, open, second) {
   const isOpen = open.has(i.path);
-  const head = el('div', 'head', null, el('div', 'line', null, titled(el('span', 'title', i.title))), el('span'),
+  const head = el('div', 'head', null, el('div', 'line', null, titled(el('span', 'title', i.title))), starButton(i),
     el('div', 'checks', null, el('span', null, second), !isOpen && i.agent === true ? agentTag() : null));
   head.addEventListener('click', () => flip(open, i.path));
-  return el('div', `item ${kind}${isOpen ? ' open' : ''}`, null, head,
+  return el('div', `item ${kind}${isOpen ? ' open' : ''}`, null, head, starRefused.has(i.path) ? el('div', 'bad star-refused', starRefused.get(i.path)) : null,
     isOpen ? el('div', 'detail', null, el('div', null, null, el('div', 'path mono', i.path), noteOf(i))) : null);
 }
+// 0538: a note's star: filled when it's starred, empty when not. Pressing it stars or unstars the note, and doesn't
+// open or close its card.
+const starredNow = i => (starWanted.has(i.path) ? starWanted.get(i.path) : i.starred === true);
+// Drawn, as the panel's fonts have no star: its outline, filled once starred (panel-cards.css).
+function starShape() {
+  const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'), star = document.createElementNS(ns, 'polygon');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  star.setAttribute('points', '12,2.5 14.9,8.6 21.5,9.3 16.5,13.8 17.9,20.4 12,17 6.1,20.4 7.5,13.8 2.5,9.3 9.1,8.6');
+  svg.appendChild(star);
+  return svg;
+}
+function starButton(i) {
+  const on = starredNow(i), b = el('button', `star${on ? ' on' : ''}`, null, starShape());
+  b.type = 'button';
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  b.setAttribute('aria-label', `Star ${i.title}`);
+  b.title = on ? 'Starred. Press to unstar' : 'Star this note';
+  b.addEventListener('click', e => { e.stopPropagation(); setStar(i.path, !on); });
+  b.starKey = i.path;
+  starButtons.set(i.path, b);
+  return b;
+}
+// The server adds or takes out the note's `Starred: yes` line, and the next board shows it. Only the last press of a
+// note's star counts, so an earlier one answered late can't undo it.
+async function setStar(at, on) {
+  const press = ++starPresses;
+  starRefused.delete(at);
+  starAnswered.delete(at);
+  starWanted.set(at, on);
+  starLast.set(at, press);
+  render();
+  let why = null;
+  try {
+    const res = await fetch(`/api/ideas/${encodeURIComponent(at.slice(at.lastIndexOf('/') + 1))}/${on ? 'star' : 'unstar'}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    if (!res.ok) {
+      try { why = (await res.json()).error; } catch { /* no JSON: say what we know */ }
+      if (typeof why !== 'string' || !why) why = `The server refused (${res.status}).`;
+    }
+  } catch {
+    why = `Couldn't reach the panel server, so the note wasn't ${on ? 'starred' : 'unstarred'}.`;
+  }
+  if (starLast.get(at) !== press) return;
+  starLast.delete(at);
+  if (why !== null) { starWanted.delete(at); starRefused.set(at, why); } else starAnswered.set(at, state);
+  render();
+}
 // 0520: Capture lists ideas and inbox notes together, each card as it was in Plan's Ideas or Inbox list. Reading is all
-// it does: a note is changed only in chat.
+// it does, apart from its star (0538): a note is changed only in chat.
 function captureItem(i) {
   const on = capturedOn(i.body);
   if (String(i.status).trim() === 'idea') return noteItem(i, 'idea', openNotes, on ? `Captured ${on}` : 'No capture date');
@@ -1250,7 +1305,15 @@ function render() {
   for (const ids of [askDrafts, askRefused]) for (const id of ids.keys()) if (!foremanAskOf(id)) ids.delete(id);
   const typing = typeof document.activeElement === 'object' && document.activeElement && document.activeElement.askKey ? document.activeElement : null;
   askBoxes.clear();
-  fill('capture', keptItems('capture', m.capture, i => i.path, i => openNotes.has(i.path), captureItem), 'Nothing captured.');
+  // 0538: a star set is shown as set until the board says so, or a board after the server's answer says otherwise, and
+  // a refusal until its note leaves Capture.
+  const inCapture = new Map(m.capture.map(i => [i.path, i]));
+  for (const [at, on] of starWanted) if (!starLast.has(at) && (!inCapture.has(at) || inCapture.get(at).starred === on || starAnswered.get(at) !== state)) { starWanted.delete(at); starAnswered.delete(at); }
+  for (const at of starRefused.keys()) if (!inCapture.has(at)) starRefused.delete(at);
+  for (const at of starButtons.keys()) if (!inCapture.has(at)) starButtons.delete(at);
+  const starFocus = typeof document.activeElement === 'object' && document.activeElement ? document.activeElement.starKey : undefined;
+  fill('capture', keptItems('capture', m.capture, i => i.path, i => [openNotes.has(i.path), starWanted.get(i.path) ?? null, starRefused.get(i.path) ?? null], captureItem), 'Nothing captured.');
+  if (starFocus !== undefined && starButtons.has(starFocus) && document.activeElement !== starButtons.get(starFocus)) starButtons.get(starFocus).focus();
   $('capture-n').textContent = m.capture.length ? `${m.capture.length} note${m.capture.length === 1 ? '' : 's'}` : ''; // 0536
   $('capture-n').hidden = !m.capture.length;
   fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
