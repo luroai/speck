@@ -1,7 +1,7 @@
 ---
 id: "0536"
 title: "Show how many notes Capture holds"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T23:32:44.719Z"
 approved: "2026-10-27T23:36:37.554Z"
+finished: "2026-10-28T09:47:39.440Z"
 
 ---
 # 0536 · Show how many notes Capture holds
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Capture lists every idea and inbox note, but nothing says how many there are, so you have to scroll the whole lane to know how big the backlog is. Build and Shipped already show a count under their titles.
