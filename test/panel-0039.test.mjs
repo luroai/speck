@@ -68,7 +68,10 @@ test('0039 AC3: an idea opens and closes from its top row (title, then its captu
   const head = top(notes(p)[0]);
   assert.ok(head, 'the idea has a top row');
   for (const s of ['Fresh', 'No capture date']) assert.ok(p.all(head).some(n => n.textContent === s), `the top row holds ${s}`);
+  // 0538: apart from its star, which marks the note and leaves the card as it is (0538's own tests check that)
+  const inStar = n => { for (; n; n = n.parentNode) if (/\bstar\b/.test(String(n.className || ''))) return true; return false; };
   for (const i of p.all(head).keys()) {
+    if (inStar(p.all(top(notes(p)[0]))[i])) continue;
     press(p.all(top(notes(p)[0]))[i]);
     assert.ok(isOpen(notes(p)[0]), `opens from top-row node ${i}`);
     press(p.all(top(notes(p)[0]))[i]);
