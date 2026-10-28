@@ -1,7 +1,7 @@
 ---
 id: "0538"
 title: "Star a note in Capture"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,12 +16,13 @@ after: ["0537"]                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-28T10:44:00.141Z"
 approved: "2026-10-28T10:57:27.789Z"
-blocked_at: "2026-10-28T11:03:55.555Z"
+blocked_at: ""
+waited_seconds: 8467
 
 ---
 # 0538 · Star a note in Capture
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 Scrolling through Capture, you can't tell which notes you liked before, so the ideas you care about get lost among dozens of inbox notes and older ideas.
@@ -50,6 +51,7 @@ You can star a note in Capture, and a starred note shows a filled star on its ca
 - Self-check: an earlier star press answered late no longer undoes a later one; a board after the server's answer now wins over the pressed value; the focus goes back to the star after a press; the star is drawn rather than typed, as the panel's fonts have no star character; `Starred:` lines are read and written only in the note's header, before its first `## ` section.
 - Handed back by speck run's ship queue 2026-10-28: 0039, 0140, 0161 and 0435's checks failed. Fixed all but 0039's: the star is now a 44 px boxed button, its top level with the title, using the panel's own focus ring. 0039 AC3 needs the user's answer above.
 - `scripts/panel.mjs` was at its 600-line limit, so `panelUrl` (the `--url` parsing) moved, unchanged, to `scripts/panel-url.mjs` to make room for the star's route.
+- Went with the recommendation: (a) let 0039's check leave out the star (chosen by the user in the panel, 2026-10-28 13:25 UTC).
 
 ## In plain words
 Every note in Capture now has a star at the right of its title. Tap it and the star fills in; tap it again and it empties. It's only a mark: the note doesn't move, nothing else about it changes, and nothing is committed. The star is saved in the note itself, so it still shows after a reload and on your phone.
