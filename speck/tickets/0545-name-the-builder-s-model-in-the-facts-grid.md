@@ -42,6 +42,7 @@ The facts grid's Builder cell names the model the build runs on when speck knows
 - From 0462's build: the board gives a ticket's builder and builder_label but no builder model.
 - Decided 2026-10-27: with no model set, show only the agent's name.
 - Today: the cell is `workerOf` in `templates/panel-model.js`; the board's builder fields are set in `scripts/speck.mjs` (`builder`, `builder_label`); `builder_model` is read by `modelOf` in `scripts/build-model.mjs`; providers you add are in `scripts/custom-providers.mjs` (first model is the default).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
