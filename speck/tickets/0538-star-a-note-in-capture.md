@@ -44,6 +44,7 @@ You can star a note in Capture, and a starred note shows a filled star on its ca
 - Decided 2026-10-27: this is a narrow exception to 0520's rule that Capture is managed only in chat. The star is the only thing Capture may write, and only the `Starred:` line. The brief says so where it describes Capture.
 - Today: Capture's cards are `captureItem` and `noteItem` in `templates/panel.js`; the panel's routes are in `scripts/panel.mjs`; the board feed keeps ideas by path (`KEYED` in `scripts/board-feed.mjs`), so the star shows on the next board update.
 - After 0537, which changes Capture's sort and the note formats, and 0536, which changes Capture's lane in `templates/panel.html` and `templates/panel.js`; all three edit the brief's sentence on Capture.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
