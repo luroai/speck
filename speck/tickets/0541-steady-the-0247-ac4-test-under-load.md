@@ -1,7 +1,7 @@
 ---
 id: "0541"
 title: "Steady the 0247 AC4 test under load"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-27-fix-the-0247-ac4-test-that-fails-under-load
 after: []                # ticket ids that must be done first
 created: 2026-10-27
 started: "2026-10-27T23:40:38.350Z"
+blocked_at: "2026-10-28T00:15:02.229Z"
 
 ---
 # 0541 · Steady the 0247 AC4 test under load
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 The `0247 AC4` test in `test/run-0247.test.mjs` (new code that can't start leaves the old one running) failed once in a large parallel `speck test --related` run and passes when its file runs alone. A test that fails by chance can stop `speck ship` for a ticket that didn't break it.
@@ -49,6 +50,10 @@ The `0247 AC4` test in `test/run-0247.test.mjs` (new code that can't start leave
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
+The change is built and its tests pass, but the reviewer (Codex) can't run: its account has hit its usage limit until about 3:41 AM. Should I wait until then and run the review with Codex, or would you rather pick another reviewer for this ticket, such as Cursor? I recommend waiting for Codex, because it's the reviewer you've set and the change is small.
+Recommended: wait for Codex after 3:41 AM
+Changes what you'd notice: no
+Clear winner: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
