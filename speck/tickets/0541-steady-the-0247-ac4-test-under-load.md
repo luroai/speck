@@ -1,7 +1,7 @@
 ---
 id: "0541"
 title: "Steady the 0247 AC4 test under load"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-10-27
 started: "2026-10-27T23:40:38.350Z"
 blocked_at: ""
 waited_seconds: 34088
+approved: "2026-10-28T09:44:26.314Z"
 
 ---
 # 0541 · Steady the 0247 AC4 test under load
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The `0247 AC4` test in `test/run-0247.test.mjs` (new code that can't start leaves the old one running) failed once in a large parallel `speck test --related` run and passes when its file runs alone. A test that fails by chance can stop `speck ship` for a ticket that didn't break it.
@@ -59,9 +60,14 @@ Changes what you'd notice: no
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 99,184
+- Elapsed since build started: 604 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - What 0247 AC4 waited on, before: 8 seconds each (`until`'s default) for speck run to start watching, for the failed switch to be said, for the ticket to launch and for the next switch, while the last check of which processes were left was taken once, straight after a fixed pause (600 ms and 800 ms), so a stopped process not yet gone counted as left over. After: each of those waits up to 30 seconds (`BUSY_MS`), and the check of which processes are left waits, up to the same limit, for the failed one to be gone. The fixed pauses stay only to show nothing happens again (no second launch, no second "couldn't switch").
 - AC2, how it was checked: with `scripts/run-switch.mjs` broken on purpose so that new code that can't start stops the old speck run (`process.exit(1)` after it says it couldn't switch), both AC4 tests fail. Broken instead so that, after a switch, the process you started stops when the next new code can't start, the AC4 test that covers a failure after a switch fails. The code was put back each time.
