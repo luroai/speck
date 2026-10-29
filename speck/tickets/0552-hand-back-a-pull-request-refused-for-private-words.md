@@ -43,6 +43,7 @@ speck run's pull request queue hands a ticket refused for private words back to 
 - Relies on nothing outside this repo.
 - Failing before this build: none
 - Self-check: no changes. As with 0323's conflict hand-back, nothing pushes the build's new commit to the pull request afterwards, so the next ship asks for `speck pr`; that's the dropped idea speck/ideas/2026-10-19-push-a-handed-back-pull-request-again.md, left alone here.
+- Handed back 2026-10-29 (tests fail together: 0232 AC3 and 0072's stop tests). main had nothing new to merge. The machine was at load 88–141 while another build ran a 64-process load script; the same tests failed on main then too. Once the load dropped, 0072's tests passed on this branch and 0232 AC3 passed three times out of three, so no code changed.
 
 ## In plain words
 In pull request mode, when speck run tries to merge a ticket and finds one of your private words or your home folder's path in its speck files, it now sends the ticket back to the agent that built it to take them out, just as it already does when you ship locally. Before, it only said the ticket didn't ship and left it waiting for you.
