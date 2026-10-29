@@ -1,7 +1,7 @@
 ---
 id: "0551"
 title: "Stop speck run when the panel's switch times out"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-28-stop-speck-run-when-the-panel-switch-times-
 after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:13:40.713Z"
+approved: "2026-10-29T14:19:43.782Z"
 
 ---
 # 0551 · Stop speck run when the panel's switch times out
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the panel's speck run switch is turned on and speck run doesn't take its lock and say it's watching within 10 seconds, the panel shows an error but leaves the speck run it started running. That speck run can start watching and launch builds a moment later, while the switch shows it off and failed.
@@ -56,9 +57,15 @@ To see it, you'd need a speck run that is slow to start; normally the switch tur
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 stopStarted waits only for the process-group leader.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 273,080
+- Elapsed since build started: 6 min
+- Changed lines: 56 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
