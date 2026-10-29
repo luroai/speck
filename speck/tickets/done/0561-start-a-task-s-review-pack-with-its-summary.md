@@ -1,7 +1,7 @@
 ---
 id: "0561"
 title: "Start a task's review pack with its summary"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:21:47.485Z"
 approved: "2026-10-29T14:32:06.403Z"
+finished: "2026-10-29T15:22:43.192Z"
 
 ---
 # 0561 · Start a task's review pack with its summary
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A task that leaves many files, such as a research run with dozens of logs, shows each one as a button at the top of its review pack, above Ship, with nothing to say which to read first. A task always waits for you to ship it, so you scroll past every file each time, especially on a phone, and have no starting point for checking the work.
