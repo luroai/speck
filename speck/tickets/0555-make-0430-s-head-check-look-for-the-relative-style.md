@@ -1,7 +1,7 @@
 ---
 id: "0555"
 title: "Make 0430's head check look for the relative stylesheet"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-28-make-0430-s-head-check-look-for-the-relative-stylesheet.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-29
+started: "2026-10-29T14:17:16.688Z"
 
 ---
 # 0555 · Make 0430's head check look for the relative stylesheet
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 0430 AC1's check that the Settings stylesheet loads in the page's head looks for `/panel-settings.css`, but since 0543 the page links `panel-settings.css`. The search finds nothing, so the check passes without checking anything, and a stylesheet could slip out of the head unnoticed.
