@@ -3,13 +3,12 @@
 // shell that started it has ended. It returns once speck run is watching, or with speck run's own refusal.
 import path from 'node:path';
 import { SpeckError, findRepoRoot, runsOf } from './speck.mjs';
-import { runState, pidAlive } from './run.mjs';
+import { runState } from './run.mjs';
 import { isSpeckRun, recordedRun } from './run-lock.mjs';
 import { panelRunOn } from './panel-run.mjs';
+export { stopStarted } from './panel-run.mjs';
 
 const LOG = path.join('speck', '.cache', 'runs', 'run.log');
-const STOP_MS = 5000, POLL_MS = 50;
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // The speck run already running in this repo, as its pid, or null: one its lock names, or the one the Foreman's record
 // names while its lock is gone. A lock naming a live process that isn't speck run isn't one: speck run refuses that itself.
@@ -24,17 +23,6 @@ export function runBackground() {
   return startBackground(findRepoRoot()).catch(fail);
 }
 
-// Stops the process group a speck run that didn't start in time leads: SIGTERM, then SIGKILL if it's still there after
-// `ms`. Resolves once it has gone, or rejects saying which process to stop when even SIGKILL didn't stop it in time.
-export async function stopStarted(pid, ms = STOP_MS) {
-  const gone = async () => { for (const until = Date.now() + ms; Date.now() < until; await sleep(POLL_MS)) if (!pidAlive(pid)) return true; return !pidAlive(pid); };
-  for (const signal of ['SIGTERM', 'SIGKILL']) {
-    try { process.kill(-pid, signal); } catch { /* already gone */ }
-    if (await gone()) return;
-  }
-  throw new SpeckError(`speck run (process ${pid}) didn't stop. Stop that process yourself.`);
-}
-
 // Starts it, `ms` being how long it has to say it's watching. Prints and exits on success; throws a SpeckError otherwise.
 export async function startBackground(repo, { ms } = {}) {
   const already = pid => console.log(`speck run: already running in this repo (process ${pid}). Its output is in ${LOG}.`);
@@ -45,8 +33,8 @@ export async function startBackground(repo, { ms } = {}) {
     console.log(`speck run: on, in the background (process ${res.body.run.pid}): stop it with the switch at the top of the panel's Settings; its output is in ${LOG}`);
     process.exit(0); // the child's listeners would otherwise hold this process
   }
-  // It didn't say it was watching in time: stop it, so nothing is left running.
-  if (res.body.pid) { await stopStarted(res.body.pid); throw new SpeckError(res.body.error, 1); }
+  // It didn't say it was watching in time: panelRunOn has stopped it, or says which process to stop (0551).
+  if (res.body.pid) throw new SpeckError(res.body.error, 1);
   // Another one started meanwhile, so this one refused: it's on all the same.
   const now = running(repo);
   if (now) { already(now); process.exit(0); }
