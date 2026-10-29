@@ -1,7 +1,7 @@
 ---
 id: "0553"
 title: "Count the pack's reviewer tokens as each round saved them"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-28-count-the-pack-s-reviewer-tokens-as-each-round-saved-them.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-29
+started: "2026-10-29T14:13:41.438Z"
 
 ---
 # 0553 · Count the pack's reviewer tokens as each round saved them
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The review pack's and the Delivery log's "Reviewer tokens" line still adds up each round's raw usage input and output. Since 0546 the panel and `speck status --json` count each round as it saved its tokens, so for a resumed Codex round, a Claude round or a Cursor round the pack and the Delivery log give a different figure from the panel's for the same ticket.
