@@ -45,6 +45,7 @@ A build's end opens only the Codex session files that changed since the ticket's
 - Shares `scripts/spend.mjs` with 0553, unchained: different functions.
 - Relies on Codex's sessions folder layout as 0532 and 0534 already read it.
 - Failing before this build: none
+- Self-check: a start time that can't be read (blank, malformed, not a string) now reads every file, and a Date or milliseconds works too. Known limit: a recent sub-agent's ancestors come from session files, so an ancestor whose own file hasn't changed since the start isn't seen; a parent writes to its file when it starts one, so this needs a parent that stopped before the ticket started.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
