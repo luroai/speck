@@ -44,6 +44,7 @@ The other tests of speck run's switch wait with time limits long enough for a bu
 - `watching(run, ms)` in `test/support/run-switch.mjs` already takes a time limit (0541), and `until` in `test/support/run.mjs` waits 8 s by default.
 - Waits for 0557: both may change the waits in `test/support/run.mjs` (`until`).
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
