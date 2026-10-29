@@ -39,6 +39,7 @@ started: "2026-10-29T14:17:16.688Z"
 - Asked for 2026-10-29 for the 0.21.1 patch release.
 - From the reviewer's minor finding F1 in 0543's round 1: `test/panel-0430.test.mjs`, line 18, compares `html.indexOf('/panel-settings.css')`, which is -1, with the head's end.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
