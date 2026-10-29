@@ -45,7 +45,7 @@ async function openDoc(p) {
   await p.settle();
   p.press(buttonsIn(p, row(), 'Review pack')[0]);
   await p.settle();
-  p.press(buttonsIn(p, pane(p), DOCS[0].path)[0]);
+  p.press(p.all(pane(p)).find(x => x.tagName === 'button' && x.title === DOCS[0].path)); // 0562: its path is its tooltip
   await p.settle();
   assert.equal(view(p).hidden, false, 'the pop-up is open');
 }

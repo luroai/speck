@@ -61,7 +61,7 @@ test('0354 AC2: each file the pack lists can be pressed; a file that isn\'t Mark
   const opened = [];
   const p = await openPack({ pack: PACK, documents: DOCS }, [], { window: { open: (...a) => opened.push(a) } });
   const bs = docButtons(p);
-  assert.deepEqual(bs.map(b => b.textContent), DOCS.map(d => d.path));
+  assert.deepEqual(bs.map(b => b.textContent), ['memo.md', 'figures.pdf']); // 0562: named from inside the output folder
   p.press(bs[1]);
   assert.deepEqual(opened.map(a => a.slice(0, 2)), [[DOCS[1].url, '_blank']]);
 });
@@ -94,7 +94,7 @@ test('0354 AC2: a Markdown file that can\'t be fetched says so in the pop-up, wi
 
 test('0354 AC2: a file the server lists with an address that isn\'t its own is left out', async () => {
   const p = await openPack({ pack: PACK, documents: [...DOCS, { path: 'outputs/x.md', url: 'https://example.com/x.md' }, { path: 'outputs/y.md' }, 'x', null] });
-  assert.deepEqual(p.all(pane(p)).filter(n => n.className === 'pack-document').map(b => b.textContent), DOCS.map(d => d.path));
+  assert.deepEqual(p.all(pane(p)).filter(n => n.className === 'pack-document').map(b => b.title), DOCS.map(d => d.path)); // 0562: each named from inside the output folder, its path as its tooltip
 });
 
 // ---------- AC2 and AC3: the panel serves the files, only from inside the folder ----------

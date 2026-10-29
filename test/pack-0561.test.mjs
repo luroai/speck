@@ -31,7 +31,7 @@ test('0561 AC1: the speck-build skill\'s paragraph on a task names summary.md at
 test('0561 AC2: the summary\'s button comes first, labelled Start here, then the Ship part, then the other files', async () => {
   const p = await openPack({ pack: PACK, documents: [SUMMARY, ...DOCS] });
   const files = fileButtons(p);
-  assert.deepEqual(files.map(b => b.textContent), ['Start here', ...DOCS.map(d => d.path)]);
+  assert.deepEqual(files.map(b => b.textContent), ['Start here', ...['memo.md', 'figures.pdf']]); // 0562: named from inside the output folder
   const s = ship(p);
   assert.ok(s, 'the Ship part is there');
   assert.equal(at(p, files[0]), 1, 'straight under the pane\'s top line');
@@ -68,7 +68,7 @@ test('0561 AC2: the server lists a top-level summary.md first, in any case, mark
 test('0561 AC3: a task with no summary shows its files above the Ship part, as today', async () => {
   const p = await openPack({ pack: PACK, documents: DOCS });
   const files = fileButtons(p);
-  assert.deepEqual(files.map(b => b.textContent), DOCS.map(d => d.path));
+  assert.deepEqual(files.map(b => b.textContent), ['memo.md', 'figures.pdf']); // 0562: named from inside the output folder
   assert.ok(!buttons(p).some(b => b.textContent === 'Start here'));
   for (const b of files) assert.ok(at(p, b) < at(p, ship(p)), `${b.textContent} is above the Ship part`);
 });
