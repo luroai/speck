@@ -63,7 +63,7 @@ function repo() {
   r.g('add', '-A'); r.g('commit', '-qm', 'tickets');
   return r;
 }
-const PACK = `{ id: '0002', state: 'ok', text: '# Review pack\\n\\nIt passed.', pictures: [], documents: [{ path: 'outputs/0002/plan.md', url: '/api/tickets/0002/output/plan.md' }] }`;
+const PACK = `{ id: '0002', state: 'ok', text: '# Review pack\\n\\nIt passed.', pictures: [], documents: [{ path: 'outputs/0002/plan.md', url: '/api/tickets/0002/output/plan.md' }, { path: 'outputs/0002/notes/a.md', url: '/api/tickets/0002/output/notes/a.md' }] }`; // 0562: and a folder
 // Each view with buttons, opened in turn: [name, script that opens it, what shows once it's open].
 const VIEWS = [
   ['Plan, a ticket open', `${openLane('plan')}, document.querySelector('#shaping .item .head').click(), true`, `!!document.querySelector('#shaping .item.open .full-open')`],
@@ -128,7 +128,7 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
         }
       });
     }
-    for (const name of ['More stats', 'Close', 'Save', 'Review pack', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'outputs/0002/plan.md', 'Light', 'Discard', 'Keep editing'])
+    for (const name of ['More stats', 'Close', 'Save', 'Review pack', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'plan.md', 'notes/', 'Light', 'Discard', 'Keep editing']) // 0562: plan.md named from inside its output folder, and notes/ a folder's button
       assert.ok(seen.has(name) || [...seen].some(t => t.startsWith(name)), `the ${name} button was checked`);
   } finally { await b.close(); await stop(panel); }
 });

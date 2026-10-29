@@ -149,10 +149,15 @@
   #full-ticket .pack-buttons, #doc-view .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
   #full-ticket .ask-changes, #doc-view .ask-changes { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
   #full-ticket .ask-changes:disabled, #doc-view .ask-changes:disabled { cursor: default; opacity: .6; }
-  /* 0359: a task's files, as buttons at the top of its review pack */
-  #full-ticket .pack-documents { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
-  #full-ticket .pack-document { font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
-  #full-ticket .pack-document:hover { background: var(--panel); }
+  /* 0359: a task's files, as buttons at the top of its review pack. 0562: one row each, and each folder one row, folded at first */
+  #full-ticket .pack-documents, #full-ticket .pack-folder-row, #full-ticket .pack-folder-files { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  #full-ticket .pack-documents { margin: 0 0 10px; }
+  #full-ticket .pack-folder-files { padding-left: 14px; }
+  #full-ticket .pack-document, #full-ticket .pack-folder { font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
+  #full-ticket .pack-folder { border-style: dashed; }
+  #full-ticket .pack-folder::before { content: ''; display: inline-block; width: 4px; height: 4px; margin: 0 8px 2px 0; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); }
+  #full-ticket .pack-folder[aria-expanded="true"]::before { transform: rotate(135deg); }
+  #full-ticket .pack-document:hover, #full-ticket .pack-folder:hover { background: var(--panel); }
   /* 0354: the button back from a task's file to its review pack */
   #full-ticket .md a, #full-ticket .criteria a, #doc-view .md a { color: var(--run); }
   /* 0294: the pictures of a visual change in its review pack, each opening full size when pressed */
@@ -198,5 +203,5 @@
      is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
-    .foreman .reload, #full-ticket .close, #doc-view .close, #foreman .close, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document { border-width: 1px; }
+    .foreman .reload, #full-ticket .close, #doc-view .close, #foreman .close, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder { border-width: 1px; }
   }

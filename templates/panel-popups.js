@@ -48,6 +48,7 @@ function packButton(t) {
     packOf = { id: fullId, state: 'loading' };
     shipRefused.delete(fullId);
     shipped.delete(fullId);
+    for (const k of packFolders) if (k.startsWith(`${fullId}/`)) packFolders.delete(k); // 0562: its folders fold again
     changesSaid.delete(fullId); // 0357: the box comes back, holding any note that wasn't sent
     changesRefused.delete(fullId);
     render();
@@ -96,19 +97,58 @@ function picturesPart(pictures) {
 // 0354: a task's files the server listed with the pack, each with its path from the project root, served by the panel.
 const packDocuments = list => (Array.isArray(list) ? list : []).filter(d => d && typeof d.path === 'string' && typeof d.url === 'string' && /^\/api\/tickets\/\d+\/output\/./.test(d.url));
 const isMarkdown = d => /\.(md|markdown)$/i.test(d.path);
-// 0359: each file as a button at the top of the pack, labelled with its path. A button has no address, so a browser that
-// opens links itself has nothing to open: pressing a Markdown file shows it formatted in a pop-up over the whole panel
-// (0362), and any other opens in a new tab, served by the panel.
+// 0359: each file as a button at the top of the pack. A button has no address, so a browser that opens links itself has
+// nothing to open: pressing a Markdown file shows it formatted in a pop-up over the whole panel (0362), and any other
+// opens in a new tab, served by the panel.
 // 0561: the task's summary, marked by the server, is labelled Start here.
+// 0562: each file is named from inside the output folder, with its path from the project root as its tooltip, and each
+// folder directly inside it is one row, folded at first, unfolding to a button for each file it holds however deep.
+const packFolders = new Set(); // 0562: `<id>/<folder>` for each folder unfolded in a review pack, until the pack is opened again
+// A file's path inside the output folder, from the address the panel serves it at.
+function insidePath(d) {
+  const rel = d.url.replace(/^\/api\/tickets\/\d+\/output\//, '');
+  try { return rel.split('/').map(decodeURIComponent).join('/'); } catch { return rel; }
+}
+function documentButton(d, label) {
+  const b = el('button', 'pack-document', d.summary === true ? 'Start here' : label);
+  b.type = 'button';
+  b.title = d.path;
+  b.docOf = d.path; // 0362: so the focus can come back to it, or to the button drawn in its place
+  b.addEventListener('click', e => { e.stopPropagation(); if (isMarkdown(d)) openDocument(d); else window.open(d.url, '_blank', 'noopener'); });
+  return b;
+}
 function documentsPart(documents) {
-  return [el('div', 'pack-documents', null, ...documents.map(d => {
-    const b = el('button', 'pack-document', d.summary === true ? 'Start here' : d.path);
-    b.type = 'button';
-    b.title = (isMarkdown(d) ? 'Show it formatted, over the whole panel' : 'Open it in a new tab') + (d.summary === true ? ` (${d.path})` : '');
-    b.docOf = d.path; // 0362: so the focus can come back to it, or to the button drawn in its place
-    b.addEventListener('click', e => { e.stopPropagation(); if (isMarkdown(d)) openDocument(d); else window.open(d.url, '_blank', 'noopener'); });
-    return b;
-  }))];
+  const rows = [], folders = new Map();
+  for (const d of documents) {
+    const rel = insidePath(d), cut = d.summary === true ? -1 : rel.indexOf('/');
+    if (cut < 0) { rows.push(documentButton(d, rel)); continue; }
+    const name = rel.slice(0, cut);
+    if (!folders.has(name)) { const f = []; folders.set(name, f); rows.push(f); }
+    folders.get(name).push([d, rel.slice(cut + 1)]);
+  }
+  for (const [name, files] of folders) rows[rows.indexOf(files)] = folderRow(name, files);
+  return [el('div', 'pack-documents', null, ...rows)];
+}
+// A folder's row: a button saying how many files it holds, and under it, while it's unfolded, a button for each. Pressing
+// it folds or unfolds it in place, so the pack around it keeps its nodes, and the focus stays on it.
+function folderRow(name, files) {
+  const key = `${packOf?.id}/${name}`;
+  const b = el('button', 'pack-folder', `${name}/ · ${files.length} ${files.length === 1 ? 'file' : 'files'}`);
+  b.type = 'button';
+  const row = el('div', 'pack-folder-row', null, b);
+  const show = open => {
+    b.setAttribute('aria-expanded', String(open));
+    if (row.children.length > 1) row.removeChild(row.children[1]);
+    if (open) row.appendChild(el('div', 'pack-folder-files', null, ...files.map(([d, inside]) => documentButton(d, inside))));
+  };
+  b.addEventListener('click', e => {
+    e.stopPropagation();
+    const open = !packFolders.has(key);
+    if (open) packFolders.add(key); else packFolders.delete(key);
+    show(open);
+  });
+  show(packFolders.has(key));
+  return row;
 }
 // 0362: the Markdown file shown in the pop-up, or null while it's closed: { id, path, state: 'loading' | 'error' | 'ok',
 // text }. It's kept apart from the pack, so the side pane behind it keeps its nodes as they were.

@@ -63,7 +63,7 @@ test('0361 AC2: closed, it is its two lines; open, its Review pack button opens 
   p.press(pack);
   await p.settle();
   assert.ok(p.calls.some(c => String(c.url).endsWith('/api/tickets/0001/pack')), 'asks for the pack');
-  assert.deepEqual(docButtons(p).map(b => b.textContent), DOCS.map(d => d.path), 'the document\'s files');
+  assert.deepEqual(docButtons(p).map(b => b.title), DOCS.map(d => d.path), 'the document\'s files'); // 0562: each path as its tooltip
   assert.ok(pane(p).children.findIndex(n => p.all(n).includes(docButtons(p)[0])) <= pane(p).children.findIndex(n => n.className === 'md'), 'at the top');
 });
 
