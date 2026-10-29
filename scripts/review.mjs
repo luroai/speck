@@ -310,6 +310,18 @@ function reviewRound(repo, id, opts, run) {
   } finally { ended(); }
 }
 
+// 0554: with --json, Codex writes why it failed to standard output, as an `error` event (`message`) or a `turn.failed`
+// one (`error.message`), so that is given first, then the last lines of standard error. An API error can come wrapped
+// as JSON in the message, when its own message is given.
+export function codexFailure(status, stdout, stderr) {
+  const said = m => typeof m === 'string' && m.trim() ? m.trim() : '';
+  const reasons = String(stdout || '').split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } })
+    .map(e => e?.type === 'turn.failed' ? said(e.error?.message) : e?.type === 'error' ? said(e.message) : '').filter(Boolean);
+  let reason = reasons.pop() || String(stderr || '').trim().split('\n').slice(-5).join('\n');
+  try { reason = said(JSON.parse(reason)?.error?.message) || reason; } catch {}
+  return reason ? `codex exited ${status}: ${reason}` : `codex exited ${status} and gave no reason.`;
+}
+
 function runCodexReview(repo, id, s) {
   const { cfg, ticket, prior, round, head, sinceSha, merged, merge, extra, diff, tests, testsSeen, response } = s;
   const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
@@ -337,7 +349,7 @@ function runCodexReview(repo, id, s) {
   const r = runLimited('codex', args, { cwd: repo, input: prompt, ms });
   if (r.timedOut) { fs.rmSync(out, { force: true }); throw new SpeckError(tookTooLong('codex', ms)); }
   if (r.error) throw new SpeckError(`codex failed: ${r.error.message}`);
-  if (r.status !== 0) throw new SpeckError(`codex exited ${r.status}: ${r.stderr.trim().split('\n').slice(-5).join('\n')}`);
+  if (r.status !== 0) throw new SpeckError(codexFailure(r.status, r.stdout, r.stderr));
   const events = r.stdout.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return {}; } });
   const thread = events.find(e => e.type === 'thread.started')?.thread_id || (round > 1 ? lastThread : undefined);
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
