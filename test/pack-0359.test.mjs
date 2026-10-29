@@ -15,7 +15,8 @@ const at = (p, pick) => pane(p).children.findIndex(n => p.all(n).includes(pick))
 test('0359 AC1: a document task\'s pack has a button per file at the top, above the Ship and Ask for changes row', async () => {
   const p = await openPack({ pack: PACK, documents: DOCS });
   const bs = docButtons(p);
-  assert.deepEqual(bs.map(b => b.textContent), DOCS.map(d => d.path), 'one per file, labelled with its path from the project root');
+  assert.deepEqual(bs.map(b => b.title), DOCS.map(d => d.path), 'one per file'); // 0562: its path from the project root as its tooltip
+  assert.deepEqual(bs.map(b => b.textContent), ['memo.md', 'figures.pdf'], 'labelled with its name (0562)');
   const all = p.all(pane(p));
   const ship = all.find(n => n.tagName === 'button' && n.textContent === 'Ship');
   const ask = all.find(n => n.tagName === 'button' && n.textContent === 'Ask for changes');
