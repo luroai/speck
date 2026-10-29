@@ -1,6 +1,6 @@
 # Read only recent Codex sessions when a build ends
 
-Captured: 2026-10-27 · Status: inbox
+Captured: 2026-10-27 · Status: ticketed (0556)
 From ticket: 0534
 Raised by: agent
 

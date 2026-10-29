@@ -1,6 +1,6 @@
 # Steady the 0232 AC3 CPU cost test under load
 
-Captured: 2026-10-28 · Status: inbox
+Captured: 2026-10-28 · Status: dropped
 From ticket: 0541
 Raised by: agent
 

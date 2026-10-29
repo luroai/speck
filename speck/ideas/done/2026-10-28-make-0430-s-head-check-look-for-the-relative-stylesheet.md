@@ -1,6 +1,6 @@
 # Make 0430's head check look for the relative stylesheet
 
-Captured: 2026-10-28 · Status: inbox
+Captured: 2026-10-28 · Status: ticketed (0555)
 From ticket: 0543
 Raised by: agent
 

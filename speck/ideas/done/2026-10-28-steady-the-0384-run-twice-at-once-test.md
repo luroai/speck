@@ -1,6 +1,6 @@
 # Steady the 0384 run-twice-at-once test
 
-Captured: 2026-10-28 · Status: inbox
+Captured: 2026-10-28 · Status: ticketed (0558)
 From ticket: 0540
 Raised by: agent
 

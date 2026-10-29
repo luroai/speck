@@ -1,6 +1,6 @@
 # Count the pack's reviewer tokens as each round saved them
 
-Captured: 2026-10-28 · Status: inbox
+Captured: 2026-10-28 · Status: ticketed (0553)
 From ticket: 0546
 Raised by: agent
 
