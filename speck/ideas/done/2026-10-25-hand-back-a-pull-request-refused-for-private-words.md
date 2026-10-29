@@ -1,6 +1,6 @@
 # Hand back a pull request refused for private words
 
-Captured: 2026-10-25 · Status: inbox
+Captured: 2026-10-25 · Status: ticketed (0552)
 From ticket: 0506
 
 ## What

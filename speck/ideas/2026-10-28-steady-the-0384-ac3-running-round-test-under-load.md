@@ -1,6 +1,6 @@
 # Steady the 0384 AC3 running-round test under load
 
-Captured: 2026-10-28 11:40 · Status: inbox
+Captured: 2026-10-28 11:40 · Status: dropped
 From ticket: 0537
 Raised by: agent
 

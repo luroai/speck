@@ -1,6 +1,6 @@
 # Stop speck run when the panel's switch times out
 
-Captured: 2026-10-28 · Status: inbox
+Captured: 2026-10-28 · Status: ticketed (0551)
 From ticket: 0544
 Raised by: agent
 

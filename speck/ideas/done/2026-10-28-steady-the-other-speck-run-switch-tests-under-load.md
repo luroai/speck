@@ -1,6 +1,6 @@
 # Steady the other speck run switch tests under load
 
-Captured: 2026-10-28 · Status: inbox
+Captured: 2026-10-28 · Status: ticketed (0559)
 From ticket: 0541
 Raised by: agent
 
