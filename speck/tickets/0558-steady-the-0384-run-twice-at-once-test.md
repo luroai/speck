@@ -1,7 +1,7 @@
 ---
 id: "0558"
 title: "Steady the 0384 run-twice-at-once test"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-28-steady-the-0384-run-twice-at-once-test.md" 
 after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:20:12.166Z"
+approved: "2026-10-29T14:42:31.258Z"
 
 ---
 # 0558 · Steady the 0384 run-twice-at-once test
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 "0384 AC2: speck review run twice at once starts one reviewer, and its round is recorded once" failed once in a full run of its file with 24 busy CPU loops during 0540's build. A test that fails by chance can stop `speck ship` for a ticket that didn't break it.
@@ -51,9 +52,14 @@ Nothing changes in how speck works. One of speck's own tests sometimes failed on
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 94,436
+- Elapsed since build started: 22 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Cause (AC1): the test counted the reviewer's starts the moment both `speck review` commands had exited 12. Each command starts the round in a process of its own, which then starts the reviewer, so the reviewer is two Node processes deep, and on a busy machine it can write its "start" line after both commands have given up their 1.5 s wait. The count then saw no reviewer at all. Timed with a probe: the line came 0.3–1 s before the commands exited when the machine was idle, 0.2–0.7 s before with 24 busy loops, and after them in two of three runs with 64. Fixed by checking the claimed start records first (each is made before its reviewer is started, so they're all there once both commands have exited), then waiting up to 30 s for the reviewer's start line before counting it. The wait for the recorded round went from 10 s to 30 s as well. The test's checks moved to `test/support/review-twice.mjs`, and 0558 AC1 holds the reviewer's start line back until both commands have exited, so that case is now tested every run rather than left to chance.
 - How AC2 was checked: four deliberate breakages in `scripts/`, each undone afterwards. (1) Every command starts its own reviewer (no pending check, a fresh start number each time): the test failed 3 runs of 3. (2) The worker records the round twice: failed 2 of 2, on "one round recorded in the ticket". (3) A claim that always succeeds, overwriting the other's: failed 1 run of 3, as the two commands rarely land in the same few milliseconds. (4) Only the pending check removed, claims kept: passed 3 of 3, because the claim alone stops it. 0558 AC2 also checks that the shared checks fail on a second claimed start, a second start line, and a reviewer that starts after the round is recorded.
