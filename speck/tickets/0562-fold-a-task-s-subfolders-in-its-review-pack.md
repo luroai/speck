@@ -1,7 +1,7 @@
 ---
 id: "0562"
 title: "Fold a task's subfolders in its review pack"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0561"]                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T15:22:57.227Z"
+approved: "2026-10-29T15:32:29.453Z"
 
 ---
 # 0562 · Fold a task's subfolders in its review pack
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In a task's review pack, every file in its output folder, however deep, is its own button labelled with its path from the project root. A research run with dozens of files in a subfolder becomes a long wall of buttons, and on a phone the repeated `outputs/<folder>/` at the start of each label takes a line of its own.
@@ -55,9 +56,14 @@ To see it, open the review pack of a task whose output folder has a subfolder. T
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 176,589
+- Elapsed since build started: 10 min
+- Changed lines: 79 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
