@@ -40,6 +40,7 @@ started: "2026-10-29T14:17:16.688Z"
 - From the reviewer's minor finding F1 in 0543's round 1: `test/panel-0430.test.mjs`, line 18, compares `html.indexOf('/panel-settings.css')`, which is -1, with the head's end.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: added a case for a page with no `</head>` at all, which the check also fails.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

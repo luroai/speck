@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { STYLES, page, panelRepo, freePort, startPanel, stop, request, cliCopy } from './support/panel.mjs';
+import { SETTINGS_LINK, linkedInHead } from './support/head.mjs';
 
 // ---------- 0430: the panel's styles in a file of their own ----------
 
@@ -15,7 +16,7 @@ test('0430 AC1: the styles are in templates/panel-base.css and the other areas\'
   const html = page();
   assert.doesNotMatch(html, /<style\b/i);
   assert.match(html, /<link rel="stylesheet" href="panel-base\.css">/);
-  assert.ok(html.indexOf('/panel-settings.css') < html.indexOf('</head>'), 'loaded in the head, before the page shows');
+  assert.ok(linkedInHead(html, SETTINGS_LINK), 'loaded in the head, before the page shows'); // 0555: the page's link is relative, panel-settings.css
 });
 
 test('0430 AC2: the server answers /panel-base.css with the file as text/css, read afresh, a change makes an open page out of date, and other paths get the unknown answer', async () => {
