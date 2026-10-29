@@ -43,6 +43,7 @@ The review pack's and the Delivery log's "Reviewer tokens" figure is the one the
 - From 0546's builder note: the line comes from `reviewTotals` in `scripts/pack.mjs`, which `scripts/close.mjs` also uses. 0546's per-round count is in `scripts/spend.mjs`, beside `roundSplit`.
 - Shares `scripts/spend.mjs` with 0556, unchained: this one reads the per-round count beside `roundSplit`, 0556 changes how `recordDelegatedSpend` finds Codex sessions.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
