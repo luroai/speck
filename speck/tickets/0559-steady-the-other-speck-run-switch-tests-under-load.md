@@ -1,7 +1,7 @@
 ---
 id: "0559"
 title: "Steady the other speck run switch tests under load"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-28-steady-the-other-speck-run-switch-tests-und
 after: ["0557"]                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T15:36:43.549Z"
+approved: "2026-10-29T16:13:52.186Z"
 
 ---
 # 0559 · Steady the other speck run switch tests under load
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The tests of speck run's switch to new code wait only 8 or 20 seconds for processes to start, ship or switch, so on a busy machine they fail by chance: in 0541's build `0247 AC1, AC2` failed once and eight 0247, 0301 and 0321 tests failed in one related run, all passing on a quiet machine. A test that fails by chance can stop `speck ship` for a ticket that didn't break it.
@@ -54,9 +55,15 @@ Nothing changes in how speck itself works. Some of speck's own checks, those on 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The final two 0321 AC2 tests still use unbounded `await exited` waits.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 321,201
+- Elapsed since build started: 37 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - AC1, the waits changed. Every wait in these tests now goes through `waitFor` (`test/support/run.mjs`), which waits up to `BUSY_MS`, 30 seconds, and fails naming what it waited for; `watching` (`test/support/run-switch.mjs`) defaults to the same limit.
   - `0247 AC1, AC3`, and `0247 AC3` (the panel's off switch), which has the same waits: speck run starting to watch, the switches to v2 and v3, only one speck run left under the one started, speck run stopping and the one on new code stopping, each 8 s before.
