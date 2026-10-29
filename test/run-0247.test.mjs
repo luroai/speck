@@ -3,11 +3,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, runRepo, until, alive } from './support/run.mjs';
+import { ROOT, runRepo, until, alive, waitFor } from './support/run.mjs';
 import { shipRepo } from './support/ship.mjs';
+import { gated } from './support/gate.mjs';
 import { cliCopy } from './support/panel.mjs';
 import { waitingSays, failedSays } from '../scripts/run-switch.mjs';
-import { startRun, stop, lockPid, childrenOf, count, edit, SWITCHED, mark, watching, setReady } from './support/run-switch.mjs';
+import { startRun, stop, lockPid, childrenOf, count, edit, SWITCHED, mark, watching, startsWatching, setReady, openGate } from './support/run-switch.mjs';
 
 // ---------- 0247: speck run switches to its new code once it's idle ----------
 
@@ -16,7 +17,7 @@ test('0247 AC1, AC3: a change to the code\'s content switches it, the same conte
   const { cli } = cliCopy();
   const run = startRun(r.dir, cli);
   try {
-    assert.ok(await watching(run), run.out());
+    await startsWatching(run);
     const host = run.child.pid;
     assert.equal(lockPid(r.dir), host);
     // Saved again as it was: newer, but the same content.
@@ -29,22 +30,21 @@ test('0247 AC1, AC3: a change to the code\'s content switches it, the same conte
     let sampling = true;
     const sampler = (async () => { while (sampling) { seen.add(alive(host) ? lockPid(r.dir) : 'gone'); await new Promise(res => setTimeout(res, 10)); } })();
     edit(cli, 'run-switch.mjs', mark('v2'));
-    const switched = await until(() => run.out().includes(`${SWITCHED} v2`));
-    assert.ok(switched, run.out());
+    await waitFor(() => run.out().includes(`${SWITCHED} v2`), 'the switch to v2', run.out);
     // A later change switches again, from the speck run on new code.
     edit(cli, 'run-switch.mjs', mark('v3'));
-    assert.ok(await until(() => run.out().includes(`${SWITCHED} v3`)), run.out());
+    await waitFor(() => run.out().includes(`${SWITCHED} v3`), 'the switch to v3', run.out);
     sampling = false;
     await sampler;
     assert.deepEqual([...seen], [host], 'the lock names the process that was started, and it\'s alive, throughout');
     assert.equal(count(run.out(), 'switching to the new code'), 2, run.out());
     // One speck run watching: the process you started, with only the one on the newest code under it.
-    assert.ok(await until(() => childrenOf(host).length === 1), `${childrenOf(host)}`);
+    await waitFor(() => childrenOf(host).length === 1, 'only the speck run on the newest code under the one started', () => `${childrenOf(host)}`);
     const worker = childrenOf(host)[0];
 
     process.kill(-host, 'SIGINT'); // Ctrl+C from the terminal
-    assert.ok(await until(() => run.child.exitCode !== null), run.out());
-    assert.ok(await until(() => !alive(worker)), 'the speck run on new code stopped too');
+    await waitFor(() => run.child.exitCode !== null, 'speck run to stop', run.out);
+    await waitFor(() => !alive(worker), 'the speck run on new code to stop too');
     assert.equal(lockPid(r.dir), null, 'the lock is released');
     assert.ok(run.out().includes('speck run stopped.'), run.out());
   } finally { await stop(run); }
@@ -55,29 +55,33 @@ test('0247 AC3: the panel\'s off switch, SIGINT to the process it started, stops
   const { cli } = cliCopy();
   const run = startRun(r.dir, cli);
   try {
-    assert.ok(await watching(run), run.out());
+    await startsWatching(run);
     edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
+    await waitFor(() => run.out().includes(`${SWITCHED} v2`), 'the switch to v2', run.out);
     const worker = childrenOf(run.child.pid)[0];
     run.child.kill('SIGINT');
-    assert.ok(await until(() => run.child.exitCode !== null), run.out());
-    assert.ok(await until(() => !alive(worker)), 'the speck run on new code stopped too');
+    await waitFor(() => run.child.exitCode !== null, 'speck run to stop', run.out);
+    await waitFor(() => !alive(worker), 'the speck run on new code to stop too');
     assert.equal(lockPid(r.dir), null);
   } finally { await stop(run); }
 });
 
 test('0247 AC1, AC2: it waits for the ship it started, naming it once, then switches', async () => {
-  const r = shipRepo({ test: 'sleep 1.5' });
+  // Its ship's tests run until the test lets them finish, so the switch is asked for while it ships.
+  const ship = gated();
+  const r = shipRepo({ test: ship.test });
   const cfg = path.join(r.dir, 'speck', 'config.yml');
   fs.writeFileSync(cfg, fs.readFileSync(cfg, 'utf8').replace(/^auto_ship:.*$/m, 'auto_ship: true'));
   r.g('commit', '-qam', 'config');
   const { cli } = cliCopy();
   const run = startRun(r.dir, cli);
   try {
-    assert.ok(await until(() => run.out().includes('Shipping 0001')), run.out());
+    await waitFor(() => run.out().includes('Shipping 0001') && fs.existsSync(ship.reached), 'the ship of 0001 to start its tests', run.out);
     edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes(waitingSays('0001'))), run.out());
-    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`), 20000), run.out());
+    await waitFor(() => run.out().includes(waitingSays('0001')), 'speck run to say it waits for the ship', run.out);
+    assert.ok(!run.out().includes(SWITCHED), `not while it ships:\n${run.out()}`);
+    openGate(ship);
+    await waitFor(() => run.out().includes(`${SWITCHED} v2`), 'the switch to v2 once the ship ends', run.out);
     const out = run.out();
     assert.equal(count(out, 'will switch to the new code'), 1, out);
     assert.ok(out.indexOf('Shipped 0001.') > 0 && out.indexOf('Shipped 0001.') < out.indexOf(`${SWITCHED} v2`), out);

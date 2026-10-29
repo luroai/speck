@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { runRepo, startRun, until, alive, killAll, stopRun, record, env, CLI } from './support/run.mjs';
+import { runRepo, startRun, until, waitFor, alive, killAll, stopRun, record, env, CLI } from './support/run.mjs';
 import { buildOfThisProcess, noteBuild, claimResumed } from '../scripts/seen-builds.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { cliCopy } from './support/panel.mjs';
@@ -223,8 +223,8 @@ test('0300 AC5: speck run doesn\'t take a build it started itself for one starte
   const r = runRepo();
   const run = startRun(r.dir, { FAKE_MS: '1500' });
   try {
-    assert.ok(await until(() => /Launched 0001/.test(run.out())), run.out());
-    assert.ok(await until(() => /0001 build exited/.test(run.out())), run.out());
+    await waitFor(() => /Launched 0001/.test(run.out()), 'speck run to launch 0001', run.out);
+    await waitFor(() => /0001 build exited/.test(run.out()), 'the build of 0001 to exit', run.out);
     assert.doesNotMatch(run.out(), /outside speck run/);
   } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
 });
