@@ -1,7 +1,7 @@
 ---
 id: "0552"
 title: "Hand back a pull request refused for private words"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-29T14:13:39.786Z"
 ---
 # 0552 · Hand back a pull request refused for private words
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 In pull request mode, when `speck ship --auto` refuses a ticket because a file under `speck/` holds a private word or the home folder's path (exit 17), speck run's pull request queue only says it didn't ship. The ticket waits for the Foreman or the user, though its build has steps to take them out, as it does in local mode.
@@ -44,7 +44,11 @@ speck run's pull request queue hands a ticket refused for private words back to 
 - Self-check: no changes. As with 0323's conflict hand-back, nothing pushes the build's new commit to the pull request afterwards, so the next ship asks for `speck pr`; that's the dropped idea speck/ideas/2026-10-19-push-a-handed-back-pull-request-again.md, left alone here.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In pull request mode, when speck run tries to merge a ticket and finds one of your private words or your home folder's path in its speck files, it now sends the ticket back to the agent that built it to take them out, just as it already does when you ship locally. Before, it only said the ticket didn't ship and left it waiting for you.
+
+To see it, add a word to your private words list that appears in an approved ticket, then let speck run try to ship it in pull request mode: the run's log says it handed the ticket back, and the build's session picks it up.
+
+Worth keeping an eye on: once the build has taken the words out, its new commit still has to reach the pull request on GitHub. Nothing pushes it there automatically yet, so the next try asks for `speck pr` to be run, as it does after a conflict.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,4 +57,78 @@ speck run's pull request queue hands a ticket refused for private words back to 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Skipped, matches speck/ideas/2026-10-19-push-a-handed-back-pull-request-again.md (dropped): pushing the build's new commit to the pull request after a hand-back, which this hand-back needs as much as 0323's conflict one.
+- The hand-back message says "speck run's ship queue tries it again", which in pull request mode is its pull request queue. Wording only.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3c41a2b26cbb94708856b5b3a1b59f82f2562643",
+    "session": "fresh",
+    "thread_id": "01a18804-ab0c-76e3-a865-11e48328a109",
+    "builder_response": "- Tests run: test/pr-private-0552.test.mjs test/pr-conflict-0323.test.mjs test/pr-ship-0296.test.mjs test/pull-request-0295.test.mjs (with `speck test --related`, plus the repo's checks)\n- Round 1. The pull request queue now maps exit 13 to `conflict` and exit 17 to `private`, as the local ship queue's HAND_BACK does. AC2 relies on the existing `waiting(id)` skip, which applies to any hand-back kind.\n- Known limit, out of scope: after a private-words hand-back the build's new commit isn't pushed to the pull request, the same as after 0323's conflict hand-back. The user dropped that idea (speck/ideas/2026-10-19-push-a-handed-back-pull-request-again.md).\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 89428,
+      "cached_input_tokens": 51840,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 708,
+      "reasoning_output_tokens": 26
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 37588,
+      "cached": 51840,
+      "write": 0,
+      "output": 708
+    },
+    "cost_usd": 0.08744,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-29T14:16:34.828Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/pr-queue.mjs maps exit 17 to 'private' and passes lastLine(log) and the branch head to handBack. scripts/run.mjs connects this callback to handBacks.keep. The passing 0552 AC1 test exercises the queue callback and verifies the complete hand-back payload."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "prQueue.check skips tickets when waiting(id) is true. The passing 0552 AC2 test verifies that a pending private hand-back prevents another ship attempt even when the pull request key changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The mapping retains exit 13 as 'conflict'; other refusal handling and retry keys remain unchanged. The passing 0552 AC3 test verifies conflict hand-back, one-line refusal messages, and retries after a pull request change for exits 1, 12, 14 and 16."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reported validation passed 155 tests with zero failures and three skips, including the new tests and existing conflict, shipping and pull request tests. No existing tests were changed, and the production change is limited to the refusal mapping."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Pull requests refused for private words now return to their build for correction and wait while that hand-back is pending. Conflict handling and other refusal behaviour remain intact. The tests exercise the change directly and passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
