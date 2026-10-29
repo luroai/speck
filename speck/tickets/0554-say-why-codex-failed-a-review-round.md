@@ -42,7 +42,7 @@ A failed Codex review round's message gives Codex's own reason.
 - From 0540's own note. The message is thrown in `runCodexReview` in `scripts/review.mjs`, which already parses standard output's JSON lines after a success.
 - Quick test: a fake `codex` on the PATH that prints JSON lines and exits 1, as the existing review tests do.
 - Checked 2026-10-29: codex-cli 0.159.0 is installed here, and its binary names a `turn.failed` event (the installed binary's strings).
-- Unverified: which field holds the message in Codex's `turn.failed` and `error` events (a usage limit can't be brought on to look). The builder checks it against codex-cli's own source or docs for its `exec --json` events and records it here.
+- Checked 2026-10-29: in codex-cli 0.159.0's `exec --json` output, an `error` event holds its message in `message` (`{"type":"error","message":"…"}`) and a `turn.failed` event in `error.message` (`{"type":"turn.failed","error":{"message":"…"}}`), seen by running `codex exec --json` with a model name it refuses. The message can itself be the API's JSON error, with its own `error.message`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
