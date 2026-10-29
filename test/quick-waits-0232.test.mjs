@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { ROOT, CLI, env, runRepo, until } from './support/run.mjs';
-import { ORDER_CASES, runUntilLaunched, idleCpu, idleSays, CHECK_BUDGET_S, RUN_POLL_MS, brokenCli } from './support/quick-run.mjs';
+import { ORDER_CASES, runUntilLaunched, idleCpu, idleSays, CHECK_BUDGET_S, RUN_POLL_MS, brokenCli, spendCpu, testBody as body } from './support/quick-run.mjs';
 import { testStallMs } from '../scripts/turns.mjs';
 import { reviewTimeoutMs } from '../scripts/reviewers.mjs';
 
@@ -14,13 +14,6 @@ import { reviewTimeoutMs } from '../scripts/reviewers.mjs';
 
 const linuxOnly = process.platform !== 'linux' && 'reads /proc';
 const src = f => fs.readFileSync(path.join(ROOT, 'test', f), 'utf8');
-// The test named `name` in `text`: from its line to the `});` that closes it, at the same indentation.
-const body = (text, name) => {
-  const lines = text.split('\n'), from = lines.findIndex(l => l.includes(`test('${name}`) || l.includes(`test(\`${name}`));
-  assert.ok(from >= 0, `there is a test named ${name}`);
-  const indent = lines[from].match(/^\s*/)[0], to = lines.findIndex((l, i) => i > from && l === `${indent}});`);
-  return lines.slice(from, to + 1).join('\n');
-};
 // A copy of the CLI in which every check speck run makes adds a line to `file`.
 const countingCli = file => brokenCli('run.mjs', '  function tick() {\n', `  function tick() {\n    fs.appendFileSync(${JSON.stringify(file)}, 'check\\n');\n`);
 
@@ -81,10 +74,12 @@ test('0232 AC2: without SPECK_STALL_MS and SPECK_REVIEW_TIMEOUT_MS, the stall an
 });
 
 test('0232 AC3: 0176 AC3\'s check fails for a speck run whose checks cost more than 5% of one core over 5 seconds', { skip: linuxOnly }, async () => {
-  // Each check spends 400 ms of CPU, more than the 250 ms a check may.
-  const cli = brokenCli('run.mjs', '  function tick() {\n', '  function tick() {\n    for (const end = Date.now() + 400; Date.now() < end;);\n');
+  // Each check spends 1 s of CPU, more than the 250 ms a check may. 0557: CPU time, not time on the clock, which a busy
+  // machine fills with waiting for a core; and checks far enough apart that a run given only BUSY_SHARE of a core is
+  // still seen using more than the budget for each.
+  const cli = brokenCli('run.mjs', '  function tick() {\n', `  function tick() {\n    ${spendCpu(1000)}\n`);
   const { dir } = runRepo({ tickets: [['0001', { status: 'done' }]] });
-  const m = await idleCpu(dir, { pollMs: 500, checks: 4, cli });
+  const m = await idleCpu(dir, { pollMs: 2500, checks: 2, cli });
   assert.ok(m.running, m.out);
   assert.ok(!(m.perCheck < CHECK_BUDGET_S), `0176 AC3 would pass: ${idleSays(m)}`);
 });

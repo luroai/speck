@@ -155,7 +155,7 @@ function runOn(worker) {
       fs.rmSync(tmp, { force: true, recursive: true });
       console.error(`${id}: couldn't save its exit in ${path.relative(repo, file)} (${e.message}), so the board won't show that this build has finished.`);
     }
-    try { const t = ticketsElsewhere(repo, cfg, id)[0]; if (t) recordDelegatedSpend(path.dirname(file), id, { worktree: t.at, rounds: ticketRounds(t.raw).rounds }); } catch (e) { console.error(`${id}: couldn't record what Codex sessions started in its worktree spent (${e.message}).`); }
+    try { const t = ticketsElsewhere(repo, cfg, id)[0]; if (t) recordDelegatedSpend(path.dirname(file), id, { worktree: t.at, rounds: ticketRounds(t.raw).rounds, started: t.fm.started }); } catch (e) { console.error(`${id}: couldn't record what Codex sessions started in its worktree spent (${e.message}).`); }
   };
 
   // True for a build that was killed while its ticket is building or reviewing, which is left without an exit so the
