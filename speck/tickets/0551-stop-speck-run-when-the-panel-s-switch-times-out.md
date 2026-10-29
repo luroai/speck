@@ -1,7 +1,7 @@
 ---
 id: "0551"
 title: "Stop speck run when the panel's switch times out"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-29T14:13:40.713Z"
 ---
 # 0551 · Stop speck run when the panel's switch times out
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When the panel's speck run switch is turned on and speck run doesn't take its lock and say it's watching within 10 seconds, the panel shows an error but leaves the speck run it started running. That speck run can start watching and launch builds a moment later, while the switch shows it off and failed.
@@ -58,3 +58,89 @@ A speck run the panel's switch started that didn't say it was watching in time i
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b2f0e4227176004ae93fc2e5fedc8dba75ccb1b7",
+    "session": "fresh",
+    "thread_id": "01a18804-dfb5-7671-be44-974f7c6a8f42",
+    "builder_response": "- Tests run: test/panel-run-0551.test.mjs test/run-background-0544.test.mjs, with --related (also test/panel-0357.test.mjs, test/run-lock-0321.test.mjs, test/setup-0510.test.mjs) and the repo checks\n- stopStarted moved from run-background.mjs to panel-run.mjs (run-background re-exports it), so panel-run doesn't import run-background and there's no loop.\n- AC3 is tested by passing panelRunOn a stop that rejects, since a process that survives SIGKILL can't be made in a test; stopStarted's SIGTERM-then-SIGKILL path stays covered by 0544's test.\n",
+    "seconds": 46,
+    "usage": {
+      "input_tokens": 92547,
+      "cached_input_tokens": 54272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 962,
+      "reasoning_output_tokens": 94
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 38275,
+      "cached": 54272,
+      "write": 0,
+      "output": 962
+    },
+    "cost_usd": 0.0915972,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-29T14:17:08.710Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/panel-run.mjs: stopStarted sends signals to the group but its gone() checks only pidAlive(pid). It can return when the leader exits while another group member survives. The AC1 test uses a 1 ms timeout without arranging any descendants, so it does not exercise this case."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelRunOn constructs the timeout error with the watching deadline, confirmation it was stopped, and the log path. The passing '0551 AC1 AC2' test checks that message."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelRunOn handles a rejected stop with the process id and instructions to stop it yourself. The passing '0551 AC3' test exercises this error branch; the existing 0544 test exercises SIGTERM escalation to SIGKILL."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "startBackground awaits panelRunOn and throws SpeckError with code 1 and the timeout message. Passing 0551 AC4 and existing 0544 timeout tests check that the started process has stopped before rejection."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported relevant tests and repository checks total 144 passed, 0 failed and 3 skipped. The diff shows no weakened existing tests or unrelated changes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/panel-run.mjs",
+        "issue": "stopStarted waits only for the process-group leader. If the leader exits after SIGTERM while a descendant ignores it, cleanup returns without sending SIGKILL to that descendant. The panel then claims it stopped everything despite leaving part of the group running, violating AC1.",
+        "suggested_fix": "Wait for the process group to stop, escalating to SIGKILL while any live member remains. Add a regression test with a leader that exits on SIGTERM and a child in its group that ignores SIGTERM; assert cleanup resolves only after both have stopped.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The timeout now waits for cleanup and gives a useful error, and the relevant tests pass. However, cleanup can leave a child process running after its parent stops. That gap needs fixing before merge."
+  }
+}
+```
+
+</details>
