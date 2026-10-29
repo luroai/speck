@@ -43,6 +43,6 @@ export async function openPack(response, more = [], globals = {}, made) {
 export const pane = p => p.byId('full-ticket');
 // 0362: the pop-up a Markdown file opens in, over the whole panel.
 export const docView = p => p.byId('doc-view');
-// 0359: each file's button, labelled with its path.
-export const docButtons = p => p.all(pane(p)).filter(n => n.tagName === 'button' && DOCS.some(d => d.path === n.textContent));
+// 0359: each file's button. 0562: labelled with its name, with its path as its tooltip.
+export const docButtons = p => p.all(pane(p)).filter(n => n.tagName === 'button' && n.className === 'pack-document' && DOCS.some(d => d.path === n.title));
 

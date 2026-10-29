@@ -44,6 +44,7 @@ A task's review pack lists the files at the top of its output folder one by one,
 - The panel is a phone-width column (keep it thin): the rows are for a narrow screen first.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes. The older tests that checked each file's button was labelled with its path from the project root (0354, 0359, 0561) now check its name, with the path as its tooltip, as AC1 and AC3 ask.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
