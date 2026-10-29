@@ -50,6 +50,8 @@ const args = process.argv.slice(2);
 fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify(args) + '\\n');
 fs.appendFileSync(${JSON.stringify(log + '.prompts')}, JSON.stringify(fs.readFileSync(0, 'utf8')) + '\\n');
 if (process.env.FAKE_CODEX_FAIL) { console.error('codex broke'); process.exit(2); }
+// FAKE_CODEX_EXIT (0554): writes FAKE_CODEX_STDOUT and FAKE_CODEX_STDERR as they are, then exits with that code.
+if (process.env.FAKE_CODEX_EXIT) { process.stdout.write(process.env.FAKE_CODEX_STDOUT || ''); process.stderr.write(process.env.FAKE_CODEX_STDERR || ''); process.exit(Number(process.env.FAKE_CODEX_EXIT)); }
 // FAKE_HANG_PID (0180): starts a process that outlives it, writes that one's pid there, and never ends.
 if (process.env.FAKE_HANG_PID) { const c = require('child_process').spawn('sleep', ['300'], { stdio: 'ignore' }); fs.writeFileSync(process.env.FAKE_HANG_PID, String(c.pid)); setInterval(() => {}, 1e6); }
 const out = args[args.indexOf('-o') + 1];
