@@ -48,7 +48,7 @@ The other tests of speck run's switch wait with time limits long enough for a bu
 - Self-check: the new code in the 0301 AC3 self-check, held until the test lets it fail, now also gives up once its gate's folder is gone, so a test file killed outright leaves no process spinning. The fake builder writes its record whole and then renames it, so a test reading the records while a build starts never reads half of one.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in how speck itself works. Some of speck's own checks, those on `speck run` picking up new code, used to give up after 8 to 20 seconds, so on a busy machine they could fail by chance and hold up shipping a ticket that broke nothing. They now wait up to 30 seconds, hold builds and ships open until they've seen what they need rather than hoping the timing works out, and say plainly what they were waiting for if it never happens. To see it, ship a ticket while the machine is busy: these checks should no longer be the reason a ship stops. Keep an eye out for any of them still failing now and then, which would point to a cause other than timing.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -74,6 +74,9 @@ The other tests of speck run's switch wait with time limits long enough for a bu
   - Each file while `npm test` ran alongside, 5 runs in a row: 0247, 0301 and 0321 all passed (10–16 s). The 0300 file failed once, in `0300 AC2`, which isn't one of this ticket's tests: it looks for a process by the session `resumed-0002` across the whole machine, and found the stand-in of the copy of the same test the suite was running at that moment. It now names a session no other copy has (`resumed-0002-<pid>`), and 5 more runs alone and 5 beside the suite all passed (11 of 11; 6 s alone, 11–19 s beside the suite).
   - Both suite runs alongside passed (4484 tests, none failing).
 - `SWITCH_START_MS` never ran out in these runs.
+- Follow-ups:
+  - `speck/ideas/2026-10-29-give-tests-session-names-no-other-run-shares.md`: other tests that start a stand-in agent with a fixed session name, such as `hand-0001`, could clash the way `0300 AC2` did when the same file runs twice at once.
+  - Known limit: `0321 AC3, AC5` failed once in a combined run before the fake builder wrote its records whole, and the failure couldn't be reproduced or its message recovered. A half-written record is the likeliest cause, not a proven one.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -155,6 +158,89 @@ The other tests of speck run's switch wait with time limits long enough for a bu
     ],
     "escalation_question": "",
     "summary": "The change gives most process waits more time and replaces timing races with explicit gates. Recorded repeated runs pass, and deliberate breakages still fail. Two process-stop waits remain unlimited and could hang the tests; bound those before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5f532e0180878246958de914f591d1b91518c0d5",
+    "session": "continued",
+    "thread_id": "01a1886e-6a15-7321-8db5-874d27afb9a6",
+    "builder_response": "- Tests run: `speck test --files test/steady-0559.test.mjs test/run-0247.test.mjs test/run-switch-0301.test.mjs test/run-lock-0321.test.mjs test/seen-builds-0300.test.mjs` (149 tests with the repo checks, none failed).\n- F1: fixed. In `test/run-lock-0321.test.mjs`, `standIn` now gives `exited()`, a `waitFor` of the host having ended (exit code or signal) named \"the stand-in speck run to exit\", used by both final 0321 AC2 tests. The same unbounded wait was also in `0321 AC2: turning it off from the Settings view…` (`await run.exited`), now `waitFor(() => ended(run.child), 'speck run to exit', run.out)`. `0559 AC1` now also fails on any `await …exited` without a call in the steadied tests; it failed on the file before this fix and passes after. The Delivery log's 0321 line names these waits.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 319475,
+      "cached_input_tokens": 252032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1726,
+      "reasoning_output_tokens": 157
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8861,
+      "cached": 122240,
+      "write": 0,
+      "output": 601
+    },
+    "cost_usd": 0.035956,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-29T16:13:27.917Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The four named test files use 30-second process waits through waitFor, BUSY_MS or startsWatching. In test/run-lock-0321.test.mjs, standIn.exited() and the Settings off-switch test now also use bounded waitFor checks. The Delivery log names the changed waits; both 0559 AC1 checks pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/support/run.mjs waitFor fails with the duration and awaited event. The passing 0559 AC2 test exercises an actual timeout and checks its explanatory failure message. The previously unbounded stand-in exit waits now use this helper."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The Delivery log records deliberate ship-wait, lock-loss and build-adoption breakages causing tests in each of the four files to fail. Those behavioural assertions remain intact."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log and previously inspected AC4 run logs record five consecutive passing runs alone and alongside the suite for each file, including the repeated 0300 checks after its session-isolation fix."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The latest /tmp/speck-0559-tests.txt records 149 passes, three skips and no failures across 152 tests. The earlier related-helper run also had no failures. The round-two changes preserve the behavioural assertions."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/run-lock-0321.test.mjs",
+        "issue": "The final two 0321 AC2 tests previously awaited process exit without a time limit.",
+        "suggested_fix": "Use bounded waitFor checks naming the process being awaited, and extend the ticket's checks to detect unbounded exit waits.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The tests now allow more time on busy machines and use explicit gates to avoid timing races. The remaining unlimited exit waits are fixed, timeout failures explain what was awaited, and the latest checks pass. No blocking concerns remain."
   }
 }
 ```
