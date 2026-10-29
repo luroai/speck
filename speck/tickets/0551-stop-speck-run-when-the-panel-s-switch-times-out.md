@@ -48,7 +48,9 @@ A speck run the panel's switch started that didn't say it was watching in time i
 - Pictures: none, because nothing anyone sees changes apart from the wording of the switch's time-out error
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If you turn speck run on with the switch in the panel and it doesn't start watching within 10 seconds, the panel now stops it, along with anything it had started, before showing the error. Before, it was left running and could start building a moment later while the switch showed it off. The error now says it was stopped and where its output is. In the rare case it can't be stopped, the error gives its process number and asks you to stop it yourself. `speck run --background` behaves as before.
+
+To see it, you'd need a speck run that is slow to start; normally the switch turns on well within the time limit, so nothing changes day to day.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +60,7 @@ A speck run the panel's switch started that didn't say it was watching in time i
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -139,6 +142,89 @@ A speck run the panel's switch started that didn't say it was watching in time i
     ],
     "escalation_question": "",
     "summary": "The timeout now waits for cleanup and gives a useful error, and the relevant tests pass. However, cleanup can leave a child process running after its parent stops. That gap needs fixing before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2f643bef4a206cc5a359ce8438bb1590320e198c",
+    "session": "continued",
+    "thread_id": "01a18804-dfb5-7671-be44-974f7c6a8f42",
+    "builder_response": "- Tests run: test/panel-run-0551.test.mjs test/run-background-0544.test.mjs test/panel-0357.test.mjs test/run-lock-0321.test.mjs test/setup-0510.test.mjs, and the repo checks\n- F1: fixed. stopStarted in scripts/panel-run.mjs now waits until no process in the group is left (signal 0 to -pid), escalating to SIGKILL while any member remains. New test '0551 AC1 (round 1 F1)': a leader that exits on SIGTERM with a child in its group that ignores SIGTERM; it fails on the old code and passes now.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 177984,
+      "cached_input_tokens": 132864,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1587,
+      "reasoning_output_tokens": 94
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6845,
+      "cached": 78592,
+      "write": 0,
+      "output": 625
+    },
+    "cost_usd": 0.0277992,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-29T14:19:36.117Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/panel-run.mjs: panelRunOn awaits stopStarted before answering; stopStarted now checks the entire process group and escalates to SIGKILL. Passing tests '0551 AC1 AC2' and '0551 AC1 (round 1 F1)' cover the switch showing off and a child surviving its leader's exit."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelRunOn's timeout error states that watching was not confirmed in time, the process was stopped, and its output location. The passing '0551 AC1 AC2' test verifies the message."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "stopStarted rejects after both signal waits if the group remains. panelRunOn reports the process id and instructions to stop it yourself; passing '0551 AC3' exercises that reporting branch."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/run-background.mjs: startBackground awaits panelRunOn and throws the timeout message with exit code 1. Passing '0551 AC4' and existing 0544 tests cover cleanup and failure behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported relevant tests and repository checks show 145 passed, 0 failed and 3 skipped. Existing tests have not been weakened, and the changes remain within scope."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/panel-run.mjs",
+        "issue": "Cleanup previously waited only for the process-group leader, potentially leaving a child running.",
+        "suggested_fix": "Completed: cleanup checks the entire process group, with a regression test covering a child that ignores SIGTERM after its leader exits.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel now stops the timed-out run and its process group before reporting failure. The child-process cleanup gap is fixed and covered by a passing regression test. All criteria pass, with no remaining blocking findings."
   }
 }
 ```
