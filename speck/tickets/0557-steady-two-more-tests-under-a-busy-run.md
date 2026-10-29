@@ -45,6 +45,7 @@ started: "2026-10-29T14:18:29.754Z"
 - Earlier steadying: 0540, 0541, 0542.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
