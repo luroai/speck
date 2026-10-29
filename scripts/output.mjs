@@ -72,7 +72,10 @@ function outputFiles(repo, t) {
     const why = e.code === 'ENOENT' ? "doesn't exist" : e.code === 'ENOTDIR' ? 'is a file, not a folder' : `couldn't be read (${e.code || e.message})`;
     return { where, files: [], why: `\`${where}\` ${why}, so the build has written nothing there.` };
   }
-  return { where, files, why: files.length ? '' : `\`${where}\` is empty: the build has written nothing there.` };
+  // 0561: a summary.md at the folder's top, in any case, comes first. One in a folder inside it isn't the summary.
+  const summary = files.find(f => f.toLowerCase() === 'summary.md');
+  if (summary) files = [summary, ...files.filter(f => f !== summary)];
+  return { where, files, summary, why: files.length ? '' : `\`${where}\` is empty: the build has written nothing there.` };
 }
 
 // The ticket's output folder as an absolute path from the project root's real path, or null when the folder, or any
@@ -82,19 +85,20 @@ function unlinkedOutput(repo, t) {
   return fs.realpathSync(dir) === dir ? dir : null;
 }
 
-// The review pack's lines about a task's files: a heading and each file's path from the project root, or why
-// there are none. None for a code ticket. `links: false` leaves out the files, for the panel, which links to them itself.
+// The review pack's lines about a task's files: a heading and each file's path from the project root, the summary
+// first, or why there are none. None for a code ticket. `links: false` leaves out the files, for the panel, which links to them itself.
 export function documentLines(repo, t, { links = true } = {}) {
   const out = outputFiles(repo, t);
   if (!out || (!links && out.files.length)) return [];
   return ['', '### Result', ...(out.files.length ? out.files.map(f => `- \`${path.posix.join(out.where, f)}\``) : [`- ${out.why}`])];
 }
 
-// The panel's list of a task's files: each one's path from the project root and the address it's served at.
+// The panel's list of a task's files: each one's path from the project root and the address it's served at, with the
+// summary first and marked `summary` (0561).
 export function panelDocuments(repo, t) {
   const out = outputFiles(repo, t);
   return out ? out.files.map(f => ({ path: path.posix.join(out.where, f),
-    url: `/api/tickets/${padId(t.fm.id)}/output/${f.split('/').map(encodeURIComponent).join('/')}` })) : [];
+    url: `/api/tickets/${padId(t.fm.id)}/output/${f.split('/').map(encodeURIComponent).join('/')}`, ...(f === out.summary ? { summary: true } : {}) })) : [];
 }
 
 // The file at `rel` in ticket `id`'s output folder, as the panel serves it: { type, body }, or null when the ticket isn't
