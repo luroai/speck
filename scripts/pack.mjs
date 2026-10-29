@@ -1,6 +1,6 @@
 // speck pack: the review pack, and the review totals the delivery log shares.
 
-import { RISKY, SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, parseTicket, lintTicket, changedLines, branchChangedLines, forkPoint, ticketBranches, contentLines, repoPath } from './core.mjs';
+import { RISKY, SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, parseTicket, lintTicket, changedLines, branchChangedLines, forkPoint, ticketBranches, contentLines, repoPath, roundTokenCount } from './core.mjs';
 import { ticketsRounds, NO_INSPECT, mergeRun, ordinaryRounds } from './review.mjs';
 import { picturesLines, panelPictures } from './pictures.mjs';
 import { documentLines, panelDocuments } from './output.mjs';
@@ -26,8 +26,9 @@ export const who = m => `${m.reviewer}, model ${m.reviewer_model || 'default'}, 
 
 // The reviewer tokens and elapsed time, worded for both the review pack and the delivery log. The time runs to `end`,
 // or else to the ticket's approval, so a pack read later leaves out the wait to ship it (0215), or else to now.
+// 0553: each round's tokens counted as it saved them, as speck status --json and the panel count them (0546).
 export function reviewTotals(t, all, end) {
-  const tokens = all.reduce((n, r) => n + (r.meta.usage?.input_tokens || 0) + (r.meta.usage?.output_tokens || 0), 0);
+  const tokens = all.reduce((n, r) => n + roundTokenCount(r), 0);
   const started = t.fm.started ? new Date(t.fm.started) : null;
   const approved = t.fm.approved ? new Date(t.fm.approved) : null;
   const until = end || (approved && !isNaN(approved) ? approved : new Date());

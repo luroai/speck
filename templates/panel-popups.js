@@ -99,11 +99,12 @@ const isMarkdown = d => /\.(md|markdown)$/i.test(d.path);
 // 0359: each file as a button at the top of the pack, labelled with its path. A button has no address, so a browser that
 // opens links itself has nothing to open: pressing a Markdown file shows it formatted in a pop-up over the whole panel
 // (0362), and any other opens in a new tab, served by the panel.
+// 0561: the task's summary, marked by the server, is labelled Start here.
 function documentsPart(documents) {
   return [el('div', 'pack-documents', null, ...documents.map(d => {
-    const b = el('button', 'pack-document', d.path);
+    const b = el('button', 'pack-document', d.summary === true ? 'Start here' : d.path);
     b.type = 'button';
-    b.title = isMarkdown(d) ? 'Show it formatted, over the whole panel' : 'Open it in a new tab';
+    b.title = (isMarkdown(d) ? 'Show it formatted, over the whole panel' : 'Open it in a new tab') + (d.summary === true ? ` (${d.path})` : '');
     b.docOf = d.path; // 0362: so the focus can come back to it, or to the button drawn in its place
     b.addEventListener('click', e => { e.stopPropagation(); if (isMarkdown(d)) openDocument(d); else window.open(d.url, '_blank', 'noopener'); });
     return b;
@@ -201,9 +202,12 @@ function packPane(t) {
     if (packOf.pictures.length) { const at = blocks.findIndex(n => n.className === 'ac-table'); blocks.splice(at < 0 ? blocks.length : at + 1, 0, ...picturesPart(packOf.pictures)); }
     for (const n of blocks) body.appendChild(n);
   }
-  // 0359: a task's files go at the top, above Ship.
-  const documents = packOf.state === 'ok' && packOf.documents.length ? documentsPart(packOf.documents) : [];
-  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close), ...documents, ...shipPart(t), body];
+  // 0359: a task's files go at the top, above Ship. 0561: when it has a summary, only the summary goes above Ship, and
+  // the other files straight after it.
+  const docs = packOf.state === 'ok' ? packOf.documents : [], summary = docs[0]?.summary === true ? docs.slice(0, 1) : [];
+  const rest = docs.slice(summary.length), files = rest.length ? documentsPart(rest) : [];
+  const top = el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close);
+  return summary.length ? [top, ...documentsPart(summary), ...shipPart(t), ...files, body] : [top, ...files, ...shipPart(t), body];
 }
 // 0133: an approved ticket's pack has a Ship button, above the pack. Clicking it is the user shipping (Gate 2), as
 // /speck-ship is: the server runs speck ship for it. Under it, that it's shipping, what speck ship said, or why it refused.
