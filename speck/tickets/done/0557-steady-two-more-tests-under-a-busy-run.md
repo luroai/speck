@@ -1,7 +1,7 @@
 ---
 id: "0557"
 title: "Steady two more tests under a busy run"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:18:29.754Z"
 approved: "2026-10-29T15:22:18.324Z"
+finished: "2026-10-29T15:36:29.156Z"
 
 ---
 # 0557 · Steady two more tests under a busy run
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 0232 AC3 (0176 AC3's check fails for a speck run whose checks cost more than 5% of one core) and 0472 AC3 (in a real browser, every element's computed style is the same as before) fail when the whole suite runs alongside other test runs, on the base code as well. A failure like this at `speck ship` hands a ticket back for nothing.
