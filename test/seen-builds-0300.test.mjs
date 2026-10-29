@@ -168,7 +168,9 @@ test('0300 AC1, AC3: speck run counts a build started outside it, and treats it 
 test('0300 AC2: a build resumed outside speck run, whose run record says it exited, shows as building, not stopped', async () => {
   const r = runRepo({ tickets: [['0001', { status: 'building' }], ['0002', { status: 'reviewing' }]] });
   exitedRecord(r.dir, '0001');
-  exitedRecord(r.dir, '0002', { session: 'resumed-0002' });
+  // A session no copy of this test running at the same time has, as the check looks at every process (0559).
+  const session = `resumed-0002-${process.pid}`;
+  exitedRecord(r.dir, '0002', { session });
   assert.ok(shown(r.dir, '0001').build_exit, 'shown as stopped before');
   // Resumed by hand and running a speck command.
   const live = sleeper();
@@ -178,7 +180,7 @@ test('0300 AC2: a build resumed outside speck run, whose run record says it exit
     assert.equal(shown(r.dir, '0001').build_stopped, false);
   } finally { killAll([live]); }
   // Resumed by hand and found by its session on speck run's check, before it runs any speck command.
-  const resumed = sleeper('claude', '--resume', 'resumed-0002');
+  const resumed = sleeper('claude', '--resume', session);
   try {
     const rec = claimResumed(runs(r.dir), '0002');
     assert.equal(rec?.pid, resumed);
