@@ -41,6 +41,8 @@ That 0384 AC2 test passes however busy the machine is, and still fails if two `s
 - Asked for 2026-10-29 for the 0.21.1 patch release.
 - From 0540's build: it didn't fail again in 12 runs alone under the same load, with or without 0540's change, so it may be rare. Its `SPECK_REVIEW_WAIT_MS` of 1.5 s may be too short on a very busy machine. Not checked.
 - Relies on nothing outside this repo.
+- Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
