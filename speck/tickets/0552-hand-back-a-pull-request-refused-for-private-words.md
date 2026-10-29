@@ -41,6 +41,7 @@ speck run's pull request queue hands a ticket refused for private words back to 
 - From 0506's own note: the private-words check in `scripts/ship.mjs` runs in both modes, but only the local ship queue maps exit 17 to a hand-back (`HAND_BACK` in `scripts/ship-queue.mjs`). The pull request queue hands back only exit 13 (`scripts/pr-queue.mjs`, in its ship callback). 0323 made that conflict hand-back.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes. As with 0323's conflict hand-back, nothing pushes the build's new commit to the pull request afterwards, so the next ship asks for `speck pr`; that's the dropped idea speck/ideas/2026-10-19-push-a-handed-back-pull-request-again.md, left alone here.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
