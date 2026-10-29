@@ -3,7 +3,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { env, until } from './run.mjs';
+import { env, until, waitFor, BUSY_MS } from './run.mjs';
+import { gateDir } from './gate.mjs';
 
 // speck run from a copy of the CLI, in a process group of its own, as a terminal starts it, so Ctrl+C can be sent to
 // the whole group.
@@ -24,7 +25,10 @@ export const edit = (cli, file, fn) => { const f = path.join(path.dirname(cli), 
 // The line speck run on new code says as it takes over, marked so the test knows which code said it.
 export const SWITCHED = 'speck run switched to the new code.';
 export const mark = tag => src => src.replace(/'speck run switched to the new code\.[^']*'/, `'${SWITCHED} ${tag}'`);
-export const watching = (run, ms) => until(() => run.out().includes('speck run: watching for ready tickets'), ms);
+const WATCHING = 'speck run: watching for ready tickets';
+export const watching = (run, ms = BUSY_MS) => until(() => run.out().includes(WATCHING), ms);
+// 0559: waits for speck run to start watching, and fails the test saying so if it doesn't.
+export const startsWatching = run => waitFor(() => run.out().includes(WATCHING), 'speck run to start watching', run.out);
 
 // Sets a draft ticket ready and commits it, for speck run to launch.
 export const setReady = (r, id) => {
@@ -32,3 +36,9 @@ export const setReady = (r, id) => {
   fs.writeFileSync(t, fs.readFileSync(t, 'utf8').replace('status: draft', 'status: ready'));
   r.g('commit', '-qam', `ready ${id}`);
 };
+
+// 0559: a file that holds fake builds started with FAKE_GATE set to `gate` until the test opens it, so a build is still
+// running at a switch however long the switch takes.
+export const buildGate = () => { const gate = path.join(gateDir(), 'go'); return { gate, open: () => fs.writeFileSync(gate, '') }; };
+// 0559: opens a gate made by gated() in gate.mjs, letting the ship it holds finish its tests.
+export const openGate = g => fs.writeFileSync(g.gate, '');

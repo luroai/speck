@@ -5,9 +5,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { runRepo, until, alive, killAll, env } from './support/run.mjs';
+import { runRepo, waitFor, alive, killAll, env, BUSY_MS } from './support/run.mjs';
 import { cliCopy } from './support/panel.mjs';
-import { startRun, stop, lockPid, childrenOf, count, edit, SWITCHED, mark, watching } from './support/run-switch.mjs';
+import { startRun, stop, lockPid, childrenOf, count, edit, SWITCHED, mark, startsWatching, buildGate } from './support/run-switch.mjs';
 import { panelRunOn, panelRunOff, panelRunState } from '../scripts/panel-run.mjs';
 import { lockLost, recordedRun, keepsLock, isSpeckRun, processCwd } from '../scripts/run-lock.mjs';
 
@@ -16,7 +16,7 @@ import { lockLost, recordedRun, keepsLock, isSpeckRun, processCwd } from '../scr
 const runs = dir => path.join(dir, 'speck', '.cache', 'runs');
 const lockFile = dir => path.join(runs(dir), 'run.lock');
 const foremanFile = dir => path.join(runs(dir), 'run.foreman.json');
-const again = (dir, cli) => spawnSync(process.execPath, [cli, 'run'], { cwd: dir, encoding: 'utf8', env, timeout: 10000 });
+const again = (dir, cli) => spawnSync(process.execPath, [cli, 'run'], { cwd: dir, encoding: 'utf8', env, timeout: BUSY_MS });
 const refusal = pid => `speck run is already running in this repo (process ${pid}).`;
 // A live process that isn't speck run, to stand for another one in the lock.
 const other = () => { const p = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { detached: true, stdio: 'ignore' }); p.unref(); return p.pid; };
@@ -25,14 +25,15 @@ const LOST = 'no longer holds this repo\'s lock';
 test('0321 AC1: starting another speck run, before or after a switch to new code, is refused naming the one running, and starts nothing', async () => {
   const r = runRepo({ tickets: [['0001', {}]], max: 1 });
   const { cli } = cliCopy();
-  const run = startRun(r.dir, cli, { FAKE_MS: '20000' });
+  // Its build runs until the test ends, so nothing else launches.
+  const run = startRun(r.dir, cli, { FAKE_GATE: buildGate().gate });
   try {
-    assert.ok(await until(() => r.calls().length === 1), run.out());
+    await waitFor(() => r.calls().length === 1, 'the build of 0001 to start', run.out);
     const before = again(r.dir, cli);
     assert.notEqual(before.status, 0, before.stdout);
     assert.ok(before.stderr.includes(refusal(run.child.pid)), before.stderr);
     edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
+    await waitFor(() => run.out().includes(`${SWITCHED} v2`), 'the switch to v2', run.out);
     const after = again(r.dir, cli);
     assert.notEqual(after.status, 0, after.stdout);
     assert.ok(after.stderr.includes(refusal(run.child.pid)), after.stderr);
@@ -50,8 +51,8 @@ test('0321 AC1: a speck run still working though its lock is gone is named and c
   // Its next check is a minute away, so it's still working when the second one starts.
   const run = startRun(r.dir, cliCopy().cli, { SPECK_RUN_POLL_MS: '60000' });
   try {
-    assert.ok(await watching(run), run.out());
-    assert.ok(await until(() => fs.existsSync(foremanFile(r.dir))), run.out());
+    await startsWatching(run);
+    await waitFor(() => fs.existsSync(foremanFile(r.dir)), 'speck run to write the Foreman\'s status', run.out);
     fs.rmSync(lockFile(r.dir));
     const second = again(r.dir, cliCopy().cli);
     assert.notEqual(second.status, 0, second.stdout);
@@ -78,7 +79,7 @@ test('0321 AC1: a speck run working in another repo is never counted as this rep
   const r = runRepo({ tickets: [] }), elsewhere = runRepo({ tickets: [] });
   const run = startRun(elsewhere.dir, cliCopy().cli, { SPECK_RUN_POLL_MS: '60000' });
   try {
-    assert.ok(await watching(run), run.out());
+    await startsWatching(run);
     assert.equal(isSpeckRun(run.child.pid), true);
     assert.equal(isSpeckRun(run.child.pid, elsewhere.dir), true);
     assert.equal(isSpeckRun(run.child.pid, r.dir), false);
@@ -94,12 +95,12 @@ test('0321 AC2: turning it off from the Settings view stops the whole speck run,
   const { cli } = cliCopy();
   const run = startRun(r.dir, cli);
   try {
-    assert.ok(await watching(run), run.out());
+    await startsWatching(run);
     edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
+    await waitFor(() => run.out().includes(`${SWITCHED} v2`), 'the switch to v2', run.out);
     const workers = childrenOf(run.child.pid);
     assert.equal(workers.length, 1, `${workers}`);
-    const res = await panelRunOff(r.dir);
+    const res = await panelRunOff(r.dir, { ms: BUSY_MS });
     assert.equal(res.status, 200, JSON.stringify(res.body));
     // Looked at once: the switch has already waited for it, and says off only once it has gone.
     assert.deepEqual(workers.filter(alive), [], 'the worker has stopped');
@@ -124,14 +125,14 @@ test('0321 AC2: the switch shows it off only once its worker has stopped, even w
   const host = spawn(process.execPath, [path.join(bin, 'speck.mjs'), 'run'], { cwd: r.dir, detached: true, stdio: 'ignore', env: { ...env, WORKER_FILE: workerFile } });
   let worker = null;
   try {
-    assert.ok(await until(() => fs.existsSync(workerFile) && fs.readFileSync(workerFile, 'utf8')), 'the worker started');
+    await waitFor(() => fs.existsSync(workerFile) && fs.readFileSync(workerFile, 'utf8'), 'the stand-in\'s worker to start');
     worker = Number(fs.readFileSync(workerFile, 'utf8'));
     fs.mkdirSync(runs(r.dir), { recursive: true });
     fs.writeFileSync(lockFile(r.dir), String(host.pid));
     // The worker stops half a second after the process you started has.
     host.on('exit', () => setTimeout(() => killAll([worker]), 500));
     const t = Date.now();
-    const res = await panelRunOff(r.dir);
+    const res = await panelRunOff(r.dir, { ms: BUSY_MS });
     assert.equal(res.status, 200, JSON.stringify(res.body));
     // Looked at once: the switch has already waited for it, and says off only once it has gone.
     assert.deepEqual([worker].filter(alive), [], 'shown off only once the worker has gone');
@@ -142,18 +143,20 @@ test('0321 AC2: the switch shows it off only once its worker has stopped, even w
 test('0321 AC3, AC5: a speck run whose lock names another live speck run stops launching, says so once and exits, leaving its build running for the one that remains', async () => {
   const r = runRepo({ tickets: [['0001', {}], ['0002', { status: 'draft' }]], max: 2 });
   const { cli } = cliCopy();
-  const run = startRun(r.dir, cli, { FAKE_MS: '20000' });
+  // Its build runs until the test ends, so it is still running when the next speck run starts.
+  const run = startRun(r.dir, cli, { FAKE_GATE: buildGate().gate });
   const thief = other();
   let next = null;
   try {
-    assert.ok(await until(() => r.calls().length === 1), run.out());
+    await waitFor(() => r.calls().length === 1, 'the build of 0001 to start', run.out);
     const build = r.calls()[0].pid;
     fs.writeFileSync(lockFile(r.dir), String(thief));
     // A ticket set ready now is never launched by the one that no longer holds the lock.
     const t = path.join(r.dir, 'speck', 'tickets', '0002-t.md');
     fs.writeFileSync(t, fs.readFileSync(t, 'utf8').replace('status: draft', 'status: ready'));
     r.g('commit', '-qam', 'ready 0002');
-    assert.equal(await Promise.race([run.exited, new Promise(res => setTimeout(() => res('still running'), 8000))]), 0, run.out());
+    await waitFor(() => run.child.exitCode !== null || run.child.signalCode !== null, 'speck run to exit', run.out);
+    assert.equal(run.child.exitCode, 0, run.out());
     assert.equal(count(run.out(), LOST), 1, run.out());
     assert.ok(run.out().includes(`its lock names another speck run, process ${thief}`), run.out());
     assert.deepEqual(r.calls().map(c => c.args[0]), ['0001'], run.out());
@@ -162,8 +165,8 @@ test('0321 AC3, AC5: a speck run whose lock names another live speck run stops l
     // AC5: once the other one has gone, the speck run that remains picks the build up rather than launching it again.
     killAll([thief]);
     next = startRun(r.dir, cli, { FAKE_MS: '200' });
-    assert.ok(await until(() => next.out().includes('0001 is already being built')), next.out());
-    assert.ok(await until(() => r.calls().some(c => c.args[0] === '0002')), next.out());
+    await waitFor(() => next.out().includes('0001 is already being built'), 'the next speck run to take up the build of 0001', next.out);
+    await waitFor(() => r.calls().some(c => c.args[0] === '0002'), 'the next speck run to launch 0002', next.out);
     assert.equal(r.calls().filter(c => c.args[0] === '0001').length, 1, next.out());
   } finally { killAll([thief]); if (next) await stop(next); await stop(run); killAll(r.calls().map(c => c.pid)); }
 });
@@ -173,15 +176,16 @@ test('0321 AC3: on new code, a speck run whose lock file is gone stops, worker a
   const { cli } = cliCopy();
   const run = startRun(r.dir, cli);
   try {
-    assert.ok(await watching(run), run.out());
+    await startsWatching(run);
     edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
+    await waitFor(() => run.out().includes(`${SWITCHED} v2`), 'the switch to v2', run.out);
     const workers = childrenOf(run.child.pid);
     fs.rmSync(lockFile(r.dir));
-    assert.equal(await Promise.race([run.exited, new Promise(res => setTimeout(() => res('still running'), 8000))]), 0, run.out());
+    await waitFor(() => run.child.exitCode !== null || run.child.signalCode !== null, 'speck run to exit', run.out);
+    assert.equal(run.child.exitCode, 0, run.out());
     assert.equal(count(run.out(), LOST), 1, run.out());
     assert.ok(run.out().includes('its lock file is gone'), run.out());
-    assert.ok(await until(() => workers.every(p => !alive(p))), `${workers}`);
+    await waitFor(() => workers.every(p => !alive(p)), 'the speck run on new code to stop', () => `${workers}`);
   } finally { await stop(run); }
 });
 
@@ -217,11 +221,12 @@ test('0321 AC4: only the speck run holding the lock writes the Foreman\'s status
   const run = startRun(r.dir, cliCopy().cli);
   const thief = other();
   try {
-    assert.ok(await watching(run), run.out());
-    assert.ok(await until(() => fs.existsSync(foremanFile(r.dir))), 'the holder writes it');
+    await startsWatching(run);
+    await waitFor(() => fs.existsSync(foremanFile(r.dir)), 'the holder to write the Foreman\'s status');
     fs.writeFileSync(lockFile(r.dir), String(thief));
     fs.rmSync(foremanFile(r.dir));
-    assert.equal(await Promise.race([run.exited, new Promise(res => setTimeout(() => res('still running'), 8000))]), 0, run.out());
+    await waitFor(() => run.child.exitCode !== null || run.child.signalCode !== null, 'speck run to exit', run.out);
+    assert.equal(run.child.exitCode, 0, run.out());
     assert.equal(fs.existsSync(foremanFile(r.dir)), false, 'it wrote no status once it no longer held the lock');
   } finally { killAll([thief]); await stop(run); }
 });
@@ -230,7 +235,7 @@ test('0321 AC1: a speck run\'s folder is read on macOS as well as Linux, so eith
   const r = runRepo({ tickets: [] });
   const run = startRun(r.dir, cliCopy().cli, { SPECK_RUN_POLL_MS: '60000' });
   try {
-    assert.ok(await watching(run), run.out());
+    await startsWatching(run);
     const real = fs.realpathSync(r.dir);
     if (process.platform === 'linux') assert.equal(processCwd(run.child.pid, 'linux'), real); // /proc is Linux's only
     assert.equal(processCwd(run.child.pid, 'darwin'), real, 'with lsof, as on macOS');
@@ -244,7 +249,7 @@ async function standIn(r) {
   fs.writeFileSync(path.join(bin, 'speck.mjs'), STANDIN);
   const workerFile = path.join(bin, 'worker');
   const host = spawn(process.execPath, [path.join(bin, 'speck.mjs'), 'run'], { cwd: r.dir, detached: true, stdio: 'ignore', env: { ...env, WORKER_FILE: workerFile } });
-  assert.ok(await until(() => fs.existsSync(workerFile) && fs.readFileSync(workerFile, 'utf8')), 'the worker started');
+  await waitFor(() => fs.existsSync(workerFile) && fs.readFileSync(workerFile, 'utf8'), 'the stand-in\'s worker to start');
   fs.mkdirSync(runs(r.dir), { recursive: true });
   fs.writeFileSync(lockFile(r.dir), String(host.pid));
   const exited = new Promise(res => host.on('exit', res));
@@ -255,7 +260,7 @@ test('0321 AC2: every page shows speck run on while its worker is still stopping
   const r = runRepo({ tickets: [] });
   const { host, worker, exited } = await standIn(r);
   try {
-    const off = panelRunOff(r.dir);
+    const off = panelRunOff(r.dir, { ms: BUSY_MS });
     await exited;
     // Its lock is gone with it (the stand-in leaves it, so remove it as speck run does), but the worker is still running.
     fs.rmSync(lockFile(r.dir), { force: true });
@@ -280,7 +285,7 @@ test('0321 AC2: once the wait for it has run out, it still shows on until all of
     fs.rmSync(lockFile(r.dir), { force: true });
     assert.equal(panelRunState(r.dir).on, true);
     // The worker stops on Ctrl+C now, so turning it off again ends it.
-    const again2 = await panelRunOff(r.dir);
+    const again2 = await panelRunOff(r.dir, { ms: BUSY_MS });
     assert.equal(again2.status, 200, JSON.stringify(again2.body));
     assert.deepEqual(panelRunState(r.dir), { on: false, pid: null });
   } finally { killAll([host.pid, worker]); }

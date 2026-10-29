@@ -28,7 +28,10 @@ const out = outArg !== '@repo' ? outArg
   : path.join(require('child_process').execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim(), 'fake-out');
 const id = args[0];
 let n = 0; while (fs.existsSync(path.join(out, id + '.' + n + '.json'))) n++;
-fs.writeFileSync(path.join(out, id + '.' + n + '.json'), JSON.stringify({ at: Date.now(), args, cwd: process.cwd(), pid: process.pid, stdin: (() => { try { return fs.readFileSync(0, 'utf8'); } catch (e) { return 'ERR ' + e.code; } })() }));
+// Written whole and then renamed, so a test reading the records while it writes never sees half of one (0559).
+const rec = path.join(out, id + '.' + n + '.json');
+fs.writeFileSync(rec + '.tmp', JSON.stringify({ at: Date.now(), args, cwd: process.cwd(), pid: process.pid, stdin: (() => { try { return fs.readFileSync(0, 'utf8'); } catch (e) { return 'ERR ' + e.code; } })() }));
+fs.renameSync(rec + '.tmp', rec);
 console.log('building ' + id);
 for (let i = 1; i <= 7; i++) console.error('stderr line ' + i);
 // FAKE_BLOCK: start the ticket in its own worktree with speck, as /speck-build does, and block it there.
@@ -39,7 +42,11 @@ if (process.env.FAKE_BLOCK) {
   spawnSync(process.execPath, [process.env.FAKE_BLOCK, 'set', id, 'status', 'blocked'], { cwd: wt, encoding: 'utf8' });
   spawnSync('git', ['commit', '-qam', 'blocked'], { cwd: wt });
 }
-setTimeout(() => process.env.FAKE_SIGNAL ? process.kill(process.pid, process.env.FAKE_SIGNAL) : process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));
+const end = () => setTimeout(() => process.env.FAKE_SIGNAL ? process.kill(process.pid, process.env.FAKE_SIGNAL) : process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));
+// FAKE_GATE (0559): first stay alive until that file exists, however long that takes. Exits with 1 once its folder is gone.
+const gate = process.env.FAKE_GATE;
+if (!gate) end();
+else { const t = setInterval(() => { if (fs.existsSync(gate)) { clearInterval(t); end(); } else if (!fs.existsSync(path.dirname(gate))) process.exit(1); }, 50); }
 `;
 
 // A repo with speck installed, the given tickets committed and build_command pointing at the fake builder, unless
@@ -83,6 +90,13 @@ export const until = async (cond, ms = 8000) => {
   const end = Date.now() + ms;
   while (Date.now() < end) { if (await cond()) return true; await new Promise(r => setTimeout(r, 50)); }
   return false;
+};
+// 0559: how long a test of speck run's switch waits for a process to start, ship, switch or stop. On a busy machine,
+// loading speck's code takes seconds and a ship took 16 (0541), so it counts on none of them happening quickly.
+export const BUSY_MS = 30000;
+// Waits up to `ms` for `cond`, and fails the test saying what it waited for, with `out()`'s output, if it never holds.
+export const waitFor = async (cond, what, out = () => '', ms = BUSY_MS) => {
+  if (!(await until(cond, ms))) assert.fail(`waited ${ms / 1000} s for ${what}, and it didn't happen.\n${out()}`);
 };
 export const alive = pid => { try { process.kill(pid, 0); return true; } catch { return false; } };
 export const killAll = pids => { for (const p of pids) try { process.kill(p, 'SIGKILL'); } catch {} };
