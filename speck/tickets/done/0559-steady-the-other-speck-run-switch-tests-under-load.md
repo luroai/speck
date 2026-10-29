@@ -1,7 +1,7 @@
 ---
 id: "0559"
 title: "Steady the other speck run switch tests under load"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0557"]                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T15:36:43.549Z"
 approved: "2026-10-29T16:13:52.186Z"
+finished: "2026-10-29T16:17:43.933Z"
 
 ---
 # 0559 · Steady the other speck run switch tests under load
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The tests of speck run's switch to new code wait only 8 or 20 seconds for processes to start, ship or switch, so on a busy machine they fail by chance: in 0541's build `0247 AC1, AC2` failed once and eight 0247, 0301 and 0321 tests failed in one related run, all passing on a quiet machine. A test that fails by chance can stop `speck ship` for a ticket that didn't break it.
