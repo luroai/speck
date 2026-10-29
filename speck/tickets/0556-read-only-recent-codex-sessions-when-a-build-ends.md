@@ -1,7 +1,7 @@
 ---
 id: "0556"
 title: "Read only recent Codex sessions when a build ends"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-27-read-only-recent-codex-sessions-when-a-buil
 after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:17:26.372Z"
+approved: "2026-10-29T14:49:56.246Z"
 
 ---
 # 0556 · Read only recent Codex sessions when a build ends
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build ends, `speck run` reads the first line of every session file in Codex's sessions folder to find the ones started in the ticket's worktree, then reads them all again for each one it finds, to collect its sub-agents. Every build does this, even one that never ran Codex, and the folder only grows: here 1,155 files (448 MB) took about a third of a second with the files cached, and more for each session found.
@@ -54,9 +55,15 @@ When a build finishes, speck looks through Codex's saved sessions to count what 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Filtering metadata removes links through older ancestors.; F2 The review's test output contains no results for the new tests and no completed totals.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 364,828
+- Elapsed since build started: 32 min
+- Changed lines: 45 (limit 5000)
 - Follow-ups (Delivery log only, no inbox notes):
   - Known limit: a session's ancestors above its parent are read from session files, so they're lost only when a session from before the start is resumed and starts a sub-agent in this worktree (reviewer accepted in round 2).
   - Tidy-up: `codexSubagents` still walks the folder once for each session it keeps. It now only stats old files, but it could share one walk with `codexSessionsIn`.
