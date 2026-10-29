@@ -1,7 +1,7 @@
 ---
 id: "0555"
 title: "Make 0430's head check look for the relative stylesheet"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-28-make-0430-s-head-check-look-for-the-relativ
 after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:17:16.688Z"
+approved: "2026-10-29T14:20:52.185Z"
 
 ---
 # 0555 · Make 0430's head check look for the relative stylesheet
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0430 AC1's check that the Settings stylesheet loads in the page's head looks for `/panel-settings.css`, but since 0543 the page links `panel-settings.css`. The search finds nothing, so the check passes without checking anything, and a stylesheet could slip out of the head unnoticed.
@@ -49,9 +50,15 @@ Nothing changes in the panel itself. One of speck's own checks, which makes sure
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC2 explicitly requires the Delivery log to explain how the missing-link and after-head failure cases were checked, but that section is empty.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 257,644
+- Elapsed since build started: 4 min
+- Changed lines: 0 (limit 5000)
 - How AC2 was checked: 0430 AC1's head check is now `linkedInHead` in `test/support/head.mjs`. The test `0555 AC2` runs that same check on the real `templates/panel.html` with the `panel-settings.css` link removed, with it moved after `</head>`, and with no `</head>` at all, and asserts that each fails. It passes on the page as it is (`0555 AC1`).
 
 ## Review rounds
