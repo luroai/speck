@@ -1,12 +1,11 @@
 // 0384, 0558: a slow command reviewer, and the checks that `speck review` run twice at once starts one reviewer and
-// records its round once. Each start is two processes deep (the round's own process, then its reviewer), so on a busy
+// records its round once. Each test file starts the two commands itself, as no shared helper starts the CLI (0231). Each start is two processes deep (the round's own process, then its reviewer), so on a busy
 // machine the reviewer's first line can come after both commands have exited 12: the checks wait for it.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { commandRepo, changesVerdict, CLI } from './speck.mjs';
+import { commandRepo, changesVerdict } from './speck.mjs';
 import { keptFile } from './copy.mjs';
 
 // A reviewer that logs each start, once its start file exists when SLOW_START is set, and answers only once its go
@@ -49,17 +48,6 @@ export function slowRepo(t, more = {}) {
   // The starts commands have claimed for 0001: each is claimed before its reviewer is started.
   const claimed = () => { try { return fs.readdirSync(path.join(r.dir, 'speck', '.cache', '0001')).filter(n => /^review-run-\d+\.json$/.test(n)).length; } catch { return 0; } };
   return { ...r, env, go, starts, run, rounds, claimed };
-}
-
-// Runs `speck review 0001` twice at once, each waiting 1.5 s for the round, and gives each one's exit code and output.
-export function reviewTwiceAtOnce(r) {
-  const start = () => new Promise(resolve => {
-    const p = spawn(process.execPath, [CLI, 'review', '1'], { cwd: r.dir, env: { ...process.env, ...r.env, SPECK_REVIEW_WAIT_MS: '1500' } });
-    let out = '';
-    p.stdout.on('data', d => { out += d; });
-    p.on('close', code => resolve({ code, out }));
-  });
-  return Promise.all([start(), start()]);
 }
 
 // Checks, once both commands have exited, that one reviewer was started: one start claimed, and one reviewer that
