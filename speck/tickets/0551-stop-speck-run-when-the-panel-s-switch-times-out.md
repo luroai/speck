@@ -44,6 +44,8 @@ A speck run the panel's switch started that didn't say it was watching in time i
 - Quick test: call `panelRunOn` directly with a short `ms` and a speck run that never says it's watching, as 0544's tests do for `startBackground`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes
+- Pictures: none, because nothing anyone sees changes apart from the wording of the switch's time-out error
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

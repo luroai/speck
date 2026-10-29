@@ -63,9 +63,22 @@ export function requestBody(req) {
 // output going to speck/.cache/runs/run.log, so it keeps running after the page is closed and after `speck panel` stops,
 // Ctrl+C included. Resolves with { status, body }: 200 and the run once it holds the lock and has said so (0207, so its first
 // line isn't read as part of a refusal from the next one), or 409 and its refusal, from a file of its own (0220), not run.log.
-const RUN_SWITCH_MS = 10000, RUN_SWITCH_POLL_MS = 50;
+// 0551: one that hasn't said so within `ms` is stopped with `stop` before it resolves with a 500, so nothing is left running.
+const RUN_SWITCH_MS = 10000, RUN_SWITCH_POLL_MS = 50, STOP_MS = 5000;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-export function panelRunOn(repo, { ms = RUN_SWITCH_MS } = {}) {
+// 0544: stops the process group a speck run that didn't start in time leads: SIGTERM, then SIGKILL if it's still there
+// after `ms`. Resolves once it has gone, or rejects saying which process to stop when even SIGKILL didn't stop it in time.
+export async function stopStarted(pid, ms = STOP_MS) {
+  const gone = async () => { for (const until = Date.now() + ms; Date.now() < until; await sleep(RUN_SWITCH_POLL_MS)) if (!pidAlive(pid)) return true; return !pidAlive(pid); };
+  for (const signal of ['SIGTERM', 'SIGKILL']) {
+    try { process.kill(-pid, signal); } catch { /* already gone */ }
+    if (await gone()) return;
+  }
+  throw new SpeckError(`speck run (process ${pid}) didn't stop. Stop that process yourself.`);
+}
+
+export function panelRunOn(repo, { ms = RUN_SWITCH_MS, stop = stopStarted } = {}) {
   const still = stillStopping(repo);
   if (still) return Promise.resolve({ status: 409, body: { error: stillSays(still) } });
   const cli = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
@@ -81,15 +94,26 @@ export function panelRunOn(repo, { ms = RUN_SWITCH_MS } = {}) {
   // What this speck run has written to the log so far.
   const said = () => { try { return fs.readFileSync(log).subarray(from).toString('utf8').trim(); } catch { return ''; } };
   return new Promise(resolve => {
-    let check, timer;
-    const finish = out => { clearInterval(check); clearTimeout(timer); resolve(out); };
+    let check, timer, done = false;
+    const finish = out => { if (done) return; done = true; clearInterval(check); clearTimeout(timer); resolve(out); };
     child.on('error', e => finish({ status: 500, body: { error: `Couldn't start speck run: ${e.message}` } }));
     child.on('exit', code => finish({ status: 409, body: { error: takeRefusal(refusal) || `speck run stopped with exit code ${code} before it was on. Its output is in ${path.relative(repo, log)}.` } }));
     check = setInterval(() => {
       const run = runState(runsOf(repo));
       if (run.on && run.pid === child.pid && said()) finish({ status: 200, body: { ok: true, run } });
     }, RUN_SWITCH_POLL_MS);
-    timer = setTimeout(() => finish({ status: 500, body: { error: `speck run (process ${child.pid}) started but didn't take its lock and say it's watching within ${ms / 1000} seconds. Its output is in ${path.relative(repo, log)}.`, pid: child.pid } }), ms);
+    timer = setTimeout(async () => {
+      // Its exit, once stopped, isn't a refusal: this answer is the time-out's, given once it has gone or couldn't be stopped.
+      if (done) return;
+      done = true;
+      clearInterval(check);
+      const late = `speck run (process ${child.pid}) started but didn't take its lock and say it's watching within ${ms / 1000} seconds`;
+      const where = `Its output is in ${path.relative(repo, log)}.`;
+      let error = `${late}, so it was stopped. ${where}`;
+      try { await stop(child.pid); } catch { error = `${late}, and didn't stop when it was sent SIGTERM and then SIGKILL. Stop process ${child.pid} yourself. ${where}`; }
+      takeRefusal(refusal); // anything it left on its way out isn't for the next one to read
+      resolve({ status: 500, body: { error, pid: child.pid } });
+    }, ms);
   });
 }
 
