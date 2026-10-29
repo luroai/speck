@@ -1,7 +1,7 @@
 ---
 id: "0552"
 title: "Hand back a pull request refused for private words"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-25-hand-back-a-pull-request-refused-for-privat
 after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:13:39.786Z"
+approved: "2026-10-29T14:16:43.968Z"
 
 ---
 # 0552 · Hand back a pull request refused for private words
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In pull request mode, when `speck ship --auto` refuses a ticket because a file under `speck/` holds a private word or the home folder's path (exit 17), speck run's pull request queue only says it didn't ship. The ticket waits for the Foreman or the user, though its build has steps to take them out, as it does in local mode.
@@ -54,9 +55,14 @@ Worth keeping an eye on: once the build has taken the words out, its new commit 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 90,136
+- Elapsed since build started: 3 min
+- Changed lines: 4 (limit 5000)
 Follow-ups:
 - Skipped, matches speck/ideas/2026-10-19-push-a-handed-back-pull-request-again.md (dropped): pushing the build's new commit to the pull request after a hand-back, which this hand-back needs as much as 0323's conflict one.
 - The hand-back message says "speck run's ship queue tries it again", which in pull request mode is its pull request queue. Wording only.
