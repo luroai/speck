@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0561"]                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T15:22:57.227Z"
-approved: "2026-10-29T15:32:29.453Z"
+approved: "2026-10-29T15:46:25.253Z"
 
 ---
 # 0562 · Fold a task's subfolders in its review pack
@@ -57,12 +57,13 @@ To see it, open the review pack of a task whose output folder has a subfolder. T
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 176,589
-- Elapsed since build started: 10 min
+- Reviewer tokens: 314,554
+- Elapsed since build started: 23 min
 - Changed lines: 79 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -137,6 +138,81 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The review pack now shows shorter file names and collapses each subfolder into a row with a file count. Expanding folders preserves file order and opening behaviour, with keyboard-accessible controls and full-path tooltips. The tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e383ba41ac90f430da72cadbf61af83898ba68be",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a18849-f9db-7280-946c-95f6c4c888de",
+    "builder_response": "- Tests run: test/panel-0453.test.mjs test/panel-0472.test.mjs test/pack-0562.test.mjs test/pack-0354.test.mjs test/pack-0359.test.mjs test/pack-0561.test.mjs test/pack-0363.test.mjs test/panel-0361.test.mjs test/panel-0473.test.mjs (plus the checks): 173 pass, 0 fail, 3 skipped.\n- Ship handed this back: `0453 AC1 AC3` (real browser: every button on whole pixels with a full border) failed on the ticket merged with main. Cause: its own change, not main's. The test checks a list of buttons by their label and expected the task file's button to be labelled `outputs/0002/plan.md`. This ticket (AC1) labels it `plan.md`, so the button was never matched and the test's \"was checked\" assertion failed.\n- Fix: merged main into the branch (no conflicts). In test/panel-0453.test.mjs, the expected label is now `plan.md`. I also added a file in a subfolder (`notes/a.md`) to its sample pack and `notes/` to the list, so the new folder button gets the same pixel and border check. It passes. No code changed.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 313434,
+      "cached_input_tokens": 242304,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1120,
+      "reasoning_output_tokens": 48
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 18900,
+      "cached": 118656,
+      "write": 0,
+      "output": 409
+    },
+    "cost_usd": 0.0537556,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-29T15:46:23.187Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "documentsPart and folderRow in templates/panel-popups.js retain top-level names, folded folders and recursive file counts. Both 0562 AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "folderRow preserves file order and toggles rows; documentButton preserves Markdown pop-ups and other files opening in new tabs. All three 0562 AC2 tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "documentButton sets each file's title to its full project path. The 0562 AC3 test passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "folderRow uses native buttons and updates aria-expanded without replacing the focused button. The 0562 AC4 test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified the latest test log: 173 passed, 0 failed, 3 skipped. test/panel-0453.test.mjs updates the expected file label and adds folder coverage while retaining its border and pixel-alignment assertions."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still meets all criteria. The browser test now recognises the shorter file label and also checks folder buttons, without weakening its visual checks. All tests run for this round pass; no blocking issues remain."
   }
 }
 ```
