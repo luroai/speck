@@ -44,6 +44,7 @@ A task's build writes a summary of its result at the top of its output folder, a
 - Decided with the user: the Ship part sits under the summary and above the other files, so the list never stands between the summary and Ship.
 - Today: `documentsPart` in `templates/panel-popups.js` puts every file above `shipPart`; the files come from `panelDocuments` and `documentLines` in `scripts/output.mjs`. The skill is `skills/speck-build/SKILL.md`, section 2's paragraph on a task. If `docs/brief.md` describes a task's review pack, it's updated to match.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
