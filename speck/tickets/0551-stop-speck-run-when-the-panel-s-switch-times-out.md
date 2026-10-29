@@ -43,6 +43,7 @@ A speck run the panel's switch started that didn't say it was watching in time i
 - From 0544's build: `speck run --background` stops the process it started on a time-out (`stopStarted` in `scripts/run-background.mjs`), while the panel's `panelRunOn` in `scripts/panel-run.mjs` only reports it, as a 500 with the child's `pid` in its body. `scripts/run-background.mjs` imports `panel-run.mjs`, so moving or sharing `stopStarted` mustn't make a loop.
 - Quick test: call `panelRunOn` directly with a short `ms` and a speck run that never says it's watching, as 0544's tests do for `startBackground`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
