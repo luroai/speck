@@ -6,11 +6,23 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { reviewRepo, commandRepo, ROOT } from './support/speck.mjs';
-import { slowRepo, until, reviewTwiceAtOnce, assertOneReviewer, assertRecordedOnce } from './support/review-twice.mjs';
+import { spawn } from 'node:child_process';
+import { reviewRepo, commandRepo, ROOT, CLI } from './support/speck.mjs';
+import { slowRepo, until, assertOneReviewer, assertRecordedOnce } from './support/review-twice.mjs';
 import { runsOf } from '../scripts/speck.mjs';
 import { roundRunning } from '../scripts/review-running.mjs';
 import { reviewWaitMs, claimStart } from '../scripts/review-wait.mjs';
+
+// Runs `speck review 0001` twice at once, each waiting 1.5 s for the round, and gives each one's exit code and output.
+function reviewTwiceAtOnce(r) {
+  const start = () => new Promise(resolve => {
+    const p = spawn(process.execPath, [CLI, 'review', '1'], { cwd: r.dir, env: { ...process.env, ...r.env, SPECK_REVIEW_WAIT_MS: '1500' } });
+    let out = '';
+    p.stdout.on('data', d => { out += d; });
+    p.on('close', code => resolve({ code, out }));
+  });
+  return Promise.all([start(), start()]);
+}
 
 const STILL = /Round 1 of 0001 is still running/;
 const WAIT = '`speck review 0001 --wait`';

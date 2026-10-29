@@ -6,8 +6,21 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { CLI } from './support/speck.mjs';
 import { claimStart } from '../scripts/review-wait.mjs';
-import { slowRepo, reviewTwiceAtOnce, assertOneReviewer, assertRecordedOnce } from './support/review-twice.mjs';
+import { slowRepo, assertOneReviewer, assertRecordedOnce } from './support/review-twice.mjs';
+
+// Runs `speck review 0001` twice at once, each waiting 1.5 s for the round, and gives each one's exit code and output.
+function reviewTwiceAtOnce(r) {
+  const start = () => new Promise(resolve => {
+    const p = spawn(process.execPath, [CLI, 'review', '1'], { cwd: r.dir, env: { ...process.env, ...r.env, SPECK_REVIEW_WAIT_MS: '1500' } });
+    let out = '';
+    p.stdout.on('data', d => { out += d; });
+    p.on('close', code => resolve({ code, out }));
+  });
+  return Promise.all([start(), start()]);
+}
 
 // A slow repo whose reviewer says it started only once `letStart` is called, as a busy machine's may.
 function lateRepo(t) {
