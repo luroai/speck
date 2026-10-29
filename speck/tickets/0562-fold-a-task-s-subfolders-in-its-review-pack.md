@@ -1,7 +1,7 @@
 ---
 id: "0562"
 title: "Fold a task's subfolders in its review pack"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0561"]                # ticket ids that must be done first
 created: 2026-10-29
+started: "2026-10-29T15:22:57.227Z"
 
 ---
 # 0562 · Fold a task's subfolders in its review pack
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 In a task's review pack, every file in its output folder, however deep, is its own button labelled with its path from the project root. A research run with dozens of files in a subfolder becomes a long wall of buttons, and on a phone the repeated `outputs/<folder>/` at the start of each label takes a line of its own.
