@@ -48,8 +48,10 @@ function claudeModel(modelUsage) {
 const CODEX_HOME = () => process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
 
 // Every rollout file in `home`'s sessions folder (sessions/YYYY/MM/DD/rollout-<time>-<thread>.jsonl), or only those for
-// thread `thread` when it's given.
-function rollouts(home, thread) {
+// thread `thread` when it's given. 0556: with `since`, a time in milliseconds, only those that last changed at or after
+// it, found by their last change rather than their day folder, so a session resumed later is found wherever it is.
+function rollouts(home, thread, since = null) {
+  const recent = p => { if (since === null) return true; try { return fs.statSync(p).mtimeMs >= since; } catch { return false; } };
   const files = [];
   const walk = (dir, depth) => {
     let names;
@@ -57,7 +59,7 @@ function rollouts(home, thread) {
     for (const d of names) {
       const p = path.join(dir, d.name);
       if (d.isDirectory() && depth < 3) walk(p, depth + 1);
-      else if (d.isFile() && d.name.startsWith('rollout-') && d.name.endsWith(thread ? `-${thread}.jsonl` : '.jsonl')) files.push(p);
+      else if (d.isFile() && d.name.startsWith('rollout-') && d.name.endsWith(thread ? `-${thread}.jsonl` : '.jsonl') && recent(p)) files.push(p);
     }
   };
   walk(path.join(home, 'sessions'), 0);
@@ -88,6 +90,13 @@ export function codexModel(thread, home = CODEX_HOME()) {
   return model;
 }
 
+// 0556: a time given as an ISO string or milliseconds, as milliseconds, or null when it's missing or can't be read, so
+// every file is read.
+const sinceOf = v => {
+  const ms = v instanceof Date ? v.getTime() : typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Date.parse(v) : NaN;
+  return Number.isFinite(ms) ? ms : null;
+};
+
 // The first line of `file`, read a piece at a time so a long session file isn't read whole, or null when it can't be
 // read or has no line within 4 MB.
 function firstLine(file) {
@@ -111,11 +120,11 @@ function firstLine(file) {
 // turn, however deep, each once and never `thread` itself: [{thread, model, usage}], model the one its session file
 // records and usage its last token_count's total_token_usage. A sub-agent's session_meta names the thread that started
 // it as source.subagent.thread_spawn.parent_thread_id. A file that can't be read or parsed, or that has no usage yet, is
-// left out, and when a session has several files, the newest one with usage counts.
-export function codexSubagents(thread, home = CODEX_HOME()) {
+// left out, and when a session has several files, the newest one with usage counts. 0556: `since` as sinceOf gives it.
+export function codexSubagents(thread, home = CODEX_HOME(), { since } = {}) {
   if (typeof thread !== 'string' || !/^[\w-]+$/.test(thread)) return [];
   const children = new Map(); // parent thread -> [{id, file}]
-  for (const { file, meta } of sessionMetas(home)) {
+  for (const { file, meta } of sessionMetas(home, sinceOf(since))) {
     const id = usable(meta.payload?.id), parent = usable(meta.payload?.source?.subagent?.thread_spawn?.parent_thread_id);
     if (!id || !parent) continue;
     if (!children.has(parent)) children.set(parent, []);
@@ -135,9 +144,9 @@ export function codexSubagents(thread, home = CODEX_HOME()) {
 }
 
 // The session_meta line of each rollout file in `home`'s sessions folder: [{file, meta}], leaving out a file whose first
-// line can't be read or parsed or isn't a session_meta.
-function sessionMetas(home) {
-  return rollouts(home).flatMap(file => {
+// line can't be read or parsed or isn't a session_meta. 0556: with `since`, only the files rollouts gives for it.
+function sessionMetas(home, since = null) {
+  return rollouts(home, undefined, since).flatMap(file => {
     let meta;
     try { meta = JSON.parse(firstLine(file) ?? ''); } catch { return []; }
     return plain(meta) && meta.type === 'session_meta' && plain(meta.payload) ? [{ file, meta }] : [];
@@ -164,8 +173,9 @@ function sessionUsage(files) {
 // 0534: each Codex session whose session_meta gives as its cwd the folder `dir` or one inside it, in `home`'s sessions
 // folder: [{thread, ancestors, ended, model, usage}], ancestors the threads that started it, nearest first, as their
 // session files name them, ended the time its files last changed, and model and usage as sessionUsage gives them, both
-// null for a session with no usage yet. A file that can't be read or parsed is left out.
-export function codexSessionsIn(dir, home = CODEX_HOME()) {
+// null for a session with no usage yet. A file that can't be read or parsed is left out. 0556: with `since`, a time as
+// sinceOf reads it, only the files that last changed at or after it are opened.
+export function codexSessionsIn(dir, home = CODEX_HOME(), { since } = {}) {
   const real = p => { try { return fs.realpathSync(p); } catch { return path.resolve(p); } };
   let root;
   try { root = fs.realpathSync(dir); } catch { return []; }
@@ -175,7 +185,7 @@ export function codexSessionsIn(dir, home = CODEX_HOME()) {
     return rel === '' || (rel.split(path.sep)[0] !== '..' && !path.isAbsolute(rel));
   };
   const parents = new Map(), files = new Map(); // thread -> the thread that started it; thread -> its files here
-  for (const { file, meta } of sessionMetas(home)) {
+  for (const { file, meta } of sessionMetas(home, sinceOf(since))) {
     const id = usable(meta.payload.id), parent = usable(meta.payload.source?.subagent?.thread_spawn?.parent_thread_id);
     if (!id || !/^[\w-]+$/.test(id)) continue;
     if (parent) parents.set(id, parent);

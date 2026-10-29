@@ -299,17 +299,18 @@ function countedThreads(runs, id, rounds) {
 // ticket end. A session countedThreads names, or one started by such a session, however deep, isn't counted. Of the
 // rest, a sub-agent whose parent is also one of them counts with it, so it's kept with the first that isn't, even when
 // that one has no usage itself. `rounds` are the ticket's saved review rounds and `home` Codex's home, $CODEX_HOME or
-// ~/.codex when it isn't given. Returns what it kept.
-export function recordDelegatedSpend(runs, id, { worktree, rounds, home } = {}) {
+// ~/.codex when it isn't given. 0556: `started`, the time the ticket's first build started, limits both to the session
+// files that last changed at or after it, or every file is read when it's missing. Returns what it kept.
+export function recordDelegatedSpend(runs, id, { worktree, rounds, home, started } = {}) {
   id = String(id ?? '');
   if (!/^[\w-]+$/.test(id) || typeof worktree !== 'string' || !worktree) return [];
   const counted = countedThreads(runs, id, rounds), kept = [];
   const n = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
-  const sessions = codexSessionsIn(worktree, home);
+  const sessions = codexSessionsIn(worktree, home, { since: started });
   const open = new Set(sessions.filter(s => ![s.thread, ...s.ancestors].some(t => counted.has(t))).map(s => s.thread));
   for (const s of sessions) {
     if (!open.has(s.thread) || s.ancestors.some(t => open.has(t))) continue;
-    const subs = codexSubagents(s.thread, home);
+    const subs = codexSubagents(s.thread, home, { since: started });
     if (!s.usage && !subs.length) continue;
     const split = s.usage && roundTokens(s.usage, { codex: true }), cost = priced(s.model, split);
     const own = s.usage ? { tokens: n(s.usage.input_tokens) + n(s.usage.output_tokens), cost_usd: cost, models: [{ model: s.model, tokens: split, cost_usd: cost }] } : { tokens: 0, cost_usd: 0, models: [] };
