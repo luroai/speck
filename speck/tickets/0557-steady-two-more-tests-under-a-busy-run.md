@@ -1,7 +1,7 @@
 ---
 id: "0557"
 title: "Steady two more tests under a busy run"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-28-steady-0232-ac3-and-0472-ac3-under-a-busy-r
 after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:18:29.754Z"
+approved: "2026-10-29T15:22:18.324Z"
 
 ---
 # 0557 · Steady two more tests under a busy run
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0232 AC3 (0176 AC3's check fails for a speck run whose checks cost more than 5% of one core) and 0472 AC3 (in a real browser, every element's computed style is the same as before) fail when the whole suite runs alongside other test runs, on the base code as well. A failure like this at `speck ship` hands a ticket back for nothing.
@@ -54,9 +55,14 @@ Nothing changes in speck itself. Two of speck's own checks that kept failing on 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 139,472
+- Elapsed since build started: 64 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: 0150 AC2 timed out waiting for the Settings view's agents' lists in two busy whole-suite runs, the same cause as 0472 AC3: speck/ideas/2026-10-29-steady-0150-ac2-s-wait-for-the-settings-view.md. 0072 and 0517 AC3 failed once each under load and aren't followed up.
 - AC1, why 0232 AC3 failed under load: it measures CPU time, as 0176 AC3's check does, but the broken copy of speck run spent its "400 ms of CPU" in a loop timed by the clock, and 0176's check counts checks by the clock too. On a busy machine speck run got well under one core, so a check spent less CPU than it was meant to, and a run that can't get the CPU can't be seen spending more than its share of a core times the wait between checks: 0.5 s × under half a core is under the 0.25 s budget. On the base code with the whole suite running, it failed in 3 runs out of 3 (load 57 to 80 on 16 cores: 0.152, 0.212 and 0.226 s a check). Now each check spends 1 s of CPU time, however long that takes, and checks are 2.5 s apart, so a run given only a tenth of a core is still seen over budget. It takes 5 s rather than 2 s.
