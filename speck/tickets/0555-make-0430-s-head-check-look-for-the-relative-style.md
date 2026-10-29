@@ -43,7 +43,7 @@ started: "2026-10-29T14:17:16.688Z"
 - Self-check: added a case for a page with no `</head>` at all, which the check also fails.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in the panel itself. One of speck's own checks, which makes sure the Settings view's styles load before the page appears, had been looking for the wrong address and so never really checked anything. It now looks for the right one, and fails if those styles go missing or load too late. There's nothing to see in use; it just guards against a page that briefly shows unstyled.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -124,6 +124,79 @@ started: "2026-10-29T14:17:16.688Z"
     ],
     "escalation_question": "",
     "summary": "The corrected check finds the relative stylesheet and rejects missing or misplaced links. The targeted tests pass. Before approval, record those failure checks in the Delivery log as the ticket requires."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "25b1c5642b70cd2dd6d41883353cdcaad3fb51cd",
+    "session": "continued",
+    "thread_id": "01a18807-cfb7-7a12-b9f3-c365e768032a",
+    "builder_response": "- Tests run: test/panel-0555.test.mjs test/panel-0430.test.mjs\n- F1: fixed. The Delivery log now says how AC2 was checked: the 0555 AC2 test runs the head check on the real page with the link removed, moved after </head> and with no </head>, and each fails.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 176586,
+      "cached_input_tokens": 142848,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1073,
+      "reasoning_output_tokens": 20
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 2975,
+      "cached": 94208,
+      "write": 0,
+      "output": 491
+    },
+    "cost_usd": 0.0202808,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-29T14:20:44.847Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/panel-0430.test.mjs uses linkedInHead(html, SETTINGS_LINK), whose constant matches the relative stylesheet link. The passing 0555 AC1 test checks the real template."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing 0555 AC2 test rejects the missing link, the link moved after </head>, and a missing </head>. The ticket's Delivery log now explicitly describes these checks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The latest /tmp/speck-0555-tests.txt records 116 tests: 113 passed, 3 skipped, 0 failed. Only the ticket documentation changed since the previous review."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0555-make-0430-s-head-check-look-for-the-relative-style.md",
+        "issue": "The required explanation of the failure checks was missing from the Delivery log.",
+        "suggested_fix": "Record how the missing-link and after-head cases were checked.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The stylesheet check now finds the relative link and rejects missing or misplaced links. Tests pass, and the Delivery log records the required checks. All criteria are met."
   }
 }
 ```
