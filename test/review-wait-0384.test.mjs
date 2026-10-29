@@ -6,47 +6,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
-import { reviewRepo, commandRepo, changesVerdict, ROOT, CLI } from './support/speck.mjs';
-import { keptFile } from './support/copy.mjs';
+import { reviewRepo, commandRepo, ROOT } from './support/speck.mjs';
+import { slowRepo, until, reviewTwiceAtOnce, assertOneReviewer, assertRecordedOnce } from './support/review-twice.mjs';
 import { runsOf } from '../scripts/speck.mjs';
 import { roundRunning } from '../scripts/review-running.mjs';
 import { reviewWaitMs, claimStart } from '../scripts/review-wait.mjs';
-
-// A reviewer that logs each start and answers only once its go file exists, or fails then with SLOW_FAIL set.
-const slow = keptFile('slow-reviewer', `#!${process.execPath}
-const fs = require('fs');
-fs.readFileSync(0, 'utf8');
-fs.appendFileSync(process.env.SLOW_LOG, 'start\\n');
-const tick = () => {
-  if (!fs.existsSync(process.env.SLOW_GO)) return setTimeout(tick, 20);
-  if (process.env.SLOW_FAIL) { console.error('slow reviewer broke'); process.exit(3); }
-  console.log(${JSON.stringify(JSON.stringify(changesVerdict))});
-};
-tick();
-`, 0o755);
-
-// Waits, with a time limit, until `check` is true.
-async function until(check, ms = 5000) {
-  const end = Date.now() + ms;
-  while (!check()) {
-    if (Date.now() > end) throw new Error('timed out waiting');
-    await new Promise(r => setTimeout(r, 20));
-  }
-}
-
-function slowRepo(t, more = {}) {
-  const r = commandRepo({ command: slow });
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'slow-'));
-  const env = { SLOW_LOG: path.join(tmp, 'log'), SLOW_GO: path.join(tmp, 'go'), SPECK_REVIEW_WAIT_MS: '300', SPECK_REVIEW_TIMEOUT_MS: '10000', ...more };
-  const go = () => fs.writeFileSync(env.SLOW_GO, '');
-  // So no reviewer is left running, unless the test's folders have gone already: then its time limit ends it.
-  t.after(() => { try { go(); } catch { /* gone */ } });
-  const starts = () => fs.existsSync(env.SLOW_LOG) ? fs.readFileSync(env.SLOW_LOG, 'utf8').split('\n').filter(Boolean).length : 0;
-  const run = (extra, ...a) => r.runEnv({ ...env, ...extra }, ...a);
-  const rounds = () => [1, 2].filter(n => r.roundFile(n)).length;
-  return { ...r, env, go, starts, run, rounds };
-}
 
 const STILL = /Round 1 of 0001 is still running/;
 const WAIT = '`speck review 0001 --wait`';
@@ -134,20 +98,10 @@ test('0384 AC2: only one command can claim a start, so two started at once never
 
 test('0384 AC2: speck review run twice at once starts one reviewer, and its round is recorded once', async t => {
   const r = slowRepo(t);
-  const start = () => new Promise(resolve => {
-    const p = spawn(process.execPath, [CLI, 'review', '1'], { cwd: r.dir, env: { ...process.env, ...r.env, SPECK_REVIEW_WAIT_MS: '1500' } });
-    let out = '';
-    p.stdout.on('data', d => { out += d; });
-    p.on('close', code => resolve({ code, out }));
-  });
-  const both = await Promise.all([start(), start()]);
+  const both = await reviewTwiceAtOnce(r);
   assert.deepEqual(both.map(b => b.code), [12, 12], JSON.stringify(both));
-  assert.equal(r.starts(), 1, 'one reviewer only');
-  r.go();
-  const done = r.run({ SPECK_REVIEW_WAIT_MS: '10000' }, 'review', '1', '--wait');
-  assert.equal(done.status, 10, done.stderr);
-  assert.equal(r.rounds(), 1);
-  assert.equal(r.starts(), 1);
+  await assertOneReviewer(r);
+  assertRecordedOnce(r);
 });
 
 test('0384 AC2: a command that looked before later rounds started can never claim an earlier start again', async t => {
