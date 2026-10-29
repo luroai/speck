@@ -6,6 +6,7 @@
 // once every `lookMs`, and tries one that wasn't shipped again once its pull request, the base branch or its branch changes.
 // 0323: a ship refused because its pull request conflicts (exit 13) is handed back to its build with `handBack`, as the
 // ship queue's is, and a ticket for which `waiting(id)` is true has that hand-back still to run, so it isn't shipped.
+// 0552: so is one refused because a file under speck/ holds a private word or the home folder's path (exit 17).
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -36,6 +37,7 @@ export function launchPr(repo, id, log, done) {
 const lastLine = log => { try { return fs.readFileSync(log, 'utf8').trim().split('\n').pop().trim(); } catch { return ''; } };
 
 const LOOK_MS = 60000;
+const HAND_BACK = { 13: 'conflict', 17: 'private' };
 
 export function prQueue(repo, cfg, { say = console.log, launch = launchPr, ship = launchShip, look = id => prLook(repo, cfg, id), lookMs = LOOK_MS, now = Date.now, handBack = () => {}, waiting = () => false } = {}) {
   const runs = sharedCacheDir(repo, 'runs'), base = cfg.base_branch;
@@ -81,7 +83,7 @@ export function prQueue(repo, cfg, { say = console.log, launch = launchPr, ship 
         if (code === 0) return say(`Shipped ${t.id}.`);
         if (code === 15) { shipped.delete(t.id); looked.delete(t.id); return; } // another ship started just before it: not a try
         if (!error && shipState(runs, t.id)?.unpushed) return say(`${t.id}'s pull request is merged, but its done ticket wasn't pushed: ${lastLine(log)}`);
-        if (!error && code === 13) handBack({ id: t.id, kind: 'conflict', why: lastLine(log), head: refs.head });
+        if (!error && HAND_BACK[code]) handBack({ id: t.id, kind: HAND_BACK[code], why: lastLine(log), head: refs.head });
         say(`${t.id} didn't ship: ${error || lastLine(log) || (code === null ? 'it was stopped' : `it exited with ${code}`)} speck run tries again once its pull request, ${base} or its branch changes.`);
       });
       return;
