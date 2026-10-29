@@ -1,7 +1,7 @@
 ---
 id: "0558"
 title: "Steady the 0384 run-twice-at-once test"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:20:12.166Z"
 approved: "2026-10-29T15:29:31.647Z"
+finished: "2026-10-29T15:40:12.201Z"
 
 ---
 # 0558 · Steady the 0384 run-twice-at-once test
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 "0384 AC2: speck review run twice at once starts one reviewer, and its round is recorded once" failed once in a full run of its file with 24 busy CPU loops during 0540's build. A test that fails by chance can stop `speck ship` for a ticket that didn't break it.
