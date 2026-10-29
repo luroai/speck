@@ -45,7 +45,22 @@ export async function idleCpu(dir, { pollMs, checks, cli = CLI, watching = () =>
     return { perCheck: used / counted, used, seconds, checks: counted, running: run.child.exitCode === null, out: run.out() };
   } finally { await stopRun(run); }
 }
+// 0557: a line of code that keeps the process busy until it has spent `ms` more of CPU time, however long that takes on
+// the clock.
+export const spendCpu = ms => `for (const cpu = () => { const u = process.cpuUsage(); return u.user + u.system; }, end = cpu() + ${ms * 1000}; cpu() < end;);`;
+// 0557: the smallest share of one core a test's speck run can count on while the machine is busy. Given only that, a
+// check can't be seen costing more than this share of the wait between checks, whatever it spends: a test showing that
+// a costly check fails 0176 AC3's needs a wait of at least CHECK_BUDGET_S / BUSY_SHARE.
+export const BUSY_SHARE = 0.1;
 export const idleSays = m => `speck run used ${m.used.toFixed(2)} s of CPU over ${m.checks.toFixed(0)} checks in ${m.seconds.toFixed(0)} s: ${m.perCheck.toFixed(3)} s a check, against ${CHECK_BUDGET_S} s (${IDLE_SHARE * 100}% of one core over ${RUN_POLL_MS / 1000} s)`;
+
+// The test named `name` in `text`: from its line to the `});` that closes it, at the same indentation.
+export const testBody = (text, name) => {
+  const lines = text.split('\n'), from = lines.findIndex(l => l.includes(`test('${name}`) || l.includes(`test(\`${name}`));
+  if (from < 0) throw new Error(`there is no test named ${name}`);
+  const indent = lines[from].match(/^\s*/)[0], to = lines.findIndex((l, i) => i > from && l === `${indent}});`);
+  return lines.slice(from, to + 1).join('\n');
+};
 
 // A copy of the CLI with `from` in scripts/<file> replaced by `to`, to break it on purpose.
 export function brokenCli(file, from, to) {
