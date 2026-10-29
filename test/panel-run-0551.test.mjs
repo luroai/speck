@@ -3,8 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
-import { panelRunOn, panelRunState } from '../scripts/panel-run.mjs';
+import { spawn, spawnSync } from 'node:child_process';
+import { panelRunOn, panelRunState, stopStarted } from '../scripts/panel-run.mjs';
 import { startBackground } from '../scripts/run-background.mjs';
 import { runRepo, alive, killAll } from './support/run.mjs';
 
@@ -54,4 +54,20 @@ test('0551 AC4: speck run --background still stops one that didn\'t say it was w
     return true;
   });
   assert.equal(fs.existsSync(path.join(r.dir, 'speck', '.cache', 'runs', 'run.lock')) && alive(Number(fs.readFileSync(path.join(r.dir, 'speck', '.cache', 'runs', 'run.lock'), 'utf8'))), false, 'no live speck run holds the lock');
+});
+
+test('0551 AC1 (round 1 F1): a process in its group that ignores SIGTERM is killed too, and stopping waits until it has gone', async () => {
+  // A leader that leaves on SIGTERM, with a child in its process group that ignores it.
+  // The leader says the child's pid only once the child is ignoring SIGTERM.
+  const kid = "process.on('SIGTERM', () => {}); console.log('ready'); setInterval(() => {}, 1000);";
+  const lead = `const c = require('child_process').spawn(process.execPath, ['-e', ${JSON.stringify(kid)}], { stdio: ['ignore', 'pipe', 'ignore'] }); c.stdout.once('data', () => console.log(c.pid)); setInterval(() => {}, 1000);`;
+  const p = spawn(process.execPath, ['-e', lead], { detached: true, stdio: ['ignore', 'pipe', 'ignore'] });
+  let child = null;
+  try {
+    child = Number(await new Promise(res => p.stdout.setEncoding('utf8').once('data', res)));
+    assert.ok(alive(child));
+    await stopStarted(p.pid, 300);
+    const goneWhenItResolved = !alive(p.pid) && !alive(child); // once: stopStarted waits for all of it to go
+    assert.ok(goneWhenItResolved, 'the leader and the child that ignored SIGTERM have both gone');
+  } finally { killAll([-p.pid, p.pid, child].filter(Boolean)); }
 });

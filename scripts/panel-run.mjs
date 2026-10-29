@@ -67,10 +67,12 @@ export function requestBody(req) {
 const RUN_SWITCH_MS = 10000, RUN_SWITCH_POLL_MS = 50, STOP_MS = 5000;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// 0544: stops the process group a speck run that didn't start in time leads: SIGTERM, then SIGKILL if it's still there
-// after `ms`. Resolves once it has gone, or rejects saying which process to stop when even SIGKILL didn't stop it in time.
+// 0544: stops the process group a speck run that didn't start in time leads: SIGTERM, then SIGKILL if any of it is still
+// there after `ms`. Resolves once all of it has gone (0551: not just its leader), or rejects saying which process to stop
+// when even SIGKILL didn't stop it in time.
 export async function stopStarted(pid, ms = STOP_MS) {
-  const gone = async () => { for (const until = Date.now() + ms; Date.now() < until; await sleep(RUN_SWITCH_POLL_MS)) if (!pidAlive(pid)) return true; return !pidAlive(pid); };
+  const there = () => { try { process.kill(-pid, 0); return true; } catch (e) { return e.code === 'EPERM' || pidAlive(pid); } };
+  const gone = async () => { for (const until = Date.now() + ms; Date.now() < until; await sleep(RUN_SWITCH_POLL_MS)) if (!there()) return true; return !there(); };
   for (const signal of ['SIGTERM', 'SIGKILL']) {
     try { process.kill(-pid, signal); } catch { /* already gone */ }
     if (await gone()) return;
