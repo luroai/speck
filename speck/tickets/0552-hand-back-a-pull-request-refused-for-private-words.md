@@ -1,7 +1,7 @@
 ---
 id: "0552"
 title: "Hand back a pull request refused for private words"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-29
 ---
 # 0552 · Hand back a pull request refused for private words
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 In pull request mode, when `speck ship --auto` refuses a ticket because a file under `speck/` holds a private word or the home folder's path (exit 17), speck run's pull request queue only says it didn't ship. The ticket waits for the Foreman or the user, though its build has steps to take them out, as it does in local mode.
