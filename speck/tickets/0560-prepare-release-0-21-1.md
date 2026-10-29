@@ -1,7 +1,7 @@
 ---
 id: "0560"
 title: "Prepare release 0.21.1"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0551","0552","0553","0554","0555","0556","0557","0558","0559","0561","0562"]                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T16:17:57.201Z"
+approved: "2026-10-29T16:21:13.796Z"
 
 ---
 # 0560 · Prepare release 0.21.1
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0.21.0, a set of fixes is on the way: the panel's switch stops a speck run that didn't start in time (0551), the pull request queue hands back a ticket refused for private words (0552), the review pack's reviewer tokens match the panel's (0553), a failed Codex review round says why (0554), a build's end reads only recent Codex sessions (0556), five more tests are steadier or can fail again (0555, 0557 to 0559), and a task's review pack opens with its summary (0561) and folds its subfolders (0562). Anyone following the setup prompt, or updating speck in a project, still gets 0.21.0 without them.
@@ -57,9 +58,14 @@ To see it, read the 0.21.1 section at the top of the changelog. Once this lands 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 192,409
+- Elapsed since build started: 3 min
+- Changed lines: 73 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
