@@ -43,6 +43,7 @@ A task's review pack lists the files at the top of its output folder one by one,
 - Waits for 0561: both change `documentsPart` in `templates/panel-popups.js` and the `.pack-documents` styles in `templates/panel-popups.css`. The summary's "Start here" row stays first, as 0561 leaves it, and isn't counted in a folder.
 - The panel is a phone-width column (keep it thin): the rows are for a narrow screen first.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
