@@ -44,6 +44,7 @@ A build's end opens only the Codex session files that changed since the ticket's
 - Checked 2026-10-29: `~/.codex/sessions` here holds 1,155 files, 448 MB; `codexSessionsIn` took 336 ms and `codexSubagents` 103 ms with the files cached (timed by calling them directly).
 - Shares `scripts/spend.mjs` with 0553, unchained: different functions.
 - Relies on Codex's sessions folder layout as 0532 and 0534 already read it.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
