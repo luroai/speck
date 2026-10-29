@@ -24,6 +24,7 @@ test('0559 AC1: the steadied tests wait for each process with a time limit for a
     assert.doesNotMatch(text, /\buntil\(/, `${where} waits through waitFor, whose limit is BUSY_MS`);
     assert.doesNotMatch(text, /\b(8000|10000|15000|20000)\b/, `${where} names no shorter limit`);
     assert.doesNotMatch(text, /'still running'/, `${where} waits for speck run to exit through waitFor`);
+    assert.doesNotMatch(text, /await (\w+\.)*exited\b(?!\()/, `${where} waits for no process to exit without a limit`);
   }
   // The waits all files share: speck run starting to watch, and a second speck run being refused.
   assert.match(src('support/run-switch.mjs'), /export const watching = \(run, ms = BUSY_MS\) =>/);
