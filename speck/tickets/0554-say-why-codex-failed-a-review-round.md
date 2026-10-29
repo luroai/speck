@@ -1,7 +1,7 @@
 ---
 id: "0554"
 title: "Say why Codex failed a review round"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-28-say-why-codex-failed-a-review-round.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-29
+started: "2026-10-29T14:14:01.823Z"
 
 ---
 # 0554 · Say why Codex failed a review round
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When Codex fails during a review round, `speck review` says only "codex exited 1:" with nothing after it, because with `--json` Codex writes its error to standard output as an event, and speck shows only its standard error. A builder or the user can't tell a usage limit from a broken setup or a bad prompt, so a build blocks without saying what to do: in 0540's build the reason only showed when Codex was run by hand.
