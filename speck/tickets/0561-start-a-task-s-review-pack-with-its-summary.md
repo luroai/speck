@@ -1,7 +1,7 @@
 ---
 id: "0561"
 title: "Start a task's review pack with its summary"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:21:47.485Z"
+approved: "2026-10-29T14:32:06.403Z"
 
 ---
 # 0561 · Start a task's review pack with its summary
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A task that leaves many files, such as a research run with dozens of logs, shows each one as a button at the top of its review pack, above Ship, with nothing to say which to read first. A task always waits for you to ship it, so you scroll past every file each time, especially on a phone, and have no starting point for checking the work.
@@ -54,9 +55,14 @@ A task's build now writes a short summary of what it found or made, naming which
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 142,343
+- Elapsed since build started: 10 min
+- Changed lines: 32 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
