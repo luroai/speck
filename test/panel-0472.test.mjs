@@ -124,9 +124,12 @@ function repo() {
   return r;
 }
 const PACK = `{ id: '0002', state: 'ok', text: '# Review pack\\n\\nIt passed.\\n\\n| # | Criterion | Result | Evidence |\\n|---|---|---|---|\\n| 1 | One | ✅ | A test |\\n\\n<details><summary>Findings</summary>None.</details>\\n\\n\`\`\`\\ncode\\n\`\`\`', pictures: [], documents: [{ path: 'outputs/0002/plan.md', url: '/api/tickets/0002/output/plan.md' }] }`;
+// 0557: Settings' agents' models come from the agents themselves, which took 12 s while the whole suite ran beside other
+// test runs: a minute, so a busy machine doesn't fail it. It stops waiting as soon as they've come.
+const AGENTS_MS = 60000;
 // Each state of the page read, opened in turn: [name, script that opens it, what shows once it's open]. What a view
 // leaves behind when the next opens stays in the page, hidden, and is read again with it. One marked false is only a
-// step to the next, not read.
+// step to the next, not read. A fifth item is how long to wait for it to show, when UNTIL_MS isn't long enough.
 const VIEWS = [
   ['Plan, a ticket open', `${openLane('plan')}, document.querySelector('#shaping .item .head').click(), true`, `!!document.querySelector('#shaping .item.open .full-open')`],
   ['Plan, the priority menu', `document.querySelector('#shaping .tag.pick, #shaping .set-prio').click(), true`, `!!document.querySelector('.prio-menu button')`],
@@ -140,7 +143,7 @@ const VIEWS = [
   ['the full ticket, open', `document.querySelector('#shaping .item.open .full-open').click(), true`, `!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .close')`],
   ['a review pack with a document', `closeFull(), packOf = ${PACK}, fullId = '0002', fullFrom = null, render(), true`, `!!document.querySelector('#full-ticket .pack-document')`],
   ['a document', `docOpen = { id: '0002', path: 'outputs/0002/plan.md', state: 'ok', text: '# Plan\\n\\nWords.\\n\\n| A | B |\\n|---|---|\\n| 1 | 2 |' }, drawDoc(), true`, `!document.getElementById('doc-view').hidden && !!document.querySelector('#doc-view .close')`],
-  ['Settings', `closeDoc(), closeFull(), document.getElementById('settings-open').click(), true`, `document.querySelectorAll('#settings .setting').length >= 10 && !!document.querySelector('#settings .save-all') && settingsView.catalogues !== 'loading'`, false], // once its agents' models have come (0407)
+  ['Settings', `closeDoc(), closeFull(), document.getElementById('settings-open').click(), true`, `document.querySelectorAll('#settings .setting').length >= 10 && !!document.querySelector('#settings .save-all') && settingsView.catalogues !== 'loading'`, false, AGENTS_MS], // once its agents' models have come (0407)
   ['Settings, an explanation open, and its question about unsaved changes', `document.querySelector('#settings .setting .info').click(), settingsLeaving = { saving: false }, renderLeaving(), true`,
     `!!document.querySelector('#settings .setting p.explain:not([hidden])') && !document.getElementById('settings-unsaved').hidden && document.querySelectorAll('#settings-unsaved button').length === 3`],
   ['the Pipeline log', `keepEditing(), closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .close')`],
@@ -179,9 +182,9 @@ test('0472 AC3: in a real browser at 390 and 1200 px wide, in both looks, with a
     await b.until(`document.readyState === 'complete' && !!document.querySelector('#shaping .item .head') && !!document.querySelector('#shipped .line .title')`, 'the panel');
     await b.js(`window.t0472 = ${JSON.stringify({ old: [before.css], split: before.after })}, true`);
     await b.js(useStyles('split'));
-    for (const [view, open, shows, check = true] of VIEWS) {
+    for (const [view, open, shows, check = true, ms] of VIEWS) {
       await b.js(open);
-      await b.until(shows, view);
+      await b.until(shows, view, ms);
       if (!check) continue;
       for (const way of SEEN) {
         await see(way);
