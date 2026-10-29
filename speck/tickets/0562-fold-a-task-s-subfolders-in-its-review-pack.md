@@ -1,7 +1,7 @@
 ---
 id: "0562"
 title: "Fold a task's subfolders in its review pack"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-29T15:22:57.227Z"
 ---
 # 0562 · Fold a task's subfolders in its review pack
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 In a task's review pack, every file in its output folder, however deep, is its own button labelled with its path from the project root. A research run with dozens of files in a subfolder becomes a long wall of buttons, and on a phone the repeated `outputs/<folder>/` at the start of each label takes a line of its own.
@@ -47,7 +47,9 @@ A task's review pack lists the files at the top of its output folder one by one,
 - Self-check: no changes. The older tests that checked each file's button was labelled with its path from the project root (0354, 0359, 0561) now check its name, with the path as its tooltip, as AC1 and AC3 ask.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A task's review pack no longer lists every file it wrote as its own long button. Files at the top of its folder are named simply, such as `memo.md`, and each subfolder is a single row saying how many files it holds, such as `imports/ · 48 files`. Press that row to see its files, and press it again to fold them away. Hovering over any file shows its full path.
+
+To see it, open the review pack of a task whose output folder has a subfolder. The rows stack one per line, so they suit a phone-width panel. A folder you unfold stays open while the pack is up, and folds again the next time you open the pack.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +59,80 @@ A task's review pack lists the files at the top of its output folder one by one,
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e635cb3be0182a0db746ec7c14e1d872c9a6055d",
+    "session": "fresh",
+    "thread_id": "01a18849-f9db-7280-946c-95f6c4c888de",
+    "builder_response": "- Tests run: `speck test --related` with test/pack-0562.test.mjs test/pack-0354.test.mjs test/pack-0359.test.mjs test/pack-0561.test.mjs test/pack-0363.test.mjs test/panel-0361.test.mjs test/panel-0473.test.mjs (plus every related file and the checks it brought in): 1219 pass, 0 fail, 3 skipped.\n- On AC5: AC1 and AC3 change each file button's label from its path from the project root to its name inside the output folder, with the path as its tooltip. Seven older tests (0354, 0359, 0361, 0363, 0473, 0561) found or checked the buttons by the old path label. Each now checks the same thing against the new label or the tooltip (the shared `docButtons` helper in test/support/documents.mjs matches by tooltip); none was dropped or loosened beyond the label the ticket changes. All pass.\n- Pictures: four, light and dark, folded and unfolded, taken in the real panel with a sample task's files.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 175878,
+      "cached_input_tokens": 123648,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 711,
+      "reasoning_output_tokens": 48
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 52230,
+      "cached": 123648,
+      "write": 0,
+      "output": 711
+    },
+    "cost_usd": 0.1239348,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-29T15:32:22.580Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-popups.js documentsPart groups files by their first folder and folderRow shows recursive counts, initially folded. Passing 0562 AC1 tests cover names, counts, summary placement and files without subfolders."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "folderRow toggles its file rows and preserves their supplied order; documentButton retains Markdown pop-ups and new tabs for other files. Three passing 0562 AC2 tests exercise these behaviours and reopening the pack."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "documentButton sets title to d.path. Passing 0562 AC3 test checks every file, including unfolded files and the summary."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "folderRow creates a native button with type=button and updates aria-expanded on each toggle. Passing 0562 AC4 test verifies these semantics and that toggling keeps the same button."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0562-tests.txt reports 1219 passed, 0 failed and 3 skipped. Existing test adjustments follow the requested label and tooltip changes without removing behavioural checks."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The review pack now shows shorter file names and collapses each subfolder into a row with a file count. Expanding folders preserves file order and opening behaviour, with keyboard-accessible controls and full-path tooltips. The tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
