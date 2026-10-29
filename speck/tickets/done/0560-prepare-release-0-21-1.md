@@ -1,7 +1,7 @@
 ---
 id: "0560"
 title: "Prepare release 0.21.1"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0551","0552","0553","0554","0555","0556","0557","0558","0559","0561","0
 created: 2026-10-29
 started: "2026-10-29T16:17:57.201Z"
 approved: "2026-10-29T16:21:13.796Z"
+finished: "2026-10-29T16:25:11.225Z"
 
 ---
 # 0560 · Prepare release 0.21.1
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0.21.0, a set of fixes is on the way: the panel's switch stops a speck run that didn't start in time (0551), the pull request queue hands back a ticket refused for private words (0552), the review pack's reviewer tokens match the panel's (0553), a failed Codex review round says why (0554), a build's end reads only recent Codex sessions (0556), five more tests are steadier or can fail again (0555, 0557 to 0559), and a task's review pack opens with its summary (0561) and folds its subfolders (0562). Anyone following the setup prompt, or updating speck in a project, still gets 0.21.0 without them.
