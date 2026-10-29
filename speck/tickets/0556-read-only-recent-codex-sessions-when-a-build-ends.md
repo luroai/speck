@@ -1,7 +1,7 @@
 ---
 id: "0556"
 title: "Read only recent Codex sessions when a build ends"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-27-read-only-recent-codex-sessions-when-a-build-ends.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-29
+started: "2026-10-29T14:17:26.372Z"
 
 ---
 # 0556 · Read only recent Codex sessions when a build ends
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a build ends, `speck run` reads the first line of every session file in Codex's sessions folder to find the ones started in the ticket's worktree, then reads them all again for each one it finds, to collect its sub-agents. Every build does this, even one that never ran Codex, and the folder only grows: here 1,155 files (448 MB) took about a third of a second with the files cached, and more for each session found.
