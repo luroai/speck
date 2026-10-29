@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.21.1 · 29 October 2026
+
+What's new since 0.21.0. A bug-fix release, with a friendlier review pack for tasks. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.21.1 init`.
+
+### Running builds
+
+- When the panel's switch turns `speck run` on and it doesn't start watching within 10 seconds, the panel now stops it, and anything it had started, before showing the error. Before, it was left running and could start building a moment later while the switch showed it off. The error says it was stopped and where its output is; if it can't be stopped, it gives its process number and asks you to stop it yourself. `speck run --background` behaves as before.
+- In pull request mode, a ticket that `speck run` couldn't merge because its files under `speck/` hold one of your private words or your home folder's path now goes back to its build to take them out, as it already did when shipping locally. Before, it only said the ticket didn't ship and left it waiting for you. The build's new commit still has to reach the pull request, so the next try asks for `speck pr` to be run, as it does after a conflict.
+- When a build ends, speck reads only the Codex sessions that changed since the ticket's first build started, to count what Codex work started in its folder spent. Before, it read every session Codex had ever saved, so each build's end got slower as Codex's history grew. The spend it counts is the same. A ticket whose build started before speck kept a start time still has every session read.
+
+### Reviewing
+
+- When Codex fails during a review round, speck's message now gives Codex's own reason, such as a usage limit and when it resets, or a model it doesn't offer. Before, the message stopped after "codex exited 1:". If Codex gives no reason, the message says so.
+- The "Reviewer tokens" figure in a ticket's review pack, and the one written into its Delivery log when it's approved, now matches the figure the panel and `speck status --json` give for the same ticket, counting each round as it saved its tokens. Tickets already shipped keep the figure they were given.
+
+### Tasks
+
+- A task's build now writes a `summary.md` at the top of its output folder, saying what it found or made, which of its files to read and which are only supporting material. The task's review pack opens with it, as a Start here button, with Ship straight under it and the rest of the files below. Tasks built before this have no summary, so their packs look as they did.
+- A task's review pack names the files at the top of its output folder from inside that folder, such as `memo.md`, rather than by their path from the project root, and folds each subfolder into one row saying how many files it holds, such as `imports/ · 48 files`. Pressing the row shows its files, and pressing it again folds them away. Hovering over a file shows its full path.
+
+### Tests
+
+- Several of speck's own tests that failed now and then on a busy machine no longer do, so fewer tickets are handed back at ship for a failure they didn't cause: the check that `speck run` stays cheap while it waits, the check that the panel looks exactly as before, `speck review` run twice at once, and the tests of `speck run` switching to new code, which now wait up to 30 seconds and say what they were waiting for. Each still fails when what it checks breaks.
+- The check that the Settings view's stylesheet loads in the page's head looks for the address the page now uses, so it really checks again.
+
 ## 0.21.0 · 28 October 2026
 
 What's new since 0.20.0. A minor release that makes Capture easier to work through, with a count, same-day notes in the order you captured them and a star for the notes you like, lets you turn `speck run` on from the command line, keeps private words out of every commit under `speck/`, and makes changes to the builder's settings apply without restarting `speck run`. Costs speck works out itself are still estimates at API list prices.

@@ -46,6 +46,7 @@ speck is ready to be released as 0.21.1.
 - Checked 2026-10-29: `package.json` is `0.21.0`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: the changelog's tests line first said "Five" of speck's tests were steadied, but 0559 alone covers several, so it no longer gives a number; the release notes say a build's end reads sessions changed since the ticket's first build started, as 0556 does. The README's Built with speck figures (545 shipped, 16 cancelled, 13 minutes, 1 round, 277 first round) are checked against the done tickets at the commit this was built from, not in the README itself, as 0491 leaves the README's wording to review.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
