@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-10-28-steady-the-0384-run-twice-at-once-test.md" 
 after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:20:12.166Z"
-approved: "2026-10-29T14:42:31.258Z"
+approved: "2026-10-29T15:29:31.647Z"
 
 ---
 # 0558 · Steady the 0384 run-twice-at-once test
@@ -53,12 +53,13 @@ Nothing changes in how speck works. One of speck's own tests sometimes failed on
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 94,436
-- Elapsed since build started: 22 min
+- Reviewer tokens: 183,140
+- Elapsed since build started: 69 min
 - Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Cause (AC1): the test counted the reviewer's starts the moment both `speck review` commands had exited 12. Each command starts the round in a process of its own, which then starts the reviewer, so the reviewer is two Node processes deep, and on a busy machine it can write its "start" line after both commands have given up their 1.5 s wait. The count then saw no reviewer at all. Timed with a probe: the line came 0.3–1 s before the commands exited when the machine was idle, 0.2–0.7 s before with 24 busy loops, and after them in two of three runs with 64. Fixed by checking the claimed start records first (each is made before its reviewer is started, so they're all there once both commands have exited), then waiting up to 30 s for the reviewer's start line before counting it. The wait for the recorded round went from 10 s to 30 s as well. The test's checks moved to `test/support/review-twice.mjs`, and 0558 AC1 holds the reviewer's start line back until both commands have exited, so that case is now tested every run rather than left to chance.
@@ -133,6 +134,76 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The test now waits for a delayed reviewer to announce its start, addressing the timing race without changing product behaviour. Duplicate reviewers and duplicate round records remain checked. The recorded stress runs and affected tests pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a61d57b07b944187faeca6b6b6f0895189c68233",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1881c-4e20-7180-ba04-1c5e80438f5d",
+    "builder_response": "- Tests run: test/review-twice-0558.test.mjs test/review-wait-0384.test.mjs test/cli-0231.test.mjs (the repo checks ran too): 135 passed, 0 failed.\n- Ship failed on \"0231 AC3: no shared helper starts the speck CLI as a process, except for panel and run\". main was merged in cleanly (no conflicts); the failure was this ticket's own: reviewTwiceAtOnce in test/support/review-twice.mjs spawned the CLI. A synchronous helper can't work here, because the test needs two commands running at once.\n- Change: reviewTwiceAtOnce moved out of the shared helper and into the two test files that use it (review-wait-0384, where it lived before this ticket, and review-twice-0558). It's the same code, so the 0231 rule still applies to test/support and nothing gets round it. Nothing else changed.\n",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 182025,
+      "cached_input_tokens": 149248,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1115,
+      "reasoning_output_tokens": 48
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7474,
+      "cached": 80768,
+      "write": 0,
+      "output": 462
+    },
+    "cost_usd": 0.0276448,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-29T15:29:27.282Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "assertOneReviewer in test/support/review-twice.mjs still waits for the reviewer's start line. The passing 0558 AC1 test delays that line until both commands exit, reproducing the original race. The Delivery log explains the cause and fix."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "assertOneReviewer and assertRecordedOnce retain checks for duplicate claims, reviewer starts and recorded rounds. Both 0558 AC2 tests pass. The Delivery log records mutation checks that failed when duplicate reviewers or round records were introduced."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The Delivery log records five consecutive passes with 24 busy CPU loops and five standalone passes. This round moves the unchanged concurrent-command code into its calling test files; the timing checks remain unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The fresh output reports 135 passed, zero failed and three skipped across the affected files, test/cli-0231.test.mjs and repository checks. Moving CLI spawning out of test/support satisfies the unchanged 0231 AC3 rule while preserving concurrent execution."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The timing fix and duplicate-reviewer checks remain intact. Moving concurrent commands into the test files resolves the shipping check failure without weakening that check. All tests run for this review pass."
   }
 }
 ```
