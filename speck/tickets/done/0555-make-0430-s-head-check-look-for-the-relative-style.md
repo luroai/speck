@@ -1,7 +1,7 @@
 ---
 id: "0555"
 title: "Make 0430's head check look for the relative stylesheet"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-29
 started: "2026-10-29T14:17:16.688Z"
 approved: "2026-10-29T14:20:52.185Z"
+finished: "2026-10-29T15:15:08.384Z"
 
 ---
 # 0555 · Make 0430's head check look for the relative stylesheet
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 0430 AC1's check that the Settings stylesheet loads in the page's head looks for `/panel-settings.css`, but since 0543 the page links `panel-settings.css`. The search finds nothing, so the check passes without checking anything, and a stylesheet could slip out of the head unnoticed.
