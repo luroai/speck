@@ -42,6 +42,8 @@ started: "2026-11-08T23:08:41.949Z"
 - From 0557's whole-suite runs: "timed out waiting for the Settings view" twice. The wait is in `test/panel-0150.test.mjs`, around line 158.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes
+- Pictures: none needed, the ticket changes nothing anyone sees.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -54,3 +56,11 @@ started: "2026-11-08T23:08:41.949Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+AC2: the only wait for "Loading your agents" to go that used the 10-second default was 0150 AC2's own, in `test/panel-0150.test.mjs`. A search of `test/` found no other `until` on that text: 0472 AC3 already had its limit from 0557 and waits on `settingsView.catalogues`, and the mentions in `test/settings-0407.test.mjs` and `test/settings-0409.test.mjs` are assertions against the fake page, not waits. So no other test changed.
+
+AC3: checked by breaking the real panel in `templates/panel.js` for one run each, then restoring it. A `keydown` listener on the Auto-build button called `preventDefault` for one key. With Enter blocked, 0150 AC2 failed with "timed out waiting for Enter to start it". With Space blocked, it failed with "timed out waiting for Space to pause it". Unbroken, it passed. `test/steady-0571.test.mjs` also checks the test still presses both keys and checks both calls.
+
+AC4: `test/panel-0150.test.mjs` passed five runs of the file alone (9 passed, 0 failed each, 12 to 13 s), and five runs while `npm test` ran the whole suite at the same time (9 passed, 0 failed each, 14 to 20 s, the suite still running at the end of each). The machine's load average was about 57.
+
+AC5: that whole-suite run, under the load above, had 4508 passed, 1 failed and 3 skipped. The failure was 0517 AC3 (each slide's first frame within 50 ms of the lane change), at 81 ms for one frame. It passed three runs out of three when re-run alone on this branch, and this ticket changes only a wait in another test, so it isn't caused by this change. `speck ship` runs the whole suite again before anything lands.
