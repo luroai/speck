@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:03:08.081Z"
-approved: "2026-11-08T23:16:46.625Z"
+approved: "2026-11-08T23:31:48.386Z"
 
 ---
 # 0563 · Let watch: fix carry on when a build goes over the size limit
@@ -54,12 +54,13 @@ With watch set to fix, a build that goes over the size limit no longer stops to 
 ## Review log
 Round 1 (codex): changes requested: F1 The new mainBranch check prevents automatic splits for every build with worktrees disabled.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 364,132
-- Elapsed since build started: 14 min
+- Reviewer tokens: 571,420
+- Elapsed since build started: 29 min
 - Changed lines: 135 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -230,6 +231,90 @@ Follow-ups (known limits and tidy-ups, none needing its own ticket):
     ],
     "escalation_question": "",
     "summary": "Automatic size-guard splits now work both with and without separate worktrees. The follow-up retains the deferred scope and waits for the original ticket to ship. The previous blocking issue is resolved, and no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "72c60ccb3d3ee04f6b9ba1ae505b603fc78f55da",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1bd70-21ef-7753-934b-ef81296e65a6",
+    "builder_response": "Merge round, after merging main into the ticket branch.\n- Resolved: docs/brief.md (class: logic, one conflict on the `speck panel` table row). Both sides added separate clauses to the same line: this ticket's \"or, on a block by the size guard, whose recommendation is to split\", and main's (0566) sentence on not starting a look for a ticket while its question is unanswered. Both are kept, word for word.\n- No other file conflicted.\n- Tests run: test/size-guard-0563.test.mjs test/split-0078.test.mjs test/blocked-0283.test.mjs test/foreman-fix-0286.test.mjs test/go-with-0284.test.mjs test/foreman-0317.test.mjs test/watch-0486.test.mjs test/skills.test.mjs, plus the commands.checks files that speck test --files adds. 179 passed, 0 failed, 3 skipped.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 568825,
+      "cached_input_tokens": 391808,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2595,
+      "reasoning_output_tokens": 361
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 32956,
+      "cached": 173696,
+      "write": 0,
+      "output": 636
+    },
+    "cost_usd": 0.0896416,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-08T23:31:45.027Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "questionFacts parses the separate Size guard fact, required by the build skill. Passing AC1 tests cover parsing and board exposure."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "fixable selects split recommendations; goWith records the choice and goWithQueue resumes the build. Passing AC2 tests cover once-only selection, refusing limit increases and builds with worktrees off."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "splitOff creates a ready ticket with the supplied scope, after dependency and provenance Notes. Passing AC3 tests cover these fields, duplicate prevention and temporary base-branch checkouts."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests cover tell/off and unchanged handling of ordinary questions. Main's unanswered-question guard remains intact in foreman-agent.mjs."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The build skill and brief describe the new flow. The resolved panel documentation retains both the size-guard clause and main's unanswered-question rule. Reported tests: 179 passed, zero failed, three skipped; git diff --check also passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/split-off.mjs",
+        "issue": "Automatic splitting previously failed when the build occupied the main checkout.",
+        "suggested_fix": "Resolved by using an existing base-branch checkout or a temporary one. The passing F1 tests cover follow-up creation, preservation of the build checkout and cleanup.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both changes: automatic size-guard splits and waiting for answers before restarting the watch agent. All acceptance criteria remain satisfied, with no open blocking concerns."
   }
 }
 ```
