@@ -186,7 +186,7 @@ test('0565 AC3: no such part when the criteria have not changed, and the plain p
   assert.ok(!plainPack(r.dir, '1').includes('Criteria changed'));
   reword(r);
   const plain = plainPack(r.dir, '1');
-  assert.ok(plain.indexOf('### Criteria changed') > 0 && plain.indexOf('### Criteria changed') < plain.indexOf('### Did it do what was asked?'), plain);
+  assert.ok(plain.indexOf('### Criteria changed') > plain.indexOf('### Did it do what was asked?'), plain);
   assert.match(part(plain), /Excel file/);
 });
 

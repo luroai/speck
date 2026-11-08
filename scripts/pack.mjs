@@ -156,9 +156,9 @@ export function plainPack(repo, id) {
     ...(all.some(r => r.meta.sandbox_ok === false) ? ['', 'In at least one review round, the reviewer could only see the change itself, not the rest of the code.'] : []),
     '', '### What it should do', sectionText(t, 'outcome') || "The ticket doesn't say.",
     '', '### In plain words', sectionText(t, 'in plain words') || "The builder didn't write this change up in plain words.",
-    ...criteriaChangedLines(criteriaChange(repo, cfg, t.fm.id)), // 0565
     '', '### Did it do what was asked?',
     ...ac.map((c, i) => `${i + 1}. ${label[v.criteria.find(x => x.id === i + 1)?.status] || label.unclear}: ${c.replace(/^\d+\.\s+/, '')}`),
+    ...criteriaChangedLines(criteriaChange(repo, cfg, t.fm.id)), // 0565: after the list, which stays in the order 0131 gives it
   ].join('\n');
 }
 

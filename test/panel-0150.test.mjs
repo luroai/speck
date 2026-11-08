@@ -6,6 +6,9 @@ import { switchPage, deferred, page, panelRepo, freePort, startPanel, stop, find
 // ---------- 0150: tidy the panel header ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
+// 0571: Settings' agents' models come from the agents themselves, which took 12 s under load (0557): a minute, as 0472 AC3
+// waits, so a busy machine doesn't fail it. It stops waiting as soon as they've come.
+const AGENTS_MS = 60000;
 const state = run => ({ tickets: [], ideas: [], resume_command: '', ...(run ? { run } : {}) });
 const header = () => page().match(/<header>([\s\S]*?)<\/header>/)[1];
 // 0285: the header button shows the Foreman now, and the Auto-build switch is in the Settings view's Foreman group.
@@ -155,7 +158,7 @@ test('0150 AC2: pressing Enter or Space on the focused button starts or pauses s
     await b.js(`document.getElementById('settings-open').click()`);
     // 0413: and its agents' lists, read after the rest (0407): drawing them redraws the view, which moves the focus to the
     // view itself, so a refresh soon after focusing the switch, as can come on a busy machine, would find it there
-    await b.until(`document.getElementById('run-switch') && !/Loading the settings|Loading your agents/.test(document.getElementById('settings').textContent)`, 'the Settings view');
+    await b.until(`document.getElementById('run-switch') && !/Loading the settings|Loading your agents/.test(document.getElementById('settings').textContent)`, 'the Settings view', AGENTS_MS);
     await b.js(`document.getElementById('run-switch').focus()`);
     // Two refreshes later it's still the focused element, so a key press reaches it.
     await b.js(`window.drawn = 0; new MutationObserver(() => window.drawn++).observe(document.getElementById('bezel'), { attributes: true }); true`); // 0413: each redraw sets speck's screen's frame

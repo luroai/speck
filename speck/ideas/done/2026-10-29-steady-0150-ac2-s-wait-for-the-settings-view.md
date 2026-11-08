@@ -1,6 +1,6 @@
 # Steady 0150 AC2's wait for the Settings view
 
-Captured: 2026-10-29 15:22 · Status: inbox
+Captured: 2026-10-29 15:22 · Status: ticketed (0571)
 From ticket: 0557
 Raised by: agent
 

@@ -1,6 +1,6 @@
 # Look into a build that runs long
 
-Captured: 2026-10-13 · Status: idea
+Captured: 2026-10-13 · Status: ticketed (0569)
 
 ## What
 When a build runs well past the project's usual build time (outside its median range), speck starts an agent to look into why. If it finds that `main` itself is broken, for example a test that hangs, it raises a P0 fix ticket so the fix happens without waiting for the user to notice.

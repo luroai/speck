@@ -8,7 +8,7 @@ import { splitCommand } from './reviewers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { providerKey } from './keys.mjs';
 import { fillLine } from './your-agents.mjs';
-import { installCommitHook } from './commit-check.mjs';
+import { commitCheckState, installCommitHook } from './commit-check.mjs';
 
 // ---------- install and doctor ----------
 
@@ -147,14 +147,21 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
   // Parts of speck, such as pausing and stopping builds, rely on macOS or Linux.
   if (platform === 'win32') checks.push(check('Windows isn\'t supported yet: speck supports macOS and Linux for now', false,
     'Use WSL (Windows Subsystem for Linux) and run speck there: https://learn.microsoft.com/windows/wsl/install'));
+  const isRepo = runs('git', ['-C', repo, 'rev-parse', '--git-dir']);
   checks.push(
     check('Node.js 20 or newer', Number(process.versions.node.split('.')[0]) >= 20,
       'Install the latest Node.js LTS from https://nodejs.org, then open a new terminal.'),
     check('git', runs('git', ['--version']),
       'Install git from https://git-scm.com/downloads.'),
-    check('This folder is a git repository', runs('git', ['-C', repo, 'rev-parse', '--git-dir']),
+    check('This folder is a git repository', isRepo,
       'Run `git init` here, or run speck from inside your project folder.'),
   );
+  // 0570: a warning, never a failure: someone with their own hook chose that.
+  if (isRepo) {
+    const state = commitCheckState(repo);
+    checks.push(state.on ? check("Commit check is on: speck refuses a commit that adds a private word or your home folder's path under speck/", true)
+      : { name: `Commit check is off: ${state.why}. ${state.todo}`, ok: false, warn: true });
+  }
   // Only the configured builder is checked. speck can't check one it doesn't know, and that isn't a failure.
   // hasOwn, so a name like `constructor` or `toString` is an unknown builder, not a built-in object property.
   if (Object.hasOwn(BUILDERS, builder)) {
@@ -193,8 +200,8 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
 }
 
 function printChecks(checks) {
-  for (const c of checks) console.log(c.info ? `  ℹ ${c.name}` : `  ${c.ok ? '✓' : c.optional ? '–' : '✗'} ${c.name}${c.ok ? '' : `\n      ${c.optional ? 'Note' : 'Fix'}: ${c.fix}`}`);
-  return checks.every(c => c.ok || c.optional);
+  for (const c of checks) console.log(c.info ? `  ℹ ${c.name}` : c.warn ? `  ! ${c.name}` : `  ${c.ok ? '✓' : c.optional ? '–' : '✗'} ${c.name}${c.ok ? '' : `\n      ${c.optional ? 'Note' : 'Fix'}: ${c.fix}`}`);
+  return checks.every(c => c.ok || c.optional || c.warn);
 }
 
 export function cmdDoctor(args, platform = process.platform) {

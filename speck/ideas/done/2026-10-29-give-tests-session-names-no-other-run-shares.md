@@ -1,6 +1,6 @@
 # Give tests session names no other run shares
 
-Captured: 2026-10-29 16:13 · Status: inbox
+Captured: 2026-10-29 16:13 · Status: ticketed (0572)
 From ticket: 0559
 Raised by: agent
 

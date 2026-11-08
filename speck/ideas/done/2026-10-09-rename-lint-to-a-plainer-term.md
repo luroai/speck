@@ -1,6 +1,6 @@
 # Rename "lint" to a plainer term
 
-Captured: 2026-10-09 · Status: idea
+Captured: 2026-10-09 · Status: ticketed (0573)
 
 ## What
 Replace the term "lint" (`speck lint <id>`, and "lint passes" in tickets and docs) with something plainer, such as `speck check <id>`, called the "ready check" in prose.
