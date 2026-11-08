@@ -46,6 +46,7 @@ With `watch: decide`, speck takes the recommendation of every blocked question t
 - Today: `FIXING` and `FIXING_SAYS` in `scripts/foreman.mjs` (about line 36), `fixable(t)` (about line 46), `foremanFixQueue` in `scripts/foreman-fix.mjs`, `goWith` and `choseOnce` in `scripts/go-with.mjs` (once per ticket today), `watch` validated in `scripts/config.mjs`, explained in `scripts/settings.mjs`, commented in `templates/config.yml`, and described in `docs/brief.md`'s `speck panel` and `speck config set` rows. Places that check for `'fix'` and must count `decide` too: `scripts/foreman-agent.mjs` (about lines 233 and 314), `scripts/foreman-took.mjs` (about line 34), `scripts/foreman.mjs` (about lines 110 and 124).
 - Waits for 0563, which adds the size-guard fact this needs and changes the same functions. 0563 is a draft with a decision still open.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
