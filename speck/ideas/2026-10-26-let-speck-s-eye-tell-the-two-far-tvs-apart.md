@@ -1,6 +1,6 @@
 # Let speck's eye tell the two far TVs apart
 
-Captured: 2026-10-26 · Status: inbox
+Captured: 2026-10-26 · Status: dropped
 From ticket: 0512
 
 ## What

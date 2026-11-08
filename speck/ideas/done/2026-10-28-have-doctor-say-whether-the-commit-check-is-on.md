@@ -1,6 +1,6 @@
 # Have doctor say whether the commit check is on
 
-Captured: 2026-10-28 13:35 · Status: inbox
+Captured: 2026-10-28 13:35 · Status: ticketed (0570)
 From ticket: 0550
 Raised by: agent
 
