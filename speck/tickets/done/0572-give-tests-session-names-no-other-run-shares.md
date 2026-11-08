@@ -1,7 +1,7 @@
 ---
 id: "0572"
 title: "Give tests session names no other run shares"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:15:19.379Z"
 approved: "2026-11-08T23:34:09.997Z"
+finished: "2026-11-08T23:46:48.868Z"
 
 ---
 # 0572 · Give tests session names no other run shares
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck finds a resumed build by looking for its session name across every process on the machine. Tests that start a stand-in agent with a fixed session name, such as `hand-0001` in `test/seen-builds-0300.test.mjs`, can find another test run's copy when the same file runs twice at once, and fail by chance: `0300 AC2` did so beside the suite in 0559's runs.
