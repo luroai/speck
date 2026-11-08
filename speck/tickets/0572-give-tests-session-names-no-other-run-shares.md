@@ -1,7 +1,7 @@
 ---
 id: "0572"
 title: "Give tests session names no other run shares"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-08T23:15:19.379Z"
 ---
 # 0572 · Give tests session names no other run shares
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck finds a resumed build by looking for its session name across every process on the machine. Tests that start a stand-in agent with a fixed session name, such as `hand-0001` in `test/seen-builds-0300.test.mjs`, can find another test run's copy when the same file runs twice at once, and fail by chance: `0300 AC2` did so beside the suite in 0559's runs.
@@ -45,7 +45,7 @@ Tests that are found through the process table give their stand-in agents sessio
 - Self-check: a lookup added to tests whose stand-in lived only 3 seconds could have flaked under load, so those stand-ins now live 30 seconds (speck run doesn't wait for them, and the tests kill them).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes for anyone using speck: this only touches its own tests. Some tests pretended to be a running build under a fixed name, so two copies of a test running at once could mistake each other's build for their own and fail by chance. Each now uses a name no other run has. To see it, run two copies of the same test file at once: they pass every time now, where one of them used to fail now and then. Nothing to keep an eye on.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -68,3 +68,75 @@ Still fails if speck stops finding the build by its session name (AC3): `assertF
 No test that passed before now fails (AC4): `speck test --related` on this ticket's files ran 823 tests, 820 passed, 3 skipped, none failed. `speck ship` runs the whole suite.
 
 Follow-ups: `sessionProcess` takes speck's `codex-times` wrapper for the agent, since its script's name starts with `codex`, so a resumed Codex build is found as the wrapper rather than Codex itself. It's harmless today and out of this ticket's scope.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3f3daa282eb1c672a9fac757b1763bcfc5685031",
+    "session": "fresh",
+    "thread_id": "01a1bd82-95d5-7ce3-b070-59e76ef2fac5",
+    "builder_response": "- Tests run: `speck test --related test/session-names-0572.test.mjs test/seen-builds-0300.test.mjs test/run-codex-0289.test.mjs test/run-cursor-0290.test.mjs` (the ticket's own file, the changed test files, and every test file naming a changed file).\n- No production code changes: only tests and `test/support/run.mjs`.\n- AC2 and AC3 are recorded in the Delivery log. AC3 is also enforced in the code by `assertFoundBySession`, which runs in each changed test.\n- Note for the scope of AC1: the Delivery log explains how the set of tests was found (reading the spawn sites and sampling the process table during the 60 test files that start real builds), and which fixed names were left alone and why.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 179925,
+      "cached_input_tokens": 121728,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 773,
+      "reasoning_output_tokens": 91
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 58197,
+      "cached": 121728,
+      "write": 0,
+      "output": 773
+    },
+    "cost_usd": 0.1362968,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-08T23:34:00.472Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/run.mjs ownSession appends process.pid. The affected stand-ins in seen-builds-0300, run-codex-0289 and run-cursor-0290 use it consistently in commands, records and assertions. The Delivery log lists the eight affected tests. The four 0572 tests passed, including a real process lookup."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The Delivery log records five consecutive simultaneous paired runs passing for each of the three affected existing test files. It also records reproducing the original collision with the old seen-builds-0300 tests."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Each affected test calls assertFoundBySession, directly or through agentBuilding. This asserts sessionProcess returns the expected PID and sessionInUse returns true. The Delivery log records all eight tests failing with each lookup separately disabled."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The full recorded output in /tmp/speck-0572-tests.txt confirms 823 tests: 820 passed, three skipped and none failed. The ticket's change is confined to test files, their support helper and its delivery record; production lookup behaviour is unchanged."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The affected tests now use session names unique to their running process, preventing simultaneous runs from finding each other's stand-in agents. The recorded repeated runs pass, and explicit checks ensure the tests still detect broken session lookup. No blocking concerns found."
+  }
+}
+```
+
+</details>
