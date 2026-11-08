@@ -47,7 +47,11 @@ A ticket whose acceptance criteria differ from the ones it was set ready with wa
 - Self-check: a criterion over several lines now has its line ends compared line by line, so a blank line inside it is kept
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If a build changes what a ticket was meant to do, the ticket no longer ships by itself: it waits for you, even with auto-ship on. You can still ship it yourself as usual.
+
+To see it, open the ticket's card in Build, which says it's waiting because a criterion changed. Its review pack then has a Criteria changed part, above the criteria, showing the old wording and the new.
+
+Worth knowing: the old and new wording can only be shown while the ticket's work is still separate, so a review pack read after shipping won't have that part.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +61,10 @@ A ticket whose acceptance criteria differ from the ones it was set ready with wa
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Steady six `speck run` timing tests under load: speck/ideas/2026-11-08-steady-six-speck-run-timing-tests-under-load.md
+  - Known limit: once a ticket has shipped and its branch has gone, its review pack can't show the Criteria changed part, as there's nothing left to compare.
+  - Known limit: on a narrow screen the open card's Now cell cuts "Criterion changed" short; the line under the table gives the whole reason.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +146,89 @@ A ticket whose acceptance criteria differ from the ones it was set ready with wa
     ],
     "escalation_question": "",
     "summary": "The shipping guard, review pack and panel work in the tested cases. However, merging newer base-branch criteria can erase the comparison history and let changed criteria ship automatically. Preserve the original baseline before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0517d34225de6e9c705ff49c65e081a74f545a50",
+    "session": "continued",
+    "thread_id": "01a1bd78-c4e9-7913-abaf-73d4e26329cd",
+    "builder_response": "- Tests run: test/criteria-0565.test.mjs, plus the commands.checks files.\n- F1: fixed. `criteriaChange` now compares with `branchStart` in scripts/criteria-changed.mjs: the parent of the oldest commit on the branch's own first-parent line (`git rev-list --first-parent <branch> --not <base>`), which merging the base branch in doesn't move. It falls back to `forkPoint` only for a branch with no commits of its own left, as a merged one. New tests in test/criteria-0565.test.mjs: main changes the criteria after branching and the ticket merges that change, and it stays flagged in `criteria_changed`, shows in the pack with the original text, and `speck ship --auto` refuses; a merge alone stays unflagged.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 335737,
+      "cached_input_tokens": 278912,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1768,
+      "reasoning_output_tokens": 139
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8324,
+      "cached": 154240,
+      "write": 0,
+      "output": 749
+    },
+    "cost_usd": 0.039562,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-08T23:24:42.914Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "criteria-changed.mjs now uses branchStart to retain the original baseline through base-branch merges and compares section lines ignoring trailing whitespace. Passing AC1 tests cover unchanged criteria, text changes, section removal, whitespace and merges, including criteria arriving from main."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "autoShipBlocker and statusData apply the criteria guard; local and PR automatic shipping use that blocker. Passing AC2 tests verify automatic refusal, the ship queue leaving the ticket approved and manual shipping succeeding."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "pack.mjs places criteriaChangedLines above the criteria in both pack formats. Passing AC3 tests cover original and current text, additions, removals, multiline content, escaping and the corrected baseline after merging main."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "statusData exposes criteria_changed; panel-model.js and panel.js explain why an approved ticket waits. Passing AC4 tests exercise CLI JSON and closed and open Build cards, including tasks."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied round-two run reports 130 passes, zero failures and three skips. All 22 ticket tests pass; the previously failing timing-test files passed in round one. Whole-suite verification remains the shipping check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/criteria-changed.mjs",
+        "issue": "The original comparison baseline previously moved when newer base commits were merged into the ticket branch.",
+        "suggested_fix": "Addressed by branchStart and regression tests verifying the original criteria remain visible and automatic shipping stays blocked after merging changed criteria from main.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Changed criteria now reliably hold a ticket for your shipping decision, including after merging updates from main. The review pack shows what changed, the panel explains the wait, and manual shipping remains available. The earlier blocking issue is fixed."
   }
 }
 ```
