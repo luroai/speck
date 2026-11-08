@@ -1,7 +1,7 @@
 ---
 id: "0571"
 title: "Steady 0150 AC2's wait for the Settings view"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-29-steady-0150-ac2-s-wait-for-the-settings-vie
 after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:08:41.949Z"
+approved: "2026-11-08T23:24:01.798Z"
 
 ---
 # 0571 · Steady 0150 AC2's wait for the Settings view
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0150 AC2 (Enter or Space on the focused button starts or pauses speck run) waits 10 seconds for the Settings view to finish loading its agents' lists. The lists come from the agents themselves, which took up to 12 seconds under load in 0557's runs, so the test failed twice there and a ship on a busy machine could hand a ticket back for nothing.
@@ -56,9 +57,14 @@ Worth keeping an eye on: a different check, on how fast the lanes slide, failed 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 125,584
+- Elapsed since build started: 15 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 AC2: the only wait for "Loading your agents" to go that used the 10-second default was 0150 AC2's own, in `test/panel-0150.test.mjs`. A search of `test/` found no other `until` on that text: 0472 AC3 already had its limit from 0557 and waits on `settingsView.catalogues`, and the mentions in `test/settings-0407.test.mjs` and `test/settings-0409.test.mjs` are assertions against the fake page, not waits. So no other test changed.
