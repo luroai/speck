@@ -1,7 +1,7 @@
 ---
 id: "0570"
 title: "Have doctor say whether the commit check is on"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:08:44.446Z"
 approved: "2026-11-08T23:14:47.554Z"
+finished: "2026-11-08T23:25:21.203Z"
 
 ---
 # 0570 · Have doctor say whether the commit check is on
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck init` says only once, as it runs, whether it installed the private-words check for commits (0550). A project set up before 0.21.0, or one whose pre-commit hook was later replaced, silently has no check, and you may think commits are protected when they aren't.
