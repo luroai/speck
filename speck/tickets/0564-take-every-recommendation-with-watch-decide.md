@@ -1,7 +1,7 @@
 ---
 id: "0564"
 title: "Take every recommendation with watch: decide"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-08T23:42:35.286Z"
 ---
 # 0564 · Take every recommendation with watch: decide
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Most blocked questions end with you pressing Go with the recommendation: in this repo, 15 of the 17 recommendations taken were picked by hand. `watch: fix` takes one only when no option changes what you'd notice and the recommendation is a clear winner, so most questions still wait for you, and their builds sit blocked until you look.
@@ -50,7 +50,11 @@ With `watch: decide`, speck takes the recommendation of every blocked question t
 - Self-check: added a test that `fix` still takes a high-risk ticket's recommendation, as before; `decide` waits on a risk that isn't low, so an unknown risk is left for the user. Split `speck split-off`'s note and the resumed build's message to name `decide`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+There's a new choice for the watch setting, decide. With it, when a build stops with a question and says what it recommends, speck takes that recommendation and carries on, even when it changes something you'd notice. It still waits for you if the question has no recommendation, if the ticket is high risk, or once speck has already decided 3 times for that ticket. The off, tell and fix choices work as they did.
+
+To see it, pick decide under Watching in Settings. A blocked ticket's card then says speck will take its recommendation, and the ticket's notes record each choice speck made and when.
+
+Keep an eye on what speck chooses for a while, as these are now choices you won't be asked about. Asking to raise the size limit is still never decided for you.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,3 +64,82 @@ With `watch: decide`, speck takes the recommendation of every blocked question t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- The README's line on `watch: fix` looking into stops doesn't mention `decide`, which does that too. A small wording tidy-up.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b11a6743521b2969816173707cbb6c43339bffc6",
+    "session": "fresh",
+    "thread_id": "01a1bd98-030f-7291-b766-8a5a1356e321",
+    "builder_response": "- Tests run: test/watch-decide-0564.test.mjs test/foreman-fix-0286.test.mjs, plus every existing test file `--related` brought in (2331 tests, 0 failed, 3 skipped).\n- One existing test changed: test/foreman-fix-0286.test.mjs pinned the Settings choices to exactly off, tell, fix. AC1 needs decide offered there, so that one assertion now lists decide too; it is not weakened.\n- Decision on AC3 and AC4 together: a high-risk ticket waits under decide even when fix would have taken its recommendation (AC3 is the specific rule). Under fix, high-risk tickets are taken as before.\n- A size guard's recommendation to raise the limit is still never taken under decide, as 0563 says and the ticket's Out of scope leaves it. A size-guard split counts towards the 3 like any other.\n- A risk that is neither low nor high is left for the user under decide, matching \"anything unknown is left for you\".\n",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 298888,
+      "cached_input_tokens": 235008,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 826,
+      "reasoning_output_tokens": 45
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 63880,
+      "cached": 235008,
+      "write": 0,
+      "output": 826
+    },
+    "cost_usd": 0.1595208,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-08T23:57:28.129Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "FIXING in scripts/foreman.mjs feeds config validation and Settings choices. Passing 0564 AC1 tests cover CLI saving, repository config, Settings saving and invalid values."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanFixQueue calls goWith, and scripts/run.mjs checks goWithQueue immediately afterwards. Passing AC2 tests exercise the recorded Notes line and build resumption with noticeable changes and missing facts."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "decidable rejects tickets without recommendations or low risk; goWith enforces MAX_DECIDED using choseCount. Passing AC3 tests cover high risk, missing recommendations, the third and fourth choices, and historical choices."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "speckActs enables the existing agent queue for decide. foremanFacts supplies foreman_will to the existing card and Needs you behaviour. Passing AC4 tests cover eligibility, counting, status output and agent launch; existing test/foreman-0317.test.mjs covers card rendering."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing AC5 tests preserve off, tell and fix behaviour, including fix on high-risk tickets. docs/brief.md describes decide and its limits. The recorded related-test run reports 2328 passed, 0 failed and 3 skipped."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The new decide setting takes recommendations automatically, resumes builds and leaves high-risk tickets or tickets with three prior automatic choices for you. Existing watch modes retain their behaviour. The tests exercise the changes and report no failures; no blocking issues found."
+  }
+}
+```
+
+</details>
