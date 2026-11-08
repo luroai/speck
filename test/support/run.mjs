@@ -7,6 +7,8 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { copied, keptFile } from './copy.mjs';
 import { speck } from './cli.mjs';
+import { sessionProcess } from '../../scripts/seen-builds.mjs';
+import { sessionInUse } from '../../scripts/build-procs.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
@@ -99,6 +101,14 @@ export const waitFor = async (cond, what, out = () => '', ms = BUSY_MS) => {
   if (!(await until(cond, ms))) assert.fail(`waited ${ms / 1000} s for ${what}, and it didn't happen.\n${out()}`);
 };
 export const alive = pid => { try { process.kill(pid, 0); return true; } catch { return false; } };
+// 0572: speck finds a build by its session name across every process on the machine, so a stand-in agent's name must be
+// its own test run's, or a copy of the same test running at the same time is found in its place (0559).
+export const ownSession = name => `${name}-${process.pid}`;
+// Fails unless speck finds process `pid` by the session name it runs under.
+export const assertFoundBySession = (session, pid) => {
+  assert.equal(sessionProcess(session), pid, `process ${pid} is found by its session ${session}`);
+  assert.ok(sessionInUse(session), `session ${session} is in use`);
+};
 export const killAll = pids => { for (const p of pids) try { process.kill(p, 'SIGKILL'); } catch {} };
 export const stopRun = async r => { if (r.child.exitCode === null) { r.child.kill('SIGINT'); await r.exited; } };
 export const record = (dir, id) => JSON.parse(fs.readFileSync(path.join(dir, 'speck', '.cache', 'runs', `${id}.json`), 'utf8'));

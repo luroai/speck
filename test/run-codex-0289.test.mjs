@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { ROOT, runRepo, startRun, until, stopRun, killAll } from './support/run.mjs';
+import { ROOT, runRepo, startRun, until, stopRun, killAll, ownSession, assertFoundBySession } from './support/run.mjs';
 import { panelSettings } from '../scripts/settings.mjs';
 import { shipRepo } from './support/ship.mjs';
 import { panelModel, T } from './support/panel.mjs';
@@ -165,18 +165,21 @@ test('0289 AC3: the panel offers each build the resume command of the agent that
 
 test('0289 AC3: speck run resumes a killed Codex build in its own session, from the folder it started in', async () => {
   const r = codexRepo({ status: 'building' }), codex = fakeCodex();
+  const thread = ownSession('thread-k'), build = ownSession('u-1');
   fs.mkdirSync(runsOf(r.dir), { recursive: true });
-  save(path.join(runsOf(r.dir), '0001.json'), { id: '0001', session: null, agent: 'codex', env_session: 'u-1', cwd: r.dir, started: '2026-10-18T10:00:00.000Z', pid: deadPid() });
-  fs.writeFileSync(path.join(runsOf(r.dir), '0001.log'), `${started('thread-k')}\n{"type":"turn.started"}\n`);
-  const run = startRun(r.dir, codex.env({ FAKE_MS: '3000' }));
+  save(path.join(runsOf(r.dir), '0001.json'), { id: '0001', session: null, agent: 'codex', env_session: build, cwd: r.dir, started: '2026-10-18T10:00:00.000Z', pid: deadPid() });
+  fs.writeFileSync(path.join(runsOf(r.dir), '0001.log'), `${started(thread)}\n{"type":"turn.started"}\n`);
+  const run = startRun(r.dir, codex.env({ FAKE_MS: '30000' }));
   try {
     assert.ok(await until(() => codex.calls().length >= 1, 10000), run.out());
     const c = codex.calls()[0];
-    assert.deepEqual(c.args.slice(0, -1), ['exec', 'resume', 'thread-k', ...BYPASS]);
+    assert.deepEqual(c.args.slice(0, -1), ['exec', 'resume', thread, ...BYPASS]);
     assert.match(c.args.at(-1), /\$speck-build 0001/);
     assert.equal(fs.realpathSync(c.cwd), fs.realpathSync(r.dir));
-    assert.equal(c.build, 'u-1', 'its processes still carry the build\'s UUID');
-    assert.equal(read(path.join(runsOf(r.dir), '0001.json')).session, 'thread-k');
+    assert.equal(c.build, build, 'its processes still carry the build\'s UUID');
+    const rec = read(path.join(runsOf(r.dir), '0001.json'));
+    assert.equal(rec.session, thread);
+    assertFoundBySession(thread, rec.pid); // speck's wrapper round Codex, which the run record names, is what it finds
   } finally { await stopRun(run); killAll(codex.calls().map(c => c.pid)); }
 });
 

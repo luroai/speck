@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { ROOT, runRepo, startRun, until, stopRun, killAll } from './support/run.mjs';
+import { ROOT, runRepo, startRun, until, stopRun, killAll, ownSession, assertFoundBySession } from './support/run.mjs';
 import { shipRepo } from './support/ship.mjs';
 import { panelModel } from './support/panel.mjs';
 import { statusData } from '../scripts/speck.mjs';
@@ -83,20 +83,21 @@ test('0290 AC1: with builder cursor and build_command blank, speck run builds wi
 });
 
 test('0290 AC1: speck run makes a chat with agent create-chat, keeps its id as the session and builds in it', async () => {
-  const r = cursorRepo({ model: 'gpt-5' }), cursor = fakeCursor();
-  const run = startRun(r.dir, cursor.env({ FAKE_CHAT: 'chat-0290', FAKE_MS: '3000' }));
+  const r = cursorRepo({ model: 'gpt-5' }), cursor = fakeCursor(), chat = ownSession('chat-0290');
+  const run = startRun(r.dir, cursor.env({ FAKE_CHAT: chat, FAKE_MS: '30000' }));
   const file = path.join(runsOf(r.dir), '0001.json');
   try {
     assert.ok(await until(() => cursor.calls().length >= 2 && fs.existsSync(file) && read(file).pid, 10000), run.out());
     const [made, built] = cursor.calls();
     assert.deepEqual(made.args, ['create-chat']);
     assert.equal(fs.realpathSync(made.cwd), fs.realpathSync(r.dir), 'the chat is made where the build runs');
-    assert.deepEqual(built.args, [...HEADLESS, '--model', 'gpt-5', '--resume', 'chat-0290', '/speck-build 0001']);
+    assert.deepEqual(built.args, [...HEADLESS, '--model', 'gpt-5', '--resume', chat, '/speck-build 0001']);
     const rec = read(file);
-    assert.equal(rec.session, 'chat-0290');
+    assert.equal(rec.session, chat);
+    assertFoundBySession(chat, built.pid);
     assert.equal(rec.agent, 'cursor');
-    assert.equal(built.build, 'chat-0290', 'its processes carry the session pause and stop look for');
-    assert.match(run.out(), /Launched 0001 \(session chat-0290\)/);
+    assert.equal(built.build, chat, 'its processes carry the session pause and stop look for');
+    assert.ok(run.out().includes(`Launched 0001 (session ${chat})`), run.out());
     assert.doesNotMatch(run.out(), /builder_model/, run.out());
   } finally { await stopRun(run); killAll(cursor.calls().map(c => c.pid)); }
 });
@@ -136,18 +137,19 @@ test('0290 AC2: the resume command speck says and the panel shows for a Cursor b
 });
 
 test('0290 AC2: speck run resumes a killed Cursor build in its own chat, from the folder it started in', async () => {
-  const r = cursorRepo({ status: 'building' }), cursor = fakeCursor();
+  const r = cursorRepo({ status: 'building' }), cursor = fakeCursor(), chat = ownSession('chat-k');
   fs.mkdirSync(runsOf(r.dir), { recursive: true });
-  save(path.join(runsOf(r.dir), '0001.json'), { id: '0001', session: 'chat-k', agent: 'cursor', cwd: r.dir, started: '2026-10-18T10:00:00.000Z', pid: deadPid() });
+  save(path.join(runsOf(r.dir), '0001.json'), { id: '0001', session: chat, agent: 'cursor', cwd: r.dir, started: '2026-10-18T10:00:00.000Z', pid: deadPid() });
   fs.writeFileSync(path.join(runsOf(r.dir), '0001.log'), '');
-  const run = startRun(r.dir, cursor.env({ FAKE_MS: '3000' }));
+  const run = startRun(r.dir, cursor.env({ FAKE_MS: '30000' }));
   try {
     assert.ok(await until(() => cursor.calls().length >= 1, 10000), run.out());
     const c = cursor.calls()[0];
-    assert.deepEqual(c.args.slice(0, -1), [...HEADLESS, '--resume', 'chat-k']);
+    assert.deepEqual(c.args.slice(0, -1), [...HEADLESS, '--resume', chat]);
     assert.match(c.args.at(-1), /\/speck-build 0001/);
     assert.equal(fs.realpathSync(c.cwd), fs.realpathSync(r.dir));
-    assert.equal(c.build, 'chat-k');
+    assert.equal(c.build, chat);
+    assertFoundBySession(chat, c.pid);
   } finally { await stopRun(run); killAll(cursor.calls().map(c => c.pid)); }
 });
 
