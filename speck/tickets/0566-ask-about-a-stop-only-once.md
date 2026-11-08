@@ -40,6 +40,7 @@ speck asks about a ticket's stop once, and looks into it again only once you've 
 - Asked for 2026-11-08: the user goes with speck's recommendation almost every time, so speck should decide and tell them rather than ask ("ticket up 1": the watcher deciding). In this repo 15 of 17 recommendations taken were picked by hand in the panel, and 10 of the watch agent's 13 actions were questions.
 - Today: `stuck()` in `scripts/foreman-agent.mjs` (about lines 231 to 238) skips a ticket only while `codeKey` (about lines 132 to 141, the base branch's and the ticket branch's heads) is unchanged; `agentView` (about lines 172 to 196) already works out which questions are still open.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
