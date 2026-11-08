@@ -1,7 +1,7 @@
 ---
 id: "0566"
 title: "Ask about a stop only once"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:01:56.140Z"
+approved: "2026-11-08T23:05:46.140Z"
 
 ---
 # 0566 · Ask about a stop only once
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck's watch agent can ask you the same question about a ticket again and again: 0344's macOS question was asked 7 times. `speck run` looks into a stop again whenever the base branch or the ticket's branch gets a new commit, and nothing checks whether it has already asked about that ticket and is waiting on you.
@@ -50,9 +51,14 @@ speck now asks you about a stopped ticket once. While its question is waiting fo
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 251,170
+- Elapsed since build started: 4 min
+- Changed lines: 16 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Known limit: a stop held back while a question waits is dropped rather than kept, so after a dismissal speck looks again only at the ticket's next stop.
 Follow-ups: none.
