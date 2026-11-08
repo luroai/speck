@@ -1,7 +1,7 @@
 ---
 id: "0571"
 title: "Steady 0150 AC2's wait for the Settings view"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-29-steady-0150-ac2-s-wait-for-the-settings-view.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-08
+started: "2026-11-08T23:08:41.949Z"
 
 ---
 # 0571 · Steady 0150 AC2's wait for the Settings view
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 0150 AC2 (Enter or Space on the focused button starts or pauses speck run) waits 10 seconds for the Settings view to finish loading its agents' lists. The lists come from the agents themselves, which took up to 12 seconds under load in 0557's runs, so the test failed twice there and a ship on a busy machine could hand a ticket back for nothing.
