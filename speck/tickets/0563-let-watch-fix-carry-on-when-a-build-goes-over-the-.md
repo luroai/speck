@@ -1,7 +1,7 @@
 ---
 id: "0563"
 title: "Let watch: fix carry on when a build goes over the size limit"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-08
+started: "2026-11-08T23:03:08.081Z"
 
 ---
 # 0563 · Let watch: fix carry on when a build goes over the size limit
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a build goes over `limits.max_changed_lines`, the size guard blocks it with a proposed split as its question. The builder marks that question "Changes what you'd notice: yes", because the first ticket ships without part of its scope, and "Clear winner: no", because raising the limit is the other option. So `watch: fix` always leaves it for you, even though the answer is nearly always the split, the code is already written, and nothing about what is finally delivered changes.
