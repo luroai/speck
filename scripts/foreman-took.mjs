@@ -1,7 +1,7 @@
 // 0317: what the Foreman will do about a blocked ticket and what it has done, from the ticket's Notes, where goWith
 // records each recommendation taken and who chose it (0284, 0286), so the panel and `speck status` say the same.
-import { chosenBySpeck, goWithResumable } from './go-with.mjs';
-import { fixable, fixingOf } from './foreman.mjs';
+import { chosenBySpeck, choseCount, goWithResumable } from './go-with.mjs';
+import { speckTakes, fixingOf, MAX_DECIDED } from './foreman.mjs';
 import { contentLines } from './core.mjs';
 import { questionFacts } from './question-facts.mjs';
 
@@ -22,7 +22,8 @@ export function wentWithLines(lines) {
 // went_with, the choice its build is carrying on with, until the ticket moves on (it's no longer building or reviewing,
 // or it has been approved since); foreman_took, every recommendation the Foreman took for it; and foreman_will, whether
 // the Foreman will take its recommendation: Fixing is fix, the question changes nothing you'd notice, it has a clear
-// winner, the Foreman hasn't taken one for this ticket before, and speck run could resume its build.
+// winner, the Foreman hasn't taken one for this ticket before, and speck run could resume its build. 0564: with decide,
+// the question has a recommendation, the ticket isn't high risk, and speck has taken fewer than 3 for it.
 export function foremanFacts(t, entry, fixing, resumable) {
   const all = wentWithLines(t.sections?.notes);
   const last = all.length ? all[all.length - 1] : null, approved = Date.parse(t.fm?.approved);
@@ -31,7 +32,7 @@ export function foremanFacts(t, entry, fixing, resumable) {
   return {
     went_with: carrying ? last : null,
     foreman_took: took,
-    foreman_will: fixing === 'fix' && fixable(entry) && !took.length && resumable === true,
+    foreman_will: speckTakes(fixing, entry) && (fixing === 'decide' ? choseCount(t.sections?.notes) < MAX_DECIDED : !took.length) && resumable === true,
   };
 }
 
@@ -47,7 +48,7 @@ export const whoWent = w => (w && w.by === 'foreman' ? 'speck went with the reco
 export function foremanBoard(tickets, cfg, runs) {
   return tickets.map(t => {
     const facts = questionFacts(contentLines(t.sections['blocked question']));
-    const entry = { id: t.fm.id, status: t.fm.status, title: t.fm.title, blocked_question: null, blocked_recommendation: facts.recommendation, blocked_noticeable: facts.noticeable, blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard };
+    const entry = { id: t.fm.id, status: t.fm.status, title: t.fm.title, risk: t.fm.risk, blocked_question: null, blocked_recommendation: facts.recommendation, blocked_noticeable: facts.noticeable, blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard };
     return { ...entry, ...foremanFacts(t, entry, fixingOf(cfg), t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg)) };
   });
 }

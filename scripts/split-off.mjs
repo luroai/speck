@@ -9,6 +9,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { SpeckError, contentLines, findRepoRoot, listTickets, loadConfig, parseTicket, setField, sh, syncHeader, worktreeList } from './core.mjs';
+import { fixingOf } from './foreman.mjs';
 import { buildTicket } from './build-records.mjs';
 import { commitTicketOnly, replaceSection } from './close.mjs';
 import { FOREMAN_CHOSE } from './go-with.mjs';
@@ -71,7 +72,7 @@ function writeSplitOff(main, cfg, t, id, title, scope) {
   let body = raw;
   const fill = (n, v) => { try { body = replaceSection(body, n, () => v, rel); } catch (e) { if (e instanceof SpeckError) drop(e.message); throw e; } };
   for (const n of [...NEEDED, 'Out of scope']) if (scope.get(n.toLowerCase())) fill(n, scope.get(n.toLowerCase()));
-  const note = `- ${CAME_FROM(id)}, because its build went over the size limit (\`limits.max_changed_lines\`) and speck took the split it recommended, as watch is fix. Its scope was approved when ${id} was set ready.`;
+  const note = `- ${CAME_FROM(id)}, because its build went over the size limit (\`limits.max_changed_lines\`) and speck took the split it recommended, as watch is ${fixingOf(cfg) === 'decide' ? 'decide' : 'fix'}. Its scope was approved when ${id} was set ready.`;
   fill('Notes', note);
   for (const key of COPIED) if (t.fm[key] !== undefined && t.fm[key] !== '') body = setField(body, key, t.fm[key]);
   body = syncHeader(setField(setField(body, 'after', `["${id}"]`), 'status', 'ready'));

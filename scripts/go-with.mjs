@@ -13,19 +13,22 @@ import { refsOf } from './ship-queue.mjs';
 import { sessionInUse } from './build-procs.mjs';
 import { splitCommand } from './reviewers.mjs';
 import { codexBuilds, codexStartWords } from './codex-build.mjs';
+import { MAX_DECIDED, fixingOf } from './foreman.mjs';
 import { cursorBuilds, cursorStartWords } from './cursor-build.mjs';
 
 // What the build's session is told when speck run resumes it. `skill` is how its agent names /speck-build. 0286: `by`
 // 'foreman' when the Foreman chose it (watch: fix), not the user.
-// 0563: `split` when it's the size guard's split: the build makes the split-off ticket as it carries on.
-export const goWithMessage = (id, option, skill = '/speck-build', by = 'user', split = false) =>
-  `${by === 'foreman' ? 'speck (watch: fix) chose' : 'The user chose'} the recommended option for ticket ${id}'s blocked question: ${option}. It's recorded in the ticket's Notes, and the ticket is building again. Carry on with ${skill} ${id} from where you left off, going with that option.${split ? ` This is the size guard's split: follow the steps for it in ${skill}, making the new ticket with speck split-off ${id}.` : ''}`;
+// 0563: `split` when it's the size guard's split: the build makes the split-off ticket as it carries on. 0564: `watch` the setting it chose under.
+export const goWithMessage = (id, option, skill = '/speck-build', by = 'user', split = false, watch = 'fix') =>
+  `${by === 'foreman' ? `speck (watch: ${watch}) chose` : 'The user chose'} the recommended option for ticket ${id}'s blocked question: ${option}. It's recorded in the ticket's Notes, and the ticket is building again. Carry on with ${skill} ${id} from where you left off, going with that option.${split ? ` This is the size guard's split: follow the steps for it in ${skill}, making the new ticket with speck split-off ${id}.` : ''}`;
 // 0286: how the Notes line says the Foreman chose it, which is also how it knows it has chosen once for the ticket.
 // 0486: before, 'chosen by the Foreman', which still counts.
 export const FOREMAN_CHOSE = 'chosen by speck';
 const OLD_CHOSE = 'chosen by the Foreman';
 export const chosenBySpeck = said => said.startsWith(FOREMAN_CHOSE) || said.startsWith(OLD_CHOSE);
-export const choseOnce = lines => (lines || []).some(line => /^\s*[-*]\s+Went with the recommendation:/.test(line) && (line.includes(`(${FOREMAN_CHOSE}`) || line.includes(`(${OLD_CHOSE}`)));
+// 0564: how many recommendations speck has taken for a ticket.
+export const choseCount = lines => (lines || []).filter(line => /^\s*[-*]\s+Went with the recommendation:/.test(line) && (line.includes(`(${FOREMAN_CHOSE}`) || line.includes(`(${OLD_CHOSE}`))).length;
+export const choseOnce = lines => choseCount(lines) > 0;
 
 // A ticket's run record from speck run, or null when it has none or it can't be read.
 function readRecord(runs, id) {
@@ -63,10 +66,10 @@ export const goWithWaiting = (runs, id) => !!pendingOf(readRecord(runs, id));
 // with the commit the branch is then at. Returns { status, body } for the server to send.
 // 0286: with `by` 'foreman', speck run's Foreman makes the choice, saying so in the Notes, at most once per ticket.
 // 0317: `by` is 'user' only for the panel's button, and anything else is refused, so a choice is never put down to you
-// that you didn't make.
+// that you didn't make. 0564: with watch: decide, the Foreman chooses up to 3 per ticket, never on a high-risk one.
 export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   if (by !== 'user' && by !== 'foreman') return { status: 500, body: { error: `speck can't tell who went with ticket ${id}'s recommendation, so nothing changed.` } };
-  const cfg = loadConfig(repo);
+  const cfg = loadConfig(repo), watch = fixingOf(cfg) === 'decide' ? 'decide' : 'fix';
   let at, t;
   try { ({ at, t } = buildTicket(repo, cfg, id)); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
   const pad = t.fm.id, refuse = error => ({ status: 409, body: { error } });
@@ -74,7 +77,10 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   if (t.fm.status !== 'blocked') return refuse(`Ticket ${pad} is "${t.fm.status}", not blocked, so it has no question waiting for you.`);
   const facts = questionFacts(contentLines(t.sections['blocked question'])), option = facts.recommendation;
   if (!option) return refuse(`Ticket ${pad}'s question has no recommendation to go with. ${byHand}`);
-  if (by === 'foreman' && choseOnce(t.sections.notes)) return refuse(`speck has already gone with a recommendation for ticket ${pad} once, so this question waits for you. ${byHand}`);
+  if (by === 'foreman' && watch === 'decide') {
+    if (t.fm.risk !== 'low') return refuse(`Ticket ${pad} is ${t.fm.risk === 'high' ? 'high risk' : 'of unknown risk'}, so this question waits for you. ${byHand}`);
+    if (choseCount(t.sections.notes) >= MAX_DECIDED) return refuse(`speck has already taken ${MAX_DECIDED} recommendations for ticket ${pad}, so this question waits for you. ${byHand}`);
+  } else if (by === 'foreman' && choseOnce(t.sections.notes)) return refuse(`speck has already gone with a recommendation for ticket ${pad} once, so this question waits for you. ${byHand}`);
   const split = by === 'foreman' && facts.sizeGuard === true; // 0563
   const runs = runsOf(repo);
   const file = path.join(runs, `${pad}.json`), rec = readRecord(runs, pad);
@@ -84,7 +90,7 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: at }).stdout.trim();
   if (!branch.startsWith(`${cfg.branch_prefix}${pad}-`)) return refuse(`Ticket ${pad}'s branch isn't checked out where its build left it, so its choice can't be committed there. ${byHand}`);
   const when = `${now.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
-  const line = `- Went with the recommendation: ${option} (${by === 'foreman' ? `${FOREMAN_CHOSE}, as watch is fix` : 'chosen by the user in the panel'}, ${when}).`;
+  const line = `- Went with the recommendation: ${option} (${by === 'foreman' ? `${FOREMAN_CHOSE}, as watch is ${watch}` : 'chosen by the user in the panel'}, ${when}).`;
   let text;
   try { text = replaceSection(t.raw, 'Notes', old => (old ? `${old}\n${line}` : line), path.relative(at, t.file)); }
   catch (e) { if (e instanceof SpeckError) return refuse(e.message); throw e; }
@@ -95,7 +101,7 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   if (commit.status !== 0)
     return { status: 500, body: { error: `Couldn't commit ${path.relative(at, t.file)}, so it's still blocked:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
   const head = sh('git', ['rev-parse', 'HEAD'], { cwd: at }).stdout.trim();
-  try { saveRecord(file, { ...rec, go_with: { option, at: now.toISOString(), head, ...(by === 'foreman' ? { by } : {}), ...(split ? { split } : {}) } }); }
+  try { saveRecord(file, { ...rec, go_with: { option, at: now.toISOString(), head, ...(by === 'foreman' ? { by } : {}), ...(split ? { split } : {}), ...(by === 'foreman' && watch === 'decide' ? { watch } : {}) } }); }
   catch (e) { return { status: 500, body: { error: `Your choice is in ${pad}'s Notes and it's set building, but its run record couldn't be saved (${e.message}), so speck run won't resume it. ${resumeHint(cfg, rec)}, and tell it you went with the recommendation.` } }; }
   const on = runState(runs).on;
   return { status: 200, body: { ok: true, id: pad, message: on ? `speck run resumes ${pad}'s build with it.` : `speck run is off: turn it on and it resumes ${pad}'s build with it.` } };
@@ -121,7 +127,7 @@ export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, m
       }
       const s = settings();
       if (!s || running.size >= s.max) return;
-      const { argv, why } = resumeFor(s.words, s.cfg, t.id, rec, goWithMessage(t.id, g.option, rec.agent === 'codex' ? '$speck-build' : '/speck-build', g.by, g.split === true));
+      const { argv, why } = resumeFor(s.words, s.cfg, t.id, rec, goWithMessage(t.id, g.option, rec.agent === 'codex' ? '$speck-build' : '/speck-build', g.by, g.split === true, g.watch === 'decide' ? 'decide' : 'fix'));
       if (!argv) {
         try { save(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said again next check */ }
         console.log(`${t.id}: ${who} went with its recommendation, but speck run can't resume its build session: ${why}. ${hint(s.cfg, rec)}, and tell it ${who} went with the recommendation.`);

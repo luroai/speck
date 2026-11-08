@@ -47,6 +47,7 @@ With `watch: decide`, speck takes the recommendation of every blocked question t
 - Waits for 0563, which adds the size-guard fact this needs and changes the same functions. 0563 is a draft with a decision still open.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: added a test that `fix` still takes a high-risk ticket's recommendation, as before; `decide` waits on a risk that isn't low, so an unknown risk is left for the user. Split `speck split-off`'s note and the resumed build's message to name `decide`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
