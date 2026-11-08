@@ -1,7 +1,7 @@
 ---
 id: "0568"
 title: "List what speck decided for you in the panel"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-08
 ---
 # 0568 · List what speck decided for you in the panel
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 With speck deciding, you need one place to see what it chose and to change any you'd have chosen differently. Today each choice is a line in its ticket's Notes, and `speck status` lists only the last 24 hours.
