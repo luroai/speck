@@ -1,7 +1,7 @@
 ---
 id: "0566"
 title: "Ask about a stop only once"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:01:56.140Z"
 approved: "2026-11-08T23:05:46.140Z"
+finished: "2026-11-08T23:12:01.806Z"
 
 ---
 # 0566 · Ask about a stop only once
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck's watch agent can ask you the same question about a ticket again and again: 0344's macOS question was asked 7 times. `speck run` looks into a stop again whenever the base branch or the ticket's branch gets a new commit, and nothing checks whether it has already asked about that ticket and is waiting on you.
