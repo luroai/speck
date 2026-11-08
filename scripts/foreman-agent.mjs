@@ -217,11 +217,13 @@ function spawnAgent(argv, cwd, log, env) {
 // speck run's side. stuck({ id, what, log }) takes a stop speck has no steps for; check(tickets), on each of its checks,
 // starts the agent for the next one waiting, at most one at a time, carries out what an agent that has ended asked for
 // and resumes builds it asked to, while a build slot is free. Each ticket is looked into at most once for the same
-// commits (codeKey). `ships` is speck run's ship queue, whose again(id) ships a ticket once more. 0392: `providers` are
-// the model providers speck knows, and `cantStart(cfg)` says why the Foreman can't start on one now.
+// commits (codeKey), and not at all while its question to you still waits (0566). `ships` is speck run's ship queue, whose again(id) ships a ticket once more. 0392: `providers` are
+// the model providers speck knows, and `cantStart(cfg)` says why the Foreman can't start on one now. 0566: `statusOf(id)`
+// is a ticket's status now.
 export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, settings = () => ({ cfg, words, max }), running, startBuild, ships,
   start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState,
-  withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`), providers = null, cantStart = c => foremanCantStart(repo, c, providers ? { providers } : {}) }) {
+  withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`), providers = null, cantStart = c => foremanCantStart(repo, c, providers ? { providers } : {}),
+  statusOf = id => statusData(repo).tickets.find(t => String(t.id) === id)?.status }) {
   let child = null; // the agent this speck run started: { token, exited }. While it runs, no other starts, whatever the record says
   const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const carried = new Set(); // 0318: the same for your answers to its questions
@@ -231,6 +233,10 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
   const stuck = ({ id, what, log }) => {
     const c = config();
     if (!c || fixingOf(c) !== 'fix') return;
+    // 0566: a question still waiting for you (agentView's, so what Needs you counts) holds back any look at its ticket.
+    let status = null;
+    try { status = statusOf(id); } catch { /* unreadable: check() holds it back before it starts */ }
+    if (agentView(runs(), [{ id, status }]).asks.length) return;
     const s = readAgentState(runs()), k = key(id);
     if (s.tried[id] === k || s.running?.id === id && s.running.key === k || s.queue.some(q => q.id === id && q.key === k)) return;
     s.queue = [...s.queue.filter(q => q.id !== id), { id, key: k, what: String(what), log: String(log || '') }];
@@ -309,6 +315,8 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     const c = config();
     // A stop whose ticket has since finished needs no look.
     const over = new Set(tickets.filter(t => t.status === 'done' || t.status === 'cancelled').map(t => String(t.id)));
+    // 0566: nor does one that came while the agent was still asking you about its ticket.
+    if (s.queue.length) for (const a of agentView(runs(), tickets).asks) over.add(a.id);
     if (s.queue.some(q => over.has(q.id))) { s.queue = s.queue.filter(q => !over.has(q.id)); changed = true; }
     if (!s.running && s.queue.length) {
       if (c && fixingOf(c) === 'fix') { launch(s, c, s.queue[0]); changed = false; }
