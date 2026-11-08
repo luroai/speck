@@ -1,7 +1,7 @@
 ---
 id: "0572"
 title: "Give tests session names no other run shares"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-29-give-tests-session-names-no-other-run-share
 after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:15:19.379Z"
+approved: "2026-11-08T23:34:09.997Z"
 
 ---
 # 0572 · Give tests session names no other run shares
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck finds a resumed build by looking for its session name across every process on the machine. Tests that start a stand-in agent with a fixed session name, such as `hand-0001` in `test/seen-builds-0300.test.mjs`, can find another test run's copy when the same file runs twice at once, and fail by chance: `0300 AC2` did so beside the suite in 0559's runs.
@@ -51,9 +52,14 @@ Nothing changes for anyone using speck: this only touches its own tests. Some te
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 180,698
+- Elapsed since build started: 19 min
+- Changed lines: 0 (limit 5000)
 Tests changed (AC1): each now gives its stand-in a session name with the test run's pid in it (`ownSession`).
 - `test/seen-builds-0300.test.mjs`, all through `agentBuilding` (was `hand-<id>`): the 0300 tests "keeps its own process", "a command that names no ticket", "stops counting once its ticket is approved", "doesn't hold up switching to new code", and "counts a build started outside it".
 - `test/run-codex-0289.test.mjs`: 0289 AC3 "resumes a killed Codex build" (was `thread-k`, and `u-1` in its environment).
