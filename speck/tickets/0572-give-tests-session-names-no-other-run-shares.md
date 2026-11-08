@@ -40,6 +40,7 @@ Tests that are found through the process table give their stand-in agents sessio
 - Asked for 2026-11-08 for release 0.22.0, alongside 0563 to 0568 (speck decides and tells you): "Agree to all of that including 4. Set it all ready and get a release out".
 - From 0559's own runs. 0559 made `resumed-0002` unique with the test process's pid (`test/seen-builds-0300.test.mjs`, around line 172).
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
