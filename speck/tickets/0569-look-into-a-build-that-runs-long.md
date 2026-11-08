@@ -1,7 +1,7 @@
 ---
 id: "0569"
 title: "Look into a build that runs long"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-08
 ---
 # 0569 · Look into a build that runs long
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When a build runs far longer than usual, nobody notices until you ask why. On 2026-10-13 a test added by 0149 hung about half of all full test runs, builds went from 6 to 9 minutes to 26 and 45+, and spotting it and raising the fix (0159) took a human, though speck already knows its usual build time.
