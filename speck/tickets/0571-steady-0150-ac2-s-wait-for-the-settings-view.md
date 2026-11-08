@@ -41,6 +41,7 @@ started: "2026-11-08T23:08:41.949Z"
 - Asked for 2026-11-08 for release 0.22.0, alongside 0563 to 0568 (speck decides and tells you): "Agree to all of that including 4. Set it all ready and get a release out".
 - From 0557's whole-suite runs: "timed out waiting for the Settings view" twice. The wait is in `test/panel-0150.test.mjs`, around line 158.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
