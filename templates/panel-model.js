@@ -35,6 +35,7 @@ const SHORT = {
   'The build stopped': 'Build stopped',
   'Approved · turn on Auto-build to ship it': 'Turn on Auto-build',
   'Finished · read the result': 'Read the result',
+  'Approved · waiting for you because a criterion changed': 'Criterion changed',
 };
 function doing(t, shipping) {
   const d = doingNow(t, shipping);
@@ -69,6 +70,7 @@ function doingNow(t, shipping) {
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
   if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');
+  if (t.status === 'approved' && t.criteria_changed === true) return at('Approved · waiting for you because a criterion changed'); // 0565
   if (t.doc_finished) return at('Finished · read the result'); // 0361, 0492
   if (approved) return at(autoShips ? 'Approved · waiting to ship' : 'Approved · waiting for you to ship it');
   const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');

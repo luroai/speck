@@ -609,6 +609,7 @@ function queueItem(t) {
     if (t.carried_by) q.appendChild(el('div', 'act carried', t.carried_by)); // 0338
     if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message));
   }
+  if (t.status === 'approved' && t.criteria_changed === true) q.appendChild(el('div', 'act to-ship', 'It waits for you to ship it because a criterion changed since it was set ready.')); // 0565
   if (t.ship_hint) q.appendChild(el('div', 'act', t.ship_hint));
   const pack = t.status === 'approved' || t.shipping || t.doc_finished; // 0361: a finished task's result is in its review pack
   // 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
