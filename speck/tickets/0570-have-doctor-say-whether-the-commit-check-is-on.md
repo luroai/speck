@@ -42,6 +42,7 @@ started: "2026-11-08T23:08:44.446Z"
 - From 0550's builder note. Open question there, decided here: a warning, not a failure, as a user with their own hook chose that.
 - Today: the hook and its marker are in `scripts/commit-check.mjs` (`HOOK`, `MARKER`, `installCommitHook`); `speck doctor`'s checks are `doctorChecks` in `scripts/install.mjs`.
 - Relies on git's `core.hooksPath` setting and the default `.git/hooks/pre-commit` location, as 0550 already does.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
