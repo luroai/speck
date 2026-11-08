@@ -1,7 +1,7 @@
 ---
 id: "0565"
 title: "Hold back a ticket whose criteria changed from shipping by itself"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:01:57.301Z"
+approved: "2026-11-08T23:25:05.403Z"
 
 ---
 # 0565 · Hold back a ticket whose criteria changed from shipping by itself
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build can change its ticket's acceptance criteria, as 0529's did when a criterion turned out wrong, and nothing records it: no copy of the criteria is kept from when the ticket was set ready, and nothing compares them. Once speck decides questions itself, a ticket could ship by itself with criteria you never agreed to.
@@ -57,9 +58,15 @@ Worth knowing: the old and new wording can only be shown while the ticket's work
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The original criteria baseline is not stable.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 337,505
+- Elapsed since build started: 23 min
+- Changed lines: 118 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Steady six `speck run` timing tests under load: speck/ideas/2026-11-08-steady-six-speck-run-timing-tests-under-load.md
