@@ -45,7 +45,7 @@ With `watch: fix`, speck takes a size-guard split itself, as it does a question 
 - Self-check: fill and Notes errors now remove the new draft rather than leaving it; added tests for a main checkout off the base branch, built-in names and missing arguments.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+With watch set to fix, a build that goes over the size limit no longer stops to ask you. If it recommends splitting the work, speck takes that once per ticket, notes it on the ticket, and the build carries on with the first part. The rest becomes a new ready ticket that builds straight after the first one ships. To see it, look for a ticket's note saying speck chose the split, and for a new ticket that says which ticket it came from. A recommendation to raise the limit is never taken for you, and with watch on tell or off these questions wait for you as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +55,10 @@ With `watch: fix`, speck takes a size-guard split itself, as it does a question 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Follow-ups (known limits and tidy-ups, none needing its own ticket):
+- `scripts/speck.mjs` is exactly at its 600-line limit, so the next line added there needs something moved out first. `speck split-off` is left out of `speck help` for that reason, as `speck watch` is.
+- Going with a size-guard split by hand in the panel works as before: it doesn't make the split-off ticket ready. Only speck's own choice does, as the ticket says.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -136,6 +140,89 @@ With `watch: fix`, speck takes a size-guard split itself, as it does a question 
     ],
     "escalation_question": "",
     "summary": "The automatic split works for builds in separate worktrees, with useful safeguards and tests. It still leaves every build using the main checkout waiting for the user, so the promised behaviour is incomplete."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "77b83bad60f4e58d3787d74f49cfa8397f93fc2d",
+    "session": "continued",
+    "thread_id": "01a1bd70-21ef-7753-934b-ef81296e65a6",
+    "builder_response": "Round 2.\n- Tests run: test/size-guard-0563.test.mjs test/split-0078.test.mjs test/blocked-0283.test.mjs test/foreman-fix-0286.test.mjs test/go-with-0284.test.mjs test/foreman-0317.test.mjs test/watch-0486.test.mjs test/skills.test.mjs, plus the commands.checks files that speck test --files adds.\n- F1 fixed: the goWith gate is gone. splitOff commits in whichever checkout has the base branch, or, when none does (worktrees off, the build holding the main checkout), in a short-lived worktree of it that is removed afterwards. New tests: \"0563 AC2 F1\" drives a worktrees-off build through choice, resume and split-off, checking the ready ticket lands on main, the build's branch and folder are untouched and the temporary checkout is gone; \"0563 AC3 F1\" covers a main checkout on an unrelated branch. docs/brief.md updated to match.\n",
+    "seconds": 49,
+    "usage": {
+      "input_tokens": 362173,
+      "cached_input_tokens": 218112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1959,
+      "reasoning_output_tokens": 361
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 89731,
+      "cached": 119936,
+      "write": 0,
+      "output": 810
+    },
+    "cost_usd": 0.1995556,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-08T23:16:34.721Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "questionFacts parses the separate Size guard fact, and the build skill requires it. Passing AC1 tests cover parsing and board exposure."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "fixable selects size-guard split recommendations; goWith records the choice and goWithQueue resumes the build. Passing AC2 tests cover once-only choice, refusing limit increases, and the worktrees-off path."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "splitOff copies the supplied scope, sets ready and after, adds provenance Notes and commits on the base branch. Passing AC3 tests cover these fields, duplicate prevention and invalid scope."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests verify that tell and off leave size-guard blocks waiting and that ordinary questions retain their previous behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The build skill's size-guard steps and docs/brief.md describe automatic split selection and follow-up creation, including temporary checkouts. The reported targeted run passed 179 tests, with no failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/split-off.mjs",
+        "issue": "Automatic splitting previously failed whenever the build occupied the main checkout.",
+        "suggested_fix": "Implemented: the choice no longer requires the main checkout to hold the base branch. splitOff uses an existing base-branch checkout or creates and removes a temporary one. Passing F1 tests verify follow-up creation and preservation of the build's checkout.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Automatic size-guard splits now work both with and without separate worktrees. The follow-up retains the deferred scope and waits for the original ticket to ship. The previous blocking issue is resolved, and no blocking concerns remain."
   }
 }
 ```
