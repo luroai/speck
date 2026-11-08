@@ -2,12 +2,15 @@
 //   Recommended: <the option it recommends>
 //   Changes what you'd notice: yes | no
 //   Clear winner: yes | no
+// 0563: and, only on a block by the size guard, a fourth:
+//   Size guard: yes
 // `lines` are the section's content lines. Returns the question without the lines it read, and each fact, or null when
 // it's missing or can't be read. A line it can't read stays in the question, so nothing written there is lost.
 const FACTS = [
   ['recommendation', /^recommended$/, v => v || null],
   ['noticeable', /^changes what you['’]d notice$/, v => yesNo(v)],
   ['clear', /^clear winner$/, v => yesNo(v)],
+  ['sizeGuard', /^size guard$/, v => yesNo(v)],
 ];
 const yesNo = v => (v.toLowerCase() === 'yes' ? true : v.toLowerCase() === 'no' ? false : null);
 
