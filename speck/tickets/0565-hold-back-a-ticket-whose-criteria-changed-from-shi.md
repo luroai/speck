@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:01:57.301Z"
-approved: "2026-11-08T23:25:05.403Z"
+approved: "2026-11-08T23:40:17.256Z"
 
 ---
 # 0565 · Hold back a ticket whose criteria changed from shipping by itself
@@ -60,12 +60,13 @@ Worth knowing: the old and new wording can only be shown while the ticket's work
 ## Review log
 Round 1 (codex): changes requested: F1 The original criteria baseline is not stable.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 337,505
-- Elapsed since build started: 23 min
+- Reviewer tokens: 490,060
+- Elapsed since build started: 38 min
 - Changed lines: 118 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
@@ -236,6 +237,90 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Changed criteria now reliably hold a ticket for your shipping decision, including after merging updates from main. The review pack shows what changed, the panel explains the wait, and manual shipping remains available. The earlier blocking issue is fixed."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d770c3c85fd356f0a287e6fdb0f4403de7f4ee73",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1bd78-c4e9-7913-abaf-73d4e26329cd",
+    "builder_response": "- Tests run: test/criteria-0565.test.mjs test/pack-0131.test.mjs, plus the commands.checks files.\n- Merge: main merged in with no conflicting files.\n- Tests that failed as it would land: four 0131 AC1 tests in test/pack-0131.test.mjs. This ticket's own change broke them. Their fixture rewrites the criteria on the branch, so `plainPack` printed the Criteria changed table before its criteria list, and criterion text appeared ahead of the order 0131 requires (id, approval, outcome, plain words, each criterion).\n- Fix: in `plainPack` (scripts/pack.mjs) the Criteria changed part now follows the criteria list. The 0131 tests are unchanged. The full review pack, which `speck pack` prints and the panel shows, still has the part above the criteria, as AC3 asks. test/criteria-0565.test.mjs's plain-pack check and the `speck pack` row in docs/brief.md now say below for `--plain`.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 487565,
+      "cached_input_tokens": 409600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2495,
+      "reasoning_output_tokens": 226
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 21140,
+      "cached": 130688,
+      "write": 0,
+      "output": 727
+    },
+    "cost_usd": 0.0626188,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-08T23:40:11.896Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "criteria-changed.mjs: branchStart retains the original baseline through merges; criteriaChange compares section lines ignoring trailing whitespace. Passing AC1 tests cover text changes, section removal, whitespace and base-branch merges."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ship.mjs: autoShipBlocker rejects changed criteria, and statusData excludes those tickets from automatic shipping. Passing AC2 tests verify CLI refusal, queue exclusion and successful manual shipping. The panel's manual shipping path remains unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "pack.mjs: reviewPack still places Criteria changed above Acceptance criteria, with original and current text. Passing AC3 tests cover changes, additions, removals and multiline content. The supplementary plain pack retains the same information below its list, preserving its existing ordering contract."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "statusData exposes criteria_changed; panel-model.js and panel.js explain the wait on approved Build cards. Passing AC4 tests cover CLI JSON and open and closed cards, including tasks."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied run reports 145 passes, zero failures and three skips. It includes the unchanged pack-0131 tests that exposed the shipping regression, alongside all 22 ticket tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/criteria-changed.mjs",
+        "issue": "The original comparison baseline previously moved when newer base commits were merged into the ticket branch.",
+        "suggested_fix": "Resolved by branchStart and passing regression coverage confirming that merged criteria remain flagged and block automatic shipping.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change preserves the shipping guard and shows changed criteria above the criteria in the main review pack. The plain pack now preserves its existing reading order while retaining the change details. The reported regression tests pass, and no blocking findings remain."
   }
 }
 ```
