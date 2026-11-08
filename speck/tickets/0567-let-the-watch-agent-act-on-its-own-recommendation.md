@@ -1,7 +1,7 @@
 ---
 id: "0567"
 title: "Let the watch agent act on its own recommendation"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-08
 ---
 # 0567 · Let the watch agent act on its own recommendation
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When speck's watch agent looks into a stop, it usually ends by asking you a question with its recommendation, and you go with it: 10 of its 13 actions in this repo were questions. With `watch: decide`, it should act on its recommendation and tell you, rather than wait for you.
