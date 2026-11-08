@@ -44,6 +44,7 @@ A ticket whose acceptance criteria differ from the ones it was set ready with wa
 - Today: `autoShipWhyNot` in `scripts/ship.mjs` (about lines 406 to 416) decides what ships by itself; the review pack is in `scripts/pack.mjs` (about lines 95 to 108); the board is `statusData` in `scripts/speck.mjs` (about lines 428 to 460).
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a criterion over several lines now has its line ends compared line by line, so a blank line inside it is kept
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

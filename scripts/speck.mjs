@@ -16,6 +16,7 @@ import { cmdDiffstat } from './diffstat.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
 import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
+import { criteriaText, criteriaChange } from './criteria-changed.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdKeys } from './keys.mjs';
@@ -330,18 +331,6 @@ function statusTickets(repo, cfg) {
   return tickets;
 }
 
-// Each acceptance criterion's full text without its number: a numbered line at the start of a line begins one, and
-// the lines under it (wrapped text, nested lists) belong to it, so a multi-line criterion comes through whole.
-function criteriaText(lines = []) {
-  const items = [];
-  for (const line of lines.join('\n').replace(/<!--[\s\S]*?-->/g, '').split('\n')) {
-    const m = line.match(/^\d+\.\s+(\S.*)$/);
-    if (m) items.push([m[1]]);
-    else if (items.length) items[items.length - 1].push(line);
-  }
-  return items.map(l => l.join('\n').replace(/\s+$/, ''));
-}
-
 // A section's text without template comments, with leading and trailing empty lines dropped, or null if nothing else is in it.
 function sectionText(lines) {
   const text = (lines || []).join('\n').replace(/<!--[\s\S]*?-->/g, '').replace(/^(?:[ \t]*\n)+/, '').replace(/\s+$/, '');
@@ -428,6 +417,7 @@ export function statusData(repo) {
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+    const criteria_changed = !['done', 'cancelled'].includes(t.fm.status) && criteriaChange(t.at || repo, cfg, t.fm.id) !== null; // 0565
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null, builder = builderSpent(runs, t.fm.id), watch = watchSpent(runs, t.fm.id), delegated = delegatedSpent(runs, t.fm.id);
     return withForeman(t, fixing, { // 0317
       ...t.fm,
@@ -456,7 +446,8 @@ export function statusData(repo) {
       lint_messages: { errors: lint.errors, warnings: lint.warnings },
       review_model: reviewerSettings(t.fm, cfg).model, // 0382: the model its review runs on, the ticket's or the config's, or null
       // 0167: whether speck ship --auto would ship it once approved, so the panel knows an approved one is waiting for you
-      auto_ship: autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0) === '', // 0356
+      auto_ship: autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed) === '', // 0356, 0565
+      criteria_changed,
       rounds: ticketRounds(t.raw).rounds.map(r => ({
         round: r?.meta?.round ?? null,
         reviewer: r?.meta?.reviewer ?? null,

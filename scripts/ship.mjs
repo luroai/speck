@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, ticketBranches, ticketKind } from './core.mjs';
+import { criteriaChange } from './criteria-changed.mjs';
 import { rounds, ticketNext } from './review.mjs';
 import { changesPending } from './changes-asked.mjs';
 import { testRun } from './results.mjs';
@@ -397,14 +398,15 @@ export function autoShipBlocker(repo, cfg, id) {
   const pad = String(id).padStart(4, '0');
   const t = findTicket(repo, pad);
   const all = rounds(repo, pad);
-  return autoShipWhyNot(cfg, pad, t.fm.risk, all, ticketKind(t), changesPending(t.raw, all).length > 0);
+  return autoShipWhyNot(cfg, pad, t.fm.risk, all, ticketKind(t), changesPending(t.raw, all).length > 0, criteriaChange(repo, cfg, pad) !== null);
 }
 
 // The same, from a ticket's risk and its review rounds as already read, as `speck status --json` has them (0167).
 // 0355: a task never ships by itself, as reading it is its review. 0356: nor does one with changes the user
-// asked for (`changed`) that no round has reviewed yet.
-export function autoShipWhyNot(cfg, pad, risk, roundList, kind = 'code', changed = false) {
+// asked for (`changed`) that no round has reviewed yet. 0565: nor does one whose criteria changed since it was set ready.
+export function autoShipWhyNot(cfg, pad, risk, roundList, kind = 'code', changed = false, criteria = false) {
   if (changed) return `the user asked for changes to ticket ${pad}, and it waits for its build to make them and the reviewer to approve them`;
+  if (criteria) return `ticket ${pad}'s acceptance criteria changed since it was set ready`;
   if (kind === 'task') return `ticket ${pad} is a task, and a task waits for you to ship it`;
   if (cfg.auto_ship !== true) return 'auto_ship is off in speck/config.yml';
   const allowed = [].concat(cfg.auto_ship_risk ?? []).map(String);

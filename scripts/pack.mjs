@@ -4,6 +4,7 @@ import { RISKY, SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, parse
 import { ticketsRounds, NO_INSPECT, mergeRun, ordinaryRounds } from './review.mjs';
 import { picturesLines, panelPictures } from './pictures.mjs';
 import { documentLines, panelDocuments } from './output.mjs';
+import { criteriaChange, criteriaChangedLines } from './criteria-changed.mjs';
 
 // Whether a round continued the reviewer's session or started fresh. Command rounds record it. Codex rounds resume
 // whenever an earlier round saved a session, so that rule gives theirs.
@@ -104,6 +105,7 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
     ...(blind.length ? ['', ...blind.map(r => `${NO_INSPECT} (round ${r.meta.round})`)] : []),
     '', `**Summary:** ${v.summary}`,
     ...documentLines(repo, t, { links: documents }), // 0359: a task's result first, before the criteria
+    ...criteriaChangedLines(criteriaChange(repo, cfg, t.fm.id)), // 0565
     '', '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
     ...v.criteria.map(c => `| ${c.id} | ${(ac[c.id - 1] || '').replace(/^\d+\.\s+/, '').replace(/\|/g, '\\|')} | ${icon[c.status] || c.status} | ${c.evidence.replace(/\n/g, ' ').replace(/\|/g, '\\|')} |`),
     ...(pictures ? picturesLines(repo, t.fm.id) : []),
@@ -154,6 +156,7 @@ export function plainPack(repo, id) {
     ...(all.some(r => r.meta.sandbox_ok === false) ? ['', 'In at least one review round, the reviewer could only see the change itself, not the rest of the code.'] : []),
     '', '### What it should do', sectionText(t, 'outcome') || "The ticket doesn't say.",
     '', '### In plain words', sectionText(t, 'in plain words') || "The builder didn't write this change up in plain words.",
+    ...criteriaChangedLines(criteriaChange(repo, cfg, t.fm.id)), // 0565
     '', '### Did it do what was asked?',
     ...ac.map((c, i) => `${i + 1}. ${label[v.criteria.find(x => x.id === i + 1)?.status] || label.unclear}: ${c.replace(/^\d+\.\s+/, '')}`),
   ].join('\n');
