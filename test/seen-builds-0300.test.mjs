@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { runRepo, startRun, until, waitFor, alive, killAll, stopRun, record, env, CLI } from './support/run.mjs';
+import { runRepo, startRun, until, waitFor, alive, killAll, stopRun, record, env, CLI, ownSession, assertFoundBySession } from './support/run.mjs';
 import { buildOfThisProcess, noteBuild, claimResumed } from '../scripts/seen-builds.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { cliCopy } from './support/panel.mjs';
@@ -27,6 +27,9 @@ const exitedRecord = (dir, id, rec = {}) => {
 // A process that stays alive, named on its command line as `args` say.
 const sleeper = (...args) => { const p = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)', '--', ...args], { detached: true, stdio: 'ignore' }); p.unref(); return p.pid; };
 
+// The session of a stand-in agent for ticket `id`: no copy of this test running at the same time has it (0572).
+const hand = id => ownSession(`hand-${id}`);
+
 // A stand-in for an agent outside speck run: a script named `claude`, run by node, which runs a speck command through
 // a shell, as a build does, then stays alive until it's killed. Resolves with its pid once the command has finished.
 async function agentBuilding(dir, id, cmd = `next ${id}`) {
@@ -38,9 +41,10 @@ try { execFileSync('sh', ['-c', ${JSON.stringify(`"${process.execPath}" "${CLI}"
 fs.writeFileSync(${JSON.stringify(done)}, '');
 setInterval(() => {}, 1000);
 `);
-  const p = spawn(process.execPath, [script, '-p', `/speck-build ${id}`, '--session-id', `hand-${id}`], { cwd: dir, env: outside, detached: true, stdio: 'ignore' });
+  const p = spawn(process.execPath, [script, '-p', `/speck-build ${id}`, '--session-id', hand(id)], { cwd: dir, env: outside, detached: true, stdio: 'ignore' });
   p.unref();
   assert.ok(await until(() => fs.existsSync(done), 15000), 'the speck command finished');
+  assertFoundBySession(hand(id), p.pid);
   return p.pid;
 }
 
@@ -68,7 +72,7 @@ test('0300 AC4: a build outside speck run keeps its own process in its ticket\'s
   try {
     const rec = record(r.dir, '0001');
     assert.equal(rec.pid, pid, 'the agent, not the speck command or its shell');
-    assert.equal(rec.session, 'hand-0001');
+    assert.equal(rec.session, hand('0001'));
     assert.ok(!('exited' in rec));
   } finally { killAll([pid]); }
   // speck start, as a build resuming a ticket runs it, even though it refuses to start it again.
@@ -159,7 +163,7 @@ test('0300 AC1, AC3: speck run counts a build started outside it, and treats it 
     assert.deepEqual(r.calls(), [], '0002 waits for the slot, and 0001 is not launched');
     process.kill(pid, 'SIGKILL');
     // As a build of its own that was killed with its ticket in hand: it's said to have stopped partway.
-    assert.ok(await until(() => /0001 build \(session hand-0001\) stopped unexpectedly/.test(run.out())), run.out());
+    assert.ok(await until(() => run.out().includes(`0001 build (session ${hand('0001')}) stopped unexpectedly`)), run.out());
     assert.ok(await until(() => r.calls().length >= 1), run.out());
     assert.deepEqual(r.calls().map(c => c.args[0]), ['0002'], 'the slot frees when it stops');
   } finally { await stopRun(run); killAll([pid, ...r.calls().map(c => c.pid)].filter(Boolean)); }
