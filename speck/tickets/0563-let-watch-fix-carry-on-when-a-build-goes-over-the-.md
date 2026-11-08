@@ -1,7 +1,7 @@
 ---
 id: "0563"
 title: "Let watch: fix carry on when a build goes over the size limit"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:03:08.081Z"
+approved: "2026-11-08T23:16:46.625Z"
 
 ---
 # 0563 · Let watch: fix carry on when a build goes over the size limit
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build goes over `limits.max_changed_lines`, the size guard blocks it with a proposed split as its question. The builder marks that question "Changes what you'd notice: yes", because the first ticket ships without part of its scope, and "Clear winner: no", because raising the limit is the other option. So `watch: fix` always leaves it for you, even though the answer is nearly always the split, the code is already written, and nothing about what is finally delivered changes.
@@ -51,9 +52,15 @@ With watch set to fix, a build that goes over the size limit no longer stops to 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new mainBranch check prevents automatic splits for every build with worktrees disabled.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 364,132
+- Elapsed since build started: 14 min
+- Changed lines: 135 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups (known limits and tidy-ups, none needing its own ticket):
