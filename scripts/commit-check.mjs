@@ -69,19 +69,39 @@ ${found.map(f => `  ${f.file} line ${f.line}: ${f.what === 'word' ? 'one of your
 Take each one out (write a path under your home folder as a \`~/\` path), stage the file again, then commit.`;
 }
 
+// 0570: what to tell someone whose hooks are their own: never to replace them.
+const CALL_IT = 'To check commits too, have your pre-commit hook run `node .speck/scripts/commit-check.mjs`.';
+
+// The repository's pre-commit hook as { file, old }, with `old` null for none, or { why, todo } when speck's hook can't
+// go there: why not, and what to do about it. Shared by init and doctor, so they agree.
+function findHook(repo) {
+  const hooksPath = sh('git', ['config', '--get', 'core.hooksPath'], { cwd: repo });
+  if (hooksPath.status === 0 && hooksPath.stdout.trim()) return { why: `git's core.hooksPath is set (${hooksPath.stdout.trim()}), so git doesn't run hooks from the repository's own folder`, todo: CALL_IT };
+  const r = sh('git', ['rev-parse', '--git-path', 'hooks/pre-commit'], { cwd: repo });
+  if (r.status !== 0) return { why: "this folder isn't a git repository", todo: 'Run `git init` here, or run speck from inside your project folder.' };
+  const file = path.resolve(repo, r.stdout.trim());
+  let old = null;
+  try { old = fs.readFileSync(file, 'utf8'); } catch (e) { if (e.code !== 'ENOENT') return { why: `the repository's pre-commit hook can't be read (${e.code || e.message})`, todo: 'Make it a file speck can read, then run `speck init` again.' }; }
+  if (old !== null && !old.includes(MARKER)) return { why: 'the repository already has its own pre-commit hook', todo: CALL_IT };
+  return { file, old };
+}
+
+// 0570: whether git will run speck's hook here, for speck doctor: { on: true }, or { on: false, why, todo }.
+export function commitCheckState(repo) {
+  const { file, old, why, todo } = findHook(repo);
+  if (why) return { on: false, why, todo };
+  if (old === null) return { on: false, why: 'the repository has no pre-commit hook', todo: 'Run `speck init` again to add it.' };
+  try { fs.accessSync(file, fs.constants.X_OK); } catch { return { on: false, why: "speck's pre-commit hook isn't executable, so git doesn't run it", todo: `Run \`chmod +x "${file}"\`.` }; }
+  return { on: true };
+}
+
 // Installs the hook in the repository at `repo`, shared by all its worktrees, or says why not. It also keeps a copy of
 // speck's scripts in the git folder, so a worktree whose branch has no .speck/ is still checked (whichever checkout init
 // ran in). Re-running refreshes that copy.
 // { action: 'installed' | 'updated' | 'current' | 'skipped', why }.
 export function installCommitHook(repo) {
-  const hooksPath = sh('git', ['config', '--get', 'core.hooksPath'], { cwd: repo });
-  if (hooksPath.status === 0 && hooksPath.stdout.trim()) return { action: 'skipped', why: `git's core.hooksPath is set (${hooksPath.stdout.trim()}), so git doesn't run hooks from the repository's own folder` };
-  const r = sh('git', ['rev-parse', '--git-path', 'hooks/pre-commit'], { cwd: repo });
-  if (r.status !== 0) return { action: 'skipped', why: "this folder isn't a git repository" };
-  const file = path.resolve(repo, r.stdout.trim());
-  let old = null;
-  try { old = fs.readFileSync(file, 'utf8'); } catch (e) { if (e.code !== 'ENOENT') return { action: 'skipped', why: `its pre-commit hook can't be read (${e.code || e.message})` }; }
-  if (old !== null && !old.includes(MARKER)) return { action: 'skipped', why: 'the repository already has its own pre-commit hook' };
+  const { file, old, why } = findHook(repo);
+  if (why) return { action: 'skipped', why };
   const common = sh('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: repo });
   if (common.status !== 0) return { action: 'skipped', why: `git couldn't say where the repository's git folder is (${(common.stderr || '').trim()})` };
   const copy = path.join(common.stdout.trim(), 'speck', 'scripts');
