@@ -1,7 +1,7 @@
 ---
 id: "0565"
 title: "Hold back a ticket whose criteria changed from shipping by itself"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-08T23:01:57.301Z"
 approved: "2026-11-08T23:40:17.256Z"
+finished: "2026-11-08T23:56:16.673Z"
 
 ---
 # 0565 · Hold back a ticket whose criteria changed from shipping by itself
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A build can change its ticket's acceptance criteria, as 0529's did when a criterion turned out wrong, and nothing records it: no copy of the criteria is kept from when the ticket was set ready, and nothing compares them. Once speck decides questions itself, a ticket could ship by itself with criteria you never agreed to.
