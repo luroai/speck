@@ -1,7 +1,7 @@
 ---
 id: "0564"
 title: "Take every recommendation with watch: decide"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-08
 ---
 # 0564 · Take every recommendation with watch: decide
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Most blocked questions end with you pressing Go with the recommendation: in this repo, 15 of the 17 recommendations taken were picked by hand. `watch: fix` takes one only when no option changes what you'd notice and the recommendation is a clear winner, so most questions still wait for you, and their builds sit blocked until you look.
