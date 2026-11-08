@@ -1,7 +1,7 @@
 ---
 id: "0570"
 title: "Have doctor say whether the commit check is on"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-28-have-doctor-say-whether-the-commit-check-is-on.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-08
+started: "2026-11-08T23:08:44.446Z"
 
 ---
 # 0570 · Have doctor say whether the commit check is on
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `speck init` says only once, as it runs, whether it installed the private-words check for commits (0550). A project set up before 0.21.0, or one whose pre-commit hook was later replaced, silently has no check, and you may think commits are protected when they aren't.
