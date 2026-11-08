@@ -42,6 +42,7 @@ With `watch: fix`, speck takes a size-guard split itself, as it does a question 
 - Seen in practice: a build at 1,400 changed lines against a 1,000-line limit proposed keeping about 975 lines and moving about 425 into a follow-up ticket. The user went with the recommendation, and it changed nothing about what was delivered.
 - Decided by the user on 2026-11-08: the split-off ticket starts `ready`, as its scope was approved when the original was set ready, so `speck run` builds it straight after.
 - Failing before this build: none
+- Self-check: fill and Notes errors now remove the new draft rather than leaving it; added tests for a main checkout off the base branch, built-in names and missing arguments.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -34,7 +34,7 @@ import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
 import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
-import { questionFacts } from './question-facts.mjs';
+import { questionFacts } from './question-facts.mjs'; import { cmdSplitOff } from './split-off.mjs'; // 0563
 import { goWithResumable, goWithWaiting } from './go-with.mjs';
 import { handedBack } from './hand-back.mjs';
 import { buildSession } from './build-records.mjs';
@@ -444,7 +444,7 @@ export function statusData(repo) {
       // 0283: the option the build recommends, whether any option changes what you'd notice, and whether it's a clear winner; null when unknown
       blocked_recommendation: facts.recommendation,
       blocked_noticeable: facts.noticeable,
-      blocked_clear: facts.clear,
+      blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, // 0563: true on a block by the size guard
       // 0284: whether speck run can resume its build, so the panel can offer to go with the recommendation
       blocked_resumable: t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg),
       lint: { errors: lint.errors.length, warnings: lint.warnings.length },
@@ -577,7 +577,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, 'split-off': cmdSplitOff, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {

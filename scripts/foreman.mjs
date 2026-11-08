@@ -43,8 +43,10 @@ export const FIXING_SAYS = Object.freeze({
 export const fixingOf = cfg => (FIXING.includes(setting(cfg, 'watch')) ? setting(cfg, 'watch') : 'tell');
 // 0286: whether the Foreman may take a blocked ticket's recommendation, from what `speck status --json` gives (0283):
 // a recommendation, no change you'd notice and a clear winner. Anything unknown is left for you.
+// 0563: a block by the size guard goes by what it recommends instead: the split is taken, and raising the limit never is.
+export const recommendsSplit = rec => typeof rec === 'string' && /^split\b/i.test(rec.trim()) && !/\b(rais|increas|lift)/i.test(rec);
 export const fixable = t => !!t && t.status === 'blocked' && typeof t.blocked_recommendation === 'string' && t.blocked_recommendation !== ''
-  && t.blocked_noticeable === false && t.blocked_clear === true;
+  && (t.blocked_size_guard === true ? recommendsSplit(t.blocked_recommendation) : t.blocked_noticeable === false && t.blocked_clear === true);
 
 const list = v => (Array.isArray(v) ? v : []);
 const text = v => (typeof v === 'string' ? v : '');
