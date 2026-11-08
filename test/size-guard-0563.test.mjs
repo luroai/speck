@@ -110,12 +110,19 @@ test('0563 AC2: raising the limit is never taken, even when marked as changing n
   assert.match(r.ticket(), /^status: blocked/m);
 });
 
-test('0563 AC2: a split isn\'t taken while the split-off ticket has nowhere to land, and nothing changes', () => {
+test('0563 AC2 F1: with worktrees off, the build in the main checkout gets its split taken and its new ticket on the base branch', () => {
   const r = blockedRepo({ question: SIZE }); // the build's branch is checked out in the main checkout
-  const out = runCheck(r, 'fix');
-  assert.equal(out.started.length, 0);
-  assert.match(out.said.join('\n'), /isn't on main/);
-  assert.match(r.ticket(), /^status: blocked/m);
+  const out = chosen(r);
+  assert.equal(out.started[0].id, '0001');
+  assert.match(r.ticket(), /^status: building/m);
+  const made = spawnIn(r.dir, 'split-off', '0001', 'Email bookings', `--from=${scopeFile()}`);
+  assert.equal(made.status, 0, made.stderr);
+  const t = parseTicket(r.g('show', `main:${splitOffFile(r)}`));
+  assert.equal(t.fm.status, 'ready');
+  assert.deepEqual(t.fm.after, ['0001']);
+  assert.match(r.g('rev-parse', '--abbrev-ref', 'HEAD'), /^speck\/0001-/, 'the build stays on its own branch');
+  assert.equal(r.g('status', '--porcelain', '--', 'speck/tickets/'), '', 'nothing left over in the build\'s folder');
+  assert.equal(r.g('worktree', 'list', '--porcelain').match(/^worktree /gm).length, 1, 'the short-lived checkout is gone');
 });
 
 test('0563 AC3: the split-off ticket is ready, runs after the original and holds the scope given up', () => {
@@ -193,20 +200,20 @@ test('0563 AC4: any other question is handled as before', () => {
   assert.equal(fixable({ ...t, blocked_noticeable: false, blocked_clear: false }), false);
   assert.equal(fixable({ ...t, blocked_recommendation: 'Split the file', blocked_noticeable: true, blocked_clear: false }), false, 'a split that isn\'t the size guard\'s');
   assert.equal(fixable({ ...t, blocked_recommendation: 'Split the file', blocked_noticeable: true, blocked_clear: false, blocked_size_guard: false }), false);
-  const r = blockedRepo(); // the build's branch checked out in the main checkout, which a size-guard split refuses
+  const r = blockedRepo();
   const out = runCheck(r, 'fix');
   assert.equal(out.started.length, 1, out.said.join('\n'));
   assert.ok(!out.started[0].argv.join(' ').includes('split-off'));
 });
 
-test('0563 AC3: a main checkout that has left the base branch makes no ticket and says what to do', () => {
+test('0563 AC3 F1: a main checkout on some other branch still gets the ticket on the base branch', () => {
   const r = blockedInWorktree();
   chosen(r);
   r.g('checkout', '-q', '-b', 'elsewhere');
   const out = spawnIn(r.wt, 'split-off', '0001', 'Email bookings', `--from=${scopeFile()}`);
-  assert.notEqual(out.status, 0);
-  assert.match(out.stderr, /not main/);
-  assert.equal(splitOffFile(r), undefined);
+  assert.equal(out.status, 0, out.stderr);
+  assert.ok(splitOffFile(r), 'on the base branch');
+  assert.equal(r.g('rev-parse', '--abbrev-ref', 'HEAD'), 'elsewhere');
 });
 
 test('0563 self-check: names that are built in, and no arguments, are refused plainly', () => {

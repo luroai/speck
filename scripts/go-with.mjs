@@ -40,9 +40,6 @@ function runsOf(repo) {
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   return path.join(main, 'speck', '.cache', 'runs');
 }
-// 0563: where the main checkout is and the branch it's on.
-export const mainOf = repo => { try { return worktreeList(repo)[0]?.path || repo; } catch { return repo; } };
-export const mainBranch = repo => sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: mainOf(repo) }).stdout.trim();
 // The choice waiting in a run record: { option, at, head }, head being the commit the ticket's branch was at once the
 // choice was committed. null when there's none.
 const pendingOf = rec => (rec?.go_with && typeof rec.go_with === 'object' && typeof rec.go_with.option === 'string' && rec.go_with.option && typeof rec.go_with.head === 'string' && rec.go_with.head ? rec.go_with : null);
@@ -78,9 +75,7 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   const facts = questionFacts(contentLines(t.sections['blocked question'])), option = facts.recommendation;
   if (!option) return refuse(`Ticket ${pad}'s question has no recommendation to go with. ${byHand}`);
   if (by === 'foreman' && choseOnce(t.sections.notes)) return refuse(`speck has already gone with a recommendation for ticket ${pad} once, so this question waits for you. ${byHand}`);
-  // 0563: the split-off ticket is committed on the base branch in the main checkout, so that has to be there for it.
-  const split = by === 'foreman' && facts.sizeGuard === true;
-  if (split && mainBranch(repo) !== cfg.base_branch) return refuse(`The main checkout isn't on ${cfg.base_branch}, so ticket ${pad}'s split-off ticket couldn't be committed there. ${byHand}`);
+  const split = by === 'foreman' && facts.sizeGuard === true; // 0563
   const runs = runsOf(repo);
   const file = path.join(runs, `${pad}.json`), rec = readRecord(runs, pad);
   const why = cantResume(cfg, pad, rec)

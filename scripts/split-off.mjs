@@ -1,15 +1,17 @@
 // 0563: speck split-off, the size guard's split once speck has chosen it (watch: fix). The resumed build gives the scope
 // its ticket is giving up, and this makes the new ticket that holds it: ready, as its scope was approved when the
-// original was set ready, to run after the original, committed on the base branch in the main checkout, as a fix ticket
-// is (0116), since only there does speck new know every ticket number in use.
+// original was set ready, to run after the original, committed on the base branch, where speck new knows every ticket
+// number in use and speck run looks for ready tickets. With worktrees off the build has the main checkout on its own
+// branch, so a short-lived checkout of the base branch takes the commit, leaving the build's files as they are.
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { SpeckError, contentLines, findRepoRoot, listTickets, loadConfig, parseTicket, setField, syncHeader } from './core.mjs';
+import { SpeckError, contentLines, findRepoRoot, listTickets, loadConfig, parseTicket, setField, sh, syncHeader, worktreeList } from './core.mjs';
 import { buildTicket } from './build-records.mjs';
 import { commitTicketOnly, replaceSection } from './close.mjs';
-import { FOREMAN_CHOSE, mainBranch, mainOf } from './go-with.mjs';
+import { FOREMAN_CHOSE } from './go-with.mjs';
 import { lintTicket } from './lint.mjs';
 import { questionFacts } from './question-facts.mjs';
 
@@ -44,9 +46,21 @@ export function splitOff(repo, rawId, title, from) {
   try { text = fs.readFileSync(path.resolve(from), 'utf8'); } catch (e) { throw new SpeckError(`Couldn't read the scope file ${from} (${e.code || e.message}), so no ticket was made. ${USAGE}`); }
   const scope = scopeSections(text), missing = NEEDED.filter(n => !scope.get(n.toLowerCase()));
   if (missing.length) throw new SpeckError(`The scope file has nothing under ${missing.map(n => `## ${n}`).join(', ')}, so no ticket was made. ${USAGE}`);
-  const main = mainOf(repo);
-  const branch = mainBranch(repo);
-  if (branch !== cfg.base_branch) throw new SpeckError(`The main checkout is on "${branch}", not ${cfg.base_branch}, so no ticket was made. Switch it back to ${cfg.base_branch}, then run this again.`);
+  return onBase(repo, cfg, main => writeSplitOff(main, cfg, t, id, title, scope));
+}
+
+// Calls `use` with a checkout of the base branch: the one that has it, or else one made just for this and removed after.
+function onBase(repo, cfg, use) {
+  const have = worktreeList(repo).find(w => w.branch === cfg.base_branch);
+  if (have) return use(have.path);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-split-off-'));
+  const added = sh('git', ['worktree', 'add', '-q', '--force', dir, cfg.base_branch], { cwd: repo });
+  if (added.status !== 0) { fs.rmSync(dir, { recursive: true, force: true }); throw new SpeckError(`Couldn't check out ${cfg.base_branch} to commit the split-off ticket, so no ticket was made:\n${(added.stderr || '').trim()}`); }
+  try { return use(dir); }
+  finally { sh('git', ['worktree', 'remove', '--force', dir], { cwd: repo }); fs.rmSync(dir, { recursive: true, force: true }); }
+}
+
+function writeSplitOff(main, cfg, t, id, title, scope) {
   const made = listTickets(main).find(x => contentLines(x.sections?.notes).some(l => l.includes(CAME_FROM(id))));
   if (made) throw new SpeckError(`Ticket ${id} already has its split-off ticket, ${made.fm.id}, so no other was made.`);
   const r = spawnSync(process.execPath, [CLI, 'new', title], { cwd: main, encoding: 'utf8' });

@@ -1,7 +1,7 @@
 ---
 id: "0563"
 title: "Let watch: fix carry on when a build goes over the size limit"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-08T23:03:08.081Z"
 ---
 # 0563 · Let watch: fix carry on when a build goes over the size limit
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a build goes over `limits.max_changed_lines`, the size guard blocks it with a proposed split as its question. The builder marks that question "Changes what you'd notice: yes", because the first ticket ships without part of its scope, and "Clear winner: no", because raising the limit is the other option. So `watch: fix` always leaves it for you, even though the answer is nearly always the split, the code is already written, and nothing about what is finally delivered changes.
@@ -55,3 +55,89 @@ With `watch: fix`, speck takes a size-guard split itself, as it does a question 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3d0db3f03532ea2f6c1dd5b2bd78a096b771fcbd",
+    "session": "fresh",
+    "thread_id": "01a1bd70-21ef-7753-934b-ef81296e65a6",
+    "builder_response": "Round 1.\n- Tests run: test/size-guard-0563.test.mjs test/split-0078.test.mjs test/blocked-0283.test.mjs test/foreman-fix-0286.test.mjs test/go-with-0284.test.mjs test/foreman-0317.test.mjs test/watch-0486.test.mjs test/skills.test.mjs, plus the commands.checks files that speck test --files adds. Before that, speck test --related ran 2,154 tests with one failure from this change (scripts/speck.mjs over its 600-line limit), now fixed.\n- A size-guard block is told apart by a fourth fact line, `Size guard: yes`. questionFacts adds the key only when the line is present, as test/blocked-0283 pins the three-fact shape.\n- The split is taken only when the recommendation starts with \"Split\" and doesn't mention raising, increasing or lifting; otherwise the size-guard block waits, even if it claims no noticeable change and a clear winner.\n- The scope of the split-off comes from the resumed build, through a new agent-only command, `speck split-off`. It commits on the base branch in the main checkout because `speck new` only sees every ticket number there. With the main checkout off the base branch (including worktrees off), speck leaves the question for the user rather than resuming a build that couldn't file the ticket.\n",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 152506,
+      "cached_input_tokens": 98176,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1149,
+      "reasoning_output_tokens": 328
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 54330,
+      "cached": 98176,
+      "write": 0,
+      "output": 1149
+    },
+    "cost_usd": 0.1299676,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-08T23:14:02.134Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "questionFacts reads the separate Size guard fact; the build skill requires its fourth line. AC1 tests cover parsing and board exposure."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The AC2 tests cover choosing, recording, resuming and refusing another choice. However, goWith rejects size-guard splits whenever the main checkout is off the base branch, which prevents this behaviour entirely with worktrees disabled."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "splitOff creates and commits a ready ticket containing the supplied scope, after dependency and provenance Notes. AC3 tests exercise these fields, duplicate prevention and invalid input."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AC4 tests exercise tell and off leaving the block untouched, and ordinary questions retaining their previous eligibility and resume behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The build skill's size-guard steps and docs/brief.md describe automatic choice and split-off creation. The reported targeted run passed 179 tests with no failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/go-with.mjs",
+        "issue": "The new mainBranch check prevents automatic splits for every build with worktrees disabled. In that supported configuration, the main checkout holds the build's ticket branch, so it cannot satisfy the base-branch requirement. The added test explicitly expects refusal in this situation, but acceptance criterion 2 requires watch: fix to resume a recommended size-guard split without this restriction.",
+        "suggested_fix": "Support safely creating the follow-up on the base branch when the build occupies the main checkout, preserving the build's work. Add a test with worktrees disabled that verifies automatic choice, resume and ready follow-up creation.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The automatic split works for builds in separate worktrees, with useful safeguards and tests. It still leaves every build using the main checkout waiting for the user, so the promised behaviour is incomplete."
+  }
+}
+```
+
+</details>

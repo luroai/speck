@@ -36,7 +36,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
    With `watch: fix`, `speck run` takes a recommended split itself, once per ticket, and resumes this session saying so. It never takes a recommendation to raise the limit. When it resumes you with the split, it's already noted in the ticket's Notes. Then:
    1. Write the scope this ticket gives up to a file, under `## Problem`, `## Outcome`, `## Acceptance criteria` and, if it has any, `## Out of scope`, as a ticket says them.
-   2. Run `speck split-off <id> "<title>" --from=<file>`. It makes the new ticket `ready`, with `after:` naming this one and a line in its Notes saying which ticket it came from and why, and commits it on the base branch itself: don't commit in the main checkout. If it refuses, block the ticket (see section 6) with its reason as the question.
+   2. Run `speck split-off <id> "<title>" --from=<file>`. It makes the new ticket `ready`, with `after:` naming this one and a line in its Notes saying which ticket it came from and why, and commits it on the base branch itself: don't commit there yourself. If it refuses, block the ticket (see section 6) with its reason as the question.
    3. Take that scope out of this ticket and out of the code, add the new ticket's id to the Notes, and carry on from step 2 until `speck diffstat` passes.
 4. **Self-check.** Before the first review round, go over your change the way an adversarial reviewer would. This is not a review or an approval: it catches what you can, and the reviewer still decides. Check:
    - **Unusual input:** empty, missing, malformed or repeated values, and names that are built in rather than missing (for example `constructor` or `__proto__` used as a key).
