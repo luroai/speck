@@ -41,6 +41,13 @@ function changedCriteria(before, now) {
   ];
 }
 
+// The commit a branch started from: the parent of the oldest commit on its own line. Merging the base branch in later
+// doesn't move it, as it does the merge-base. A branch with no commits of its own left has been merged: forkPoint knows.
+function branchStart(repo, base, branch) {
+  const own = git(['rev-list', '--first-parent', branch, '--not', base], repo).split('\n').filter(Boolean);
+  return own.length ? `${own.at(-1)}^` : forkPoint(repo, base, branch);
+}
+
 // What changed in the ticket's Acceptance criteria section, between the base branch where its branch started and its
 // branch, or null when nothing did or there's nothing to compare: no branch, or no copy of the ticket on either side,
 // as for a ticket that isn't being built. Ends of lines aside, any difference counts, even one that leaves every
@@ -50,7 +57,7 @@ export function criteriaChange(repo, cfg, id) {
   try {
     const [branch] = ticketBranches(repo, cfg, pad);
     if (!branch) return null;
-    const was = sectionsAt(repo, forkPoint(repo, cfg.base_branch, branch), pad), is = sectionsAt(repo, branch, pad);
+    const was = sectionsAt(repo, branchStart(repo, cfg.base_branch, branch), pad), is = sectionsAt(repo, branch, pad);
     if (!was || !is) return null;
     const text = lines => lines.map(l => l.replace(/\s+$/, '')).join('\n');
     if (text(was) === text(is)) return null;

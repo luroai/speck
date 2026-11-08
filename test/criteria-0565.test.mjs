@@ -25,6 +25,7 @@ function edit(r, fn, at = r.wt) {
 }
 const reword = (r, now = '1. Export button downloads an Excel file.') => edit(r, s => s.replace(OLD, now));
 const change = r => criteriaChange(r.dir, CFG, '1');
+const part = pack => pack.split('### Criteria changed')[1]?.split('\n### ')[0];
 
 test('0565 AC1: a ticket whose branch has the criteria it started with has not changed, whatever else changed in it', () => {
   const r = changesRepo();
@@ -69,6 +70,28 @@ test('0565 AC1: a change stays counted once the base branch has been merged in',
   reword(r);
   r.mergeMain();
   assert.ok(change(r));
+});
+
+test('0565 AC1: merging the base branch in does not move where the branch started', () => {
+  const r = changesRepo();
+  r.mergeMain();
+  assert.equal(change(r), null, 'a merge alone changes nothing');
+});
+
+test('0565 AC1, AC2, AC3: criteria that arrive by merging the base branch in still count as changed', () => {
+  const r = changesRepo();
+  edit(r, s => s.replace(OLD, '1. Criteria from main.'), r.dir);
+  r.mergeMain();
+  assert.match(read(r.wt, TICKET), /Criteria from main/, 'the branch took them');
+  assert.ok(change(r));
+  assert.equal(shown(r).criteria_changed, true);
+  assert.equal(shown(r).auto_ship, false);
+  assert.match(part(reviewPack(r.dir, '1')), /\| 1 \| changed \| Export button downloads a CSV\. \| Criteria from main\. \|/);
+  const main = r.sha('main');
+  const out = runIn(r.dir, 'ship', '1', '--auto');
+  assert.equal(out.status, 12, out.stdout + out.stderr);
+  assert.match(out.stderr, /acceptance criteria changed since it was set ready/);
+  assert.equal(r.sha('main'), main, 'nothing shipped');
 });
 
 test('0565 AC1: a ticket with no branch, or none in the base branch where it started, has nothing to compare', () => {
@@ -116,8 +139,6 @@ test('0565 AC2: speck ship run by hand ships it as before', () => {
   assert.equal(out.status, 0, out.stdout + out.stderr);
   assert.ok(fs.existsSync(path.join(r.dir, 'speck/tickets/done/0001-export-bookings.md')), 'filed as done on main');
 });
-
-const part = pack => pack.split('### Criteria changed')[1]?.split('\n### ')[0];
 
 test('0565 AC3: the review pack has a Criteria changed part above the criteria, with the text it was set ready with and the text now', () => {
   const r = changesRepo();
