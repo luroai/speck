@@ -1,7 +1,7 @@
 ---
 id: "0589"
 title: Keep the whole question with each call speck makes                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-09
 ---
 # 0589 · Keep the whole question with each call speck makes
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Decided for you lists only the option speck took. To judge a call, and to change it, you need the question it answered and the options it didn't choose, which today live only in free text in the build's question, if at all.
