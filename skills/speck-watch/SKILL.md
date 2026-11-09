@@ -1,12 +1,12 @@
 ---
 name: speck-watch
-description: The instructions for the agent speck runs to watch the pipeline. speck run starts it, with watch set to fix or decide, when work stops for a reason speck has no steps for, and its brief points here. It looks into one stop and does one thing about it. It's agent-only, never typed as a command.
+description: The instructions for the agent speck runs to watch the pipeline. speck run starts it, with watch set to fix or decide, when work stops for a reason speck has no steps for or a build runs far longer than usual, and its brief points here. It looks into that one thing and does one thing about it. It's agent-only, never typed as a command.
 user-invocable: false
 ---
 
 # speck watch
 
-You are **speck**, watching the pipeline. `speck run` started you, with `watch` set to fix or decide, because work on one ticket stopped for a reason speck has no steps for: a ship refused for a reason it doesn't hand back to the build, or a build that ended with its ticket neither approved nor blocked. Your brief names the ticket, what happened and the last lines of its log.
+You are **speck**, watching the pipeline. `speck run` started you, with `watch` set to fix or decide, because work on one ticket stopped for a reason speck has no steps for: a ship refused for a reason it doesn't hand back to the build, or a build that ended with its ticket neither approved nor blocked. Or a build is still running far longer than usual: see "A build that runs long" below, which replaces sections 1 and 2's choices for it. Your brief names the ticket, what happened and the last lines of its log.
 
 You look into that one stop, then do exactly one thing about it. You keep the work moving; you never decide what gets built, only, with `watch: decide`, how a ticket already being built carries on.
 
@@ -31,6 +31,19 @@ Pick the one action below that keeps the work moving with the least change, and 
 - **Ask the user** one question, when it needs their call or you can't tell what's wrong. `speck watch ask <id> "<one question, answerable in a sentence, with your recommendation>" --why="..."`. With `watch: decide`, ask only when you have no recommendation or the ticket is high risk, or when `speck watch decide` refuses and says why.
 
 With `watch: fix`, when you're unsure, ask. With `watch: decide`, make your best recommendation and go with it; ask only as above. After the action, stop: you get one action a run, and `speck watch` refuses a second.
+
+## A build that runs long
+
+Your brief says this when a build is still running at more than twice the median build time of the last shipped tickets. It names the ticket, how long the build has run, the median, the last lines of its log and the machine's load average. Nothing has stopped: the build carries on while you look, and you never stop or restart it.
+
+1. Read its log, `speck/.cache/runs/<id>.log`, for what it has been doing and where the time went.
+2. Read its test runs in `speck/.cache/results/`. Each is a JSON file with the test command, the commit it tested, when it ran, its exit status and its output: look at the latest for a test that hangs, fails or takes far longer than the others.
+3. Read the machine's load in your brief. A high load can explain a slow build by itself.
+4. Do exactly one thing, as in section 2:
+   - **Make a draft fix ticket**, when the base branch itself is broken, such as a test that hangs. `speck watch fix <id> "<what to fix, in a few words>" --why="<what's broken, in plain words>"`.
+   - Otherwise, **tell the user what you found**, even when the slowness was harmless: `speck watch tell <id> "<what you found, in a sentence or two>" --why="<how you know, in a sentence>"`. It goes in the ticket's Notes and `speck run`'s log, and needs no answer.
+
+`speck watch` refuses `resume`, `reship`, `ask` and `decide` while the build runs long, and refuses `tell` for anything else.
 
 ## Rules
 

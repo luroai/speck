@@ -561,8 +561,8 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck ship <id> [--auto]            merge an approved ticket into the base branch (the user's gate; --auto
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
   speck pr <id>                       push an approved ticket's branch and open its pull request with gh (ship_mode: pr)
-  speck watch <action> <id> ...       what the agent speck run starts to look into a stop may do: resume, reship,
-                                      fix or ask (only that agent may run it)
+  speck watch <action> <id> ...       what the agent speck run starts to look into a stop or a build running long
+                                      may do: resume, reship, fix, ask, decide or tell (only that agent may run it)
   speck answer <id> "<text>"          answer speck's question about a ticket
   speck dismiss <id>                  dismiss speck's question about a ticket
 `;
