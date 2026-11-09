@@ -1,7 +1,7 @@
 ---
 id: "0587"
 title: "Show Shipped with its figures up top"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ waited_seconds: 4005
 ---
 # 0587 · Show Shipped with its figures up top
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The Shipped lane opens with a line of figures and long cards. The redesign puts its three key figures up top as tiles and lists shipped tickets as compact rows.
@@ -63,5 +63,90 @@ Shipped opens with three figure tiles and lists its tickets as compact rows.
 Each test still checks its behaviour where that exists on the new look. Checks of what's gone were removed: opening and closing a card in place, the step track and facts table inside a card, the bordered card, the one-line stats, a closed title cut with an ellipsis, and the card's Full ticket and Review pack buttons.
 
 ### Known limits
-- A ticket with a merge round after its first approval has more than one round, so it counts as not approved in the first round. The figure uses the round count, as the other figures do.
 - A shipped ticket with no review rounds has no Review pack row in its full view. The old open card showed a button that said there was no pack.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3a1efd8afaa64b4caee8401998789b1ad27a22d4",
+    "session": "fresh",
+    "thread_id": "01a1c29d-8cc0-7460-9295-61254b7f02be",
+    "builder_response": "- Tests run: test/build-log-0291.test.mjs test/panel-0050.test.mjs test/panel-0058.test.mjs test/panel-0063.test.mjs test/panel-0132.test.mjs test/panel-0133.test.mjs test/panel-0137.test.mjs test/panel-0141.test.mjs test/panel-0157.test.mjs test/panel-0162.test.mjs test/panel-0167.test.mjs test/panel-0411.test.mjs test/panel-0417.test.mjs test/panel-0418.test.mjs test/panel-0420.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0434.test.mjs test/panel-0442.test.mjs test/panel-0453.test.mjs test/panel-0461.test.mjs test/panel-0464.test.mjs test/panel-0465.test.mjs test/panel-0466.test.mjs test/panel-0469.test.mjs test/panel-0472.test.mjs test/panel-0473.test.mjs test/panel-0494.test.mjs test/panel-0519.test.mjs test/panel-0577.test.mjs test/panel-0587.test.mjs test/panel-focus-0326.test.mjs test/panel.test.mjs test/spend-0120.test.mjs test/total-cost-0526.test.mjs \n- One failure in this run, `0517 AC3` (a timing check: 105 ms against a 50 ms limit on the first frame), with the machine's load average at 43 from other builds. The same test passed in the run before this one and passed 3 times out of 3 run alone (`node --test test/panel-0517.test.mjs`), so it isn't from this change. The test is unchanged.\n- AC5: no test checks it directly. The ticket's Delivery log lists the tests updated, and this run covers them with every test file that names a changed file.\n- A shipped ticket's own costs and tokens moved from the old open card into its full view, so they aren't lost now that a row opens the full view.\n",
+    "seconds": 64,
+    "usage": {
+      "input_tokens": 488702,
+      "cached_input_tokens": 397952,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1139,
+      "reasoning_output_tokens": 83
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 90750,
+      "cached": 397952,
+      "write": 0,
+      "output": 1139
+    },
+    "cost_usd": 0.2326852,
+    "tests": {
+      "failing": 1,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T23:22:11.022Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The three tiles are rendered and tested in panel-0587.test.mjs, but panelModel() in templates/panel-model.js:383 measures exactly one round rather than approval in the first round."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "render() creates compact rows with id, title, date, rounds and duration. Passing tests in panel-0587, panel-0141 and panel-0466 cover opening the full view, keyboard controls and focus return."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "render() retains the other figures in shipped-more. Passing 0587 AC3 tests exercise the toggle, costs, token figures and missing data."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-cards.css sets a 44 px minimum row height and wrapping titles. The passing 0587 AC4 browser test measures both at 320 px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the updated tests, whose changes follow the replaced card behaviour. Reported coverage passes apart from an unchanged timing test that the builder reports passed on repeated isolated runs; no regression is established."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-model.js:383",
+        "issue": "The 'approved first round' percentage counts tickets with exactly one round. Merge reviews happen after approval, so a ticket approved immediately can incorrectly count as unsuccessful. A direct model check with two approving rounds returns 0%. The ticket's Known limits acknowledges this, but it contradicts AC1. Current tests only check round counts and miss the distinction.",
+        "suggested_fix": "Determine first-round approval from the first review's verdict, preserve that information in board-feed.mjs when older tickets are condensed, and test a ticket approved in round one followed by merge reviews alongside a ticket initially sent back for changes.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The compact rows, mobile layout and extra figures work and have meaningful test coverage. The approval percentage needs correction: later merge reviews currently make a ticket approved on its first review count as though it was not."
+  }
+}
+```
+
+</details>

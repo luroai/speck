@@ -1,6 +1,7 @@
 import './support/tmp.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { panelBoard } from '../scripts/board-feed.mjs';
 import { T, round, fakePage, click, shippedRows, stoppedClock, panelRepo, freePort, startPanel, stop, browserPage, openLane } from './support/panel.mjs';
 
 // Midday local time, so "today" covers what shipped minutes ago.
@@ -10,13 +11,14 @@ const show = async (tickets, states) => { const p = fakePage(states || [{ run: {
 const byClass = (p, n, cls) => p.all(n).filter(c => String(c.className || '').split(' ').includes(cls));
 const one = (p, n, cls) => byClass(p, n, cls)[0];
 const rowOf = (p, id) => shippedRows(p).find(r => one(p, r, 'id').textContent === id);
+const sentBack = n => ({ ...round(n, 500), verdict: 'changes_requested' });
 const shippedAt = (id, o = {}) => T(id, 'done', { started: ago(1500), finished: ago(600), rounds: [round(1, 500)], ...o });
 
 test('0587 AC1: Shipped opens with three tiles: median build time, median review rounds and the share approved in the first round', async () => {
   const p = await show([
     shippedAt('0701', { started: ago(1800), finished: ago(600), rounds: [round(1, 500)] }), // 20 min
     shippedAt('0702', { started: ago(1200), finished: ago(600), rounds: [round(1, 500)] }), // 10 min
-    shippedAt('0703', { started: ago(2400), finished: ago(600), rounds: [round(1, 500), round(2, 500), round(3, 500)] }), // 30 min
+    shippedAt('0703', { started: ago(2400), finished: ago(600), rounds: [sentBack(1), round(2, 500), round(3, 500)] }), // 30 min
   ]);
   const shown = p.byId('shipped-stats');
   assert.equal(shown.hidden, false);
@@ -27,14 +29,26 @@ test('0587 AC1: Shipped opens with three tiles: median build time, median review
 });
 
 test('0587 AC1: the first-round share counts the tickets the median rounds does, so one with no review rounds is left out', async () => {
-  const p = await show([shippedAt('0701', { rounds: [round(1, 500)] }), shippedAt('0702', { rounds: [round(1, 500), round(2, 500)] }), shippedAt('0703', { rounds: [] })]);
+  const p = await show([shippedAt('0701', { rounds: [round(1, 500)] }), shippedAt('0702', { rounds: [sentBack(1), round(2, 500)] }), shippedAt('0703', { rounds: [] })]);
   const share = p.byId('shipped-stats').children[2];
   assert.equal(one(p, share, 'num').textContent, '50%');
   assert.equal(one(p, share, 'count').textContent, '2 tickets');
 });
 
-test('0587 AC1: a ticket cut down to its Shipped figures counts by its total of rounds', async () => {
-  const p = await show([shippedAt('0701', { rounds: undefined, review_total: { rounds: 1, tokens: 500 } }), shippedAt('0702', { rounds: undefined, review_total: { rounds: 4, tokens: 500 } })]);
+test('0587 AC1: a ticket approved in its first round still counts when merge rounds follow, and one sent back does not', async () => {
+  const p = await show([shippedAt('0701', { rounds: [round(1, 500), round(2, 500), round(3, 500)] }), shippedAt('0702', { rounds: [sentBack(1), round(2, 500)] })]);
+  assert.equal(one(p, p.byId('shipped-stats').children[2], 'num').textContent, '50%');
+});
+
+test('0587 AC1: the board keeps whether the first round approved an older ticket when it cuts its rounds down', () => {
+  const stamp = i => new Date(NOW - i * 60000).toISOString();
+  const tickets = Array.from({ length: 12 }, (_, i) => T(`07${String(i).padStart(2, '0')}`, 'done', { finished: stamp(i), rounds: i === 11 ? [sentBack(1), round(2, 500)] : i === 10 ? [round(1, 500), round(2, 500)] : [round(1, 500)] }));
+  const cut = panelBoard({ tickets }).tickets.slice(10).map(t => t.review_total);
+  assert.deepEqual(cut, [{ rounds: 2, tokens: 1000, first_approved: true }, { rounds: 2, tokens: 1000, first_approved: false }]);
+});
+
+test('0587 AC1: a ticket cut down to its Shipped figures counts by what its total says of the first round', async () => {
+  const p = await show([shippedAt('0701', { rounds: undefined, review_total: { rounds: 3, tokens: 500, first_approved: true } }), shippedAt('0702', { rounds: undefined, review_total: { rounds: 2, tokens: 500, first_approved: false } })]);
   assert.equal(one(p, p.byId('shipped-stats').children[2], 'num').textContent, '50%');
 });
 
