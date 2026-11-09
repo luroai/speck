@@ -1,7 +1,7 @@
 ---
 id: "0582"
 title: "Show the lanes as tabs with their counts"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-09
 ---
 # 0582 · Show the lanes as tabs with their counts
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The lane strip is a row of small marks that the user has found hard to read (an inbox note asked to mark the lane in view more clearly). The redesign shows the four lanes as clear tabs with their counts.
