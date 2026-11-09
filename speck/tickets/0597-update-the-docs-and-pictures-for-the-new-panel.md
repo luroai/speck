@@ -42,6 +42,7 @@ The docs and the README's pictures describe and show the redesigned panel.
 - The design is the mock agreed with the user on 2026-11-08 and 9 (a private claude.ai design canvas, "speck panel, grown up": Lanes, Decided for you, a ticket waiting at Ship, Pipeline log, each light and dark, the bridge, and the Character page). The user picked the Premium screen for speck and asked for these tickets for 1.0.0 on 2026-11-09.
 - The `speck panel` row is one table row of several thousand characters at about line 203 of `docs/brief.md`; it may be split into a section of its own if that reads better.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
