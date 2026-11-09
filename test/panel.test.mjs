@@ -469,7 +469,7 @@ test('0033 AC5: the Ideas list shows every idea not yet ticketed (0056), and cli
   const titles = list.map(n => top(n).children[0].textContent);
   assert.deepEqual(titles.map(t => t.replace(/^idea/, '')), ['Fresh', 'Also fresh']);
   // 0435: under each, when it was captured
-  assert.deepEqual(list.map(n => top(n).children.find(c => /\bchecks\b/.test(c.className)).textContent), ['No capture date', 'No capture date']);
+  assert.deepEqual(list.map(n => top(n).children.find(c => /\bchecks\b/.test(c.className)).textContent), ['Idea · no capture date', 'Idea · no capture date']);
   assert.ok(!list[1].textContent.includes('Just'), 'closed by default');
   click(top(list[1]));
   assert.ok(notes(p)[1].textContent.includes('Just <i>text</i>.'), 'the note, as text');
@@ -707,7 +707,7 @@ test('0042 AC1: an open draft has a Set ready button, disabled with the reason w
   ], ideas: [] };
   const p = fakePage([state, state]);
   await p.settle();
-  assert.equal(button(items(p)[0]), null, 'no button while closed');
+  assert.ok(button(items(p)[0]), 'on the closed row too (0586)');
   click(top(items(p)[0])); click(top(items(p)[1]));
   const [a, b] = items(p).map(button);
   assert.ok(a && b);

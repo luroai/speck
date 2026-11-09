@@ -57,7 +57,7 @@ test('0038 AC2: clicking an inbox item shows its note as text, and clicking agai
   assert.ok(!notes(p)[1].textContent.includes('should'), 'clicking again closes it');
 });
 
-test('0038 AC2 (0520: in Capture): with no inbox note Capture lists only ideas, and with nothing says "Nothing captured."', async () => {
+test('0038 AC2 (0520: in Capture): with no inbox note Capture lists only ideas, and with nothing says "Nothing captured · Ideas you capture in chat land here."', async () => {
   const s = { tickets: [], ideas: [idea('Mine', 'idea'), idea('Gone', 'dropped')] };
   const p = fakePage([s]);
   await p.settle();
@@ -65,7 +65,7 @@ test('0038 AC2 (0520: in Capture): with no inbox note Capture lists only ideas, 
   const q = fakePage([{ tickets: [], ideas: [idea('Gone', 'dropped')] }]);
   await q.settle();
   assert.equal(notes(q).length, 0);
-  assert.equal(q.byId('capture').textContent, 'Nothing captured.');
+  assert.equal(q.byId('capture').textContent, 'Nothing captured · Ideas you capture in chat land here.');
 });
 
 test('0038 AC2: the From ticket id is read from the note, and a missing or odd body gives none', () => {

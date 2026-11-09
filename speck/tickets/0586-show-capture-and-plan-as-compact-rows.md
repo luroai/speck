@@ -42,6 +42,7 @@ Capture and Plan list their items as compact rows, and an empty lane shows speck
 - Today: `captureItem`, `noteItem`, `starButton`, `ticketItem`, `ticketHead`, `priorityPicker`, `readiness`, `setReadyButton` in `templates/panel.js`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: fixed the size and risk sitting under the priority's 44 px tap box, the empty lane's face stopping the render on a page without its script, and a border coming back on the row's labels below a pixel ratio of 2; each has a test.
 - AC3's "an empty lane" is read as Capture's and Plan's, as the ticket's title and problem say: Build keeps its 0449 message, and Shipped is 0587's.
 
 ## In plain words
@@ -55,3 +56,11 @@ Capture and Plan list their items as compact rows, and an empty lane shows speck
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Tests updated from the old look (AC5), each to the rows' new look with what it checks otherwise left as it was:
+- Empty Capture's new line: `test/panel-0038.test.mjs`, `test/panel-0056.test.mjs`, `test/panel-0520.test.mjs`, `test/panel-0536.test.mjs`.
+- A note's new second line ("Idea · 8 Oct", "From 0139 · 9 Oct"): `test/panel-0039.test.mjs` (AC3), `test/panel-0214.test.mjs`, `test/panel-0435.test.mjs`, `test/panel-0537.test.mjs`, `test/panel.test.mjs` (0033 AC5).
+- Set ready on the row: `test/panel-0039.test.mjs` (AC1), `test/panel-0062.test.mjs`, `test/panel-0463.test.mjs`, `test/panel-0467.test.mjs`, `test/panel-0419.test.mjs` (AC1), `test/panel.test.mjs` (0042 AC1).
+- Rows, not bordered cards: `test/panel-0151.test.mjs` (AC4), `test/panel-0167.test.mjs`, `test/panel-0418.test.mjs`.
+- The priority, size and risk as words: `test/panel-0151.test.mjs` (AC3), `test/panel-0419.test.mjs` (AC1), `test/panel-0519.test.mjs`.
+- Long titles wrap: `test/panel-0419.test.mjs` (AC1, AC2 and AC5), `test/panel-0434.test.mjs`, `test/panel-0435.test.mjs` (AC5), `test/panel-0468.test.mjs`.

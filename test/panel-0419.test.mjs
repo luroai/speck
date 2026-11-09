@@ -36,13 +36,13 @@ test('0419 AC1: a closed Plan ticket is its id and title, then its priority, siz
   const p = page();
   await p.settle();
   const t = card(p, '0419');
-  assert.deepEqual(linesOf(t), ['line', 'checks'], 'a title line and a details line');
+  assert.deepEqual(linesOf(t), ['line', 'checks', 'set-ready'], 'a title line and a details line, then Set ready (0586)');
   assert.equal(topOf(t).children[0].textContent, '0419Fit a closed ticket on two lines1', 'the id, the title and its chip');
   assert.equal(chipSaid(p, t), 'Waits on 1 ticket');
-  assert.equal(detailsOf(t).textContent, 'P3Mlow');
-  assert.equal(detailsOf(card(p, '0418')).textContent, 'P2Slow');
+  assert.equal(detailsOf(t).textContent, 'P3 · M · low');
+  assert.equal(detailsOf(card(p, '0418')).textContent, 'P2 · S · low');
   assert.equal(chipSaid(p, card(p, '0418')), '1 ticket waits on this');
-  assert.equal(detailsOf(card(p, '0430')).textContent, 'P4Shighbug');
+  assert.equal(detailsOf(card(p, '0430')).textContent, 'P4 · S · high · bug');
 });
 
 // 0585: a Build row is its id and title, then one line saying where the ticket is, with the sentence as its tooltip;
@@ -164,9 +164,9 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         assert.ok(c.detailSize < c.titleSize, `${c.id}: the details (${c.detailSize} px) are smaller than the title (${c.titleSize} px)`);
         assert.deepEqual(c.broken, [], `${c.id}: the details line wraps only between its parts`);
         assert.ok(!c.overflows, `${c.id}: the details stay inside the card`);
-        // 0434: a closed ticket's title is one line, cut off with an ellipsis when it doesn't fit
+        // 0586: a Plan row's long title wraps
+        if (c.id === '0702') { assert.ok(c.titleLines > 1, '0702: a long title wraps'); continue; }
         assert.equal(c.titleLines, 1, `${c.id}: the title is on one line`);
-        if (c.id === '0702') { assert.ok(c.cut, '0702: a long title is cut off'); continue; }
         // 0585: a Build row's line wraps between its parts when a long list of tickets it waits on doesn't fit
         if (c.id === '0707') { assert.ok(c.detailLines > 1, '0707: the long list wraps'); continue; }
         assert.equal(c.detailLines, 1, `${c.id}: the details fit on one line`);

@@ -32,11 +32,11 @@ test('0536 AC1: more notes say "<n> notes", counting only idea and inbox notes',
   assert.equal(count(p).textContent, '35 notes');
 });
 
-test('0536 AC2: with no notes in Capture, the count line is hidden and the lane says "Nothing captured."', async () => {
+test('0536 AC2: with no notes in Capture, the count line is hidden and the lane says "Nothing captured · Ideas you capture in chat land here."', async () => {
   const p = await opened(board([note('ticketed-one', 'ticketed (0001)'), note('dropped-one', 'dropped')]));
   assert.equal(count(p).hidden, true);
   assert.equal(count(p).textContent, '');
-  assert.equal(p.byId('capture').textContent, 'Nothing captured.');
+  assert.equal(p.byId('capture').textContent, 'Nothing captured · Ideas you capture in chat land here.');
 });
 
 test('0536 AC3: the count follows notes added, ticketed and dropped with each board update', async () => {
@@ -54,7 +54,7 @@ test('0536 AC3: the count follows notes added, ticketed and dropped with each bo
   assert.equal(count(p).textContent, '1 note', 'one ticketed and one dropped');
   await next(p);
   assert.equal(count(p).hidden, true, 'the last one dropped');
-  assert.equal(p.byId('capture').textContent, 'Nothing captured.');
+  assert.equal(p.byId('capture').textContent, 'Nothing captured · Ideas you capture in chat land here.');
   await next(p);
   assert.equal(count(p).hidden, false, 'shown again when a note comes in');
   assert.equal(count(p).textContent, '1 note');

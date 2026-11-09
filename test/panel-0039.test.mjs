@@ -30,6 +30,7 @@ test('0039 AC1: a draft opens and closes from anywhere in its top row: id, title
   for (const i of inHead.keys()) {
     if (/\bpick\b/.test(inHead[i].className)) continue; // since 0077 the priority tag opens its menu instead (covered there)
     if ((inHead[i].className || '').split(' ').includes('tag')) continue; // since 0165 a tag shows its tip instead (covered there)
+    if (/^set-ready\b/.test(inHead[i].className || '')) continue; // since 0586 Set ready is on the row, and sets it ready instead
     press(p.all(top(items(p)[0]))[i]);
     assert.ok(isOpen(items(p)[0]), `opens from top-row node ${i}`);
     press(p.all(top(items(p)[0]))[i]);
@@ -67,7 +68,7 @@ test('0039 AC3: an idea opens and closes from its top row (title, then its captu
   await p.settle();
   const head = top(notes(p)[0]);
   assert.ok(head, 'the idea has a top row');
-  for (const s of ['Fresh', 'No capture date']) assert.ok(p.all(head).some(n => n.textContent === s), `the top row holds ${s}`);
+  for (const s of ['Fresh', 'Idea · no capture date']) assert.ok(p.all(head).some(n => n.textContent === s), `the top row holds ${s}`);
   // 0538: apart from its star, which marks the note and leaves the card as it is (0538's own tests check that)
   const inStar = n => { for (; n; n = n.parentNode) if (/\bstar\b/.test(String(n.className || ''))) return true; return false; };
   for (const i of p.all(head).keys()) {
