@@ -1,7 +1,7 @@
 ---
 id: "0590"
 title: "Redesign Decided for you"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T21:37:00.355Z"
 ---
 # 0590 · Redesign Decided for you
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Decided for you (0568) is a plain list. In the redesign it's where speck reports to you: in its own voice, with its face, showing what it decided, what it didn't choose, and what's waiting for you because of it.
@@ -55,3 +55,94 @@ Decided for you reads as speck's report, as in the mock.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Tests updated from the old look:
+- `0568 AC2: the line says how many, and pressing it opens the list…`: now looks for the sheepish sentence instead of "changed a criterion".
+- `0568 AC4: at 320 px the list and its line fit the width…`: its calls now have a long question and other options too, as the rows show them.
+- `0576 AC2: the Decided for you line names its face…` (was "…says the name…"): the line speaks in the first person now, so the name is on the face beside it.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a7581abe10b864b11f5e87748d916e87a15dbb9e",
+    "session": "fresh",
+    "thread_id": "01a1c244-4175-7393-8948-ae3550572f41",
+    "builder_response": "Round 1.\n\n- Tests run: test/panel-decided-0590.test.mjs test/panel-decided-0568.test.mjs test/speck-name-0576.test.mjs, with --related (which also ran every existing test file naming a changed file).\n- Tests updated from the old look: 0568 AC2 (the \"changed a criterion\" text is now the sheepish sentence), 0576 AC2 (the line's words are first person now; the name is on the face beside them, as 0576 says for words beside the face). 0568's 320 px test now also has a long question and other options.\n- Moved: board, D, buttons, rows and openList from the 0568 test to test/support/decided.mjs, shared with 0590's tests.\n- Choices the ticket leaves open: \"Today\" is the viewer's local day (sameDay, as elsewhere in the panel). A shipped ticket says \"waited\" and a cancelled one drops the Ship clause, as neither still waits. Status doesn't give which criterion changed on a done or cancelled ticket, so those say \"its criteria\".\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 156646,
+      "cached_input_tokens": 110080,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 793,
+      "reasoning_output_tokens": 43
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 46566,
+      "cached": 110080,
+      "write": 0,
+      "output": 793
+    },
+    "cost_usd": 0.11207,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T21:44:03.875Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-popups.js drawDecidedLine and renderDecided show the count, pleased face and Review control. Passing 0590 AC1 tests cover rendering and opening; scripts/foreman-took.mjs decidedFor supplies the seven-day list."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "renderDecided and decidedDays render the pleased face, speech bubble and local-day groups. Passing 0590 AC2 tests cover grouping, midnight updates and an emptied list."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "decidedRow and decidedChanged render the ticket, question, chosen and rejected options, time and sheepish criterion message. Passing 0590 AC3 tests cover these, legacy records, text escaping and completed or cancelled tickets."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "decidedRow retains the Change handler and renderDecided restricts it to approved tickets that are not shipping. Passing 0590 AC4 and existing 0568 AC3 tests cover opening the review pack and removing unavailable actions."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "The old presentation assertions were updated in panel-decided-0568.test.mjs and speck-name-0576.test.mjs. The recorded run has 242 passes, zero failures and three skips. However, the ticket's Delivery log contains only its placeholder and does not list the updated tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0590-redesign-decided-for-you.md",
+        "issue": "Criterion 5 explicitly requires the Delivery log to list tests updated from the old presentation, but that section is empty. The builder response lists them, which does not satisfy the ticket record requirement.",
+        "suggested_fix": "Add the updated 0568 AC2 and 0576 AC2 tests, and the expanded 0568 phone-width test, to the Delivery log with brief explanations of their changes.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The redesigned report works in the reviewed code and passing tests: it shows speck's faces, groups calls by day, explains choices and preserves Change. Approval is held only because the required list of updated tests is missing from the ticket's Delivery log."
+  }
+}
+```
+
+</details>
