@@ -1,7 +1,7 @@
 ---
 id: "0588"
 title: "Show what changed in a ticket's criteria in its full view"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0583","0585"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T21:24:55.435Z"
+approved: "2026-11-09T21:32:35.211Z"
 
 ---
 # 0588 · Show what changed in a ticket's criteria in its full view
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build changes a ticket's acceptance criteria, it waits for you at Ship (0565), and its review pack lists what changed. Its full view and its row don't say so, so you can't see why it's waiting without opening the pack.
@@ -55,9 +56,14 @@ To see it, open any ticket whose criteria were edited during its build. Worth a 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 143,781
+- Elapsed since build started: 8 min
+- Changed lines: 68 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
