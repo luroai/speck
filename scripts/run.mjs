@@ -3,10 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { logSpend, earlierBuilds, recordDelegatedSpend, ticketsElsewhere, ticketRounds, waitFields, addPaused, pausedSince } from './core.mjs';
+import { logSpend, recordDelegatedSpend, ticketsElsewhere, ticketRounds, waitFields, addPaused, pausedSince } from './core.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
-import { goWithQueue } from './go-with.mjs';
+import { goWithQueue, newBuildKeeps } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { fillSession, timedArgv } from './codex-build.mjs';
@@ -306,7 +306,7 @@ function runOn(worker) {
     const argv = plan.words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, tag));
     const started = new Date().toISOString();
     const own = plan.agent === 'codex' ? { agent: 'codex', env_session: tag } : plan.agent ? { agent: plan.agent } : {};
-    const earlier = earlierBuilds(runsDir(repo), id), kept = earlier.length ? { earlier_builds: earlier } : {}; // 0523: as this build's record and log replace theirs
+    const kept = newBuildKeeps(runsDir(repo), id); // 0523, 0589: as this build's record and log replace theirs
     const record = pid => `${JSON.stringify({ id, session, ...own, cwd: repo, started, pid, command: argv, ...kept }, null, 2)}\n`;
     startBuild(id, argv, repo, session, 'w', record, tag);
   };

@@ -32,7 +32,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 1. Write the simplest change that makes the tests pass, within the ticket's scope. Don't touch anything listed as out of scope, and don't make unrelated changes.
 2. Run the ticket's own test files (`speck test --files <file>…`) until they pass. Don't run the whole suite: `speck ship` runs it (see step 5).
-3. **Size guard:** run `speck diffstat`. If it exits 2 (over the limit), stop. Don't push on. Block the ticket (see section 6) and give a proposed split as the question, saying which scope each part keeps. Below the three lines section 6 asks for, add a fourth on its own line, `Size guard: yes`. When you recommend the split, start the `Recommended` line with the word `Split`.
+3. **Size guard:** run `speck diffstat`. If it exits 2 (over the limit), stop. Don't push on. Block the ticket (see section 6) and give a proposed split as the question, saying which scope each part keeps. Below the four lines section 6 asks for, add a fifth on its own line, `Size guard: yes`. When you recommend the split, start the `Recommended` line with the word `Split`.
 
    With `watch: fix` or `decide`, `speck run` takes a recommended split itself, once per ticket with `fix`, and resumes this session saying so. It never takes a recommendation to raise the limit. When it resumes you with the split, it's already noted in the ticket's Notes. Then:
    1. Write the scope this ticket gives up to a file, under `## Problem`, `## Outcome`, `## Acceptance criteria` and, if it has any, `## Out of scope`, as a ticket says them.
@@ -161,7 +161,7 @@ The base branch's own tests are failing. Change no code: not in this ticket's br
 While getting a ship through, apart from blocking a ticket handed back again (above), ask the user only when two tickets contradict each other, or when `speck next <id>` says `block` during a merge round. Nothing else is a reason to ask.
 
 1. If you stopped partway through resolving a merge (two tickets contradict each other), undo it first with `git merge --abort`. That puts the ticket branch back as the reviewer approved it, without choosing either ticket's side, and lets the next steps commit. Don't commit a half-resolved merge.
-2. Write one question under `## Blocked question` in the ticket. Write it in plain words, without git terms (no merge, branch, conflict or commit): say what each ticket wants, the options, and which one you recommend and why. Make it answerable in a sentence. Below it, add the three lines in section 6 step 1: the option you recommend, whether any option changes what you'd notice, and whether your recommendation is a clear winner.
+2. Write one question under `## Blocked question` in the ticket. Write it in plain words, without git terms (no merge, branch, conflict or commit): say what each ticket wants, the options, and which one you recommend and why. Make it answerable in a sentence. Below it, add the four lines in section 6 step 1: the option you recommend, the other options, whether any option changes what you'd notice, and whether your recommendation is a clear winner.
 3. Run `speck set <id> status blocked`, then commit the ticket and any work in progress, staged by name.
 4. Stop, and tell the user the question and how to resume: answer it, then run `/speck-build <id>`. On resuming after an undone merge, record the answer in the ticket's Notes and start "Conflict" again from step 1, resolving the clash the way the user chose.
 
@@ -169,16 +169,18 @@ While getting a ship through, apart from blocking a ticket handed back again (ab
 
 Use this when the review loop says `block`, the size guard trips, or a product question comes up that you can't answer from the ticket or the code:
 
-1. Write one specific question under `## Blocked question` in the ticket. Make it answerable in a sentence, with the options and your recommendation. Below it, add these three lines, each on its own line, so speck and the panel can read them:
+1. Write one specific question under `## Blocked question` in the ticket. Make it answerable in a sentence, with the options and your recommendation. Below it, add these four lines, each on its own line, so speck and the panel can read them:
 
    ```markdown
    Recommended: <the option you recommend, in a few words>
+   Other options: <the options you don't recommend, in a few words each, separated by semicolons>
    Changes what you'd notice: <yes or no>
    Clear winner: <yes or no>
    ```
 
-   A block by the size guard adds `Size guard: yes` on a fourth line (see section 3 step 3).
+   A block by the size guard adds `Size guard: yes` on a fifth line (see section 3 step 3).
 
+   - `Other options`: speck keeps these with the question when it takes your recommendation, so you can see what it didn't choose. Keep listing the options in the question as well.
    - `Changes what you'd notice`: `yes` when any of the options would change something the user would notice: what speck does, shows or ships. `no` when every option only changes how it's built, such as which test to fix or how the code is laid out.
    - `Clear winner`: `yes` when your recommendation is clearly better than the other options, `no` when they're close and it's a judgement call.
 2. Run `speck set <id> status blocked`, then commit your changes, staged by name, including the ticket with its review rounds.

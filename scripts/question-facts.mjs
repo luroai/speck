@@ -4,6 +4,8 @@
 //   Clear winner: yes | no
 // 0563: and, only on a block by the size guard, a fourth:
 //   Size guard: yes
+// 0589: and, beside Recommended, the options it doesn't recommend, separated by semicolons, or `none`:
+//   Other options: <an option>; <another>
 // `lines` are the section's content lines. Returns the question without the lines it read, and each fact, or null when
 // it's missing or can't be read. A line it can't read stays in the question, so nothing written there is lost.
 const FACTS = [
@@ -11,8 +13,13 @@ const FACTS = [
   ['noticeable', /^changes what you['’]d notice$/, v => yesNo(v)],
   ['clear', /^clear winner$/, v => yesNo(v)],
   ['sizeGuard', /^size guard$/, v => yesNo(v)],
+  ['otherOptions', /^other options$/, v => optionList(v)],
 ];
 const yesNo = v => (v.toLowerCase() === 'yes' ? true : v.toLowerCase() === 'no' ? false : null);
+const optionList = v => {
+  const options = [...new Set(v.split(';').map(o => o.trim()).filter(Boolean))];
+  return options.length === 1 && options[0].toLowerCase() === 'none' ? [] : options.length ? options : null;
+};
 
 export function questionFacts(lines = []) {
   const facts = { recommendation: null, noticeable: null, clear: null };

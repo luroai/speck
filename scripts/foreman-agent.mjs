@@ -18,7 +18,7 @@ import { buildTicket, saveRecord, foremanSubject, oldForemanSubject, byWatch } f
 import { readableLog } from './build-log.mjs';
 import { resumeFor, resumedRecord } from './hand-back.mjs';
 import { pidAlive } from './run-switch.mjs';
-import { runWords, choseCount, FOREMAN_CHOSE } from './go-with.mjs';
+import { runWords, choseCount, FOREMAN_CHOSE, callOf, withCall } from './go-with.mjs';
 import { processesWithEnv, sessionInUse } from './build-procs.mjs';
 import { refsOf } from './ship-queue.mjs';
 import { fixingOf, speckActs, MAX_DECIDED } from './foreman.mjs';
@@ -514,6 +514,10 @@ export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RU
   else noteInTicket(at, t, `- speck (${when}) ${did}. Why: ${why}`, `${foremanSubject(id)} ${action}`);
   // 0567: a decide keeps what its resume checks the ticket against: its commit, its build's session and its status now.
   const decided = action === 'decide' ? { status: t.fm.status === 'blocked' ? 'building' : t.fm.status, head: sh('git', ['rev-parse', 'HEAD'], { cwd: at }).stdout.trim(), session: readObject(path.join(runs, `${id}.json`))?.session } : {};
+  if (action === 'decide') { // 0589: a run record that can't be saved loses only the call's question and other options, as the choice stands
+    const file = path.join(runs, `${id}.json`), facts = t.fm.status === 'blocked' ? questionFacts(contentLines(t.sections['blocked question'])) : {}; // any other ticket's section is an old question
+    try { saveRecord(file, withCall(runs, id, readObject(file), callOf(facts, text, now))); } catch { /* the Notes still list it */ }
+  }
   const entry = { run: token, id, action, text, why, at: now.toISOString(), status: t.fm.status, ...decided, ...(fixId ? { fix_id: fixId } : {}) };
   fs.appendFileSync(path.join(runs, DID), `${JSON.stringify(entry)}\n`);
   return {
