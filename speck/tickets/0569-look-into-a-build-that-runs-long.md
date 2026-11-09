@@ -48,7 +48,11 @@ When a build runs well past the usual time, speck looks into why and tells you w
 - Self-check: dropped a look at a long build whose build ended while it waited for the agent; held the look back while a question waits for you (0566); timed a hand-back or the agent's resume from then; kept `tried` for stops, so a long look doesn't swallow a later stop.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a build has run for more than twice the usual time, and at least 20 minutes, speck now notices without being asked. With the watch setting on fix or decide, its agent looks into why and tells you what it found, in the ticket's notes and speck run's log, or raises a draft fix ticket if the main branch itself is broken. With the setting on tell, speck run just says the build is running long, and with it off nothing happens.
+
+You'll see it next time a build runs long: look for a "running long" line in speck run's log and, with fix or decide, a note on the ticket. It needs no answer from you and doesn't add to Needs you. The agent never stops or restarts the build.
+
+Worth watching: your own long-running build conversations count too, so one left open for a long time can get a look from the agent.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -147,6 +151,97 @@ When a build runs well past the usual time, speck looks into why and tells you w
     ],
     "escalation_question": "",
     "summary": "Slow-build detection and reporting work on the tested paths, and the investigation guidance is clear. Two gaps need fixing: builds started outside speck run are ignored, and an investigation waiting in the queue can start after its build is paused."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "dfe21435265f8125a281caef47dadec7ae669bef",
+    "session": "continued",
+    "thread_id": "01a1bdaf-08b6-73e3-9667-1f1c210d708d",
+    "builder_response": "- Tests run: test/long-build-0569.test.mjs (plus the commands.checks files): 142 tests, 0 failed, 3 skipped.\n- F1: fixed. check() in scripts/foreman-agent.mjs now re-checks each queued long look before launching (new canRunLong in scripts/long-build.mjs: paused or out of hand). A queued look on a paused, blocked or approved build is dropped and its once-per-build mark cleared, so it comes back once the build is running again. Tests: \"a look waiting for the agent doesn't start while its build is paused, and comes once it plays\", and the blocked variant.\n- F2: fixed. Removed the rec.seen exclusion, so builds speck run adopted from outside it count in both agent and tell modes. A missing log reaches the brief as \"(the log is empty or missing)\". Tests: \"a build started outside speck run counts too, whether or not it has a log\" and the tell variant. docs/brief.md no longer mentions the exclusion.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 430748,
+      "cached_input_tokens": 360704,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2170,
+      "reasoning_output_tokens": 253
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 18019,
+      "cached": 141440,
+      "write": 0,
+      "output": 754
+    },
+    "cost_usd": 0.057722,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T00:23:56.171Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/long-build.mjs implements the last-20 median, both time thresholds and pause exclusion. foremanAgentQueue persists once-per-build detection and rechecks queued eligibility. Passing AC1 tests cover fix/decide, brief contents, restart persistence, adopted builds and pausing while queued."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foreman-agent.mjs longBuilds logs figures once with tell and does nothing with off. Passing AC2 tests cover figures, persistence, adopted external builds and no agent launch."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanAction writes tell findings into Notes; finish reports them in the run log. Passing AC3 tests verify both outputs, no question or Needs you count, action validation and draft fix creation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "skills/speck-watch/SKILL.md, ‘A build that runs long’, explicitly requires reading logs, cached test results and load, raising a draft fix for a broken base branch, and otherwise reporting findings even for harmless slowness."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Round 2 reports 139 passed, 0 failed and 3 skipped; round 1's related tests also had no failures. No existing tests were weakened. Whole-suite verification remains the ship check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs",
+        "issue": "Queued investigations could previously start after their build was paused.",
+        "suggested_fix": "Implemented: check revalidates queued investigations with canRunLong and clears the detection mark when deferred. Passing regression tests cover pause/resume and blocked/building transitions.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs",
+        "issue": "Builds adopted from outside speck run were previously excluded from long-running detection.",
+        "suggested_fix": "Implemented: removed the seen exclusion. Passing regression tests cover agent and tell modes, including a missing log; documentation now matches.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both review findings are fixed. Slow builds now receive attention regardless of how they started, and queued investigations respect pauses. All criteria pass, with no blocking concerns remaining."
   }
 }
 ```
