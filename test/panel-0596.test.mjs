@@ -302,6 +302,27 @@ test('0596: a why it doesn\'t know, even a built-in name, still reads as needing
   assert.equal(within(p, 'bridge-reason')[0].textContent, '');
 });
 
+test('0596: the page behind is held while the bridge is open, and let go before the focus returns to it', async () => {
+  const behind = [{ inert: false }, { inert: false }], classes = new Set();
+  const p = fakePage([board(list()), two, board(list())], { scrollX: 0, scrollY: 0, scrollTo() {} });
+  p.document.documentElement = { classList: { toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)) } };
+  p.document.querySelectorAll = () => behind;
+  await p.settle();
+  let inertAtFocus = null;
+  p.byId('bridge-open').focus = () => { inertAtFocus = behind[0].inert; };
+  p.byId('bridge-open').listeners.click({ stopPropagation() {} });
+  await p.settle();
+  assert.equal(classes.has('held'), true, 'held as it opens');
+  assert.deepEqual(behind.map(n => n.inert), [true, true]);
+  for (const t of p.timers.splice(0)) t();
+  await p.settle();
+  assert.equal(classes.has('held'), true, 'and through a new board');
+  press(within(p, 'back')[0]);
+  assert.equal(classes.has('held'), false, 'let go as it closes');
+  assert.deepEqual(behind.map(n => n.inert), [false, false]);
+  assert.equal(inertAtFocus, false, 'before the focus returns to the header');
+});
+
 test('0596: while the bridge is open the lanes hold still', async () => {
   const p = await opened();
   p.key('ArrowRight');

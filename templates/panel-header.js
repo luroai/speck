@@ -116,6 +116,7 @@ function openBridge() {
   bridgeBody = null; bridgeError = null; bridgeDrawn = null; bridgeFace = null;
   drawBridge();
   $('bridge').hidden = false;
+  holdPage(pageHeld()); // only the bridge can be clicked, scrolled or reached with Tab
   if ($('bridge').focus) $('bridge').focus({ preventScroll: true });
   askBridge();
   bridgeTimer = setInterval(askBridge, BRIDGE_MS);
@@ -125,6 +126,7 @@ function closeBridge() {
   clearInterval(bridgeTimer);
   bridgeTimer = null;
   $('bridge').hidden = true;
+  holdPage(pageHeld()); // let go first, or the focus can't return to the header
   if ($('bridge-open').focus) $('bridge-open').focus();
 }
 async function askBridge() {
