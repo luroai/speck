@@ -144,7 +144,7 @@ for (const w of [375, 1280]) {
     assert.deepEqual(lanes.map(l => l.id), ['capture-section', 'shaping-section', 'build-section', 'shipped-section']); // 0520: Capture first
     for (const l of lanes) assert.deepEqual(l.sides, [0, 0, 0, 0], `${l.id} has no border`);
     assert.ok(tickets.length >= 8, 'every ticket and the idea were checked'); // 0520: and Capture's note
-    // 0585, 0586: a row is a line in a list: it has only the hairline under it
-    for (const t of tickets) assert.ok(/\brow\b/.test(t.id) ? t.sides[2] >= 1 && !t.sides[0] && !t.sides[1] && !t.sides[3] : t.sides.every(x => x >= 1), `${t.id} has its border: ${t.sides}`);
+    // 0585, 0586, 0587: a row, or a Shipped ticket's table row, is a line in a list: it has only the hairline under it
+    for (const t of tickets) assert.ok(/\brow\b|^TR$/.test(t.id) ? t.sides[2] >= 1 && !t.sides[0] && !t.sides[1] && !t.sides[3] : t.sides.every(x => x >= 1), `${t.id} has its border: ${t.sides}`);
   });
 }

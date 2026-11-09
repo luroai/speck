@@ -835,18 +835,17 @@ test('0035 AC1: the stats row is drawn above the list, and a median with nothing
   await p.settle();
   const stats = p.byId('shipped-stats');
   assert.equal(stats.hidden, false);
-  // 0157: each tile has its number, then its label, then the tickets its median covers. 0162: three, then three more.
-  // 0420: the first three are one line.
-  assert.equal(stats.textContent, '2 today · median 4 min, –');
+  // 0157: each tile has its number, then its label, then the tickets its median covers. 0587: three, then the others.
+  assert.deepEqual(stats.children.map(c => c.textContent), ['4 minmedian build time1 ticket', '2median review rounds1 ticket', '0%approved first round1 ticket']);
   assert.deepEqual(p.byId('shipped-more').children.map(c => c.textContent),
-    ['2median review rounds1 ticket', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']);
+    ['2shipped today', '–median builder cost0 tickets', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']);
   const html = page();
   assert.ok(html.indexOf('id="shipped-stats"') < html.indexOf('id="shipped"'), 'stats come before the list');
   const none = fakePage([{ tickets: [T('0012', 'done', { finished: iso(now), rounds: [] })], ideas: [] }]);
   await none.settle();
-  assert.equal(none.byId('shipped-stats').textContent, '1 today · median – min, –');
+  assert.deepEqual(none.byId('shipped-stats').children.map(c => c.textContent), ['–median build time0 tickets', '–median review rounds0 tickets', '–approved first round0 tickets']);
   assert.deepEqual(none.byId('shipped-more').children.map(c => c.textContent),
-    ['–median review rounds0 tickets', '–median reviewer tokens0 tickets', '–median builder tokens0 tickets']);
+    ['1shipped today', '–median builder cost0 tickets', '–median reviewer tokens0 tickets', '–median builder tokens0 tickets']);
 });
 
 test('0035 AC2: each row shows when it shipped: HH:MM today, D Mon, HH:MM before (0157), labelled, and nothing with no finished time', async () => {
@@ -873,12 +872,12 @@ test('0035 AC2: each row shows when it shipped: HH:MM today, D Mon, HH:MM before
   const rows = shippedRows(p);
   assert.equal(rows.length, 4);
   const row = id => rows.find(r => r.textContent.startsWith(id));
-  // 0420: in the details line, the time today and the day alone before, with "Shipped" and the time in its tooltip
+  // 0587: in the details line, the time today and the date and time before, with "Shipped" and the time in its tooltip
   const shown = id => p.all(row(id)).filter(n => n.className === 'when').map(n => n.textContent);
   const tip = id => p.all(row(id)).find(n => n.className === 'meta')?.title;
   assert.deepEqual(shown('0011'), [hhmm(nowTime)], 'today: HH:MM');
   assert.equal(tip('0011'), `Shipped ${hhmm(nowTime)}`);
-  assert.deepEqual(shown('0012'), [`${earlier.getDate()} ${months[earlier.getMonth()]}`]);
+  assert.deepEqual(shown('0012'), [`${earlier.getDate()} ${months[earlier.getMonth()]}, 14:02`]);
   assert.equal(tip('0012'), `Shipped ${earlier.getDate()} ${months[earlier.getMonth()]}, 14:02`);
   assert.deepEqual(shown('0014'), [], 'no finished time: no ship time (0157)');
 });

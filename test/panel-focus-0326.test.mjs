@@ -144,16 +144,16 @@ test('0326 AC3: the Plan and Build sections can take the focus', () => {
   assert.match(html, /<section id="build-section" [^>]*tabindex="-1"/);
 });
 
-// 0466: a shipped ticket opens from its card's Full ticket button too, so the focus goes back to it, as it does in Plan and Build.
+// 0587: a shipped ticket opens from its row, so the focus goes back to its title, as it does to Full ticket in Plan.
+const shippedTitle = (p, row) => p.all(row()).find(n => n.className === 'title');
 const openFromShipped = async p => {
   const row = () => p.byId('shipped').children.find(r => p.all(r).some(n => n.className === 'id' && n._text === '0005'));
-  if (!/\bopen\b/.test(row().className)) p.press(p.all(row()).find(n => n.className === 'title'));
+  p.press(shippedTitle(p, row));
   await p.settle();
-  click(fullOf(p, row()));
   return row;
 };
 
-test('0326 AC4 (0466): opening from a Shipped card\'s Full ticket and closing puts the focus back on that button', async () => {
+test('0326 AC4 (0587): opening from a Shipped row and closing puts the focus back on its title', async () => {
   const p = livePage(board());
   await p.settle();
   const row = await openFromShipped(p);
@@ -161,7 +161,7 @@ test('0326 AC4 (0466): opening from a Shipped card\'s Full ticket and closing pu
   assert.equal(p.focused(), pane(p), 'the pane takes the focus, as before');
   p.key('Escape');
   assert.ok(!paneOpen(p));
-  assert.equal(p.focused(), fullOf(p, row()), 'back on the Shipped card\'s Full ticket button');
+  assert.equal(p.focused(), shippedTitle(p, row), 'back on the Shipped row\'s title');
 });
 
 test('0326 AC4: a Full ticket opening followed by another opening clears the first, and a second Escape does nothing more', async () => {
@@ -173,7 +173,7 @@ test('0326 AC4: a Full ticket opening followed by another opening clears the fir
   assert.equal(p.focused(), b);
   const row = await openFromShipped(p);
   p.key('Escape');
-  assert.equal(p.focused(), fullOf(p, row()), 'the Shipped opening sends it back to its own button, not the Plan one');
+  assert.equal(p.focused(), shippedTitle(p, row), 'the Shipped opening sends it back to its own title, not the Plan one');
   pane(p).focus();
   p.key('Escape');
   assert.equal(p.focused(), pane(p), 'and an Escape with nothing open moves nothing');

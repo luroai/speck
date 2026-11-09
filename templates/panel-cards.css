@@ -182,8 +182,7 @@
   .next { color: var(--ok); font-family: var(--font-ui); font-size: 12px; border: .5px solid var(--ok); padding: 0 5px; }
 
   /* Shipped */
-  /* 0157: the stats a grid of tiles of equal size, each number over its label and the tickets its median covers, and
-     each shipped ticket a card of its own, laid out as a Plan ticket */
+  /* 0157: the stats a grid of tiles of equal size, each number over its label and the tickets its median covers */
   .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line); border-bottom: .5px solid var(--line-soft); }
   .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 6px; background: var(--panel); }
   .stat .num { font-family: var(--font-mono); font-size: 18px; font-weight: 500; line-height: 1.3; }
@@ -210,7 +209,7 @@
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
   #shipped .line .id { flex: none; font-size: 14px; line-height: 14px; }
   #shipped .line .title { flex: 0 1 auto; font-family: var(--font-ui); font-weight: 600; font-size: 17px; line-height: 20px; min-width: 0; overflow-wrap: anywhere; }
-  /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the card taller */
+  /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the row taller */
   #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
   #shipped .line .tags .tag { font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; }
   /* 0426: a tag in a line of 12 px text is in the muted colour for small text. :where() keeps the risk and type tags' own colours */
@@ -339,8 +338,6 @@
   .full-open { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
   #shipped td.unpushed { cursor: auto; } /* 0587: what's under a row doesn't open it */
-  td .full-open { margin: 0; padding: 0 8px; font-size: 12px; white-space: nowrap; }
-  td .full-open + .full-open { margin-left: 6px; }
   /* 0142: an opened draft's, idea's or inbox note's Markdown in Plan, formatted as in the full ticket pane */
   .shaping .md { overflow-wrap: anywhere; }
   .shaping .md p { margin: 0 0 8px; color: var(--text); }
@@ -362,7 +359,7 @@
 
   /* 0428: rounded corners as Cursor's: 8 px for a control, 12 px for a card or a box */
   .question-fact, .next, .prio-menu { border-radius: 8px; }
-  .item, .q, #shipped tr, .q .log { border-radius: 12px; }
+  .item, .q, .q .log { border-radius: 12px; }
   .stats { border-radius: 12px; overflow: hidden; }
 
   /* 0140: a phone screen */
@@ -427,11 +424,6 @@
 
   /* Shipped */
   .more-stats { min-width: 44px; min-height: 44px; }
-  #shipped .line .title { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
-  /* 0434: a block, so its title can end in an ellipsis. 0494: its text on a 22 px line, where a Build or Plan title's
-     starts, with 11 px of padding above and below for its 44 px tap area, which its negative margins give back, so
-     nothing around it moves. It's above the details line it reaches over, so a tap anywhere in it reaches the title. */
-  td .full-open { min-height: 44px; }
 
   /* 0469: a touch screen only: tap areas that reach past a control without changing the layout */
   @media (pointer: coarse) {

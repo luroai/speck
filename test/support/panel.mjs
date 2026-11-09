@@ -368,13 +368,6 @@ export async function shippedPack(p, row) {
   await p.settle();
   return p.all(p.byId('full-ticket')).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
 }
-// 0162: opens every Shipped card, which holds its labelled figures and its Review pack button. 0466: by its title.
-export async function openDetails(p) {
-  for (let i = 0; i < shippedRows(p).length; i++) {
-    const d = p.all(shippedRows(p)[i]).find(n => n.className === 'title' && n.attrs && n.attrs.role === 'button');
-    if (d && d.attrs['aria-expanded'] === 'false') { p.press(d); await p.settle(); }
-  }
-}
 export const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
 
 export const exitOf = (message = 'speck ship refused: speck/config.yml has an uncommitted change.') => ({ build_exit: { at: '2026-10-09T14:55:00.000Z', code: 0, message } });

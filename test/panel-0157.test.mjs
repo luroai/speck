@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, round, shippedRows, startOfToday, openDetails, openLane } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, round, shippedRows, startOfToday, shippedPack, openLane } from './support/panel.mjs';
 
 // ---------- 0157: a tidy Shipped section ----------
 
@@ -34,28 +34,32 @@ const STATE = () => ({
 
 const cardOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const byClass = (p, node, cls) => p.all(node).filter(n => (n.className || '').split(' ').includes(cls));
-// A card's figures, as [label, value, tooltip] for each, the tooltip only when it says more than the value. 0464: in
-// the facts table, after when it shipped.
-const figures = (p, card) => byClass(p, card, 'fact').slice(1).map(f => { const v = f.children[1]; return [f.children[0].textContent, v.textContent, v.title !== v.textContent ? v.title : null]; });
+// 0587: a ticket's own figures, in its full view, as [label, value, tooltip] for each, the tooltip only when it says
+// more than the value.
+const COST = ['Builder cost', 'Reviewer cost', 'Total cost', 'Builder tokens', 'Reviewer tokens'];
+const figures = async (p, id) => { p.press(cardOf(p, id)); await p.settle();
+  return byClass(p, p.byId('full-ticket'), 'fact').filter(f => COST.includes(f.children[0].textContent)).map(f => { const v = f.children[1]; return [f.children[0].textContent, v.textContent, v.title !== v.textContent ? v.title : null]; }); };
 
-// 0420: the first three stats are one line, so the three under More stats are the tiles left.
+// 0587: the three up top and those under More stats are all tiles.
 test('0157 AC2: each stat is a tile with its number, then a short label, then the tickets its median covers', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
-  const tiles = p.byId('shipped-more').children;
-  assert.equal(tiles.length, 3);
-  const parts = tiles.map(t => [t.className, ...t.children.map(c => [c.tagName, c.className, c.textContent])]);
-  assert.deepEqual(parts.map(t => t[2][2]), ['median review rounds', 'median reviewer tokens', 'median builder tokens']);
-  for (const t of parts) {
-    assert.equal(t.length, 4, `${t[2][2]}: number, label and count`);
+  const parts = id => p.byId(id).children.map(t => [t.className, ...t.children.map(c => [c.tagName, c.className, c.textContent])]);
+  const top = parts('shipped-stats'), more = parts('shipped-more');
+  assert.deepEqual(top.map(t => t[2][2]), ['median build time', 'median review rounds', 'approved first round']);
+  assert.deepEqual(more.map(t => t[2][2]), ['shipped today', 'median builder cost', 'median reviewer tokens', 'median builder tokens']);
+  for (const t of [...top, ...more]) {
     assert.deepEqual(t[1].slice(0, 2), ['b', 'num']);
+    if (t[2][2] === 'shipped today') { assert.equal(t.length, 3, 'number and label: it covers no median'); continue; }
+    assert.equal(t.length, 4, `${t[2][2]}: number, label and count`);
     assert.deepEqual(t[3].slice(0, 2), ['span', 'count']);
   }
-  assert.deepEqual(parts.map(t => t[3][2]), ['4 tickets', '4 tickets', '2 tickets']);
-  assert.equal(parts[0][1][2], '1', 'median review rounds: 1, 1, 1, 2');
+  assert.deepEqual(top.map(t => t[3][2]), ['4 tickets', '4 tickets', '4 tickets']);
+  assert.deepEqual(more.slice(1).map(t => t[3][2]), ['1 ticket', '4 tickets', '2 tickets']);
+  assert.equal(top[1][1][2], '1', 'median review rounds: 1, 1, 1, 2');
 });
 
-test('0157 AC3: a card has the id, then the title that opens the card (0466), with a bug or fix tag after them (0420)', async () => {
+test('0157 AC3: a row has the id, then the title that opens its full view (0587), with a bug or fix tag after them (0420)', async () => {
   const p = fakePage([STATE(), STATE()]);
   await p.settle();
   const card = cardOf(p, '0402');
@@ -65,45 +69,45 @@ test('0157 AC3: a card has the id, then the title that opens the card (0466), wi
   assert.ok(!byClass(p, cardOf(p, '0401'), 'tag').length, 'no tag row without a type');
   p.press(line.children[1]);
   await p.settle();
-  assert.match(cardOf(p, '0402').className, /\bopen\b/, 'the title opens the card in place (0466)');
-  p.press(p.all(cardOf(p, '0402')).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
-  assert.equal(p.byId('full-ticket').hidden, false, 'and its Full ticket opens the full ticket');
+  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'sum'], 'the row stays one row (0587)');
+  assert.equal(p.byId('full-ticket').hidden, false, 'its title opens the full ticket');
   assert.ok(p.byId('full-ticket').textContent.includes('0402'));
 });
 
-test('0157 AC4: under the title, the ship time: the time alone today, the day before (0420: with the time in its tooltip)', async () => {
+test('0157 AC4: under the title, the ship time: the time alone today, the day and time before (0587)', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
   const when = id => byClass(p, cardOf(p, id), 'when').map(n => n.textContent);
   const today = new Date(Date.parse(STATE().tickets[0].finished)), y = yesterday(21, 52);
   if (new Date(Date.now() - 600000).getDate() === new Date().getDate()) assert.deepEqual(when('0401'), [hhmm(today)]);
-  assert.deepEqual(when('0405'), [`${y.getDate()} ${MONTHS[y.getMonth()]}`]);
+  assert.deepEqual(when('0405'), [`${y.getDate()} ${MONTHS[y.getMonth()]}, 21:52`]);
   assert.match(byClass(p, cardOf(p, '0405'), 'meta')[0].title, new RegExp(`^Shipped ${y.getDate()} ${MONTHS[y.getMonth()]}, 21:52 · `));
   assert.deepEqual(when('0404'), [], 'no ship time: no line');
-  await openDetails(p);
-  const kids = cardOf(p, '0401').children.map(n => n.className);
-  assert.deepEqual(kids, ['name', 'steps', 'full-cell'], 'title, then its steps and facts (0464), then Full ticket and Review pack (0466)');
+  assert.deepEqual(cardOf(p, '0401').children.map(n => n.className), ['name', 'sum'], 'title, then its line (0587)');
 });
 
-test('0157 AC4: the figures are label and value pairs, missing ones a dash (0464), big token counts shortened with the exact number as a tooltip', async () => {
+// 0587: rounds and time on the row, and its costs and tokens in its full view.
+test('0157 AC4: the figures are label and value pairs in the full view, missing ones a dash (0464), big token counts shortened with the exact number as a tooltip', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
-  await openDetails(p); // 0162: they are under Details
-  assert.deepEqual(figures(p, cardOf(p, '0401')), [['Time', '10 min', null], ['Review rounds', '2', null], ['Builder cost', '$3.46', null], ['Reviewer cost', '—', null], ['Total cost', '—', null],
-    ['Builder tokens', '2.4M', '2,412,345'], ['Reviewer tokens', '108k', '108,234']]);
-  assert.deepEqual(figures(p, cardOf(p, '0402')), [['Time', '30 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '10k', '10,000'], ['Reviewer tokens', '9,999', null]]);
-  assert.deepEqual(figures(p, cardOf(p, '0403')), [['Time', '53 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '500', null]]);
-  assert.deepEqual(figures(p, cardOf(p, '0404')).map(f => f[1]), ['—', '—', '—', '—', '—', '—', '—'], 'none recorded: a dash for each');
-  assert.deepEqual(figures(p, cardOf(p, '0405')), [['Time', '22 min', null], ['Review rounds', '1', null], ['Builder cost', '—', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '1M', '999,600']]);
-  assert.ok(!shippedRows(p).some(r => byClass(p, r, 'facts').some(f => f.textContent.includes(' · '))), 'no run of figures separated by dots among the labelled ones (0162 adds one line of them above)');
+  const figline = id => byClass(p, cardOf(p, id), 'figline').map(n => n.textContent);
+  assert.deepEqual(figline('0401'), ['2 rounds · 10 min']);
+  assert.deepEqual(figline('0402'), ['1 round · 30 min']);
+  assert.deepEqual(figline('0403'), ['1 round · 53 min']);
+  assert.deepEqual(figline('0404'), []);
+  assert.deepEqual(figline('0405'), ['1 round · 22 min']);
+  assert.deepEqual(await figures(p, '0401'), [['Builder cost', '$3.46', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '2.4M', '2,412,345'], ['Reviewer tokens', '108k', '108,234']]);
+  assert.deepEqual(await figures(p, '0402'), [['Builder cost', '—', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '10k', '10,000'], ['Reviewer tokens', '9,999', null]]);
+  assert.deepEqual(await figures(p, '0403'), [['Builder cost', '—', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '500', null]]);
+  assert.deepEqual((await figures(p, '0404')).map(f => f[1]), ['—', '—', '—', '—', '—'], 'none recorded: a dash for each');
+  assert.deepEqual(await figures(p, '0405'), [['Builder cost', '—', null], ['Reviewer cost', '—', null], ['Total cost', '—', null], ['Builder tokens', '—', null], ['Reviewer tokens', '1M', '999,600']]);
+  assert.ok(!shippedRows(p).some(r => byClass(p, r, 'facts').length), 'no labelled figures on a row');
 });
 
-test('0157 AC4: the Review pack button is the card\'s last part and opens its pack as before', async () => {
+test('0157 AC4: the Review pack button is in the full view and opens its pack as before (0587)', async () => {
   const p = fakePage([STATE(), { pack: '# Review pack\n\nAll good.\n' }]);
   await p.settle();
-  await openDetails(p); // 0162: Review pack is under Details
-  const card = cardOf(p, '0401'), last = card.children.at(-1);
-  const b = p.all(last).filter(n => n.tagName === 'button').at(-1); // 0466: after Full ticket
+  const b = await shippedPack(p, () => cardOf(p, '0401'));
   assert.equal(b.textContent, 'Review pack');
   p.press(b);
   await p.settle();
@@ -157,10 +161,8 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-// 0162: shows the three stats More stats holds, and opens each card (0466: by its title).
-const OPEN_ALL = `(() => { document.getElementById('more-stats').click(); for (const d of document.querySelectorAll('#shipped .line .title')) d.click(); })()`;
 // The stats tiles: where each sits, its size, how many lines its label takes, and its count's size and colour.
-const TILES = `[...document.querySelectorAll('section.shipped .stat')].map(n => {
+const TILES = `[...document.querySelectorAll('#shipped-stats .stat')].map(n => {
   const r = n.getBoundingClientRect(), label = n.querySelector('.label'), ls = getComputedStyle(label), count = n.querySelector('.count');
   const num = n.querySelector('.num').getBoundingClientRect(), lr = label.getBoundingClientRect();
   return { left: r.left, top: r.top, width: r.width, height: r.height, numAbove: num.bottom <= lr.top + 0.5,
@@ -168,10 +170,9 @@ const TILES = `[...document.querySelectorAll('section.shipped .stat')].map(n => 
     count: count && { size: parseFloat(getComputedStyle(count).fontSize), color: getComputedStyle(count).color, below: count.getBoundingClientRect().top >= lr.bottom - 0.5 } };
 })`;
 for (const [width, perRow] of [[375, 3], [700, 3], [1280, 3]]) { // three to a row since 0162
-  // 0420: the first three stats are one line, so the three under More stats are the tiles left.
-  test(`0157 AC2: at ${width} px the stats under More stats are tiles of equal size, ${perRow} to a row, each number above its label, no label past three lines at 375 px (since 0162)`, skip, async () => {
+  // 0587: the three tiles up top.
+  test(`0157 AC2: at ${width} px the three stats up top are tiles of equal size, ${perRow} to a row, each number above its label, no label past three lines at 375 px (since 0162)`, skip, async () => {
     await withPanel(async b => {
-      await b.js(OPEN_ALL);
       const tiles = await b.js(TILES);
       assert.equal(tiles.length, 3);
       const rows = [...new Set(tiles.map(t => Math.round(t.top)))];
@@ -182,7 +183,7 @@ for (const [width, perRow] of [[375, 3], [700, 3], [1280, 3]]) { // three to a r
         const first = tiles.find(x => Math.round(x.top) === Math.round(t.top));
         assert.ok(Math.abs(t.width - tiles[0].width) < 1 && Math.abs(t.height - first.height) < 1, `every tile the same size: ${JSON.stringify(tiles.map(x => [x.width, x.height]))}`);
         assert.ok(t.numAbove, 'the number above its label');
-        // 0162: three to a row, the More stats labels ("median reviewer tokens") break a word to a line at 375 px.
+        // 0162: three to a row, the labels ("median review rounds") break a word to a line at 375 px.
         if (width === 375) assert.ok(t.lines <= 3, `a label on ${t.lines} lines`);
       }
       const faint = await b.js(RGB('var(--faint)'));
@@ -195,8 +196,8 @@ for (const [width, perRow] of [[375, 3], [700, 3], [1280, 3]]) { // three to a r
   });
 }
 
-// Each shipped card: its four borders and how well each stands out from the section, the space to the next card, and
-// where its id, title lines, ship time, figures and Review pack sit.
+// Each shipped row: its four borders and how well each stands out from the section, the space to the next row, and
+// where its id, title lines and ship time sit, and whether it holds a facts table or Review pack.
 const CARDS = `(() => {
   const lum = c => { const [r, g, b] = c.match(/[\\d.]+/g).slice(0, 3).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
@@ -214,26 +215,23 @@ const CARDS = `(() => {
       const same = lines.find(l => Math.abs(l.top - q.top) < 2);
       if (same) same.left = Math.min(same.left, q.left); else lines.push({ top: q.top, bottom: q.bottom, left: q.left });
     }
-    const figs = n.querySelector('.facts'); // 0464: the figures are in the facts table
     return { id: idN.textContent, top: side('Top'), right: side('Right'), bottom: side('Bottom'), left: side('Left'), gap: next ? next.getBoundingClientRect().top - r.bottom : null,
       idSize: getComputedStyle(idN).fontSize, titleSize: getComputedStyle(t).fontSize, idRect: rect(idN), lines, when: rect(n.querySelector('.when')),
-      figs: rect(figs), figsDisplay: figs && getComputedStyle(figs).display, figCells: figs ? [...figs.children].map(rect) : [], pack: rect(n.querySelector('.full-cell .full-open:last-child')) }; // Review pack, after Full ticket (0466)
+      facts: !!n.querySelector('.facts'), buttons: n.querySelectorAll('button').length };
   });
 })()`;
 
 for (const theme of ['light', 'dark']) {
   for (const width of [375, 1280]) {
-    test(`0157 AC3: at ${width} px in the ${theme} look, each shipped ticket is a bordered card with no stripe (since 0167), 8 px or more from the next`, skip, async () => {
+    test(`0157 AC3: at ${width} px in the ${theme} look, each shipped ticket is a row with a hairline under it and no stripe (0587), touching the next`, skip, async () => {
       await withPanel(async b => {
         const cards = await b.js(CARDS);
         assert.equal(cards.length, 5);
         for (const c of cards) {
-          for (const k of ['top', 'right', 'bottom', 'left']) {
-            assert.ok(c[k].width >= 0.5 && c[k].style === 'solid', `${c.id}: no ${k} border`);
-            assert.ok(c[k].contrast >= 1.2, `${c.id}: the ${k} border (${c[k].color}) is hard to see, contrast ${c[k].contrast.toFixed(2)}`);
-          }
-          assert.deepEqual([c.left.width, c.left.color], [c.right.width, c.right.color], `${c.id}: no stripe on its left edge`);
-          if (c.gap !== null) assert.ok(c.gap >= 7.99, `${c.id}: only ${c.gap} px to the next card`);
+          assert.ok(c.bottom.width >= 0.5 && c.bottom.style === 'solid', `${c.id}: no bottom border`);
+          assert.ok(c.bottom.contrast >= 1.2, `${c.id}: the bottom border (${c.bottom.color}) is hard to see, contrast ${c.bottom.contrast.toFixed(2)}`);
+          for (const k of ['top', 'right', 'left']) assert.equal(c[k].width, 0, `${c.id}: a ${k} border`);
+          if (c.gap !== null) assert.ok(Math.abs(c.gap) < 0.5, `${c.id}: ${c.gap} px to the next row`);
         }
       }, { width, theme });
     });
@@ -241,9 +239,8 @@ for (const theme of ['light', 'dark']) {
 }
 
 for (const width of [375, 1280]) {
-  test(`0157 AC3 AC4: at ${width} px, a card has its id and title first, as on a Plan card, then the ship time, the figures in a grid and Review pack at the bottom`, skip, async () => {
+  test(`0157 AC3 AC4: at ${width} px, a row has its id and title first, as on a Plan row, then the ship time, and no figures or buttons (0587)`, skip, async () => {
     await withPanel(async b => {
-      await b.js(OPEN_ALL);
       for (const c of await b.js(CARDS)) {
         assert.deepEqual([c.idSize, c.titleSize], ['14px', '17px'], c.id);
         const [first, ...rest] = c.lines;
@@ -252,24 +249,19 @@ for (const width of [375, 1280]) {
         for (const l of rest) assert.ok(Math.abs(l.left - first.left) < 1, `${c.id}: a wrapped line starts under the title, not the id`);
         const below = c.lines.at(-1).bottom;
         if (c.when) assert.ok(c.when.top >= below - 0.5, `${c.id}: the ship time under the title`);
-        assert.ok(!c.when, `${c.id}: open, its line gives way to the table (0464)`);
-        assert.equal(c.figCells.length, 8, `${c.id}: eight cells (0464, 0526)`);
-        if (c.figCells.length) {
-          assert.equal(c.figsDisplay, 'grid', `${c.id}: the figures in a grid`);
-          assert.ok(c.figs.top >= below - 0.5, `${c.id}: the figures under the title`);
-          if (c.figCells.length > 1) assert.ok(new Set(c.figCells.map(f => Math.round(f.left))).size > 1, `${c.id}: more than one column`);
-        }
-        assert.ok(c.pack.top >= (c.figCells.length ? c.figs.bottom : c.when ? c.when.bottom : below) - 0.5, `${c.id}: Review pack at the bottom`);
+        assert.ok(c.id === '0404' ? !c.when : !!c.when, `${c.id}: its line`);
+        assert.ok(!c.facts && !c.buttons, `${c.id}: no facts table or buttons on the row`);
       }
     }, { width });
   });
 }
 
-test('0157 AC4: in the browser, a shortened token count has the exact number as its tooltip', skip, async () => {
+test('0157 AC4: in the browser, a shortened token count in the full view has the exact number as its tooltip (0587)', skip, async () => {
   await withPanel(async b => {
-    await b.js(OPEN_ALL);
-    const v = await b.js(`[...document.querySelectorAll('#shipped .fact .value')].filter(n => n.title !== n.textContent && /tokens/.test(n.previousElementSibling.textContent)).map(n => [n.textContent, n.title])`);
-    assert.deepEqual(v, [['2.4M', '2,412,345'], ['108k', '108,234'], ['10k', '10,000'], ['1M', '999,600']]);
+    await b.js(`document.querySelector('#shipped tr').click()`);
+    await b.until(`!document.getElementById('full-ticket').hidden && document.querySelectorAll('#full-ticket .fact .value').length > 0`, 'the full view');
+    const v = await b.js(`[...document.querySelectorAll('#full-ticket .fact .value')].filter(n => n.title !== n.textContent && /tokens/.test(n.previousElementSibling.textContent)).map(n => [n.textContent, n.title])`);
+    assert.deepEqual(v, [['2.4M', '2,412,345'], ['108k', '108,234']]);
   });
 });
 

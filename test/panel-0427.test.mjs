@@ -84,7 +84,7 @@ test('0427 AC4: no label is in spaced capitals: buttons and labels are sentence 
   } // 0520: Plan's Tickets, Ideas and Inbox buttons (.toggle, labelled `${label} · ${n}`) are gone
   // The words themselves are already sentence case: the capitals were only the stylesheet's.
   const script = pageScript() + popupsScript(); // 0473: the pop-ups' words are in their own file
-  for (const words of ["'full-open', 'Full ticket'", "'full-open', 'Review pack'", "'Ask for changes'", "'Set ready'"]) assert.ok(script.includes(words), words);
+  for (const words of ["'full-open', 'Full ticket'", "row('Review pack'", "'Ask for changes'", "'Set ready'"]) assert.ok(script.includes(words), words);
   assert.match(script, /'More stats'/);
 });
 

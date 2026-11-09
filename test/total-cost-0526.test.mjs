@@ -104,8 +104,9 @@ const TICKETS = [
 ];
 const page = (tickets = TICKETS) => fakePage([{ run: { on: false }, ideas: [], tickets }], { Date: stoppedClock(NOW) });
 const cardOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-const factsOf = (p, id) => cardOf(p, id).children.find(c => c.className === 'steps').children[1];
-const cell = (p, id, label) => factsOf(p, id).children.find(c => c.children[0].textContent === label)?.children[1];
+// 0587: a shipped ticket's costs are in its full view, which shows one ticket at a time: `open` it first.
+const factsOf = p => p.all(p.byId('full-ticket')).find(c => c.className === 'facts');
+const cell = (p, id, label) => factsOf(p).children.find(c => c.children[0].textContent === label)?.children[1];
 async function open(p, ...ids) {
   for (const id of ids) { p.press(p.all(cardOf(p, id)).find(n => n.className === 'title')); await p.settle(); }
 }
@@ -113,49 +114,53 @@ async function open(p, ...ids) {
 test('0526 AC2: a shipped ticket\'s facts show Reviewer cost and Total cost beside Builder cost, or — with no known cost', async () => {
   const p = page();
   await p.settle();
-  await open(p, '0901', '0902');
-  const labels = factsOf(p, '0901').children.map(c => c.children[0].textContent);
-  assert.deepEqual(labels.slice(3, 6), ['Builder cost', 'Reviewer cost', 'Total cost']);
-  assert.equal(labels.length, 8);
+  await open(p, '0901');
+  const labels = factsOf(p).children.map(c => c.children[0].textContent);
+  assert.deepEqual(labels.slice(-5), ['Builder cost', 'Reviewer cost', 'Total cost', 'Builder tokens', 'Reviewer tokens']); // 0587: in its full view
   assert.equal(cell(p, '0901', 'Reviewer cost').textContent, '$0.40');
   assert.equal(cell(p, '0901', 'Total cost').textContent, '$3.31');
   assert.equal(cell(p, '0901', 'Total cost').title, '$3.31');
+  await open(p, '0902');
   for (const label of ['Builder cost', 'Reviewer cost', 'Total cost']) assert.equal(cell(p, '0902', label).textContent, '—', label);
 });
 
 test('0526 AC3: a total that leaves out a part with tokens but no cost says "at least", and its tooltip names each part left out', async () => {
   const p = page();
   await p.settle();
-  await open(p, '0901', '0903', '0904');
+  await open(p, '0903');
   assert.equal(cell(p, '0903', 'Total cost').textContent, 'at least $1.50');
   assert.match(cell(p, '0903', 'Total cost').title, /Reviewer cost unknown/);
+  assert.equal(cell(p, '0903', 'Total cost').title, 'at least $1.50: Reviewer cost unknown');
   assert.equal(cell(p, '0903', 'Reviewer cost').textContent, '—');
   // No part known at all: nothing to add up, so "—", with the parts named.
+  await open(p, '0904');
   assert.equal(cell(p, '0904', 'Total cost').textContent, '—');
   assert.equal(cell(p, '0904', 'Total cost').title, 'Builder cost unknown, Reviewer cost unknown, Watch agent cost unknown');
-  assert.equal(cell(p, '0903', 'Total cost').title, 'at least $1.50: Reviewer cost unknown');
+  await open(p, '0901');
   assert.equal(cell(p, '0901', 'Total cost').title.includes('unknown'), false);
 });
 
 test('0526 AC3: a reviewer cost that leaves out a round whose cost is unknown also says "at least"', async () => {
   const p = page();
   await p.settle();
-  await open(p, '0901', '0905');
+  await open(p, '0905');
   assert.equal(cell(p, '0905', 'Reviewer cost').textContent, 'at least $0.20');
   assert.equal(cell(p, '0905', 'Total cost').textContent, 'at least $1.20');
+  await open(p, '0901');
   assert.equal(cell(p, '0901', 'Reviewer cost').textContent, '$0.40');
 });
 
 // ---------- AC4 ----------
 
-test('0526 AC4: a shipped ticket\'s line shows its total cost where it showed its builder cost', async () => {
+test('0526 AC4 (0587): a shipped ticket\'s total cost is its row\'s tooltip, out of the line', async () => {
   const p = page();
   await p.settle();
-  const fig = id => p.all(cardOf(p, id)).find(n => n.className === 'figline')?.textContent;
-  assert.equal(fig('0901'), '15 min · 1 round · $3.31');
-  assert.equal(fig('0903'), '28 min · 1 round · at least $1.50');
-  assert.equal(fig('0902'), '30 min', 'no cost: none shown');
-  assert.equal(fig('0904'), '27 min · 1 round');
+  const meta = id => p.all(cardOf(p, id)).find(n => n.className === 'meta');
+  assert.match(meta('0901').title, /\$3\.31$/);
+  assert.match(meta('0903').title, /at least \$1\.50$/);
+  assert.doesNotMatch(meta('0902').title, /\$/, 'no cost: none shown');
+  assert.doesNotMatch(meta('0904').title, /\$/);
+  for (const id of ['0901', '0902', '0903', '0904']) assert.doesNotMatch(meta(id).textContent, /\$/, `${id}: not in the line`);
 });
 
 // ---------- AC5 ----------
@@ -163,18 +168,17 @@ test('0526 AC4: a shipped ticket\'s line shows its total cost where it showed it
 test('0526 AC5: the stats add the total cost of the shipped tickets with a known total, saying how many it covers', async () => {
   const p = page();
   await p.settle();
-  const stats = p.byId('shipped-stats');
-  assert.match(stats.textContent, /, \$1\.50, \$6\.01 total$/, 'beside the median builder cost');
-  const part = p.all(stats).find(n => n.className === 'part' && /total/.test(n.textContent));
-  assert.equal(part.title, 'Total AI cost of the shipped tickets shown, over 3 tickets, at least: some of their costs are unknown');
+  const tile = p.byId('shipped-more').children.find(c => /total cost/.test(c.textContent)); // 0587: a tile under More stats
+  assert.equal(tile.textContent, '$6.01total cost3 tickets');
+  assert.equal(tile.title, 'Total AI cost of the shipped tickets shown, over 3 tickets, at least: some of their costs are unknown');
   const m = panelModel({ Date: stoppedClock(NOW) })({ run: { on: false }, ideas: [], tickets: TICKETS });
   assert.deepEqual(m.stats.totalCost, { sum: 6.01, count: 3, partial: true });
 });
 
-test('0526 AC5: with no known total the stats line shows no total', async () => {
+test('0526 AC5: with no known total the stats show no total', async () => {
   const p = page([TICKETS[1]]);
   await p.settle();
-  assert.equal(p.byId('shipped-stats').textContent, '1 today · median 30 min, –');
+  assert.deepEqual(p.byId('shipped-more').children.map(c => c.children.find(n => n.className === 'label').textContent), ['shipped today', 'median builder cost', 'median reviewer tokens', 'median builder tokens']);
 });
 
 test('0526 AC1: the brief names the total fields speck status --json gives', () => {

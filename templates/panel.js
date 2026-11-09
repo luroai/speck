@@ -149,7 +149,7 @@ const openNotes = new Set(); // paths of the open notes in Capture (0520)
 // starButtons: each note's star as last built, so a redraw can put the focus back on it.
 const starWanted = new Map(), starRefused = new Map(), starLast = new Map(), starAnswered = new Map(), starButtons = new Map();
 let starPresses = 0;
-let moreStats = false; // whether Shipped shows all six stats (0162)
+let moreStats = false; // whether Shipped shows its other figures (0162, 0587)
 const logs = new Map(); // id → the log shown for an open queue ticket ({ text, truncated, build, at }), or { failed: true } before any arrived
 const logEarly = new Map(); // id → the updates its stream sent while its log was still being asked for (0189)
 const logRetry = new Set(); // ids whose log couldn't be loaded, asked for again at the stream's next keep-alive (0189)

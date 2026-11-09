@@ -141,7 +141,7 @@ test('0050 AC4: the in-flight minutes since started and a Shipped time crossing 
   await refresh(p);
   assert.ok(keptRow() && keptShip(), 'both selections stayed');
   assert.equal(minutes(), '8', 'the minutes moved on');
-  assert.match(when(), /^\d+ \w{3}$/, 'the time became the day (0420: the day alone in the line)');
+  assert.match(when(), /^\d+ \w{3}, 23:48$/, 'the time became the date and time (0587)');
   now += 60000;
   await refresh(p);
   assert.ok(keptRow() && keptShip());
@@ -166,7 +166,7 @@ test('0050 AC5: when a row\'s own ticket data changes, the new content shows in 
   assert.ok(!p.byId('full-ticket').textContent.includes('Which way'));
   assert.equal(byClass(p, await fullViewOf(p, '0003'), 'exit').textContent, 'A new last message.');
   assert.ok(rowOf(p, '0005').textContent.includes('Renamed ready'));
-  assert.match(shipOf(p, '0011').textContent, /15 min · 2 rounds/); // one line of figures since 0162
+  assert.match(shipOf(p, '0011').textContent, /2 rounds · 15 min/); // one line of figures since 0162, rounds first since 0587
   await refresh(p);
   assert.match(whereOf(p, '0003'), /^Has a question/, 'its row now says it has a question');
   assert.ok(p.byId('full-ticket').textContent.includes('Stopped and blocked.'));
@@ -298,7 +298,7 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
     await clock(late + 2 * 60000);
     await b.until(`document.querySelector('${when}').textContent !== '23:48'`, 'midnight to pass');
     const date = await b.js(`document.querySelector('${when}').textContent`);
-    assert.match(date, /^\d+ \w{3}$/, 'past midnight it shows the day (0420: the day alone in the line)');
+    assert.match(date, /^\d+ \w{3}, 23:48$/, 'past midnight it shows the date and time (0587)');
     assert.equal(await sel(), date, 'and the selection follows it');
     // From the title across the minutes.
     await b.js(openLane('build')); // 0410

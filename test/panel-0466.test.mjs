@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T, round, fakePage, shippedRows, queueRows, click } from './support/panel.mjs';
 
-// ---------- 0466: a shipped ticket opens and closes from its top row, as a Build ticket does ----------
+// ---------- 0466: a shipped ticket opens from its row. 0587: its full view, as a Build ticket's does ----------
 
 const clone = v => JSON.parse(JSON.stringify(v));
 const board = () => ({ run: { on: true }, ideas: [], tickets: [
@@ -24,13 +24,12 @@ function livePage(s = board()) {
 }
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')?._text;
 const card = (p, id) => shippedRows(p).find(r => idOf(p, r) === id);
-const isOpen = (p, id) => /\bopen\b/.test(card(p, id).className);
 const titleOf = (p, id) => p.all(card(p, id)).find(n => n.className === 'title');
 const cell = (p, id, cls) => card(p, id).children.find(n => n && n.className === cls);
 const buttons = (p, id) => p.all(card(p, id)).filter(n => n.tagName === 'button');
-const named = (p, id, text) => buttons(p, id).find(b => b.textContent === text);
 const pane = p => p.byId('full-ticket');
 const paneOpen = p => !pane(p).hidden && pane(p).children.length > 0;
+const closePane = async p => { click(p.all(pane(p)).find(n => /\bclose\b/.test(n.className))); await p.settle(); };
 // A key pressed on a node, as the browser sends it to the node holding the focus.
 function keyOn(n, key) {
   let prevented = false;
@@ -38,61 +37,45 @@ function keyOn(n, key) {
   return prevented;
 }
 
-test('0466 AC1: pressing a shipped ticket\'s title or anywhere on its top row opens it in place, and pressing again closes it', async () => {
+test('0466 AC1 (0587): pressing a shipped ticket\'s title or anywhere on its row opens its full view', async () => {
   const p = livePage();
   await p.settle();
-  p.press(titleOf(p, '0901'));
-  assert.ok(isOpen(p, '0901'), 'the title opens it');
-  assert.ok(!paneOpen(p), 'and opens no full ticket');
-  p.press(titleOf(p, '0901'));
-  assert.ok(!isOpen(p, '0901'), 'the title again closes it');
-  p.press(cell(p, '0901', 'sum').children[0]);
-  assert.ok(isOpen(p, '0901'), 'its second line opens it');
-  p.press(p.all(cell(p, '0901', 'steps')).find(n => n.className === 'facts'));
-  assert.ok(!isOpen(p, '0901'), 'an open one\'s facts table, in its top row, closes it');
-  p.press(cell(p, '0901', 'name').children[0].children[0]);
-  assert.ok(isOpen(p, '0901'), 'its id opens it');
-  p.press(card(p, '0901'));
-  assert.ok(!isOpen(p, '0901'), 'the card\'s own edge, around its cells, closes it');
-  p.press(card(p, '0901'));
-  assert.ok(!isOpen(p, '0902'), 'the other card stays as it was');
-  assert.ok(!paneOpen(p));
+  for (const [what, node] of [['the title', () => titleOf(p, '0901')], ['the second line', () => cell(p, '0901', 'sum').children[0]],
+    ['the id', () => cell(p, '0901', 'name').children[0].children[0]], ['the row\'s own edge', () => card(p, '0901')]]) {
+    p.press(node());
+    assert.ok(paneOpen(p), `${what} opens it`);
+    assert.equal(pane(p).children[0].children[0].textContent, '0901', `${what}: that ticket`);
+    assert.doesNotMatch(card(p, '0901').className, /\bopen\b/, `${what}: the row stays a row`);
+    await closePane(p);
+  }
 });
 
-test('0466 AC1: a click on what\'s under the top row, a push warning or the buttons\' row, leaves the card as it is', async () => {
+test('0466 AC1 (0587): a click on the push warning under a row leaves it as it is', async () => {
   const s = board();
   s.tickets.push(T('0903', 'done', { title: 'Not pushed', ship: { unpushed: true, message: 'Push it yourself.' } }));
   const p = livePage(s);
   await p.settle();
   assert.ok(cell(p, '0903', 'unpushed'), 'a push warning');
   p.press(p.all(cell(p, '0903', 'unpushed')).find(n => n.className === 'unpushed-said') || cell(p, '0903', 'unpushed'));
-  assert.ok(!isOpen(p, '0903'), 'the warning on a closed card doesn\'t open it');
-  p.press(titleOf(p, '0903'));
+  assert.ok(!paneOpen(p), 'the warning opens no full view');
   p.press(cell(p, '0903', 'unpushed'));
-  assert.ok(isOpen(p, '0903'), 'nor does it close an open one');
-  p.press(cell(p, '0903', 'full-cell'));
-  assert.ok(isOpen(p, '0903'), 'nor does the space around Full ticket and Review pack');
+  assert.ok(!paneOpen(p), 'nor does the space around its words');
 });
 
-test('0466 AC1: a shipped ticket\'s title is reached with Tab and opens and closes with Enter or Space, keeping the focus', async () => {
+test('0466 AC1 (0587): a shipped ticket\'s title is reached with Tab and opens the full view with Enter or Space', async () => {
   const p = livePage();
   await p.settle();
-  let title = titleOf(p, '0901');
-  assert.equal(title.tabIndex, 0, 'Tab reaches it');
-  assert.equal(title.attrs.role, 'button');
-  assert.equal(title.attrs['aria-expanded'], 'false');
-  title.focus();
-  assert.ok(keyOn(title, 'Enter'), 'Enter is taken');
-  assert.ok(isOpen(p, '0901'), 'Enter opens it');
-  title = titleOf(p, '0901');
-  assert.equal(title.attrs['aria-expanded'], 'true');
-  assert.equal(p.focused(), title, 'the title drawn in its place has the focus');
-  assert.ok(keyOn(title, ' '), 'Space is taken, so the page doesn\'t scroll');
-  assert.ok(!isOpen(p, '0901'), 'Space closes it');
-  assert.equal(p.focused(), titleOf(p, '0901'));
-  assert.ok(!keyOn(titleOf(p, '0901'), 'a'), 'other keys do nothing');
-  assert.ok(!isOpen(p, '0901'));
-  assert.ok(!paneOpen(p), 'no full ticket opened');
+  for (const key of ['Enter', ' ']) {
+    const title = titleOf(p, '0901');
+    assert.equal(title.tabIndex, 0, 'Tab reaches it');
+    assert.equal(title.attrs.role, 'button');
+    assert.ok(!keyOn(title, 'a'), 'other keys do nothing');
+    assert.ok(!paneOpen(p));
+    title.focus();
+    assert.ok(keyOn(title, key), `${JSON.stringify(key)} is taken, so the page doesn't scroll`);
+    assert.ok(paneOpen(p), `${JSON.stringify(key)} opens it`);
+    await closePane(p);
+  }
 });
 
 test('0466 AC1: a Build ticket\'s top row opens its full ticket, not the row itself (0585)', async () => {
@@ -106,50 +89,39 @@ test('0466 AC1: a Build ticket\'s top row opens its full ticket, not the row its
   assert.ok(!/\bopen\b/.test(row().className), 'the row stays as it was');
 });
 
-test('0466 AC2: a shipped ticket has no Details button, open or closed', async () => {
+test('0466 AC2 (0587): a shipped row has no buttons, Details or otherwise', async () => {
   const p = livePage();
   await p.settle();
-  for (const id of ['0901', '0902']) {
-    assert.deepEqual(buttons(p, id).map(b => b.textContent), [], `${id} closed: no buttons`);
-    p.press(titleOf(p, id));
-    assert.ok(!buttons(p, id).some(b => b.textContent === 'Details' || /\bdetails\b/.test(b.className)), `${id} open: no Details`);
-  }
+  for (const id of ['0901', '0902']) assert.deepEqual(buttons(p, id).map(b => b.textContent), [], id);
 });
 
-test('0466 AC3: the open card has Full ticket, then Review pack, and Full ticket opens the full ticket', async () => {
+test('0466 AC3 (0587): the full view of a ticket with rounds has a Review pack row, which opens the review pack', async () => {
   const p = livePage();
   await p.settle();
   p.press(titleOf(p, '0901'));
-  assert.deepEqual(cell(p, '0901', 'full-cell').children.map(b => b.textContent), ['Full ticket', 'Review pack']);
-  const b = named(p, '0901', 'Full ticket');
-  assert.equal(b.className, 'full-open', 'the same button an open Build ticket has');
+  const b = p.all(pane(p)).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
+  assert.equal(b.className, 'pane-row');
   p.press(b);
-  assert.ok(paneOpen(p), 'the full ticket opens');
-  assert.equal(pane(p).children[0].children[0].textContent, '0901');
-  assert.ok(isOpen(p, '0901'), 'the card stays open behind it');
+  await p.settle();
+  assert.equal(p.all(pane(p)).find(n => n.className === 'title').textContent, 'Review pack');
 });
 
-test('0466 AC3: Close brings the focus back to the shipped card\'s Full ticket button', async () => {
+test('0466 AC3 (0587): Close brings the focus back to the shipped row\'s title', async () => {
   const p = livePage();
   await p.settle();
   p.press(titleOf(p, '0901'));
-  p.press(named(p, '0901', 'Full ticket'));
   assert.equal(p.focused(), pane(p), 'the pane takes the focus');
-  click(p.all(pane(p)).find(n => /\bclose\b/.test(n.className)));
-  await p.settle();
+  await closePane(p);
   assert.ok(!paneOpen(p));
-  assert.equal(p.focused(), named(p, '0901', 'Full ticket'), 'back on its Full ticket button');
+  assert.equal(p.focused(), titleOf(p, '0901'), 'back on its title');
 });
 
-test('0466 AC4: a shipped ticket\'s open or closed state is kept as the list refreshes', async () => {
+test('0466 AC4 (0587): a shipped row and an open full view are kept as the list refreshes', async () => {
   const p = livePage();
   await p.settle();
+  const row = card(p, '0901');
   p.press(titleOf(p, '0901'));
   for (let i = 0; i < 2; i++) { p.timers.shift()?.(); await p.settle(); }
-  assert.ok(isOpen(p, '0901'), 'open stays open');
-  assert.ok(!isOpen(p, '0902'), 'closed stays closed');
-  p.press(titleOf(p, '0901'));
-  p.timers.shift()?.();
-  await p.settle();
-  assert.ok(!isOpen(p, '0901'), 'closed again stays closed');
+  assert.equal(card(p, '0901'), row, 'the same row');
+  assert.ok(paneOpen(p), 'the full view stays open');
 });

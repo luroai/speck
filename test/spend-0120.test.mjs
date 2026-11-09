@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { CLI, env, runRepo, startRun, until, stopRun, record } from './support/run.mjs';
-import { panelModel, T, round, fakePage, shippedRows, openDetails } from './support/panel.mjs';
+import { panelModel, T, round, fakePage, shippedRows } from './support/panel.mjs';
 import { builderSpend } from '../scripts/core.mjs';
 
 // ---------- 0120: record what each build's builder spends ----------
@@ -83,8 +83,8 @@ test('0120 AC2: speck status --json gives each ticket\'s recorded builder tokens
   assert.deepEqual([s('0004').builder_tokens, s('0004').builder_cost_usd], [null, null], 'not numbers');
 });
 
-// 0464: an open card's figures are in its facts table, after its Shipped cell, whose time depends on the clock
-const figsOf = tr => tr.children.find(n => n.className === 'steps').children.find(n => n.className === 'facts').children.slice(1).map(c => c.textContent).join('');
+// 0587: a shipped ticket's own figures are the last five cells of its full view's facts table
+const figsOf = async (p, tr) => { p.press(tr); await p.settle(); return p.all(p.byId('full-ticket')).find(n => n.className === 'facts').children.slice(-5).map(c => c.textContent).join(''); };
 test('0120 AC3: Shipped rows label the existing figure as reviewer tokens and show the builder\'s tokens and cost', async () => {
   const now = Date.now(), iso = ms => new Date(ms).toISOString();
   const p = fakePage([{ tickets: [
@@ -92,11 +92,10 @@ test('0120 AC3: Shipped rows label the existing figure as reviewer tokens and sh
     T('0012', 'done', { started: iso(now - 9 * 60000), finished: iso(now - 60000), rounds: [round(1, 300)], builder_tokens: 1000, builder_cost_usd: null }),
   ], ideas: [] }]);
   await p.settle();
-  await openDetails(p); // 0162: the labelled figures are under Details
   // 0157: label and value pairs, a token count from 10,000 up shortened.
-  const [a, b] = shippedRows(p).map(figsOf);
-  assert.equal(a, 'Time4 minReview rounds1Builder cost$1.16Reviewer cost—Total cost—Builder tokens2.3MReviewer tokens1,200');
-  assert.equal(b, 'Time8 minReview rounds1Builder cost—Reviewer cost—Total cost—Builder tokens1,000Reviewer tokens300', 'a dash for what isn\'t recorded (0464)');
+  const [first, second] = shippedRows(p);
+  assert.equal(await figsOf(p, first), 'Builder cost$1.16Reviewer cost—Total cost—Builder tokens2.3MReviewer tokens1,200');
+  assert.equal(await figsOf(p, second), 'Builder cost—Reviewer cost—Total cost—Builder tokens1,000Reviewer tokens300', 'a dash for what isn\'t recorded (0464)');
 });
 
 test('0120 AC4: the stats add median builder tokens and cost, each over the done tickets with that data', async () => {
@@ -116,9 +115,8 @@ test('0120 AC4: the stats add median builder tokens and cost, each over the done
   const p = fakePage([state]);
   await p.settle();
   const texts = p.byId('shipped-more').children.map(c => c.textContent);
-  assert.match(p.byId('shipped-stats').textContent, /, \$0\.88$/); // one line since 0420
-  assert.equal(p.all(p.byId('shipped-stats')).find(n => n.className === 'part' && n.textContent === '$0.88').title, 'Median builder cost, over 2 tickets');
-  assert.deepEqual(texts.slice(1), ['–median reviewer tokens0 tickets', '300median builder tokens3 tickets']); // as 0162 lays them out
+  assert.deepEqual(texts.slice(1), ['$0.88median builder cost2 tickets', '–median reviewer tokens0 tickets', '300median builder tokens3 tickets']); // 0587: all under More stats
+  assert.equal(p.byId('shipped-more').children[1].title, 'Median builder cost, over 2 tickets');
 });
 
 test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipped is unchanged', async () => {
@@ -126,11 +124,10 @@ test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipp
   const state = { tickets: [T('0011', 'done', { started: iso(now - 4 * 60000), finished: iso(now), rounds: [round(1, 1200), round(2, 300)] })], ideas: [] };
   const p = fakePage([state]);
   await p.settle();
-  await openDetails(p);
-  assert.equal(figsOf(shippedRows(p)[0]), 'Time4 minReview rounds2Builder cost—Reviewer cost—Total cost—Builder tokens—Reviewer tokens1,500'); // as 0464 lays them out
-  assert.equal(p.byId('shipped-stats').textContent, '1 today · median 4 min, –'); // one line since 0420
+  assert.equal(await figsOf(p, shippedRows(p)[0]), 'Builder cost—Reviewer cost—Total cost—Builder tokens—Reviewer tokens1,500');
+  assert.deepEqual(p.byId('shipped-stats').children.map(c => c.textContent), ['4 minmedian build time1 ticket', '2median review rounds1 ticket', '0%approved first round1 ticket']); // 0587: three tiles
   assert.deepEqual(p.byId('shipped-more').children.map(c => c.textContent),
-    ['2median review rounds1 ticket', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']); // as 0162 lays them out
+    ['1shipped today', '–median builder cost0 tickets', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']); // 0587: the others
   const m = panelModel()(state);
   assert.equal(m.shipped[0].tokens, 1500);
   assert.equal(m.shipped[0].builderTokens, null);

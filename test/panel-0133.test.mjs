@@ -4,13 +4,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, freePort, startPanel, stop, request, post, tokenOf, fakePage, T, queueRows, shippedRows, panelModel, deferred, openDetails, fullViewOf } from './support/panel.mjs';
+import { ROOT, freePort, startPanel, stop, request, post, tokenOf, fakePage, T, queueRows, shippedRows, panelModel, deferred, shippedPack, fullViewOf, round } from './support/panel.mjs';
 import { shipRepo } from './support/ship.mjs';
 
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
 const STATE = () => ({ ideas: [], tickets: [
   T('0005', 'approved', { started: ago(30) }), T('0006', 'building', { started: ago(10) }), T('0007', 'ready'),
-  T('0010', 'done', { started: ago(50), finished: ago(20) }),
+  T('0010', 'done', { started: ago(50), finished: ago(20), rounds: [round(1, 100)] }), // 0587: the full view offers a pack once a round has run
 ] });
 const PACK = '## 0005 · Ticket 0005\n**Verdict:** ✅ Approved by reviewer\n\n### Risk\n- Ticket risk: **high**\n';
 
@@ -54,9 +54,8 @@ test('0133 AC1: the review pack of an approved ticket has a Ship button', async 
 test('0133 AC1: a ticket in any other status has no Ship button, and there is none outside a review pack', async () => {
   const p = page();
   await p.settle();
-  // The shipped ticket's pack: done, so no Ship button. Its Review pack is under Details since 0162.
-  await openDetails(p);
-  p.press(buttonsIn(p, shippedRows(p).find(r => r.textContent.includes('0010')), 'Review pack')[0]);
+  // The shipped ticket's pack: done, so no Ship button. Its Review pack is in its full view since 0587.
+  p.press(await shippedPack(p, () => shippedRows(p).find(r => r.textContent.includes('0010'))));
   await p.settle();
   assert.ok(pane(p).textContent.includes('Approved by reviewer'), 'the pack shows');
   assert.equal(shipOf(p), null, 'no Ship button on a done ticket\'s pack');

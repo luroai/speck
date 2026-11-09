@@ -85,7 +85,7 @@ test('0434 AC3: a Build row shows no priority, size or risk; its full view does'
   assert.deepEqual(factsOf(await fullViewOf(p, '0426')).slice(0, 3), [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'high']], '0426: its full view shows its priority, size and risk');
 });
 
-test('0434 AC4: a closed Shipped ticket\'s title is one line, cut off with an ellipsis, with the whole title as its tooltip; an open one wraps; a Build or Plan row\'s wraps (0586)', async () => {
+test('0434 AC4: a title keeps its whole text and tooltip; a Shipped (0587), Build or Plan row\'s wraps (0586)', async () => {
   const s = board();
   s.tickets.push(T('0911', 'done', { title: LONG, end: ago(60) }));
   const p = page(s);
@@ -98,20 +98,16 @@ test('0434 AC4: a closed Shipped ticket\'s title is one line, cut off with an el
   }
   assert.equal(p.all(card(p, '0426')).find(n => n.className === 'title').textContent, LONG, 'Build: the whole title is its text');
   const style = css();
-  const rule = /#shipped tr:not\(\.open\) \.line \.title \{([^}]*)\}/.exec(style);
-  assert.ok(rule, 'the rule for a closed Shipped ticket\'s title');
-  assert.match(rule[1], /white-space: nowrap;/);
-  assert.match(rule[1], /overflow: hidden;/);
-  assert.match(rule[1], /text-overflow: ellipsis;/);
+  const rule = /#shipped \.line \.title \{([^}]*)\}/.exec(style);
+  assert.ok(rule, 'the rule for a Shipped row\'s title');
+  assert.doesNotMatch(rule[1], /nowrap|ellipsis/, 'a Shipped row\'s title wraps (0587)');
+  assert.match(rule[1], /overflow-wrap: anywhere;/);
   assert.match(style, /\.q\.row \.top \.line \.title \{ white-space: normal; overflow: visible;/, 'a Build row\'s title wraps');
   assert.match(style, /\.item\.row \.line \.title \{[^}]*white-space: normal; overflow: visible;/, 'a Plan or Capture row\'s title wraps');
   // an open one is marked open, so the rule leaves it to wrap
   click(topOf(card(p, '0801')));
   await p.settle();
-  p.press(p.all(shippedRows(p).find(r => idOf(p, r) === '0911')).find(n => n.className === 'title')); // 0466: its title opens it
-  await p.settle();
   assert.match(card(p, '0801').className, /\bopen\b/);
-  assert.match(shippedRows(p).find(r => idOf(p, r) === '0911').className, /\bopen\b/);
 });
 
 test('0434 AC5: a Build row shows nothing but its two lines, and its full view shows the rest', async () => {

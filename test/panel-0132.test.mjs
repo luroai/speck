@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, request, fakePage, T, queueRows, shippedRows, deferred, openDetails, fullViewOf } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, request, fakePage, T, queueRows, shippedRows, deferred, shippedPack, fullViewOf, round } from './support/panel.mjs';
 import { shipRepo } from './support/ship.mjs';
 
 const pane = p => p.byId('full-ticket');
@@ -11,7 +11,7 @@ const tags = (p, n, tag) => p.all(n).filter(x => x.tagName === tag);
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
 const STATE = { ideas: [], tickets: [
   T('0005', 'approved', { started: ago(30) }), T('0006', 'building', { started: ago(10) }), T('0007', 'ready'),
-  T('0009', 'done', { started: ago(90), finished: ago(60) }), T('0010', 'done', { started: ago(50), finished: ago(20) }),
+  T('0009', 'done', { started: ago(90), finished: ago(60), rounds: [round(1, 100)] }), T('0010', 'done', { started: ago(50), finished: ago(20), rounds: [round(1, 100)] }), // 0587: the full view offers a pack once a round has run
 ] };
 const clone = s => JSON.parse(JSON.stringify(s));
 
@@ -49,14 +49,12 @@ const PACK = [
 ].join('\n');
 
 const LOG = { text: '', truncated: false };
-// Opens the pack from a row, after opening the ticket's full view first if it's in the queue (0585), or its Details in Shipped (0162).
+// Opens the pack from a ticket's full view, which its row opens (0585; 0587 in Shipped).
 async function openPack(row, response = { pack: PACK }) {
   const queued = row === approvedRow;
   const p = fakePage([clone(STATE), ...(queued ? [LOG] : []), response, clone(STATE)]);
   await p.settle();
-  let from;
-  if (queued) from = await fullViewOf(p, '0005'); else { await openDetails(p); from = row(p); }
-  const b = packButtons(p, from)[0];
+  const b = queued ? packButtons(p, await fullViewOf(p, '0005'))[0] : await shippedPack(p, () => row(p));
   assert.ok(b, 'the row has a Review pack button');
   p.press(b);
   await p.settle();
@@ -71,11 +69,9 @@ test('0132 AC1: each approved ticket in the queue, in its full view, and each Sh
   assert.equal(queueRows(p).length, 3);
   for (const r of queueRows(p)) assert.equal(packButtons(p, r).length, 0, 'a row has no buttons (0585)');
   for (const id of ['0005', '0006', '0007']) assert.equal(packButtons(p, await fullViewOf(p, id)).length, id === '0005' ? 1 : 0, id);
-  for (const r of shippedRows(p)) assert.equal(packButtons(p, r).length, 0, 'a Shipped card keeps Review pack under Details (0162)');
-  await openDetails(p);
-  const shipped = shippedRows(p);
-  assert.equal(shipped.length, 2);
-  for (const r of shipped) assert.equal(packButtons(p, r).length, 1);
+  for (const r of shippedRows(p)) assert.equal(packButtons(p, r).length, 0, 'a Shipped row has no buttons (0587)');
+  assert.equal(shippedRows(p).length, 2);
+  for (const i of [0, 1]) { assert.ok(await shippedPack(p, () => shippedRows(p)[i]), 'in its full view (0587)'); assert.equal(packButtons(p, pane(p)).length, 1); }
   assert.equal(packButtons(p, p.byId('shaping')).length, 0);
 });
 
@@ -131,25 +127,24 @@ test('0132 AC2 (self-check): a pack that arrives after its pane was closed, or r
   const late = deferred();
   const p = fakePage([clone(STATE), late, clone(STATE)]);
   await p.settle();
-  await openDetails(p); // 0162
-  p.press(packButtons(p, shippedRow(p))[0]);
+  p.press(await shippedPack(p, () => shippedRow(p)));
   await p.settle();
   assert.ok(pane(p).textContent.includes('Loading the review pack'));
-  p.key('Escape');
+  p.key('Escape'); // 0583: from the pack back to the full view
+  p.key('Escape'); // and closed
   late.resolve({ ok: true, status: 200, json: async () => ({ pack: PACK }) });
   await p.settle();
   assert.equal(pane(p).hidden, true, 'still closed');
   const later = deferred();
   const q = fakePage([clone(STATE), later, clone(STATE)]);
   await q.settle();
-  await openDetails(q); // 0162
-  q.press(packButtons(q, shippedRow(q))[0]);
+  q.press(await shippedPack(q, () => shippedRow(q)));
   await q.settle();
-  q.press(q.all(shippedRow(q)).find(x => x.tagName === 'button' && x.textContent === 'Full ticket')); // its card's Full ticket (0466)
+  q.press(shippedRow(q)); // 0587: its row opens the full ticket
   later.resolve({ ok: true, status: 200, json: async () => ({ pack: PACK }) });
   await q.settle();
   assert.ok(!pane(q).textContent.includes('Approved by reviewer'), 'the full ticket stays');
-  assert.ok(!pane(q).textContent.includes('Review pack'));
+  assert.equal(packButtons(q, pane(q)).length, 1, 'the full ticket, with its Review pack button, not the pack (0587)');
 });
 
 test('0132 AC2 AC4: the server sends `speck pack`\'s text for an approved and a shipped ticket, and changes no file', async () => {

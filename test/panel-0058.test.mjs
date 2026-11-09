@@ -168,8 +168,8 @@ test('0058 AC5: the Shipped rows and the median stat keep whole minutes', async 
   const figs = shippedRows(p).flatMap(r => p.all(r).filter(n => n.className === 'figline').map(n => n.textContent));
   assert.equal(figs.length, 2);
   assert.ok(!figs.some(t => /\d\d:\d\d|\d+:\d\d min/.test(t)), 'no MM:SS in Shipped');
-  const stats = p.byId('shipped-stats').textContent;
-  assert.ok(stats.includes('median 12 min'), `the median is whole minutes: ${stats}`); // one line since 0420
+  const stats = p.byId('shipped-stats').children[0].textContent;
+  assert.ok(stats.startsWith('12 min'), `the median is whole minutes: ${stats}`); // a tile since 0587
 });
 
 // ---------- in a real browser ----------

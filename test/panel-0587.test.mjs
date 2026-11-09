@@ -106,6 +106,13 @@ test('0587 AC2: a press that ends selecting text in the row opens nothing', asyn
   assert.equal(p.byId('full-ticket').hidden, true);
 });
 
+test('0587 AC2: pressing a bug tag in the row explains the tag and opens nothing', async () => {
+  const p = await show([shippedAt('0701', { type: 'bug' })]);
+  p.press(one(p, rowOf(p, '0701'), 'bug'));
+  await p.settle();
+  assert.equal(p.byId('full-ticket').hidden, true);
+});
+
 test('0587 AC2: the review pack can still be reached, from the full view', async () => {
   const p = await show([shippedAt('0701')]);
   click(rowOf(p, '0701'));

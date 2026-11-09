@@ -69,17 +69,17 @@ test('0162 AC2: a ticket in flight also brings the full layout back', async () =
 
 // ---------- AC3 ----------
 
-// 0420: the first three are one line of stats, not tiles.
-test('0162 AC3: Shipped shows three stats, and More stats shows and hides the other three', async () => {
+// 0587: three tiles up top, and More stats shows and hides the rest.
+test('0162 AC3: Shipped shows three stats, and More stats shows and hides the others', async () => {
   const p = fakePage([STATE(), STATE()]);
   await p.settle();
-  assert.match(p.byId('shipped-stats').textContent, /^\d+ today · median \d+ min, \$[\d.]+, \$[\d.]+ total$/);
+  assert.deepEqual(tiles(p, 'shipped-stats').map(t => t[1]), ['median build time', 'median review rounds', 'approved first round']);
   const more = p.byId('more-stats');
   assert.equal(more.hidden, false);
   assert.equal(more.textContent, 'More stats');
   assert.equal(more.attrs['aria-expanded'], 'false');
-  assert.equal(p.byId('shipped-more').hidden, true, 'the other three start hidden');
-  assert.deepEqual(tiles(p, 'shipped-more').map(t => t[1]), ['median review rounds', 'median reviewer tokens', 'median builder tokens']);
+  assert.equal(p.byId('shipped-more').hidden, true, 'the others start hidden');
+  assert.deepEqual(tiles(p, 'shipped-more').map(t => t[1]), ['shipped today', 'median builder cost', 'total cost', 'median reviewer tokens', 'median builder tokens']);
   p.press(more);
   await p.settle();
   assert.equal(p.byId('shipped-more').hidden, false);
@@ -96,14 +96,14 @@ test('0162 AC3: Shipped shows three stats, and More stats shows and hides the ot
 test('0162 AC3: every stat over 9,999 is shortened as the cards\' figures are, with the exact number as a tooltip', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
+  assert.deepEqual(tiles(p, 'shipped-stats'), [['23 min', 'median build time', null], ['1.5', 'median review rounds', null], ['50%', 'approved first round', null]]);
   // Reviewer tokens 108,234 and 500, builder tokens 2,412,345 alone.
-  assert.deepEqual(tiles(p, 'shipped-more'), [['1.5', 'median review rounds', null], ['54k', 'median reviewer tokens', '54,367'],
+  assert.deepEqual(tiles(p, 'shipped-more').slice(1), [['$2.91', 'median builder cost', null], ['$2.91', 'total cost', null], ['54k', 'median reviewer tokens', '54,367'],
     ['2.4M', 'median builder tokens', '2,412,345']]);
-  const line = q => [q.byId('shipped-stats').textContent.replace(/^\d+ today · /, ''), byClass(q, q.byId('shipped-stats'), 'num').slice(1).map(n => n.title || null)]; // one line since 0420
-  assert.deepEqual(line(p), ['median 23 min, $2.91, $2.91 total', [null, null, null]]); // 0526: and the total
   const big = fakePage([{ tickets: [T('0011', 'done', { started: ago(20000 * 60), finished: ago(0), builder_cost_usd: 12345.678 })], ideas: [] }]);
   await big.settle();
-  assert.deepEqual(line(big), ['median 20k min, $12k', ['20,000', '$12,345.68']]);
+  assert.deepEqual(tiles(big, 'shipped-stats')[0], ['20k min', 'median build time', '20,000']);
+  assert.deepEqual(tiles(big, 'shipped-more')[1], ['$12k', 'median builder cost', '$12,345.68']);
 });
 
 test('0162 AC3: with nothing shipped there are no stats and no More stats button', async () => {
@@ -116,64 +116,57 @@ test('0162 AC3: with nothing shipped there are no stats and no More stats button
 
 // ---------- AC4 ----------
 
-test('0162 AC4: a shipped card shows its id and title, its ship time and one line of figures, and its title opens it (0466: no Details button)', async () => {
+test('0162 AC4: a shipped row shows its id and title, its ship time and one line of figures, and has no buttons (0587)', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
   const a = cardOf(p, '0401');
   assert.deepEqual(a.children.map(n => n.className), ['name', 'sum'], 'the ship time in the line of figures since 0420');
   assert.deepEqual(byClass(p, a, 'line')[0].children.map(n => n.textContent), ['0401', 'Every figure']);
-  assert.equal(byClass(p, a, 'figline')[0].textContent, '15 min · 2 rounds · $2.91');
-  assert.equal(byClass(p, cardOf(p, '0402'), 'figline')[0].textContent, '30 min · 1 round');
+  assert.equal(byClass(p, a, 'figline')[0].textContent, '2 rounds · 15 min');
+  assert.equal(byClass(p, cardOf(p, '0402'), 'figline')[0].textContent, '1 round · 30 min');
   assert.deepEqual(byClass(p, cardOf(p, '0403'), 'figline'), [], 'no figures: no line of them');
   for (const id of ['0401', '0402', '0403']) {
-    assert.deepEqual(p.all(cardOf(p, id)).filter(n => n.tagName === 'button').map(n => n.textContent), [], `${id}: no Details button (0466)`);
-    assert.equal(byClass(p, cardOf(p, id), 'title')[0].attrs['aria-expanded'], 'false', `${id}: its title opens it`);
+    assert.deepEqual(p.all(cardOf(p, id)).filter(n => n.tagName === 'button').map(n => n.textContent), [], `${id}: no buttons on the row`);
+    assert.equal(byClass(p, cardOf(p, id), 'title')[0].attrs.role, 'button', `${id}: its title opens it`);
   }
-  assert.deepEqual(byClass(p, a, 'facts'), [], 'the labelled figures wait for it to open (0464: in the facts table)');
-  assert.ok(!p.all(a).some(n => n.textContent === 'Review pack'), 'and so does Review pack');
+  assert.deepEqual(byClass(p, a, 'facts'), [], 'the labelled figures are in the full view');
+  assert.ok(!p.all(a).some(n => n.textContent === 'Review pack'), 'and so is Review pack');
 });
 
-test('0162 AC4: opening the card shows the labelled figures and the Review pack button, and closing it hides them again', async () => {
+test('0162 AC4: pressing the row shows the labelled figures and the Review pack button in the full view, and leaves the row as it was (0587)', async () => {
   const p = fakePage([STATE(), STATE(), { pack: '# Review pack\n\nAll good.\n' }]);
   await p.settle();
-  p.press(byClass(p, cardOf(p, '0401'), 'title')[0]); // 0466: its title, where Details was
+  p.press(byClass(p, cardOf(p, '0401'), 'title')[0]);
   await p.settle();
-  let a = cardOf(p, '0401');
-  // 0464: its steps and its facts in a table, in place of its line
-  assert.deepEqual(a.children.map(n => n.className), ['name', 'steps', 'full-cell']);
-  assert.deepEqual(byClass(p, a, 'fact').map(f => [f.children[0].textContent, f.children[1].textContent]),
-    [['Shipped', byClass(p, a, 'fact')[0].children[1].textContent], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Reviewer cost', '—'], ['Total cost', '$2.91'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
-  assert.equal(byClass(p, a, 'title')[0].attrs['aria-expanded'], 'true');
-  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'sum'], 'only the card tapped opens');
+  const facts = () => Object.fromEntries(byClass(p, p.byId('full-ticket'), 'fact').map(f => [f.children[0].textContent, f.children[1].textContent]));
+  for (const [label, value] of [['Builder cost', '$2.91'], ['Reviewer cost', '—'], ['Total cost', '$2.91'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]) assert.equal(facts()[label], value, label);
+  assert.deepEqual(cardOf(p, '0401').children.map(n => n.className), ['name', 'sum']);
   await refresh(p);
-  a = cardOf(p, '0401');
-  assert.deepEqual(a.children.map(n => n.className), ['name', 'steps', 'full-cell'], 'still open after the next poll');
-  const pack = p.all(a).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
+  assert.equal(facts()['Builder cost'], '$2.91', 'still open after the next poll');
+  const pack = p.all(p.byId('full-ticket')).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
   p.press(pack);
   await p.settle();
   assert.ok(p.calls.some(c => /\/api\/tickets\/0401\/pack$/.test(c.url)), 'Review pack opens the pack as before');
   assert.ok(p.byId('full-ticket').textContent.includes('All good.'));
-  p.press(byClass(p, cardOf(p, '0401'), 'title')[0]);
-  await p.settle();
-  assert.deepEqual(cardOf(p, '0401').children.map(n => n.className), ['name', 'sum'], 'its title again hides them');
 });
 
-test('0162 AC4: a card with no figures still opens, showing Review pack', async () => {
+test('0162 AC4: a row with no figures still opens its full view (0587)', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
-  assert.deepEqual(cardOf(p, '0403').children.map(n => n.className), ['name'], 'closed: no line, and no Details (0466)');
+  assert.deepEqual(cardOf(p, '0403').children.map(n => n.className), ['name'], 'no line, and no Details (0466)');
   p.press(byClass(p, cardOf(p, '0403'), 'title')[0]);
   await p.settle();
-  assert.deepEqual(cardOf(p, '0403').children.map(n => n.className), ['name', 'steps', 'full-cell']);
+  assert.equal(p.byId('full-ticket').hidden, false);
+  assert.ok(p.byId('full-ticket').textContent.includes('0403'));
 });
 
-test('0162 AC4 (0466): tapping the title opens the card, not the full ticket', async () => {
+test('0162 AC4 (0587): tapping the title opens the full ticket, not the row in place', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
   p.press(byClass(p, cardOf(p, '0402'), 'title')[0]);
   await p.settle();
-  assert.equal(p.byId('full-ticket').hidden, true);
-  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'steps', 'full-cell']);
+  assert.equal(p.byId('full-ticket').hidden, false);
+  assert.deepEqual(cardOf(p, '0402').children.map(n => n.className), ['name', 'sum']);
 });
 
 // ---------- in a real browser ----------
@@ -232,46 +225,43 @@ for (const width of [375, 1280]) {
     }, { width, state: STATE({ queue: false }) });
   });
 
-  // 0420: the three are one line, with More stats at its end, and the other three are tiles in one row under it.
-  test(`0162 AC3: at ${width} px three stats show in one line, and More stats shows the other three in one row`, skip, async () => {
+  // 0587: three tiles in a row, More stats under them, and the others in tiles under that.
+  test(`0162 AC3: at ${width} px three stats show as tiles in one row, and More stats shows the others`, skip, async () => {
     await withPanel(async b => {
       await b.js(openLane('shipped')); // 0410
       const shown = () => b.js(`[...document.querySelectorAll('section.shipped .stat')].filter(n => n.getBoundingClientRect().height > 0).map(n => { const r = n.getBoundingClientRect(); return { top: Math.round(r.top), bottom: r.bottom, label: n.querySelector('.label').textContent }; })`);
-      assert.deepEqual(await shown(), [], 'no tiles until More stats');
-      const line = await b.js(`(() => { const r = document.getElementById('shipped-stats').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, right: r.right, text: document.getElementById('shipped-stats').innerText }; })()`);
-      assert.match(line.text, /^\d+ today · median \d+ min, \$[\d.]+, \$[\d.]+ total$/);
+      const before = await shown();
+      assert.deepEqual(before.map(t => t.label), ['median build time', 'median review rounds', 'approved first round'], 'three tiles until More stats');
+      assert.equal(new Set(before.map(t => t.top)).size, 1, 'one row');
       const more = await b.js(`(() => { const r = document.getElementById('more-stats').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, height: r.height, text: document.getElementById('more-stats').innerText }; })()`);
-      assert.ok(more.left >= line.right - 0.5 && more.top < line.bottom && more.bottom > line.top, 'More stats at the end of the line');
+      assert.ok(more.top >= before[0].bottom - 0.5, 'More stats under the tiles');
       assert.equal(more.text.toLowerCase(), 'more stats');
       if (width < 700) assert.ok(more.height >= 43.5, `More stats is ${more.height} px high`);
       await b.js(`document.getElementById('more-stats').click()`);
       await settle(b);
       const after = await shown();
-      assert.deepEqual(after.map(t => t.label), ['median review rounds', 'median reviewer tokens', 'median builder tokens']);
-      assert.equal(new Set(after.map(t => t.top)).size, 1, 'one row');
+      assert.deepEqual(after.slice(3).map(t => t.label), ['shipped today', 'median builder cost', 'total cost', 'median reviewer tokens', 'median builder tokens']);
       assert.deepEqual(await b.js(`[...document.querySelectorAll('section.shipped .stat .num')].filter(n => n.title).map(n => [n.textContent, n.title])`), [['54k', '54,367'], ['2.4M', '2,412,345']]);
     }, { width });
   });
 
-  test(`0162 AC4: at ${width} px a shipped card is compact until its title opens it`, skip, async () => {
+  test(`0162 AC4: at ${width} px a shipped row stays compact, and its title opens the full view (0587)`, skip, async () => {
     await withPanel(async b => {
       await b.js(openLane('shipped')); // 0410
       const card = `[...document.querySelectorAll('#shipped tr')].find(n => n.querySelector('.id').textContent === '0401')`;
       const look = () => b.js(`(() => { const c = ${card}, r = c.getBoundingClientRect(), fl = c.querySelector('.figline'), d = c.querySelector('.line .title');
         const lh = fl && (parseFloat(getComputedStyle(fl).lineHeight) || parseFloat(getComputedStyle(fl).fontSize) * 1.5);
-        return { height: r.height, figLines: fl ? Math.round(fl.getBoundingClientRect().height / lh) : 0, figs: !!c.querySelector('.facts'), pack: !!c.querySelector('.full-cell .full-open'),
-          details: d.getBoundingClientRect().height, title: getComputedStyle(d).color }; })()`);
+        return { height: r.height, figLines: fl ? Math.round(fl.getBoundingClientRect().height / lh) : 0, figs: !!c.querySelector('.facts'), buttons: c.querySelectorAll('button').length, title: getComputedStyle(d).color }; })()`);
       const closed = await look();
       assert.equal(closed.figLines, 1, 'the figures on one line');
-      assert.ok(!closed.figs && !closed.pack);
-      if (width < 700) assert.ok(closed.details >= 43.5, `its title is ${closed.details} px high`);
+      assert.ok(!closed.figs && !closed.buttons);
+      if (width < 700) assert.ok(closed.height >= 43.5, `the row, its tap area, is ${closed.height} px high`);
       const text = await b.js(`(() => { const s = document.createElement('span'); s.style.color = 'var(--text)'; document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c; })()`);
       assert.equal(closed.title, text, 'the title in the text colour, not the accent');
       await b.js(`${card}.querySelector('.line .title').click()`);
       await settle(b);
-      const open = await look();
-      assert.ok(open.figs && open.pack, 'opening it shows the figures and Review pack');
-      assert.ok(open.height > closed.height);
+      assert.equal(await b.js(`document.getElementById('full-ticket').hidden`), false, 'pressing it opens the full view');
+      assert.equal((await look()).height, closed.height, 'and the row is as it was');
     }, { width });
   });
 
