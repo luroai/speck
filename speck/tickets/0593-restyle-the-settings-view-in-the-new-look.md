@@ -17,7 +17,7 @@ created: 2026-11-09
 started: "2026-11-09T18:38:04.469Z"
 blocked_at: ""
 waited_seconds: 3810
-approved: "2026-11-09T20:01:28.242Z"
+approved: "2026-11-09T20:08:45.297Z"
 
 ---
 # 0593 · Restyle the Settings view in the new look
@@ -69,13 +69,14 @@ Clear winner: yes
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 165,901
-- Elapsed since build started: 83 min
-- Changed lines: 45 (limit 5000)
+- Reviewer tokens: 286,622
+- Elapsed since build started: 91 min
+- Changed lines: 38 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Tests updated for the new look:
@@ -157,6 +158,81 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "Settings now uses plain sections, muted help text and an accent Save button, with speck's watching face beside its name. Tests confirm the layout fits at 320 px in both looks. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9ee94c98eebf89d946e39839d3e129d0eb65844d",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c1e6-3cf4-7ef0-9d03-0126eedd4614",
+    "builder_response": "- Tests run: test/panel-0302.test.mjs test/panel-0593.test.mjs test/panel-0428.test.mjs test/panel-0432.test.mjs test/panel-0433.test.mjs test/panel-0473.test.mjs test/panel-0474.test.mjs, plus the checks files: 147 passed, 0 failed.\n- Failing test ship named: 0302 AC1. It passes on this branch merged with main, here and in five further runs of its file alone. Ship's output wasn't kept, so I can't say why it failed; the machine's load average was about 26 to 29. This ticket doesn't touch what 0302 AC1 checks beyond the page's script list, and that test's pattern allows scripts between lcd.js and panel.js. I changed no code for it and did not change the test.\n- Conflicts, all from 0580 shipping first and adding the same face script (conflict class logic or added-lines):\n  - scripts/panel.mjs: kept main's faceFiles (speck-face.js and speck-mood.js in the stamp), dropping this ticket's faceFile, which it covers.\n  - templates/panel.html: kept main's speck-mood.js line; speck-face.js appears once.\n  - test/panel-0432, 0433, 0473, 0474: kept main's script lists, so these tests are no longer changed by this ticket.\n  - test/panel-0428: allowed colours keep both main's --bar-muted and this ticket's --blue.\n- The ticket's Notes and Delivery log are updated to match.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 285462,
+      "cached_input_tokens": 223360,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1160,
+      "reasoning_output_tokens": 13
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 12934,
+      "cached": 107264,
+      "write": 0,
+      "output": 523
+    },
+    "cost_usd": 0.0418244,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T20:08:42.281Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-settings.css retains borderless groups, heading dividers, setting rows and muted explanations. All AC1 tests in panel-0593.test.mjs passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel-settings.css retains the redesigned savebar and accent Save button with a muted disabled state. All AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel-settings.js nameFace and settingRow draw the watching face beside speck_name. AC3 tests passed. The merged panel.html loads speck-face.js once, and scripts/panel.mjs includes both face scripts in the page stamp."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The real-browser test in panel-0593.test.mjs passed at 320 px in both looks, checking overflow, borderless groups, face placement, input width and theme colours."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log correctly lists panel-0428.test.mjs as the remaining updated existing test. Its merged colour allowance preserves both --bar-muted and --blue. The latest test output confirms 147 passes, zero failures and three skips, including all 11 ticket tests and the previously failing 0302 AC1. That test remains unchanged."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves the Settings restyle and the header’s face integration. All reviewed criteria pass, including the narrow layout in both looks. The earlier shipping test failure has not recurred; its cause remains unknown. No blocking issues found."
   }
 }
 ```
