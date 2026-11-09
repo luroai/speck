@@ -1,7 +1,7 @@
 ---
 id: "0592"
 title: "Make the Pipeline log a full view"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ approved: "2026-11-09T23:27:21.582Z"
 ---
 # 0592 · Make the Pipeline log a full view
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 The Pipeline log is a pop-up of raw lines. In the redesign it's a full view you can filter, where speck's own calls stand out from the tool's routine lines.
@@ -313,6 +313,90 @@ Round 3 (codex, merge round): approve.
     ],
     "escalation_question": "",
     "summary": "The full Pipeline log view meets all criteria. This round fixes the run-state compatibility issue and button styling, while preserving ticket build logs as pop-ups. The expanded tests pass, and no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e2cee14ff75e1e454e7a84dd50615c01ec0f9c55",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c296-fa97-7ea2-ad6e-5392df46487c",
+    "builder_response": "- Tests run: test/pipeline-0592.test.mjs test/build-log-0548.test.mjs test/panel-0128.test.mjs test/panel-0413.test.mjs test/panel-0453.test.mjs test/panel-0366.test.mjs test/panel-0472.test.mjs test/pipeline-0415.test.mjs test/pipeline-0458.test.mjs test/pipeline-0459.test.mjs test/pipeline-0470.test.mjs test/pipeline-0479.test.mjs (234 pass, 0 fail).\n- Merge round: main merged into the ticket branch after `speck ship` hit a conflict.\n- test/panel-0453.test.mjs, class logic, one conflict: only the name of the 0453 AC2 test. main (0587) changed it to \"Full ticket (0587: on a Plan ticket), Close, Save, a document's button\", dropping Review pack; this ticket changed \"the Foreman's Close\" to \"the Pipeline log's filter\". The resolved name keeps both changes. The test's body merged without a conflict.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 723937,
+      "cached_input_tokens": 622464,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2776,
+      "reasoning_output_tokens": 72
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 25805,
+      "cached": 174208,
+      "write": 0,
+      "output": 515
+    },
+    "cost_usd": 0.0741808,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T23:34:01.570Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "pipelineFrame and drawLogStatus retain the full view, back link, heading, mood and live run status. Passing 0592 AC1 tests cover start time, slots and refreshes; browser tests verify layout."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runLogFilterOf and runLogFiltered retain the corrected classifications. Passing 0592 AC2 tests cover all four filters, runner message formats, continuation lines, reopening and refreshes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runLogRow and runLogDetails retain time, text and details beneath each row. Passing 0592 AC3 tests check contents and mono font rules."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "runLogLine detects the engineering manager marker; runLogRow adds a face only for marked lines. The 0592 AC4 test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists updated appearance tests. Current output confirms 234 passes, zero failures and three skips. The resolved panel-0453 test preserves main's Plan-ticket coverage and this ticket's filter-button coverage. Build-log tests preserve the original pop-up frame."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-model.js",
+        "issue": "The Builds filter previously omitted real build lifecycle messages.",
+        "suggested_fix": "Completed: classification includes the omitted messages, with regression coverage using runner message formats.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both sets of changes. The Pipeline log still meets all criteria, ticket build logs remain pop-ups, and the current tests pass. No blocking concerns remain."
   }
 }
 ```
