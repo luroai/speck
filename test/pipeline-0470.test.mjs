@@ -97,7 +97,7 @@ const FAKE = (board, log) => `(() => {
   window.EventSource = class { constructor() { this.l = {}; this.readyState = 1; setTimeout(() => this.l.message && this.l.message({ data: '1' }), 10); } addEventListener(t, f) { this.l[t] = f; } close() {} };
 })();`;
 
-test('0470 AC2 and AC3: in a real browser, the title is in the header\'s Doto at 18 px or more, on one line beside Close from 320 px up, in both looks, and stays in view as the pop-up scrolls', chrome, async () => {
+test('0470 AC2 and AC3: in a real browser, the title is in Inter at 18 px or more, on one line beside Close from 320 px up, in both looks, and stays in view as the pop-up scrolls', chrome, async () => {
   const lines = Array.from({ length: 120 }, (_, i) => `10:${String(i % 60).padStart(2, '0')} line ${120 - i}`);
   const b = await browserPage('about:blank');
   try {
@@ -136,9 +136,8 @@ test('0470 AC2 and AC3: in a real browser, the title is in the header\'s Doto at
             label: v.getAttribute('aria-label') };
         })()`);
         const where = `${width} px, ${look}`;
-        assert.equal(at.family.split(',')[0].replace(/"/g, '').trim(), 'Doto', `${where}: Doto (${at.family})`);
-        assert.equal(at.family, at.nameFamily, `${where}: the header's font`);
-        assert.equal(at.weight, at.nameWeight, `${where}: the header's weight`);
+        assert.equal(at.family.split(',')[0].replace(/"/g, '').trim(), 'Inter', `${where}: Inter (${at.family})`); // 0577: no longer Doto
+        assert.equal(at.weight, '600', `${where}: a weight Inter has`);
         assert.ok(at.size >= 18, `${where}: at least 18 px (${at.size})`);
         assert.equal(at.rects, 1, `${where}: on one line`);
         assert.ok(at.height <= at.lineHeight, `${where}: one line high (${at.height} px)`);

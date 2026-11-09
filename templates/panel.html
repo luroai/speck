@@ -11,8 +11,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="speck">
 <meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar">
-<meta name="theme-color" content="#f3f3f3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)">
 <title>speck · control panel</title>
 <meta name="speck-panel" id="speck-panel" content="{{panel}}">
 <script id="theme-start">
@@ -28,7 +28,7 @@
   // matches the phone's own setting shows the look chosen in Settings.
   const bar = look => {
     const m = document.getElementById?.('status-bar'); if (m) m.content = look === 'dark' ? 'black-translucent' : 'default';
-    for (const t of document.querySelectorAll?.('meta[name="theme-color"]') || []) t.content = look === 'dark' ? '#141414' : '#f3f3f3';
+    for (const t of document.querySelectorAll?.('meta[name="theme-color"]') || []) t.content = look === 'dark' ? '#111214' : '#FFFFFF';
   };
   // 0372: Settings' look, while it's open, shows the one the page has (0396: drawn by the page's drawLook).
   const set = look => { root.dataset.theme = look; bar(look); if (typeof globalThis.drawLook === 'function') globalThis.drawLook(); };

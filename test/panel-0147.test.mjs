@@ -9,9 +9,9 @@ import { ROOT, page, PALETTE, paletteProblems, styles } from './support/panel.mj
 // ---------- 0147: style the panel like the landing page ----------
 
 const parse = s => Object.fromEntries(s.split('; ').map(d => d.split(': ')));
-const LIGHT = parse('--bg: #f3f3f3; --panel: #fcfcfc; --raise: #f3f3f3; --line: #14141476; --line-soft: #14141413; --text: #141414EB; --muted: #141414BA; --faint: #141414BA; --accent: #cf2d56; --bad: #96213f; --ok: #145a42; --warn: #6d4700; --run: #285372; --idea: #833063; --inbox: #4c7f8c; --bug: #86371b; --fix: #6d4700; --accent-bg: #f5f0e8; --ok-bg: #eaf3f0; --inbox-bg: #eef2f3; --bad-bg: #f8ebef');
-const DARK = parse('--bg: #141414; --panel: #181818; --raise: #1c1c1c; --line: #E4E4E462; --line-soft: #E4E4E413; --text: #E4E4E4EB; --muted: #E4E4E4B8; --faint: #E4E4E4B8; --accent: #e34671; --bad: #ef95ad; --ok: #7fbc95; --warn: #d9a65e; --run: #97b2cc; --idea: #c4a6be; --inbox: #88c0d0; --bug: #e69d83; --fix: #d9a65e; --accent-bg: #27221b; --ok-bg: #1f2421; --inbox-bg: #212527; --bad-bg: #281c1f');
-const FONTS = ['-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif', '"SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace']; // 0427: Cursor's fonts
+const LIGHT = parse('--bg: #FFFFFF; --panel: #FFFFFF; --raise: #F4F5F7; --line: #E4E6EA; --line-soft: #E4E6EA; --text: #15171A; --muted: #5F6670; --faint: #5F6670; --accent: #2F55D4; --ok: #145a42; --warn: #A84F06; --bad: #A84F06; --run: #2F55D4; --idea: #833063; --inbox: #4c7f8c; --bug: #86371b; --fix: #6d4700; --accent-bg: #f5f0e8; --ok-bg: #edf6f3; --inbox-bg: #eef2f3; --bad-bg: #F4F5F7');
+const DARK = parse('--bg: #111214; --panel: #111214; --raise: #1B1D20; --line: #2A2D31; --line-soft: #2A2D31; --text: #ECEDEF; --muted: #9AA0A8; --faint: #9AA0A8; --accent: #86A2FF; --bad: #F0A35A; --ok: #7fbc95; --warn: #F0A35A; --run: #86A2FF; --idea: #c4a6be; --inbox: #88c0d0; --bug: #e69d83; --fix: #d9a65e; --accent-bg: #27221b; --ok-bg: #191f1d; --inbox-bg: #212527; --bad-bg: #1B1D20');
+const FONTS = ['"Inter", -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif', '"JetBrains Mono", "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace']; // 0577: the redesign's fonts, with the machine's behind them, named once each as --font-ui and --font-mono
 
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 const css = () => styles(); // 0430: from their own file
@@ -65,7 +65,7 @@ test('0147 AC3: the full-ticket pane\'s backdrop is rgba(20, 20, 19, .2) in ligh
 
 test('0147 AC4: every font list in the stylesheet is one of the landing page\'s three, in its order', () => {
   const lists = fontLists(css());
-  assert.ok(lists.length > 20, `the stylesheet's font lists are found (${lists.length})`);
+  assert.ok(lists.length >= 3, `the stylesheet's font lists are found (${lists.length})`);
   // 0304: and the design's Doto for speck's name in the header, with a monospace fall-back
   for (const l of lists) assert.ok(FONTS.includes(l) || l === '"Doto", ui-monospace, monospace', `unexpected font list: ${l}`);
   for (const f of FONTS) assert.ok(lists.includes(f), `${f} is used`);
@@ -76,8 +76,8 @@ test('0147 AC4: no font is loaded from another host', () => {
   const html = page();
   assert.doesNotMatch(html, /<link\b[^>]*https?:\/\//i);
   assert.doesNotMatch(css(), /@import/i);
-  // 0304: the one font loaded is Doto, from the panel itself
-  assert.deepEqual([...css().matchAll(/url\(([^)]*)\)/gi)].map(m => m[1]), ['"fonts/Doto.ttf"']);
+  // 0304, 0577: every font loaded is from the panel itself
+  for (const [, u] of css().matchAll(/url\(([^)]*)\)/gi)) assert.match(u, /^"fonts\/[\w-]+\.(?:ttf|woff2)"$/);
 });
 
 // AC5: each commit this ticket made (and, on its own branch, the uncommitted work) against the one before it.

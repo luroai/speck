@@ -6,8 +6,8 @@
      line at the top. Each line's time is in a column of its own and its text past it, as a build log's (0422) */
   .foreman .run-log { box-sizing: border-box; margin: 0; padding: 6px 10px; overflow-y: auto; overflow-anchor: none;
     background: var(--log-bg); border: 1px solid var(--line); list-style: none; color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; }
-  .foreman ol.run-log { font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; }
-  .foreman div.run-log { font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; }
+  .foreman ol.run-log { font: 12px/1.5 var(--font-mono); }
+  .foreman div.run-log { font: 12px/1.5 var(--font-mono); }
   .foreman .run-log p { margin: 0; }
   .foreman .run-log .ln { display: block; padding-left: 9ch; min-width: 0; }
   .foreman .run-log .ln.timed { text-indent: -9ch; }
@@ -19,7 +19,7 @@
   .foreman .run-log .ln.gap { min-height: 1.5em; } /* 0548: a build log's blank line, a line high */
   .foreman p { margin: 2px 0; }
   .foreman .stale { color: var(--warn); }
-  .foreman .reload { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
+  .foreman .reload { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
   #full-ticket .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 6px 0 4px; }
   #full-ticket .track .step { display: block; min-width: 0; padding-top: 3px; border-top: 4px solid var(--line); font-size: 12px; line-height: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #full-ticket .track .step.done { color: var(--text); }
@@ -58,20 +58,20 @@
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #doc-view .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
-  #full-ticket .close, #doc-view .close, #foreman .close { margin-left: auto; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #full-ticket .close, #doc-view .close, #foreman .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
   /* 0424: the full ticket and a review pack set out as a document: the id and status in small type, the title the
      largest text with its tags under it, then each section's heading, smaller than the title and larger than the text,
      with more room above it than between the section's paragraphs. A review pack's text (the pane's own .md, where a
      ticket's sections are each inside its body) has its own headings as its sections. */
-  #full-ticket .top .id, #full-ticket .top .state { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; line-height: 16px; color: var(--muted); }
-  #full-ticket .top .id { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; }
+  #full-ticket .top .id, #full-ticket .top .state { font-family: var(--font-ui); font-size: 12px; line-height: 16px; color: var(--muted); }
+  #full-ticket .top .id { font-family: var(--font-mono); }
   #full-ticket .top .state { text-transform: capitalize; } /* 0427: a status is one word, so this is sentence case */
   #full-ticket .top .title { order: 1; flex-basis: 100%; font-size: 26px; line-height: 1.25; font-weight: 600; } /* under the id and Close, which a review pack has after it */
   #full-ticket > .steps { margin: 0 0 18px; } /* 0465: the track and table its card shows open, under the title */
   #full-ticket .track .step.ship { margin: 0; padding: 3px 0 0; border-right: none; border-bottom: none; border-left: none; background: none; cursor: auto; min-height: 0; } /* not the review pack's Ship button */
-  #full-ticket h4, #full-ticket > .md .md-h1, #full-ticket > .md .md-h2, #full-ticket > .md .md-h3 { margin: 28px 0 8px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
+  #full-ticket h4, #full-ticket > .md .md-h1, #full-ticket > .md .md-h2, #full-ticket > .md .md-h3 { margin: 28px 0 8px; font-family: var(--font-ui); font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
   /* 0362: a task's Markdown file, over the whole panel, its path and Close above its text in a centred column.
      0366: the Foreman's detail opens in the same pop-up. */
@@ -79,7 +79,7 @@
   #doc-view[hidden], #foreman[hidden] { display: none; }
   #doc-view .top, #doc-view .doc-actions, #doc-view .md { max-width: 760px; margin: 0 auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); } /* 0453: on a whole pixel, as Settings' column is (0281) */
   #doc-view .top { margin-bottom: 10px; }
-  #doc-view .top .title { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; overflow-wrap: anywhere; }
+  #doc-view .top .title { font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
   /* 0379: each pop-up's top line, with its Close, stays at the top while the rest scrolls under it. The pop-up's own top
      padding, the room for a phone's notch, is in the line instead, so nothing shows through above it. Above a setting's
      explanation (z-index 2), which scrolls under it too. */
@@ -88,7 +88,7 @@
      panel in a column at most 720 px wide. Long titles and options wrap, so it fits a phone's width. */
   #decided { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #decided[hidden] { display: none; }
-  #decided .close { margin-left: auto; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #decided .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #decided .close:hover { color: var(--text); }
   #decided .top, #decided .decided-list, #decided .decided-none { max-width: 720px; margin-left: auto; margin-right: auto; }
   #decided .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: .5px solid var(--line-soft); background: var(--panel); }
@@ -111,7 +111,7 @@
     padding-left: max(16px, env(safe-area-inset-left), calc(16px + round(down, calc((100% - 720px) / 2), 1px))); padding-right: max(16px, env(safe-area-inset-right), calc(16px + round(up, calc((100% - 720px) / 2), 1px))); }
   #foreman[hidden] { display: none; }
   #foreman .top { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; min-width: 0; margin: 0; padding: 7px 6px 6px 10px; color: var(--bezel-ink); background: var(--bezel); border-radius: 12px 12px 0 0; }
-  #foreman .top .title { display: inline-flex; align-items: center; gap: .25em; min-width: 0; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 22px; line-height: 1; white-space: nowrap; color: inherit; } /* 0470: in the header's lettering (.bezel .name). In the title row's light ink, over every .title's text colour */
+  #foreman .top .title { display: inline-flex; align-items: center; gap: .25em; min-width: 0; font-family: var(--font-ui); font-weight: 600; font-size: 22px; line-height: 1; white-space: nowrap; color: inherit; } /* 0470: in the header's lettering (.bezel .name). In the title row's light ink, over every .title's text colour */
   #foreman .top .title::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; background: var(--lcd-red); } /* speck's own dot, as the header's: decoration, so a screen reader passes over it */
   #foreman .fm-body { display: flex; flex-direction: column; min-height: 0; padding: 0 4px 4px; color: var(--bezel-ink); background: var(--bezel); border-radius: 0 0 12px 12px; }
   #foreman .fm-stale { flex: none; padding: 0 6px 6px; }
@@ -127,7 +127,7 @@
   #full-ticket .md > :last-child, #full-ticket li > :last-child, #doc-view .md > :last-child, #doc-view li > :last-child { margin-bottom: 0; }
   #full-ticket .md ul, #full-ticket .md ol, #full-ticket .criteria ul, #full-ticket .criteria ol, #doc-view .md ul, #doc-view .md ol { margin: 0 0 8px; padding-left: 20px; }
   #full-ticket li ul, #full-ticket li ol, #doc-view li ul, #doc-view li ol { margin: 2px 0 0; }
-  #full-ticket h5, #full-ticket h6, #doc-view h5, #doc-view h6 { margin: 10px 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; color: var(--text); font-weight: 600; }
+  #full-ticket h5, #full-ticket h6, #doc-view h5, #doc-view h6 { margin: 10px 0 4px; font-family: var(--font-ui); color: var(--text); font-weight: 600; }
   /* 0424: the text, a heading in it smaller at each level and all smaller than a section's, and lists with their numbers
      and bullets hanging to the left of the text, a nested list indented under its item. */
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { font-size: 15px; line-height: 1.6; }
@@ -140,7 +140,7 @@
   #full-ticket h4:first-child, #full-ticket .md > :first-child, #doc-view .md > :first-child { margin-top: 0; }
   /* 0445: a task's Markdown file set out as the full ticket is: its first heading is its title, in the title's
      size, its other headings as a review pack's are, and its text, tables, code and lists in the ticket's sizes. */
-  #doc-view .md .md-h1, #doc-view .md .md-h2, #doc-view .md .md-h3 { margin: 28px 0 8px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
+  #doc-view .md .md-h1, #doc-view .md .md-h2, #doc-view .md .md-h3 { margin: 28px 0 8px; font-family: var(--font-ui); font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
   #doc-view .md .doc-title { margin: 0 0 14px; font-size: 26px; line-height: 1.25; font-weight: 600; }
   #full-ticket code.md-code, #doc-view code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
   #full-ticket pre, #doc-view pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
@@ -156,20 +156,20 @@
   #full-ticket .md details, #doc-view .md details { margin: 0 0 8px; }
   #full-ticket .md summary, #doc-view .md summary { cursor: pointer; color: var(--muted); }
   /* 0133: an approved ticket's Ship button, above its review pack, and what speck ship said. 0363: and above its document */
-  #full-ticket .ship, #doc-view .ship { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 0 0 10px; padding: 3px 14px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
+  #full-ticket .ship, #doc-view .ship { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 0 0 10px; padding: 3px 14px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
   #full-ticket .ship:disabled, #doc-view .ship:disabled { cursor: default; opacity: .6; }
   #full-ticket .ship-said, #doc-view .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad, #doc-view .ship-said.bad { color: var(--bad); }
   /* 0357: beside it, a box for a note and an Ask for changes button, which sends the note back to the build */
   #full-ticket .changes-note, #doc-view .changes-note { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 0 0 6px; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: .5px solid var(--line); resize: vertical; }
   #full-ticket .pack-buttons, #doc-view .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-  #full-ticket .ask-changes, #doc-view .ask-changes { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
+  #full-ticket .ask-changes, #doc-view .ask-changes { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
   #full-ticket .ask-changes:disabled, #doc-view .ask-changes:disabled { cursor: default; opacity: .6; }
   /* 0359: a task's files, as buttons at the top of its review pack. 0562: one row each, and each folder one row, folded at first */
   #full-ticket .pack-documents, #full-ticket .pack-folder-row, #full-ticket .pack-folder-files { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   #full-ticket .pack-documents { margin: 0 0 10px; }
   #full-ticket .pack-folder-files { padding-left: 14px; }
-  #full-ticket .pack-document, #full-ticket .pack-folder { font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
+  #full-ticket .pack-document, #full-ticket .pack-folder { font: inherit; font-family: var(--font-mono); font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
   #full-ticket .pack-folder { border-style: dashed; }
   #full-ticket .pack-folder::before { content: ''; display: inline-block; width: 4px; height: 4px; margin: 0 8px 2px 0; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); }
   #full-ticket .pack-folder[aria-expanded="true"]::before { transform: rotate(135deg); }
@@ -198,7 +198,7 @@
     #full-ticket .md tr, #doc-view .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
     #full-ticket .md tr:last-child, #doc-view .md tr:last-child { border-bottom: 0; }
     #full-ticket .md td, #doc-view .md td { border: 0; padding: 2px 0; overflow-wrap: normal; overflow-x: auto; } /* a word too long for the line scrolls in its cell, unbroken */
-    #full-ticket .md td::before, #doc-view .md td::before { content: attr(data-label); display: block; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); white-space: nowrap; }
+    #full-ticket .md td::before, #doc-view .md td::before { content: attr(data-label); display: block; font-family: var(--font-ui); font-size: 12px; color: var(--muted); white-space: nowrap; }
     /* A review pack's criteria: the number and result on one line, then the criterion, then the labelled evidence */
     #full-ticket .md .ac-table tr { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
     #full-ticket .md .ac-table td:nth-child(-n+3)::before { display: none; }

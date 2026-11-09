@@ -73,7 +73,7 @@ test('0455 AC4: the log keeps its height, scrolling, monospaced font, line layou
   assert.equal(decl(d, 'height'), '24em');
   assert.equal(decl(d, 'max-height'), '24em');
   assert.equal(decl(d, 'overflow-y'), 'auto');
-  assert.match(decl(d, 'font'), /^12px\/1\.5 "SF Mono".*monospace$/);
+  assert.match(decl(d, 'font'), /^12px\/1\.5 var\(--font-mono\)$/);
   assert.equal(decl(d, 'white-space'), 'pre-wrap');
   assert.equal(decl(d, 'cursor'), 'text');
   assert.equal(decl(d, 'user-select'), undefined, 'its text can still be selected');

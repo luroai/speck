@@ -6,18 +6,19 @@ import { page, paletteProblems, panelRepo, freePort, startPanel, stop, findChrom
 
 // ---------- 0136: a dark look you can switch to ----------
 
-const DARK = { '--bg': '#141414', '--panel': '#181818', '--raise': '#1c1c1c', '--line': '#E4E4E462', '--line-soft': '#E4E4E413',
-  '--text': '#E4E4E4EB', '--muted': '#E4E4E4B8', '--faint': '#E4E4E4B8', '--accent': '#e34671', '--bad': '#ef95ad',
-  '--ok': '#7fbc95', '--warn': '#d9a65e', '--run': '#97b2cc', '--idea': '#c4a6be', '--inbox': '#88c0d0', '--bug': '#e69d83', '--fix': '#d9a65e',
-  '--accent-bg': '#27221b', '--ok-bg': '#1f2421', '--inbox-bg': '#212527', '--bad-bg': '#281c1f' };
-const ZEN = { '--bg': '#f3f3f3', '--panel': '#fcfcfc', '--raise': '#f3f3f3', '--line': '#14141476', '--line-soft': '#14141413',
-  '--text': '#141414EB', '--muted': '#141414BA', '--faint': '#141414BA', '--accent': '#cf2d56', '--bad': '#96213f',
-  '--ok': '#145a42', '--warn': '#6d4700', '--run': '#285372', '--idea': '#833063', '--inbox': '#4c7f8c', '--bug': '#86371b', '--fix': '#6d4700' };
+const DARK = { '--bg': '#111214', '--panel': '#111214', '--raise': '#1B1D20', '--line': '#2A2D31', '--line-soft': '#2A2D31',
+  '--text': '#ECEDEF', '--muted': '#9AA0A8', '--faint': '#9AA0A8', '--accent': '#86A2FF', '--bad': '#F0A35A',
+  '--ok': '#7fbc95', '--warn': '#F0A35A', '--run': '#86A2FF', '--idea': '#c4a6be', '--inbox': '#88c0d0', '--bug': '#e69d83', '--fix': '#d9a65e',
+  '--accent-bg': '#27221b', '--ok-bg': '#191f1d', '--inbox-bg': '#212527', '--bad-bg': '#1B1D20' };
+const ZEN = { '--bg': '#FFFFFF', '--panel': '#FFFFFF', '--raise': '#F4F5F7', '--line': '#E4E6EA', '--line-soft': '#E4E6EA',
+  '--text': '#15171A', '--muted': '#5F6670', '--faint': '#5F6670', '--accent': '#2F55D4', '--bad': '#A84F06',
+  '--ok': '#145a42', '--warn': '#A84F06', '--run': '#2F55D4', '--idea': '#833063', '--inbox': '#4c7f8c', '--bug': '#86371b', '--fix': '#6d4700' };
 // The light tints, set in the later plain :root block.
-const ZEN_TINTS = { '--accent-bg': '#f5f0e8', '--ok-bg': '#eaf3f0', '--inbox-bg': '#eef2f3', '--bad-bg': '#f8ebef' };
+const ZEN_TINTS = { '--accent-bg': '#f5f0e8', '--ok-bg': '#edf6f3', '--inbox-bg': '#eef2f3', '--bad-bg': '#F4F5F7' };
 const OWN = ['--ok', '--warn', '--run', '--idea', '--inbox', '--bug', '--fix'];
-// 0426: the fix tag is in Cursor's yellow, as --warn is
-const SHARED = new Set(['--fix --warn', '--warn --fix']);
+// 0426: the fix tag is in Cursor's yellow, as --warn is. 0577: what's wrong or waiting is in the needs-you text, and
+// what's at work in the accent
+const SHARED = new Set(['--fix --warn', '--warn --fix', '--warn --bad', '--run --accent']);
 const TINTS = ['--accent-bg', '--ok-bg', '--inbox-bg', '--bad-bg'];
 
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
@@ -111,8 +112,8 @@ test('0136 AC5: with no choice saved, the <head> script follows the computer\'s 
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const bodyBg = `getComputedStyle(document.body).backgroundColor`;
-const LIGHT_BG = 'rgb(243, 243, 243)';
-const DARK_BG = 'rgb(20, 20, 20)';
+const LIGHT_BG = 'rgb(255, 255, 255)';
+const DARK_BG = 'rgb(17, 18, 20)';
 // 0372: the look Settings' list shows, opening Settings if it's closed, and a look picked there.
 const LOOK = `(async () => { if (!document.getElementById('look')) document.getElementById('settings-open').click(); for (let i = 0; i < 100 && !document.getElementById('look'); i++) await new Promise(r => setTimeout(r, 20)); return document.getElementById('look'); })()`;
 // 0412: Appearance's System, Light and Dark: the one chosen, and one picked.

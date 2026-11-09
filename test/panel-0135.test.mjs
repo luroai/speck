@@ -53,5 +53,5 @@ test('0135 AC3: no number span in a section header, and no .sh .num rule; td.num
   assert.equal(headers.length, 4, 'four section headers (0520: with Capture)');
   for (const h of headers) assert.doesNotMatch(h, /<span class="num"/, h);
   assert.doesNotMatch(css(), /\.sh\s+\.num\b/);
-  assert.ok(css().includes('  td.num { color: var(--muted); text-align: right; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; white-space: nowrap; }'), 'the td.num rule is as it was, at 12 px (0161), in Cursor\'s monospace (0427)');
+  assert.ok(css().includes('  td.num { color: var(--muted); text-align: right; font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }'), 'the td.num rule is as it was, at 12 px (0161), in Cursor\'s monospace (0427)');
 });

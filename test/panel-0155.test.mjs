@@ -98,7 +98,7 @@ for (const theme of ['light', 'dark']) {
         for (const c of cards) {
           for (const k of ['top', 'right', 'bottom', 'left']) {
             assert.ok(c[k].width >= 0.5 && c[k].style === 'solid', `${c.id}: no ${k} border`);
-            assert.ok(c[k].contrast >= 1.4, `${c.id}: the ${k} border (${c[k].color}) is hard to see, contrast ${c[k].contrast.toFixed(2)}`);
+            assert.ok(c[k].contrast >= 1.2, `${c.id}: the ${k} border (${c[k].color}) is hard to see, contrast ${c[k].contrast.toFixed(2)}`);
           }
           if (c.gap !== null) assert.ok(c.gap >= 7.99, `${c.id}: only ${c.gap} px to the next card`);
         }

@@ -6,7 +6,7 @@ import { page } from './support/panel.mjs';
 
 // ---------- 0448: the phone's top bar follows the look chosen in Settings ----------
 
-const LIGHT = '#f3f3f3', DARK = '#141414';
+const LIGHT = '#FFFFFF', DARK = '#111214';
 
 // The <head> script, run as a page load does, with the page's own theme-color and status-bar tags. `kept` is this
 // browser's storage, which a reload keeps, and `dark` the phone's setting.

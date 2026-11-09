@@ -52,7 +52,8 @@ test('AC2: no model name is hard-coded in speck code, templates or skills', () =
   const files = d => fs.readdirSync(path.join(ROOT, d), { recursive: true }).map(f => path.join(ROOT, d, f)).filter(f => fs.statSync(f).isFile());
   // 0524: the price table is LiteLLM's list of models and their rates, made by npm run prices, not names written into speck
   const table = path.join(ROOT, 'scripts', 'prices.json');
-  for (const f of [...files('scripts'), ...files('templates'), ...files('skills')].filter(f => f !== table)) {
+  // 0577: a woff2 font is compressed bytes, which can happen to spell a model name, not text anyone wrote
+  for (const f of [...files('scripts'), ...files('templates'), ...files('skills')].filter(f => f !== table && !f.endsWith('.woff2'))) {
     const hit = fs.readFileSync(f, 'utf8').match(MODEL);
     assert.equal(hit, null, `${path.relative(ROOT, f)} names a model: ${hit && hit[0]}`);
   }
