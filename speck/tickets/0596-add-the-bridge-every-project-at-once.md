@@ -1,7 +1,7 @@
 ---
 id: "0596"
 title: "Add the bridge: every project at once"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0595","0592","0587","0581"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T23:37:42.137Z"
+approved: "2026-11-09T23:47:43.470Z"
 
 ---
 # 0596 · Add the bridge: every project at once
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 With several projects running, you check each panel in turn to see what needs you. The redesign's bridge shows every project at once, as the engineering manager's view across all of them.
@@ -55,9 +56,15 @@ With two or more projects running, the bar now has an All projects button beside
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 openBridge and closeBridge change bridgeOpen without calling holdPage(pageHeld()) or render().
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 287,358
+- Elapsed since build started: 10 min
+- Changed lines: 239 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - All projects could be an entry in the project menu's own list: saved to the inbox as speck/ideas/2026-11-09-put-all-projects-in-the-project-menu-s-list.md.
