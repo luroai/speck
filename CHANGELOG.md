@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.22.0 · 9 November 2026
+
+What's new since 0.21.1. A minor release in which speck can decide for you and tell you what it chose: `watch: decide` takes the recommendation on a blocked question and carries on, the panel lists what it decided, and a ticket whose acceptance criteria changed waits for you at Ship. The `watch` setting still starts at `tell`, so none of this happens until you choose it. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.22.0 init`.
+- `speck doctor` now says whether the commit check is on, the check that refuses a commit adding a private word or your home folder's path under `speck/`. If there's no pre-commit hook, it says to run `speck init` again to add it. If the hook isn't speck's, or `core.hooksPath` points git at another folder, it says which, and doesn't tell you to replace your own hook. The line is a warning, never a failure, so it doesn't change `speck doctor`'s exit code.
+
+### Deciding for you
+
+- `watch` has a new value, `decide`, in `speck config set`, `speck/config.yml` and under Watching in the Settings view. With `watch: decide`, speck takes the recommendation of any blocked question that has one and resumes the build, whatever the question's "Changes what you'd notice" and "Clear winner" lines say, as the Go with the recommendation button does. It notes each choice in the ticket's Notes. It waits for you when the question has no recommendation, when the ticket's risk is high, or when it has already taken 3 recommendations for that ticket. It never takes a recommendation to raise the size limit. Everything `watch: fix` does still happens, a ticket speck will decide doesn't count under Needs you, and its card says speck will take the recommendation.
+- With `watch: decide`, the watch agent acts on its own recommendation instead of asking, through a new `speck watch decide` action, and carries the build on. It asks only when it has no recommendation or the ticket's risk is high. `speck watch decide` refuses, changing nothing, when `watch` isn't `decide` or the ticket is high risk. A decision doesn't count under Needs you.
+- When speck has taken a recommendation in the last 7 days, the panel shows a line under speck's status saying how many. Pressing it opens the Decided for you list, with each one's ticket, the option, when, and whether its criteria changed. A decision whose ticket is approved and not yet shipped has a Change button, which opens Ask for changes for that ticket. `speck status --json` lists the same decisions, newest first. The list fits a phone-width screen and closes with its Close button or Escape.
+- With `watch: fix` or `decide`, a build that goes over the size limit and recommends a split no longer waits for you. speck takes the split, notes it in the ticket's Notes and resumes the build with the first part. The rest becomes a new ready ticket that runs straight after it and says which ticket it came from. With `fix` this happens once per ticket, and with `decide` it follows the limits above, so a high-risk ticket's split waits for you. With `tell` or `off`, a size-guard block waits for you as before.
+
+### Holding back changed criteria
+
+- A ticket whose acceptance criteria differ from the ones it was set ready with no longer ships by itself. `speck run`'s ship queue leaves it approved and `speck ship <id> --auto` refuses, saying why. You can still ship it yourself with `speck ship <id>` or the panel's Ship button. Its Build card says it waits for you because a criterion changed, and its review pack has a "Criteria changed" part above the criteria, with the old and new text of each one changed, added or removed. That part needs the ticket's work to still be separate, so it isn't there once the ticket has shipped. `speck status --json` gives each open ticket `criteria_changed`, true or false.
+
+### Watching
+
+- speck asks about a ticket's stop once. While its question is waiting for you and the ticket's status hasn't changed, new commits no longer start the watch agent for that ticket again. Before, the same question could be asked again and again. Once you answer or dismiss it, or the status changes, speck looks into new stops as before. The question counts once under Needs you.
+- speck notices a build that runs long, meaning more than twice the median build time of the last 20 shipped tickets and at least 20 minutes, with paused builds left out. With `watch: fix` or `decide`, it starts the watch agent once per build to find out why: the agent reports what it found with the new `speck watch tell` action, in the ticket's Notes and `speck run`'s log, or makes a draft fix ticket when the base branch is broken. A report needs no answer and doesn't count under Needs you, and the agent never stops or restarts the build. With `watch: tell`, `speck run` says once in its log that the build is running long and starts no agent. With `watch: off`, nothing happens.
+
+### Names
+
+- The check that a ticket is ready to build is now called the ready check, and you run it with `speck check <id>`. `speck lint <id>` still works, with the same results and exit codes. speck's own messages, the skills, the docs and the ticket template use the new name, and the panel's Readiness list is headed Ready check. The `lint` fields in `speck status --json` keep their names.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 9 November 2026.
+
+### Tests
+
+- Two more of speck's own tests that could fail by chance no longer do, so fewer tickets are handed back at ship for a failure they didn't cause: the check that Enter and Space work on the `speck run` switch now gives the Settings view up to a minute to load, and tests that stand in for a running build use names no other test run shares. Each still fails when what it checks breaks.
+
 ## 0.21.1 · 29 October 2026
 
 What's new since 0.21.0. A bug-fix release, with a friendlier review pack for tasks. Costs speck works out itself are still estimates at API list prices.

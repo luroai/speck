@@ -48,6 +48,12 @@ speck is ready to be released as 0.22.0.
 - Checked 2026-11-08: `package.json` is `0.21.1`.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.21.1`: 0563 to 0573, and no others.
+- Built from main at `speck(0573): Rename lint to the ready check`: 557 shipped, 16 cancelled, 13 minutes median, 1 round median, 284 approved in the first round, worked out with `test/support/figures.mjs` as 0307 did.
+- `npm run prices` on 2026-11-09 wrote the rates of 3534 models, and `scripts/prices.json`'s `taken` is 2026-11-09.
+- 0560's checks that named 0.21.1 as the current version now check the current version, as 0560 did for 0539, and `test/docs-0491.test.mjs` allows `test/release-0574.test.mjs` to name the version.
+- Pictures: none, because the README's only changes are its status line's version and two figures, which change no layout.
+- Self-check: the changelog and release notes first said a size-guard split never waits with `decide`, but a high-risk ticket's does, so both now say so; the changelog says the panel's Decided for you line shows only when speck has taken one in the last 7 days.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
