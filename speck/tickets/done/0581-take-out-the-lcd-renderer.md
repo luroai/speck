@@ -1,7 +1,7 @@
 ---
 id: "0581"
 title: "Take out the LCD renderer"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0580"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T20:00:43.274Z"
 approved: "2026-11-09T20:15:53.268Z"
+finished: "2026-11-09T20:21:04.244Z"
 
 ---
 # 0581 · Take out the LCD renderer
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Once the black bar replaces the LCD screen (0580), the LCD's renderer, its poses and pastimes, its font and its tests are dead weight that every later change has to step round.
