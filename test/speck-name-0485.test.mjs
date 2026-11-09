@@ -84,7 +84,7 @@ test('0485 AC1: nowhere in the panel says Foreman, in any case: header, lanes, o
   await openSettings(p);
   shown.push(...said(p, [...made, p.byId('settings')]));
   assert.ok(agentsBox(p), 'Your agents is drawn');
-  for (const words of ['speck will take its recommendation', 'speck asks you', 'speck went with the recommendation', 'Watching'])
+  for (const words of ['speck will take its recommendation', 'speck asks you', 'speck went with the recommendation', 'Your engineering manager'])
     assert.ok(shown.some(s => s.includes(words)), `the scan saw "${words}"`);
   assert.deepEqual(foremanIn([...shown, ...confirms]), []);
   // the page's own markup, outside its ids and classes
@@ -125,12 +125,12 @@ test('0485 AC3: speck\'s screen is named speck\'s screen, and its tooltip starts
   assert.match(run.title, /^speck: Needs you 2 · The pipeline: speck run's log$/);
 });
 
-test('0485 AC4: Settings titles the group Watching, and the role is called speck in Your agents', async () => {
+test('0485 AC4: Settings titles the group Your engineering manager, and the role is called speck in Your agents', async () => {
   const { p } = page();
   await p.settle();
   await openSettings(p);
   const titles = p.all(p.byId('settings')).filter(n => n.tagName === 'h4').map(n => n.textContent);
-  assert.ok(titles.includes('Watching'), titles.join(', '));
+  assert.ok(titles.includes('Your engineering manager'), titles.join(', '));
   assert.deepEqual(rolesUsing('deepseek', { builder: 'claude', reviewer: 'codex', foreman: 'deepseek' }), ['speck']);
   assert.deepEqual(rolesUsing('claude', { builder: 'claude', reviewer: 'codex' }), ['builder', 'speck']);
 });

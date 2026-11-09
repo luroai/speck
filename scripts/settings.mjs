@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, sh, loadConfig, parseConfig, findRepoRoot, EFFORTS } from './core.mjs';
+import { SpeckError, sh, loadConfig, parseConfig, findRepoRoot, EFFORTS, speckNameOf } from './core.mjs';
 import { sameModelProblem } from './same-model.mjs';
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
@@ -22,16 +22,18 @@ import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs';
 export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
 
 export const SETTING_GROUPS = [
-  // 0286: the panel shows this group's settings in its own group, under the speck run switch. 0486: Watching, was Foreman.
-  { title: 'Watching', settings: [
-    { key: 'watch', default: 'tell', // 0487: were foreman_fixing, foreman, foreman_model and foreman_effort
+  // 0286: the panel shows this group's settings in its own group, under the speck run switch. 0486: Watching, was Foreman. 0575: Your engineering manager, was Watching. `named`: its explanation says speck_name's name for each "speck".
+  { title: 'Your engineering manager', settings: [
+    { key: 'speck_name', default: 'speck', unset: 'speck as its name',
+      explain: 'speck is your engineering manager: once you set a ticket ready, getting it shipped is its job, so it runs the builder and reviewer you\'ve chosen, gets stuck work moving again, makes the calls that watch lets it and tells you what it did and why, asking you only when there\'s no clear answer. You decide what gets built, planning it with your own agent, and you can call your engineering manager whatever you like here, with 1 to 24 letters, digits, spaces, hyphens or apostrophes, starting with a letter.' },
+    { key: 'watch', default: 'tell', named: true, // 0487: were foreman_fixing, foreman, foreman_model and foreman_effort
       explain: 'What speck does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. decide does everything fix does and takes every recommendation, whatever it changes, up to 3 per ticket, and leaves a question with no recommendation or a high-risk ticket to you. With fix or decide, it also starts an agent to look into work that stops for a reason speck has no steps for, which resumes the build, ships it again once, makes a draft fix ticket or asks you.' },
     // 0287: the agent speck looks into stops with
-    { key: 'watch_agent', default: '',
+    { key: 'watch_agent', default: '', named: true,
       explain: 'The agent speck runs on when it looks into work that stopped for a reason speck has no steps for: claude, codex, cursor or a model provider, such as DeepSeek, with your own API key for it. Blank uses the builder when that\'s codex, cursor or a model provider, and claude otherwise.' },
-    { key: 'watch_model', default: '',
+    { key: 'watch_model', default: '', named: true,
       explain: 'The model speck\'s agent runs on, picked from that agent\'s models or written as it names it. Blank leaves it to the agent\'s own default.' },
-    { key: 'watch_effort', default: '',
+    { key: 'watch_effort', default: '', named: true,
       explain: 'How hard speck\'s agent thinks: low, medium, high, xhigh or max, or blank for the agent\'s own default. Cursor isn\'t given it, as its model names carry the effort.' },
   ] },
   { title: 'Shipping', settings: [
@@ -82,7 +84,7 @@ const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] :
 // 0293: and builder, which sets build_command with it. 0511: and allow_same_model_review, which the view asks about
 // before turning it on, as it weakens the independent review.
 export const EDITABLE = Object.freeze(['builder', 'builder_model', 'builder_effort', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
-  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'watch', 'watch_agent', 'watch_model', 'watch_effort', 'allow_same_model_review']);
+  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'speck_name', 'watch', 'watch_agent', 'watch_model', 'watch_effort', 'allow_same_model_review']);
 const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
@@ -138,21 +140,22 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
       hand_set: handSetBuildCommand(used), each_ticket: buildsEachTicket(used.build_command ?? ''), own: { ...OWN_BUILD_COMMANDS, ...Object.fromEntries(providers.map(p => [p.name, ''])) } } }; // 0401: and yours
     const machine = !MACHINE_SETTINGS.includes(s.key) ? {}
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
-    return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s),
+    return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s, speckNameOf(file)),
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
   }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
     ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS, providers: providersShown(repo, providers) };
 }
 
 // 0397: a setting's explanation, ending with what speck uses when it isn't set, unless the explanation already says what
-// blank does, and then where a change to it is saved.
-export function explainFully(s) {
-  const unset = s.default === '' ? '' : ` When it isn't set, speck uses ${Array.isArray(s.default) ? s.default.join(' and ') : String(s.default)}.`;
+// blank does, and then where a change to it is saved. 0575: `named` calls the engineering manager `name`; `unset` words what's used.
+export function explainFully(s, name = 'speck') {
+  const unset = s.default === '' ? '' : ` When it isn't set, ${s.named ? name : 'speck'} uses ${s.unset ?? (Array.isArray(s.default) ? s.default.join(' and ') : String(s.default))}.`;
   const saved = !EDITABLE.includes(s.key) ? ' It\'s changed in speck/config.yml rather than here, and saved there for the project, with a commit.'
     : MACHINE_SETTINGS.includes(s.key) ? ' A change here is saved for your machine only, without a commit.'
       : ' A change here is saved for the project in speck/config.yml, with a commit.';
-  return `${s.explain}${unset}${saved}`;
+  return `${namedExplain(s, name)}${unset}${saved}`;
 }
+const namedExplain = (s, name) => (s.named ? s.explain.replace(/\bspeck\b/g, () => name) : s.explain);
 
 // 0393: a provider's models as the Settings view lists them, its default model said as such.
 const providerModels = p => p.models.map(slug => ({ slug, display_name: null, description: slug === p.defaultModel ? `${p.label}'s default` : null }));
@@ -342,9 +345,9 @@ export function cmdConfigShow(args) {
   if (args.length && !json) throw new SpeckError('Usage: speck config show [--json]');
   const defaults = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, s.default]));
   // 0397: the explanation without the panel's own ending, which says where a change made there is saved.
-  const explains = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, s.explain]));
   // 0386: a value this machine holds is shown as speck uses it, marked this_machine, with speck/config.yml's in repo_value.
-  const repo = findRepoRoot(), mine = machineConfig(repo);
+  const repo = findRepoRoot(), mine = machineConfig(repo), name = speckNameOf(loadConfig(repo, { machine: false })); // 0575
+  const explains = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, namedExplain(s, name)]));
   const groups = panelSettings(repo).groups.map(g => ({ title: g.title, settings: g.settings.map(s => {
     const repoValue = s.repo_value ?? s.value, machine = Object.hasOwn(mine, s.key), value = machine ? mine[s.key] : repoValue;
     return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: explains[s.key],

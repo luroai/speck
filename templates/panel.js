@@ -1478,7 +1478,7 @@ function drawRunSwitch() {
 const runSwitchSaid = el('p', 'bad');
 runSwitchSaid.hidden = true;
 function foremanGroup(rows = []) {
-  return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Watching')), ...rows);
+  return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Your engineering manager')), ...rows);
 }
 // 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the button shows
 // that at once. A refusal shows speck run's own message under the header until the next click on the switch.

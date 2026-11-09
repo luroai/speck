@@ -404,7 +404,10 @@ export function sumParts(parts) {
 }
 
 // 0526: ticket `id`'s total AI spend, from the builds and watch agent runs kept in `runs` and its saved review rounds:
-// sumParts of its spendParts (0527), so speck status and speck spend never disagree.
-export function totalSpent(runs, id, rounds) {
-  return sumParts(spendParts(runs, id, rounds));
+// sumParts of its spendParts (0527), so speck status and speck spend never disagree. 0595: given `since`, a time in
+// milliseconds, also recent_spend: each part that ended since then, as { part, ended, tokens, cost_usd }, when there are any.
+export function totalSpent(runs, id, rounds, since = null) {
+  const parts = spendParts(runs, id, rounds);
+  const recent = since === null ? [] : parts.filter(x => x.ended !== null && Date.parse(x.ended) >= since).map(({ part, ended, tokens, cost_usd }) => ({ part, ended, tokens, cost_usd }));
+  return { ...sumParts(parts), ...(recent.length ? { recent_spend: recent } : {}) };
 }

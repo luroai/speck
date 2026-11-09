@@ -72,7 +72,7 @@ test('0564 AC1: speck reads decide from speck/config.yml, and the template names
 
 test('0564 AC1: the Settings view offers decide, explains it and saves it, and refuses any other value', () => {
   const r = panelRepo();
-  const s = panelSettings(r.dir).groups.find(x => x.title === 'Watching').settings.find(x => x.key === 'watch');
+  const s = panelSettings(r.dir).groups.find(x => x.title === 'Your engineering manager').settings.find(x => x.key === 'watch');
   assert.ok(s.choices.includes('decide'));
   assert.match(s.explain, /\bdecide\b/);
   assert.equal(panelSaveSettings(r.dir, [{ key: 'watch', value: 'decide' }]).status, 200);

@@ -2,7 +2,7 @@
 
 **Plan in ten minutes. Come back to it shipped.**
 
-speck gives you a team you can trust. You spend your time where it counts: deciding what needs doing and what done looks like, in a quick conversation with your coding agent. Then you walk away. Your agents build each change tests first, a second AI reviews it, and speck ships it, the same way every time.
+speck gives you a team you can trust. You spend your time where it counts: deciding what needs doing and what done looks like, in a quick conversation with your coding agent. Then you walk away. Your agents build each change tests first, a second AI reviews it, and speck ships it, the same way every time. speck works as your engineering manager, and you can rename it to whatever you like.
 
 speck isn't only for code. A ticket can be a task instead, such as drafting an email, writing a plan or pulling together research. speck has your agent do it, a second AI checks it against what you asked for, and the result waits for you in `outputs/`.
 

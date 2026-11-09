@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, findRepoRoot, parseYaml, parseConfig, stripComment, EFFORTS, loadConfig, yamlValue, RENAMED, settingName } from './core.mjs';
+import { SpeckError, findRepoRoot, parseYaml, parseConfig, stripComment, EFFORTS, loadConfig, yamlValue, RENAMED, settingName, SPECK_NAME } from './core.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValues } from './machine.mjs';
 import { knownEffort } from './codex-models.mjs';
 import { ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
@@ -26,6 +26,7 @@ const KINDS = Object.assign(Object.create(null), {
   reviewer_effort: 'effort', auto_ship_risk: 'risks', watch: 'fixing',
   watch_agent: 'agent', watch_model: 'text', watch_effort: 'effort', // 0287, 0487: were foreman_fixing, foreman, foreman_model and foreman_effort
   ship_mode: 'shipmode', // 0295
+  speck_name: 'speckname', // 0575
   builder_effort: 'effort', // 0402
   max_parallel_builds: 'count', max_parallel_tests: 'count', test_stall_minutes: 'count', review_timeout_minutes: 'count', ship_wait_minutes: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
   'limits.max_review_rounds': 'count', 'limits.max_merge_rounds': 'count', 'limits.escalate_after_repeat_disputes': 'count', 'limits.max_ticket_body_lines': 'count',
@@ -38,6 +39,10 @@ export function checkConfigValue(key, value, providers = knownProviders()) {
   if (kind === 'flag') {
     if (value !== 'true' && value !== 'false') throw new SpeckError(`${key} must be true or false (got ${JSON.stringify(value)}).`);
     return value === 'true';
+  }
+  if (kind === 'speckname') { // 0575
+    if (!SPECK_NAME.test(value)) throw new SpeckError(`${key} must be 1 to 24 characters of letters, digits, spaces, hyphens and apostrophes, starting with a letter (got ${JSON.stringify(value)}).`);
+    return value.trimEnd();
   }
   if (kind === 'effort') {
     // 0276: or one Codex lists for one of its models, such as ultra
