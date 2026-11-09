@@ -144,7 +144,7 @@ test('0426 AC3: every link is blue, visited or not, including the pull request l
 test('0426 AC3: needs you, waiting for you, passing checks, links, the focus ring and the stage edges take those colours', () => {
   // needs you, a stopped build and the high-risk tag: red
   uses('.tab .needs', 'color', '--bad');
-  uses('.bezel.needs', 'border-color', '--bad');
+  uses('.bezel.needs', 'border-color', '--bar-needs');
   uses('.q.blocked', 'border-color', '--bad');
   uses('.q .top .stage.bad', 'color', '--bad');
   uses('.tag.high', 'color', '--bad');
@@ -163,7 +163,7 @@ test('0426 AC3: needs you, waiting for you, passing checks, links, the focus rin
     uses(sel, 'border-color', token);
 });
 
-test('0426 AC4: speck\'s screen, its frame and the dot-matrix title keep their own colours', () => {
+test('0426 AC4: speck\'s colours and the bar keep their own colours', () => {
   const all = looks();
   const KEPT = {
     light: { '--lcd-bg': '#e6e9db', '--lcd-off': '#dde1cf', '--lcd-ink': '#20241d', '--lcd-red': '#d63f28', '--lcd-shadow': 'rgba(30, 40, 15, .14)',
@@ -172,9 +172,7 @@ test('0426 AC4: speck\'s screen, its frame and the dot-matrix title keep their o
       '--bezel': '#080907', '--bezel-ink': '#e6e7df', '--bezel-muted': '#b8b9b1', '--dot': '#d4664e' },
   };
   for (const [name, kept] of Object.entries(KEPT)) for (const [k, v] of Object.entries(kept)) assert.equal(all[name][k], v, `${name}: ${k}`);
-  uses('.bezel', 'background', '--bezel');
-  uses('.bezel .name', 'color', '--bezel-ink');
-  uses('.bezel .glass', 'background', '--lcd-bg');
+  uses('.bezel', 'background', '--bar'); // 0580: the frame is the bar now, one colour in both looks
 });
 
 test('0426 AC5: System, light and dark all take these colours: they are set only for the light look and the dark one', () => {

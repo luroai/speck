@@ -49,7 +49,7 @@ The Settings view is in the redesign's look, with speck's face beside its name.
 - AC1's "its explanation in muted text; info buttons stay": the explanation stays behind the info button and is now drawn in muted text. 0268 put explanations behind the button on purpose ("no setting's explanation shows until it's asked for"), and each is several sentences long.
 - AC1: Appearance and Auto-build, at the top, have no heading of their own (0396 tests that they have none) and sit under the view's own divider.
 - AC2: a Save with nothing to save stays greyed out, so the accent says it can be pressed.
-- AC3: 0578 left `speck-face.js` unloaded, so this ticket loads it and counts it in the page's out-of-date stamp. 0580 makes the same change for the header, so the two will meet when one merges.
+- AC3: 0578 left `speck-face.js` unloaded. 0580, which shipped first, now loads it and counts it in the page's out-of-date stamp, so this ticket relies on that and adds nothing of its own there.
 - AC5 has no test of its own: its first half is the Delivery log, which a reviewer reads, and its second half is the whole suite, which `speck ship` runs.
 - Self-check: the groups kept the box every section has until the real-browser pictures showed it, because the reset had been taken out; `border: 0` is back and the browser test now measures each group's drawn border.
 
@@ -80,7 +80,8 @@ Round 1 (codex): approve.
 
 Tests updated for the new look:
 - `test/panel-0428.test.mjs`: Settings' groups and switches no longer have a 12 px corner radius, and a button's border may be the accent (Save).
-- `test/panel-0432.test.mjs`, `test/panel-0433.test.mjs`, `test/panel-0473.test.mjs`, `test/panel-0474.test.mjs`: the page's list of scripts now has `speck-face.js`.
+
+Ship's first try: `0302 AC1` failed on the merged code, then passed on this branch merged with main, six runs out of six. Ship's output wasn't kept, so the cause isn't known. The machine was under heavy load (load average about 26 to 29).
 
 Follow-ups:
 - The Save button in the question about unsaved changes keeps its plain look; only the Save bar was in scope.

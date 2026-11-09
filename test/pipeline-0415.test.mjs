@@ -324,7 +324,7 @@ test('0415 AC5: in a real browser at 320 px wide, the open pop-up doesn\'t scrol
     await b.until(`location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`, 'the page');
     // 0430: a page opened from its file can't load /panel.css, so its styles are put in from their own file.
     await b.js(`(() => { const s = document.createElement('style'); s.textContent = ${JSON.stringify(styles())}; document.head.appendChild(s); return true; })()`);
-    await b.until(`!!document.getElementById('run') && document.getElementById('run').getAttribute('aria-label') !== null`, 'the board');
+    await b.until(`!!document.getElementById('bar-word') && document.getElementById('bar-word').textContent !== ''`, 'the board');
     await b.js(`document.getElementById('run').click(), true`);
     await b.until(`!!document.querySelector('#foreman ol.run-log li')`, 'the log in the pop-up');
     for (const look of ['light', 'dark']) {

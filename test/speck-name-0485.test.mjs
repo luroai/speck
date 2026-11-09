@@ -116,12 +116,12 @@ test('0485 AC2: the cards, the full ticket and the dismiss confirm use the new w
   assert.match(confirms[0], /^Dismiss speck's question about 0004: "Should it keep the old test\?"/);
 });
 
-test('0485 AC3: speck\'s screen is named speck\'s screen, and its tooltip starts "speck: " before the status word', async () => {
-  assert.match(panelHtml(), /<button class="glass" id="run" type="button" aria-label="speck's screen"/);
+test('0485 AC3: the status button is named by what it says, and its tooltip starts "speck: " before the status word', async () => {
+  assert.match(panelHtml(), /<button class="bar-status" id="run" type="button" aria-expanded/); // 0580: its name is the text in it
   const { p } = page();
   await p.settle();
   const run = p.byId('run');
-  assert.equal(run.attrs['aria-label'], 'speck\'s screen', 'still its name once the board is drawn');
+  assert.equal((run.attrs || {})['aria-label'], undefined, 'no label over the status it shows');
   assert.match(run.title, /^speck: Needs you 2 · The pipeline: speck run's log$/);
 });
 

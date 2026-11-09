@@ -7,7 +7,7 @@
        design's. The black bar's are the same in both looks, so the dark look leaves them as they are. */
     --bg: #FFFFFF; --surface: #F4F5F7; --border: #E4E6EA; --text: #15171A; --muted: #5F6670; --accent: #2F55D4;
     --needs-you: #D9822B; --needs-you-text: #A84F06; --eye: #D63F28;
-    --bar: #1C1D19; --bar-ink: #E8E7E1; --bar-muted: #A5A69E; --bar-line: #34352F; --bar-eye: #E24A2F;
+    --bar: #1C1D19; --bar-ink: #E8E7E1; --bar-muted: #A5A69E; --bar-line: #34352F; --bar-eye: #E24A2F; --bar-needs: #F0A35A;
     /* The names the views use take the design's colours: a card is on the page's background, a raised part is on the
        surface, and what's wrong or waiting is in the needs-you text, not a red. */
     --panel: #FFFFFF; --raise: #F4F5F7; --input: #FFFFFF; --line: #E4E6EA; --line-soft: #E4E6EA;

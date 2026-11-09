@@ -328,7 +328,7 @@ test('0031 AC1: the page header names the project by its main checkout (0413), e
   const { port } = p;
   try {
     const body = (await request(port)).body;
-    assert.ok(body.includes(`<span class="repo">${path.basename(r.dir)} · <code>main</code></span>`), 'the main checkout\'s name, then the base branch');
+    assert.ok(body.includes(`<span class="repo">${path.basename(r.dir)}</span>`) && body.includes('<code>main</code>'), 'the main checkout\'s name, and the base branch (0580: on the bar\'s two lines)');
     assert.ok(!body.includes(path.basename(wt)), 'not the worktree\'s');
     assert.ok(!body.includes('{{repo}}') && !body.includes('{{base}}'));
   } finally { await stop(p); }
@@ -369,7 +369,7 @@ test('0031 AC4: a request that never answers, or whose body never arrives, still
 
 test('0033 AC2: the page header shows the base branch (0413: after the project again), with no counts (0150: and no connection status)', async () => {
   const header = page().match(/<header>([\s\S]*?)<\/header>/)[1];
-  assert.match(header, /\{\{repo\}\} · <code>\{\{base\}\}/);
+  assert.match(header, /\{\{repo\}\}[\s\S]*<code>\{\{base\}\}/); // 0580: the second line of the bar
   assert.match(header, /\{\{base\}\}/);
   assert.doesNotMatch(header, /id="pills"/);
   const state = { tickets: [T('0001', 'draft'), T('0002', 'blocked'), T('0003', 'ready'), T('0004', 'done')], ideas: [idea('A', 'idea')] };

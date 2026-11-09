@@ -86,7 +86,7 @@ async function openLog(b, width, height) {
   await b.js(`(() => { const s = document.createElement('style'); s.textContent = ${JSON.stringify(styles())}; document.head.appendChild(s); return true; })()`);
   await b.js(`(async () => { const f = new FontFace('Doto', Uint8Array.from(atob(${JSON.stringify(font)}), c => c.charCodeAt(0)).buffer, { weight: '100 900' });
     document.fonts.add(await f.load()); return true; })()`);
-  await b.until(`!!document.getElementById('run') && document.getElementById('run').getAttribute('aria-label') !== null`, 'the board');
+  await b.until(`!!document.getElementById('bar-word') && document.getElementById('bar-word').textContent !== ''`, 'the board');
   await b.js(`document.getElementById('run').click(), true`);
   await b.until(`document.querySelectorAll('#foreman ol.run-log li').length === 200`, 'the 200 lines in the pop-up');
 }
@@ -106,8 +106,8 @@ const MEASURE = `(() => {
     laneSide: 4, // 0480: the lanes are light cards now, so the log keeps 0478's 4 px frame of its own
     bezel, topBg: cs.backgroundColor, bodyBg: bs.backgroundColor, corners: [cs.borderTopLeftRadius, cs.borderTopRightRadius, bs.borderBottomLeftRadius, bs.borderBottomRightRadius],
     side: [parseFloat(bs.paddingLeft), parseFloat(bs.paddingRight), parseFloat(bs.paddingBottom)],
-    titleFont: getComputedStyle(t).fontFamily, titleWeight: getComputedStyle(t).fontWeight, nameFont: getComputedStyle(document.querySelector('.bezel .name')).fontFamily,
-    dot: dot.backgroundColor, nameDot: getComputedStyle(document.querySelector('.bezel .name'), '::before').backgroundColor, dotW: parseFloat(dot.width),
+    titleFont: getComputedStyle(t).fontFamily, titleWeight: getComputedStyle(t).fontWeight, nameFont: getComputedStyle(document.querySelector('.bezel .bar-word')).fontFamily,
+    dot: dot.backgroundColor, nameDot: (() => { const d = document.createElement('div'); d.style.background = 'var(--lcd-red)'; document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; })(), dotW: parseFloat(dot.width),
     ink, titleColor: getComputedStyle(t).color, titleText: t.textContent, titleRects: t.getClientRects().length,
     pageScrolls: se.scrollHeight > se.clientHeight || se.scrollWidth > se.clientWidth, popScrolls: v.scrollHeight > v.clientHeight || v.scrollWidth > v.clientWidth,
     bodyScrolls: body.scrollHeight > body.clientHeight, topScrolls: top.scrollHeight > top.clientHeight,
@@ -149,7 +149,7 @@ test('0479 AC1 and AC2: in a real browser at 390 × 844 and 1200 × 800 with 200
         assert.equal(m.titleColor, m.ink, `${where}: in the frame's light ink (${m.titleColor})`);
         assert.match(m.titleFont, /^"?Inter"?,/, `${where}: in Inter (0577)`);
         assert.equal(m.titleWeight, '600');
-        assert.equal(m.dot, m.nameDot, `${where}: speck's own dot`);
+        assert.equal(m.dot, m.nameDot, `${where}: speck's own dot`); // 0580: the header's dot is gone, and the log keeps its red
         assert.ok(m.dotW > 0, `${where}: which shows`);
         assert.equal(m.titleRects, 1, `${where}: on one line`);
         assert.ok(m.close.right <= m.top.right && m.top.right - m.close.right <= 8, `${where}: Close at the row's right-hand end`);

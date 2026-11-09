@@ -131,7 +131,7 @@ test('0160 AC3: scrolling down and back up starts no fade in the header, and lea
   const before = await b.js(`document.querySelector('header').className`);
   await scrollTo(b, 600);
   await scrollTo(b, 0);
-  assert.deepEqual(await b.js('anims'), []);
+  assert.deepEqual((await b.js('anims')).filter(n => !n.startsWith('sf-')), []); // 0580: speck's own animations aren't the header fading
   assert.equal(await b.js(`document.querySelector('header').className`), before);
 }));
 

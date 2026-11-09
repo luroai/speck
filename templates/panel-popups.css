@@ -119,6 +119,12 @@
   #full-ticket ol.criteria > li { margin-bottom: 6px; }
   /* 0583: a tick on each criterion the reviewer passed, and the rows that open its review pack and build log */
   #full-ticket .tick { display: inline-block; width: 6px; height: 12px; margin: 0 8px 0 3px; border: solid var(--blue); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* drawn, so it needs no font to have the glyph */
+  /* 0584: a build's live details, under the track and facts, styled as its card is */
+  #full-ticket .live { margin-top: 14px; }
+  #full-ticket .live-now { font-size: 14px; line-height: 20px; color: var(--text); margin-bottom: 6px; }
+  #full-ticket .live-now .sub { font-family: var(--font-mono); font-size: 12px; }
+  #full-ticket .live-now .say.bad { color: var(--bad); }
+  #full-ticket .live-now .say.to-ship { color: var(--ok); }
   #full-ticket .pane-rows { margin: 14px 0 0; border-top: .5px solid var(--line-soft); }
   #full-ticket .pane-row { display: flex; justify-content: space-between; width: 100%; padding: 12px 2px; font: inherit; font-family: var(--font-ui); font-size: 15px; color: var(--text); text-align: left; background: none; border: 0; border-bottom: .5px solid var(--line-soft); border-radius: 0; cursor: pointer; }
   #full-ticket .pane-row:hover { background: var(--surface); color: var(--text); }

@@ -60,7 +60,7 @@ test('0440 AC1: a ticket that needs you is in the needs-you text', () => {
   assert.equal(ruleVar('.q.blocked', 'background'), '--bad-bg');
   assert.equal(ruleVar('.q .top .stage.bad', 'color'), '--bad');
   assert.equal(ruleVar('.tab .needs', 'color'), '--bad');
-  assert.equal(ruleVar('.bezel.needs', 'border-color'), '--bad');
+  assert.equal(ruleVar('.bezel.needs', 'border-color'), '--bar-needs');
   const { light, dark } = looks();
   assert.equal(light.get('--bad').toLowerCase(), '#a84f06');
   assert.equal(dark.get('--bad').toLowerCase(), '#f0a35a');

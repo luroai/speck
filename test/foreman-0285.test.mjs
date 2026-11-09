@@ -49,7 +49,7 @@ test('0285 AC1: the header shows the Foreman\'s status and colour in place of th
   click(header(p));
   await p.settle();
   assert.ok(!p.calls.some(c => /\/api\/run\//.test(c.url)), 'pressing it doesn\'t turn speck run on or off');
-  assert.match(page().match(/<header>([\s\S]*?)<\/header>/)[1], /<button class="glass" id="run" type="button" aria-label="speck's screen" aria-expanded="false" aria-controls="foreman"/);
+  assert.match(page().match(/<header>([\s\S]*?)<\/header>/)[1], /<button class="bar-status" id="run" type="button" aria-expanded="false" aria-controls="foreman"/);
 });
 
 test('0285 AC2: pressing the status opens its detail; 0458: which shows only the log, while speck status keeps ready tickets with why, shipping\'s state and blocked tickets with their questions', async () => {

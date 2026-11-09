@@ -107,27 +107,22 @@ test('0543 AC4: from either address, the manifest opens the panel full screen at
   } finally { await px.close(); await stop(panel); }
 });
 
-// The files the page fetched, the header's font, whether Doto loaded and the manifest as Chrome reads it.
+// The files the page fetched and the manifest as Chrome reads it.
 // The page's fetches and event stream (/api/…) stay at the site's root: out of scope here.
 const LOOK = `(async () => {
   await document.fonts.ready;
-  const n = document.querySelector('.bezel .name');
-  return { font: getComputedStyle(n).fontFamily, loaded: document.fonts.check('900 18px Doto'),
-    fetched: performance.getEntriesByType('resource').filter(e => !new URL(e.name).pathname.startsWith('/api/') || e.name.startsWith(location.href)).map(e => e.name) };
+  return { fetched: performance.getEntriesByType('resource').filter(e => !new URL(e.name).pathname.startsWith('/api/') || e.name.startsWith(location.href)).map(e => e.name) };
 })()`;
 
-test('0543 AC2, AC3 and AC4: in a real browser, at the root and under a proxy\'s path, the header is drawn in Doto and Chrome reads the manifest', skip, async () => {
+test('0543 AC2, AC3 and AC4: in a real browser, at the root and under a proxy\'s path, the page\'s files load from under it and Chrome reads the manifest', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const px = await proxy(panel.port);
   const b = await browserPage('about:blank');
   try {
     for (const base of [`http://127.0.0.1:${panel.port}/`, px.base]) {
       await b.send('Page.navigate', { url: base });
-      await b.until(`location.href === ${JSON.stringify(base)} && document.readyState === 'complete' && !!document.querySelector('.bezel .name')`, base);
+      await b.until(`location.href === ${JSON.stringify(base)} && document.readyState === 'complete' && !!document.querySelector('#bar-word')`, base);
       const m = await b.js(LOOK);
-      assert.ok(m.loaded, `Doto loaded at ${base}: ${JSON.stringify(m)}`);
-      assert.match(m.font, /^Doto,/);
-      assert.ok(m.fetched.some(u => u.endsWith('/fonts/Doto.ttf')), `the font fetched: ${m.fetched}`);
       for (const u of m.fetched) assert.ok(u.startsWith(base), `${u} under ${base}`);
       // Chrome reads the manifest a little after the page has loaded: until then it reports none (0149).
       let app;
