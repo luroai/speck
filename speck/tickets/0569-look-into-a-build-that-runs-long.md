@@ -45,6 +45,7 @@ When a build runs well past the usual time, speck looks into why and tells you w
 - Waits for 0567, which adds `decide` to `speck watch`'s actions in `scripts/foreman-agent.mjs`, after 0564 and 0566.
 - Relies on nothing outside this repo; the load average is Node's `os.loadavg()`, which is all zeros on Windows.
 - Failing before this build: none
+- Self-check: dropped a look at a long build whose build ended while it waited for the agent; held the look back while a question waits for you (0566); timed a hand-back or the agent's resume from then; kept `tried` for stops, so a long look doesn't swallow a later stop.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
