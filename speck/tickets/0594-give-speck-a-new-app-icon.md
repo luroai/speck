@@ -1,7 +1,7 @@
 ---
 id: "0594"
 title: "Give speck a new app icon"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0578"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:53:58.245Z"
+approved: "2026-11-09T19:08:01.622Z"
 
 ---
 # 0594 · Give speck a new app icon
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's app icon and favicon are the LCD-era mark. In the redesign, speck itself is the mark: the Premium screen on the black slab.
@@ -59,9 +60,14 @@ Worth keeping an eye on: at the very smallest size the visor is only a small red
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 121,289
+- Elapsed since build started: 14 min
+- Changed lines: 10 (limit 5000)
 Tests updated from the old look to the new (AC5):
 - `test/icons-0305.test.mjs`: the manifest's colours are the black bar's.
 - `test/panel-0426.test.mjs`: the manifest's colours are the black bar's.
