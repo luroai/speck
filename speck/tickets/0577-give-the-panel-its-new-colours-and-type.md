@@ -88,9 +88,95 @@ Tests updated to the new look (AC5):
 - `test/pipeline-0479.test.mjs`
 - `test/review.test.mjs`
 - `test/support/panel.mjs`: the agreed palette (`PALETTE`).
-- `test/panel-0420.test.mjs` and `test/panel-0442.test.mjs` loosen two measurements Inter's wider letters and narrower spaces moved: the shipped stats line at 420 px has room for one more digit, down from three (a bigger figure wraps between the stats, as it already did on a phone), and the ` · ` gap is 3 px, down from 4.
+- `test/panel-0420.test.mjs` and `test/panel-0442.test.mjs` loosen two measurements Inter's wider letters and narrower spaces moved: the shipped stats line at 420 px now just fits, with no spare room where the test asked for three more digits (a bigger figure wraps between the stats, as it already did on a phone), and the ` · ` gap is 3 px, down from 4.
 - `test/review.test.mjs` is in that list for a different reason: its check for hard-coded model names read every file as text, and a woff2 font's compressed bytes can spell one by chance, so it now skips `.woff2` files only.
 
 `test/panel-0472.test.mjs` is unchanged: its AC3 compares the styles from before and after 0472's split, both read from git history, so the redesign doesn't touch what it checks, and it still passes.
 
 Follow-ups for the tickets after this one: state colours other than what needs you and the accent (green for approved, the purple Ship track, the bug, fix and task tags) keep their old hues until the views that use them are redesigned. The build log's terminal colours, including its red-pink failure lines, are unchanged.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6f223af2e6dcce945f7f4d06159ef26bb5f10d94",
+    "session": "fresh",
+    "thread_id": "01a1c186-8fb1-7cc1-8a38-f00334ab7ff8",
+    "builder_response": "- Tests run: test/panel-0577.test.mjs test/icons-0305.test.mjs test/mockup-0126.test.mjs test/panel-0051.test.mjs test/panel-0055.test.mjs test/panel-0134.test.mjs test/panel-0135.test.mjs test/panel-0136.test.mjs test/panel-0147.test.mjs test/panel-0149.test.mjs test/panel-0151.test.mjs test/panel-0155.test.mjs test/panel-0156.test.mjs test/panel-0157.test.mjs test/panel-0161.test.mjs test/panel-0420.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0440.test.mjs test/panel-0442.test.mjs test/panel-0445.test.mjs test/panel-0448.test.mjs test/panel-0449.test.mjs test/panel-0455.test.mjs test/panel-0461.test.mjs test/panel-0478.test.mjs test/panel-0480.test.mjs test/pipeline-0470.test.mjs test/pipeline-0479.test.mjs test/review.test.mjs, by `speck test --related`, plus the files it brought in. No whole-suite run.\n- Round 1. The change is templates/panel-base.css (tokens, @font-face), templates/fonts (woff2 and OFL licences), the font lists now `var(--font-ui)` / `var(--font-mono)` across the panel's CSS, a font route in scripts/panel.mjs, and the browser bar and manifest colour.\n- AC5 has no test of its own: a test can't read this repo's speck/ folder (0122), and the suite half runs at ship. The Delivery log lists every test updated, with why.\n- test/review.test.mjs now skips `.woff2` files: its hard-coded-model check reads every file as text, and compressed font bytes can match the pattern by chance.\n- Please check the mapping of the older tokens (--panel, --raise, --run, --blue, --bad, --warn) to the design, and that 0161's 7:1 small-text and 3:1 edge rules are correctly superseded by AC3 and the design's hairline border.\n",
+    "seconds": 41,
+    "usage": {
+      "input_tokens": 412107,
+      "cached_input_tokens": 321536,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 878,
+      "reasoning_output_tokens": 26
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 90571,
+      "cached": 321536,
+      "write": 0,
+      "output": 878
+    },
+    "cost_usd": 0.2220756,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:17:04.340Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-base.css defines the specified light, dark and black-bar tokens. The passing 0577 AC1 tests check their values and legacy-token mappings."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Bundled fonts, licences, relative @font-face addresses and title changes are covered by passing 0577 AC2 tests. However, templates/panel.js progressOf() and factsOf() render timers without a monospace class; templates/panel-cards.css leaves these and #shipped-stats .num inheriting Inter."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0577 AC3 test calculates contrast for all three required text colours against background and surface in both looks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0577 AC4 tests check local stylesheet/font addresses and exercise the server routes for every named font. scripts/panel.mjs serves only explicitly allowed font files."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the updated tests and explains measurement changes. The recorded related-test run reports 3260 passed, zero failed and three skipped. panel-0472 correctly continues checking historical styles."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css",
+        "issue": "AC2 requires JetBrains Mono for times and figures, but build timers (progressOf()'s .sub and factsOf()'s .time .sub), shipped summary figures (#shipped-stats .num), and shipped metadata still inherit Inter. The new font test checks log times and tile figures only, so it misses these visible cases.",
+        "suggested_fix": "Apply --font-mono to the relevant time and numeric elements, keeping surrounding prose in Inter, and add coverage for build timers and shipped summary figures rather than checking only logs and stat tiles.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The new colours and locally bundled fonts are in place, and the reported tests pass. Some visible timers and figures still use the ordinary text font, so the typography requirement needs one further fix before approval."
+  }
+}
+```
+
+</details>

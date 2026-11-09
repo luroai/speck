@@ -122,7 +122,8 @@
   /* 0168: an in-flight ticket's progress, under its title: a sentence saying what's happening and the current stage's
      name, then the timer. 0416: in words only, with no builder badge. */
   .q .top .say { display: inline-block; color: var(--text); font-size: 14px; line-height: 13px; } /* 0427: the stage sentence is body text, in a line of smaller details: a block one line of 13 px tall, so it starts under the title and keeps the line its height */
-  .q .top .ship-at { color: var(--text); font-variant-numeric: tabular-nums; }
+  .q .top .ship-at { color: var(--text); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .q .top .progress > .sub, .q .facts .value.time .sub, #shipped .facts .value.time .sub { font-family: var(--font-mono); } /* 0577: a build's timer */
   .q .top .say.bad { color: var(--bad); }
   .q .top .say.to-ship { color: var(--ok); }
   .q .top .stage { color: var(--run); }
@@ -196,7 +197,7 @@
   .stats-line[hidden] { display: none; }
   #shipped-stats { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
   #shipped-stats .part { white-space: nowrap; }
-  #shipped-stats .num { font-weight: 600; color: var(--text); }
+  #shipped-stats .num { font-family: var(--font-mono); font-weight: 500; color: var(--text); }
   #shipped-stats[hidden] { display: none; }
   .full-open.more-stats { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
   .more-stats[hidden] { display: none; }
@@ -204,7 +205,7 @@
      when it shipped and its figures, separated by " · ". More stats is plain words in a thin box, so these lines fit
      on one line in a 420 px pane with a scroll bar. 0466: its top row opens and closes it, as a Build ticket's does. */
   #shipped .sum { display: flex; align-items: flex-end; gap: 6px; margin-top: 2px; }
-  #shipped .meta { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
+  #shipped .meta { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--muted); }
   #shipped .meta > * { white-space: nowrap; } /* whole, so a line too long for a phone wraps between its time and figures */
   section.shipped table { display: block; }
   #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
