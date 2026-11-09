@@ -42,6 +42,8 @@ With two or more projects running, the panel offers the bridge, which shows what
 - The design is the mock agreed with the user on 2026-11-08 and 9 (a private claude.ai design canvas, "speck panel, grown up": Lanes, Decided for you, a ticket waiting at Ship, Pipeline log, each light and dark, the bridge, and the Character page). The user picked the Premium screen for speck and asked for these tickets for 1.0.0 on 2026-11-09.
 - Uses 0595's summaries and 0516's switch. Waits for the header, log and lane tickets that change the same files.
 - Relies on nothing outside this repo.
+- Failing before this build: none
+- AC1: All projects is a button beside the project menu's caret, not an entry in its list: 0516's tests compare the list's entries exactly, and AC5 keeps every passing test as it is. It's offered exactly when the menu lists two or more running panels.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
