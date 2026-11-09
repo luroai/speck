@@ -1,7 +1,7 @@
 ---
 id: "0595"
 title: "Read every project's board for the bridge"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T17:42:11.877Z"
 approved: "2026-11-09T17:59:29.693Z"
+finished: "2026-11-09T18:10:38.033Z"
 
 ---
 # 0595 · Read every project's board for the bridge
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The bridge shows what needs you across every project on this machine (0596), but each panel today knows only its own board. The panels already find each other through 0516's records, so one can ask the others for a summary.
