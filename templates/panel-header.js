@@ -58,6 +58,12 @@ if (typeof globalThis.fetch === 'function') {
     return res;
   };
 }
+// 0596: All projects, in the bar before Settings, made here as it shows only with two or more panels running.
+const bridgeOpener = el('button', 'bridge-open', 'All projects');
+bridgeOpener.type = 'button';
+bridgeOpener.title = 'Every project at once';
+bridgeOpener.hidden = true;
+$('bezel').insertBefore(bridgeOpener, $('settings-open'));
 let projectsGoneList = null, projectsDrawn = null; // the panels still running while the one shown has stopped; what the menu was drawn from
 // The project shown, by the name the menu last gave it.
 function projectShown() {
@@ -79,6 +85,7 @@ function drawProjects() {
   const projects = state && state.projects, list = projectsGoneList || (projects && Array.isArray(projects.list) ? projects.list : []);
   const self = projectsGoneList ? null : projects && projects.self, show = list.length > (projectsGoneList ? 0 : 1);
   $('project-pick').hidden = !show;
+  bridgeOpener.hidden = list.length < 2; // 0596: every project at once, from two running panels
   const drawn = JSON.stringify([show && list, self]);
   if (!show || drawn === projectsDrawn) return;
   projectsDrawn = drawn;
@@ -98,8 +105,161 @@ async function chooseProject(port) {
   $('offline').textContent = `Couldn't show that project: ${(body && body.error) || "can't reach speck panel."}`;
   projectsDrawn = null;
   drawProjects(); // the menu goes back to the project shown
+  return false;
 }
 $('project').addEventListener('change', () => chooseProject($('project').value));
+// 0596: the bridge, every project at once: a full view over the lanes, opened by All projects beside the project menu. It
+// reads 0595's summaries from the panel at this address, and again every few seconds while it's open. A panel that isn't
+// answering stays in Projects, and counts for nothing in the figures.
+const BRIDGE_MS = 5000, BRIDGE_GIVE_UP_MS = 15000, ASKED_TICKET = 'speck-open-ticket';
+const MOOD_RANK = ['asleep', 'watching', 'focused', 'asking']; // busiest last, as speckMood puts asking ahead of focused
+const NEED_WHY = new Map([['question', 'Question'], ['manager', 'Engineering manager'], ['ship', 'At Ship'], ['high_risk', 'High risk']]);
+const NEED_SAYS = new Map([['question', 'Blocked, waiting for your answer.'], ['manager', 'Your engineering manager has a question.'], ['ship', 'Approved, and waiting for you at Ship.'], ['high_risk', 'High risk, so it\'s waiting for you at Ship.']]);
+let bridgeOpen = false, bridgeBody = null, bridgeError = null, bridgeAsking = false, bridgeTimer = null, bridgeDrawn = null, bridgeFace = null;
+const bridgeButtons = new Map(); // what's on it to press, by what it opens, so a redraw keeps the focus
+function openBridge() {
+  bridgeOpen = true;
+  bridgeBody = null; bridgeError = null; bridgeDrawn = null; bridgeFace = null;
+  drawBridge();
+  $('bridge').hidden = false;
+  holdPage(pageHeld()); // only the bridge can be clicked, scrolled or reached with Tab
+  if ($('bridge').focus) $('bridge').focus({ preventScroll: true });
+  askBridge();
+  bridgeTimer = setInterval(askBridge, BRIDGE_MS);
+}
+function closeBridge() {
+  bridgeOpen = false;
+  clearInterval(bridgeTimer);
+  bridgeTimer = null;
+  $('bridge').hidden = true;
+  holdPage(pageHeld()); // let go first, or the focus can't return to the header
+  if (bridgeOpener.focus) bridgeOpener.focus();
+}
+async function askBridge() {
+  if (bridgeAsking || !bridgeOpen) return;
+  bridgeAsking = true;
+  const stop = new AbortController(), giveUp = setTimeout(() => stop.abort(), BRIDGE_GIVE_UP_MS);
+  try {
+    const res = await fetch('/api/projects/summary', { method: 'POST', signal: stop.signal }), body = await res.json();
+    if (res.ok) { bridgeBody = body; bridgeError = null; } else bridgeError = (body && body.error) || 'the panel refused.';
+  } catch { bridgeError = "can't reach speck panel."; }
+  clearTimeout(giveUp);
+  bridgeAsking = false;
+  if (bridgeOpen) drawBridge();
+}
+// The bridge's figures from the summaries: only panels that answered count.
+function bridgeModel(body) {
+  const count = v => (Number.isFinite(v) && v > 0 ? v : 0), all = body && Array.isArray(body.projects) ? body.projects : [];
+  const projects = all.filter(p => p && typeof p === 'object' && Number.isInteger(p.port) && typeof p.name === 'string');
+  const named = new Map();
+  for (const p of projects) named.set(p.name, (named.get(p.name) || 0) + 1);
+  for (const p of projects) p.label = named.get(p.name) > 1 ? `${p.name} · ${p.port}` : p.name;
+  const up = projects.filter(p => p.running);
+  const spends = up.map(p => p.spent_week_usd).filter(Number.isFinite);
+  return { projects,
+    needs: up.flatMap(p => (Array.isArray(p.needs) ? p.needs : []).filter(n => n && typeof n === 'object').map(n => ({ ...n, port: p.port, project: p.label }))),
+    mood: up.map(p => p.mood).sort((a, b) => MOOD_RANK.indexOf(b) - MOOD_RANK.indexOf(a))[0] || 'asleep',
+    building: up.reduce((n, p) => n + count(p.building), 0), busy: up.filter(p => p.busy === true || count(p.building) > 0).length,
+    needsYou: up.reduce((n, p) => n + count(p.needs_you), 0), shipped: up.reduce((n, p) => n + count(p.shipped_week), 0),
+    minutes: median(up.flatMap(p => (Array.isArray(p.build_minutes) ? p.build_minutes.filter(Number.isFinite) : []))),
+    spent: spends.length ? spends.reduce((n, v) => n + v, 0) : null, spentUnknown: up.some(p => p.spent_week_unknown === true) };
+}
+// An amount spent this week: "+" when some of it has no known cost, a dash when none of it does.
+function bridgeSpend(usd, unknown) {
+  return Number.isFinite(usd) ? `${dollars(usd)}${unknown ? '+' : ''}` : unknown ? '–' : dollars(0);
+}
+function bridgeDot(p) { return !p.running ? 'gone' : Number(p.needs_you) > 0 ? 'needs' : p.busy === true || Number(p.building) > 0 ? 'busy' : 'quiet'; }
+function bridgeLine(p) {
+  if (!p.running) return 'Not answering';
+  const doing = [p.building > 0 ? `Building ${p.building}` : null, p.queued > 0 ? `${p.queued} queued` : null].filter(Boolean);
+  if (!doing.length && !NEEDS_YOU.test(p.status) && p.status) doing.push(String(p.status));
+  if (p.needs_you > 0) doing.push(`${p.needs_you} need${p.needs_you === 1 ? 's' : ''} you`);
+  return doing.join(' · ') || 'Idle';
+}
+function bridgeButton(key, cls, press, ...kids) {
+  const b = el('button', cls, null, ...kids);
+  b.type = 'button';
+  b.addEventListener('click', e => { e.stopPropagation(); press(); });
+  bridgeButtons.set(key, b);
+  return b;
+}
+function drawBridge() {
+  const drawn = JSON.stringify([bridgeBody, bridgeError]);
+  if (drawn === bridgeDrawn) return;
+  bridgeDrawn = drawn;
+  const box = $('bridge'), had = [...bridgeButtons].find(([, b]) => b === document.activeElement)?.[0];
+  bridgeButtons.clear();
+  const back = el('span', 'back', 'Back');
+  back.tabIndex = 0;
+  back.setAttribute('role', 'link');
+  back.setAttribute('aria-label', 'Back to this project');
+  back.addEventListener('click', e => { e.stopPropagation(); closeBridge(); });
+  back.addEventListener('keydown', pressWithKeys);
+  const parts = [back, el('h2', 'bridge-heading', 'All projects')];
+  if (bridgeError) parts.push(el('p', 'bridge-error', `Couldn't read your projects: ${bridgeError}`));
+  if (bridgeBody) parts.push(...bridgeParts(bridgeModel(bridgeBody)));
+  else if (!bridgeError) parts.push(el('p', 'bridge-none', 'Reading your projects…'));
+  box.replaceChildren(...parts);
+  const again = bridgeButtons.get(had);
+  if (again && again.focus) again.focus({ preventScroll: true });
+}
+function bridgeParts(m) {
+  if (!bridgeFace && globalThis.SpeckFace) bridgeFace = SpeckFace.draw({ mood: m.mood, size: 44, look: 'dark' });
+  else if (bridgeFace) SpeckMood.change(bridgeFace, m.mood);
+  const tile = (n, label, tip) => { const d = el('div', 'bridge-tile', null, el('b', 'num', n), el('span', 'label', label)); if (tip) d.title = tip; return d; };
+  const counts = `${m.building} building · ${plural(m.busy, 'project')} busy · ${m.needsYou ? `${m.needsYou} need${m.needsYou === 1 ? 's' : ''} you` : 'Nothing needs you'}`;
+  const bar = el('div', 'bridge-bar', null, el('div', 'bridge-top', null, bridgeFace, el('span', 'bridge-counts', counts)), el('div', 'bridge-tiles', null,
+    tile(String(m.shipped), 'shipped this week'),
+    tile(m.minutes === null ? '–' : `${Math.round(m.minutes)} min`, 'median build time', 'Over each project\'s latest shipped tickets'),
+    tile(bridgeSpend(m.spent, m.spentUnknown), 'spend this week', m.spentUnknown ? 'Some of this week\'s work has no known cost, so it isn\'t counted' : null)));
+  const cards = m.needs.map(n => {
+    const id = String(n.id), why = NEED_WHY.get(n.why) || 'Needs you', reason = String(n.detail || '').split(/\s*\n\s*/).filter(Boolean).join(' ') || NEED_SAYS.get(n.why) || '';
+    return bridgeButton(`need ${n.port} ${id}`, 'bridge-card', () => pressBridgeTicket(n.port, id),
+      el('span', 'bridge-where', `${n.project} · ${id} · ${why}`), el('span', 'bridge-title', String(n.title || '')), el('span', 'bridge-reason', reason));
+  });
+  const rows = m.projects.map(p => bridgeButton(`row ${p.port}`, 'bridge-row', () => pressBridgeProject(p.port),
+    el('span', `bridge-dot ${bridgeDot(p)}`), el('span', 'bridge-about', null, el('span', 'bridge-name', p.label), el('span', 'bridge-line', bridgeLine(p))),
+    el('span', 'bridge-spend', p.running ? bridgeSpend(p.spent_week_usd, p.spent_week_unknown === true) : '')));
+  return [bar, el('h3', 'bridge-section', 'Needs you'), ...(cards.length ? cards : [el('p', 'bridge-none', 'Nothing needs you.')]), el('h3', 'bridge-section', 'Projects'), ...rows];
+}
+const shownHere = port => !projectsGoneList && state && state.projects && state.projects.self === port;
+// A row: that project's panel here, by the same switch as the menu. The project already shown just comes back.
+function pressBridgeProject(port) {
+  if (shownHere(port)) return closeBridge();
+  return switchFromBridge(port);
+}
+// A card: that ticket, in its own project's panel. The page reloads to switch, so the ticket to open is kept for the page that comes next.
+function pressBridgeTicket(port, id) {
+  if (shownHere(port)) { closeBridge(); return openTicket(id); }
+  askedTicket({ port, id });
+  return switchFromBridge(port);
+}
+async function switchFromBridge(port) {
+  if ((await chooseProject(String(port))) !== false) return;
+  askedTicket(null); // no switch, so the ticket isn't for the next page; closed, so its message shows
+  closeBridge();
+}
+// The ticket kept across the reload: reads it with no argument, otherwise keeps it, or forgets it with null. Nothing is kept where the browser won't store it.
+function askedTicket(v) {
+  try {
+    if (v === undefined) return sessionStorage.getItem(ASKED_TICKET);
+    if (v === null) sessionStorage.removeItem(ASKED_TICKET); else sessionStorage.setItem(ASKED_TICKET, JSON.stringify(v));
+  } catch { /* no storage: it just isn't opened */ }
+  return null;
+}
+function openTicket(id, m = panelModel(state)) {
+  const t = [...m.drafts, ...m.queue, ...m.shipped].find(x => String(x.id) === id);
+  if (t) openFull(t);
+}
+function openAskedTicket(m) {
+  const kept = askedTicket();
+  if (kept === null) return;
+  askedTicket(null); // first, as opening it draws the page again
+  let v = null;
+  try { v = JSON.parse(kept); } catch { return; }
+  if (v && state && state.projects && v.port === state.projects.self) openTicket(String(v.id), m);
+}
+bridgeOpener.addEventListener('click', e => { e.stopPropagation(); openBridge(); });
 // 0410: Plan, Build and Shipped are tabs under the header (0520: with Capture first), and only the open one's lane shows. 0582: each says
 // how many its lane holds. Build opens with the
 // page. Each lane's list keeps its own scroll position, put back when its tab opens again.

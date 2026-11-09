@@ -1,5 +1,5 @@
 // 0569: whether a build speck run is watching has been running far past the usual time, and the figures that say so.
-const LAST_SHIPPED = 20; // how many shipped tickets the usual build time comes from
+export const LAST_SHIPPED = 20; // how many shipped tickets the usual build time comes from
 const AT_LEAST_MINUTES = 20; // however short the usual time, a build under this isn't running long
 
 const time = v => { const t = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(t) ? t : null; };
@@ -9,15 +9,20 @@ function median(values) {
   return v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
 }
 
-// The median build time of the latest shipped tickets, in minutes, and how many it covers, or null with none. A ticket's
-// time is measured as the panel's Shipped stats measure it (templates/panel-model.js): from its start to its approval
-// or, without one, to its end, less the time it waited for you.
-export function usualBuild(tickets) {
-  const took = tickets.filter(t => t.status === 'done').flatMap(t => {
+// Each shipped ticket's build time, newest first, as { end, minutes }. A ticket's time is measured as the panel's Shipped
+// stats measure it (templates/panel-model.js): from its start to its approval or, without one, to its end, less the time
+// it waited for you. 0596: the bridge's median uses these too.
+export function buildTimes(tickets) {
+  return tickets.filter(t => t.status === 'done').flatMap(t => {
     const start = time(t.started), end = time(t.finished), approved = time(t.approved);
     const until = approved !== null && start !== null && approved >= start ? approved : end;
     return start !== null && until !== null && end !== null ? [{ end, minutes: Math.max(0, until - start - waited(t)) / 60000 }] : [];
-  }).sort((a, b) => b.end - a.end).slice(0, LAST_SHIPPED);
+  }).sort((a, b) => b.end - a.end);
+}
+
+// The median build time of the latest shipped tickets, in minutes, and how many it covers, or null with none.
+export function usualBuild(tickets) {
+  const took = buildTimes(tickets).slice(0, LAST_SHIPPED);
   return took.length ? { minutes: median(took.map(x => x.minutes)), count: took.length } : null;
 }
 

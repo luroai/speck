@@ -1,6 +1,7 @@
 // 0595: what the bridge (0596) shows of one speck panel, from the board and status its /api/state is made of: its status
 // word, how many tickets are building, queued and need you, what needs you, and what it shipped and spent in the last 7 days.
 import { sumParts } from './spend.mjs';
+import { buildTimes, LAST_SHIPPED } from './long-build.mjs';
 
 const WEEK_MS = 7 * 864e5;
 const list = v => (Array.isArray(v) ? v : []);
@@ -34,24 +35,25 @@ export function projectSummary({ board, foreman, run, now = Date.now() }) {
     .map(a => ({ id: String(a.id), title: text(byId.get(String(a.id)).title), why: 'manager', detail: text(a.question) }));
   const ship = tickets.filter(t => atShip(t, tickets, runOn)).map(t => ({ id: String(t.id), title: text(t.title), why: t.risk === 'high' ? 'high_risk' : 'ship', detail: '' }));
   const needs = [...questions, ...manager, ...ship];
+  const building = tickets.filter(t => t.status === 'building' || t.status === 'reviewing').length;
+  // 0579: speck's mood from the board, for its face: asleep while speck run is off, asking while anything needs you,
+  // focused while a build is building or reviewing or a ticket is shipping, otherwise watching.
+  const busy = !!(building || list(f.building).length || (f.ship && f.ship.running) || tickets.some(shipping));
+  const mood = !runOn ? 'asleep' : needs.length ? 'asking' : busy ? 'focused' : 'watching';
   const spent = sumParts(tickets.flatMap(t => list(t.recent_spend)).filter(p => p && time(p.ended) !== null && time(p.ended) >= since));
   return {
-    status: text(f.word), tone: text(f.tone),
-    building: tickets.filter(t => t.status === 'building' || t.status === 'reviewing').length,
+    status: text(f.word), tone: text(f.tone), mood, busy, // 0596: for the bridge
+    building,
     queued: tickets.filter(t => t.status === 'ready').length,
     needs_you: needs.length, needs,
     shipped_week: tickets.filter(t => t.status === 'done' && !shipping(t) && time(t.finished) !== null && time(t.finished) >= since).length,
     spent_week_usd: spent.total_cost_usd, spent_week_unknown: spent.total_cost_unknown.length > 0,
+    build_minutes: buildTimes(tickets.filter(t => !shipping(t))).slice(0, LAST_SHIPPED).map(x => x.minutes), // 0596: each build's, so the bridge can take one median over every project
   };
 }
 
-// 0579: speck's mood from the board, for its face: asleep while speck run is off, asking while anything needs you (as
-// projectSummary counts it), focused while a build is building or reviewing or a ticket is shipping, otherwise watching.
-// Its other moods aren't the board's: the page's SpeckMood.watcher and SpeckMood.beside add them.
+// 0579: speck's mood from the board, for its face, as projectSummary works it out. Its other moods aren't the board's:
+// the page's SpeckMood.watcher and SpeckMood.beside add them.
 export function speckMood({ board, foreman, run, now = Date.now() }) {
-  if (!(run && run.on)) return 'asleep';
-  const summary = projectSummary({ board, foreman, run, now }), f = foreman && typeof foreman === 'object' ? foreman : {};
-  if (summary.needs_you) return 'asking';
-  const busy = summary.building || list(f.building).length || (f.ship && f.ship.running) || list(board && board.tickets).some(t => t && shipping(t));
-  return busy ? 'focused' : 'watching';
+  return projectSummary({ board, foreman, run, now }).mood;
 }

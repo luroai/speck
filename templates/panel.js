@@ -352,7 +352,7 @@ function mdInline(nodes) {
 }
 // While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
 // 0366: the same while Settings or the Foreman's pop-up is open.
-const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen || buildLogOf !== null || decidedOpen; // 0548: and a build log's pop-up, 0568: and the Decided for you list
+const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen || buildLogOf !== null || decidedOpen || bridgeOpen; // 0548: and a build log's pop-up, 0568: and the Decided for you list, 0596: and the bridge
 let heldAt = null; // the page's scroll position when the pane opened, or null while it's closed
 function holdPage(on) {
   const root = document.documentElement;
@@ -425,6 +425,7 @@ document.addEventListener('keydown', e => {
   if (tipTag !== null) closeTip();
   else if (docOpen !== null) closeDoc(); // 0362: the pop-up, over everything else
   else if (decidedOpen) closeDecided(); // 0568
+  else if (bridgeOpen && settingsView === null) closeBridge(); // 0596
   else if (foremanOpen && settingsView === null) closeForeman(); // 0285: the Foreman's detail
   else if (buildLogOf !== null && settingsView === null) closeBuildLog(); // 0548: a build log's pop-up
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
@@ -1326,6 +1327,7 @@ function render() {
   }
   if (tipTag !== null && tipTag.isConnected === false) closeTip(); // 0165: its tag has left the page, so it goes too
   if (focusBack && fullId === null) returnFocus(); // 0326
+  openAskedTicket(m); // 0596: the ticket pressed on the bridge, once its project's board is here
 }
 // 0285: the Foreman's status and detail, as the server worked them out from speck run's own record. A server without
 // it (older code) gets what the page can tell: on or off.
