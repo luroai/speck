@@ -379,6 +379,8 @@ function panelModel(state) {
       today: done.filter(t => t.end !== null && sameDay(new Date(t.end), new Date(now))).length,
       minutes: stat(done.filter(t => t.exactMinutes !== null).map(t => t.exactMinutes), Math.round),
       rounds: stat(done.filter(t => t.roundCount > 0).map(t => t.roundCount), n => Math.round(n * 10) / 10),
+      // 0587: the share of those with review rounds that had only the one, as a whole percentage, or null with none.
+      firstRound: (all => ({ share: all.length ? Math.round(all.filter(t => t.roundCount === 1).length / all.length * 100) : null, count: all.length }))(done.filter(t => t.roundCount > 0)),
       tokens: stat(done.filter(t => t.tokens > 0).map(t => t.tokens), Math.round),
       builderTokens: stat(done.filter(t => t.builderTokens !== null).map(t => t.builderTokens), Math.round),
       builderCost: stat(done.filter(t => t.builderCost !== null).map(t => t.builderCost), n => Math.round(n * 100) / 100),

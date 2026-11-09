@@ -136,7 +136,6 @@
      Its lights move across it only when the browser allows motion (below); held still, one diagonal is lit. */
   /* 0434: a closed ticket's title is one line, cut off with an ellipsis when it doesn't fit, and a closed Build ticket's
      status line is one line too. An open one wraps as needed. */
-  #shipped tr:not(.open) .line .title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* 0419: a Plan or Build ticket is its title line and one line of details, in smaller type, its parts separated by " · ". */
   .q { padding: 6px 10px; }
   .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
@@ -191,30 +190,26 @@
   .stat .label { font-size: 14px; line-height: 1.4; color: var(--muted); }
   .stat .count { font-family: var(--font-mono); font-size: 12px; color: var(--faint); }
   .stats[hidden] { display: none; }
-  /* 0420: the three stats one line of smaller type, with More stats at its end; the other three still tiles under it.
-     Each stat stays whole, so in a pane too narrow for the line, such as a phone's, it wraps between them. */
-  .stats-line { display: flex; align-items: flex-end; gap: 8px; padding: 6px 16px; border-bottom: .5px solid var(--line-soft); }
+  .stat:last-child:nth-child(3n + 2) { grid-column: span 2; } /* 0587: the last tile fills its row, so no gap shows the grid's line colour */
+  .stat:last-child:nth-child(3n + 1) { grid-column: span 3; }
+  /* 0587: under the three tiles, the toggle for the other figures, at the right */
+  .stats-line { display: flex; justify-content: flex-end; padding: 6px 16px; border-bottom: .5px solid var(--line-soft); }
   .stats-line[hidden] { display: none; }
-  #shipped-stats { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 16px; color: var(--muted); }
-  #shipped-stats .part { white-space: nowrap; }
-  #shipped-stats .num { font-family: var(--font-mono); font-weight: 500; color: var(--text); }
-  #shipped-stats[hidden] { display: none; }
   .full-open.more-stats { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
   .more-stats[hidden] { display: none; }
-  /* 0420: a shipped ticket is its title line, with any bug or fix tag after the title, and one line of smaller type:
-     when it shipped and its figures, separated by " · ". More stats is plain words in a thin box, so these lines fit
-     on one line in a 420 px pane with a scroll bar. 0466: its top row opens and closes it, as a Build ticket's does. */
-  #shipped .sum { display: flex; align-items: flex-end; gap: 6px; margin-top: 2px; }
+  /* 0587: a shipped ticket is a row, as Capture's and Plan's are: a hairline under it, its title wrapping, then one line
+     of smaller type, each part whole so a line too long for a phone wraps between them. */
+  #shipped .sum { display: block; margin-top: 2px; }
   #shipped .meta { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--muted); }
   #shipped .meta > * { white-space: nowrap; } /* whole, so a line too long for a phone wraps between its time and figures */
   section.shipped table { display: block; }
-  #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
-  #shipped .empty { padding: 0 4px; }
-  #shipped tr { display: block; padding: 6px 8px; border: 1px solid var(--line); }
+  #shipped { display: flex; flex-direction: column; }
+  #shipped .empty { padding: 10px 14px; }
+  #shipped tr { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 7px 14px 8px; border-bottom: .5px solid var(--line); cursor: pointer; }
   #shipped td { display: block; padding: 0; border: 0; }
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
   #shipped .line .id { flex: none; font-size: 14px; line-height: 14px; }
-  #shipped .line .title { flex: 0 1 auto; font-family: var(--font-ui); font-weight: 600; font-size: 17px; line-height: 22px; overflow-wrap: anywhere; }
+  #shipped .line .title { flex: 0 1 auto; font-family: var(--font-ui); font-weight: 600; font-size: 17px; line-height: 20px; min-width: 0; overflow-wrap: anywhere; }
   /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the card taller */
   #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
   #shipped .line .tags .tag { font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; }
@@ -224,8 +219,6 @@
   #shipped td.unpushed { margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--bad); }
   #shipped .unpushed-head { color: var(--bad); font-weight: 600; }
   #shipped .unpushed-said { margin-top: 2px; font-size: 12px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
-  /* 0464: an open one's track and table (0461, 0462) under its title, then (0466) Full ticket and Review pack */
-  #shipped .full-cell { display: flex; align-items: center; gap: 6px; width: auto; margin-top: 8px; }
   /* 0318: the Foreman's question, with an Answer box and Answer and Dismiss buttons, on its ticket's card and in its detail */
   .foreman-ask { margin: 6px 0 6px; white-space: normal; }
   .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: .5px solid var(--line); resize: vertical; }
@@ -275,33 +268,33 @@
   /* 0461: an open ticket's five steps, under its title: five equal bars in one row, each with its name under it. A
      step reached so far has its bar in its own colour, and the current one its name in it and bold. A name too long
      for its bar ends in an ellipsis. */
-  .item.ticket .track, #shipped .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 6px 0 4px; }
-  .item.ticket .track .step, #shipped .track .step { display: block; min-width: 0; padding-top: 3px; border-top: 4px solid var(--line); font-size: 12px; line-height: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item.ticket .track .step.done, #shipped .track .step.done { color: var(--text); }
-  .item.ticket .track .step.now, #shipped .track .step.now { font-weight: 600; }
-  .item.ticket .track .step.done.build, .item.ticket .track .step.now.build, #shipped .track .step.done.build, #shipped .track .step.now.build { border-top-color: var(--blue); }
-  .item.ticket .track .step.done.check, .item.ticket .track .step.now.check, #shipped .track .step.done.check, #shipped .track .step.now.check { border-top-color: var(--inbox); }
-  .item.ticket .track .step.done.review, .item.ticket .track .step.now.review, #shipped .track .step.done.review, #shipped .track .step.now.review { border-top-color: var(--yellow); }
-  .item.ticket .track .step.done.approve, .item.ticket .track .step.now.approve, #shipped .track .step.done.approve, #shipped .track .step.now.approve { border-top-color: var(--green); }
-  .item.ticket .track .step.done.ship, .item.ticket .track .step.now.ship, #shipped .track .step.done.ship, #shipped .track .step.now.ship { border-top-color: var(--purple); }
-  .item.ticket .track .step.now.build, #shipped .track .step.now.build { color: var(--run); }
-  .item.ticket .track .step.now.check, #shipped .track .step.now.check { color: var(--cyan-text); }
-  .item.ticket .track .step.now.review, #shipped .track .step.now.review { color: var(--warn); }
-  .item.ticket .track .step.now.approve, #shipped .track .step.now.approve { color: var(--ok); }
-  .item.ticket .track .step.now.ship, #shipped .track .step.now.ship { color: var(--purple-text); }
-  .item.ticket .track.stopped .step.now, #shipped .track.stopped .step.now { border-top-color: var(--bad); color: var(--bad); } /* blocked, or its build stopped */
+  .item.ticket .track{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 6px 0 4px; }
+  .item.ticket .track .step{ display: block; min-width: 0; padding-top: 3px; border-top: 4px solid var(--line); font-size: 12px; line-height: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.ticket .track .step.done{ color: var(--text); }
+  .item.ticket .track .step.now{ font-weight: 600; }
+  .item.ticket .track .step.done.build, .item.ticket .track .step.now.build{ border-top-color: var(--blue); }
+  .item.ticket .track .step.done.check, .item.ticket .track .step.now.check{ border-top-color: var(--inbox); }
+  .item.ticket .track .step.done.review, .item.ticket .track .step.now.review{ border-top-color: var(--yellow); }
+  .item.ticket .track .step.done.approve, .item.ticket .track .step.now.approve{ border-top-color: var(--green); }
+  .item.ticket .track .step.done.ship, .item.ticket .track .step.now.ship{ border-top-color: var(--purple); }
+  .item.ticket .track .step.now.build{ color: var(--run); }
+  .item.ticket .track .step.now.check{ color: var(--cyan-text); }
+  .item.ticket .track .step.now.review{ color: var(--warn); }
+  .item.ticket .track .step.now.approve{ color: var(--ok); }
+  .item.ticket .track .step.now.ship{ color: var(--purple-text); }
+  .item.ticket .track.stopped .step.now{ border-top-color: var(--bad); color: var(--bad); } /* blocked, or its build stopped */
   /* 0462: an open in-flight ticket's facts, under its track: six even cells in three columns and two rows, with lines
      between them and round them. Each is its label above its value, each on one line, cut short with … */
-  .item.ticket .facts, #shipped .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 4px; border-top: .5px solid var(--line); border-left: .5px solid var(--line); }
-  .item.ticket .facts .fact, #shipped .facts .fact { min-width: 0; padding: 4px 6px; border-right: .5px solid var(--line); border-bottom: .5px solid var(--line); }
-  .item.ticket .facts .label, .item.ticket .facts .value, #shipped .facts .label, #shipped .facts .value { display: block; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item.ticket .facts .label, #shipped .facts .label { font-size: 12px; line-height: 14px; color: var(--muted); }
-  .item.ticket .facts .value, #shipped .facts .value { font-size: 12px; line-height: 16px; color: var(--text); font-variant-numeric: tabular-nums; }
-  .item.ticket .facts .value.now.bad, #shipped .facts .value.now.bad { color: var(--bad); }
-  .item.ticket .facts .value.now.to-ship, #shipped .facts .value.now.to-ship { color: var(--ok); }
-  .item.ticket .facts .value.bug, #shipped .facts .value.bug { color: var(--bug); }
-  .item.ticket .facts .value.fix, #shipped .facts .value.fix { color: var(--fix); }
-  .item.ticket .facts .value.task, #shipped .facts .value.task { color: var(--idea); }
+  .item.ticket .facts{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 4px; border-top: .5px solid var(--line); border-left: .5px solid var(--line); }
+  .item.ticket .facts .fact{ min-width: 0; padding: 4px 6px; border-right: .5px solid var(--line); border-bottom: .5px solid var(--line); }
+  .item.ticket .facts .label, .item.ticket .facts .value{ display: block; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.ticket .facts .label{ font-size: 12px; line-height: 14px; color: var(--muted); }
+  .item.ticket .facts .value{ font-size: 12px; line-height: 16px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .item.ticket .facts .value.now.bad{ color: var(--bad); }
+  .item.ticket .facts .value.now.to-ship{ color: var(--ok); }
+  .item.ticket .facts .value.bug{ color: var(--bug); }
+  .item.ticket .facts .value.fix{ color: var(--fix); }
+  .item.ticket .facts .value.task{ color: var(--idea); }
   /* 0463: the same track and table on an open ticket that hasn't started. A draft's priority opens the menu that sets it,
      underlined as a linked id is, with room for its menu */
   .item.ticket .facts .value.pick { overflow: visible; }
@@ -345,9 +338,7 @@
 
   .full-open { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
-  td.full-cell { width: 1%; padding-left: 0; }
-  #shipped tr { cursor: pointer; } /* 0466: its top row opens and closes it, as .q .top does, */
-  #shipped td.unpushed, #shipped td.full-cell { cursor: auto; } /* and what's under it doesn't */
+  #shipped td.unpushed { cursor: auto; } /* 0587: what's under a row doesn't open it */
   td .full-open { margin: 0; padding: 0 8px; font-size: 12px; white-space: nowrap; }
   td .full-open + .full-open { margin-left: 6px; }
   /* 0142: an opened draft's, idea's or inbox note's Markdown in Plan, formatted as in the full ticket pane */
@@ -416,8 +407,6 @@
      reaches 10 px up behind the title line and 10 px down past the card's padding, taking only 24 px of the card's
      height, its text where a 24 px line's is. Its tag, 16 px and its two borders high, is in the line's exact middle, so
      its tap area is inside the line. */
-  #shipped tr:not(.open) .sum { align-items: center; height: 22px; margin-top: 0; }
-  #shipped tr:not(.open) .meta { line-height: 22px; white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; }
   /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
      gap before a tag stays wide, and its words, stage and time fit on a phone */
   /* 0484: when the line doesn't fit, its words (or, while an agent is at work, the reviewer's model) give up room first:
@@ -442,7 +431,6 @@
   /* 0434: a block, so its title can end in an ellipsis. 0494: its text on a 22 px line, where a Build or Plan title's
      starts, with 11 px of padding above and below for its 44 px tap area, which its negative margins give back, so
      nothing around it moves. It's above the details line it reaches over, so a tap anywhere in it reaches the title. */
-  #shipped tr:not(.open) .line .title { display: block; position: relative; min-width: 44px; line-height: 22px; padding: 11px 0; margin: -11px 0; }
   td .full-open { min-height: 44px; }
 
   /* 0469: a touch screen only: tap areas that reach past a control without changing the layout */
