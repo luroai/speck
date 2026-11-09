@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0595","0592","0587","0581"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T23:37:42.137Z"
-approved: "2026-11-09T23:47:43.470Z"
+approved: "2026-11-09T23:54:09.865Z"
 
 ---
 # 0596 · Add the bridge: every project at once
@@ -58,13 +58,14 @@ With two or more projects running, the bar now has an All projects button beside
 ## Review log
 Round 1 (codex): changes requested: F1 openBridge and closeBridge change bridgeOpen without calling holdPage(pageHeld()) or render().
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 287,358
-- Elapsed since build started: 10 min
-- Changed lines: 239 (limit 5000)
+- Reviewer tokens: 419,590
+- Elapsed since build started: 16 min
+- Changed lines: 244 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - All projects could be an entry in the project menu's own list: saved to the inbox as speck/ideas/2026-11-09-put-all-projects-in-the-project-menu-s-list.md.
@@ -232,6 +233,90 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "The bridge shows activity, spending and items needing attention across projects, with working project and ticket navigation. The modal interaction bug is fixed and covered by a regression test. All criteria pass; no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ee76d36a327f8b36d9f7cb63b456fd1a9193925f",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c2b4-80bf-7b93-a05b-2baeb2d89ac0",
+    "builder_response": "- Tests run: test/panel-0134.test.mjs test/panel-0161.test.mjs test/panel-0413.test.mjs test/panel-0596.test.mjs test/panel-0516.test.mjs test/panel-0417.test.mjs test/panel-0474.test.mjs (and the repo's checks, which every `speck test --files` runs).\n- Why this round: `speck ship` refused the ticket because five tests failed on it: 0134 AC4, 0161 AC1 (two) and 0413 AC2 and AC3. Merging main changed nothing (\"Already up to date\"), so this ticket's own change broke them. `--related` hadn't chosen those three test files before the first review.\n- 0134 AC4, 0413 AC2 and AC3: panel.html gained a button with visible text in the bar, and these allow no added static text, exactly two static buttons in the header, and Settings straight after a `</span>`. The All projects button is now made by templates/panel-header.js and inserted before Settings: still a real button, in the same place, with the same words. panel.html no longer has it. No existing test was changed. test/panel-0596.test.mjs finds the button in the bar rather than by id or in the static page.\n- 0161 AC1 (contrast): `#bridge .bridge-tile .label` is in the bar's muted colour, and the check took it as sitting on the light surfaces. The rule now sets the bar's own fill, the colour already behind it.\n- 0161 AC1 (fills): `.bridge-dot` was a filled area with no text colour. The dots are now drawn with a border 4 px deep (8 px across), and the state classes change the border's colour. Same look.\n- Checked in a real browser with two real panels: the button is between the project menu and Settings at 44 px tall, opens the bridge, holds the page behind it, and Back releases the page and returns focus to the button. The look hasn't changed, so the pictures stand.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 417680,
+      "cached_input_tokens": 349056,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1910,
+      "reasoning_output_tokens": 61
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 10614,
+      "cached": 121088,
+      "write": 0,
+      "output": 530
+    },
+    "cost_usd": 0.0386368,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T23:54:04.456Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-header.js creates bridgeOpener before Settings; drawProjects offers it with two or more panels. Passing AC1 tests exercise the actual generated button and opening the bridge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "projectSummary, bridgeModel and bridgeParts still supply and display aggregate mood, counts and all three tiles. Passing AC2 tests cover these calculations; the CSS changes preserve their appearance."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "bridgeParts renders the required card contents; pressBridgeTicket and openAskedTicket support local and cross-project ticket opening. All AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "bridgeParts, bridgeLine and bridgeDot provide project rows, activity, spend and state indicators. Border-based dots preserve the states; all AC4 tests pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported run passes 196 tests with zero failures and three skips, including the previously failing 0134, 0161 and 0413 files. Existing tests were not modified; fixes address regressions introduced by this ticket."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "Resolved: opening immediately holds the background, and closing releases it before returning focus to the generated All projects button.",
+        "suggested_fix": "No further change required. The modal regression test remains passing and now exercises the generated button.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The compatibility fixes preserve the bridge’s behaviour and repair the failures found during shipping without weakening existing tests. All acceptance criteria pass, and the earlier modal bug remains fixed. No blocking concerns remain."
   }
 }
 ```
