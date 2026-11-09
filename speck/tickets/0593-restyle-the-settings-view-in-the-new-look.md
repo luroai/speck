@@ -1,7 +1,7 @@
 ---
 id: "0593"
 title: "Restyle the Settings view in the new look"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-11-09
 started: "2026-11-09T18:38:04.469Z"
 blocked_at: ""
 waited_seconds: 3810
+approved: "2026-11-09T20:01:28.242Z"
 
 ---
 # 0593 · Restyle the Settings view in the new look
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Settings view still uses the LCD-era boxes and borders. It should match the rest of the redesign, and its engineering manager group should show who it's about.
@@ -67,9 +68,14 @@ Changes what you'd notice: yes
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 165,901
+- Elapsed since build started: 83 min
+- Changed lines: 45 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Tests updated for the new look:
