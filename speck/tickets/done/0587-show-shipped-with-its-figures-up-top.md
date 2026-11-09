@@ -1,7 +1,7 @@
 ---
 id: "0587"
 title: "Show Shipped with its figures up top"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-11-09
 started: "2026-11-09T21:53:18.728Z"
 waited_seconds: 4005
 approved: "2026-11-09T23:25:27.122Z"
+finished: "2026-11-09T23:29:24.883Z"
 
 ---
 # 0587 · Show Shipped with its figures up top
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The Shipped lane opens with a line of figures and long cards. The redesign puts its three key figures up top as tiles and lists shipped tickets as compact rows.
