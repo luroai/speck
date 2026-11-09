@@ -599,7 +599,6 @@ function buildNotes(t) {
     t.exit_label ? el('div', t.to_ship ? 'act to-ship' : t.carried_by ? 'act' : 'act bad', t.exit_label) : null,
     t.exit_label && t.carried_by ? el('div', 'act carried', t.carried_by) : null, // 0338
     t.exit_label && t.exit_message ? el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message) : null,
-    t.status === 'approved' && t.criteria_changed === true ? el('div', 'act to-ship', 'It waits for you to ship it because a criterion changed since it was set ready.') : null, // 0565
     t.ship_hint ? el('div', 'act', t.ship_hint) : null,
     t.status !== 'blocked' ? null : t.foreman_will === true ? el('div', 'act foreman-will', `${speckCalled()} will take its recommendation: ${t.blocked_recommendation}`)
       : el('div', 'act', `Waiting for you. Answer the question, then run /speck-build ${t.id}`), // the bar already shows the status

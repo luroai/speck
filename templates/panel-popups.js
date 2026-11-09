@@ -397,13 +397,14 @@ function fullTicket(t, draft, steps, barShown) {
   if (liveBox) steps.appendChild(liveBox); // 0584
   mdPart(body, 'Outcome', t.outcome);
   const criteria = list(t.acceptance_criteria), passed = new Set(list(t.criteria_passed));
+  const marks = new Map(changesOf(t).filter(c => c.change === 'changed' || c.change === 'added').map(c => [c.n, c.change])); // 0588
   if (criteria.length) {
     const ol = el('ol', 'criteria');
     criteria.forEach((c, i) => {
       const [first, ...rest] = markdown(c);
       // A criterion's first paragraph sits in its numbered item, not in a paragraph of its own.
       const lead = first && first.type === 'paragraph' ? mdInline(first.inline) : first ? mdBlocks([first]) : [];
-      ol.appendChild(el('li', null, null, passed.has(i + 1) ? tick() : null, ...lead, ...mdBlocks(rest)));
+      ol.appendChild(el('li', null, null, passed.has(i + 1) ? tick() : null, ...lead, marks.has(i + 1) ? el('span', 'criterion-mark', marks.get(i + 1)) : null, ...mdBlocks(rest)));
     });
     body.appendChild(el('h4', null, 'Acceptance criteria'));
     body.appendChild(ol);
@@ -548,13 +549,37 @@ const liveCounters = () => (liveSub && paneTicket && paneTicket.counter !== null
 // 0583: the bar fixed to the bottom of an approved ticket's full view: Ask for changes and Ship, then what they said.
 const barShows = t => t.status === 'approved' || t.shipping === true || shippingId === String(t.id) || shipped.has(String(t.id));
 const shipBar = t => el('div', 'ship-bar', null, ...shipPart(t, true));
-// 0465, 0583: the track and facts, by the list the ticket is in, and (0467) its dependency box.
-function paneSteps(t) {
-  return el('div', 'steps', null, paneTrack(t, paneTone(t)), paneFacts(t), paneFrom === 'shipped' ? null : withDeps(t, true));
+// 0588: what status says changed in its criteria, without anything that isn't one of its changes.
+const changesOf = t => list(t.criteria_changes).filter(c => c && typeof c === 'object' && typeof c.change === 'string');
+const joined = xs => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}` : xs[0]);
+function calloutHead(items) {
+  const said = ['changed', 'added', 'removed'].map(word => {
+    const ns = items.filter(c => c.change === word && Number.isInteger(c.n)).map(c => c.n);
+    return ns.length ? `${word} ${ns.length > 1 ? 'criteria' : 'criterion'} ${joined(ns)}` : null;
+  }).filter(Boolean);
+  return `I ${said.length ? joined(said) : items.length ? 'changed the order or layout of the criteria' : 'changed its criteria'} while building`;
 }
-// What the pane's track and table show.
-const stepsShown = n => signature([[...n.children[0].children].map(s => [s.className, s.textContent]),
-  ...[...n.children[1].children].map(c => [c.children[0].textContent, c.children[1].title, c.children[1].textContent]), n.children[2] ? n.children[2].sig : null]);
+const wasNow = (label, text) => el('div', 'was-now', null, el('span', 'label', label),
+  typeof text === 'string' && text !== '' ? el('div', 'md', null, ...mdBlocks(markdown(text))) : el('div', 'md', '(none)'));
+// 0588: above its facts, on a ticket whose criteria changed: speck's face, sheepish, what changed and that it won't ship by itself.
+function criteriaCallout(t) {
+  if (t.criteria_changed !== true) return null;
+  const items = changesOf(t);
+  const face = globalThis.SpeckFace ? SpeckFace.draw({ mood: SpeckMood.beside(t, 'watching'), size: 40, label: `${speckCalled()}, sheepish` }) : null;
+  return el('div', 'criteria-callout', null, face, el('div', 'callout-body', null, el('div', 'callout-head', calloutHead(items)),
+    ...items.map(c => el('div', 'callout-change', null, Number.isInteger(c.n) ? el('div', 'callout-n', `Criterion ${c.n}${c.change === 'changed' ? '' : ` · ${c.change}`}`) : null, wasNow('Was', c.before), wasNow('Now', c.now))),
+    el('div', 'callout-line', "It won't ship by itself: it waits for you to ship it because a criterion changed since it was set ready.")));
+}
+// 0465, 0583: the track and facts, by the list the ticket is in, and (0467) its dependency box. 0588: the callout between them.
+function paneSteps(t) {
+  return el('div', 'steps', null, paneTrack(t, paneTone(t)), criteriaCallout(t), paneFacts(t), paneFrom === 'shipped' ? null : withDeps(t, true));
+}
+// What the pane's track and table show. The callout is compared by what it's drawn from, in renderFull.
+const stepsShown = n => {
+  const [track, facts, deps] = [...n.children].filter(c => c.className !== 'criteria-callout');
+  return signature([[...track.children].map(s => [s.className, s.textContent]),
+    ...[...facts.children].map(c => [c.children[0].textContent, c.children[1].title, c.children[1].textContent]), deps ? deps.sig : null]);
+};
 // A heading and its Markdown, formatted, or nothing when the text is empty.
 function mdPart(body, heading, text) {
   if (text === null || text === undefined || text === '') return;
@@ -564,7 +589,7 @@ function mdPart(body, heading, text) {
 const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false);
 // What the pane shows apart from its readiness list and its track and table, and what that list shows, with the view
 // state it depends on.
-const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes, t.criteria_passed ?? null, hasPack(t), hasLog(t), backList()];
+const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes, t.criteria_passed ?? null, t.criteria_changes ?? null, hasPack(t), hasLog(t), backList()];
 const readyData = t => [ownData(t), settingReady.has(t.id), refused.get(t.id) ?? null];
 // Shows the ticket whose id is in fullId wherever it shows: in the Tickets list, the queue or the Shipped list, the
 // first one in that order when ids repeat. It closes the pane when the ticket shows in none of them. The pane keeps
@@ -583,7 +608,7 @@ function renderFull(m) {
   paneFrom = !t ? null : draft ? 'draft' : find(m.queue) ? 'queue' : 'shipped';
   drawDocActs(); // 0363
   const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null, changesSending, changesSaid.get(fullId) ?? null, changesRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
-  const tone = t && !packOf ? paneTone(t) : '', steps = t && !packOf ? paneSteps(t) : null, stepsSig = steps ? signature([fullId, t.status, tone, stepsShown(steps)]) : null;
+  const tone = t && !packOf ? paneTone(t) : '', steps = t && !packOf ? paneSteps(t) : null, stepsSig = steps ? signature([fullId, t.status, tone, stepsShown(steps), t.criteria_changed === true, t.criteria_changes ?? null, speckCalled()]) : null;
   const barSig = t && !packOf && barShows(t) ? docActsSig(t) : null; // 0583
   const liveNew = liveSig(t); // 0584
   followLive(t);
