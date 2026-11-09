@@ -1,7 +1,7 @@
 ---
 id: "0596"
 title: "Add the bridge: every project at once"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T23:37:42.137Z"
 ---
 # 0596 · Add the bridge: every project at once
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 With several projects running, you check each panel in turn to see what needs you. The redesign's bridge shows every project at once, as the engineering manager's view across all of them.
@@ -49,7 +49,7 @@ With two or more projects running, the panel offers the bridge, which shows what
 - Self-check: a why the page doesn't know, even a built-in name such as constructor, no longer reads off an object's prototype; a project whose port isn't a whole number gets no row; removed a 44 px minimum on the bridge's cards that 0417 forbids and their content already exceeds.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+With two or more projects running, the bar now has an All projects button beside the project menu. It opens the bridge: speck in the busiest mood among your projects, how many things are building, how many projects are busy and how many need you, then shipped this week, the median build time and this week's spend across them all. Below that, each thing that needs you is a card, and pressing one takes you to that ticket in its own project. Each project also has a row saying what it's doing and what it has spent; pressing it switches to that project. To see it, start panels for two projects and press All projects, or look at the pictures in this review pack. All projects is a button beside the menu rather than a line in its list, so that is worth a look. A project whose panel doesn't answer stays in the list marked Not answering, and its figures aren't counted.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,3 +59,174 @@ With two or more projects running, the panel offers the bridge, which shows what
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- All projects could be an entry in the project menu's own list: saved to the inbox as speck/ideas/2026-11-09-put-all-projects-in-the-project-menu-s-list.md.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ebd3bd545fd4f6649ae341123be68f2e1c6df4b6",
+    "session": "fresh",
+    "thread_id": "01a1c2b4-80bf-7b93-a05b-2baeb2d89ac0",
+    "builder_response": "- Tests run: `speck test --related test/panel-0596.test.mjs` (the ticket's own test file, the repo's checks and the 31 related test files it picked).\n- AC1: All projects is a button beside the project menu's caret, not an entry in the menu's list. 0516's tests (test/panel-0516.test.mjs) compare the list's entries exactly, and AC5 says no test that passed may fail, so an entry in the list can't meet both. It's offered exactly when two or more running panels are listed. Noted in the ticket.\n- Checked in a real browser with two real panels at one address: All projects opens the bridge, Back closes it, and pressing a card switches project and opens that ticket. Pictures are with the review pack.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 175767,
+      "cached_input_tokens": 125056,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 880,
+      "reasoning_output_tokens": 61
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 50711,
+      "cached": 125056,
+      "write": 0,
+      "output": 880
+    },
+    "cost_usd": 0.1227276,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T23:46:44.821Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-header.js drawProjects/openBridge offer the button with two panels; passing 0596 AC1 tests cover visibility, opening and closing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "projectSummary supplies mood, activity and build times; bridgeModel aggregates them. Passing AC2 tests cover mood ranking, counts, median and spend."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "bridgeParts renders cards; pressBridgeTicket and openAskedTicket switch projects and open the selected ticket. Passing AC3 tests exercise both local and cross-project navigation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "bridgeParts, bridgeDot and bridgeLine render project rows; passing AC4 tests cover their contents and switching."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported related-test run passed 397 tests with zero failures and three skips. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "openBridge and closeBridge change bridgeOpen without calling holdPage(pageHeld()) or render(). Initially, keyboard focus can reach controls behind the modal. If a board update renders while the bridge is open, it makes the background inert; closing the bridge then leaves that background inert and scrolling locked until another render, and the focus-return attempt targets an inert header.",
+        "suggested_fix": "Synchronise holdPage(pageHeld()) immediately on both opening and closing, releasing the background before returning focus. Add regression coverage for opening, receiving a board update and closing without another update.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The bridge aggregates projects and supports the requested navigation, with meaningful passing tests. One modal interaction bug needs fixing: background controls can remain accessible while it opens, or become temporarily unusable after it closes."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "84bd1950b2cc811707fa8a8fc89e1f674dd5bf82",
+    "session": "continued",
+    "thread_id": "01a1c2b4-80bf-7b93-a05b-2baeb2d89ac0",
+    "builder_response": "- Tests run: test/panel-0596.test.mjs (and the repo's checks, which every `speck test --files` runs).\n- F1: fixed. openBridge and closeBridge in templates/panel-header.js now call holdPage(pageHeld()): as it opens, and on closing before the focus goes back to All projects. New test \"0596: the page behind is held while the bridge is open, and let go before the focus returns to it\" covers opening, a new board arriving while open, closing and the order on closing.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 285978,
+      "cached_input_tokens": 227968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1380,
+      "reasoning_output_tokens": 61
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7299,
+      "cached": 102912,
+      "write": 0,
+      "output": 500
+    },
+    "cost_usd": 0.0298892,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T23:47:29.565Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-header.js drawProjects offers All projects for two or more panels; openBridge opens it. Passing AC1 tests cover visibility, opening, polling and closing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/panel-summary.mjs projectSummary supplies project figures; bridgeModel and bridgeParts aggregate and display them. Passing AC2 tests cover mood, counts, shipped totals, combined median and spend."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "bridgeParts renders ticket cards; pressBridgeTicket and openAskedTicket open tickets locally or after switching projects. Passing AC3 tests cover contents, navigation and failed switches."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "bridgeParts, bridgeDot and bridgeLine render project rows; pressBridgeProject switches projects. Passing AC4 tests cover row contents, states and navigation."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Round 1's related tests reported zero failures. Round 2 reports 137 passing tests, zero failures and three skips; the changes add modal handling and a regression test without weakening existing tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "The modal interaction defect is fixed: openBridge immediately holds the background, and closeBridge releases it before returning focus.",
+        "suggested_fix": "Implemented. The passing regression test covers opening, a board update while open, closing and release before focus returns.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The bridge shows activity, spending and items needing attention across projects, with working project and ticket navigation. The modal interaction bug is fixed and covered by a regression test. All criteria pass; no blocking concerns remain."
+  }
+}
+```
+
+</details>
