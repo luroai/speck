@@ -1,7 +1,7 @@
 ---
 id: "0592"
 title: "Make the Pipeline log a full view"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0591","0590"]                # ticket ids that must be done first
 created: 2026-11-09
+started: "2026-11-09T21:56:49.489Z"
 
 ---
 # 0592 · Make the Pipeline log a full view
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The Pipeline log is a pop-up of raw lines. In the redesign it's a full view you can filter, where speck's own calls stand out from the tool's routine lines.
