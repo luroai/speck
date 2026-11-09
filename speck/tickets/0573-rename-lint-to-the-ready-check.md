@@ -1,7 +1,7 @@
 ---
 id: "0573"
 title: "Rename lint to the ready check"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T00:39:05.212Z"
 ---
 # 0573 · Rename lint to the ready check
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 "Lint" is programmer jargon and doesn't say what the check does, and the user once had to ask what "lint passes" meant. The panel already calls the same checks Readiness, so speck uses two names for one thing, in the CLI, the skills, the docs and its messages.
@@ -49,7 +49,7 @@ speck calls the check that a ticket is ready to build the ready check, run with 
 - Kept on purpose: internal names (`lintTicket`, `scripts/lint.mjs`, the `lint` and `lint_messages` fields in `speck status --json`) and code comments, which no user reads. The README's new `check` row is left to review, as tests may only check certain README facts.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck now calls its check that a ticket is ready to build the ready check, everywhere you'd meet it: the command is `speck check`, and the panel's list on a draft is headed Ready check instead of Readiness. The old `speck lint` command still works, so nothing breaks in projects with older instructions. To see it, open a draft in the panel's Plan lane, or try to set an unfinished ticket ready and read why it's refused. The one thing to watch is that the data speck gives to other programs still uses the old name inside it, which nobody sees in normal use.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,3 +59,80 @@ speck calls the check that a ticket is ready to build the ready check, run with 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ba81d754aff06a8d0dca66263f91888094f83e9d",
+    "session": "fresh",
+    "thread_id": "01a1bdc5-721a-7ca0-b328-800183f51d7d",
+    "builder_response": "- Tests run: test/ready-check-0573.test.mjs test/panel-0054.test.mjs test/panel-0061.test.mjs test/panel-0062.test.mjs test/panel-0063.test.mjs test/panel-0079.test.mjs test/panel-0463.test.mjs test/panel-0465.test.mjs test/panel-0519.test.mjs test/panel.test.mjs test/ready-gate-0252.test.mjs test/skills.test.mjs, with --related (which adds every test file naming a changed file).\n- Existing tests changed only where they pin words this ticket has to change (AC2 to AC4): the panel's heading, pass line, tooltip and fact label, the `Not ready:` refusal, and two skill sentences.\n- test/panel-0063 AC2: it asserted no text \"Readiness\" in a non-draft's pane. A non-draft's facts table now has a \"Ready check\" cell, where it said \"Lint\", so that assertion now checks the list's pass line; the headings assertion just above it still proves there's no list heading.\n- Kept on purpose, as nobody using speck reads them: `lintTicket`, `scripts/lint.mjs`, `lint` and `lint_messages` in `speck status --json`, and code comments.\n- The README's new `check` row has no test, as the build rules only allow tests of certain README facts. Please check it by reading.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 195974,
+      "cached_input_tokens": 140928,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 821,
+      "reasoning_output_tokens": 133
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 55046,
+      "cached": 140928,
+      "write": 0,
+      "output": 821
+    },
+    "cost_usd": 0.1323948,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T00:47:06.888Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs maps check and lint to the same cmdCheck function, preserving the previous implementation. Passing 0573 AC1 tests compare output and exit codes for valid, invalid and missing tickets, and check help."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "checkSetTicket, HELP and templates/panel.js use ready check terminology. Passing 0573 AC2 tests cover refusal messages, missing frontmatter ids, help, panel success text and tooltips. Remaining lint references are internal names, comments or the compatibility alias."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0573 AC3 tests check skills, templates/ticket.md and docs/brief.md for the new command and removal of lint terminology, except the brief's single compatibility note. README.md's command table was checked directly: its check row describes the ready check."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.js readiness() renders the heading Ready check. The passing 0573 AC4 test exercises the rendered panel with fakePage."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded related-test run reports 2,378 passes, zero failures and three skips. Existing test changes reflect the requested terminology; the command's checking logic is unchanged."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The command, panel and guidance now call this the ready check. The old lint command still works with the same results. Relevant tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
