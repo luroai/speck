@@ -45,7 +45,7 @@ Decided for you reads as speck's report, as in the mock.
 - Self-check: a call that changed a criterion now says "waited" once shipped and drops the Ship clause once cancelled, as neither still waits; the speech bubble is left out when the list empties while open; the list regroups when the day changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When speck has made calls for you in the last week, a line under the bar now shows its pleased face and says how many, with Review to open them. Decided for you now reads as speck's own report: it opens with speck saying it went with its recommendation, then lists the calls under Today and Earlier, each with the question, what it went with, what it didn't choose and when. If a call came with a changed criterion, speck looks sheepish and says which one and that the ticket waits for you at Ship. Change works as before. To see it, wait for speck to make a call on a blocked ticket, or look at the pictures in this review pack. Calls speck made before it kept their questions show just what it went with, and a shipped ticket can't say which criterion changed, so it says "its criteria" instead.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +60,9 @@ Tests updated from the old look:
 - `0568 AC2: the line says how many, and pressing it opens the list…`: now looks for the sheepish sentence instead of "changed a criterion".
 - `0568 AC4: at 320 px the list and its line fit the width…`: its calls now have a long question and other options too, as the rows show them.
 - `0576 AC2: the Decided for you line names its face…` (was "…says the name…"): the line speaks in the first person now, so the name is on the face beside it.
+
+Follow-ups (known limits, no ticket needed):
+- A shipped or cancelled ticket has no list of which criteria changed, so its call says "its criteria" rather than a number.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -141,6 +144,89 @@ Tests updated from the old look:
     ],
     "escalation_question": "",
     "summary": "The redesigned report works in the reviewed code and passing tests: it shows speck's faces, groups calls by day, explains choices and preserves Change. Approval is held only because the required list of updated tests is missing from the ticket's Delivery log."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4f3b61c0971fa283393e47e02bde48a9656750bc",
+    "session": "continued",
+    "thread_id": "01a1c244-4175-7393-8948-ae3550572f41",
+    "builder_response": "Round 2.\n\n- Tests run: test/panel-decided-0590.test.mjs test/panel-decided-0568.test.mjs test/speck-name-0576.test.mjs\n- F1 fixed: the Delivery log now lists the three tests updated from the old look, each with what changed. No code changed in this round.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 305426,
+      "cached_input_tokens": 254208,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1420,
+      "reasoning_output_tokens": 43
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4652,
+      "cached": 144128,
+      "write": 0,
+      "output": 627
+    },
+    "cost_usd": 0.0299868,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T21:44:39.912Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-popups.js drawDecidedLine renders the pleased face, call count and Review; renderDecided opens the report. Passing 0590 AC1 tests exercise these behaviours. decidedFor in scripts/foreman-took.mjs supplies the seven-day list."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "renderDecided and decidedDays render the pleased face, speech bubble and Today/Earlier groups. Passing 0590 AC2 tests cover the introduction, grouping, midnight updates and empty state."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "decidedRow and decidedChanged render ticket details, question, chosen and rejected options, time and the sheepish criterion message. Passing 0590 AC3 tests cover these details, legacy records, escaping and status updates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "renderDecided restricts Change to approved tickets that are not shipping; decidedRow opens their review pack. Passing 0590 AC4 and existing 0568 AC3 tests exercise availability and the review-pack action."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log now lists all three updated presentation tests and explains their changes. The latest targeted run reports 157 passes, zero failures and three skips; round 1's related-test run also had zero failures. No implementation or tests changed this round."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0590-redesign-decided-for-you.md",
+        "issue": "The required list of updated presentation tests was missing from the Delivery log.",
+        "suggested_fix": "List the updated 0568 AC2, 0568 phone-width and 0576 AC2 tests with brief explanations.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The redesigned report meets all five criteria. It shows speck's faces, groups calls by day, explains the choices and preserves Change. The missing test record is now complete, and the reviewed test runs have no failures. Ready for the owner's merge decision."
   }
 }
 ```
