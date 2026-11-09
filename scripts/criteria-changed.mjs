@@ -41,6 +41,9 @@ function changedCriteria(before, now) {
   ];
 }
 
+// A section's lines as one text, without the spaces at the ends of lines.
+const text = lines => lines.map(l => l.replace(/\s+$/, '')).join('\n');
+
 // The commit a branch started from: the parent of the oldest commit on its own line. Merging the base branch in later
 // doesn't move it, as it does the merge-base. A branch with no commits of its own left has been merged: forkPoint knows.
 function branchStart(repo, base, branch) {
@@ -59,12 +62,26 @@ export function criteriaChange(repo, cfg, id) {
     if (!branch) return null;
     const was = sectionsAt(repo, branchStart(repo, cfg.base_branch, branch), pad), is = sectionsAt(repo, branch, pad);
     if (!was || !is) return null;
-    const text = lines => lines.map(l => l.replace(/\s+$/, '')).join('\n');
     if (text(was) === text(is)) return null;
     const clean = lines => criteriaText(lines).map(c => text(c.split('\n')));
     return { before: text(was).trim(), now: text(is).trim(), items: changedCriteria(clean(was), clean(is)) };
   } catch (e) {
     if (e instanceof SpeckError) return null; // git can't say: ship and the pack report any real trouble themselves
+    throw e;
+  }
+}
+
+// 0568: whether a shipped ticket's criteria, `now`, differ from the ones it started with. Its branch has gone, but the
+// commit speck start made is in the base branch's history, so the criteria are read from just before it. false when
+// there's no such commit, as for a pull request that was squashed.
+export function shippedCriteriaChanged(repo, cfg, id, now = []) {
+  const pad = padId(id);
+  try {
+    const start = git(['log', '-1', '--format=%H', `--grep=^speck(${pad}): start$`, cfg.base_branch], repo).trim();
+    const was = start ? sectionsAt(repo, `${start}^`, pad) : null;
+    return !!was && text(was) !== text(now);
+  } catch (e) {
+    if (e instanceof SpeckError) return false;
     throw e;
   }
 }

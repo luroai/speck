@@ -52,6 +52,17 @@ export function foremanBoard(tickets, cfg, runs) {
     return { ...entry, ...foremanFacts(t, entry, fixingOf(cfg), t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg)) };
   });
 }
+// 0568: the recommendations speck took in the 7 days before `now`, newest first, from statusData's board entries, for
+// the panel's Decided for you list. `changed` says whether an entry's criteria changed, and is asked only about entries
+// with one to list, as it can have to look through git.
+export function decidedFor(entries, changed, now = Date.now()) {
+  return entries.flatMap(e => {
+    const recent = (e.foreman_took || []).filter(w => now - Date.parse(w.at) <= 7 * 864e5);
+    if (!recent.length) return [];
+    const criteria_changed = changed(e) === true;
+    return recent.map(w => ({ id: e.id, title: e.title, option: w.option, at: w.at, criteria_changed }));
+  }).sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+}
 // The lines `speck status` puts under a ticket from its board entry `b`: a blocked one's question `q` and whether it
 // waits for the Foreman or for you, and who went with the recommendation its build is carrying on with.
 export function foremanTicketLines(b, q) {

@@ -29,6 +29,10 @@
   .bezel .glass { position: relative; display: block; width: 100%; max-width: 520px; margin: 0 auto; padding: 0; overflow: hidden; color: var(--lcd-ink); background: var(--lcd-bg); border: .5px solid var(--bezel-muted); cursor: pointer; }
   .bezel .glass::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 8px rgba(0, 0, 0, .3); pointer-events: none; }
   .bezel .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 72; image-rendering: pixelated; }
+  /* 0568: the line under speck's status saying how many it decided, which opens the Decided for you list */
+  .decided-line { display: block; box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 16px; font: inherit; font-size: 14px; color: var(--muted); background: var(--bg); border: 0; border-radius: 0; border-bottom: .5px solid var(--line); cursor: pointer; }
+  .decided-line:hover { color: var(--text); }
+  .decided-line[hidden] { display: none; }
   /* 0477: the lanes are a thin strip under speck's screen, in place of the tabs: each lane's name on one row, in order,
      the one in view in the text colour and the others muted, and Build's needs-you number after its name whichever lane
      is in view. Nothing in it depends on how many lanes there are. Each lane is a 44 px button, taller than the strip:

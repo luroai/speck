@@ -16,7 +16,7 @@ import { cmdDiffstat } from './diffstat.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
 import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
-import { criteriaText, criteriaChange } from './criteria-changed.mjs';
+import { criteriaText, criteriaChange, shippedCriteriaChanged } from './criteria-changed.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdKeys } from './keys.mjs';
@@ -28,7 +28,7 @@ import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint, runState } from './run.mjs';
 import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs';
-import { withForeman, foremanBoard, foremanTicketLines } from './foreman-took.mjs';
+import { withForeman, foremanBoard, foremanTicketLines, decidedFor } from './foreman-took.mjs';
 import { agentView, cmdForeman, cmdWatch } from './foreman-agent.mjs';
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
@@ -481,7 +481,9 @@ export function statusData(repo) {
   });
   // The command that reopens a build's session, for the panel. A config without the setting gets the default (0289:
   // Codex's, for Codex builds).
-  return { tickets: entries, ideas, idea_counts: ideaCounts(repo), resume_command: resumeCommandOf(cfg) };
+  // 0568: what speck decided in the last 7 days. A shipped ticket has no branch to compare, so its criteria come from history. Left out when there are none.
+  const decided = decidedFor(entries, e => (e.status === 'done' ? shippedCriteriaChanged(repo, cfg, e.id, tickets.find(t => t.fm.id === e.id)?.sections['acceptance criteria']) : e.criteria_changed));
+  return { tickets: entries, ...(decided.length ? { decided } : {}), ideas, idea_counts: ideaCounts(repo), resume_command: resumeCommandOf(cfg) };
 }
 
 function cmdStatus(args = []) {

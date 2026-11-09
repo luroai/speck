@@ -84,6 +84,22 @@
      padding, the room for a phone's notch, is in the line instead, so nothing shows through above it. Above a setting's
      explanation (z-index 2), which scrolls under it too. */
   #full-ticket .top, #doc-view .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
+  /* 0568: the Decided for you list, over the whole
+     panel in a column at most 720 px wide. Long titles and options wrap, so it fits a phone's width. */
+  #decided { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #decided[hidden] { display: none; }
+  #decided .close { margin-left: auto; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #decided .close:hover { color: var(--text); }
+  #decided .top, #decided .decided-list, #decided .decided-none { max-width: 720px; margin-left: auto; margin-right: auto; }
+  #decided .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: .5px solid var(--line-soft); background: var(--panel); }
+  #decided .top .title { font-weight: 600; }
+  #decided .decided-row { padding: 10px 0; border-bottom: .5px solid var(--line-soft); overflow-wrap: anywhere; }
+  #decided .decided-head { display: flex; gap: 8px; align-items: baseline; }
+  #decided .decided-head .id { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #decided .decided-title { min-width: 0; font-weight: 600; }
+  #decided .decided-option { margin-top: 2px; color: var(--text); }
+  #decided .decided-when { margin-top: 2px; font-size: 12px; color: var(--muted); }
+  #decided .decided-change { margin: 6px 0 0; }
   /* 0479: the Pipeline log is one card in a dark frame that fills the window, as a lane's (0478): the frame is the
      screen's colour and corners, 4 px at the sides and bottom, in a column as wide as the lanes' (720 px less their
      16 px sides, on whole pixels as the lanes' are, 0453), clear of a phone's notch and home indicator. Its title row has
@@ -195,7 +211,7 @@
   /* 0417: a touch screen, at any width: every button and clickable control at least 44 px each way */
   @media (pointer: coarse) {
     /* The full ticket and review pack */
-    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close { min-width: 44px; min-height: 44px; }
+    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #decided .close { min-width: 44px; min-height: 44px; }
     #full-ticket .md summary, #doc-view .md summary { min-height: 44px; padding-top: 12px; }
   }
 
@@ -203,5 +219,5 @@
      is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
-    .foreman .reload, #full-ticket .close, #doc-view .close, #foreman .close, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder { border-width: 1px; }
+    .foreman .reload, #full-ticket .close, #doc-view .close, #foreman .close, #decided .close, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder { border-width: 1px; }
   }
