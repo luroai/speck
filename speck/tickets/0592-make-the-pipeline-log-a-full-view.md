@@ -1,7 +1,7 @@
 ---
 id: "0592"
 title: "Make the Pipeline log a full view"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ approved: "2026-11-09T23:16:42.005Z"
 ---
 # 0592 · Make the Pipeline log a full view
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 The Pipeline log is a pop-up of raw lines. In the redesign it's a full view you can filter, where speck's own calls stand out from the tool's routine lines.
@@ -228,6 +228,90 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The Pipeline log now provides a full view with live status, filters, readable rows and speck faces. The missing build updates are fixed and covered by regression tests. All criteria pass, with no remaining blocking findings."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2f8cef0e6cc3eee6f4b279cef9f00c002682f3c0",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c296-fa97-7ea2-ad6e-5392df46487c",
+    "builder_response": "- Tests run: test/pipeline-0592.test.mjs test/build-log-0548.test.mjs test/panel-0128.test.mjs test/panel-0413.test.mjs test/panel-0453.test.mjs test/panel-0366.test.mjs test/panel-0472.test.mjs test/pipeline-0415.test.mjs test/pipeline-0458.test.mjs test/pipeline-0459.test.mjs test/pipeline-0470.test.mjs test/pipeline-0479.test.mjs, with `--related` (777 pass, 0 fail).\n- Why this round: `speck ship` refused the approved branch. `git merge main` had nothing new to bring in, so the failures came from this ticket's change. The seven failing tests, and what each was:\n- 0128 AC1, AC2 and AC4: real breakage from this change, not a look test, so the tests are untouched. They compare the panel's run state to exactly `{ on, pid }`, and I had added `since` to it. `since` now travels on the Foreman's view instead (`foremanView({ since })`, `foreman.since`, `runSince` in scripts/panel-run.mjs), and `panelRunState` is as it was before this ticket.\n- 0453 AC1 AC3: a real slip of mine. The filter buttons had pill corners, and the panel's buttons have 8 px ones. I fixed the CSS (no border-radius of their own) and retook the pictures.\n- 0548 AC2, 0413 AC1/AC4/AC5, 0453 AC2 and 0453's view opener: tests of the old look that open the Pipeline log, updated to the full view and added to the Delivery log. 0548 AC2 said the build log and the Pipeline log share one frame, which this ticket ends: it now checks the build log keeps the pop-up's frame, title row, Close and log box, and that the Pipeline log, a full view, opens in the same element. 0413 presses the back link. 0453 measures a filter button, as the back link is a link with no border.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 523924,
+      "cached_input_tokens": 448256,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2261,
+      "reasoning_output_tokens": 72
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 12069,
+      "cached": 135040,
+      "write": 0,
+      "output": 602
+    },
+    "cost_usd": 0.043662,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T23:27:17.129Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "pipelineFrame and drawLogStatus provide the full view, back link, mood and live status. Start time now flows through runSince, foremanView and foremanOf. Passing 0592 AC1 tests cover this data and rendering; browser tests cover layout."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runLogFilterOf and runLogFiltered retain the corrected classification. Passing 0592 AC2 tests cover runner message formats, default selection, continuation lines and refreshes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runLogRow and runLogDetails render time, text and details, with mono fonts set by scoped CSS. Passing 0592 AC3 tests exercise these behaviours."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "runLogRow adds a face only to lines marked as the engineering manager speaking. The passing 0592 AC4 test verifies marked and unmarked rows."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the additional updated appearance tests. The test output confirms 777 passes, zero failures and three skips, including compatibility and button-border tests. The updated 0548 test explicitly checks that build logs retain their original pop-up frame."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-model.js",
+        "issue": "The Builds filter previously omitted real build lifecycle messages.",
+        "suggested_fix": "Completed: classification includes the omitted messages, with regression coverage using runner message formats.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The full Pipeline log view meets all criteria. This round fixes the run-state compatibility issue and button styling, while preserving ticket build logs as pop-ups. The expanded tests pass, and no blocking concerns remain."
   }
 }
 ```
