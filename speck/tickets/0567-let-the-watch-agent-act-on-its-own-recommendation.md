@@ -42,6 +42,7 @@ With `watch: decide`, the watch agent takes its own recommendation instead of as
 - Today: `ACTIONS` in `scripts/foreman-agent.mjs` (about lines 39 to 44) and `foremanAction` (about lines 388 to 435); the agent's instructions are `skills/speck-watch/SKILL.md` section 2, which says "When you're unsure, ask." `goWith` in `scripts/go-with.mjs` resumes a build with a chosen option.
 - Waits for 0564, which adds `decide`, and 0566, which changes `scripts/foreman-agent.mjs`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
