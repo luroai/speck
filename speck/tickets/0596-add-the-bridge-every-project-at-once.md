@@ -44,6 +44,9 @@ With two or more projects running, the panel offers the bridge, which shows what
 - Relies on nothing outside this repo.
 - Failing before this build: none
 - AC1: All projects is a button beside the project menu's caret, not an entry in its list: 0516's tests compare the list's entries exactly, and AC5 keeps every passing test as it is. It's offered exactly when the menu lists two or more running panels.
+- The median covers each project's latest 20 shipped tickets, as the long-build check's usual time does; 0595's summary now also gives each panel's mood, whether it's busy and those build times.
+- The ticket pressed on a card is kept in the tab's sessionStorage across the reload that switches project, and opened once that project's board arrives.
+- Self-check: a why the page doesn't know, even a built-in name such as constructor, no longer reads off an object's prototype; a project whose port isn't a whole number gets no row; removed a 44 px minimum on the bridge's cards that 0417 forbids and their content already exceeds.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

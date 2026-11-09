@@ -147,7 +147,7 @@
   #bridge .bridge-section { margin: 20px 0 8px; font-size: 14px; line-height: 20px; font-weight: 600; }
   #bridge .bridge-none { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
   #bridge .bridge-error { margin: 0 0 10px; font-size: 14px; line-height: 20px; color: var(--bad); }
-  #bridge .bridge-card, #bridge .bridge-row { box-sizing: border-box; width: 100%; min-height: 44px; font: inherit; color: inherit; text-align: left; background: var(--raise); border: 0; border-radius: 12px; cursor: pointer; }
+  #bridge .bridge-card, #bridge .bridge-row { box-sizing: border-box; width: 100%; font: inherit; color: inherit; text-align: left; background: var(--raise); border: 0; border-radius: 12px; cursor: pointer; }
   #bridge .bridge-card { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; padding: 10px 12px; }
   #bridge .bridge-where { font-size: 12px; line-height: 16px; color: var(--bad); }
   #bridge .bridge-title { font-size: 14px; line-height: 20px; font-weight: 600; overflow-wrap: anywhere; }
