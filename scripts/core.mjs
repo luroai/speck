@@ -415,6 +415,12 @@ export function ticketRounds(text) {
   return { rounds, errors };
 }
 
+// 0583: the criteria the reviewer passed in the latest round, by number, for the panel's ticks.
+export function criteriaPassed(rounds) {
+  const all = rounds[rounds.length - 1]?.verdict?.criteria;
+  return Array.isArray(all) ? all.filter(c => c?.status === 'pass' && Number.isInteger(c.id)).map(c => c.id) : [];
+}
+
 // ---------- shared by the commands ----------
 
 export const posix = p => p.split(path.sep).join('/');

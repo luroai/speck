@@ -98,7 +98,7 @@ test('0063 AC1: each Shipped card\'s Full ticket opens the pane on that ticket a
   assert.equal(paneId(p), '0006');
   assert.ok(pane(p).textContent.includes('Shipped two'));
   assert.deepEqual(openStates(p), before, 'nothing else opens or closes');
-  named(p, pane(p), 'Close').listeners.click();
+  p.all(pane(p)).find(n => n.className === 'close').listeners.click();
   press(titleOf(p, shipOf(p, '0005')));
   assert.equal(paneId(p), '0005');
 });
@@ -110,10 +110,10 @@ test('0063 AC2: a ticket that isn\'t a draft shows the same id, title and sectio
   click(top(itemOf(p, '0001')));
   press(fullOf(p, itemOf(p, '0001')));
   const draftHeadings = headings(p, pane(p));
-  assert.deepEqual(draftHeadings, ['Ready check', 'Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']);
-  const sections = node => node.children.at(-1).children.filter(n => !/\bready\b/.test(n.className)).map(n => n.textContent);
+  assert.deepEqual(draftHeadings, ['Ready check', 'Outcome', 'Acceptance criteria', 'Problem', 'Out of scope', 'Notes']);
+  const sections = node => node.children.at(-1).children.filter(n => !/\bready\b|\bpane-rows\b/.test(n.className)).map(n => n.textContent); // 0583: and the rows, which depend on how far it's got
   const draftSections = sections(pane(p));
-  named(p, pane(p), 'Close').listeners.click();
+  p.all(pane(p)).find(n => n.className === 'close').listeners.click();
   for (const [id, from] of [['0002', 'queue'], ['0004', 'queue'], ['0005', 'shipped']]) {
     if (from === 'queue') { click(topOf(rowOf(p, id))); await p.settle(); press(fullOf(p, rowOf(p, id))); } else press(titleOf(p, shipOf(p, id)));
     assert.equal(paneId(p), id);
@@ -123,7 +123,7 @@ test('0063 AC2: a ticket that isn\'t a draft shows the same id, title and sectio
     assert.deepEqual(sections(pane(p)).map(t => t.replaceAll(id, 'X')), draftSections.map(t => t.replaceAll('0001', 'X')), `${id}: shown the same way`);
     assert.equal(p.all(pane(p)).find(n => /\bset-ready\b/.test(n.className || '')), undefined, `${id}: no Set ready`);
     assert.ok(!pane(p).textContent.includes('Ready check passes'), `${id}: no readiness lines`); // the heading: above. Its facts table has a Ready check cell of its own
-    named(p, pane(p), 'Close').listeners.click();
+    p.all(pane(p)).find(n => n.className === 'close').listeners.click();
   }
 });
 
@@ -229,7 +229,7 @@ test('0063 AC4: opening and closing the pane leaves queue tickets as they were, 
       assert.ok(paneOpen(p));
       await refresh(p);
       assert.ok(paneOpen(p), 'open through the refresh');
-      if (how === 'Close') named(p, pane(p), 'Close').listeners.click();
+      if (how === 'Close') p.all(pane(p)).find(n => n.className === 'close').listeners.click();
       else if (how === 'Escape') p.key('Escape');
       else p.byId('full-backdrop').listeners.click({ target: p.byId('full-backdrop') });
       assert.ok(!paneOpen(p), `${how} closes it`);

@@ -373,11 +373,11 @@ test('0165 AC2: an open full ticket pane updates its risk tip and label when onl
   p.press(top(items(p)[0]));
   p.press(p.all(items(p)[0]).find(n => n.className === 'full-open'));
   assert.equal(p.calls.length, 1, 'opening it asked for nothing more');
-  const risk = () => p.all(p.byId('full-ticket')).find(n => n.className === 'fact' && n.children[0].textContent === 'Size · risk');
-  assert.equal(risk().children[1].textContent, 'S · low');
+  const risk = () => p.all(p.byId('full-ticket')).find(n => n.className === 'fact' && n.children[0].textContent === 'Risk');
+  assert.equal(risk().children[1].textContent, 'low');
   assert.ok(!p.all(p.byId('full-ticket')).some(isTag), 'no tags');
   p.timers.shift()(); // the next refresh
   await p.settle();
-  assert.equal(risk().children[1].textContent, 'S · low', 'the same risk');
+  assert.equal(risk().children[1].textContent, 'low', 'the same risk');
   assert.ok(!p.all(p.byId('full-ticket')).some(isTag), 'still no tags');
 });

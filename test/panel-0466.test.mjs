@@ -134,7 +134,7 @@ test('0466 AC3: Close brings the focus back to the shipped card\'s Full ticket b
   p.press(titleOf(p, '0901'));
   p.press(named(p, '0901', 'Full ticket'));
   assert.equal(p.focused(), pane(p), 'the pane takes the focus');
-  click(p.all(pane(p)).find(n => n.tagName === 'button' && /\bclose\b/.test(n.className)));
+  click(p.all(pane(p)).find(n => /\bclose\b/.test(n.className)));
   await p.settle();
   assert.ok(!paneOpen(p));
   assert.equal(p.focused(), named(p, '0901', 'Full ticket'), 'back on its Full ticket button');

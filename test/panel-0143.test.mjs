@@ -9,10 +9,10 @@ const ago = min => new Date(Date.now() - min * 60000).toISOString();
 const clone = s => JSON.parse(JSON.stringify(s));
 const pane = p => p.byId('full-ticket');
 const paneTop = p => pane(p).children[0];
-// 0465: the pane's Priority, Size · risk and Type cells, as [label, value] each, or null when its table has none.
+// 0465, 0583: the pane's Priority, Size and Risk cells, as [label, value] each, or null when its table has none.
 const paneTags = p => {
   const f = pane(p).children[1] && pane(p).children[1].children[1];
-  const kept = f ? f.children.map(c => [c.children[0].textContent, c.children[1].textContent]).filter(([l]) => ['Priority', 'Size · risk', 'Type'].includes(l)) : [];
+  const kept = f ? f.children.map(c => [c.children[0].textContent, c.children[1].textContent]).filter(([l]) => ['Priority', 'Size', 'Risk'].includes(l)) : [];
   return kept.length ? kept : null;
 };
 const fullButtonIn = (p, n) => p.all(n).find(x => x.tagName === 'button' && x.textContent === 'Full ticket');
@@ -43,9 +43,9 @@ const STATE = () => ({ ideas: [], tickets: [
 
 test('0143 AC1: the pane shows priority, size and risk under the title, whichever list it was opened from', async () => {
   for (const [where, id, want] of [
-    ['plan', '0001', [['Priority', 'P1'], ['Size · risk', 'M · high'], ['Type', 'code']]],
-    ['build', '0005', [['Priority', 'P3'], ['Size · risk', 'S · low'], ['Type', 'code']]],
-    ['shipped', '0009', null], // 0465: its table has its figures, as its open card's has
+    ['plan', '0001', [['Priority', 'P1'], ['Size', 'M'], ['Risk', 'high']]],
+    ['build', '0005', [['Priority', 'P3'], ['Size', 'S'], ['Risk', 'low']]],
+    ['shipped', '0009', [['Priority', 'P2'], ['Size', 'M'], ['Risk', 'high']]], // 0583: the same grid for a shipped one
   ]) {
     const p = fakePage([STATE(), STATE(), STATE()]);
     await p.settle();
@@ -73,7 +73,7 @@ test('0143 AC1: the pane\'s tags follow a change to the ticket', async () => {
   const [head, , body] = pane(p).children, [id, title] = head.children;
   p.timers.shift()();
   await p.settle();
-  assert.deepEqual(paneTags(p), [['Priority', 'P4'], ['Size · risk', 'M · low'], ['Type', 'code']]);
+  assert.deepEqual(paneTags(p), [['Priority', 'P4'], ['Size', 'M'], ['Risk', 'low']]);
   assert.deepEqual([pane(p).children[0], pane(p).children[2], ...head.children.slice(0, 2)], [head, body, id, title], 'the rest of the pane keeps its nodes');
   assert.equal(body.detached || 0, 0);
 });
@@ -86,12 +86,11 @@ test('0143 AC2: a bug or fix ticket shows its bug or fix tag in the pane, as in 
   let p = fakePage([s(), s(), s()]);
   await p.settle();
   openFrom(p, 'build', '0006');
-  assert.deepEqual(paneTags(p), [['Priority', 'P0'], ['Size · risk', 'S · low'], ['Type', 'fix']]);
-  assert.equal(pane(p).children[1].children[1].children[5].children[1].className, 'value fix', 'in the fix tag\'s colour');
+  assert.deepEqual(paneTags(p), [['Priority', 'P0'], ['Size', 'S'], ['Risk', 'low']]); // 0583: its type isn't one of the view's facts
   p = fakePage([s(), s(), s()]);
   await p.settle();
   openFrom(p, 'shipped', '0010');
-  assert.equal(paneTags(p), null, '0465: a shipped one\'s table has its figures, as its open card\'s has');
+  assert.deepEqual(paneTags(p), [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'low']], '0583: the same grid for a shipped one');
 });
 
 test('0143 AC3: a field the ticket doesn\'t have shows no tag, and a ticket with none shows no tags at all', async () => {
@@ -103,12 +102,12 @@ test('0143 AC3: a field the ticket doesn\'t have shows no tag, and a ticket with
   let p = fakePage([s(), s(), s()]);
   await p.settle();
   openFrom(p, 'build', '0009');
-  assert.deepEqual(paneTags(p), [['Priority', '–'], ['Size · risk', 'S · high'], ['Type', 'code']]);
+  assert.deepEqual(paneTags(p), [['Priority', '–'], ['Size', 'S'], ['Risk', 'high']]);
   for (const id of ['0011', '0012']) {
     p = fakePage([s(), s(), s()]);
     await p.settle();
     openFrom(p, 'build', id);
-    assert.deepEqual(paneTags(p), [['Priority', '–'], ['Size · risk', '– · –'], ['Type', 'code']], `${id}: a dash for each, as on its card (0465)`);
+    assert.deepEqual(paneTags(p), [['Priority', '–'], ['Size', '–'], ['Risk', '–']], `${id}: a dash for each (0583)`);
     assert.deepEqual(paneTop(p).children.map(n => n.className), ['id', 'state', 'close', 'title'], `${id}: the top row as before (0424: with its status)`);
   }
 });
@@ -127,7 +126,7 @@ test('0143 AC4: the pane\'s priority tag only shows the value: clicking it opens
   await p.settle();
   openFrom(p, 'plan', '0001');
   // 0465: its Priority cell, in the table under the title
-  const tag = pane(p).children[1].children[1].children[3].children[1];
+  const tag = pane(p).children[1].children[1].children[0].children[1]; // 0583: first in its grid
   assert.equal(tag.textContent, 'P1');
   assert.ok(!p.all(tag).some(n => /\bpick\b/.test(n.className || '') || n.attrs?.role === 'button'), 'not styled as clickable');
   assert.ok(!p.all(tag).some(n => n.title === 'Set the priority'), 'no "Set the priority" hover text');
@@ -139,7 +138,7 @@ test('0143 AC4: the pane\'s priority tag only shows the value: clicking it opens
 
 test('0143 AC3: tags come and go with the fields on a refresh, and the rest of the top row stays', async () => {
   const one = o => ({ ideas: [], tickets: [T('0011', 'ready', o)] });
-  const none = { priority: null, size: '', risk: '' }, empty = [['Priority', '–'], ['Size · risk', '– · –'], ['Type', 'code']];
+  const none = { priority: null, size: '', risk: '' }, empty = [['Priority', '–'], ['Size', '–'], ['Risk', '–']];
   const boards = [one(none), one({ priority: null }), one(none)]; // 0465: an open Build card fetches its log too
   const p = fakePage([], { fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : clone(boards.length > 1 ? boards.shift() : boards[0])) }) });
   await p.settle();
@@ -148,7 +147,7 @@ test('0143 AC3: tags come and go with the fields on a refresh, and the rest of t
   assert.deepEqual(paneTags(p), empty);
   p.timers.shift()();
   await p.settle();
-  assert.deepEqual(paneTags(p), [['Priority', '–'], ['Size · risk', 'S · low'], ['Type', 'code']]);
+  assert.deepEqual(paneTags(p), [['Priority', '–'], ['Size', 'S'], ['Risk', 'low']]);
   p.timers.shift()();
   await p.settle();
   assert.deepEqual(paneTags(p), empty);
