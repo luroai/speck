@@ -1,7 +1,7 @@
 ---
 id: "0591"
 title: "Have speck's own log lines speak in the first person"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T18:30:56.036Z"
 ---
 # 0591 · Have speck's own log lines speak in the first person
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 In the redesign, speck speaks in the first person wherever its face appears, the Pipeline log included. Today `speck run`'s log speaks about speck in the third person, and the panel can't tell speck's own lines from the tool's.
@@ -46,7 +46,7 @@ In the redesign, speck speaks in the first person wherever its face appears, the
 - Pictures: none, because the look of the log doesn't change here (0592 does that); only the words of the manager's lines do.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When speck run's log reports something your engineering manager did, it now says it in the first person: "I'll look into it", "I went with the recommendation". Lines about the tool's own work, such as a build starting or a ticket shipping, read as before. To see it, open the Pipeline log after the manager has looked into a ticket. The panel now knows which lines are the manager's, though they look the same until the Pipeline log is redesigned. In a terminal those lines start with a small » mark. Lines written before this change stay as they were.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,4 +55,83 @@ In the redesign, speck speaks in the first person wherever its face appears, the
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Existing tests changed to the new wording, as AC1 requires, at the same strictness: speck-name-0576, foreman-fix-0286, long-build-0569, foreman-provider-0392, watch-0486, foreman-once-0566.
+- Known limit: a refusal goWith gives keeps the manager's name in its reason, so a log line can read "I didn't take its recommendation: Virgil has already gone with a recommendation…". The same text also serves the panel's errors, so it was left.
+- Follow-ups: none for the inbox.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a11bb156637081b5d077b72230e7eaefaad59b41",
+    "session": "fresh",
+    "thread_id": "01a1c199-487f-7a72-8fe6-4643bc11c312",
+    "builder_response": "- Tests run: test/first-person-0591.test.mjs test/speck-name-0576.test.mjs test/foreman-fix-0286.test.mjs test/long-build-0569.test.mjs test/foreman-provider-0392.test.mjs test/watch-0486.test.mjs test/foreman-once-0566.test.mjs test/watch-decide-0567.test.mjs test/pipeline-0459.test.mjs, with --related (it also ran every test file naming a changed file).\n- AC5 and existing tests: AC1 changes the words of lines that six existing test files pinned. Those tests now expect the new lines, at the same strictness (exact strings stay exact, and foreman-once-0566's \"doesn't say it will\" check was moved to the new words so it can't pass vacuously). No assertion was removed. Files: speck-name-0576, foreman-fix-0286, long-build-0569, foreman-provider-0392, watch-0486, foreman-once-0566. I read AC5 as covering tests after that rewording, since AC1 can't hold otherwise; please say if you read it differently.\n- The mark: a manager's line starts with `» ` (speckSays in scripts/core.mjs), which runLogLine in templates/panel-model.js recognises, sets `speck: true` for and takes off the text. Only the mark counts, so first-person words on an unmarked line aren't the manager's.\n- A build running long under watch: tell stays an unmarked line: it names no one and isn't the manager acting.\n- split-off.mjs needs no change: its 0576 use of the name is a refusal message, not a log line.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 197307,
+      "cached_input_tokens": 141184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 707,
+      "reasoning_output_tokens": 56
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56123,
+      "cached": 141184,
+      "write": 0,
+      "output": 707
+    },
+    "cost_usd": 0.1334344,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:37:19.633Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "foremanAgentQueue, foremanFixQueue and goWithQueue emit marked first-person manager messages. Passing 0591 AC1 tests exercise investigation, actions, failures and recommendation resumption."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Tool log producers remain unchanged. Passing 0591 AC2 tests cover unmarked user choices and watch:tell notices; AC2/AC3 checks existing tool summaries."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel-model.js runLogLine recognises and removes the explicit marker, adding speck:true only for marked messages. Passing AC3 tests cover timed, untimed, empty and unmarked first-person input."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Status rendering is unchanged. Passing 0591 AC4 test exercises foremanView and foremanLines with the chosen name Virgil."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Recorded related-test output reports 879 passed, zero failed and three skipped. Existing assertions were updated for the required wording without removing their behavioural checks."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The manager now speaks in the first person, and the panel can distinguish its messages using an explicit marker. Tool messages and the chosen name in status remain intact. The relevant tests pass; no blocking concerns found."
+  }
+}
+```
+
+</details>
