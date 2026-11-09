@@ -1,7 +1,7 @@
 ---
 id: "0577"
 title: "Set the panel's new design tokens"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T17:42:55.310Z"
 ---
 # 0577 · Set the panel's new design tokens
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel's look was built around the LCD screen: grey-green screen colours, the Doto dot-matrix font on titles, and borders round every card. The redesign needs a calm, grown-up base for every view: neutral greys, one blue accent, orange only for what needs you, and speck's red kept for its eye alone.
@@ -47,6 +47,7 @@ The panel uses the redesign's colours and fonts in both looks, and every view pi
 - AC5 has no test of its own: its first half is the Delivery log, which a reviewer reads, and its second half is the whole suite, which `speck ship` runs. A test can't read this repo's `speck/` folder (0122).
 - Inter and JetBrains Mono are the Latin subsets from @fontsource 5.3.0 (about 24 KB each). Anything outside them (Greek, Cyrillic, some arrows) falls back to the machine's fonts, which stay behind them in each list.
 - Self-check: lane dots moved from the border to the muted colour, because the border is too faint for a dot; two old comments that named Cursor's blue corrected; the browser bar and the manifest moved to the new page colour.
+- speck (2026-11-09 18:16 UTC) told you: Nothing is stuck and main isn't broken: 0577 is slow because new colours and fonts broke about 65 older tests that pinned the old look, so the build has been fixing them and re-running large test batches, up to all 3,263 tests, which took about 20 of its first 31 minutes. It's on its last test run before review round 1, and the machine's high load is probably slowing the browser tests too. Why: The build's log shows steady progress with no test hanging, every failure came from the new look, one of them a browser timing check that passed on re-run, and main's last recorded test run passed; I couldn't see which processes are causing the load.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
