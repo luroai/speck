@@ -1,7 +1,7 @@
 ---
 id: "0582"
 title: "Show the lanes as tabs with their counts"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0580"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T20:00:43.162Z"
-approved: "2026-11-09T20:23:16.464Z"
+approved: "2026-11-09T20:32:06.059Z"
 
 ---
 # 0582 · Show the lanes as tabs with their counts
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The lane strip is a row of small marks that the user has found hard to read (an inbox note asked to mark the lane in view more clearly). The redesign shows the four lanes as clear tabs with their counts.
@@ -57,12 +57,13 @@ To see it, open the panel and change lanes. Worth a look: Build can show two num
 ## Review log
 Round 1 (codex): changes requested: F1 The submitted verification run fails the existing slide responsiveness test: its first frame took 111 ms against a 50 ms limit.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 207,229
-- Elapsed since build started: 23 min
+- Reviewer tokens: 331,435
+- Elapsed since build started: 31 min
 - Changed lines: 47 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Tests updated for the new look (AC5): `test/panel-0410.test.mjs` (Plan's tab now has a count), `test/panel-0425.test.mjs` (tab contents, Build's accessible name), `test/panel-0477.test.mjs` (strip height, open tab's border, accessible name, real-browser height), `test/panel-0481.test.mjs` (the bar is under the whole tab in the accent), `test/panel-0135.test.mjs` (each tab's children).
