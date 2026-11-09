@@ -1,7 +1,7 @@
 ---
 id: "0594"
 title: "Give speck a new app icon"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T18:53:58.245Z"
 ---
 # 0594 · Give speck a new app icon
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel's app icon and favicon are the LCD-era mark. In the redesign, speck itself is the mark: the Premium screen on the black slab.
@@ -49,7 +49,11 @@ The app icon and favicon are speck as the Premium screen on the black slab.
 - Self-check: added a quick check of icon.svg's small-size rule that runs without a browser.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's app icon is now its new character: the dark device with the red visor, on a black rounded square. In a browser tab, where there's little room, it shows the plain visor, without the glow or the reflection.
+
+To see it, open the panel and look at the tab, or add the panel to a phone's home screen. If you've added it before, you may need to add it again for the phone to pick up the new icon.
+
+Worth keeping an eye on: at the very smallest size the visor is only a small red bar, so check it still reads as speck in your own browser's tabs.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -64,3 +68,80 @@ Tests updated from the old look to the new (AC5):
 - `test/panel-0149.test.mjs`: the manifest's colours are the black bar's, and the browser compares the Apple touch icon with `icon.svg` rather than the LCD logo.
 - `test/panel-0159.test.mjs`: the check on 0149's browser test follows that comparison.
 - `test/logo-0320.test.mjs`: the four tests of the icons as the LCD logo are replaced by `test/icons-0594.test.mjs`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8af3f2d2ce3a24b4bd96e3aac9c240b8e24a246c",
+    "session": "fresh",
+    "thread_id": "01a1c1b5-3e53-7492-a2db-a0437f30630f",
+    "builder_response": "- Tests run: test/icons-0594.test.mjs test/logo-0320.test.mjs test/icons-0305.test.mjs test/panel-0149.test.mjs test/panel-0159.test.mjs test/panel-0426.test.mjs, with --related, which added every existing test file naming a changed file.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 120558,
+      "cached_input_tokens": 75648,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 731,
+      "reasoning_output_tokens": 12
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 44910,
+      "cached": 75648,
+      "write": 0,
+      "output": 731
+    },
+    "cost_usd": 0.1046948,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T19:07:52.221Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/icons/icon.svg and the PNGs use the watching Premium screen on #1C1D19 with rounded corners. Both AC1 tests in test/icons-0594.test.mjs passed; visual inspection of icon-512.png confirms the artwork."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The 16 and 32 px PNG pixel tests passed. The SVG media-rule test and real-browser rendering test passed, checking that glow and reflection disappear at tab sizes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/icons/manifest.webmanifest sets both colours to #1C1D19. The AC3 test compares these with --bar in panel-base.css and passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html links the new favicons and Apple touch icon; panelServer() serves them. AC4 verifies links and served bytes. The existing 0149 browser test also passed, checking icon loading and the Apple icon against the SVG."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists all five existing test files updated for the new appearance. Recorded results confirm 428 passed, zero failed and three skipped. Changes are confined to the icons, their wiring and related tests; the whole-suite shipping check remains."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The app and home-screen icons now show speck’s Premium screen on the rounded black slab. Small favicons omit the glow and reflection. The relevant tests passed, including browser checks, and I found no blocking issues."
+  }
+}
+```
+
+</details>
