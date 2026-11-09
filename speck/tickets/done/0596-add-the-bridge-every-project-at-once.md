@@ -1,7 +1,7 @@
 ---
 id: "0596"
 title: "Add the bridge: every project at once"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0595","0592","0587","0581"]                # ticket ids that must be do
 created: 2026-11-09
 started: "2026-11-09T23:37:42.137Z"
 approved: "2026-11-09T23:54:09.865Z"
+finished: "2026-11-09T23:57:33.967Z"
 
 ---
 # 0596 · Add the bridge: every project at once
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 With several projects running, you check each panel in turn to see what needs you. The redesign's bridge shows every project at once, as the engineering manager's view across all of them.
