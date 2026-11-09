@@ -43,6 +43,7 @@ The panel uses the redesign's colours and fonts in both looks, and every view pi
 - Light: background #FFFFFF, surface #F4F5F7, border #E4E6EA, text #15171A, muted #5F6670, accent #2F55D4, needs-you #D9822B with its text #A84F06, speck's eye #D63F28. Dark: background #111214, surface #1B1D20, border #2A2D31, text #ECEDEF, muted #9AA0A8, accent #86A2FF, needs-you #F0A35A (text too), speck's eye #FF6A4D. The black bar, the same in both looks: #1C1D19, ink #E8E7E1, muted ink #A5A69E, line #34352F, its eye #E24A2F.
 - `test/panel-0472.test.mjs` AC3 compared every element's computed style with the look before 0472's split; it can't hold through a redesign, so it's updated to check what it still can, or replaced, and the Delivery log says which.
 - Checked 2026-11-09: Inter and JetBrains Mono are both under the SIL Open Font License 1.1, which allows bundling them, read from each font's own LICENSE file in @fontsource/inter and @fontsource/jetbrains-mono 5.3.0. The builder keeps that file beside each font, as Doto's `OFL.txt` is.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
