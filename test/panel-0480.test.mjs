@@ -22,7 +22,7 @@ test('0480 AC1 AC2 AC4: the lane card is drawn by the lane itself, light, with a
   // AC4: drawn inside the lane's own box, so it slides with it (0476)
   assert.equal(cssValue(cssRules('main > section'), 'position'), 'relative');
   assert.equal(cssValue(cssRules('main > section'), 'padding'), '8px 16px');
-  assert.equal(cssValue(cssRules('#shaping-section .lane-title::before'), 'background'), 'var(--line)', 'Plan\'s dot is 0461\'s grey for a step not reached');
+  assert.equal(cssValue(cssRules('#shaping-section .lane-title::before'), 'background'), 'var(--muted)', 'Plan\'s dot is the muted grey (0577)');
   // No lane rule uses the screen's frame colours, and the token made for Plan's dot on the frame has gone
   const css = styles().replace(/\/\*[\s\S]*?\*\//g, '');
   for (const [, sel, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
@@ -107,7 +107,7 @@ test('0480 AC1 AC2: in both looks, each lane is a light card with a hairline edg
         // AC2
         assert.match(l.title.family, /^"?Inter"?/, `${w}: in Inter (0577)`);
         assert.equal(l.title.colour, m.want.text, `${w}: the name in the text colour`);
-        assert.equal(l.title.dot, { plan: m.want.line, build: m.want.blue, shipped: m.want.purple }[l.lane], `${w}: its stage's dot`);
+        assert.equal(l.title.dot, { plan: m.want.muted, build: m.want.blue, shipped: m.want.purple }[l.lane], `${w}: its stage's dot`);
         if (l.line) assert.equal(l.line, m.want.muted, `${w}: the lane's line in the muted colour`);
         assert.equal(l.under.colour, m.want.soft, `${w}: a thin line in --line-soft under the row`);
         assert.ok(l.under.width > 0 && l.under.width <= 1, `${w}: thin (${l.under.width})`);

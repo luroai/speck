@@ -53,7 +53,7 @@ const MEASURE = `(async () => {
   const bz = document.querySelector('.bezel').getBoundingClientRect(), glass = document.querySelector('.bezel .glass').getBoundingClientRect();
   const out = { vw: innerWidth, bezel: { colour: getComputedStyle(document.querySelector('.bezel')).backgroundColor, radius: getComputedStyle(document.querySelector('.bezel')).borderTopLeftRadius,
     side: glass.left - bz.left, bottom: bz.bottom - glass.bottom, titleTop: document.querySelector('.bezel .name').getBoundingClientRect().top - bz.top },
-    want: { blue: val('--blue'), purple: val('--purple'), grey: val('--line'), ink: val('--text'), muted: val('--muted'), panel: val('--panel') }, lanes: [] };
+    want: { blue: val('--blue'), purple: val('--purple'), grey: val('--muted'), ink: val('--text'), muted: val('--muted'), panel: val('--panel') }, lanes: [] };
   for (const lane of ['capture', 'plan', 'build', 'shipped']) {
     document.getElementById('tab-' + lane).click(); ${REST_LANES};
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));

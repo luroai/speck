@@ -12,7 +12,7 @@ const NAME = 'panel.example.ts.net';
 const URL_ = `https://${NAME}`;
 const ASSETS = ['/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'];
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const colour = name => PALETTE.match(new RegExp(`${name}: (#[0-9a-f]{6})`))[1];
+const colour = name => PALETTE.match(new RegExp(`${name}: (#[0-9a-f]{6})`, 'i'))[1];
 const hex = c => `#${c.map(n => n.toString(16).padStart(2, '0')).join('')}`;
 
 async function served(extra = []) {

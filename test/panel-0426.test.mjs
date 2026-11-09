@@ -88,10 +88,10 @@ test('0426 AC1: the page, cards, text and inputs are the redesign\'s (0577)', ()
 
 test('0426 AC1: the browser bar and the home-screen app take the new page colour', () => {
   const html = page();
-  assert.match(html, /<meta name="theme-color" content="#f3f3f3" media="\(prefers-color-scheme: light\)">/);
-  assert.match(html, /<meta name="theme-color" content="#141414" media="\(prefers-color-scheme: dark\)">/);
+  assert.match(html, /<meta name="theme-color" content="#FFFFFF" media="\(prefers-color-scheme: light\)">/);
+  assert.match(html, /<meta name="theme-color" content="#111214" media="\(prefers-color-scheme: dark\)">/);
   const m = JSON.parse(fs.readFileSync(path.join(ROOT, 'templates/icons/manifest.webmanifest'), 'utf8'));
-  assert.deepEqual([m.background_color, m.theme_color], ['#f3f3f3', '#f3f3f3']);
+  assert.deepEqual([m.background_color, m.theme_color], ['#FFFFFF', '#FFFFFF']);
 });
 
 test('0426 AC2: muted text and edges are the redesign\'s muted and border, at every size (0577)', () => {
