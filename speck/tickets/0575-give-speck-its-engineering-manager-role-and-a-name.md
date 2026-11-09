@@ -1,7 +1,7 @@
 ---
 id: "0575"
 title: Let you name speck, your engineering manager                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T17:42:11.358Z"
+approved: "2026-11-09T17:53:26.990Z"
 
 ---
 # 0575 · Let you name speck, your engineering manager
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck's watcher acts like an engineering manager (it takes the calls, unblocks builds and tells you what it did) but nothing says so: the Settings view calls its group Watching and describes its settings one by one, and the docs never say what its job is. Nor can you name it, though people who work with it daily, like the user, think of it by a name of their own.
@@ -55,9 +56,14 @@ speck now says what it is: your engineering manager, the one that gets a ready t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 159,011
+- Elapsed since build started: 11 min
+- Changed lines: 66 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
