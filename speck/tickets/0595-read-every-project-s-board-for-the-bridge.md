@@ -1,7 +1,7 @@
 ---
 id: "0595"
 title: "Read every project's board for the bridge"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-09
+started: "2026-11-09T17:42:11.877Z"
 
 ---
 # 0595 · Read every project's board for the bridge
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The bridge shows what needs you across every project on this machine (0596), but each panel today knows only its own board. The panels already find each other through 0516's records, so one can ask the others for a summary.
