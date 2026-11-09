@@ -43,6 +43,7 @@ Wherever the engineering manager speaks or acts, speck uses the name you gave it
 - Today the engineering manager speaks as speck in, among others: `scripts/foreman-agent.mjs` ("speck will look into it"), `scripts/foreman-took.mjs` ("speck will take its recommendation" and the 7-day list), `scripts/split-off.mjs`, `templates/panel-model.js` ("Blocked · speck will take its recommendation", "speck will answer") and `templates/panel.js`. The Notes lines are parsed by `wentWithLines` and `choseOnce`, which is why they keep `speck`.
 - Waits for 0575, which adds `speck_name`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
