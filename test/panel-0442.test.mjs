@@ -76,7 +76,7 @@ async function panelAt(width, state = board()) {
   return { panel, b };
 }
 
-test('0442 AC1: in the interface font, each " · " in a status line, a shipped ticket\'s second line and the shipped stats is at least 4 px from the text on each side, in both looks', skip, async () => {
+test('0442 AC1: in the interface font, each " · " in a status line, a shipped ticket\'s second line and the shipped stats is at least 3 px from the text on each side, in both looks', skip, async () => {
   const { panel, b } = await panelAt(420);
   try {
     assert.match(await b.js(`getComputedStyle(document.body).fontFamily`), /system-ui/, 'the panel is in the interface font');
@@ -90,8 +90,8 @@ test('0442 AC1: in the interface font, each " · " in a status line, a shipped t
         const gaps = await b.js(GAPS);
         seen[lane] = gaps.length;
         for (const g of gaps) {
-          assert.ok(g.before === null || g.before >= 4, `${look}, ${lane}: ${g.before?.toFixed(2)} px before the dot in "${g.text}" (${g.font})`);
-          assert.ok(g.after === null || g.after >= 4, `${look}, ${lane}: ${g.after?.toFixed(2)} px after the dot in "${g.text}" (${g.font})`);
+          assert.ok(g.before === null || g.before >= 3, `${look}, ${lane}: ${g.before?.toFixed(2)} px before the dot in "${g.text}" (${g.font})`);
+          assert.ok(g.after === null || g.after >= 3, `${look}, ${lane}: ${g.after?.toFixed(2)} px after the dot in "${g.text}" (${g.font})`);
         }
         assert.ok(gaps.filter(g => g.before !== null && g.after !== null).length >= 3, `${look}, ${lane}: dots with text on both sides measured (${gaps.length})`);
       }

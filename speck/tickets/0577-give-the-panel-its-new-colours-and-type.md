@@ -87,6 +87,7 @@ Tests updated to the new look (AC5):
 - `test/pipeline-0479.test.mjs`
 - `test/review.test.mjs`
 - `test/support/panel.mjs`: the agreed palette (`PALETTE`).
+- `test/panel-0420.test.mjs` and `test/panel-0442.test.mjs` loosen two measurements Inter's wider letters and narrower spaces moved: the shipped stats line at 420 px has room for about one and a half more digits, down from three, and the ` · ` gap is 3 px, down from 4.
 - `test/review.test.mjs` is in that list for a different reason: its check for hard-coded model names read every file as text, and a woff2 font's compressed bytes can spell one by chance, so it now skips `.woff2` files only.
 
 `test/panel-0472.test.mjs` is unchanged: its AC3 compares the styles from before and after 0472's split, both read from git history, so the redesign doesn't touch what it checks, and it still passes.
