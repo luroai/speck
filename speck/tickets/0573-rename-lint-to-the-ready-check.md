@@ -1,7 +1,7 @@
 ---
 id: "0573"
 title: "Rename lint to the ready check"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-09-rename-lint-to-a-plainer-term.md"          
 after: ["0563","0564","0565","0566","0567","0568","0569","0570","0571","0572"]                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-09T00:39:05.212Z"
+approved: "2026-11-09T00:47:15.713Z"
 
 ---
 # 0573 · Rename lint to the ready check
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 "Lint" is programmer jargon and doesn't say what the check does, and the user once had to ask what "lint passes" meant. The panel already calls the same checks Readiness, so speck uses two names for one thing, in the CLI, the skills, the docs and its messages.
@@ -55,9 +56,14 @@ speck now calls its check that a ticket is ready to build the ready check, every
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 196,795
+- Elapsed since build started: 8 min
+- Changed lines: 50 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
