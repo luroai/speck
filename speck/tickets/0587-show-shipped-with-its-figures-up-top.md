@@ -15,6 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0586"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T21:53:18.728Z"
+waited_seconds: 4005
 
 ---
 # 0587 · Show Shipped with its figures up top
