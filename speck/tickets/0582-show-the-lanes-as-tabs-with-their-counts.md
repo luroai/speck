@@ -1,7 +1,7 @@
 ---
 id: "0582"
 title: "Show the lanes as tabs with their counts"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T20:00:43.162Z"
 ---
 # 0582 · Show the lanes as tabs with their counts
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The lane strip is a row of small marks that the user has found hard to read (an inbox note asked to mark the lane in view more clearly). The redesign shows the four lanes as clear tabs with their counts.
@@ -57,3 +57,89 @@ The lanes are shown as four tabs with their counts, and the open one is plain to
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Tests updated for the new look (AC5): `test/panel-0410.test.mjs` (Plan's tab now has a count), `test/panel-0425.test.mjs` (tab contents, Build's accessible name), `test/panel-0477.test.mjs` (strip height, open tab's border, accessible name, real-browser height), `test/panel-0481.test.mjs` (the bar is under the whole tab in the accent), `test/panel-0135.test.mjs` (each tab's children).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ad7673f32dd3786036a5fbc4a58b66238c8fc54b",
+    "session": "fresh",
+    "thread_id": "01a1c1f8-ed38-7fe0-96d5-eee62dfde850",
+    "builder_response": "- Tests run: test/panel-0582.test.mjs test/panel-0054.test.mjs test/panel-0067.test.mjs test/panel-0134.test.mjs test/panel-0135.test.mjs test/panel-0140.test.mjs test/panel-0161.test.mjs test/panel-0162.test.mjs test/panel-0165.test.mjs test/panel-0213.test.mjs test/panel-0410.test.mjs test/panel-0417.test.mjs test/panel-0418.test.mjs test/panel-0425.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0440.test.mjs test/panel-0449.test.mjs test/panel-0453.test.mjs test/panel-0465.test.mjs test/panel-0467.test.mjs test/panel-0469.test.mjs test/panel-0474.test.mjs test/panel-0476.test.mjs test/panel-0477.test.mjs test/panel-0478.test.mjs test/panel-0480.test.mjs test/panel-0481.test.mjs test/panel-0514.test.mjs test/panel-0517.test.mjs test/panel-0520.test.mjs test/panel-0537.test.mjs test/panel-0582.test.mjs test/panel.test.mjs test/speck-name-0485.test.mjs  (with --related, which also ran the existing test files naming the changed templates).\n- Result: 571 pass, 1 fail. The failure is test/panel-0517.test.mjs \"0517 AC3\" (a slide's first frame within 50 ms), a real-browser timing test, run here alongside the other files on a machine at load average 28-35 with other builds going. It is not listed as failing before this build. It passed 6 of 6 alternating with the same 6 runs on the code from before this change, each alone. Those runs show it passes on both when run alone, not that the two are equally slow under load. The change adds four text writes and four attribute writes to drawTabs and doesn't touch the slide code.\n- Existing tests changed because they checked the old look (AC5, listed in the Delivery log): panel-0410, 0425, 0477, 0481, 0135. The one assertion loosened in meaning: 0477's \"at most 32 px\" strip, now at most 45 px (44 px tabs plus the strip's edge), and its no-border check on the open tab, now no background only, as AC1 asks for an underline.\n- Decision to check: Build's red needs-you number stays after the new count. AC1 doesn't ask to remove it and 0425/0474 still cover it.\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 113548,
+      "cached_input_tokens": 82688,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 767,
+      "reasoning_output_tokens": 80
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 30860,
+      "cached": 82688,
+      "write": 0,
+      "output": 767
+    },
+    "cost_usd": 0.0776588,
+    "tests": {
+      "failing": 1,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T20:21:46.476Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-header.css defines 44 px minimum-height tabs, muted inactive names and an accent underline. panel-0582 AC1 tests passed, including the real-browser check at 320 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "openTab and drawTabs in templates/panel-header.js keep selection synchronised with lane changes. Passing panel-0582 AC2 tests exercise clicks, swipe, trackpad and arrow keys."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html retains tablist/tab roles; drawTabs sets aria-selected and descriptive accessible names. Passing panel-0582 AC3 tests exercise these."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "render passes the current board model to drawTabs, which updates all four counts. Passing panel-0582 AC4 tests exercise board refreshes and preservation across lane changes."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "The Delivery log lists all five updated test files, and their changes reflect the requested appearance. However, the submitted run failed panel-0517 AC3, which was not listed as failing before this build. Separate successful runs do not resolve that submitted regression result."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0517.test.mjs",
+        "issue": "The submitted verification run fails the existing slide responsiveness test: its first frame took 111 ms against a 50 ms limit. Machine load is a plausible explanation, but the evidence does not establish that this failure is independent of the change.",
+        "suggested_fix": "Rerun the required review files, including panel-0517, under suitable conditions and submit the fresh result. If the failure persists, investigate its cause without weakening the existing responsiveness assertion.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The four tabs show live counts, clearly mark the open lane and preserve navigation and screen-reader support. Their tests cover the requested behaviour. Approval is held pending a clean verification run because an existing slide responsiveness test failed."
+  }
+}
+```
+
+</details>
