@@ -1,7 +1,7 @@
 ---
 id: "0585"
 title: "Show Build as compact rows grouped by what they need"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0584","0582"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T20:35:51.962Z"
 approved: "2026-11-09T21:20:56.589Z"
+finished: "2026-11-09T21:24:40.724Z"
 
 ---
 # 0585 · Show Build as compact rows grouped by what they need
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Build cards are tall and busy, with progress lights, logs and buttons on each, so on a phone you see two or three tickets at a time. The redesign shows Build as compact rows grouped by what each ticket needs, with the detail one tap away.
