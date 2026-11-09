@@ -1,7 +1,7 @@
 ---
 id: "0578"
 title: "Draw speck as the Premium screen"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-09
 ---
 # 0578 · Draw speck as the Premium screen
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The redesign replaces the LCD's dot-drawn speck with a new character: the Premium screen, a small dark device whose red visor is its eye. It shows wherever speck acts or speaks, so it has to be one drawing that works at every size, in both looks, and that feels alive without the device ever moving.
