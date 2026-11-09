@@ -149,8 +149,7 @@ const openNotes = new Set(); // paths of the open notes in Capture (0520)
 // starButtons: each note's star as last built, so a redraw can put the focus back on it.
 const starWanted = new Map(), starRefused = new Map(), starLast = new Map(), starAnswered = new Map(), starButtons = new Map();
 let starPresses = 0;
-const openShipped = new Set(); // ids of the shipped cards that are open (0162, 0466)
-let moreStats = false; // whether Shipped shows all six stats (0162)
+let moreStats = false; // whether Shipped shows its other figures (0162, 0587)
 const logs = new Map(); // id → the log shown for an open queue ticket ({ text, truncated, build, at }), or { failed: true } before any arrived
 const logEarly = new Map(); // id → the updates its stream sent while its log was still being asked for (0189)
 const logRetry = new Set(); // ids whose log couldn't be loaded, asked for again at the stream's next keep-alive (0189)
@@ -302,25 +301,15 @@ function tokenCount(n) {
   if (short !== null) v.title = exact;
   return v;
 }
-// 0466: a Shipped card's title, which opens and closes the card as the rest of its top row does. Tab, Enter and Space
-// work as on a button (0141), and the focus stays on it once the card is drawn again.
-function shippedTitle(t, isOpen) {
+// 0587: a Shipped row's title, which opens the ticket's full view as the rest of its row does. Tab, Enter and Space
+// work as on a button (0141), and the focus comes back to it when the view closes (fullOf, 0326).
+function shippedTitle(t) {
   const a = el('span', 'title', (t.title || '').trim() || `Ticket ${t.id}`); // a blank title would leave nothing to press
   a.tabIndex = 0;
   a.setAttribute('role', 'button');
-  a.setAttribute('aria-expanded', String(isOpen));
-  a.shippedOf = String(t.id);
+  a.fullOf = String(t.id);
   a.addEventListener('keydown', pressWithKeys);
   return a;
-}
-// Opens or closes a shipped card. When its title had the focus, the title drawn in its place takes it.
-function toggleShipped(id) {
-  const had = document.activeElement && document.activeElement.shippedOf === id;
-  flip(openShipped, id);
-  if (!had) return;
-  const find = n => { if (n.shippedOf === id) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
-  const title = find($('shipped'));
-  if (title && title.focus) title.focus({ preventScroll: true });
 }
 // Nodes for Markdown blocks and inline runs from markdown(). Text goes in as text nodes, never read as HTML, and a link
 // gets its URL only when markdown() kept one, which it does only for http and https.
@@ -715,21 +704,14 @@ function putDeps(card, top, t) {
   if (old) card.removeChild(old);
 }
 const withDeps = (t, inPane) => { const b = depsBox(t, inPane); if (b) b.sig = depsSig(t); return b; };
-const shippedDay = when => when.replace(/,.*$/, ''); // 0464: the day alone, before today
-// 0464: a shipped ticket's five steps, every one done, the Review step naming its last round, such as "Review 2".
-const shippedSteps = t => NOT_STARTED.map((s, i) => ({ label: i === 2 && t.roundCount > 0 ? `Review ${t.roundCount}` : s.label, state: 'done' }));
-// 0464: its facts, in the same table: when it shipped, as its line says it, with the time too as its tooltip, then
-// its figures, tokens shortened as on the line with the exact count as their tooltip. One it doesn't have shows "—".
-function shippedFacts(t, day) {
+// 0587: a shipped ticket's own costs and tokens, for its full view. Tokens are shortened with the exact count as their
+// tooltip. One it doesn't have shows "—".
+function shippedFacts(t) {
   const tokens = (label, n, has) => (!has ? factCell(label, '—', null)
     : factCell(label, shortened(n) ?? n.toLocaleString('en-GB'), null, n.toLocaleString('en-GB')));
-  return el('dl', 'facts', null,
-    t.end !== null ? factCell('Shipped', day(t.when), null, t.when) : factCell('Shipped', '—', null),
-    factCell('Time', t.minutes !== null ? `${t.minutes} min` : '—', null),
-    factCell('Review rounds', t.roundCount > 0 ? String(t.roundCount) : '—', null),
-    factCell('Builder cost', t.builderCost !== null ? dollars(t.builderCost) : '—', null),
+  return [factCell('Builder cost', t.builderCost !== null ? dollars(t.builderCost) : '—', null),
     factCell('Reviewer cost', atLeast(t.reviewerCost, t.totalUnknown.includes('reviewer')) ?? '—', null), totalCell(t),
-    tokens('Builder tokens', t.builderTokens, t.builderTokens !== null), tokens('Reviewer tokens', t.tokens, t.tokens > 0));
+    tokens('Builder tokens', t.builderTokens, t.builderTokens !== null), tokens('Reviewer tokens', t.tokens, t.tokens > 0)];
 }
 // 0526: its total cost, "at least" it when the total leaves out a part whose cost is unknown, as its tooltip names.
 // Its reviewer cost too says "at least" when a round's cost is unknown.
@@ -1273,79 +1255,54 @@ function render() {
   $('queue-n').textContent = m.queue.length ? `${flying} in flight · ${m.queue.length - flying} queued` : '';
   $('queue-n').hidden = !m.queue.length;
 
-  // 0157: each shipped ticket is a card. 0420: its id and title, with a bug or fix tag after the title, then one line:
-  // when it shipped (the time, or the day before today) and (0162) its figures, separated by " · ".
-  // 0464: open, the line gives way to the step track and facts table an open ticket in flight has, every step done.
-  // 0466: its top row opens and closes it, as a Build ticket's does, and open, Full ticket and Review pack are under it. The shipped time turns from the time alone to date and time after midnight, so
-  // it is put right on a kept card.
-  // In the line, a ticket shipped before today shows its day alone ("20 Oct"), so the line fits a 420 px pane; its
-  // tooltip says when it shipped, with the time, and its figures.
-  const day = shippedDay;
-  const metaTip = (t, figs) => [t.end !== null ? `Shipped ${t.when}` : null, figs || null].filter(Boolean).join(' · ');
-  for (const id of openShipped) if (!m.shipped.some(t => String(t.id) === id)) openShipped.delete(id);
-  fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), t => openShipped.has(String(t.id)), t => {
-    const id = String(t.id), isOpen = openShipped.has(id);
-    const line = [t.minutes !== null ? `${t.minutes} min` : null, t.roundCount > 0 ? plural(t.roundCount, 'round') : null,
-      totalShown(t)].filter(Boolean).join(' · '); // 0526: its total cost, where its builder cost was
-    const tags = [typeTag(t), taskTag(t)].filter(Boolean);
-    const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), titled(shippedTitle(t, isOpen)), tags.length ? el('span', 'tags tag-row', null, ...tags) : null));
-    const parts = [t.end !== null ? el('span', 'when', day(t.when)) : null, line ? el('span', 'figline', line) : null].filter(Boolean);
+  // 0587: each shipped ticket is one row: its id and title, with a bug or fix tag after the title, then one line of when
+  // it shipped, its rounds and how long it took. Pressing it opens the full view. The shipped time turns from the time
+  // alone to date and time after midnight, so it is put right on a kept row. Its tooltip adds what it cost.
+  const figsOf = t => [t.roundCount > 0 ? plural(t.roundCount, 'round') : null, t.minutes !== null ? `${t.minutes} min` : null].filter(Boolean).join(' · ');
+  const metaTip = t => [t.end !== null ? `Shipped ${t.when}` : null, figsOf(t) || null, totalShown(t)].filter(Boolean).join(' · ');
+  fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), () => null, t => {
+    const line = figsOf(t), tags = [typeTag(t), taskTag(t)].filter(Boolean);
+    const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), titled(shippedTitle(t)), tags.length ? el('span', 'tags tag-row', null, ...tags) : null));
+    const parts = [t.end !== null ? el('span', 'when', t.when) : null, line ? el('span', 'figline', line) : null].filter(Boolean);
     // 0204: merged, but the push of the base branch failed: what speck ship said, which says how to fix it.
     const unpushed = t.unpushed ? el('td', 'unpushed', null, el('div', 'unpushed-head', 'Merged, but not pushed'), t.unpushed_message ? el('div', 'unpushed-said', t.unpushed_message) : null) : null;
-    const meta = !isOpen && parts.length ? detailsLine('meta', parts) : null;
-    if (meta) meta.title = metaTip(t, line);
-    const under = isOpen ? el('td', 'full-cell', null, fullButton(t, 'shipped'), packButton(t)) : null;
-    const tr = isOpen ? el('tr', 'open', null, name, el('td', 'steps', null, trackOf({ steps: shippedSteps(t) }), shippedFacts(t, day)), unpushed, under)
-      : el('tr', null, null, name, meta ? el('td', 'sum', null, meta) : null, unpushed);
-    // Only the top row opens and closes it, not the warning or buttons under it, and a click that ends selecting text in
-    // it leaves it as it is, as in Build.
+    const meta = parts.length ? detailsLine('meta', parts) : null;
+    if (meta) meta.title = metaTip(t);
+    const tr = el('tr', null, null, name, meta ? el('td', 'sum', null, meta) : null, unpushed);
+    // A press on the warning under it, or one that ends selecting text in it, leaves it as it is, as in Build.
     tr.addEventListener('click', e => {
-      if ([unpushed, under].some(n => n && within(e.target, n))) return;
-      if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleShipped(id);
+      if (unpushed && within(e.target, unpushed)) return;
+      if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) openFull(t, { id: String(t.id), list: 'shipped' });
     });
     return tr;
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => {
     const meta = child(child(tr, 'sum') || tr, 'meta'), w = meta && child(meta, 'when');
-    if (w) { setText(w, day(t.when)); meta.title = metaTip(t, child(meta, 'figline')?.textContent); }
-    const facts = child(child(tr, 'steps') || tr, 'facts'), cell = facts && child(facts.children[0], 'value');
-    if (cell && t.end !== null) { setText(cell.children[0], day(t.when)); cell.title = t.when; }
+    if (w) { setText(w, t.when); meta.title = metaTip(t); }
   } }), 'Nothing shipped yet.');
-  // 0162: three stats, and More stats shows the other three. A stat over 9,999 is shortened as a card's figures are,
-  // with the exact number as its tooltip. 0420: the three are one line, "24 today · median 10 min, $1.77", short enough
-  // to fit beside More stats or Fewer stats in a 420 px pane, each saying what it is, and the tickets a median covers,
-  // as its tooltip; the other three stay tiles.
-  const num = (n, money = false) => {
+  // 0587: three figures up top as tiles, and More stats shows the others. A figure over 9,999 is shortened as a ticket's
+  // are, with the exact number as its tooltip. Each tile says what it is, and the tickets a median covers, as its tooltip.
+  const num = (n, money = false, unit = '') => {
     const exact = n === null ? '–' : money ? `$${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : n.toLocaleString('en-GB');
-    const short = n === null ? null : shortened(n), b = el('b', 'num', short === null ? exact : `${money ? '$' : ''}${short}`);
+    const short = n === null ? null : shortened(n), b = el('b', 'num', `${short === null ? exact : `${money ? '$' : ''}${short}`}${n === null ? '' : unit}`);
     if (short !== null) b.title = exact;
     return b;
   };
-  const stat = (n, label, s, money = false) => el('div', 'stat', null, num(n, money), el('span', 'label', label), s ? el('span', 'count', plural(s.count, 'ticket')) : null);
-  const part = (tip, ...parts) => {
-    const p = el('span', 'part', null, ...parts.map(x => typeof x === 'string' ? document.createTextNode(x) : x));
-    p.title = tip;
-    return p;
+  const stat = (n, label, s, { money = false, unit = '', tip = null } = {}) => {
+    const d = el('div', 'stat', null, num(n, money, unit), el('span', 'label', label), s ? el('span', 'count', plural(s.count, 'ticket')) : null);
+    if (tip) d.title = tip;
+    return d;
   };
   const tiles = (box, list) => { $(box).replaceChildren(...(m.shippedTotal ? list : [])); };
-  const line = $('shipped-stats');
-  line.replaceChildren();
-  if (m.shippedTotal) {
-    const { today, minutes, builderCost } = m.stats;
-    line.appendChild(part('Tickets shipped today', num(today), ' today'));
-    line.appendChild(el('span', 'sep', ' ·'));
-    line.appendChild(document.createTextNode(' '));
-    line.appendChild(part(`Median time to build, over ${plural(minutes.count, 'ticket')}`, 'median ', num(minutes.median), ' min'));
-    line.appendChild(document.createTextNode(', '));
-    line.appendChild(part(`Median builder cost, over ${plural(builderCost.count, 'ticket')}`, num(builderCost.median, true)));
-    // 0526: and the total cost of those with a known total, when there are any.
-    const { totalCost } = m.stats;
-    if (totalCost.count) {
-      line.appendChild(document.createTextNode(', '));
-      line.appendChild(part(`Total AI cost of the shipped tickets shown, over ${plural(totalCost.count, 'ticket')}${totalCost.partial ? ', at least: some of their costs are unknown' : ''}`, num(totalCost.sum, true), ' total'));
-    }
-  }
-  tiles('shipped-more', [stat(m.stats.rounds.median, 'median review rounds', m.stats.rounds), stat(m.stats.tokens.median, 'median reviewer tokens', m.stats.tokens),
-    stat(m.stats.builderTokens.median, 'median builder tokens', m.stats.builderTokens)]);
+  const { today, minutes, rounds, firstRound, tokens, builderTokens, builderCost, totalCost } = m.stats;
+  const over = s => `over ${plural(s.count, 'ticket')}`;
+  tiles('shipped-stats', [stat(minutes.median, 'median build time', minutes, { unit: ' min', tip: `Median time to build, ${over(minutes)}` }),
+    stat(rounds.median, 'median review rounds', rounds, { tip: `Median review rounds, ${over(rounds)}` }),
+    stat(firstRound.share, 'approved first round', firstRound, { unit: '%', tip: `Share approved in the first review round, ${over(firstRound)}` })]);
+  // 0526: the total cost of those with a known total, when there are any.
+  tiles('shipped-more', [stat(today, 'shipped today', null, { tip: 'Tickets shipped today' }),
+    stat(builderCost.median, 'median builder cost', builderCost, { money: true, tip: `Median builder cost, ${over(builderCost)}` }),
+    totalCost.count ? stat(totalCost.sum, 'total cost', totalCost, { money: true, tip: `Total AI cost of the shipped tickets shown, ${over(totalCost)}${totalCost.partial ? ', at least: some of their costs are unknown' : ''}` }) : null,
+    stat(tokens.median, 'median reviewer tokens', tokens), stat(builderTokens.median, 'median builder tokens', builderTokens)].filter(Boolean));
   $('shipped-stats').hidden = m.shippedTotal === 0;
   $('shipped-stats-line').hidden = m.shippedTotal === 0;
   $('shipped-more').hidden = m.shippedTotal === 0 || !moreStats;

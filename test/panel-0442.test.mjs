@@ -119,7 +119,7 @@ const ROWS = `(async () => {
   });
 })()`;
 
-test('0442 AC2: at 390 px with a mouse, each Build row\'s where line and each shipped ticket\'s details line is one line, and a shipped title too', skip, async () => {
+test('0442 AC2: at 390 px with a mouse, each Build row\'s where line and each shipped ticket\'s details line is one line (0587: a shipped title wraps)', skip, async () => {
   const { panel, b } = await panelAt(390);
   try {
     for (const lane of ['build', 'shipped']) {
@@ -127,7 +127,6 @@ test('0442 AC2: at 390 px with a mouse, each Build row\'s where line and each sh
       const cards = await b.js(ROWS);
       assert.ok(cards.length >= 3, `${lane}: ${cards.length} cards`);
       for (const c of cards) {
-        if (lane === 'shipped') assert.equal(c.title, 1, `${lane} ${c.id}: its title on one line`); // 0585: a Build row's title wraps
         assert.equal(c.details, 1, `${lane} ${c.id}: its details on one line: "${c.text}"`);
         assert.ok(c.inside, `${lane} ${c.id}: its details stay inside the card`);
       }

@@ -80,7 +80,6 @@ const VIEWS = [
   ['Build, closed', `${openLane('build')}, true`, `document.querySelectorAll('#queue .q').length === 5`],
   // 0585: a Build row never opens in the list: pressing it opens the ticket's full view
   ['Shipped, closed', `${openLane('shipped')}, true`, `document.querySelectorAll('#shipped tr').length === 2`],
-  ['Shipped, open', `[...document.querySelectorAll('#shipped tr:not(.open) .line .title')].forEach(t => t.click()), true`, `document.querySelectorAll('#shipped tr.open').length === 2`],
 ];
 // Each shown element in the header, the tabs and the open lane: where it is, its size, and the styles that lay it out.
 const READ = `(async () => {

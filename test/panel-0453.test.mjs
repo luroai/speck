@@ -69,7 +69,7 @@ const PACK = `{ id: '0002', state: 'ok', text: '# Review pack\\n\\nIt passed.', 
 const VIEWS = [
   ['Plan, a ticket open', `${openLane('plan')}, document.querySelector('#shaping .item .head').click(), true`, `!!document.querySelector('#shaping .item.open .full-open')`],
   ['Plan, the priority menu', `document.querySelector('#shaping .tag.pick, #shaping .set-prio').click(), true`, `!!document.querySelector('.prio-menu button')`],
-  ['Shipped, a ticket open', `document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), ${openLane('shipped')}, document.querySelector('#shipped .line .title').click(), true`, `!!document.querySelector('#shipped .facts')`], // 0466: its title opens it
+  ['Shipped', `document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), ${openLane('shipped')}, true`, `!document.getElementById('shipped-section').hidden && !!document.querySelector('#shipped-stats .stat')`], // 0587: a row opens the full view, so a shipped ticket has no buttons of its own
   ['the full ticket', `${openLane('plan')}, document.querySelector('#shaping .item.open .full-open').click(), true`, `!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .close')`],
   ['a review pack with a document', `closeFull(), packOf = ${PACK}, fullId = '0002', fullFrom = null, render(), true`, `!!document.querySelector('#full-ticket .pack-document')`],
   ['a document', `docOpen = { id: '0002', path: 'outputs/0002/plan.md', state: 'ok', text: '# Plan\\n\\nWords.' }, drawDoc(), true`, `!document.getElementById('doc-view').hidden && !!document.querySelector('#doc-view .close')`],
@@ -128,7 +128,7 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
         }
       });
     }
-    for (const name of ['More stats', 'Close', 'Save', 'Review pack', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'plan.md', 'notes/', 'Light', 'Discard', 'Keep editing']) // 0562: plan.md named from inside its output folder, and notes/ a folder's button
+    for (const name of ['More stats', 'Close', 'Save', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'plan.md', 'notes/', 'Light', 'Discard', 'Keep editing']) // 0562: plan.md named from inside its output folder, and notes/ a folder's button
       assert.ok(seen.has(name) || [...seen].some(t => t.startsWith(name)), `the ${name} button was checked`);
   } finally { await b.close(); await stop(panel); }
 });
@@ -138,9 +138,8 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
 // AC2: a picture of each button at a phone's size and pixel ratio shows its border on every side. For each side, along its
 // middle, the device pixels at its edge differ from the button's own background just inside it.
 const NAMED = [
-  ['Shipped, a ticket open', '#more-stats'],
-  ['Shipped, a ticket open', '#shipped .full-cell .full-open:first-child'], // 0466: Full ticket, where Details was
-  ['Shipped, a ticket open', '#shipped .full-cell .full-open:last-child'],
+  ['Plan, a ticket open', '#shaping .item.open .full-open'], // 0587: Full ticket, which a shipped row no longer has
+  ['Shipped', '#more-stats'],
   ['a review pack with a document', '#full-ticket .close'],
   ['a review pack with a document', '#full-ticket .pack-document'],
   ['a document', '#doc-view .close'],
@@ -163,7 +162,7 @@ const sidesShown = (png, r, dpr) => {
     right: side(along(T, B), y => [[R, y], [R - 1, y]], y => [R - 5, y]),
   };
 };
-test('0453 AC2: on a phone at a pixel ratio of 3, Full ticket (0466: where Details was), Close, Save, Review pack, a document\'s button and the Foreman\'s Close show all four sides of their border', { skip }, async () => {
+test('0453 AC2: on a phone at a pixel ratio of 3, Full ticket (0587: on a Plan ticket), Close, Save, a document\'s button and the Foreman\'s Close show all four sides of their border', { skip }, async () => {
   const r = repo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');

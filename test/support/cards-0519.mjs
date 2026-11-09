@@ -28,26 +28,6 @@ export const STUB = `(() => {
 })();`;
 // The board has loaded once every lane has its cards.
 export const CARD_COUNTS = `document.querySelectorAll('#shaping .item.ticket').length === 4 && document.querySelectorAll('#queue .q').length === 3 && document.querySelectorAll('#shipped tr').length === 3`;
-// 0585: Build lists compact rows that wrap long titles, so only Plan and Shipped keep the one height.
-export const LANES = [['plan', '#shaping .item.ticket:not(.open)'], ['shipped', '#shipped tr:not(.open)']];
-// Each closed card in the lane: its id, its height, how many lines its title and its second row are on, whether its
-// title is long and whether it's cut short with an ellipsis, whether its second row reaches past the card, and how far
-// the card's padding starts under the second row (rowEnd: 0 when the row ends there).
-export const MEASURE = sel => `(async () => {
-  await document.fonts.ready;
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  const lines = n => { if (!n) return 0; const w = document.createTreeWalker(n, NodeFilter.SHOW_TEXT), out = [];
-    for (let t; (t = w.nextNode());) { const r = document.createRange(); r.selectNodeContents(t); for (const x of r.getClientRects()) if (x.width > 0 && !out.some(b => Math.abs(b - x.bottom) <= 4)) out.push(x.bottom); }
-    return out.length; };
-  return [...document.querySelectorAll(${JSON.stringify(sel)})].map(c => {
-    const title = c.querySelector('.line .title'), row = c.matches('tr') ? c.querySelector('.meta') : c.firstElementChild.children[1];
-    const box = c.getBoundingClientRect(), r = row.getBoundingClientRect(), pad = parseFloat(getComputedStyle(c).paddingBottom) + parseFloat(getComputedStyle(c).borderBottomWidth);
-    return { id: c.querySelector('.id').textContent, height: +box.height.toFixed(2), titleLines: lines(title), rowLines: lines(row),
-      long: title.textContent === ${JSON.stringify(LONG)},
-      cut: title.scrollWidth > title.clientWidth + 0.5 && getComputedStyle(title).textOverflow === 'ellipsis',
-      outside: r.right > box.right + 0.5, rowEnd: +(box.bottom - pad - r.bottom).toFixed(2) };
-  });
-})()`;
 // Each closed Plan card's labels: their text, border, type size and box, and its title's type size.
 export const LABELS = `(async () => {
   await document.fonts.ready;
