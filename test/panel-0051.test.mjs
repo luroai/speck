@@ -196,7 +196,7 @@ test('0051 AC3: the log shows as text with ANSI escapes removed, blank runs as o
   assert.ok(rule, 'a .log rule');
   assert.match(rule[1], /max-height:/);
   assert.match(rule[1], /overflow(-y)?:\s*auto/);
-  assert.match(rule[1], /monospace/);
+  assert.match(rule[1], /--font-mono/);
 });
 
 test('0051 AC3: the formatting on its own', () => {

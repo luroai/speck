@@ -85,6 +85,6 @@ test('0445 AC2: the pop-up\'s top line still shows the document\'s file path, no
   const title = top.children.find(n => n.className === 'title');
   assert.equal(title && title.textContent, DOCS[0].path);
   assert.ok(!top.textContent.includes('Pricing'), 'the document\'s title stays in the document');
-  assert.match(val('#doc-view .top .title', 'font-family') || '', /monospace/, 'in the path\'s own type, as today');
+  assert.match(val('#doc-view .top .title', 'font-family') || '', /--font-mono/, 'in the path\'s own type, as today');
   assert.equal(px('#doc-view .top .title'), 12);
 });

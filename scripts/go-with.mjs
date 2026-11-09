@@ -3,7 +3,7 @@
 // run's next check then resumes the build's own session with a message saying so, as it does after a hand-back (0194).
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, sh, loadConfig, speckNameOf, setField, syncHeader, contentLines, waitFields, worktreeList, earlierBuilds } from './core.mjs';
+import { SpeckError, sh, loadConfig, speckNameOf, speckSays, setField, syncHeader, contentLines, waitFields, worktreeList, earlierBuilds } from './core.mjs';
 import { replaceSection, commitTicketOnly } from './close.mjs';
 import { buildTicket, saveRecord, resumeHint } from './build-records.mjs';
 import { questionFacts } from './question-facts.mjs';
@@ -140,11 +140,11 @@ export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, m
       if ((t.status !== 'building' && t.status !== 'reviewing') || t.build_running || running.has(t.id)) continue;
       const rec = readRecord(runs(), t.id), g = pendingOf(rec);
       if (!g) continue;
-      const file = path.join(runs(), `${t.id}.json`), who = g.by === 'foreman' ? speckNameOf(settings()?.cfg || cfg) : 'you'; // 0286, 0576: what you call speck
+      const file = path.join(runs(), `${t.id}.json`), who = g.by === 'foreman' ? 'I' : 'you', log = m => console.log(g.by === 'foreman' ? speckSays(m) : m); // 0286, 0591: the engineering manager's lines are its own
       const { go_with: _, exited: _e, exit_code: _c, ...kept } = rec;
       if (g.head !== refsOf(repo, cfg, t.id).head || sessionInUse(rec.session)) {
         try { save(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* tried again next check */ }
-        console.log(`${t.id}: ${who} went with its recommendation, but its build has been carried on since, so speck run left it as it is.`);
+        log(`${t.id}: ${who} went with its recommendation, but its build has been carried on since, so speck run left it as it is.`);
         continue;
       }
       const s = settings();
@@ -152,13 +152,13 @@ export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, m
       const { argv, why } = resumeFor(s.words, s.cfg, t.id, rec, goWithMessage(t.id, g.option, rec.agent === 'codex' ? '$speck-build' : '/speck-build', g.by, g.split === true, g.watch === 'decide' ? 'decide' : 'fix'));
       if (!argv) {
         try { save(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said again next check */ }
-        console.log(`${t.id}: ${who} went with its recommendation, but speck run can't resume its build session: ${why}. ${hint(s.cfg, rec)}, and tell it ${who} went with the recommendation.`);
+        log(`${t.id}: ${who} went with its recommendation, but speck run can't resume its build session: ${why}. ${hint(s.cfg, rec)}, and tell it ${who} went with the recommendation.`);
         continue;
       }
       const next = { ...resumedRecord(kept), went_with: g, resume_command: argv };
-      try { save(file, next); } catch (e) { console.log(`${t.id}: ${who} went with its recommendation, but speck run couldn't save its run record (${e.message}), so it tries again on its next check.`); continue; }
+      try { save(file, next); } catch (e) { log(`${t.id}: ${who} went with its recommendation, but speck run couldn't save its run record (${e.message}), so it tries again on its next check.`); continue; }
       const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
-      console.log(`${t.id}: ${who} went with its recommendation, so speck run is resuming its build (session ${rec.session}).`);
+      log(`${t.id}: ${who} went with its recommendation, so speck run is resuming its build (session ${rec.session}).`);
       startBuild(t.id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
     }
   };

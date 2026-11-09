@@ -82,7 +82,7 @@ const run = (r, args) => runCommand(args, { cwd: r.dir, env: { ...process.env, S
 
 test('0486 AC1: speck run\'s lines and speck status say speck where they said the Foreman', () => {
   const { r, a } = asked();
-  assert.ok(a.said.some(l => /^0001: speck \(claude\) is looking into it\. Log: /.test(l)), a.said.join('\n'));
+  assert.ok(a.said.some(l => /^» 0001: I'm looking into it on claude\. Log: /.test(l)), a.said.join('\n'));
   const lines = foremanLines(foremanView({ run: { on: true, pid: process.pid }, record: { lock: process.pid }, tickets: [T('0001', 'building')], fixing: 'fix',
     agent: { running: null, waiting: [], did: [], asks: [{ id: '0001', question: QUESTION, at: '' }] } }));
   assert.ok(lines.includes(`  speck asks you about 0001: ${QUESTION}`), lines.join('\n'));

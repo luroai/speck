@@ -116,6 +116,9 @@ function scalar(v) {
 // apostrophes, starting with a letter. speck when it's unset, or when the file holds something that isn't a name.
 export const SPECK_NAME = /^\p{L}[\p{L}\p{M}\p{Nd} '’-]{0,23}$/u;
 export const speckNameOf = cfg => (typeof cfg?.speck_name === 'string' && SPECK_NAME.test(cfg.speck_name) ? cfg.speck_name.trimEnd() : 'speck');
+// 0591: a line of speck run's log that is the engineering manager speaking, in the first person: the mark at its start is
+// how the panel tells it from the tool's lines (RUN_SPECK_MARK in templates/panel-model.js, which takes it off to show it).
+export const speckSays = text => `» ${text}`;
 
 export const RENAMED = Object.freeze({ foreman_fixing: 'watch', foreman: 'watch_agent', foreman_model: 'watch_model', foreman_effort: 'watch_effort' });
 export const settingName = key => (Object.hasOwn(RENAMED, key) ? RENAMED[key] : key);

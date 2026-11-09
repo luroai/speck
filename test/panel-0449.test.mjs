@@ -163,7 +163,7 @@ test('0449 AC4: at 375 and 1280 px, in both looks, the message is centred in the
           assert.ok(s.parts.length >= 3, `${where}: its lines show`);
           for (const p of s.parts) {
             assert.ok(Math.abs(p.left - p.right) <= 1, `${where}: "${p.text}" is centred (${p.left} vs ${p.right})`);
-            const need = p.size < 14 ? 7 : 4.5;
+            const need = 4.5; // 0577: the same at every size
             assert.ok(p.ratio >= need, `${where}: "${p.text}" has ${p.ratio.toFixed(2)}:1, under ${need}:1`);
           }
         }

@@ -11,11 +11,12 @@ const rootVars = html => {
   const root = (html.match(/:root \{([\s\S]*?)\}/) || [])[1] || '';
   return new Map([...root.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 };
-const ZEN = { '--bg': '#f3f3f3', '--panel': '#fcfcfc', '--raise': '#f3f3f3', '--line': '#14141476', '--line-soft': '#14141413',
-  '--text': '#141414EB', '--muted': '#141414BA', '--faint': '#141414BA', '--accent': '#cf2d56', '--bad': '#96213f' };
+const ZEN = { '--bg': '#FFFFFF', '--panel': '#FFFFFF', '--raise': '#F4F5F7', '--line': '#E4E6EA', '--line-soft': '#E4E6EA',
+  '--text': '#15171A', '--muted': '#5F6670', '--faint': '#5F6670', '--accent': '#2F55D4', '--bad': '#A84F06' };
 const OWN = ['--ok', '--warn', '--run', '--idea', '--inbox', '--bug', '--fix'];
-// 0426: the fix tag is in Cursor's yellow, as --warn is
-const SHARED = new Set(['--fix --warn', '--warn --fix']);
+// 0426: the fix tag is in Cursor's yellow, as --warn is. 0577: what's wrong or waiting is in the needs-you text, and
+// what's at work in the accent
+const SHARED = new Set(['--fix --warn', '--warn --fix', '--warn --bad', '--run --accent']);
 const luminance = hex => {
   const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -49,9 +50,9 @@ test('0134 AC1: PALETTE lists the new values for the same 14 names, and the colo
   const vars = rootVars(styles());
   for (const d of PALETTE.split('; ')) { const [k, v] = d.split(': '); if (ZEN[k]) assert.equal(v, ZEN[k], k); else assert.equal(v, vars.get(k), k); }
   assert.deepEqual(paletteProblems(styles()), []);
-  const changed = styles().replace('--accent: #cf2d56;', '--accent: #b0412f;');
+  const changed = styles().replace('--accent: #2F55D4;', '--accent: #b0412f;');
   assert.notEqual(changed, styles());
-  assert.deepEqual(paletteProblems(changed), ['--accent should be #cf2d56']);
+  assert.deepEqual(paletteProblems(changed), ['--accent should be #2F55D4']);
   const src = fs.readFileSync(path.join(ROOT, 'test', 'mockup-0126.test.mjs'), 'utf8');
   assert.ok(src.includes(`assert.equal(PALETTE, '${PALETTE}')`), 'the 0126 AC2 literal lists the new values');
 });
