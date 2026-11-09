@@ -1,7 +1,7 @@
 ---
 id: "0579"
 title: "Choose speck's mood from what the pipeline is doing"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0578"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:54:00.698Z"
+approved: "2026-11-09T19:01:46.681Z"
 
 ---
 # 0579 · Choose speck's mood from what the pipeline is doing
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck's face should say what the pipeline is doing at a glance, as the LCD's speck did, but with the new character's six moods.
@@ -54,9 +55,14 @@ Worth keeping an eye on: pleased only shows for things that happen while the pan
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 151,337
+- Elapsed since build started: 8 min
+- Changed lines: 129 (limit 5000)
 Follow-ups:
 - 0580 and the other tickets that show the face need to load `speck-mood.js` after `speck-face.js` in `templates/panel.html`, and use `SpeckMood.watcher`, `SpeckMood.change` and `SpeckMood.beside`. No idea note: skipped as covered by ticket 0580 (criterion 1, speck in its current mood).
 
