@@ -58,7 +58,7 @@ Shipped opens with three figure tiles and lists its tickets as compact rows.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ### Tests updated to the new look (AC5)
-`test/build-log-0291`, `panel` (the main file), `panel-0050`, `0058`, `0063`, `0132`, `0133`, `0137`, `0141`, `0157`, `0162`, `0167`, `0411`, `0417`, `0418`, `0420`, `0427`, `0428`, `0434`, `0442`, `0453`, `0461`, `0464`, `0465`, `0466`, `0469`, `0472`, `0473`, `0494`, `0577`, `panel-focus-0326`, `spend-0120` and `total-cost-0526`, plus the `shippedFull` helper in `test/support/panel.mjs` (`shippedPack` added, `openDetails` removed).
+`test/build-log-0291`, `panel` (the main file), `panel-0050`, `0058`, `0063`, `0132`, `0133`, `0137`, `0141`, `0157`, `0162`, `0167`, `0411`, `0417`, `0418`, `0420`, `0427`, `0428`, `0434`, `0442`, `0453`, `0461`, `0464`, `0465`, `0466`, `0469`, `0472`, `0473`, `0494`, `0519`, `0577`, `panel-focus-0326`, `spend-0120` and `total-cost-0526`, plus the `shippedFull` helper in `test/support/panel.mjs` (`shippedPack` added, `openDetails` removed). The 0519 test that every Shipped card is the same height went with its helpers in `test/support/cards-0519.mjs`, as no lane keeps titles on one line now.
 
 Each test still checks its behaviour where that exists on the new look. Checks of what's gone were removed: opening and closing a card in place, the step track and facts table inside a card, the bordered card, the one-line stats, a closed title cut with an ellipsis, and the card's Full ticket and Review pack buttons.
 

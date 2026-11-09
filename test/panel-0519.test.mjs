@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T, full, fakePage, items, click, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
-import { STUB, LANES, MEASURE, LABELS, CARD_COUNTS } from './support/cards-0519.mjs';
+import { STUB, LABELS, CARD_COUNTS } from './support/cards-0519.mjs';
 
 // ---------- 0519: every closed card the same height, and a closed Plan card's second row its labels ----------
 
@@ -89,29 +89,6 @@ async function inPanel(fn) {
     await fn(b, go);
   } finally { await b.close(); await stop(panel); }
 }
-
-test('0519 AC3 and AC4: at 320, 375 and 420 px, in both looks, every closed card in Shipped (0586: Plan is rows) is the same height, its title and second row on one line each with no room under the row', skip, () => inPanel(async (b, go) => {
-  for (const width of [320, 375, 420]) for (const look of ['light', 'dark']) {
-    const at = `${width} px, ${look}`;
-    await go(width, look);
-    const heights = [];
-    for (const [lane, sel] of LANES.filter(([l]) => l !== 'plan')) {
-      await b.js(openLane(lane));
-      const cards = await b.js(MEASURE(sel));
-      assert.ok(cards.length >= 3, `${at}: the ${lane} lane's closed cards`);
-      for (const c of cards) {
-        const who = `${at}, ${lane} ${c.id}`;
-        assert.equal(c.titleLines, 1, `${who}: its title is on one line`);
-        assert.equal(c.rowLines, 1, `${who}: its second row is on one line`);
-        assert.ok(!c.outside, `${who}: its second row stays inside the card`);
-        assert.ok(c.rowEnd <= 0.5, `${who}: the card ends ${c.rowEnd} px under its second row, past its padding`);
-        if (c.long) assert.ok(c.cut, `${who}: its long title is cut short with …`);
-        heights.push([who, c.height]);
-      }
-    }
-    assert.deepEqual([...new Set(heights.map(([, h]) => h))].length, 1, `${at}: ${heights.map(h => h.join(': ')).join(', ')}`);
-  }
-}));
 
 test('0586 AC2: in a real browser, a closed Plan row\'s labels are plain text side by side, and a tap on the priority opens its menu', skip, () => inPanel(async (b, go) => {
   for (const width of [320, 420]) {
