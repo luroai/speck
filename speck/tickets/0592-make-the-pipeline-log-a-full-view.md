@@ -1,7 +1,7 @@
 ---
 id: "0592"
 title: "Make the Pipeline log a full view"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0591","0590"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T21:56:49.489Z"
 waited_seconds: 4044
+approved: "2026-11-09T23:16:42.005Z"
 
 ---
 # 0592 · Make the Pipeline log a full view
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Pipeline log is a pop-up of raw lines. In the redesign it's a full view you can filter, where speck's own calls stand out from the tool's routine lines.
@@ -52,9 +53,15 @@ Pressing the bar now opens the Pipeline log as a full view, on the panel's own l
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The Builds filter hides real build lifecycle messages.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 378,474
+- Elapsed since build started: 80 min
+- Changed lines: 133 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests of the old look updated to the full view (test files): `test/panel-0366.test.mjs` (the back link for Close), `test/panel-0472.test.mjs` (the view's opened check), `test/pipeline-0415.test.mjs` (the back link for Close), `test/pipeline-0458.test.mjs` (what the view holds, the back link), `test/pipeline-0459.test.mjs` (a row's classes and time), `test/pipeline-0470.test.mjs` (the back link above the heading, and a short window scrolls to the log rather than keeping the top in view), `test/pipeline-0479.test.mjs` (no dark frame round the log, the back link).
 
