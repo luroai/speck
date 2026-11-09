@@ -14,17 +14,15 @@ const headerHtml = () => (page().match(/<header>([\s\S]*?)<\/header>/) || [])[1]
 const script = () => pageScript();
 const decl = (sel, prop) => rules().filter(r => !r.at.length && selectors(r).includes(sel)).map(r => get(r, prop)).filter(v => v !== undefined).pop();
 
-test('0413 AC1: the header is speck\'s screen in its dark frame, under a title row of speck, then the project and base branch', () => {
+test('0413 AC1: the header is a dark frame with the status, the project and the base branch (0580: the bar)', () => {
   const h = headerHtml();
-  assert.match(h, /^\s*<div class="bezel" id="bezel">\s*<div class="print"><b class="name">speck<\/b><span class="repo">\{\{repo\}\} · <code>\{\{base\}\}<\/code><\/span>/);
-  assert.match(h, /<\/div>\s*<button class="glass" id="run"[^>]*><canvas class="lcd" id="screen" aria-hidden="true"><\/canvas><\/button>\s*<\/div>\s*$/, 'the screen under the title row, in the frame');
-  assert.match(decl('.bezel', 'background'), /var\(--bezel\)/);
-  assert.match(decl('.bezel .name', 'font-family'), /^"Doto",/, 'speck in the dot-matrix font');
-  assert.equal(decl('.bezel .repo', 'text-overflow'), 'ellipsis');
-  assert.equal(decl('.bezel .repo', 'white-space'), 'nowrap');
-  assert.equal(decl('.bezel .repo', 'font-size') || (/\b(\d+)px\b/.exec(decl('.bezel .repo', 'font')) || [])[0], '12px', 'small plain text');
+  assert.match(h, /^\s*<div class="bezel" id="bezel">\s*<button class="bar-status" id="run"[^>]*>[\s\S]*<span class="repo">\{\{repo\}\}<\/span>[\s\S]*<code>\{\{base\}\}<\/code>/);
+  assert.match(decl('.bezel', 'background'), /var\(--bar\)/);
+  assert.equal(decl('.bezel .bar-top .repo', 'text-overflow'), 'ellipsis');
+  assert.equal(decl('.bezel .bar-more', 'white-space'), 'nowrap');
   const css = styles();
-  for (const look of [/:root \{([^}]*)\}/, /:root\[data-theme="dark"\] \{([^}]*)\}/]) assert.match(css.match(look)[1], /--bezel: #[0-9a-f]{6}/, 'a frame colour in each look');
+  assert.match(css.match(/:root \{([^}]*)\}/)[1], /--bar: #[0-9a-f]{6}/i, 'one bar colour, for both looks');
+  assert.doesNotMatch(css.match(/:root\[data-theme="dark"\] \{([^}]*)\}/)[1], /--bar:/, 'not set again for the dark look');
 });
 
 test('0413 AC1: the old header row and the notice board are gone', () => {
@@ -48,7 +46,7 @@ test('0413 AC2: the top row shows the Foreman\'s word in the dot font, in capita
 });
 
 test('0413 AC2: the frame\'s edge is in the needs-you colour only while the word is "Needs you <n>"', async () => {
-  assert.match(decl('.bezel.needs', 'border-color'), /var\(--bad\)/, 'the panel\'s needs-you colour, as on the Build tab');
+  assert.match(decl('.bezel.needs', 'border-color'), /var\(--bar-needs\)/, 'the bar\'s needs-you colour');
   for (const [word, needs] of [['Needs you 1', true], ['Needs you 12', true], ['Building 2', false], ['Idle', false], ['Off', false]]) {
     const p = screenPage([state(foreman({ word }))]);
     await p.settle();
@@ -63,7 +61,7 @@ test('0413 AC2: the frame\'s edge is in the needs-you colour only while the word
 });
 
 test('0413 AC2: there\'s no text under the screen and no A, B or C button', () => {
-  const h = headerHtml(), after = h.slice(h.indexOf('<button class="glass"'));
+  const h = headerHtml(), after = h.slice(h.indexOf('</button>'));
   assert.equal(after.replace(/<[^>]*>/g, '').trim(), '', 'nothing after the screen');
   assert.ok(!/>\s*[ABC]\s*</.test(h), 'no A, B or C key');
   assert.equal((h.match(/<button\b/g) || []).length, 2, 'Settings and the screen');
@@ -71,7 +69,7 @@ test('0413 AC2: there\'s no text under the screen and no A, B or C button', () =
 
 test('0413 AC3: Settings ends the frame\'s title row and opens Settings', async () => {
   const h = headerHtml();
-  assert.match(h, /<div class="print">[\s\S]*<\/span><button class="settings-open" id="settings-open" type="button" aria-label="Settings"[\s\S]*?<\/button><\/div>/, 'the last thing in the title row');
+  assert.match(h, /<\/span>\s*<button class="settings-open" id="settings-open" type="button" aria-label="Settings"[\s\S]*?<\/button>\s*<\/div>\s*$/, 'the last thing in the bar');
   const p = settingsPage([{ settings: [] }]);
   await p.settle();
   assert.equal(p.settingsCalls.some(c => c.url.startsWith('/api/settings')), false);
@@ -82,7 +80,7 @@ test('0413 AC3: Settings ends the frame\'s title row and opens Settings', async 
 });
 
 test('0413 AC4: pressing the screen opens the Foreman\'s detail, and again closes it', async () => {
-  assert.match(headerHtml(), /<button class="glass" id="run" type="button"[^>]* aria-expanded="false" aria-controls="foreman"/, 'a button, so Enter and Space press it');
+  assert.match(headerHtml(), /<button class="bar-status" id="run" type="button"[^>]* aria-expanded="false" aria-controls="foreman"/, 'a button, so Enter and Space press it');
   const p = screenPage([state(foreman())], { scrollX: 0, scrollY: 0, scrollTo() {} });
   p.document.documentElement = { classList: { toggle() {} } };
   p.document.querySelectorAll = () => [];
@@ -120,7 +118,7 @@ test('0413 AC5: the screen\'s tooltip includes speck\'s word', async () => {
     await p.settle();
     assert.ok(p.byId('run').title.startsWith(`speck: ${word} · `), `${word}: ${p.byId('run').title}`);
   }
-  assert.match(headerHtml(), /<canvas class="lcd" id="screen" aria-hidden="true">/, 'the canvas is drawn for the eye only');
+  assert.doesNotMatch(headerHtml(), /<canvas/, 'no canvas: the face is an svg (0580)');
 });
 
 // A long board, so the lane's list scrolls, at 320 px.
@@ -141,16 +139,15 @@ test('0413 AC1, AC4 and AC5: at 320 px the frame fits without sideways scrolling
     await b.js('document.fonts.ready.then(() => true)');
     const m = await b.js(`(() => {
       const r = s => { const b = document.querySelector(s).getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, height: b.height }; };
-      const repo = document.querySelector('.print .repo');
-      return { page: document.documentElement.scrollWidth, width: innerWidth, bezel: r('.bezel'), print: r('.print'), name: r('.print .name'), repo: r('.print .repo'),
-        settings: r('#settings-open'), screen: r('#run'), canvas: r('#screen'), repoCut: repo.scrollWidth > repo.clientWidth, edge: getComputedStyle(document.querySelector('.bezel')).borderTopColor };
+      const repo = document.querySelector('.bar-top .repo');
+      return { page: document.documentElement.scrollWidth, width: innerWidth, bezel: r('.bezel'), repo: r('.bar-top .repo'),
+        settings: r('#settings-open'), screen: r('#run'), face: r('#bar-face svg'), repoCut: repo.scrollWidth > repo.clientWidth, edge: getComputedStyle(document.querySelector('.bezel')).borderTopColor };
     })()`);
     const at = JSON.stringify(m);
     assert.ok(m.page <= m.width, `no sideways scrolling: ${at}`);
-    for (const k of ['bezel', 'print', 'name', 'repo', 'settings', 'screen', 'canvas']) assert.ok(m[k].left >= 0 && m[k].right <= m.width + 0.5, `${k} is on screen: ${at}`);
-    assert.ok(m.name.right <= m.repo.left + 0.5 && m.repo.right <= m.settings.left + 0.5, `speck, the project and base branch, then Settings, in a row: ${at}`);
-    assert.ok(m.settings.right <= m.bezel.right && m.screen.top >= m.print.bottom - 0.5, `the title row is above the screen, in the frame: ${at}`);
-    assert.ok(m.canvas.height > 60, `the screen is drawn: ${at}`);
+    for (const k of ['bezel', 'repo', 'settings', 'screen', 'face']) assert.ok(m[k].left >= 0 && m[k].right <= m.width + 0.5, `${k} is on screen: ${at}`);
+    assert.ok(m.repo.right <= m.settings.left + 0.5 && m.settings.right <= m.bezel.right, `the status, then Settings, in the bar: ${at}`);
+    assert.ok(m.face.height >= 40, `speck is drawn: ${at}`);
     assert.notEqual(m.edge, await b.js(`getComputedStyle(document.querySelector('.bezel')).backgroundColor`), 'the frame\'s edge shows the needs-you colour');
     // The list scrolls and the screen stays.
     const top = await b.js(`document.querySelector('header').getBoundingClientRect().top`);

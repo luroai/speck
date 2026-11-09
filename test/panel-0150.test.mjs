@@ -43,7 +43,7 @@ test('0150 AC1: when the panel can\'t reach its server, the banner under the hea
 
 test('0150 AC2: Auto-build is one button in the header, with no separate Pause or Start button or small print', async () => {
   const h = header();
-  assert.match(h, /<button class="glass" id="run" type="button"/); // 0413: speck's screen
+  assert.match(h, /<button class="bar-status" id="run" type="button"/); // 0580: the bar's status
   assert.doesNotMatch(h, /id="run-switch"/);
   for (const run of [null, { on: true, pid: 7 }]) {
     const p = switchPage([state(run)]);
@@ -143,7 +143,7 @@ async function withPage(run, width, fn) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(run) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run canvas')`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#bar-face svg')`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }

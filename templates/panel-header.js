@@ -1,17 +1,18 @@
 'use strict';
 // 0474: the panel's header, which the page loads from /panel-header.js after its own script and before the pop-ups: the
-// dark frame's title row, speck's screen (its poses, words and time, drawn by the design's renderer from lcd.js) and the
-// strip of the Capture, Plan, Build and Shipped lanes under it (0477). It uses the page's helpers ($, el, setText, within, foremanOf and the rest), and
+// dark bar with speck and the status (0580) and the strip of the Capture, Plan, Build and Shipped lanes under it (0477).
+// The LCD screen's code below is no longer on the page, as the page has no #screen: 0581 takes it out. It uses the page's helpers ($, el, setText, within, foremanOf and the rest), and
 // the page's render() calls drawHeader and drawTabs.
 
 // 0160: the header stays at the top of the screen. --head is its height on screen, so a ticket scrolled to sits below
-// it. 0413: the header is speck's screen in its frame, and the project and base branch, cut short when the title row
-// is narrow, show in full in their tooltip.
+// it. 0580: the project and the base branch, cut short when the bar is narrow, show in full in their tooltips.
 const pageHeader = document.querySelector?.('header');
 if (pageHeader) {
   new ResizeObserver(() => document.documentElement.style.setProperty('--head', `${pageHeader.offsetHeight}px`)).observe(pageHeader);
   const repo = pageHeader.querySelector('.repo');
   if (repo) repo.title = repo.textContent.trim();
+  const base = pageHeader.querySelector('.bar-more code');
+  if (base) base.title = base.textContent.trim();
 }
 // The design's LCD renderer, for speck's screen at the top of the panel (0413). 0416: the cards have no builder badges.
 const LCD = globalThis.SpeckLCD;
@@ -604,19 +605,32 @@ function speckRests(now) {
   }
   return { pose: 'idle', cap: w === 'Reload page' ? 'RELOAD THE PAGE' : '' };
 }
-// 0285: the Foreman, speck run's one status for the whole pipeline. Pressing it opens its detail. 0413: its word is
-// the top row of speck's screen, which is the button, and the frame's edge is in the needs-you colour while the word
-// is "Needs you <n>". The button stays put and only what the screen shows changes, so it keeps the focus.
+// 0285: the Foreman, speck run's one status for the whole pipeline. Pressing it opens its detail. 0580: its word is on
+// the bar's first line, and the bar's edge is in the needs-you colour while the word is "Needs you <n>". The button stays
+// put and only what's in it changes, so it keeps the focus.
 function drawHeader(f, stale) {
   const run = $('run'), word = stale ? 'Reload page' : f.word;
-  noteBoard(state, f, word); // 0414
-  drawScreen(word);
+  if ($('screen')) { noteBoard(state, f, word); drawScreen(word); } // 0414: only until 0581 takes the screen's code out
   $('bezel').className = NEEDS_YOU.test(word) ? 'bezel needs' : 'bezel';
-  $('bezel').setAttribute('data-run', f.word === 'Off' ? 'off' : 'on'); // 0513: the dot by speck's name is grey while speck run is off
-  run.setAttribute('aria-label', 'speck\'s screen'); // 0485: its word is in its tooltip. 0451: Settings says whether fixing is on
+  drawBar(f, word);
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = `speck: ${word} · ${stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: speck run\'s log'}`;
   drawProjects(); // 0516
+}
+// 0580: what's on the bar. speck's face is made once, in the pipeline's mood, and SpeckMood eases it from one to the next.
+let barFace = null, barMood = null;
+function drawBar(f, word) {
+  if (!barFace && globalThis.SpeckFace) { // without its script the bar still shows the status
+    barFace = SpeckFace.draw({ mood: state && state.foreman && state.foreman.mood, size: 44, look: 'dark' });
+    $('bar-face').replaceChildren(barFace);
+    barMood = SpeckMood.watcher(mood => SpeckMood.change(barFace, mood));
+  }
+  if (barMood) barMood(state);
+  setText($('bar-word'), word);
+  const queued = f.ready.length, needs = /^Needs you (\d+)$/.exec(f.word);
+  setText($('bar-queued'), queued ? `${queued} queued` : 'Nothing queued');
+  $('bar-needs-part').hidden = !needs;
+  if (needs) setText($('bar-needs'), `${needs[1]} need${needs[1] === '1' ? 's' : ''} you`);
 }
 // 0516: the project menu. While two or more speck panels are running on this machine, a menu after the project's name
 // in the title row lists every running panel's project, by its folder name (and its port, when two share a name), with

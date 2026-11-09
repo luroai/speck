@@ -50,9 +50,7 @@ const MEASURE = `(async () => {
   await document.fonts.ready;
   const colour = v => { const p = document.createElement('i'); p.style.color = v; document.body.appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; };
   const root = getComputedStyle(document.documentElement), val = v => colour(root.getPropertyValue(v));
-  const bz = document.querySelector('.bezel').getBoundingClientRect(), glass = document.querySelector('.bezel .glass').getBoundingClientRect();
-  const out = { vw: innerWidth, bezel: { colour: getComputedStyle(document.querySelector('.bezel')).backgroundColor, radius: getComputedStyle(document.querySelector('.bezel')).borderTopLeftRadius,
-    side: glass.left - bz.left, bottom: bz.bottom - glass.bottom, titleTop: document.querySelector('.bezel .name').getBoundingClientRect().top - bz.top },
+  const out = { vw: innerWidth, bezel: { colour: getComputedStyle(document.querySelector('.bezel')).backgroundColor, radius: getComputedStyle(document.querySelector('.bezel')).borderTopLeftRadius },
     want: { blue: val('--blue'), purple: val('--purple'), grey: val('--muted'), ink: val('--text'), muted: val('--muted'), panel: val('--panel') }, lanes: [] };
   for (const lane of ['capture', 'plan', 'build', 'shipped']) {
     document.getElementById('tab-' + lane).click(); ${REST_LANES};
@@ -93,9 +91,7 @@ for (const theme of ['light', 'dark']) {
         for (const l of m.lanes) {
           const w = `${at}, ${l.lane}`;
           // AC1: its tickets inside it on the lane's own background (0480: the card's colour and corners are checked in panel-0480.test.mjs)
-          assert.ok(l.sides.left > 0 && l.sides.left < m.bezel.side, `${w}: its left side (${l.sides.left}) is thinner than the screen's (${m.bezel.side})`);
-          assert.ok(l.sides.right > 0 && l.sides.right < m.bezel.side, `${w}: its right side (${l.sides.right}) is thinner than the screen's`);
-          assert.ok(l.sides.bottom > 0 && l.sides.bottom < m.bezel.bottom, `${w}: its bottom (${l.sides.bottom}) is thinner than the screen's (${m.bezel.bottom})`);
+          assert.ok(l.sides.left > 0 && l.sides.right > 0 && l.sides.bottom > 0, `${w}: its sides show (0580: the bar has no screen to be thinner than)`);
           assert.equal(l.inside.bg, m.want.panel, `${w}: its tickets sit on the lane's own background`);
           assert.ok(l.title.top >= l.frame.top && l.title.bottom <= l.frame.top + l.sides.top, `${w}: the title row is in the frame, above the tickets`);
           // AC2: the dot-matrix title in the frame's ink, its stage's dot before it, its line at the row's right end

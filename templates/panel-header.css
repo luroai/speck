@@ -1,34 +1,33 @@
-/* The panel's styles (0472: a file for each area of the panel): the dark frame at the top, speck's screen in it and the lanes' strip under it. */
-  /* 0413: the top of the panel is speck's screen in its dark frame, as the design's console (without its keys or the text
-     under the screen). The frame's title row has speck's name in the dot-matrix lettering, the project and base branch
-     cut short with "…", and Settings at its right end. The screen under it shows the Foreman's word and speck. 0438: the
-     frame is as wide as the tabs and cards under it, the screen at most 520 px, centred in it, and a dot in speck's
-     vermilion, its eye's colour, sits before the title. 0471: the title is 32 px, to fill the row the 44 px Settings
-     button gives it without making it taller, and its dot and the gap after it are sized from it. */
+/* The panel's styles (0472: a file for each area of the panel): the dark bar at the top and the lanes' strip under it. */
+  /* 0580: the top of the panel is a thin dark bar, as wide as the tabs and cards under it, its corners a card's 12 px
+     (0438). It holds speck, the status with the project over what's queued, how many need you and the base branch, the
+     project menu and Settings. Its colours (--bar) are the same in both looks, and speck is drawn for a dark background. */
   header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; padding: calc(8px + env(safe-area-inset-top)) 16px 8px; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .bezel { box-sizing: border-box; padding: 5px 7px 7px; color: var(--bezel-ink); background: var(--bezel); border: 2px solid var(--bezel); }
-  .bezel.needs { border-color: var(--bad); } /* the Foreman's word is "Needs you <n>" */
-  .bezel .print { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 0 4px 2px; }
-  .bezel .name { flex: none; display: inline-flex; align-items: center; gap: .25em; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 32px; line-height: 1; color: var(--bezel-ink); }
-  .bezel .name::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; background: var(--lcd-red); } /* decoration: no text, so a screen reader passes over it */
-  .bezel[data-run="off"] .name::before { background: var(--bezel-muted); } /* 0513: grey while speck run is off, like a power light */
-  .bezel .repo { flex: 1 1 auto; min-width: 0; text-align: right; font: 400 12px/1.5 var(--font-ui); color: var(--bezel-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bezel .repo code { font-size: inherit; color: inherit; }
+  .bezel { box-sizing: border-box; display: flex; align-items: center; min-width: 0; padding: 2px 4px 2px 2px; color: var(--bar-ink); background: var(--bar); border: 2px solid var(--bar); }
+  .bezel.needs { border-color: var(--bar-needs); } /* the Foreman's word is "Needs you <n>" */
+  /* 0580: pressing the status, speck included, opens the Pipeline log. Its first line is cut short with "…", the project first. */
+  .bezel .bar-status { flex: 1 1 auto; display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 44px; margin: 0; padding: 0; font: inherit; color: inherit; text-align: left; background: transparent; border: 0; cursor: pointer; }
+  .bezel .bar-face { flex: none; width: 44px; height: 44px; }
+  .bezel .bar-lines { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+  .bezel .bar-lines:has(.bar-word:empty) { visibility: hidden; } /* until the first board says what the status is */
+  .bezel .bar-top { display: flex; min-width: 0; gap: .3em; white-space: pre; font: 600 15px/20px var(--font-ui); }
+  .bezel .bar-word { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .bezel .bar-top .repo { flex: 0 1000 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 400; color: var(--bar-muted); }
+  .bezel .bar-more { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/16px var(--font-ui); color: var(--bar-muted); }
+  .bezel .bar-more code { font-size: inherit; color: inherit; }
+  .bezel .bar-more .needs { color: var(--bar-needs); }
   /* 0516: the project menu, while other panels are running: a caret after the project's name, as big as Settings
      (0417: 44 px each way), which opens the browser's own list of the projects. */
-  .bezel .project-pick { position: relative; flex: none; display: grid; place-items: center; width: 44px; height: 44px; margin: 0 -4px 0 -10px; color: var(--bezel-muted); }
+  .bezel .project-pick { position: relative; flex: none; display: grid; place-items: center; width: 44px; height: 44px; margin: 0 -4px 0 -10px; color: var(--bar-muted); }
   .bezel .project-pick[hidden] { display: none; }
   .bezel .project-pick::after { content: ""; width: 0; height: 0; border-top: 5px solid; border-right: 4px solid transparent; border-left: 4px solid transparent; pointer-events: none; } /* a caret drawn in the text colour, which needs no font */
-  .bezel .project-pick:hover, .bezel .project-pick:focus-within { color: var(--bezel-ink); }
+  .bezel .project-pick:hover, .bezel .project-pick:focus-within { color: var(--bar-ink); }
   /* The list itself is the browser's own. The select's text, the project shown, is pushed out of its box, as the name already shows before it. */
-  .bezel .project-pick select { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; text-indent: 44px; white-space: nowrap; font-size: 16px; color: var(--bezel-muted); background: transparent; border: 0; appearance: none; -webkit-appearance: none; cursor: pointer; }
-  .bezel .settings-open { flex: none; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: .5px solid var(--bezel-muted); background: transparent; color: var(--bezel-muted); cursor: pointer; }
-  .bezel .settings-open:hover { border-color: var(--bezel-ink); color: var(--bezel-ink); }
+  .bezel .project-pick select { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; text-indent: 44px; white-space: nowrap; font-size: 16px; color: var(--bar-muted); background: transparent; border: 0; appearance: none; -webkit-appearance: none; cursor: pointer; }
+  .bezel .settings-open { flex: none; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: .5px solid var(--bar-muted); background: transparent; color: var(--bar-muted); cursor: pointer; }
+  .bezel .settings-open:hover { border-color: var(--bar-ink); color: var(--bar-ink); }
   .bezel .settings-open svg { width: 15px; height: 15px; }
-  .bezel :focus-visible { outline-color: var(--bezel-ink); }
-  .bezel .glass { position: relative; display: block; width: 100%; max-width: 520px; margin: 0 auto; padding: 0; overflow: hidden; color: var(--lcd-ink); background: var(--lcd-bg); border: .5px solid var(--bezel-muted); cursor: pointer; }
-  .bezel .glass::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 8px rgba(0, 0, 0, .3); pointer-events: none; }
-  .bezel .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 72; image-rendering: pixelated; }
+  .bezel :focus-visible { outline-color: var(--bar-ink); }
   /* 0568: the line under speck's status saying how many it decided, which opens the Decided for you list */
   .decided-line { display: block; box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 16px; font: inherit; font-size: 14px; color: var(--muted); background: var(--bg); border: 0; border-radius: 0; border-bottom: .5px solid var(--line); cursor: pointer; }
   .decided-line:hover { color: var(--text); }
@@ -51,19 +50,14 @@
   .tab .needs { color: var(--bad); }
   .tab .needs:empty { display: none; }
 
-  /* 0438: speck's frame is a card's 12 px, and the screen's corners follow it: the frame's less the 9 px between them,
-     at least 4 px. The screen cuts what it draws to its corners. */
   .bezel { border-radius: 12px; }
-  .bezel .glass { border-radius: 4px; }
-  .bezel .glass::after { border-radius: inherit; }
 
   /* 0417: every button at least 44 px each way. 0469: with a mouse too, at any width, as on a touch screen */
-  /* 0454: no negative margin above or below, so the title row grows to hold it and it stays 4 px clear of the screen */
   .bezel .settings-open { width: 44px; height: 44px; margin: 0 -2px 0 0; }
 
   /* 0453: every button's border at least a device pixel on each side, as 0281 gave Settings' info buttons: a half pixel
      is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
-    .bezel .settings-open, .bezel .glass { border-width: 1px; }
+    .bezel .settings-open { border-width: 1px; }
   }

@@ -50,14 +50,15 @@ const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--ok-bg', '--inb
 // 0413: what sits in speck's screen's dark frame (its rules start ".bezel") sits on the frame's colour, not the surfaces.
 // 0479: so does what's in the Pipeline log's frame, its title row and the frame round its log. (0480: a lane is a light
 // card, so its title row sits on the surfaces, as 0478's dark frame had it not.)
-const onFrame = sel => sel.split(',').every(s => /^(?:\.bezel\b|#foreman (?:\.top|\.fm-body|\.stale|\.close|\.reload|:focus-visible)\b)/.test(s.trim()));
+const onBar = sel => sel.split(',').every(s => /^\.bezel\b/.test(s.trim())); // 0580: the bar at the top
+const onFrame = sel => sel.split(',').every(s => /^#foreman (?:\.top|\.fm-body|\.stale|\.close|\.reload|:focus-visible)\b/.test(s.trim()));
 // 0455: and what's in a ticket's build log (its rules start ".q .log") sits on the log's own black, in every look. 0459:
 // so does what's in the pipeline log (".foreman .run-log").
 const inLog = sel => sel.split(',').every(s => /^(?:\.q \.log|\.foreman \.run-log)\b/.test(s.trim()));
-const behind = sel => (onFrame(sel) ? ['--bezel'] : inLog(sel) ? ['--log-bg'] : SURFACES);
+const behind = sel => (onBar(sel) ? ['--bar'] : onFrame(sel) ? ['--bezel'] : inLog(sel) ? ['--log-bg'] : SURFACES);
 // Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
 // stage dots and the ensō's speck went in 0168.)
-const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.bezel .name::before', '.bezel[data-run="off"] .name::before', '.lane-title::before', '#capture-section .lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before', '#foreman .top .title::before']; // 0478: nor do the dots before each lane's title (0520: Capture's too). 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title, grey or not (0513)
+const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.lane-title::before', '#capture-section .lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before', '#foreman .top .title::before']; // 0478: nor do the dots before each lane's title (0520: Capture's too). 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title, grey or not (0513)
 // Every control and card with an edge of its own, by its main rule. 0520: Plan's Tickets, Ideas and Inbox buttons
 // (.toggle) are gone.
 const EDGED = ['.tag', '.bezel .settings-open', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
@@ -294,7 +295,7 @@ const TEXTS = `(() => { ${LIB}
 // The edge of every control and card on show against what's next to it: each border side with a width, or its fill.
 const EDGES = `(() => { ${LIB}
   const out = [];
-  const sel = 'button:not(.prio-menu button):not(.dep-chip):not(.tab), .dep-pill, .tag:not(:is(.checks, .progress, .act) .tag), .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge. 0419: a card's tags are words. 0468: a chip's edge is its pill's. 0477: a lane's name in the strip is a word
+  const sel = 'button:not(.prio-menu button):not(.dep-chip):not(.tab):not(.bar-status), .dep-pill, .tag:not(:is(.checks, .progress, .act) .tag), .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge. 0419: a card's tags are words. 0468: a chip's edge is its pill's. 0477: a lane's name in the strip is a word
   for (const el of document.querySelectorAll(sel)) {
     if (!shown(el)) continue;
     const s = getComputedStyle(el), next = behind(el.parentElement);
@@ -344,20 +345,20 @@ async function everyView(b, theme) {
   for (const lane of ['capture', 'plan', 'build', 'shipped']) { // 0520: and Capture, its notes closed
     await b.js(openLane(lane));
     checkTexts(await b.js(TEXTS), `${theme}, ${lane}, with Plan's tickets and Build open`, lane === 'capture' ? 10 : 21); // 0520: Capture holds two closed notes
-    checkEdges(await b.js(EDGES), `${theme}, ${lane}, with Plan's tickets and Build open`, lane === 'capture' ? 2 : 5); // Shipped has fewer controls than the others, and Capture (0520) only its notes
+    checkEdges(await b.js(EDGES), `${theme}, ${lane}, with Plan's tickets and Build open`, lane === 'capture' ? 2 : 4); // Shipped has fewer controls than the others (0580: the bar's status has no edge of its own), and Capture (0520) only its notes
     tags.push(...await b.js(TAGS));
   }
   await b.js(openLane('plan'));
   await b.js(`document.querySelector('#shaping .tag.pick').click()`);
   await b.until(`!!document.querySelector('.prio-menu')`, 'the priority menu');
   checkTexts(await b.js(TEXTS), `${theme}, the priority menu`);
-  checkEdges(await b.js(EDGES), `${theme}, the priority menu`, 7); // 0520: less Plan's three Tickets, Ideas and Inbox buttons
+  checkEdges(await b.js(EDGES), `${theme}, the priority menu`, 6); // 0520: less Plan's three Tickets, Ideas and Inbox buttons. 0580: and the bar's status, which has no edge of its own
   await b.js(`document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
   await b.until(`!document.querySelector('.prio-menu')`, 'the priority menu to close');
   await b.js(`document.querySelector('#shaping .full-open').click()`);
   await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .facts')`, 'the full ticket'); // 0465: its table, in place of its tags
   checkTexts(await b.js(TEXTS), `${theme}, the full ticket`);
-  checkEdges(await b.js(EDGES), `${theme}, the full ticket`, 7); // 0583: its Close is a back link now, with no edge
+  checkEdges(await b.js(EDGES), `${theme}, the full ticket`, 6); // 0583: its Close is a back link now, with no edge. 0580: and the bar's status has none of its own
   tags.push(...(await b.js(TAGS)).filter(t => t.where === 'pane'));
   // 0420: a shipped ticket's tag is a small box in its title's line, so the full ticket's were the boxed ones left to
   // check. 0465: its tags are in its table now, as its card's are, so no boxed tag is left on show.
