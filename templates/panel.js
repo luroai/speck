@@ -254,7 +254,7 @@ function ticketDetail(t, criteria) {
 // A ticket's readiness list from what speck can check, its Set ready button, the Full ticket button when `withFull`,
 // and why the server last refused to set it ready.
 function readiness(t, criteria, withFull) {
-  const ready = el('div', 'ready', null, el('h4', null, 'Readiness'));
+  const ready = el('div', 'ready', null, el('h4', null, 'Ready check'));
   const line = (cls, ok, text) => ready.appendChild(el('div', cls, null, el('span', ok ? 'tick' : 'sq'), el('span', null, text)));
   const sizeOk = t.size === 'S' || t.size === 'M';
   line(sizeOk && t.risk !== 'high' ? 'ok' : sizeOk ? 'warn' : 'bad', sizeOk && t.risk !== 'high', `Size ${t.size ?? '?'}, risk ${t.risk ?? '?'}`);
@@ -263,7 +263,7 @@ function readiness(t, criteria, withFull) {
   const errors = list(msgs.errors), warnings = list(msgs.warnings);
   for (const e of errors) line('bad', false, e);
   for (const w of warnings) line('warn', false, w);
-  if (!errors.length && !warnings.length) line('ok', true, 'lint passes');
+  if (!errors.length && !warnings.length) line('ok', true, 'Ready check passes');
   const after = list(t.after), waiting = list(t.waiting_on);
   for (const id of after) {
     const done = !waiting.includes(id);
@@ -281,7 +281,7 @@ function setReadyButton(t, lintErrors) {
   const b = el('button', 'set-ready', pending ? 'Setting ready…' : 'Set ready');
   b.type = 'button';
   b.disabled = pending || lintErrors > 0;
-  if (lintErrors > 0) b.title = `Fix the lint ${lintErrors === 1 ? 'error' : 'errors'} first: a ticket that fails lint can't be ready.`;
+  if (lintErrors > 0) b.title = `Fix the ready check ${lintErrors === 1 ? 'error' : 'errors'} first: a ticket that fails the ready check can't be ready.`;
   b.addEventListener('click', e => {
     e.stopPropagation(); // the click is for the button, not the ticket
     if (b.disabled) return;
@@ -701,7 +701,7 @@ function waitingFacts(t, status, after, pick) {
   return el('dl', 'facts', null,
     factCell('Status', status, null),
     factCell(after, !left ? '—' : of > 1 ? `${left} left of ${of}` : `${left} left`, null),
-    factCell('Lint', lintText, null, lintText, null, bits.length ? bits.flatMap((b, i) => (i ? [document.createTextNode(' · '), b] : [b])) : null),
+    factCell('Ready check', lintText, null, lintText, null, bits.length ? bits.flatMap((b, i) => (i ? [document.createTextNode(' · '), b] : [b])) : null),
     ...lastFacts(t, pick));
 }
 // 0467: an open ticket's dependency box, under its table, from the model's deps, or nothing when it has none. A Waits

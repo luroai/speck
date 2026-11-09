@@ -19,7 +19,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## Reviewer model and effort
 
-The reviewer's model and effort come from the ticket's `reviewer_model` and `reviewer_effort` fields. A blank ticket value falls back to the same settings, as `speck config show` gives them when the round starts. If both are blank, speck passes nothing and the reviewer runs on its own default. Model names are passed through exactly as written. Effort must be blank, one of `low`, `medium`, `high`, `xhigh` or `max`, or an effort Codex lists for one of its models, such as `ultra` (`speck lint` checks this). Every saved round and the review pack record the model and effort used, or `default`.
+The reviewer's model and effort come from the ticket's `reviewer_model` and `reviewer_effort` fields. A blank ticket value falls back to the same settings, as `speck config show` gives them when the round starts. If both are blank, speck passes nothing and the reviewer runs on its own default. Model names are passed through exactly as written. Effort must be blank, one of `low`, `medium`, `high`, `xhigh` or `max`, or an effort Codex lists for one of its models, such as `ultra` (the ready check, `speck check`, checks this). Every saved round and the review pack record the model and effort used, or `default`.
 
 ## Round 1
 

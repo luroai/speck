@@ -56,7 +56,7 @@ test('0062 AC1: the pane shows the same readiness lines as the open ticket, afte
   assert.deepEqual(text, ['Size M, risk high', '3 criteria', 'Outcome contains "and": one outcome per ticket.', 'Notes has no Self-check line.', 'Priority is blank.',
     'after: 0007 done', 'after: 0008 not done']);
   const q = await openPane([full('0001')]);
-  assert.ok(lines(q, pane(q)).some(l => l[1] === 'lint passes') && lines(q, pane(q)).some(l => l[1] === 'no after: tickets'));
+  assert.ok(lines(q, pane(q)).some(l => l[1] === 'Ready check passes') && lines(q, pane(q)).some(l => l[1] === 'no after: tickets'));
 });
 
 test('0062 AC2: the pane has the same buttons as the open ticket except Full ticket, disabled with the same hover text', async () => {
@@ -70,7 +70,7 @@ test('0062 AC2: the pane has the same buttons as the open ticket except Full tic
     assert.equal(b.disabled, a.disabled);
     assert.equal(b.title, a.title);
     assert.equal(b.disabled, o === MIXED, 'disabled only with lint errors');
-    if (o === MIXED) assert.match(b.title, /lint/);
+    if (o === MIXED) assert.match(b.title, /ready check/);
   }
 });
 

@@ -55,6 +55,6 @@ test('0252 AC3: /speck-setup states the rule where the user approves the first t
 
 test("0252 AC4: /speck-build's fix-ticket step still sets a fix ticket ready without asking", () => {
   const md = skillText('speck-build');
-  assert.ok(md.includes("3. In the main checkout, run `speck set <fix-id> status ready` without asking the user, so it builds next, ahead of everything else. Set only a `draft` one, and only if it has no branch yet (`git branch --list '<branch_prefix><fix-id>-*'` prints nothing): one that's ready, building, reviewing, approved or blocked is already on its way, and setting it ready would undo that. If `speck set` refuses (its lint names what's missing), fill that in and try again; if it still refuses, leave it `draft` and say so in step 4."));
+  assert.ok(md.includes("3. In the main checkout, run `speck set <fix-id> status ready` without asking the user, so it builds next, ahead of everything else. Set only a `draft` one, and only if it has no branch yet (`git branch --list '<branch_prefix><fix-id>-*'` prints nothing): one that's ready, building, reviewing, approved or blocked is already on its way, and setting it ready would undo that. If `speck set` refuses (its ready check names what's missing), fill that in and try again; if it still refuses, leave it `draft` and say so in step 4."));
   assert.doesNotMatch(md, RULE, '/speck-build does not take on the rule');
 });

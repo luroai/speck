@@ -425,32 +425,32 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
   const first = list[0].textContent;
   for (const s of ['Third', 'P1', 'M', 'high']) assert.ok(first.includes(s), s);
   // 0519: a closed ticket's criteria count and lint result are in its readiness, once it's open
-  for (const n of list) assert.doesNotMatch(n.textContent, /criteri|lint/);
+  for (const n of list) assert.doesNotMatch(n.textContent, /criteri|lint|ready check/i);
 
   click(top(list[0]));
   let open = items(p)[0].textContent;
   // The short view (0054): criteria, out of scope and notes are in the side pane, behind Full ticket.
-  for (const s of ['Problem', 'Problem of 0003.', 'Outcome', 'Outcome of 0003.', 'Readiness', 'Size M, risk high', '2 criteria', lint.errors[0], lint.warnings[0], '0002 done', '0009 not done'])
+  for (const s of ['Problem', 'Problem of 0003.', 'Outcome', 'Outcome of 0003.', 'Ready check', 'Size M, risk high', '2 criteria', lint.errors[0], lint.warnings[0], '0002 done', '0009 not done'])
     assert.ok(open.includes(s), s);
   click(p.all(items(p)[0]).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
   const pane = p.byId('full-ticket').textContent;
   for (const s of ['Acceptance criteria', 'One.', 'Two.', 'Out of scope', 'Not this.', 'Notes', 'A note.']) assert.ok(pane.includes(s), s);
   const ol = p.all(p.byId('full-ticket')).find(n => n.tagName === 'ol');
   assert.deepEqual(ol.children.map(li => li.textContent), ['One.', 'Two.'], 'numbered criteria');
-  assert.ok(!items(p)[1].textContent.includes('Readiness'), 'only the clicked ticket opens');
+  assert.ok(!items(p)[1].textContent.includes('Ready check'), 'only the clicked ticket opens');
 
   p.timers.shift()(); await p.settle();
-  assert.ok(items(p)[0].textContent.includes('Readiness'), 'stays open through a refresh');
+  assert.ok(items(p)[0].textContent.includes('Ready check'), 'stays open through a refresh');
   click(top(items(p)[1]));
   open = items(p)[1].textContent;
-  assert.ok(open.includes('lint passes'), 'no lint messages');
+  assert.ok(open.includes('Ready check passes'), 'no lint messages');
   assert.ok(open.includes('3 criteria'), 'its criteria count');
   assert.ok(!open.includes('Problem of'), 'a missing section is not filled in');
   click(top(items(p)[0]));
-  assert.ok(!items(p)[0].textContent.includes('Readiness'), 'clicking again closes it');
+  assert.ok(!items(p)[0].textContent.includes('Ready check'), 'clicking again closes it');
   p.timers.shift()(); await p.settle();
-  assert.ok(!items(p)[0].textContent.includes('Readiness'), 'stays closed');
-  assert.ok(items(p)[1].textContent.includes('Readiness'));
+  assert.ok(!items(p)[0].textContent.includes('Ready check'), 'stays closed');
+  assert.ok(items(p)[1].textContent.includes('Ready check'));
 });
 
 test('0033 AC5: the Ideas list shows every idea not yet ticketed (0056), and clicking one shows its note as text', async () => {
@@ -711,7 +711,7 @@ test('0042 AC1: an open draft has a Set ready button, disabled with the reason w
   assert.ok(a && b);
   assert.equal(a.textContent, 'Set ready');
   assert.equal(a.disabled, true);
-  assert.match(a.title, /lint/i);
+  assert.match(a.title, /ready check/i);
   assert.equal(b.textContent, 'Set ready');
   assert.ok(!b.disabled);
 });
@@ -746,7 +746,7 @@ test('0042 AC3: a refusal shows its reason under the button, and it stays throug
   assert.ok(items(p)[0].textContent.includes(reason));
   p.timers.shift()(); await p.settle();
   assert.ok(items(p)[0].textContent.includes(reason), 'kept through the refresh');
-  assert.ok(items(p)[0].textContent.includes('Readiness'), 'still open');
+  assert.ok(items(p)[0].textContent.includes('Ready check'), 'still open');
 });
 
 test('0042 AC4 (self-check): a token with non-ASCII characters of the right length gets 403 and the server keeps running', async () => {

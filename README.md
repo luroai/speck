@@ -121,6 +121,7 @@ In your terminal, `speck` stands for `node .speck/scripts/speck.mjs`, which `ini
 
 | Command | What it does |
 |---|---|
+| `check <id>` | The ready check: whether a ticket is ready to build, and what stops it |
 | `set <id> status ready` | Approves a ticket for building (Gate 1). `set` also changes its priority, size and other fields |
 | `run` | Builds each ready ticket, and ships approved ones `auto_ship` covers |
 | `panel` | The control panel in your browser |

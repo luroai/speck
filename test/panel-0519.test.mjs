@@ -39,10 +39,10 @@ test('0519 AC1: an open Plan card still shows its criteria count and lint result
   for (const id of ['0601', '0602']) { click(card(p, id).children[0]); await p.settle(); }
   const said = id => p.all(card(p, id)).filter(n => /^(ok|warn|bad)$/.test(n.className)).map(n => n.textContent);
   assert.ok(said('0601').includes('3 criteria'), said('0601').join(' | '));
-  assert.ok(said('0601').includes('lint passes'));
+  assert.ok(said('0601').includes('Ready check passes'));
   assert.ok(said('0602').includes('2 criteria'));
   assert.ok(said('0602').includes('An error.') && said('0602').includes('A warning.'), said('0602').join(' | '));
-  assert.ok(!said('0602').includes('lint passes'));
+  assert.ok(!said('0602').includes('Ready check passes'));
 });
 
 test('0519 AC2: the priority label still opens the priority menu and sets the priority; size, risk and type explain themselves', async () => {

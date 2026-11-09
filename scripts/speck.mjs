@@ -111,7 +111,7 @@ function cmdNew(args) {
   console.log(path.relative(process.cwd(), file));
 }
 
-function cmdLint(args) {
+function cmdCheck(args) {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const t = findTicket(repo, args[0]);
@@ -169,7 +169,7 @@ export function checkSetTicket(t, cfg, key, value) {
   if (value === 'cancelled') throw new SpeckError(`Use \`speck cancel ${t.fm.id} "<reason>"\` instead: cancelling records the reason.`); // `set` would lose it
   if (value === 'ready') {
     const { errors } = lintTicket(t, cfg);
-    if (errors.length) throw new SpeckError(`Not ready:\n${errors.map(e => `  ✗ ${e}`).join('\n')}`);
+    if (errors.length) throw new SpeckError(`Not ready: it fails the ready check (\`speck check ${t.fm.id ?? '<id>'}\`):\n${errors.map(e => `  ✗ ${e}`).join('\n')}`);
   }
 }
 
@@ -520,8 +520,9 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck detect                        print what setup needs to know about this folder and machine, as JSON
   speck agents [--json]               every agent speck knows: whether it's yours, installed and signed in (or has its key), and its models; speck agents add|remove <agent> changes this machine's list of your agents
   speck new <title> [--source=path]   create the next numbered draft ticket
-  speck lint <id>                     check a ticket against the size rules
-  speck set <id> <field> <value>      update a ticket field (status ready runs lint first and commits the ticket; priority "" clears it)
+  speck check <id>                    the ready check: check a ticket against the size rules
+  speck lint <id>                     another name for speck check, which still works
+  speck set <id> <field> <value>      update a ticket field (status ready runs the ready check first and commits the ticket; priority "" clears it)
   speck config set <key> <value>      change one setting, checked first: your own (builder, reviewer, auto_ship...) for this machine only, the rest in speck/config.yml
   speck config set --repo <key> <value>     change speck/config.yml's value instead; --machine <key> "" removes this machine's own value
   speck config show [--json]          the main settings by group, with each one's value, whether it's the default and
@@ -569,7 +570,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck dismiss <id>                  dismiss speck's question about a ticket
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, check: cmdCheck, lint: cmdCheck, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, 'split-off': cmdSplitOff, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.

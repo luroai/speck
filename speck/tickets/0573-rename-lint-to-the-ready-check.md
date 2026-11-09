@@ -45,6 +45,8 @@ speck calls the check that a ticket is ready to build the ready check, run with 
 - Waits for every other ticket in 0.22.0, as it touches the skills, the brief and scripts they change.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a ticket with no id in its frontmatter was told to run `speck check undefined`; it now says `speck check <id>`, with a test.
+- Kept on purpose: internal names (`lintTicket`, `scripts/lint.mjs`, the `lint` and `lint_messages` fields in `speck status --json`) and code comments, which no user reads. The README's new `check` row is left to review, as tests may only check certain README facts.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

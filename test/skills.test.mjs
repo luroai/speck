@@ -109,7 +109,7 @@ const preCheck = () => {
 test('0026 AC1: before presenting, each criterion is checked for more than one reading, and rewritten or asked about', () => {
   const { md, text, at } = preCheck();
   assert.ok(at > 0, 'the ticket skill has a Pre-check step');
-  assert.ok(at > md.indexOf('speck lint <id>'), 'after the lint');
+  assert.ok(at > md.indexOf('speck check <id>'), 'after the lint');
   assert.ok(at < md.indexOf('**Present the tickets**'), 'before the tickets are presented');
   assert.match(text, /each acceptance criterion/i);
   assert.match(text, /builder and (a )?reviewer could read it differently/i);

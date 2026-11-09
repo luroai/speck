@@ -70,7 +70,7 @@ test('0079 AC2: a draft that fails the size rules gets exactly speck set\'s Not 
   try {
     r.write('0003-three.md', fm({ id: '"0003"', title: 'Three', size: 'L' }), '## Problem\nP.\n## Outcome\nO.\n');
     const want = setRefusal(r, '0003-three.md', ['3', 'status', 'ready']);
-    assert.match(want, /^Not ready:\n  ✗ /);
+    assert.match(want, /^Not ready: it fails the ready check \(`speck check 0003`\):\n  ✗ /);
     const before = headOf(r), files = ticketFiles(r);
     const res = await post(port, readyPath('0003'), { token });
     assert.equal(res.status, 422, res.body);
