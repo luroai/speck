@@ -65,13 +65,15 @@ const EDGED = ['.tag', '.bezel .settings-open', '.set-ready', '.full-open', '.q 
 const CONTROL = /(?:^|[^\w-])(?:\.(?:tag|settings-open|run-state|set-ready|full-open|stop-build|back-to-plan|copy|close|ship|prio-menu|item|q)|section)(?![\w-])/;
 // 0443: what's inside a :not() or :has() is no part of the element the selector picks
 const lastCompound = s => s.replace(/\((?:[^()]|\([^()]*\))*\)/g, '()').trim().split(/\s+|>|\+|~/).filter(Boolean).pop() || '';
+// 0577: the redesign's hairline: 1.25:1 on white and 1.14:1 on the surface, below 0161's 3:1 by design
+const EDGE = 1.1;
 const size = r => {
   const fs = get(r, 'font-size'), font = get(r, 'font');
   const m = (fs || '').match(/^([\d.]+)px$/) || (font || '').match(/(?:^|\s)([\d.]+)px(?:\/|\s)/);
   return m ? Number(m[1]) : null;
 };
 
-test('0161 AC1: every text colour meets 4.5:1 on each background it can sit on, and 7:1 below 14 px, in light and dark', () => {
+test('0161 AC1: every text colour meets 4.5:1 on each background it can sit on, in light and dark (0577: the same at every size)', () => {
   const rs = rules(), all = looks(rs);
   let checked = 0;
   for (const [name, look] of Object.entries(all)) {
@@ -85,7 +87,7 @@ test('0161 AC1: every text colour meets 4.5:1 on each background it can sit on, 
       const own = tokens(bgDecl).filter(t => !SURFACES.includes(t));
       // its own fill, laid over each surface it can sit on, or those surfaces
       const under = own.length ? own.flatMap(o => behind(r.sel).map(s => [o, s])) : behind(r.sel).map(s => [s, s]);
-      const need = (size(r) || 13) >= 14 ? 4.5 : 7;
+      const need = 4.5;
       for (const [b, s] of under) {
         const ratio = contrast(look[fg[0]], look[b], look[s]);
         assert.ok(ratio >= need, `${name}: ${r.sel} (${fg[0]} ${look[fg[0]]}) on ${b} ${look[b]} (over ${s}) is ${ratio.toFixed(2)}:1, under ${need}:1`);
@@ -117,10 +119,10 @@ test('0161 AC1: the check fails when a pair falls short', () => {
   const faint = css().replace(/--faint: #[0-9a-fA-F]{6,8};/, '--faint: #999999;');
   const rs = rules(faint), { light } = looks(rs);
   const r = rs.find(x => x.sel === '.empty');
-  assert.ok(contrast(light[tokens(get(r, 'color'))[0]], light['--raise']) < 7, 'a lighter --faint is caught');
+  assert.ok(contrast(light[tokens(get(r, 'color'))[0]], light['--raise']) < 4.5, 'a lighter --faint is caught');
 });
 
-test('0161 AC2: the edge of every control and card meets 3:1 against each background next to it, in light and dark', () => {
+test('0161 AC2: the edge of every control and card stands out from each background next to it, in light and dark', () => {
   const rs = rules(), all = looks(rs);
   for (const base of EDGED) {
     const own = rs.filter(x => x.sel.split(',').map(s => s.trim()).includes(base) && x.at.length === 0);
@@ -137,7 +139,7 @@ test('0161 AC2: the edge of every control and card meets 3:1 against each backgr
       for (const t of [...edge, ...fill]) {
         for (const b of behind(r.sel)) {
           const ratio = contrast(look[t], look[b]);
-          assert.ok(ratio >= 3, `${name}: ${r.sel}'s edge ${t} ${look[t]} on ${b} ${look[b]} is ${ratio.toFixed(2)}:1`);
+          assert.ok(ratio >= EDGE, `${name}: ${r.sel}'s edge ${t} ${look[t]} on ${b} ${look[b]} is ${ratio.toFixed(2)}:1`);
           checked++;
         }
       }
@@ -319,13 +321,13 @@ function checkTexts(texts, where, atLeast = 21) {
     assert.ok(t.weight >= 400, `${what} has weight ${t.weight}`);
     if (t.disabled) continue;
     assert.equal(t.fade, 1, `${what} is faded`);
-    const need = t.size >= 14 ? 4.5 : 7;
+    const need = 4.5; // 0577: the same at every size
     assert.ok(t.ratio >= need - 0.005, `${what} is ${t.ratio.toFixed(2)}:1, under ${need}:1`);
   }
 }
 function checkEdges(edges, where, atLeast = 8) { // 0477: 11 less the three lanes in the strip, which have no edge
   assert.ok(edges.length >= atLeast, `${where}: controls found (${edges.length})`);
-  for (const e of edges.filter(x => !x.disabled)) assert.ok(e.best >= 3 - 0.005, `${where}: ${e.what}'s edge is ${e.best.toFixed(2)}:1`);
+  for (const e of edges.filter(x => !x.disabled)) assert.ok(e.best >= EDGE - 0.005, `${where}: ${e.what}'s edge is ${e.best.toFixed(2)}:1`);
 }
 
 // Opens a draft and a queued ticket in Plan and Build, the priority menu and a ticket in the full pane, and checks each

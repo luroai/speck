@@ -147,8 +147,8 @@ test('0479 AC1 and AC2: in a real browser at 390 × 844 and 1200 × 800 with 200
         // Its title row: speck's red dot, Pipeline log in the dot-matrix letters, and Close at its end.
         assert.equal(m.titleText, 'Pipeline log');
         assert.equal(m.titleColor, m.ink, `${where}: in the frame's light ink (${m.titleColor})`);
-        assert.equal(m.titleFont, m.nameFont, `${where}: in the header's lettering`);
-        assert.equal(m.titleWeight, '900');
+        assert.match(m.titleFont, /^"?Inter"?,/, `${where}: in Inter (0577)`);
+        assert.equal(m.titleWeight, '600');
         assert.equal(m.dot, m.nameDot, `${where}: speck's own dot`);
         assert.ok(m.dotW > 0, `${where}: which shows`);
         assert.equal(m.titleRects, 1, `${where}: on one line`);

@@ -110,7 +110,7 @@
   .title { white-space: pre-wrap; overflow-wrap: anywhere; }
   /* The light tints. 0167: the open item in Shaping or the queue is set apart by a raised fill and a border in the text
      colour; only a ticket waiting for you or in trouble keeps a tint (below). */
-  :root { --accent-bg: #f5f0e8; --ok-bg: #eaf3f0; --inbox-bg: #eef2f3; --bad-bg: #F4F5F7; } /* 0426: Cursor's yellow, green (0440) and cyan, 8% over --panel. 0577: what's wrong sits on the surface, in the needs-you text */
+  :root { --accent-bg: #f5f0e8; --ok-bg: #edf6f3; --inbox-bg: #eef2f3; --bad-bg: #F4F5F7; } /* 0426: Cursor's yellow, green (0440) and cyan, 8% over --panel. 0577: what's wrong sits on the surface, in the needs-you text */
 
   /* 0428: rounded corners as Cursor's: 8 px for a control, 12 px for a card, a box or a pop-up. The focus ring is an
      outline, which follows them. 0472: each area's own corners are in its own file. */
@@ -127,7 +127,7 @@
     --blue: #86A2FF; --yellow: #d2943e; --green: #70b489;
     --inbox: #88c0d0; --bug: #e69d83; --fix: #d9a65e;
     --purple: #a08ad6; --purple-text: #b9a7e4; --cyan-text: #8cc3d2; /* a shade apart from --inbox, which keeps a colour of its own (0038) */
-    --accent-bg: #27221b; --ok-bg: #1f2421; --inbox-bg: #212527; --bad-bg: #1B1D20;
+    --accent-bg: #27221b; --ok-bg: #191f1d; --inbox-bg: #212527; --bad-bg: #1B1D20;
     --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
     --bezel: #080907; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1;
     --dot: #d4664e;

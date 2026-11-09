@@ -88,7 +88,7 @@ const contrast = (fg, bg) => {
   return (x + 0.05) / (y + 0.05);
 };
 
-test('0480 AC1 AC2: in both looks, each lane is a light card with a hairline edge, its name in dark dot-matrix letters, and nothing in the frame colour', skip, async () => {
+test('0480 AC1 AC2: in both looks, each lane is a light card with a hairline edge, its name in dark letters, and nothing in the frame colour', skip, async () => {
   const b = await panel();
   try {
     for (const theme of ['light', 'dark']) {
@@ -105,7 +105,7 @@ test('0480 AC1 AC2: in both looks, each lane is a light card with a hairline edg
         assert.equal(m.main.right - l.card.right, 16, `${w}: and its right`);
         for (const c of l.used) assert.ok(!m.want.frame.includes(c), `${w}: nothing in or round the lane is in the frame's colours (${c})`);
         // AC2
-        assert.match(l.title.family, /^"?Doto"?/, `${w}: in the dot-matrix letters`);
+        assert.match(l.title.family, /^"?Inter"?/, `${w}: in Inter (0577)`);
         assert.equal(l.title.colour, m.want.text, `${w}: the name in the text colour`);
         assert.equal(l.title.dot, { plan: m.want.line, build: m.want.blue, shipped: m.want.purple }[l.lane], `${w}: its stage's dot`);
         if (l.line) assert.equal(l.line, m.want.muted, `${w}: the lane's line in the muted colour`);

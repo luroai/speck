@@ -5,8 +5,8 @@ import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T
 
 // ---------- 0427: use Cursor's fonts in the panel ----------
 
-const UI = '-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif';
-const MONO = '"SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace';
+const UI = 'var(--font-ui)'; // 0577: Inter, with the machine's own fonts behind it
+const MONO = 'var(--font-mono)'; // 0577: JetBrains Mono, likewise
 const DOTO = '"Doto", ui-monospace, monospace';
 
 const css = () => styles();
@@ -39,8 +39,6 @@ test('0427 AC1 and AC2: every font list in the stylesheet is the interface font,
   for (const r of named) {
     const f = family(r);
     if (r.sel === '.bezel .name') { assert.equal(f, DOTO, 'speck\'s title stays Doto'); continue; }
-    if (r.sel === '#foreman .top .title') { assert.equal(f, DOTO, '0470: so is the Pipeline log pop-up\'s'); continue; }
-    if (r.sel === '.lane-title') { assert.equal(f, DOTO, '0478: and each lane\'s, in its frame'); continue; }
     if (r.sel === '@font-face') continue;
     assert.ok(f === UI || f === MONO, `${r.sel}: ${f}`);
   }

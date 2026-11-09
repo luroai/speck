@@ -7,7 +7,7 @@ import { page, panelRepo, fm, good, freePort, startPanel, stop, findChrome, brow
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const LANE = { capture: 'capture-section', plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
-const DOT = { capture: 'var(--line)', plan: 'var(--line)', build: 'var(--blue)', shipped: 'var(--purple)' };
+const DOT = { capture: 'var(--muted)', plan: 'var(--muted)', build: 'var(--blue)', shipped: 'var(--purple)' };
 
 test('0478 AC1 AC2 AC3: the lane cards share one frame, in the screen\'s frame colour and corners, with the title row in it', () => {
   const html = page();
@@ -18,10 +18,10 @@ test('0478 AC1 AC2 AC3: the lane cards share one frame, in the screen\'s frame c
   }
   // 0480: the frame's colour and corners are a light card's now, checked in panel-0480.test.mjs
   for (const id of Object.values(LANE)) assert.deepEqual(cssRules(`#${id}`), [], `${id} has no frame of its own (AC3)`);
-  // The title in the header's lettering, with a dot in its stage's colour
+  // The title, with a dot in its stage's colour
   const title = cssRules('.lane-title');
-  assert.equal(cssValue(title, 'font-family'), cssValue(cssRules('.bezel .name'), 'font-family'), 'Doto, as "speck"');
-  assert.equal(cssValue(title, 'font-weight'), cssValue(cssRules('.bezel .name'), 'font-weight'), 'at "speck"\'s weight');
+  assert.equal(cssValue(title, 'font-family'), 'var(--font-ui)', '0577: in Inter, no longer Doto');
+  assert.equal(cssValue(title, 'font-weight'), '600', '0577: at a weight Inter has');
   assert.equal(cssValue(title, 'color'), 'var(--text)', '0480: in the text colour, on the light card');
   for (const [lane, id] of Object.entries(LANE)) assert.equal(cssValue(cssRules(`#${id} .lane-title::before`), 'background'), DOT[lane], `${lane}'s dot`);
   const line = cssRules('.lane-n');
@@ -99,8 +99,8 @@ for (const theme of ['light', 'dark']) {
           assert.equal(l.inside.bg, m.want.panel, `${w}: its tickets sit on the lane's own background`);
           assert.ok(l.title.top >= l.frame.top && l.title.bottom <= l.frame.top + l.sides.top, `${w}: the title row is in the frame, above the tickets`);
           // AC2: the dot-matrix title in the frame's ink, its stage's dot before it, its line at the row's right end
-          assert.match(l.title.family, /^"?Doto"?/, `${w}: in Doto`);
-          assert.equal(l.title.weight, '900', `${w}: at "speck"'s weight`);
+          assert.match(l.title.family, /^"?Inter"?/, `${w}: in Inter (0577)`);
+          assert.equal(l.title.weight, '600', `${w}: at Inter's weight`);
           assert.equal(l.title.colour, m.want.ink, `${w}: in the text colour (0480)`);
           assert.equal(l.dot.colour, { capture: m.want.grey, plan: m.want.grey, build: m.want.blue, shipped: m.want.purple }[l.lane], `${w}: its stage's dot`);
           assert.ok(l.dot.width > 0, `${w}: the dot shows`);

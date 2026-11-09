@@ -55,23 +55,21 @@ test('0440 AC1: the green is Cursor\'s, its words at the shade 0161 needs and it
   }
 });
 
-test('0440 AC1: a ticket that needs you stays red', () => {
+test('0440 AC1: a ticket that needs you is in the needs-you text', () => {
   assert.equal(ruleVar('.q.blocked', 'border-color'), '--bad');
   assert.equal(ruleVar('.q.blocked', 'background'), '--bad-bg');
   assert.equal(ruleVar('.q .top .stage.bad', 'color'), '--bad');
   assert.equal(ruleVar('.tab .needs', 'color'), '--bad');
   assert.equal(ruleVar('.bezel.needs', 'border-color'), '--bad');
   const { light, dark } = looks();
-  assert.equal(light.get('--bad'), '#96213f');
-  assert.equal(dark.get('--bad'), '#ef95ad');
+  assert.equal(light.get('--bad').toLowerCase(), '#a84f06');
+  assert.equal(dark.get('--bad').toLowerCase(), '#f0a35a');
 });
 
 test('0440 AC2: waiting for you and needs you are at least 60° of hue apart, in both looks', () => {
   for (const [name, look] of Object.entries(looks())) {
     const gap = hueGap(look.get('--ok'), look.get('--bad'));
     assert.ok(gap >= 60, `${name}: --ok ${look.get('--ok')} and --bad ${look.get('--bad')} are ${gap.toFixed(0)}° apart`);
-    const tints = hueGap(look.get('--ok-bg'), look.get('--bad-bg'));
-    assert.ok(tints >= 60, `${name}: --ok-bg and --bad-bg are ${tints.toFixed(0)}° apart`);
   }
 });
 
@@ -80,7 +78,6 @@ test('0440 AC3: the green meets 0161\'s contrast on its own tint and every surfa
     for (const s of ['--bg', '--panel', '--raise', '--input', '--accent-bg', '--ok-bg', '--inbox-bg', '--bad-bg'])
       assert.ok(contrast(look.get('--ok'), look.get(s)) >= 7, `${name}: --ok on ${s} is ${contrast(look.get('--ok'), look.get(s)).toFixed(2)}:1`);
     for (const t of ['--text', '--muted', '--faint'])
-      assert.ok(contrast(look.get(t), look.get('--ok-bg')) >= 7, `${name}: ${t} on --ok-bg`);
-    assert.ok(contrast(look.get('--line'), look.get('--ok-bg')) >= 3, `${name}: --line on --ok-bg`);
+      assert.ok(contrast(look.get(t), look.get('--ok-bg')) >= 4.5, `${name}: ${t} on --ok-bg`); // 0577: the redesign's 4.5:1
   }
 });
