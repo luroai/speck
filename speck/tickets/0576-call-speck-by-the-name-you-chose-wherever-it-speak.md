@@ -1,7 +1,7 @@
 ---
 id: "0576"
 title: "Call speck by the name you chose wherever it speaks"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0575"]                # ticket ids that must be done first
 created: 2026-11-09
+started: "2026-11-09T18:03:21.956Z"
 
 ---
 # 0576 · Call speck by the name you chose wherever it speaks
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Once you've named your engineering manager (0575), speck should call it by that name wherever it speaks or acts, or the name means nothing. Today `speck status`, the panel and `speck run`'s log all say "speck asked you…", "speck will take its recommendation…" and "speck will look into it…".
