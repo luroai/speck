@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0576"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:30:55.350Z"
-approved: "2026-11-09T18:38:11.392Z"
+approved: "2026-11-09T18:50:31.980Z"
 
 ---
 # 0589 · Keep the whole question with each call speck makes
@@ -54,12 +54,13 @@ When speck makes a call for you, it now remembers the question it answered and t
 ## Review log
 Round 1 (codex): changes requested: F1 callOf includes the original recommendation among other_options only if the chosen text exactly matches a listed alternative.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 254,119
-- Elapsed since build started: 7 min
+- Reviewer tokens: 377,090
+- Elapsed since build started: 20 min
 - Changed lines: 75 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -230,6 +231,90 @@ Follow-ups (known limits, no ticket needed):
     ],
     "escalation_question": "",
     "summary": "Calls now retain their question and unchosen options, including when speck chooses an option outside the original list. Status exposes the details, older calls remain visible, and the reported tests pass. Ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7c00e9ab5aa4e38d80873f92846e7bf5f5d6f3da",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c199-273c-78d1-849a-61e4d14bef65",
+    "builder_response": "- Tests run: test/calls-0589.test.mjs test/go-with-0284.test.mjs test/foreman-fix-0286.test.mjs test/watch-decide-0567.test.mjs\n- Merge round: merged main into the ticket's branch.\n- scripts/go-with.mjs (class: logic, 1 conflict, lines 6-10): both sides added a name to the import from core.mjs. main added `speckSays`, this ticket added `earlierBuilds`. Resolved by importing both; nothing else changed.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 374922,
+      "cached_input_tokens": 312320,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2168,
+      "reasoning_output_tokens": 162
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 13357,
+      "cached": 109056,
+      "write": 0,
+      "output": 558
+    },
+    "cost_usd": 0.0431996,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:50:28.701Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The build skill specifies Other options beside Recommended; passing AC1 tests exercise questionFacts parsing and board output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "goWith and foremanAction save the question, chosen option, alternatives and time. Passing AC2 tests cover all requested routes and preservation across builds. The merge retains both speckSays and earlierBuilds imports and their uses."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "statusData uses withCalls to enrich decidedFor output. The passing AC3 test invokes status --json and checks all required fields."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests confirm historical calls remain visible with a null question and empty alternatives, and matching consumes each saved call once."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The merge-round tests report 173 passed, zero failed and three skipped, including existing go-with, foreman-fix and watch-decide tests. No tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/go-with.mjs",
+        "issue": "Choices outside the listed alternatives previously omitted the original recommendation from other_options.",
+        "suggested_fix": "Completed: callOf combines all offered options, removes duplicates and excludes the chosen option. The regression test remains present and passes after the merge.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both sides' behaviour. Calls retain their questions and alternatives, status exposes them, and older calls remain visible. The reported tests pass, with no open blocking findings."
   }
 }
 ```
