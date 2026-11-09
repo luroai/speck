@@ -1,7 +1,7 @@
 ---
 id: "0578"
 title: "Draw speck as the Premium screen"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T18:34:48.451Z"
 ---
 # 0578 · Draw speck as the Premium screen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The redesign replaces the LCD's dot-drawn speck with a new character: the Premium screen, a small dark device whose red visor is its eye. It shows wherever speck acts or speaks, so it has to be one drawing that works at every size, in both looks, and that feels alive without the device ever moving.
@@ -50,7 +50,11 @@ The panel has speck's new character as one reusable drawing, in six moods, alive
 - Self-check: took the new script back out of the page's stamp, as the page doesn't load it until 0580.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's new character now exists: a small dark device whose red visor is its eye, in six moods (watching, focused, pleased, sheepish, asking and asleep). Only the red light moves, and it stays still for anyone who has asked their computer for less motion.
+
+You won't see it in the panel yet, because putting it in the top bar is the next ticket's job. For now, the pictures in this review pack show all six moods at five sizes, in both looks.
+
+Worth keeping an eye on: the smallest sizes, where the question mark and the z's are left out so the face stays readable.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,4 +63,82 @@ The panel has speck's new character as one reusable drawing, in six moods, alive
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- 0580, when it adds the script to the page, should also add `templates/speck-face.js` to the page's stamp in `scripts/panel.mjs`, so a change to it reloads an open page.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2e8b9a2ec7e10763c2f52f794b53a11068e8ddba",
+    "session": "fresh",
+    "thread_id": "01a1c19e-32ae-7562-b697-f3e4b837be4b",
+    "builder_response": "- Tests run: test/speck-face-0578.test.mjs, with `speck test --related`, which added the 16 existing test files that name scripts/panel.mjs, and the commands.checks files.\n- The panel serves templates/speck-face.js at /speck-face.js, but panel.html doesn't load it yet. Placing speck is 0580 (out of scope here), and a new script tag would fail the existing tests that list the page's scripts, which AC5 protects. See the ticket's Notes.\n- Checked in a real browser (Chromium, from a real panel): 30 faces across six moods and five sizes draw in both looks (pictures are in the review pack); 94 sf- animations run normally and 0 with reduced motion emulated, with the z's resting visible.\n- AC5 has no test of its own: it is the whole suite, which speck ship runs.\n",
+    "seconds": 46,
+    "usage": {
+      "input_tokens": 196445,
+      "cached_input_tokens": 164736,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 706,
+      "reasoning_output_tokens": 89
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 31709,
+      "cached": 164736,
+      "write": 0,
+      "output": 706
+    },
+    "cost_usd": 0.0869516,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:42:58.892Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/speck-face.js draw() creates the sized SVG, bezel, rim, recessed screen, glow and reflection with both looks. The four AC1 tests passed, including serving /speck-face.js."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "VISORS, HOOK and ZS in templates/speck-face.js define all six moods through the red light. Four AC2 tests passed, checking shapes, marks and unchanged device geometry."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "STYLE confines animations to red-light elements within the screen clip, with all loops at least five seconds and all motion inside prefers-reduced-motion: no-preference. Four AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "draw() omits marks below MARKS_FROM (24) and substitutes the watching visor for asking. The AC4 test passed at 16, 23, 23.9 and 24 px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded related-test run reports 260 passed, zero failed and three skipped. No existing tests were changed; the production change adds the renderer and its serving route. Whole-suite verification remains the ship gate."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The reusable Premium screen character supports all six moods, both looks and small sizes. Its red light animates while the device stays still, and reduced motion disables animation. The relevant tests pass. Placement in the panel remains for ticket 0580, as intended."
+  }
+}
+```
+
+</details>
