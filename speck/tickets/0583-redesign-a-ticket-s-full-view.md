@@ -42,6 +42,7 @@ A ticket's full view reads top to bottom as in the mock and ends in the action i
 - The design is the mock agreed with the user on 2026-11-08 and 9 (a private claude.ai design canvas, "speck panel, grown up": Lanes, Decided for you, a ticket waiting at Ship, Pipeline log, each light and dark, the bridge, and the Character page). The user picked the Premium screen for speck and asked for these tickets for 1.0.0 on 2026-11-09.
 - Today: `fullTicket`, `paneSteps`, `renderFull` in `templates/panel-popups.js`, the track (`trackOf`) and facts (`factsOf`, `factCell`) in `templates/panel.js`, styles in `templates/panel-popups.css` and `templates/panel-cards.css`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
