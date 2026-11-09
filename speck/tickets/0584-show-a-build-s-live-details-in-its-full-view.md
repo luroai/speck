@@ -1,7 +1,7 @@
 ---
 id: "0584"
 title: "Show a build's live details in its full view"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0583"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T19:26:25.966Z"
+approved: "2026-11-09T19:49:31.011Z"
 
 ---
 # 0584 · Show a build's live details in its full view
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A building ticket's card holds its live log, its progress, its paused or blocked state and its Stop button. The redesign turns Build cards into compact rows (0585), so those details need a home first, or they'd be lost.
@@ -57,9 +58,14 @@ Worth keeping an eye on: a running ticket now has both a Full log button and a B
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 189,874
+- Elapsed since build started: 23 min
+- Changed lines: 187 (limit 5000)
 Follow-ups:
 - A running ticket's full view has both the Full log button (AC1) and the Build log row (0583), which open the same pop-up. Once Build cards become compact rows (0585), one of them could go.
 - Skipped, already captured: the real-browser slide timing test in 0517 failed once under load at 52 ms against its 50 ms limit and passed on the next run (speck/ideas/2026-11-08-steady-the-0517-ac3-frame-time-test-under-load.md).
