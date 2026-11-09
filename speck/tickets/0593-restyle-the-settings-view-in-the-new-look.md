@@ -1,7 +1,7 @@
 ---
 id: "0593"
 title: "Restyle the Settings view in the new look"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-09
 ---
 # 0593 · Restyle the Settings view in the new look
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The Settings view still uses the LCD-era boxes and borders. It should match the rest of the redesign, and its engineering manager group should show who it's about.
