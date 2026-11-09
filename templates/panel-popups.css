@@ -138,6 +138,32 @@
   #foreman .close, #foreman .reload { color: var(--bezel-muted); background: transparent; border-color: var(--bezel-muted); }
   #foreman .close:hover, #foreman .reload:hover { color: var(--bezel-ink); border-color: var(--bezel-ink); }
   #foreman :focus-visible { outline-color: var(--bezel-ink); }
+  /* 0592: the Pipeline log is a full view on the panel's own colours, in light and dark, and only a ticket's build log keeps the dark frame.
+     Each line is a row: its time, a column for speck's face on the manager's own lines, then its text with its details under it. */
+  #foreman.log-view .top { position: static; display: block; padding: 4px 0 10px; color: var(--text); background: var(--panel); border-radius: 0; border-bottom: .5px solid var(--line-soft); }
+  #foreman.log-view .back { display: inline-block; padding: 2px 0; font-size: 14px; color: var(--run); cursor: pointer; }
+  #foreman.log-view .back::before { content: '‹'; margin-right: 4px; }
+  #foreman.log-view .top .title { display: block; margin-top: 4px; font-size: 20px; line-height: 24px; white-space: normal; }
+  #foreman.log-view .top .title::before { content: none; }
+  #foreman.log-view .log-status { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--muted); }
+  #foreman.log-view .log-said { min-width: 0; }
+  #foreman.log-view .log-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  #foreman.log-view .log-filter { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+  #foreman.log-view .log-filter:hover { color: var(--text); }
+  #foreman.log-view .log-filter[aria-pressed="true"] { color: var(--text); background: var(--raise); border-color: var(--text); }
+  #foreman.log-view .fm-body { padding: 0; color: var(--text); background: none; border-radius: 0; }
+  #foreman.log-view .stale { color: var(--warn); }
+  #foreman.log-view .reload { color: var(--muted); border-color: var(--line); }
+  #foreman.log-view .run-log { padding: 0; border: 0; border-radius: 0; color: var(--muted); background: none; color-scheme: inherit; white-space: normal; }
+  #foreman.log-view .run-log .none { padding: 12px 0; font-family: var(--font-ui); font-size: 14px; }
+  #foreman.log-view .run-log .log-row { display: grid; grid-template-columns: 9ch 20px minmax(0, 1fr); column-gap: 8px; align-items: start; padding: 8px 0; border-bottom: .5px solid var(--line-soft); }
+  #foreman.log-view .run-log .at { grid-column: 1; font-family: var(--font-mono); font-size: 12px; line-height: 20px; color: var(--muted); }
+  #foreman.log-view .run-log .speck-face { grid-column: 2; }
+  #foreman.log-view .run-log .log-main { grid-column: 3; min-width: 0; }
+  #foreman.log-view .run-log .log-text { font-family: var(--font-ui); font-size: 14px; line-height: 20px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+  #foreman.log-view .run-log .fail .log-text { color: var(--bad); }
+  #foreman.log-view .run-log .log-more { font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--muted); overflow-wrap: anywhere; }
+  #foreman.log-view :focus-visible { outline-color: var(--text); }
   #full-ticket ol.criteria > li { margin-bottom: 6px; }
   /* 0583: a tick on each criterion the reviewer passed, and the rows that open its review pack and build log */
   #full-ticket .tick { display: inline-block; width: 6px; height: 12px; margin: 0 8px 0 3px; border: solid var(--blue); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* drawn, so it needs no font to have the glyph */
@@ -250,7 +276,7 @@
   /* 0417: a touch screen, at any width: every button and clickable control at least 44 px each way */
   @media (pointer: coarse) {
     /* The full ticket and review pack */
-    #full-ticket .pane-row, #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #decided .close { min-width: 44px; min-height: 44px; }
+    #full-ticket .pane-row, #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #foreman.log-view .back, #foreman.log-view .log-filter, #decided .close { min-width: 44px; min-height: 44px; }
     #full-ticket .md summary, #doc-view .md summary { min-height: 44px; padding-top: 12px; }
   }
 
@@ -258,5 +284,5 @@
      is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
-    .foreman .reload, #full-ticket .pane-row, #full-ticket .close, #doc-view .close, #foreman .close, #decided .close, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder { border-width: 1px; }
+    .foreman .reload, #foreman.log-view .log-filter, #full-ticket .pane-row, #full-ticket .close, #doc-view .close, #foreman .close, #decided .close, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder { border-width: 1px; }
   }

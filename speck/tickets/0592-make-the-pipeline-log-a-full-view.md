@@ -43,6 +43,7 @@ The Pipeline log is a full view with filters, and speck's own lines carry its fa
 - Today: `#foreman` with `renderForeman`, `drawRunLog`, `fillLog`, `runLogRow` in `templates/panel-popups.js`; lines from `runLogSummary` and `runLogLine` in `templates/panel-model.js`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a blank log line no longer gets an empty row; the top isn't sticky, as it would cover a short window's log; the back link's top padding no longer doubles the safe area; speck's face in the status line has no fixed label, so its mood isn't misreported after a change; added tests for a filter kept through a refresh, the status line following the board and the box losing the full view's look once closed.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -30,7 +30,7 @@ function popPage(responses, globals = {}, made = () => {}) {
   return p;
 }
 const pop = p => p.byId('foreman');
-const closeOf = p => p.all(pop(p)).find(n => n.tagName === 'button' && n.textContent === 'Close');
+const closeOf = p => p.all(pop(p)).find(n => /\bback\b/.test(n.className)); // 0592: its back link
 const tick = async p => { for (const fn of p.timers.splice(0)) fn(); await p.settle(); };
 async function opened(responses, globals, made) {
   const p = popPage(responses, globals, made);
@@ -216,11 +216,11 @@ test('0415 AC2: blank lines at the end of run.log don\'t take the place of the l
 
 // ---------- AC3: Close, Escape and a click outside close it, with the focus back on the screen ----------
 
-test('0415 AC3: Close, Escape and a click beside its column close the pop-up, and the focus goes back to the screen', async () => {
-  for (const how of ['Close', 'Escape', 'beside']) {
+test('0415 AC3, since 0592: its back link, Escape and a click beside its column close the view, and the focus goes back to the screen', async () => {
+  for (const how of ['Back', 'Escape', 'beside']) {
     const made = n => { n.getBoundingClientRect = () => (n.className === 'top' ? { left: 300, right: 1060, top: 0, bottom: 40 } : { left: 0, right: 0, top: 0, bottom: 0 }); };
     const p = await opened([state(BUSY)], {}, made);
-    if (how === 'Close') p.press(closeOf(p));
+    if (how === 'Back') p.press(closeOf(p));
     else if (how === 'Escape') p.key('Escape');
     else {
       const e = { target: pop(p), clientX: 100, stopPropagation() {}, preventDefault() {} };

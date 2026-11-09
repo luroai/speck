@@ -1377,7 +1377,7 @@ function foremanOf(st) {
   const on = !!(st && st.run && st.run.on), list = v => (Array.isArray(v) ? v : []);
   const tone = f && typeof f.tone === 'string' ? f.tone : on ? 'idle' : 'off';
   return { word: f && typeof f.word === 'string' ? f.word : on ? 'Idle' : 'Off', tone, on,
-    building: list(f && f.building), ready: list(f && f.ready), held: list(f && f.held), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked),
+    building: list(f && f.building), max: f && Number.isInteger(f.max) ? f.max : null, ready: list(f && f.ready), held: list(f && f.held), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked),
     agent: f && f.agent && typeof f.agent === 'object' ? f.agent : null, // 0287: the Foreman agent's work
     fixing: f && typeof f.fixing === 'string' ? f.fixing : null, fixing_says: f && typeof f.fixing_says === 'string' ? f.fixing_says : '', took: list(f && f.took), // 0317
     why: f && typeof f.why === 'string' ? f.why : '', base: f && typeof f.base === 'string' ? f.base : '' }; // 0495: for speck's caption

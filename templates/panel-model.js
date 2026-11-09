@@ -684,9 +684,35 @@ function runLogSummary(text) {
 // 0591: what starts a line that is the engineering manager speaking (speckSays in scripts/core.mjs): `speck` says so, and
 // the summary is shown without it.
 const RUN_SPECK_MARK = '» ';
+const RUN_LOG_TIME = /^(\d\d:\d\d:\d\d )([\s\S]*)$/;
 function runLogLine(line) {
-  const m = String(line).match(/^(\d\d:\d\d:\d\d )([\s\S]*)$/), said = String(m ? m[2] : line), speck = said.startsWith(RUN_SPECK_MARK);
+  const m = String(line).match(RUN_LOG_TIME), said = String(m ? m[2] : line), speck = said.startsWith(RUN_SPECK_MARK);
   const text = runLogSummary(speck ? said.slice(RUN_SPECK_MARK.length) : said);
   const fail = /^\d{4,} (?:build failed|didn't ship)/.test(text);
   return { at: m ? m[1] : '', text, kind: fail ? 'fail' : 'msg', ...(speck ? { speck } : {}) };
+}
+// 0592: the Pipeline log's filters, and which of them a line is in: the engineering manager's own lines and anyone going
+// with a recommendation are decisions.
+const RUN_LOG_FILTERS = Object.freeze([['all', 'Everything'], ['decisions', 'Decisions'], ['ships', 'Ships'], ['builds', 'Builds']]);
+const RUN_LOG_SHIPS = /^(?:Shipping \d{4,}|Shipped \d{4,}|Shipping is on hold|\d{4,} didn't ship|\d{4,}'s ship\b|\d{4,} merged into)|\bspeck run is shipping\b/;
+const RUN_LOG_BUILDS = /^(?:(?:Launched|Resumed) \d{4,}|\d{4,} build\b|\d{4,} (?:carries on through the switch|is already being built|is being built outside|is still ready, so the build never started))/;
+function runLogFilterOf(said) {
+  if (said.startsWith(RUN_SPECK_MARK) || /\bwent with (?:its|the) recommendation\b/.test(said)) return 'decisions';
+  return RUN_LOG_SHIPS.test(said) ? 'ships' : RUN_LOG_BUILDS.test(said) ? 'builds' : null;
+}
+// 0592: the lines (oldest first) a filter shows, leaving out blank ones. A line with no time carries on the timed line above it, as a
+// refused ship's reason does, so it's in that line's filter unless its own words say otherwise.
+function runLogFiltered(lines, filter) {
+  let above = null;
+  return lines.filter(line => {
+    const m = line.match(RUN_LOG_TIME), own = runLogFilterOf(m ? m[2] : line);
+    if (m) above = own;
+    return line.trim() && (filter === 'all' || (own ?? (m ? null : above)) === filter);
+  });
+}
+// 0592: what a line says beyond its summary, for under it: the agent looking into it and its log file.
+function runLogDetails(line) {
+  const said = String(line).replace(RUN_LOG_TIME, '$2');
+  const agent = said.match(/\bI'm looking into it on (.+?)\.(?: Log: |$)/), log = said.match(/\bLog: (\S+?)\.?$/);
+  return [agent && agent[1], log && log[1]].filter(Boolean);
 }

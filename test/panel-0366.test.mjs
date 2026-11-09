@@ -39,7 +39,7 @@ function popPage(responses, globals = {}) {
   return p;
 }
 const pop = p => p.byId('foreman');
-const closeOf = p => p.all(pop(p)).find(n => n.tagName === 'button' && n.textContent === 'Close');
+const closeOf = p => p.all(pop(p)).find(n => /\bback\b/.test(n.className)); // 0592: its back link
 const tick = async p => { for (const fn of p.timers.splice(0)) fn(); await p.settle(); };
 async function opened(responses, globals) {
   const p = popPage(responses, globals);
@@ -53,10 +53,10 @@ const BUSY = view({ building: ['0001'], ready: [{ id: '0004', kind: 'after', why
 
 // ---------- AC1: a pop-up over the whole panel, in a document's look, with Close and the detail ----------
 
-test('0366 AC1: pressing the notice board opens a pop-up with a Close button and, since 0458, only the log', async () => {
+test('0366 AC1: pressing the notice board opens a view with a back link and, since 0458, only the log', async () => {
   const p = await opened([state(BUSY)]);
   assert.equal(pop(p).hidden, false, 'open');
-  assert.ok(closeOf(p), 'a Close button');
+  assert.ok(closeOf(p), 'a back link');
   assert.deepEqual(p.all(pop(p)).filter(n => /^h\d$/.test(n.tagName)).map(n => n.textContent), []); // 0470: no Log heading
   assert.doesNotMatch(pop(p).textContent, /0004 waiting for 0003|Which one\?/);
 });
@@ -91,7 +91,7 @@ test('0366 AC2: while it is open, the page behind is held and inert, and the foc
 
 // ---------- AC3: Close and Escape close it, the focus back on the board ----------
 
-for (const [how, close] of [['Close', p => p.press(closeOf(p))], ['Escape', p => p.key('Escape')]]) {
+for (const [how, close] of [['Back', p => p.press(closeOf(p))], ['Escape', p => p.key('Escape')]]) {
   test(`0366 AC3: ${how} closes the pop-up, with the focus back on the notice board`, async () => {
     const p = await opened([state(BUSY)]);
     close(p);
@@ -106,7 +106,7 @@ for (const [how, close] of [['Close', p => p.press(closeOf(p))], ['Escape', p =>
 
 // ---------- AC4: it stays up to date, keeping an answer being typed, and Reload page still reloads ----------
 
-test('0366 AC4: the pop-up stays up to date as the panel refreshes, keeping its Close button and the focus in it', async () => {
+test('0366 AC4: the pop-up stays up to date as the panel refreshes, keeping its back link and the focus in it', async () => {
   // 0458: what changes in it is the log
   const p = await opened([state(BUSY, { run_log: '1' }), { lines: ['first'] }, state(BUSY, { run_log: '2' }), { lines: ['second', 'first'] }]);
   const close = closeOf(p);
@@ -114,7 +114,7 @@ test('0366 AC4: the pop-up stays up to date as the panel refreshes, keeping its 
   await tick(p);
   assert.equal(pop(p).hidden, false, 'still open');
   assert.match(pop(p).textContent, /firstsecond/); // 0459: the newest line at the bottom
-  assert.equal(closeOf(p), close, 'Close is kept');
+  assert.equal(closeOf(p), close, 'the back link is kept');
   assert.ok(within(p.focused(), pop(p)), 'the focus stays in the pop-up');
 });
 
