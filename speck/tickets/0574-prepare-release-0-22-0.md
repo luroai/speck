@@ -1,7 +1,7 @@
 ---
 id: "0574"
 title: "Prepare release 0.22.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0563","0564","0565","0566","0567","0568","0569","0570","0571","0572","0573"]                # ticket ids that must be done first
 created: 2026-11-08
+started: "2026-11-09T00:51:48.142Z"
 
 ---
 # 0574 · Prepare release 0.22.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0.21.1, speck is on its way to deciding for you rather than asking: `watch: decide` takes every recommendation (0564), and its agent acts on its own (0567), asking about a stop only once (0566). A ticket whose criteria changed waits for you at Ship (0565), the panel lists what speck decided (0568), a size-guard split is taken by itself (0563), and speck looks into a build that runs long (0569). `speck doctor` says whether the commit check is on (0570), lint is now the ready check (0573), and two more tests are steadier (0571, 0572). Anyone following the setup prompt, or updating speck in a project, still gets 0.21.1 without them.
