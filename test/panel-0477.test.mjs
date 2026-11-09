@@ -28,19 +28,19 @@ const open = p => Object.keys(LANE).filter(l => !p.byId(LANE[l]).hidden);
 
 // ---------- AC1 ----------
 
-test('0477 AC1: the lanes are a strip of their names in order, at most 32 px tall, the one in view in the text colour and the others muted, with no tab look', () => {
+test('0477 AC1: the lanes are a strip of their names in order, the one in view in the text colour and the others muted', () => {
   const [whole, inner] = nav();
   assert.match(whole, /role="tablist"/);
   assert.deepEqual([...inner.matchAll(/<button [^>]*id="([^"]+)"[^>]*><span class="tab-name">([^<]+)<\/span>/g)].map(m => [m[1], m[2]]),
     [['tab-capture', 'Capture'], ['tab-plan', 'Plan'], ['tab-build', 'Build'], ['tab-shipped', 'Shipped']], 'each lane in order, as its name (0520: Capture first)');
   const strip = decls('.tabs');
-  assert.match(strip, /(^|[\s;])height:\s*32px/, 'the strip is 32 px tall');
+  assert.doesNotMatch(strip, /(^|[\s;])height:/, '0582: as tall as its 44 px tabs');
   assert.match(strip, /display:\s*flex/);
   assert.match(decls('.tab'), /color:\s*var\(--muted\)/, 'a lane not in view is muted');
   assert.match(decls('.tab[aria-selected="true"]'), /color:\s*var\(--text\)/, 'the lane in view is in the text colour');
   assert.match(decls('.tab'), /border:\s*0/, 'no box round a lane\'s name');
   assert.match(decls('.tab'), /border-radius:\s*0;/, 'no tab corners, so a tap in a corner of its box lands');
-  assert.doesNotMatch(decls('.tab[aria-selected="true"]'), /background|border/, 'the lane in view isn\'t a tab joined to its lane (0457)');
+  assert.doesNotMatch(decls('.tab[aria-selected="true"]'), /background/, 'the lane in view isn\'t a tab joined to its lane (0457)');
 });
 
 // ---------- AC2 ----------
@@ -54,7 +54,7 @@ test('0477 AC2: Build shows how many tickets need you, in the colour the tab\'s 
     click(p.byId(TAB[lane]));
     assert.deepEqual(open(p), [lane]);
     assert.equal(p.byId('build-needs').textContent, '3', `${lane} in view: the number`);
-    assert.equal(label(), 'Build, 3 needs you', `${lane} in view: its accessible name`);
+    assert.match(label(), /^Build, \d+ tickets?, 3 needs you$/, `${lane} in view: its accessible name (0582: with its count)`);
   }
   p.set(board({ word: 'Needs you 12', tone: 'bad' }));
   await refresh(p);
@@ -63,7 +63,7 @@ test('0477 AC2: Build shows how many tickets need you, in the colour the tab\'s 
     p.set(board({ word, tone: 'idle' }));
     await refresh(p);
     assert.equal(p.byId('build-needs').textContent, '', `"${word}": no number`);
-    assert.equal(label(), 'Build', `"${word}": its name is Build`);
+    assert.match(label(), /^Build, \d+ tickets?$/, `"${word}": its name is Build and its count (0582)`);
   }
 });
 
@@ -91,7 +91,7 @@ test('0477 AC3: each lane in the strip is a button Tab reaches, Enter or Space p
 
 // ---------- AC1, AC3 and AC4 in a real browser ----------
 
-test('0477 AC1, AC3, AC4: in a real browser the strip is one row at most 32 px tall at every width from 320 px, each lane a 44 × 44 px tap target, pressing one slides to it, and a fourth lane fits with no change to the styles', skip, async () => {
+test('0477 AC1, AC3, AC4: in a real browser the strip is one row at most 45 px tall (0582: 44 px tabs and its edge) at every width from 320 px, each lane a 44 × 44 px tap target, pressing one slides to it, and a fourth lane fits with no change to the styles', skip, async () => {
   const r = panelRepo();
   r.write('0010-ready.md', fm({ id: '"0010"', title: 'Ready ticket', status: 'ready' }), good);
   r.write('0020-draft.md', fm({ id: '"0020"', title: 'Draft ticket', status: 'draft' }), good);
@@ -130,7 +130,7 @@ test('0477 AC1, AC3, AC4: in a real browser the strip is one row at most 32 px t
     };
     const check = async (s, at, n) => {
       assert.equal(s.lanes.length, n, `${at}: ${n} lanes`);
-      assert.ok(s.height <= 32, `${at}: the strip is ${s.height} px tall`);
+      assert.ok(s.height <= 45, `${at}: the strip is ${s.height} px tall`);
       assert.ok(s.bezelBottom <= s.top, `${at}: under speck's screen`);
       for (const [i, l] of s.lanes.entries()) {
         assert.equal(l.top, s.lanes[0].top, `${at}, lane ${i + 1}: on the one row`);

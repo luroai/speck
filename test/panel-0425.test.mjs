@@ -40,9 +40,9 @@ const open = p => Object.keys(LANE).filter(l => !p.byId(LANE[l]).hidden);
 // ---------- AC2 ----------
 
 test('0425 AC2: each tab holds its name and nothing else, except Build\'s needs-you number', () => {
-  assert.equal(tabHtml('tab-plan'), '<span class="tab-name">Plan</span>');
-  assert.equal(tabHtml('tab-build'), '<span class="tab-name">Build</span><span class="needs" id="build-needs"></span>');
-  assert.equal(tabHtml('tab-shipped'), '<span class="tab-name">Shipped</span>');
+  assert.equal(tabHtml('tab-plan'), '<span class="tab-name">Plan</span><span class="tab-n" id="tab-plan-n"></span>'); // 0582: with its count
+  assert.equal(tabHtml('tab-build'), '<span class="tab-name">Build</span><span class="tab-n" id="tab-build-n"></span><span class="needs" id="build-needs"></span>');
+  assert.equal(tabHtml('tab-shipped'), '<span class="tab-name">Shipped</span><span class="tab-n" id="tab-shipped-n"></span>');
   assert.match(css(), /\.tab \.needs \{ color: var\(--bad\); \}/, 'the number is in the panel\'s crimson');
   assert.match(css(), /\.tab \{[^}]*white-space: nowrap;/, 'a tab never wraps its name');
 });
@@ -65,7 +65,7 @@ test('0425 AC2: with the Foreman reading "Needs you <n>", Build shows <n> alone,
     p.set(board({ word, tone: 'idle' }));
     await refresh(p);
     assert.equal(p.byId('build-needs').textContent, '', `"${word}": no number`);
-    assert.equal(label(), 'Build', `"${word}": its name is Build`);
+    assert.match(label(), /^Build, \d+ tickets?$/, `"${word}": its name is Build and its count (0582)`);
   }
 });
 

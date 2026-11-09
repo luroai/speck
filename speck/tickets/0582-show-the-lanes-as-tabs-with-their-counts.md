@@ -42,6 +42,8 @@ The lanes are shown as four tabs with their counts, and the open one is plain to
 - Today: `nav.tabs#tabs` in `templates/panel.html`, drawn by `openTab` and `drawTabs` in `templates/panel-header.js`, with the swipe code beside them (`placeLanes`, `slideFrom`, `stepLane`), styled in `templates/panel-header.css`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: at 320 px the names were cut short with real counts, so the row's padding and the count's size came down, with a real-browser test at that width; tabs that touched took a press meant for a neighbour, so they keep a 2 px gap.
+- Build's red needs-you number stays after its count: the ticket doesn't ask to remove it and its tests still hold. The bar has said the same since 0580, so it may be worth dropping.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -54,3 +56,4 @@ The lanes are shown as four tabs with their counts, and the open one is plain to
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Tests updated for the new look (AC5): `test/panel-0410.test.mjs` (Plan's tab now has a count), `test/panel-0425.test.mjs` (tab contents, Build's accessible name), `test/panel-0477.test.mjs` (strip height, open tab's border, accessible name, real-browser height), `test/panel-0481.test.mjs` (the bar is under the whole tab in the accent), `test/panel-0135.test.mjs` (each tab's children).

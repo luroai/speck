@@ -12,23 +12,28 @@ const headerCss = () => fs.readFileSync(path.join(ROOT, 'templates', 'panel-head
 // The declarations of every plain rule in the header's styles whose selectors include `sel`.
 const decls = sel => [...headerCss().matchAll(/([^{}]+)\{([^}]*)\}/g)].filter(m => m[1].split(',').map(s => s.trim()).includes(sel)).map(m => m[2]).join(';');
 
-test('0481 AC1: the open lane\'s name has a bar under it in the text colour, the others none, and every name keeps its weight and size', () => {
+// 0582: the bar is under the whole tab now, in the accent; a transparent one under the others, so nothing moves.
+test('0481 AC1: the open lane has a bar under it in the accent, the others none showing, and every name keeps its weight and size', () => {
   const open = decls('.tab[aria-selected="true"] .tab-name');
-  assert.match(open, /border-bottom:\s*(\d+)px solid currentColor/, 'a solid bar under the open lane\'s name, in its colour');
-  assert.ok(Number(open.match(/border-bottom:\s*(\d+)px/)[1]) >= 2, 'at least 2 px tall');
+  assert.match(decls('.tab'), /border-bottom:\s*2px solid transparent/, 'each tab has room for the bar');
+  assert.match(decls('.tab[aria-selected="true"]'), /border-bottom-color:\s*var\(--accent\)/, 'the open lane\'s shows, in the accent');
   assert.match(decls('.tab[aria-selected="true"]'), /color:\s*var\(--text\)/, 'the open lane in the text colour');
   assert.match(decls('.tab'), /color:\s*var\(--muted\)/, 'the others muted');
-  assert.doesNotMatch(decls('.tab .tab-name'), /border/, 'no bar on the other lanes\' names');
+  assert.doesNotMatch(decls('.tab .tab-name'), /border/, 'no bar on the names themselves');
   assert.doesNotMatch(open, /font|letter-spacing|padding-(left|right)|margin/, 'the open name keeps its weight, size and width');
 });
 
 // The strip and each lane in it: the name's box, its bar, its colours and the button's box.
 const measure = b => b.js(`(() => {
   const nav = document.getElementById('tabs'), r = nav.getBoundingClientRect();
-  return { height: r.height, bg: getComputedStyle(nav).backgroundColor, lanes: [...nav.querySelectorAll('[role="tab"]')].map(t => {
-    const n = t.querySelector('.tab-name'), s = getComputedStyle(n), nb = n.getBoundingClientRect(), tb = t.getBoundingClientRect();
+  const probe = nav.appendChild(document.createElement('i'));
+  probe.style.color = 'var(--accent)';
+  const accent = getComputedStyle(probe).color;
+  probe.remove();
+  return { height: r.height, accent, bg: getComputedStyle(nav).backgroundColor, lanes: [...nav.querySelectorAll('[role="tab"]')].map(t => {
+    const n = t.querySelector('.tab-name'), s = getComputedStyle(n), own = getComputedStyle(t), nb = n.getBoundingClientRect(), tb = t.getBoundingClientRect();
     return { id: t.id, open: t.getAttribute('aria-selected') === 'true', colour: getComputedStyle(t).color, weight: s.fontWeight, size: s.fontSize,
-      bar: s.borderBottomStyle === 'none' ? 0 : parseFloat(s.borderBottomWidth), barColour: s.borderBottomColor, barStyle: s.borderBottomStyle,
+      bar: own.borderBottomStyle === 'none' || own.borderBottomColor === 'rgba(0, 0, 0, 0)' ? 0 : parseFloat(own.borderBottomWidth), barColour: own.borderBottomColor, barStyle: own.borderBottomStyle,
       nameLeft: nb.left, nameWidth: nb.width, textWidth: n.scrollWidth, left: tb.left, width: tb.width, height: tb.height,
       needs: t.querySelector('.needs') && { colour: getComputedStyle(t.querySelector('.needs')).color, left: t.querySelector('.needs').getBoundingClientRect().left } };
   }) };
@@ -55,7 +60,7 @@ test('0481 AC1–AC4: in a real browser at 390 px, in both looks, the bar is und
     const check = async (lane, at) => {
       await b.until(`document.getElementById('tab-${lane}').getAttribute('aria-selected') === 'true' && !document.querySelector('main').dataset.slide`, `${at}: ${lane} to open`, 3000);
       const s = await measure(b);
-      assert.equal(s.height, 32, `${at}: the strip is 32 px tall`);
+      assert.ok(s.height >= 44 && s.height <= 45, `${at}: the strip is ${s.height} px tall`);
       for (const l of s.lanes) {
         assert.ok(l.width >= 44 && l.height >= 44, `${at}, ${l.id}: ${l.width} × ${l.height} px`);
         assert.equal(l.weight, '600', `${at}, ${l.id}: its weight`);
@@ -63,8 +68,7 @@ test('0481 AC1–AC4: in a real browser at 390 px, in both looks, the bar is und
         if (l.open) {
           assert.ok(l.bar >= 2, `${at}, ${l.id}: a bar ${l.bar} px tall under it`);
           assert.equal(l.barStyle, 'solid');
-          assert.equal(l.barColour, l.colour, `${at}, ${l.id}: the bar in the name's colour`);
-          assert.ok(Math.abs(l.nameWidth - l.textWidth) < 1, `${at}, ${l.id}: the bar as wide as the name (${l.nameWidth} against ${l.textWidth})`);
+          assert.equal(l.barColour, s.accent, `${at}, ${l.id}: the bar in the accent`);
           // AC2: with the colours removed, only lightness is left: the bar stands out from the strip behind it
           const [hi, lo] = [lum(l.barColour), lum(s.bg)].sort((x, y) => y - x);
           assert.ok((hi + 0.05) / (lo + 0.05) >= 3, `${at}, ${l.id}: the bar shows without its colour (${l.barColour} on ${s.bg})`);
