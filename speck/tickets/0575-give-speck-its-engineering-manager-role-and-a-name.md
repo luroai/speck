@@ -1,7 +1,7 @@
 ---
 id: "0575"
 title: Let you name speck, your engineering manager                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T17:42:11.358Z"
 ---
 # 0575 · Let you name speck, your engineering manager
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck's watcher acts like an engineering manager (it takes the calls, unblocks builds and tells you what it did) but nothing says so: the Settings view calls its group Watching and describes its settings one by one, and the docs never say what its job is. Nor can you name it, though people who work with it daily, like the user, think of it by a name of their own.
@@ -49,7 +49,7 @@ speck is described everywhere as your engineering manager, with a short account 
 - Self-check: spaces at the end of a name are dropped when it's saved or read, so a name never ends up as "Virgil 's agent", with a test; the brief's sentence that placed the switch in this group now says it's the Auto-build switch, as the page draws it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck now says what it is: your engineering manager, the one that gets a ready ticket shipped and only asks you when there's no clear answer. You can give it a name of your own for each project. To see it, open Settings: the group that was called Watching is now Your engineering manager, with the name as its first setting. Type a name and save, then press the info button on watch, and the explanation uses that name. For now the name only appears in those explanations: speck's messages and the panel's cards still say speck until the next ticket.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,3 +59,80 @@ speck is described everywhere as your engineering manager, with a short account 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7bc4b4b04d48f1a81e9cd5854ca9bc3b7330e038",
+    "session": "fresh",
+    "thread_id": "01a1c170-f371-7530-b760-edee62228205",
+    "builder_response": "- Tests run: speck test --related with test/foreman-0285.test.mjs test/foreman-agent-0287.test.mjs test/foreman-cursor-0333.test.mjs test/foreman-fix-0286.test.mjs test/panel-0257.test.mjs test/panel-0258.test.mjs test/panel-0368.test.mjs test/panel-0451.test.mjs test/settings-0370.test.mjs test/settings-0381.test.mjs test/settings-0396.test.mjs test/settings-0407.test.mjs test/settings-builder-effort-0402.test.mjs test/settings-foreman-0348.test.mjs test/settings-groups-0406.test.mjs test/settings-info-0405.test.mjs test/settings-models-0369.test.mjs test/settings-provider-0393.test.mjs test/settings-roles-0400.test.mjs test/settings-roles-0403.test.mjs test/speck-name-0485.test.mjs test/speck-name-0575.test.mjs test/watch-decide-0564.test.mjs test/watch-settings-0487.test.mjs (and every existing test file naming a changed file, as --related chose). 2346 passed, 0 failed, 3 skipped.\n- AC5 (no test that passed before fails) has no test of its own: the related run above covers it, and speck ship runs the whole suite.\n- Existing tests changed only where this ticket changes what they check: the group title 'Watching' became 'Your engineering manager' (in fixtures and assertions), and speck_name was added to the lists of settings (settings count 19 to 20, EDITABLE, group keys). No assertion was removed.\n- Also changed in docs/brief.md: the sentence saying the first group, Watching, has the speck run switch now says the Auto-build switch, as the page draws it, with the group under it.\n- speck_name's value is checked in checkConfigValue, so the CLI and the panel's Save refuse the same things. It's a project setting, not one of MACHINE_SETTINGS.\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 158129,
+      "cached_input_tokens": 99968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 882,
+      "reasoning_output_tokens": 92
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 58161,
+      "cached": 99968,
+      "write": 0,
+      "output": 882
+    },
+    "cost_usd": 0.1351388,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T17:53:18.829Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/config.mjs checkConfigValue validates and trims names; scripts/core.mjs speckNameOf supplies the default. Passing 0575 AC1 tests cover CLI persistence, allowed names and rejection without changes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "SETTING_GROUPS puts speck_name first in Your engineering manager; panel templates retain its position beneath Auto-build. Passing AC2 tests cover rendering and saving. The explanation describes the role and says it can be called whatever you like."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs namedExplain and explainFully substitute the configured name in all four watch explanations. Passing AC3 tests cover Virgil, the speck fallback and config show."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md's Your engineering manager section explains the role, distinguishes the owner, own agent, builder and reviewer, and names speck_name and all watch settings; its settings facts have a passing test. README's opening paragraph includes the requested sentence."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified the recorded test output: 2346 passed, 0 failed, 3 skipped. Existing test changes track the new group title and setting without weakening assertions."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "You can now give speck a project-specific name through the command line or Settings. Its engineering manager role is explained in Settings and the docs, and the watch settings use the chosen name. The tests pass, and I found no blocking issues or unrelated changes."
+  }
+}
+```
+
+</details>
