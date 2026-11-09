@@ -46,7 +46,9 @@ The lanes are shown as four tabs with their counts, and the open one is plain to
 - Build's red needs-you number stays after its count: the ticket doesn't ask to remove it and its tests still hold. The bar has said the same since 0580, so it may be worth dropping.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The small row of lane names under the bar is now four clear tabs: Capture, Plan, Build and Shipped, each with how many it holds. The open tab has a coloured underline and its name stands out, and the counts keep up as work moves through. Press a tab, swipe or use the arrow keys, and the underline moves with you.
+
+To see it, open the panel and change lanes. Worth a look: Build can show two numbers, its count and the red number of tickets that need you. There's a note in the inbox suggesting the red one goes, since the bar already says it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +59,8 @@ The lanes are shown as four tabs with their counts, and the open one is plain to
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Tests updated for the new look (AC5): `test/panel-0410.test.mjs` (Plan's tab now has a count), `test/panel-0425.test.mjs` (tab contents, Build's accessible name), `test/panel-0477.test.mjs` (strip height, open tab's border, accessible name, real-browser height), `test/panel-0481.test.mjs` (the bar is under the whole tab in the accent), `test/panel-0135.test.mjs` (each tab's children).
+
+Follow-ups: `speck/ideas/2026-11-09-drop-build-s-needs-you-number-from-its-tab.md`. Skipped as a duplicate: the 0517 AC3 timing test failing under load, already in `speck/ideas/2026-11-08-steady-the-0517-ac3-frame-time-test-under-load.md`.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +142,89 @@ Tests updated for the new look (AC5): `test/panel-0410.test.mjs` (Plan's tab now
     ],
     "escalation_question": "",
     "summary": "The four tabs show live counts, clearly mark the open lane and preserve navigation and screen-reader support. Their tests cover the requested behaviour. Approval is held pending a clean verification run because an existing slide responsiveness test failed."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8ad3751bdee3391798c470f52e6da281e1394385",
+    "session": "continued",
+    "thread_id": "01a1c1f8-ed38-7fe0-96d5-eee62dfde850",
+    "builder_response": "- Tests run: test/panel-0582.test.mjs test/panel-0054.test.mjs test/panel-0067.test.mjs test/panel-0134.test.mjs test/panel-0135.test.mjs test/panel-0140.test.mjs test/panel-0161.test.mjs test/panel-0162.test.mjs test/panel-0165.test.mjs test/panel-0213.test.mjs test/panel-0410.test.mjs test/panel-0417.test.mjs test/panel-0418.test.mjs test/panel-0425.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0440.test.mjs test/panel-0449.test.mjs test/panel-0453.test.mjs test/panel-0465.test.mjs test/panel-0467.test.mjs test/panel-0469.test.mjs test/panel-0474.test.mjs test/panel-0476.test.mjs test/panel-0477.test.mjs test/panel-0478.test.mjs test/panel-0480.test.mjs test/panel-0481.test.mjs test/panel-0514.test.mjs test/panel-0520.test.mjs test/panel-0537.test.mjs test/panel-0582.test.mjs test/panel.test.mjs test/speck-name-0485.test.mjs , then test/panel-0517.test.mjs in a run of its own. The attached output is the first run and that one, joined. Both passed: 425 pass and 0 fail, then panel-0517 with 0 fail, its first and only attempt after the first run (load average about 12).\n- F1: no code changed. The 0517 AC3 timing test is the only one that failed, and it passes when it isn't competing with 33 other files on a loaded machine. The code it measures, the slide, is unchanged; this ticket adds only eight writes to drawTabs, which the slide doesn't wait on. I haven't shown it can't ever be slower under load, but a clean run of it is attached as asked.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 205890,
+      "cached_input_tokens": 170880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1339,
+      "reasoning_output_tokens": 80
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4150,
+      "cached": 88192,
+      "write": 0,
+      "output": 572
+    },
+    "cost_usd": 0.0228392,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T20:22:59.574Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.html provides the four named tabs and count elements. panel-header.css sets the accent underline, selected text colour, muted inactive colour and 44 px minimum height. Passing panel-0582 AC1 tests include a real-browser check at 320 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "openTab and drawTabs synchronise lane selection with the underline. Passing panel-0582 AC2 tests exercise tab presses, swiping, trackpad scrolling and arrow keys."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel.html supplies tablist/tab roles; drawTabs updates aria-selected and accessible names. The panel-0582 AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "render calls drawTabs(m) with the current board model. Passing panel-0582 AC4 tests verify updated counts after a board refresh and preserved counts when changing lanes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the five existing test files updated for the new appearance. Verified /tmp/speck-0582-tests.txt contains 425 passes and zero failures in the first run, followed by all 11 panel-0517 tests passing, including the previously failing responsiveness test."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0517.test.mjs",
+        "issue": "The previous verification run failed the existing slide responsiveness test.",
+        "suggested_fix": "Provide fresh passing verification, including the existing responsiveness assertion without weakening it.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The four tabs show live lane counts and clearly underline the open lane. Navigation and screen-reader support remain covered. Fresh verification passes, including the previously failing responsiveness test; no blocking concerns remain."
   }
 }
 ```
