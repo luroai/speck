@@ -42,6 +42,9 @@ A ticket whose criteria changed says so in its row and its full view, with what 
 - 0565 added `criteria_changed` to `statusData` in `scripts/speck.mjs` and the "Criteria changed" part of the review pack in `scripts/pack.mjs`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes. Text that isn't what status gives (older status, odd values) was already covered by tests written with the feature.
+- `--related` doesn't pick up the panel test files, which reach the page through a support module, so this build also ran every test file that uses the Build row or the full view.
+- Marks: an added criterion is marked "added" rather than "changed", matching what the callout says about it. The 0565 sentence that a criterion changed moved from the live section into the callout, so it says it once.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

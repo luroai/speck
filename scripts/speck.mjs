@@ -16,7 +16,7 @@ import { cmdDiffstat } from './diffstat.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
 import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
-import { criteriaText, criteriaChange, shippedCriteriaChanged } from './criteria-changed.mjs';
+import { criteriaText, criteriaChange, criteriaChanges, shippedCriteriaChanged } from './criteria-changed.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdKeys } from './keys.mjs';
@@ -417,7 +417,7 @@ export function statusData(repo) {
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-    const criteria_changed = !['done', 'cancelled'].includes(t.fm.status) && criteriaChange(t.at || repo, cfg, t.fm.id) !== null; // 0565
+    const criteria_change = ['done', 'cancelled'].includes(t.fm.status) ? null : criteriaChange(t.at || repo, cfg, t.fm.id), criteria_changed = criteria_change !== null; // 0565
     const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed);
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null, builder = builderSpent(runs, t.fm.id), watch = watchSpent(runs, t.fm.id), delegated = delegatedSpent(runs, t.fm.id);
     return withForeman(t, fixing, { // 0317
@@ -452,6 +452,7 @@ export function statusData(repo) {
       auto_ship_why: shipsWhyNot, // 0583: why it won't ship by itself, or nothing when it will
       criteria_passed: criteriaPassed(ticketRounds(t.raw).rounds), // 0583: the ticks in its full view
       criteria_changed,
+      criteria_changes: criteriaChanges(criteria_change), // 0588: what each was when it was set ready and is now, or null
       rounds: ticketRounds(t.raw).rounds.map(r => ({
         round: r?.meta?.round ?? null,
         reviewer: r?.meta?.reviewer ?? null,

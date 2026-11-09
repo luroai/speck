@@ -86,12 +86,17 @@ export function shippedCriteriaChanged(repo, cfg, id, now = []) {
   }
 }
 
+// 0588: each change in `change`, as criteriaChange gives it: the criterion's number (null for one that names no criterion), the
+// kind of change, and its text when set ready and now. A change that leaves every criterion's words alone is the whole
+// section, before and now. Null when it's null.
+export const criteriaChanges = change => (!change ? null : change.items.length ? change.items : [{ n: null, change: 'order or layout', before: change.before, now: change.now }]);
+
 const cell = text => (text === null || text === '' ? '(none)' : text.replace(/\s*\n\s*/g, ' ').replace(/\|/g, '\\|'));
 
 // The review pack's Criteria changed part for `change`, or no lines when it's null.
 export function criteriaChangedLines(change) {
   if (!change) return [];
-  const rows = change.items.length ? change.items.map(c => [c.n, c.change, c.before, c.now]) : [['', 'order or layout', change.before, change.now]];
+  const rows = criteriaChanges(change).map(c => [c.n ?? '', c.change, c.before, c.now]);
   return ['', '### Criteria changed', "These aren't the acceptance criteria this ticket was set ready with, so it doesn't ship by itself.", '',
     '| # | Change | Set ready with | Now |', '|---|---|---|---|',
     ...rows.map(([n, what, before, now]) => `| ${n} | ${what} | ${cell(before)} | ${cell(now)} |`)];

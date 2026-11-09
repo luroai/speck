@@ -34,7 +34,7 @@ const SHORT = {
   'The build stopped': 'Build stopped',
   'Approved · turn on Auto-build to ship it': 'Turn on Auto-build',
   'Finished · read the result': 'Read the result',
-  'Approved · waiting for you because a criterion changed': 'Criterion changed',
+  'Approved · waiting for you because a criterion changed': 'Approved · waiting at Ship: a criterion changed', // 0588: the row says where it waits
 };
 // 0576: `name` is what you call speck, which a ticket's sentence and short words say when it will answer.
 function doing(t, shipping, name = 'speck') {
