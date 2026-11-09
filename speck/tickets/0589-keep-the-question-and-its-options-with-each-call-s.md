@@ -42,6 +42,7 @@ Each call speck makes keeps its question and its other options, and Decided for 
 - Today: `questionFacts` in `scripts/question-facts.mjs` reads `Recommended:`, `Changes what you'd notice:` and `Clear winner:`; `goWith` in `scripts/go-with.mjs` keeps `go_with`; the list is built in `scripts/foreman-took.mjs` (0568). Waits for 0576, which changes the same lines.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
