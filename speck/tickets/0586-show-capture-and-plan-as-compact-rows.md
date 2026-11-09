@@ -46,7 +46,9 @@ Capture and Plan list their items as compact rows, and an empty lane shows speck
 - AC3's "an empty lane" is read as Capture's and Plan's, as the ticket's title and problem say: Build keeps its 0449 message, and Shipped is 0587's.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Capture and Plan now list their items as short rows, in the same style as Build, instead of separate cards. Each row has a title that wraps instead of being cut off, then one small line: for a note, where it came from and when, and for a draft, its priority, size and risk. A note's star and a draft's Set ready button are right on the row, so you can set a draft ready without opening it first. When a lane is empty, speck is shown asleep with a line saying what lands there.
+
+To see it, open Capture and Plan in the panel; a lane with nothing in it shows speck asleep. Keep an eye on drafts that fail the ready check: their Set ready button is greyed out on the row, and hovering over it says why. Build and Shipped keep their own empty messages for now.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -64,6 +66,9 @@ Tests updated from the old look (AC5), each to the rows' new look with what it c
 - Rows, not bordered cards: `test/panel-0151.test.mjs` (AC4), `test/panel-0167.test.mjs`, `test/panel-0418.test.mjs`.
 - The priority, size and risk as words: `test/panel-0151.test.mjs` (AC3), `test/panel-0419.test.mjs` (AC1), `test/panel-0519.test.mjs`.
 - Long titles wrap: `test/panel-0419.test.mjs` (AC1, AC2 and AC5), `test/panel-0434.test.mjs`, `test/panel-0435.test.mjs` (AC5), `test/panel-0468.test.mjs`.
+
+Follow-ups:
+- Inbox: `speck/ideas/2026-11-09-show-speck-asleep-in-an-empty-build-and-shipped.md`.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -145,6 +150,89 @@ Tests updated from the old look (AC5), each to the rows' new look with what it c
     ],
     "escalation_question": "",
     "summary": "Capture and Plan now use compact rows, and their empty states show speck asleep. The controls and narrow-screen layout have useful passing tests. One layout defect needs fixing: opening a Capture note lets its title overlap its star."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5a7eeb87a734ce367bba7097114ce3d0ddce919c",
+    "session": "continued",
+    "thread_id": "01a1c245-071c-7533-a0f1-35ea33a07e7d",
+    "builder_response": "- Tests run: test/panel-0586.test.mjs test/panel-0038.test.mjs test/panel-0039.test.mjs test/panel-0056.test.mjs test/panel-0062.test.mjs test/panel-0151.test.mjs test/panel-0167.test.mjs test/panel-0214.test.mjs test/panel-0418.test.mjs test/panel-0419.test.mjs test/panel-0434.test.mjs test/panel-0435.test.mjs test/panel-0463.test.mjs test/panel-0467.test.mjs test/panel-0468.test.mjs test/panel-0519.test.mjs test/panel-0520.test.mjs test/panel-0536.test.mjs test/panel-0537.test.mjs test/panel.test.mjs \n- F1: fixed. templates/panel-cards.css: the full-width open-title rule now applies only to ticket rows (`.item.ticket.row.open`), so an open note keeps its title in column 1 beside its star. test/panel-0586.test.mjs's browser test opens the long note at 320 px and checks its title ends before the star.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 338592,
+      "cached_input_tokens": 272256,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1498,
+      "reasoning_output_tokens": 110
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6252,
+      "cached": 123008,
+      "write": 0,
+      "output": 554
+    },
+    "cost_usd": 0.0303448,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T21:46:20.909Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js captureItem and noteItem render the title, source/date, star and expandable text. panel-0586 AC1 tests pass; panel-0538 covers starring and unstarring. The passing browser test now verifies an open long title stays clear of its star."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticketHead renders the id, title, priority/size/risk line and Set ready control. Passing panel-0586 AC2 tests exercise priority changes, readiness, disabled controls and refusals."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "asleepLane and render provide sleeping faces and explanatory lines for empty Capture and Plan lanes. Passing panel-0586 AC3 tests cover both states and preservation across refreshes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-cards.css sets a 44 px minimum row height and wrapping titles. The passing panel-0586 AC4 browser test measures both lanes at 320 px, including the open note's separation from its star."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the updated appearance tests, whose changes retain relevant behaviour checks. The saved round-two output confirms 336 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css",
+        "issue": "An open Capture note's title previously shared grid space with its star.",
+        "suggested_fix": "Completed: the full-width open-title selector now applies only to ticket rows, and a passing browser assertion checks that an open Capture title stays clear of its star at 320 px.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Capture and Plan now display compact rows with working controls, wrapping titles and sleeping empty states. The title/star overlap is fixed and covered by a browser test. All criteria pass, with no remaining blocking concerns."
   }
 }
 ```
