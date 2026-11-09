@@ -127,6 +127,40 @@
     padding: calc(8px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     padding-left: max(16px, env(safe-area-inset-left), calc(16px + round(down, calc((100% - 720px) / 2), 1px))); padding-right: max(16px, env(safe-area-inset-right), calc(16px + round(up, calc((100% - 720px) / 2), 1px))); }
   #foreman[hidden] { display: none; }
+  /* 0596: the bridge, every project at once: a full view on the panel's own colours, with a dark bar like the header's. */
+  #bridge { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); color: var(--text); font-family: var(--font-ui);
+    padding: calc(8px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    padding-left: max(16px, env(safe-area-inset-left), calc(16px + round(down, calc((100% - 720px) / 2), 1px))); padding-right: max(16px, env(safe-area-inset-right), calc(16px + round(up, calc((100% - 720px) / 2), 1px))); }
+  #bridge[hidden] { display: none; }
+  #bridge .back { display: inline-block; padding: 2px 0; font-size: 14px; color: var(--run); cursor: pointer; }
+  #bridge .back::before { content: '‹'; margin-right: 4px; }
+  #bridge :focus-visible { outline-color: var(--text); }
+  #bridge .bridge-heading { margin: 4px 0 10px; font-size: 20px; line-height: 24px; font-weight: 600; }
+  #bridge .bridge-bar { padding: 8px 12px 12px; color: var(--bar-ink); background: var(--bar); border-radius: 12px; }
+  #bridge .bridge-top { display: flex; align-items: center; gap: 8px; }
+  #bridge .bridge-top svg { flex: none; }
+  #bridge .bridge-counts { min-width: 0; font-size: 14px; line-height: 20px; font-weight: 600; }
+  #bridge .bridge-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  #bridge .bridge-tile { display: flex; flex-direction: column; min-width: 0; padding: 8px; border: .5px solid var(--bar-line); border-radius: 8px; }
+  #bridge .bridge-tile .num { font-size: 20px; line-height: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  #bridge .bridge-tile .label { font-size: 12px; line-height: 16px; color: var(--bar-muted); }
+  #bridge .bridge-section { margin: 20px 0 8px; font-size: 14px; line-height: 20px; font-weight: 600; }
+  #bridge .bridge-none { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
+  #bridge .bridge-error { margin: 0 0 10px; font-size: 14px; line-height: 20px; color: var(--bad); }
+  #bridge .bridge-card, #bridge .bridge-row { box-sizing: border-box; width: 100%; min-height: 44px; font: inherit; color: inherit; text-align: left; background: var(--raise); border: 0; border-radius: 12px; cursor: pointer; }
+  #bridge .bridge-card { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; padding: 10px 12px; }
+  #bridge .bridge-where { font-size: 12px; line-height: 16px; color: var(--bad); }
+  #bridge .bridge-title { font-size: 14px; line-height: 20px; font-weight: 600; overflow-wrap: anywhere; }
+  #bridge .bridge-reason { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 20px; color: var(--muted); } /* one line */
+  #bridge .bridge-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 10px 12px; }
+  #bridge .bridge-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  #bridge .bridge-dot.needs { background: var(--needs-you); }
+  #bridge .bridge-dot.busy { background: var(--run); }
+  #bridge .bridge-dot.gone { background: transparent; box-shadow: inset 0 0 0 1px var(--muted); }
+  #bridge .bridge-about { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+  #bridge .bridge-name { font-size: 14px; line-height: 20px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #bridge .bridge-line { font-size: 12px; line-height: 16px; color: var(--muted); }
+  #bridge .bridge-spend { flex: none; font-size: 14px; line-height: 20px; font-variant-numeric: tabular-nums; }
   #foreman .top { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; min-width: 0; margin: 0; padding: 7px 6px 6px 10px; color: var(--bezel-ink); background: var(--bezel); border-radius: 12px 12px 0 0; }
   #foreman .top .title { display: inline-flex; align-items: center; gap: .25em; min-width: 0; font-family: var(--font-ui); font-weight: 600; font-size: 22px; line-height: 1; white-space: nowrap; color: inherit; } /* 0470: in the header's lettering (.bezel .name). In the title row's light ink, over every .title's text colour */
   #foreman .top .title::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; background: var(--speck-red); } /* speck's own dot, as the header's: decoration, so a screen reader passes over it */
