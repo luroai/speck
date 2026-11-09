@@ -43,6 +43,7 @@ With `watch: decide`, the watch agent takes its own recommendation instead of as
 - Waits for 0564, which adds `decide`, and 0566, which changes `scripts/foreman-agent.mjs`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: added the size-guard refusal to the docs, and refused a size guard's block so raising the limit can never be chosen.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
