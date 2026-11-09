@@ -56,3 +56,4 @@ The Pipeline log is a full view with filters, and speck's own lines carry its fa
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Tests of the old look updated to the full view (test files): `test/panel-0366.test.mjs` (the back link for Close), `test/panel-0472.test.mjs` (the view's opened check), `test/pipeline-0415.test.mjs` (the back link for Close), `test/pipeline-0458.test.mjs` (what the view holds, the back link), `test/pipeline-0459.test.mjs` (a row's classes and time), `test/pipeline-0470.test.mjs` (the back link above the heading, and a short window scrolls to the log rather than keeping the top in view), `test/pipeline-0479.test.mjs` (no dark frame round the log, the back link).
