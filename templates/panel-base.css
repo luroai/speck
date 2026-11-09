@@ -42,9 +42,9 @@
   body { padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left); }
   body { margin: 0; font: 400 14px/1.5 var(--font-ui); background: var(--bg); color: var(--text); }
   b, strong { font-weight: 600; }
-  a { color: var(--run); } /* 0426: every link, visited or not, in Cursor's blue (a pull request's, a ticket's text) */
+  a { color: var(--run); } /* 0426, 0577: every link, visited or not, in the accent (a pull request's, a ticket's text) */
   /* 0161: a clear ring round whatever the keyboard reaches */
-  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } /* 0426: Cursor's blue */
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; } /* 0577: the accent */
   code, .mono, .id { font-family: var(--font-mono); }
   code { font-size: 12px; color: var(--muted); }
 

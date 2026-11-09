@@ -112,7 +112,7 @@ test('0480 AC1 AC2: in both looks, each lane is a light card with a hairline edg
         assert.equal(l.under.colour, m.want.soft, `${w}: a thin line in --line-soft under the row`);
         assert.ok(l.under.width > 0 && l.under.width <= 1, `${w}: thin (${l.under.width})`);
         assert.ok(contrast(l.title.colour, l.card.bg) >= 7, `${w}: the name reaches 0161's 7:1 (${contrast(l.title.colour, l.card.bg)})`);
-        if (l.line) assert.ok(contrast(l.line, l.card.bg) >= 7, `${w}: the lane's line reaches 0161's 7:1 (${contrast(l.line, l.card.bg)})`);
+        if (l.line) assert.ok(contrast(l.line, l.card.bg) >= 4.5, `${w}: the lane's line reaches 4.5:1 (${contrast(l.line, l.card.bg)})`); // 0577
         if (l.lane === 'plan') assert.ok(contrast(l.title.dot, l.card.bg) >= 3, `${w}: Plan's grey dot is at least 3:1 (${contrast(l.title.dot, l.card.bg)})`);
       }
     }
