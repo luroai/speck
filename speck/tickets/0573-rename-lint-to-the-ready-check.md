@@ -44,6 +44,7 @@ speck calls the check that a ticket is ready to build the ready check, run with 
 - Today: the command is `cmdLint` in `scripts/speck.mjs` and `scripts/lint.mjs`; "lint" appears in `scripts/` (`core.mjs`, `ship.mjs`, `output.mjs`, `pack.mjs`, `stall.mjs`, `detect.mjs` and others), `skills/speck-build`, `skills/speck-ticket`, `skills/speck-review`, `docs/brief.md` and about 50 test files. The panel's heading is in `templates/panel.js` (`'Readiness'`).
 - Waits for every other ticket in 0.22.0, as it touches the skills, the brief and scripts they change.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
