@@ -45,6 +45,7 @@ speck is described everywhere as your engineering manager, with a short account 
 - Decided: the role is engineering manager, not tech lead (which writes the code and decides the design) or chief of staff (not an engineering role). The setting is `speck_name`, not `name`, so it can't be mistaken for the project's name.
 - Today: the group is `{ title: 'Watching', ... }` in `SETTING_GROUPS` in `scripts/settings.mjs`, and `templates/panel-settings.js` finds it by that title (`g.title === 'Watching'`) to put it under the speck run switch, so both change together. Settings are validated in `scripts/config.mjs`. 0485 to 0488 renamed the Foreman to speck; this keeps speck as the default name.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
