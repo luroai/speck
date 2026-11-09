@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T, full, round, boardPage, items, queueRows, shippedRows, top, click, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
-import { rules, selectors } from './support/css.mjs';
+import { rules, selectors, get } from './support/css.mjs';
 
 // ---------- 0465: the full ticket shows the step track and facts table its open card shows ----------
 
@@ -59,34 +59,31 @@ async function openFull(p, id) {
   assert.equal(pane(p).children[0].children[0].textContent, id, `${id} is in it`);
 }
 const paneSteps = p => pane(p).children[1];
+const backLink = p => p.all(pane(p)).find(n => n.className === 'close'); // 0583: the back link, in Close's place
 // A node as everything it shows: its tag, classes, tooltip, attributes and text, and the same for what's in it.
 const shape = n => [n.tagName, n.className ?? null, n.title ?? null, n.attrs ?? null, n.tagName === '#text' ? n.textContent : n._text, (n.children || []).map(shape)];
 const cells = f => f.children.map(c => [c.children[0].textContent, c.children[1].textContent]);
 
 const IDS = ['0801', '0812', '0811', '0813', '0814', '0901', '0903'];
 
-test('0465 AC1: the full view shows its card\'s open track and table, cell for cell, under the title and above Problem', async () => {
+test('0465 AC1: the full view shows its track and table under the title and above Problem', async () => {
   for (const id of IDS) {
     const p = page();
     await p.settle();
-    const [, track, facts] = await openCard(p, id);
     await openFull(p, id);
     const kids = pane(p).children;
     assert.equal(kids.length, 3, `${id}: its top, the track and table, then its body`);
     assert.equal(kids[1].className, 'steps', `${id}: the track and table under the top`);
     const [t, f] = kids[1].children;
-    assert.deepEqual(shape(t), shape(track), `${id}: the same track as its open card`);
-    assert.equal(f.children.length, id.startsWith('09') ? 8 : 6, `${id}: six cells, eight for a shipped one (0526)`);
-    // a draft's priority opens its menu on its card; in the full view it's the value alone, as 0143 had it
-    const asShown = (c, i) => (id === '0801' && i === 3 ? [c.children[0].textContent, c.children[1].textContent, c.children[1].title] : shape(c));
-    assert.deepEqual(f.children.map(asShown), facts.children.map(asShown), `${id}: the same cells as its open card`);
+    assert.equal(t.children.length, 4, `${id}: four bars (0583)`);
+    assert.equal(f.children.length, 6, `${id}: six cells (0583)`);
     assert.equal(f.className, 'facts');
     const body = kids[2];
-    assert.equal(body.children.find(n => n.tagName === 'h4').textContent, 'Problem', `${id}: Problem after them`);
+    assert.ok(body.children.some(n => n.tagName === 'h4' && n.textContent === 'Problem'), `${id}: Problem after them`);
   }
 });
 
-test('0465 AC1: in flight as 0461 and 0462 set out, not started as 0463 does, and shipped as 0464 does', async () => {
+test('0465 AC1: the bars and facts follow where each ticket is (0583)', async () => {
   const p = page();
   await p.settle();
   const seen = {};
@@ -94,31 +91,27 @@ test('0465 AC1: in flight as 0461 and 0462 set out, not started as 0463 does, an
     await openFull(p, id);
     const [t, f] = paneSteps(p).children;
     seen[id] = [t.className, t.children.map(s => s.className), cells(f)];
-    click(button(p, pane(p), 'Close'));
+    click(backLink(p));
     await p.settle();
   }
-  const grey = ['step build', 'step check', 'step review', 'step approve', 'step ship'];
-  const done = grey.map(s => `${s} done`);
-  assert.deepEqual(seen['0801'], ['track', grey, [['Status', 'Draft'], ['After', '—'], ['Ready check', '1 error · 2 warnings'], ['Priority', 'P3'], ['Size · risk', 'M · high'], ['Type', 'bug']]]);
-  assert.deepEqual(seen['0812'], ['track', grey, [['Status', 'Queued'], ['Waiting on', '1 left'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'fix']]]);
-  assert.deepEqual(seen['0811'], ['track', ['step build now', 'step check', 'step review', 'step approve', 'step ship'],
-    [['Now', 'Writing'], ['Builder', 'Claude'], ['Time', '01:05'], ['Priority', 'P1'], ['Size · risk', 'S · low'], ['Type', 'code']]]);
-  assert.equal(seen['0813'][0], 'track stopped', 'a blocked one\'s current step in crimson');
-  assert.deepEqual(seen['0814'][2].slice(0, 2), [['Now', 'Reviewing'], ['Reviewer', LONG]]);
-  assert.deepEqual(seen['0901'], ['track', done, [['Shipped', '11:50'], ['Time', '15 min'], ['Review rounds', '2'], ['Builder cost', '$2.91'], ['Reviewer cost', '—'], ['Total cost', '—'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]]);
-  assert.deepEqual(seen['0903'][2].map(c => c[1]), ['—', '—', '—', '—', '—', '—', '—', '—']);
+  // 0583: its own four bars and six facts, for every ticket
+  const none = ['step', 'step', 'step', 'step'];
+  const facts = (p1, size, risk) => [['Priority', p1], ['Size', size], ['Risk', risk]];
+  assert.deepEqual(seen['0801'], ['track', ['step waits', ...none.slice(1)], [...facts('P3', 'M', 'high'), ['Ships by itself', '–'], ['Builder', '–'], ['Reviewer', '–']]]);
+  assert.deepEqual(seen['0812'][1], ['step done', ...none.slice(1)]);
+  assert.deepEqual(seen['0811'][1], ['step done', 'step now', 'step', 'step']);
+  assert.deepEqual(seen['0811'][2].slice(0, 3), facts('P1', 'S', 'low'));
+  assert.deepEqual(seen['0813'][1], ['step done', 'step done', 'step waits', 'step'], 'a blocked one waits for you where it stopped');
+  assert.deepEqual(seen['0814'][2][5], ['Reviewer', `Codex · ${LONG}`]);
+  assert.deepEqual(seen['0901'][1], Array(4).fill('step done'));
+  assert.deepEqual(seen['0903'][1], Array(4).fill('step done'));
 });
 
 const plain = rules().filter(r => !r.at.length);
-test('0465 AC1: the track and the table look the same in the full view as on a Build card', () => {
-  const qs = plain.filter(r => selectors(r).some(s => /^\.q \.(track|facts)\b/.test(s)));
-  assert.ok(qs.length >= 20, 'the track\'s and table\'s rules');
-  for (const r of qs) {
-    // 0472: the full view's in a rule of its own, in the pop-ups' file, with the same declarations
-    for (const s of selectors(r).filter(s => s.startsWith('.q '))) {
-      assert.ok(plain.some(x => selectors(x).includes(s.replace('.q ', '#full-ticket ')) && JSON.stringify(x.decls) === JSON.stringify(r.decls)), `${s} also styles the full view's`);
-    }
-  }
+test('0465 AC1: 0583: the full view has its own four-step track, and a Build card keeps its five', () => {
+  const columns = sel => get(plain.find(r => selectors(r).includes(sel)), 'grid-template-columns');
+  assert.match(columns('#full-ticket .track'), /repeat\(4,/);
+  assert.match(columns('.q .track'), /repeat\(5,/);
 });
 
 test('0465 AC2: the tags under the title are gone, and the id, status and Close stay where they are', async () => {
@@ -129,25 +122,20 @@ test('0465 AC2: the tags under the title are gone, and the id, status and Close 
     const head = pane(p).children[0];
     assert.deepEqual(head.children.map(n => n.className), ['id', 'state', 'close', 'title'], `${id}: id, status, Close, then the title, and no tags`);
     assert.ok(!p.all(pane(p)).some(n => /\btag\b/.test(n.className || '')), `${id}: no tag anywhere in it`);
-    click(button(p, pane(p), 'Close'));
+    click(backLink(p));
     await p.settle();
   }
   assert.ok(!plain.some(r => selectors(r).some(s => /#full-ticket \.top \.tags/.test(s))), 'no rule for its tags');
 });
 
-test('0465 AC3: while it\'s open, the track and table move on with the ticket, its counter with the clock, and stay put when nothing changes', async () => {
+test('0465 AC3: while it\'s open, the track and table move on with the ticket, and stay put when nothing changes', async () => {
   const moved = TICKETS().map(t => (t.id === '0811' ? { ...t, status: 'reviewing', self_check: 'no changes', review_running: 1, reviewer: 'codex', review_model: 'gpt-x' } : t));
   const shipped = TICKETS().map(t => (t.id === '0811' ? { ...t, status: 'done', finished: ago(0), rounds: [round(1, 900)] } : t));
   const p = page([board(), board(), board(moved), board(moved), board(shipped)]);
   await p.settle();
   await openFull(p, '0811');
-  const first = paneSteps(p), sub = first.children[1].children[2].children[1].children[0];
-  assert.equal(cells(first.children[1])[0][1], 'Writing');
-  // the clock moves its counter on, in place, as the card's
-  clock = NOW + 10000;
-  for (const { fn, ms } of p.intervals.values()) if (ms === 1000) fn();
-  assert.equal(sub.textContent, '01:15', 'the counter moved on');
-  assert.equal(sub.parentNode.title, '01:15', 'and its tooltip');
+  const first = paneSteps(p);
+  assert.deepEqual(first.children[0].children.map(s => s.className), ['step done', 'step now', 'step', 'step']);
   // a refresh with nothing new keeps the nodes, so text selected in them stays
   p.timers.shift()();
   await p.settle();
@@ -158,10 +146,10 @@ test('0465 AC3: while it\'s open, the track and table move on with the ticket, i
   await p.settle();
   const now = paneSteps(p);
   assert.notEqual(now, first, 'drawn again');
-  assert.deepEqual(now.children[0].children.map(s => s.className), ['step build done', 'step check done', 'step review now', 'step approve', 'step ship']);
-  assert.deepEqual(cells(now.children[1]).slice(0, 2), [['Now', 'Reviewing'], ['Reviewer', 'gpt-x']]);
+  assert.deepEqual(now.children[0].children.map(s => s.className), ['step done', 'step done', 'step now', 'step']);
+  assert.deepEqual(cells(now.children[1])[5], ['Reviewer', 'Codex · gpt-x']);
   assert.equal(pane(p).children[0].children[1].textContent, 'reviewing');
-  assert.equal(pane(p).children[2].children.find(n => n.tagName === 'h4').textContent, 'Problem', 'its body still under it');
+  assert.ok(pane(p).children[2].children.some(n => n.tagName === 'h4' && n.textContent === 'Problem'), 'its body still under it');
   p.timers.shift()();
   await p.settle();
   assert.equal(paneSteps(p), now, 'kept again');
@@ -169,8 +157,7 @@ test('0465 AC3: while it\'s open, the track and table move on with the ticket, i
   p.timers.shift()();
   await p.settle();
   assert.equal(pane(p).hidden, false, 'still open');
-  assert.deepEqual(paneSteps(p).children[0].children.map(s => s.className), ['step build done', 'step check done', 'step review done', 'step approve done', 'step ship done']);
-  assert.equal(cells(paneSteps(p).children[1])[0][0], 'Shipped');
+  assert.deepEqual(paneSteps(p).children[0].children.map(s => s.className), Array(4).fill('step done'));
 });
 
 test('0465 AC3: a draft\'s readiness list still updates in place under the track and table', async () => {
@@ -181,7 +168,7 @@ test('0465 AC3: a draft\'s readiness list still updates in place under the track
   const body = pane(p).children[2];
   for (const _ of [1, 2]) { p.timers.shift()(); await p.settle(); }
   assert.equal(pane(p).children[2], body, 'the body is kept');
-  assert.equal(cells(paneSteps(p).children[1])[2][1], 'passes', 'its Lint cell followed');
+  assert.doesNotMatch(body.children[0].textContent, /error/, '0583: its readiness list followed');
 });
 
 // ---------- in a real browser ----------
@@ -212,7 +199,7 @@ const OPEN = id => `(async () => {
   return out;
 })()`;
 
-test('0465 AC4: in a real browser at 320 and 390 px and on a wide window, the full view\'s track and table keep to their rows, each value on one line', skip, async () => {
+test('0465 AC4: in a real browser at 320 and 390 px and on a wide window, the full view\'s track and table keep to their rows, each value within its cell (0583: it wraps)', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -230,14 +217,14 @@ test('0465 AC4: in a real browser at 320 and 390 px and on a wide window, the fu
         assert.ok(m.scroll[0] <= m.scroll[1] + 0.5 && m.scroll[2] <= m.scroll[3] + 0.5, `${at}: nothing past the track or table`);
         for (const s of m.steps) {
           assert.ok(Math.abs(s.top - m.steps[0].top) < 0.5, `${at}: the steps in one row`);
-          assert.ok(s.height <= s.line + 3 + 4 + 0.5, `${at}: each step's name on one line (${JSON.stringify(s)})`);
+          assert.ok(s.height <= s.line + 6 + 4 + 0.5, `${at}: each step's name on one line (${JSON.stringify(s)})`);
           assert.deepEqual(s.look, ['rgba(0, 0, 0, 0)', 'none', 'none', 'none', '0px', '0px'], `${at}: ${s.name} is a bar with its name, not a button`);
         }
         const [first] = m.cells;
         for (const [i, c] of m.cells.entries()) {
-          assert.ok(Math.abs(c.top - m.cells[i - i % 3].top) < 0.5, `${at}: ${c.label} is in its row`);
-          assert.ok(Math.abs(c.height - first.height) < 0.5 && Math.abs(c.width - first.width) < 1, `${at}: ${c.label} the same size as the others`);
-          assert.ok(c.nowrap && c.valueHeight <= c.line + 0.5, `${at}: ${c.label}'s value on one line (${c.valueHeight} px)`);
+          assert.ok(Math.abs(c.top - m.cells[i - i % 2].top) < 0.5, `${at}: ${c.label} is in its row, two to a row (0583)`);
+          assert.ok(Math.abs(c.width - first.width) < 1, `${at}: ${c.label} as wide as the others`);
+          assert.ok(!c.nowrap && c.valueHeight <= c.height + 0.5, `${at}: ${c.label}'s value wraps within its cell`);
         }
       }
     }

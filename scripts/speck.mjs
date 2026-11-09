@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ideaCounts } from './idea-counts.mjs';
-import { speckNameOf, TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketKind, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, reviewerCost, watchSpent, delegatedSpent, totalSpent, roundTokenCount, cmdSpend, cmdPrices, pausedSince, waitFields } from './core.mjs';
+import { criteriaPassed, speckNameOf, TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketKind, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, reviewerCost, watchSpent, delegatedSpent, totalSpent, roundTokenCount, cmdSpend, cmdPrices, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdPr, prShown } from './pull-request.mjs';
@@ -418,6 +418,7 @@ export function statusData(repo) {
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
     const criteria_changed = !['done', 'cancelled'].includes(t.fm.status) && criteriaChange(t.at || repo, cfg, t.fm.id) !== null; // 0565
+    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed);
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null, builder = builderSpent(runs, t.fm.id), watch = watchSpent(runs, t.fm.id), delegated = delegatedSpent(runs, t.fm.id);
     return withForeman(t, fixing, { // 0317
       ...t.fm,
@@ -446,7 +447,9 @@ export function statusData(repo) {
       lint_messages: { errors: lint.errors, warnings: lint.warnings },
       review_model: reviewerSettings(t.fm, cfg).model, // 0382: the model its review runs on, the ticket's or the config's, or null
       // 0167: whether speck ship --auto would ship it once approved, so the panel knows an approved one is waiting for you
-      auto_ship: autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed) === '', // 0356, 0565
+      auto_ship: shipsWhyNot === '', // 0356, 0565
+      auto_ship_why: shipsWhyNot, // 0583: why it won't ship by itself, or nothing when it will
+      criteria_passed: criteriaPassed(ticketRounds(t.raw).rounds), // 0583: the ticks in its full view
       criteria_changed,
       rounds: ticketRounds(t.raw).rounds.map(r => ({
         round: r?.meta?.round ?? null,

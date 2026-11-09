@@ -981,6 +981,12 @@ function toggleLog(id) {
   flip(openQueue, id);
   if (openQueue.has(id)) { loadLog(id); return; }
   logBoxes.delete(id);
+  closeLog(id);
+}
+// 0583: its log is shown by its open card, or by the build log's pop-up, which the full view can open with the card closed.
+const logWanted = id => openQueue.has(id) || buildLogOf === id;
+// Stops following a log nothing shows any more.
+function closeLog(id) {
   logEarly.delete(id);
   logRetry.delete(id);
   if (logPending.has(id)) { logPending.get(id).abort(); logPending.delete(id); }
@@ -1003,7 +1009,7 @@ async function loadLog(id) {
       log = { text: body.text, truncated: body.truncated === true, build: Number.isInteger(body.build) ? body.build : null, at: Number.isInteger(body.at) ? body.at : null };
   } catch { /* the server is down: keep what's shown */ }
   if (logPending.get(id) === ctl) logPending.delete(id);
-  if (logAsks.get(id) !== mine || !openQueue.has(id)) return; // a newer request has taken over, or it's closed
+  if (logAsks.get(id) !== mine || !logWanted(id)) return; // a newer request has taken over, or it's closed
   const early = logEarly.get(id) || [];
   logEarly.delete(id);
   if (!log) logRetry.add(id);
@@ -1021,7 +1027,7 @@ function logUpdate(u) {
   if (!u || typeof u !== 'object' || !Number.isInteger(u.build) || !Number.isInteger(u.at)) return;
   if (u.reset === true ? typeof u.text !== 'string' : !Number.isInteger(u.drop) || u.drop < 0 || !Array.isArray(u.lines) || !u.lines.every(l => typeof l === 'string')) return;
   const id = String(u.id);
-  if (!openQueue.has(id)) return;
+  if (!logWanted(id)) return;
   if (logPending.has(id)) { if (!logEarly.has(id)) logEarly.set(id, []); logEarly.get(id).push(u); return; }
   const old = logs.get(id);
   if (!old || old.failed || old.build === null) return;
@@ -1341,9 +1347,7 @@ function render() {
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks, depsSig(t)], update: queueUpdate });
   fill('queue', rows, m.queue.length ? '' : idleLane(m));
   if (m.queue.length) idleClock(null, null);
-  const pt = paneTicket, paneSub = pt ? paneCounter() : null; // 0465: the pane's counter moves on too
-  startCounters([...m.queue.flatMap((t, i) => (t.counter !== null && t.held_at === null && counterOf(rows[i]) ? [[counterOf(rows[i]), t.since, !!t.paused]] : [])),
-    ...(paneSub && pt.counter !== null && pt.held_at === null ? [[paneSub, pt.since, !!pt.paused]] : [])]);
+  startCounters(m.queue.flatMap((t, i) => (t.counter !== null && t.held_at === null && counterOf(rows[i]) ? [[counterOf(rows[i]), t.since, !!t.paused]] : [])));
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();
   queueIds = new Set(m.queue.map(t => String(t.id)));
@@ -1627,7 +1631,7 @@ function connect() {
     if (source !== s) return;
     heard();
     if (retry !== null) load(retry); else if (state) render();
-    for (const id of logRetry) if (openQueue.has(id) && queueIds.has(id)) loadLog(id);
+    for (const id of logRetry) if (logWanted(id) && (queueIds.has(id) || buildLogOf === id)) loadLog(id);
   });
   s.addEventListener('error', () => {
     if (source !== s) return;

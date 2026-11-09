@@ -10,7 +10,7 @@ const paneOpen = p => !pane(p).hidden && pane(p).children.length > 0;
 const isOpen = item => /\bopen\b/.test(item.className);
 const named = (p, node, text) => p.all(node).find(n => n.tagName === 'button' && n.textContent === text);
 const fullButton = (p, item) => named(p, item, 'Full ticket');
-const closeButton = p => named(p, pane(p), 'Close');
+const closeButton = p => p.all(pane(p)).find(n => n.className === 'close'); // 0583: the back link, in Close's place
 const itemOf = (p, id) => items(p).find(n => n.textContent.startsWith(id));
 const openTicket = (p, id) => { click(top(itemOf(p, id))); return itemOf(p, id); };
 const showFull = (p, id) => click(fullButton(p, itemOf(p, id)));
@@ -54,7 +54,7 @@ test('0054 AC2: Full ticket keeps the ticket open and shows its whole text in th
   assert.ok(paneOpen(p), 'the side pane opens');
   const text = pane(p).textContent;
   for (const x of ['0001', 'Ticket 0001', 'Problem of 0001.', 'Outcome of 0001.', 'Not this.', 'A <b>bold</b> note.']) assert.ok(text.includes(x), x);
-  assert.deepEqual(headings(p, pane(p)), ['Ready check', 'Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']); // Readiness: 0062
+  assert.deepEqual(headings(p, pane(p)), ['Ready check', 'Outcome', 'Acceptance criteria', 'Problem', 'Out of scope', 'Notes']); // Readiness: 0062
   const ol = p.all(pane(p)).find(n => n.tagName === 'ol');
   assert.deepEqual(ol.children.map(li => li.textContent), ['First criterion.', 'Second criterion.'], 'numbered criteria');
   assert.doesNotMatch(page(), /innerHTML|insertAdjacentHTML/, 'built as text, never read as HTML');

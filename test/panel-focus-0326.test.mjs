@@ -39,7 +39,7 @@ const named = (p, node, text) => node && p.all(node).find(n => n.tagName === 'bu
 const fullOf = (p, node) => named(p, node, 'Full ticket');
 const at0 = target => ({ target, stopPropagation() {} });
 const closers = {
-  'its Close button': p => click(p.all(pane(p)).find(n => n.tagName === 'button' && /\bclose\b/.test(n.className))),
+  'its Close button': p => click(p.all(pane(p)).find(n => /\bclose\b/.test(n.className))),
   Escape: p => p.key('Escape'),
   'a click outside': p => p.byId('full-backdrop').listeners.click(at0(p.byId('full-backdrop'))),
 };
