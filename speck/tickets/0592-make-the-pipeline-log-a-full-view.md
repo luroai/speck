@@ -15,6 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0591","0590"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T21:56:49.489Z"
+waited_seconds: 4044
 
 ---
 # 0592 · Make the Pipeline log a full view
