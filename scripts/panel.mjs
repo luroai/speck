@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { speckNameOf } from './core.mjs';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
 import { stopBuild } from './run.mjs';
-import { panelShip, panelChanges, requestBody, panelRunOn, panelRunOff, panelRunState, runLogPart, runLogAnswer } from './panel-run.mjs';
+import { panelShip, panelChanges, requestBody, panelRunOn, panelRunOff, panelRunState, runSince, runLogPart, runLogAnswer } from './panel-run.mjs';
 export { panelRunOn } from './panel-run.mjs';
 import { boardReader } from './panel-board.mjs';
 import { panelPack } from './pack.mjs';
@@ -278,7 +278,7 @@ export async function panelServer() {
     // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
-      const run = panelRunState(repo, runs), name = nameNow(), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets, name), base: baseNow(), name });
+      const run = panelRunState(repo, runs), name = nameNow(), foreman = foremanView({ run, record: readForeman(runs), since: runSince(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets, name), base: baseNow(), name });
       const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman: { ...foreman, mood: speckMood({ board: out.board, foreman, run }) }, ...runLogPart(runs), ...pageNow(), ...(projects ? projects.part() : {}) }); // 0415: run_log. 0516: projects
       return { status: 200, body: snap.body, snap, summary: () => projectSummary({ board: out.board, foreman, run }) }; // 0595: worked out when asked, as its 7 days move on
     }

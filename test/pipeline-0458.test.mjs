@@ -39,13 +39,13 @@ async function opened(board = state(), globals) {
 const buttons = (p, root) => p.all(root).filter(n => n.tagName === 'button').map(n => n.textContent);
 const RIGHT_NOW = ['Right now', 'Building', 'Ready, not building', 'Shipping', 'Blocked', 'Recommendations taken', 'Looked into'];
 
-test('0458 AC1: the pop-up has only its title, Close and the log', async () => {
+test('0458 AC1, since 0592: the view has only its back link, heading, speck\'s line, the filters and the log', async () => {
   const p = await opened();
   assert.equal(pop(p).hidden, false, 'open');
   const [top, body] = pop(p).children;
   assert.equal(pop(p).children.length, 2, 'its top and its body');
-  assert.equal(top.textContent, 'Pipeline logClose'); // 0470
-  assert.deepEqual(buttons(p, pop(p)), ['Close'], 'no button but Close');
+  assert.deepEqual(top.children.map(n => n.className), ['back', 'title', 'log-status', 'log-filters']); // 0592
+  assert.deepEqual(buttons(p, pop(p)), ['Everything', 'Decisions', 'Ships', 'Builds'], 'no button but the filters');
   const shown = body.children.filter(n => !n.hidden);
   assert.equal(shown.length, 1, 'only the log shows in the body');
   assert.match(shown[0].className, /\bfm-log\b/);
@@ -117,12 +117,12 @@ test('0458 AC3: a Foreman\'s question keeps its Answer and Dismiss buttons on it
   assert.match((await fullViewOf(p, '0006')).textContent, /Which one\?/, 'the blocked ticket\'s question is in its full view');
 });
 
-test('0458 AC4: the pop-up opens with the focus in it, and Close, Escape and pressing the screen again close it with the focus back on the screen', async () => {
-  for (const how of ['Close', 'Escape', 'screen']) {
+test('0458 AC4, since 0592: the view opens with the focus in it, and its back link, Escape and pressing the screen again close it with the focus back on the screen', async () => {
+  for (const how of ['Back', 'Escape', 'screen']) {
     const p = await opened();
     assert.equal(p.focused(), pop(p), `${how}: the focus is in the pop-up`);
     assert.equal(p.byId('run').attrs['aria-expanded'], 'true');
-    if (how === 'Close') p.press(p.all(pop(p)).find(n => n.tagName === 'button' && n.textContent === 'Close'));
+    if (how === 'Back') p.press(p.all(pop(p)).find(n => /\bback\b/.test(n.className)));
     else if (how === 'Escape') p.key('Escape');
     else p.press(p.byId('run'));
     await p.settle();

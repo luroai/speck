@@ -39,10 +39,10 @@ async function opened(board = state(), globals) {
 
 // ---------- AC1: one title, Pipeline log, beside Close, and no Log heading ----------
 
-test('0470 AC1: the top row reads Pipeline log beside Close, and no heading is under it', async () => {
+test('0470 AC1, since 0592: the top reads Pipeline log under its back link, and no heading is under it', async () => {
   const p = await opened();
   const [top, body] = pop(p).children;
-  assert.equal(top.textContent, 'Pipeline logClose');
+  assert.equal(top.children[0].textContent, 'Build');
   assert.equal(top.children.find(n => /\btitle\b/.test(n.className || '')).textContent, 'Pipeline log');
   assert.deepEqual(p.all(pop(p)).filter(n => /^h\d$/.test(n.tagName)).map(n => n.textContent), [], 'no Log heading');
   const log = body.children[1];
@@ -65,11 +65,11 @@ test('0470 AC1: the dialog\'s accessible name is Pipeline log', () => {
 
 // ---------- AC3: Close, Escape, a click outside and the focus as before ----------
 
-test('0470 AC3: opening puts the focus in the pop-up, and Close, Escape and a click beside it close it, the focus back on the screen', async () => {
-  for (const how of ['Close', 'Escape', 'beside']) {
+test('0470 AC3, since 0592: opening puts the focus in the view, and its back link, Escape and a click beside it close it, the focus back on the screen', async () => {
+  for (const how of ['Back', 'Escape', 'beside']) {
     const p = await opened();
-    assert.ok(within(p.focused(), pop(p)), `${how}: the focus is in the pop-up`);
-    if (how === 'Close') p.press(p.all(pop(p)).find(n => n.tagName === 'button' && n.textContent === 'Close'));
+    assert.ok(within(p.focused(), pop(p)), `${how}: the focus is in the view`);
+    if (how === 'Back') p.press(p.all(pop(p)).find(n => /\bback\b/.test(n.className)));
     else if (how === 'Escape') p.key('Escape');
     else {
       const e = { target: pop(p), clientX: 100, stopPropagation() {}, preventDefault() {} };
@@ -97,7 +97,7 @@ const FAKE = (board, log) => `(() => {
   window.EventSource = class { constructor() { this.l = {}; this.readyState = 1; setTimeout(() => this.l.message && this.l.message({ data: '1' }), 10); } addEventListener(t, f) { this.l[t] = f; } close() {} };
 })();`;
 
-test('0470 AC2 and AC3: in a real browser, the title is in Inter at 18 px or more, on one line beside Close from 320 px up, in both looks, and stays in view as the pop-up scrolls', chrome, async () => {
+test('0470 AC2 and AC3, since 0592: in a real browser, the title is in Inter at 18 px or more, on one line under its back link from 320 px up, in both looks, and a window too short for the log scrolls to it', chrome, async () => {
   const lines = Array.from({ length: 120 }, (_, i) => `10:${String(i % 60).padStart(2, '0')} line ${120 - i}`);
   const b = await browserPage('about:blank');
   try {
@@ -123,12 +123,11 @@ test('0470 AC2 and AC3: in a real browser, the title is in Inter at 18 px or mor
       for (const look of ['light', 'dark']) {
         const at = await b.js(`(() => {
           document.documentElement.dataset.theme = ${JSON.stringify(look)};
-          const v = document.getElementById('foreman'), top = v.querySelector('.top'), t = top.querySelector('.title'), close = top.querySelector('.close');
+          const v = document.getElementById('foreman'), top = v.querySelector('.top'), t = top.querySelector('.title'), back = top.querySelector('.back');
           const cs = getComputedStyle(t), name = getComputedStyle(document.querySelector('.bezel .bar-word')); // 0580: the bar's lettering, as the title row's was
-          const tr = t.getBoundingClientRect(), cr = close.getBoundingClientRect(), log = v.querySelector('.run-log').getBoundingClientRect();
+          const tr = t.getBoundingClientRect(), br = back.getBoundingClientRect(), log = v.querySelector('.run-log').getBoundingClientRect();
           return { family: cs.fontFamily, weight: cs.fontWeight, nameFamily: name.fontFamily, nameWeight: name.fontWeight, size: parseFloat(cs.fontSize),
-            rects: t.getClientRects().length, height: tr.height, lineHeight: parseFloat(cs.fontSize) * 1.6, sameRow: tr.top < cr.bottom && cr.top < tr.bottom,
-            besideClose: tr.right <= cr.left, headings: v.querySelectorAll('h1, h2, h3, h4, h5, h6').length, gap: log.top - top.getBoundingClientRect().bottom,
+            rects: t.getClientRects().length, height: tr.height, lineHeight: parseFloat(cs.fontSize) * 1.6, under: br.bottom <= tr.top, headings: v.querySelectorAll('h1, h2, h3, h4, h5, h6').length, gap: log.top - top.getBoundingClientRect().bottom,
             label: v.getAttribute('aria-label') };
         })()`);
         const where = `${width} px, ${look}`;
@@ -137,22 +136,20 @@ test('0470 AC2 and AC3: in a real browser, the title is in Inter at 18 px or mor
         assert.ok(at.size >= 18, `${where}: at least 18 px (${at.size})`);
         assert.equal(at.rects, 1, `${where}: on one line`);
         assert.ok(at.height <= at.lineHeight, `${where}: one line high (${at.height} px)`);
-        assert.ok(at.sameRow && at.besideClose, `${where}: beside Close`);
+        assert.ok(at.under, `${where}: under its back link`);
         assert.equal(at.headings, 0, `${where}: no heading`);
         assert.ok(at.gap >= 0 && at.gap <= 16, `${where}: the log box starts straight under the top row (${at.gap} px)`);
         assert.equal(at.label, 'Pipeline log');
       }
     }
-    // The top row stays in view while the pop-up and the log scroll.
-    // At 200 px high the log box's 12 lines don't fit under the top row, so the pop-up scrolls as well as the log.
+    // 0592: at 200 px high the log box's 12 lines don't fit under the top, so the view scrolls, taking the top with it, to reach them.
     await b.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 200, deviceScaleFactor: 1, mobile: true });
     const kept = await b.js(`(() => {
       const v = document.getElementById('foreman'), list = v.querySelector('ol.run-log');
       v.scrollTop = v.scrollHeight; list.scrollTop = 0;
-      const top = v.querySelector('.top').getBoundingClientRect();
-      return { scrolled: v.scrollTop, top: top.top, bottom: top.bottom };
+      return { scrolled: v.scrollTop, log: list.getBoundingClientRect().top };
     })()`);
-    assert.ok(kept.scrolled > 0, 'the pop-up scrolled');
-    assert.ok(kept.top >= -1 && kept.bottom <= 200, `the top row is still in view (${kept.top} to ${kept.bottom})`);
+    assert.ok(kept.scrolled > 0, 'the view scrolled');
+    assert.ok(kept.log < 200, `the log is in view (${kept.log})`);
   } finally { await b.close(); }
 });

@@ -146,7 +146,7 @@ const VIEWS = [
   ['Settings', `closeDoc(), closeFull(), document.getElementById('settings-open').click(), true`, `document.querySelectorAll('#settings .setting').length >= 10 && !!document.querySelector('#settings .save-all') && settingsView.catalogues !== 'loading'`, false, AGENTS_MS], // once its agents' models have come (0407)
   ['Settings, an explanation open, and its question about unsaved changes', `document.querySelector('#settings .setting .info').click(), settingsLeaving = { saving: false }, renderLeaving(), true`,
     `!!document.querySelector('#settings .setting p.explain:not([hidden])') && !document.getElementById('settings-unsaved').hidden && document.querySelectorAll('#settings-unsaved button').length === 3`],
-  ['the Pipeline log', `keepEditing(), closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .close')`],
+  ['the Pipeline log', `keepEditing(), closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .back')`],
 ];
 const frames = `new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`;
 const skip = !findChrome() ? 'needs Chrome or Chromium' : noGit;

@@ -39,19 +39,19 @@ function popPage(responses, globals = {}) {
   return p;
 }
 
-test('0479 AC4: on the fake page, the title row, the stale line\'s place and the log box are where the frame expects them, and Close, Escape and a click beside it still close it', async () => {
-  for (const how of ['Close', 'Escape', 'beside']) {
+test('0479 AC4, since 0592: on the fake page, the top, the stale line\'s place and the log box are where the view expects them, and its back link, Escape and a click beside it still close it', async () => {
+  for (const how of ['Back', 'Escape', 'beside']) {
     const p = popPage([state(), { lines: LINES.slice(0, 3), stamp: '1' }]);
     await p.settle();
     p.press(p.byId('run'));
     await p.settle();
     const box = p.byId('foreman'), [top, body] = box.children;
     assert.match(top.className, /\btop\b/);
-    assert.equal(top.children.map(n => n.className).join(' '), 'title close', 'the title, then Close at the end of the row');
+    assert.equal(top.children.map(n => n.className).join(' '), 'back title log-status log-filters', 'its back link, heading, speck\'s line and filters');
     assert.deepEqual(body.children.map(n => n.className), ['fm-stale', 'fm-log']);
     assert.equal(p.all(body.children[1]).filter(n => n.tagName === 'li').length, 3, 'the log\'s lines');
     assert.ok(within(p.focused(), box), `${how}: the focus is in it`);
-    if (how === 'Close') p.press(top.children[1]);
+    if (how === 'Back') p.press(top.children[0]);
     else if (how === 'Escape') p.key('Escape');
     else { const e = { target: box, clientX: 100, stopPropagation() {}, preventDefault() {} }; box.listeners.pointerdown(e); box.listeners.click(e); }
     assert.equal(box.hidden, true, `${how}: shut`);
@@ -92,14 +92,14 @@ async function openLog(b, width, height) {
 // Where everything is, and whether anything but the log box can scroll.
 const MEASURE = `(() => {
   const v = document.getElementById('foreman'), top = v.querySelector('.top'), body = v.querySelector('.fm-body'), log = v.querySelector('.run-log');
-  const t = top.querySelector('.title'), close = top.querySelector('.close'), stale = v.querySelector('.fm-stale');
+  const t = top.querySelector('.title'), back = top.querySelector('.back'), stale = v.querySelector('.fm-stale');
   const r = n => { const b = n.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; };
   const lane = [...document.querySelectorAll('main > section')].map(s => ({ s, b: s.getBoundingClientRect() })).find(x => x.b.width > 0);
   const ls = lane && getComputedStyle(lane.s), cs = getComputedStyle(top), bs = getComputedStyle(body), dot = getComputedStyle(t, '::before');
   const bezel = (() => { const d = document.createElement('div'); d.style.background = 'var(--bezel)'; document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; })();
   const ink = (() => { const d = document.createElement('div'); d.style.color = 'var(--bezel-ink)'; document.body.appendChild(d); const c = getComputedStyle(d).color; d.remove(); return c; })();
   const se = document.scrollingElement;
-  return { w: innerWidth, h: innerHeight, top: r(top), body: r(body), log: r(log), title: r(t), close: r(close), stale: stale.hidden ? null : r(stale),
+  return { w: innerWidth, h: innerHeight, top: r(top), body: r(body), log: r(log), title: r(t), back: r(back), stale: stale.hidden ? null : r(stale),
     laneFrame: lane ? { left: lane.b.left + parseFloat(ls.paddingLeft), right: lane.b.right - parseFloat(ls.paddingRight) } : null,
     laneSide: 4, // 0480: the lanes are light cards now, so the log keeps 0478's 4 px frame of its own
     bezel, topBg: cs.backgroundColor, bodyBg: bs.backgroundColor, corners: [cs.borderTopLeftRadius, cs.borderTopRightRadius, bs.borderBottomLeftRadius, bs.borderBottomRightRadius],
@@ -112,7 +112,7 @@ const MEASURE = `(() => {
     logScrolls: log.scrollHeight > log.clientHeight, logOverflow: getComputedStyle(log).overflowY };
 })()`;
 
-test('0479 AC1 and AC2: in a real browser at 390 × 844 and 1200 × 800 with 200 lines, the log is a lane card\'s frame filling the window, up to the lanes\' column, and only the log box scrolls', chrome, async () => {
+test('0479 AC1 and AC2, since 0592: in a real browser at 390 × 844 and 1200 × 800 with 200 lines, the view fills the window, up to the lanes\' column, and only the log box scrolls', chrome, async () => {
   const b = await browserPage('about:blank');
   try {
     await openLog(b, 390, 844);
@@ -135,23 +135,16 @@ test('0479 AC1 and AC2: in a real browser at 390 × 844 and 1200 × 800 with 200
         assert.ok(m.top.width <= 720, `${where}: no wider than the panel's column (${m.top.width})`);
         if (width >= 720) assert.ok(Math.abs(m.top.left - (width - m.top.right)) <= 1, `${where}: centred`);
         else assert.equal(m.top.left, 16, `${where}: across the window, with the lanes' 16 px sides`);
-        // A lane card's frame: its colour, thickness and corners.
-        assert.equal(m.topBg, m.bezel, `${where}: the title row is on --bezel`);
-        assert.equal(m.bodyBg, m.bezel, `${where}: so is the frame round the log`);
-        assert.deepEqual(m.side, [m.laneSide, m.laneSide, m.laneSide], `${where}: its sides and bottom are a lane frame's ${m.laneSide} px`);
-        assert.deepEqual(m.corners, ['12px', '12px', '12px', '12px'], `${where}: its corners are 12 px, as a lane frame's`);
-        assert.equal(m.log.left, m.body.left + m.laneSide); assert.equal(m.log.right, m.body.right - m.laneSide);
-        assert.equal(m.log.bottom, m.body.bottom - m.laneSide, `${where}: the log box fills the frame to its bottom side`);
-        // Its title row: speck's red dot, Pipeline log in the dot-matrix letters, and Close at its end.
+        // 0592: no dark frame: the log goes edge to edge in the column.
+        assert.notEqual(m.topBg, m.bezel, `${where}: the top isn't on --bezel`);
+        assert.equal(m.log.left, m.body.left); assert.equal(m.log.right, m.body.right);
+        assert.equal(m.log.bottom, m.body.bottom, `${where}: the log box fills the view to its bottom`);
+        // Its top: Pipeline log under the back link.
         assert.equal(m.titleText, 'Pipeline log');
-        assert.equal(m.titleColor, m.ink, `${where}: in the frame's light ink (${m.titleColor})`);
         assert.match(m.titleFont, /^"?Inter"?,/, `${where}: in Inter (0577)`);
         assert.equal(m.titleWeight, '600');
-        assert.equal(m.dot, m.nameDot, `${where}: speck's own dot`); // 0580: the header's dot is gone, and the log keeps its red
-        assert.ok(m.dotW > 0, `${where}: which shows`);
         assert.equal(m.titleRects, 1, `${where}: on one line`);
-        assert.ok(m.close.right <= m.top.right && m.top.right - m.close.right <= 8, `${where}: Close at the row's right-hand end`);
-        assert.ok(m.close.top < m.title.bottom && m.title.top < m.close.bottom, `${where}: on the title's row`);
+        assert.ok(m.back.bottom <= m.title.top, `${where}: under its back link`);
         // AC2: only the log box scrolls, and it takes the room left.
         assert.equal(m.pageScrolls, false, `${where}: the page doesn't scroll`);
         assert.equal(m.popScrolls, false, `${where}: nor the pop-up`);
@@ -179,7 +172,7 @@ test('0479 AC1 and AC2: in a real browser at 390 × 844 and 1200 × 800 with 200
         assert.equal(m.pageScrolls || m.popScrolls || m.bodyScrolls || m.topScrolls, false, `${where}: nothing but the log scrolls`);
         assert.equal(m.top.top, 8, `${where}: the frame's top`); assert.equal(m.body.bottom, height - 8, `${where}: its bottom`);
         assert.equal(m.titleRects, 1, `${where}: the title on one line`);
-        assert.ok(m.title.right <= m.close.left && m.close.right <= m.top.right, `${where}: the title and Close fit the row`);
+        assert.ok(m.title.right <= m.top.right, `${where}: the title fits the row`);
         assert.ok(m.log.height > 100, `${where}: the log box has room (${m.log.height})`);
       }
     }

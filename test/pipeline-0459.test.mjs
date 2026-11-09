@@ -36,14 +36,14 @@ test('0459 AC1: the log box has the build log\'s black background, light text, f
 
 // ---------- AC2: each line laid out as a build log's ----------
 
-test('0459 AC2: a line\'s time is in a column of its own with its text after it, and a line with no time starts under the text', async () => {
+test('0459 AC2, since 0592: a line\'s time is in a column of its own with its text after it, and a line with no time has none', async () => {
   const p = await opened(['10:17:22 Shipped 0457.', 'speck run will try it again once main has a new commit.', 'an old line from before 0460']);
   const rows = list(p).children;
-  assert.deepEqual(rows.map(r => r.className), ['ln msg timed', 'ln msg', 'ln msg']);
+  assert.deepEqual(rows.map(r => r.className), ['log-row msg', 'log-row msg', 'log-row msg']); // 0592
   const at = rows[0].children[0];
   assert.equal(at.className, 'at');
-  assert.equal(at.textContent, '10:17:22 ');
-  assert.equal(rows[0].textContent, '10:17:22 0457 shipped');
+  assert.equal(at.textContent, '10:17:22');
+  assert.equal(rows[0].textContent, '10:17:220457 shipped');
   assert.ok(rows.slice(1).every(r => !r.children.some(c => c.className === 'at')), 'no time column on a line with none');
   assert.match(css(), /\.foreman \.run-log \.ln \{ display: block; padding-left: 9ch;/, 'the text past a column for the time');
   assert.match(css(), /\.foreman \.run-log \.ln\.timed \{ text-indent: -9ch; \}/, 'the time pulled back into its column, on the first row only');

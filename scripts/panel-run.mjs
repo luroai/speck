@@ -135,6 +135,10 @@ const stillSays = s => `speck run (process${s.left.length === 1 ? '' : 'es'} ${s
 
 // speck run's state as the panel shows it: on while its lock names a live process, or while one being turned off is
 // still stopping, with the pid it's known by.
+// 0592: when speck run took its lock, which the process you started holds through every switch to new code, or null.
+export function runSince(runs) {
+  try { return fs.statSync(path.join(runs, 'run.lock')).mtime.toISOString(); } catch { return null; }
+}
 export function panelRunState(repo, runs = runsOf(repo)) {
   const run = runState(runs);
   if (run.on) return run;

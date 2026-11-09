@@ -100,17 +100,19 @@ test('0548 AC1: the button opens the pop-up titled "<id> build log", and the dia
 
 const shape = n => ({ tag: String(n.tagName).toLowerCase(), cls: n.className, kids: (n.children || []).filter(c => c.tagName !== '#text' && !/^(ol|li|p)$/i.test(c.tagName)).map(shape) });
 
-test('0548 AC2: the pop-up is the Pipeline log\'s own, with the same frame, title row, Close and log box', async () => {
+test('0548 AC2, since 0592: the build log keeps the pop-up\'s frame, title row, Close and log box, and the Pipeline log, now a full view, opens in the same element', async () => {
   const p = await poppedUp();
   const ours = shape(pop(p));
+  assert.equal(ours.cls, 'foreman', 'not the full view');
+  assert.deepEqual(ours.kids.map(n => n.cls), ['top', 'fm-body']);
+  assert.deepEqual(ours.kids[0].kids.map(n => n.cls), ['title', 'close']);
+  assert.deepEqual(ours.kids[1].kids.map(n => n.cls), ['fm-stale', 'fm-log']);
   p.key('Escape');
   await p.settle();
   p.press(p.byId('run'));
   await p.settle();
   assert.equal(pop(p).hidden, false, 'the Pipeline log opens in the same element');
-  const theirs = shape(pop(p));
-  ours.kids[1].kids[0].kids = theirs.kids[1].kids[0].kids = []; // the stale page's line, empty in both
-  assert.deepEqual(ours, theirs);
+  assert.equal(pop(p).className, 'foreman log-view');
   assert.equal(p.all(pop(p)).find(n => n.className === 'title').textContent, 'Pipeline log');
   assert.equal(pop(p).attrs['aria-label'], 'Pipeline log', 'named for the Pipeline log again');
 });

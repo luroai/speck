@@ -75,7 +75,7 @@ const VIEWS = [
   ['a document', `docOpen = { id: '0002', path: 'outputs/0002/plan.md', state: 'ok', text: '# Plan\\n\\nWords.' }, drawDoc(), true`, `!document.getElementById('doc-view').hidden && !!document.querySelector('#doc-view .close')`],
   ['Settings', `closeDoc(), closeFull(), document.getElementById('settings-open').click(), true`, `document.querySelectorAll('#settings .setting').length >= 10 && !!document.querySelector('#settings .save-all')`],
   ['Settings\' question about unsaved changes', `settingsLeaving = { saving: false }, renderLeaving(), true`, `!document.getElementById('settings-unsaved').hidden && document.querySelectorAll('#settings-unsaved button').length === 3`],
-  ['the Foreman', `keepEditing(), closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .close')`],
+  ['the Foreman', `keepEditing(), closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .log-filter')`],
 ];
 // Opens the panel at a size and pixel ratio, then each view in turn, calling `each(view, buttons)` with what MEASURE gives.
 async function eachView(b, port, width, dpr, each) {
@@ -146,7 +146,7 @@ const NAMED = [
   ['Settings', '#settings .close'],
   ['Settings', '#settings .save-all'],
   ['Settings\' question about unsaved changes', '#settings-unsaved .save-all'],
-  ['the Foreman', '#foreman .close'],
+  ['the Foreman', '#foreman .log-filter'], // 0592: its filters, as its back link is a link with no border
 ];
 const sidesShown = (png, r, dpr) => {
   const px = (x, y) => png.at(Math.max(0, Math.min(png.w - 1, x)), Math.max(0, Math.min(png.h - 1, y)));
@@ -162,7 +162,7 @@ const sidesShown = (png, r, dpr) => {
     right: side(along(T, B), y => [[R, y], [R - 1, y]], y => [R - 5, y]),
   };
 };
-test('0453 AC2: on a phone at a pixel ratio of 3, Full ticket (0587: on a Plan ticket), Close, Save, a document\'s button and the Foreman\'s Close show all four sides of their border', { skip }, async () => {
+test('0453 AC2: on a phone at a pixel ratio of 3, Full ticket (0587: on a Plan ticket), Close, Save, a document\'s button and the Pipeline log\'s filter show all four sides of their border', { skip }, async () => {
   const r = repo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');

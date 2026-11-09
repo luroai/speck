@@ -9,6 +9,7 @@ let focusBack = false; // 0326: the pane has closed, so the next render puts the
 let foremanOpen = false; // 0285: whether the Foreman's detail is open
 let decidedOpen = false, decidedBuilt = null, decidedLineSaid = null; // 0568: whether the Decided for you list is open, and what it was last drawn from. 0590: and what the line under the bar last said
 let runLog = null, runLogFor = null, runLogAsking = false, runLogShown, runLogDrawn = null; // 0415: runLogShown: the log's lines as drawn (runLogDrawn), joined, undefined when not drawn
+let runLogFilter = 'all', logFilters = [], logFace = null, logMood = null, logSaid = null; // 0592: the filter chosen in the Pipeline log, its buttons, and speck's face and line in it
 let buildLogOf = null; // 0548: the id of the ticket whose build log the Pipeline log's pop-up shows instead, or null
 let buildLogShown, buildLogDrawn = null, buildLogBuild = null; // 0548: as runLogShown and runLogDrawn, and the build they're from
 let packOf = null; // while the side pane shows a review pack instead: { id, state: 'loading' | 'ok' | 'none' | 'error', text }
@@ -769,21 +770,24 @@ function closeForeman() {
 // While it's open the page behind is held (holdPage), so only the pop-up can be clicked, scrolled or reached with Tab.
 // 0415: the Pipeline pop-up, with speck run's output as its Log section. 0458: the log is all it shows, apart from a
 // stale page's Reload page button above it. 0470: titled Pipeline log, with no Log heading over the log box.
-// 0548: or, while buildLogOf is set, a ticket's build log in its place (renderBuildLog).
+// 0548: or, while buildLogOf is set, a ticket's build log in its place (renderBuildLog). 0592: the Pipeline log is a full view
+// (pipelineFrame, class log-view) and only a build log is still the pop-up.
 function renderForeman(stale) {
   const box = $('foreman'), shows = foremanOpen ? 'run' : buildLogOf !== null ? `build ${buildLogOf}` : null;
   const was = !box.hidden && box.children.length > 0 && box.shows === shows;
   box.hidden = shows === null;
   box.shows = shows;
+  box.className = foremanOpen ? 'foreman log-view' : 'foreman';
   holdPage(pageHeld());
   holdPane(); // 0583
   if (shows === null) { box.replaceChildren(); return; }
   if (!foremanOpen) { renderBuildLog(was); return; }
   let body = was ? box.children[1] : null;
   if (!body) {
-    body = popFrame('Pipeline log', closeForeman);
+    body = pipelineFrame();
     runLogShown = undefined; runLogDrawn = null;
   }
+  drawLogStatus();
   const top = body.children[0];
   const lost = !stale && within(document.activeElement, top); // the Reload page button had the focus and goes
   top.hidden = !stale;
@@ -825,11 +829,12 @@ function drawRunLog() {
   if (key === runLogShown) return;
   runLogShown = key;
   // 0459: the oldest line at the top and the newest at the bottom, in a box of its own that scrolls. The server gives
-  // them newest first.
-  const lines = given && given.slice().reverse().map(String), was = sec.children[0];
+  // them newest first. 0592: only those of the filter chosen.
+  const all = given && given.slice().reverse().map(String), lines = all && runLogFiltered(all, runLogFilter);
   if (!lines || !lines.length) {
     runLogDrawn = null;
-    sec.replaceChildren(el('div', 'run-log', null, el('p', 'none', lines && runLogFor === null ? 'Reading speck run\'s log…' : 'speck run hasn\'t written anything yet.')));
+    const filtered = all && all.length && runLogFilter !== 'all' ? `No ${runLogFilter} in this log yet.` : null;
+    sec.replaceChildren(el('div', 'run-log', null, el('p', 'none', all && runLogFor === null ? 'Reading speck run\'s log…' : filtered || 'speck run hasn\'t written anything yet.')));
     return;
   }
   fillLog(sec, runLogDrawn, lines, runLogRow);
@@ -856,10 +861,12 @@ function fillLog(sec, drawn, lines, row, fresh = false, dropped = runLogDropped)
   if (follow) list.scrollTop = list.scrollHeight;
   else if (again) list.scrollTop += again.top - anchor.top;
 }
-// 0459: a line of the log, laid out as a build log's line (0422): its time, then its summary (runLogLine).
+// 0592: a line of the log as a row: its time, speck's face when it's the engineering manager's own, then its summary
+// (runLogLine) with its details under it (runLogDetails).
 function runLogRow(line) {
-  const p = runLogLine(line);
-  return el('li', `ln ${p.kind}${p.at ? ' timed' : ''}`, null, p.at ? el('span', 'at', p.at) : null, document.createTextNode(p.text));
+  const p = runLogLine(line), more = runLogDetails(line);
+  return el('li', `log-row ${p.kind}`, null, p.at ? el('span', 'at', p.at.trim()) : null, p.speck ? decidedFace('watching', 20) : null,
+    el('div', 'log-main', null, el('div', 'log-text', p.text), more.length ? el('div', 'log-more', more.join(' · ')) : null));
 }
 // How many lines dropped out at the top of the log as drawn (was) to make it now: the fewest d for which was, from line
 // d on, is how now starts, or null when it isn't at any d, as when speck run's log was started afresh.
@@ -871,6 +878,48 @@ function runLogDropped(was, now) {
     if (same) return d;
   }
   return null;
+}
+// 0592: the Pipeline log's frame: on top a back link to the lane it covers, its heading, speck's line and the filters, then its
+// body as a pop-up's has. Opening it always starts on Everything. Returns the body.
+function pipelineFrame() {
+  const box = $('foreman'), lane = openLane[0].toUpperCase() + openLane.slice(1), back = el('span', 'back', lane);
+  back.tabIndex = 0;
+  back.setAttribute('role', 'link');
+  back.setAttribute('aria-label', `Back to ${lane}`);
+  back.addEventListener('click', e => { e.stopPropagation(); closeForeman(); });
+  back.addEventListener('keydown', pressWithKeys);
+  runLogFilter = 'all';
+  logFilters = RUN_LOG_FILTERS.map(([key, label]) => {
+    const b = el('button', 'log-filter', label);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(key === runLogFilter));
+    b.addEventListener('click', e => { e.stopPropagation(); chooseLogFilter(key); });
+    return b;
+  });
+  logFace = globalThis.SpeckFace ? SpeckFace.draw({ mood: state && state.foreman && state.foreman.mood, size: 36 }) : null; // unlabelled, as its mood changes
+  logMood = logFace && globalThis.SpeckMood ? SpeckMood.watcher(mood => SpeckMood.change(logFace, mood)) : null;
+  const body = el('div', 'fm-body', null, el('div', 'fm-stale'), el('div', 'fm-log'));
+  box.setAttribute('aria-label', 'Pipeline log');
+  logSaid = el('span', 'log-said');
+  box.replaceChildren(el('div', 'top', null, back, el('span', 'title', 'Pipeline log'),
+    el('div', 'log-status', null, logFace, logSaid), el('div', 'log-filters', null, ...logFilters)), body);
+  return body;
+}
+// 0592: shows only the lines of this filter (RUN_LOG_FILTERS), scrolled to the newest.
+function chooseLogFilter(key) {
+  runLogFilter = key;
+  RUN_LOG_FILTERS.forEach(([k], i) => logFilters[i].setAttribute('aria-pressed', String(k === key)));
+  runLogShown = undefined; runLogDrawn = null;
+  drawRunLog();
+}
+// 0592: speck's line at the top of the Pipeline log, in the pipeline's mood: whether speck run is on, since when, and the build
+// slots in use.
+function drawLogStatus() {
+  if (logMood) logMood(state);
+  const f = foremanOf(state), n = f.building.length, since = Date.parse(f.since);
+  const slots = f.max === null ? plural(n, 'build slot') : `${n} of ${plural(f.max, 'build slot')}`;
+  setText(logSaid, !f.on ? 'speck run is off, so no build slots are in use.'
+    : `speck run ${Number.isFinite(since) ? `has been on since ${shippedAt(since, Date.now())}` : 'is on'}, with ${slots} in use.`);
 }
 // 0548: the pop-up's frame: its title row, with the title and Close, then its body, with room for a stale page's line
 // and the log box. Returns the body.

@@ -90,7 +90,7 @@ export function switchingReady(tickets, running, own) {
 // `took` lists the recommendations the Foreman took in the 24 hours before `now`, newest first.
 // 0495: `base` is the base branch's name, given back as it is, and `why` the full reason while the word is Waiting, '' otherwise.
 // 0576: `name` is what you call it (speck_name), given back as it is, for all that says it.
-export function foremanView({ run, record, tickets, fixing = 'tell', agent = null, now = Date.now(), base = '', name = 'speck' }) {
+export function foremanView({ run, record, since = null, tickets, fixing = 'tell', agent = null, now = Date.now(), base = '', name = 'speck' }) {
   const on = !!(run && run.on), called = text(name) || 'speck';
   const rec = on && record && record.lock === run.pid ? record : null;
   const all = list(tickets).filter(t => t && typeof t === 'object');
@@ -121,7 +121,7 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
   if (ship && ship.hold) held.push(`Shipping is ${ship.hold.message}`);
   const ag = agent && typeof agent === 'object' ? agent : { running: null, waiting: [], did: [], asks: [] };
   const asks = list(ag.asks).filter(a => a && !blocked.some(b => b.id === a.id));
-  const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), name: called, fixing, fixing_says: fixingSays(fixing, called), building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag });
+  const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), name: called, fixing, fixing_says: fixingSays(fixing, called), building, max: rec && Number.isInteger(rec.max) && rec.max > 0 ? rec.max : null, since: on ? since : null, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag }); // 0592: max, the build slots, and since, when speck run started
   if (!on) return view('Off', 'off');
   if ((yours && fixing !== 'off') || asks.length) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length}`, 'bad');
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
