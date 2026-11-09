@@ -41,6 +41,7 @@ The Pipeline log is a full view with filters, and speck's own lines carry its fa
 - The design is the mock agreed with the user on 2026-11-08 and 9 (a private claude.ai design canvas, "speck panel, grown up": Lanes, Decided for you, a ticket waiting at Ship, Pipeline log, each light and dark, the bridge, and the Character page). The user picked the Premium screen for speck and asked for these tickets for 1.0.0 on 2026-11-09.
 - Today: `#foreman` with `renderForeman`, `drawRunLog`, `fillLog`, `runLogRow` in `templates/panel-popups.js`; lines from `runLogSummary` and `runLogLine` in `templates/panel-model.js`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
