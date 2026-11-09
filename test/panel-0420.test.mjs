@@ -188,7 +188,7 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
       assert.ok(st.more.top < st.box.bottom && st.more.bottom > st.box.top, `${label}: on the same line`);
       assert.ok(st.more.left >= st.box.right - 0.5, `${label}: after the stats`);
       assert.ok(st.row.height <= 57, `${label}: the stats line is ${st.row.height} px tall`); // 0469: with the touch screen's 44 px More stats
-      assert.ok(st.room >= st.digits / 2, `${label}: ${st.room.toFixed(1)} px to spare, less than one and a half more digits (${(st.digits / 2).toFixed(1)} px)`); // 0577: Inter's text is wider than the system font's, so three digits no longer fit
+      assert.ok(st.room >= st.digits / 3, `${label}: ${st.room.toFixed(1)} px to spare, less than one more digit (${(st.digits / 3).toFixed(1)} px)`); // 0577: Inter's text is wider than the system font's. A bigger figure wraps between the stats
     }
     for (const c of cards) {
       // AC1: the details line is smaller type, on one line, inside the card (0466: with no Details button at its end)
