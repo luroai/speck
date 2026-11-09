@@ -35,7 +35,7 @@ export async function onPhone(fn, state = STATE()) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(state) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelectorAll('#queue .q .act').length === 2`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelectorAll('#queue .q .where').length === 2`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }

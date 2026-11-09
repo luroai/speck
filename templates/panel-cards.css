@@ -83,6 +83,19 @@
   .q .top .line .id { flex: none; font-size: 14px; }
   .q .top .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
   .q .top .sub { font-variant-numeric: tabular-nums; }
+  /* 0585: Build's rows, under a head for each group */
+  #queue:has(.q.row) { gap: 0; padding: 0; }
+  #queue .group-head { margin: 0; padding: 14px 14px 6px; font-family: var(--font-ui); font-weight: 600; font-size: 13px; line-height: 16px; color: var(--muted); }
+  #queue .group-head .group-n { font-family: var(--font-mono); font-weight: 400; font-size: 12px; }
+  .q.row { padding: 0; border: 0; border-bottom: .5px solid var(--line); border-radius: 0; }
+  .q.row .top { box-sizing: border-box; min-height: 44px; padding: 7px 14px 8px; }
+  .q.row .top .line .title { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+  .q.row .where { font-size: 12px; line-height: 16px; color: var(--muted); }
+  .q.row .where .sub { font-family: var(--font-mono); }
+  .where::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; vertical-align: 1px; } /* decoration: its group says the same */
+  .where.needs::before { background: var(--needs-you); }
+  .where.run::before { background: var(--accent); }
+  .where.wait::before { background: var(--muted); }
   .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--log-bg); border: 1px solid var(--line);
     font: 12px/1.5 var(--font-mono); color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; } /* 0455: a terminal in every look */
   /* 0422: one line of the log a row, its text past a column for the time, so a line that wraps, or a message's next line,
@@ -96,7 +109,6 @@
   .q .log .tool { color: var(--log-run); }
   .q .log .fail { color: var(--log-bad); }
   .q .log .note { color: var(--log-warn); }
-  .q.wait { background: var(--raise); } /* 0161: set back by its fill, not faded, so its text keeps its contrast */
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
   /* 0421: an open card's Full ticket, Review pack and Stop build are small buttons on one line. 0428: each boxed, as every button is */
   .q .stop-build { font: inherit; font-family: var(--font-ui); font-size: 12px; line-height: 16px; margin: 6px 0 2px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
@@ -121,50 +133,31 @@
   .act.to-ship { color: var(--ok); }
   /* 0168: an in-flight ticket's progress, under its title: a sentence saying what's happening and the current stage's
      name, then the timer. 0416: in words only, with no builder badge. */
-  .q .top .say { display: inline-block; color: var(--text); font-size: 14px; line-height: 13px; } /* 0427: the stage sentence is body text, in a line of smaller details: a block one line of 13 px tall, so it starts under the title and keeps the line its height */
-  .q .top .ship-at { color: var(--text); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-  .q .top .progress > .sub { font-family: var(--font-mono); } /* 0577: a build's timer */
   .facts .value.time .sub { font-family: var(--font-mono); } /* 0577: and in the facts table, in every view that has one */
-  .q .top .say.bad { color: var(--bad); }
-  .q .top .say.to-ship { color: var(--ok); }
-  .q .top .stage { color: var(--run); }
-  .q .top .stage.bad { color: var(--bad); }
-  .q .top .stage.to-ship { color: var(--ok); }
   /* 0434: while an agent is at work on a ticket, a 4 × 4 grid of dots, 12.5 px square, in place of the stage sentence.
      Its lights move across it only when the browser allows motion (below); held still, one diagonal is lit. */
-  .q .top .lights { display: inline-grid; grid-template-columns: repeat(4, 2px); grid-auto-rows: 2px; gap: 1.5px; width: 12.5px; height: 12.5px; vertical-align: middle; color: var(--run); }
-  .q .top .lights i { display: block; width: 2px; height: 2px; border-radius: 50%; background: var(--line); }
-  .q .top .lights .d3 { background: var(--run); }
   /* 0434: a closed ticket's title is one line, cut off with an ellipsis when it doesn't fit, and a closed Build ticket's
      status line is one line too. An open one wraps as needed. */
-  .item.ticket:not(.open) .line .title, .q:not(.open) .top .line .title, #shipped tr:not(.open) .line .title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.ticket:not(.open) .line .title, #shipped tr:not(.open) .line .title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* 0435: a closed idea's or inbox note's title too, so the card is its title line and its second line */
   .item.idea:not(.open) .line .title, .item.inbox:not(.open) .line .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item.idea:not(.open) .head .line, .item.inbox:not(.open) .head .line { min-width: 0; } /* its grid column no wider than the card */
-  .q:not(.open) .top .progress, .q:not(.open) .top .act { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* 0419: a Plan or Build ticket is its title line and one line of details, in smaller type: a Build ticket's parts
      separated by " · ", and (0519) a Plan ticket's labels side by side. */
   .item.ticket, .q { padding: 6px 10px; }
   .item.ticket .head { display: block; margin: -6px -10px; padding: 6px 10px; }
   .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
   .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
-  .q .top .progress, .q .top .act { display: block; font-family: inherit; font-size: 12px; line-height: 14px; color: var(--muted); }
-  .q .top .progress > *, .q .top .act > * { white-space: nowrap; }
   /* 0519: a closed Plan ticket's second row is its priority, size, risk and type, each a small boxed label, side by side
      on one line that never wraps. A closed Build ticket's bug, fix or task tag is the same small box, as Shipped's is.
      --label-border is the boxes' border: a whole pixel below a pixel ratio of 2 (below) */
   .item.ticket .head .checks { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; font-size: 12px; line-height: 16px; color: var(--muted); white-space: nowrap; }
-  .item.ticket .head .checks, .q .top .progress, .q .top .act { --label-border: .5px; }
-  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { flex: none; display: inline-block; font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; vertical-align: middle; }
+  .item.ticket .head .checks { --label-border: .5px; }
+  .item.ticket .head .checks .tag { flex: none; display: inline-block; font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; vertical-align: middle; }
   @media (prefers-reduced-motion: no-preference) {
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
     @keyframes flash { 0%, 40% { box-shadow: inset 0 0 0 2px var(--text); } } /* 0167: a ring only, so a state's tint stays */
-    /* 0434: the grid's lights sweep across it from one corner to the other, a diagonal at a time */
-    .q .top .lights i { animation: lights 1.4s linear infinite both; }
-    .q .top .lights .d1 { animation-delay: .1s; } .q .top .lights .d2 { animation-delay: .2s; } .q .top .lights .d3 { animation-delay: .3s; }
-    .q .top .lights .d4 { animation-delay: .4s; } .q .top .lights .d5 { animation-delay: .5s; } .q .top .lights .d6 { animation-delay: .6s; }
-    @keyframes lights { 0%, 40%, 100% { background-color: var(--line); } 15% { background-color: var(--run); } }
   }
   .question.exit.to-ship { border-left-color: var(--ok); }
   .question.exit.carried { border-left-color: var(--run); background: var(--raise); } /* 0338: speck run is carrying it on */
@@ -180,7 +173,6 @@
   main .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
   main .resume { flex-wrap: wrap; }
   main .resume .cmd { min-width: 0; }
-  .q .tag.high { color: var(--bad); border-color: var(--bad); }
   .next { color: var(--ok); font-family: var(--font-ui); font-size: 12px; border: .5px solid var(--ok); padding: 0 5px; }
 
   /* Shipped */
@@ -220,7 +212,7 @@
   #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
   #shipped .line .tags .tag { font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; }
   /* 0426: a tag in a line of 12 px text is in the muted colour for small text. :where() keeps the risk and type tags' own colours */
-  :where(.item.ticket .head .checks, .q .top .progress, .q .top .act, #shipped .line .tags) .tag { color: var(--muted); }
+  :where(.item.ticket .head .checks, #shipped .line .tags) .tag { color: var(--muted); }
   /* 0204: a ticket merged but not pushed, in crimson, with speck ship's message */
   #shipped td.unpushed { margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--bad); }
   #shipped .unpushed-head { color: var(--bad); font-weight: 600; }
@@ -240,7 +232,6 @@
 
   /* 0164: only where the main pointer can hover, as a phone keeps a tapped card's :hover until the next tap */
   @media (hover: hover) { .item:hover { background: var(--raise); } }
-  .q.open { background: var(--raise); border-color: var(--text); }
   .note { margin: 0; color: var(--text); }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
 
@@ -270,48 +261,40 @@
   /* 0167: a ticket in trouble, blocked or its build stopped, is crimson; one waiting for you to ship it is green (0440:
      magenta was too near the red), as nothing is wrong (0138). Each keeps its border and background whether it's open
      or highlighted. */
-  .q.blocked { border-color: var(--bad); background: var(--bad-bg); }
-  .q.to-ship { border-color: var(--ok); background: var(--ok-bg); }
   /* 0171: a ticket an agent is at work on has a 2px border in its stage's colour, and its fill stays as it is, as only a
      ticket that needs you is filled. It keeps it whether it's open or highlighted. */
-  .q.at-build { border-color: var(--blue); border-width: 2px; }
-  .q.at-check { border-color: var(--inbox); border-width: 2px; }
-  .q.at-review { border-color: var(--yellow); border-width: 2px; }
-  .q.at-ship { border-color: var(--purple); border-width: 2px; } /* 0461: purple, as its Ship bar is */
   /* 0519: closed, a pixel less padding for its border's extra pixel, so it's as tall as every other closed card, its text
      where theirs is */
-  .q:is(.at-build, .at-check, .at-review, .at-ship):not(.open) { padding: 5px 9px; }
   /* 0461: an open ticket's five steps, under its title: five equal bars in one row, each with its name under it. A
      step reached so far has its bar in its own colour, and the current one its name in it and bold. A name too long
      for its bar ends in an ellipsis. */
-  .q .track, .item.ticket .track, #shipped .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 6px 0 4px; }
-  .q .track .step, .item.ticket .track .step, #shipped .track .step { display: block; min-width: 0; padding-top: 3px; border-top: 4px solid var(--line); font-size: 12px; line-height: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .q .track .step.done, .item.ticket .track .step.done, #shipped .track .step.done { color: var(--text); }
-  .q .track .step.now, .item.ticket .track .step.now, #shipped .track .step.now { font-weight: 600; }
-  .q .track .step.done.build, .q .track .step.now.build, .item.ticket .track .step.done.build, .item.ticket .track .step.now.build, #shipped .track .step.done.build, #shipped .track .step.now.build { border-top-color: var(--blue); }
-  .q .track .step.done.check, .q .track .step.now.check, .item.ticket .track .step.done.check, .item.ticket .track .step.now.check, #shipped .track .step.done.check, #shipped .track .step.now.check { border-top-color: var(--inbox); }
-  .q .track .step.done.review, .q .track .step.now.review, .item.ticket .track .step.done.review, .item.ticket .track .step.now.review, #shipped .track .step.done.review, #shipped .track .step.now.review { border-top-color: var(--yellow); }
-  .q .track .step.done.approve, .q .track .step.now.approve, .item.ticket .track .step.done.approve, .item.ticket .track .step.now.approve, #shipped .track .step.done.approve, #shipped .track .step.now.approve { border-top-color: var(--green); }
-  .q .track .step.done.ship, .q .track .step.now.ship, .item.ticket .track .step.done.ship, .item.ticket .track .step.now.ship, #shipped .track .step.done.ship, #shipped .track .step.now.ship { border-top-color: var(--purple); }
-  .q .track .step.now.build, .item.ticket .track .step.now.build, #shipped .track .step.now.build { color: var(--run); }
-  .q .track .step.now.check, .item.ticket .track .step.now.check, #shipped .track .step.now.check { color: var(--cyan-text); }
-  .q .track .step.now.review, .item.ticket .track .step.now.review, #shipped .track .step.now.review { color: var(--warn); }
-  .q .track .step.now.approve, .item.ticket .track .step.now.approve, #shipped .track .step.now.approve { color: var(--ok); }
-  .q .track .step.now.ship, .item.ticket .track .step.now.ship, #shipped .track .step.now.ship { color: var(--purple-text); }
-  .q .track.stopped .step.now, .item.ticket .track.stopped .step.now, #shipped .track.stopped .step.now { border-top-color: var(--bad); color: var(--bad); } /* blocked, or its build stopped */
+  .item.ticket .track, #shipped .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 6px 0 4px; }
+  .item.ticket .track .step, #shipped .track .step { display: block; min-width: 0; padding-top: 3px; border-top: 4px solid var(--line); font-size: 12px; line-height: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.ticket .track .step.done, #shipped .track .step.done { color: var(--text); }
+  .item.ticket .track .step.now, #shipped .track .step.now { font-weight: 600; }
+  .item.ticket .track .step.done.build, .item.ticket .track .step.now.build, #shipped .track .step.done.build, #shipped .track .step.now.build { border-top-color: var(--blue); }
+  .item.ticket .track .step.done.check, .item.ticket .track .step.now.check, #shipped .track .step.done.check, #shipped .track .step.now.check { border-top-color: var(--inbox); }
+  .item.ticket .track .step.done.review, .item.ticket .track .step.now.review, #shipped .track .step.done.review, #shipped .track .step.now.review { border-top-color: var(--yellow); }
+  .item.ticket .track .step.done.approve, .item.ticket .track .step.now.approve, #shipped .track .step.done.approve, #shipped .track .step.now.approve { border-top-color: var(--green); }
+  .item.ticket .track .step.done.ship, .item.ticket .track .step.now.ship, #shipped .track .step.done.ship, #shipped .track .step.now.ship { border-top-color: var(--purple); }
+  .item.ticket .track .step.now.build, #shipped .track .step.now.build { color: var(--run); }
+  .item.ticket .track .step.now.check, #shipped .track .step.now.check { color: var(--cyan-text); }
+  .item.ticket .track .step.now.review, #shipped .track .step.now.review { color: var(--warn); }
+  .item.ticket .track .step.now.approve, #shipped .track .step.now.approve { color: var(--ok); }
+  .item.ticket .track .step.now.ship, #shipped .track .step.now.ship { color: var(--purple-text); }
+  .item.ticket .track.stopped .step.now, #shipped .track.stopped .step.now { border-top-color: var(--bad); color: var(--bad); } /* blocked, or its build stopped */
   /* 0462: an open in-flight ticket's facts, under its track: six even cells in three columns and two rows, with lines
      between them and round them. Each is its label above its value, each on one line, cut short with … */
-  .q .facts, .item.ticket .facts, #shipped .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 4px; border-top: .5px solid var(--line); border-left: .5px solid var(--line); }
-  .q .facts .fact, .item.ticket .facts .fact, #shipped .facts .fact { min-width: 0; padding: 4px 6px; border-right: .5px solid var(--line); border-bottom: .5px solid var(--line); }
-  .q .facts .label, .q .facts .value, .item.ticket .facts .label, .item.ticket .facts .value, #shipped .facts .label, #shipped .facts .value { display: block; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .q .facts .label, .item.ticket .facts .label, #shipped .facts .label { font-size: 12px; line-height: 14px; color: var(--muted); }
-  .q .facts .value, .item.ticket .facts .value, #shipped .facts .value { font-size: 12px; line-height: 16px; color: var(--text); font-variant-numeric: tabular-nums; }
-  .q .facts .value .lights, .item.ticket .facts .value .lights, #shipped .facts .value .lights { margin: 1.75px 5px 0 0; vertical-align: top; } /* at the line's top, so the line keeps its height */
-  .q .facts .value.now.bad, .item.ticket .facts .value.now.bad, #shipped .facts .value.now.bad { color: var(--bad); }
-  .q .facts .value.now.to-ship, .item.ticket .facts .value.now.to-ship, #shipped .facts .value.now.to-ship { color: var(--ok); }
-  .q .facts .value.bug, .item.ticket .facts .value.bug, #shipped .facts .value.bug { color: var(--bug); }
-  .q .facts .value.fix, .item.ticket .facts .value.fix, #shipped .facts .value.fix { color: var(--fix); }
-  .q .facts .value.task, .item.ticket .facts .value.task, #shipped .facts .value.task { color: var(--idea); }
+  .item.ticket .facts, #shipped .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 4px; border-top: .5px solid var(--line); border-left: .5px solid var(--line); }
+  .item.ticket .facts .fact, #shipped .facts .fact { min-width: 0; padding: 4px 6px; border-right: .5px solid var(--line); border-bottom: .5px solid var(--line); }
+  .item.ticket .facts .label, .item.ticket .facts .value, #shipped .facts .label, #shipped .facts .value { display: block; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item.ticket .facts .label, #shipped .facts .label { font-size: 12px; line-height: 14px; color: var(--muted); }
+  .item.ticket .facts .value, #shipped .facts .value { font-size: 12px; line-height: 16px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .item.ticket .facts .value.now.bad, #shipped .facts .value.now.bad { color: var(--bad); }
+  .item.ticket .facts .value.now.to-ship, #shipped .facts .value.now.to-ship { color: var(--ok); }
+  .item.ticket .facts .value.bug, #shipped .facts .value.bug { color: var(--bug); }
+  .item.ticket .facts .value.fix, #shipped .facts .value.fix { color: var(--fix); }
+  .item.ticket .facts .value.task, #shipped .facts .value.task { color: var(--idea); }
   /* 0463: the same track and table on an open ticket that hasn't started. A draft's priority opens the menu that sets it,
      underlined as a linked id is, with room for its menu */
   .item.ticket .facts .value.pick { overflow: visible; }
@@ -355,8 +338,6 @@
 
   .full-open { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
-  .q .full-open { margin: 6px 8px 2px 0; padding: 1px 10px; font-size: 12px; line-height: 16px; }
-  .q .full-open:hover { border-color: var(--text); }
   td.full-cell { width: 1%; padding-left: 0; }
   #shipped tr { cursor: pointer; } /* 0466: its top row opens and closes it, as .q .top does, */
   #shipped td.unpushed, #shipped td.full-cell { cursor: auto; } /* and what's under it doesn't */
@@ -424,7 +405,6 @@
   .dep-chip { min-width: 44px; min-height: 44px; margin: -13px 0; } /* 0468: its pill in the middle, and the title line no taller */
 
   /* 0419: wide gaps either side of each " · " in a Build card's status line, so the tags' tap areas in it stay apart */
-  .q .top .progress .sep, .q .top .act .sep { padding: 0 12px; }
   /* 0519: every closed card is as tall as its 44 px top row: its title line, then a second row of 24 px (22 px in
      Shipped, whose title line is 22 px), so the cards in every lane are the same height, with no room under the row */
   .item.ticket:not(.open) .head .checks { height: 24px; line-height: 24px; }
@@ -432,18 +412,13 @@
      reaches 10 px up behind the title line and 10 px down past the card's padding, taking only 24 px of the card's
      height, its text where a 24 px line's is. Its tag, 16 px and its two borders high, is in the line's exact middle, so
      its tap area is inside the line. */
-  .q:not(.open) .top .progress, .q:not(.open) .top .act { height: 44px; line-height: 44px; margin: -10px 0; }
-  .q:not(.open) .top :is(.progress, .act) .tag { vertical-align: top; margin-top: calc(14px - var(--label-border)); }
-  .q:not(.open) .top .line { position: relative; } /* above the status line reaching behind it, so its title is still pressed and selected; a tag's tap area (z-index 1 on a touch screen) is above both */
   #shipped tr:not(.open) .sum { align-items: center; height: 22px; margin-top: 0; }
   #shipped tr:not(.open) .meta { line-height: 22px; white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; }
   /* 0443: a closed Build card's status line has nothing to tap but a bug, fix or document tag at its end, so only the
      gap before a tag stays wide, and its words, stage and time fit on a phone */
-  .q:not(.open) .top .progress .sep:not(:has(+ .tag)) { padding: 0; }
   /* 0484: when the line doesn't fit, its words (or, while an agent is at work, the reviewer's model) give up room first:
      the page script sets their width to what the stage, time and tag leave, and they end in … there. Clipped across
      only, so nothing is cut off below and they keep their baseline. */
-  .q:not(.open) .top .progress > :is(.say, .by) { display: inline-block; overflow-x: clip; text-overflow: ellipsis; }
   /* The priority's 44 px box takes no more room in the row than its label does. 0519: it's first in the row, so its box
      reaches left of the label, into the card's edge, and not over the label beside it */
   .item.ticket .head .checks .prio { justify-content: flex-end; padding: 0; margin: -14px 0 -14px calc(2ch + 10px + 2 * var(--label-border) - 44px); font-family: var(--font-mono); font-size: 12px; }
@@ -454,7 +429,6 @@
 
   /* Queue: the top row is at least 44 px high */
   .q .top { min-height: 44px; }
-  .q .full-open { min-height: 44px; }
   .q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply { min-width: 44px; min-height: 44px; }
   .resume .copy { min-width: 44px; min-height: 44px; }
 
@@ -473,7 +447,6 @@
     .item.ticket .facts .set-prio::after { content: ''; position: absolute; inset: 0; }
     /* 0224: a linked id's tap area reaches past its text, so the tags beside it in the line (0419) are above it: a tap
        anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
-    .q .top .tag:not(.pick) { z-index: 1; }
     /* 0519: a closed Plan card's second row is only 24 px high, so a label's tap area reaches from the row's top to the
        card's bottom, never into the title line above it, and only halfway into the gap beside it */
     .item.ticket:not(.open) .head .checks .tag:not(.pick)::after { inset: -3.5px -2px -10.5px; }
@@ -484,6 +457,6 @@
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
     .prio-menu button, .set-ready, .q .stop-build, .q .back-to-plan, .q .go-with, .resume .copy, .foreman-ask .ask-reply, .full-open { border-width: 1px; }
-    .item.ticket .head .checks, .q .top .progress, .q .top .act { --label-border: 1px; } /* 0519: the labels' border, as a whole pixel */
-    .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { border-width: 1px; }
+    .item.ticket .head .checks { --label-border: 1px; } /* 0519: the labels' border, as a whole pixel */
+    .item.ticket .head .checks .tag { border-width: 1px; }
   }

@@ -306,6 +306,13 @@ export function boardPage(boards, globals = {}) {
   const body = url => (/\/log$/.test(url) ? { text: '', truncated: false } : left.length > 1 ? left.shift() : left[0]);
   return fakePage([], { fetch: async url => { const b = JSON.parse(JSON.stringify(body(String(url)))); return { ok: true, status: 200, json: async () => b }; }, ...globals });
 }
+// 0585: presses a Build row, which opens the ticket's full view, and returns the view.
+export async function fullViewOf(p, id) {
+  const row = queueRows(p).find(r => p.all(r).find(n => n.className === 'id')?._text === String(id));
+  row.children[0].listeners.click({ stopPropagation() {} });
+  await p.settle();
+  return p.byId('full-ticket');
+}
 // 0434: opens each Build card that's closed, as a Build card shows its priority, size and risk only while it's open.
 export async function openQueueRows(p) {
   const idOf = r => p.all(r).find(n => n.className === 'id')._text;
