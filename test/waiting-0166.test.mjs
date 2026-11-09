@@ -121,18 +121,18 @@ test('0166 AC3: a building ticket\'s timer leaves out its waited time and counts
   const c = clock(NOW);
   const p = fakePage([{ tickets: [T('0001', 'building', { started: ago(13), waited_seconds: 600 })], ideas: [] }], { Date: c.Date });
   await p.settle();
-  assert.equal(subOf(p, '0001').textContent, '03:00');
-  await tick(p, c, 5000);
-  assert.equal(subOf(p, '0001').textContent, '03:05');
+  assert.equal(subOf(p, '0001').textContent, '3 min'); // 0585: a row counts in whole minutes
+  await tick(p, c, 2 * 60000);
+  assert.equal(subOf(p, '0001').textContent, '5 min');
 });
 
 test('0166 AC3: a blocked ticket\'s timer stops at when it blocked, without its earlier waiting', async () => {
   const c = clock(NOW);
   const p = fakePage([{ tickets: [T('0001', 'blocked', { started: ago(10), blocked_at: ago(2), waited_seconds: 60 })], ideas: [] }], { Date: c.Date });
   await p.settle();
-  assert.equal(subOf(p, '0001').textContent, '07:00');
-  await tick(p, c, 5000);
-  assert.equal(subOf(p, '0001').textContent, '07:00', 'it has stopped');
+  assert.equal(subOf(p, '0001').textContent, '7 min');
+  await tick(p, c, 2 * 60000);
+  assert.equal(subOf(p, '0001').textContent, '7 min', 'it has stopped');
 });
 
 test('0166 AC3: a paused build\'s timer stops at when it paused, and carries on from the same figure once played', async () => {
@@ -141,9 +141,10 @@ test('0166 AC3: a paused build\'s timer stops at when it paused, and carries on 
   const playing = T('0001', 'building', { started: ago(5), build_running: true, paused: false, paused_at: null, waited_seconds: 60 });
   const p = fakePage([{ tickets: [paused], ideas: [] }], { Date: c.Date });
   await p.settle();
-  assert.equal(subOf(p, '0001').textContent, 'Paused · 04:00');
-  await tick(p, c, 5000);
-  assert.equal(subOf(p, '0001').textContent, 'Paused · 04:00', 'it has stopped');
+  const said = () => p.all(rowOf(p, '0001')).find(n => n.className === 'said').textContent;
+  assert.deepEqual([said(), subOf(p, '0001').textContent], ['Paused', '4 min']);
+  await tick(p, c, 2 * 60000);
+  assert.deepEqual([said(), subOf(p, '0001').textContent], ['Paused', '4 min'], 'it has stopped');
   const m = panelModel()({ tickets: [{ ...playing, started: iso(Date.now() - 5 * 60000) }], ideas: [] });
   assert.equal(m.queue[0].counter, '04:00', 'played: the same figure, counting on from there');
 });
@@ -152,9 +153,9 @@ test('0166 AC3: a blocked ticket with no recorded block time counts on as before
   const c = clock(NOW);
   const p = fakePage([{ tickets: [T('0001', 'blocked', { started: ago(10) })], ideas: [] }], { Date: c.Date });
   await p.settle();
-  assert.equal(subOf(p, '0001').textContent, '10:00');
-  await tick(p, c, 3000);
-  assert.equal(subOf(p, '0001').textContent, '10:03');
+  assert.equal(subOf(p, '0001').textContent, '10 min');
+  await tick(p, c, 3 * 60000);
+  assert.equal(subOf(p, '0001').textContent, '13 min');
 });
 
 // ---------- AC4: Shipped minutes ----------

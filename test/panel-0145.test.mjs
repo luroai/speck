@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { T, fakePage, queueRows, click, page as pageHtml, pageScript, post, openQueueRows } from './support/panel.mjs';
+import { T, fakePage, queueRows, click, page as pageHtml, pageScript, post, fullViewOf } from './support/panel.mjs';
 const html = () => pageHtml() + pageScript(); // 0433: the page and the script it loads from /panel.js
 import { buildPanel, runs, psState, cli } from './support/build-panel.mjs';
 
@@ -50,26 +50,28 @@ test('0145 AC2: a paused build still says "Paused", with the command that carrie
   const s = state();
   const p = page(s);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const paused = rowOf(p, '0002');
-  assert.match(p.all(topOf(paused)).find(n => n.className === 'sub').textContent, /^Paused · 01:0\d$/);
-  assert.ok(p.all(paused).some(n => n._text && n._text.includes('speck play 0002')), 'it shows speck play 0002');
-  const running = rowOf(p, '0001');
+  const where = id => p.all(rowOf(p, id)).find(n => /^where\b/.test(n.className));
+  assert.match(where('0002').textContent, /^Paused · 1 min$/, 'the row says Paused'); // 0585: the command is in the full view
+  assert.ok(!/Paused/.test(where('0001').textContent), 'a running build\'s row doesn\'t');
+  const paused = await fullViewOf(p, '0002');
+  assert.ok(p.all(paused).some(n => n._text && n._text.includes('speck play 0002')), 'its full view shows speck play 0002');
+  assert.ok(p.all(paused).some(n => n._text && /Paused/.test(n._text)));
+  const running = await fullViewOf(p, '0001');
   assert.ok(!p.all(running).some(n => n._text && /speck play|Paused/.test(n._text)), 'a running build shows neither');
+  await fullViewOf(p, '0002');
   s.tickets[1].paused = false; // played again from the command line
   p.timers.shift()();
   await p.settle();
-  assert.ok(!p.all(rowOf(p, '0002')).some(n => n._text && /speck play|Paused/.test(n._text)), 'played: both go');
+  assert.ok(!p.all(p.byId('full-ticket')).some(n => n._text && /speck play|Paused/.test(n._text)), 'played: both go from the full view');
+  assert.ok(!/Paused/.test(where('0002').textContent), 'and from the row');
 });
 
-test('0145 AC3: an open building or reviewing row still has Stop build, and it sends the stop as before', async () => {
+test('0145 AC3: a building or reviewing ticket\'s full view still has Stop build, and it sends the stop as before', async () => {
   const sent = [];
   const p = page(state(), (url, opts) => { sent.push([url, opts.method, opts.headers['X-Speck-Token']]); return { ok: true, status: 200, json: async () => ({ ok: true }) }; });
   await p.settle();
   for (const id of ['0001', '0002']) {
-    click(topOf(rowOf(p, id)));
-    await p.settle();
-    const stop = buttons(p, rowOf(p, id)).find(b => b.className === 'stop-build');
+    const stop = buttons(p, await fullViewOf(p, id)).find(b => b.className === 'stop-build'); // 0585: in the full view
     assert.ok(stop, `${id}: Stop build`);
     assert.equal(stop.textContent, 'Stop build');
     p.press(stop);

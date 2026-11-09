@@ -1,10 +1,9 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, boardPage, items, queueRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
-import { rules, selectors } from './support/css.mjs';
+import { T, full, fakePage, boardPage, items, queueRows, fullViewOf, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
 
-// ---------- 0463: an open ticket that hasn't started shows the same step track and facts table as one in flight ----------
+// ---------- 0463: an open ticket that hasn't started shows the same step track and facts table as one in flight (0585: a Build ticket's are in its full view) ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const NOW = Date.parse('2026-10-24T12:00:00.000Z');
@@ -26,21 +25,22 @@ const board = () => ({ run: { on: true }, ideas: [], tickets: TICKETS });
 const page = () => fakePage([board()], { Date: stoppedClock(NOW) });
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')._text;
 const card = (p, id) => [...items(p), ...queueRows(p)].find(n => idOf(p, n) === id);
-const topOf = n => n.children[0]; // a Plan item's head, or a queue card's top row
+const topOf = n => n.children[0]; // a Plan item's head, or a queue row's top
 const factsIn = n => topOf(n).children.find(c => c.className === 'facts') || null;
 const trackIn = n => topOf(n).children.find(c => /^track\b/.test(c.className)) || null;
 const cells = f => f.children.map(c => [c.children[0].textContent, c.children[1].textContent]);
 const PLAN = ['0801', '0802', '0803', '0804'], QUEUED = ['0812', '0813', '0814'];
+// 0585: a queued Build ticket's facts, as its full view has them: label to value.
+const factsOfFull = (p, full) => Object.fromEntries(p.all(full).filter(n => n.className === 'fact').map(c => [c.children[0].textContent, c.children[1].textContent]));
 async function openAll(p) {
   for (const id of PLAN) { click(topOf(card(p, id))); await p.settle(); }
-  for (const id of QUEUED) { click(topOf(card(p, id))); await p.settle(); }
 }
 
-test('0463 AC1: an open Plan ticket and an open queued Build ticket show the grey track, then the table, under the title', async () => {
+test('0463 AC1: an open Plan ticket shows the grey track, then the table, under the title, and a queued Build ticket\'s full view shows its own', async () => {
   const p = page();
   await p.settle();
   await openAll(p);
-  for (const id of [...PLAN, ...QUEUED]) {
+  for (const id of PLAN) {
     const c = card(p, id), kids = topOf(c).children, track = trackIn(c), f = factsIn(c);
     assert.ok(/\bopen\b/.test(c.className), `${id}: open`);
     assert.deepEqual(kids.map(k => k.className.split(' ')[0]), ['line', 'track', 'facts'], `${id}: title, track, table`);
@@ -55,21 +55,17 @@ test('0463 AC1: an open Plan ticket and an open queued Build ticket show the gre
       assert.equal(v.title, v.textContent, `${id}: ${cell.children[0].textContent}'s tooltip is its whole text`);
     }
   }
-});
-
-const all = rules();
-const plain = all.filter(r => !r.at.length);
-test('0463 AC1: the track and the table look the same on a Plan ticket as on a Build card', () => {
-  const qs = plain.filter(r => selectors(r).some(s => /^\.q \.(track|facts)\b/.test(s)));
-  assert.ok(qs.length >= 20, 'the track\'s and table\'s rules');
-  for (const r of qs) {
-    for (const s of selectors(r).filter(s => s.startsWith('.q '))) {
-      assert.ok(selectors(r).includes(s.replace('.q ', '.item.ticket ')), `${s} also styles a Plan ticket's`);
-    }
+  for (const id of QUEUED) {
+    const full = await fullViewOf(p, id), track = p.all(full).find(n => n.className === 'track');
+    assert.deepEqual(track.children.map(s => s.textContent), ['Ready', 'Built', 'Reviewed', 'Ship'], `${id}: its steps`);
+    assert.deepEqual(track.children.map(s => s.className), ['step done', 'step', 'step', 'step'], `${id}: Ready done, the others not reached`);
+    const f = p.all(full).find(n => n.className === 'facts');
+    assert.equal(f.tagName, 'dl', `${id}: a list of labels and values`);
+    for (const cell of f.children) if (cell.children[0].textContent !== 'Type') assert.equal(cell.children[1].title, cell.children[1].textContent, `${id}: ${cell.children[0].textContent}'s tooltip is its whole text`); // 0585: Type's tooltip says what the type means
   }
 });
 
-test('0463 AC2: the six cells are Status, After or Waiting on, Lint, Priority, Size · risk and Type', async () => {
+test('0463 AC2: the six cells are Status, After, Lint, Priority, Size · risk and Type', async () => {
   const p = page();
   await p.settle();
   await openAll(p);
@@ -78,31 +74,47 @@ test('0463 AC2: the six cells are Status, After or Waiting on, Lint, Priority, S
     '0802': [['Status', 'Draft'], ['After', '1 left'], ['Ready check', '2 errors · 1 warning'], ['Priority', 'P1'], ['Size · risk', 'S · high'], ['Type', 'bug']],
     '0803': [['Status', 'Draft'], ['After', '11 left of 27'], ['Ready check', '3 warnings'], ['Priority', 'P4'], ['Size · risk', `S · ${LONG}`], ['Type', 'task']],
     '0804': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
-    '0812': [['Status', 'Queued'], ['Waiting on', '1 left'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Size · risk', 'M · high'], ['Type', 'fix']],
-    '0813': [['Status', 'Queued'], ['Waiting on', '2 left of 3'], ['Ready check', '1 error'], ['Priority', 'P5'], ['Size · risk', `S · ${LONG}`], ['Type', 'code']],
-    '0814': [['Status', 'Queued'], ['Waiting on', '—'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
   };
   for (const [id, rows] of Object.entries(want)) assert.deepEqual(cells(factsIn(card(p, id))), rows, id);
   // errors and warnings in their colours, and the kinds in their tags' colours
   const lint = id => factsIn(card(p, id)).children[2].children[1].children.filter(n => n.tagName !== '#text').map(n => [n.className, n.textContent]);
   assert.deepEqual(lint('0802'), [['bad', '2 errors'], ['warn', '1 warning']]);
   assert.deepEqual(lint('0803'), [['warn', '3 warnings']]);
-  assert.deepEqual(lint('0813'), [['bad', '1 error']]);
   const kind = id => factsIn(card(p, id)).children[5].children[1].className;
   assert.equal(kind('0802'), 'value bug');
   assert.equal(kind('0803'), 'value task');
-  assert.equal(kind('0812'), 'value fix');
   assert.equal(kind('0801'), 'value');
 });
 
-test('0463 AC3: the dotted line is gone from an open one, closed ones keep theirs, and what\'s under it stays', async () => {
+test('0463 AC2: a queued Build ticket\'s full view shows its priority, size, risk and what it waits on', async () => {
+  const p = page();
+  await p.settle();
+  const want = { '0812': { Priority: 'P2', Size: 'M', Risk: 'high' }, '0813': { Priority: 'P5', Size: 'S', Risk: LONG }, '0814': { Priority: 'P2', Size: 'S', Risk: 'low' } };
+  for (const [id, facts] of Object.entries(want)) {
+    const full = await fullViewOf(p, id);
+    assert.deepEqual(Object.fromEntries(Object.entries(factsOfFull(p, full)).filter(([k]) => facts[k] !== undefined)), facts, id);
+    assert.equal(p.all(full).some(n => n.className === 'state' && n.textContent === 'ready'), true, `${id}: its state`);
+  }
+  assert.ok(p.all(await fullViewOf(p, '0812')).some(n => /^deps\b/.test(n.className)), '0812: what it waits on');
+  assert.ok(p.all(await fullViewOf(p, '0813')).some(n => /^deps\b/.test(n.className)), '0813: what it waits on');
+});
+
+test('0463 AC2: a queued Build ticket\'s full view shows its Ready check and its type', async () => {
+  const p = page();
+  await p.settle();
+  const facts = factsOfFull(p, await fullViewOf(p, '0813'));
+  assert.equal(facts['Ready check'], '1 error');
+  assert.equal(factsOfFull(p, await fullViewOf(p, '0812')).Type, 'fix');
+});
+
+test('0463 AC3: the dotted line is gone from an open Plan ticket, closed ones keep theirs, and what\'s under it stays', async () => {
   const p = page();
   await p.settle();
   for (const id of PLAN) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className), ['line', 'checks'], `${id}: closed, its line`);
-  for (const id of QUEUED) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className), ['line', 'act'], `${id}: closed, its line`);
-  assert.equal(topOf(card(p, '0812')).children[1].textContent, 'Queued · fix'); // 0468: its ids in its chip
+  for (const id of QUEUED) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className.split(' ')[0]), ['line', 'where'], `${id}: its line, then where it is (0585)`);
+  assert.equal(p.all(card(p, '0812')).find(n => /^where\b/.test(n.className)).textContent, 'Ready · after 0811'); // 0585: its ids in its line
   await openAll(p);
-  for (const id of [...PLAN, ...QUEUED]) {
+  for (const id of PLAN) {
     assert.ok(!p.all(topOf(card(p, id))).some(n => /^(checks|act)\b/.test(n.className || '')), `${id}: no dotted line`);
   }
   // a Plan ticket's detail is still under it: its problem, outcome, readiness list with its criteria, Set ready and Full ticket
@@ -119,39 +131,35 @@ test('0463 AC3: the dotted line is gone from an open one, closed ones keep their
   const menu = p.all(card(p, '0802')).find(n => n.className === 'prio-menu');
   assert.ok(menu, 'the menu opened');
   assert.deepEqual(menu.children.map(n => n.textContent), ['P1', 'P2', 'P3', 'P4', 'P5']);
-  // a queued ticket keeps its buttons and log under the table
-  const q = card(p, '0812');
-  const names = q.children.slice(1).map(n => (n.tagName === 'button' ? n.textContent : n.className));
-  assert.deepEqual(names.filter(n => /Full ticket|Back to Plan|^log$/.test(n)), ['Full ticket', 'Back to Plan', 'log']);
+  // a queued ticket keeps its Back to Plan button, in its full view
+  const q = await fullViewOf(p, '0812');
+  assert.ok(p.all(q).some(n => n.tagName === 'button' && n.textContent === 'Back to Plan'));
 });
 
-test('0463 AC3: an open queued card puts its table right when the tickets it waits on change, without redrawing the card', async () => {
-  // a draft that waits on it changes its chain, which only puts the kept card's parts right
+test('0463 AC3: a queued ticket\'s full view puts its dependencies right when the tickets it waits on change', async () => {
+  // a draft that waits on it changes its chain
   const next = { ...board(), tickets: [...TICKETS, T('0815', 'draft', { after: ['0814'], waiting_on: ['0814'] })] };
   const p = boardPage([board(), next], { Date: stoppedClock(NOW) });
   await p.settle();
-  click(topOf(card(p, '0814')));
-  await p.settle();
-  const kept = card(p, '0814');
-  assert.equal(cells(factsIn(kept))[0][1], 'Queued');
+  const full = await fullViewOf(p, '0814');
+  assert.ok(!p.all(full).some(n => /^deps\b/.test(n.className)), 'on its own, no dependency box');
   p.timers.shift()();
   await p.settle();
-  assert.equal(card(p, '0814'), kept, 'the same card');
-  assert.ok(factsIn(kept), 'still its table, not the dotted line');
-  assert.ok(!topOf(kept).children.some(c => /^act\b/.test(c.className)), 'and no line beside it');
-  assert.equal(p.all(topOf(kept)).find(n => n.className === 'chain')?.title, 'Starts a chain: unlocks 0815', 'its chain icon put right');
+  assert.match(p.all(p.byId('full-ticket')).find(n => /^deps\b/.test(n.className))?.textContent ?? '', /0815/, 'its chain put right');
 });
 
 test('0463 AC4: a screen reader reads each cell as its label, then its value', async () => {
   const p = page();
   await p.settle();
   await openAll(p);
-  for (const id of ['0802', '0812']) {
-    for (const c of factsIn(card(p, id)).children) {
-      assert.equal(c.tagName, 'div', `${id}: a cell is a group in the list`);
-      assert.deepEqual(c.children.map(n => n.tagName), ['dt', 'dd'], `${id}: its label is a term, its value its description`);
-      assert.ok(c.children[0].textContent && c.children[1].textContent, `${id}: both have words`);
-    }
+  for (const c of factsIn(card(p, '0802')).children) {
+    assert.equal(c.tagName, 'div', 'a cell is a group in the list');
+    assert.deepEqual(c.children.map(n => n.tagName), ['dt', 'dd'], 'its label is a term, its value its description');
+    assert.ok(c.children[0].textContent && c.children[1].textContent, 'both have words');
+  }
+  for (const c of p.all(await fullViewOf(p, '0812')).filter(n => n.className === 'fact')) { // 0585: and a queued ticket's full view
+    assert.equal(c.tagName, 'div', 'a cell is a group in the list');
+    assert.deepEqual(c.children.map(n => n.tagName), ['dt', 'dd'], 'its label is a term, its value its description');
   }
 });
 
@@ -203,7 +211,7 @@ function checkCards(cards, width, ids) {
   }
 }
 
-test('0463 AC3: in a real browser at 320 and 390 px, open Plan and queued tickets show the track and an even table, a long value cut short with …', skip, async () => {
+test('0463 AC3: in a real browser at 320 and 390 px, open Plan tickets show the track and an even table, a long value cut short with …', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -215,9 +223,6 @@ test('0463 AC3: in a real browser at 320 and 390 px, open Plan and queued ticket
       await b.send('Emulation.setTouchEmulationEnabled', { enabled: touch, ...(touch ? { maxTouchPoints: 1 } : {}) });
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
       await b.until(`document.querySelectorAll('#queue .q').length === 4`, 'the panel');
-      await b.js(`[...document.querySelectorAll('#queue .q.queued .top')].forEach(t => t.click()), true`);
-      await b.until(`document.querySelectorAll('#queue .q.open').length === ${QUEUED.length}`, 'every queued card open');
-      checkCards(await b.js(MEASURE('#queue .q.open')), width, QUEUED);
       await b.js(openLane('plan'));
       await b.until(`document.querySelectorAll('#shaping .item.ticket').length === ${PLAN.length}`, 'the Plan list');
       await b.js(`[...document.querySelectorAll('#shaping .item.ticket .head')].forEach(h => h.click()), true`);

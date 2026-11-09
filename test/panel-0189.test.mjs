@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
-import { panelRepo, startPanel, stop, freePort, page, fakePage, T, queueRows, click } from './support/panel.mjs';
+import { panelRepo, startPanel, stop, freePort, page, fakePage, T, fullViewOf } from './support/panel.mjs';
 import { openStream, manualSources, wait } from './support/stream.mjs';
 import { logFeed } from '../scripts/log-feed.mjs';
 import { readableLog } from '../scripts/speck.mjs';
@@ -60,8 +60,10 @@ function streamPage(log) {
   return p;
 }
 const NAME = 'cd'.repeat(16);
-const rowOf = p => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === '0001'));
-const logOf = p => p.all(rowOf(p)).find(n => /(^| )log( |$)/.test(n.className || ''));
+// 0585: a Build row opens the ticket's full view, which shows its log; closing the view closes the log.
+const openFull = p => fullViewOf(p, '0001');
+const closeFull = async p => { p.press(p.all(p.byId('full-ticket')).find(n => n.className === 'close')); await p.settle(); };
+const logOf = p => p.all(p.byId('full-ticket')).find(n => /(^| )log( |$)/.test(n.className || ''));
 
 // ---------- AC1: each new entry within a second, and no timer ----------
 
@@ -97,8 +99,7 @@ test('0189 AC1: the page asks for an open log once, on its stream, sets no timer
   p.source().emit('stream', NAME);
   p.source().emit('message', '1');
   await p.settle();
-  click(rowOf(p).children.find(n => n.className === 'top'));
-  await p.settle();
+  await openFull(p);
   assert.deepEqual(p.asks, [{ url: '/api/tickets/0001/log', stream: NAME }], 'asked for once, on the stream');
   assert.equal(logOf(p).textContent, 'one');
   const timers = p.timers.length;
@@ -119,8 +120,7 @@ test('0189 AC1: a page whose stream reconnects opens its log on the new stream, 
   p.source().emit('stream', NAME);
   p.source().emit('message', '1');
   await p.settle();
-  click(rowOf(p).children.find(n => n.className === 'top'));
-  await p.settle();
+  await openFull(p);
   const other = 'ef'.repeat(16);
   p.source().emit('stream', other);
   await p.settle();
@@ -160,8 +160,7 @@ test('0189 AC2: the page shows the last 200 lines as updates add to them, with t
   p.source().emit('stream', NAME);
   p.source().emit('message', '1');
   await p.settle();
-  click(rowOf(p).children.find(n => n.className === 'top'));
-  await p.settle();
+  await openFull(p);
   p.source().emit('log', JSON.stringify({ id: '0001', build: 3, at: 1, drop: 0, lines: ['l199', 'l200'] }));
   const shown = logOf(p).textContent.split('\n');
   assert.match(shown[0], /^Earlier lines aren't shown/);
@@ -255,7 +254,7 @@ test('0189 AC3: closing and opening a log quickly leaves it open, whichever requ
   p.source().emit('stream', NAME);
   p.source().emit('message', '1');
   await p.settle();
-  for (let i = 0; i < 3; i++) { click(rowOf(p).children.find(n => n.className === 'top')); await p.settle(); }
+  await openFull(p); await closeFull(p); await openFull(p);
   assert.deepEqual(p.orders, ['1', '2', '3'], 'open, close, open: in order');
 });
 

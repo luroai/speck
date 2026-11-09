@@ -83,8 +83,9 @@ test('0455 AC4: the log keeps its height, scrolling, monospaced font, line layou
 // ---------- in a real browser ----------
 
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const row = `[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0001')`;
-const box = `${row}.querySelector('.log')`;
+// 0585: the log is in the full view's live section, which a Build row opens.
+const row = `document.querySelector('#full-ticket .q.live')`;
+const box = `document.querySelector('#full-ticket .log')`;
 const said = (text, at) => `${JSON.stringify({ type: 'assistant', timestamp: at, message: { content: [{ type: 'text', text }] } })}\n`;
 const ran = (command, at) => `${JSON.stringify({ type: 'assistant', timestamp: at, message: { content: [{ type: 'tool_use', name: 'Bash', input: { command } }] } })}\n`;
 const frames = `new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`;
@@ -110,14 +111,15 @@ test('0455 AC1, AC2, AC3: in a real browser, the log is the same dark box in eve
   const r = panelRepo();
   const runs = path.join(r.dir, 'speck', '.cache', 'runs');
   fs.mkdirSync(runs, { recursive: true });
+  assert.equal(r.run('set', '1', 'status', 'building').status, 0); // in flight, so its full view follows its log
   fs.writeFileSync(path.join(runs, '0001.log'), said('A message.', '2026-10-24T09:00:01Z') + ran('npm test', '2026-10-24T09:00:02Z'));
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`!!${row}`, 'the queue');
-    await b.js(`${row}.querySelector('.top').click()`);
+    await b.until(`!!document.querySelector('#queue .q')`, 'the queue');
+    await b.js(`document.querySelector('#queue .q .top').click()`);
     await b.until(`(${box} || {}).textContent?.includes('npm test')`, 'the log');
     const LOOKS = [['light', 'light', 'light'], ['dark', 'dark', 'dark'], ['System, set to dark', null, 'dark'], ['System, set to light', null, 'light']];
     const backgrounds = new Set();

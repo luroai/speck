@@ -43,13 +43,13 @@ const measure = `(() => {
     width: innerWidth, page: document.documentElement.scrollWidth };
 })()`;
 
-test('0438 AC1: the frame has 12 px corners, as the ticket cards', skip, () => withPanel(async b => {
+test('0438 AC1: the frame has 12 px corners; 0585: Build\'s rows are square, flush in the lane\'s frame', skip, () => withPanel(async b => {
   for (const w of WIDTHS) {
     await b.at(w);
     const m = await b.js(measure), at = `${w} px: ${JSON.stringify(m)}`;
     const card = await b.js(`parseFloat(getComputedStyle(document.querySelector('#queue .q')).borderTopLeftRadius)`);
     assert.equal(m.frameRadius, 12, `the frame: ${at}`);
-    assert.equal(card, 12, 'as the ticket cards');
+    assert.equal(card, 0, 'its rows are flush');
   }
 }));
 

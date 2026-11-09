@@ -6,7 +6,7 @@ import path from 'node:path';
 import { runIn, gIn } from './support/ship.mjs';
 import { read, TICKET } from './support/merge-rounds.mjs';
 import { changesRepo } from './support/changes.mjs';
-import { T, fakePage, queueRows, round, openQueueRows } from './support/panel.mjs';
+import { T, fakePage, queueRows, round, fullViewOf } from './support/panel.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { autoShipWhyNot } from '../scripts/ship.mjs';
 import { shipQueue } from '../scripts/ship-queue.mjs';
@@ -208,19 +208,20 @@ const page = async t => {
 };
 const words = (p, n) => [n, ...p.all(n)].map(x => [x.attrs?.['aria-label'], x._text].join(' ')).join(' ');
 
-test('0565 AC4: the Build card of an approved ticket whose criteria changed says it waits for you because of that, closed and open', async () => {
+const tip = (p, n) => [n, ...p.all(n)].map(x => x.title).join(' ');
+
+test('0565 AC4: the Build row of an approved ticket whose criteria changed says it waits for you because of that, and so does its full view', async () => {
   const p = await page(approved({ criteria_changed: true }));
-  assert.match(words(p, queueRows(p)[0]), /waiting for you because a criterion changed/);
-  await openQueueRows(p);
-  assert.match(queueRows(p)[0].textContent, /waits for you to ship it because a criterion changed/);
+  assert.match(tip(p, queueRows(p)[0]), /waiting for you because a criterion changed/);
+  assert.match((await fullViewOf(p, '0701')).textContent, /waits for you to ship it because a criterion changed/);
 });
 
-test('0565 AC4: a task\'s Build card says so too, and an unchanged ticket\'s does not', async () => {
+test('0565 AC4: a task\'s Build row says so too, and an unchanged ticket\'s does not', async () => {
   const task = await page(approved({ criteria_changed: true, kind: 'task' }));
-  assert.match(words(task, queueRows(task)[0]), /because a criterion changed/);
+  assert.match(tip(task, queueRows(task)[0]), /because a criterion changed/);
   const same = await page(approved({ criteria_changed: false }));
-  await openQueueRows(same);
-  assert.ok(!/criterion changed/.test(words(same, queueRows(same)[0])));
+  assert.ok(!/criterion changed/.test(words(same, queueRows(same)[0]) + tip(same, queueRows(same)[0])));
+  assert.ok(!/criterion changed/.test((await fullViewOf(same, '0701')).textContent));
   const old = await page(approved({})); // from an older speck status, with no such field
-  assert.ok(!/criterion changed/.test(words(old, queueRows(old)[0])));
+  assert.ok(!/criterion changed/.test(words(old, queueRows(old)[0]) + tip(old, queueRows(old)[0])));
 });

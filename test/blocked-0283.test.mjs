@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { panelRepo, fm, good, T, fakePage, queueRows, openQueueRows } from './support/panel.mjs';
+import { panelRepo, fm, good, T, fakePage, queueRows, fullViewOf } from './support/panel.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { questionFacts } from '../scripts/question-facts.mjs';
 
@@ -52,8 +52,7 @@ test('0283 AC3: a value speck can\'t read is unknown and stays in the question, 
 const page = tickets => fakePage([], {
   fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : { tickets: JSON.parse(JSON.stringify(tickets)), ideas: [] }) }),
 });
-const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-const factsOf = (p, id) => p.all(rowOf(p, id)).filter(n => /\bquestion-fact\b/.test(n.className)).map(n => n.textContent);
+const factsOf = async (p, id) => { const v = await fullViewOf(p, id); return p.all(v).filter(n => /\bquestion-fact\b/.test(n.className)).map(n => n.textContent); };
 
 test('0283 AC4: the panel says on a blocked ticket\'s question whether it changes what you\'d notice and whether it\'s a clear recommendation', async () => {
   const p = page([
@@ -64,12 +63,11 @@ test('0283 AC4: the panel says on a blocked ticket\'s question whether it change
     T('0005', 'blocked', { blocked_question: null, blocked_recommendation: 'A', blocked_noticeable: true, blocked_clear: false }),
   ]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  assert.deepEqual(factsOf(p, '0001'), ['Changes what you\'d notice', 'Clear recommendation']);
-  assert.deepEqual(factsOf(p, '0002'), ['Doesn\'t change what you\'d notice', 'Close call']);
-  assert.deepEqual(factsOf(p, '0003'), [], 'nothing for an unknown');
-  assert.deepEqual(factsOf(p, '0004'), ['Doesn\'t change what you\'d notice'], 'only the one that\'s known');
-  assert.deepEqual(factsOf(p, '0005'), ['Changes what you\'d notice', 'Close call'], 'shown even when the section holds nothing else');
-  const q = p.all(rowOf(p, '0002')).find(n => n.className === 'question');
+  assert.deepEqual(await factsOf(p, '0001'), ['Changes what you\'d notice', 'Clear recommendation']);
+  assert.deepEqual(await factsOf(p, '0002'), ['Doesn\'t change what you\'d notice', 'Close call']);
+  assert.deepEqual(await factsOf(p, '0003'), [], 'nothing for an unknown');
+  assert.deepEqual(await factsOf(p, '0004'), ['Doesn\'t change what you\'d notice'], 'only the one that\'s known');
+  assert.deepEqual(await factsOf(p, '0005'), ['Changes what you\'d notice', 'Close call'], 'shown even when the section holds nothing else');
+  const q = p.all(await fullViewOf(p, '0002')).find(n => n.className === 'question');
   assert.ok(q && p.all(q).some(n => /\bquestion-fact\b/.test(n.className)), 'shown on the question itself');
 });

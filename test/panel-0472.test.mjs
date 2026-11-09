@@ -136,7 +136,7 @@ const VIEWS = [
   // 0520: the inbox is in Capture
   ['Capture', `document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), ${openLane('capture')}, true`, `!!document.querySelector('#capture .item.inbox, #capture .item.idea')`],
   ['Capture, a note open', `document.querySelector('#capture .item .head').click(), true`, `!!document.querySelector('#capture .item.open .md')`],
-  ['Build, each ticket open', `${openLane('build')}, [...document.querySelectorAll('#queue .q .top')].forEach(t => t.click()), true`, `document.querySelectorAll('#queue .q.open').length >= 2 && !!document.querySelector('#queue .q.blocked .question')`],
+  ['Build, its rows in groups', `${openLane('build')}, true`, `document.querySelectorAll('#queue .q').length >= 2 && !!document.querySelector('#queue .group-head')`], // 0585: a row opens the full view, not itself
   ['Shipped, a ticket open', `${openLane('shipped')}, document.querySelector('#shipped .line .title').click(), true`, `!!document.querySelector('#shipped .facts')`],
   ['Plan, the tickets again', `${openLane('plan')}, true`, `!!document.querySelector('#shaping .item.ticket')`, false],
   ['Plan, a ticket open again', `document.querySelector('#shaping .item.open .full-open') || document.querySelector('#shaping .item.ticket .head').click(), true`, `!!document.querySelector('#shaping .item.open .full-open')`],

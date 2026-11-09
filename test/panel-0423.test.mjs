@@ -3,7 +3,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, page, full, click, items, top, queueRows, styles } from './support/panel.mjs';
+import { fakePage, page, full, click, items, top, fullViewOf, styles } from './support/panel.mjs';
 
 // The declarations of each CSS rule whose selector list holds exactly `sel`, in the page's style, media queries included.
 const rules = sel => {
@@ -50,10 +50,8 @@ test('0423 AC1: Full ticket and Review pack both open in it', async () => {
   assert.equal(p.all(pane(p)).find(n => n.className === 'title').textContent, 'A draft');
   p.key('Escape');
   assert.ok(!paneOpen(p));
-  const row = () => queueRows(p).find(r => r.textContent.includes('0002'));
-  p.press(row().children.find(n => n.className === 'top'));
-  await p.settle();
-  const pack = p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
+  const approved = await fullViewOf(p, '0002'); // 0585: a Build row opens its full view, which has the Review pack button
+  const pack = p.all(approved).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
   assert.ok(pack, 'the approved ticket has a Review pack button');
   p.press(pack);
   await p.settle();

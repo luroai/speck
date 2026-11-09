@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseTicket, lintTicket } from '../scripts/speck.mjs';
-import { T, fm, good, fakePage, items, queueRows, shippedRows, panelRepo } from './support/panel.mjs';
+import { T, fm, good, fakePage, items, fullViewOf, shippedRows, panelRepo } from './support/panel.mjs';
 
 const cfg = { allow_same_model_review: false, limits: { max_acceptance_criteria: 5, max_ticket_body_lines: 40, max_review_rounds: 3, escalate_after_repeat_disputes: 2 } };
 const lint = o => lintTicket(parseTicket(`---\n${fm(o)}\n---\n${good}`), cfg).errors;
@@ -66,7 +66,7 @@ test('0350 AC4: a task ticket\'s card shows a "task" tag; a code ticket\'s shows
   ] });
   const p = fakePage([s(), s(), s()]);
   await p.settle();
-  const where = [[items(p), '0001', '0002'], [queueRows(p), '0003', '0004'], [shippedRows(p), '0005', '0006']];
+  const where = [[items(p), '0001', '0002'], [shippedRows(p), '0005', '0006']];
   for (const [list, doc, code] of where) {
     const d = card(p, list, doc), c = card(p, list, code);
     assert.ok(d && c, `cards for ${doc} and ${code}`);
@@ -75,4 +75,16 @@ test('0350 AC4: a task ticket\'s card shows a "task" tag; a code ticket\'s shows
     assert.match(tag.className, /\btask\b/, 'a tag of its own, as the bug tag is');
     assert.ok(!texts(p, c).includes('task') && !texts(p, c).includes('code'), `${code} shows no task tag`);
   }
+});
+
+// 0585: a Build row has no tags, so its Type cell in the full view says task.
+test('0350 AC4: a task ticket\'s full view from Build says task in its Type cell; a code ticket\'s says code', async () => {
+  const s = () => ({ ideas: [], tickets: [T('0003', 'ready', { kind: 'task' }), T('0004', 'ready', { kind: 'code' })] });
+  const p = fakePage([s(), s(), s()]);
+  await p.settle();
+  const type = async id => { const v = await fullViewOf(p, id); return p.all(v).find(n => n.className === 'fact' && n.children[0].textContent === 'Type').children[1]; };
+  const task = await type('0003');
+  assert.equal(task.textContent, 'task');
+  assert.match(task.className, /\btask\b/, 'a colour of its own, as the bug tag has');
+  assert.equal((await type('0004')).textContent, 'code');
 });

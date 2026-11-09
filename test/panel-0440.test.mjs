@@ -33,11 +33,8 @@ const ruleVar = (selector, prop) => {
 };
 const CURSOR_GREEN = { light: '#1f8a65', dark: '#70b489' };
 
-test('0440 AC1: a ticket waiting for you to ship it is green on its edge, its tint and its words', () => {
-  assert.equal(ruleVar('.q.to-ship', 'border-color'), '--ok', 'its edge');
-  assert.equal(ruleVar('.q.to-ship', 'background'), '--ok-bg', 'its tint');
-  assert.equal(ruleVar('.q .top .say.to-ship', 'color'), '--ok', 'its sentence');
-  assert.equal(ruleVar('.q .top .stage.to-ship', 'color'), '--ok', 'its current step');
+test('0440 AC1: a ticket waiting for you to ship it is green in its full view, in its sentence, label and message edge', () => {
+  assert.equal(ruleVar('#full-ticket .live-now .say.to-ship', 'color'), '--ok', 'its sentence');
   assert.equal(ruleVar('.act.to-ship', 'color'), '--ok', 'its label');
   assert.equal(ruleVar('.question.exit.to-ship', 'border-left-color'), '--ok', 'its message\'s edge');
   // nothing about a ticket waiting to ship is magenta any more
@@ -56,9 +53,8 @@ test('0440 AC1: the green is Cursor\'s, its words at the shade 0161 needs and it
 });
 
 test('0440 AC1: a ticket that needs you is in the needs-you text', () => {
-  assert.equal(ruleVar('.q.blocked', 'border-color'), '--bad');
-  assert.equal(ruleVar('.q.blocked', 'background'), '--bad-bg');
-  assert.equal(ruleVar('.q .top .stage.bad', 'color'), '--bad');
+  assert.equal(ruleVar('#full-ticket .live-now .say.bad', 'color'), '--bad', 'its sentence in the full view');
+  assert.equal(ruleVar('.where.needs::before', 'background'), '--needs-you', 'its row\'s dot');
   assert.equal(ruleVar('.tab .needs', 'color'), '--bad');
   assert.equal(ruleVar('.bezel.needs', 'border-color'), '--bar-needs');
   const { light, dark } = looks();

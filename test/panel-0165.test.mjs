@@ -59,8 +59,7 @@ async function withPanel(fn, { width = 1280, height = 900, state = STATE(), touc
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(state) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#shaping .item') && !!document.querySelector('#queue .q')`, 'the panel');
-    // 0434: a Build ticket showed its priority, size and risk only while it was open. 0463: open, they're in its facts
-    // table, as plain text, so the Build queue's only tag is a closed card's bug, fix or document tag.
+    // 0585: a Build row has no tags, and its full view has its priority, size and risk in its table, as plain text.
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
@@ -95,9 +94,7 @@ const TIP = `(() => { const t = document.getElementById('tag-tip'); if (!t || t.
   return { text: t.textContent, left: r.left, right: r.right, top: r.top, bottom: r.bottom }; })()`;
 const texts = (b, sel) => b.js(`[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => n.textContent)`);
 const openPane = async b => {
-  await b.js(`document.querySelector('#queue .q.open') || document.querySelector('#queue .q .top').click()`); // open already since 0434
-  await settle(b);
-  await b.js(`document.querySelector('#queue .q .full-open').click()`);
+  await b.js(`document.querySelector('#queue .q .top').click()`); // 0585: pressing a Build row opens its full view
   await settle(b);
   assert.equal(await b.js(`document.getElementById('full-ticket').hidden`), false, 'the full ticket pane is open');
 };
@@ -120,16 +117,15 @@ const BOXES = sel => `${laneFor(sel)} [...document.querySelectorAll(${JSON.strin
 })`;
 
 for (const width of [375, 1280]) {
-  // 0419: a Plan or Build card's tags are words in its details line, so they match each other, and the pane's match each other.
-  test(`0165 AC1: at ${width} px, every tag in Plan and the Build queue, and every tag in the full ticket pane, has the same visible size and even gaps${width < 700 ? ', with a 44 by 44 px tap area each (0519: in a closed Plan card\'s second row, from the row\'s top to the card\'s bottom)' : ''}`, skip, async () => {
+  // 0585: the Build queue has no tags. A Plan card's match each other, and the pane's (none) match each other.
+  test(`0165 AC1: at ${width} px, every tag in Plan, none in the Build queue, and none in the full ticket pane, has the same visible size and even gaps${width < 700 ? ', with a 44 by 44 px tap area each (0519: in a closed Plan card\'s second row, from the row\'s top to the card\'s bottom)' : ''}`, skip, async () => {
     await withPanel(async b => {
       const all = [];
       for (const where of ['plan', 'queue']) all.push(...(await b.js(BOXES(WHERE[where]))).map(t => ({ ...t, where })));
       await openPane(b);
       all.push(...(await b.js(BOXES(WHERE.pane))).map(t => ({ ...t, where: 'pane' })));
       // 0465: the pane has no tags, as its facts are in its table, as an open card's are
-      assert.deepEqual(all.map(t => `${t.where} ${t.text}`), ['plan P1', 'plan M', 'plan high', 'plan bug', 'plan P3', 'plan S', 'plan low', 'plan fix',
-        'queue bug']);
+      assert.deepEqual(all.map(t => `${t.where} ${t.text}`), ['plan P1', 'plan M', 'plan high', 'plan bug', 'plan P3', 'plan S', 'plan low', 'plan fix']);
       for (const t of all) {
         const first = all.find(x => (x.where === 'pane') === (t.where === 'pane'));
         assert.ok(Math.abs(t.height - first.height) < 0.5, `${t.where} ${t.text} is ${t.height} px high, not ${first.height}`);
@@ -156,7 +152,8 @@ for (const width of [375, 1280]) {
 
 test('0165 AC2: a click on each tag that opens no menu shows its meaning next to it', skip, async () => {
   await withPanel(async b => {
-    for (const where of ['plan', 'queue']) {
+    assert.deepEqual(await texts(b, WHERE.queue), [], 'a Build row has no tags (0585)');
+    for (const where of ['plan']) {
       const tags = await texts(b, WHERE[where]);
       for (let i = 0; i < tags.length; i++) {
         if (where === 'plan' && /^P\d$/.test(tags[i])) continue; // opens the priority menu (AC4)
@@ -266,21 +263,19 @@ test('0165 AC3: one tip at a time; a click elsewhere, Escape or a scroll closes 
     await settle(b);
     await mouse(b, await b.js(centre(WHERE.plan, 1)));
     assert.equal(await b.js(`document.querySelector('#shaping .item').classList.contains('open')`), true, 'the tag closed its ticket');
-    await mouse(b, await b.js(centre(WHERE.queue, 0)));
-    assert.equal(await b.js(`document.querySelector('#queue .q').classList.contains('open')`), false, 'the tag opened the queue ticket'); // 0463: closed, as its tags show only then
     // A click elsewhere.
     await mouse(b, [5, 890]);
     assert.equal(await b.js(TIP), null, 'a click elsewhere closes it');
     // Escape.
-    await mouse(b, await b.js(centre(WHERE.queue, 0)));
+    await mouse(b, await b.js(centre(WHERE.plan, 1)));
     assert.ok(await b.js(TIP));
     await key(b, 'Escape');
     assert.equal(await b.js(TIP), null, 'Escape closes it');
     // A scroll.
-    await mouse(b, await b.js(centre(WHERE.queue, 0)));
+    await mouse(b, await b.js(centre(WHERE.plan, 1)));
     assert.ok(await b.js(TIP));
-    // 0410: the page itself never scrolls, so Build's list does, made long enough to scroll
-    await b.js(`new Promise(r => { const l = document.getElementById('queue'); l.style.paddingBottom = '1000px'; l.addEventListener('scroll', () => r(), { once: true }); l.scrollBy(0, 40); })`);
+    // 0410: the page itself never scrolls, so Plan's list does, made long enough to scroll
+    await b.js(`new Promise(r => { const l = document.getElementById('shaping'); l.style.paddingBottom = '1000px'; l.addEventListener('scroll', () => r(), { once: true }); l.scrollBy(0, 40); })`);
     await settle(b);
     assert.equal(await b.js(TIP), null, 'a scroll closes it');
   }, { width: 700, height: 600 });
@@ -288,7 +283,7 @@ test('0165 AC3: one tip at a time; a click elsewhere, Escape or a scroll closes 
 
 test('0165 AC3: at 375 px, a tapped tip stays on screen, the rightmost tag\'s too', skip, async () => {
   await withPanel(async b => {
-    for (const where of ['plan', 'queue']) {
+    for (const where of ['plan']) {
       const tags = await texts(b, WHERE[where]);
       for (let i = 0; i < tags.length; i++) {
         if (where === 'plan' && /^P\d$/.test(tags[i])) continue;
@@ -299,14 +294,14 @@ test('0165 AC3: at 375 px, a tapped tip stays on screen, the rightmost tag\'s to
       }
     }
     assert.equal(await b.js(`[...document.querySelectorAll('#shaping .item')].some(n => n.classList.contains('open'))`), false, 'a tap opened a ticket');
-    assert.equal(await b.js(`document.querySelector('#queue .q').classList.contains('open')`), false, 'a tap opened the queue ticket'); // 0463: closed, as its tags show only then
+    assert.equal(await b.js(`document.getElementById('full-ticket').hidden`), true, 'a tap opened a full view');
   }, { width: 375, touch: true });
 });
 
 // ---------- AC4 ----------
 
 // 0463: the Build queue has no priority tag, so the pane's is the one that shows its tip
-test('0165 AC4: on a draft in Plan the priority tag opens the priority menu, not a tip; in the queue and the pane it shows its tip', skip, async () => {
+test('0165 AC4: on a draft in Plan the priority tag opens the priority menu, not a tip; the queue and the pane have no priority tag', skip, async () => {
   await withPanel(async b => {
     await mouse(b, await b.js(centre('#shaping .item .tag.pick', 0)));
     assert.equal(await b.js(`!!document.querySelector('#shaping .item .prio-menu')`), true, 'the menu opens');
@@ -353,15 +348,14 @@ test('0165 AC5: the fake page gives each tag its label, the Plan priority tag to
   assert.deepEqual(tags.map(n => n._text), ['P3', 'S', 'low', 'fix']);
   assert.deepEqual(tags.slice(1).map(n => n.attrs['aria-label']), [LABEL('S'), LABEL('low'), LABEL('fix')]);
   assert.match(tags[0].attrs['aria-label'], /^Priority 3: built after P0 to P2 tickets\. /);
-  // 0463: a closed Build ticket's bug, fix or document tag; open, its facts are in a table, as plain text
-  const q = p.all(queueRows(p)[0].children[0]).filter(isTag);
-  assert.deepEqual(q.map(n => n.attrs['aria-label']), [LABEL('bug')]);
+  // 0585: a Build row has no tags
+  assert.deepEqual(p.all(queueRows(p)[0]).filter(isTag), []);
 });
 
 test('0165 AC4: the Plan priority tag keeps its pointer, and the tags that show a tip get the help pointer', skip, async () => {
   await withPanel(async b => {
     assert.equal(await b.js(`getComputedStyle(document.querySelector('#shaping .item .tag.pick')).cursor`), 'pointer');
-    assert.equal(await b.js(`getComputedStyle(document.querySelectorAll('#queue .q .tag')[0]).cursor`), 'help');
+    assert.equal(await b.js(`getComputedStyle(document.querySelectorAll('#shaping .item .tag')[1]).cursor`), 'help');
   });
 });
 

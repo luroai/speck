@@ -48,7 +48,7 @@ function livePage(states, logs = {}) {
     constructor(url) { super(url); sources.push(this); Promise.resolve().then(() => this.emit('stream', NAME)); }
   }
   const p = fakePage([], { fetch, setTimeout, EventSource, getSelection: () => ({ isCollapsed: true, rangeCount: 0 }) },
-    { made: n => { if (n.tagName === 'pre') sized(n); } });
+    { made: n => { if (n.tagName === 'div') sized(n); } }); // the log box is a div, whose class isn't set yet
   p.logCalls = () => calls.filter(u => /\/log$/.test(u));
   p.closeCalls = () => calls.filter(u => /\/log\/close$/.test(u));
   p.opened = opened;
@@ -81,8 +81,10 @@ const poll = p => p.run(2000);
 const tick = p => p.tick();
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
-const logOf = (p, id) => p.all(rowOf(p, id)).find(n => /(^| )log( |$)/.test(n.className || ''));
+// 0585: a row opens the ticket's full view, which holds the log and follows it; its Close button closes the view.
+const logOf = (p, id) => (p.byId('full-ticket').hidden ? null : p.all(p.byId('full-ticket')).find(n => /(^| )log( |$)/.test(n.className || '')));
 const open = async (p, id) => { click(topOf(rowOf(p, id))); await p.settle(); };
+const shut = async p => { click(p.all(p.byId('full-ticket')).find(n => n.className === 'close')); await p.settle(); };
 const state = () => ({
   tickets: [
     T('0001', 'building', { started: new Date().toISOString() }),
@@ -123,21 +125,22 @@ test('0052 AC1: an open queue ticket\'s log is asked for once, on the page\'s st
   assert.equal(p.pending(1000), 0, 'and no log timer');
 });
 
-test('0052 AC1: every open ticket gets its own changes, and a closed one is closed on the stream at once', async () => {
-  const texts = { '0001': 'a', '0003': 'x' };
-  const p = livePage([state()], { '0001': () => ({ text: texts['0001'], truncated: false }), '0003': () => ({ text: texts['0003'], truncated: false }) });
+test('0052 AC1: the ticket whose full view is open gets its own changes, and closing the view closes it on the stream at once', async () => {
+  const texts = { '0001': 'a', '0002': 'x' };
+  const p = livePage([state()], { '0001': () => ({ text: texts['0001'], truncated: false }), '0002': () => ({ text: texts['0002'], truncated: false }) });
   await p.settle();
   await open(p, '0001');
-  await open(p, '0003');
-  texts['0001'] = 'a\nb'; texts['0003'] = 'x\ny';
+  texts['0001'] = 'a\nb'; texts['0002'] = 'x\ny';
   await tick(p);
   assert.equal(logOf(p, '0001').textContent, 'a\nb');
-  assert.equal(logOf(p, '0003').textContent, 'x\ny');
-  await open(p, '0001'); // closes it
+  assert.deepEqual([...p.opened.keys()], ['0001'], 'only the ticket shown is followed');
+  await shut(p);
   assert.deepEqual(p.closeCalls(), ['/api/tickets/0001/log/close'], 'closed on the stream');
-  assert.deepEqual([...p.opened.keys()], ['0003']);
-  await open(p, '0003'); // closes the last one
   assert.equal(p.opened.size, 0, 'nothing open: nothing sent');
+  await open(p, '0002');
+  assert.equal(logOf(p, '0002').textContent, 'x\ny', 'the next ticket has its own log');
+  await shut(p);
+  assert.equal(p.opened.size, 0);
   assert.equal(p.logCalls().length, 2, 'each asked for once');
 });
 
@@ -148,7 +151,7 @@ test('0052 AC1: closing and opening again quickly, or refreshes that rebuild the
   const p = livePage([s, changed], { '0001': () => ({ text, truncated: false }) });
   await p.settle();
   await open(p, '0001');
-  await open(p, '0001');
+  await shut(p);
   await open(p, '0001');
   assert.equal(p.logCalls().length, 2, 'asked for on each opening');
   await poll(p);
@@ -307,11 +310,12 @@ test('0052 AC5: a log replaced by a new build shows only the new log, at the bot
 
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const row = id => `[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}')`;
-const box = `${row('0001')}.querySelector('.log')`;
+const box = `document.querySelector('#full-ticket .log')`; // 0585: the full view a row opens
 const atBottom = `(${box}.scrollHeight - ${box}.clientHeight - ${box}.scrollTop <= 2)`;
 
 test('0052 AC1-AC5: in a real browser, the log grows by itself in a fixed box, follows at the bottom, keeps a selection scrolled up, and resets for a new build', chrome, async () => {
   const r = panelRepo();
+  r.run('set', '1', 'status', 'building'); // 0585: the full view follows the log of a ticket in flight
   writeLog(r.dir, '0001', `${lines(5).join('\n')}\n`);
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const { port } = panel;
@@ -354,7 +358,7 @@ test('0052 AC1-AC5: in a real browser, the log grows by itself in a fixed box, f
     assert.ok(await b.js(atBottom));
 
     // AC1: closing it stops the requests.
-    await b.js(`${row('0001')}.querySelector('.top').click()`);
+    await b.js(`document.querySelector('#full-ticket .close').click()`);
     assert.equal(await b.js(`!!${box}`), false);
   } finally {
     await b.close();
@@ -364,6 +368,7 @@ test('0052 AC1-AC5: in a real browser, the log grows by itself in a fixed box, f
 
 test('0052 AC3: in a real browser, a selection in repeated lines stays through unchanged and growing logs (review round 1, F1)', chrome, async () => {
   const r = panelRepo();
+  r.run('set', '1', 'status', 'building');
   writeLog(r.dir, '0001', 'working\nworking\n');
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const { port } = panel;

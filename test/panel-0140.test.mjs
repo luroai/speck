@@ -70,17 +70,22 @@ async function withPhone(fn, { width = 375, theme = 'light' } = {}) {
 }
 
 const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
-// Opens every Plan item, every Capture note (0520: the ideas and inbox notes Plan's Ideas and Inbox lists had) and every Build row.
+// Opens every Plan item and every Capture note (0520: the ideas and inbox notes Plan's Ideas and Inbox lists had). A Build row (0585) doesn't open: its full view does, with what the card had.
 async function openAll(b) {
   await b.js(`[...document.querySelectorAll('#shaping .item:not(.open) .head, #capture .item:not(.open) .head')].forEach(h => h.click())`);
-  await b.js(`[...document.querySelectorAll('#queue .q:not(.open) .top')].forEach(t => t.click())`);
   await settle(b);
 }
+// A Build ticket's full view, opened by pressing its row.
+const openBuild = async (b, id) => {
+  await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}').querySelector('.top').click()`);
+  await b.until(`!document.getElementById('full-ticket').hidden && document.querySelector('#full-ticket .id').textContent === '${id}'`, `the full view of ${id}`);
+};
 // 0463: an open draft's priority is in its facts' Priority cell
 const openPrio = async b => { await b.js(`document.querySelector('#shaping .tag.pick, #shaping .set-prio').click()`); await settle(b); };
 const openFull = async b => { await b.js(`document.querySelector('#shaping .item.open .full-open').click()`); await b.until(`!document.getElementById('full-ticket').hidden`, 'the full ticket'); };
 const openPack = async b => {
-  await b.js(`[...document.querySelectorAll('#queue .full-open')].find(x => x.textContent === 'Review pack').click()`);
+  await openBuild(b, '0206');
+  await b.js(`[...document.querySelectorAll('#full-ticket .pane-row')].find(x => x.textContent === 'Review pack').click()`);
   await b.until(`!!document.querySelector('#full-ticket .ship') && !!document.querySelector('#full-ticket details')`, 'the review pack and its Ship button');
 };
 const closePane = async b => { await b.js(`document.querySelector('#full-ticket .close').click()`); await b.until(`document.getElementById('full-ticket').hidden`, 'the pane to close'); };
@@ -135,6 +140,11 @@ for (const theme of ['light', 'dark']) {
       await openFull(b);
       assert.deepEqual(await overflow(b), [], 'the full ticket pane');
       await closePane(b);
+      for (const id of ['0203', '0204', '0205', '0206', '0207']) { // 0585: what a Build card had open is in its full view
+        await openBuild(b, id);
+        assert.deepEqual(await overflow(b), [], `the full view of ${id}`);
+        await closePane(b);
+      }
       await openPack(b);
       await b.js(`document.querySelector('#full-ticket details').open = true`);
       await settle(b);
@@ -290,11 +300,16 @@ for (const width of [375, 699]) {
       await check('as first shown');
       await openAll(b);
       await openPrio(b);
-      await check('tickets, notes and builds open, priority menu open'); // 0520: the notes are in Capture, opened with the rest
+      await check('tickets and notes open, priority menu open'); // 0520: the notes are in Capture, opened with the rest
       await b.js(openLane('plan')); // 0520: a click closes the priority menu, as pressing Plan's Tickets button did here before
       await openFull(b);
       await check('the full ticket pane');
       await closePane(b);
+      for (const id of ['0203', '0204', '0205', '0206', '0207']) { // 0585: what a Build card had open is in its full view
+        await openBuild(b, id);
+        await check(`the full view of ${id}`);
+        await closePane(b);
+      }
       await openPack(b);
       await check('the review pack pane');
       // The controls the ticket names were all among those checked. 0520: Plan's Tickets, Ideas and Inbox buttons are

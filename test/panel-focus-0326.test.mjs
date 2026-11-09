@@ -50,10 +50,10 @@ async function openFromPlan(p, id) {
   assert.ok(paneOpen(p), 'the pane opens');
   assert.equal(p.focused(), pane(p), 'with the focus in it, as before');
 }
+// 0585: a Build ticket has no Full ticket button: its row, pressed, opens the pane, and is what the focus comes back to.
 async function openFromBuild(p, id) {
   click(topOf(rowOf(p, id)));
   await p.settle();
-  click(fullOf(p, rowOf(p, id)));
   assert.ok(paneOpen(p), 'the pane opens');
 }
 
@@ -66,14 +66,14 @@ for (const [how, close] of Object.entries(closers)) {
     assert.ok(!paneOpen(p), 'the pane closes');
     assert.equal(p.focused(), fullOf(p, itemOf(p, '0001')), 'the focus is on its Full ticket button');
   });
-  test(`0326 AC1: closing the pane with ${how} puts the focus on the Build ticket's Full ticket button`, async () => {
+  test(`0326 AC1: closing the pane with ${how} puts the focus back on the Build ticket's row`, async () => {
     const p = livePage(board());
     await p.settle();
     click(top(itemOf(p, '0001'))); // a Plan ticket open too, so its button is on the page
     await openFromBuild(p, '0003');
     close(p);
     assert.ok(!paneOpen(p), 'the pane closes');
-    assert.equal(p.focused(), fullOf(p, rowOf(p, '0003')), 'the focus is on the Build ticket\'s button, not the Plan one\'s');
+    assert.equal(p.focused(), topOf(rowOf(p, '0003')), 'the focus is on the Build ticket\'s row, not the Plan one\'s button');
   });
 }
 
@@ -90,17 +90,17 @@ test('0326 AC2: after a refresh draws the Plan ticket again, closing puts the fo
   assert.equal(p.focused(), now, 'the focus is on the new button');
 });
 
-test('0326 AC2: after a refresh draws the Build ticket again, closing puts the focus on its new button', async () => {
+test('0326 AC2: after a refresh draws the Build ticket again, closing puts the focus on its new row', async () => {
   const p = livePage(board());
   await p.settle();
   await openFromBuild(p, '0003');
-  const old = fullOf(p, rowOf(p, '0003'));
+  const old = topOf(rowOf(p, '0003'));
   p.set(board({ '0003': { title: 'Queued one, renamed' } }));
   await refresh(p);
-  const now = fullOf(p, rowOf(p, '0003'));
-  assert.ok(now && now !== old, 'the button was drawn again');
+  const now = topOf(rowOf(p, '0003'));
+  assert.ok(now && now !== old, 'the row was drawn again');
   closers['a click outside'](p);
-  assert.equal(p.focused(), now, 'the focus is on the new button');
+  assert.equal(p.focused(), now, 'the focus is on the new row');
 });
 
 test('0326 AC3: when the Plan ticket has left the board, closing puts the focus at the top of Plan', async () => {
@@ -186,12 +186,16 @@ test('0326 AC4: opening a Review pack after a Full ticket and closing it moves t
   await p.settle();
   await openFromBuild(p, '0004');
   p.key('Escape');
-  assert.equal(p.focused(), fullOf(p, rowOf(p, '0004')), 'back on Full ticket');
-  click(named(p, rowOf(p, '0004'), 'Review pack'));
+  assert.equal(p.focused(), topOf(rowOf(p, '0004')), 'back on its row');
+  await openFromBuild(p, '0004');
+  click(named(p, pane(p), 'Review pack')); // 0585: in its full view
   await p.settle();
   assert.ok(paneOpen(p));
   assert.equal(p.focused(), pane(p), 'the pane takes the focus, as before');
   p.key('Escape');
+  assert.ok(paneOpen(p), 'closing the pack goes back to the full view (0583)');
+  assert.equal(p.focused(), pane(p), 'nothing else takes the focus');
+  p.key('Escape');
   assert.ok(!paneOpen(p));
-  assert.equal(p.focused(), pane(p), 'nothing else takes it');
+  assert.equal(p.focused(), topOf(rowOf(p, '0004')), 'closing the full view puts it back on the row');
 });

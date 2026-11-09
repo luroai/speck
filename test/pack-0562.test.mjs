@@ -41,7 +41,7 @@ test('0562 AC2: pressing a folder lists each file it holds, named inside it, in 
 });
 
 test('0562 AC2: a folder stays unfolded when the pane is drawn again, and folds again when the pack is opened again', async () => {
-  const p = await open([{ status: 409, body: { error: 'Not now.' } }, { pack: PACK, documents: DOCS }], { confirm: () => true });
+  const p = await open([{ status: 409, body: { error: 'Not now.' } }, { text: '', truncated: false }, { pack: PACK, documents: DOCS }], { confirm: () => true }); // 0585: back in the full view, its log is asked for again
   p.press(folder(p, 'drafts'));
   const was = pane(p).children[1];
   p.press(p.all(pane(p)).find(n => n.tagName === 'button' && n.textContent === 'Ship')); // its refusal draws the pane again
@@ -52,7 +52,7 @@ test('0562 AC2: a folder stays unfolded when the pane is drawn again, and folds 
   assert.equal(folder(p, 'drafts').attrs['aria-expanded'], 'true');
   p.press(p.all(pane(p)).find(n => n.tagName === 'button' && n.textContent === 'Close'));
   await p.settle();
-  p.press(p.all(p.byId('queue')).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  p.press(p.all(pane(p)).find(n => n.tagName === 'button' && n.textContent === 'Review pack')); // 0585: Close goes back to the full view, which has it
   await p.settle();
   assert.deepEqual(rows(p), ['Start here', 'drafts/ · 1 file', 'imports/ · 3 files', 'memo.md', 'report.pdf'], 'folded again');
 });

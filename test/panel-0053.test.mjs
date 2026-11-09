@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, page, queueRows, click } from './support/panel.mjs';
+import { T, fakePage, page, queueRows, click, fullViewOf } from './support/panel.mjs';
 
 // ---------- 0053: show the worktree path inside the open queue ticket ----------
 
@@ -24,7 +24,8 @@ const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className =
 const topOf = row => row.children.find(n => n.className === 'top');
 const pathOf = (p, row) => p.all(row).find(n => /(^| )path( |$)/.test(n.className || ''));
 const isOpen = row => /(^| )open( |$)/.test(row.className);
-const open = async (p, id) => { click(topOf(rowOf(p, id))); await p.settle(); };
+const closeView = async p => { click(p.all(p.byId('full-ticket')).find(n => n.className === 'close')); await p.settle(); };
+const whereOf = (p, row) => p.all(row).find(n => /^where\b/.test(n.className || ''));
 
 test('0053 AC1: a closed queue row shows nothing about the worktree', async () => {
   const p = queuePage();
@@ -38,54 +39,48 @@ test('0053 AC1: a closed queue row shows nothing about the worktree', async () =
   }
 });
 
-// 0421: the open ticket's card has no worktree line now, so 0053 AC2's path line is gone. Opening and closing work as before.
-test('0053 AC2 (since 0421): opening the ticket shows no worktree path; opening it again closes it', async () => {
+// 0421: the ticket has no worktree line now, so 0053 AC2's path line is gone. 0585: pressing its row opens its full view, and its Back link closes it.
+test('0053 AC2 (since 0421): opening the ticket shows no worktree path; going back closes it', async () => {
   const p = queuePage();
   await p.settle();
-  await open(p, '0001');
-  const row = rowOf(p, '0001');
-  assert.ok(isOpen(row));
-  assert.equal(pathOf(p, row), undefined, 'no path line');
-  assert.ok(!row.textContent.includes(WT), 'no path');
-  await open(p, '0003');
-  assert.ok(!rowOf(p, '0003').textContent.includes('/tmp/wt/0003'), 'a blocked ticket neither');
-  await open(p, '0001');
-  assert.ok(!isOpen(rowOf(p, '0001')), 'closed again');
-  assert.ok(isOpen(rowOf(p, '0003')), 'the other stays open');
+  const view = await fullViewOf(p, '0001');
+  assert.equal(view.hidden, false);
+  assert.equal(pathOf(p, view), undefined, 'no path line');
+  assert.ok(!view.textContent.includes(WT), 'no path');
+  assert.ok(!isOpen(rowOf(p, '0001')), 'its row does not open');
+  assert.ok(!(await fullViewOf(p, '0003')).textContent.includes('/tmp/wt/0003'), 'a blocked ticket neither');
+  await closeView(p);
+  assert.equal(p.byId('full-ticket').hidden, true, 'closed again');
 });
 
-test('0053 AC3: a ticket whose worktree is null shows nothing about it, open or closed', async () => {
+test('0053 AC3: a ticket whose worktree is null shows nothing about it, on its row or in its full view', async () => {
   const p = queuePage();
   await p.settle();
   for (const id of ['0002', '0005']) {
-    await open(p, id);
-    const row = rowOf(p, id);
-    assert.ok(isOpen(row), `${id} open`);
-    assert.ok(!row.textContent.includes('worktree'), `${id}: nothing about the worktree`);
-    assert.equal(pathOf(p, row), undefined, `${id}: no path line`);
+    const view = await fullViewOf(p, id);
+    assert.equal(view.hidden, false, `${id} open`);
+    assert.ok(!view.textContent.includes('worktree'), `${id}: nothing about the worktree`);
+    assert.equal(pathOf(p, view), undefined, `${id}: no path line`);
+    assert.ok(!rowOf(p, id).textContent.includes('worktree'), `${id}: nor on its row`);
   }
 });
 
-test('0053 AC4: everything else in the row stays where it is', async () => {
+test('0053 AC4: everything else stays where it is', async () => {
   const p = queuePage();
   await p.settle();
   const shape = row => row.children.map(n => n.className);
   const a = rowOf(p, '0001');
-  assert.deepEqual(shape(a), ['top'], 'the top row, with the progress in it since 0156 (0069: no status line under it)');
-  assert.match(p.all(topOf(a)).find(n => n.className === 'sub').textContent, /^03:0\d$/, 'the time since started, in the top row (MM:SS since 0058)');
+  assert.deepEqual(shape(a), ['top'], 'the top row, with nothing under it (0069: no status line)');
+  assert.match(whereOf(p, a).children.find(n => n.className === 'sub').textContent, /^3 min$/, 'the time since started, in the row (0585: in minutes)');
   assert.deepEqual(shape(rowOf(p, '0003')), ['top'], '0434: closed, its two lines only');
-  await open(p, '0003');
-  const c = rowOf(p, '0003');
-  assert.deepEqual(shape(c).slice(0, 3), ['top', 'question', 'act'], '0434: open, its question under them');
-  assert.equal(c.children[2].textContent, 'Waiting for you. Answer the question, then run /speck-build 0003'); // 0069, 0317
+  const live = p.all(await fullViewOf(p, '0003')).find(n => n.className === 'live-state');
+  assert.deepEqual(shape(live).slice(0, 3), ['live-now', 'question', 'act'], '0585: its question is in its full view');
+  assert.equal(live.children[2].textContent, 'Waiting for you. Answer the question, then run /speck-build 0003'); // 0069, 0317
   const waiting = rowOf(p, '0004');
-  assert.deepEqual(shape(waiting), ['top']); // 0419: the Queued line is the top row's details line
-  assert.equal(topOf(waiting).children[1].textContent, 'Queued'); // 0468: what it waits on is in its chip
-  assert.ok(!p.all(topOf(waiting)).some(n => n.className === 'lock'), '0483: closed, no padlock in the top row');
+  assert.deepEqual(shape(waiting), ['top']); // 0585: the line saying where it is is in the top row
+  assert.equal(whereOf(p, waiting).textContent, 'Ready · after 0005');
+  assert.ok(!p.all(waiting).some(n => n.className === 'lock'), '0483: no padlock in the row');
   const chain = rowOf(p, '0005');
-  assert.equal(topOf(chain).children[1].textContent, 'Queued');
-  assert.ok(!p.all(topOf(chain)).some(n => n.className === 'chain'), '0483: closed, no chain icon in the top row');
-  // Opened, the rest keeps its place (0421: with no path line).
-  await open(p, '0001');
-  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'full-open', 'full-open', 'log']); // Full ticket: 0063. Full log: 0548
+  assert.equal(whereOf(p, chain).textContent, 'Ready');
+  assert.ok(!p.all(chain).some(n => n.className === 'chain'), '0483: no chain icon in the row');
 });

@@ -457,7 +457,13 @@ function paneFacts(t) {
   const named = s => (typeof s === 'string' && s.trim() ? `${s.trim()[0].toUpperCase()}${s.trim().slice(1)}` : '');
   const name = named(t.reviewer), model = typeof t.review_model === 'string' && t.review_model.trim() ? t.review_model.trim() : typeof t.reviewer_model === 'string' ? t.reviewer_model.trim() : '';
   return el('dl', 'facts', null, factCell('Priority', priority, null), factCell('Size', t.size ? String(t.size) : '–', null), factCell('Risk', t.risk ? String(t.risk) : '–', null),
-    factCell('Ships by itself', ships, null), factCell('Builder', workerOf(t, { round: null }).value, null), factCell('Reviewer', name ? `${name}${model ? ` · ${model}` : ''}` : '–', null));
+    factCell('Ships by itself', ships, null), factCell('Builder', workerOf(t, { round: null }).value, null), factCell('Reviewer', name ? `${name}${model ? ` · ${model}` : ''}` : '–', null),
+    ...paneFrom === 'queue' ? queueFacts(t) : []);
+}
+// 0585: what a Build row can't show: its type, and, on one that hasn't started, its ready check.
+function queueFacts(t) {
+  const kind = kindOf(t);
+  return [factCell('Type', kind, kind === 'code' ? null : kind, Object.hasOwn(KIND_TIPS, kind) ? KIND_TIPS[kind] : kind), t.inFlight ? null : lintCell(t)].filter(Boolean);
 }
 // 0583: the rows that open what it has so far: a review pack once a round has run or it waits to ship, and a build log once its build has started.
 const hasPack = t => list(t.rounds).length > 0 || t.roundCount > 0 || t.status === 'approved' || t.shipping === true || t.doc_finished === true;

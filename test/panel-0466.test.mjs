@@ -95,14 +95,15 @@ test('0466 AC1: a shipped ticket\'s title is reached with Tab and opens and clos
   assert.ok(!paneOpen(p), 'no full ticket opened');
 });
 
-test('0466 AC1: a Build ticket\'s top row still opens and closes it', async () => {
+test('0466 AC1: a Build ticket\'s top row opens its full ticket, not the row itself (0585)', async () => {
   const p = livePage();
   await p.settle();
   const row = () => queueRows(p).find(r => idOf(p, r) === '0811');
+  assert.ok(!paneOpen(p), 'closed to begin with');
   click(row().children[0]);
-  assert.ok(/\bopen\b/.test(row().className));
-  click(row().children[0]);
-  assert.ok(!/\bopen\b/.test(row().className));
+  await p.settle();
+  assert.ok(paneOpen(p), 'its full ticket opens');
+  assert.ok(!/\bopen\b/.test(row().className), 'the row stays as it was');
 });
 
 test('0466 AC2: a shipped ticket has no Details button, open or closed', async () => {

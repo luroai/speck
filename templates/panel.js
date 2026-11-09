@@ -62,12 +62,12 @@ function detailsLine(cls, parts) {
 // Its priority, size and risk, then a bug, fix or task tag, as words in the details line.
 const tagsOf = (t, pick) => [...fieldTags(t, pick), typeTag(t), taskTag(t)];
 // A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
-const typeTag = t => (t.type === 'bug' || t.type === 'fix'
-  ? explained(el('span', `tag ${t.type}`, t.type), t.type === 'bug' ? 'Bug: fixes a defect' : 'Fix: fixes a broken main, built before anything else') : null);
+const KIND_TIPS = { bug: 'Bug: fixes a defect', fix: 'Fix: fixes a broken main, built before anything else', task: 'Task: the build does a task and leaves its result in outputs/, not code' };
+const typeTag = t => (t.type === 'bug' || t.type === 'fix' ? explained(el('span', `tag ${t.type}`, t.type), KIND_TIPS[t.type]) : null);
 // 0521: an "agent" tag for an idea note an agent raised itself, such as a build's follow-up.
 const agentTag = () => explained(el('span', 'tag agent', 'agent'), 'Agent: an agent raised this idea itself, not you');
 // 0350, 0492: a "task" tag for a task ticket, whose build does a task rather than change code, or nothing for a code ticket.
-const taskTag = t => (t.kind === 'task' ? explained(el('span', 'tag task', 'task'), 'Task: the build does a task and leaves its result in outputs/, not code') : null);
+const taskTag = t => (t.kind === 'task' ? explained(el('span', 'tag task', 'task'), KIND_TIPS.task) : null);
 // A ticket's priority, size and risk tags, each only when it has that field. `pick`: the priority tag opens the menu
 // that sets it (a draft in the Tickets list).
 function fieldTags(t, pick) {
@@ -627,9 +627,10 @@ function factCell(label, value, cls, tip = value, lit = null, parts = null) {
 }
 // The table's bottom row: its priority, size and risk, and its kind. `pick`: its priority opens the menu that sets it,
 // as a draft's priority tag does.
+const kindOf = t => (t.type === 'bug' || t.type === 'fix' ? t.type : t.kind === 'task' ? 'task' : 'code');
 function lastFacts(t, pick) {
   const size = t.size ? String(t.size) : '–', risk = t.risk ? String(t.risk) : '–';
-  const kind = t.type === 'bug' || t.type === 'fix' ? t.type : t.kind === 'task' ? 'task' : 'code';
+  const kind = kindOf(t);
   const priority = t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : '–';
   const set = pick && priority !== '–' ? priorityPicker(t, el('span', 'set-prio', priority)) : null; // plain text, not a tag
   return [factCell('Priority', priority, set ? 'pick' : null, priority, null, set ? [set] : null),
@@ -641,14 +642,18 @@ function lastFacts(t, pick) {
 // their colours. `pick`: its priority opens the menu that sets it, as on a draft.
 function waitingFacts(t, status, after, pick) {
   const left = list(t.waiting_on).length, of = Math.max(list(t.after).length, left);
-  const lint = t.lint || { errors: 0, warnings: 0 };
-  const bits = [lint.errors ? el('span', 'bad', plural(lint.errors, 'error')) : null, lint.warnings ? el('span', 'warn', plural(lint.warnings, 'warning')) : null].filter(Boolean);
-  const lintText = bits.length ? bits.map(b => b.textContent).join(' · ') : 'passes';
   return el('dl', 'facts', null,
     factCell('Status', status, null),
     factCell(after, !left ? '—' : of > 1 ? `${left} left of ${of}` : `${left} left`, null),
-    factCell('Ready check', lintText, null, lintText, null, bits.length ? bits.flatMap((b, i) => (i ? [document.createTextNode(' · '), b] : [b])) : null),
+    lintCell(t),
     ...lastFacts(t, pick));
+}
+// Its lint result, its errors and warnings in their colours.
+function lintCell(t) {
+  const lint = t.lint || { errors: 0, warnings: 0 };
+  const bits = [lint.errors ? el('span', 'bad', plural(lint.errors, 'error')) : null, lint.warnings ? el('span', 'warn', plural(lint.warnings, 'warning')) : null].filter(Boolean);
+  const text = bits.length ? bits.map(b => b.textContent).join(' · ') : 'passes';
+  return factCell('Ready check', text, null, text, null, bits.length ? bits.flatMap((b, i) => (i ? [document.createTextNode(' · '), b] : [b])) : null);
 }
 // 0467: an open ticket's dependency box, under its table, from the model's deps, or nothing when it has none. A Waits
 // on box: a header counting its tickets by state, a bar with one even segment for each, then a grid of chips six to a

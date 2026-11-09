@@ -59,8 +59,8 @@ test('0040 AC2: the selection survives while other tickets change, and those cha
   await refresh(p);
   assert.ok(kept(), 'the selection survives the changes elsewhere');
   assert.deepEqual(items(p).map(n => n.textContent.slice(0, 4)), ['0000', '0001'], 'the new draft shows and 0002 has left Shaping');
-  assert.ok(queueText(p).some(t => t.includes('0002') && t.includes('Queued')), '0002 is in the queue');
-  assert.equal(stageOf(queueRows(p).find(r => r.textContent.includes('0003'))).textContent, 'Review 2', 'the new review round shows');
+  assert.ok(queueText(p).some(t => t.includes('0002') && t.includes('Ready')), '0002 is in the queue');
+  assert.match(p.all(queueRows(p).find(r => r.textContent.includes('0003'))).find(n => /^where\b/.test(n.className || '')).title, /round 2/, 'the new review round shows'); // 0585: in its row's tooltip
   assert.ok(shippedRows(p).some(r => r.textContent.includes('Newly shipped')), 'the new shipped ticket shows');
   await refresh(p);
   assert.ok(kept(), 'and through another refresh with other changes');
@@ -137,12 +137,12 @@ test('0040 AC5: the queue\'s time since started (MM:SS since 0058), the connecti
   await p.settle();
   const item = openTicket(p, '0001');
   const kept = held(p, p.all(item).find(n => n.tagName === 'p'));
-  const minutes = () => queueRows(p).find(r => r.textContent.includes('0003')).textContent.match(/(\d\d):\d\d/)[1];
-  assert.equal(minutes(), '05');
+  const minutes = () => queueRows(p).find(r => r.textContent.includes('0003')).textContent.match(/(\d+) min/)[1]; // 0585: in minutes
+  assert.equal(minutes(), '5');
   now += 3 * 60000;
   await refresh(p);
   assert.ok(kept());
-  assert.equal(minutes(), '08', 'the time since started moved on');
+  assert.equal(minutes(), '8', 'the time since started moved on');
   now += 4000;
   await refresh(p);
   await p.elapse(10000); // 0186: the message shows once 10 seconds pass without a board

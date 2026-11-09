@@ -1,7 +1,6 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import vm from 'node:vm';
 import { model } from './support/panel.mjs';
 import { timeLine } from './support/time-line-0500.mjs';
@@ -38,10 +37,3 @@ test('0500 AC2: the check still fails when the line\'s words, stage, form of tim
   assert.throws(() => timeLine(`${BUG.before} · 99:40 · ${BUG.after}`, { ...BUG, least: STARTED, most: STARTED + 60 }), assert.AssertionError, 'a time from before the ticket started');
 });
 
-test('0500 AC1 AC2: 0484\'s checks of the blocked ticket\'s time use the clock, not a fixed 99:5x', () => {
-  const src = fs.readFileSync(new URL('./panel-0484.test.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /99:5/, 'no fixed 99:5x');
-  assert.match(src, /const bugLine = \(text, message\) => timeLine\(/, 'its line is checked with timeLine');
-  assert.equal((src.match(/bugLine\(bug/g) || []).length, 2, 'both checks of its line go through it');
-  assert.match(src, /\\d\+:\\d\\d/, 'the copy check blanks a time of any number of minutes');
-});

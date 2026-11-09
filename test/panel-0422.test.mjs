@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, page, fakePage, queueRows, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
+import { T, page, fakePage, fullViewOf, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 const TRUNCATED = "Earlier lines aren't shown: this is the last 200 lines of the log.";
 const LOG = [
@@ -19,13 +19,11 @@ const LOG = [
   'stray text',
 ].join('\n');
 
-// A fake page with ticket 0001 building and its log open, answering the log with `text`.
+// A fake page with ticket 0001 building and its full view open, answering the log with `text`.
 async function openLog(text, truncated = false) {
   const p = fakePage([{ tickets: [T('0001', 'building')] }, { text, truncated, build: 1, at: 0 }], { getSelection: () => ({ isCollapsed: true, rangeCount: 0 }) });
   await p.settle();
-  p.press(queueRows(p)[0].children.find(n => n.className === 'top'));
-  await p.settle();
-  const box = p.all(queueRows(p)[0]).find(n => n.className === 'log');
+  const box = p.all(await fullViewOf(p, '0001')).find(n => n.className === 'log'); // 0585: the log is in the full view
   return { p, box };
 }
 const rows = box => box.children.map(r => ({ kind: r.className.replace(' timed', ''), at: (r.children.find(c => c.className === 'at') || {}).textContent || '', text: r.textContent }));
@@ -83,7 +81,7 @@ test('0422 AC4: the log\'s text is still its plain text, with the times', async 
 
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const row = id => `[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}')`;
-const box = `${row('0001')}.querySelector('.log')`;
+const box = `document.querySelector('#full-ticket .log')`; // 0585: in the ticket's full view
 const writeLog = (dir, text) => {
   const runs = path.join(dir, 'speck', '.cache', 'runs');
   fs.mkdirSync(runs, { recursive: true });
@@ -94,6 +92,7 @@ const ran = (command, at) => `${JSON.stringify({ type: 'assistant', timestamp: a
 
 test('0422 AC1, AC3, AC4: in a real browser, text starts past the times, wrapped and later lines line up under it, and selecting, copying and scrolling work as before (with review round 1, F1)', chrome, async () => {
   const r = panelRepo();
+  r.run('set', '1', 'status', 'building'); // 0585: only a ticket in flight has its log in the full view
   const long = 'word '.repeat(80).trim();
   writeLog(r.dir, said(`First message.\nIts second line, ${long}`, '2026-10-23T09:00:01Z') + said(`Second message, ${long}`, '2026-10-23T09:00:02Z')
     + Array.from({ length: 60 }, (_, i) => ran(`echo ${i}`, '2026-10-23T09:00:03Z')).join(''));

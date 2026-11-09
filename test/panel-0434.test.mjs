@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, round, fakePage, items, queueRows, shippedRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles, factsOf } from './support/panel.mjs';
+import { T, full, round, fakePage, items, queueRows, shippedRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles, factsOf, fullViewOf } from './support/panel.mjs';
 
 // ---------- 0434: each closed ticket is two single lines, with a grid of moving lights while an agent works ----------
 
@@ -33,56 +33,33 @@ const page = (s = board()) => fakePage([s], { Date: stoppedClock(NOW) });
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')?._text;
 const card = (p, id) => [...items(p), ...queueRows(p)].find(n => idOf(p, n) === id);
 const topOf = n => n.children[0];
-const statusOf = n => topOf(n).children.filter(c => !/^track\b/.test(c.className))[1]; // 0461: past an open card's track
-const gridOf = (p, n) => p.all(n).find(x => x.className === 'lights') || null;
+// 0585: a Build row is its line, then one line saying where the ticket is, with the same sentence as its tooltip.
+const statusOf = n => (function find(x) { if (/^where\b/.test(x.className || '')) return x; for (const c of x.children || []) { const f = find(c); if (f) return f; } return null; })(n);
 
-test('0434 AC1: while its builder or reviewer is at work, the status line starts with a 4 × 4 grid named for the sentence it replaces', async () => {
+test('0434 AC1: while its builder or reviewer is at work, the row\'s line names the sentence it stands for in its tooltip', async () => {
   const p = page();
   await p.settle();
   const working = { '0901': 'Writing tests and code', '0902': 'Checking its own work', '0903': 'gpt-6.1-sol is reviewing · round 1', '0904': "Claude is fixing round 1's findings" };
   for (const [id, sentence] of Object.entries(working)) {
-    const line = statusOf(card(p, id)), grid = line.children[0];
-    assert.equal(grid.className, 'lights', `${id}: the grid comes first`);
-    assert.equal(grid.children.length, 16, `${id}: 16 dots`);
-    assert.equal(grid.attrs.role, 'img');
-    assert.equal(grid.attrs['aria-label'], sentence, `${id}: its accessible name`);
-    assert.equal(grid.title, sentence, `${id}: its tooltip`);
-    assert.ok(!line.textContent.includes(sentence), `${id}: the sentence itself is gone from the line`);
+    const line = statusOf(card(p, id));
+    assert.equal(line.title, sentence, `${id}: its tooltip`);
+    assert.ok(!line.textContent.includes(sentence), `${id}: the sentence itself is not in the line`);
+    assert.match(line.className, /\brun\b/, `${id}: its dot`);
   }
 });
 
-test('0434 AC1: a ticket no agent is working on shows no grid', async () => {
-  const p = page();
-  await p.settle();
-  for (const id of ['0905', '0906', '0907', '0908', '0909', '0426', '0910']) assert.equal(gridOf(p, card(p, id)), null, `${id}: no grid`);
-  assert.ok(statusOf(card(p, '0906')).textContent.startsWith('Has a question'), 'words instead'); // 0443: in short words
-});
-
 const css = () => styles().replace(/\/\*[\s\S]*?\*\//g, '');
-test('0434 AC1: the grid is no more than 14 px square, its lights move only with motion allowed, and held still some dots stay lit', () => {
-  const style = css();
-  const grid = /\.q \.top \.lights \{([^}]*)\}/.exec(style)[1];
-  for (const side of ['width', 'height']) assert.ok(parseFloat(new RegExp(`\\b${side}: ([\\d.]+)px`).exec(grid)[1]) <= 14, side);
-  assert.match(grid, /grid-template-columns: repeat\(4, /);
-  const at = style.indexOf('@media (prefers-reduced-motion: no-preference)');
-  const before = style.slice(0, at);
-  assert.doesNotMatch(before, /\.lights[^{]*\{[^}]*animation/, 'no animation outside the no-preference block');
-  assert.match(style.slice(at), /\.q \.top \.lights i \{ animation: lights /, 'the lights move when motion is allowed');
-  assert.match(style.slice(at), /@keyframes lights/);
-  assert.match(before, /\.q \.top \.lights \.d3 \{ background: var\(--run\); \}/, 'held still, one diagonal is lit');
-  assert.match(before, /\.q \.top \.lights i \{[^}]*background: var\(--line\);/, 'and the rest are dim');
-});
 
-test('0434 AC2: a closed Build ticket\'s status line is its grid or words, its stage and one time', async () => {
+test('0434 AC2: a Build row\'s line is its stage and one time', async () => {
   const p = page();
   await p.settle();
-  const text = id => statusOf(card(p, id)).textContent.trimStart(); // the grid has no text, and a space after it
-  assert.equal(text('0901'), 'Build · 01:07', 'the grid, then Build and its time');
-  assert.equal(text('0903'), 'Review 1 · gpt-6.1-sol · 07:52', 'the round and the reviewer\'s model');
-  assert.equal(text('0904'), 'Review 1 · 07:52', 'the builder fixing the findings');
-  assert.equal(text('0905'), 'Shipping · 19:12', 'one time on a shipping ticket: its build\'s, held at its approval as before');
-  assert.equal(text('0910'), 'Queued'); // 0468: what it waits on or unlocks is in its chip
-  assert.equal(text('0426'), 'Queued');
+  const text = id => statusOf(card(p, id)).textContent;
+  assert.equal(text('0901'), 'Writing · 1 min');
+  assert.equal(text('0903'), 'Reviewing · round 1 · 7 min', 'the round');
+  assert.equal(text('0904'), 'Fixing · 7 min', 'the builder fixing the findings');
+  assert.equal(text('0905'), 'Shipping · 19 min', 'one time on a shipping ticket: its build\'s, held at its approval as before');
+  assert.equal(text('0910'), 'Ready · after 0426');
+  assert.equal(text('0426'), 'Ready');
   assert.ok(!p.all(card(p, '0905')).some(n => /ship-at|ship-time/.test(n.className || '')), 'no time for the ship itself');
 });
 
@@ -91,58 +68,52 @@ test('0434 AC2: the one time keeps counting on its own timer, and nothing counts
   const Clock = class extends Date { constructor(...a) { super(...(a.length ? a : [at])); } static now() { return at; } };
   const p = fakePage([board()], { Date: Clock });
   await p.settle();
-  at += 3000;
+  at += 2 * 60000;
   for (const w of p.intervals.values()) if (w.ms === 1000) w.fn();
-  assert.equal(statusOf(card(p, '0901')).textContent, ' Build · 01:10');
-  assert.equal(statusOf(card(p, '0905')).textContent, 'Shipping · 19:12');
+  assert.equal(statusOf(card(p, '0901')).textContent, 'Writing · 3 min');
+  assert.equal(statusOf(card(p, '0905')).textContent, 'Shipping · 19 min');
 });
 
-test('0434 AC3: a closed Build ticket shows no priority, size or risk; an open one does, and its priority still opens its tip', async () => {
+test('0434 AC3: a Build row shows no priority, size or risk; its full view does', async () => {
   const p = page();
   await p.settle();
-  const tags = n => p.all(statusOf(n)).filter(x => /\btag\b/.test(x.className));
-  for (const id of ['0901', '0903', '0905', '0906', '0426', '0910']) assert.deepEqual(tags(card(p, id)), [], `${id}: no tags while closed`);
-  // 0462: an open one in flight shows them in its facts' cells instead
-  click(topOf(card(p, '0901')));
-  await p.settle();
-  assert.deepEqual(factsOf(card(p, '0901')).slice(3, 5), [['Priority', 'P3'], ['Size · risk', 'M · low']], '0901: open, it shows its priority, size and risk');
-  // 0463: and so does an open queued one, as plain text
-  click(topOf(card(p, '0426')));
-  await p.settle();
-  assert.equal(factsOf(card(p, '0426'))[0][1], 'Queued');
-  assert.deepEqual(factsOf(card(p, '0426')).slice(3, 5), [['Priority', 'P2'], ['Size · risk', 'S · high']], '0426: open, it shows its priority, size and risk');
+  const tags = n => p.all(n).filter(x => /\btag\b/.test(x.className));
+  for (const id of ['0901', '0903', '0905', '0906', '0426', '0910']) assert.deepEqual(tags(card(p, id)), [], `${id}: no tags on its row`);
+  // 0462: an in-flight ticket's full view shows them in its facts' cells
+  assert.deepEqual(factsOf(await fullViewOf(p, '0901')).slice(0, 3), [['Priority', 'P3'], ['Size', 'M'], ['Risk', 'low']], '0901: its full view shows its priority, size and risk');
+  // 0463: and so does a queued one, as plain text
+  assert.deepEqual(factsOf(await fullViewOf(p, '0426')).slice(0, 3), [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'high']], '0426: its full view shows its priority, size and risk');
 });
 
-test('0434 AC4: a closed ticket\'s title is one line, cut off with an ellipsis, with the whole title as its tooltip; an open one wraps', async () => {
+test('0434 AC4: a closed Plan or Shipped ticket\'s title is one line, cut off with an ellipsis, with the whole title as its tooltip; an open one wraps; a Build row\'s wraps', async () => {
   const s = board();
   s.tickets.push(T('0911', 'done', { title: LONG, end: ago(60) }));
   const p = page(s);
   await p.settle();
   const plan = topOf(card(p, '0801')).children[0].children.find(n => n.className === 'title');
-  const build = topOf(card(p, '0426')).children[0].children.find(n => n.className === 'title');
   const shipped = p.all(shippedRows(p).find(r => idOf(p, r) === '0911')).find(n => n.className === 'title');
-  for (const [n, where] of [[plan, 'Plan'], [build, 'Build'], [shipped, 'Shipped']]) {
+  for (const [n, where] of [[plan, 'Plan'], [shipped, 'Shipped']]) {
     assert.equal(n.textContent, LONG, `${where}: the whole title is its text, and so its accessible name`);
     assert.equal(n.title, LONG, `${where}: its tooltip`);
   }
+  assert.equal(p.all(card(p, '0426')).find(n => n.className === 'title').textContent, LONG, 'Build: the whole title is its text');
   const style = css();
-  const rule = /\.item\.ticket:not\(\.open\) \.line \.title, \.q:not\(\.open\) \.top \.line \.title, #shipped tr:not\(\.open\) \.line \.title \{([^}]*)\}/.exec(style);
-  assert.ok(rule, 'one rule for a closed ticket\'s title in each lane');
+  const rule = /\.item\.ticket:not\(\.open\) \.line \.title, #shipped tr:not\(\.open\) \.line \.title \{([^}]*)\}/.exec(style);
+  assert.ok(rule, 'one rule for a closed ticket\'s title in Plan and Shipped');
   assert.match(rule[1], /white-space: nowrap;/);
   assert.match(rule[1], /overflow: hidden;/);
   assert.match(rule[1], /text-overflow: ellipsis;/);
+  assert.match(style, /\.q\.row \.top \.line \.title \{ white-space: normal; overflow: visible;/, 'a Build row\'s title wraps');
   // an open one is marked open, so the rule leaves it to wrap
   click(topOf(card(p, '0801')));
-  click(topOf(card(p, '0426')));
   await p.settle();
   p.press(p.all(shippedRows(p).find(r => idOf(p, r) === '0911')).find(n => n.className === 'title')); // 0466: its title opens it
   await p.settle();
   assert.match(card(p, '0801').className, /\bopen\b/);
-  assert.match(card(p, '0426').className, /\bopen\b/);
   assert.match(shippedRows(p).find(r => idOf(p, r) === '0911').className, /\bopen\b/);
 });
 
-test('0434 AC5: a closed Build card shows nothing under its two lines but the Foreman\'s question; open, it shows the rest', async () => {
+test('0434 AC5: a Build row shows nothing but its two lines, and its full view shows the rest', async () => {
   const s = board();
   s.tickets.find(t => t.id === '0906').blocked_recommendation = 'A';
   s.tickets.find(t => t.id === '0907').build_exit.message = 'Approved, not shipped.';
@@ -150,16 +121,12 @@ test('0434 AC5: a closed Build card shows nothing under its two lines but the Fo
   s.foreman = { agent: { asks: [{ id: '0910', question: 'Start it again?' }] } };
   const p = page(s);
   await p.settle();
-  for (const t of s.tickets.filter(x => x.status !== 'draft' && x.id !== '0910')) assert.deepEqual(card(p, t.id).children.map(n => n.className), ['top'], `${t.id}: its two lines only`);
-  const asked = card(p, '0910');
-  assert.equal(asked.children.length, 2, 'the Foreman\'s question stays under a closed card');
-  assert.ok(asked.children[1].textContent.includes('Start it again?'));
-  // open, each shows what it has under its two lines, as before
-  const under = { '0906': /A or B\?/, '0907': /Approved, not shipped\./, '0908': /carry it on with speck play 0908/, '0909': /It ended\./ };
+  for (const t of s.tickets.filter(x => x.status !== 'draft')) assert.deepEqual(card(p, t.id).children.map(n => n.className), ['top'], `${t.id}: its two lines only`);
+  // its full view shows each one's own, as before
+  const under = { '0906': /A or B\?/, '0907': /Approved, not shipped\./, '0908': /carry it on with speck play 0908/, '0909': /It ended\./, '0910': /Start it again\?/ };
   for (const [id, re] of Object.entries(under)) {
-    click(topOf(card(p, id)));
-    await p.settle();
-    assert.match(card(p, id).children.slice(1).map(n => n.textContent).join(' | '), re, `${id}: open, it shows it`);
+    const view = await fullViewOf(p, id);
+    assert.match(view.textContent, re, `${id}: its full view shows it`);
   }
 });
 
@@ -174,25 +141,23 @@ const stub = `(() => {
   const json = b => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } });
   window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? json(STATE) : /\\/log$/.test(String(url)) ? json({ text: '' }) : opts.method === 'POST' ? json({}) : real(url, opts);
 })();`;
-// Each closed Build card: how many lines its title and status line take, whether its title is cut off, and the lines
-// of anything else in it.
+// Each Build row: how many lines its title and its line saying where it is take, whether its title is cut off, and
+// whether that line stays inside the row.
 const CARDS = `(async () => {
   await document.fonts.ready;
   const lines = n => { const w = document.createTreeWalker(n, NodeFilter.SHOW_TEXT), out = [];
     for (let t; (t = w.nextNode());) { const r = document.createRange(); r.selectNodeContents(t); for (const x of r.getClientRects()) if (x.width > 0 && !out.some(b => Math.abs(b - x.top) <= 4)) out.push(x.top); }
     return out.length; };
-  return [...document.querySelectorAll('#queue .q:not(.open)')].map(c => {
-    const top = c.firstElementChild, title = top.querySelector('.title'), status = top.children[1], grid = status.querySelector('.lights');
+  return [...document.querySelectorAll('#queue .q')].map(c => {
+    const top = c.firstElementChild, title = top.querySelector('.title'), where = top.children[1];
     const rows = [...top.children].map(n => Math.round(n.getBoundingClientRect().top));
-    return { id: c.querySelector('.id').textContent, children: c.children.length, rows: new Set(rows).size, titleLines: lines(title), statusLines: lines(status),
-      statusHeight: status.getBoundingClientRect().height, lineHeight: parseFloat(getComputedStyle(status).lineHeight),
-      cut: title.scrollWidth > title.clientWidth, inside: status.getBoundingClientRect().right <= c.getBoundingClientRect().right + 0.5,
-      grid: grid && [grid.getBoundingClientRect().width, grid.getBoundingClientRect().height] };
+    return { id: c.querySelector('.id').textContent, children: c.children.length, rows: new Set(rows).size, titleLines: lines(title), whereLines: lines(where),
+      cut: title.scrollWidth > title.clientWidth + 0.5, inside: where.getBoundingClientRect().right <= c.getBoundingClientRect().right + 0.5 };
   });
 })()`;
 
 for (const touch of [true, false]) {
-  test(`0434 AC5: at 390 px ${touch ? 'on a touch screen' : 'with a mouse'}, every closed Build ticket is two rows, its title line and its status line`, skip, async () => {
+  test(`0434 AC5: at 390 px ${touch ? 'on a touch screen' : 'with a mouse'}, every Build row is two rows, its title line and its line saying where it is`, skip, async () => {
     const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
     const b = await browserPage('about:blank');
     try {
@@ -209,34 +174,11 @@ for (const touch of [true, false]) {
       for (const c of cards) {
         assert.equal(c.children, 1, `${c.id}: nothing under its top row`);
         assert.equal(c.rows, 2, `${c.id}: two rows`);
-        assert.equal(c.titleLines, 1, `${c.id}: its title on one line`);
-        assert.equal(c.statusLines, 1, `${c.id}: its status on one line`);
-        assert.ok(c.statusHeight <= c.lineHeight + 0.5, `${c.id}: its status line is one line high (${c.statusHeight} px)`);
-        assert.ok(c.inside, `${c.id}: its status line stays inside the card`);
-        if (c.grid) assert.ok(c.grid[0] <= 14 && c.grid[1] <= 14, `${c.id}: its grid is ${c.grid.join(' × ')} px`);
+        assert.ok(!c.cut, `${c.id}: its title is not cut off`);
+        assert.ok(c.inside, `${c.id}: its line stays inside the row`);
+        if (c.id !== '0913') assert.equal(c.whereLines, 1, `${c.id}: it is on one line`);
       }
-      assert.ok(cards.find(c => c.id === '0426').cut, 'a long title is cut off');
-      assert.ok(cards.find(c => c.id === '0901').grid, 'a working ticket has its grid');
+      assert.ok(cards.find(c => c.id === '0426').titleLines > 1, 'a long title wraps');
     } finally { await b.close(); await stop(panel); }
   });
 }
-
-test('0434 AC1: in a real browser, the grid\'s lights move, and with reduced motion they hold still with some lit', skip, async () => {
-  const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
-  const b = await browserPage('about:blank');
-  try {
-    await b.send('Page.enable');
-    await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub });
-    for (const motion of ['no-preference', 'reduce']) {
-      await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: motion }] });
-      await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/?${motion}` });
-      await b.until(`location.port === '${panel.port}' && !!document.querySelector('#queue .q .lights')`, 'the grid');
-      const seen = await b.js(`(() => { const dots = [...document.querySelector('#queue .q .lights').children];
-        return { anims: document.querySelector('#queue .q .lights').getAnimations({ subtree: true }).length, lit: dots.filter(d => getComputedStyle(d).backgroundColor === getComputedStyle(d.parentNode).color).length }; })()`);
-      if (motion === 'reduce') {
-        assert.equal(seen.anims, 0, 'nothing moves');
-        assert.ok(seen.lit > 0 && seen.lit < 16, `${seen.lit} dots lit`);
-      } else assert.equal(seen.anims, 16, 'each dot is lit in turn');
-    }
-  } finally { await b.close(); await stop(panel); }
-});

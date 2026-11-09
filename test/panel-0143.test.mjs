@@ -27,8 +27,7 @@ function openFrom(p, where, id) {
     click(fullButtonIn(p, items(p).find(i => p.all(i).some(n => n.className === 'id' && n._text === id))));
   } else if (where === 'build') {
     const row = () => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-    if (!fullButtonIn(p, row())) click(row().children.find(n => /\btop\b/.test(n.className)));
-    click(fullButtonIn(p, row()));
+    click(row().children.find(n => /\btop\b/.test(n.className))); // 0585: pressing a row opens the full view
   } else {
     p.press(shippedFull(p, () => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id)))); // 0466
   }

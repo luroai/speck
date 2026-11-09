@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fakePage, queueRows, round, panelRepo } from './support/panel.mjs';
+import { T, fakePage, fullViewOf, round, panelRepo } from './support/panel.mjs';
 import { statusData } from '../scripts/speck.mjs';
 
 // ---------- 0382: name the model on the review step ----------
@@ -17,9 +17,8 @@ function fake(tickets) {
     fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets, ideas: [] }))) }),
   });
 }
-const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-// 0434: while its reviewer or builder is at work, the sentence is the name of the grid of lights that stands in for it
-const say = (p, id) => p.all(rowOf(p, id)).filter(n => n.className === 'lights')[0].attrs['aria-label'];
+// 0585: the sentence is in the ticket's full view, which a Build row opens (the grid of lights is gone).
+const say = async (p, id) => p.all(await fullViewOf(p, id)).find(n => /^say\b/.test(n.className)).textContent;
 
 // A panel repo whose config has `cfgModel` as reviewer_model and whose ticket 0001 has `ticketModel`.
 function repo(cfgModel, ticketModel) {
@@ -36,10 +35,10 @@ test('0382 AC1: a ticket in review whose model is set names the model as written
     reviewing('0702', { review_running: null, reviewer: 'claude', reviewer_model: 'opus-x', review_model: 'opus-x' }),
   ]);
   await p.settle();
-  assert.equal(say(p, '0701'), 'grok-4.7-high is reviewing · round 2');
-  assert.equal(say(p, '0702'), 'opus-x is reviewing · round 1');
-  assert.doesNotMatch(say(p, '0701'), /Cursor/);
-  assert.doesNotMatch(say(p, '0702'), /Claude/);
+  assert.equal(await say(p, '0701'), 'grok-4.7-high is reviewing · round 2');
+  assert.equal(await say(p, '0702'), 'opus-x is reviewing · round 1');
+  assert.doesNotMatch(await say(p, '0701'), /Cursor/);
+  assert.doesNotMatch(await say(p, '0702'), /Claude/);
 });
 
 test('0382 AC1: the board gives each ticket the model its review runs on, the ticket\'s own when it is set', () => {
@@ -58,13 +57,13 @@ test('0382 AC2: with no model, the sentence names the reviewer as before, or the
     reviewing('0713', { review_running: 1, reviewer: 'codex', review_model: '  ' }),
   ]);
   await p.settle();
-  assert.equal(say(p, '0711'), 'Codex is reviewing · round 1');
-  assert.equal(say(p, '0712'), 'The reviewer is reviewing · round 1');
-  assert.equal(say(p, '0713'), 'Codex is reviewing · round 1');
+  assert.equal(await say(p, '0711'), 'Codex is reviewing · round 1');
+  assert.equal(await say(p, '0712'), 'The reviewer is reviewing · round 1');
+  assert.equal(await say(p, '0713'), 'Codex is reviewing · round 1');
 });
 
 test('0382 AC3: while the builder fixes a round\'s findings, the sentence names the builder, not the model', async () => {
   const p = fake([reviewing('0721', { rounds: [asked(1), asked(2)], review_running: null, review_model: 'grok-4.7-high' })]);
   await p.settle();
-  assert.equal(say(p, '0721'), "Claude is fixing round 2's findings");
+  assert.equal(await say(p, '0721'), "Claude is fixing round 2's findings");
 });

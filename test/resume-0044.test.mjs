@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { CLI, env, runRepo } from './support/run.mjs';
-import { T, fakePage, queueRows, panelModel, page, ROOT, openQueueRows, pageScript } from './support/panel.mjs';
+import { T, fakePage, queueRows, panelModel, page, ROOT, fullViewOf, pageScript } from './support/panel.mjs';
 
 // ---------- 0044: show how to resume a blocked build's session ----------
 
@@ -91,19 +91,18 @@ async function clipPage(s, { fail = false } = {}) {
   const navigator = { clipboard: { writeText: async text => { if (fail) throw new Error('denied'); copied.push(text); } } };
   const p = fakePage([s], { navigator, setTimeout: (fn, ms) => timers.push({ fn, ms }) });
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  return { p, copied, timers };
+  const view = await fullViewOf(p, '0007'); // 0585: the command is in the ticket's full view, which its row opens
+  return { p, copied, timers, view };
 }
 
 test('0044 AC2: a blocked ticket with a session shows cd <cwd> && <resume_command> under its question, with {session} replaced', async () => {
   assert.deepEqual(resumeOf(state()), { text: `cd /home/me/repo && claude --resume ${SESSION}`, command: true });
   assert.equal(resumeOf(state({}, { resume_command: 'x {session} y {session}' })).text, `cd /home/me/repo && x ${SESSION} y ${SESSION}`);
-  const { p } = await clipPage(state());
-  const row = queueRows(p)[0];
-  const kids = row.children.map(n => n.className);
+  const { p, view } = await clipPage(state());
+  const kids = byClass(p, view, 'live-state')[0].children.map(n => n.className);
   const qi = kids.indexOf('question'), ri = kids.findIndex(c => /\bresume\b/.test(c));
   assert.ok(qi >= 0 && ri === qi + 1, `the command comes right under the question: ${kids}`);
-  assert.equal(byClass(p, row, 'cmd')[0].textContent, `cd /home/me/repo && claude --resume ${SESSION}`);
+  assert.equal(byClass(p, view, 'cmd')[0].textContent, `cd /home/me/repo && claude --resume ${SESSION}`);
 });
 
 test('0044 AC2: the folder is quoted for a POSIX shell only when it has anything other than letters, digits, /, ., _ and -', () => {
@@ -124,22 +123,21 @@ test('0044 AC3: with resume_command blank, the panel shows only "session <id>", 
     if (resume_command === undefined) delete s.resume_command;
     assert.deepEqual(resumeOf(s), { text: `session ${SESSION}`, command: false }, String(resume_command));
   }
-  const { p } = await clipPage(state({}, { resume_command: '' }));
-  const row = queueRows(p)[0];
-  assert.equal(byClass(p, row, 'resume')[0].textContent, `session ${SESSION}`);
-  assert.equal(p.all(row).filter(n => n.className === 'copy').length, 0);
+  const { p, view } = await clipPage(state({}, { resume_command: '' }));
+  assert.equal(byClass(p, view, 'resume')[0].textContent, `session ${SESSION}`);
+  assert.equal(p.all(view).filter(n => n.className === 'copy').length, 0);
 });
 
 test('0044 AC4: Copy copies the command\'s exact text and says "Copied" for 2 seconds', async () => {
   const s = state({ session: { id: SESSION, cwd: '/home/me/my repo' } });
-  const { p, copied, timers } = await clipPage(s);
-  const btn = () => p.all(queueRows(p)[0]).find(n => n.className === 'copy');
+  const { p, copied, timers, view } = await clipPage(s);
+  const btn = () => p.all(view).find(n => n.className === 'copy');
   assert.equal(btn().textContent, 'Copy');
   const before = timers.length;
   btn().listeners.click({ stopPropagation() {} });
   await p.settle();
   assert.deepEqual(copied, [`cd '/home/me/my repo' && claude --resume ${SESSION}`]);
-  assert.equal(copied[0], byClass(p, queueRows(p)[0], 'cmd')[0].textContent, 'exactly the text shown');
+  assert.equal(copied[0], byClass(p, view, 'cmd')[0].textContent, 'exactly the text shown');
   assert.equal(btn().textContent, 'Copied');
   const reset = timers.slice(before).filter(t => t.ms === 2000 && t.fn !== timers[0].fn);
   assert.equal(reset.length, 1, 'one 2-second timer puts it back');
@@ -148,8 +146,8 @@ test('0044 AC4: Copy copies the command\'s exact text and says "Copied" for 2 se
 });
 
 test('0044 AC4: a second copy within 2 seconds keeps "Copied" until 2 seconds after the second', async () => {
-  const { p, timers } = await clipPage(state());
-  const btn = () => p.all(queueRows(p)[0]).find(n => n.className === 'copy');
+  const { p, timers, view } = await clipPage(state());
+  const btn = () => p.all(view).find(n => n.className === 'copy');
   const before = timers.length;
   btn().listeners.click({ stopPropagation() {} });
   await p.settle();
@@ -164,13 +162,13 @@ test('0044 AC4: a second copy within 2 seconds keeps "Copied" until 2 seconds af
 });
 
 test('0044 AC4: when the clipboard refuses, the button says so instead of "Copied", and the command stays on show to copy by hand', async () => {
-  const { p } = await clipPage(state(), { fail: true });
-  const btn = () => p.all(queueRows(p)[0]).find(n => n.className === 'copy');
+  const { p, view } = await clipPage(state(), { fail: true });
+  const btn = () => p.all(view).find(n => n.className === 'copy');
   btn().listeners.click({ stopPropagation() {} });
   await p.settle();
   assert.notEqual(btn().textContent, 'Copied');
   assert.match(btn().textContent, /couldn't copy/i);
-  assert.equal(byClass(p, queueRows(p)[0], 'cmd')[0].textContent, `cd /home/me/repo && claude --resume ${SESSION}`);
+  assert.equal(byClass(p, view, 'cmd')[0].textContent, `cd /home/me/repo && claude --resume ${SESSION}`);
 });
 
 test('0044 AC5: a blocked ticket with no session, and tickets that aren\'t blocked, show nothing extra', async () => {
@@ -181,10 +179,14 @@ test('0044 AC5: a blocked ticket with no session, and tickets that aren\'t block
   for (const status of ['building', 'reviewing', 'approved', 'ready'])
     assert.equal(resumeOf(state({ status })), null, status);
   const s = { tickets: [blocked({ session: null }), T('0008', 'building', { session: { id: SESSION, cwd: '/x' } })], ideas: [], resume_command: 'claude --resume {session}' };
-  const { p } = await clipPage(s);
-  for (const row of queueRows(p)) {
+  const { p, view } = await clipPage(s);
+  for (const row of [...queueRows(p), view]) {
     assert.equal(byClass(p, row, 'resume').length, 0);
     assert.equal(p.all(row).filter(n => n.className === 'copy').length, 0);
+  }
+  for (const id of ['0008']) {
+    const v = await fullViewOf(p, id);
+    assert.equal(byClass(p, v, 'resume').length, 0, `${id}: not blocked`);
   }
 });
 
@@ -193,21 +195,20 @@ test('0044: the page uses the Clipboard API and builds the command with textCont
   assert.doesNotMatch(pageScript(), /innerHTML/);
 });
 
-test('0050: the Copy label changes on the kept row, so text selected in it stays through the label reset and the next refresh', async () => {
-  const { p, timers } = await clipPage(state(), { fail: true });
-  const row = queueRows(p)[0];
+test('0050: the Copy label changes in the kept full view, so text selected in it stays through the label reset and the next refresh', async () => {
+  const { p, timers, view: row } = await clipPage(state(), { fail: true });
   const cmd = byClass(p, row, 'cmd')[0], btn = p.all(row).find(n => n.className === 'copy');
-  const kept = () => queueRows(p)[0] === row && p.all(row).includes(cmd) && p.all(row).includes(btn);
+  const kept = () => p.byId('full-ticket') === row && p.all(row).includes(cmd) && p.all(row).includes(btn);
   const before = timers.length;
   btn.listeners.click({ stopPropagation() {} });
   await p.settle();
   assert.match(btn.textContent, /couldn't copy/i);
-  assert.ok(kept(), 'the row is kept when the label changes');
+  assert.ok(kept(), 'the full view is kept when the label changes');
   timers.slice(before).find(t => t.ms === 2000 && t.fn !== timers[0].fn).fn();
   assert.equal(btn.textContent, 'Copy');
   assert.ok(kept(), 'and when it resets');
   timers[0].fn();
   await p.settle();
   assert.ok(kept(), 'and through the next refresh');
-  assert.equal(p.all(queueRows(p)[0]).find(n => n.className === 'copy').textContent, 'Copy');
+  assert.equal(p.all(row).find(n => n.className === 'copy').textContent, 'Copy');
 });

@@ -1,9 +1,9 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, round, fakePage, queueRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, nowOf } from './support/panel.mjs';
+import { T, round, fakePage, queueRows, fullViewOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
 
-// ---------- 0443: a closed Build ticket's long status in short words, so its stage and time fit on a phone ----------
+// ---------- 0443: a Build row's long status in short words, so its time fits on a phone (0585: its where line) ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const NOW = Date.now(); // the real browser's clock too
@@ -31,16 +31,16 @@ const CASES = [
 const SAME = [
   { id: '0811', on: true, words: 'Paused', t: T('0811', 'building', { started: ago(300), build_running: true, paused: true }) },
   { id: '0812', on: true, words: 'Shipping', t: T('0812', 'approved', approved({ auto_ship: true, build_exit: { at: ago(30), code: 0 }, ship: { running: true, auto: true, started: ago(8) } })) },
-  { id: '0813', on: true, words: 'Queued', t: T('0813', 'ready', { after: ['0801'], waiting_on: ['0801'] }) },
+  { id: '0813', on: true, words: 'Ready', t: T('0813', 'ready', { after: ['0801'], waiting_on: ['0801'] }) },
 ];
 const boardOf = on => ({ run: on ? { on: true } : null, ideas: [], tickets: [...CASES, ...SAME].filter(c => c.on === on).map(c => c.t) });
 const page = on => fakePage([boardOf(on)], { Date: stoppedClock(NOW) });
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')?._text;
 const card = (p, id) => queueRows(p).find(n => idOf(p, n) === id);
-const statusOf = n => n.children[0].children.filter(c => !/^track\b/.test(c.className))[1]; // 0461: past an open card's track
-const sayOf = (p, n) => p.all(statusOf(n)).find(x => /\bsay\b/.test(x.className || ''));
+const statusOf = (p, n) => p.all(n).find(c => /^where\b/.test(c.className)); // 0585: the row's where line
+const sayOf = (p, n) => p.all(statusOf(p, n)).find(x => x.className === 'said');
 
-test('0443 AC1: on a closed Build ticket, each long status shows in short words', async () => {
+test('0443 AC1: on a Build row, each long status shows in short words', async () => {
   for (const on of [true, false]) {
     const p = page(on);
     await p.settle();
@@ -48,51 +48,38 @@ test('0443 AC1: on a closed Build ticket, each long status shows in short words'
       const say = sayOf(p, card(p, c.id));
       assert.ok(say, `${c.id}: its words`);
       assert.equal(say.textContent, c.short, `${c.id}: short words`);
-      assert.ok(!statusOf(card(p, c.id)).textContent.includes(c.sentence), `${c.id}: not the sentence`);
+      assert.ok(!statusOf(p, card(p, c.id)).textContent.includes(c.sentence), `${c.id}: not the sentence`);
     }
   }
 });
 
-test('0443 AC1: Paused, Shipping and Queued stay as they are (0468: its ids in its chip)', async () => {
+test('0443 AC1: Paused, Shipping and Ready stay as they are', async () => {
   const p = page(true);
   await p.settle();
-  for (const c of SAME) assert.ok(statusOf(card(p, c.id)).textContent.startsWith(c.words), `${c.id}: ${statusOf(card(p, c.id)).textContent}`);
-  for (const id of ['0811', '0812']) {
-    const say = sayOf(p, card(p, id));
-    assert.equal(say.title || '', '', `${id}: no tooltip, as its words are the sentence`);
-    assert.equal(say.attrs?.['aria-label'], undefined, `${id}: its words are its name`);
-  }
+  for (const c of SAME) assert.ok(statusOf(p, card(p, c.id)).textContent.startsWith(c.words), `${c.id}: ${statusOf(p, card(p, c.id)).textContent}`);
+  for (const id of ['0811', '0812']) assert.equal(statusOf(p, card(p, id)).title || '', '', `${id}: no tooltip, as its words are the sentence`);
 });
 
-test('0443 AC2: the full sentence is the short words\' tooltip and accessible name', async () => {
+test('0443 AC2: the full sentence is the short words\' tooltip', async () => {
   for (const on of [true, false]) {
     const p = page(on);
     await p.settle();
     for (const c of CASES.filter(x => x.on === on)) {
-      const say = sayOf(p, card(p, c.id));
-      assert.equal(say.title, c.sentence, `${c.id}: its tooltip`);
-      assert.equal(say.attrs.role, 'img', `${c.id}: named by its label`);
-      assert.equal(say.attrs['aria-label'], c.sentence, `${c.id}: its accessible name`);
+      assert.equal(statusOf(p, card(p, c.id)).title, c.sentence, `${c.id}: its tooltip`);
     }
   }
 });
 
-// 0462: open, its facts' Now cell says it in short words too, with the sentence as their tooltip
-test('0443 AC2: an open ticket shows the full sentence', async () => {
+// 0585: the full view, where a row opens, says the full sentence.
+test('0443 AC2: a ticket\'s full view shows the full sentence', async () => {
   for (const on of [true, false]) {
     const p = page(on);
     await p.settle();
     for (const c of CASES.filter(x => x.on === on)) {
-      click(card(p, c.id).children[0]);
-      await p.settle();
-      assert.match(card(p, c.id).className, /\bopen\b/);
-      const now = nowOf(card(p, c.id));
-      assert.equal(now.textContent, c.short, `${c.id}: open, the short words`);
-      assert.equal(now.title, c.sentence, `${c.id}: open, the sentence as their tooltip`);
-      // and closed again, the short words
-      click(card(p, c.id).children[0]);
-      await p.settle();
-      assert.equal(sayOf(p, card(p, c.id)).textContent, c.short, `${c.id}: closed again`);
+      const view = await fullViewOf(p, c.id);
+      const say = p.all(view).find(x => /(^| )say( |$)/.test(x.className || ''));
+      assert.ok(say, `${c.id}: it says where it is`);
+      assert.equal(say.textContent, c.sentence, `${c.id}: the full sentence`);
     }
   }
 });
@@ -105,12 +92,11 @@ const stub = `(() => {
   const json = b => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } });
   window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? json(STATE) : /\\/log$/.test(String(url)) ? json({ text: '' }) : opts.method === 'POST' ? json({}) : real(url, opts);
 })();`;
-// Each closed Build card's status line: its words, stage and time, whether any is cut off or reaches past the line, and
-// how many lines it takes.
+// Each Build row's where line: its words and time, whether any is cut off or reaches past the line, and how many lines it takes.
 const LINES = `(async () => {
   await document.fonts.ready;
-  return [...document.querySelectorAll('#queue .q:not(.open)')].map(c => {
-    const status = c.firstElementChild.children[1], box = status.getBoundingClientRect();
+  return [...document.querySelectorAll('#queue .q')].map(c => {
+    const status = c.querySelector('.where'), box = status.getBoundingClientRect();
     const parts = [...status.children].filter(n => !n.classList.contains('sep')).map(n => ({ text: n.textContent, cls: n.className,
       inside: n.getBoundingClientRect().right <= box.right + 0.5 && n.getBoundingClientRect().left >= box.left - 0.5, cut: n.scrollWidth > n.clientWidth + 0.5 }));
     return { id: c.querySelector('.id').textContent, text: status.textContent, overflows: status.scrollWidth > status.clientWidth + 0.5, widths: [status.scrollWidth, status.clientWidth],
@@ -119,7 +105,7 @@ const LINES = `(async () => {
 })()`;
 
 for (const touch of [true, false]) {
-  test(`0443 AC3: at 375 px ${touch ? 'on a touch screen' : 'with a mouse'}, every closed Build ticket's status line shows its words, stage and time whole`, skip, async () => {
+  test(`0443 AC3: at 375 px ${touch ? 'on a touch screen' : 'with a mouse'}, every Build row's where line shows its words and time whole`, skip, async () => {
     const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
     const b = await browserPage('about:blank');
     try {
@@ -133,21 +119,17 @@ for (const touch of [true, false]) {
         await b.until(`location.search === '?${which}' && document.querySelectorAll('#queue .q').length === ${n}`, 'the panel');
         await b.js(openLane('build'));
         const lines = await b.js(LINES);
-        assert.equal(lines.length, n, `${which}: ${lines.length} closed cards`);
+        assert.equal(lines.length, n, `${which}: ${lines.length} rows`);
         for (const l of lines) {
           const c = [...CASES, ...SAME].find(x => x.id === l.id);
-          if (!l.parts.some(x => /\btag\b/.test(x.cls))) assert.ok(!l.overflows, `${l.id}: nothing reaches past its status line: ${l.text} (${l.widths.join(' > ')} px)`);
+          assert.ok(!l.overflows, `${l.id}: nothing reaches past its where line: ${l.text} (${l.widths.join(' > ')} px)`);
           assert.ok(l.height <= l.lineHeight + 0.5, `${l.id}: one line (${l.height} px)`);
-          // 0484: a line with a tag keeps the tag whole and cuts its words short first, so only its stage and time are
-          // sure to show whole; its words show, cut short or not
-          const tagged = l.parts.some(x => /\btag\b/.test(x.cls));
-          for (const part of l.parts.filter(x => !/\btag\b/.test(x.cls))) {
+          for (const part of l.parts) {
             assert.ok(part.inside, `${l.id}: "${part.text}" shows whole`);
-            if (!(tagged && /\bsay\b/.test(part.cls))) assert.ok(!part.cut, `${l.id}: "${part.text}" isn't cut off`);
+            assert.ok(!part.cut, `${l.id}: "${part.text}" isn't cut off`);
           }
           if (c.short) assert.equal(l.parts[0].text, c.short, `${l.id}: its short words`);
-          if (c.id !== '0813') assert.ok(l.parts.some(x => /\d:\d{2}$/.test(x.text)), `${l.id}: its time: ${l.text}`);
-          if (c.short) assert.ok(l.parts.some(x => /\bstage\b/.test(x.cls)), `${l.id}: its stage: ${l.text}`);
+          if (c.id !== '0813') assert.ok(l.parts.some(x => /\d+ min$/.test(x.text)), `${l.id}: its time: ${l.text}`);
         }
       }
     } finally { await b.close(); await stop(panel); }

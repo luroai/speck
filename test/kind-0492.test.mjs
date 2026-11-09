@@ -10,7 +10,7 @@ import { parseTicket, lintTicket } from '../scripts/speck.mjs';
 import { ticketKind } from '../scripts/core.mjs';
 import { autoShipWhyNot } from '../scripts/ship.mjs';
 import { outputFolder, documentSection, documentLines, panelDocuments, documentFile } from '../scripts/output.mjs';
-import { ROOT, T, fm, good, fakePage, items, queueRows, shippedRows, panelRepo, round, exitOf, nowOf } from './support/panel.mjs';
+import { ROOT, T, fm, good, fakePage, items, queueRows, shippedRows, panelRepo, round, exitOf, boardPage, fullViewOf } from './support/panel.mjs';
 
 const cfg = { allow_same_model_review: false, limits: { max_acceptance_criteria: 5, max_ticket_body_lines: 40, max_review_rounds: 3, escalate_after_repeat_disputes: 2 } };
 const ticket = o => parseTicket(`---\n${fm(o)}\n---\n${good}`);
@@ -129,7 +129,7 @@ const texts = (p, n) => p.all(n).filter(x => /^tag\b/.test(x.className || '')).m
 const card = (p, list, id) => list.find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const TIP = 'Task: the build does a task and leaves its result in outputs/, not code';
 
-test('0492 AC3: a task ticket\'s card shows a task tag with its tip, in Tickets, Build and Shipped, whichever line it has', async () => {
+test('0492 AC3: a task ticket\'s card shows a task tag with its tip, in Tickets and Shipped, whichever line it has', async () => {
   const ago = min => new Date(Date.now() - min * 60000).toISOString();
   const s = () => ({ ideas: [], tickets: [
     T('0001', 'draft', { kind: 'task' }), T('0002', 'draft', { kind: 'code' }),
@@ -139,7 +139,7 @@ test('0492 AC3: a task ticket\'s card shows a task tag with its tip, in Tickets,
   ] });
   const p = fakePage([s(), s(), s()]);
   await p.settle();
-  for (const [list, task, code] of [[items(p), '0001', '0002'], [queueRows(p), '0003', '0004'], [shippedRows(p), '0005', '0006']]) {
+  for (const [list, task, code] of [[items(p), '0001', '0002'], [shippedRows(p), '0005', '0006']]) {
     const d = card(p, list, task), c = card(p, list, code);
     assert.ok(d && c, `cards for ${task} and ${code}`);
     const tag = p.all(d).find(x => x.textContent === 'task' && /^tag\b/.test(x.className));
@@ -151,23 +151,32 @@ test('0492 AC3: a task ticket\'s card shows a task tag with its tip, in Tickets,
   }
 });
 
-test('0492 AC3: a finished task\'s closed card reads Read the result, and open its Type cell says task', async () => {
+test('0492 AC3: a task ticket\'s full view, from its Build row (0585), says task in its Type cell with its tip, and a code ticket\'s says code', async () => {
+  const p = boardPage([{ ideas: [], tickets: [T('0003', 'ready', { kind: 'task' }), T('0004', 'ready', { kind: 'code' })] }]);
+  await p.settle();
+  const type = view => p.all(view).find(n => n.className === 'fact' && n.children[0].textContent === 'Type').children[1];
+  const d = await fullViewOf(p, '0003');
+  assert.equal(type(d).textContent, 'task');
+  assert.equal(type(d).title, TIP);
+  assert.ok(!d.textContent.toLowerCase().includes('document'), '0003: no "document" in its full view');
+  assert.equal(type(await fullViewOf(p, '0004')).textContent, 'code');
+});
+
+test('0492 AC3: a finished task\'s row reads Read the result, and its full view\'s Type cell says task', async () => {
   const t = T('0001', 'approved', { kind: 'task', auto_ship: false, rounds: [round(1, 1)], ...exitOf('log line') });
-  const p = fakePage([{ ideas: [], tickets: [t] }, { text: 'log', truncated: false }]);
+  const p = boardPage([{ ideas: [], tickets: [t] }]);
   await p.settle();
   const row = () => queueRows(p).find(r => r.textContent.includes('0001'));
-  const progress = row().children[0].children.find(n => n.className === 'progress');
-  assert.ok(progress.textContent.startsWith('Read the result'), progress.textContent);
+  const where = p.all(row()).find(n => /^where\b/.test(n.className));
+  assert.ok(where.textContent.startsWith('Read the result'), where.textContent);
   assert.ok(!row().textContent.toLowerCase().includes('document'), row().textContent);
-  p.press(row().children.find(n => n.className === 'top'));
-  await p.settle();
-  assert.equal(nowOf(row()).textContent, 'Read the result');
-  assert.ok(!/document/i.test(nowOf(row()).title), nowOf(row()).title);
-  const type = p.all(row()).find(n => n.tagName === 'dt' && n.textContent === 'Type');
+  const view = await fullViewOf(p, '0001');
+  assert.match(p.all(view).find(n => /\bsay\b/.test(n.className || '')).textContent, /read the result/i);
+  assert.ok(!p.all(view).some(n => /\bdocument\b/i.test(n.title || '') || /\bdocument\b/i.test(n.tip || '') || /\bdocument\b/i.test(n.attrs?.['aria-label'] || '')), 'no tooltip or accessible name says document');
+  const type = p.all(view).find(n => n.tagName === 'dt' && n.textContent === 'Type');
   assert.ok(type, 'a Type cell');
-  const fact = p.all(row()).find(n => n.className === 'fact' && n.children.includes(type));
+  const fact = p.all(view).find(n => n.className === 'fact' && n.children.includes(type));
   assert.equal(fact.children[1].textContent, 'task');
-  assert.ok(!p.all(row()).some(n => /\bdocument\b/i.test(n.title || '') || /\bdocument\b/i.test(n.tip || '') || /\bdocument\b/i.test(n.attrs?.['aria-label'] || '')), 'no tooltip or accessible name says document');
 });
 
 test('0492 AC4: a kind: task ticket has an output folder, a reviewer prompt part, pack files and served files, and waits for you to ship it', () => {

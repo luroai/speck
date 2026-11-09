@@ -33,6 +33,9 @@
   #full-ticket .facts .label, #full-ticket .facts .value { display: block; margin: 0; min-width: 0; overflow-wrap: anywhere; }
   #full-ticket .facts .label { font-size: 12px; line-height: 16px; color: var(--muted); }
   #full-ticket .facts .value { font-size: 14px; line-height: 20px; color: var(--text); font-variant-numeric: tabular-nums; }
+  #full-ticket .facts .value.bug { color: var(--bug); }
+  #full-ticket .facts .value.fix { color: var(--fix); }
+  #full-ticket .facts .value.task { color: var(--idea); }
   /* The full ticket, over the whole panel (0423). While it's open, the page behind it holds still, under a backdrop. */
   html.held { overflow: hidden; }
   #full-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: pinch-zoom; }

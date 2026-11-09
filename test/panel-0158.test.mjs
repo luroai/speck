@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, idea, round, queueRows, openLane } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, idea, round, fullViewOf, openLane } from './support/panel.mjs';
 
 // ---------- 0158: stack review pack tables on a phone ----------
 
@@ -36,9 +36,8 @@ const tags = (p, n, tag) => p.all(n).filter(x => x.tagName === tag);
 async function fakePack() {
   const p = fakePage([JSON.parse(JSON.stringify(STATE)), { text: '', truncated: false }, { pack: PACK }, JSON.parse(JSON.stringify(STATE))]);
   await p.settle();
-  p.press(queueRows(p)[0].children.find(n => n.className === 'top'));
-  await p.settle();
-  p.press(p.all(queueRows(p)[0]).find(x => x.tagName === 'button' && x.textContent === 'Review pack')); // the opened row
+  const full = await fullViewOf(p, '0005'); // 0585: the button is in its full view
+  p.press(p.all(full).find(x => x.tagName === 'button' && x.textContent === 'Review pack'));
   await p.settle();
   return p;
 }
@@ -97,8 +96,8 @@ async function withPack(width, fn) {
     await b.js(`document.querySelector('#capture .item .head').click()`);
     await b.until(`!!document.querySelector('.shaping .md table')`, 'the idea\'s note');
     await b.js(`document.querySelector('#queue .q .top').click()`);
-    await b.until(`[...document.querySelectorAll('#queue .full-open')].some(x => x.textContent === 'Review pack')`, 'the Review pack button');
-    await b.js(`[...document.querySelectorAll('#queue .full-open')].find(x => x.textContent === 'Review pack').click()`);
+    await b.until(`[...document.querySelectorAll('#full-ticket .pane-row')].some(x => x.textContent === 'Review pack')`, 'the Review pack button');
+    await b.js(`[...document.querySelectorAll('#full-ticket .pane-row')].find(x => x.textContent === 'Review pack').click()`);
     await b.until(`document.querySelectorAll('#full-ticket .md table').length === 2`, 'the review pack');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
@@ -223,7 +222,9 @@ for (const width of [375, 1280]) {
     const order = [...tables.filter(t => t.pane), ...tables.filter(t => !t.pane)]; // the pane's first: the note sits under it
     assert.deepEqual(order.map(t => t.pane), [true, true, false]);
     for (const t of order) {
-      if (!t.pane && !(await b.js(`document.getElementById('full-ticket').hidden`))) await b.js(`document.querySelector('#full-ticket .close').click()`);
+      // 0585: the pack was opened from the ticket's full view, so closing it goes back there, and closing that leaves the panel.
+      for (let i = 0; !t.pane && !(await b.js(`document.getElementById('full-ticket').hidden`)) && i < 3; i++) { await b.js(`document.querySelector('#full-ticket .close').click()`); await new Promise(res => setTimeout(res, 100)); }
+      if (!t.pane) await b.js(openLane('capture')); // closing the full view shows Build again
       await b.js(`getSelection().removeAllRanges()`);
       // The table at the top of the screen, so the drag's two ends are on it.
       await b.js(`document.querySelectorAll('#full-ticket .md table, .shaping .md table')[${t.i}].scrollIntoView({ block: 'start' })`);

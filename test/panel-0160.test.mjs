@@ -17,13 +17,13 @@ const phoneCss = () => [...css().matchAll(/@media \(max-width: 699\.98px\) \{/g)
   return text.slice(m.index + m[0].length, j - 1);
 }).join('\n');
 
-// Enough tickets for the page to scroll well past one screen, on a phone and on a desktop. 0001 unlocks 0002, so 0002's
-// row in the Build queue, open, has a button that jumps to 0001 (0154, 0467), and closed, a chip (0468).
+// Enough tickets for the page to scroll well past one screen, on a phone and on a desktop. 0001 unlocks 0010, so 0010's
+// item in Plan, open, has a button that jumps to 0001 (0154, 0467). 0585: a Build row's full view shows a ticket in the pane instead.
 const board = () => ({
   tickets: [
     full('0001', { problem: Array.from({ length: 60 }, (_, i) => `Line ${i + 1} of a long problem.`).join('\n\n') }),
     T('0002', 'ready', { after: ['0001'], waiting_on: ['0001'] }),
-    ...Array.from({ length: 24 }, (_, i) => full(String(i + 10).padStart(4, '0'))),
+    ...Array.from({ length: 24 }, (_, i) => full(String(i + 10).padStart(4, '0'), i === 0 ? { after: ['0001'], waiting_on: ['0001'] } : {})),
     ...Array.from({ length: 12 }, (_, i) => T(String(i + 50).padStart(4, '0'), 'done', { shipped: new Date().toISOString() })),
   ],
   ideas: [],
@@ -48,7 +48,7 @@ async function withPanel(fn, { width = 375, height = 640, insets = null, theme =
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     for (let i = 0; ; i++) {
-      try { if (await b.js(`location.port === '${panel.port}' && !!document.querySelector('#queue .q .dep-chip') && !document.querySelector('#run').hidden`)) break; } catch (e) { if (i >= 100) throw e; }
+      try { if (await b.js(`location.port === '${panel.port}' && !!document.querySelector('#queue .q .where') && !document.querySelector('#run').hidden`)) break; } catch (e) { if (i >= 100) throw e; }
       if (i >= 100) throw new Error('timed out waiting for the panel');
       await new Promise(res => setTimeout(res, 100));
     }
@@ -181,10 +181,11 @@ test('0160 AC2: scrolled to its end, the full ticket shows none of its text behi
 for (const insets of [null, { top: 47, bottom: 34 }]) {
   const where = insets ? 'in the home-screen app' : 'in a browser tab';
   test(`0160 AC5: ${where}, jumping to a ticket shows it below the header, not behind it`, skip, () => withPanel(async b => {
-    await b.js(`[...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '0002').querySelector('.top').click()`); // 0468: open, to reach its box
-    await b.until(`!!document.querySelector('#queue .q.open button[aria-label^="Go to ticket 0001"]')`, 'its dependency box');
-    await b.js(`document.querySelector('#queue').scrollIntoView()`);
-    await b.js(`document.querySelector('#queue .q.open button[aria-label^="Go to ticket 0001"]').click()`);
+    await b.js(openLane('plan'));
+    await b.js(`[...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === '0010').querySelector('.head').click()`); // open, to reach its box
+    await b.until(`!!document.querySelector('#shaping .item.open button[aria-label^="Go to ticket 0001"]')`, 'its dependency box');
+    await b.js(`document.querySelector('#shaping .item.open button[aria-label^="Go to ticket 0001"]').scrollIntoView()`);
+    await b.js(`document.querySelector('#shaping .item.open button[aria-label^="Go to ticket 0001"]').click()`);
     await b.until(`!!document.querySelector('#shaping .item.flash')`, 'the highlight');
     await new Promise(r => setTimeout(r, 600)); // any smooth scroll and the header's fade
     const h = await box(b, 'header');

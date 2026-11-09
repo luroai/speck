@@ -313,14 +313,6 @@ export async function fullViewOf(p, id) {
   await p.settle();
   return p.byId('full-ticket');
 }
-// 0434: opens each Build card that's closed, as a Build card shows its priority, size and risk only while it's open.
-export async function openQueueRows(p) {
-  const idOf = r => p.all(r).find(n => n.className === 'id')._text;
-  for (const id of queueRows(p).map(idOf)) {
-    const row = queueRows(p).find(r => idOf(r) === id);
-    if (!/\bopen\b/.test(row.className)) { row.children[0].listeners.click({ stopPropagation() {} }); await p.settle(); }
-  }
-}
 // A queue row's node with this class, searched for through the whole row, or null.
 const inRow = (row, re) => (function find(n) { if (re.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 // An in-flight queue row's sentence saying what it's doing (0156; beside the builder badge from 0168 until 0416), and
@@ -331,7 +323,6 @@ export const stageOf = row => inRow(row, /^stage\b/);
 // 0462: an open in-flight row's facts, as [label, value] for each cell, and its Now cell's value; null when it has none.
 const factsIn = row => inRow(row, /^facts$/);
 export const factsOf = row => { const f = factsIn(row); return f ? f.children.map(c => [c.children[0].textContent, c.children[1].textContent]) : null; };
-export const nowOf = row => { const f = factsIn(row); return f ? f.children[0].children[1] : null; };
 export const sentenceOf = row => { const n = inRow(row, /^(say|lights)\b/); return !n ? null : n.className === 'lights' ? n.attrs['aria-label'] : n.textContent; };
 export const steps = t => t.steps.map(s => s.state || '');
 

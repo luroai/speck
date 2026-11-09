@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { fakePage, T, gitEnv, CLI, click, startPanel, stop, freePort, request, post, tokenOf } from './support/panel.mjs';
+import { fakePage, fullViewOf, T, gitEnv, CLI, click, startPanel, stop, freePort, request, post, tokenOf } from './support/panel.mjs';
 import { blockedRepo } from './support/blocked.mjs';
 import { loadConfig } from '../scripts/speck.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
@@ -56,26 +56,27 @@ const find = (p, root, pred) => p.all(root).find(pred);
 const askIn = (p, root) => find(p, root, n => /\bforeman-ask\b/.test(n.className || ''));
 const buttonIn = (p, root, text) => find(p, root, n => n.tagName === 'button' && n.textContent === text);
 
-test('0318 AC1: the Foreman\'s question shows on the ticket\'s card with an Answer box and a Dismiss button', async () => {
+test('0318 AC1: the Foreman\'s question shows on the ticket\'s full view with an Answer box and a Dismiss button', async () => {
   const { r } = asked();
   const p = pageWith(r);
   await p.settle();
-  const card = askIn(p, p.byId('queue'));
-  assert.ok(card, 'the card has the question');
+  const card = askIn(p, await fullViewOf(p, '0001'));
+  assert.ok(card, 'the full view has the question');
   assert.match(card.textContent, /speck asks you: Should it keep the old test\?/);
   assert.ok(find(p, card, n => n.tagName === 'textarea'), 'an Answer box');
   assert.ok(buttonIn(p, card, 'Answer'));
   assert.ok(buttonIn(p, card, 'Dismiss'));
 });
 
-test('0318 AC1, 0458: the Foreman\'s question shows on its card, and no longer in its detail, which shows only the log', async () => {
+test('0318 AC1, 0458: the Foreman\'s question shows in its full view, and no longer in the Foreman\'s detail, which shows only the log', async () => {
   const { r } = asked();
   const p = pageWith(r);
   await p.settle();
   click(p.byId('run'));
   await p.settle();
   assert.equal(askIn(p, p.byId('foreman')), undefined, 'not in the detail');
-  assert.ok(askIn(p, p.byId('queue')), 'on the card');
+  assert.equal(askIn(p, p.byId('queue')), undefined, 'not on the row');
+  assert.ok(askIn(p, await fullViewOf(p, '0001')), 'in the full view');
 });
 
 test('0318 AC1: a ticket the Foreman hasn\'t asked about has no Answer box', async () => {
@@ -168,7 +169,7 @@ test('0318 AC2 AC3: the panel\'s Answer and Dismiss send the answer to the panel
   const { r } = asked();
   const p = pageWith(r, [{ message: 'ok' }]);
   await p.settle();
-  const card = askIn(p, p.byId('queue'));
+  const card = askIn(p, await fullViewOf(p, '0001'));
   const box = find(p, card, n => n.tagName === 'textarea');
   box.value = 'Keep it.';
   box.listeners.input?.({ target: box });
@@ -182,7 +183,7 @@ test('0318 AC2 AC3: the panel\'s Answer and Dismiss send the answer to the panel
 
   const p2 = pageWith(r, [{ message: 'ok' }]);
   await p2.settle();
-  click(buttonIn(p2, askIn(p2, p2.byId('queue')), 'Dismiss'));
+  click(buttonIn(p2, askIn(p2, await fullViewOf(p2, '0001')), 'Dismiss'));
   await p2.settle();
   assert.ok(p2.calls.some(c => /\/api\/foreman\/0001\/dismiss$/.test(c.url) && c.opts.method === 'POST'));
 });

@@ -28,7 +28,7 @@ const page = (boards = [board()]) => { clock = NOW; return boardPage(boards, { D
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')?._text;
 const pane = p => p.byId('full-ticket');
 const button = (p, n, text) => p.all(n).find(x => x.tagName === 'button' && x.textContent === text);
-// Opens the ticket's card, as the user does, and returns it: [the card, its track, its table].
+// Opens the ticket's card, as the user does, and returns it: [the card, its track, its table]. 0585: a Build row isn't opened.
 async function openCard(p, id) {
   let card = items(p).find(n => idOf(p, n) === id);
   if (card) {
@@ -38,10 +38,7 @@ async function openCard(p, id) {
   }
   card = queueRows(p).find(n => idOf(p, n) === id);
   if (card) {
-    if (!/\bopen\b/.test(card.className)) { click(card.children[0]); await p.settle(); }
-    card = queueRows(p).find(n => idOf(p, n) === id);
-    const head = card.children[0];
-    return [card, head.children.find(n => n.className.startsWith('track')), head.children.find(n => n.className === 'facts')];
+    return [card, null, null]; // 0585: a Build row has no track or table of its own
   }
   card = shippedRows(p).find(n => idOf(p, n) === id);
   if (!/\bopen\b/.test(card.className)) { p.press(p.all(card).find(n => n.className === 'title')); await p.settle(); } // 0466: its title opens it
@@ -52,8 +49,8 @@ async function openCard(p, id) {
 // Opens its full view from its card, as the user does.
 async function openFull(p, id) {
   const [card] = await openCard(p, id);
-  const b = button(p, card, 'Full ticket');
-  p.press(b);
+  if (/\bq\b/.test(card.className)) click(card.children[0]); // 0585: a Build row opens its full view, and has no button
+  else p.press(button(p, card, 'Full ticket'));
   await p.settle();
   assert.equal(pane(p).hidden, false, `${id}: the full view is open`);
   assert.equal(pane(p).children[0].children[0].textContent, id, `${id} is in it`);
@@ -76,7 +73,7 @@ test('0465 AC1: the full view shows its track and table under the title and abov
     assert.equal(kids[1].className, 'steps', `${id}: the track and table under the top`);
     const [t, f] = kids[1].children;
     assert.equal(t.children.length, 4, `${id}: four bars (0583)`);
-    assert.equal(f.children.length, 6, `${id}: six cells (0583)`);
+    assert.ok(f.children.length >= 6, `${id}: six cells (0583), then Type and any Ready check (0585)`);
     assert.equal(f.className, 'facts');
     const body = kids[2];
     assert.ok(body.children.some(n => n.tagName === 'h4' && n.textContent === 'Problem'), `${id}: Problem after them`);
@@ -108,10 +105,10 @@ test('0465 AC1: the bars and facts follow where each ticket is (0583)', async ()
 });
 
 const plain = rules().filter(r => !r.at.length);
-test('0465 AC1: 0583: the full view has its own four-step track, and a Build card keeps its five', () => {
+test('0465 AC1: 0583: the full view has its own four-step track (0585: a Build card has none)', () => {
   const columns = sel => get(plain.find(r => selectors(r).includes(sel)), 'grid-template-columns');
   assert.match(columns('#full-ticket .track'), /repeat\(4,/);
-  assert.match(columns('.q .track'), /repeat\(5,/);
+  assert.equal(plain.find(r => selectors(r).includes('.q .track')), undefined, 'no five-step track rule is left for a Build row');
 });
 
 test('0465 AC2: the tags under the title are gone, and the id, status and Close stay where they are', async () => {
@@ -184,7 +181,7 @@ const OPEN = id => `(async () => {
   const wait = async test => { for (let i = 0; i < 200 && !test(); i++) await new Promise(r => setTimeout(r, 20)); if (!test()) throw new Error('timed out: ' + test); };
   const has = sel => [...document.querySelectorAll(sel)].find(n => [...n.querySelectorAll('.id')].some(i => i.textContent === ${JSON.stringify(id)}));
   if (has('#shaping .item.ticket')) { document.getElementById('tab-plan').click(); has('#shaping .item.ticket .head').click(); await wait(() => has('#shaping .item.ticket.open')); has('#shaping .item.ticket.open').querySelector('.full-open').click(); }
-  else if (has('#queue .q')) { document.getElementById('tab-build').click(); if (!has('#queue .q.open')) has('#queue .q').querySelector('.top').click(); await wait(() => has('#queue .q.open')); has('#queue .q.open').querySelector('.full-open').click(); }
+  else if (has('#queue .q')) { document.getElementById('tab-build').click(); has('#queue .q').querySelector('.top').click(); } // 0585: pressing its row
   else { document.getElementById('tab-shipped').click(); if (!has('#shipped tr.open')) has('#shipped tr').querySelector('.title').click(); await wait(() => has('#shipped tr.open')); has('#shipped tr.open').querySelector('.full-open').click(); } // 0466
   const pane = document.getElementById('full-ticket');
   await wait(() => !pane.hidden && pane.querySelector('.top .id') && pane.querySelector('.top .id').textContent === ${JSON.stringify(id)} && pane.querySelector('.steps'));

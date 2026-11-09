@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fakePage, T, full, click, top, items, queueRows, openQueueRows, findChrome, browserPage, styles, factsOf } from './support/panel.mjs';
+import { page, fakePage, T, full, click, top, items, queueRows, fullViewOf, findChrome, browserPage, styles, factsOf } from './support/panel.mjs';
 
 const css = () => styles();
 const rule = sel => (css().match(new RegExp(`\\n\\s*${sel.replace(/[.:#]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[1] || '';
@@ -28,10 +28,11 @@ test('0213 AC1: a P0 tag gets the p0 class in Plan, the Build queue and the full
   const tags = items(p).flatMap(r => prioTags(p, r)).filter(t => t.text === 'P0');
   assert.equal(tags.length, 1, 'one P0 tag in Plan');
   assert.deepEqual(tags[0].cls, ['tag', 'p0'], 'Plan');
-  // 0434: a Build card's priority showed while it was open. 0463: open, it's in its facts table, as plain text
-  await openQueueRows(p);
+  // 0585: a Build row has no priority; its full view has it in its facts table, as plain text
   assert.equal(queueRows(p).flatMap(r => prioTags(p, r)).length, 0, 'no priority tag in the Build queue');
-  assert.deepEqual(factsOf(withId(p, queueRows(p), '0004'))[3], ['Priority', 'P0'], 'the Build queue');
+  const queued = await fullViewOf(p, '0004');
+  assert.equal(prioTags(p, queued).length, 0, 'nor in its full view');
+  assert.deepEqual(factsOf(queued)[0], ['Priority', 'P0'], 'the Build queue\'s full view');
   // 0465: and so is the full ticket pane's, as its open card's is
   assert.deepEqual(openPane(p, '0001'), [], 'no priority tag in the full ticket pane');
   assert.deepEqual(panePriority(p), ['Priority', 'P0'], 'the full ticket pane');

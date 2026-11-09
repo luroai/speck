@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseTicket, lintTicket } from '../scripts/speck.mjs';
-import { ROOT, T, fm, good, page, fakePage, items, queueRows, shippedRows, panelRepo, styles } from './support/panel.mjs';
+import { ROOT, T, fm, good, page, fakePage, items, queueRows, fullViewOf, shippedRows, panelRepo, styles } from './support/panel.mjs';
 import { runRepo } from './support/run.mjs';
 import { ORDER_CASES, runUntilLaunched } from './support/quick-run.mjs';
 
@@ -121,7 +121,8 @@ test('0100 AC4: the panel shows a fix tag beside a fix ticket\'s id in Shaping, 
   // priority, size and risk tags. 0419: in Plan and the queue, in the details line under the title.
   const lastTag = row => p.all(row).find(n => /\b(tag-row|checks|progress|act)\b/.test(n.className || '')).children.filter(n => /\btag\b/.test(n.className || '')).at(-1);
   const anyFix = row => p.all(row).some(n => /\bfix\b/.test(n.className || ''));
-  for (const [where, rows] of [['Shaping', items(p)], ['queue', queueRows(p)], ['Shipped', shippedRows(p)]]) {
+  for (const [where, rows] of [['Shaping', items(p)], ['Shipped', shippedRows(p)]]) {
+
     const fix = rows.find(r => ['0001', '0003', '0005'].includes(idOf(r)));
     const other = rows.find(r => ['0002', '0004', '0006'].includes(idOf(r)));
     assert.ok(fix && other, `${where} lists both`);
@@ -131,6 +132,18 @@ test('0100 AC4: the panel shows a fix tag beside a fix ticket\'s id in Shaping, 
     assert.ok(!anyFix(other), `${where}: no fix tag on another ticket`);
   }
   assert.match(styles(), /\.tag\.fix\s*\{[^}]*color:/, 'the fix tag has a colour');
+});
+
+// 0585: a Build row has no tags, so its Type cell in the full view says fix.
+test('0100 AC4: the Type cell of a fix ticket\'s full view from Build says fix, with its tip', async () => {
+  const p = fakePage([{ tickets: [T('0003', 'ready', { type: 'fix', priority: 0 }), T('0004', 'ready')], ideas: [] }]);
+  await p.settle();
+  const type = async id => { const v = await fullViewOf(p, id); return p.all(v).find(n => n.className === 'fact' && n.children[0].textContent === 'Type').children[1]; };
+  const fix = await type('0003');
+  assert.equal(fix.textContent, 'fix');
+  assert.match(fix.className, /\bfix\b/);
+  assert.equal(fix.title, 'Fix: fixes a broken main, built before anything else');
+  assert.equal((await type('0004')).textContent, 'code');
 });
 
 test('0100: the ticket template and /speck-ticket mention fix tickets', () => {

@@ -8,7 +8,7 @@ import path from 'node:path';
 import { reviewPack, panelPack } from '../scripts/pack.mjs';
 import { addPicture, clearPictures, readPictures, pictureFile } from '../scripts/pictures.mjs';
 import { shipRepo } from './support/speck.mjs';
-import { fakePage, T, queueRows, startPanel, freePort, stop, raw, request } from './support/panel.mjs';
+import { fakePage, T, queueRows, fullViewOf, startPanel, freePort, stop, raw, request } from './support/panel.mjs';
 
 // The smallest real pictures of each kind speck keeps: the bytes each starts with, and a little more.
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from('rest of a png')]);
@@ -103,10 +103,8 @@ const STATE = { ideas: [], tickets: [T('0005', 'approved', { started: new Date(D
 async function openPack(response) {
   const p = fakePage([structuredClone(STATE), { text: '', truncated: false }, response, structuredClone(STATE)]);
   await p.settle();
-  const row = () => queueRows(p).find(n => n.textContent.includes('0005'));
-  p.press(row().children.find(n => n.className === 'top'));
-  await p.settle();
-  p.press(p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  const view = await fullViewOf(p, '0005'); // 0585: its Review pack is in its full view
+  p.press(p.all(view).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
   await p.settle();
   return p;
 }

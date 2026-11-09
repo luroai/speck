@@ -85,7 +85,7 @@
   .q .top .sub { font-variant-numeric: tabular-nums; }
   /* 0585: Build's rows, under a head for each group */
   #queue:has(.q.row) { gap: 0; padding: 0; }
-  #queue .group-head { margin: 0; padding: 14px 14px 6px; font-family: var(--font-ui); font-weight: 600; font-size: 13px; line-height: 16px; color: var(--muted); }
+  #queue .group-head { margin: 0; padding: 14px 14px 6px; font-family: var(--font-ui); font-weight: 600; font-size: 14px; line-height: 16px; color: var(--muted); }
   #queue .group-head .group-n { font-family: var(--font-mono); font-weight: 400; font-size: 12px; }
   .q.row { padding: 0; border: 0; border-bottom: .5px solid var(--line); border-radius: 0; }
   .q.row .top { box-sizing: border-box; min-height: 44px; padding: 7px 14px 8px; }

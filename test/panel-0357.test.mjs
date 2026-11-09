@@ -40,7 +40,7 @@ async function openPack(p, id = '0005') {
   await p.settle();
   p.press(rowOf(p, id).children.find(n => n.className === 'top'));
   await p.settle();
-  p.press(buttonsIn(p, rowOf(p, id), 'Review pack')[0]);
+  p.press(buttonsIn(p, pane(p), 'Review pack')[0]); // 0585: the row opens the full view, which has the button
   await p.settle();
 }
 
@@ -135,7 +135,9 @@ test('0357 AC2 (self-check): once a note is sent the box goes, and opening the p
   await p.settle();
   assert.equal(boxOf(p), null, 'no box while what speck said shows');
   assert.ok(buttonsIn(p, pane(p), 'Ship')[0], 'Ship is still there');
-  p.press(buttonsIn(p, rowOf(p, '0005'), 'Review pack')[0]);
+  p.press(p.all(pane(p)).find(n => n.className === 'close')); // 0585: back to the full view, whose button opens the pack again
+  await p.settle();
+  p.press(buttonsIn(p, pane(p), 'Review pack')[0]);
   await p.settle();
   assert.equal(boxOf(p).value, '', 'back, empty');
   assert.doesNotMatch(pane(p).textContent, /Review log/, 'the old message has gone');

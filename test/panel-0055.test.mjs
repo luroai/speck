@@ -19,8 +19,8 @@ const rowOf = (p, id) => queueRows(p).find(r => idOf(r) === id);
 // Anything on a row that could move: a canvas, or a node marked as moving or as a badge.
 const movingSteps = row => (function all(n) { return [n, ...(n.children || []).flatMap(all)]; })(row)
   .filter(n => n.tagName === 'canvas' || /\b(moving|badge)\b/.test(n.className || ''));
-// The row's current stage's name.
-const stageIn = row => (function find(n) { if (/^stage\b/.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
+// The row's line saying where the ticket is (0585: its current step and its time).
+const stageIn = row => (function find(n) { if (/^where\b/.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 
 const board = () => ({
   tickets: [
@@ -43,7 +43,7 @@ test('0055 AC1: a building or reviewing ticket that isn\'t red says its current 
     const row = rowOf(p, id);
     assert.equal(movingSteps(row).length, 0, `${id} doesn't move`);
     assert.ok(stageIn(row) && stageIn(row).textContent, `${id} names its current step`);
-    assert.ok(!/\bbad\b/.test(stageIn(row).className), `${id}'s step isn't red`);
+    assert.match(stageIn(row).className, /\brun\b/, `${id}'s line isn't red or orange`);
   }
 });
 
@@ -68,7 +68,7 @@ test('0055 AC3: no motion is drawn on a card, whatever the browser asks for (041
   assert.doesNotMatch(outside, /animation:/, 'and nothing else animates');
 });
 
-test('0055 AC4: a refresh with the ticket unchanged keeps its current step\'s node', async () => {
+test('0055 AC4: a refresh with the ticket unchanged keeps its where line\'s node', async () => {
   const s = board(), next = clone(s), third = clone(s);
   next.tickets.push(T('0009', 'ready', { title: 'Another ticket' })); // another ticket changes
   third.tickets[0].status = 'reviewing'; third.tickets[0].rounds = [round(1, 100)]; // now 0001 changes
@@ -77,7 +77,7 @@ test('0055 AC4: a refresh with the ticket unchanged keeps its current step\'s no
   const step = stageIn(rowOf(p, '0001')), row = rowOf(p, '0001'), detached = step.detached || 0;
   await refresh(p);
   assert.equal(rowOf(p, '0001'), row, 'the row is kept');
-  assert.equal(stageIn(rowOf(p, '0001')), step, 'the same step is on the page');
+  assert.equal(stageIn(rowOf(p, '0001')), step, 'the same line is on the page');
   assert.equal(step.detached || 0, detached, 'and was never taken out');
   await refresh(p);
   assert.notEqual(rowOf(p, '0001'), row, 'a change to the ticket itself redraws it');
@@ -112,20 +112,19 @@ test('0055 AC1-AC4: in a real browser, no card moves, a refresh keeps a selectio
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`document.querySelectorAll('#queue .q').length === 4`, 'the queue');
-    // AC1 and AC2: since 0416, no card has a canvas, and nothing animates in CSS but (0434) the dots of the grid of
-    // lights on a card an agent is at work on.
+    // AC1 and AC2: since 0416, no card has a canvas, and nothing animates in CSS.
     assert.equal(await b.js(`document.querySelectorAll('#queue canvas').length`), 0);
-    assert.deepEqual(await b.js(`document.getAnimations().filter(a => !a.effect.target.matches('#queue .q .lights > i') && !a.effect.target.closest('.speck-face')).length`), 0);
+    assert.deepEqual(await b.js(`document.getAnimations().filter(a => !a.effect.target.closest('.speck-face')).length`), 0);
     // AC4: a refresh keeps the row's step, and a selection in the row stays.
     const t = `${row('0002')}.querySelector('.title')`;
     await b.drag(await b.js(charIn(t, 0)), await b.js(charIn(t, 6)));
     assert.equal(await b.js('getSelection().toString()'), 'A buil');
-    await b.js(`void (window.step = ${row('0002')}.querySelector('.stage'))`);
+    await b.js(`void (window.step = ${row('0002')}.querySelector('.where'))`);
     await refreshed(b, 'a refresh'); await refreshed(b, 'a second refresh');
-    assert.equal(await b.js(`${row('0002')}.querySelector('.stage') === window.step`), true, 'the same step stays');
+    assert.equal(await b.js(`${row('0002')}.querySelector('.where') === window.step`), true, 'the same line stays');
     assert.equal(await b.js('getSelection().toString()'), 'A buil', 'the selection stays');
-    // AC3: the stage's name keeps its in-flight blue.
-    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.stage')).color`), 'rgb(47, 85, 212)', 'in the in-flight blue'); // 0577: --run, the accent
+    // AC3: the line's dot keeps its in-flight blue.
+    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.where'), '::before').backgroundColor`), 'rgb(47, 85, 212)', 'in the in-flight blue'); // 0577: --run, the accent
   } finally {
     await b.close();
     await stop(panel);

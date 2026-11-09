@@ -28,10 +28,10 @@ test('0167 AC1: no section or card rule draws a top or left stripe, and each car
   }
 });
 
-test('0167 AC2: a ticket waiting for you is green (0440), a blocked or stopped one crimson, each with its border and a light background', () => {
-  const blocked = rule('.q.blocked'), toShip = rule('.q.to-ship');
-  assert.deepEqual([tokens(get(blocked, 'border-color')), tokens(get(blocked, 'background'))], [['--bad'], ['--bad-bg']]);
-  assert.deepEqual([tokens(get(toShip, 'border-color')), tokens(get(toShip, 'background'))], [['--ok'], ['--ok-bg']]);
+test('0167 AC2: a ticket that needs you has an orange dot, one worked on a blue dot and one waiting a grey one, and a row has no tint of its own', () => {
+  // 0585: a Build row isn't tinted or bordered by its state; its where line's dot says it.
+  assert.deepEqual([rule('.q.blocked'), rule('.q.to-ship')], [undefined, undefined]);
+  for (const [sel, t] of [['.where.needs::before', '--needs-you'], ['.where.run::before', '--accent'], ['.where.wait::before', '--muted']]) assert.deepEqual(tokens(get(rule(sel), 'background')), [t], sel);
   // The passing checks stay green.
   assert.deepEqual(tokens(get(rule('.ok'), 'color')), ['--ok']);
 });
@@ -39,7 +39,7 @@ test('0167 AC2: a ticket waiting for you is green (0440), a blocked or stopped o
 test('0167 AC2: the speck red is used only for the speck itself', () => {
   // From 0168 the speck was the builder badge's eye, drawn on its canvas, and the badge went in 0416, so no rule uses the speck red.
   const users = plain().filter(r => r.decls.some(([, v]) => tokens(v).some(t => t === '--accent' || t === '--accent-bg'))).map(r => r.sel);
-  assert.deepEqual(users, []);
+  assert.deepEqual(users, ['.where.run::before'], '0585: but for a row\'s blue dot while it is worked on'); // --accent is the panel\'s blue now
   // 0303: the builders are drawn on the LCD screen, whose speck is its own red. 0413: the header's mark, whose speck was
   // in the panel's --dot, went with the header row, so nothing uses --dot now.
   const dots = plain().flatMap(r => r.decls.filter(([, v]) => tokens(v).includes('--dot')).map(([k]) => `${r.sel} { ${k} }`));
@@ -126,10 +126,8 @@ const STATE = {
   ideas: [idea('2026-10-14-an-idea', 'idea'),
     idea('2026-10-14-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0161\n\nSome text.\n')],
 };
-// Each queue card's state colour: its border and its background, or none.
-// 0171: a running card has a 2px border in its stage's colour instead, and no fill (RUNNING).
-const RUNNING = { '0301': 'blue' }; // 0426: Cursor's blue
-const STATES = { '0301': null, '0302': ['--ok', '--ok-bg'], '0303': ['--bad', '--bad-bg'], '0304': ['--bad', '--bad-bg'], '0305': null, '0306': ['--ok', '--ok-bg'] };
+// 0585: each Build row's dot, which is all that shows its state: orange for needs you, blue while it is worked on, grey while it waits.
+const DOTS = { '0301': '--accent', '0302': '--needs-you', '0303': '--needs-you', '0304': '--muted', '0305': '--muted', '0306': '--needs-you' };
 
 const stub = theme => `(() => {
   try { localStorage.setItem('speck-theme', ${JSON.stringify(theme)}); } catch {}
@@ -163,7 +161,7 @@ const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAn
 // A colour as the browser computes it, from a CSS value such as var(--bad).
 const RGB = v => `(() => { const s = document.createElement('span'); s.style.color = ${JSON.stringify(v)}; document.body.appendChild(s);
   const c = getComputedStyle(s).color; s.remove(); return c; })()`;
-const colours = async b => { const c = {}; for (const k of ['line', 'text', 'muted', 'ok', 'ok-bg', 'bad', 'bad-bg', 'panel', 'run', 'blue']) c[k] = await b.js(RGB(`var(--${k})`)); return c; };
+const colours = async b => { const c = {}; for (const k of ['line', 'text', 'muted', 'ok', 'ok-bg', 'bad', 'bad-bg', 'panel', 'run', 'blue', 'accent', 'needs-you']) c[k] = await b.js(RGB(`var(--${k})`)); return c; };
 // Each element's four border colours and widths, and its background.
 const LOOK = sel => `[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => { const s = getComputedStyle(n);
   return { id: (n.querySelector('.id') || n).textContent.slice(0, 40), cls: n.className, back: s.backgroundColor,
@@ -196,28 +194,19 @@ for (const theme of ['light', 'dark']) {
     }, theme);
   });
 
-  test(`0167 AC2 AC5: in the ${theme} look, only a ticket waiting for you or in trouble is coloured, open or closed`, skip, async () => {
+  test(`0167 AC2 AC5: in the ${theme} look, only a ticket's dot is coloured, and a Build row has only a hairline under it and no tint`, skip, async () => {
     await withPanel(async b => {
       const c = await colours(b);
-      const check = async when => {
-        const cards = await b.js(LOOK('#queue .q'));
-        assert.deepEqual(cards.map(x => x.id).sort(), Object.keys(STATES));
-        for (const card of cards) {
-          const state = STATES[card.id];
-          if (state) {
-            sameAllRound(card, c[state[0].slice(2)], `${card.id} ${when}`);
-            assert.equal(card.back, c[state[1].slice(2)], `${card.id} ${when}: its background`);
-          } else if (RUNNING[card.id]) {
-            for (const [k, [col, width]] of card.sides.entries()) assert.deepEqual([col, width], [c[RUNNING[card.id]], 2], `${card.id} ${when}: side ${k}`);
-          } else sameAllRound(card, /\bopen\b/.test(card.cls) ? c.text : c.line, `${card.id} ${when}`);
-        }
-      };
-      await check('closed');
-      for (const id of Object.keys(STATES)) {
-        await b.js(`[...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '${id}').querySelector('.top').click()`);
-        await settle(b);
+      const cards = await b.js(LOOK('#queue .q'));
+      assert.deepEqual(cards.map(x => x.id).sort(), Object.keys(DOTS));
+      for (const card of cards) {
+        const [top, right, bottom, left] = card.sides;
+        for (const [k, side] of [['top', top], ['right', right], ['left', left]]) assert.equal(side[1], 0, `${card.id}: no ${k} border`);
+        assert.deepEqual([bottom[0], bottom[2], bottom[1] > 0 && bottom[1] <= 1], [c.line, 'solid', true], `${card.id}: a hairline under it in the line colour`);
+        assert.ok(![c['ok-bg'], c['bad-bg']].includes(card.back) || card.back === c.panel, `${card.id}: no tint of its own`);
       }
-      await check('open');
+      const dots = await b.js(`Object.fromEntries([...document.querySelectorAll('#queue .q')].map(n => [n.querySelector('.id').textContent, getComputedStyle(n.querySelector('.where'), '::before').backgroundColor]))`);
+      assert.deepEqual(dots, Object.fromEntries(Object.entries(DOTS).map(([id, v]) => [id, c[v.slice(2)]])));
     }, theme);
   });
 
@@ -228,7 +217,7 @@ for (const theme of ['light', 'dark']) {
         return { text: n.textContent, color: s.color, line: s.textDecorationLine, border: s.borderTopColor, back: s.backgroundColor }; })`);
       for (const n of await style('#queue .id, #shipped .id')) assert.equal(n.color, c.muted, `id ${n.text}`);
       for (const n of await style('#shipped .line .title')) assert.deepEqual([n.color, n.line], [c.text, 'none'], `shipped title ${n.text} (not underlined since 0466)`);
-      // 0468: a closed card's linked ids are in its dependency chip, in the muted colour of every id
+      // 0468: a closed Plan card's linked ids are in its dependency chip, in the muted colour of every id
       const chips = await style('#shaping .dep-chip');
       assert.ok(chips.length >= 1, 'a dependency chip');
       for (const n of chips) assert.equal(n.color, c.muted, `chip ${n.text}`);

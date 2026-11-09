@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, exitOf, round, page, styles } from './support/panel.mjs';
+import { T, fakePage, queueRows, exitOf, round, page, styles, fullViewOf } from './support/panel.mjs';
 
 // ---------- 0168: the builder badge on each in-flight ticket's Build card ----------
 // 0416: the badge has gone, so only the words beside it are checked here: test/panel-0416.test.mjs checks no card has a picture.
@@ -43,23 +43,20 @@ function fake(tickets = TICKETS) {
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 const classes = n => (n.className || '').split(' ');
-const WORKING = ['0401', '0402', '0403']; // 0434: an agent is at work on them
-
-test('0168 AC1: each in-flight card has a row under its title with the sentence and the stage\'s name (with no badge since 0416)', async () => {
+// 0585: a row says where the ticket is in one line, with the sentence as its tooltip; its full view says the sentence and
+// the stage's name.
+test('0168 AC1: each in-flight ticket\'s full view has the sentence and the stage\'s name, and its row one line saying where it is (with no badge since 0416)', async () => {
   const p = fake();
   await p.settle();
   for (const [id, [sentence, stage]] of Object.entries(SHOWS)) {
-    const top = topOf(rowOf(p, id)), rows = top.children.filter(n => classes(n)[0] === 'progress');
-    assert.equal(rows.length, 1, `${id}: one progress row`);
-    assert.ok(top.children.indexOf(rows[0]) > top.children.findIndex(n => n.className === 'line'), `${id}: under the title`);
-    const text = rows[0];
-    assert.equal(text.className, stage ? 'progress' : 'progress ship-line');
-    // 0434: while its builder or reviewer is at work, a grid of lights named for the sentence stands in for it
-    const shown = text.children.filter(n => n.className && n.className !== 'sep').map(n => [n.className.split(' ')[0], n.attrs?.['aria-label'] ?? n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
-    const say = WORKING.includes(id) ? 'lights' : 'say';
-    assert.deepEqual(shown.slice(0, 2), [[say, sentence], stage ? ['stage', stage] : ['sub', 'MM:SS']], `${id}: the sentence and the stage, or (0434) a shipping card's one time`);
-    // 0419: then the timer, on the same line (0434: after the reviewer's name while it reviews, and no tags while it's closed)
-    assert.deepEqual(shown.slice(2).map(([c]) => c), id === '0403' ? ['by', 'sub'] : stage ? ['sub'] : [], `${id}: the timer`);
+    const top = topOf(rowOf(p, id)), lines = top.children.filter(n => classes(n)[0] === 'where');
+    assert.equal(lines.length, 1, `${id}: one line saying where it is`);
+    assert.ok(top.children.indexOf(lines[0]) > top.children.findIndex(n => n.className === 'line'), `${id}: under the title`);
+    if (lines[0].title) assert.equal(lines[0].title, sentence, `${id}: the sentence is its tooltip`);
+    else assert.ok(lines[0].textContent.startsWith(sentence), `${id}: the line is the sentence`);
+    const view = await fullViewOf(p, id), live = p.all(view).find(n => n.className === 'live-now');
+    const shown = live.children.filter(n => n.className && n.className !== 'sep').map(n => [n.className.split(' ')[0], n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
+    assert.deepEqual(shown.slice(0, 2), [['say', sentence], stage ? ['stage', stage] : ['sub', 'MM:SS']], `${id}: the sentence and the stage, or a shipping ticket's one time`);
     assert.equal(p.all(top).filter(n => /\b(enso|orbit|speck|dots|dot)\b/.test(n.className || '')).length, 0, `${id}: no ensō, speck or stage dots`);
   }
   assert.doesNotMatch((page() + styles()), /\.enso\b|\.orbit\b|\.dot\.now|@keyframes orbit/, 'the ensō and the dots are gone from the page');

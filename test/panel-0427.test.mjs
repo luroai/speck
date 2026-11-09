@@ -132,12 +132,16 @@ test('0427 AC1: in a real browser, a ticket\'s stage sentence and a question are
     await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#queue .q').length === 2`, 'the panel');
     await b.js(openLane('build'));
     const look = sel => `[${sel}].map(n => ({ text: n.textContent, size: getComputedStyle(n).fontSize, font: getComputedStyle(n).fontFamily }))`;
-    const said = await b.js(look(`...document.querySelectorAll('#queue .q .top .say')`)); // 0462: a closed card's, as an open one has its facts in a table
-    await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0802').querySelector('.top').click(), true`);
-    await b.until(`!!document.querySelector('#queue .q.open .question')`, 'the question');
-    const seen = [...said, ...await b.js(look(`document.querySelector('#queue .q.open .question')`))];
-    assert.equal(seen.length, 2, JSON.stringify(seen)); // 0434: 0801's builder is at work, so a grid of lights stands in for its sentence
-    assert.ok(await b.js(`!!document.querySelector('#queue .q .top .lights')`), '0801: its grid');
+    const row = id => `[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}').querySelector('.top').click(), true`;
+    // 0585: a row opens the ticket's full view, which has its stage sentence and its question
+    await b.js(row('0801'));
+    await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .live .say')`, 'the sentence');
+    const said = await b.js(look(`...document.querySelectorAll('#full-ticket .live .say')`));
+    await b.js(`document.querySelector('#full-ticket .close').click(), true`);
+    await b.js(row('0802'));
+    await b.until(`!!document.querySelector('#full-ticket .question')`, 'the question');
+    const seen = [...said, ...await b.js(look(`document.querySelector('#full-ticket .question')`))];
+    assert.equal(seen.length, 2, JSON.stringify(seen));
     for (const s of seen) {
       assert.equal(s.size, '14px', `${s.text}: ${s.size}`);
       assert.match(s.font, /BlinkMacSystemFont/, `${s.text}: ${s.font}`);

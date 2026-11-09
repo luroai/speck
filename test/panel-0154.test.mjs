@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, boardPage, full, items, top, queueRows, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
+import { T, fakePage, boardPage, full, items, top, queueRows, fullViewOf, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0154: go to a linked ticket by tapping its id ----------
 
@@ -68,34 +68,49 @@ test('0154 AC1: with a mouse, hovering still highlights linked tickets and leave
 });
 
 // 0468: a closed card's ids are in its chip now, so the ids that go to their tickets are those in an open card's
-// dependency box (0467).
+// dependency box (0467). 0585: a Build ticket's box is in its full view, which pressing its row opens.
+const pane = p => p.byId('full-ticket');
 const openUp = async (p, ...ids) => {
-  for (const id of ids) { const n = rows(p).find(r => idOf(p, r) === id); if (!/\bopen\b/.test(n.className)) tap(p, items(p).includes(n) ? top(n) : n.children[0]); await p.settle(); }
+  for (const id of ids) { const n = rows(p).find(r => idOf(p, r) === id); if (items(p).includes(n)) { if (!/\bopen\b/.test(n.className)) tap(p, top(n)); await p.settle(); } else await fullViewOf(p, id); }
 };
 
-test('0154 AC2: each linked id in an open card\'s dependency box, in Plan and the Build queue, is a button', async () => {
+test('0154 AC2: each linked id in an open Plan card\'s or a Build ticket\'s full view\'s dependency box is a button', async () => {
   const p = fakePage([board()]);
   await p.settle();
-  await openUp(p, '0001', '0003', '0002', '0006');
+  await openUp(p, '0001', '0003');
   assert.deepEqual(gotos(p, shaping(p, '0001')).map(b => [b.tagName, b.type, b.textContent]), [['button', 'button', '0002']], 'Plan: what it unlocks');
   assert.deepEqual(gotos(p, shaping(p, '0003')).map(b => b.textContent), ['0001'], 'Plan: what it waits on');
-  assert.deepEqual(gotos(p, queued(p, '0002')).map(b => [b.tagName, b.textContent]), [['button', '0001']], 'queue: what it waits on');
-  assert.deepEqual(gotos(p, queued(p, '0006')).map(b => b.textContent), ['0005'], 'a ticket in flight is on the page too');
+  await openUp(p, '0002');
+  assert.deepEqual(gotos(p, pane(p)).map(b => [b.tagName, b.textContent]), [['button', '0001']], 'Build: what it waits on');
+  await openUp(p, '0006');
+  assert.deepEqual(gotos(p, pane(p)).map(b => b.textContent), ['0005'], 'a ticket in flight is on the page too');
+  assert.deepEqual(gotos(p, queued(p, '0006')), [], 'and none is on a row');
+});
+
+test('0154 AC2: in a Build ticket\'s full view, tapping an id shows that ticket in the view and scrolls nothing', async () => {
+  const p = fakePage([board()]);
+  await p.settle();
+  await openUp(p, '0002');
+  for (const n of rows(p)) n.scrollIntoView = () => { throw new Error('scrolled'); };
+  tap(p, goto(p, pane(p), '0001'));
+  await p.settle();
+  assert.match(pane(p).textContent, /Ticket 0001/);
+  assert.ok(rows(p).every(n => !flashing(n)), 'nothing is lit up behind it');
 });
 
 test('0154 AC2: tapping or clicking an id scrolls its ticket into view and highlights it for about 1.5 seconds, opening and closing nothing', async () => {
   const { p, delays } = withTimers();
   await p.settle();
-  await openUp(p, '0002');
+  await openUp(p, '0003');
   const target = shaping(p, '0001');
   let scrolled = 0;
   target.scrollIntoView = () => { scrolled++; };
   const openBefore = rows(p).map(n => /\bopen\b/.test(n.className));
   const before = p.calls.length;
-  tap(p, goto(p, queued(p, '0002'), '0001'));
+  tap(p, goto(p, shaping(p, '0003'), '0001'));
   assert.equal(scrolled, 1, 'the ticket is scrolled into view');
   assert.ok(flashing(shaping(p, '0001')), 'and highlighted');
-  assert.ok(!flashing(queued(p, '0002')), 'only that ticket');
+  assert.ok(!flashing(shaping(p, '0003')), 'only that ticket');
   assert.deepEqual(rows(p).map(n => /\bopen\b/.test(n.className)), openBefore, 'nothing opened or closed');
   assert.equal(p.calls.length, before, 'nothing was asked of the server');
   assert.equal(delays.at(-1), 1500, 'the highlight is timed to end after 1.5 seconds');
@@ -125,9 +140,9 @@ test('0154 AC2: a tap on an id in an open Plan ticket doesn\'t close that ticket
 test('0154 AC2: the highlight lasts through a refresh that rebuilds the ticket', async () => {
   const { p } = withTimers();
   await p.settle();
-  await openUp(p, '0002');
+  await openUp(p, '0003');
   for (const n of rows(p)) n.scrollIntoView = () => {};
-  tap(p, goto(p, queued(p, '0002'), '0001'));
+  tap(p, goto(p, shaping(p, '0003'), '0001'));
   tap(p, top(shaping(p, '0001'))); // opening it rebuilds its item
   assert.ok(flashing(shaping(p, '0001')), 'the rebuilt item is still highlighted');
 });
@@ -136,7 +151,7 @@ test('0154 AC2: activating an id with Enter or Space works as a click does, sinc
   const p = fakePage([board()]);
   await p.settle();
   await openUp(p, '0001', '0002');
-  const all = [...gotos(p, shaping(p, '0001')), ...gotos(p, queued(p, '0002'))];
+  const all = [...gotos(p, shaping(p, '0001')), ...gotos(p, pane(p))];
   assert.equal(all.length, 2);
   for (const b of all) {
     assert.equal(b.tagName, 'button', 'a button, which a browser presses on Enter or Space');
@@ -150,15 +165,16 @@ test('0154 AC2: activating an id with Enter or Space works as a click does, sinc
 test('0154 AC3: an id whose ticket isn\'t on the page is plain text, not a button', async () => {
   const p = fakePage([board(), board()]);
   await p.settle();
-  await openUp(p, '0004', '0002', '0006');
-  const q = queued(p, '0004');
-  p.press(p.all(q).find(n => n.className === 'chip more')); // its shipped one too
+  await openUp(p, '0004');
+  p.press(p.all(pane(p)).find(n => n.className === 'chip more')); // its shipped one too
   await p.settle();
-  assert.deepEqual(gotos(p, queued(p, '0004')).map(b => b.textContent), ['0001'], 'a shipped ticket\'s id is not a button');
-  assert.ok(p.all(queued(p, '0004')).some(n => n.tagName === 'span' && n.textContent === '0009'), 'but it is still shown');
+  assert.deepEqual(gotos(p, pane(p)).map(b => b.textContent), ['0001'], 'a shipped ticket\'s id is not a button');
+  assert.ok(p.all(pane(p)).some(n => n.tagName === 'span' && n.textContent === '0009'), 'but it is still shown');
   // 0520: Plan's Tickets, Ideas and Inbox buttons are gone, so Plan always lists its drafts and a link to one stays a button.
-  assert.deepEqual(gotos(p, queued(p, '0002')).map(b => b.textContent), ['0001'], 'a draft in Plan is a button');
-  assert.deepEqual(gotos(p, queued(p, '0006')).map(b => b.textContent), ['0005'], 'and so is a queued ticket\'s link');
+  await openUp(p, '0002');
+  assert.deepEqual(gotos(p, pane(p)).map(b => b.textContent), ['0001'], 'a draft in Plan is a button');
+  await openUp(p, '0006');
+  assert.deepEqual(gotos(p, pane(p)).map(b => b.textContent), ['0005'], 'and so is a queued ticket\'s link');
 });
 
 test('0154 AC3: a link to a ticket that has left the page since its box was built is plain text after the refresh', async () => {
@@ -167,12 +183,12 @@ test('0154 AC3: a link to a ticket that has left the page since its box was buil
   const p = boardPage([board(), later]); // 0434: opening a Build card asks for its log apart from the boards
   await p.settle();
   await openUp(p, '0006');
-  assert.deepEqual(gotos(p, queued(p, '0006')).map(b => b.textContent), ['0005']);
+  assert.deepEqual(gotos(p, pane(p)).map(b => b.textContent), ['0005']);
   const kept = queued(p, '0002');
   p.timers.shift()(); // the next poll
   await p.settle();
   assert.ok(!queued(p, '0005'), '0005 has left the queue');
-  assert.deepEqual(gotos(p, queued(p, '0006')), [], 'it is no button now');
+  assert.deepEqual(gotos(p, pane(p)), [], 'it is no button now');
   assert.equal(queued(p, '0002'), kept, 'a row with nothing new keeps its node');
 });
 
@@ -180,7 +196,7 @@ test('0154 AC4: each id button says where it goes to a screen reader and is at l
   const p = fakePage([board()]);
   await p.settle();
   await openUp(p, '0001', '0006');
-  const all = [...gotos(p, shaping(p, '0001')), ...gotos(p, queued(p, '0006'))];
+  const all = [...gotos(p, shaping(p, '0001')), ...gotos(p, pane(p))];
   assert.equal(all.length, 2);
   for (const b of all) assert.match(b.attrs['aria-label'], new RegExp(`^Go to ticket ${b.textContent}, `));
   const touch = (css().match(/@media \(pointer: coarse\) \{([\s\S]*)$/) || [])[1] || '';
@@ -202,7 +218,7 @@ async function withBoard(fn, { width = 1280 } = {}) {
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     for (let i = 0; ; i++) {
-      try { if (await b.js(`location.port === '${panel.port}' && !!document.querySelector('#queue .q .dep-chip')`)) break; } catch (e) { if (i >= 100) throw e; }
+      try { if (await b.js(`location.port === '${panel.port}' && !!document.querySelector('#queue .q')`)) break; } catch (e) { if (i >= 100) throw e; }
       if (i >= 100) throw new Error('timed out waiting for the panel');
       await new Promise(res => setTimeout(res, 100));
     }
@@ -210,21 +226,26 @@ async function withBoard(fn, { width = 1280 } = {}) {
   } finally { await b.close(); await stop(panel); }
 }
 
-// 0468: opens these cards, as only an open card's dependency box has ids that go to their tickets.
-const OPEN = ids => `(() => { for (const id of ${JSON.stringify(ids)}) { const n = [...document.querySelectorAll('#shaping .item, #queue .q')].find(c => c.querySelector('.id').textContent === id);
+// 0468: opens these Plan cards, as only an open card's dependency box has ids that go to their tickets.
+const OPEN = ids => `(() => { for (const id of ${JSON.stringify(ids)}) { const n = [...document.querySelectorAll('#shaping .item')].find(c => c.querySelector('.id').textContent === id);
   if (!n.classList.contains('open')) n.firstElementChild.click(); } return true; })()`;
+// 0585: a Build row opens its ticket's full view, which has the dependency box.
+const OPEN_FULL = id => `(() => { const n = [...document.querySelectorAll('#queue .q')].find(c => c.querySelector('.id').textContent === '${id}'); n.querySelector('.top').click(); return true; })()`;
 const GOTOS = list => `[...document.querySelectorAll('#${list} button[aria-label^="Go to ticket "]')]`;
+const SIZES = list => `${GOTOS(list)}.map(n => [n.getAttribute('aria-label'), n.textContent, Math.round(n.getBoundingClientRect().height)])`;
 
 test('0154 AC4: on a 375 px screen every id button is at least 44 px high and named for its ticket', skip, () => withBoard(async b => {
   // 0410: each lane's in turn, as only the open one shows
   const sizes = [];
-  for (const [lane, list, ids] of [['plan', 'shaping', ['0001', '0003']], ['build', 'queue', ['0002', '0006']]]) {
-    await b.js(openLane(lane));
-    await b.js(OPEN(ids));
-    await b.until(`${GOTOS(list)}.length >= 2`, 'the open cards\' id buttons');
-    sizes.push(...await b.js(`${GOTOS(list)}.map(n => [n.getAttribute('aria-label'), n.textContent, Math.round(n.getBoundingClientRect().height)])`));
-  }
-  assert.ok(sizes.length >= 4, `found the id buttons: ${JSON.stringify(sizes)}`);
+  await b.js(openLane('plan'));
+  await b.js(OPEN(['0001', '0003']));
+  await b.until(`${GOTOS('shaping')}.length >= 2`, 'the open cards\' id buttons');
+  sizes.push(...await b.js(SIZES('shaping')));
+  await b.js(openLane('build'));
+  await b.js(OPEN_FULL('0002'));
+  await b.until(`${GOTOS('full-ticket')}.length >= 1`, 'the full view\'s id buttons');
+  sizes.push(...await b.js(SIZES('full-ticket')));
+  assert.ok(sizes.length >= 3, `found the id buttons: ${JSON.stringify(sizes)}`);
   for (const [label, text, h] of sizes) {
     assert.match(label, new RegExp(`^Go to ticket ${text}, `));
     assert.ok(h >= 44, `${text} is ${h} px high`);
@@ -232,24 +253,23 @@ test('0154 AC4: on a 375 px screen every id button is at least 44 px high and na
 }, { width: 375 }));
 
 test('0154 AC2: in a browser, pressing Enter on an id brings its ticket into view and highlights it without opening anything', skip, () => withBoard(async b => {
-  await b.js(openLane('build'));
-  await b.js(OPEN(['0002']));
-  await b.until(`${GOTOS('queue')}.some(n => n.textContent === '0001')`, 'its dependency box');
-  await b.js(`document.querySelector('#queue').scrollIntoView()`);
-  await b.js(`(() => { const btn = ${GOTOS('queue')}.find(n => n.textContent === '0001'); btn.focus(); })()`);
+  await b.js(openLane('plan'));
+  await b.js(OPEN(['0001']));
+  await b.until(`${GOTOS('shaping')}.some(n => n.textContent === '0002')`, 'its dependency box');
+  await b.js(`(() => { const btn = ${GOTOS('shaping')}.find(n => n.textContent === '0002'); btn.focus(); })()`);
   await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' });
   await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
-  await b.until(`[...document.querySelectorAll('#shaping .item')].some(n => n.classList.contains('flash'))`, 'the highlight');
-  const r = await b.js(`(() => { const n = [...document.querySelectorAll('#shaping .item')].find(n => n.classList.contains('flash')); const box = n.getBoundingClientRect();
+  await b.until(`[...document.querySelectorAll('#queue .q')].some(n => n.classList.contains('flash'))`, 'the highlight');
+  const r = await b.js(`(() => { const n = [...document.querySelectorAll('#queue .q')].find(n => n.classList.contains('flash')); const box = n.getBoundingClientRect();
     return { id: n.querySelector('.id').textContent, inView: box.bottom > 0 && box.top < innerHeight, open: document.querySelectorAll('.item.open, .q.open').length }; })()`);
-  assert.deepEqual(r, { id: '0001', inView: true, open: 1 }, 'only the card it was pressed in is open');
+  assert.deepEqual(r, { id: '0002', inView: true, open: 1 }, 'only the card it was pressed in is open');
   await b.until(`![...document.querySelectorAll('.flash')].length`, 'the highlight to end by itself');
 }));
 
 test('0154 AC1: in a browser, a tap on a ticket lights nothing up, even for a moment, and a mouse over it still does', skip, () => withBoard(async b => {
-  // The middle of its Queued line: it has no bar since 0156.
+  // The middle of its where line: it has no bar since 0156.
   // 0413: below speck's screen, the card may start under the fold of this 500 px window, so it's scrolled to first.
-  const at = await b.js(`(() => { const q = [...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '0002'); q.scrollIntoView({ block: 'center' }); const r = q.querySelector('.act').getBoundingClientRect();
+  const at = await b.js(`(() => { const q = [...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '0002'); q.scrollIntoView({ block: 'center' }); const r = q.querySelector('.where').getBoundingClientRect();
     return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
   assert.ok(at[1] < await b.js('innerHeight'), 'it is on screen');
   // Every time a ticket is lit or dimmed, as headless Chrome sends a mouseleave straight after a tap's mouseenter, which a phone doesn't.
@@ -263,6 +283,7 @@ test('0154 AC1: in a browser, a tap on a ticket lights nothing up, even for a mo
   await new Promise(r => setTimeout(r, 100));
   assert.equal(await b.js(`marks`), 0, 'nothing lit or dimmed by a tap');
   await b.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await b.js(`document.querySelector('#full-ticket .close').click()`); // 0585: the tap opened its full view
   // The mouse comes onto it from off the card, rather than counting on headless Chrome's mouseleave after the tap (0156).
   await b.move([2, 2]);
   await b.move([at[0], at[1] + 1]);

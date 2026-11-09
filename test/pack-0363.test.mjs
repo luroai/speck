@@ -3,7 +3,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, T, queueRows, deferred, page as html, styles } from './support/panel.mjs';
+import { fakePage, T, fullViewOf, deferred, page as html, styles } from './support/panel.mjs';
 import { PACK, DOCS } from './support/documents.mjs';
 
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
@@ -40,10 +40,7 @@ const tick = async p => { for (const fn of p.timers.splice(0)) fn(); await p.set
 // Opens 0005's review pack, then its memo in the pop-up.
 async function openDoc(p) {
   await p.settle();
-  const row = () => queueRows(p).find(n => n.textContent.includes('0005'));
-  p.press(row().children.find(n => n.className === 'top'));
-  await p.settle();
-  p.press(buttonsIn(p, row(), 'Review pack')[0]);
+  p.press(buttonsIn(p, await fullViewOf(p, '0005'), 'Review pack')[0]); // 0585: the Review pack button is in the full view
   await p.settle();
   p.press(p.all(pane(p)).find(x => x.tagName === 'button' && x.title === DOCS[0].path)); // 0562: its path is its tooltip
   await p.settle();

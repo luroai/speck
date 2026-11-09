@@ -141,26 +141,20 @@ test('0426 AC3: every link is blue, visited or not, including the pull request l
     assert.doesNotMatch(css(), new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' a\\b'), `${sel} doesn't recolour its link`);
 });
 
-test('0426 AC3: needs you, waiting for you, passing checks, links, the focus ring and the stage edges take those colours', () => {
+test('0426 AC3: needs you, waiting for you, passing checks, links, and the focus ring take those colours', () => {
   // needs you, a stopped build and the high-risk tag: red
   uses('.tab .needs', 'color', '--bad');
   uses('.bezel.needs', 'border-color', '--bar-needs');
-  uses('.q.blocked', 'border-color', '--bad');
-  uses('.q .top .stage.bad', 'color', '--bad');
+  uses('#full-ticket .live-now .say.bad', 'color', '--bad'); // 0585: a Build row has no border, the full view says it
   uses('.tag.high', 'color', '--bad');
   // waiting for you: green (0440: magenta was too near the red)
-  uses('.q.to-ship', 'border-color', '--ok');
-  uses('.q .top .say.to-ship', 'color', '--ok');
+  uses('#full-ticket .live-now .say.to-ship', 'color', '--ok');
   // passing checks: green
   uses('.next', 'color', '--ok');
   // links and the focus ring: blue
   uses('.shaping .md a', 'color', '--run');
   uses('#full-ticket .md a, #full-ticket .criteria a, #doc-view .md a', 'color', '--run');
   assert.match(rule(':focus-visible'), /outline: 2px solid var\(--blue\)/);
-  // a ticket's edge at each stage: blue while its tests and code are written, cyan in its self-check, yellow in review,
-  // purple while it ships (0461, as its Ship bar is)
-  for (const [sel, token] of [['.q.at-build', '--blue'], ['.q.at-check', '--inbox'], ['.q.at-review', '--yellow'], ['.q.at-ship', '--purple']])
-    uses(sel, 'border-color', token);
 });
 
 test('0426 AC4: speck\'s colours and the bar keep their own colours', () => {

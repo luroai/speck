@@ -3,7 +3,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, page, full, click, items, top, queueRows, cssRules, cssValue, styles } from './support/panel.mjs';
+import { fakePage, boardPage, fullViewOf, page, full, click, items, top, cssRules, cssValue, styles } from './support/panel.mjs';
 
 const clone = s => JSON.parse(JSON.stringify(s));
 const board = () => ({ tickets: [full('0001', { title: 'A draft', type: 'bug', priority: 3, size: 'M', risk: 'high' }), full('0002', { title: 'Approved one', status: 'approved' })], ideas: [] });
@@ -26,10 +26,7 @@ async function openTicket() {
 async function openPack() {
   const p = livePage();
   await p.settle();
-  const row = () => queueRows(p).find(r => r.textContent.includes('0002'));
-  p.press(row().children.find(n => n.className === 'top'));
-  await p.settle();
-  p.press(p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  p.press(p.all(await fullViewOf(p, '0002')).find(n => n.tagName === 'button' && n.textContent === 'Review pack')); // 0585: from the full view
   await p.settle();
   return p;
 }
@@ -74,11 +71,7 @@ test('0424 AC1: the title is the largest text, on a line of its own, and the id 
 test('0424 AC1: a ticket in the queue or the Shipped list shows its own status above its title', async () => {
   const p = livePage();
   await p.settle();
-  const row = () => queueRows(p).find(r => r.textContent.includes('0002'));
-  p.press(row().children.find(n => n.className === 'top'));
-  await p.settle();
-  click(p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
-  await p.settle();
+  await fullViewOf(p, '0002'); // 0585: pressing its row
   const state = pane(p).children[0].children.find(n => n.className === 'state');
   assert.equal(state && state.textContent, 'approved');
 });
@@ -86,13 +79,9 @@ test('0424 AC1: a ticket in the queue or the Shipped list shows its own status a
 test('0424 AC1: the status follows a change to the ticket, and the rest of the pane keeps its nodes', async () => {
   const s1 = { tickets: [full('0002', { title: 'Building one', status: 'building' })], ideas: [] }, s2 = clone(s1);
   s2.tickets[0].status = 'reviewing';
-  const p = fakePage([s1, s2, clone(s2)]);
+  const p = boardPage([s1, s2, clone(s2)]); // its full view asks for a log, which fakePage would answer with the next board
   await p.settle();
-  const row = () => queueRows(p).find(r => r.textContent.includes('0002'));
-  p.press(row().children.find(n => n.className === 'top'));
-  await p.settle();
-  click(p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
-  await p.settle();
+  await fullViewOf(p, '0002');
   const [head, , body] = pane(p).children, state = head.children.find(n => n.className === 'state'); // 0465: the track and table between them
   assert.equal(state.textContent, 'building');
   p.timers.shift()();
