@@ -1,7 +1,7 @@
 ---
 id: "0586"
 title: "Show Capture and Plan as compact rows"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0585"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T21:24:53.557Z"
 approved: "2026-11-09T21:46:36.864Z"
+finished: "2026-11-09T21:52:51.737Z"
 
 ---
 # 0586 · Show Capture and Plan as compact rows
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Capture and Plan still show the LCD-era cards. In the redesign they're compact rows like Build's, and an empty lane shows speck resting instead of a blank space.
