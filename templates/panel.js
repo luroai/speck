@@ -159,7 +159,8 @@ let streamName = null; // the name the server gave the board's stream, on which 
 let logOrder = 0; // numbers each request opening or closing a log on the stream, so the server can tell which came last
 const logAsks = new Map(); // id → the number of its latest log request, so only the latest answer is used
 const logPending = new Map(); // id → the AbortController of its log request still waiting for an answer
-const logBoxes = new Map(); // id → the log box last built for an open queue ticket, which each new log updates in place
+const logBoxes = new Map(); // id → the log box last built for an open queue ticket, which each new log updates in place. 0584: paneKey(id) → the full view's
+const paneKey = id => `pane:${id}`; // 0584: the full view's own Answer box, log box or Copy button for a ticket whose card has one too
 const logScroll = new Map(); // a log box built by this render → where to scroll it once it's on the page (null: the bottom)
 let queueIds = new Set(); // ids in the queue at the last render, so a ticket that has left it isn't asked for
 const settingReady = new Set(); // ids whose Set ready request hasn't been answered yet
@@ -173,7 +174,7 @@ const goWithRefused = new Map(); // 0284: id → why the server refused it, unti
 const askDrafts = new Map(); // 0318: id → the answer typed so far to the Foreman's question, kept through redraws
 const askPending = new Map(); // 0318: id → 'answer' or 'dismiss' while the server is at it
 const askRefused = new Map(); // 0318: id → why the server refused, until the next press
-const askBoxes = new Map(); // 0318: `<where>:<id>` → its latest Answer box, so a redraw keeps the focus in it
+const askBoxes = new Map(); // 0318: `<where>:<id>` → its latest Answer box, so a redraw keeps the focus in it, and (0584) the card's and full view's match
 const unreadying = new Set(); // ids whose Back to Plan request hasn't been answered yet
 const planRefused = new Map(); // id → why the server refused to move it back to Plan, until the next click on its Back to Plan button
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
@@ -600,25 +601,8 @@ function queueItem(t) {
     if (ask) q.appendChild(foremanAskBox(id, ask.question, 'card'));
     return q;
   }
-  const facts = t.status === 'blocked' ? questionFacts(t) : null;
-  if (t.status === 'blocked' && (t.blocked_question || facts)) q.appendChild(el('div', 'question', t.blocked_question, facts, goWithButton(t), goWithRefusal(t)));
-  if (ask) q.appendChild(foremanAskBox(id, ask.question, 'card'));
-  if (t.resume) q.appendChild(resumeLine(t));
-  if (t.paused) q.appendChild(el('div', 'act', `Paused · carry it on with speck play ${t.id}`));
-  if (t.exit_label) {
-    q.appendChild(el('div', t.to_ship ? 'act to-ship' : t.carried_by ? 'act' : 'act bad', t.exit_label));
-    if (t.carried_by) q.appendChild(el('div', 'act carried', t.carried_by)); // 0338
-    if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message));
-  }
-  if (t.status === 'approved' && t.criteria_changed === true) q.appendChild(el('div', 'act to-ship', 'It waits for you to ship it because a criterion changed since it was set ready.')); // 0565
-  if (t.ship_hint) q.appendChild(el('div', 'act', t.ship_hint));
+  for (const n of buildNotes(t, 'card')) q.appendChild(n);
   const pack = t.status === 'approved' || t.shipping || t.doc_finished; // 0361: a finished task's result is in its review pack
-  // 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
-  // build carries on with a recommendation says who went with it, until it moves on
-  if (t.status === 'blocked' && t.foreman_will === true) q.appendChild(el('div', 'act foreman-will', `${speckCalled()} will take its recommendation: ${t.blocked_recommendation}`));
-  else if (t.status === 'blocked') q.appendChild(el('div', 'act', `Waiting for you. Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
-  const went = wentWithOf(t);
-  if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? `${speckCalled()} went with the recommendation` : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
   q.appendChild(fullButton(t, 'queue'));
   if (pack) q.appendChild(packButton(t));
   q.appendChild(buildLogButton(id)); // 0548: with the card's other buttons, in the row above its log box, Stop build last (0421)
@@ -628,6 +612,26 @@ function queueItem(t) {
   }
   q.appendChild(logBox(id));
   return q;
+}
+// 0584: what an in-flight ticket says about its build, on its open card and in its full view (`where`: 'card' or 'pane').
+// 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
+// build carries on with a recommendation says who went with it, until it moves on.
+function buildNotes(t, where) {
+  const id = String(t.id), ask = foremanAskOf(id), facts = t.status === 'blocked' ? questionFacts(t) : null, went = wentWithOf(t);
+  return [
+    t.status === 'blocked' && (t.blocked_question || facts) ? el('div', 'question', t.blocked_question, facts, goWithButton(t), goWithRefusal(t)) : null,
+    ask ? foremanAskBox(id, ask.question, where) : null, // 0318
+    t.resume ? resumeLine(t, where) : null,
+    t.paused ? el('div', 'act', `Paused · carry it on with speck play ${t.id}`) : null,
+    t.exit_label ? el('div', t.to_ship ? 'act to-ship' : t.carried_by ? 'act' : 'act bad', t.exit_label) : null,
+    t.exit_label && t.carried_by ? el('div', 'act carried', t.carried_by) : null, // 0338
+    t.exit_label && t.exit_message ? el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message) : null,
+    t.status === 'approved' && t.criteria_changed === true ? el('div', 'act to-ship', 'It waits for you to ship it because a criterion changed since it was set ready.') : null, // 0565
+    t.ship_hint ? el('div', 'act', t.ship_hint) : null,
+    t.status !== 'blocked' ? null : t.foreman_will === true ? el('div', 'act foreman-will', `${speckCalled()} will take its recommendation: ${t.blocked_recommendation}`)
+      : el('div', 'act', `Waiting for you. Answer the question, then run /speck-build ${t.id}`), // the bar already shows the status
+    went ? el('div', 'act went-with', `${went.by === 'foreman' ? `${speckCalled()} went with the recommendation` : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`) : null,
+  ].filter(Boolean);
 }
 // 0461: a ticket's five steps, each a bar with its name under it, in its own colour once it's reached. A blocked
 // ticket's, or one whose build stopped, has its current step in crimson.
@@ -885,7 +889,7 @@ function foremanAskOf(id) {
   const a = state && state.foreman && typeof state.foreman === 'object' ? state.foreman.agent : null;
   return (a && Array.isArray(a.asks) ? a.asks : []).find(q => q && String(q.id) === String(id) && typeof q.question === 'string' && q.question) || null;
 }
-// 0318: the question with an Answer box and Answer and Dismiss buttons, on the ticket's card (`where` 'card'). The server notes your reply in the ticket's Notes, and speck run carries an answer out.
+// 0318: the question with an Answer box and Answer and Dismiss buttons, on the ticket's card (`where` 'card') or in its full view ('pane'). The server notes your reply in the ticket's Notes, and speck run carries an answer out.
 function foremanAskBox(id, question, where) {
   const pending = askPending.get(id) || null;
   const box = el('textarea', 'ask-answer');
@@ -896,7 +900,11 @@ function foremanAskBox(id, question, where) {
   box.setAttribute('aria-label', `Your answer to ${speckCalled()}'s question about ${id}`);
   box.askKey = `${where}:${id}`;
   askBoxes.set(box.askKey, box);
-  box.addEventListener('input', () => askDrafts.set(id, String(box.value ?? '')));
+  box.addEventListener('input', () => {
+    askDrafts.set(id, String(box.value ?? ''));
+    const other = askBoxes.get(`${where === 'card' ? 'pane' : 'card'}:${id}`); // 0584: the same answer, on its card and in its full view
+    if (other) other.value = box.value;
+  });
   box.addEventListener('click', e => e.stopPropagation()); // typing in it neither opens nor closes the card
   const press = (label, doing, action) => {
     const b = el('button', 'ask-reply', pending === action ? doing : label);
@@ -966,10 +974,10 @@ async function backToPlan(id) {
 const logShown = log => (!log ? 'Loading the log…' : log.failed ? "Couldn't load the log yet. Trying again in a few seconds…" : logText(log));
 // A box built afresh, when the ticket opens or its row is rebuilt, goes to the bottom once it's on the page, or where
 // the reader had scrolled the box it replaces.
-function logBox(id) {
-  const old = logBoxes.get(id), box = el('pre', 'log');
+function logBox(id, key = id) {
+  const old = logBoxes.get(key), box = el(key === id ? 'pre' : 'div', 'log'); // 0584: in the full view a div, as #full-ticket pre would restyle it
   setLogText(box, logShown(logs.get(id)));
-  logBoxes.set(id, box);
+  logBoxes.set(key, box);
   logScroll.set(box, old && !atBottom(old) ? old.scrollTop : null);
   return box;
 }
@@ -981,10 +989,10 @@ function toggleLog(id) {
   flip(openQueue, id);
   if (openQueue.has(id)) { loadLog(id); return; }
   logBoxes.delete(id);
-  closeLog(id);
+  if (!logWanted(id)) closeLog(id); // 0584: the full view may still show it
 }
-// 0583: its log is shown by its open card, or by the build log's pop-up, which the full view can open with the card closed.
-const logWanted = id => openQueue.has(id) || buildLogOf === id;
+// 0583: its log is shown by its open card, or by the build log's pop-up, which the full view can open with the card closed. 0584: or by the full view itself.
+const logWanted = id => openQueue.has(id) || buildLogOf === id || liveLogOf === id;
 // Stops following a log nothing shows any more.
 function closeLog(id) {
   logEarly.delete(id);
@@ -1050,11 +1058,12 @@ const replaced = (old, log) => !!old && !old.failed && !log.truncated && (old.tr
 // view, and so does a box whose log was replaced by a new build's. Otherwise the box stays where the reader left it.
 function showLog(id, toBottom) {
   if (id === buildLogOf) drawBuildLog(); // 0548: and in its pop-up
-  const box = logBoxes.get(id);
-  if (!box) return;
-  const follow = toBottom || atBottom(box);
-  setLogText(box, logShown(logs.get(id)));
-  if (follow) box.scrollTop = box.scrollHeight;
+  for (const box of [logBoxes.get(id), logBoxes.get(paneKey(id))]) { // 0584: its card's and its full view's
+    if (!box) continue;
+    const follow = toBottom || atBottom(box);
+    setLogText(box, logShown(logs.get(id)));
+    if (follow) box.scrollTop = box.scrollHeight;
+  }
 }
 // 0422: a log line's row: its time (HH:MM:SS and a space) in a span of its own, then its text, coloured by its kind:
 // the note that earlier lines aren't shown, a failure (✗, or Build ended), a tool call (→) or the agent's message.
@@ -1173,14 +1182,14 @@ function tickCounters() {
   for (const [sub, since, paused] of counters) putCounter(sub, `${paused ? 'Paused · ' : ''}${counter(Date.now() - since)}`);
 }
 // Under a blocked question: the command that reopens the build's session, with a button that copies it.
-function resumeLine(t) {
+function resumeLine(t, where = 'card') {
   const line = el('div', 'resume', null, el('code', 'cmd', t.resume.text));
   if (!t.resume.command) return line;
   const shown = copied.get(t.id);
   const b = el('button', 'copy', shown ? shown[1] : 'Copy');
   b.type = 'button';
   b.addEventListener('click', e => { e.stopPropagation(); copy(t.id, t.resume.text); });
-  copyButtons.set(t.id, b);
+  copyButtons.set(where === 'pane' ? paneKey(t.id) : t.id, b); // 0584: the full view has its own
   line.appendChild(b);
   return line;
 }
@@ -1194,8 +1203,7 @@ async function copy(id, text) {
 }
 // The label is put right on the button, so the row it's in, and any text selected there, stays.
 function copyLabel(id) {
-  const b = copyButtons.get(id);
-  if (b) b.textContent = copied.has(id) ? copied.get(id)[1] : 'Copy';
+  for (const b of [copyButtons.get(id), copyButtons.get(paneKey(id))]) if (b) b.textContent = copied.has(id) ? copied.get(id)[1] : 'Copy';
 }
 // Hovering a ticket in Shaping or a ready one in the queue lights it and every ticket linked to it through after:, and
 // leaves the rest as they are (0185). A ticket with no links lights nothing: its own hover fill is enough.
@@ -1321,7 +1329,6 @@ function render() {
   // in puts the focus back in the new one, where it was.
   for (const ids of [askDrafts, askRefused]) for (const id of ids.keys()) if (!foremanAskOf(id)) ids.delete(id);
   const typing = typeof document.activeElement === 'object' && document.activeElement && document.activeElement.askKey ? document.activeElement : null;
-  askBoxes.clear();
   // 0538: a star set is shown as set until the board says so, or a board after the server's answer says otherwise, and
   // a refusal until its note leaves Capture.
   const inCapture = new Map(m.capture.map(i => [i.path, i]));
@@ -1347,7 +1354,7 @@ function render() {
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks, depsSig(t)], update: queueUpdate });
   fill('queue', rows, m.queue.length ? '' : idleLane(m));
   if (m.queue.length) idleClock(null, null);
-  startCounters(m.queue.flatMap((t, i) => (t.counter !== null && t.held_at === null && counterOf(rows[i]) ? [[counterOf(rows[i]), t.since, !!t.paused]] : [])));
+  startCounters([...m.queue.flatMap((t, i) => (t.counter !== null && t.held_at === null && counterOf(rows[i]) ? [[counterOf(rows[i]), t.since, !!t.paused]] : [])), ...liveCounters()]); // 0584: and the full view's
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();
   queueIds = new Set(m.queue.map(t => String(t.id)));
@@ -1447,7 +1454,8 @@ function render() {
   renderForeman(stale);
   drawTabs(); // 0410: and Build's "<n> needs you"
   drawRunSwitch();
-  const again = typing && typing.isConnected === false ? askBoxes.get(typing.askKey) : null; // 0318
+  for (const [key, box] of askBoxes) if (box.isConnected === false) askBoxes.delete(key); // 0318: only the boxes still showing
+  const again = typing && typing.isConnected === false ? askBoxes.get(typing.askKey) : null;
   if (again && again !== typing) {
     again.focus();
     try { again.setSelectionRange(typing.selectionStart, typing.selectionEnd); } catch { /* nothing selected */ }
@@ -1623,7 +1631,7 @@ function connect() {
   s.addEventListener('stream', e => {
     if (source !== s) return;
     streamName = /^[0-9a-f]{32}$/.test(e.data) ? e.data : null;
-    for (const id of openQueue) if (queueIds.has(id)) loadLog(id);
+    for (const id of new Set([...openQueue, ...liveLogOf === null ? [] : [liveLogOf]])) if (queueIds.has(id)) loadLog(id); // 0584: and the full view's
   });
   s.addEventListener('gone', e => { if (source !== s) return; heard(); let g = null; try { g = JSON.parse(e.data); } catch { /* not a list */ } projectsGone(g || { list: [] }); }); // 0516: the project shown has stopped
   s.addEventListener('log', e => { if (source !== s) return; let u = null; try { u = JSON.parse(e.data); } catch { /* not an update */ } logUpdate(u); });

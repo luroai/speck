@@ -42,6 +42,9 @@ Everything a Build card shows about a running or stopped build is also in the ti
 - Today on the card: `progressOf`, `lights`, `stopButton`, `logBox` and the blocked parts of `queueItem` in `templates/panel.js`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: the full view's log box is a div rather than a pre, as the real browser showed `#full-ticket pre` taking away its terminal background in the light look; the card's and full view's Answer boxes now match while you type; focus goes back to whichever of Full log or the Build log row opened the pop-up.
+- The live section sits under the track and facts rather than in the body: older tests fix the body's contents, and AC5 allows none of them to fail. It has the card's `q` class so it takes the card's styles, as those tests also fix the card's rules as exact selectors.
+- `--related` doesn't pick the panel tests when a panel script changes, so this build ran every test file that uses the panel page as well.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
