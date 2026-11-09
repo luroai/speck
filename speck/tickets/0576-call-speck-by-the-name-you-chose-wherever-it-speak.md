@@ -1,7 +1,7 @@
 ---
 id: "0576"
 title: "Call speck by the name you chose wherever it speaks"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T18:03:21.956Z"
 ---
 # 0576 · Call speck by the name you chose wherever it speaks
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Once you've named your engineering manager (0575), speck should call it by that name wherever it speaks or acts, or the name means nothing. Today `speck status`, the panel and `speck run`'s log all say "speck asked you…", "speck will take its recommendation…" and "speck will look into it…".
@@ -47,7 +47,11 @@ Wherever the engineering manager speaks or acts, speck uses the name you gave it
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Once you've named your engineering manager in Settings, speck uses that name wherever the manager speaks or acts: on a blocked ticket's card, in its questions to you, in the Decided for you line, in `speck status` and in `speck run`'s log. Everything that means the tool itself, such as its commands and the panel's title, still says speck, and so do the notes speck writes into tickets.
+
+To see it, set a name in Settings, then look at a blocked ticket that the manager will answer: its card says, for example, "Virgil will answer".
+
+On a phone-width card, the short status can be cut off, as "Virgil will a…". Hold or hover over it for the whole sentence.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +61,85 @@ Wherever the engineering manager speaks or acts, speck uses the name you gave it
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Follow-ups (known limits, none needing its own ticket):
+- The status word still says speck: `SPECK: Idle` at the top of `speck status` and the `speck: Idle` tooltip on the panel's screen. The criteria don't list them.
+- The briefs and resume messages sent to agents still say speck, as nobody reads them as the manager speaking.
+- The Now cell on a phone-width card cuts off "<name> will answer", with the full sentence as its tooltip.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0457c673b7da7e7c3b98fa09fb973e677a34de35",
+    "session": "fresh",
+    "thread_id": "01a1c186-f962-75b3-9cbc-ee36f5f391d8",
+    "builder_response": "- Tests run: `speck test --related test/speck-name-0576.test.mjs` (the ticket's own file, every existing test file that names a changed file, and commands.checks): 1626 tests, 1623 pass, 0 fail, 3 skipped.\n- Scope notes for the reviewer: briefs and resume messages sent to agents (\"You are speck...\", \"speck looked into why...\") are unchanged, as they aren't what the user reads. The status word `SPECK: Idle` and the panel header's `speck: Idle` tooltip are unchanged: AC1 and AC2 don't list them. Notes lines in tickets keep speck (AC4).\n- Pictures of the named panel are kept with `speck picture`.\n",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 270350,
+      "cached_input_tokens": 207104,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1009,
+      "reasoning_output_tokens": 93
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 63246,
+      "cached": 207104,
+      "write": 0,
+      "output": 1009
+    },
+    "cost_usd": 0.1572924,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:17:28.915Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdStatus passes speckNameOf(cfg) into the status renderers. foremanLines, foremanTicketLines and agentView use it for questions, actions and recommendations. AC1 tests, including a real CLI invocation and unset-name fallback, passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel.mjs supplies foreman.name; panel.js, panel-model.js and panel-popups.js use speckCalled() for cards, questions, recommendation attribution and the seven-day list. Passing AC2 tests exercise rendering, dismiss confirmation, renaming an existing card and the real panel API."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanAgentQueue, foremanFixQueue and goWithQueue use the configured name in their log messages. Passing AC3 tests exercise queueing, launching, actions, fallback naming, recommendations and resumption."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Commands and the panel title retain speck. Ticket note generation retains its established speck attribution. Both AC4 tests passed, including parsing a named manager's choice back as a foreman decision."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0576-tests.txt: 1626 tests, 1623 passed, zero failed and three skipped. Existing tests were not weakened or modified."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The chosen name now appears in the manager’s status messages, panel questions, recommendations and run logs. Commands, the panel title and ticket records retain speck. The tests exercise the changed behaviour and report no failures; no blocking concerns found."
+  }
+}
+```
+
+</details>
