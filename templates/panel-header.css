@@ -12,7 +12,7 @@
   .bezel .name { flex: none; display: inline-flex; align-items: center; gap: .25em; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 32px; line-height: 1; color: var(--bezel-ink); }
   .bezel .name::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; background: var(--lcd-red); } /* decoration: no text, so a screen reader passes over it */
   .bezel[data-run="off"] .name::before { background: var(--bezel-muted); } /* 0513: grey while speck run is off, like a power light */
-  .bezel .repo { flex: 1 1 auto; min-width: 0; text-align: right; font: 400 12px/1.5 -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; color: var(--bezel-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bezel .repo { flex: 1 1 auto; min-width: 0; text-align: right; font: 400 12px/1.5 var(--font-ui); color: var(--bezel-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bezel .repo code { font-size: inherit; color: inherit; }
   /* 0516: the project menu, while other panels are running: a caret after the project's name, as big as Settings
      (0417: 44 px each way), which opens the browser's own list of the projects. */
@@ -41,13 +41,13 @@
   .tabs { position: relative; z-index: 8; display: flex; align-items: flex-start; justify-content: center; gap: 4px; height: 32px; padding: 0 16px; border-bottom: .5px solid var(--line); background: var(--bg); }
   .tab { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 6px; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 10px 12px; font: inherit; color: var(--muted); background: transparent; border: 0; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
   .tab:hover, .tab[aria-selected="true"] { color: var(--text); }
-  .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 14px; font-weight: 600; line-height: 1; }
+  .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-ui); font-size: 14px; font-weight: 600; line-height: 1; }
   /* 0481: a bar under the open lane's name, as wide as it and in its colour, so which lane is open shows without its
      colour (0161). Every name's box is the same height, the open one's bar taking 2 px of the others' padding, so
      nothing moves when the lane changes. */
   .tab .tab-name { padding-bottom: 4px; }
   .tab[aria-selected="true"] .tab-name { padding-bottom: 2px; border-bottom: 2px solid currentColor; }
-  .tab .needs { flex: none; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; line-height: 1; }
+  .tab .needs { flex: none; font-family: var(--font-mono); font-size: 12px; line-height: 1; }
   .tab .needs { color: var(--bad); }
   .tab .needs:empty { display: none; }
 

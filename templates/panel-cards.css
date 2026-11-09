@@ -11,15 +11,15 @@
      scrolled under it never hides it, and its contents sit inside it. */
   main > section { position: relative; isolation: isolate; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); column-gap: 10px; padding: 8px 16px; color: var(--text); background-color: var(--panel); background-clip: content-box; border-radius: 28px / 20px; }
   main > section::before { content: ""; position: absolute; inset: 8px 16px; z-index: 1; border: .5px solid var(--line); border-radius: 12px; pointer-events: none; }
-  .lane-title { grid-row: 1; grid-column: 1; display: inline-flex; align-items: center; gap: .25em; min-width: 0; margin: 0; padding: 7px 0 6px 14px; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 22px; line-height: 1; white-space: nowrap; color: var(--text); }
+  .lane-title { grid-row: 1; grid-column: 1; display: inline-flex; align-items: center; gap: .25em; min-width: 0; margin: 0; padding: 7px 0 6px 14px; font-family: var(--font-ui); font-weight: 600; font-size: 22px; line-height: 1; white-space: nowrap; color: var(--text); }
   .lane-title::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; } /* decoration: no text, so a screen reader passes over it */
   #capture-section .lane-title::before, #shaping-section .lane-title::before { background: var(--line); }
   #build-section .lane-title::before { background: var(--blue); }
   #shipped-section .lane-title::before { background: var(--purple); }
-  .lane-n { grid-row: 1; grid-column: 2; align-self: center; min-width: 0; padding: 7px 14px 6px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; line-height: 1.5; text-align: right; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lane-n { grid-row: 1; grid-column: 2; align-self: center; min-width: 0; padding: 7px 14px 6px 0; font-family: var(--font-ui); font-size: 12px; line-height: 1.5; text-align: right; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .lane-list { grid-row: 3; grid-column: 1 / -1; min-height: 0; margin: 0 1px 1px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); border-radius: 0 0 11px 11px; } /* the card's 12 px less the pixel its edge sits in, so what's in it stays on whole pixels (0453) */
   .lane-n + .lane-list, .lane-title + .lane-list { border-top: 1px solid var(--line-soft); } /* 0520: Plan's and Capture's lists start under their titles */
-  .group { padding: 7px 14px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
+  .group { padding: 7px 14px; font-family: var(--font-ui); font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
   .group.attn { color: var(--warn); }
   .group.run { color: var(--run); }
   .prio { position: relative; display: inline-block; }
@@ -42,13 +42,13 @@
   .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; }
   .item.open { background: var(--raise); border-color: var(--text); }
   .detail { margin-top: 10px; border-top: .5px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
-  .detail h4 { margin: 0 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); font-weight: 400; }
+  .detail h4 { margin: 0 0 4px; font-family: var(--font-ui); font-size: 12px; color: var(--muted); font-weight: 400; }
   .detail p { margin: 0 0 8px; color: var(--text); }
   .detail ol { margin: 0; padding-left: 18px; color: var(--text); }
   .detail ol li { margin-bottom: 4px; }
   .ready { border-left: .5px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
   .ready div { padding: 3px 0; }
-  .set-ready { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin-top: 10px; padding: 4px 12px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
+  .set-ready { font: inherit; font-family: var(--font-ui); font-size: 12px; margin-top: 10px; padding: 4px 12px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
   .set-ready:disabled { background: transparent; color: var(--faint); border-color: var(--line); cursor: not-allowed; }
   .ready div.refused { white-space: pre-wrap; }
   /* 0151: a ticket's id and title on one line, a wrapped title's next line starting under the title, then its tags.
@@ -84,7 +84,7 @@
   .q .top .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
   .q .top .sub { font-variant-numeric: tabular-nums; }
   .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--log-bg); border: 1px solid var(--line);
-    font: 12px/1.5 "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; } /* 0455: a terminal in every look */
+    font: 12px/1.5 var(--font-mono); color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; } /* 0455: a terminal in every look */
   /* 0422: one line of the log a row, its text past a column for the time, so a line that wraps, or a message's next line,
      starts under the text. Each kind of entry has its own colour; anything else keeps the log's muted one */
   .q .log { overflow-anchor: none; } /* 0422: rows taken out at the top leave the box's scroll place as it was, as text did */
@@ -99,24 +99,24 @@
   .q.wait { background: var(--raise); } /* 0161: set back by its fill, not faded, so its text keeps its contrast */
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
   /* 0421: an open card's Full ticket, Review pack and Stop build are small buttons on one line. 0428: each boxed, as every button is */
-  .q .stop-build { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; line-height: 16px; margin: 6px 0 2px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .q .stop-build { font: inherit; font-family: var(--font-ui); font-size: 12px; line-height: 16px; margin: 6px 0 2px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
   /* An open ready ticket's Back to Plan button, beside Full ticket, and why the server refused it */
-  .q .back-to-plan { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .q .back-to-plan { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .q .back-to-plan:hover { color: var(--text); border-color: var(--text); }
   .q .back-to-plan:disabled { cursor: default; opacity: .6; }
   .q .stop-refused, .q .plan-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .question { margin: 6px 0 4px; padding: 6px 10px; border-left: 2px solid var(--bad); background: var(--bad-bg); color: var(--text); }
   /* 0283: under a blocked question, whether it changes what you'd notice and whether the recommendation is a clear one */
   .question-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; white-space: normal; }
-  .question-fact { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); }
+  .question-fact { font-family: var(--font-ui); font-size: 12px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); }
   /* 0284: on a blocked question with a recommendation, the button that takes it and has speck run carry the build on */
-  .q .go-with { display: block; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 6px 0 0; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; white-space: normal; }
+  .q .go-with { display: block; font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 6px 0 0; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; white-space: normal; }
   .q .go-with:hover { border-color: var(--text); }
   .q .go-with:disabled { cursor: default; opacity: .6; }
   .q .go-with-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
-  .act { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); }
+  .act { font-family: var(--font-ui); font-size: 12px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
   .act.to-ship { color: var(--ok); }
   /* 0168: an in-flight ticket's progress, under its title: a sentence saying what's happening and the current stage's
@@ -153,7 +153,7 @@
      --label-border is the boxes' border: a whole pixel below a pixel ratio of 2 (below) */
   .item.ticket .head .checks { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; font-size: 12px; line-height: 16px; color: var(--muted); white-space: nowrap; }
   .item.ticket .head .checks, .q .top .progress, .q .top .act { --label-border: .5px; }
-  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { flex: none; display: inline-block; font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; line-height: 16px; padding: 0 5px; vertical-align: middle; }
+  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { flex: none; display: inline-block; font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; vertical-align: middle; }
   @media (prefers-reduced-motion: no-preference) {
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
@@ -166,10 +166,10 @@
   }
   .question.exit.to-ship { border-left-color: var(--ok); }
   .question.exit.carried { border-left-color: var(--run); background: var(--raise); } /* 0338: speck run is carrying it on */
-  .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
+  .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: var(--font-mono); font-size: 12px; }
   .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px; }
-  .resume .cmd { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
-  .resume .copy { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
+  .resume .cmd { font-family: var(--font-mono); font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
+  .resume .copy { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
   .resume .copy:hover { color: var(--text); }
   /* 0418: in the lanes, the narrow layout at every width: a Plan item's readiness under its details, and a resume command
      that wraps. Elsewhere these keep their own layout. */
@@ -179,16 +179,16 @@
   main .resume { flex-wrap: wrap; }
   main .resume .cmd { min-width: 0; }
   .q .tag.high { color: var(--bad); border-color: var(--bad); }
-  .next { color: var(--ok); font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; border: .5px solid var(--ok); padding: 0 5px; }
+  .next { color: var(--ok); font-family: var(--font-ui); font-size: 12px; border: .5px solid var(--ok); padding: 0 5px; }
 
   /* Shipped */
   /* 0157: the stats a grid of tiles of equal size, each number over its label and the tickets its median covers, and
      each shipped ticket a card of its own, laid out as a Plan ticket */
   .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line); border-bottom: .5px solid var(--line-soft); }
   .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 6px; background: var(--panel); }
-  .stat .num { font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 18px; font-weight: 600; line-height: 1.3; }
+  .stat .num { font-family: var(--font-mono); font-size: 18px; font-weight: 500; line-height: 1.3; }
   .stat .label { font-size: 14px; line-height: 1.4; color: var(--muted); }
-  .stat .count { font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; color: var(--faint); }
+  .stat .count { font-family: var(--font-mono); font-size: 12px; color: var(--faint); }
   .stats[hidden] { display: none; }
   /* 0420: the three stats one line of smaller type, with More stats at its end; the other three still tiles under it.
      Each stat stays whole, so in a pane too narrow for the line, such as a phone's, it wraps between them. */
@@ -213,10 +213,10 @@
   #shipped td { display: block; padding: 0; border: 0; }
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
   #shipped .line .id { flex: none; font-size: 14px; line-height: 14px; }
-  #shipped .line .title { flex: 0 1 auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-weight: 600; font-size: 17px; line-height: 22px; overflow-wrap: anywhere; }
+  #shipped .line .title { flex: 0 1 auto; font-family: var(--font-ui); font-weight: 600; font-size: 17px; line-height: 22px; overflow-wrap: anywhere; }
   /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the card taller */
   #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
-  #shipped .line .tags .tag { font: inherit; font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; line-height: 16px; padding: 0 5px; }
+  #shipped .line .tags .tag { font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; }
   /* 0426: a tag in a line of 12 px text is in the muted colour for small text. :where() keeps the risk and type tags' own colours */
   :where(.item.ticket .head .checks, .q .top .progress, .q .top .act, #shipped .line .tags) .tag { color: var(--muted); }
   /* 0204: a ticket merged but not pushed, in crimson, with speck ship's message */
@@ -229,7 +229,7 @@
   .foreman-ask { margin: 6px 0 6px; white-space: normal; }
   .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: .5px solid var(--line); resize: vertical; }
   .foreman-ask .ask-buttons { display: flex; gap: 8px; margin: 6px 0 0; }
-  .foreman-ask .ask-reply { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; }
+  .foreman-ask .ask-reply { font: inherit; font-family: var(--font-ui); font-size: 12px; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; }
   .foreman-ask .ask-reply:hover { border-color: var(--text); }
   .foreman-ask .ask-reply:disabled { cursor: default; opacity: .6; }
   .foreman-ask .ask-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
@@ -351,7 +351,7 @@
   /* 0154: a ticket gone to from a dependency box (0467) lights briefly. It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
   @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
 
-  .full-open { font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .full-open { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
   .q .full-open { margin: 6px 8px 2px 0; padding: 1px 10px; font-size: 12px; line-height: 16px; }
   .q .full-open:hover { border-color: var(--text); }
@@ -367,7 +367,7 @@
   .shaping .md ul, .shaping .md ol { margin: 0 0 8px; padding-left: 20px; color: var(--text); }
   .shaping .md li { margin-bottom: 0; }
   .shaping .md li ul, .shaping .md li ol { margin: 2px 0 0; }
-  .shaping .md h5, .shaping .md h6 { margin: 10px 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; color: var(--text); font-weight: 600; }
+  .shaping .md h5, .shaping .md h6 { margin: 10px 0 4px; font-family: var(--font-ui); color: var(--text); font-weight: 600; }
   .shaping .md-h1 { font-size: 14px; }
   .shaping .md-h2 { font-size: 12px; }
   .shaping .md-h3 { font-size: 12px; color: var(--muted); }
@@ -397,7 +397,7 @@
     .shaping .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
     .shaping .md tr:last-child { border-bottom: 0; }
     .shaping .md td { border: 0; padding: 2px 0; overflow-wrap: normal; overflow-x: auto; } /* a word too long for the line scrolls in its cell, unbroken */
-    .shaping .md td::before { content: attr(data-label); display: block; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .shaping .md td::before { content: attr(data-label); display: block; font-family: var(--font-ui); font-size: 12px; color: var(--muted); white-space: nowrap; }
     /* A review pack's criteria: the number and result on one line, then the criterion, then the labelled evidence */
     .shaping .md .ac-table tr { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
     .shaping .md .ac-table td:nth-child(-n+3)::before { display: none; }
@@ -444,7 +444,7 @@
   .q:not(.open) .top .progress > :is(.say, .by) { display: inline-block; overflow-x: clip; text-overflow: ellipsis; }
   /* The priority's 44 px box takes no more room in the row than its label does. 0519: it's first in the row, so its box
      reaches left of the label, into the card's edge, and not over the label beside it */
-  .item.ticket .head .checks .prio { justify-content: flex-end; padding: 0; margin: -14px 0 -14px calc(2ch + 10px + 2 * var(--label-border) - 44px); font-family: "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace; font-size: 12px; }
+  .item.ticket .head .checks .prio { justify-content: flex-end; padding: 0; margin: -14px 0 -14px calc(2ch + 10px + 2 * var(--label-border) - 44px); font-family: var(--font-mono); font-size: 12px; }
   /* 0463: in a draft's facts table, the priority's 44 px box starts at the value's left, and its negative margins give
      back what it reaches above and below the line, so the cell stays as tall as the others. A tap anywhere in it
      reaches the priority. */
