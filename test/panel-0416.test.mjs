@@ -4,7 +4,6 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T, fakePage, queueRows, round, page, styles } from './support/panel.mjs';
-import { LCD } from './support/screen.mjs';
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 const approved = o => ({ started: ago(900), approved: ago(60), self_check: 'no changes', rounds: [round(1, 10)], ...o });
@@ -19,20 +18,10 @@ const CARDS = [
   [T('0907', 'building', { started: ago(300), build_exit: { at: ago(30), code: 1 } }), 'The build stopped', 'bad'],
 ];
 
-// The real renderer, counting each thing the page asks it to draw.
 function fake(tickets = CARDS.map(c => c[0])) {
-  const drawn = [];
-  const SpeckLCD = { ...LCD,
-    Screen: class { constructor(canvas) { drawn.push(['Screen', canvas]); this.dirty = true; } size() {} },
-    badge: (...a) => { drawn.push(['badge', ...a]); return { set() {}, scr: { still: false, size() {} }, cast: { still: false } }; },
-    mini: (...a) => { drawn.push(['mini', ...a]); return { set() {}, scr: { still: false, size() {} }, cast: { still: false } }; } };
-  const p = fakePage([], {
-    SpeckLCD, requestAnimationFrame() {},
+  return fakePage([], {
     fetch: async url => ({ ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(/\/log$/.test(url) ? { text: '', truncated: false } : { tickets, ideas: [], run: { on: true, pid: 1 } })) }),
   });
-  p.byId('screen').getContext = () => ({});
-  p.drawn = drawn;
-  return p;
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
@@ -53,8 +42,6 @@ test('0416 AC1: no card has a tile, picture or animation of its stage, at any st
     // 0434: only the grid of lights, on a card an agent is at work on
     assert.deepEqual(pictures.map(n => `${n.tagName}.${n.className}`), WORKING.includes(t.id) ? ['span.lights'] : [], `${t.id}: no picture on its card`);
   }
-  assert.deepEqual(p.drawn.filter(([what]) => what !== 'Screen').map(([what]) => what), [], 'only speck\'s screen is drawn');
-  assert.equal(p.drawn.filter(([what]) => what === 'Screen').length, 1, 'speck\'s screen, once');
   assert.doesNotMatch(page(), /badgeOf|badgeFor|startBadges|LCD\.badge/, 'the badge code has gone');
   assert.doesNotMatch(css(), /\.badge\b|badgerow|badgetext/, 'and its styles');
 });

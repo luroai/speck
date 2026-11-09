@@ -58,7 +58,7 @@ test('0543 AC1: the page and its stylesheets link to nothing that starts with /,
   for (const f of STYLE_FILES) assert.ok(found.includes(f), `the page links ${f}`);
   for (const f of ['panel.js', 'panel-model.js', 'icon.svg', 'manifest.webmanifest', 'apple-touch-icon.png']) assert.ok(found.includes(f), `the page links ${f}`);
   assert.deepEqual(found.filter(l => l.startsWith('/')), [], 'no link from the site\'s root');
-  assert.ok(urls(styles()).includes('fonts/Doto.ttf'), 'the font, relative to the stylesheet');
+  assert.ok(urls(styles()).includes('fonts/Inter-400.woff2'), 'a font, relative to the stylesheet');
   assert.deepEqual(urls(styles()).filter(u => u.startsWith('/')), [], 'no url() from the site\'s root');
   const m = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
   for (const a of [m.id, m.start_url, m.scope, ...m.icons.map(i => i.src)]) assert.ok(!a.startsWith('/'), a);
@@ -71,9 +71,9 @@ function served(got, base) {
     assert.equal(g.status, 200, g.url);
     assert.doesNotMatch(g.type, /^text\/html/, `${g.url} is the file, not a page`);
   }
-  const font = got.find(g => g.url === new URL('fonts/Doto.ttf', base).href);
-  assert.ok(font, 'the font');
-  assert.equal(font.type, 'font/ttf');
+  const font = got.find(g => g.url === new URL('fonts/Inter-400.woff2', base).href);
+  assert.ok(font, 'a font');
+  assert.equal(font.type, 'font/woff2');
 }
 
 test('0543 AC2: served at the site\'s root, the page\'s every file loads from the panel', async () => {

@@ -247,13 +247,12 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
   if (!Object.hasOwn(globals, 'EventSource')) ctx.EventSource = tickingSource(ctx); // 0187: the board's changes, as the poll's timer was
   vm.createContext(ctx);
   // 0473: every script the page loads, in its order, each from its file in templates/, with what the server puts on its
-  // tag (0433: the stamp and token on /panel.js's) as document.currentScript while it runs. The design's LCD renderer puts
-  // SpeckLCD on the page's window, unless a test gives a SpeckLCD of its own, which the page uses in its place.
+  // tag (0433: the stamp and token on /panel.js's) as document.currentScript while it runs.
   const scripts = []; // the scripts it ran, in order
   for (const { src, attrs } of pageScripts()) {
     const code = fs.readFileSync(path.join(ROOT, 'templates', src), 'utf8');
     document.currentScript = { dataset: Object.fromEntries([...attrs.matchAll(/data-(\w+)="([^"]*)"/g)].map(m => [m[1], m[2]])) };
-    vm.runInContext(src === 'lcd.js' ? `(window => {\n${code}\n})(${Object.hasOwn(globals, 'SpeckLCD') ? '{}' : 'globalThis'});` : code, ctx, { filename: src });
+    vm.runInContext(code, ctx, { filename: src });
     scripts.push(src);
   }
   document.currentScript = null;

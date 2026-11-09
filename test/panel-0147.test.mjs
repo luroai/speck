@@ -65,9 +65,8 @@ test('0147 AC3: the full-ticket pane\'s backdrop is rgba(20, 20, 19, .2) in ligh
 
 test('0147 AC4: every font list in the stylesheet is one of the landing page\'s three, in its order', () => {
   const lists = fontLists(css());
-  assert.ok(lists.length >= 2, `the stylesheet's font lists are found (${lists.length})`); // 0580: Doto's list went with the LCD's title
-  // 0304: and the design's Doto for speck's name in the header, with a monospace fall-back
-  for (const l of lists) assert.ok(FONTS.includes(l) || l === '"Doto", ui-monospace, monospace', `unexpected font list: ${l}`);
+  assert.ok(lists.length >= 2, `the stylesheet's font lists are found (${lists.length})`);
+  for (const l of lists) assert.ok(FONTS.includes(l), `unexpected font list: ${l}`);
   for (const f of FONTS) assert.ok(lists.includes(f), `${f} is used`);
   assert.deepEqual(fontLists('a { font-family: "X", Georgia, serif; }'), ['"X", Georgia, serif'], 'the check finds a stray list');
 });

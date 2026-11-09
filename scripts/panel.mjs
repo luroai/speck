@@ -191,7 +191,7 @@ catch (e) { const line = (e && e.name === 'SpeckError' ? '' : (e && e.name || 'E
   return { child, code };
 }
 
-const FONT_TYPES = Object.fromEntries([['Doto.ttf', 'font/ttf'], ...['Inter-400', 'Inter-500', 'Inter-600', 'JetBrainsMono-400', 'JetBrainsMono-500'].map(f => [`${f}.woff2`, 'font/woff2'])].map(([f, type]) => [`/fonts/${f}`, type]));
+const FONT_TYPES = Object.fromEntries(['Inter-400', 'Inter-500', 'Inter-600', 'JetBrainsMono-400', 'JetBrainsMono-500'].map(f => [`/fonts/${f}.woff2`, 'font/woff2']));
 const PANEL_WATCH_MS = 250, PANEL_SETTLE_MS = 500, PANEL_START_MS = 10000, PANEL_STOP_MS = 3000;
 
 // The code `speck panel` runs from: every .mjs file in the CLI's own folder (scripts/, or .speck/scripts/ in a repo set
@@ -455,8 +455,8 @@ export async function panelServer() {
       try { return send(res, 200, 'text/html', page()); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
     }
-    // 0302: the design's LCD renderer, which draws the builder badges, served as it is. 0430, 0431, 0432, 0433, 0473, 0474: and the page's styles, model, Settings, the rest of its script, its pop-ups and its header, read afresh as the page is. 0472: its styles are a file for each area. 0578: and speck's character.
-    if (where === '/lcd.js' || styleNames.includes(where.slice(1)) || where === '/panel-model.js' || where === '/panel-settings.js' || where === '/panel.js' || where === '/panel-popups.js' || where === '/panel-header.js' || where === '/speck-face.js' || where === '/speck-mood.js') {
+    // 0430, 0431, 0432, 0433, 0473, 0474: the page's styles, model, Settings, the rest of its script, its pop-ups and its header, read afresh as the page is. 0472: its styles are a file for each area. 0578: and speck's character.
+    if (styleNames.includes(where.slice(1)) || where === '/panel-model.js' || where === '/panel-settings.js' || where === '/panel.js' || where === '/panel-popups.js' || where === '/panel-header.js' || where === '/speck-face.js' || where === '/speck-mood.js') {
       try { return send(res, 200, where.endsWith('.css') ? 'text/css' : 'text/javascript', fs.readFileSync(path.join(TEMPLATES, where.slice(1)))); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${path.join(TEMPLATES, where.slice(1))}: ${e.message}\nPut the file back, then reload.\n`); }
     }
