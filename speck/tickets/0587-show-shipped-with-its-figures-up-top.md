@@ -46,7 +46,11 @@ Shipped opens with three figure tiles and lists its tickets as compact rows.
 - Self-check: a press on a row's bug or fix tag explains the tag and opens nothing (test added); removed the leftover 44 px title rule and rounded corners from the old card; a ticket's own costs and tokens moved into its full view so they aren't lost with the open card.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Shipped lane now opens with three tiles: the median build time, the median number of review rounds and the share of tickets approved in their first round. Below them, each shipped ticket is a compact row with when it shipped, its review rounds and how long it took, and long titles wrap.
+
+To see it, open Shipped in the panel. Press a row to open that ticket's full view, which now also shows what it cost and how many tokens it used, and has its Review pack. More stats shows the other figures, costs included.
+
+Worth keeping an eye on: a ticket that had no review rounds has no Review pack link in its full view, where the old card showed a button saying there was no pack.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -145,6 +149,89 @@ Each test still checks its behaviour where that exists on the new look. Checks o
     ],
     "escalation_question": "",
     "summary": "The compact rows, mobile layout and extra figures work and have meaningful test coverage. The approval percentage needs correction: later merge reviews currently make a ticket approved on its first review count as though it was not."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6f835fefce7f2e8390f09778227c135dd674e54a",
+    "session": "continued",
+    "thread_id": "01a1c29d-8cc0-7460-9295-61254b7f02be",
+    "builder_response": "- Tests run: test/build-log-0291.test.mjs test/panel-0050.test.mjs test/panel-0058.test.mjs test/panel-0063.test.mjs test/panel-0132.test.mjs test/panel-0133.test.mjs test/panel-0137.test.mjs test/panel-0141.test.mjs test/panel-0157.test.mjs test/panel-0162.test.mjs test/panel-0167.test.mjs test/panel-0178.test.mjs test/panel-0187.test.mjs test/panel-0188.test.mjs test/panel-0208.test.mjs test/panel-0246.test.mjs test/panel-0411.test.mjs test/panel-0417.test.mjs test/panel-0418.test.mjs test/panel-0420.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0434.test.mjs test/panel-0442.test.mjs test/panel-0453.test.mjs test/panel-0461.test.mjs test/panel-0464.test.mjs test/panel-0465.test.mjs test/panel-0466.test.mjs test/panel-0467.test.mjs test/panel-0469.test.mjs test/panel-0472.test.mjs test/panel-0473.test.mjs test/panel-0494.test.mjs test/panel-0517.test.mjs test/panel-0519.test.mjs test/panel-0577.test.mjs test/panel-0587.test.mjs test/panel-focus-0326.test.mjs test/panel.test.mjs test/ship-0204.test.mjs test/spend-0120.test.mjs test/total-cost-0526.test.mjs \n- F1: fixed. The share now comes from the first review round's verdict (`firstApproved` in `panelModel()`, templates/panel-model.js), not the round count. `panelBoard()` in scripts/board-feed.mjs keeps `first_approved` in `review_total` when it cuts an older ticket down. Tests in test/panel-0587.test.mjs cover a ticket approved in round one with merge rounds after it beside one sent back, the cut-down shape from `panelBoard()`, and the model reading it. The Known limit about this is gone from the Delivery log.\n",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 718528,
+      "cached_input_tokens": 613632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1847,
+      "reasoning_output_tokens": 83
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 14146,
+      "cached": 215680,
+      "write": 0,
+      "output": 708
+    },
+    "cost_usd": 0.05694,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T23:25:19.137Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panelModel() now uses the first review verdict, and panelBoard() preserves first_approved for condensed tickets. Passing panel-0587 tests cover merge reviews after first-round approval, initial changes requested, condensed tickets and missing data."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "render() displays each ticket's id, title, ship time, rounds and duration as a compact row opening its full view. Passing panel-0587, panel-0141 and panel-0466 tests cover mouse, touch, keyboard and focus return."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "render() retains the remaining figures, including costs, in shipped-more. Passing 0587 AC3 tests exercise showing and hiding them and handling unknown costs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-cards.css gives shipped rows min-height: 44px and wrapping titles. The passing 0587 AC4 browser test measures row heights and long-title wrapping at 320 px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the tests updated for the new appearance. The latest run covers the changed tests and previously failing timing test: 537 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-model.js",
+        "issue": "The first-round approval percentage previously counted tickets with exactly one review round, incorrectly excluding tickets with subsequent merge reviews.",
+        "suggested_fix": "Implemented: use the first review's verdict, preserve it when older tickets are condensed, and cover both paths with regression tests.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Shipped now shows three headline tiles and compact ticket rows that open the full view. Extra figures remain available, mobile rows wrap correctly, and the approval percentage now handles later merge reviews correctly. All criteria pass; no blocking concerns remain."
   }
 }
 ```
