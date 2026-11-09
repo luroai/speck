@@ -77,7 +77,7 @@ test('0583 AC1: the pill\'s colours are orange for waiting, blue for working and
   const rs = rules(), rule = s => rs.find(r => selectors(r).includes(s));
   assert.match(get(rule('#full-ticket .top .state'), 'color'), /--muted/);
   assert.match(get(rule('#full-ticket .top .state[data-tone="waits"]'), 'color'), /--needs-you-text/);
-  assert.match(get(rule('#full-ticket .top .state[data-tone="working"]'), 'color'), /--accent/);
+  assert.match(get(rule('#full-ticket .top .state[data-tone="working"]'), 'color'), /--run/); // 0577: the accent, as links have it
 });
 
 for (const [id, want] of [
@@ -100,7 +100,7 @@ for (const [id, want] of [
 test('0583 AC2: the bars are four across, filled in the accent, and orange for a step that waits for you', () => {
   const rs = rules(), rule = s => rs.find(r => selectors(r).includes(s));
   assert.match(get(rule('#full-ticket .track'), 'grid-template-columns'), /repeat\(4,/);
-  assert.match(get(rule('#full-ticket .track .step.done'), 'border-top-color'), /--accent/);
+  assert.match(get(rule('#full-ticket .track .step.done'), 'border-top-color'), /--blue/); // 0577: the accent
   assert.match(get(rule('#full-ticket .track .step.waits'), 'border-top-color'), /--needs-you/);
 });
 
@@ -218,7 +218,7 @@ test('0583 AC4: the bar is fixed to the bottom, and its Ship is in the accent co
   const bar = rule('#full-ticket .ship-bar');
   assert.equal(get(bar, 'position'), 'sticky');
   assert.equal(get(bar, 'bottom'), '0');
-  assert.match(get(rule('#full-ticket .ship-bar .ship'), 'background'), /--accent/);
+  assert.match(get(rule('#full-ticket .ship-bar .ship'), 'background'), /--blue/); // 0577: the accent
 });
 
 test('0583 AC4: the folded note box really is hidden, though the box is a block', () => {

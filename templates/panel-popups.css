@@ -24,7 +24,7 @@
      step that waits for you */
   #full-ticket .track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 4px 0 18px; }
   #full-ticket .track .step { display: block; min-width: 0; padding-top: 6px; border-top: 4px solid var(--border); font-size: 12px; line-height: 16px; color: var(--muted); }
-  #full-ticket .track .step.done, #full-ticket .track .step.now { border-top-color: var(--accent); color: var(--text); }
+  #full-ticket .track .step.done, #full-ticket .track .step.now { border-top-color: var(--blue); color: var(--text); }
   #full-ticket .track .step.now { font-weight: 600; }
   #full-ticket .track .step.waits { border-top-color: var(--needs-you); color: var(--needs-you-text); font-weight: 600; }
   /* 0583: its facts, two to a row, each its label over its value, which wraps rather than being cut short */
@@ -57,14 +57,14 @@
   #full-ticket .top .title { order: 1; flex-basis: 100%; font-size: 26px; line-height: 1.25; font-weight: 600; } /* under the id and Close, which a review pack has after it */
   /* 0583: a ticket's full view: the back link and its id at the right on the first row, then its status pill, then its title */
   #full-ticket .top:has(> .state) { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-  #full-ticket .top:has(> .state) .close { grid-area: 1 / 1; justify-self: start; margin: 0; padding: 2px 0; border: 0; background: none; color: var(--accent); font-size: 14px; text-decoration: none; }
+  #full-ticket .top:has(> .state) .close { grid-area: 1 / 1; justify-self: start; margin: 0; padding: 2px 0; border: 0; background: none; color: var(--run); font-size: 14px; text-decoration: none; }
   #full-ticket .top:has(> .state) .close::before { content: '‹'; margin-right: 4px; }
   #full-ticket .top:has(> .state) .id { grid-area: 1 / 2; align-self: center; }
   #full-ticket .top:has(> .state) .title { grid-area: 3 / 1 / 3 / 3; }
   /* The pill: grey, orange when it waits for you, blue while it's being worked on. 0427: a status is one word, so this is sentence case */
   #full-ticket .top .state { grid-area: 2 / 1; justify-self: start; padding: 2px 10px; border: 1px solid transparent; border-radius: 999px; background: var(--surface); color: var(--muted); text-transform: capitalize; font-weight: 500; }
   #full-ticket .top .state[data-tone="waits"] { color: var(--needs-you-text); border-color: var(--needs-you-text); }
-  #full-ticket .top .state[data-tone="working"] { color: var(--accent); border-color: var(--accent); }
+  #full-ticket .top .state[data-tone="working"] { color: var(--run); border-color: var(--run); }
   #full-ticket > .steps { margin: 0 0 18px; } /* 0465: the track and table its card shows open, under the title */
   #full-ticket h4, #full-ticket > .md .md-h1, #full-ticket > .md .md-h2, #full-ticket > .md .md-h3 { margin: 28px 0 8px; font-family: var(--font-ui); font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
@@ -118,7 +118,7 @@
   #foreman :focus-visible { outline-color: var(--bezel-ink); }
   #full-ticket ol.criteria > li { margin-bottom: 6px; }
   /* 0583: a tick on each criterion the reviewer passed, and the rows that open its review pack and build log */
-  #full-ticket .tick { display: inline-block; width: 6px; height: 12px; margin: 0 8px 0 3px; border: solid var(--accent); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* drawn, so it needs no font to have the glyph */
+  #full-ticket .tick { display: inline-block; width: 6px; height: 12px; margin: 0 8px 0 3px; border: solid var(--blue); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* drawn, so it needs no font to have the glyph */
   #full-ticket .pane-rows { margin: 14px 0 0; border-top: .5px solid var(--line-soft); }
   #full-ticket .pane-row { display: flex; justify-content: space-between; width: 100%; padding: 12px 2px; font: inherit; font-family: var(--font-ui); font-size: 15px; color: var(--text); text-align: left; background: none; border: 0; border-bottom: .5px solid var(--line-soft); border-radius: 0; cursor: pointer; }
   #full-ticket .pane-row:hover { background: var(--surface); color: var(--text); }
@@ -131,7 +131,7 @@
   #full-ticket .ship-bar .changes-note[hidden] { display: none; } /* folded until Ask for changes is pressed */
   #full-ticket .ship-bar .pack-buttons { justify-content: flex-end; }
   #full-ticket .ship-bar .ship, #full-ticket .ship-bar .ask-changes { margin: 0; padding: 8px 18px; font-size: 14px; font-weight: 500; border-radius: 8px; }
-  #full-ticket .ship-bar .ship { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  #full-ticket .ship-bar .ship { background: var(--blue); border-color: var(--blue); color: var(--bg); }
   #full-ticket .ship-bar .ship-said { margin: 8px 0 0; }
   /* Each section's Markdown. Its headings rank below the section's own (h4) and are no taller than body text. */
   #full-ticket .md p, #full-ticket .criteria p, #doc-view .md p { margin: 0 0 8px; }
