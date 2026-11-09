@@ -1,7 +1,7 @@
 ---
 id: "0582"
 title: "Show the lanes as tabs with their counts"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ approved: "2026-11-09T20:23:16.464Z"
 ---
 # 0582 · Show the lanes as tabs with their counts
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 The lane strip is a row of small marks that the user has found hard to read (an inbox note asked to mark the lane in view more clearly). The redesign shows the four lanes as clear tabs with their counts.
@@ -232,6 +232,90 @@ Follow-ups: `speck/ideas/2026-11-09-drop-build-s-needs-you-number-from-its-tab.m
     ],
     "escalation_question": "",
     "summary": "The four tabs show live lane counts and clearly underline the open lane. Navigation and screen-reader support remain covered. Fresh verification passes, including the previously failing responsiveness test; no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "19245985b3e88d76b5c311fa90a7c0fb3a4cc71c",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c1f8-ed38-7fe0-96d5-eee62dfde850",
+    "builder_response": "Merge round: main merged into the ticket branch after speck ship's tests failed on the combined code.\n- Tests run: test/mockup-0126.test.mjs test/panel-0054.test.mjs test/panel-0067.test.mjs test/panel-0134.test.mjs test/panel-0135.test.mjs test/panel-0136.test.mjs test/panel-0138.test.mjs test/panel-0140.test.mjs test/panel-0147.test.mjs test/panel-0161.test.mjs test/panel-0162.test.mjs test/panel-0165.test.mjs test/panel-0167.test.mjs test/panel-0213.test.mjs test/panel-0273.test.mjs test/panel-0410.test.mjs test/panel-0417.test.mjs test/panel-0418.test.mjs test/panel-0425.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0438.test.mjs test/panel-0440.test.mjs test/panel-0449.test.mjs test/panel-0453.test.mjs test/panel-0465.test.mjs test/panel-0467.test.mjs test/panel-0469.test.mjs test/panel-0474.test.mjs test/panel-0476.test.mjs test/panel-0477.test.mjs test/panel-0478.test.mjs test/panel-0480.test.mjs test/panel-0481.test.mjs test/panel-0514.test.mjs test/panel-0537.test.mjs test/panel-0577.test.mjs test/panel-0582.test.mjs test/panel.test.mjs test/speck-name-0485.test.mjs  test/panel-0517.test.mjs and the existing test files that name the changed files, with --related: 3352 pass, 0 fail. Includes both tests ship named, test/panel-0167.test.mjs and test/panel-0438.test.mjs.\n- Resolved: templates/panel-header.css, class logic. Main's 0581 only reworded a comment (the 0477 strip's) inside the block this ticket replaces, so this ticket's block is kept and main's wording drops with it.\n- Tests that failed and why, both caused by this ticket's change rather than main's, and missed earlier because neither file was in the round's list:\n  - 0167 AC2 reserves --accent, so the open tab's underline can't use it. Fixed in the code: the underline uses --blue, which holds the same accent colour in both looks (#2F55D4 and #86A2FF) and is what the focus ring uses. Test unchanged. This ticket's own assertions in panel-0582 and panel-0481 now name --blue.\n  - 0438 AC2 needs the tab row's edges on the bar's. This ticket had narrowed the row's padding to 8 px to fit at 320 px. Fixed in the code: back to 16 px, and the room comes from the gap between tabs (2 px to 1 px) and each tab's own side padding (2 px to 1 px). Test unchanged. panel-0582's 320 px check, with big counts and a needs-you number, still passes.\n- The pictures in the review pack were retaken.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 329509,
+      "cached_input_tokens": 278272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1926,
+      "reasoning_output_tokens": 80
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 16227,
+      "cached": 107392,
+      "write": 0,
+      "output": 587
+    },
+    "cost_usd": 0.0490632,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T20:32:00.675Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.html supplies four named tabs with counts. panel-header.css gives them a 44 px minimum height and selected underline using --blue, which matches the accent colour in both themes in panel-base.css. Passing panel-0582 AC1 tests include real-browser fitting at 320 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "openTab and drawTabs in panel-header.js retain selection updates for lane changes. Passing panel-0582 AC2 tests exercise pressing tabs, swiping, trackpad scrolling and arrow keys."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel.html retains tablist/tab roles; drawTabs updates aria-selected and accessible names. All panel-0582 AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel.js render passes the current model to drawTabs, which refreshes all lane counts. Passing panel-0582 AC4 tests verify board updates and count preservation when opening lanes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the five updated appearance tests. Verified fresh output reports 3352 passes and zero failures, including panel-0167, panel-0438 and the previously failing panel-0517 responsiveness test. Existing regression assertions were retained."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0517.test.mjs",
+        "issue": "An earlier verification run failed the existing slide responsiveness test.",
+        "suggested_fix": "Provide fresh passing verification without weakening the responsiveness assertion.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change preserves the four tabs, live counts, clear selection and accessible navigation. The spacing and colour fixes retain the intended appearance while satisfying existing checks. Fresh verification passes with no blocking concerns."
   }
 }
 ```
