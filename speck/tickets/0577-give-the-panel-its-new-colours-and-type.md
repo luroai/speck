@@ -1,7 +1,7 @@
 ---
 id: "0577"
 title: "Set the panel's new design tokens"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T17:42:55.310Z"
+approved: "2026-11-09T18:19:46.081Z"
 
 ---
 # 0577 · Set the panel's new design tokens
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's look was built around the LCD screen: grey-green screen colours, the Doto dot-matrix font on titles, and borders round every card. The redesign needs a calm, grown-up base for every view: neutral greys, one blue accent, orange only for what needs you, and speck's red kept for its eye alone.
@@ -60,9 +61,15 @@ Worth watching: the edges of cards and buttons are much fainter than before, and
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC2 requires JetBrains Mono for times and figures, but build timers (progressOf()'s .sub and factsOf()'s .time .sub), shipped summary figures (#shipped-stats .num), and shipped metadata still inherit Inter.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 606,395
+- Elapsed since build started: 37 min
+- Changed lines: 403 (limit 5000)
 Tests updated to the new look (AC5):
 - `test/icons-0305.test.mjs`
 - `test/mockup-0126.test.mjs`
