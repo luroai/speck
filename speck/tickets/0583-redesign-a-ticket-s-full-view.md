@@ -43,6 +43,9 @@ A ticket's full view reads top to bottom as in the mock and ends in the action i
 - Today: `fullTicket`, `paneSteps`, `renderFull` in `templates/panel-popups.js`, the track (`trackOf`) and facts (`factsOf`, `factCell`) in `templates/panel.js`, styles in `templates/panel-popups.css` and `templates/panel-cards.css`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: hid the folded note box, which the box's own `display: block` kept on show; drew the tick in CSS, as the checkmark glyph isn't in the panel's fonts; the back link is a link with no border, so the edge checks no longer list it.
+- The Build log row also shows a log for a ticket whose card is closed. `--related` doesn't pick the panel test files, as they reach the page through a support module, so this build ran every test file that uses the panel page as well.
+- speck (2026-11-09 19:02 UTC) told you: Nothing is stuck and main isn't broken: 0583 is slow because the redesign broke about 37 older tests of the old look, which it has been updating one batch at a time (4 left, all pointing at the old Close button), with about 10 of its 27 minutes in four long runs on a busy machine, one of them a screenshot script that hung until its 3-minute limit. Separately, while clearing up after that hang at 18:56 the build ran a command to kill every speck panel on the machine, and your real panel showed as only seconds old just afterwards, so it was probably restarted by this; 0589's ship still went through. Why: The build's log shows failures falling from 37 to 4 with every one tied to the full view it is changing, four runs of two to three minutes at a load of 20 to 28 on 16 cores, and the kill command followed by a process list showing the panel freshly started.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
