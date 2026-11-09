@@ -1,7 +1,7 @@
 ---
 id: "0580"
 title: "Replace the LCD screen with the black bar"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T19:22:31.098Z"
 ---
 # 0580 · Replace the LCD screen with the black bar
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The LCD screen at the top of the panel, with its dot-matrix speck, clock and captions, has become decoration: the user finds it pointless now. The redesign keeps only what was liked, its black frame, as a thin dark bar holding speck and the status.
@@ -46,7 +46,11 @@ The top of the panel is a thin black bar with speck, the status and the Settings
 - Self-check: hid the status lines until the first board arrives (they showed their separators alone), added speck-face.js and speck-mood.js to the page's stamp so a change to them makes an open page out of date, and kept the bar drawing when speck's script can't load.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The dot-matrix screen at the top of the panel is gone. In its place is a thin black bar with speck's face, showing its mood, what speck is doing and which project this is. Under that it says what's queued, how many things need you, in orange, and the base branch.
+
+To see it, open the panel in the light and the dark look: the bar is the same in both. Press the status to open the Pipeline log, and use the arrow beside it to switch project when more than one panel is running.
+
+The clock and speck's little animations went with the screen. The old screen's code is still in the product, unused, until the next ticket removes it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,8 @@ The top of the panel is a thin black bar with speck, the status and the Settings
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none.
+
 Tests updated to the new look (AC5):
 - `test/panel-0413`, `0438`, `0454`, `0478`, `0140`, `0150`, `0372`, `0128`, `0059`, `foreman-0285`, `speck-name-0485`: the header's markup, measurements and names are the bar's.
 - `test/panel-0426`, `0440`, `0161`, `0428`: the bar's colours are `--bar`, the same in both looks; the status button has no edge of its own, so 0161's control counts are one lower.
@@ -69,3 +75,80 @@ Tests removed, because what they checked is gone (AC5):
 - `test/panel-0471` (the big "speck" title and its dot), `test/panel-0513` (the title's dot going grey while off: speck's asleep face says that now).
 - From `test/panel-0304`: the three about the title in Doto. The test that the panel serves the font stays, for 0581.
 - From `test/panel-0438`: AC3 (the screen's dots against its corners) and AC5 (the title's dot).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a29feccacf1fd94cd623e1803bf7056076524d3b",
+    "session": "fresh",
+    "thread_id": "01a1c1d2-c084-7c52-bf0e-490336b84d56",
+    "builder_response": "- Tests run: test/foreman-0285.test.mjs test/panel-0054.test.mjs test/panel-0055.test.mjs test/panel-0059.test.mjs test/panel-0061.test.mjs test/panel-0063.test.mjs test/panel-0128.test.mjs test/panel-0133.test.mjs test/panel-0140.test.mjs test/panel-0143.test.mjs test/panel-0147.test.mjs test/panel-0150.test.mjs test/panel-0160.test.mjs test/panel-0161.test.mjs test/panel-0165.test.mjs test/panel-0213.test.mjs test/panel-0302.test.mjs test/panel-0304.test.mjs test/panel-0372.test.mjs test/panel-0413.test.mjs test/panel-0416.test.mjs test/panel-0423.test.mjs test/panel-0424.test.mjs test/panel-0426.test.mjs test/panel-0428.test.mjs test/panel-0432.test.mjs test/panel-0433.test.mjs test/panel-0438.test.mjs test/panel-0440.test.mjs test/panel-0453.test.mjs test/panel-0454.test.mjs test/panel-0465.test.mjs test/panel-0466.test.mjs test/panel-0473.test.mjs test/panel-0474.test.mjs test/panel-0478.test.mjs test/panel-0543.test.mjs test/panel-0580.test.mjs test/panel-focus-0326.test.mjs test/pipeline-0415.test.mjs test/pipeline-0470.test.mjs test/pipeline-0479.test.mjs test/speck-name-0485.test.mjs (with --related, which also ran every test file naming a changed file)\n- Scope note: the LCD renderer and speck's poses stay in panel-header.js and lcd.js until 0581, per the ticket's Out of scope. The real page has no #screen, so drawHeader skips them; the fake page's getElementById always makes a node, so the LCD's own tests keep running until 0581 removes them.\n- AC5: the Delivery log lists each test updated and each removed. Removed tests checked elements this ticket takes out (the Doto title and its dot, the screen's dots).\n- The bar uses 0577's --bar tokens. --bar-needs is new and set once, because --bad differs between the looks.\n- Face script: drawBar copes with SpeckFace missing, which is what pipeline-0415/0470/0479 exercise (their file:// copy of the page can't load it).\n",
+    "seconds": 53,
+    "usage": {
+      "input_tokens": 253980,
+      "cached_input_tokens": 196352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 757,
+      "reasoning_output_tokens": 50
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 57628,
+      "cached": 196352,
+      "write": 0,
+      "output": 757
+    },
+    "cost_usd": 0.1424612,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T19:40:29.836Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html and drawBar in templates/panel-header.js provide the face, status, project, queue, orange needs-you count, base branch and Settings. panel-0580 tests exercise content and mood changes; its browser test verifies a 44 px face and bar height at most 56 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passed panel-0580 AC2 test presses the status and verifies that the Pipeline log opens and aria-expanded becomes true. Updated panel-0454 browser tests cover pressing the status."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "drawProjects and chooseProject remain in templates/panel-header.js. Passed panel-0580 AC3 test verifies the menu lists running projects, posts the chosen project's port and reloads."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passed panel-0580 AC4 browser test verifies a single first line at 320 px, matching bar colours in both looks, and an unchanged bar position while the lane list scrolls."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The ticket's Delivery log lists updated and removed tests. Changes replace assertions about removed header elements while retaining LCD renderer coverage. The recorded run passed 735 tests, skipped three and failed none."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The LCD screen is replaced by a compact dark bar showing speck, pipeline status and queue details. The Pipeline log, project switcher and Settings remain available. Tests cover the narrow layout, both looks and scrolling, with no failures in the recorded run. No blocking concerns found."
+  }
+}
+```
+
+</details>
