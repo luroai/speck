@@ -44,6 +44,7 @@ The panel has a Decided for you list of the recommendations speck took, with a w
 - Today: "chosen by speck" Notes lines are parsed by `wentWithLines` in `scripts/foreman-took.mjs`; Ask for changes is in `templates/panel-popups.js`.
 - Waits for 0564 and 0567, which write the lines it lists, and 0565, which gives `criteria_changed`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
