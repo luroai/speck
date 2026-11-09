@@ -42,6 +42,9 @@ A panel can give a summary of every speck panel running on this machine.
 - Today: `scripts/panel-projects.mjs` (`runningPanels`, `registerPanel`, the pass-through to another panel) and the routes in `scripts/panel.mjs`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- AC5 is checked by the whole suite, which `speck ship` runs; this build ran the ticket's tests with `--related`.
+- Pictures: none, because nothing anyone sees changes (0596 shows it).
+- Self-check: widened the 2-second test's upper limit so a busy machine can't fail it; no code changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
