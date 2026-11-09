@@ -36,10 +36,10 @@
      underline in the accent and its name in the text colour, the others are muted. Every tab has the underline's 2 px,
      transparent unless open, so nothing moves when the lane changes, and it's a border so it shows without colours
      (0161). Each tab is 44 px tall, and shares what's left of the row after the names and counts. */
-  .tabs { position: relative; z-index: 8; display: flex; align-items: stretch; gap: 2px; padding: 0 8px; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .tab { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 4px; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 2px; font: inherit; color: var(--muted); background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
+  .tabs { position: relative; z-index: 8; display: flex; align-items: stretch; gap: 1px; padding: 0 16px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  .tab { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 4px; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 1px; font: inherit; color: var(--muted); background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
   .tab:hover, .tab[aria-selected="true"] { color: var(--text); }
-  .tab[aria-selected="true"] { border-bottom-color: var(--accent); }
+  .tab[aria-selected="true"] { border-bottom-color: var(--blue); } /* 0577: the accent, as the focus ring has it */
   .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-ui); font-size: 14px; font-weight: 600; line-height: 1; }
   .tab .tab-n { flex: none; font-family: var(--font-ui); font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--muted); }
   .tab .tab-n:empty { display: none; }

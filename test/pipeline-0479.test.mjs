@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { fakePage, page, ROOT, findChrome, browserPage, styles, model, settingsScript, pageScript, popupsScript, headerScript, cssRules, cssValue } from './support/panel.mjs';
+import { fakePage, page, findChrome, browserPage, styles, model, settingsScript, pageScript, popupsScript, headerScript, cssRules, cssValue } from './support/panel.mjs';
 
 const ON = { on: true, pid: 4242 };
 const state = (o = {}) => ({ tickets: [], ideas: [], resume_command: '', run: ON, foreman: { word: 'Idle' }, run_log: '1', ...o });
@@ -21,7 +21,7 @@ test('0479 AC1: the pop-up is clear of a phone\'s status bar and home indicator,
   assert.match(pad, /env\(safe-area-inset-top\)/, 'clear of the status bar');
   assert.match(pad, /env\(safe-area-inset-bottom\)/, 'and the home indicator');
   for (const sel of ['#foreman .top', '#foreman .fm-body']) assert.equal(cssValue(cssRules(sel), 'background'), 'var(--bezel)', `${sel} is on the frame`);
-  assert.equal(cssValue(cssRules('#foreman .top .title::before'), 'background'), 'var(--lcd-red)', 'speck\'s red dot, as the header\'s');
+  assert.equal(cssValue(cssRules('#foreman .top .title::before'), 'background'), 'var(--speck-red)', 'speck\'s red dot, as the header\'s');
 });
 
 function popPage(responses, globals = {}) {
@@ -80,12 +80,10 @@ async function openLog(b, width, height) {
     .replace('<script src="panel.js" data-page="{{page}}" data-token="{{token}}"></script>', () => `<script data-page="{{page}}" data-token="{{token}}">${pageScript()}</script>`)
     .replace('<script src="panel-popups.js"></script>', () => `<script>${popupsScript()}</script>`)
     .replace('<script src="panel-header.js"></script>', () => `<script>${headerScript()}</script>`));
-  const url = pathToFileURL(copy).href, font = fs.readFileSync(path.join(ROOT, 'templates', 'fonts', 'Doto.ttf')).toString('base64');
+  const url = pathToFileURL(copy).href;
   await b.send('Page.navigate', { url });
   await b.until(`location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`, 'the page');
   await b.js(`(() => { const s = document.createElement('style'); s.textContent = ${JSON.stringify(styles())}; document.head.appendChild(s); return true; })()`);
-  await b.js(`(async () => { const f = new FontFace('Doto', Uint8Array.from(atob(${JSON.stringify(font)}), c => c.charCodeAt(0)).buffer, { weight: '100 900' });
-    document.fonts.add(await f.load()); return true; })()`);
   await b.until(`!!document.getElementById('bar-word') && document.getElementById('bar-word').textContent !== ''`, 'the board');
   await b.js(`document.getElementById('run').click(), true`);
   await b.until(`document.querySelectorAll('#foreman ol.run-log li').length === 200`, 'the 200 lines in the pop-up');
@@ -107,7 +105,7 @@ const MEASURE = `(() => {
     bezel, topBg: cs.backgroundColor, bodyBg: bs.backgroundColor, corners: [cs.borderTopLeftRadius, cs.borderTopRightRadius, bs.borderBottomLeftRadius, bs.borderBottomRightRadius],
     side: [parseFloat(bs.paddingLeft), parseFloat(bs.paddingRight), parseFloat(bs.paddingBottom)],
     titleFont: getComputedStyle(t).fontFamily, titleWeight: getComputedStyle(t).fontWeight, nameFont: getComputedStyle(document.querySelector('.bezel .bar-word')).fontFamily,
-    dot: dot.backgroundColor, nameDot: (() => { const d = document.createElement('div'); d.style.background = 'var(--lcd-red)'; document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; })(), dotW: parseFloat(dot.width),
+    dot: dot.backgroundColor, nameDot: (() => { const d = document.createElement('div'); d.style.background = 'var(--speck-red)'; document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; })(), dotW: parseFloat(dot.width),
     ink, titleColor: getComputedStyle(t).color, titleText: t.textContent, titleRects: t.getClientRects().length,
     pageScrolls: se.scrollHeight > se.clientHeight || se.scrollWidth > se.clientWidth, popScrolls: v.scrollHeight > v.clientHeight || v.scrollWidth > v.clientWidth,
     bodyScrolls: body.scrollHeight > body.clientHeight, topScrolls: top.scrollHeight > top.clientHeight,

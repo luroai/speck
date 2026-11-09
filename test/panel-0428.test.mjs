@@ -77,10 +77,10 @@ test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu ha
 
 // 0477: the tabs, and their corners, are gone: the lanes are a strip of their names.
 
-test('0428 AC2: cards, the build log, the stats, Settings\' groups and the pop-ups have a 12 px corner radius', () => {
+test('0428 AC2: cards, the build log, the stats and the pop-ups have a 12 px corner radius', () => {
   const BOXES = {
     'a Plan card': ['.item'], 'a Build card': ['.q'], 'a shipped card': ['#shipped tr'], 'the build log': ['.q .log'],
-    'the stats': ['.stats'], 'Settings\' groups': ['#settings .sgroup'], 'Settings\' switches': ['#settings .switches'],
+    'the stats': ['.stats'], // 0593: Settings' groups are plain sections
     'Settings\' question': ['#settings-unsaved .box'],
   };
   for (const [what, sels] of Object.entries(BOXES)) assert.equal(resolve(sels)['border-radius'], '12px', what);
@@ -92,7 +92,7 @@ test('0428 AC3: every button has a border on all four sides, in a colour 0161 ch
     const got = sides(sels);
     for (const [d, s] of Object.entries(got)) {
       assert.ok(s.width && parseFloat(s.width) > 0, `${what}: its ${d} border is ${s.width}`);
-      assert.ok(['--line', '--text', '--bad', '--bezel-muted', '--bar-muted'].includes(s.colour), `${what}: its ${d} border is in ${s.colour}`);
+      assert.ok(['--line', '--text', '--bad', '--bezel-muted', '--bar-muted', '--blue'].includes(s.colour), `${what}: its ${d} border is in ${s.colour}`);
     }
   }
 });

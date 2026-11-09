@@ -1,7 +1,7 @@
 /* The panel's styles (0472: a file for each area of the panel): the cards in Capture, Plan, Build and Shipped and everything
    in them, the build log included. */
   /* 0478: each lane is a card with its name in the header's dot-matrix lettering. 0480: a light card, not a dark frame,
-     so speck's screen is the only dark frame on the page: the lane's own background with a hairline edge in the line
+     so the bar is the only dark frame on the page: the lane's own background with a hairline edge in the line
      colour and a card's 12 px corners (0428). Its title row has the lane's name in the text colour, a dot in its stage's
      colour before it (0461's: grey for a step not reached, blue for Build and purple for Ship), and the lane's line at
      its right end in the muted colour (0425: Build's and Shipped's counts), cut short with "…" before the name gives

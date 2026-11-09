@@ -3,8 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T, findChrome, browserPage } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
-import { foreman } from './support/screen.mjs';
-import { MIN, building, board, speckPage } from './support/screen-speck.mjs';
+import { foreman } from './support/bar.mjs';
 
 // ---------- 0438: speck's screen and its frame are rounded and line up with the panel ----------
 

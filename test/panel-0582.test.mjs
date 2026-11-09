@@ -55,7 +55,7 @@ test('0582 AC1: an empty lane says 0, and nothing is shown before the first boar
 
 test('0582 AC1: the open tab is underlined in the accent and its name in the text colour; the others are muted with no underline showing', () => {
   assert.match(decls('.tab[aria-selected="true"]'), /color:\s*var\(--text\)/);
-  assert.match(decls('.tab[aria-selected="true"]'), /border-bottom-color:\s*var\(--accent\)/);
+  assert.match(decls('.tab[aria-selected="true"]'), /border-bottom-color:\s*var\(--blue\)/);
   assert.match(decls('.tab'), /(^|;|\s)color:\s*var\(--muted\)/);
   assert.match(decls('.tab'), /border-bottom:\s*2px solid transparent/);
 });

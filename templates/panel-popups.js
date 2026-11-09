@@ -703,7 +703,7 @@ function renderDecided(m) {
   if (!was) box.scrollTop = 0;
   if ((!was || had) && box.focus) box.focus({ preventScroll: true });
 }
-// 0366: closes the Foreman's pop-up, with the focus back on speck's screen (0413), which opened it.
+// 0366: closes the Foreman's pop-up, with the focus back on the bar, which opened it.
 function closeForeman() {
   foremanOpen = false;
   render();

@@ -1448,7 +1448,7 @@ function render() {
   more.setAttribute('aria-expanded', String(moreStats));
   $('shipped-n').textContent = `${m.shippedTotal} in total`;
 
-  // 0285: the Foreman, speck run's one status for the whole pipeline, on speck's screen in the header.
+  // 0285: the Foreman, speck run's one status for the whole pipeline, on the bar in the header.
   const stale = pageStale(state);
   drawHeader(foremanOf(state), stale); // 0474: in the header's file
   renderForeman(stale);
@@ -1653,6 +1653,6 @@ function connect() {
 // 0432, 0433: the page starts once the whole page has loaded, after the Settings script it loads from /panel-settings.js
 // has run, so nothing it hears first finds Settings missing. 0473: and the pop-ups' script, from /panel-popups.js.
 document.addEventListener('DOMContentLoaded', () => {
-  document.addEventListener('visibilitychange', () => { const on = document.visibilityState === 'visible'; speckShown(on); if (on) connect(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') connect(); });
   connect();
 });

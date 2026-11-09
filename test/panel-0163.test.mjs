@@ -92,8 +92,6 @@ test('0163 AC3: no square and no builder: the label alone, whether a build is ru
   assert.doesNotMatch((page() + styles()), /\.run-state \.mini \{/, 'no style for a builder in the button');
 });
 
-// 0303: the builder is the LCD renderer's mini builder, so the drawing of it is checked in panel-0303.test.mjs.
-
 test('0163 AC4: clicking still starts or pauses Auto-build, and the tooltip says only what a click will do (0199)', async () => {
   const p = switchPage([state([BUILDING]), { ok: true, run: { on: false, pid: null } }, { ok: true, run: { on: true, pid: 9 } }]);
   await p.settle();

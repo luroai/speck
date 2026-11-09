@@ -16,7 +16,7 @@ const decls = sel => [...headerCss().matchAll(/([^{}]+)\{([^}]*)\}/g)].filter(m 
 test('0481 AC1: the open lane has a bar under it in the accent, the others none showing, and every name keeps its weight and size', () => {
   const open = decls('.tab[aria-selected="true"] .tab-name');
   assert.match(decls('.tab'), /border-bottom:\s*2px solid transparent/, 'each tab has room for the bar');
-  assert.match(decls('.tab[aria-selected="true"]'), /border-bottom-color:\s*var\(--accent\)/, 'the open lane\'s shows, in the accent');
+  assert.match(decls('.tab[aria-selected="true"]'), /border-bottom-color:\s*var\(--blue\)/, 'the open lane\'s shows, in the accent');
   assert.match(decls('.tab[aria-selected="true"]'), /color:\s*var\(--text\)/, 'the open lane in the text colour');
   assert.match(decls('.tab'), /color:\s*var\(--muted\)/, 'the others muted');
   assert.doesNotMatch(decls('.tab .tab-name'), /border/, 'no bar on the names themselves');
@@ -27,7 +27,7 @@ test('0481 AC1: the open lane has a bar under it in the accent, the others none 
 const measure = b => b.js(`(() => {
   const nav = document.getElementById('tabs'), r = nav.getBoundingClientRect();
   const probe = nav.appendChild(document.createElement('i'));
-  probe.style.color = 'var(--accent)';
+  probe.style.color = 'var(--blue)';
   const accent = getComputedStyle(probe).color;
   probe.remove();
   return { height: r.height, accent, bg: getComputedStyle(nav).backgroundColor, lanes: [...nav.querySelectorAll('[role="tab"]')].map(t => {

@@ -1,13 +1,13 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, page, findChrome, browserPage, styles, pageScript } from './support/panel.mjs';
+import { T, page, fakePage, findChrome, browserPage, styles, pageScript } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 import { settingsPage } from './support/settings.mjs';
 import { rules, get, selectors } from './support/css.mjs';
-import { screenPage, foreman, state, wordDots, expected, CLOCK } from './support/screen.mjs';
+import { foreman, state } from './support/bar.mjs';
 
-// ---------- 0413: speck's LCD screen is the panel's header ----------
+// ---------- 0413: the panel's header, the bar since 0580 ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const headerHtml = () => (page().match(/<header>([\s\S]*?)<\/header>/) || [])[1] || '';
@@ -32,27 +32,14 @@ test('0413 AC1: the old header row and the notice board are gone', () => {
   assert.ok(!rules().some(r => selectors(r).some(x => /\.run-state|\.logo\b|\.board\b/.test(x))), 'none of their styles');
 });
 
-test('0413 AC2: the top row shows the Foreman\'s word in the dot font, in capitals, with speck below it', async () => {
-  for (const word of ['Off', 'Idle', 'Building 2', 'Needs you 1']) {
-    const p = screenPage([state(foreman({ word }))]);
-    await p.settle();
-    assert.ok(p.made(), `the screen is made: ${word}`);
-    assert.equal(p.made().cols, 160);
-    assert.deepEqual(wordDots(p.draw()), expected(word.toUpperCase(), 4, 2), word);
-    assert.ok(p.cast().cur, 'speck is cast'); // 0414: in the pose the pipeline gives it (panel-0414.test.mjs)
-    const below = p.draw().filter(([, r]) => r > 12);
-    assert.ok(below.length > 100, `speck is drawn below the word: ${below.length} dots`);
-  }
-});
-
 test('0413 AC2: the frame\'s edge is in the needs-you colour only while the word is "Needs you <n>"', async () => {
   assert.match(decl('.bezel.needs', 'border-color'), /var\(--bar-needs\)/, 'the bar\'s needs-you colour');
   for (const [word, needs] of [['Needs you 1', true], ['Needs you 12', true], ['Building 2', false], ['Idle', false], ['Off', false]]) {
-    const p = screenPage([state(foreman({ word }))]);
+    const p = fakePage([state(foreman({ word }))]);
     await p.settle();
     assert.equal(p.byId('bezel').className, needs ? 'bezel needs' : 'bezel', word);
   }
-  const p = screenPage([state(foreman({ word: 'Needs you 1' })), state(foreman({ word: 'Idle' }))]);
+  const p = fakePage([state(foreman({ word: 'Needs you 1' })), state(foreman({ word: 'Idle' }))]);
   await p.settle();
   assert.equal(p.byId('bezel').className, 'bezel needs');
   p.timers.shift()(); // the next board
@@ -81,7 +68,7 @@ test('0413 AC3: Settings ends the frame\'s title row and opens Settings', async 
 
 test('0413 AC4: pressing the screen opens the Foreman\'s detail, and again closes it', async () => {
   assert.match(headerHtml(), /<button class="bar-status" id="run" type="button"[^>]* aria-expanded="false" aria-controls="foreman"/, 'a button, so Enter and Space press it');
-  const p = screenPage([state(foreman())], { scrollX: 0, scrollY: 0, scrollTo() {} });
+  const p = fakePage([state(foreman())], { scrollX: 0, scrollY: 0, scrollTo() {} });
   p.document.documentElement = { classList: { toggle() {} } };
   p.document.querySelectorAll = () => [];
   await p.settle();
@@ -97,11 +84,11 @@ test('0413 AC4: pressing the screen opens the Foreman\'s detail, and again close
 });
 
 test('0413 AC4: while the panel runs newer code, the top row reads "Reload page" and the detail offers its Reload page button', async () => {
-  const p = screenPage([state(foreman({ word: 'Needs you 1' }), { page: 'newer' })], { scrollX: 0, scrollY: 0, scrollTo() {} });
+  const p = fakePage([state(foreman({ word: 'Needs you 1' }), { page: 'newer' })], { scrollX: 0, scrollY: 0, scrollTo() {} });
   p.document.documentElement = { classList: { toggle() {} } };
   p.document.querySelectorAll = () => [];
   await p.settle();
-  assert.deepEqual(wordDots(p.draw()), expected('RELOAD PAGE', 4, 2));
+  assert.equal(p.byId('bar-word').textContent, 'Reload page');
   assert.equal(p.byId('bezel').className, 'bezel', 'the word is Reload page now');
   assert.match(p.byId('run').title, /^speck: Reload page · /); // 0485: the word is in its tooltip
   p.press(p.byId('run'));
@@ -114,7 +101,7 @@ test('0413 AC4: while the panel runs newer code, the top row reads "Reload page"
 // 0485: its accessible name is speck's screen, and the word is in its tooltip, which a screen reader reads with it.
 test('0413 AC5: the screen\'s tooltip includes speck\'s word', async () => {
   for (const word of ['Off', 'Idle', 'Building 2', 'Needs you 1']) {
-    const p = screenPage([state(foreman({ word }))]);
+    const p = fakePage([state(foreman({ word }))]);
     await p.settle();
     assert.ok(p.byId('run').title.startsWith(`speck: ${word} · `), `${word}: ${p.byId('run').title}`);
   }
@@ -168,39 +155,4 @@ test('0413 AC1, AC4 and AC5: at 320 px the frame fits without sideways scrolling
   } finally { await b.close(); }
 });
 
-test('0413 AC2: a word too wide for the top row starts at its left, then scrolls; with reduced motion it stays, cut short', async () => {
-  const word = 'Waiting: the base branch is failing its tests';
-  const p = screenPage([state(foreman({ word }))]);
-  await p.settle();
-  const start = [...expected(word.toUpperCase(), 4, 2)].filter(d => Number(d.split(',')[0]) <= CLOCK.wordRight); // 4 dots in from the left, 0451: and up to the clock
-  const first = wordDots(p.draw(5000, false));
-  assert.deepEqual(first, new Set(start), 'its start, cut at the right edge');
-  assert.deepEqual(wordDots(p.draw(5000 + 1500, false)), first, 'still during the pause');
-  assert.notDeepEqual(wordDots(p.draw(5000 + 1800 + 1000, false)), first, 'then it moves');
-  assert.deepEqual(wordDots(p.draw(1000, true)), new Set(start), 'still with reduced motion');
-  assert.ok([...first].every(d => Number(d.split(',')[0]) <= CLOCK.wordRight), 'nothing past the clock (0451)');
-});
-
 // 0451: "FIXING ON" is gone from the top row, which has the time at its right instead (panel-0451.test.mjs).
-test('0413 AC2: with watch fix, a short word is drawn in full and the name is only the word', async () => {
-  for (const fixing of ['fix', 'tell']) {
-    const p = screenPage([state(foreman({ word: 'Idle', fixing }))]);
-    await p.settle();
-    assert.deepEqual(wordDots(p.draw()), expected('IDLE', 4, 2), fixing);
-    assert.match(p.byId('run').title, /^speck: Idle · /);
-  }
-});
-
-test('0413 AC1: a change of the screen\'s pixels per CSS pixel gives speck\'s screen its new size, as it does the badges', async () => {
-  const changes = [];
-  const matchMedia = q => ({ matches: false, addEventListener(type, fn) { if (/resolution/.test(q)) changes.push(fn); } });
-  const p = screenPage([state(foreman())], { matchMedia, devicePixelRatio: 1 });
-  await p.settle();
-  let sized = 0;
-  const before = changes.length;
-  assert.ok(before > 0, 'it listens for a change of resolution');
-  // The Screen the page made counts its resizes.
-  p.lcd().size = () => { sized++; };
-  changes[before - 1]();
-  assert.equal(sized, 1);
-});

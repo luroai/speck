@@ -7,13 +7,12 @@ import { ROOT, HEADER, headerScript, pageScript, pageScripts, page, fakePage, T,
 
 // ---------- 0474: the header's script in a file of its own ----------
 
-// What draws and updates speck's screen (its poses, words and time), the dark frame's title row and the tabs.
-const HEADER_NAMES = ['drawHeader', 'drawScreen', 'screenFrame', 'watchPose', 'speckPoses', 'noteBoard', 'speckShown', 'latestMissed', 'speckNow', 'speckRests', 'pickPastime',
-  'SCREEN', 'NEEDS_YOU', 'screen', 'SPECK', 'IDLE_MOODS', 'PASTIMES', 'speckDo', 'LCD', 'reducedMotion', 'pageHeader',
+// What draws and updates the bar and the tabs.
+const HEADER_NAMES = ['drawHeader', 'drawBar', 'NEEDS_YOU', 'reducedMotion', 'pageHeader',
   'LANES', 'TAB_ORDER', 'openLane', 'laneScroll', 'laneOf', 'openTab', 'drawTabs'];
 const declares = (js, name) => new RegExp(`^(?:async function|function|let|const) ${name}\\b`, 'm').test(js);
 
-test('0474 AC1: speck\'s screen, the title row and the tabs are in templates/panel-header.js, panel.js no longer has them, and lcd.js is as it was', () => {
+test('0474 AC1: the bar, the title row and the tabs are in templates/panel-header.js, and panel.js no longer has them', () => {
   assert.equal(HEADER, path.join(ROOT, 'templates', 'panel-header.js'));
   const js = headerScript(), rest = pageScript();
   assert.match(js, /^'use strict';/, 'strict, as the page\'s script is');
@@ -23,15 +22,12 @@ test('0474 AC1: speck\'s screen, the title row and the tabs are in templates/pan
     assert.ok(declares(js, name), `panel-header.js has ${name}`);
     assert.ok(!declares(rest, name), `panel.js no longer has ${name}`);
   }
-  for (const [what, re] of [['the title row\'s tooltip', /repo\.title = /], ['the screen\'s reduced-motion listener', /matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.addEventListener/],
+  for (const [what, re] of [['the title row\'s tooltip', /repo\.title = /],
     ['the tabs\' keys', /tab\.addEventListener\('keydown'/], ['the screen\'s frame edge', /\$\('bezel'\)\.className/]]) {
     assert.match(js, re, `${what} is in the header's file`);
     assert.doesNotMatch(rest, re, `and not in panel.js: ${what}`);
   }
   assert.match(rest, /drawHeader\(foremanOf\(state\), stale\)/, 'the page\'s render draws the header');
-  const lcd = fs.readFileSync(path.join(ROOT, 'templates', 'lcd.js'), 'utf8');
-  assert.match(lcd, /SpeckLCD/, 'lcd.js is still the screen\'s renderer');
-  assert.ok(!declares(lcd, 'drawScreen') && !declares(lcd, 'drawTabs'), 'and nothing moved into it');
 });
 
 test('0474 AC1: on the fake page, speck\'s screen, its frame and the tabs still work', async () => {
@@ -50,7 +46,7 @@ test('0474 AC1: on the fake page, speck\'s screen, its frame and the tabs still 
 
 test('0474 AC2: panel.html loads panel-header.js after the page\'s own script, which it uses, and before the pop-ups', () => {
   const tags = pageScripts().map(s => s.src);
-  assert.deepEqual(tags, ['panel-model.js', 'lcd.js', 'speck-face.js', 'speck-mood.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
+  assert.deepEqual(tags, ['panel-model.js', 'speck-face.js', 'speck-mood.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
   assert.match(page(), /<script src="panel-header\.js"><\/script>/, 'an empty tag');
 });
 
@@ -87,7 +83,7 @@ test('0474 AC2: the server answers /panel-header.js with the file, as text/javas
 
 test('0474 AC3: the fake page runs panel-header.js from its file, in the page\'s order, without a browser', async () => {
   const p = fakePage([{ tickets: [T('0001', 'building')], ideas: [], page: 'ffffffffffffffff' }]);
-  assert.deepEqual(p.scripts, ['panel-model.js', 'lcd.js', 'speck-face.js', 'speck-mood.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
+  assert.deepEqual(p.scripts, ['panel-model.js', 'speck-face.js', 'speck-mood.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
   await p.settle();
   assert.match(p.byId('run').title, /^speck: Reload page · /, 'a page whose stamp differs says it is out of date');
   assert.match(p.byId('run').title, /newer code/);
