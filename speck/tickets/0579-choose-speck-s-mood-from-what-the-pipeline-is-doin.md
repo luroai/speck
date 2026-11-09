@@ -42,6 +42,8 @@ speck's mood follows the pipeline wherever its face appears for the whole pipeli
 - Today the status word comes from `foremanView` in `scripts/foreman.mjs` and `foremanOf` in `templates/panel.js`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- `test/speck-face-0578.test.mjs` requires that `speck-face.js` runs no timers or animation frames, and AC5 keeps that test as it is, so the frame-by-frame easing and the 10-second timer are in a new `templates/speck-mood.js`.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
