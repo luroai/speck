@@ -1,7 +1,7 @@
 ---
 id: "0579"
 title: "Choose speck's mood from what the pipeline is doing"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0578"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:54:00.698Z"
 approved: "2026-11-09T19:10:03.039Z"
+finished: "2026-11-09T19:22:10.134Z"
 
 ---
 # 0579 · Choose speck's mood from what the pipeline is doing
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck's face should say what the pipeline is doing at a glance, as the LCD's speck did, but with the new character's six moods.
