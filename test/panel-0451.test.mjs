@@ -87,7 +87,7 @@ test('0451 AC3: the screen\'s accessible name no longer mentions fixing; Setting
     assert.doesNotMatch(name + tip, /fixing/i);
     // 0458: the Pipeline pop-up shows only the log, so it no longer says it
   }
-  assert.ok(SETTING_GROUPS.find(g => g.title === 'Watching').settings.some(s => s.key === 'watch'), 'Settings still has watch');
+  assert.ok(SETTING_GROUPS.find(g => g.title === 'Your engineering manager').settings.some(s => s.key === 'watch'), 'Settings still has watch');
 });
 
 // 0491: the README is checked by review.

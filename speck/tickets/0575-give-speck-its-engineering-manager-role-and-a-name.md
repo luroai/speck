@@ -46,6 +46,7 @@ speck is described everywhere as your engineering manager, with a short account 
 - Today: the group is `{ title: 'Watching', ... }` in `SETTING_GROUPS` in `scripts/settings.mjs`, and `templates/panel-settings.js` finds it by that title (`g.title === 'Watching'`) to put it under the speck run switch, so both change together. Settings are validated in `scripts/config.mjs`. 0485 to 0488 renamed the Foreman to speck; this keeps speck as the default name.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: spaces at the end of a name are dropped when it's saved or read, so a name never ends up as "Virgil 's agent", with a test; the brief's sentence that placed the switch in this group now says it's the Auto-build switch, as the page draws it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

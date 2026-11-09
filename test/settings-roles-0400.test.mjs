@@ -31,7 +31,7 @@ const YOURS = ({ cursor = false } = {}) => ({ list: true, agents: [
 
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, for_machine: true, from: 'repo', repo_value: value, ...o });
 const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', builder_model = '', reviewer_model = '', watch_model = '', cursor = false } = {}) => ({ groups: [
-  { title: 'Watching', settings: [S('watch_agent', foreman, { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('watch_model', watch_model),
+  { title: 'Your engineering manager', settings: [S('watch_agent', foreman, { choices: ['', 'claude', 'codex', 'cursor', 'deepseek'] }), S('watch_model', watch_model),
     S('watch_effort', '', { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] })] },
   { title: 'Building and reviewing', settings: [
     S('builder', builder, { choices: ['claude', 'codex', 'cursor', 'deepseek'], build_command: { value: '', own: { claude: '', codex: '', cursor: '' }, each_ticket: true } }),

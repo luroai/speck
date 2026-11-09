@@ -55,7 +55,7 @@ test('0286 AC1: speck config set accepts off, tell and fix for watch, and refuse
 
 test('0286 AC1: the settings give watch in a Foreman group, explained, picked from off, tell and fix, and the panel saves it', () => {
   const r = panelRepo();
-  const g = panelSettings(r.dir).groups.find(x => x.title === 'Watching');
+  const g = panelSettings(r.dir).groups.find(x => x.title === 'Your engineering manager');
   const s = g.settings.find(x => x.key === 'watch');
   assert.equal(s.value, 'tell');
   assert.equal(s.editable, true);
@@ -68,7 +68,7 @@ test('0286 AC1: the settings give watch in a Foreman group, explained, picked fr
 
 test('0286 AC1: the Settings view shows watch in its Foreman group, under the speck run switch, with its explanation', async () => {
   const settings = { groups: [
-    { title: 'Watching', settings: [{ key: 'watch', value: 'tell', default: true, explain: 'What the Foreman does.', editable: true, choices: ['off', 'tell', 'fix'] }] },
+    { title: 'Your engineering manager', settings: [{ key: 'watch', value: 'tell', default: true, explain: 'What the Foreman does.', editable: true, choices: ['off', 'tell', 'fix'] }] },
     { title: 'Shipping', settings: [{ key: 'auto_ship', value: false, default: true, explain: 'Ships.' }] },
   ] };
   const fetch = async url => ({ ok: true, status: 200, json: async () => (String(url).startsWith('/api/settings') ? settings : { tickets: [], ideas: [] }) });
@@ -77,9 +77,9 @@ test('0286 AC1: the Settings view shows watch in its Foreman group, under the sp
   p.press(p.byId('settings-open'));
   await p.settle();
   const groups = p.byId('settings').children.filter(n => n.className === 'sgroup');
-  assert.equal(groups.filter(n => n.textContent.startsWith('Watching')).length, 1, 'one Foreman group');
+  assert.equal(groups.filter(n => n.textContent.startsWith('Your engineering manager')).length, 1, 'one Foreman group');
   const foreman = groups[0];
-  assert.ok(foreman.textContent.startsWith('Watching'), 'first');
+  assert.ok(foreman.textContent.startsWith('Your engineering manager'), 'first');
   assert.ok(p.all(p.byId('settings').children.find(n => n.className === 'switches')).some(n => n.id === 'run-switch'), 'with the speck run switch above it (0396)');
   const pick = p.all(foreman).find(n => n.tagName === 'select' && n.attrs['aria-label'] === 'watch');
   assert.ok(pick, 'a list to pick from');

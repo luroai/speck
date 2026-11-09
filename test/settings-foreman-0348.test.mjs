@@ -28,7 +28,7 @@ const notAsked = async () => { throw new Error('not asked'); };
 const builderRow = builder => ({ key: 'builder', value: builder, default: false, explain: 'Who builds.', editable: true, choices: ['claude', 'codex', 'cursor'] });
 const view = ({ builder = 'claude', foreman = '', foreman_models }) => ({ groups: [
   { title: 'Building and reviewing', settings: [builderRow(builder)] },
-  { title: 'Watching', settings: [
+  { title: 'Your engineering manager', settings: [
     { key: 'watch_agent', value: foreman, default: false, explain: 'The Foreman agent.', editable: true, choices: ['', 'claude', 'codex', 'cursor'] },
     { key: 'watch_model', value: '', default: false, explain: 'The Foreman model.', editable: true },
   ] }],

@@ -121,12 +121,12 @@ test('0285 AC1, AC2: a ship started outside speck run\'s queue, from the panel\'
 
 // 0396: the Foreman group shows once the settings have loaded.
 test('0285 AC3: Settings has a Foreman group, first, with the speck run switch, which turns speck run on and off as the header\'s did', async () => {
-  const p = fakePage([state(view({}), { run: undefined }), { groups: [{ title: 'Watching', settings: [] }] }, { ok: true, run: { on: true, pid: 7 } }, { ok: true, run: { on: false, pid: null } }]);
+  const p = fakePage([state(view({}), { run: undefined }), { groups: [{ title: 'Your engineering manager', settings: [] }] }, { ok: true, run: { on: true, pid: 7 } }, { ok: true, run: { on: false, pid: null } }]);
   await p.settle();
   click(p.byId('settings-open'));
   await p.settle();
   const groups = p.byId('settings').children.filter(n => n.className === 'sgroup');
-  assert.equal(groups[0].textContent.startsWith('Watching'), true, 'the Foreman group comes first');
+  assert.equal(groups[0].textContent.startsWith('Your engineering manager'), true, 'the Foreman group comes first');
   // 0396: the switch is Auto-build's, in the box above the groups.
   const box = p.byId('settings').children.find(n => n.className === 'switches');
   assert.ok(p.byId('settings').children.indexOf(box) < p.byId('settings').children.indexOf(groups[0]), 'Auto-build above it');
