@@ -43,6 +43,7 @@ The panel has speck's new character as one reusable drawing, in six moods, alive
 - From the mock's component: viewBox -26 -50 52 52; body 44 by 34 with 11 corner radius, centred at (0, -25); screen inset 4 with radius 7; visor 15 by 5. Bezel gradient #45484F to #0D0E11 on light, #5A5C54 to #1D1E1A on dark; screen #06070A; rim #5D6169 (light) or #70726A (dark); glass reflection white at 7%; glow the visor's red at about 28% and 3.6 wide.
 - Timings from the mock: watching drift 16 s, focused scan 5.2 s, glow 6.2 s, pleased lift 6.5 s, sheepish glance 9.5 s, asking pulse 5.6 s, asleep fade 9 s and line breathing 11 s, the z's on a 9 s cycle, a blink every 8.5 s, and 0.8 s easing between shapes.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
