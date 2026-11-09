@@ -32,21 +32,32 @@ const SHORT = { after: 'other tickets', slots: 'build slots', switching: 'new co
 
 // 0286: watch (0487: was foreman_fixing), what the Foreman does with a blocked question: off (nothing), tell (counts it under Needs you)
 // or fix (takes the recommendation of one that changes nothing you'd notice and has a clear winner). tell by default,
-// and for any value speck doesn't know.
-export const FIXING = Object.freeze(['off', 'tell', 'fix']);
+// and for any value speck doesn't know. 0564: or decide (everything fix does, and takes the recommendation whatever its facts).
+export const FIXING = Object.freeze(['off', 'tell', 'fix', 'decide']);
 // 0317: what each setting has the Foreman do, as its detail and `speck status` say it.
 export const FIXING_SAYS = Object.freeze({
   off: 'off. speck leaves blocked questions to you, without counting them under Needs you.',
   tell: 'tell. speck leaves blocked questions to you, and counts them under Needs you.',
   fix: 'fix. speck takes the recommendation of a blocked question that changes nothing you\'d notice and has a clear winner, once per ticket.',
+  decide: 'decide. speck takes the recommendation of every blocked question that has one, up to 3 per ticket, and leaves high-risk tickets to you.',
 });
 export const fixingOf = cfg => (FIXING.includes(setting(cfg, 'watch')) ? setting(cfg, 'watch') : 'tell');
+// 0564: whether watch has speck act at all, as fix does: decide does everything fix does.
+export const speckActs = fixing => fixing === 'fix' || fixing === 'decide';
+// 0564: how many recommendations speck takes for one ticket with watch: decide.
+export const MAX_DECIDED = 3;
 // 0286: whether the Foreman may take a blocked ticket's recommendation, from what `speck status --json` gives (0283):
 // a recommendation, no change you'd notice and a clear winner. Anything unknown is left for you.
 // 0563: a block by the size guard goes by what it recommends instead: the split is taken, and raising the limit never is.
 export const recommendsSplit = rec => typeof rec === 'string' && /^split\b/i.test(rec.trim()) && !/\b(rais|increas|lift)/i.test(rec);
 export const fixable = t => !!t && t.status === 'blocked' && typeof t.blocked_recommendation === 'string' && t.blocked_recommendation !== ''
   && (t.blocked_size_guard === true ? recommendsSplit(t.blocked_recommendation) : t.blocked_noticeable === false && t.blocked_clear === true);
+// 0564: whether watch: decide may take it: any recommendation, as long as the ticket is low risk. Raising the size limit is
+// still never taken (0563), and anything unknown is left for you.
+export const decidable = t => !!t && t.status === 'blocked' && typeof t.blocked_recommendation === 'string' && t.blocked_recommendation !== ''
+  && t.risk === 'low' && (t.blocked_size_guard !== true || recommendsSplit(t.blocked_recommendation));
+// 0564: whether `fixing` (watch) has speck take this ticket's recommendation, leaving aside how many it has taken.
+export const speckTakes = (fixing, t) => (fixing === 'decide' ? decidable(t) : fixing === 'fix' && fixable(t));
 
 const list = v => (Array.isArray(v) ? v : []);
 const text = v => (typeof v === 'string' ? v : '');
@@ -120,10 +131,10 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
 
 // The Foreman for `speck status`: its status, then each ready ticket's reason and shipping's state, one per line.
 // Blocked tickets aren't repeated: speck status lists them with their questions.
-// 0317: with watch fix, the status says so and what fix does, and the recommendations the Foreman took lately follow.
+// 0317: with watch fix (0564: or decide), the status says so and what fix does, and the recommendations the Foreman took lately follow.
 // 0501: it names the watch setting, which was called Fixing.
 export function foremanLines(v) {
-  const lines = [`SPECK: ${v.word}${v.fixing === 'fix' ? ' · watch: fix' : ''}`, ...(v.fixing === 'fix' ? [`  watch: ${FIXING_SAYS.fix}`] : [])];
+  const lines = [`SPECK: ${v.word}${speckActs(v.fixing) ? ` · watch: ${v.fixing}` : ''}`, ...(speckActs(v.fixing) ? [`  watch: ${FIXING_SAYS[v.fixing]}`] : [])];
   for (const h of v.held || []) lines.push(`  ${h}`); // 0299: once, before the tickets it holds up
   for (const r of v.ready) lines.push(`  ${r.id} ready, not building: ${r.why}`);
   for (const w of v.ship ? v.ship.waiting : []) lines.push(`  ${w.id} waiting to ship: ${w.why}`);

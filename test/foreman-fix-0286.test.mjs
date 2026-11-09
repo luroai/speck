@@ -59,7 +59,7 @@ test('0286 AC1: the settings give watch in a Foreman group, explained, picked fr
   const s = g.settings.find(x => x.key === 'watch');
   assert.equal(s.value, 'tell');
   assert.equal(s.editable, true);
-  assert.deepEqual(s.choices, ['off', 'tell', 'fix']);
+  assert.deepEqual(s.choices, ['off', 'tell', 'fix', 'decide']); // 0564: and decide
   assert.match(s.explain, /fix/);
   assert.equal(panelSaveSettings(r.dir, [{ key: 'watch', value: 'fix' }]).status, 200);
   assert.equal(loadConfig(r.dir).watch, 'fix');

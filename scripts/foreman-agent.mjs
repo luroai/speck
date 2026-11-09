@@ -16,7 +16,7 @@ import { resumeFor, resumedRecord } from './hand-back.mjs';
 import { pidAlive } from './run-switch.mjs';
 import { runWords } from './go-with.mjs';
 import { processesWithEnv } from './build-procs.mjs';
-import { fixingOf } from './foreman.mjs';
+import { fixingOf, speckActs } from './foreman.mjs';
 import { statusData } from './speck.mjs';
 import { askKey, dealtWith, readReplies, cmdForemanReply } from './foreman-answer.mjs';
 import { cursorCli, CURSOR_HEADLESS } from './cursor-build.mjs';
@@ -232,7 +232,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
 
   const stuck = ({ id, what, log }) => {
     const c = config();
-    if (!c || fixingOf(c) !== 'fix') return;
+    if (!c || !speckActs(fixingOf(c))) return;
     // 0566: a question still waiting for you (agentView's, so what Needs you counts) holds back any look at its ticket.
     let status = null;
     try { status = statusOf(id); } catch { /* unreadable: check() holds it back before it starts */ }
@@ -240,7 +240,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     const s = readAgentState(runs()), k = key(id);
     if (s.tried[id] === k || s.running?.id === id && s.running.key === k || s.queue.some(q => q.id === id && q.key === k)) return;
     s.queue = [...s.queue.filter(q => q.id !== id), { id, key: k, what: String(what), log: String(log || '') }];
-    if (save(s)) say(`${id}: speck will look into it, as watch is fix: ${what}`);
+    if (save(s)) say(`${id}: speck will look into it, as watch is ${fixingOf(c)}: ${what}`);
   };
 
   // An agent that has ended: each action it took for its ticket is carried out.
@@ -319,7 +319,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     if (s.queue.length) for (const a of agentView(runs(), tickets).asks) over.add(a.id);
     if (s.queue.some(q => over.has(q.id))) { s.queue = s.queue.filter(q => !over.has(q.id)); changed = true; }
     if (!s.running && s.queue.length) {
-      if (c && fixingOf(c) === 'fix') { launch(s, c, s.queue[0]); changed = false; }
+      if (c && speckActs(fixingOf(c))) { launch(s, c, s.queue[0]); changed = false; }
       else { s.queue = []; changed = true; } // turned off meanwhile: nothing waits
     }
     // 0318: your answers to its questions, each carried out once, as it would its own instruction, while the ticket is
