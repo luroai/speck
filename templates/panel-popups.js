@@ -21,6 +21,9 @@ const changesSaid = new Map(); // id → what speck changes printed when the pan
 const changesRefused = new Map(); // id → why speck changes refused it, until its next Ask for changes
 const changesOpen = new Set(); // 0583: ids whose note box is unfolded in the full view's bar
 let packFromFull = false; // 0583: the review pack showing was opened from the full view, so closing it goes back there
+let liveBox = null, liveBuilt = null, liveSub = null; // 0584: the full view's live section, the signature of what it shows, and its counter
+let liveLogOf = null; // 0584: the id of the ticket whose log the full view is following, or null
+let logFromRow = false; // 0584: the build log's pop-up was opened by the full view's Build log row
 // Shows the whole ticket in the side pane, leaving the ticket open in the list. `list` is the id of the list it's in.
 function fullButton(t, list) {
   const b = el('button', 'full-open', 'Full ticket');
@@ -381,6 +384,7 @@ function packBlocks(text) {
 // facts; then, for a draft, its readiness list and buttons as in the list, without Full ticket; then its outcome, its
 // criteria with a tick on each one the reviewer passed, rows that open its review pack and build log, and its other
 // sections that have something in them, their Markdown formatted; then, for an approved ticket, the bar with its actions.
+// 0584: a ticket in the Build lane has its live section under its track and facts.
 function fullTicket(t, draft, steps, barShown) {
   const lane = LANE_OF[backList()], back = el('span', 'close', lane);
   back.tabIndex = 0;
@@ -389,6 +393,8 @@ function fullTicket(t, draft, steps, barShown) {
   back.addEventListener('click', closeFull);
   back.addEventListener('keydown', pressWithKeys);
   const body = el('div', null, null, draft ? paneReadiness(t) : null);
+  liveBox = liveShows(t) ? liveSection(t) : null;
+  if (liveBox) steps.appendChild(liveBox); // 0584
   mdPart(body, 'Outcome', t.outcome);
   const criteria = list(t.acceptance_criteria), passed = new Set(list(t.criteria_passed));
   if (criteria.length) {
@@ -466,9 +472,70 @@ function paneRows(t) {
 // Opens its build log's pop-up. With its card closed, nothing has loaded its log yet.
 function openLogFromPane(id) {
   buildLogOf = id;
-  if (!openQueue.has(id)) loadLog(id);
+  logFromRow = true;
+  if (!openQueue.has(id) && liveLogOf !== id) loadLog(id);
   render();
 }
+// 0584: the full view's live section, for a ticket in the Build lane: what its open card says about a running or stopped
+// build, or only the Foreman's question on one that hasn't started. It has the card's class, so it has the card's styles. Its
+// log is kept while the rest is drawn again.
+const liveShows = t => paneFrom === 'queue' && !packOf && (t.inFlight === true || !!foremanAskOf(t.id));
+function liveSig(t) {
+  if (!t || !liveShows(t)) return null;
+  const id = String(t.id), { counter, ship_counter, ...own } = ownData(t);
+  return signature([id, own, t.counter !== null, stopping.has(id), stopRefused.get(id) ?? null, goingWith.has(id), goWithRefused.get(id) ?? null, foremanAskOf(id)?.question ?? null,
+    askPending.get(id) ?? null, askRefused.get(id) ?? null, speckCalled(), shippingId === id]);
+}
+// Where it is, in the sentence its card says it in, its step's name, and how long it has been going.
+function liveNow(t, d) {
+  const tone = d.tone ? ` ${d.tone}` : '', now = t.steps.find(s => s.state === 'now'), counter = queueCounter(t);
+  const line = detailsLine('live-now', [el('span', `say${tone}`, d.sentence),
+    d.sentence === 'Shipping' ? null : d.round !== null && d.round !== undefined ? el('span', `stage${tone}`, `Review ${d.round}`) : now ? el('span', `stage${tone}`, now.label) : null,
+    counter ? el('span', 'sub', counter) : null]);
+  return line;
+}
+function liveParts(t) {
+  const id = String(t.id);
+  if (!t.inFlight) return [foremanAskBox(id, foremanAskOf(id).question, 'pane')];
+  return [liveNow(t, doing(t, t.shipping || shippingId === id, speckCalled())), ...buildNotes(t, 'pane'),
+    el('div', 'live-buttons', null, buildLogButton(id), t.pausable ? stopButton(t) : null),
+    t.pausable && stopRefused.has(id) ? el('div', 'stop-refused', stopRefused.get(id)) : null].filter(Boolean);
+}
+const liveCounterIn = parts => (parts[0] && parts[0].className === 'live-now' ? child(parts[0], 'sub') || null : null);
+function liveSection(t) {
+  const parts = liveParts(t);
+  liveSub = liveCounterIn(parts);
+  return el('div', 'q live', null, el('div', 'live-state', null, ...parts), t.inFlight ? logBox(String(t.id), paneKey(t.id)) : null);
+}
+// Draws it again in place, leaving its log box as it is unless the ticket no longer has a log or has just got one.
+function drawLive(t) {
+  const state = liveBox.children[0], parts = liveParts(t), pane = $('full-ticket');
+  const focused = within(document.activeElement, state);
+  state.replaceChildren(...parts);
+  liveSub = liveCounterIn(parts);
+  const log = child(liveBox, 'log');
+  if (t.inFlight && !log) liveBox.appendChild(logBox(String(t.id), paneKey(t.id)));
+  if (!t.inFlight && log) { liveBox.removeChild(log); logBoxes.delete(paneKey(t.id)); }
+  if (focused && pane.focus) pane.focus({ preventScroll: true }); // so the keys still scroll the pane
+}
+// The track and facts have been drawn again, so it moves under the new ones, with its log's place and the focus kept.
+function moveLive(steps) {
+  const log = child(liveBox, 'log'), active = document.activeElement, inside = within(active, liveBox);
+  if (log) logScroll.set(log, atBottom(log) ? null : log.scrollTop);
+  steps.appendChild(liveBox);
+  if (inside && active.focus) active.focus({ preventScroll: true });
+}
+// Follows the log of the ticket the live section shows, and stops following one it no longer shows.
+function followLive(t) {
+  const id = t && liveShows(t) && t.inFlight ? String(t.id) : null;
+  if (id === liveLogOf) return;
+  const was = liveLogOf;
+  liveLogOf = id;
+  if (was !== null) { logBoxes.delete(paneKey(was)); if (!logWanted(was)) closeLog(was); }
+  if (id !== null && !openQueue.has(id) && buildLogOf !== id) loadLog(id);
+}
+// The live section's counter, for the page's clock, as a card's is.
+const liveCounters = () => (liveSub && paneTicket && paneTicket.counter !== null && paneTicket.held_at === null ? [[liveSub, paneTicket.since, !!paneTicket.paused]] : []);
 // 0583: the bar fixed to the bottom of an approved ticket's full view: Ask for changes and Ship, then what they said.
 const barShows = t => t.status === 'approved' || t.shipping === true || shippingId === String(t.id) || shipped.has(String(t.id));
 const shipBar = t => el('div', 'ship-bar', null, ...shipPart(t, true));
@@ -509,11 +576,15 @@ function renderFull(m) {
   const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null, changesSending, changesSaid.get(fullId) ?? null, changesRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
   const tone = t && !packOf ? paneTone(t) : '', steps = t && !packOf ? paneSteps(t) : null, stepsSig = steps ? signature([fullId, t.status, tone, stepsShown(steps)]) : null;
   const barSig = t && !packOf && barShows(t) ? docActsSig(t) : null; // 0583
+  const liveNew = liveSig(t); // 0584
+  followLive(t);
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
   holdPage(pageHeld());
   if (sig !== fullBuilt) {
     fullBuilt = sig;
+    liveBuilt = liveNew;
+    liveBox = null; liveSub = null;
     readyBuilt = readySig;
     stepsBuilt = stepsSig;
     barBuilt = barSig;
@@ -534,7 +605,16 @@ function renderFull(m) {
     if (state) { state.textContent = String(t.status ?? ''); setTone(state, tone); } // 0424
     pane.insertBefore(steps, pane.children[1]);
     pane.removeChild(pane.children[2]);
+    if (liveBox) moveLive(steps); // 0584
   }
+  if (liveNew !== liveBuilt) { // 0584: the live section, in place
+    liveBuilt = liveNew;
+    const holder = pane.children[1];
+    if (liveNew === null) { if (liveBox) holder.removeChild(liveBox); liveBox = null; liveSub = null; }
+    else if (liveBox) drawLive(t);
+    else { liveBox = liveSection(t); holder.appendChild(liveBox); }
+  }
+  if (liveSub) putCounter(liveSub, queueCounter(t)); // the counter comes from the clock, as on a kept card
   if (barSig !== barBuilt) { // 0583: the bar, drawn again when what it shows changes, with the focus kept in the pane
     barBuilt = barSig;
     const old = pane.children[3] || null, had = !!old && within(document.activeElement, old);
@@ -765,12 +845,13 @@ function buildLogButton(id) {
 // 0548: closes it, with the focus back on the Full log button that opened it, or on the one drawn in its place since,
 // or, when its card has gone, on the Build lane.
 function closeBuildLog() {
-  const id = buildLogOf;
+  const id = buildLogOf, row = logFromRow;
   buildLogOf = null;
-  if (!openQueue.has(id)) closeLog(id); // 0583: opened from the full view, with its card closed
+  logFromRow = false;
+  if (!logWanted(id)) closeLog(id); // 0583: opened from the full view, with its card closed
   render();
-  const find = n => { if (n.buildLogOf === id) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
-  const to = find($('full-ticket')) || find($('queue')) || $('build-section'); // 0583: its row in the full view first
+  const find = (n, cls) => { if (n.buildLogOf === id && (!cls || n.className === cls)) return n; for (const c of n.children || []) { const f = find(c, cls); if (f) return f; } return null; };
+  const to = (row && find($('full-ticket'), 'pane-row')) || find($('full-ticket')) || find($('queue')) || $('build-section'); // 0583: its row in the full view first
   if (to.focus) to.focus({ preventScroll: true });
 }
 // 0548: the ticket's build log in the pop-up, titled "<id> build log", in place of the Pipeline log, which has no stale
