@@ -44,6 +44,7 @@ When a build runs well past the usual time, speck looks into why and tells you w
 - Today: `speck run` starts the agent for ended builds (`lookInto` in `scripts/run.mjs`, `buildStuck` and `stuck` in `scripts/foreman-agent.mjs`); `speck watch fix` already makes a draft fix ticket (`makeFixTicket`). The panel works out the median build time in `templates/panel-model.js`.
 - Waits for 0567, which adds `decide` to `speck watch`'s actions in `scripts/foreman-agent.mjs`, after 0564 and 0566.
 - Relies on nothing outside this repo; the load average is Node's `os.loadavg()`, which is all zeros on Windows.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
