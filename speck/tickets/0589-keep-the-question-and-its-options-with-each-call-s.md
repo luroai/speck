@@ -45,7 +45,7 @@ Each call speck makes keeps its question and its other options, and Decided for 
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When speck makes a call for you, it now remembers the question it answered and the options it turned down, as well as the one it picked and when. Builds also write down the options they don't recommend when they stop to ask something. Nothing looks different yet: the Decided for you list will show this once its redesign lands. To see it now, run `speck status --json` after speck has made a call and look at the list of what it decided. Calls speck made before this still appear, just without the question or the other options.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +55,10 @@ Each call speck makes keeps its question and its other options, and Decided for 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Follow-ups (known limits, no ticket needed):
+- If the watch agent rewords the recommended option when it decides, the recommended wording also shows among those not chosen, as the two are compared exactly.
+- The panel's blocked card, like `Recommended:`, doesn't print the `Other options:` line, so the build skill asks for the options in the question as well.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -136,6 +140,89 @@ Each call speck makes keeps its question and its other options, and Decided for 
     ],
     "escalation_question": "",
     "summary": "The main paths work and the reported tests pass. One gap remains: when the watch agent chooses a different option, the saved call can lose the original recommendation. Fix this so users can see all the options speck declined."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "cf3873c982a9270b8a624aeb4e0631023fd1d059",
+    "session": "continued",
+    "thread_id": "01a1c199-273c-78d1-849a-61e4d14bef65",
+    "builder_response": "- Tests run: test/calls-0589.test.mjs\n- F1: fixed. `callOf` in scripts/go-with.mjs now builds other_options from the recommendation and the listed options, without repeats or the chosen option. New test: \"an agent choosing outside the listed options keeps every option it didn't choose\".\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 252509,
+      "cached_input_tokens": 203264,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1610,
+      "reasoning_output_tokens": 162
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4041,
+      "cached": 92288,
+      "write": 0,
+      "output": 608
+    },
+    "cost_usd": 0.0233908,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:38:00.139Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The build skill includes Other options beside Recommended. Passing AC1 tests exercise questionFacts parsing and board output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "goWith and foremanAction save calls with question, choice, alternatives and time. Passing AC2 tests cover watch fix, decide, size-guard splits, preservation across builds and choices outside the listed options."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "statusData joins decidedFor output with saved calls through withCalls. The passing AC3 CLI test checks every required field in status --json."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests verify historical calls remain visible with question null and other_options empty, and saved calls are matched only once."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Round 2 reports 126 passed, zero failed and three skipped. Round 1 related tests also had zero failures; no existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/go-with.mjs",
+        "issue": "Choices outside the listed alternatives previously omitted the original recommendation from other_options.",
+        "suggested_fix": "Completed: callOf combines the recommendation and alternatives, removes duplicates and excludes the chosen option. A passing regression test exercises this through the watch agent.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Calls now retain their question and unchosen options, including when speck chooses an option outside the original list. Status exposes the details, older calls remain visible, and the reported tests pass. Ready for the owner's merge decision."
   }
 }
 ```
