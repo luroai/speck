@@ -23,7 +23,7 @@ after: []                # ticket ids that must be done first
 <!-- What is true when this ships. One outcome. -->
 
 ## Acceptance criteria
-<!-- 1–5 testable statements. Each one becomes a test before any code is written. -->
+<!-- 1–5 testable statements. Each one becomes a test before any code is written. `speck check <id>` runs the ready check on the ticket. -->
 1.
 
 ## Out of scope

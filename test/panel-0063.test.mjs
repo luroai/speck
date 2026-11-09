@@ -110,7 +110,7 @@ test('0063 AC2: a ticket that isn\'t a draft shows the same id, title and sectio
   click(top(itemOf(p, '0001')));
   press(fullOf(p, itemOf(p, '0001')));
   const draftHeadings = headings(p, pane(p));
-  assert.deepEqual(draftHeadings, ['Readiness', 'Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']);
+  assert.deepEqual(draftHeadings, ['Ready check', 'Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']);
   const sections = node => node.children.at(-1).children.filter(n => !/\bready\b/.test(n.className)).map(n => n.textContent);
   const draftSections = sections(pane(p));
   named(p, pane(p), 'Close').listeners.click();
@@ -122,7 +122,7 @@ test('0063 AC2: a ticket that isn\'t a draft shows the same id, title and sectio
     assert.deepEqual(headings(p, pane(p)), draftHeadings.slice(1), `${id}: the same sections, with no readiness list`);
     assert.deepEqual(sections(pane(p)).map(t => t.replaceAll(id, 'X')), draftSections.map(t => t.replaceAll('0001', 'X')), `${id}: shown the same way`);
     assert.equal(p.all(pane(p)).find(n => /\bset-ready\b/.test(n.className || '')), undefined, `${id}: no Set ready`);
-    assert.ok(!pane(p).textContent.includes('Readiness') && !pane(p).textContent.includes('lint passes'), `${id}: no readiness lines`);
+    assert.ok(!pane(p).textContent.includes('Ready check passes'), `${id}: no readiness lines`); // the heading: above. Its facts table has a Ready check cell of its own
     named(p, pane(p), 'Close').listeners.click();
   }
 });
@@ -141,7 +141,7 @@ test('0063 AC3: the pane stays on a ticket as it moves from Tickets to the queue
   await p.settle();
   click(top(itemOf(p, '0001')));
   press(fullOf(p, itemOf(p, '0001')));
-  assert.ok(headings(p, pane(p)).includes('Readiness'), 'a draft: with its readiness list');
+  assert.ok(headings(p, pane(p)).includes('Ready check'), 'a draft: with its readiness list');
   const move = async (o, what) => {
     const next = clone(s);
     Object.assign(next.tickets[0], o);
@@ -152,7 +152,7 @@ test('0063 AC3: the pane stays on a ticket as it moves from Tickets to the queue
   };
   await move({ status: 'ready' }, 'set ready');
   assert.ok(rowOf(p, '0001') && !itemOf(p, '0001'), 'it is in the queue now');
-  assert.ok(!headings(p, pane(p)).includes('Readiness'), 'ready: no readiness list');
+  assert.ok(!headings(p, pane(p)).includes('Ready check'), 'ready: no readiness list');
   assert.equal(named(p, pane(p), 'Set ready'), undefined, 'and no Set ready');
   await move({ status: 'building', started: at(9) }, 'starts building');
   await move({ status: 'approved', started: at(9), rounds: [round(1, 50)] }, 'approved');

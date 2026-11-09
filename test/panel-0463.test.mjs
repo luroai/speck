@@ -74,13 +74,13 @@ test('0463 AC2: the six cells are Status, After or Waiting on, Lint, Priority, S
   await p.settle();
   await openAll(p);
   const want = {
-    '0801': [['Status', 'Draft'], ['After', '—'], ['Lint', 'passes'], ['Priority', 'P3'], ['Size · risk', 'M · low'], ['Type', 'code']],
-    '0802': [['Status', 'Draft'], ['After', '1 left'], ['Lint', '2 errors · 1 warning'], ['Priority', 'P1'], ['Size · risk', 'S · high'], ['Type', 'bug']],
-    '0803': [['Status', 'Draft'], ['After', '11 left of 27'], ['Lint', '3 warnings'], ['Priority', 'P4'], ['Size · risk', `S · ${LONG}`], ['Type', 'task']],
-    '0804': [['Status', 'Draft'], ['After', '—'], ['Lint', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
-    '0812': [['Status', 'Queued'], ['Waiting on', '1 left'], ['Lint', 'passes'], ['Priority', 'P2'], ['Size · risk', 'M · high'], ['Type', 'fix']],
-    '0813': [['Status', 'Queued'], ['Waiting on', '2 left of 3'], ['Lint', '1 error'], ['Priority', 'P5'], ['Size · risk', `S · ${LONG}`], ['Type', 'code']],
-    '0814': [['Status', 'Queued'], ['Waiting on', '—'], ['Lint', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
+    '0801': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P3'], ['Size · risk', 'M · low'], ['Type', 'code']],
+    '0802': [['Status', 'Draft'], ['After', '1 left'], ['Ready check', '2 errors · 1 warning'], ['Priority', 'P1'], ['Size · risk', 'S · high'], ['Type', 'bug']],
+    '0803': [['Status', 'Draft'], ['After', '11 left of 27'], ['Ready check', '3 warnings'], ['Priority', 'P4'], ['Size · risk', `S · ${LONG}`], ['Type', 'task']],
+    '0804': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
+    '0812': [['Status', 'Queued'], ['Waiting on', '1 left'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Size · risk', 'M · high'], ['Type', 'fix']],
+    '0813': [['Status', 'Queued'], ['Waiting on', '2 left of 3'], ['Ready check', '1 error'], ['Priority', 'P5'], ['Size · risk', `S · ${LONG}`], ['Type', 'code']],
+    '0814': [['Status', 'Queued'], ['Waiting on', '—'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
   };
   for (const [id, rows] of Object.entries(want)) assert.deepEqual(cells(factsIn(card(p, id))), rows, id);
   // errors and warnings in their colours, and the kinds in their tags' colours

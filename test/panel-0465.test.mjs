@@ -99,8 +99,8 @@ test('0465 AC1: in flight as 0461 and 0462 set out, not started as 0463 does, an
   }
   const grey = ['step build', 'step check', 'step review', 'step approve', 'step ship'];
   const done = grey.map(s => `${s} done`);
-  assert.deepEqual(seen['0801'], ['track', grey, [['Status', 'Draft'], ['After', '—'], ['Lint', '1 error · 2 warnings'], ['Priority', 'P3'], ['Size · risk', 'M · high'], ['Type', 'bug']]]);
-  assert.deepEqual(seen['0812'], ['track', grey, [['Status', 'Queued'], ['Waiting on', '1 left'], ['Lint', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'fix']]]);
+  assert.deepEqual(seen['0801'], ['track', grey, [['Status', 'Draft'], ['After', '—'], ['Ready check', '1 error · 2 warnings'], ['Priority', 'P3'], ['Size · risk', 'M · high'], ['Type', 'bug']]]);
+  assert.deepEqual(seen['0812'], ['track', grey, [['Status', 'Queued'], ['Waiting on', '1 left'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'fix']]]);
   assert.deepEqual(seen['0811'], ['track', ['step build now', 'step check', 'step review', 'step approve', 'step ship'],
     [['Now', 'Writing'], ['Builder', 'Claude'], ['Time', '01:05'], ['Priority', 'P1'], ['Size · risk', 'S · low'], ['Type', 'code']]]);
   assert.equal(seen['0813'][0], 'track stopped', 'a blocked one\'s current step in crimson');

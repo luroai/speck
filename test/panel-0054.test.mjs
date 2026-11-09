@@ -31,7 +31,7 @@ test('0054 AC1: an open ticket shows its problem, outcome, readiness list and Se
   await p.settle();
   const item = openTicket(p, '0001');
   const text = item.textContent;
-  for (const s of ['Problem', 'Problem of 0001.', 'Outcome', 'Outcome of 0001.', 'Readiness', '2 criteria', 'lint passes']) assert.ok(text.includes(s), s);
+  for (const s of ['Problem', 'Problem of 0001.', 'Outcome', 'Outcome of 0001.', 'Ready check', '2 criteria', 'Ready check passes']) assert.ok(text.includes(s), s);
   assert.ok(named(p, item, 'Set ready'), 'the Set ready button');
   for (const s of ['First criterion.', 'Second criterion.', 'Out of scope', '- Not this.', 'Notes', '- A note.']) assert.ok(!text.includes(s), `no ${s}`);
   assert.ok(!headings(p, item).some(h => h.startsWith('Acceptance criteria')), 'no criteria heading');
@@ -54,14 +54,14 @@ test('0054 AC2: Full ticket keeps the ticket open and shows its whole text in th
   assert.ok(paneOpen(p), 'the side pane opens');
   const text = pane(p).textContent;
   for (const x of ['0001', 'Ticket 0001', 'Problem of 0001.', 'Outcome of 0001.', 'Not this.', 'A <b>bold</b> note.']) assert.ok(text.includes(x), x);
-  assert.deepEqual(headings(p, pane(p)), ['Readiness', 'Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']); // Readiness: 0062
+  assert.deepEqual(headings(p, pane(p)), ['Ready check', 'Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']); // Readiness: 0062
   const ol = p.all(pane(p)).find(n => n.tagName === 'ol');
   assert.deepEqual(ol.children.map(li => li.textContent), ['First criterion.', 'Second criterion.'], 'numbered criteria');
   assert.doesNotMatch(page(), /innerHTML|insertAdjacentHTML/, 'built as text, never read as HTML');
 
   openTicket(p, '0003');
   showFull(p, '0003');
-  assert.deepEqual(headings(p, pane(p)), ['Readiness', 'Outcome'], 'empty sections are left out');
+  assert.deepEqual(headings(p, pane(p)), ['Ready check', 'Outcome'], 'empty sections are left out');
   assert.ok(!p.all(pane(p)).some(n => n.tagName === 'ol'));
 });
 
