@@ -1,7 +1,7 @@
 ---
 id: "0575"
 title: Let you name speck, your engineering manager                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-09
 ---
 # 0575 · Let you name speck, your engineering manager
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 speck's watcher acts like an engineering manager (it takes the calls, unblocks builds and tells you what it did) but nothing says so: the Settings view calls its group Watching and describes its settings one by one, and the docs never say what its job is. Nor can you name it, though people who work with it daily, like the user, think of it by a name of their own.
