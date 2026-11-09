@@ -42,6 +42,7 @@ Build lists its tickets as compact rows under Needs you, Building and Queued.
 - Today: `queueItem`, `titleLine`, `queuedLine` in `templates/panel.js`, styled in `templates/panel-cards.css`. Waits for 0584, which puts the live details in the full view first.
 - Relies on nothing outside this repo.
 Failing before this build: none
+- speck (2026-11-09 21:10 UTC) told you: This build is slow because of the size of its test update, and nothing is stuck. Replacing the Build cards with rows broke 449 of the 3353 tests that checked the old look, so the builder split that work between six helper agents, which took about 7 to 19 minutes each, and it is now fixing the last few and re-running every panel test. Why: The build's log shows the 449 failures on its first full test run and later runs with only two failures left, the failures are all about the old cards with no test hanging, and the last full test run saved, on 0584 which this ticket builds on, passed; the high machine load fits the builder re-running the panel tests, though I couldn't list running processes to confirm it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
