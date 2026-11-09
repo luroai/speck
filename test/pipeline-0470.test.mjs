@@ -118,7 +118,7 @@ test('0470 AC2 and AC3: in a real browser, the title is in Inter at 18 px or mor
     // A file page can't load /fonts/Doto.ttf either, so the font is put in from its own file.
     await b.js(`(async () => { const f = new FontFace('Doto', Uint8Array.from(atob(${JSON.stringify(font)}), c => c.charCodeAt(0)).buffer, { weight: '100 900' });
       document.fonts.add(await f.load()); return true; })()`);
-    await b.until(`!!document.getElementById('run') && document.getElementById('run').getAttribute('aria-label') !== null`, 'the board');
+    await b.until(`!!document.getElementById('bar-word') && document.getElementById('bar-word').textContent !== ''`, 'the board');
     await b.js(`document.getElementById('run').click(), true`);
     await b.until(`!!document.querySelector('#foreman ol.run-log li')`, 'the log in the pop-up');
     assert.ok(await b.js(`[...document.fonts].some(f => f.family.replace(/"/g, '') === 'Doto' && f.status === 'loaded')`), 'Doto loaded');
@@ -128,7 +128,7 @@ test('0470 AC2 and AC3: in a real browser, the title is in Inter at 18 px or mor
         const at = await b.js(`(() => {
           document.documentElement.dataset.theme = ${JSON.stringify(look)};
           const v = document.getElementById('foreman'), top = v.querySelector('.top'), t = top.querySelector('.title'), close = top.querySelector('.close');
-          const cs = getComputedStyle(t), name = getComputedStyle(document.querySelector('.bezel .name'));
+          const cs = getComputedStyle(t), name = getComputedStyle(document.querySelector('.bezel .bar-word')); // 0580: the bar's lettering, as the title row's was
           const tr = t.getBoundingClientRect(), cr = close.getBoundingClientRect(), log = v.querySelector('.run-log').getBoundingClientRect();
           return { family: cs.fontFamily, weight: cs.fontWeight, nameFamily: name.fontFamily, nameWeight: name.fontWeight, size: parseFloat(cs.fontSize),
             rects: t.getClientRects().length, height: tr.height, lineHeight: parseFloat(cs.fontSize) * 1.6, sameRow: tr.top < cr.bottom && cr.top < tr.bottom,

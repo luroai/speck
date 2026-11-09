@@ -48,33 +48,33 @@ async function withPanel(touch, fn) {
 }
 const measure = `(() => {
   const r = el => { const b = el.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; };
-  return { button: r(document.getElementById('settings-open')), screen: r(document.getElementById('run')), row: r(document.querySelector('.bezel .print')) };
+  return { button: r(document.getElementById('settings-open')), screen: r(document.getElementById('run')), row: r(document.querySelector('.bezel')) };
 })()`;
 const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
 for (const touch of [true, false]) {
   const how = touch ? 'a touch screen' : 'a mouse';
 
-  test(`0454 AC1: with ${how}, at every width, the Settings button is at least 4 px above speck's screen and doesn't overlap it`, skip, () => withPanel(touch, async b => {
+  test(`0454 AC1: with ${how}, at every width, the Settings button is beside the status and doesn't overlap it`, skip, () => withPanel(touch, async b => {
     for (const w of WIDTHS) {
       await b.at(w);
       const m = await b.js(measure), at = `${w} px: ${JSON.stringify(m)}`;
-      assert.ok(m.screen.top - m.button.bottom >= 4, `a gap of ${m.screen.top - m.button.bottom} px: ${at}`);
+      assert.ok(m.button.left >= m.screen.right - 0.5, `beside it: ${at}`);
       assert.ok(!overlap(m.button, m.screen), `no overlap: ${at}`);
     }
   }));
 
   // 0469: at least 44 × 44 px with a mouse too
-  test(`0454 AC2: with ${how}, the Settings button is at least 44 × 44 px, inside a title row tall enough to hold it`, skip, () => withPanel(touch, async b => {
+  test(`0454 AC2: with ${how}, the Settings button is at least 44 × 44 px, inside the bar, tall enough to hold it`, skip, () => withPanel(touch, async b => {
     for (const w of WIDTHS) {
       await b.at(w);
       const m = await b.js(measure), at = `${w} px: ${JSON.stringify(m)}`;
       assert.ok(m.button.width >= 44 && m.button.height >= 44, `44 × 44 px: ${at}`);
-      assert.ok(m.button.top >= m.row.top && m.button.bottom <= m.row.bottom, `inside the title row: ${at}`);
+      assert.ok(m.button.top >= m.row.top && m.button.bottom <= m.row.bottom, `inside the bar: ${at}`);
     }
   }));
 
-  test(`0454 AC3: with ${how}, pressing anywhere on speck's screen opens the pipeline log, and pressing the button opens Settings`, skip, () => withPanel(touch, async b => {
+  test(`0454 AC3: with ${how}, pressing anywhere on the status opens the pipeline log, and pressing the button opens Settings`, skip, () => withPanel(touch, async b => {
     for (const w of [375, 1000]) {
       await b.at(w);
       const m = await b.js(measure), s = m.screen, at = `${w} px: ${JSON.stringify(m)}`;

@@ -24,7 +24,7 @@ test('0433 AC1: the rest of the script is in templates/panel.js, loaded from /pa
   for (const name of POPUP_NAMES) assert.ok(declares(popupsScript(), name) && !declares(html, name), `panel-popups.js has ${name}, and panel.html doesn't`);
   assert.ok(declares(headerScript(), 'drawScreen') && !declares(html, 'drawScreen'), 'panel-header.js has drawScreen, and panel.html doesn\'t'); // 0474
   const scripts = [...html.matchAll(/<script\b[^>]*>/g)].map(m => m[0]);
-  assert.deepEqual(scripts, ['<script id="theme-start">', '<script src="panel-model.js">', '<script src="lcd.js">',
+  assert.deepEqual(scripts, ['<script id="theme-start">', '<script src="panel-model.js">', '<script src="lcd.js">', '<script src="speck-face.js">', '<script src="speck-mood.js">',
     '<script src="panel.js" data-page="{{page}}" data-token="{{token}}">', '<script src="panel-header.js">', '<script src="panel-popups.js">', '<script src="panel-settings.js">']); // 0473: and its pop-ups', 0474: and its header's
   for (const m of html.matchAll(/<script src="[^"]*"[^>]*>([\s\S]*?)<\/script>/g)) assert.equal(m[1], '', 'each loaded script tag is empty');
   assert.match(html, /<script id="theme-start">[\s\S]*?setLook[\s\S]*?<\/script>/, 'the look is still set before the page is drawn');

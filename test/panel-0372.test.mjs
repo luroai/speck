@@ -43,7 +43,7 @@ test('0372 AC1: the header has no light/dark button, and Settings and the Forema
   assert.doesNotMatch(h, /light and dark/i);
   assert.doesNotMatch(h, /class="(moon|sun)"/);
   assert.match(h, /<button class="settings-open" id="settings-open"/);
-  assert.match(h, /<button class="glass" id="run"/);
+  assert.match(h, /<button class="bar-status" id="run"/);
   // Nothing in the stylesheet brings it back at any width.
   assert.doesNotMatch(css(), /\.theme\b/);
 });
@@ -152,7 +152,7 @@ async function withPanel(fn, width) {
       window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? new Response(JSON.stringify(STATE), { status: 200, headers: { 'content-type': 'application/json' } }) : real(url, opts);
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run canvas')`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#bar-face svg')`, 'the panel');
     await b.js('document.fonts.ready.then(() => true)');
     await fn(b);
   } finally { await b.close(); }
@@ -171,7 +171,7 @@ test('0372 AC2: in a real browser, choosing dark in Settings switches the page, 
   assert.notEqual(await b.js(bg), light, 'the page looks different');
   assert.equal(await b.js(`localStorage.getItem('speck-theme')`), 'dark');
   // 0542: waits for the reloaded panel to be ready, riding out the page changing over, before it reads the look
-  await reload(b, `!!document.querySelector('#run canvas')`, 'the reloaded panel');
+  await reload(b, `!!document.querySelector('#bar-face svg')`, 'the reloaded panel');
   assert.equal(await b.js(`document.documentElement.dataset.theme`), 'dark', 'dark after a reload');
   await b.js(`localStorage.removeItem('speck-theme'); true`);
 }, 1200));

@@ -107,7 +107,7 @@ test('0416 AC3: apart from speck\'s screen, nothing on the panel moves unless yo
   // Each transition: only the Settings switch's knob, which moves when you flip it.
   const transitions = [...style.matchAll(/([^{}]+)\{[^{}]*\btransition\s*:\s*(?!\s|none)[^{}]*\}/g)].map(m => m[1].trim());
   assert.deepEqual(transitions, ['#settings [role="switch"] .knob']);
-  // The page draws on one canvas only, speck's screen, and asks for frames only for it.
-  assert.deepEqual([...page().matchAll(/<canvas\b[^>]*\bid="(\w+)"/g)].map(m => m[1]), ['screen']);
+  // 0580: the page draws on no canvas.
+  assert.deepEqual([...page().matchAll(/<canvas\b[^>]*\bid="(\w+)"/g)].map(m => m[1]), []);
   assert.doesNotMatch(page(), /el\('canvas'/, 'no canvas made for a card');
 });

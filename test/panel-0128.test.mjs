@@ -257,7 +257,7 @@ test('0128 AC1: the button sits in the header, as the speck run pill itself (015
   await p.settle();
   const html = fs.readFileSync(new URL('../templates/panel.html', import.meta.url), 'utf8');
   const header = html.match(/<header>([\s\S]*?)<\/header>/)[1];
-  assert.match(header, /<button class="glass" id="run" type="button"/); // 0413: speck's screen
+  assert.match(header, /<button class="bar-status" id="run" type="button"/); // 0580: the bar's status
   assert.doesNotMatch(header, /id="run-switch"|id="pills"/);
   assert.match(html, /<div class="run-error" id="run-error" hidden><\/div>/, 'no message until something is refused');
   assert.equal(p.byId('run-error').textContent, '');

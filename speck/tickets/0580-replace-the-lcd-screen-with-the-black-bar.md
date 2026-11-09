@@ -43,6 +43,7 @@ The top of the panel is a thin black bar with speck, the status and the Settings
 - Today: the header is `.bezel#bezel` with the title row and `button.glass#run` around `canvas.lcd#screen` in `templates/panel.html`, drawn by `templates/panel-header.js` (`drawScreen`, `screenFrame`, `drawHeader`) with `templates/panel-header.css`; the project menu is `#project-pick` (`drawProjects`, `chooseProject`). The clock, the captions and the one-off animations go with the screen.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: hid the status lines until the first board arrives (they showed their separators alone), added speck-face.js and speck-mood.js to the page's stamp so a change to them makes an open page out of date, and kept the bar drawing when speck's script can't load.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -55,3 +56,16 @@ The top of the panel is a thin black bar with speck, the status and the Settings
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Tests updated to the new look (AC5):
+- `test/panel-0413`, `0438`, `0454`, `0478`, `0140`, `0150`, `0372`, `0128`, `0059`, `foreman-0285`, `speck-name-0485`: the header's markup, measurements and names are the bar's.
+- `test/panel-0426`, `0440`, `0161`, `0428`: the bar's colours are `--bar`, the same in both looks; the status button has no edge of its own, so 0161's control counts are one lower.
+- `test/panel-0432`, `0433`, `0473`, `0474`, `0302`: the page also loads `speck-face.js` and `speck-mood.js`.
+- `test/panel-0055`, `0160`, `0416`: speck's face moves, and the page has no canvas.
+- `test/panel-0147`: Doto's font list went with the title.
+- `test/panel-0543`: under a proxy's path it checks the page's files load, not Doto.
+- `test/pipeline-0415`, `0470`, `0479`: they wait for the bar's status, and compare the log's title with the bar's lettering.
+
+Tests removed, because what they checked is gone (AC5):
+- `test/panel-0471` (the big "speck" title and its dot), `test/panel-0513` (the title's dot going grey while off: speck's asleep face says that now).
+- From `test/panel-0304`: the three about the title in Doto. The test that the panel serves the font stays, for 0581.
+- From `test/panel-0438`: AC3 (the screen's dots against its corners) and AC5 (the title's dot).

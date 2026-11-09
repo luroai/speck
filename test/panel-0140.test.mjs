@@ -228,8 +228,8 @@ const LINES = sel => `(() => {
 })()`;
 // 0150: speck run's state is itself its on/off button, Auto-build, and the live indicator has gone.
 // 0372: and Settings, which ends it now that light and dark are chosen in Settings.
-// 0413: the title row of speck's screen's frame, and the screen under it
-const HEADER = { 'the speck name': 'header .name', 'the repo and base branch': 'header .repo', "speck's screen": '#run',
+// 0580: the bar's status word, its project, the status as a button and Settings
+const HEADER = { 'the status word': '#bar-word', 'the project': 'header .repo', "speck's status": '#run',
   'Settings': '#settings-open' };
 
 test('0140 AC3: at 375 px, the header shows each of its parts in full, each label on one line', skip, async () => {
@@ -246,8 +246,8 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
       else assert.ok(!r.cut, `${what} isn't cut short`);
       if (sel !== '#settings-open' && sel !== '#run') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
     }
-    assert.match(await b.js(`document.querySelector('header .repo').textContent`), / · main$/); // 0413: the project, then the base branch
-    assert.ok(await b.js(`document.querySelector('#run canvas').getBoundingClientRect().height > 0`), "speck's screen is shown"); // 0413
+    assert.match(await b.js(`document.querySelector('.bar-more code').textContent`), /^main$/); // 0580: the base branch, on the second line
+    assert.ok(await b.js(`document.querySelector('#bar-face svg').getBoundingClientRect().height > 0`), 'speck is shown'); // 0580
   });
 });
 
