@@ -1,7 +1,7 @@
 ---
 id: "0581"
 title: "Take out the LCD renderer"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0580"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T20:00:43.274Z"
+approved: "2026-11-09T20:15:53.268Z"
 
 ---
 # 0581 · Take out the LCD renderer
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once the black bar replaces the LCD screen (0580), the LCD's renderer, its poses and pastimes, its font and its tests are dead weight that every later change has to step round.
@@ -55,9 +56,14 @@ Worth keeping an eye on: one timing test failed once on a very busy run and pass
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 526,810
+- Elapsed since build started: 15 min
+- Changed lines: 1471 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
