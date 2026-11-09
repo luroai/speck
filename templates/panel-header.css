@@ -32,20 +32,17 @@
   .decided-line { display: block; box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 16px; font: inherit; font-size: 14px; color: var(--muted); background: var(--bg); border: 0; border-radius: 0; border-bottom: .5px solid var(--line); cursor: pointer; }
   .decided-line:hover { color: var(--text); }
   .decided-line[hidden] { display: none; }
-  /* 0477: the lanes are a thin strip under the bar, in place of the tabs: each lane's name on one row, in order,
-     the one in view in the text colour and the others muted, and Build's needs-you number after its name whichever lane
-     is in view. Nothing in it depends on how many lanes there are. Each lane is a 44 px button, taller than the strip:
-     its name is in the strip and its last 12 px reach down past it, over the top of the lane's own padding, never up
-     into the header (0160). The strip is drawn over what they reach into. */
-  .tabs { position: relative; z-index: 8; display: flex; align-items: flex-start; justify-content: center; gap: 4px; height: 32px; padding: 0 16px; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .tab { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 6px; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 10px 12px; font: inherit; color: var(--muted); background: transparent; border: 0; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
+  /* 0582: the lanes are four tabs under the bar, each with its lane's name and how many it holds. The open one has an
+     underline in the accent and its name in the text colour, the others are muted. Every tab has the underline's 2 px,
+     transparent unless open, so nothing moves when the lane changes, and it's a border so it shows without colours
+     (0161). Each tab is 44 px tall, and shares what's left of the row after the names and counts. */
+  .tabs { position: relative; z-index: 8; display: flex; align-items: stretch; gap: 1px; padding: 0 16px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  .tab { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 4px; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 1px; font: inherit; color: var(--muted); background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
   .tab:hover, .tab[aria-selected="true"] { color: var(--text); }
+  .tab[aria-selected="true"] { border-bottom-color: var(--blue); } /* 0577: the accent, as the focus ring has it */
   .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-ui); font-size: 14px; font-weight: 600; line-height: 1; }
-  /* 0481: a bar under the open lane's name, as wide as it and in its colour, so which lane is open shows without its
-     colour (0161). Every name's box is the same height, the open one's bar taking 2 px of the others' padding, so
-     nothing moves when the lane changes. */
-  .tab .tab-name { padding-bottom: 4px; }
-  .tab[aria-selected="true"] .tab-name { padding-bottom: 2px; border-bottom: 2px solid currentColor; }
+  .tab .tab-n { flex: none; font-family: var(--font-ui); font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .tab .tab-n:empty { display: none; }
   .tab .needs { flex: none; font-family: var(--font-mono); font-size: 12px; line-height: 1; }
   .tab .needs { color: var(--bad); }
   .tab .needs:empty { display: none; }

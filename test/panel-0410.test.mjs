@@ -68,7 +68,7 @@ test('0410 AC1: pressing a tab opens its lane, and only its lane', async () => {
 test('0410 AC1: Build and Shipped show the counts their headings did; Plan shows none', async () => {
   const nav = staticHtml().match(/<nav [^>]*role="tablist"[^>]*>([\s\S]*?)<\/nav>/)[1];
   const tab = id => nav.match(new RegExp(`<button [^>]*id="${id}"[^>]*>([\\s\\S]*?)</button>`))[1];
-  assert.equal(tab('tab-plan'), '<span class="tab-name">Plan</span>', 'Plan\'s tab is its name alone');
+  assert.equal(tab('tab-plan'), '<span class="tab-name">Plan</span><span class="tab-n" id="tab-plan-n"></span>', '0582: Plan\'s tab is its name and its count');
   assert.doesNotMatch(nav, /id="(queue-n|shipped-n)"/, 'the counts aren\'t in the tabs (0425)');
   const p = livePage(board());
   await p.settle();

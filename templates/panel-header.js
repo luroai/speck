@@ -100,12 +100,13 @@ async function chooseProject(port) {
   drawProjects(); // the menu goes back to the project shown
 }
 $('project').addEventListener('change', () => chooseProject($('project').value));
-// 0410: Plan, Build and Shipped are tabs under the header (0520: with Capture first), and only the open one's lane shows. 0477: they're a strip
-// of the lanes' names, still tabs to a screen reader. Build opens with the
+// 0410: Plan, Build and Shipped are tabs under the header (0520: with Capture first), and only the open one's lane shows. 0582: each says
+// how many its lane holds. Build opens with the
 // page. Each lane's list keeps its own scroll position, put back when its tab opens again.
 const LANES = { capture: ['tab-capture', 'capture-section', 'capture'], plan: ['tab-plan', 'shaping-section', 'shaping'], build: ['tab-build', 'build-section', 'queue'], shipped: ['tab-shipped', 'shipped-section', 'shipped-list'] };
 const TAB_ORDER = ['capture', 'plan', 'build', 'shipped'];
 let openLane = 'build';
+let laneCounts = null; // 0582: how many each lane holds, from the last board drawn, or null before the first
 const laneScroll = new Map(); // a closed lane's list's scroll position, by lane
 // The lane a node is in, by the list or section holding it: Plan for anything that isn't in another lane.
 const laneOf = n => TAB_ORDER.find(l => within(n, $(LANES[l][1])) || within(n, $(LANES[l][2]))) || 'plan';
@@ -120,7 +121,8 @@ function openTab(lane) {
   drawTabs();
   if (laneScroll.has(lane)) { $(LANES[lane][2]).scrollTop = laneScroll.get(lane); laneScroll.delete(lane); }
 }
-function drawTabs() {
+function drawTabs(m) {
+  if (m) laneCounts = { capture: m.capture.length, plan: m.drafts.length, build: m.queue.length, shipped: m.shippedTotal };
   for (const l of TAB_ORDER) {
     const [tab, section] = LANES[l], on = l === openLane;
     $(tab).setAttribute('aria-selected', String(on));
@@ -131,7 +133,13 @@ function drawTabs() {
   const needs = /^Needs you (\d+)$/.exec(foremanOf(state).word);
   // 0425: the number alone; its accessible name says what it is
   setText($('build-needs'), needs ? needs[1] : '');
-  $('tab-build').setAttribute('aria-label', needs ? `Build, ${needs[1]} needs you` : 'Build');
+  // 0582: each tab's count, and its accessible name says what the count is
+  for (const l of TAB_ORDER) {
+    const n = laneCounts && laneCounts[l], name = l[0].toUpperCase() + l.slice(1);
+    setText($(`${LANES[l][0]}-n`), laneCounts ? String(n) : '');
+    const held = laneCounts ? `, ${n} ${l === 'capture' ? 'note' : 'ticket'}${n === 1 ? '' : 's'}` : '';
+    $(LANES[l][0]).setAttribute('aria-label', `${name}${held}${l === 'build' && needs ? `, ${needs[1]} needs you` : ''}`);
+  }
 }
 for (const [i, l] of TAB_ORDER.entries()) {
   const tab = $(LANES[l][0]);

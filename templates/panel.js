@@ -1452,7 +1452,7 @@ function render() {
   const stale = pageStale(state);
   drawHeader(foremanOf(state), stale); // 0474: in the header's file
   renderForeman(stale);
-  drawTabs(); // 0410: and Build's "<n> needs you"
+  drawTabs(m); // 0410: and Build's "<n> needs you". 0582: and each lane's count
   drawRunSwitch();
   for (const [key, box] of askBoxes) if (box.isConnected === false) askBoxes.delete(key); // 0318: only the boxes still showing
   const again = typing && typing.isConnected === false ? askBoxes.get(typing.askKey) : null;
