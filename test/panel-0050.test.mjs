@@ -3,8 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, good, panelRepo, freePort, startPanel, stop, fakePage, full, round, exitOf, queueRows, shippedRows, startOfToday, findChrome, browserPage, charAt, openLane, QUICK_PINGS, openQueueRows, boardPage } from './support/panel.mjs';
-import { chipSaid } from './support/dep-chip.mjs';
+import { T, fm, good, panelRepo, freePort, startPanel, stop, fakePage, full, round, exitOf, queueRows, shippedRows, startOfToday, findChrome, browserPage, charAt, openLane, QUICK_PINGS, boardPage, fullViewOf } from './support/panel.mjs';
 
 // ---------- 0050: selected text and scroll in queue and Shipped rows survive the refresh ----------
 
@@ -22,6 +21,7 @@ const clone = s => JSON.parse(JSON.stringify(s));
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const shipOf = (p, id) => shippedRows(p).find(r => r.textContent.includes(id));
 const byClass = (p, row, cls) => p.all(row).find(n => new RegExp(`(^| )${cls}( |$)`).test(n.className || ''));
+const whereOf = (p, id) => byClass(p, rowOf(p, id), 'where').textContent;
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
 
 const base = () => ({
@@ -38,7 +38,7 @@ const base = () => ({
   ideas: [],
 });
 
-test('0050 AC1: a selection in a queue row\'s title, blocked question or build message survives a refresh in which that ticket is unchanged, and other changes show', async () => {
+test('0050 AC1: a selection in a queue row\'s title survives a refresh in which that ticket is unchanged, and other changes show', async () => {
   const s = base();
   const next = clone(s);
   next.tickets[3].rounds = [round(1, 100), round(2, 200)]; // another queue ticket's review round
@@ -49,25 +49,23 @@ test('0050 AC1: a selection in a queue row\'s title, blocked question or build m
   third.tickets[1].title = 'A renamed blocked ticket'; // 0002 changes, the others don't
   const p = boardPage([s, next, third]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const keptTitle = held(p, 'queue', byClass(p, rowOf(p, '0005'), 'title'));
-  const keptQuestion = held(p, 'queue', p.all(rowOf(p, '0002')).find(n => n._text === 'Which way should it go?'));
-  const keptMessage = held(p, 'queue', byClass(p, rowOf(p, '0003'), 'exit'));
+  const keptBlocked = held(p, 'queue', byClass(p, rowOf(p, '0002'), 'title'));
+  const keptBuilding = held(p, 'queue', byClass(p, rowOf(p, '0003'), 'title'));
   await refresh(p);
   assert.ok(keptTitle(), 'the ready row\'s title stayed on the page');
-  assert.ok(keptQuestion(), 'the blocked question stayed on the page');
-  assert.ok(keptMessage(), 'the build message stayed on the page');
-  // 0462: an open card's current step is on its track
-  assert.equal(p.all(rowOf(p, '0004')).find(n => /^step review\b/.test(n.className || '')).textContent, 'Review 2', 'the other ticket\'s new round shows');
+  assert.ok(keptBlocked(), 'the blocked row\'s title stayed on the page');
+  assert.ok(keptBuilding(), 'the building row\'s title stayed on the page');
+  assert.match(whereOf(p, '0004'), /^Reviewing · round 2/, 'the other ticket\'s new round shows');
   assert.ok(rowOf(p, '0007'), 'the new ready ticket shows');
   assert.ok(shipOf(p, 'Newly shipped'), 'the new shipped ticket shows');
   await refresh(p);
-  assert.ok(keptTitle() && keptMessage(), 'and through a second refresh');
+  assert.ok(keptTitle() && keptBuilding(), 'and through a second refresh');
   assert.ok(rowOf(p, '0008'), 'the newer ready ticket shows');
   assert.ok(rowOf(p, '0002').textContent.includes('A renamed blocked ticket'));
 });
 
-test('0050 AC1: a chain change that comes only from another ticket shows on a kept row', async () => {
+test('0050 AC1: a change that comes only from another ticket leaves a kept row as it was', async () => {
   const s = base();
   const next = clone(s);
   next.tickets.push(T('0009', 'ready', { after: ['0006'], waiting_on: ['0006'] })); // 0006 now unlocks 0009
@@ -75,14 +73,11 @@ test('0050 AC1: a chain change that comes only from another ticket shows on a ke
   third.tickets.pop(); // and again it unlocks nothing
   const p = fakePage([s, next, third]);
   await p.settle();
-  const row = rowOf(p, '0006');
-  const kept = held(p, 'queue', byClass(p, row, 'title'));
-  assert.ok(!byClass(p, row, 'lock'), 'closed, it has no padlock (0483)');
-  assert.equal(chipSaid(p, row), 'Waits on 1 ticket'); // 0468: in its chip
+  const kept = held(p, 'queue', byClass(p, rowOf(p, '0006'), 'title'));
+  assert.equal(whereOf(p, '0006'), 'Ready · after 0005');
   await refresh(p);
   assert.ok(kept(), 'the row stayed');
-  assert.equal(chipSaid(p, rowOf(p, '0006')), 'Waits on 1 ticket', 'still waiting, so still its chip');
-  assert.ok(!byClass(p, rowOf(p, '0006'), 'lock'), 'and still no padlock (0483)');
+  assert.equal(whereOf(p, '0006'), 'Ready · after 0005', 'still waiting, so still its line');
   await refresh(p);
   assert.ok(kept());
   const s2 = { tickets: [T('0005', 'ready'), T('0006', 'ready')], ideas: [] };
@@ -90,12 +85,11 @@ test('0050 AC1: a chain change that comes only from another ticket shows on a ke
   const q = fakePage([s2, clone(s2), n3]);
   await q.settle();
   const keptFive = held(q, 'queue', byClass(q, rowOf(q, '0005'), 'title'));
-  assert.ok(!byClass(q, rowOf(q, '0005'), 'chain'));
   await refresh(q);
   await refresh(q);
   assert.ok(keptFive(), '0005 kept its node');
-  assert.ok(!byClass(q, rowOf(q, '0005'), 'chain'), 'closed, no chain icon (0483)');
-  assert.equal(chipSaid(q, rowOf(q, '0005')), '1 ticket waits on this', 'and its chip (0468)');
+  assert.equal(whereOf(q, '0005'), 'Ready');
+  assert.equal(whereOf(q, '0007'), 'Ready · after 0005', 'and the new ticket shows what it waits on');
 });
 
 test('0050 AC2: a build message box keeps its node, and so its scroll position, through refreshes in which its ticket is unchanged', async () => {
@@ -104,13 +98,13 @@ test('0050 AC2: a build message box keeps its node, and so its scroll position, 
   next.tickets[1].blocked_question = 'Another question.'; // another ticket changes
   const p = boardPage([s, next, clone(next)]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const box = byClass(p, rowOf(p, '0003'), 'exit');
-  const kept = held(p, 'queue', box);
+  const full = await fullViewOf(p, '0003'); // 0585: the message is in the ticket's full view
+  const box = byClass(p, full, 'exit');
+  const kept = held(p, 'full-ticket', box);
   await refresh(p);
   await refresh(p);
   assert.ok(kept(), 'the scrolling box stayed on the page');
-  assert.equal(byClass(p, rowOf(p, '0003'), 'exit'), box);
+  assert.equal(byClass(p, p.byId('full-ticket'), 'exit'), box);
 });
 
 test('0050 AC3: a selection in a Shipped row survives a refresh in which that ticket is unchanged and Shipped has the same tickets', async () => {
@@ -130,7 +124,7 @@ test('0050 AC3: a selection in a Shipped row survives a refresh in which that ti
   assert.ok(kept(), 'and through a second refresh');
 });
 
-test('0050 AC4: the in-flight time since started (MM:SS since 0058) and a Shipped time crossing midnight keep updating while text in that row is selected', async () => {
+test('0050 AC4: the in-flight minutes since started and a Shipped time crossing midnight keep updating while text in that row is selected', async () => {
   let now = startOfToday() + 23 * 3600000 + 58 * 60000; // 23:58 today
   class FakeDate extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now; } }
   const iso = ms => new Date(ms).toISOString();
@@ -139,19 +133,19 @@ test('0050 AC4: the in-flight time since started (MM:SS since 0058) and a Shippe
   await p.settle();
   const keptRow = held(p, 'queue', byClass(p, rowOf(p, '0003'), 'title'));
   const keptShip = held(p, 'shipped', shipOf(p, '0010').children[0]);
-  const minutes = () => rowOf(p, '0003').textContent.match(/(\d\d):00/)[1];
+  const minutes = () => byClass(p, rowOf(p, '0003'), 'sub').textContent.match(/^(\d+) min$/)[1]; // 0585: in the row's line
   const when = () => p.all(shipOf(p, '0010')).find(n => n.className === 'when').textContent; // in the details line since 0420
-  assert.equal(minutes(), '05');
+  assert.equal(minutes(), '5');
   assert.equal(when(), '23:48');
   now += 3 * 60000; // 00:01 tomorrow
   await refresh(p);
   assert.ok(keptRow() && keptShip(), 'both selections stayed');
-  assert.equal(minutes(), '08', 'the minutes moved on');
+  assert.equal(minutes(), '8', 'the minutes moved on');
   assert.match(when(), /^\d+ \w{3}$/, 'the time became the day (0420: the day alone in the line)');
   now += 60000;
   await refresh(p);
   assert.ok(keptRow() && keptShip());
-  assert.equal(minutes(), '09');
+  assert.equal(minutes(), '9');
 });
 
 test('0050 AC5: when a row\'s own ticket data changes, the new content shows in that refresh', async () => {
@@ -165,16 +159,18 @@ test('0050 AC5: when a row\'s own ticket data changes, the new content shows in 
   third.tickets[2].status = 'blocked'; third.tickets[2].blocked_question = 'Stopped and blocked.';
   const p = boardPage([s, next, third]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
+  const blocked = await fullViewOf(p, '0002'); // 0585: the question and the message are in the full view
+  assert.ok(blocked.textContent.includes('Which way'));
   await refresh(p);
-  assert.ok(rowOf(p, '0002').textContent.includes('A new question.'));
-  assert.ok(!rowOf(p, '0002').textContent.includes('Which way'));
-  assert.equal(byClass(p, rowOf(p, '0003'), 'exit').textContent, 'A new last message.');
+  assert.ok(p.byId('full-ticket').textContent.includes('A new question.'));
+  assert.ok(!p.byId('full-ticket').textContent.includes('Which way'));
+  assert.equal(byClass(p, await fullViewOf(p, '0003'), 'exit').textContent, 'A new last message.');
   assert.ok(rowOf(p, '0005').textContent.includes('Renamed ready'));
   assert.match(shipOf(p, '0011').textContent, /15 min · 2 rounds/); // one line of figures since 0162
   await refresh(p);
-  assert.ok(rowOf(p, '0003').textContent.includes('Stopped and blocked.'));
-  assert.ok(!byClass(p, rowOf(p, '0003'), 'exit'), 'a blocked ticket shows its question, not the build message');
+  assert.match(whereOf(p, '0003'), /^Has a question/, 'its row now says it has a question');
+  assert.ok(p.byId('full-ticket').textContent.includes('Stopped and blocked.'));
+  assert.ok(!byClass(p, p.byId('full-ticket'), 'exit'), 'a blocked ticket shows its question, not the build message');
 });
 
 const reorder = v => (Array.isArray(v) ? v.map(reorder) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).reverse().map(k => [k, reorder(v[k])])) : v);
@@ -182,8 +178,7 @@ test('0050 AC1 and AC3: the same field values in another order count as unchange
   const s = base();
   const p = boardPage([s, reorder(s), clone(s)]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const keptRow = held(p, 'queue', byClass(p, rowOf(p, '0003'), 'exit'));
+  const keptRow = held(p, 'queue', byClass(p, rowOf(p, '0003'), 'title'));
   const keptShip = held(p, 'shipped', shipOf(p, '0010').children[0]);
   await refresh(p);
   await refresh(p);
@@ -225,28 +220,21 @@ test('0050 AC1-AC5: in a real browser, selections and the build message scroll s
   const sel = () => b.js('getSelection().toString()');
   // Each refresh puts a new label in the Foreman's button (0150; 0303: its builder stays), so a label that isn't the one marked is a refresh since.
   const refreshed = async what => { await b.js(`window.seen = window.drawn || 0; if (!window.drawWatch) (window.drawWatch = new MutationObserver(() => { window.drawn = (window.drawn || 0) + 1; })).observe(document.getElementById('bezel'), { attributes: true }); true`); await b.until(`(window.drawn || 0) > window.seen`, what); }; // 0413: each redraw sets the frame of speck's screen, which stays between them
-  const exit = '#queue .question.exit';
+  const exit = '#full-ticket .question.exit';
   try {
-    await b.until(`document.querySelectorAll('#queue .q.blocked').length === 2 && document.querySelectorAll('#shipped tr').length === 1`, 'the queue and Shipped');
-    // 0434: the question and the message show while the card is open
-    await b.js(`document.querySelectorAll('#queue .q .top').forEach(t => t.click())`);
-    await b.until(`!!document.querySelector('${exit}') && !!document.querySelector('#queue .q.blocked .question:not(.exit)')`, 'the question and the message');
-    // AC1: the blocked question.
-    const q = '#queue .q.blocked .question:not(.exit)';
-    await b.drag(await b.js(charAt(q, 0)), await b.js(charAt(q, 10)));
-    assert.equal(await sel(), 'Should the');
+    await b.until(`document.querySelectorAll('#queue .q .where').length >= 2 && document.querySelectorAll('#shipped tr').length === 1`, 'the queue and Shipped');
+    // AC1: a row's title (0585: the question and the message are in the full view, tested at AC2).
+    const q = '#queue .q .title';
+    await b.drag(await b.js(charAt(q, 0)), await b.js(charAt(q, 9)));
+    const picked = await sel();
+    assert.ok(picked.length >= 8, picked);
     await refreshed('a refresh'); await refreshed('a second refresh');
-    assert.equal(await sel(), 'Should the', 'kept through refreshes');
-    // AC2: the build message box, scrolled.
-    await b.js(`document.querySelector('${exit}').scrollTop = 120`);
-    const scrolled = await b.js(`document.querySelector('${exit}').scrollTop`);
-    assert.ok(scrolled > 0, 'the box scrolls');
+    assert.equal(await sel(), picked, 'kept through refreshes');
     // Another ticket changes, and shows.
     write('0005', { title: "'Newly ready'", status: 'ready' });
     await b.until(`document.getElementById('queue').textContent.includes('Newly ready')`, 'the new ready ticket');
     await refreshed('another refresh');
-    assert.equal(await sel(), 'Should the', 'kept while another ticket changes');
-    assert.equal(await b.js(`document.querySelector('${exit}').scrollTop`), scrolled, 'the scroll position stayed');
+    assert.equal(await sel(), picked, 'kept while another ticket changes');
     // AC3: a Shipped row.
     const ship = '#shipped tr td:first-child .title'; // the title, in a link from 0137 until 0141, opening the card since 0466
     await b.js(openLane('shipped')); // 0410
@@ -260,6 +248,16 @@ test('0050 AC1-AC5: in a real browser, selections and the build message scroll s
     await b.until(`document.getElementById('queue').textContent.includes('A stopped build, renamed')`, 'the renamed ticket');
     write('0010', { title: "'Shipped, renamed'", status: 'done', started: ago(30), finished: ago(20) }, good, 'speck/tickets/done');
     await b.until(`document.getElementById('shipped').textContent.includes('Shipped, renamed')`, 'the renamed shipped ticket');
+    // AC2: the build message box, in the ticket's full view, scrolled.
+    await b.js(`getSelection().removeAllRanges(); [...document.querySelectorAll('#queue .q')].find(r => r.querySelector('.id').textContent === '0003').querySelector('.top').click()`);
+    await b.until(`!!document.querySelector('#full-ticket .question.exit')`, 'the build message');
+    await b.js(`document.querySelector('${exit}').scrollTop = 120`);
+    const scrolled = await b.js(`document.querySelector('${exit}').scrollTop`);
+    assert.ok(scrolled > 0, 'the box scrolls');
+    write('0006', { title: "'Another ready'", status: 'ready' });
+    await b.until(`document.getElementById('queue').textContent.includes('Another ready')`, 'another ticket');
+    await refreshed('another refresh');
+    assert.equal(await b.js(`document.querySelector('${exit}').scrollTop`), scrolled, 'the scroll position stayed');
   } finally {
     await b.close();
     await stop(panel);
@@ -286,13 +284,13 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
   try {
     await b.until(`!!document.querySelector('${sub}')`, 'the page');
     await clock(late);
-    await b.until(`document.querySelector('${sub}') && /^05:3\\d$/.test(document.querySelector('${sub}').textContent) && document.querySelector('${when}').textContent === '23:48'`, 'the page on its moved clock');
-    // Only the minutes (MM:SS since 0058).
-    await select(sub, 0, sub, 2);
-    assert.equal(await sel(), '05');
+    await b.until(`document.querySelector('${sub}') && /^5 min$/.test(document.querySelector('${sub}').textContent) && document.querySelector('${when}').textContent === '23:48'`, 'the page on its moved clock');
+    // Only the minutes (0585: "5 min" in the row's line).
+    await select(sub, 0, sub, 1);
+    assert.equal(await sel(), '5');
     await clock(late + 60000);
-    await b.until(`document.querySelector('${sub}').textContent.startsWith('06:')`, 'the minutes to move on');
-    assert.equal(await sel(), '06', 'the selected number is still selected, and updated');
+    await b.until(`document.querySelector('${sub}').textContent === '6 min'`, 'the minutes to move on');
+    assert.equal(await sel(), '6', 'the selected number is still selected, and updated');
     // The Shipped time, after midnight.
     await b.js(openLane('shipped')); // 0410
     await select(when, 0, when, 5);
@@ -305,10 +303,10 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
     // From the title across the minutes.
     await b.js(openLane('build')); // 0410
     await select('#queue .q .title', 2, sub, 5);
-    assert.match(await sel(), /^long build\s+Build · 07:\d\d$/); // what it's doing and its stage come before the timer since 0156 (0434: what it's doing as a grid of lights), and the tags after it while it's open
+    assert.match(await sel(), /^long build\s+[\s\S]*7 min$/); // the line saying where it is comes between the title and the minutes
     await clock(late + 3 * 60000);
-    await b.until(`document.querySelector('${sub}').textContent.startsWith('08:')`, 'the minutes to move on again');
-    assert.match(await sel(), /^long build\s+Build · 08:\d\d$/, 'the selection across the title and minutes stays');
+    await b.until(`document.querySelector('${sub}').textContent === '8 min'`, 'the minutes to move on again');
+    assert.match(await sel(), /^long build\s+[\s\S]*8 min$/, 'the selection across the title and minutes stays');
   } finally {
     await b.close();
     await stop(panel);

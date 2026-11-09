@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelModel, T, round, fakePage, queueRows, exitOf, isRed, stageOf, sayOf, findText, boardPage, openQueueRows, styles } from './support/panel.mjs';
+import { page, panelModel, T, round, fakePage, queueRows, exitOf, isRed, sayOf, findText, boardPage, fullViewOf, styles } from './support/panel.mjs';
 
 const MESSAGE = 'speck ship refused: tests failed.';
 const purple = n => /\bto-ship\b/.test(n.className || '');
@@ -33,52 +33,38 @@ const ruleVar = (selector, prop) => {
 };
 
 const waiting = (o = {}) => T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf(MESSAGE), ...o });
-// 0434: each card open, as what's under a Build card's two lines shows only then
-const rows = async state => { const p = boardPage([state]); await p.settle(); await openQueueRows(p); return { p, rows: queueRows(p) }; };
-// 0462: closed, as the current step and the sentence are in a closed card's line; an open one has its facts in a table
-const closed = async state => { const p = boardPage([state]); await p.settle(); return queueRows(p); };
-const openRow = async (state, id) => {
+// 0585: a row says where its ticket is with a dot; what a stopped or finished build says is in its full view
+const whereIn = (p, row) => p.all(row).find(n => /^where\b/.test(n.className || ''));
+const viewOf = async (state, id) => {
   const p = fakePage([state]);
   await p.settle();
-  p.press(queueRows(p).find(r => r.textContent.includes(id)).children.find(n => n.className === 'top'));
-  await p.settle();
-  return { p, row: queueRows(p).find(r => r.textContent.includes(id)) };
+  return { p, full: await fullViewOf(p, id) };
 };
 
-test('0138 AC1: an approved ticket whose build has exited is purple on its border (its left edge until 0167), current step and label, and nothing in it is red', async () => {
+test('0138 AC1: an approved ticket whose build has exited is under Needs you, and in its full view purple in its sentence and label, and nothing in it is red', async () => {
   const m = panelModel()({ tickets: [waiting()], ideas: [] });
   assert.equal(m.queue[0].red, false);
   assert.equal(m.queue[0].to_ship, true);
-  const [shut] = await closed({ tickets: [waiting()], ideas: [] });
-  assert.equal(stageOf(shut).textContent, 'Ship');
-  assert.match(stageOf(shut).className, /\bto-ship\b/);
-  assert.equal(sayOf(shut).className, 'say to-ship', 'it waits for you, in purple (0416: with no badge)');
-  const { p, rows: [a] } = await rows({ tickets: [waiting()], ideas: [] });
-  assert.match(a.className, /\bto-ship\b/);
-  const label = findText(p, a, 'Build finished without shipping');
+  const p0 = boardPage([{ tickets: [waiting()], ideas: [] }]);
+  await p0.settle();
+  assert.equal(p0.byId('queue').children[0].textContent, 'Needs you 1');
+  assert.match(whereIn(p0, queueRows(p0)[0]).className, /\bneeds\b/, 'a row waiting for you has its orange dot');
+  const { p, full } = await viewOf({ tickets: [waiting()], ideas: [] }, '0001');
+  assert.equal(sayOf(full).className, 'say to-ship', 'it waits for you, in purple (0416: with no badge)');
+  const label = findText(p, full, 'Build finished without shipping');
   assert.ok(label, 'the label');
-  const line = p.all(a).find(n => n.children && n.children.includes(label)) || p.all(a).find(n => n.textContent === 'Build finished without shipping' && n.className);
-  assert.match(line.className, /\bto-ship\b/);
-  assert.ok(findText(p, a, MESSAGE), 'the message still shows');
-  assert.ok(!p.all(a).some(isRed), 'nothing red');
+  assert.match(label.className, /\bto-ship\b/);
+  assert.ok(findText(p, full, MESSAGE), 'the message still shows');
+  assert.ok(p.all(full).some(n => n._text === MESSAGE && /\bto-ship\b/.test(n.className)), 'in purple');
+  assert.ok(!p.all(full).some(isRed), 'nothing red');
 });
 
-test('0138 AC1: the open row is tinted purple, and nothing in it is red', async () => {
-  const { p, row } = await openRow({ tickets: [waiting()], ideas: [] }, '0001');
-  assert.match(row.className, /\bopen\b/);
-  assert.match(row.className, /\bto-ship\b/);
-  assert.ok(!p.all(row).some(isRed), 'nothing red');
-});
-
-test('0138 AC1: the CSS draws each of those in purple (green since 0440)', () => {
-  // 0167: its border all round and its tint, open or closed, in place of a left edge
-  assert.equal(ruleVar('.q.to-ship', 'border-color'), '--ok', 'the border');
-  assert.equal(ruleVar('.q.to-ship', 'background'), '--ok-bg', 'the tint');
-  assert.equal(ruleVar('.q .top .stage.to-ship', 'color'), '--ok', 'the current step\'s name (0156)');
+test('0138 AC1: the full view draws each of those in purple (green since 0440)', async () => {
+  const { p, full } = await viewOf({ tickets: [waiting()], ideas: [] }, '0001');
+  assert.ok(!p.all(full).some(isRed), 'nothing red');
+  assert.equal(ruleVar('#full-ticket .live-now .say.to-ship', 'color'), '--ok', 'the sentence in the full view');
   assert.equal(ruleVar('.act.to-ship', 'color'), '--ok', 'the label line');
   assert.equal(ruleVar('.question.exit.to-ship', 'border-left-color'), '--ok', 'the message\'s edge');
-  // The tint comes after .q.open, so it wins over the plain open fill.
-  assert.ok(css().indexOf('.q.to-ship {') > css().indexOf('.q.open {'), '.q.to-ship comes after .q.open');
 });
 
 test('0138 AC2: the purple (green since 0440) reads clearly in light and dark, and is visibly different from red and amber', () => {
@@ -106,27 +92,18 @@ test('0138 AC3: blocked, stopped-before-finishing and stopped-unexpectedly ticke
   const m = panelModel()(state);
   assert.deepEqual(m.queue.map(t => t.red), [true, true, true, true]);
   assert.deepEqual(m.queue.map(t => t.to_ship), [false, false, false, false]);
-  for (const row of await closed(state)) {
-    assert.match(stageOf(row).className, /\bbad\b/);
-    assert.equal(sayOf(row).className, 'say bad', 'it needs you, in its sentence (0416: with no badge)');
+  const views = [];
+  for (const id of ['0001', '0002', '0003', '0004']) views.push(await viewOf(state, id));
+  for (const { p, full } of views) {
+    assert.ok(!p.all(full).some(purple), 'nothing purple');
+    assert.equal(sayOf(full).className, 'say bad', 'it needs you, in its sentence (0416: with no badge)');
   }
-  const { p, rows: all } = await rows(state);
-  for (const row of all) {
-    assert.match(row.className, /\bblocked\b/);
-    assert.ok(!p.all(row).some(purple), 'nothing purple');
-  }
-  for (const [row, label] of [[all[1], 'Build stopped before finishing'], [all[2], 'Build stopped before finishing'], [all[3], 'Build stopped unexpectedly']])
-    assert.ok(p.all(row).some(n => n.className === 'act bad' && n.textContent === label), label);
-  assert.equal(ruleVar('.q.blocked', 'border-color'), '--bad'); // its border all round since 0167
-  assert.equal(ruleVar('.q.blocked', 'background'), '--bad-bg');
-  assert.equal(ruleVar('.q .top .stage.bad', 'color'), '--bad'); // the current step's name since 0156
+  for (const [{ p, full }, label] of [[views[1], 'Build stopped before finishing'], [views[2], 'Build stopped before finishing'], [views[3], 'Build stopped unexpectedly']])
+    assert.ok(p.all(full).some(n => n.className === 'act bad' && n.textContent === label), label);
   assert.match(css(), /\.question\.exit \{ border-left-color: var\(--bad\);/);
-  const { p: q, row } = await openRow(state, '0001');
-  assert.match(row.className, /\bblocked\b.*\bopen\b|\bopen\b.*\bblocked\b/);
-  assert.ok(!q.all(row).some(purple));
 });
 
-test('0138 AC4: an approved ticket waiting to ship still has Full ticket and Review pack, and the pack\'s Ship button ships it', async () => {
+test('0138 AC4: an approved ticket waiting to ship has Review pack in its full view, and the pack\'s Ship button ships it', async () => {
   const sent = [];
   const p = fakePage([], {
     fetch: async (url, opts) => {
@@ -141,10 +118,9 @@ test('0138 AC4: an approved ticket waiting to ship still has Full ticket and Rev
   const row = () => queueRows(p)[0];
   p.press(row().children.find(n => n.className === 'top'));
   await p.settle();
-  const buttons = () => p.all(row()).filter(n => n.tagName === 'button').map(n => n.textContent);
-  assert.ok(buttons().includes('Full ticket'));
-  assert.ok(buttons().includes('Review pack'));
-  p.press(p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  const buttons = () => p.all(p.byId('full-ticket')).filter(n => n.tagName === 'button').map(n => n.textContent);
+  assert.ok(buttons().includes('Review pack'), 'its full view has the Review pack');
+  p.press(p.all(p.byId('full-ticket')).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
   await p.settle();
   const pane = p.byId('full-ticket');
   assert.ok(pane.textContent.includes('Approved by reviewer'), 'the pack shows');

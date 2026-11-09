@@ -8,8 +8,19 @@ import path from 'node:path';
 import { reviewPack, panelPack } from '../scripts/pack.mjs';
 import { documentFile } from '../scripts/output.mjs';
 import { shipRepo } from './support/speck.mjs';
-import { startPanel, freePort, stop, raw, request } from './support/panel.mjs';
-import { docRepo, PACK, DOCS, text, openPack, pane, docView, docButtons } from './support/documents.mjs';
+import { startPanel, freePort, stop, raw, request, fakePage, T, fullViewOf } from './support/panel.mjs';
+import { docRepo, PACK, DOCS, text, pane, docView, docButtons } from './support/documents.mjs';
+
+// 0585: the Review pack button is in the ticket's full view, which a Build row opens.
+async function openPack(response, more = [], globals = {}) {
+  const state = () => ({ ideas: [], tickets: [T('0005', 'approved', { started: new Date(Date.now() - 60000).toISOString() })] });
+  const p = fakePage([state(), { text: '', truncated: false }, response, ...more, state()], globals);
+  await p.settle();
+  const view = await fullViewOf(p, '0005');
+  p.press(p.all(view).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  await p.settle();
+  return p;
+}
 
 // ---------- AC1: speck pack lists the files ----------
 

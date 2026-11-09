@@ -53,8 +53,8 @@ async function width(w) {
   await settle();
 }
 
-// For each lane, opened by its tab with every Plan item and Build row in it open: the boxes of the header's frame, the
-// tabs, the lane and its list, each ticket in it and the parts of each open Plan item's details.
+// For each lane, opened by its tab with every Plan item in it open: the boxes of the header's frame, the
+// tabs, the lane and its list, each ticket in it (a Build row presses to open the full view, so it is not opened) and the parts of each open Plan item's details.
 const LAYOUT = `(async () => {
   const box = n => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width }; };
   const frame = n => n ? { header: box(document.querySelector('header')), bezel: box(document.querySelector('.bezel')),
@@ -66,7 +66,7 @@ const LAYOUT = `(async () => {
   for (const tab of document.querySelectorAll('#tabs .tab')) {
     tab.click();
     ${REST_LANES}; // 0476: at rest
-    for (const h of document.querySelectorAll('#shaping .item:not(.open) .head, #queue .q:not(.open) .top')) h.click();
+    for (const h of document.querySelectorAll('#shaping .item:not(.open) .head')) h.click();
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     const section = [...document.querySelectorAll('main > section')].find(n => !n.hidden);
     const list = section.querySelector('.lane-list');
@@ -138,31 +138,13 @@ const BORDERS = `(() => {
 })()`;
 
 for (const w of [375, 1280]) {
-  test(`0418 AC3: at ${w} px, no lane has a border round it, and each ticket keeps its full border`, skip, async () => {
+  test(`0418 AC3: at ${w} px, no lane has a border round it, and each ticket keeps its border`, skip, async () => {
     await width(w);
     const { lanes, tickets } = await b.js(BORDERS);
     assert.deepEqual(lanes.map(l => l.id), ['capture-section', 'shaping-section', 'build-section', 'shipped-section']); // 0520: Capture first
     for (const l of lanes) assert.deepEqual(l.sides, [0, 0, 0, 0], `${l.id} has no border`);
     assert.ok(tickets.length >= 8, 'every ticket and the idea were checked'); // 0520: and Capture's note
-    for (const t of tickets) assert.ok(t.sides.every(x => x >= 1), `${t.id} has a border on every side: ${t.sides}`);
+    // 0585: a Build row is a line in a list: it has only the hairline under it
+    for (const t of tickets) assert.ok(/\bq row\b/.test(t.id) ? t.sides[2] >= 1 && !t.sides[0] && !t.sides[1] && !t.sides[3] : t.sides.every(x => x >= 1), `${t.id} has its border: ${t.sides}`);
   });
 }
-
-// Each Build row's border and fill, by its state, against the colours its state has had since 0161, 0167 and 0171.
-test('0418 AC3: a ticket that needs you, waits for you or is being built keeps its tint or edge', skip, async () => {
-  await width(375);
-  const got = await b.js(`(() => {
-    const root = getComputedStyle(document.documentElement);
-    const colour = v => { const p = document.createElement('i'); p.style.color = root.getPropertyValue(v); document.body.appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; };
-    const row = cls => { const n = document.querySelector('#queue .q.' + cls); if (!n) return null; const s = getComputedStyle(n);
-      return { border: s.borderTopColor, width: s.borderTopWidth, fill: s.backgroundColor }; };
-    return { want: { bad: colour('--bad'), badBg: colour('--bad-bg'), ok: colour('--ok'), okBg: colour('--ok-bg'), blue: colour('--blue'), raise: colour('--raise') },
-      blocked: row('blocked'), toShip: row('to-ship'), atBuild: row('at-build'), wait: row('wait') };
-  })()`);
-  const w = got.want;
-  assert.deepEqual(got.blocked, { border: w.bad, width: '1px', fill: w.badBg }, 'a ticket that needs you is crimson');
-  assert.deepEqual(got.toShip, { border: w.ok, width: '1px', fill: w.okBg }, 'a ticket waiting for you to ship it is green (0440)');
-  assert.ok(got.atBuild, 'a ticket being built is in the list');
-  assert.deepEqual([got.atBuild.border, got.atBuild.width], [w.blue, '2px'], 'a ticket being built has a 2px edge in its stage\'s colour (0426: Cursor\'s blue)');
-  assert.equal(got.wait && got.wait.fill, w.raise, 'a ticket waiting on another is set back by its fill');
-});

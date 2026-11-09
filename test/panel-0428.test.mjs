@@ -97,8 +97,8 @@ test('0428 AC3: every button has a border on all four sides, in a colour 0161 ch
   }
 });
 
-test('0428 AC3: the small buttons on an open card are boxed', () => {
-  for (const sel of ['.q .full-open', '.q .stop-build']) {
+test('0428 AC3: the small buttons in a full view are boxed', () => {
+  for (const sel of ['.full-open', '.q .stop-build']) {
     const r = rule(sel);
     assert.ok(!r.decls.some(([k, v]) => k === 'border' && v === '0'), `${sel} doesn't take its border away`);
     assert.ok(!r.decls.some(([k]) => k === 'border-bottom'), `${sel} has no border on its bottom alone`);

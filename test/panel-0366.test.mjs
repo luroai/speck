@@ -3,7 +3,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, page, T, styles } from './support/panel.mjs';
+import { fakePage, page, T, styles, fullViewOf } from './support/panel.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
 
 const ON = { on: true, pid: 4242 };
@@ -119,12 +119,13 @@ test('0366 AC4: the pop-up stays up to date as the panel refreshes, keeping its 
 });
 
 test('0366 AC4: an answer being typed to the Foreman\'s question keeps its text and focus through a refresh', async () => {
-  // 0458: the question is on its ticket's card, not in the pop-up
+  // 0458: the question is on its ticket's card, not in the pop-up. 0585: it is in the ticket's full view.
   const agent = { running: null, asks: [{ id: '0001', question: 'Should it keep the old test?' }], did: [] };
   const f = { ...view({}, [T('0001', 'building')]), agent };
   const p = popPage([state(f, { tickets: [T('0001', 'building')] }), state(f, { tickets: [T('0001', 'building')] })]);
   await p.settle();
-  const box = () => p.all(p.byId('queue')).find(n => n.tagName === 'textarea');
+  await fullViewOf(p, '0001');
+  const box = () => p.all(p.byId('full-ticket')).find(n => n.tagName === 'textarea');
   const typed = box();
   assert.ok(typed, 'the question has an Answer box');
   typed.value = 'Keep it';

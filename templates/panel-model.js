@@ -97,6 +97,20 @@ function doingNow(t, shipping, called) {
   const working = t.status === 'building' || t.status === 'reviewing';
   return { sentence, tone, moving: working, working, round, by: round !== null ? reviewer : null };
 }
+// 0585: Build's groups, top to bottom. A ticket is under Needs you when it's blocked and waiting for you, approved and
+// waiting at Ship, or has the engineering manager's question (`asked`); under Queued when it's ready; otherwise under
+// Building, which has one the manager will answer or speck run will ship too.
+const BUILD_GROUPS = [['needs', 'Needs you'], ['building', 'Building'], ['queued', 'Queued']];
+function buildGroup(t, d, asked) {
+  if (asked) return 'needs';
+  if (!d) return 'queued';
+  if (d.sentence === 'Shipping') return 'building';
+  return (t.status === 'blocked' && t.foreman_will !== true) || (t.status === 'approved' && (t.to_ship || t.red)) ? 'needs' : 'building';
+}
+// A row's dot: orange for needs you, blue while it's worked on, grey while it waits.
+const rowDot = (group, d) => (group === 'needs' ? 'needs' : d && d.moving ? 'run' : 'wait');
+// How long a row has been going, in whole minutes.
+const rowTime = ms => { const m = Math.floor(Math.max(0, ms) / 60000); return m < 1 ? '<1 min' : `${m} min`; };
 // 0171: the stage a ticket an agent is at work on has reached, for its card's border: 'build', 'check', 'review' or
 // 'ship', from what it's doing (`d`, from doing). Null when no agent is at work on it.
 function stageOf(t, d) {

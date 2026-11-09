@@ -48,8 +48,8 @@ async function withPack(widths, fn) {
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
       await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#queue .q .top')`, 'the panel');
       await b.js(`document.querySelector('#queue .q .top').click()`);
-      await b.until(`[...document.querySelectorAll('#queue .full-open')].some(x => x.textContent === 'Review pack')`, 'the Review pack button');
-      await b.js(`[...document.querySelectorAll('#queue .full-open')].find(x => x.textContent === 'Review pack').click()`);
+      await b.until(`[...document.querySelectorAll('#full-ticket .pane-row')].some(x => x.textContent === 'Review pack')`, 'the Review pack button');
+      await b.js(`[...document.querySelectorAll('#full-ticket .pane-row')].find(x => x.textContent === 'Review pack').click()`);
       await b.until(`!!document.querySelector('#full-ticket .md table.ac-table tbody tr')`, 'the review pack');
       await fn(b, width);
     }

@@ -58,7 +58,7 @@ const inLog = sel => sel.split(',').every(s => /^(?:\.q \.log|\.foreman \.run-lo
 const behind = sel => (onBar(sel) ? ['--bar'] : onFrame(sel) ? ['--bezel'] : inLog(sel) ? ['--log-bg'] : SURFACES);
 // Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
 // stage dots and the ensō's speck went in 0168.)
-const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.q .top .lights i', '.q .top .lights .d3', '.lane-title::before', '#capture-section .lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before', '#foreman .top .title::before']; // 0478: nor do the dots before each lane's title (0520: Capture's too). 0434: the grid of lights' dots hold no text. 0438: nor does the dot before speck's title, grey or not (0513)
+const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.where.needs::before', '.where.run::before', '.where.wait::before', '.lane-title::before', '#capture-section .lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before', '#foreman .top .title::before']; // 0478: nor do the dots before each lane's title (0520: Capture's too). 0585: nor do a Build row's dots. 0438: nor does the dot before speck's title, grey or not (0513)
 // Every control and card with an edge of its own, by its main rule. 0520: Plan's Tickets, Ideas and Inbox buttons
 // (.toggle) are gone.
 const EDGED = ['.tag', '.bezel .settings-open', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
@@ -331,22 +331,28 @@ function checkEdges(edges, where, atLeast = 8) { // 0477: 11 less the three lane
   for (const e of edges.filter(x => !x.disabled)) assert.ok(e.best >= EDGE - 0.005, `${where}: ${e.what}'s edge is ${e.best.toFixed(2)}:1`);
 }
 
-// Opens a draft and a queued ticket in Plan and Build, the priority menu and a ticket in the full pane, and checks each
+// Opens a draft in Plan, the priority menu and a ticket in the full pane, and checks each
 // list of Plan, in the look given.
 async function everyView(b, theme) {
   await b.js(`document.querySelector('#shaping .item.ticket .head').click()`);
   await b.until(`!!document.querySelector('#shaping .item.open')`, 'the open draft');
-  for (const id of ['0004', '0006', '0007']) {
-    await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}').querySelector('.top').click()`);
-  }
-  await b.until(`document.querySelectorAll('#queue .q.open').length === 3`, 'the open queue tickets');
   // 0410: each lane in turn, as only the open one shows
   const tags = [];
   for (const lane of ['capture', 'plan', 'build', 'shipped']) { // 0520: and Capture, its notes closed
     await b.js(openLane(lane));
-    checkTexts(await b.js(TEXTS), `${theme}, ${lane}, with Plan's tickets and Build open`, lane === 'capture' ? 10 : 21); // 0520: Capture holds two closed notes
-    checkEdges(await b.js(EDGES), `${theme}, ${lane}, with Plan's tickets and Build open`, lane === 'capture' ? 2 : 4); // Shipped has fewer controls than the others (0580: the bar's status has no edge of its own), and Capture (0520) only its notes
+    checkTexts(await b.js(TEXTS), `${theme}, ${lane}, with a Plan ticket open`, lane === 'capture' ? 10 : 21); // 0520: Capture holds two closed notes
+    checkEdges(await b.js(EDGES), `${theme}, ${lane}, with a Plan ticket open`, lane === 'capture' ? 2 : 4); // Shipped has fewer controls than the others (0580: the bar's status has no edge of its own), and Capture (0520) only its notes
     tags.push(...await b.js(TAGS));
+  }
+  // 0585: a Build row opens a full view, which has what a Build card showed open
+  await b.js(openLane('build'));
+  for (const id of ['0004', '0006', '0007']) {
+    await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}').querySelector('.top').click()`);
+    await b.until(`!document.getElementById('full-ticket').hidden && document.querySelector('#full-ticket .title').textContent !== '' && !!document.querySelector('#full-ticket .facts')`, `the full view of ${id}`);
+    checkTexts(await b.js(TEXTS), `${theme}, the full view of ${id}`);
+    checkEdges(await b.js(EDGES), `${theme}, the full view of ${id}`, 6);
+    await b.js(`document.querySelector('#full-ticket .close').click()`);
+    await b.until(`document.getElementById('full-ticket').hidden`, 'the full view to close');
   }
   await b.js(openLane('plan'));
   await b.js(`document.querySelector('#shaping .tag.pick').click()`);
@@ -409,7 +415,7 @@ test('0161 AC4: in a real browser, each button, link and tab reached with Tab sh
       }
       assert.ok(seen.length >= 10, `${theme}: Tab reaches the controls (${seen.length})`);
       // 0520: Plan's Tickets, Ideas and Inbox buttons (BUTTON.toggle) are gone; the lanes' names are buttons Tab reaches
-      for (const kind of ['BUTTON.tab', 'BUTTON.settings-open', 'SPAN.title', 'BUTTON.full-open', 'BUTTON.dep-chip']) {
+      for (const kind of ['BUTTON.tab', 'BUTTON.settings-open', 'SPAN.title', 'BUTTON.full-open', 'DIV.top']) {
         assert.ok(seen.some(f => f.what.startsWith(kind)), `${theme}: Tab reaches a ${kind}: ${seen.map(f => f.what).join(' | ')}`);
       }
       for (const f of seen) {

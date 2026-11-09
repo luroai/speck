@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, round, fakePage, queueRows, click, exitOf, openQueueRows } from './support/panel.mjs';
+import { T, round, fakePage, queueRows, exitOf, fullViewOf } from './support/panel.mjs';
 
 // ---------- 0069: drop the status word under an in-flight queue ticket's bar ----------
 
@@ -24,45 +24,45 @@ const queuePage = (s = state()) => fakePage([], {
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 const shape = row => row.children.map(n => n.className);
-const open = async (p, id) => { click(topOf(rowOf(p, id))); await p.settle(); };
-// What's under the bar: every child after the top row, which has the progress in it since 0156.
-const under = row => row.children.slice(row.children.findIndex(n => n.className === 'top') + 1);
+// 0585: a row opens the ticket's full view, which has what was under the card's two lines: its live section, whose
+// state is what's under the bar.
+const stateOf = (p, view) => p.all(view).find(n => n.className === 'live-state');
+const whereOf = row => p_find(row, n => /^where\b/.test(n.className || ''));
+const p_find = (n, f) => (f(n) ? n : (n.children || []).reduce((found, c) => found || p_find(c, f), null));
 
-test('0069 AC1: a building, reviewing or approved ticket has no status line under its bar, closed or open', async () => {
+test('0069 AC1: a building, reviewing or approved ticket has no status line under its bar, on its row or in its full view', async () => {
   const p = queuePage();
   await p.settle();
   for (const [id, status] of [['0001', 'building'], ['0002', 'reviewing'], ['0003', 'approved']]) {
-    assert.deepEqual(shape(rowOf(p, id)), ['top'], `${id} closed: only the top row, with the progress in it (0156)`);
-    assert.ok(!under(rowOf(p, id)).some(n => n.textContent.includes(status)), `${id} closed: no "${status}"`);
-    await open(p, id);
-    const row = rowOf(p, id);
-    assert.ok(!under(row).some(n => n.className === 'act' || n.textContent.includes(status)), `${id} open: no "${status}" line`);
+    assert.deepEqual(shape(rowOf(p, id)), ['top'], `${id} row: only the top row`);
+    assert.ok(!rowOf(p, id).textContent.includes(status), `${id} row: no "${status}"`);
+    const view = await fullViewOf(p, id);
+    assert.ok(!p.all(stateOf(p, view)).some(n => n.className === 'act' || n.textContent === status), `${id} full view: no "${status}" line`);
   }
 });
 
-test('0069 AC1: the rest of the row shows as before: bar, counter and log (the worktree path went in 0421)', async () => {
+test('0069 AC1: the rest of the ticket shows as before: counter and log (the worktree path went in 0421)', async () => {
   const p = queuePage();
   await p.settle();
-  const a = rowOf(p, '0001');
-  assert.ok(topOf(a).children.some(n => n.className === 'progress'), 'the progress, in the top row since 0156: in words only since 0416');
-  assert.match(p.all(topOf(a)).find(n => n.className === 'sub').textContent, /^01:0\d$/, 'the counter in the top row');
-  await open(p, '0001');
-  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'full-open', 'full-open', 'log'], 'no path line since 0421 (0548: Full log)');
-  await open(p, '0002');
-  assert.deepEqual(shape(rowOf(p, '0002')), ['top', 'full-open', 'full-open', 'log']);
+  assert.match(p.all(topOf(rowOf(p, '0001'))).find(n => n.className === 'sub').textContent, /^1 min$/, 'the minutes in the row');
+  const view = await fullViewOf(p, '0001');
+  assert.match(p.all(view).find(n => n.className === 'sub').textContent, /^01:0\d$/, 'the counter in the full view');
+  assert.deepEqual(stateOf(p, view).children.map(n => n.className), ['live-now', 'live-buttons'], 'no path line since 0421 (0548: Full log)');
+  assert.ok(p.all(view).some(n => n.className === 'log'), 'the log');
+  assert.deepEqual(stateOf(p, await fullViewOf(p, '0002')).children.map(n => n.className), ['live-now', 'live-buttons']);
 });
 
-test('0069 AC1: a build exit message still shows, with no status line after it', async () => {
+test('0069 AC1: a build exit message still shows in the full view, with no status line after it', async () => {
   const s = { tickets: [T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf('Ship refused.') }), T('0002', 'building', exitOf('Stopped here.'))], ideas: [] };
   const p = fakePage([s]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const [a, b] = queueRows(p);
-  assert.deepEqual(shape(a).slice(0, 3), ['top', 'act to-ship', 'question exit to-ship']); // purple since 0138 (0434: then its buttons and log, as it's open)
+  const a = stateOf(p, await fullViewOf(p, '0001'));
+  assert.deepEqual(shape(a).slice(0, 4), ['live-now', 'act to-ship', 'question exit to-ship', 'live-buttons']); // purple since 0138
   assert.equal(a.children[1].textContent, 'Build finished without shipping');
   assert.equal(a.children[2].textContent, 'Ship refused.');
   assert.ok(!a.textContent.includes('approved'));
-  assert.deepEqual(shape(b).slice(0, 3), ['top', 'act bad', 'question exit']);
+  const b = stateOf(p, await fullViewOf(p, '0002'));
+  assert.deepEqual(shape(b).slice(0, 4), ['live-now', 'act bad', 'question exit', 'live-buttons']);
   assert.equal(b.children[1].textContent, 'Build stopped before finishing');
   assert.ok(!b.textContent.includes('building'));
 });
@@ -70,38 +70,31 @@ test('0069 AC1: a build exit message still shows, with no status line after it',
 test('0069 AC2: a blocked ticket says "Answer the question, then run /speck-build <id>" under its question and resume command', async () => {
   const p = queuePage();
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const row = rowOf(p, '0004');
-  assert.deepEqual(shape(row).slice(0, 4), ['top', 'question', 'resume', 'act']);
-  assert.equal(row.children[1].textContent, 'A or B?');
-  assert.match(row.children[2].textContent, /^cd \/tmp\/x && claude --resume abc/);
-  assert.equal(row.children[3].textContent, 'Waiting for you. Answer the question, then run /speck-build 0004');
-  assert.ok(!row.textContent.includes('blocked'), 'no status word');
-  assert.deepEqual(shape(rowOf(p, '0004')), ['top', 'question', 'resume', 'act', 'full-open', 'full-open', 'log'], 'open: the rest as before (0548: and Full log)');
-  await open(p, '0004');
-  assert.deepEqual(shape(rowOf(p, '0004')), ['top'], '0434: closed, its two lines only');
+  assert.deepEqual(shape(rowOf(p, '0004')), ['top'], '0585: its row is its two lines only');
+  const live = stateOf(p, await fullViewOf(p, '0004'));
+  assert.deepEqual(shape(live), ['live-now', 'question', 'resume', 'act', 'live-buttons'], 'the rest as before (0548: and Full log)');
+  assert.equal(live.children[1].textContent, 'A or B?');
+  assert.match(live.children[2].textContent, /^cd \/tmp\/x && claude --resume abc/);
+  assert.equal(live.children[3].textContent, 'Waiting for you. Answer the question, then run /speck-build 0004');
+  assert.ok(!live.textContent.includes('blocked'), 'no status word');
 });
 
 test('0069 AC2: a blocked ticket with no question or session still gets the line, with its own id', async () => {
   const p = fakePage([{ tickets: [T('0042', 'blocked')], ideas: [] }]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const [row] = queueRows(p);
-  assert.deepEqual(shape(row).slice(0, 2), ['top', 'act']);
-  assert.equal(row.children[1].textContent, 'Waiting for you. Answer the question, then run /speck-build 0042');
+  const live = stateOf(p, await fullViewOf(p, '0042'));
+  assert.deepEqual(shape(live).slice(0, 2), ['live-now', 'act']);
+  assert.equal(live.children[1].textContent, 'Waiting for you. Answer the question, then run /speck-build 0042');
 });
 
-test('0069 AC3: a ready ticket\'s Queued line is unchanged', async () => {
+test('0069 AC3: a ready ticket\'s row line says Ready, and what it waits on', async () => {
   const p = queuePage();
   await p.settle();
   const waiting = rowOf(p, '0005'), chain = rowOf(p, '0006');
-  // 0419: the Queued line is the top row's details line, followed by the ticket's tags
-  const queuedOf = row => row.children[0].children[1];
   assert.deepEqual(shape(waiting), ['top']);
-  assert.equal(queuedOf(waiting).textContent, 'Queued'); // 0468: what it waits on or unlocks is in its chip
-  assert.equal(queuedOf(waiting).children[0].tagName, 'b');
-  assert.equal(queuedOf(chain).textContent, 'Queued');
+  assert.equal(whereOf(waiting).textContent, 'Ready · after 0006'); // 0585: what it waits on is in the line
+  assert.equal(whereOf(chain).textContent, 'Ready');
   const lone = fakePage([{ tickets: [T('0007', 'ready')], ideas: [] }]);
   await lone.settle();
-  assert.equal(queuedOf(queueRows(lone)[0]).textContent, 'Queued');
+  assert.equal(whereOf(queueRows(lone)[0]).textContent, 'Ready');
 });

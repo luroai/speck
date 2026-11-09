@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { statusData } from '../scripts/speck.mjs';
-import { fakePage, T, round, queueRows, panelModel, isRed, findText, panelRepo, boardPage, openQueueRows } from './support/panel.mjs';
+import { T, round, panelModel, isRed, findText, panelRepo, boardPage, fullViewOf } from './support/panel.mjs';
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 const MESSAGE = 'Tests failed on the approved branch, so nothing was shipped.';
@@ -21,12 +21,10 @@ const blocked = (o = {}) => T('0001', 'blocked', { started: ago(3600), approved:
   build_running: false, ship: { running: false, auto: true, started: ago(300), ended: ago(60), message: MESSAGE }, ...o });
 const state = (tickets, on = true) => ({ tickets, ideas: [], run: { on } });
 
-const row = p => queueRows(p).find(r => r.textContent.includes('0001'));
 async function shown(s) {
   const p = boardPage([s]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const r = row(p);
+  const r = await fullViewOf(p, '0001'); // 0585: what a row doesn't say is in its full view
   return { p, r, red: [r, ...p.all(r)].some(isRed), has: text => !!findText(p, r, text) };
 }
 

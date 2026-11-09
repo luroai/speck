@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, openQueueRows, page as panelHtml } from './support/panel.mjs';
+import { T, fakePage, queueRows, fullViewOf, page as panelHtml } from './support/panel.mjs';
 import { openSettings } from './support/settings.mjs';
 import { settingsWithAgents, YOURS_VIEW, agentsBox } from './support/your-agents.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
@@ -61,17 +61,16 @@ const card = (p, id) => queueRows(p).find(r => p.all(r).find(n => n.className ==
 
 const IDS = ['run', 'queue', 'shaping', 'shipped', 'settings', 'foreman', 'full-ticket', 'tab-plan', 'tab-build', 'tab-shipped'];
 
-test('0485 AC1: nowhere in the panel says Foreman, in any case: header, lanes, open cards, a full ticket, the Pipeline log pop-up, Settings and Your agents', async () => {
+test('0485 AC1: nowhere in the panel says Foreman, in any case: header, lanes, rows, full tickets, the Pipeline log pop-up, Settings and Your agents', async () => {
   const { p, made, confirms } = page();
   await p.settle();
   for (const lane of ['plan', 'shipped', 'build']) { p.press(p.byId(`tab-${lane}`)); await p.settle(); }
-  await openQueueRows(p);
-  const fullButton = p.all(card(p, '0001')).find(n => n.tagName === 'button' && n.textContent === 'Full ticket');
-  assert.ok(fullButton, 'the blocked card has a Full ticket button');
-  p.press(fullButton);
-  await p.settle();
+  // 0585: a Build row opens its full view, which has what an open card had
+  await fullViewOf(p, '0001');
   assert.equal(p.byId('full-ticket').hidden, false, 'the full ticket is open');
-  const dismiss = p.all(card(p, '0004')).find(n => n.tagName === 'button' && n.textContent === 'Dismiss');
+  await fullViewOf(p, '0003');
+  const dismiss = p.all(await fullViewOf(p, '0004')).find(n => n.tagName === 'button' && n.textContent === 'Dismiss');
+  assert.ok(dismiss, 'the full view has Dismiss');
   p.press(dismiss);
   await p.settle();
   assert.equal(confirms.length, 1, 'the dismiss asked to confirm');
@@ -96,18 +95,18 @@ test('0485 AC1: the scan finds Foreman where it shows, and lets the setting name
   assert.deepEqual(foremanIn(['watch is fix', 'set watch_model', 'The FOREMAN asks', 'foremen']), ['The FOREMAN asks']);
 });
 
-test('0485 AC2: the cards, the full ticket and the dismiss confirm use the new wording', async () => {
+test('0485 AC2: the rows, the full views and the dismiss confirm use the new wording', async () => {
   const { p, confirms } = page();
   await p.settle();
-  const closed = card(p, '0001');
-  assert.ok(closed.textContent.includes('speck will answer'), closed.textContent);
-  await openQueueRows(p);
-  const one = card(p, '0001').textContent;
-  assert.ok(one.includes(`speck will take its recommendation: ${OPTION}`), one);
-  const nowCell = p.all(card(p, '0001')).find(n => n.title === 'Blocked · speck will take its recommendation');
+  const row = card(p, '0001');
+  assert.ok(row.textContent.includes('speck will answer'), row.textContent);
+  const one = await fullViewOf(p, '0001');
+  assert.ok(one.textContent.includes(`speck will take its recommendation: ${OPTION}`), one.textContent);
+  const nowCell = [row, ...p.all(row)].find(n => n.title === 'Blocked · speck will take its recommendation');
   assert.ok(nowCell, 'the sentence is its tooltip');
-  assert.ok(card(p, '0003').textContent.includes(`speck went with the recommendation: ${OPTION} · ${time}`), card(p, '0003').textContent);
-  const four = card(p, '0004');
+  const three = await fullViewOf(p, '0003');
+  assert.ok(three.textContent.includes(`speck went with the recommendation: ${OPTION} · ${time}`), three.textContent);
+  const four = await fullViewOf(p, '0004');
   assert.ok(four.textContent.includes(`speck asks you: ${QUESTION}`), four.textContent);
   const box = p.all(four).find(n => n.tagName === 'textarea');
   assert.equal(box.attrs['aria-label'], 'Your answer to speck\'s question about 0004');

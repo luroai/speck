@@ -3,8 +3,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, POPUPS, popupsScript, pageScript, pageScripts, page, fakePage, full, items, top, click, STYLE_FILES, panelRepo, freePort, startPanel, stop, request, cliCopy } from './support/panel.mjs';
-import { PACK, DOCS, text, openPack } from './support/documents.mjs';
+import { ROOT, POPUPS, popupsScript, pageScript, pageScripts, page, fakePage, full, items, top, click, STYLE_FILES, panelRepo, freePort, startPanel, stop, request, cliCopy, T, fullViewOf } from './support/panel.mjs';
+import { PACK, DOCS, text } from './support/documents.mjs';
+
+// 0585: the Review pack button is in the ticket's full view, which a Build row opens.
+async function openPack(response, more = []) {
+  const state = { ideas: [], tickets: [T('0005', 'approved', { started: new Date(Date.now() - 60000).toISOString() })] };
+  const p = fakePage([structuredClone(state), { text: '', truncated: false }, response, ...more, structuredClone(state)]);
+  await p.settle();
+  p.press(p.all(await fullViewOf(p, '0005')).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  await p.settle();
+  return p;
+}
 
 // ---------- 0473: the pop-ups' script in a file of its own ----------
 

@@ -78,7 +78,7 @@ const VIEWS = [
   ['Capture, closed', `${openLane('capture')}, true`, `!!document.querySelector('#capture .item.idea') && !!document.querySelector('#capture .item.inbox')`],
   ['Capture, an idea open', `document.querySelector('#capture .item.idea .head').click(), true`, `!!document.querySelector('#capture .item.idea.open')`],
   ['Build, closed', `${openLane('build')}, true`, `document.querySelectorAll('#queue .q').length === 5`],
-  ['Build, open', `[...document.querySelectorAll('#queue .q:not(.open) .top')].forEach(t => t.click()), true`, `document.querySelectorAll('#queue .q.open').length === 5`],
+  // 0585: a Build row never opens in the list: pressing it opens the ticket's full view
   ['Shipped, closed', `${openLane('shipped')}, true`, `document.querySelectorAll('#shipped tr').length === 2`],
   ['Shipped, open', `[...document.querySelectorAll('#shipped tr:not(.open) .line .title')].forEach(t => t.click()), true`, `document.querySelectorAll('#shipped tr.open').length === 2`],
 ];
@@ -95,7 +95,7 @@ const READ = `(async () => {
 })()`;
 
 for (const width of [390, 600]) {
-  test(`0469 AC1, AC2: at ${width} px, the header, tabs and every card closed and open are laid out the same with a mouse as on a touch screen, in the same font sizes`, skip, async () => {
+  test(`0469 AC1, AC2: at ${width} px, the header, tabs and every card and row, closed and open, are laid out the same with a mouse as on a touch screen, in the same font sizes`, skip, async () => {
     const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
     const b = await browserPage('about:blank');
     const pointer = async touch => {

@@ -19,6 +19,8 @@ const itemOf = (p, id) => items(p).find(n => n.textContent.startsWith(id));
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const shipOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
+// 0585: pressing a Build row opens the ticket's full view; the row itself never opens.
+const openFull = async (p, id) => { click(topOf(rowOf(p, id))); await p.settle(); };
 const isOpen = n => /(^| )open( |$)/.test(n.className);
 const logOf = (p, row) => p.all(row).find(n => /(^| )log( |$)/.test(n.className || ''));
 const clone = s => JSON.parse(JSON.stringify(s));
@@ -55,43 +57,37 @@ const board = () => ({
 // What's open or selected across the page: each Shaping item's and queue row's open state, and the Shaping list showing.
 const openStates = p => [items(p).map(isOpen), queueRows(p).map(isOpen), p.byId('shaping-section').className];
 
-test('0063 AC1: an open queue ticket has a Full ticket button, and a closed one has none', async () => {
+test('0063 AC1: a queue ticket\'s row has no Full ticket button, and pressing it opens the pane on it, with its log', async () => {
   const p = livePage(board());
   await p.settle();
-  for (const id of ['0002', '0003', '0004']) assert.equal(fullOf(p, rowOf(p, id)), undefined, `${id}: closed, no button`);
+  for (const id of ['0002', '0003', '0004']) assert.equal(fullOf(p, rowOf(p, id)), undefined, `${id}: no button on its row`);
   for (const id of ['0002', '0003', '0004']) {
-    click(topOf(rowOf(p, id)));
-    await p.settle();
-    assert.ok(logOf(p, rowOf(p, id)), `${id}: its log is showing`);
-    assert.ok(fullOf(p, rowOf(p, id)), `${id}: open, so it has the button`);
-    assert.ok(!p.all(topOf(rowOf(p, id))).includes(fullOf(p, rowOf(p, id))), 'not in the top row, which opens and closes it');
+    await openFull(p, id);
+    assert.equal(paneId(p), id, `${id}: the pane opens on it`);
+    assert.equal(fullOf(p, rowOf(p, id)), undefined, `${id}: still no button on its row`);
+    assert.ok(!isOpen(rowOf(p, id)), `${id}: its row doesn't open`);
+    assert.equal(!!logOf(p, pane(p)), id !== '0004', `${id}: its log is showing in the pane, if it has started`);
   }
-  click(topOf(rowOf(p, '0002')));
-  await p.settle();
-  assert.equal(fullOf(p, rowOf(p, '0002')), undefined, 'closed again: no button');
 });
 
-test('0063 AC1: clicking a queue ticket\'s Full ticket opens the pane on it and opens, closes or selects nothing else', async () => {
+test('0063 AC1: pressing a queue ticket\'s row opens the pane on it and opens, closes or selects nothing else', async () => {
   const p = livePage(board());
   await p.settle();
   click(top(itemOf(p, '0001')));
-  click(topOf(rowOf(p, '0002')));
-  click(topOf(rowOf(p, '0003')));
   await p.settle();
-  const before = openStates(p), calls = p.fetched.length;
-  assert.ok(press(fullOf(p, rowOf(p, '0003'))), 'the click goes no further');
+  const before = openStates(p);
+  await openFull(p, '0003');
   assert.ok(paneOpen(p), 'the pane opens');
   assert.equal(paneId(p), '0003', 'on that ticket');
   assert.ok(pane(p).textContent.includes('Blocked'), 'with its title');
   assert.deepEqual(openStates(p), before, 'nothing else opens or closes');
-  assert.equal(p.fetched.length, calls, 'and nothing is asked of the server');
 });
 
 test('0063 AC1: each Shipped card\'s Full ticket opens the pane on that ticket and nothing else (from its open card since 0466)', async () => {
   const p = livePage(board());
   await p.settle();
-  click(topOf(rowOf(p, '0002')));
-  await p.settle();
+  await openFull(p, '0002');
+  p.all(pane(p)).find(n => n.className === 'close').listeners.click();
   for (const id of ['0005', '0006']) assert.ok(titleOf(p, shipOf(p, id)), `${id}: a Full ticket button`);
   const before = openStates(p);
   assert.ok(press(titleOf(p, shipOf(p, '0006'))), 'the click goes no further');
@@ -115,7 +111,7 @@ test('0063 AC2: a ticket that isn\'t a draft shows the same id, title and sectio
   const draftSections = sections(pane(p));
   p.all(pane(p)).find(n => n.className === 'close').listeners.click();
   for (const [id, from] of [['0002', 'queue'], ['0004', 'queue'], ['0005', 'shipped']]) {
-    if (from === 'queue') { click(topOf(rowOf(p, id))); await p.settle(); press(fullOf(p, rowOf(p, id))); } else press(titleOf(p, shipOf(p, id)));
+    if (from === 'queue') await openFull(p, id); else press(titleOf(p, shipOf(p, id)));
     assert.equal(paneId(p), id);
     const [head] = pane(p).children;
     assert.equal(head.children.find(n => n.className === 'title').textContent, s.tickets.find(t => t.id === id).title, `${id}: its title`);
@@ -180,7 +176,7 @@ test('0063 AC3: the pane closes when its ticket is cancelled, from the queue or 
     const s = board();
     const p = livePage(s);
     await p.settle();
-    if (id === '0001') { click(top(itemOf(p, id))); press(fullOf(p, itemOf(p, id))); } else { click(topOf(rowOf(p, id))); await p.settle(); press(fullOf(p, rowOf(p, id))); }
+    if (id === '0001') { click(top(itemOf(p, id))); press(fullOf(p, itemOf(p, id))); } else await openFull(p, id);
     assert.equal(paneId(p), id);
     const next = clone(s);
     next.tickets.find(t => t.id === id).status = 'cancelled';
@@ -194,9 +190,7 @@ test('0063 AC3: its content changes with the ticket, and a draft\'s readiness li
   const s = board();
   const p = livePage(s);
   await p.settle();
-  click(topOf(rowOf(p, '0002')));
-  await p.settle();
-  press(fullOf(p, rowOf(p, '0002')));
+  await openFull(p, '0002');
   const next = clone(s);
   next.tickets[1].notes = '- A new note.';
   p.set(next);
@@ -212,31 +206,35 @@ const held = (node, root) => {
   return () => chain.every(([n, d], i) => (n.detached || 0) === d && (i === chain.length - 1 || n.parentNode === chain[i + 1][0]));
 };
 
-test('0063 AC4: opening and closing the pane leaves queue tickets as they were, and their rows, Shipped rows and log boxes keep their nodes', async () => {
+test('0063 AC4: opening and closing the pane leaves queue tickets as they were, and their rows and Shipped rows keep their nodes, and a log box its place', async () => {
   const s = board();
   const p = livePage(s);
   await p.settle();
-  click(topOf(rowOf(p, '0002')));
-  await p.settle();
-  const log = logOf(p, rowOf(p, '0002'));
-  Object.assign(log, { scrollHeight: 1000, clientHeight: 100, scrollTop: 37 }); // the reader has scrolled it up
-  const keptLog = held(log, p.byId('queue')), keptRow = held(rowOf(p, '0003'), p.byId('queue'));
+  const keptRow = held(rowOf(p, '0003'), p.byId('queue'));
   const keptShip = held(shipOf(p, '0006').children[0], p.byId('shipped'));
   const before = openStates(p);
   for (const how of ['Close', 'Escape', 'backdrop']) {
     for (const from of ['queue', 'shipped']) {
-      press(from === 'queue' ? fullOf(p, rowOf(p, '0002')) : titleOf(p, shipOf(p, '0005')));
+      if (from === 'queue') await openFull(p, '0002'); else press(titleOf(p, shipOf(p, '0005')));
       assert.ok(paneOpen(p));
+      const log = logOf(p, pane(p)); // 0585: the build's log is in its full view
+      if (from === 'queue') {
+        assert.ok(log, 'its log box');
+        Object.assign(log, { scrollHeight: 1000, clientHeight: 100, scrollTop: 37 }); // the reader has scrolled it up
+      }
+      const keptLog = log && held(log, pane(p));
       await refresh(p);
       assert.ok(paneOpen(p), 'open through the refresh');
+      if (log) {
+        assert.ok(keptLog(), `${how} from ${from}: the log box is not taken out while it's open`);
+        assert.equal(log.scrollTop, 37, 'and stays where it was scrolled');
+      }
       if (how === 'Close') p.all(pane(p)).find(n => n.className === 'close').listeners.click();
       else if (how === 'Escape') p.key('Escape');
       else p.byId('full-backdrop').listeners.click({ target: p.byId('full-backdrop') });
       assert.ok(!paneOpen(p), `${how} closes it`);
       await refresh(p);
       assert.deepEqual(openStates(p), before, `${how} from ${from}: queue tickets open or closed as they were`);
-      assert.ok(keptLog(), `${how} from ${from}: the log box is never taken out`);
-      assert.equal(log.scrollTop, 37, 'and stays where it was scrolled');
       assert.ok(keptRow(), 'a queue row keeps its node, so text selected in it stays');
       assert.ok(keptShip(), 'a Shipped row keeps its node too');
     }
@@ -247,9 +245,7 @@ test('0063 self-check: built-in names as ids, and an id in more than one list, s
   const s = { tickets: [any('__proto__', 'building', { title: 'Proto build' }), shipped('constructor', 8, { title: 'Ctor shipped' }), full('0009', { title: 'Draft 9' }), shipped('0009', 9, { title: 'Done 9' })], ideas: [] };
   const p = livePage(s);
   await p.settle();
-  click(topOf(rowOf(p, '__proto__')));
-  await p.settle();
-  press(fullOf(p, rowOf(p, '__proto__')));
+  await openFull(p, '__proto__');
   assert.ok(pane(p).textContent.includes('Proto build'));
   await refresh(p);
   assert.ok(pane(p).textContent.includes('Proto build'), 'kept through the refresh');
@@ -274,21 +270,19 @@ test('0063 AC1-AC4: in a real browser, Full ticket from the queue and from an op
   try {
     await b.until(`[...document.querySelectorAll('#queue .q')].some(q => q.textContent.includes('A build to watch'))`, 'the build in the queue');
     const row = `[...document.querySelectorAll('#queue .q')].find(q => q.textContent.includes('A build to watch'))`;
-    assert.ok(await b.js(`!(${row}).querySelector('button.full-open')`), 'closed: no button');
-    await b.js(`(${row}).querySelector('.top').click()`);
-    await b.until(`!!(${row}).querySelector('.log') && (${row}).querySelector('.log').textContent.includes('line 119')`, 'the log');
-    await b.js(`(${row}).querySelector('.log').scrollTop = 40`);
-    const scrolled = await b.js(`(${row}).querySelector('.log').scrollTop`);
-    assert.ok(scrolled > 0, 'the log scrolled');
-    await b.js(`[...(${row}).querySelectorAll('button')].find(x => x.textContent === 'Full ticket').click()`);
+    assert.ok(await b.js(`!(${row}).querySelector('button.full-open')`), 'its row has no button');
+    await b.js(`(${row}).querySelector('.top').click()`); // 0585: pressing the row opens the pane
     await b.until(`!document.getElementById('full-ticket').hidden`, 'the pane');
     assert.ok(await b.js(`document.querySelector('#full-ticket .id').textContent === '0002'`));
     assert.ok(await b.js(`!document.querySelector('#full-ticket .ready') && !document.querySelector('#full-ticket .set-ready')`), 'no readiness list');
-    assert.ok(await b.js(`(${row}).classList.contains('open')`), 'the queue ticket stays open');
+    await b.until(`!!document.querySelector('#full-ticket .log') && document.querySelector('#full-ticket .log').textContent.includes('line 119')`, 'the log');
+    await b.js(`document.querySelector('#full-ticket .log').scrollTop = 40`);
+    const scrolled = await b.js(`document.querySelector('#full-ticket .log').scrollTop`);
+    assert.ok(scrolled > 0, 'the log scrolled');
+    assert.ok(await b.js(`!(${row}).classList.contains('open')`), 'the queue row does not open');
     await b.js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
     assert.ok(await isHidden(), 'Escape closes it');
-    assert.equal(await b.js(`(${row}).querySelector('.log').scrollTop`), scrolled, 'the log is where it was');
-    assert.ok(await b.js(`(${row}).classList.contains('open')`), 'and the ticket is still open');
+    assert.ok(await b.js(`!(${row}).classList.contains('open')`), 'and the row is as it was');
     await b.until(`!!document.querySelector('#shipped tr .title')`, 'the Shipped row\'s title');
     await b.js(`document.querySelector('#shipped tr .title').click()`); // 0466: it opens the card, which has Full ticket
     await b.until(`!!document.querySelector('#shipped tr.open .full-open')`, 'the open Shipped card');

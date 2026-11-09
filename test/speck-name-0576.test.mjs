@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fakePage, T, click, gitEnv, ROOT, openQueueRows, nowOf, startPanel, stop, freePort, request, CLI } from './support/panel.mjs';
+import { fakePage, T, click, gitEnv, ROOT, fullViewOf, startPanel, stop, freePort, request, CLI } from './support/panel.mjs';
 import { OPTION, blockedRepo } from './support/blocked.mjs';
 import { loadConfig, statusData } from '../scripts/speck.mjs';
 import { speckSays } from '../scripts/core.mjs';
@@ -31,6 +31,8 @@ const named = (r, name = 'Virgil') => fs.appendFileSync(path.join(r.dir, 'speck'
 const state = (foreman, tickets = [], o = {}) => ({ tickets, ideas: [], resume_command: '', run: ON, foreman, ...o });
 const BLOCKED = (id, o = {}) => T(id, 'blocked', { blocked_question: 'A or B?', blocked_recommendation: OPTION, blocked_noticeable: false, blocked_clear: true, blocked_resumable: true, ...o });
 const rowOf = (p, id) => p.byId('queue').children.find(n => /\bq\b/.test(n.className) && n.textContent.includes(id));
+// 0585: a Build row's line saying where it is, and its tooltip.
+const whereOf = (p, id) => p.all(rowOf(p, id)).find(n => /^where\b/.test(n.className || ''));
 const SPOKEN = /speck (?:is looking|asks you|resumed|went with|takes)/;
 
 test('0576 AC1: speck status\'s lines say the name for what it looks into, asks, does and took, and what watch has it do', () => {
@@ -103,31 +105,32 @@ test('0576 AC1: the moved-on sentence under a question takes the name it\'s give
   assert.equal(view(), 'No longer waiting: speck has done something else about 0001 since.');
 });
 
-test('0576 AC2: a blocked card says the name when it will take the recommendation, in its status words too', async () => {
+test('0576 AC2: a blocked ticket says the name when it will take the recommendation, in its row\'s status words too', async () => {
   const p = fakePage([state(view({ name: 'Virgil', agent: undefined, tickets: [] }), [BLOCKED('0001', { foreman_will: true })])]);
   await p.settle();
-  await openQueueRows(p);
-  const row = rowOf(p, '0001');
-  assert.ok(row.textContent.includes(`Virgil will take its recommendation: ${OPTION}`), row.textContent);
-  assert.equal(nowOf(row).textContent, 'Virgil will answer');
-  assert.equal(nowOf(row).title, 'Blocked · Virgil will take its recommendation');
-  assert.doesNotMatch(row.textContent, /speck will/);
+  assert.match(whereOf(p, '0001').textContent, /^Virgil will answer/);
+  assert.equal(whereOf(p, '0001').title, 'Blocked · Virgil will take its recommendation');
+  assert.doesNotMatch(rowOf(p, '0001').textContent, /speck will/);
+  const full = await fullViewOf(p, '0001'); // 0585: and its full view says what it will take
+  assert.ok(full.textContent.includes(`Virgil will take its recommendation: ${OPTION}`), full.textContent);
+  assert.doesNotMatch(full.textContent, /speck will/);
 });
 
-test('0576 AC2: the card that went with a recommendation says the name', async () => {
+test('0576 AC2: the full view of a ticket that went with a recommendation says the name', async () => {
   const went = { option: OPTION, by: 'foreman', at: AT };
   const p = fakePage([state(view({ name: 'Virgil', agent: undefined, tickets: [] }), [T('0001', 'building', { went_with: went })])]);
   await p.settle();
-  await openQueueRows(p);
-  assert.ok(rowOf(p, '0001').textContent.includes(`Virgil went with the recommendation: ${OPTION}`), rowOf(p, '0001').textContent);
+  const full = await fullViewOf(p, '0001');
+  assert.ok(full.textContent.includes(`Virgil went with the recommendation: ${OPTION}`), full.textContent);
 });
 
-test('0576 AC2: its question and Answer box say the name, and Dismiss asks about it by name', async () => {
+test('0576 AC2: its question and Answer box in the full view say the name, and Dismiss asks about it by name', async () => {
   const confirms = [];
   const agent = { running: null, waiting: [], did: [], asks: [{ id: '0001', question: 'Keep it?', at: AT }] };
   const p = fakePage([state(view({ name: 'Virgil', agent, tickets: [] }), [T('0001', 'building')])], { confirm: m => { confirms.push(m); return false; } });
   await p.settle();
-  const row = rowOf(p, '0001');
+  assert.match(whereOf(p, '0001').textContent, /^Virgil has a question/, 'its row says so');
+  const row = await fullViewOf(p, '0001');
   assert.ok(row.textContent.includes('Virgil asks you: Keep it?'), row.textContent);
   const find = (n, want) => (want(n) ? n : (n.children || []).map(c => find(c, want)).find(Boolean));
   assert.equal(find(row, n => /ask-answer/.test(n.className || '')).attrs['aria-label'], 'Your answer to Virgil\'s question about 0001');
@@ -144,8 +147,7 @@ test('0576 AC2: the Decided for you line says the name, and a board without one 
   const old = fakePage([state(view({ agent: undefined, tickets: [] }), [BLOCKED('0001', { foreman_will: true })], { decided })]);
   await old.settle();
   assert.equal(old.byId('decided-open').textContent, 'speck decided 1 for you in the last 7 days');
-  await openQueueRows(old);
-  assert.equal(nowOf(rowOf(old, '0001')).textContent, 'speck will answer');
+  assert.match(old.all(rowOf(old, '0001')).find(n => /^where\b/.test(n.className || '')).textContent, /^speck will answer/);
 });
 
 test('0576 AC2: renaming it redraws a card already showing, and anything that isn\'t a name says speck', async () => {

@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, T, round, queueRows, panelModel, exitOf, isRed, stageOf, sayOf, findText, openQueueRows } from './support/panel.mjs';
+import { fakePage, T, round, queueRows, panelModel, exitOf, isRed, findText, fullViewOf } from './support/panel.mjs';
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 const PACK = '## 0001 · Ticket 0001\n**Verdict:** ✅ Approved by reviewer\n';
@@ -28,13 +28,13 @@ function page(state) {
   return p;
 }
 const row = p => queueRows(p).find(r => r.textContent.includes('0001'));
+const whereOf = p => p.all(row(p)).find(n => /^where\b/.test(n.className)); // 0585: the row's one line
 const texts = (p, n) => p.all(n).map(x => x._text).filter(Boolean);
 const buttons = (p, n, re) => p.all(n).filter(x => x.tagName === 'button' && re.test(x.textContent));
 async function openPack(p) {
   await p.settle();
-  p.press(row(p).children.find(n => n.className === 'top'));
-  await p.settle();
-  p.press(buttons(p, row(p), /^Review pack$/)[0]);
+  const full = await fullViewOf(p, '0001'); // 0585: its Review pack button is in its full view
+  p.press(buttons(p, full, /^Review pack$/)[0]);
   await p.settle();
 }
 
@@ -46,8 +46,8 @@ test('0153 AC1: a running ship shows "Shipping" on its queue row (0434: with its
   await p.settle();
   const r = row(p);
   assert.ok(findText(p, r, 'Shipping'), 'the label'); // once, beside the badge, since 0201
-  assert.ok(!texts(p, r).some(t => /^0?2:0[5-6]$/.test(t)), `not how long the ship has run: ${texts(p, r).join(' | ')}`);
-  assert.ok(texts(p, r).includes('50:00'), 'its build\'s time, held at its approval');
+  assert.ok(!texts(p, r).some(t => /^2 min$/.test(t)), `not how long the ship has run: ${texts(p, r).join(' | ')}`);
+  assert.ok(texts(p, r).includes('50 min'), 'its build\'s time, held at its approval');
   assert.ok(!p.all(r).some(isRed), 'nothing red while it ships');
 });
 
@@ -57,11 +57,11 @@ test('0153 AC1: the ship\'s time isn\'t shown or counted between polls (0434)', 
   const state = { tickets: [approved({ ship: { running: true, auto: true, started: new Date(now - 10000).toISOString() } })], ideas: [] };
   const p = fakePage([state], { Date: Clock });
   await p.settle();
-  assert.ok(!texts(p, row(p)).includes('00:10'));
+  assert.ok(!texts(p, row(p)).includes('0 min'));
   now += 60000;
   for (const { fn, ms } of p.intervals.values()) if (ms === 1000) fn();
-  assert.ok(!texts(p, row(p)).includes('01:10'), texts(p, row(p)).join(' | '));
-  assert.ok(texts(p, row(p)).includes('50:00'), 'its build\'s time, held at its approval');
+  assert.ok(!texts(p, row(p)).includes('1 min'), texts(p, row(p)).join(' | '));
+  assert.ok(texts(p, row(p)).includes('50 min'), 'its build\'s time, held at its approval');
 });
 
 test('0153 AC1: any running ship shows, whoever started it, and a reload shows it again', async () => {
@@ -103,11 +103,8 @@ test('0153 AC3: an auto-ship that ended without shipping says so, with speck shi
   assert.equal(m.queue[0].shipping, false);
   const p = page(state);
   await p.settle();
-  // 0462: the current step and the sentence are in a closed card's line; an open one has its facts in a table
-  assert.match(stageOf(row(p)).className, /\bbad\b/);
-  assert.equal(sayOf(row(p)).className, 'say bad', 'it needs you, in its sentence (0416: with no badge)');
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const r = row(p), all = texts(p, r);
+  assert.match(whereOf(p).className, /\bneeds\b/, 'its row says it needs you (0585)');
+  const r = await fullViewOf(p, '0001'), all = texts(p, r); // 0585: the rest is in its full view
   const at = l => all.indexOf(l);
   assert.ok(at("Auto-ship didn't finish") >= 0, all.join(' | '));
   assert.ok(at(MESSAGE) > at("Auto-ship didn't finish"), 'the message follows the label');
@@ -119,8 +116,7 @@ test('0153 AC3: an auto-ship that ended without shipping says so, with speck shi
 test('0153 AC3: with no message (a killed auto-ship), it says so without one', async () => {
   const p = page({ tickets: [approved(failedShip({ message: null, ended: null }))], ideas: [] });
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const all = texts(p, row(p));
+  const all = texts(p, await fullViewOf(p, '0001')); // 0585: in its full view
   assert.ok(all.includes("Auto-ship didn't finish"));
   assert.ok(all.includes(SHIP_IT));
   assert.ok(!all.includes(MESSAGE));
@@ -142,16 +138,15 @@ test('0153 AC4: an approved ticket auto-ship doesn\'t cover shows none of these,
   assert.equal(m.queue[0].to_ship, true);
   const p = page(state);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const all = texts(p, row(p));
+  const full = await fullViewOf(p, '0001'), all = texts(p, full); // 0585: in its full view
   for (const l of LABELS) assert.ok(!all.includes(l), l);
   assert.ok(all.includes('Build finished without shipping'));
-  assert.ok(!p.all(row(p)).some(isRed));
+  assert.ok(!p.all(full).some(isRed));
   // And with no build exit at all, nothing either.
   const q = page({ tickets: [approved()], ideas: [] });
   await q.settle();
-  await openQueueRows(q); // 0434: what's under a Build card's two lines shows while it's open
-  for (const l of LABELS) assert.ok(!texts(q, row(q)).includes(l), l);
+  const view = await fullViewOf(q, '0001');
+  for (const l of LABELS) assert.ok(!texts(q, view).includes(l), l);
 });
 
 test('0153 AC4: a state from an older speck with no ship field shows none of these', async () => {
@@ -174,9 +169,7 @@ test('0153 AC1 AC2: a ticket speck ship has set done while its push still runs s
     const p = page(state);
     await p.settle();
     assert.ok(findText(p, row(p), 'Shipping'));
-    p.press(row(p).children.find(n => n.className === 'top'));
-    await p.settle();
-    p.press(buttons(p, row(p), /^Review pack$/)[0]);
+    p.press(buttons(p, await fullViewOf(p, '0001'), /^Review pack$/)[0]);
     await p.settle();
     const b = buttons(p, p.byId('full-ticket'), /^Ship/)[0];
     assert.ok(b, 'the pack shows its Ship button');

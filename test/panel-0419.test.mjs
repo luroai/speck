@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, openQueueRows, factsOf } from './support/panel.mjs';
+import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, fullViewOf, factsOf } from './support/panel.mjs';
 import { chipSaid } from './support/dep-chip.mjs';
 
 // ---------- 0419: a closed Plan or Build ticket is a title line and one line of details ----------
@@ -45,23 +45,20 @@ test('0419 AC1: a closed Plan ticket is its id and title, then its priority, siz
   assert.equal(detailsOf(card(p, '0430')).textContent, 'P4Shighbug');
 });
 
-// 0434: a closed Build ticket's stage sentence is a grid of lights while an agent is at work on it, and its priority,
-// size and risk show only while it's open.
-test('0419 AC2: a closed Build ticket is its id and title, then its stage sentence, stage and timer; a queued one starts "Queued"', async () => {
+// 0585: a Build row is its id and title, then one line saying where the ticket is, with the sentence as its tooltip;
+// what it waits on is in that line.
+test('0419 AC2: a Build row is its id and title, then its stage and timer; a ready one starts "Ready"', async () => {
   const p = page();
   await p.settle();
   const b = card(p, '0501');
-  assert.deepEqual(linesOf(b), ['line', 'progress']);
-  assert.equal(topOf(b).children[0].textContent, '0501Writing its code1', 'its id, title and chip (0468: 0502 waits on it)');
-  assert.equal(chipSaid(p, b), '1 ticket waits on this');
-  assert.equal(detailsOf(b).textContent, ' Build · 19:18');
-  assert.equal(detailsOf(b).children[0].attrs['aria-label'], 'Writing tests and code');
+  assert.deepEqual(linesOf(b), ['line', 'where run']);
+  assert.equal(topOf(b).children[0].textContent, '0501Writing its code', 'its id and title');
+  assert.equal(detailsOf(b).textContent, 'Writing · 19 min');
+  assert.equal(detailsOf(b).title, 'Writing tests and code');
   const q = card(p, '0502');
-  assert.deepEqual(linesOf(q), ['line', 'act']);
-  assert.equal(detailsOf(q).textContent, 'Queued'); // 0468: what it waits on or unlocks is in its chip
-  assert.equal(chipSaid(p, q), 'Waits on 2 tickets');
-  assert.equal(detailsOf(card(p, '0503')).textContent, 'Queued');
-  assert.equal(chipSaid(p, card(p, '0503')), '1 ticket waits on this');
+  assert.deepEqual(linesOf(q), ['line', 'where wait']);
+  assert.equal(detailsOf(q).textContent, 'Ready · after 0501, 0503');
+  assert.equal(detailsOf(card(p, '0503')).textContent, 'Ready');
   for (const id of ['0501', '0502', '0503']) assert.deepEqual(card(p, id).children.map(c => c.className), ['top'], `${id}: nothing under the two lines`);
 });
 
@@ -82,15 +79,11 @@ test('0419 AC3: the priority opens its menu, and size and risk explain themselve
     assert.equal(n.tip, tip);
     assert.equal(n.attrs.role, 'button');
   }
-  click(topOf(card(p, '0501'))); // 0434: a Build ticket's priority, size and risk show while it's open
-  await p.settle();
-  // 0462: in its facts' cells, as plain values
-  const cells = factsOf(card(p, '0501'));
-  assert.deepEqual([cells[3], cells[4]], [['Priority', 'P3'], ['Size · risk', 'M · low']]);
-  // 0468: the ids that were Go to ticket links here are in a closed card's chip, and an open card's box (0154, 0467)
+  // 0585: a Build ticket's priority, size and risk show in its full view, in its facts' cells, as plain values
+  assert.deepEqual(factsOf(await fullViewOf(p, '0501')).slice(0, 3), [['Priority', 'P3'], ['Size', 'M'], ['Risk', 'low']]);
 });
 
-test('0419 AC4: a question, a recommendation, a Ship hint and a message still show under the two lines, while the card is open (0434)', async () => {
+test('0419 AC4: a question, a recommendation, a Ship hint and a message still show, in the full view (0434, 0585)', async () => {
   const s = { run: { on: true }, tickets: [
     T('0601', 'blocked', { started: ago(300), blocked_question: 'A or B?', blocked_recommendation: 'A', blocked_resumable: true }),
     T('0602', 'blocked', { started: ago(300), blocked_question: 'C or D?', blocked_recommendation: 'C', foreman_will: true }),
@@ -99,16 +92,15 @@ test('0419 AC4: a question, a recommendation, a Ship hint and a message still sh
   ], ideas: [] };
   const p = page(s);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const under = id => card(p, id).children.slice(1).map(c => c.className).filter(c => !/^(full-open|log)$/.test(c)); // then its buttons and log, as it's open
-  for (const id of ['0601', '0602', '0603', '0604']) assert.deepEqual(linesOf(card(p, id)), ['line', 'facts'], `${id}: the title and (0462) its facts first`);
-  assert.deepEqual(under('0601'), ['question', 'act']);
-  assert.ok(p.all(card(p, '0601')).some(n => n.className === 'go-with' && n.textContent === 'Go with the recommendation'), 'the recommendation button');
-  assert.deepEqual(under('0602'), ['question', 'act foreman-will']);
-  assert.equal(card(p, '0602').children[2].textContent, 'speck will take its recommendation: C');
-  assert.deepEqual(under('0603'), ['act to-ship', 'question exit to-ship']);
-  assert.equal(card(p, '0603').children[2].textContent, 'Approved, not shipped.');
-  assert.deepEqual(under('0604'), ['act bad', 'question exit']);
+  for (const id of ['0601', '0602', '0603', '0604']) assert.deepEqual(card(p, id).children.map(c => c.className), ['top'], `${id}: its two lines only`);
+  const under = async id => (await fullViewOf(p, id)) && p.all(p.byId('full-ticket')).find(n => n.className === 'live-state').children.map(c => c.className).filter(c => !/^(live-now|live-buttons)$/.test(c));
+  assert.deepEqual(await under('0601'), ['question', 'act']);
+  assert.ok(p.all(p.byId('full-ticket')).some(n => n.className === 'go-with' && n.textContent === 'Go with the recommendation'), 'the recommendation button');
+  assert.deepEqual(await under('0602'), ['question', 'act foreman-will']);
+  assert.ok(p.byId('full-ticket').textContent.includes('speck will take its recommendation: C'));
+  assert.deepEqual(await under('0603'), ['act to-ship', 'question exit to-ship']);
+  assert.ok(p.byId('full-ticket').textContent.includes('Approved, not shipped.'));
+  assert.deepEqual(await under('0604'), ['act bad', 'question exit']);
 });
 
 // ---------- in a real browser: a 420 px side pane with a mouse ----------
@@ -146,8 +138,8 @@ const CARDS = sel => `(async () => {
     const top = c.firstElementChild, title = top.querySelector('.title'), details = top.children[1];
     return { id: c.querySelector('.id').textContent, height: c.getBoundingClientRect().height, titleLines: lines(title), detailLines: lines(details),
       titleSize: parseFloat(getComputedStyle(title).fontSize), detailSize: parseFloat(getComputedStyle(details).fontSize),
-      broken: [...details.children].filter(n => !n.matches('.sep, .ids') && n.getClientRects().length > 1).map(n => n.textContent),
-      // 0434: a closed Build card's status line is one line that ends in an ellipsis when it doesn't fit, inside the card
+      broken: [...details.children].filter(n => !n.matches('.sep, .ids, .after') && n.getClientRects().length > 1).map(n => n.textContent),
+      // 0434: a closed Plan card's title is cut off with an ellipsis when it doesn't fit; 0585: a Build row's wraps
       cut: title.scrollWidth > title.clientWidth + 0.5 && getComputedStyle(title).textOverflow === 'ellipsis',
       overflows: (getComputedStyle(details).textOverflow !== 'ellipsis' && details.scrollWidth > details.clientWidth + 0.5) || details.getBoundingClientRect().right > c.getBoundingClientRect().right };
   });
@@ -175,18 +167,17 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         // 0434: a closed ticket's title is one line, cut off with an ellipsis when it doesn't fit
         assert.equal(c.titleLines, 1, `${c.id}: the title is on one line`);
         if (c.id === '0702') { assert.ok(c.cut, '0702: a long title is cut off'); continue; }
-        // 0434: a closed Build card's status line is one line, even with a long list of tickets it waits on, cut off
-        // where it doesn't fit; an open one wraps between its ids. A Plan card's details still wrap when they don't fit.
+        // 0585: a Build row's line wraps between its parts when a long list of tickets it waits on doesn't fit
+        if (c.id === '0707') { assert.ok(c.detailLines > 1, '0707: the long list wraps'); continue; }
         assert.equal(c.detailLines, 1, `${c.id}: the details fit on one line`);
         assert.ok(c.height <= 80, `${c.id}: ${c.height} px tall`); // 0469: with the touch screen's 44 px title row and details line
       }
     }
     assert.deepEqual(seen, ['0701', '0702', '0703', '0704', '0705', '0706', '0707']);
-    // 0434: open, its details wrapped between the ids it waits on. 0463: open, its facts are in a table, which counts them
+    // 0585: pressing its row opens its full view, whose dependency box counts the tickets it waits on
     await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0707').querySelector('.top').click()`);
-    await b.until(`!!document.querySelector('#queue .q.open .facts')`, '0707 to open');
-    const wait = await b.js(`[...document.querySelector('#queue .q.open .facts').children].map(c => [c.children[0].textContent, c.children[1].textContent])[1]`);
-    assert.deepEqual(wait, ['Waiting on', `${LONG_WAIT.length} left of ${LONG_WAIT.length}`], '0707 open');
+    await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .deps-waits')`, '0707 to open');
+    assert.equal(await b.js(`document.querySelector('#full-ticket .deps-head').textContent`), `Waits on${LONG_WAIT.length} queued`, '0707 open');
   } finally { await b.close(); await stop(panel); }
 });
 
@@ -196,14 +187,17 @@ test('0419 AC1 and AC2: a ticket missing its priority, size or risk, or with no 
     T('0804', 'reviewing', { priority: 2, size: '', risk: 'low', started: ago(5) })], ideas: [] });
   await p.settle();
   assert.equal(detailsOf(card(p, '0801')).textContent, ''); // 0519: no labels, and no criteria count or lint result
-  assert.equal(detailsOf(card(p, '0802')).textContent, ' Build');
-  assert.equal(detailsOf(card(p, '0803')).textContent, 'Queued');
-  assert.equal(detailsOf(card(p, '0804')).textContent, ' Review 1 · The reviewer · 00:05');
-  for (const id of ['0802', '0803', '0804']) { click(topOf(card(p, id))); await p.settle(); } // 0434: the tags show while it's open
-  // 0462: an open one in flight has its facts in cells, each always there, with a dash for what it doesn't have
-  const cell = (id, label) => factsOf(card(p, id)).find(([l]) => l === label)[1];
-  assert.deepEqual(['Time', 'Priority', 'Size · risk'].map(l => cell('0802', l)), ['–', '–', '– · –']);
-  assert.deepEqual(['Time', 'Priority', 'Size · risk'].map(l => cell('0804', l)), ['00:05', 'P2', '– · low']);
-  // 0463: and so does an open queued one
-  assert.deepEqual(['Status', 'Priority', 'Size · risk'].map(l => cell('0803', l)), ['Queued', '–', '– · –']);
+  assert.equal(detailsOf(card(p, '0802')).textContent, 'Writing'); // 0585: no time, and no empty part
+  assert.equal(detailsOf(card(p, '0803')).textContent, 'Ready');
+  assert.equal(detailsOf(card(p, '0804')).textContent, 'Reviewing · round 1 · <1 min');
+  // 0462: a full view of one in flight has its facts in cells, each always there, with a dash for what it doesn't have
+  const cell = async (id, label) => factsOf(await fullViewOf(p, id)).find(([l]) => l === label)[1];
+  assert.deepEqual([await cell('0802', 'Priority'), await cell('0802', 'Size'), await cell('0802', 'Risk')], ['–', '–', '–']);
+  assert.deepEqual([await cell('0804', 'Priority'), await cell('0804', 'Size'), await cell('0804', 'Risk')], ['P2', '–', 'low']);
+  assert.deepEqual([await cell('0803', 'Priority'), await cell('0803', 'Size'), await cell('0803', 'Risk')], ['–', '–', '–']);
+  const time = id => p.all(p.byId('full-ticket')).find(n => n.className === 'sub')?.textContent ?? null;
+  await fullViewOf(p, '0802');
+  assert.equal(time(), null, 'no time without a start');
+  await fullViewOf(p, '0804');
+  assert.equal(time(), '00:05');
 });

@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, boardPage, items, queueRows, top, click, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
+import { T, full, boardPage, items, queueRows, top, click, fullViewOf, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 import { panelBoard } from '../scripts/board-feed.mjs';
 
 // ---------- 0467: an open ticket shows its dependencies in a small box under its table ----------
@@ -32,11 +32,11 @@ async function openCard(p, id) {
     card = items(p).find(n => idOf(p, n) === id);
     return [card, top(card)];
   }
-  card = queueRows(p).find(n => idOf(p, n) === id);
-  if (!/\bopen\b/.test(card.className)) { click(card.children[0]); await p.settle(); }
-  card = queueRows(p).find(n => idOf(p, n) === id);
-  return [card, card.children[0]];
+  // 0585: a Build row opens the ticket's full view, which holds its box under its table
+  const view = await fullViewOf(p, id);
+  return [view, view.children[0]];
 }
+const inView = (p, card) => card === p.byId('full-ticket');
 const boxOf = (p, n) => p.all(n).find(x => /^deps\b/.test(x.className || ''));
 const chipsOf = (p, box) => cls(box, /^deps-grid$/).children;
 const slotsOf = box => cls(box, /^deps-slots$/).children;
@@ -107,9 +107,12 @@ test('0467 AC2: an open card in a chain shows the Chain box: its header, then fi
     const [card, head] = await openCard(p, id);
     const box = boxOf(p, card);
     assert.equal(box.className, 'deps deps-chain');
-    assert.equal(head.children[head.children.length - 1].className, 'facts', `${id}: its top row ends with its table`);
-    const under = card.children[card.children.indexOf(head) + 1];
-    assert.equal(under.className === 'detail' ? under.children[0] : under, box, `${id}: right under it`);
+    if (inView(p, card)) assert.deepEqual(card.children[1].children.map(n => n.className).slice(0, 3), ['track', 'facts', 'deps deps-chain'], `${id}: right under its table`); // 0584: then its live section
+    else {
+      assert.equal(head.children[head.children.length - 1].className, 'facts', `${id}: its top row ends with its table`);
+      const under = card.children[card.children.indexOf(head) + 1];
+      assert.equal(under.className === 'detail' ? under.children[0] : under, box, `${id}: right under it`);
+    }
     assert.deepEqual(cls(box, /^deps-head$/).children.map(n => n.textContent), ['Chain', header]);
     assert.equal(slotsOf(box).length, 5);
   }
@@ -141,13 +144,15 @@ test('0467 AC3: pressing a chip or a circle goes to that ticket, opening its tab
   assert.equal(p.byId('tab-build').attrs['aria-selected'], 'true', 'its tab opens');
   assert.match(queueRows(p).find(n => idOf(p, n) === '0204').className, /\bflash\b/, 'and it lights up');
   assert.match((await openCard(p, '0100'))[0].className, /\bopen\b/, 'the card it was in stays open');
+  // 0585: a ticket in Build opens its full view, which covers the page, so a circle there shows that ticket in it
   const [chained] = await openCard(p, '0013');
   const slots = slotsOf(boxOf(p, chained));
   p.press(slots[3]);
   await p.settle();
-  assert.equal(p.byId('tab-plan').attrs['aria-selected'], 'true');
-  assert.match(items(p).find(n => idOf(p, n) === '0014').className, /\bflash\b/);
+  assert.equal(p.byId('full-ticket').children[0].children[0].textContent, '0014', 'the pane shows 0014');
   assert.notEqual(slots[2].tagName, 'button', 'itself is no button');
+  p.press(p.all(p.byId('full-ticket')).find(n => n.className === 'close'));
+  await p.settle();
   // a shipped ticket isn't on the page, so its chip is plain
   const [again] = await openCard(p, '0100');
   p.press(chipsOf(p, boxOf(p, again))[2]);
@@ -160,7 +165,7 @@ test('0467 AC3: pressing a chip or a circle goes to that ticket, opening its tab
 test('0467 AC4: the full ticket shows the same box under its table, and no open card has the line of ids', async () => {
   const p = boardPage([board()]);
   await p.settle();
-  for (const id of ['0100', '0013', '0014']) {
+  for (const id of ['0100', '0014']) {
     const [card, head] = await openCard(p, id);
     const want = boxOf(p, card).textContent;
     assert.doesNotMatch(head.textContent, /(after|unlocks|waiting on) \d/, `${id}: no line of ids`);
@@ -172,6 +177,9 @@ test('0467 AC4: the full ticket shows the same box under its table, and no open 
     p.press(p.all(p.byId('full-ticket')).find(n => n.className === 'close'));
     await p.settle();
   }
+  // 0585: a Build row opens the full view itself, with the box under its table
+  const steps = (await fullViewOf(p, '0013')).children[1];
+  assert.deepEqual(steps.children.map(n => n.className), ['track', 'facts', 'deps deps-chain', 'q live'], '0013: track, table, the box, then its live section (0584)');
 });
 
 test('0467 AC3: in the full ticket, which covers the page, pressing a chip shows that ticket there', async () => {

@@ -306,13 +306,12 @@ export function boardPage(boards, globals = {}) {
   const body = url => (/\/log$/.test(url) ? { text: '', truncated: false } : left.length > 1 ? left.shift() : left[0]);
   return fakePage([], { fetch: async url => { const b = JSON.parse(JSON.stringify(body(String(url)))); return { ok: true, status: 200, json: async () => b }; }, ...globals });
 }
-// 0434: opens each Build card that's closed, as a Build card shows its priority, size and risk only while it's open.
-export async function openQueueRows(p) {
-  const idOf = r => p.all(r).find(n => n.className === 'id')._text;
-  for (const id of queueRows(p).map(idOf)) {
-    const row = queueRows(p).find(r => idOf(r) === id);
-    if (!/\bopen\b/.test(row.className)) { row.children[0].listeners.click({ stopPropagation() {} }); await p.settle(); }
-  }
+// 0585: presses a Build row, which opens the ticket's full view, and returns the view.
+export async function fullViewOf(p, id) {
+  const row = queueRows(p).find(r => p.all(r).find(n => n.className === 'id')?._text === String(id));
+  row.children[0].listeners.click({ stopPropagation() {} });
+  await p.settle();
+  return p.byId('full-ticket');
 }
 // A queue row's node with this class, searched for through the whole row, or null.
 const inRow = (row, re) => (function find(n) { if (re.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
@@ -324,7 +323,6 @@ export const stageOf = row => inRow(row, /^stage\b/);
 // 0462: an open in-flight row's facts, as [label, value] for each cell, and its Now cell's value; null when it has none.
 const factsIn = row => inRow(row, /^facts$/);
 export const factsOf = row => { const f = factsIn(row); return f ? f.children.map(c => [c.children[0].textContent, c.children[1].textContent]) : null; };
-export const nowOf = row => { const f = factsIn(row); return f ? f.children[0].children[1] : null; };
 export const sentenceOf = row => { const n = inRow(row, /^(say|lights)\b/); return !n ? null : n.className === 'lights' ? n.attrs['aria-label'] : n.textContent; };
 export const steps = t => t.steps.map(s => s.state || '');
 

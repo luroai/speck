@@ -33,10 +33,9 @@ export const text = body => Promise.resolve({ ok: true, status: 200, text: async
 export async function openPack(response, more = [], globals = {}, made) {
   const p = fakePage([structuredClone(STATE), { text: '', truncated: false }, response, ...more, structuredClone(STATE)], globals, made ? { made } : {});
   await p.settle();
-  const row = () => queueRows(p).find(n => n.textContent.includes('0005'));
-  p.press(row().children.find(n => n.className === 'top'));
+  p.press(queueRows(p).find(n => n.textContent.includes('0005')).children.find(n => n.className === 'top')); // 0585: its full view
   await p.settle();
-  p.press(p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  p.press(p.all(p.byId('full-ticket')).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
   await p.settle();
   return p;
 }

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { T, fakePage, queueRows, round } from './support/panel.mjs';
+import { T, fakePage, queueRows, round, fullViewOf } from './support/panel.mjs';
 import { CLI, commandRepo, reviewRepo, changesVerdict, approveVerdict, skillText } from './support/speck.mjs';
 import { statusData } from '../scripts/speck.mjs';
 
@@ -22,11 +22,11 @@ function fake(tickets) {
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const find = (p, row, re) => p.all(row).filter(n => re.test(n.className || ''));
-// 0434: while its reviewer or builder is at work, the sentence is the name of the grid of lights that stands in for it
-const say = (p, id) => find(p, rowOf(p, id), /^lights$/)[0].attrs['aria-label'];
-const stage = (p, id) => find(p, rowOf(p, id), /^stage\b/)[0]?.textContent;
+// 0585: the sentence is the tooltip of the row's line saying where it is, and also what the full view says
+const say = (p, id) => find(p, rowOf(p, id), /^where\b/)[0].title;
+const stage = async (p, id) => find(p, await fullViewOf(p, id), /^stage\b/)[0]?.textContent;
 
-test('0223 AC1: while a round is running, the card names the round being run: 1 for the first, otherwise the last recorded plus one', async () => {
+test('0223 AC1: while a round is running, its row names the round being run: 1 for the first, otherwise the last recorded plus one', async () => {
   const p = fake([
     reviewing('0601', { review_running: 1 }),
     reviewing('0602', { rounds: [asked(1)], review_running: 2 }),
@@ -38,7 +38,7 @@ test('0223 AC1: while a round is running, the card names the round being run: 1 
   assert.equal(say(p, '0603'), 'Fake is reviewing · round 3');
 });
 
-test('0223 AC2: while no round is running, the card says the builder is fixing the last recorded round\'s findings', async () => {
+test('0223 AC2: while no round is running, its row says the builder is fixing the last recorded round\'s findings', async () => {
   const p = fake([
     reviewing('0611', { rounds: [asked(1)], review_running: null }),
     reviewing('0612', { rounds: [asked(1), asked(2)], review_running: null, builder: 'codex', reviewer: 'claude-subagent' }),
@@ -50,15 +50,15 @@ test('0223 AC2: while no round is running, the card says the builder is fixing t
   assert.equal(say(p, '0613'), "The builder is fixing round 1's findings");
 });
 
-// 0434: the sentence is now only the grid of lights' name, so while a round is running the stage names that round
+// 0434: while a round is running the stage names that round
 test('0223 AC4: the stage name uses the last recorded round while no round is running, and the running one while one is', async () => {
   const p = fake([
     reviewing('0621', { rounds: [asked(1)], review_running: 2 }),
     reviewing('0622', { rounds: [asked(1)], review_running: null }),
   ]);
   await p.settle();
-  assert.equal(stage(p, '0621'), 'Review 2');
-  assert.equal(stage(p, '0622'), 'Review 1');
+  assert.equal(await stage(p, '0621'), 'Review 2');
+  assert.equal(await stage(p, '0622'), 'Review 1');
 });
 
 // A reviewer command that, while it runs, saves what `speck status --json` says, then answers as FAKE_MODE says.
@@ -162,7 +162,7 @@ test('0223 AC1, AC3: a subagent\'s round counts as running from speck review-run
   assert.equal(one(statusData(r.dir)).review_running, 2, 'the last recorded round plus one');
 });
 
-test('0223 AC1: the card of a building ticket whose first round a subagent is running says the reviewer is reviewing round 1', async () => {
+test('0223 AC1: the row of a building ticket whose first round a subagent is running says the reviewer is reviewing round 1', async () => {
   const r = subagent();
   assert.equal(r.run('review-running', '1').status, 0);
   const t = one(statusData(r.dir));

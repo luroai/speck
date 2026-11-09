@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { CLI, env, T, fakePage, queueRows, click, exitOf, panelRepo, freePort, startPanel, stop, request, post, tokenOf } from './support/panel.mjs';
+import { CLI, env, T, fakePage, queueRows, fullViewOf, exitOf, panelRepo, freePort, startPanel, stop, request, post, tokenOf } from './support/panel.mjs';
 import { hasStopped } from './support/stopped.mjs';
 
 // ---------- 0073: stop a build from its open queue row ----------
@@ -29,34 +29,37 @@ function page({ s = state(), answer = () => ({ ok: true, status: 200, json: asyn
     confirm: q => { asked.push(q); return yes(); },
   });
 }
+// 0585: the Stop build button and its reason are in the ticket's full view, which pressing its row opens.
+const inView = p => p.all(p.byId('full-ticket'));
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-const topOf = row => row.children.find(n => n.className === 'top');
-const stopOf = row => row.children.find(n => n.className === 'stop-build') || null;
-const shape = row => row.children.map(n => n.className);
-async function opened(p, id) { click(topOf(rowOf(p, id))); await p.settle(); return rowOf(p, id); }
+const stopOf = p => inView(p).find(n => n.className === 'stop-build') || null;
+const shape = p => inView(p).find(n => n.className === 'live-state').children.map(n => n.className);
+const reasonOf = p => { const row = stopOf(p).parentNode; return row.parentNode.children[row.parentNode.children.indexOf(row) + 1]; };
+const opened = async (p, id) => { p.key('Escape'); await p.settle(); return fullViewOf(p, id); };
 
-test('0073 AC1: an open running or paused build launched by speck run has a Stop build button among its open details', async () => {
+test('0073 AC1: the full view of a running or paused build launched by speck run has a Stop build button among its live details', async () => {
   const p = page();
   await p.settle();
   for (const id of ['0001', '0002']) {
-    assert.equal(stopOf(rowOf(p, id)), null, `${id}: none while closed`);
-    const row = await opened(p, id);
-    const b = stopOf(row);
-    assert.ok(b, `${id}: a Stop build button once open`);
+    assert.equal(p.all(rowOf(p, id)).find(n => n.className === 'stop-build'), undefined, `${id}: none on its row`);
+    await opened(p, id);
+    const b = stopOf(p);
+    assert.ok(b, `${id}: a Stop build button in its full view`);
     assert.equal(b.textContent, 'Stop build');
-    assert.ok(shape(row).indexOf('stop-build') > shape(row).indexOf('full-open'), 'beside Full ticket');
-    assert.ok(shape(row).indexOf('stop-build') < shape(row).indexOf('log'), 'above the log');
+    assert.ok(shape(p).indexOf('live-buttons') >= 0, 'in the live buttons');
+    assert.ok(inView(p).indexOf(b) < inView(p).findIndex(n => n.className === 'log'), 'above the log');
   }
 });
 
-test('0073 AC1: any other ticket has none, open or closed', async () => {
+test('0073 AC1: any other ticket has none, on its row or in its full view', async () => {
   const p = page();
   await p.settle();
   for (const id of ['0003', '0004', '0005', '0006', '0007']) {
     const row = rowOf(p, id);
     if (!row) continue; // not in the queue at all
-    assert.equal(stopOf(row), null, `${id}: closed`);
-    assert.equal(stopOf(await opened(p, id)), null, `${id}: open`);
+    assert.equal(p.all(row).find(n => n.className === 'stop-build'), undefined, `${id}: row`);
+    await opened(p, id);
+    assert.equal(stopOf(p), null, `${id}: full view`);
   }
 });
 
@@ -64,14 +67,15 @@ test('0073 AC2: clicking asks first; confirming sends the stop with the token an
   const sent = [], asked = [];
   const p = page({ answer: (url, opts) => { sent.push([url, opts]); return { ok: true, status: 200, json: async () => ({ ok: true }) }; }, asked });
   await p.settle();
-  const row = await opened(p, '0001');
-  const before = shape(row);
-  p.press(stopOf(row));
+  await opened(p, '0001');
+  const before = shape(p);
+  p.press(stopOf(p));
   await p.settle();
   assert.equal(asked.length, 1, 'asked once');
   assert.match(asked[0], /Stop 0001's build\?/);
   assert.deepEqual(sent.map(([u, o]) => [u, o.method, o.headers['X-Speck-Token']]), [['/api/tickets/0001/stop', 'POST', '{{token}}']]);
-  assert.deepEqual(shape(rowOf(p, '0001')), before, 'the row stays open as it was');
+  assert.equal(p.byId('full-ticket').hidden, false, 'the full view stays open');
+  assert.deepEqual(shape(p), before, 'as it was');
 });
 
 test('0073 AC2: cancelling the question sends nothing and changes nothing', async () => {
@@ -79,64 +83,63 @@ test('0073 AC2: cancelling the question sends nothing and changes nothing', asyn
   const asked = [];
   const p = page({ answer: () => { n++; return { ok: true, status: 200, json: async () => ({ ok: true }) }; }, yes: () => false, asked });
   await p.settle();
-  const row = await opened(p, '0002');
-  const before = shape(row), calls = p.calls.length;
-  p.press(stopOf(row));
+  await opened(p, '0002');
+  const before = shape(p), calls = p.calls.length;
+  p.press(stopOf(p));
   await p.settle();
   assert.equal(asked.length, 1);
   assert.equal(n, 0, 'no stop sent');
   assert.equal(p.calls.length, calls, 'no request at all');
-  assert.deepEqual(shape(rowOf(p, '0002')), before, 'still open');
-  assert.equal(stopOf(rowOf(p, '0002')).textContent, 'Stop build');
+  assert.deepEqual(shape(p), before, 'still open');
+  assert.equal(stopOf(p).textContent, 'Stop build');
 });
 
 test('0073 AC2: a second click while the first is unanswered sends nothing more', async () => {
   let n = 0, release;
   const p = page({ answer: () => { n++; return new Promise(r => { release = () => r({ ok: true, status: 200, json: async () => ({ ok: true }) }); }); } });
   await p.settle();
-  const row = await opened(p, '0001');
-  p.press(stopOf(row));
+  await opened(p, '0001');
+  p.press(stopOf(p));
   await p.settle();
-  assert.equal(stopOf(rowOf(p, '0001')).disabled, true);
-  p.press(stopOf(rowOf(p, '0001')));
+  assert.equal(stopOf(p).disabled, true);
+  p.press(stopOf(p));
   await p.settle();
   assert.equal(n, 1);
   release();
   await p.settle();
-  assert.equal(stopOf(rowOf(p, '0001')).disabled, false);
+  assert.equal(stopOf(p).disabled, false);
 });
 
 test('0073 AC3: a refusal shows its reason under the button until the next click on it', async () => {
   let answer = { ok: false, status: 409, json: async () => ({ error: "0001 has no running or paused build launched by speck run, so there's nothing to stop." }) };
   const p = page({ answer: () => answer });
   await p.settle();
-  let row = await opened(p, '0001');
-  p.press(stopOf(row));
+  await opened(p, '0001');
+  p.press(stopOf(p));
   await p.settle();
-  const reason = r => r.children[r.children.indexOf(stopOf(r)) + 1];
-  row = rowOf(p, '0001');
-  assert.equal(reason(row).className, 'stop-refused', 'right under the button');
-  assert.equal(reason(row).textContent, "0001 has no running or paused build launched by speck run, so there's nothing to stop.");
+  assert.equal(reasonOf(p).className, 'stop-refused', 'right under the button');
+  assert.equal(reasonOf(p).textContent, "0001 has no running or paused build launched by speck run, so there's nothing to stop.");
   p.timers.shift()(); // the next poll: the reason stays
   await p.settle();
-  assert.match(reason(rowOf(p, '0001')).textContent, /nothing to stop/);
+  assert.match(reasonOf(p).textContent, /nothing to stop/);
   answer = { ok: false, status: 403, json: async () => { throw new Error('not JSON'); } };
-  p.press(stopOf(rowOf(p, '0001')));
+  p.press(stopOf(p));
   await p.settle();
-  assert.equal(reason(rowOf(p, '0001')).textContent, 'The server refused (403).', 'the next click replaces it');
+  assert.equal(reasonOf(p).textContent, 'The server refused (403).', 'the next click replaces it');
   answer = { ok: true, status: 200, json: async () => ({ ok: true }) };
-  p.press(stopOf(rowOf(p, '0001')));
+  p.press(stopOf(p));
   await p.settle();
-  assert.ok(!shape(rowOf(p, '0001')).includes('stop-refused'), 'a click that works clears it');
+  assert.ok(!shape(p).includes('stop-refused'), 'a click that works clears it');
 });
 
 test('0073 AC3: a refusal\'s reason goes once the build has ended, so a later build of the ticket doesn\'t show it', async () => {
   const s = state();
   const p = page({ s, answer: () => ({ ok: false, status: 409, json: async () => ({ error: 'Refused.' }) }) });
   await p.settle();
-  p.press(stopOf(await opened(p, '0001')));
+  await opened(p, '0001');
+  p.press(stopOf(p));
   await p.settle();
-  assert.ok(shape(rowOf(p, '0001')).includes('stop-refused'));
+  assert.ok(shape(p).includes('stop-refused'));
   const poll = () => { for (const f of p.timers.splice(0)) f(); }; // the state poll, and the open log's
   s.tickets[0].build_running = false; // the build ended
   poll();
@@ -144,17 +147,17 @@ test('0073 AC3: a refusal\'s reason goes once the build has ended, so a later bu
   s.tickets[0].build_running = true; // built again
   poll();
   await p.settle();
-  assert.ok(stopOf(rowOf(p, '0001')), 'the button is back');
-  assert.ok(!shape(rowOf(p, '0001')).includes('stop-refused'), 'without the old reason');
+  assert.ok(stopOf(p), 'the button is back');
+  assert.ok(!shape(p).includes('stop-refused'), 'without the old reason');
 });
 
 test('0073 AC3: no answer from the server says so under the button', async () => {
   const p = page({ answer: () => { throw new Error('offline'); } });
   await p.settle();
-  p.press(stopOf(await opened(p, '0002')));
+  await opened(p, '0002');
+  p.press(stopOf(p));
   await p.settle();
-  const row = rowOf(p, '0002');
-  assert.match(row.children[row.children.indexOf(stopOf(row)) + 1].textContent, /Couldn't reach the panel server/);
+  assert.match(reasonOf(p).textContent, /Couldn't reach the panel server/);
 });
 
 // ---------- the server ----------

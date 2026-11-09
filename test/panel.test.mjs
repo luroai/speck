@@ -9,8 +9,14 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, popupsScript, panelModel, T, round, fakePage, deferred, full, idea, click, items, notes, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, openQueueRows, boardPage, styles } from './support/panel.mjs';
-import { chipSaid } from './support/dep-chip.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, popupsScript, panelModel, T, round, fakePage, deferred, full, idea, click, items, notes, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, fullViewOf, boardPage, styles } from './support/panel.mjs';
+
+// 0585: a Build row's line saying where the ticket is, by its id, and the Build list's group heads, as one string
+const whereIn = (p, id) => p.all(queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id))).find(n => /^where\b/.test(n.className)).textContent;
+const whereOf = (p, row) => p.all(row).find(n => /^where\b/.test(n.className));
+const idOf = (p, row) => p.all(row).find(n => n.className === 'id')._text;
+const groupOf = (p, row) => { const kids = p.byId('queue').children; return kids.slice(0, kids.indexOf(row)).filter(n => n.tagName === 'h3').pop().children[0].textContent; };
+const headsOf = p => p.byId('queue').children.filter(n => n.tagName === 'h3').map(n => n.textContent).join(' | ');
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -247,13 +253,14 @@ test('0031 AC5: a title like <b>x</b> is rendered as those characters, in every 
   };
   const p = fakePage([state]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   for (const area of ['shaping', 'queue', 'shipped']) {
     const nodes = p.all(p.byId(area));
     assert.ok(p.byId(area).textContent.includes(evil), `${area} shows the title literally`);
     assert.ok(!nodes.some(n => n.tagName === 'b' && n.textContent === 'x'), `${area} made no <b> from the title`);
   }
-  assert.ok(p.byId('queue').textContent.includes('<script>alert(1)</script>'));
+  const blocked = await fullViewOf(p, '0002'); // 0585: a Build row opens its full view, which has the question
+  assert.ok(blocked.textContent.includes('<script>alert(1)</script>'));
+  assert.ok(!p.all(blocked).some(n => n.tagName === 'script'));
   // Open the draft: its sections and lint messages are text too (0033), and so is the full ticket in the side pane (0054).
   const draft = p.all(p.byId('shaping')).find(n => n.listeners.click);
   draft.listeners.click();
@@ -277,19 +284,19 @@ test('0031 AC4: the page shows when it is disconnected, keeps polling and recove
   const p = fakePage([one, new Error('connection refused'), new Error('connection refused'), moved]);
   await p.settle();
   assert.equal(p.byId('offline').hidden, true);
-  assert.match(p.byId('queue').textContent, /0001.*Queued/);
+  assert.match(whereIn(p, '0001'), /^Ready/);
   p.timers.shift()(); await p.settle();
   assert.equal(p.byId('offline').hidden, true, 'not at once (0186)');
   await p.elapse(10000);
   assert.equal(p.byId('offline').hidden, false, 'says it is disconnected, once 10 seconds pass without a board');
   assert.equal(p.byId('pills').children.length, 0, 'only the message says so: the header has no connection pill (0150)');
-  assert.match(p.byId('queue').textContent, /0001.*Queued/, 'keeps the last state');
+  assert.match(whereIn(p, '0001'), /^Ready/, 'keeps the last state');
   p.timers.shift()(); await p.settle();
   assert.equal(p.timers.length, 1, 'still polling while disconnected');
   p.timers.shift()(); await p.settle();
   assert.equal(p.byId('offline').hidden, true, 'recovered');
-  assert.equal(stageOf(queueRows(p)[0]).textContent, 'Build', 'the ticket is now building');
-  assert.doesNotMatch(p.byId('queue').textContent, /Queued/);
+  assert.doesNotMatch(whereIn(p, '0001'), /^Ready/, 'the ticket is now building');
+  assert.match(headsOf(p), /^Building/);
 });
 
 test('0031 AC4: when the server answers but cannot read the tickets, the page shows its error and recovers', async () => {
@@ -357,12 +364,12 @@ test('0031 AC4: a request that never answers, or whose body never arrives, still
   await p.elapse(15000); // given up too, then the server answers the next refresh
   p.timers.shift()(); await p.settle();
   assert.equal(p.byId('offline').hidden, true, 'recovered');
-  assert.equal(stageOf(queueRows(p)[0]).textContent, 'Build');
+  assert.match(headsOf(p), /^Building/);
   // The abandoned request answering late doesn't put the old state back.
   stalled.resolve({ ok: true, status: 200, json: async () => one });
   await p.settle();
-  assert.equal(stageOf(queueRows(p)[0]).textContent, 'Build');
-  assert.doesNotMatch(p.byId('queue').textContent, /Queued/);
+  assert.match(headsOf(p), /^Building/);
+  assert.doesNotMatch(whereIn(p, '0001'), /^Ready/);
 });
 
 // ---------- 0033: everything needed for Gate 1 in Shaping ----------
@@ -475,19 +482,20 @@ test('0033 AC5: the Ideas list shows every idea not yet ticketed (0056), and cli
 
 // ---------- 0034: the queue as one list with progress bars ----------
 
-test('0034 AC1: the queue is one list, in-flight tickets first, then ready ones, each in JSON order, with no group headings', async () => {
+test('0034 AC1: the queue is one list, the model\'s in-flight tickets first, then ready ones, each in JSON order, shown in groups (0585)', async () => {
   const model = panelModel();
   const state = { tickets: [T('0001', 'ready'), T('0002', 'approved'), T('0003', 'draft'), T('0004', 'building'), T('0005', 'ready'), T('0006', 'blocked'),
     T('0007', 'reviewing', { rounds: [round(1, 1)] }), T('0008', 'done'), T('0009', 'cancelled')], ideas: [] };
   assert.deepEqual(model(state).queue.map(t => t.id), ['0002', '0004', '0006', '0007', '0001', '0005']);
   const html = page() + pageScript(); // 0433: the script is in /panel.js
-  // 0410: a heading would be text in the markup or a string in the script; the script does read the Foreman's "Needs you <n>".
-  for (const h of ['Needs you', 'Running', 'Up next']) assert.ok(!new RegExp(`>${h}<|['"\`]${h}['"\`]`).test(html), `no ${h} heading`);
+  // 0410: a heading would be text in the markup or a string in the script
+  for (const h of ['Running', 'Up next']) assert.ok(!new RegExp(`>${h}<|['"\`]${h}['"\`]`).test(html), `no ${h} heading`);
   assert.ok(!/id="(needs|running|next)(-h)?"/.test(html), 'no group containers');
   const p = fakePage([state]);
   await p.settle();
-  assert.deepEqual(queueRows(p).map(r => r.textContent.slice(0, 4)), ['0002', '0004', '0006', '0007', '0001', '0005']);
-  assert.ok(!p.byId('queue').children.some(n => /\bgroup\b/.test(n.className)), 'no group rows');
+  // 0585: in groups, each in the model's order
+  assert.deepEqual(queueRows(p).map(r => idOf(p, r)), ['0006', '0002', '0004', '0007', '0001', '0005']);
+  assert.deepEqual(queueRows(p).map(r => groupOf(p, r)), ['Needs you', 'Building', 'Building', 'Building', 'Queued', 'Queued']);
 });
 
 test('0034 AC2: every queued ticket has a five-step bar, with done and current steps from status, self_check and rounds', () => {
@@ -527,57 +535,51 @@ test('0034 AC2: every queued ticket has a five-step bar, with done and current s
   assert.deepEqual(steps(by('0013')), ['done', '', 'done', 'done', 'now'], 'approved with self_check only: Ship is still current');
 });
 
-test('0034 AC2: the current stage (the bar before 0156, its dots before 0168) is named on the page', async () => {
+test('0034 AC2: the current stage is named on the page (0585: in the full view)', async () => {
   const state = { tickets: [T('0001', 'reviewing', { self_check: 'x', rounds: [round(1, 1), round(2, 1)] }), T('0002', 'approved', { rounds: [round(1, 1)] }),
     T('0003', 'approved'), T('0004', 'approved', { self_check: 'x' })], ideas: [] };
   const p = fakePage([state]);
   await p.settle();
-  const [a, b, c, d] = queueRows(p);
-  assert.deepEqual([a, b, c, d].map(r => stageOf(r).textContent), ['Review 2', 'Ship', 'Ship', 'Ship'], 'approved, with or without rounds or self_check: Ship is current');
+  // 0585: a row has no stage; the ticket's full view has its track, with the current step marked
+  const current = [];
+  for (const id of ['0001', '0002', '0003', '0004']) current.push(p.all(await fullViewOf(p, id)).find(n => /^step\b/.test(n.className || '') && /\b(now|waits)\b/.test(n.className)).textContent);
+  assert.deepEqual(current, ['Reviewed', 'Ship', 'Ship', 'Ship'], 'approved, with or without rounds or self_check: Ship is current');
   const m = panelModel()(state).queue;
   assert.deepEqual(m[0].steps.map(s => s.label), ['Build', 'Self-check', 'Review 2', 'Approve', 'Ship']);
   assert.deepEqual(m.map(steps), [['done', 'done', 'now', '', ''], ['done', 'done', 'done', 'done', 'now'], ['', '', 'done', 'done', 'now'], ['done', '', 'done', 'done', 'now']]);
 });
 
-test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167), current stage and sentence, with its question under it, and nothing else is red', async () => {
-  const state = { tickets: [T('0001', 'blocked', { blocked_question: 'Split it or keep it?', self_check: 'x' }), T('0002', 'approved', { risk: 'high' }),
-    T('0003', 'building', { risk: 'high' }), T('0004', 'reviewing'), T('0005', 'ready', { waiting_on: ['0001'] })], ideas: [] };
+test('0034 AC3: a blocked ticket is under Needs you, with its dot in the colour for that, its question in its full view, and nothing else is red', async () => {
+  const state = { tickets: [T('0001', 'blocked', { blocked_question: 'Split it or keep it?', self_check: 'x' }), T('0002', 'approved', { risk: 'high', auto_ship: true }),
+    T('0003', 'building', { risk: 'high' }), T('0004', 'reviewing'), T('0005', 'ready', { waiting_on: ['0001'] })], ideas: [], run: { on: true } };
   assert.deepEqual(panelModel()(state).queue.map(t => t.red), [true, false, false, false, false]);
   const p = fakePage([state]);
   await p.settle();
-  // 0462: the stage and sentence are in a closed card's line; an open one has its facts in a table
-  const now = stageOf(queueRows(p)[0]);
-  assert.equal(now.textContent, 'Self-check');
-  assert.match(now.className, /\bbad\b/); // and the sentence (0156)
-  assert.equal(sayOf(queueRows(p)[0]).className, 'say bad', 'its sentence (0416: with no badge)');
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const rows = queueRows(p);
-  const red = n => /\b(bad|blocked)\b/.test(n.className || '');
-  assert.match(rows[0].className, /\bblocked\b/);
-  assert.ok(rows[0].textContent.includes('Split it or keep it?'));
-  for (const r of rows.slice(1)) assert.ok(!p.all(r).some(red), `${r.textContent.slice(0, 4)} has nothing red`);
-  const css = styles();
-  assert.match(css, /\.q\.blocked \{[^}]*border-color:[^}]*var\(--bad\)/); // its border all round since 0167
-  assert.match(css, /\.q \.top \.stage\.bad \{[^}]*color: var\(--bad\)/);
-  assert.match(css, /\.q \.tag\.high \{[^}]*color: var\(--bad\)/, '0151 AC2: a high-risk tag in the queue is in the panel\'s red');
+  const rows = queueRows(p), red = n => /\b(bad|blocked)\b/.test(n.className || '');
+  assert.equal(groupOf(p, rows[0]), 'Needs you');
+  assert.match(whereOf(p, rows[0]).className, /\bneeds\b/);
+  assert.equal(whereOf(p, rows[0]).title, 'Blocked · it has a question for you', 'its sentence (0156)');
+  assert.ok((await fullViewOf(p, '0001')).textContent.includes('Split it or keep it?'));
+  for (const r of rows.slice(1)) assert.ok(!/\bneeds\b/.test(whereOf(p, r).className) && !p.all(r).some(red), `${idOf(p, r)} has nothing red`);
+  assert.match(styles(), /\.where\.needs::before \{ background: var\(--needs-you\); \}/);
 });
 
-test('0034 AC4: a ready ticket shows Queued, and since 0156 no progress, plus (since 0468) a chip when it waits on any', async () => {
+test('0034 AC4: a ready ticket is under Queued, and says Ready, with no progress, plus what it waits on, if any (0585)', async () => {
   const state = { tickets: [T('0001', 'ready', { self_check: 'x', rounds: [round(1, 1)] }), T('0002', 'ready', { waiting_on: ['0009', '0004'] })], ideas: [] };
   assert.deepEqual(steps(panelModel()(state).queue[0]), ['', '', '', '', '']);
   const p = fakePage([state]);
   await p.settle();
   const [a, b] = queueRows(p);
-  assert.ok(a.textContent.includes('Queued'));
+  assert.equal(groupOf(p, a), 'Queued');
+  assert.equal(whereOf(p, a).textContent, 'Ready');
   assert.equal(sayOf(a), null, 'no sentence');
   assert.equal(stageOf(a), null, 'no stage');
   assert.deepEqual(panelModel()(state).queue[0].steps.map(s => s.label), ['Build', 'Self-check', 'Review 1', 'Approve', 'Ship'], 'AC2: Review <n> while it has rounds');
-  assert.equal(chipSaid(p, a), null);
-  assert.ok(b.textContent.includes('Queued'));
-  assert.equal(chipSaid(p, b), 'Waits on 2 tickets');
+  assert.equal(groupOf(p, b), 'Queued');
+  assert.equal(whereOf(p, b).textContent, 'Ready · after 0009, 0004');
 });
 
-test('0034 AC5: an in-flight ticket shows the time since started, as MM:SS since 0058 (its worktree path is in the open ticket, 0053)', async () => {
+test('0034 AC5: an in-flight ticket shows the minutes since started in its row (0585: its worktree path is in the full view, 0053)', async () => {
   const ago = ms => new Date(Date.now() - ms).toISOString();
   const state = { tickets: [
     T('0001', 'building', { worktree: '/tmp/wt/0001', started: ago(7.9 * 60000) }),
@@ -586,15 +588,15 @@ test('0034 AC5: an in-flight ticket shows the time since started, as MM:SS since
     T('0004', 'ready', { worktree: '/tmp/wt/0004', started: ago(60 * 60000) }),
   ], ideas: [] };
   const m = panelModel()(state);
-  assert.deepEqual(m.queue.map(t => t.counter && t.counter.slice(0, 4)), ['07:5', '00:3', null, null]);
+  assert.deepEqual(m.queue.map(t => t.counter && t.counter.slice(0, 4)), ['07:5', '00:3', null, null]); // the model's, in seconds
   const p = fakePage([state]);
   await p.settle();
-  const [a, b, c, d] = queueRows(p);
-  // 0053: the worktree path shows only in the open ticket (test/panel-0053.test.mjs), so the closed row leaves it out.
-  assert.ok(!a.textContent.includes('/tmp/wt/0001') && /07:5\d/.test(a.textContent));
-  assert.ok(/00:3\d/.test(b.textContent) && !b.textContent.includes('worktree'));
-  assert.ok(!/\d\d:\d\d/.test(c.textContent) && !c.textContent.includes('worktree'));
-  assert.ok(!d.textContent.includes('/tmp/wt/0004') && !/\d\d:\d\d/.test(d.textContent), 'not for a ready ticket');
+  const [a, b, c, d] = ['0001', '0002', '0003', '0004'].map(id => queueRows(p).find(r => idOf(p, r) === id));
+  // 0053: the worktree path shows only in the full view (test/panel-0053.test.mjs), so the row leaves it out.
+  assert.ok(!a.textContent.includes('/tmp/wt/0001') && /7 min$/.test(whereOf(p, a).textContent));
+  assert.ok(/<1 min$/.test(whereOf(p, b).textContent) && !b.textContent.includes('worktree'));
+  assert.ok(!/min/.test(whereOf(p, c).textContent) && !c.textContent.includes('worktree'));
+  assert.ok(!d.textContent.includes('/tmp/wt/0004') && !/min/.test(whereOf(p, d).textContent), 'not for a ready ticket');
 });
 
 // ---------- 0042: set a draft ticket to ready from the panel ----------
@@ -904,7 +906,7 @@ test('0035 AC3: with no done tickets, Shipped says nothing has shipped yet and s
 
 // ---------- 0045: flag a build that finished without shipping ----------
 
-test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its border (its left edge until 0167), current stage and sentence, with the label and message as text', async () => {
+test('0045 AC3: an approved ticket with a build_exit waits for you under Needs you, and its full view has the label and message as text', async () => {
   const message = 'Line one\n<b>not bold</b>\nShip refused.';
   const state = { tickets: [T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf(message) }), T('0002', 'approved', { rounds: [round(1, 1)], build_exit: null })], ideas: [] };
   const m = panelModel()(state);
@@ -913,32 +915,30 @@ test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its bor
   assert.deepEqual(m.queue.map(t => t.exit_label), ['Build finished without shipping', null]);
   const p = fakePage([state]);
   await p.settle();
-  // 0462: the stage and sentence are in a closed card's line; an open one has its facts in a table
-  assert.equal(stageOf(queueRows(p)[0]).textContent, 'Ship');
-  assert.match(stageOf(queueRows(p)[0]).className, /\bto-ship\b/);
-  assert.equal(sayOf(queueRows(p)[0]).className, 'say to-ship', 'its sentence waits for you (0416: with no badge)');
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const [a, b] = queueRows(p);
-  assert.match(a.className, /\bto-ship\b/);
-  assert.ok(!p.all(a).some(isRed), 'nothing red');
-  assert.ok(findText(p, a, 'Build finished without shipping'), 'the label');
-  assert.ok(findText(p, a, message), 'the message, as one text node with the HTML left as text');
-  const text = a.textContent;
+  assert.equal(groupOf(p, a), 'Needs you'); // purple since 0138, now its group
+  assert.equal(whereOf(p, a).title, 'Approved · waiting for you to ship it', 'its sentence waits for you');
+  const full = await fullViewOf(p, '0001');
+  assert.ok(!p.all(full).some(isRed) && !p.all(a).some(isRed), 'nothing red');
+  assert.ok(findText(p, full, 'Build finished without shipping'), 'the label');
+  assert.ok(findText(p, full, message), 'the message, as one text node with the HTML left as text');
+  const text = full.textContent;
   assert.ok(text.indexOf('Build finished without shipping') < text.indexOf(message), 'the message is under the label');
+  assert.ok(!a.textContent.includes('without shipping'), 'the row has neither');
   // AC3: an approved ticket with no build_exit looks as it does now.
   assert.ok(!p.all(b).some(isRed));
-  assert.ok(!b.textContent.includes('without shipping'));
+  assert.ok(!(await fullViewOf(p, '0002')).textContent.includes('without shipping'));
 });
 
 test('0045 AC3: a build_exit with no message shows just the label', async () => {
   const state = { tickets: [T('0001', 'approved', exitOf(null))], ideas: [] };
   const p = fakePage([state]);
   await p.settle();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
   const [a] = queueRows(p);
-  assert.match(a.className, /\bto-ship\b/); // purple since 0138
-  assert.ok(a.textContent.includes('Build finished without shipping'));
-  assert.ok(!a.textContent.includes('null'));
+  assert.equal(groupOf(p, a), 'Needs you'); // purple since 0138
+  const full = await fullViewOf(p, '0001');
+  assert.ok(full.textContent.includes('Build finished without shipping'));
+  assert.ok(!full.textContent.includes('null'));
 });
 
 test('0045 AC4: a building or reviewing ticket with a build_exit says the build stopped before finishing', async () => {
@@ -948,19 +948,12 @@ test('0045 AC4: a building or reviewing ticket with a build_exit says the build 
   assert.deepEqual(m.queue.map(t => t.exit_label), ['Build stopped before finishing', 'Build stopped before finishing']);
   const p = fakePage([state]);
   await p.settle();
-  // 0462: the stage and sentence are in a closed card's line; an open one has its facts in a table
-  for (const [row, step] of [[queueRows(p)[0], 'Build'], [queueRows(p)[1], 'Review 1']]) {
-    assert.equal(stageOf(row).textContent, step);
-    assert.match(stageOf(row).className, /\bbad\b/);
-    assert.equal(sayOf(row).className, 'say bad');
-  }
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const [a, b] = queueRows(p);
-  for (const [row, msg] of [[a, 'Stopped here.'], [b, 'Out of turns.']]) {
-    assert.match(row.className, /\bblocked\b/);
-    assert.ok(findText(p, row, 'Build stopped before finishing'));
-    assert.ok(findText(p, row, msg));
-    assert.ok(!row.textContent.includes('without shipping'));
+  for (const row of queueRows(p)) assert.equal(whereOf(p, row).title, 'The build stopped', 'its sentence'); // 0585: the row's line
+  for (const [id, msg] of [['0001', 'Stopped here.'], ['0002', 'Out of turns.']]) {
+    const full = await fullViewOf(p, id);
+    assert.ok(findText(p, full, 'Build stopped before finishing'));
+    assert.ok(findText(p, full, msg));
+    assert.ok(!full.textContent.includes('without shipping'));
   }
 });
 
@@ -971,10 +964,19 @@ test('0045 AC5: blocked, ready and tickets with no build_exit look as they do no
   const strip = m => m.queue.map(({ build_exit, ...t }) => t);
   assert.deepEqual(strip(model(withExit)), strip(model(plain)), 'the same model, apart from the build_exit field itself');
   assert.deepEqual(model(withExit).queue.map(t => t.red), [true, false, false, false, false]);
-  // 0434: each card open, as what's under a Build card's two lines shows only then
-  const render = async state => { const p = boardPage([state]); await p.settle(); await openQueueRows(p); return queueRows(p).map(r => ({ cls: r.className, text: r.textContent, red: p.all(r).filter(isRed).length })); };
+  // 0585: each row, and each ticket's full view
+  const render = async state => {
+    const p = boardPage([state]);
+    await p.settle();
+    const out = [];
+    for (const id of queueRows(p).map(r => idOf(p, r))) {
+      const r = queueRows(p).find(x => idOf(p, x) === id), full = await fullViewOf(p, id);
+      out.push({ cls: r.className, text: r.textContent, red: p.all(r).filter(isRed).length, full: full.textContent, fullRed: p.all(full).filter(isRed).length });
+    }
+    return out;
+  };
   assert.deepEqual(await render(withExit), await render(plain));
   const rows = await render(withExit);
-  assert.ok(!rows.some(r => /Should not show|without shipping|before finishing/.test(r.text)));
-  assert.ok(rows[0].text.includes('A or B?'), 'a blocked ticket still shows its question');
+  assert.ok(!rows.some(r => /Should not show|without shipping|before finishing/.test(r.text + r.full)));
+  assert.ok(rows.find(r => r.text.startsWith('0001')).full.includes('A or B?'), 'a blocked ticket still shows its question');
 });

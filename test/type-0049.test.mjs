@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseTicket, lintTicket } from '../scripts/speck.mjs';
-import { ROOT, T, fm, good, page, fakePage, items, queueRows, shippedRows, panelRepo, styles } from './support/panel.mjs';
+import { ROOT, T, fm, good, page, fakePage, items, fullViewOf, shippedRows, panelRepo, styles } from './support/panel.mjs';
 
 // ---------- 0049: bug tickets ----------
 
@@ -77,30 +77,37 @@ test('0049 AC3: speck status shows bug after a bug ticket\'s id, and --json has 
   assert.ok(json.tickets.every(t => Object.hasOwn(t, 'type')));
 });
 
-test('0049 AC4: a bug ticket shows a bug tag beside its id in Shaping, the queue and Shipped; others show none', async () => {
+test('0049 AC4: a bug ticket shows a bug tag beside its id in Shaping and Shipped; others show none', async () => {
   const p = fakePage([{ tickets: [
     T('0001', 'draft', { type: 'bug' }), T('0002', 'draft', { type: null }),
-    T('0003', 'ready', { type: 'bug' }), T('0004', 'ready'),
     T('0005', 'done', { type: 'bug', finished: new Date().toISOString() }), T('0006', 'done', { type: null, finished: new Date().toISOString() }),
   ], ideas: [] }]);
   await p.settle();
   const idOf = row => p.all(row).find(n => n.className === 'id')._text;
-  // 0151, 0155, 0157: in Plan, the queue and Shipped the bug tag comes last in the row under the title, after any
-  // priority, size and risk tags. 0419: in Plan and the queue, in the details line under the title.
+  // 0151, 0155, 0157: in Plan and Shipped the bug tag comes last in the row under the title, after any
+  // priority, size and risk tags. 0419: in Plan, in the details line under the title.
   const lastTag = row => {
     const tags = p.all(row).find(n => /\b(tag-row|checks|progress|act)\b/.test(n.className || '')).children.filter(n => /\btag\b/.test(n.className || ''));
     return /\bbug\b/.test(tags.at(-1)?.className || '') ? tags.at(-1) : null;
   };
   const anyBug = row => p.all(row).some(n => /\bbug\b/.test(n.className || ''));
-  for (const [where, rows] of [['Shaping', items(p)], ['queue', queueRows(p)], ['Shipped', shippedRows(p)]]) {
-    const bug = rows.find(r => ['0001', '0003', '0005'].includes(idOf(r)));
-    const other = rows.find(r => ['0002', '0004', '0006'].includes(idOf(r)));
+  for (const [where, rows] of [['Shaping', items(p)], ['Shipped', shippedRows(p)]]) {
+    const bug = rows.find(r => ['0001', '0005'].includes(idOf(r)));
+    const other = rows.find(r => ['0002', '0006'].includes(idOf(r)));
     assert.ok(bug && other, `${where} lists both`);
     const tag = lastTag(bug);
     assert.ok(tag, `${where}: a bug tag after any other tags`);
     assert.equal(tag._text, 'bug');
     assert.ok(!anyBug(other), `${where}: no tag on a ticket that isn't a bug`);
   }
+});
+
+test('0049 AC4: a bug ticket in Build says so in its full view, and others do not', async () => {
+  const p = fakePage([{ tickets: [T('0003', 'ready', { type: 'bug' }), T('0004', 'ready')], ideas: [] }]);
+  await p.settle();
+  const bugged = async id => { const full = await fullViewOf(p, id); return p.all(full).some(n => /\bbug\b/.test(n.className || '')) || /\bbug\b/i.test(full.textContent); }; // 0585: a Build row has no tags
+  assert.equal(await bugged('0003'), true);
+  assert.equal(await bugged('0004'), false);
 });
 
 test('0049 AC4: the bug tag has a colour of its own', () => {

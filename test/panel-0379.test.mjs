@@ -4,9 +4,20 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
-import { PAGE, page, findChrome, browserPage, styles } from './support/panel.mjs';
-import { PACK, DOCS, text, openPack, docView, docButtons } from './support/documents.mjs';
+import { PAGE, page, findChrome, browserPage, styles, fakePage, T, fullViewOf } from './support/panel.mjs';
+import { PACK, DOCS, text, docView, docButtons } from './support/documents.mjs';
 import { settingsPage, openSettings, rowOf } from './support/settings.mjs';
+
+// 0585: the review pack is opened from the ticket's full view, which a Build row opens.
+async function openPack(response, more = []) {
+  const state = () => ({ ideas: [], tickets: [T('0005', 'approved', { started: new Date(Date.now() - 60000).toISOString() })] });
+  const p = fakePage([state(), { text: '', truncated: false }, response, ...more, state()]);
+  await p.settle();
+  const view = await fullViewOf(p, '0005');
+  p.press(p.all(view).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  await p.settle();
+  return p;
+}
 
 // 0479: not the Pipeline log, which no longer scrolls as a whole: it's a frame that holds still, with only its log box
 // scrolling (test/pipeline-0479.test.mjs).

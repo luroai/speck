@@ -48,22 +48,22 @@ test('0139 AC2: an approved ticket\'s timer shows started to approved and stops;
   ], ideas: [] };
   const p = fakePage([state], { Date: c.Date });
   await p.settle();
-  assert.equal(subOf(p, '0001').textContent, '06:00');
-  assert.equal(subOf(p, '0002').textContent, '03:00');
-  assert.equal(subOf(p, '0003').textContent, '05:00', 'a reviewing ticket counts from started, whatever approved says');
-  c.now += 7000;
+  assert.equal(subOf(p, '0001').textContent, '6 min');
+  assert.equal(subOf(p, '0002').textContent, '3 min');
+  assert.equal(subOf(p, '0003').textContent, '5 min', 'a reviewing ticket counts from started, whatever approved says');
+  c.now += 2 * 60000; // 0585: a row counts in whole minutes
   for (const { fn } of p.intervals.values()) fn();
   await p.settle();
-  assert.equal(subOf(p, '0001').textContent, '06:00', 'the approved timer has stopped');
-  assert.equal(subOf(p, '0002').textContent, '03:07');
-  assert.equal(subOf(p, '0003').textContent, '05:07');
+  assert.equal(subOf(p, '0001').textContent, '6 min', 'the approved timer has stopped');
+  assert.equal(subOf(p, '0002').textContent, '5 min');
+  assert.equal(subOf(p, '0003').textContent, '7 min');
 });
 
 test('0139 AC2: with only approved tickets that have an approved time, no counter timer runs', async () => {
   const c = clock(NOW);
   const p = fakePage([{ tickets: [T('0001', 'approved', { started: ago(10), approved: ago(4) })], ideas: [] }], { Date: c.Date });
   await p.settle();
-  assert.equal(subOf(p, '0001').textContent, '06:00');
+  assert.equal(subOf(p, '0001').textContent, '6 min');
   assert.equal(p.intervals.size, 0);
 });
 

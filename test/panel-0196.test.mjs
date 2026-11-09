@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, round, panelModel, openQueueRows } from './support/panel.mjs';
+import { T, fakePage, queueRows, round, panelModel, fullViewOf } from './support/panel.mjs';
 
 // ---------- 0196: show an auto-shipping ticket as shipping from approval until it ships ----------
 
@@ -23,30 +23,29 @@ function fake(tickets = TICKETS) {
   });
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-const topOf = row => row.children.find(n => n.className === 'top');
 const classes = n => (n.className || '').split(/\s+/).filter(Boolean);
-// What a card shows: its classes, its sentence and the sentence's classes, the stage its border shows (0171), or null,
-// and its labels. 0416: the builder badge's pose went with the badge; the border still shows the stage.
-function shows(p, id) {
-  const row = rowOf(p, id), text = topOf(row).children.find(n => classes(n)[0] === 'progress');
-  const say = text ? text.children.find(n => /\bsay\b/.test(n.className)) : null; // 0462: an open card has its facts in a table instead
-  return { card: classes(row), say: say ? say.attrs?.['aria-label'] ?? say.textContent : null, // 0443: a closed card's long sentence is the accessible name of its short words
-    sayClass: say ? classes(say) : null, stage: (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null,
-    acts: p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent) };
+// What a row shows (0585): its sentence (the line's hover text, or its words when they are the sentence), the group it
+// is under, its dot, and, from its full view, the lines saying why it stopped.
+async function shows(p, id) {
+  const row = rowOf(p, id), where = p.all(row).find(n => /^where\b/.test(n.className));
+  const kids = p.byId('queue').children;
+  const head = kids.slice(0, kids.indexOf(row)).filter(n => n.tagName === 'h3').pop();
+  const say = where.title || p.all(where).find(n => n.className === 'said').textContent;
+  const full = await fullViewOf(p, id);
+  return { say, group: head.children[0].textContent, dot: classes(where)[1],
+    acts: p.all(full).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent) };
 }
 
-test('0196 AC1: an approved ticket auto-ship covers, whose build has ended, waits to ship in the normal colour, its border at the ship stage', async () => {
+test('0196 AC1: an approved ticket auto-ship covers, whose build has ended, waits to ship under Building, as it does while shipping', async () => {
   const p = fake();
   await p.settle();
-  const s = shows(p, '0601');
+  const s = await shows(p, '0601');
   assert.equal(s.say, 'Approved · waiting to ship');
-  assert.deepEqual(s.sayClass, ['say'], 'the normal text colour');
-  assert.ok(!s.card.includes('to-ship') && !s.card.includes('blocked'), `not purple or crimson: ${s.card}`);
+  assert.equal(s.group, 'Building', 'not under Needs you');
+  assert.notEqual(s.dot, 'needs');
   assert.deepEqual(s.acts, [], 'no "Build finished without shipping"');
-  const shipping = shows(p, '0602');
-  assert.equal(s.stage, shipping.stage, 'its border shows the stage as it does while shipping');
-  assert.equal(s.stage, 'ship');
-  assert.ok(s.card.includes('at-ship'), 'its border shows the ship stage');
+  const shipping = await shows(p, '0602');
+  assert.equal(s.group, shipping.group, 'with the one being shipped');
   const m = panelModel()({ tickets: TICKETS, ideas: [], run: { on: true } }).queue.find(t => t.id === '0601');
   assert.deepEqual([m.to_ship, m.red, m.exit_label], [false, false, null]);
 });
@@ -54,38 +53,32 @@ test('0196 AC1: an approved ticket auto-ship covers, whose build has ended, wait
 test('0196 AC1: one whose build is still closing out doesn\'t say it waits for you either', async () => {
   const p = fake([T('0611', 'approved', approved({ auto_ship: true, build_running: true }))]);
   await p.settle();
-  const s = shows(p, '0611');
+  const s = await shows(p, '0611');
   assert.equal(s.say, 'Approved · waiting to ship');
-  assert.deepEqual(s.sayClass, ['say']);
+  assert.equal(s.group, 'Building');
 });
 
 test('0196 AC2: an approved ticket being shipped shows as shipping in the Build queue, not as queued', async () => {
   const p = fake();
   await p.settle();
-  const s = shows(p, '0602');
+  const s = await shows(p, '0602');
   assert.equal(s.say, 'Shipping');
-  assert.ok(!s.card.includes('queued'));
+  assert.equal(s.group, 'Building');
   assert.deepEqual(s.acts, [], 'no separate Shipping line since 0201');
 });
 
 test('0196 AC4: one auto-ship doesn\'t cover, or whose last auto-ship didn\'t finish, shows as before', async () => {
   const p = fake();
   await p.settle();
-  const closed = Object.fromEntries(['0603', '0604', '0605'].map(id => [id, shows(p, id)])); // 0462: the sentence is in a closed card's line
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const open = id => ({ ...shows(p, id), say: closed[id].say, sayClass: closed[id].sayClass });
   for (const id of ['0603', '0605']) {
-    const s = open(id);
+    const s = await shows(p, id);
     assert.equal(s.say, 'Approved · waiting for you to ship it', id);
-    assert.deepEqual(s.sayClass, ['say', 'to-ship'], id);
-    assert.ok(s.card.includes('to-ship'), id);
-    assert.equal(s.stage, null, id);
+    assert.equal(s.group, 'Needs you', id);
+    assert.equal(s.dot, 'needs', id);
     assert.deepEqual(s.acts, ['Build finished without shipping'], id);
   }
-  const failed = open('0604');
+  const failed = await shows(p, '0604');
   assert.equal(failed.say, 'Approved · waiting for you to ship it');
-  assert.deepEqual(failed.sayClass, ['say', 'bad']);
-  assert.ok(failed.card.includes('blocked'));
-  assert.equal(failed.stage, null);
+  assert.equal(failed.group, 'Needs you');
   assert.deepEqual(failed.acts, ["Auto-ship didn't finish", 'Ship it from its review pack, or run /speck-ship 0604']);
 });

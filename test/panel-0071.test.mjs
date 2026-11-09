@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { CLI, env, T, fakePage, queueRows, exitOf, sayOf, sentenceOf } from './support/panel.mjs';
+import { CLI, env, T, fakePage, queueRows, exitOf, sayOf, sentenceOf, fullViewOf } from './support/panel.mjs';
 import { buildPanel, runs } from './support/build-panel.mjs';
 
 // ---------- 0071: a paused build on its queue row (its pause and play icon went in 0145) ----------
@@ -32,12 +32,15 @@ const topOf = row => row.children.find(n => n.className === 'top');
 test('0071 AC4: a paused build says it\'s paused (its dot stood still until 0168, its badge until 0416) and "Paused" beside its counter', async () => {
   const p = page();
   await p.settle();
-  const paused = rowOf(p, '0002'), running = rowOf(p, '0001');
-  assert.equal(sayOf(paused).textContent, 'Paused');
-  assert.equal(sentenceOf(running), 'Writing tests and code', 'running: the builder is at work (0434: its grid of lights says so)');
-  const sub = p.all(topOf(paused)).find(n => n.className === 'sub');
+  const where = id => p.all(rowOf(p, id)).find(n => /^where\b/.test(n.className));
+  const paused = where('0002'), running = where('0001');
+  assert.match(paused.className, /\bwait\b/, 'a paused build waits, in grey');
+  assert.match(running.className, /\brun\b/);
+  const full = await fullViewOf(p, '0002');
+  assert.ok(p.all(full).some(n => n.className === 'act' && /^Paused · carry it on with speck play 0002$/.test(n.textContent)), 'its full view says it\'s paused');
+  const sub = p.all(full).find(n => n.className === 'sub');
   assert.match(sub.textContent, /^Paused · 01:0\d$/);
-  assert.match(p.all(topOf(running)).find(n => n.className === 'sub').textContent, /^01:0\d$/);
+  assert.equal(sentenceOf(full), 'Paused');
   // The counter's own timer keeps "Paused" in place.
   for (const { fn } of p.intervals.values()) fn();
   assert.match(sub.textContent, /^Paused · 01:0\d$/);
@@ -47,12 +50,15 @@ test('0071 AC4: played again, it says what it\'s doing (its dot moved until 0168
   const s = state();
   const p = page(s);
   await p.settle();
+  await fullViewOf(p, '0002');
   s.tickets[1].paused = false;
   p.timers.shift()();
   await p.settle();
-  const row = rowOf(p, '0002');
-  assert.match(sentenceOf(row), /is (reviewing|fixing)/, 'at work with the reviewer');
-  assert.match(p.all(topOf(row)).find(n => n.className === 'sub').textContent, /^01:0\d$/);
+  const full = p.byId('full-ticket');
+  assert.match(sentenceOf(full), /is (reviewing|fixing)/, 'at work with the reviewer');
+  assert.match(p.all(full).find(n => n.className === 'sub').textContent, /^01:0\d$/);
+  assert.ok(!p.all(full).some(n => /Paused/.test(n.textContent || '') && n.className === 'act'), 'and Paused goes');
+  assert.match(p.all(rowOf(p, '0002')).find(n => /^where\b/.test(n.className)).className, /\brun\b/);
 });
 
 // ---------- the server ----------

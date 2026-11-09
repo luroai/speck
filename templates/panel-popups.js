@@ -457,7 +457,13 @@ function paneFacts(t) {
   const named = s => (typeof s === 'string' && s.trim() ? `${s.trim()[0].toUpperCase()}${s.trim().slice(1)}` : '');
   const name = named(t.reviewer), model = typeof t.review_model === 'string' && t.review_model.trim() ? t.review_model.trim() : typeof t.reviewer_model === 'string' ? t.reviewer_model.trim() : '';
   return el('dl', 'facts', null, factCell('Priority', priority, null), factCell('Size', t.size ? String(t.size) : '–', null), factCell('Risk', t.risk ? String(t.risk) : '–', null),
-    factCell('Ships by itself', ships, null), factCell('Builder', workerOf(t, { round: null }).value, null), factCell('Reviewer', name ? `${name}${model ? ` · ${model}` : ''}` : '–', null));
+    factCell('Ships by itself', ships, null), factCell('Builder', workerOf(t, { round: null }).value, null), factCell('Reviewer', name ? `${name}${model ? ` · ${model}` : ''}` : '–', null),
+    ...paneFrom === 'queue' ? queueFacts(t) : []);
+}
+// 0585: what a Build row can't show: its type, and, on one that hasn't started, its ready check.
+function queueFacts(t) {
+  const kind = kindOf(t);
+  return [factCell('Type', kind, kind === 'code' ? null : kind, Object.hasOwn(KIND_TIPS, kind) ? KIND_TIPS[kind] : kind), t.inFlight ? null : lintCell(t)].filter(Boolean);
 }
 // 0583: the rows that open what it has so far: a review pack once a round has run or it waits to ship, and a build log once its build has started.
 const hasPack = t => list(t.rounds).length > 0 || t.roundCount > 0 || t.status === 'approved' || t.shipping === true || t.doc_finished === true;
@@ -469,22 +475,22 @@ function paneRows(t) {
   if (log) log.buildLogOf = String(t.id); // so the focus can come back to it
   return pack || log ? el('div', 'pane-rows', null, pack, log) : null;
 }
-// Opens its build log's pop-up. With its card closed, nothing has loaded its log yet.
+// Opens its build log's pop-up, loading its log when the full view isn't following it.
 function openLogFromPane(id) {
   buildLogOf = id;
   logFromRow = true;
-  if (!openQueue.has(id) && liveLogOf !== id) loadLog(id);
+  if (liveLogOf !== id) loadLog(id);
   render();
 }
-// 0584: the full view's live section, for a ticket in the Build lane: what its open card says about a running or stopped
-// build, or only the Foreman's question on one that hasn't started. It has the card's class, so it has the card's styles. Its
+// 0584: the full view's live section, for a ticket in the Build lane: what it says about a running or stopped build.
+// 0585: and, on one that hasn't started, the Foreman's question and Back to Plan. It has class q for those styles. Its
 // log is kept while the rest is drawn again.
-const liveShows = t => paneFrom === 'queue' && !packOf && (t.inFlight === true || !!foremanAskOf(t.id));
+const liveShows = t => paneFrom === 'queue' && !packOf;
 function liveSig(t) {
   if (!t || !liveShows(t)) return null;
   const id = String(t.id), { counter, ship_counter, ...own } = ownData(t);
   return signature([id, own, t.counter !== null, stopping.has(id), stopRefused.get(id) ?? null, goingWith.has(id), goWithRefused.get(id) ?? null, foremanAskOf(id)?.question ?? null,
-    askPending.get(id) ?? null, askRefused.get(id) ?? null, speckCalled(), shippingId === id]);
+    askPending.get(id) ?? null, askRefused.get(id) ?? null, speckCalled(), shippingId === id, unreadying.has(id), planRefused.get(id) ?? null]);
 }
 // Where it is, in the sentence its card says it in, its step's name, and how long it has been going.
 function liveNow(t, d) {
@@ -496,8 +502,11 @@ function liveNow(t, d) {
 }
 function liveParts(t) {
   const id = String(t.id);
-  if (!t.inFlight) return [foremanAskBox(id, foremanAskOf(id).question, 'pane')];
-  return [liveNow(t, doing(t, t.shipping || shippingId === id, speckCalled())), ...buildNotes(t, 'pane'),
+  if (!t.inFlight) {
+    const ask = foremanAskOf(id);
+    return [ask ? foremanAskBox(id, ask.question) : null, backToPlanButton(t), planRefused.has(id) ? el('div', 'plan-refused', planRefused.get(id)) : null].filter(Boolean);
+  }
+  return [liveNow(t, doing(t, t.shipping || shippingId === id, speckCalled())), ...buildNotes(t),
     el('div', 'live-buttons', null, buildLogButton(id), t.pausable ? stopButton(t) : null),
     t.pausable && stopRefused.has(id) ? el('div', 'stop-refused', stopRefused.get(id)) : null].filter(Boolean);
 }
@@ -505,7 +514,7 @@ const liveCounterIn = parts => (parts[0] && parts[0].className === 'live-now' ? 
 function liveSection(t) {
   const parts = liveParts(t);
   liveSub = liveCounterIn(parts);
-  return el('div', 'q live', null, el('div', 'live-state', null, ...parts), t.inFlight ? logBox(String(t.id), paneKey(t.id)) : null);
+  return el('div', 'q live', null, el('div', 'live-state', null, ...parts), t.inFlight ? logBox(String(t.id)) : null);
 }
 // Draws it again in place, leaving its log box as it is unless the ticket no longer has a log or has just got one.
 function drawLive(t) {
@@ -514,8 +523,8 @@ function drawLive(t) {
   state.replaceChildren(...parts);
   liveSub = liveCounterIn(parts);
   const log = child(liveBox, 'log');
-  if (t.inFlight && !log) liveBox.appendChild(logBox(String(t.id), paneKey(t.id)));
-  if (!t.inFlight && log) { liveBox.removeChild(log); logBoxes.delete(paneKey(t.id)); }
+  if (t.inFlight && !log) liveBox.appendChild(logBox(String(t.id)));
+  if (!t.inFlight && log) { liveBox.removeChild(log); logBoxes.delete(String(t.id)); }
   if (focused && pane.focus) pane.focus({ preventScroll: true }); // so the keys still scroll the pane
 }
 // The track and facts have been drawn again, so it moves under the new ones, with its log's place and the focus kept.
@@ -531,8 +540,8 @@ function followLive(t) {
   if (id === liveLogOf) return;
   const was = liveLogOf;
   liveLogOf = id;
-  if (was !== null) { logBoxes.delete(paneKey(was)); if (!logWanted(was)) closeLog(was); }
-  if (id !== null && !openQueue.has(id) && buildLogOf !== id) loadLog(id);
+  if (was !== null) { logBoxes.delete(was); if (!logWanted(was)) closeLog(was); }
+  if (id !== null && buildLogOf !== id) loadLog(id);
 }
 // The live section's counter, for the page's clock, as a card's is.
 const liveCounters = () => (liveSub && paneTicket && paneTicket.counter !== null && paneTicket.held_at === null ? [[liveSub, paneTicket.since, !!paneTicket.paused]] : []);
@@ -848,7 +857,7 @@ function closeBuildLog() {
   const id = buildLogOf, row = logFromRow;
   buildLogOf = null;
   logFromRow = false;
-  if (!logWanted(id)) closeLog(id); // 0583: opened from the full view, with its card closed
+  if (!logWanted(id)) closeLog(id); // 0583: opened from the full view
   render();
   const find = (n, cls) => { if (n.buildLogOf === id && (!cls || n.className === cls)) return n; for (const c of n.children || []) { const f = find(c, cls); if (f) return f; } return null; };
   const to = (row && find($('full-ticket'), 'pane-row')) || find($('full-ticket')) || find($('queue')) || $('build-section'); // 0583: its row in the full view first

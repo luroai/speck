@@ -3,8 +3,8 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, pageScript, styles } from './support/panel.mjs';
-import { PACK, DOCS, text, openPack, pane, docView, docButtons } from './support/documents.mjs';
+import { page, pageScript, styles, fakePage, T, fullViewOf } from './support/panel.mjs';
+import { PACK, DOCS, text, pane, docView, docButtons } from './support/documents.mjs';
 
 const MEMO = '# Pricing\n\nPrices go **up**.\n\n| Plan | Price |\n|---|---|\n| Basic | £5 |\n';
 // The declarations of each CSS rule whose selector list holds exactly `sel`, in the page's style, media queries included.
@@ -13,6 +13,16 @@ const rules = sel => {
   return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].replace(/^[^{]*\{/, '').split(',').map(x => x.trim()).includes(sel)).map(m => m[2]);
 };
 const rule = sel => rules(sel)[0] || '';
+// 0585: the Review pack button is in the ticket's full view, which a Build row opens.
+async function openPack(response, more = [], globals = {}, made) {
+  const state = { ideas: [], tickets: [T('0005', 'approved', { started: new Date(Date.now() - 60000).toISOString() })] };
+  const p = fakePage([structuredClone(state), { text: '', truncated: false }, response, ...more, structuredClone(state)], globals, made ? { made } : {});
+  await p.settle();
+  const full = await fullViewOf(p, '0005');
+  p.press(p.all(full).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  await p.settle();
+  return p;
+}
 // A page where each node can take the focus, and `p.focused()` is the node holding it.
 async function focusPack(responses) {
   let focused = null;

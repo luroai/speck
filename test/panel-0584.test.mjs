@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 // 0584: everything a Build card shows about a running or stopped build is also in the ticket's full view.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, T, queueRows } from './support/panel.mjs';
+import { fakePage, T, queueRows, fullViewOf } from './support/panel.mjs';
 import { manualSources } from './support/stream.mjs';
 
 const NAME = 'ab'.repeat(16);
@@ -51,13 +51,8 @@ const inLive = (p, cls) => p.all(live(p)).find(n => (n.className || '').split(' 
 const logBox = p => inLive(p, 'log');
 const button = (p, text) => p.all(live(p)).find(n => n.tagName === 'button' && n.textContent === text) || null;
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-// Opens the ticket's card and presses its Full ticket button, as the user does.
-async function open(p, id) {
-  if (!/\bopen\b/.test(rowOf(p, id).className)) { p.press(rowOf(p, id).children[0]); await p.settle(); }
-  p.press(p.all(rowOf(p, id)).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
-  await p.settle();
-}
-const closeCard = async (p, id) => { p.press(rowOf(p, id).children[0]); await p.settle(); };
+// Presses the ticket's row, as the user does, which opens its full view (0585: a row has no card to open).
+const open = (p, id) => fullViewOf(p, id);
 const back = async p => { p.press(p.all(pane(p)).find(n => n.className === 'close')); await p.settle(); };
 
 test('0584 AC1: a building ticket\'s full view shows where it is, for how long, its log, Full log and Stop build', async () => {
@@ -117,15 +112,12 @@ test('0584 AC1: no Stop build for a build speck run isn\'t running, as on the ca
   assert.ok(button(p, 'Full log'));
 });
 
-test('0584: a build that stopped says why, as its card does', async () => {
+test('0584: a build that stopped says why, and its row says it stopped', async () => {
   const p = await page([building('0801', { build_running: false, build_exit: { code: 1, signal: null, at: new Date().toISOString(), message: 'It fell over.' } })]);
   await open(p, '0801');
-  const card = rowOf(p, '0801');
-  for (const cls of ['act bad', 'question exit']) {
-    const of = root => p.all(root).find(n => n.className === cls);
-    assert.ok(of(card), `${cls} is on the card`);
-    assert.equal(of(live(p)).textContent, of(card).textContent, cls);
-  }
+  for (const cls of ['act bad', 'question exit']) assert.ok(p.all(live(p)).find(n => n.className === cls), `${cls} is in the full view`);
+  assert.match(p.all(live(p)).find(n => n.className === 'question exit').textContent, /It fell over\./);
+  assert.match(p.all(rowOf(p, '0801')).find(n => /^where\b/.test(n.className)).textContent, /^Build stopped/);
 });
 
 test('0584 AC2: a blocked ticket\'s full view shows its question and Go with the recommendation', async () => {
@@ -153,10 +145,12 @@ test('0584 AC2: a ready ticket with a manager\'s question shows just that, with 
   assert.equal(inLive(p, 'live-now'), null);
 });
 
-test('0584: a ready ticket with no question has no live section', async () => {
+test('0584: a ready ticket with no question has no log or manager\'s question in its full view', async () => {
   const p = await page([T('0801', 'ready')]);
   await open(p, '0801');
-  assert.equal(live(p), null);
+  assert.equal(logBox(p), null);
+  assert.equal(inLive(p, 'foreman-ask'), null);
+  assert.equal(inLive(p, 'live-now'), null);
 });
 
 test('0584 AC3: what it shows follows the board while the full view is open, with the log box and the sections kept', async () => {
@@ -187,7 +181,6 @@ test('0584 AC3: when the track and facts are drawn again the live section moves 
 test('0584 AC3: a ticket that starts while it is open gets its live section and log', async () => {
   const p = await page([T('0801', 'ready')]);
   await open(p, '0801');
-  await closeCard(p, '0801');
   const was = p.asked.length;
   await p.set({ tickets: [building('0801')] });
   assert.ok(logBox(p));
@@ -201,14 +194,13 @@ test('0584 AC3: new log lines reach the open full view', async () => {
   p.source().emit('log', JSON.stringify({ id: '0801', build: 1, at: 2, drop: 0, lines: ['second'] }));
   await p.settle();
   assert.match(logBox(p).textContent, /first\s*second/);
-  assert.match(p.all(rowOf(p, '0801')).find(n => (n.className || '').split(' ').includes('log')).textContent, /first\s*second/, 'and the card\'s');
+  assert.equal(p.all(rowOf(p, '0801')).find(n => (n.className || '').split(' ').includes('log')), undefined, 'a row has no log');
 });
 
-test('0584 AC3: its log still follows after the card behind it closes, and stops once nothing shows it', async () => {
+test('0584 AC3: its log follows while the full view shows it, and stops once nothing shows it', async () => {
   const p = await page([building('0801')]);
   p.logs['0801'] = { text: 'first', truncated: false, build: 1, at: 1 };
   await open(p, '0801');
-  await closeCard(p, '0801');
   assert.deepEqual(p.closed, [], 'the full view still shows it');
   p.source().emit('log', JSON.stringify({ id: '0801', build: 1, at: 2, drop: 0, lines: ['second'] }));
   await p.settle();
@@ -217,14 +209,7 @@ test('0584 AC3: its log still follows after the card behind it closes, and stops
   assert.deepEqual(p.closed, ['0801']);
 });
 
-test('0584 AC3: closing the full view leaves an open card\'s log followed', async () => {
-  const p = await page([building('0801')]);
-  await open(p, '0801');
-  await back(p);
-  assert.deepEqual(p.closed, []);
-});
-
-test('0584 AC3: a full view reached with its card closed loads the log, and the stream asks again after a reconnect', async () => {
+test('0584 AC3: a full view reached from another full view loads the log, and the stream asks again after a reconnect', async () => {
   const p = await page([building('0801'), T('0802', 'ready', { after: ['0801'], waiting_on: ['0801'] })]);
   await open(p, '0802');
   const chip = p.all(pane(p)).find(n => n.tagName === 'button' && (n.attrs?.['aria-label'] || '').startsWith('Go to ticket 0801'));
@@ -240,7 +225,6 @@ test('0584 AC3: a full view reached with its card closed loads the log, and the 
 test('0584 AC3: its counter runs on the clock, and a review pack over it stops the log', async () => {
   const p = await page([building('0801')]);
   await open(p, '0801');
-  await closeCard(p, '0801');
   const sub = inLive(p, 'sub');
   sub.textContent = 'stale';
   [...p.intervals.values()].find(i => i.ms === 1000).fn();
@@ -251,15 +235,13 @@ test('0584 AC3: its counter runs on the clock, and a review pack over it stops t
   assert.deepEqual(p.closed, ['0801']);
 });
 
-test('0584 AC3: text typed in the full view\'s Answer box survives a redraw, and reaches the card\'s', async () => {
+test('0584 AC3: text typed in the full view\'s Answer box survives a redraw', async () => {
   const foreman = { agent: { asks: [{ id: '0801', question: 'Carry on?' }] } };
   const p = await page([blocked('0801')], { foreman });
   await open(p, '0801');
   const box = inLive(p, 'ask-answer');
   box.value = 'Yes please';
   box.listeners.input();
-  const card = p.all(rowOf(p, '0801')).find(n => n.className === 'ask-answer');
-  assert.equal(card.value, 'Yes please', 'the card behind it matches');
   await p.set({ tickets: [blocked('0801', { blocked_question: 'Which two?' })] });
   assert.equal(inLive(p, 'ask-answer').value, 'Yes please');
 });

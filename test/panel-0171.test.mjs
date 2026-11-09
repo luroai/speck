@@ -1,16 +1,12 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, exitOf, round, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
-import { rules, tokens, get, rule } from './support/css.mjs';
+import { T, fakePage, queueRows, exitOf, round } from './support/panel.mjs';
 
 // ---------- 0171: colour a running ticket's border by its build stage ----------
+// 0585: Build's rows have no border to colour; these check the stage a row says and its dot.
 
-const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
-// Each stage's class on the card and the colour token of its border.
-// 0426: Cursor's blue, cyan (the inbox's own colour), yellow and green. 0461: purple while it ships, as its Ship bar is.
-const STAGES = { 'at-build': '--blue', 'at-check': '--inbox', 'at-review': '--yellow', 'at-ship': '--purple' };
 const TICKETS = [
   T('0501', 'building', { title: 'Writing its code', started: ago(65), build_running: true }),
   T('0502', 'building', { title: 'Checking itself', started: ago(65), build_running: true, self_check: 'no changes' }),
@@ -30,9 +26,10 @@ const TICKETS = [
   T('0512', 'approved', { title: 'Approved, auto-ship about to start', started: ago(900), approved: ago(60), self_check: 'no changes', rounds: [round(1, 10)],
     auto_ship: true, build_running: true }),
 ];
-// What each card should show: a stage class, a state class (0167), or neither.
-const EXPECT = { '0501': 'at-build', '0502': 'at-check', '0503': 'at-review', '0504': 'at-review', '0505': 'at-ship', '0506': 'at-ship',
-  '0507': 'blocked', '0508': 'blocked', '0509': 'to-ship', '0510': null, '0511': null, '0512': null };
+// 0585: what each row's where line says first and its dot's class: the card's stage border went, so the stage is in
+// the words and a blue dot while an agent is at work, orange for a ticket that needs you and grey for the rest.
+const EXPECT = { '0501': ['Writing', 'run'], '0502': ['Checking', 'run'], '0503': ['Reviewing · round 1', 'run'], '0504': ['Reviewing · round 1', 'run'], '0505': ['Shipping', 'run'], '0506': ['Shipping', 'run'],
+  '0507': ['Has a question', 'needs'], '0508': ['Build stopped', 'wait'], '0509': ['Ready to ship', 'needs'], '0510': ['Ready', 'wait'], '0511': ['Paused', 'wait'], '0512': ['Shipping next', 'wait'] };
 
 // speck run is on, as its ship queue ships the approved tickets auto-ship covers (0203: with it off, they wait for you).
 function fake(state) {
@@ -41,134 +38,32 @@ function fake(state) {
   });
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-const classes = row => row.className.split(/\s+/);
-const looks = row => classes(row).filter(c => c in STAGES || c === 'blocked' || c === 'to-ship');
+// The row's where line: its first words, and its dot's class.
+const looks = (p, id) => { const w = p.all(rowOf(p, id)).find(n => /^where\b/.test(n.className || '')); return [p.all(w).find(n => n.className === 'said').textContent, w.className.split(' ')[1]]; };
 
-test('0171 AC1: a card whose agent is at work has its stage\'s class: building, self-check, review (any round) or shipping', async () => {
+test('0171 AC1: a row whose agent is at work says its stage: building, self-check, review (any round) or shipping, with a blue dot', async () => {
   const p = fake({ tickets: TICKETS });
   await p.settle();
-  for (const id of ['0501', '0502', '0503', '0504', '0505', '0506']) assert.deepEqual(looks(rowOf(p, id)), [EXPECT[id]], id);
+  for (const id of ['0501', '0502', '0503', '0504', '0505', '0506']) assert.deepEqual(looks(p, id), EXPECT[id], id);
 });
 
-test('0171 AC1: each stage has a 2px border in its colour, and leaves the card\'s background alone', () => {
-  for (const [cls, token] of Object.entries(STAGES)) {
-    const r = rule(`.q.${cls}`);
-    assert.ok(r, `.q.${cls} has a rule`);
-    assert.deepEqual(tokens(get(r, 'border-color')), [token], `.q.${cls}: its border colour`);
-    assert.equal(get(r, 'border-width'), '2px', `.q.${cls}: its border width`);
-    assert.equal(get(r, 'background') ?? get(r, 'background-color'), undefined, `.q.${cls}: no fill`);
-  }
-});
-
-test('0171 AC2: when a running ticket moves to its next stage, its card takes the new stage\'s class on the next update', async () => {
+test('0171 AC2: when a running ticket moves to its next stage, its row says the new stage on the next update', async () => {
   const state = { tickets: [T('0601', 'building', { title: 'Moving on', started: ago(65), build_running: true })] };
   const p = fake(state);
   await p.settle();
   const next = async tickets => { state.tickets = tickets; for (const fn of p.timers.splice(0)) fn(); await p.settle(); };
-  assert.deepEqual(looks(rowOf(p, '0601')), ['at-build']);
+  assert.deepEqual(looks(p, '0601'), ['Writing', 'run']);
   await next([T('0601', 'building', { title: 'Moving on', started: ago(65), build_running: true, self_check: 'no changes' })]);
-  assert.deepEqual(looks(rowOf(p, '0601')), ['at-check']);
+  assert.deepEqual(looks(p, '0601'), ['Checking', 'run']);
   await next([T('0601', 'reviewing', { title: 'Moving on', started: ago(65), build_running: true, self_check: 'no changes' })]);
-  assert.deepEqual(looks(rowOf(p, '0601')), ['at-review']);
+  assert.deepEqual(looks(p, '0601'), ['Reviewing · round 1', 'run']);
   await next([T('0601', 'approved', { title: 'Moving on', started: ago(65), approved: ago(1), self_check: 'no changes', rounds: [round(1, 10)],
     auto_ship: true, ship: { running: true, auto: true, started: ago(1) } })]);
-  assert.deepEqual(looks(rowOf(p, '0601')), ['at-ship']);
+  assert.deepEqual(looks(p, '0601'), ['Shipping', 'run']);
 });
 
-test('0171 AC3: blocked, stopped and waiting tickets keep 0167\'s colours, and every other card has no stage class', async () => {
+test('0171 AC3: blocked, stopped and waiting tickets have no blue dot', async () => {
   const p = fake({ tickets: TICKETS });
   await p.settle();
-  for (const id of ['0507', '0508', '0509', '0510', '0511', '0512']) {
-    assert.deepEqual(looks(rowOf(p, id)), EXPECT[id] ? [EXPECT[id]] : [], id);
-  }
+  for (const id of ['0507', '0508', '0509', '0510', '0511', '0512']) assert.deepEqual(looks(p, id), EXPECT[id], id);
 });
-
-// ---------- In the browser ----------
-
-const STATE = { run: { on: true }, tickets: TICKETS, ideas: [] };
-const stub = theme => `(() => {
-  try { localStorage.setItem('speck-theme', ${JSON.stringify(theme)}); } catch {}
-  const STATE = ${JSON.stringify(STATE)};
-  const real = window.fetch.bind(window);
-  const json = b => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } });
-  window.fetch = async (url, opts = {}) => {
-    const u = String(url);
-    if (u === '/api/state') return json(STATE);
-    if (/\\/log$/.test(u)) return json({ text: '' });
-    if (opts.method === 'POST') return json({});
-    return real(url, opts);
-  };
-})();`;
-
-async function withPanel(fn, theme) {
-  const r = panelRepo();
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
-  const b = await browserPage('about:blank');
-  try {
-    await b.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
-    await b.send('Page.enable');
-    await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(theme) });
-    await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelectorAll('#queue .q').length === ${TICKETS.length}`, 'the panel');
-    assert.equal(await b.js(`document.documentElement.dataset.theme`), theme);
-    await fn(b);
-  } finally { await b.close(); await stop(panel); }
-}
-const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
-const RGB = v => `(() => { const s = document.createElement('span'); s.style.color = ${JSON.stringify(v)}; document.body.appendChild(s);
-  const c = getComputedStyle(s).color; s.remove(); return c; })()`;
-const colours = async b => {
-  const c = {};
-  for (const k of ['line', 'text', 'run', 'inbox', 'warn', 'ok', 'idea', 'ok-bg', 'bad', 'bad-bg', 'panel', 'raise', 'blue', 'yellow', 'green', 'purple']) c[k] = await b.js(RGB(`var(--${k})`));
-  return c;
-};
-const LOOK = `[...document.querySelectorAll('#queue .q')].map(n => { const s = getComputedStyle(n);
-  return { id: n.querySelector('.id').textContent, cls: n.className, back: s.backgroundColor,
-    sides: ['Top', 'Right', 'Bottom', 'Left'].map(k => [s['border' + k + 'Color'], parseFloat(s['border' + k + 'Width']), s['border' + k + 'Style']]) }; })`;
-const border = (card, colour, width, what) => {
-  for (const [k, [col, w, style]] of card.sides.entries()) {
-    assert.equal(col, colour, `${what}: side ${k} is ${col}, not ${colour}`);
-    assert.ok(style === 'solid' && (width === 2 ? w === 2 : w > 0 && w <= 1), `${what}: side ${k} is ${w} px ${style}`);
-  }
-};
-const lum = rgb => {
-  const [r, g, b] = rgb.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).map(v => v / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
-const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-
-for (const theme of ['light', 'dark']) {
-  test(`0171 AC1 AC3 AC4: in the ${theme} look, running cards have their stage's 2px border, closed, open and lit, and the rest keep theirs`, skip, async () => {
-    await withPanel(async b => {
-      const c = await colours(b);
-      const plainBack = (await b.js(LOOK)).find(x => x.id === '0510').back;
-      const check = async when => {
-        for (const card of await b.js(LOOK)) {
-          const want = EXPECT[card.id], what = `${card.id} ${when}`, open = /\bopen\b/.test(card.cls);
-          if (want in STAGES) {
-            border(card, c[STAGES[want].slice(2)], 2, what);
-            assert.equal(card.back, open ? c.raise : plainBack, `${what}: the normal card background`);
-          } else if (want === 'blocked') { border(card, c.bad, 1, what); assert.equal(card.back, c['bad-bg'], `${what}: crimson fill`); }
-          else if (want === 'to-ship') { border(card, c.ok, 1, what); assert.equal(card.back, c['ok-bg'], `${what}: green fill (0440)`); }
-          else border(card, open ? c.text : c.line, 1, what);
-        }
-      };
-      await check('closed');
-      // Lit from a linked id: the ring is inside the border, which stays.
-      await b.js(`document.querySelectorAll('#queue .q').forEach(n => n.classList.add('flash'))`);
-      await settle(b);
-      await check('lit');
-      for (const id of Object.keys(EXPECT)) {
-        await b.js(`[...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '${id}').querySelector('.top').click()`);
-        await settle(b);
-      }
-      await check('open');
-      for (const [cls, token] of Object.entries(STAGES)) {
-        for (const back of ['panel', 'raise']) {
-          const k = contrast(c[token.slice(2)], c[back]);
-          assert.ok(k >= 3, `${cls}: ${token} against --${back} is ${k.toFixed(2)}:1`);
-        }
-      }
-    }, theme);
-  });
-}

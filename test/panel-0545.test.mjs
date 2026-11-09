@@ -3,13 +3,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, round, boardPage, queueRows, openQueueRows, panelRepo } from './support/panel.mjs';
+import { T, round, boardPage, fullViewOf, panelRepo } from './support/panel.mjs';
 import { ticketBuilderModel, DEFAULT_BUILD_COMMAND } from '../scripts/build-model.mjs';
 import { PROVIDERS } from '../scripts/providers.mjs';
 import { checkedProvider, saveCustomProvider } from '../scripts/custom-providers.mjs';
 import { statusData } from '../scripts/speck.mjs';
 
-// ---------- 0545: an open Build ticket's Builder cell names the model its builds run on ----------
+// ---------- 0545: a Build ticket's Builder cell names the model its builds run on (0585: in its full view) ----------
 
 const NOW = Date.now();
 const ago = s => new Date(NOW - s * 1000).toISOString();
@@ -19,10 +19,10 @@ const model = (fm, cfg) => ticketBuilderModel(fm, cfg, providers);
 
 const page = tickets => boardPage([{ run: { on: true }, ideas: [], tickets }]);
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')?._text;
-const card = (p, id) => queueRows(p).find(n => idOf(p, n) === id);
-const cellOf = (p, id) => {
-  const f = card(p, id).children[0].children.find(n => n.className === 'facts');
-  const c = f.children[1];
+// A cell of the facts table in a ticket's full view, which a Build row opens: its label, its value and its tooltip.
+const cellOf = async (p, id, label = 'Builder') => {
+  const f = p.all(await fullViewOf(p, id)).find(n => n.className === 'facts');
+  const c = f.children.find(x => x.children[0].textContent === label);
   return [c.children[0].textContent, c.children[1].textContent, c.children[1].title];
 };
 
@@ -45,10 +45,9 @@ test('0545 AC1: the Builder cell shows the agent\'s name and its model', async (
     T('0953', 'building', { started: ago(65), build_running: true, builder: 'acme', builder_label: 'Acme', builder_model: 'acme-big' }),
   ]);
   await p.settle();
-  await openQueueRows(p);
-  assert.deepEqual(cellOf(p, '0951'), ['Builder', 'Claude · opus', 'Claude · opus']);
-  assert.deepEqual(cellOf(p, '0952'), ['Builder', 'Codex · gpt-6.1-sol', 'Codex · gpt-6.1-sol']);
-  assert.deepEqual(cellOf(p, '0953'), ['Builder', 'Acme · acme-big', 'Acme · acme-big']);
+  assert.deepEqual(await cellOf(p, '0951'), ['Builder', 'Claude · opus', 'Claude · opus']);
+  assert.deepEqual(await cellOf(p, '0952'), ['Builder', 'Codex · gpt-6.1-sol', 'Codex · gpt-6.1-sol']);
+  assert.deepEqual(await cellOf(p, '0953'), ['Builder', 'Acme · acme-big', 'Acme · acme-big']);
 });
 
 test('0545 AC2: with no model known, the Builder cell shows only the agent\'s name', async () => {
@@ -67,10 +66,9 @@ test('0545 AC2: with no model known, the Builder cell shows only the agent\'s na
     T('0963', 'building', { started: ago(65), build_running: true, builder: 'claude', builder_model: '  ' }),
   ]);
   await p.settle();
-  await openQueueRows(p);
-  assert.deepEqual(cellOf(p, '0961').slice(0, 2), ['Builder', 'Claude']);
-  assert.deepEqual(cellOf(p, '0962').slice(0, 2), ['Builder', 'Cursor']);
-  assert.deepEqual(cellOf(p, '0963').slice(0, 2), ['Builder', 'Claude']);
+  assert.deepEqual((await cellOf(p, '0961')).slice(0, 2), ['Builder', 'Claude']);
+  assert.deepEqual((await cellOf(p, '0962')).slice(0, 2), ['Builder', 'Cursor']);
+  assert.deepEqual((await cellOf(p, '0963')).slice(0, 2), ['Builder', 'Claude']);
 });
 
 test('0545 AC3: speck status --json gives each ticket\'s builder_model, or null', () => {
@@ -90,13 +88,12 @@ test('0545 AC3: speck status --json gives each ticket\'s builder_model, or null'
   assert.equal(JSON.parse(out.stdout).tickets.find(x => x.id === '0001').builder_model, 'acme-big');
 });
 
-test('0545 AC4: the Reviewer cell, and the cell while a round runs, are unchanged', async () => {
+test('0545 AC4: the Reviewer cell, while a round runs, names the reviewer and its model', async () => {
   const p = page([
     T('0971', 'reviewing', { started: ago(65), build_running: true, self_check: 'no changes', review_running: 1, reviewer: 'codex', review_model: 'gpt-6.1-sol', builder: 'claude', builder_model: 'opus' }),
     T('0972', 'reviewing', { started: ago(65), build_running: true, self_check: 'no changes', review_running: 1, reviewer: 'codex', builder: 'claude', builder_model: 'opus' }),
   ]);
   await p.settle();
-  await openQueueRows(p);
-  assert.deepEqual(cellOf(p, '0971').slice(0, 2), ['Reviewer', 'gpt-6.1-sol']);
-  assert.deepEqual(cellOf(p, '0972').slice(0, 2), ['Reviewer', 'Codex']);
+  assert.deepEqual((await cellOf(p, '0971', 'Reviewer')).slice(0, 2), ['Reviewer', 'Codex · gpt-6.1-sol']);
+  assert.deepEqual((await cellOf(p, '0972', 'Reviewer')).slice(0, 2), ['Reviewer', 'Codex']);
 });

@@ -188,7 +188,6 @@ test('0410 AC3: in a real browser, the open lane\'s list keeps its scroll positi
     assert.equal(await b.js(`document.getElementById('build-section').hidden`), false, 'Build is still open');
     // Self-check: while the full ticket covers the page, the tabs can't be reached or pressed, as the rest of the page can't.
     await b.js(`document.querySelector('#queue .q .top').click(), 1`);
-    await b.js(`[...document.querySelectorAll('#queue .q.open button')].find(x => x.textContent === 'Full ticket').click(), 1`);
     await b.until(`!document.getElementById('full-ticket').hidden`, 'the full ticket');
     assert.equal(await b.js(`document.getElementById('tabs').inert`), true, 'the tab row is inert under the pane');
   } finally { await b.close(); await stop(panel); }
@@ -218,20 +217,18 @@ test('0410 AC4: with Plan or Shipped open and the Foreman reading "Needs you <n>
 });
 
 test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back there, puts "<n>" on Build straight away', async () => {
-  const p = livePage(board({ foreman: { word: 'Needs you 2', tone: 'bad' } }));
+  const p = livePage(secondDraft(board({ foreman: { word: 'Needs you 2', tone: 'bad' } })));
   await p.settle();
-  const waiting = queueRows(p).find(n => idOf(p, n) === '0002');
-  p.press(await gotoIn(p, waiting, '0001'));
+  p.press(await gotoIn(p, items(p).find(n => idOf(p, n) === '0004'), '0001'));
   openIs(p, 'plan', 'after going to a Plan ticket');
   assert.equal(p.byId('build-needs').textContent, '2', 'before any refresh');
   // Back to Build through a link, then opened from Build and closed once it's back in Plan.
   p.press(await gotoIn(p, items(p).find(n => idOf(p, n) === '0001'), '0002'));
   assert.equal(p.byId('build-needs').textContent, '2', 'Build open again (0477: whichever lane is open)');
   const row = queueRows(p).find(n => idOf(p, n) === '0003');
-  click(row.children.find(n => n.className === 'top'));
+  click(row.children.find(n => n.className === 'top')); // 0585: its row opens its full view
   await p.settle();
-  click(p.all(queueRows(p).find(n => idOf(p, n) === '0003')).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
-  p.set(board({ '0003': { status: 'draft' }, foreman: { word: 'Needs you 2', tone: 'bad' } }));
+  p.set(secondDraft(board({ '0003': { status: 'draft' }, foreman: { word: 'Needs you 2', tone: 'bad' } })));
   await refresh(p);
   click(top(items(p).find(n => idOf(p, n) === '0003')));
   await p.settle();
@@ -243,6 +240,8 @@ test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back t
 // ---------- AC5 ----------
 
 const idOf = (p, n) => p.all(n).find(x => x.className === 'id')._text;
+// 0585: a Build row has no dependency box, so a second draft in Plan, waiting on 0001, has the link to it.
+const secondDraft = b => ({ ...b, tickets: [...b.tickets, full('0004', { title: 'A second draft', after: ['0001'], waiting_on: ['0001'] })] });
 // 0468: a closed card's ids are in its chip, so this opens the card and finds the id in its dependency box (0467).
 async function gotoIn(p, n, id) {
   const of = idOf(p, n), find = () => [...items(p), ...queueRows(p)].find(r => idOf(p, r) === of);
@@ -252,11 +251,11 @@ async function gotoIn(p, n, id) {
 
 test('0410 AC5: "Go to ticket" opens the tab holding the ticket, then scrolls to it and lights it', async () => {
   let opened = null;
-  const p = livePage(board());
+  const p = livePage(secondDraft(board()));
   await p.settle();
   const row = items(p).find(n => idOf(p, n) === '0001');
   row.scrollIntoView = () => { opened = showing(p); };
-  const waiting = queueRows(p).find(n => idOf(p, n) === '0002');
+  const waiting = items(p).find(n => idOf(p, n) === '0004');
   p.press(await gotoIn(p, waiting, '0001'));
   assert.deepEqual(opened, ['plan'], 'Plan was open when it scrolled to the ticket');
   openIs(p, 'plan', 'after going to a Plan ticket');
@@ -284,9 +283,8 @@ test('0410 AC5: closing the full ticket opens the tab holding where the focus go
   await p.settle();
   // Opened from Build, and the ticket has gone back to Plan since: the focus goes to its Full ticket button there.
   const row = queueRows(p).find(n => idOf(p, n) === '0003');
-  click(row.children.find(n => n.className === 'top'));
+  click(row.children.find(n => n.className === 'top')); // 0585: its row opens its full view
   await p.settle();
-  click(p.all(queueRows(p).find(n => idOf(p, n) === '0003')).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
   p.set(board({ '0003': { status: 'draft' } }));
   await refresh(p);
   click(top(items(p).find(n => idOf(p, n) === '0003')));

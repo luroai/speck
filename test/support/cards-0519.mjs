@@ -28,7 +28,8 @@ export const STUB = `(() => {
 })();`;
 // The board has loaded once every lane has its cards.
 export const CARD_COUNTS = `document.querySelectorAll('#shaping .item.ticket').length === 4 && document.querySelectorAll('#queue .q').length === 3 && document.querySelectorAll('#shipped tr').length === 3`;
-export const LANES = [['plan', '#shaping .item.ticket:not(.open)'], ['build', '#queue .q:not(.open)'], ['shipped', '#shipped tr:not(.open)']];
+// 0585: Build lists compact rows that wrap long titles, so only Plan and Shipped keep the one height.
+export const LANES = [['plan', '#shaping .item.ticket:not(.open)'], ['shipped', '#shipped tr:not(.open)']];
 // Each closed card in the lane: its id, its height, how many lines its title and its second row are on, whether its
 // title is long and whether it's cut short with an ellipsis, whether its second row reaches past the card, and how far
 // the card's padding starts under the second row (rowEnd: 0 when the row ends there).

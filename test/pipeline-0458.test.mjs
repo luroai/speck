@@ -1,10 +1,10 @@
 // 0458: pressing speck's screen shows the pipeline log and nothing else: the Pipeline pop-up no longer has a Right now
-// section, while a stale page's Reload page button, and the questions on the tickets' cards, stay.
+// section, while a stale page's Reload page button, and the questions on the tickets' full views, stay.
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { fakePage, T, openQueueRows, model } from './support/panel.mjs';
+import { fakePage, T, fullViewOf, model } from './support/panel.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
 
 const ON = { on: true, pid: 4242 };
@@ -107,15 +107,14 @@ test('0458 AC2 self-check: once the page is no longer stale, the Reload page but
   assert.equal(p.focused(), pop(p), 'the focus is back in the pop-up');
 });
 
-test('0458 AC3: a Foreman\'s question keeps its Answer and Dismiss buttons on its ticket\'s card, and a blocked ticket\'s question stays on its card', async () => {
+test('0458 AC3: a Foreman\'s question keeps its Answer and Dismiss buttons on its ticket\'s full view, and a blocked ticket\'s question stays there', async () => {
   const p = await opened();
-  await openQueueRows(p); // 0434: what's under a Build card's two lines shows while it's open
-  const queue = p.byId('queue');
-  const ask = p.all(queue).find(n => /\bforeman-ask\b/.test(n.className || ''));
-  assert.ok(ask, 'the card has the Foreman\'s question');
+  const full = await fullViewOf(p, '0001'); // 0585: a Build row opens its full view, which has the question
+  const ask = p.all(full).find(n => /\bforeman-ask\b/.test(n.className || ''));
+  assert.ok(ask, 'the full view has the Foreman\'s question');
   assert.match(ask.textContent, /speck asks you: Should it keep the old test\?/);
   for (const b of ['Answer', 'Dismiss']) assert.ok(buttons(p, ask).includes(b), `its ${b} button`);
-  assert.match(queue.textContent, /Which one\?/, 'the blocked ticket\'s question is on its card');
+  assert.match((await fullViewOf(p, '0006')).textContent, /Which one\?/, 'the blocked ticket\'s question is in its full view');
 });
 
 test('0458 AC4: the pop-up opens with the focus in it, and Close, Escape and pressing the screen again close it with the focus back on the screen', async () => {

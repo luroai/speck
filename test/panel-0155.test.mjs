@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { findChrome, browserPage, T } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 
-// ---------- 0155: each Build queue ticket a clear card ----------
+// ---------- 0155: each Build queue ticket a clear row (0585: it was a card) ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
@@ -27,11 +27,8 @@ const STATE = {
   ],
   ideas: [],
 };
-// The colour of each card's border by its state since 0167: plain while at work or ready, purple waiting to ship (green since 0440), red
-// blocked or stopped. A ready ticket is 'ready'.
-// 0171: a running card's border has its stage's colour: building in --run, review in --warn. 0426: Cursor's blue and
-// yellow, --blue and --yellow.
-const STATES = { '0301': 'blue', '0302': 'yellow', '0303': 'ok', '0304': 'bad', '0305': 'bad', '0306': 'ready', '0307': 'ready' };
+// 0585: each ticket's dot by its state: orange for needs you (blocked, waiting to ship), blue while it's worked on, grey while it waits (a build that stopped, a ready ticket).
+const STATES = { '0301': 'run', '0302': 'run', '0303': 'needs', '0304': 'needs', '0305': 'wait', '0306': 'wait', '0307': 'wait' };
 
 // Before the page's own script runs: the look to use, a confirm that says yes, and a fetch that answers with the board
 // above and records each POST.
@@ -66,72 +63,58 @@ async function withPanel(fn, { width = 1280, theme = 'light' } = {}) {
   } finally { await b.close(); }
 }
 const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
-// The queue card with this id.
+// The queue row with this id.
 const CARD = id => `[...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === ${JSON.stringify(id)})`;
 const open = async (b, id) => { await b.js(`${CARD(id)}.querySelector('.top').click()`); await settle(b); };
+const FULL = '#full-ticket';
+const closeFull = async b => { await b.js(`document.querySelector('${FULL} .close').click()`); await b.until(`document.getElementById('full-ticket').hidden`, 'the full ticket to close'); };
 // A colour as the browser computes it, from a CSS value such as var(--bad).
 const RGB = v => `(() => { const s = document.createElement('span'); s.style.color = ${JSON.stringify(v)}; document.body.appendChild(s);
   const c = getComputedStyle(s).color; s.remove(); return c; })()`;
 
-// Each card in the queue: its four borders, how well each stands out from the section, and the space to the next card.
+// Each row in the queue: its bottom edge, how well it stands out from the section, its height, and its dot's colour.
 const CARDS = `(() => {
   const lum = c => { const [r, g, b] = c.match(/[\\d.]+/g).slice(0, 3).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
   const back = getComputedStyle(document.getElementById('queue').closest('.lane-list')).backgroundColor; // 0478: the lane's list, inside its frame
-  const cards = [...document.querySelectorAll('#queue .q')];
-  return cards.map((n, i) => {
-    const s = getComputedStyle(n), r = n.getBoundingClientRect(), next = cards[i + 1];
-    const side = k => ({ width: parseFloat(s['border' + k + 'Width']), style: s['border' + k + 'Style'], color: s['border' + k + 'Color'], contrast: contrast(s['border' + k + 'Color'], back) });
-    return { id: n.querySelector('.id').textContent, open: n.classList.contains('open'), top: side('Top'), right: side('Right'), bottom: side('Bottom'), left: side('Left'),
-      gap: next ? next.getBoundingClientRect().top - r.bottom : null };
+  return [...document.querySelectorAll('#queue .q')].map(n => {
+    const s = getComputedStyle(n), r = n.getBoundingClientRect(), where = n.querySelector('.where');
+    return { id: n.querySelector('.id').textContent, open: n.classList.contains('open'), height: r.height, bottom: { width: parseFloat(s.borderBottomWidth), style: s.borderBottomStyle, contrast: contrast(s.borderBottomColor, back) },
+      dot: getComputedStyle(where, '::before').backgroundColor };
   });
 })()`;
 
 for (const theme of ['light', 'dark']) {
   for (const width of [375, 1280]) {
-    test(`0155 AC1: at ${width} px in the ${theme} look, every ticket in the Build queue is a bordered card, 8 px or more from the next`, skip, async () => {
+    test(`0155 AC1: at ${width} px in the ${theme} look, every ticket in the Build queue is a row with a visible edge under it, and none is open`, skip, async () => {
       await withPanel(async b => {
-        await open(b, '0302'); // an open card too
-        await open(b, '0306');
+        await open(b, '0302'); // pressing a row opens its full view, never the row
         const cards = await b.js(CARDS);
         assert.equal(cards.length, STATE.tickets.length);
         for (const c of cards) {
-          for (const k of ['top', 'right', 'bottom', 'left']) {
-            assert.ok(c[k].width >= 0.5 && c[k].style === 'solid', `${c.id}: no ${k} border`);
-            assert.ok(c[k].contrast >= 1.2, `${c.id}: the ${k} border (${c[k].color}) is hard to see, contrast ${c[k].contrast.toFixed(2)}`);
-          }
-          if (c.gap !== null) assert.ok(c.gap >= 7.99, `${c.id}: only ${c.gap} px to the next card`);
+          assert.ok(c.bottom.width >= 0.5 && c.bottom.style === 'solid', `${c.id}: no edge under it`);
+          assert.ok(c.bottom.contrast >= 1.1, `${c.id}: its edge is hard to see, contrast ${c.bottom.contrast.toFixed(2)}`);
+          assert.ok(c.height >= 44, `${c.id}: only ${c.height} px tall`);
+          assert.ok(!c.open, `${c.id}: open in the list`);
         }
       }, { width, theme });
     });
 
-    test(`0155 AC2: at ${width} px in the ${theme} look, each card's border is coloured by its state (all round since 0167), open or closed`, skip, async () => {
+    test(`0155 AC2: at ${width} px in the ${theme} look, each row's dot is coloured by its state`, skip, async () => {
       await withPanel(async b => {
         const colour = {};
-        for (const k of ['line', 'ok', 'bad', 'text', 'blue', 'yellow']) colour[k] = await b.js(RGB(`var(--${k})`));
-        assert.equal(new Set(Object.values(colour)).size, 6, 'six different colours');
-        const check = async when => {
-          for (const c of await b.js(CARDS)) {
-            const state = STATES[c.id] === 'ready' ? 'line' : STATES[c.id];
-            // A plain card that's open has a border in the text colour; one in a state keeps its state's colour.
-            const want = state === 'line' && c.open ? 'text' : state;
-            for (const k of ['top', 'right', 'bottom', 'left']) assert.equal(c[k].color, colour[want], `${c.id} ${when}: its ${k} edge should be --${want}`);
-            assert.equal(c.left.width, c.right.width, `${c.id} ${when}: no stripe on its left edge`);
-          }
-        };
-        await check('closed');
-        for (const id of Object.keys(STATES)) await open(b, id);
-        assert.equal((await b.js(CARDS)).filter(c => c.open).length, STATE.tickets.length, 'every card is open');
-        await check('open');
+        for (const [k, v] of [['needs', 'var(--needs-you)'], ['run', 'var(--accent)'], ['wait', 'var(--muted)']]) colour[k] = await b.js(RGB(v));
+        assert.equal(new Set(Object.values(colour)).size, 3, 'three different colours');
+        for (const c of await b.js(CARDS)) assert.equal(c.dot, colour[STATES[c.id]], `${c.id}: its dot should be ${STATES[c.id]}`);
       }, { width, theme });
     });
   }
 }
 
-// One card's layout: where its content starts, its id, title lines, timer, tags, bar and everything under the bar.
+// One row's layout: where its content starts, its id, title lines, and the line saying where it is.
 const LAYOUT = id => `(() => {
-  const card = ${CARD(id)}, s = getComputedStyle(card), box = card.getBoundingClientRect();
-  const left = box.left + parseFloat(s.borderLeftWidth) + parseFloat(s.paddingLeft), right = box.right - parseFloat(s.borderRightWidth) - parseFloat(s.paddingRight);
+  const card = ${CARD(id)}, top = card.querySelector('.top'), s = getComputedStyle(top), box = card.getBoundingClientRect();
+  const left = top.getBoundingClientRect().left + parseFloat(s.paddingLeft), right = top.getBoundingClientRect().right - parseFloat(s.paddingRight);
   const rect = n => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, height: r.height }; };
   const idN = card.querySelector('.top .id'), t = card.querySelector('.top .title'), ts = getComputedStyle(t), range = document.createRange();
   range.selectNodeContents(t);
@@ -142,26 +125,21 @@ const LAYOUT = id => `(() => {
     if (same) { same.left = Math.min(same.left, r.left); same.right = Math.max(same.right, r.right); }
     else lines.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
   }
-  const sub = card.querySelector('.top .sub'), progress = card.querySelector('.top .progress'), facts = card.querySelector('.top .facts'), act = card.querySelector('.top .act');
-  const under = [...card.children].filter(n => !n.classList.contains('top'));
+  const where = card.querySelector('.top .where'), sub = where.querySelector('.sub');
   return { left, right, idSize: getComputedStyle(idN).fontSize, titleSize: ts.fontSize, id: rect(idN), lines,
     cut: t.scrollWidth > t.clientWidth + 0.5 || t.scrollHeight > t.clientHeight + 0.5 || ts.textOverflow === 'ellipsis' || lines.some(l => l.left < box.left || l.right > box.right + 0.5),
-    sub: sub && sub.textContent ? rect(sub) : null, progress: progress ? rect(progress) : null, facts: facts ? rect(facts) : null, act: act ? rect(act) : null, line: rect(card.querySelector('.top .line')),
-    tags: [...card.querySelectorAll('.top .tag')].map(n => ({ text: n.textContent, ...rect(n) })),
-    under: under.map(n => ({ what: n.className, button: n.tagName === 'BUTTON', first: n === under.find(x => x.tagName === 'BUTTON'), ...rect(n) })),
-    firstButton: (() => { const bs = under.filter(n => n.tagName === 'BUTTON'); return bs.length ? rect(bs[0]) : null; })() };
+    where: rect(where), sub: sub ? rect(sub) : null, line: rect(card.querySelector('.top .line')), children: [...card.children].map(n => n.className), topChildren: [...top.children].map(n => n.className) };
 })()`;
 
 for (const width of [375, 699, 700, 1000, 1280]) {
-  test(`0155 AC3: at ${width} px, a card has its id (14 px) and title (17 px) on one row, then (0419) one details line with its progress or Queued line, its timer and its tags, then the rest, all from its left padding`, skip, async () => {
+  test(`0155 AC3: at ${width} px, a row has its id (14 px) and title (17 px) on one row, then one line saying where it is with its minutes, all from its left padding`, skip, async () => {
     await withPanel(async b => {
-      for (const id of Object.keys(STATES)) await open(b, id);
       for (const id of Object.keys(STATES)) {
         const l = await b.js(LAYOUT(id));
         assert.equal(l.idSize, '14px', `${id}: the id`);
         assert.equal(l.titleSize, '17px', `${id}: the title`);
         assert.ok(!l.cut, `${id}: the title is cut off`);
-        assert.ok(Math.abs(l.id.left - l.left) < 0.5, `${id}: the id starts at ${l.id.left}, not the card's left padding at ${l.left}`);
+        assert.ok(Math.abs(l.id.left - l.left) < 0.5, `${id}: the id starts at ${l.id.left}, not the row's left padding at ${l.left}`);
         // The title starts on the id's row, and a wrapped title's next lines start under the title, not under the id.
         const [first] = l.lines;
         assert.ok(first.top < l.id.bottom && first.bottom > l.id.top, `${id}: the title starts on the id's row`);
@@ -169,31 +147,15 @@ for (const width of [375, 699, 700, 1000, 1280]) {
           assert.ok(Math.abs(line.left - first.left) < 1, `${id}: a title line starts at ${line.left}, not under the title's start at ${first.left}`);
           assert.ok(line.left >= l.id.right, `${id}: a title line starts under the id`);
         }
-        const titleBottom = Math.max(...l.lines.map(x => x.bottom)), titleRight = Math.max(...l.lines.map(x => x.right));
-        // 0419: under the title, one details line from the card's left padding: a ticket in flight's progress (0168),
-        // with its timer in it, or a ready one's Queued line, with no timer; then the tags, in the same line.
-        // 0462: an open one in flight has its facts in a table under its step track instead, its timer and its priority,
-        // size and risk in their cells. 0463: and so does an open ready one. The title has the full width.
-        assert.ok(Math.abs(l.line.right - l.right) < 1, `${id}: the title's row ends at ${l.line.right}, not the card's right padding at ${l.right}`);
-        const details = l.facts;
-        assert.ok(details, `${id}: no details line`);
-        assert.ok(Math.abs(details.left - l.left) < 0.5, `${id}: the details line starts at ${details.left}, not the card's left padding at ${l.left}`);
-        assert.ok(details.top >= titleBottom - 0.5, `${id}: the details line is under the title`);
-        const inside = r => r.left >= details.left - 0.5 && r.right <= details.right + 0.5 && r.top >= details.top - 0.5 && r.bottom <= details.bottom + 0.5;
-        if (STATES[id] === 'ready') assert.ok(l.sub === null && l.progress === null && l.act === null, `${id}: a ready ticket has no timer, and no Queued line`);
-        else assert.ok(l.sub && inside(l.sub), `${id}: the timer is in the details line`);
-        assert.equal(l.tags.length, 0, `${id}: no tags, as its facts are in their cells`);
-        for (const t of l.tags) {
-          assert.ok(inside(t), `${id}: ${t.text} is in the details line`);
-          assert.ok(Math.abs(t.height - l.tags[0].height) < 0.5, `${id}: ${t.text} is ${t.height} px high, ${l.tags[0].text} ${l.tags[0].height} px`);
-        }
-        // Then everything under the top row (the bar went into it in 0156), starting at the left padding: no empty column on the left.
-        assert.ok(l.under[0].top >= details.bottom - 0.5, `${id}: ${l.under[0].what} is not under the details line`);
-        for (const u of l.under) {
-          if (u.button && !u.first) continue; // beside the first button
-          assert.ok(Math.abs(u.left - l.left) < 0.5, `${id}: ${u.what} starts at ${u.left}, not the card's left padding at ${l.left}`);
-        }
-        assert.ok(l.firstButton && Math.abs(l.firstButton.left - l.left) < 0.5, `${id}: its first button doesn't start at the card's left padding`);
+        const titleBottom = Math.max(...l.lines.map(x => x.bottom));
+        assert.ok(Math.abs(l.line.right - l.right) < 1, `${id}: the title's row ends at ${l.line.right}, not the row's right padding at ${l.right}`);
+        assert.ok(Math.abs(l.where.left - l.left) < 0.5, `${id}: its where line starts at ${l.where.left}, not the row's left padding at ${l.left}`);
+        assert.ok(l.where.top >= titleBottom - 0.5, `${id}: its where line is under the title`);
+        if (['0306', '0307'].includes(id)) assert.equal(l.sub, null, `${id}: a ready ticket has no minutes`);
+        else assert.ok(l.sub && l.sub.left >= l.where.left && l.sub.right <= l.where.right + 0.5, `${id}: its minutes are in the where line`);
+        assert.deepEqual(l.children, ['top'], `${id}: nothing under its top`);
+        assert.deepEqual(l.topChildren, ['line', l.topChildren[1]], `${id}: its id and title, then one line`);
+        assert.match(l.topChildren[1], /^where /);
       }
     }, { width });
   });
@@ -203,11 +165,8 @@ for (const width of [375, 699, 700, 1000, 1280]) {
 // 0168 so does a ticket in flight's, whose timer is on its progress's row (from 0156 its ensō was beside its title).
 // 0441: 3 lines at 375 px, as the longest title takes in a proportional font with Arial's widths
 for (const [width, most] of [[375, 3], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
-  test(`0155 AC3: at ${width} px, the longest title wraps as in Plan, on at most ${most} ${most === 1 ? 'line' : 'lines'}, in flight or not, while its card is open`, skip, async () => {
+  test(`0155 AC3: at ${width} px, the longest title wraps as in Plan, on at most ${most} ${most === 1 ? 'line' : 'lines'}, in flight or not`, skip, async () => {
     await withPanel(async b => {
-      // 0434: a closed card's title is one line, cut off when it doesn't fit
-      await open(b, '0306');
-      await open(b, '0301');
       const ready = await b.js(LAYOUT('0306'));
       assert.ok(ready.lines.length >= 1 && ready.lines.length <= most, `0306: the title is on ${ready.lines.length} lines`);
       const flying = await b.js(LAYOUT('0301'));
@@ -217,37 +176,36 @@ for (const [width, most] of [[375, 3], [699, 3], [700, 3], [1000, 3], [1279, 3],
 }
 
 for (const width of [375, 1280]) {
-  test(`0155 AC4: at ${width} px, opening and closing a card, the live log, Stop build, Back to Plan, Full ticket, Review pack and Ship work as before, and the timer counts`, skip, async () => {
+  test(`0155 AC4: at ${width} px, pressing a row opens its full view, with the live log, Stop build, Back to Plan, Review pack and Ship working as before, and the timer counting`, skip, async () => {
     await withPanel(async b => {
-      const isOpen = id => b.js(`${CARD(id)}.classList.contains('open')`);
-      // The timer counts on.
-      const before = await b.js(`${CARD('0302')}.querySelector('.top .sub').textContent`);
-      await b.until(`${CARD('0302')}.querySelector('.top .sub').textContent !== ${JSON.stringify(before)}`, 'the timer to count');
-      // Opening shows the live log; closing takes it away.
+      const full = sel => `document.querySelector('${FULL} ${sel}')`;
+      const hidden = () => b.js(`document.getElementById('full-ticket').hidden`);
+      assert.ok(await hidden(), 'the full view is closed at first');
+      // Pressing a row opens the full view with its title and the live log, and the timer counts on.
+      await open(b, '0302');
+      assert.ok(!(await hidden()), '0302 opens its full view');
+      assert.ok(await b.js(`!${CARD('0302')}.classList.contains('open')`), 'and the row stays closed');
+      const before = await b.js(`${full('.live-now .sub')}.textContent`);
+      await b.until(`${full('.live-now .sub')}.textContent !== ${JSON.stringify(before)}`, 'the timer to count');
+      await closeFull(b);
       await open(b, '0301');
-      assert.ok(await isOpen('0301'), '0301 opens');
-      await b.until(`(${CARD('0301')}.querySelector('.log') || {}).textContent === 'the log of /api/tickets/0301/log'`, 'the live log');
-      await open(b, '0301');
-      assert.ok(!(await isOpen('0301')), '0301 closes');
-      assert.ok(await b.js(`!${CARD('0301')}.querySelector('.log')`), 'a closed card has no log');
+      await b.until(`(${full('.log')} || {}).textContent === 'the log of /api/tickets/0301/log'`, 'the live log');
+      assert.ok(await b.js(`!${CARD('0301')}.querySelector('.log')`), 'the row has no log');
       // Stop build.
-      await open(b, '0301');
-      await b.js(`${CARD('0301')}.querySelector('.stop-build').click()`);
+      await b.js(`${full('.stop-build')}.click()`);
       await b.until(`window.__posts.includes('/api/tickets/0301/stop')`, 'Stop build');
+      await closeFull(b);
       // Back to Plan.
       await open(b, '0306');
-      await b.js(`${CARD('0306')}.querySelector('.back-to-plan').click()`);
+      await b.until(`${full('.title')} && ${full('.title')}.textContent === ${JSON.stringify(LONGEST)}`, 'the full ticket');
+      await b.js(`${full('.back-to-plan')}.click()`);
       await b.until(`window.__posts.includes('/api/tickets/0306/draft')`, 'Back to Plan');
-      // Full ticket.
-      await b.js(`${CARD('0306')}.querySelector('.full-open').click()`);
-      await b.until(`!document.getElementById('full-ticket').hidden && document.querySelector('#full-ticket .title').textContent === ${JSON.stringify(LONGEST)}`, 'the full ticket');
-      await b.js(`document.querySelector('#full-ticket .close').click()`);
-      await b.until(`document.getElementById('full-ticket').hidden`, 'the full ticket to close');
+      await closeFull(b);
       // Review pack, and Ship from it.
       await open(b, '0303');
-      await b.js(`[...${CARD('0303')}.querySelectorAll('.full-open')].find(n => n.textContent === 'Review pack').click()`);
-      await b.until(`!!document.querySelector('#full-ticket .ship')`, 'the review pack with its Ship button');
-      await b.js(`document.querySelector('#full-ticket .ship').click()`);
+      await b.js(`[...document.querySelectorAll('${FULL} .pane-row')].find(n => n.textContent === 'Review pack').click()`);
+      await b.until(`!!${full('.ship')}`, 'the review pack with its Ship button');
+      await b.js(`${full('.ship')}.click()`);
       await b.until(`window.__posts.includes('/api/tickets/0303/ship')`, 'Ship');
     }, { width });
   });

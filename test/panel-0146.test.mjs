@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fakePage, queueRows, click, items, fm, freePort, startPanel, stop, request, post, tokenOf, panelRepo, headOf, readT } from './support/panel.mjs';
+import { T, fakePage, queueRows, fullViewOf, items, fm, freePort, startPanel, stop, request, post, tokenOf, panelRepo, headOf, readT } from './support/panel.mjs';
 import { runRepo, startRun, stopRun, until } from './support/run.mjs';
 import { spawn } from 'node:child_process';
 
@@ -36,14 +36,14 @@ function page(s = state(), draft = () => ({ ok: true, status: 200, json: async (
   return p;
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-const topOf = row => row.children.find(n => n.className === 'top');
+const view = p => p.byId('full-ticket'); // 0585: the button and its refusal are in the ticket's full view
 const backOf = (p, row) => p.all(row).find(n => n.tagName === 'button' && /\bback-to-plan\b/.test(n.className));
 const refusalOf = (p, row) => (p.all(row).find(n => /\bplan-refused\b/.test(n.className || '')) || {}).textContent;
-const openRow = async (p, id) => { click(topOf(rowOf(p, id))); await p.settle(); return rowOf(p, id); };
+const openRow = (p, id) => fullViewOf(p, id);
 // Runs every timer due, the state poll among them (an open row's log timer is there too).
 const poll = async p => { for (const fn of p.timers.splice(0)) fn(); await p.settle(); };
 
-test('0146 AC1: an opened ready ticket in the queue has Back to Plan; in-flight tickets and closed rows don\'t', async () => {
+test('0146 AC1: an opened ready ticket in the queue has Back to Plan in its full view; in-flight tickets and rows don\'t', async () => {
   const p = page();
   await p.settle();
   for (const id of ['0001', '0002', '0003', '0004', '0005', '0006']) assert.equal(backOf(p, rowOf(p, id)), undefined, `${id} closed: no button`);
@@ -61,18 +61,18 @@ test('0146 AC2: clicking it posts with the token, shows it pending, and the next
   const s = state();
   const p = page(s, () => new Promise(r => { answer = r; }));
   await p.settle();
-  const row = await openRow(p, '0005');
-  const caught = p.press(backOf(p, row));
+  const full = await openRow(p, '0005');
+  const caught = p.press(backOf(p, full));
   assert.equal(caught, false, 'the page itself doesn\'t swallow the click');
   await p.settle();
   assert.deepEqual(p.sent, [['/api/tickets/0005/draft', 'POST', '{{token}}']]);
-  const pending = backOf(p, rowOf(p, '0005'));
+  const pending = backOf(p, view(p));
   assert.equal(pending.textContent, 'Moving to Plan…');
   assert.equal(pending.disabled, true);
   p.press(pending); // a second click while it's pending sends nothing
   await p.settle();
   assert.equal(p.sent.length, 1);
-  assert.ok(rowOf(p, '0005'), 'the row stays open after the click');
+  assert.equal(view(p).hidden, false, 'the full view stays open after the click');
   answer({ ok: true, status: 200, json: async () => ({ ok: true, id: '0005' }) });
   await p.settle();
   s.tickets.find(t => t.id === '0005').status = 'draft';
@@ -88,27 +88,27 @@ test('0146 AC3: a refusal leaves the row as it was and shows why, until the next
   const p = page(s, () => answers.shift());
   await p.settle();
   await openRow(p, '0005');
-  p.press(backOf(p, rowOf(p, '0005')));
+  p.press(backOf(p, view(p)));
   await p.settle();
-  assert.equal(refusalOf(p, rowOf(p, '0005')), why);
-  assert.equal(backOf(p, rowOf(p, '0005')).textContent, 'Back to Plan', 'the button is back');
+  assert.equal(refusalOf(p, view(p)), why);
+  assert.equal(backOf(p, view(p)).textContent, 'Back to Plan', 'the button is back');
   await poll(p);
-  assert.equal(refusalOf(p, rowOf(p, '0005')), why, 'the reason stays through a refresh');
-  p.press(backOf(p, rowOf(p, '0005')));
+  assert.equal(refusalOf(p, view(p)), why, 'the reason stays through a refresh');
+  p.press(backOf(p, view(p)));
   await p.settle();
-  assert.equal(refusalOf(p, rowOf(p, '0005')), 'The server refused (500).', 'a reply with no reason still says something');
+  assert.equal(refusalOf(p, view(p)), 'The server refused (500).', 'a reply with no reason still says something');
   // The server unreachable.
   const q = page(state(), () => { throw new Error('offline'); });
   await q.settle();
   await openRow(q, '0005');
-  q.press(backOf(q, rowOf(q, '0005')));
+  q.press(backOf(q, view(q)));
   await q.settle();
-  assert.equal(refusalOf(q, rowOf(q, '0005')), "Couldn't reach the panel server, so the ticket wasn't changed.");
+  assert.equal(refusalOf(q, view(q)), "Couldn't reach the panel server, so the ticket wasn't changed.");
   // Once its build has started, the reason and the button go.
   Object.assign(s.tickets.find(t => t.id === '0005'), { status: 'building', build_running: true, started: started() });
   await poll(p);
-  assert.equal(refusalOf(p, rowOf(p, '0005')), undefined);
-  assert.equal(backOf(p, rowOf(p, '0005')), undefined);
+  assert.equal(refusalOf(p, view(p)), undefined);
+  assert.equal(backOf(p, view(p)), undefined);
 });
 
 // A panel repo whose 0001 is ready and committed, and whose 0002 is a committed draft, served on a free port.

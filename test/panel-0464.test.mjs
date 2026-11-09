@@ -53,12 +53,13 @@ test('0464 AC1: opening the card shows, under the title, the five steps all done
 });
 
 const plain = rules().filter(r => !r.at.length);
-test('0464 AC1: the track and the table look the same on a shipped card as on a Build card', () => {
-  const qs = plain.filter(r => selectors(r).some(s => /^\.q \.(track|facts)\b/.test(s)));
+test('0464 AC1: the track and the table look the same on a shipped card as on an open Plan ticket (0585: a Build ticket has them in its full view)', () => {
+  const qs = plain.filter(r => selectors(r).some(s => /^\.item\.ticket \.(track|facts)\b/.test(s)));
   assert.ok(qs.length >= 20, 'the track\'s and table\'s rules');
   for (const r of qs) {
-    for (const s of selectors(r).filter(s => s.startsWith('.q '))) {
-      assert.ok(selectors(r).includes(s.replace('.q ', '#shipped ')), `${s} also styles a shipped card's`);
+    for (const s of selectors(r).filter(s => s.startsWith('.item.ticket '))) {
+      if (/\.(set-prio|prio|pick)\b/.test(s)) continue; // a Plan ticket's priority picker has no shipped counterpart
+      assert.ok(selectors(r).includes(s.replace('.item.ticket ', '#shipped ')), `${s} also styles a shipped card's`);
     }
   }
 });

@@ -91,7 +91,7 @@ async function inPanel(fn) {
   } finally { await b.close(); await stop(panel); }
 }
 
-test('0519 AC3 and AC4: at 320, 375 and 420 px, in both looks, every closed card in Plan, Build and Shipped is the same height, its title and second row on one line each with no room under the row', skip, () => inPanel(async (b, go) => {
+test('0519 AC3 and AC4: at 320, 375 and 420 px, in both looks, every closed card in Plan and Shipped is the same height, its title and second row on one line each with no room under the row', skip, () => inPanel(async (b, go) => {
   for (const width of [320, 375, 420]) for (const look of ['light', 'dark']) {
     const at = `${width} px, ${look}`;
     await go(width, look);
@@ -138,14 +138,4 @@ test('0519 AC1 and AC2: in a real browser, a closed Plan card\'s labels are smal
     else for (const type of ['mousePressed', 'mouseReleased']) await b.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1 });
     await b.until(`!!document.querySelector('#shaping .prio-menu')`, `the priority menu at ${width} px`);
   }
-}));
-
-test('0519 AC4: a card an agent is at work on loses a pixel of padding for its thicker border only while it\'s closed', skip, () => inPanel(async (b, go) => {
-  await go(420, 'light');
-  await b.js(openLane('build'));
-  const pad = () => b.js(`getComputedStyle([...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0911')).padding`);
-  assert.equal(await pad(), '5px 9px', 'closed');
-  await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0911').querySelector('.top').click(), true`);
-  await b.until(`[...document.querySelectorAll('#queue .q.open')].some(q => q.querySelector('.id').textContent === '0911')`, '0911 to open');
-  assert.equal(await pad(), '6px 10px', 'open, as before');
 }));

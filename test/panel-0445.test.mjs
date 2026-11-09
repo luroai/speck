@@ -3,8 +3,18 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cssRules, cssValue } from './support/panel.mjs';
-import { DOCS, text, openPack, docView, docButtons } from './support/documents.mjs';
+import { cssRules, cssValue, fakePage, T, fullViewOf } from './support/panel.mjs';
+import { DOCS, text, docView, docButtons } from './support/documents.mjs';
+
+// 0585: the Review pack button is in the ticket's full view, which a Build row opens.
+async function openPack(response, more = []) {
+  const state = { ideas: [], tickets: [T('0005', 'approved', { started: new Date(Date.now() - 60000).toISOString() })] };
+  const p = fakePage([structuredClone(state), { text: '', truncated: false }, response, ...more, structuredClone(state)]);
+  await p.settle();
+  p.press(p.all(await fullViewOf(p, '0005')).find(n => n.tagName === 'button' && n.textContent === 'Review pack'));
+  await p.settle();
+  return p;
+}
 
 const MEMO = 'A line before any heading.\n\n# Pricing\n\nPrices go **up**.\n\n## Why\n\n1. Costs\n2. Demand\n\n### Detail\n\n- More\n\n# Next\n';
 async function openDoc(body = MEMO) {

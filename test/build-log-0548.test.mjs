@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 // 0548: a Build card's build log opens in the Pipeline log's full-screen pop-up, showing only that ticket's log.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, T, queueRows, click, styles } from './support/panel.mjs';
+import { fakePage, T, queueRows, click, styles, fullViewOf } from './support/panel.mjs';
 import { manualSources } from './support/stream.mjs';
 
 const NAME = 'ab'.repeat(16);
@@ -34,13 +34,15 @@ function logPage(tickets, logOf, made = () => {}) {
   return p;
 }
 const building = (id = '0001') => T(id, 'building', { started: new Date().toISOString() });
+// 0585: a ticket's log box and Full log button are in its full view, which pressing its row opens.
 const rowOf = (p, id = '0001') => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-const cardLog = (p, id) => p.all(rowOf(p, id)).find(n => /(^| )log( |$)/.test(n.className || ''));
-const logButton = (p, id) => p.all(rowOf(p, id)).find(n => n.tagName === 'button' && n.textContent === 'Full log');
+const viewOf = p => p.byId('full-ticket');
+const cardLog = p => p.all(viewOf(p)).find(n => /(^| )log( |$)/.test(n.className || ''));
+const logButton = p => p.all(viewOf(p)).find(n => n.tagName === 'button' && n.textContent === 'Full log');
 const pop = p => p.byId('foreman');
 const listOf = p => p.all(pop(p)).find(n => /\brun-log\b/.test(n.className || '') && /^ol$/i.test(n.tagName));
 const shown = p => listOf(p).children.map(li => li.textContent);
-// Starts the page on its stream and opens the card of `id`.
+// Starts the page on its stream and opens the full view of `id`.
 async function opened(tickets, logOf, made, id = '0001') {
   const p = logPage(tickets, logOf, made);
   await p.settle();
@@ -48,42 +50,42 @@ async function opened(tickets, logOf, made, id = '0001') {
   p.source().emit('stream', NAME);
   p.source().emit('message', '1');
   await p.settle();
-  click(rowOf(p, id).children.find(n => n.className === 'top'));
-  await p.settle();
+  await fullViewOf(p, id);
   return p;
 }
 const LOG = { text: '09:00:00 Starting.\n09:00:01 → Bash: npm test\n09:00:02 ✗ npm test failed', truncated: false, build: 2, at: 0 };
 async function poppedUp(log = LOG, made, tickets = [building()]) {
   const p = await opened(tickets, () => log, made);
-  p.press(logButton(p, '0001'));
+  p.press(logButton(p));
   await p.settle();
   return p;
 }
 
 // ---------- AC1: a button next to every open card's log box ----------
 
-test('0548 AC1: an open card in flight, and an open queued one, each have a Full log button in the row of buttons just above their log box', async () => {
+test('0548 AC1: a ticket in flight has a Full log button in the row of buttons just above its log box in its full view, and a queued one has neither', async () => {
   const p = await opened([building('0001'), T('0002', 'ready')], () => LOG);
-  click(rowOf(p, '0002').children.find(n => n.className === 'top'));
+  const live = p.all(viewOf(p)).find(n => /(^| )live( |$)/.test(n.className || ''));
+  const b = logButton(p), box = cardLog(p);
+  assert.ok(b, 'the button');
+  assert.equal(b.attrs.type ?? b.type, 'button');
+  const row = b.parentNode;
+  assert.ok(row.children.every(n => n.tagName === 'button'), 'only buttons in its row');
+  assert.ok(live.children.indexOf(row.parentNode) < live.children.indexOf(box), 'before the log box');
   await p.settle();
-  for (const id of ['0001', '0002']) {
-    const row = rowOf(p, id), b = logButton(p, id), box = cardLog(p, id);
-    assert.ok(b, `${id}: the button`);
-    assert.equal(b.attrs.type ?? b.type, 'button');
-    const between = row.children.slice(row.children.indexOf(b) + 1, row.children.indexOf(box));
-    assert.ok(row.children.indexOf(b) < row.children.indexOf(box), `${id}: before the log box`);
-    assert.ok(between.every(n => n.tagName === 'button'), `${id}: only buttons between it and the box`);
-  }
+  await fullViewOf(p, '0002');
+  assert.equal(logButton(p), undefined);
+  assert.equal(cardLog(p), undefined);
 });
 
-test('0548 AC1: a closed card has no Full log button', async () => {
+test('0548 AC1: a row in the list has no Full log button', async () => {
   const p = logPage([building()], () => LOG);
   await p.settle();
   p.source().emit('open');
   p.source().emit('message', '1');
   await p.settle();
-  assert.ok(rowOf(p), 'the card');
-  assert.equal(logButton(p, '0001'), undefined);
+  assert.ok(rowOf(p), 'the row');
+  assert.equal(p.all(rowOf(p)).find(n => n.textContent === 'Full log'), undefined);
 });
 
 test('0548 AC1: the button opens the pop-up titled "<id> build log", and the dialog is named so too', async () => {
@@ -125,8 +127,6 @@ test('0548 AC2: each line is laid out as a Pipeline log line, a time column then
 
 test('0548 AC2: it shows only this ticket\'s log, never speck run\'s or another ticket\'s', async () => {
   const p = await poppedUp(LOG, undefined, [building('0001'), building('0002')]);
-  click(rowOf(p, '0002').children.find(n => n.className === 'top'));
-  await p.settle();
   p.source().emit('log', JSON.stringify({ id: '0002', build: 2, at: 1, drop: 0, lines: ['other ticket'] }));
   await p.settle();
   assert.ok(!shown(p).includes('other ticket'));
@@ -138,11 +138,11 @@ test('0548 AC2: it shows only this ticket\'s log, never speck run\'s or another 
 
 test('0548 AC3: the same lines as the card\'s box, oldest at the top, and each new one is added at the bottom without reloading', async () => {
   const p = await poppedUp();
-  assert.deepEqual(shown(p), cardLog(p, '0001').textContent.split('\n'));
+  assert.deepEqual(shown(p), cardLog(p).textContent.split('\n'));
   const asks = p.calls2.filter(u => /\/log$/.test(u)).length;
   p.source().emit('log', JSON.stringify({ id: '0001', build: 2, at: 1, drop: 0, lines: ['09:00:03 Fixed it.'] }));
   assert.equal(shown(p).at(-1), '09:00:03 Fixed it.', 'at once');
-  assert.deepEqual(shown(p), cardLog(p, '0001').textContent.split('\n'));
+  assert.deepEqual(shown(p), cardLog(p).textContent.split('\n'));
   await p.settle();
   assert.equal(p.calls2.filter(u => /\/log$/.test(u)).length, asks, 'not asked for again');
 });
@@ -206,15 +206,15 @@ test('0548 AC3: before the log has loaded, and when it can\'t be loaded, it says
   let answer;
   const slow = new Promise(r => { answer = r; });
   const p = await opened([building()], () => slow);
-  p.press(logButton(p, '0001'));
+  p.press(logButton(p));
   await p.settle();
   const said = () => p.all(pop(p)).find(n => /\brun-log\b/.test(n.className || '')).textContent;
   assert.equal(said(), 'Loading the log…');
-  assert.equal(said(), cardLog(p, '0001').textContent);
+  assert.equal(said(), cardLog(p).textContent);
   answer(new Error('down'));
   await p.settle();
   assert.equal(said(), "Couldn't load the log yet. Trying again in a few seconds…");
-  assert.equal(said(), cardLog(p, '0001').textContent);
+  assert.equal(said(), cardLog(p).textContent);
   const q = await poppedUp({ text: '', truncated: false, build: 1, at: 0 });
   assert.equal(q.all(pop(q)).find(n => /\brun-log\b/.test(n.className || '')).textContent, 'No log yet.');
 });
@@ -234,27 +234,28 @@ test('0548 AC4: Close, Escape and a click beside its column close it, with the f
     }
     await p.settle();
     assert.equal(pop(p).hidden, true, `${how}: shut`);
-    assert.equal(p.focused(), logButton(p, '0001'), `${how}: the focus is back on Full log`);
+    assert.equal(p.focused(), logButton(p), `${how}: the focus is back on Full log`);
   }
 });
 
 test('0548 AC4: while it\'s open the page behind is held, and it\'s let go once it closes', async () => {
   const p = await poppedUp();
   assert.equal(p.main.inert, true);
+  assert.equal(viewOf(p).inert, true, 'the full view is held too');
   assert.equal(p.focused(), pop(p), 'the focus is in the pop-up');
   p.key('Escape');
   await p.settle();
-  assert.equal(p.main.inert, false);
+  assert.equal(viewOf(p).inert, false, 'and let go');
 });
 
-test('0548 AC4: opening and closing it leaves the card open, and its log open on the stream', async () => {
+test('0548 AC4: opening and closing it leaves the full view open, and its log open on the stream', async () => {
   const p = await opened([building()], () => LOG);
   const before = p.calls2.length;
-  p.press(logButton(p, '0001'));
+  p.press(logButton(p));
   await p.settle();
-  assert.match(rowOf(p).className, /\bopen\b/);
+  assert.equal(viewOf(p).hidden, false);
   p.key('Escape');
   await p.settle();
-  assert.match(rowOf(p).className, /\bopen\b/, 'still open');
+  assert.equal(viewOf(p).hidden, false, 'still open');
   assert.ok(!p.calls2.slice(before).some(u => /\/log(\/close)?$/.test(u)), 'the log is neither asked for again nor closed');
 });

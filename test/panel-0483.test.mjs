@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { T, full, boardPage, fakePage, items, queueRows, click } from './support/panel.mjs';
 
 // ---------- 0483: a closed Plan or Build card has no chain or padlock icon; its dependency chip says it ----------
+// 0585: a Build row has no icon, chip or open state: its line says what it waits on, and its full view has the dependency box.
 
 // 0100 (Plan) and 0500 (Build) wait on others; 0200 (Plan) and 0600 (Build) are waited on; 0900 is in flight and waited on.
 const at = new Date().toISOString();
@@ -31,23 +32,29 @@ test('0483 AC1: a closed Plan or Build card shows no chain or padlock icon, wait
   for (const id of ['0100', '0200', '0201', '0500', '0600', '0601', '0900', '0901']) assert.equal(iconOf(p, id), null, `${id}: no icon`);
 });
 
-test('0483 AC1: a closed card\'s chip still ends its title row', async () => {
+test('0483 AC1: a closed Plan card\'s chip still ends its title row, and a Build row has none', async () => {
   const p = boardPage([board()]);
   await p.settle();
-  for (const [id, said] of [['0100', 'Waits on 1 ticket'], ['0200', '1 ticket waits on this'], ['0500', 'Waits on 1 ticket'], ['0600', '1 ticket waits on this'], ['0900', '1 ticket waits on this']]) {
+  for (const [id, said] of [['0100', 'Waits on 1 ticket'], ['0200', '1 ticket waits on this']]) {
     const line = lineOf(card(p, id)), last = line.children[line.children.length - 1];
     assert.equal(last.className, 'dep-chip', `${id}: the chip is last`);
     assert.equal(last.title, said, `${id}: what it says`);
   }
+  for (const id of ['0500', '0600', '0900']) assert.ok(!p.all(card(p, id)).some(n => /dep-chip|chain|lock/.test(n.className || '')), `${id}: a row has no chip or icon`);
+  const where = id => p.all(card(p, id)).find(n => /^where\b/.test(n.className || '')).textContent;
+  assert.equal(where('0500'), 'Ready · after 0490', 'its line says what it waits on');
 });
 
-test('0483 AC2: an open Plan or Build card shows its icon with its hover text, as today', async () => {
+test('0483 AC2: an open Plan card shows its icon with its hover text, as today, and a pressed Build row shows none', async () => {
   const p = boardPage([board()]);
   await p.settle();
   for (const id of ['0100', '0200', '0500', '0600']) click(topOf(card(p, id)));
   await p.settle();
-  const want = { '0100': ['lock', 'Waiting on 0090'], '0200': ['chain', 'Starts a chain: unlocks 0201'],
-    '0500': ['lock', 'Waiting on 0490'], '0600': ['chain', 'Starts a chain: unlocks 0601'] };
+  for (const id of ['0500', '0600']) {
+    assert.equal(iconOf(p, id), null, `${id}: a Build row never shows an icon`);
+    assert.doesNotMatch(card(p, id).className, /\bopen\b/, `${id}: and never opens`);
+  }
+  const want = { '0100': ['lock', 'Waiting on 0090'], '0200': ['chain', 'Starts a chain: unlocks 0201'] };
   for (const [id, [cls, title]] of Object.entries(want)) {
     const icon = iconOf(p, id);
     assert.ok(icon, `${id}: an icon`);
@@ -63,7 +70,7 @@ test('0483 AC2: opening adds the icon and closing takes it away, without a reloa
   const p = fakePage([], { fetch });
   await p.settle();
   const asked = states;
-  for (const id of ['0100', '0600']) {
+  for (const id of ['0100']) {
     click(topOf(card(p, id)));
     await p.settle();
     assert.ok(iconOf(p, id), `${id}: open, an icon`);
@@ -85,7 +92,7 @@ test('0483 AC2: the 2-second refresh never brings an icon back on a closed card,
     p.timers.shift()();
     await p.settle();
     for (const id of ['0200', '0600', '0601', '0900', '0901']) assert.equal(iconOf(p, id), null, `refresh ${i + 1}, ${id}: no icon`);
-    assert.equal(iconOf(p, '0500')?.className, 'lock', `refresh ${i + 1}: the open Build card keeps its padlock`);
+    assert.equal(iconOf(p, '0500'), null, `refresh ${i + 1}: the Build row has no padlock`);
     assert.equal(iconOf(p, '0100')?.className, 'lock', `refresh ${i + 1}: the open Plan card keeps its padlock`);
   }
 });
@@ -93,5 +100,6 @@ test('0483 AC2: the 2-second refresh never brings an icon back on a closed card,
 test('0483 AC3: a closed card\'s title comes straight after its id', async () => {
   const p = boardPage([board()]);
   await p.settle();
-  for (const id of ['0100', '0200', '0500', '0600', '0900']) assert.deepEqual(shape(p, id), ['id', 'title', 'dep-chip'], id);
+  for (const id of ['0100', '0200']) assert.deepEqual(shape(p, id), ['id', 'title', 'dep-chip'], id);
+  for (const id of ['0500', '0600', '0900']) assert.deepEqual(shape(p, id), ['id', 'title'], id); // 0585: a Build row has no chip
 });

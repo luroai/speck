@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, switchPage, exitOf, round, page, styles, pageScript } from './support/panel.mjs';
+import { T, switchPage, fullViewOf, exitOf, round, page, styles, pageScript } from './support/panel.mjs';
 
 // ---------- 0163: the running build in the Auto-build button ----------
 
@@ -41,12 +41,12 @@ test('0163 AC1: while Auto-build is on and a ticket is building, reviewing or sh
   }
 });
 
-test('0163 AC1: the Build card still names the stage, and the button doesn\'t (0199)', async () => {
+test('0163 AC1: the Build ticket still names the stage in its full view (0585), and the button doesn\'t (0199)', async () => {
   const js = pageScript();
   assert.doesNotMatch(js, /function runLabel\(/);
   const p = await shows([REVIEWING]);
-  const card = p.all(p.byId('queue')).find(n => /^stage\b/.test(n.className || ''));
-  assert.equal(card.textContent, 'Review 2', 'the card counts the round');
+  const card = p.all(await fullViewOf(p, '0153')).find(n => /^stage\b/.test(n.className || ''));
+  assert.equal(card.textContent, 'Review 2', 'it counts the round');
   assert.equal(runOf(p).textContent, 'On');
 });
 

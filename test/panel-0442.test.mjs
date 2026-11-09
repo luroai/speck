@@ -39,7 +39,7 @@ const stub = state => `(() => {
 
 // Each " · " in the shown details lines: the gap from the dot's ink to the box of the text either side of it, where the
 // text is on the dot's line. The dot's ink is where the font draws it within its box, measured in the font it's drawn in.
-const LINES = '.item.ticket .head .checks, .q .top .progress, .q .top .act, #shipped .meta, #shipped-stats';
+const LINES = '.item.ticket .head .checks, .q .top .where, #full-ticket .live-now, #shipped .meta, #shipped-stats';
 const GAPS = `(async () => {
   await document.fonts.ready;
   const ink = document.createElement('canvas').getContext('2d'), out = [];
@@ -85,8 +85,7 @@ test('0442 AC1: in the interface font, each " · " in a status line, a shipped t
       const seen = { build: 0, shipped: 0 };
       for (const lane of ['build', 'shipped']) { // 0519: a closed Plan card's second row is labels, with no " · " 
         await b.js(openLane(lane));
-        // open one ticket too, so an open card's line, with its priority, size and risk, is measured as well
-        if (lane === 'build') await b.js(`(document.querySelector('#queue .q .top').click(), true)`);
+        // 0585: measure a ticket's full view too, where a row opens, with its live line
         const gaps = await b.js(GAPS);
         seen[lane] = gaps.length;
         for (const g of gaps) {
@@ -95,6 +94,13 @@ test('0442 AC1: in the interface font, each " · " in a status line, a shipped t
         }
         assert.ok(gaps.filter(g => g.before !== null && g.after !== null).length >= 3, `${look}, ${lane}: dots with text on both sides measured (${gaps.length})`);
       }
+      await b.js(openLane('build'));
+      await b.js(`(document.querySelector('#queue .q .top').click(), true)`);
+      await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .live-now')`, 'the full view');
+      const inView = (await b.js(GAPS)).filter(g => g.before !== null && g.after !== null);
+      assert.ok(inView.length >= 1, `${look}: the full view's live line measured`);
+      for (const g of inView) assert.ok(g.before >= 3 && g.after >= 3, `${look}, full view: ${g.before.toFixed(2)} and ${g.after.toFixed(2)} px round the dot in "${g.text}"`);
+      await b.js(`(document.querySelector('#full-ticket .close').click(), true)`);
       assert.ok(seen.shipped >= 4, `${look}: the shipped stats' dot and the shipped tickets' dots (${seen.shipped})`);
     }
   } finally { await b.close(); await stop(panel); }
@@ -107,13 +113,13 @@ const ROWS = `(async () => {
     for (let t; (t = w.nextNode());) { const r = document.createRange(); r.selectNodeContents(t); for (const x of r.getClientRects()) if (x.width > 0 && !out.some(b => Math.abs(b - x.top) <= 4)) out.push(x.top); }
     return out.length; };
   return [...document.querySelectorAll('#queue .q:not(.open), #shipped tr:not(.open)')].filter(c => c.getClientRects().length).map(c => {
-    const title = c.querySelector('.line'), details = c.querySelector('.top > .progress, .top > .act, .meta');
+    const title = c.querySelector('.line'), details = c.querySelector('.top > .where, .meta');
     return { id: c.querySelector('.id').textContent, title: lines(title), details: details ? lines(details) : 0, text: details && details.textContent,
       inside: !details || details.getBoundingClientRect().right <= c.getBoundingClientRect().right + 0.5 };
   });
 })()`;
 
-test('0442 AC2: at 390 px with a mouse, each closed Build and shipped ticket is still its title line and one details line', skip, async () => {
+test('0442 AC2: at 390 px with a mouse, each Build row\'s where line and each shipped ticket\'s details line is one line, and a shipped title too', skip, async () => {
   const { panel, b } = await panelAt(390);
   try {
     for (const lane of ['build', 'shipped']) {
@@ -121,7 +127,7 @@ test('0442 AC2: at 390 px with a mouse, each closed Build and shipped ticket is 
       const cards = await b.js(ROWS);
       assert.ok(cards.length >= 3, `${lane}: ${cards.length} cards`);
       for (const c of cards) {
-        assert.equal(c.title, 1, `${lane} ${c.id}: its title on one line`);
+        if (lane === 'shipped') assert.equal(c.title, 1, `${lane} ${c.id}: its title on one line`); // 0585: a Build row's title wraps
         assert.equal(c.details, 1, `${lane} ${c.id}: its details on one line: "${c.text}"`);
         assert.ok(c.inside, `${lane} ${c.id}: its details stay inside the card`);
       }

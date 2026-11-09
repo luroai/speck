@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, freePort, startPanel, stop, request, post, tokenOf, fakePage, T, queueRows, shippedRows, panelModel, deferred, openDetails } from './support/panel.mjs';
+import { ROOT, freePort, startPanel, stop, request, post, tokenOf, fakePage, T, queueRows, shippedRows, panelModel, deferred, openDetails, fullViewOf } from './support/panel.mjs';
 import { shipRepo } from './support/ship.mjs';
 
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
@@ -36,10 +36,8 @@ const shipOf = p => buttonsIn(p, pane(p), /^Ship/)[0] || null;
 const rowOf = (p, id) => queueRows(p).find(r => r.textContent.includes(id));
 async function openPack(p, id = '0005') {
   await p.settle();
-  const row = rowOf(p, id);
-  p.press(row.children.find(n => n.className === 'top'));
-  await p.settle();
-  p.press(buttonsIn(p, rowOf(p, id), 'Review pack')[0]);
+  await fullViewOf(p, id); // 0585: its Review pack is in its full view
+  p.press(buttonsIn(p, pane(p), 'Review pack')[0]);
   await p.settle();
 }
 
@@ -72,13 +70,12 @@ test('0133 AC1: a ticket in any other status has no Ship button, and there is no
   await q.settle();
   assert.equal(pane(q).hidden, false, 'the pack stays open');
   assert.equal(shipOf(q), null, 'no Ship button once it isn\'t approved');
-  // Nowhere outside a review pack: every queue row open, the Shipped table, the shaping column, and the full ticket.
+  // Nowhere outside a review pack: the Build rows, the Shipped table, the shaping column, and the full views of tickets that aren't approved.
   const r = page();
   await r.settle();
-  for (const row of queueRows(r)) { r.press(row.children.find(n => n.className === 'top')); await r.settle(); }
   for (const id of ['queue', 'shipped', 'shaping']) assert.equal(buttonsIn(r, r.byId(id), /^Ship/).length, 0, id);
-  r.press(buttonsIn(r, rowOf(r, '0005'), 'Full ticket')[0]);
-  await r.settle();
+  for (const id of ['0006', '0007']) { await fullViewOf(r, id); assert.equal(shipOf(r), null, `${id}'s full view`); }
+  await fullViewOf(r, '0005');
   assert.equal(pane(r).hidden, false);
   assert.ok(shipOf(r).parentNode.className.includes('pack-buttons'), '0583: an approved ticket\'s full view has it, in its bar');
 });

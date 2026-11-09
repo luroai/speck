@@ -64,12 +64,12 @@ function repo() {
   return r;
 }
 const PACK = `{ id: '0002', state: 'ok', text: '# Review pack\\n\\nIt passed.', pictures: [], documents: [{ path: 'outputs/0002/plan.md', url: '/api/tickets/0002/output/plan.md' }, { path: 'outputs/0002/notes/a.md', url: '/api/tickets/0002/output/notes/a.md' }] }`; // 0562: and a folder
+// 0585: a Build row opens the full view, where Review pack is a row in a list, not a bordered button, so Build has no view here.
 // Each view with buttons, opened in turn: [name, script that opens it, what shows once it's open].
 const VIEWS = [
   ['Plan, a ticket open', `${openLane('plan')}, document.querySelector('#shaping .item .head').click(), true`, `!!document.querySelector('#shaping .item.open .full-open')`],
   ['Plan, the priority menu', `document.querySelector('#shaping .tag.pick, #shaping .set-prio').click(), true`, `!!document.querySelector('.prio-menu button')`],
-  ['Build, a ticket open', `document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), ${openLane('build')}, document.querySelector('#queue .q .top').click(), true`, `!!document.querySelector('#queue .q.open .full-open')`],
-  ['Shipped, a ticket open', `${openLane('shipped')}, document.querySelector('#shipped .line .title').click(), true`, `!!document.querySelector('#shipped .facts')`], // 0466: its title opens it
+  ['Shipped, a ticket open', `document.querySelector('.prio-menu button').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), ${openLane('shipped')}, document.querySelector('#shipped .line .title').click(), true`, `!!document.querySelector('#shipped .facts')`], // 0466: its title opens it
   ['the full ticket', `${openLane('plan')}, document.querySelector('#shaping .item.open .full-open').click(), true`, `!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .close')`],
   ['a review pack with a document', `closeFull(), packOf = ${PACK}, fullId = '0002', fullFrom = null, render(), true`, `!!document.querySelector('#full-ticket .pack-document')`],
   ['a document', `docOpen = { id: '0002', path: 'outputs/0002/plan.md', state: 'ok', text: '# Plan\\n\\nWords.' }, drawDoc(), true`, `!document.getElementById('doc-view').hidden && !!document.querySelector('#doc-view .close')`],
@@ -141,7 +141,6 @@ const NAMED = [
   ['Shipped, a ticket open', '#more-stats'],
   ['Shipped, a ticket open', '#shipped .full-cell .full-open:first-child'], // 0466: Full ticket, where Details was
   ['Shipped, a ticket open', '#shipped .full-cell .full-open:last-child'],
-  ['Build, a ticket open', '#queue .q.open .full-open'],
   ['a review pack with a document', '#full-ticket .close'],
   ['a review pack with a document', '#full-ticket .pack-document'],
   ['a document', '#doc-view .close'],

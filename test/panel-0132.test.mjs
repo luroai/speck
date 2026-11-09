@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, request, fakePage, T, queueRows, shippedRows, deferred, openDetails } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, request, fakePage, T, queueRows, shippedRows, deferred, openDetails, fullViewOf } from './support/panel.mjs';
 import { shipRepo } from './support/ship.mjs';
 
 const pane = p => p.byId('full-ticket');
@@ -49,16 +49,14 @@ const PACK = [
 ].join('\n');
 
 const LOG = { text: '', truncated: false };
-// Opens a queue row, as a click on its top row does, which also fetches its log.
-const openRow = async (p, row) => { p.press(row.children.find(n => n.className === 'top')); await p.settle(); };
-
-// Opens the pack from a row, after opening the row first if it's in the queue, or its Details in Shipped (0162).
+// Opens the pack from a row, after opening the ticket's full view first if it's in the queue (0585), or its Details in Shipped (0162).
 async function openPack(row, response = { pack: PACK }) {
   const queued = row === approvedRow;
   const p = fakePage([clone(STATE), ...(queued ? [LOG] : []), response, clone(STATE)]);
   await p.settle();
-  if (queued) await openRow(p, row(p)); else await openDetails(p);
-  const b = packButtons(p, row(p))[0];
+  let from;
+  if (queued) from = await fullViewOf(p, '0005'); else { await openDetails(p); from = row(p); }
+  const b = packButtons(p, from)[0];
   assert.ok(b, 'the row has a Review pack button');
   p.press(b);
   await p.settle();
@@ -67,16 +65,12 @@ async function openPack(row, response = { pack: PACK }) {
 const approvedRow = p => queueRows(p).find(n => n.textContent.includes('0005'));
 const shippedRow = p => shippedRows(p).find(n => n.textContent.includes('0010'));
 
-test('0132 AC1: each approved ticket in the queue, once opened, and each Shipped row has a Review pack button, and no other row', async () => {
+test('0132 AC1: each approved ticket in the queue, in its full view, and each Shipped row has a Review pack button, and no other', async () => {
   const p = fakePage([clone(STATE), LOG, LOG, LOG, clone(STATE)]);
   await p.settle();
   assert.equal(queueRows(p).length, 3);
-  for (const r of queueRows(p)) assert.equal(packButtons(p, r).length, 0, 'closed, a row keeps to its top row and bar, as 0069 has it');
-  for (let i = 0; i < 3; i++) await openRow(p, queueRows(p)[i]);
-  for (const r of queueRows(p)) {
-    assert.ok(r.children.some(n => n.className === 'log'), 'the row is open');
-    assert.equal(packButtons(p, r).length, r.textContent.includes('0005') ? 1 : 0, r.textContent.slice(0, 20));
-  }
+  for (const r of queueRows(p)) assert.equal(packButtons(p, r).length, 0, 'a row has no buttons (0585)');
+  for (const id of ['0005', '0006', '0007']) assert.equal(packButtons(p, await fullViewOf(p, id)).length, id === '0005' ? 1 : 0, id);
   for (const r of shippedRows(p)) assert.equal(packButtons(p, r).length, 0, 'a Shipped card keeps Review pack under Details (0162)');
   await openDetails(p);
   const shipped = shippedRows(p);

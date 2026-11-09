@@ -34,7 +34,7 @@ const media = q => blocks(css()).filter(b => b.prelude === `@media ${q}`);
 // in a closed card's note, which 0468 replaced with a chip, and Plan's Tickets, Ideas and Inbox buttons (.toggle), which
 // 0520 removed.
 const SIZED = ['.bezel .settings-open', '.tab', '.head', '.item.ticket .prio', '.prio-menu button', '.set-ready, .full-open',
-  '.q .top', '.q .full-open', '.q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply', '.resume .copy',
+  '.q .top', '.q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply', '.resume .copy',
   '.more-stats', '#shipped .line .title', 'td .full-open',
   '#full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close',
   '#full-ticket .md summary, #doc-view .md summary'];
@@ -132,11 +132,11 @@ async function view(b, width, touch) {
   assert.equal(await b.js(`matchMedia('(pointer: coarse)').matches`), touch, 'the pointer is as emulated');
   await settle(b);
 }
-// Opens the lane, then every Plan item or Build row in it, and gives each shown control in it with its size and minimums.
+// Opens the lane, then every Plan item in it (0585: a Build row opens its full view instead, so it stays as it is), and gives each shown control in it with its size and minimums.
 const CONTROLS = lane => `(async () => {
   document.getElementById('tab-${lane}').click();
   ${REST_LANES}; // 0476: at rest
-  for (const h of document.querySelectorAll('#shaping .item:not(.open) .head, #queue .q:not(.open) .top')) h.click();
+  for (const h of document.querySelectorAll('#shaping .item:not(.open) .head')) h.click();
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   const shown = n => { const r = n.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(n).visibility === 'visible'; };
   return [...document.querySelectorAll('button, summary, .head, .q .top, .item.ticket .prio, #shipped .line .title, .goto')].filter(shown).map(n => {
@@ -165,7 +165,7 @@ test('0417 AC1, AC3: in a 375 px window with no touch screen, each control has t
   // AC3: the narrow layout itself, which isn't about a control's size
   await b.js(openLane('build'));
   assert.equal(await b.js(`getComputedStyle(document.getElementById('tab-build')).flexDirection`), 'row', 'each tab\'s name on one line (0425)');
-  assert.equal(await b.js(`getComputedStyle(document.getElementById('queue')).paddingLeft`), '8px'); // 0418: the lane's list, as main has none. 0478: 8 px inside the lane's frame
+  assert.equal(await b.js(`getComputedStyle(document.getElementById('queue')).paddingLeft`), '0px'); // 0418: the lane's list, as main has none. 0478: 8 px inside the lane's frame. 0585: its rows run edge to edge
 }));
 
 for (const width of [375, 1280]) {
