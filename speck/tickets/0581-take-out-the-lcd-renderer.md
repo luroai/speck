@@ -1,7 +1,7 @@
 ---
 id: "0581"
 title: "Take out the LCD renderer"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T20:00:43.274Z"
 ---
 # 0581 · Take out the LCD renderer
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Once the black bar replaces the LCD screen (0580), the LCD's renderer, its poses and pastimes, its font and its tests are dead weight that every later change has to step round.
@@ -45,7 +45,11 @@ The LCD screen's code, font and tests are gone from the panel.
 - Self-check: found no further problems; `--lcd-red` became `--speck-red` so that nothing named after the LCD is left in the panel's styles. `docs/brief.md` still mentions the LCD screen: ticket 0597 updates the docs.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing looks different: the black bar took the old LCD screen's place in an earlier change, and this clears away what was left behind. The panel now loads less, as the screen's drawing code, speck's old animations and the dot-matrix font are gone.
+
+To see it, open the panel: the bar, its status, the Pipeline log's red dot and the lane swipes all work as before.
+
+Worth keeping an eye on: one timing test failed once on a very busy run and passed when run alone. It's unrelated to this change, and it's in the inbox as a follow-up. The design record of the LCD screen is kept as it was.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +59,10 @@ The LCD screen's code, font and tests are gone from the panel.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Follow-ups:
+- To the inbox: `speck/ideas/2026-11-09-steady-0517-s-slide-timing-under-a-busy-run.md`, the one timing test that failed once under load.
+- Tidy-up, not sent to the inbox: `foremanOf` in `templates/panel.js` still passes on the Foreman's `why` and `base`, which only the screen's captions read. `foremanView` and its tests still give them.
 
 Tests removed because they checked only the LCD screen (AC3):
 
@@ -84,3 +92,80 @@ Tests removed from files that keep the rest:
 | `panel-0495` | speck's captions. | What the Foreman gives for the base branch and a wait. |
 | `logo-0320` | The check on `templates/lcd.js` and the check that `panel-0302` and `panel-0308` pin the renderer. | The design record's pin. |
 | `panel-0474`, `panel-0473`, `panel-0433`, `panel-0432`, `panel-0426`, `panel-0543`, `panel-0147`, `panel-0364`, `pipeline-0470`, `pipeline-0479` | Only the mentions of `lcd.js`, Doto, `--lcd-red` and the stand-in renderer. | All their tests. |
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4f8083fdf402b8e2852ddae0bad8cfd259117576",
+    "session": "fresh",
+    "thread_id": "01a1c1f3-0c27-7993-959f-08ba2d702044",
+    "builder_response": "- Tests run: `speck test --related` with test/panel-0581.test.mjs and every existing test file this change edits: 366 files chosen, 3323 tests, 3319 pass, 3 skipped, 1 failed.\n- The one failure, 0517 AC3 (test/panel-0517.test.mjs), is a 50 ms timing check in a real browser: \"58, 19, 22, 23, 21, 23 ms\" while 366 files ran together. It is not related to this change: run alone, the file passed 3 times out of 3 (11 tests each).\n- Which tests went and why is in the ticket's Delivery log (AC3).\n- `--lcd-red` is renamed `--speck-red`, with the same two values, as the Pipeline log's dot still uses it. The other four `--lcd-*` colours were only the screen's.\n- `docs/brief.md` line 215 still mentions the LCD screen: ticket 0597 updates the docs for the new panel, so it's left alone here.\n- No pictures: nothing anyone sees changes, as 0580 already took the screen off the page.\n",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 526051,
+      "cached_input_tokens": 385920,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 759,
+      "reasoning_output_tokens": 37
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 140131,
+      "cached": 385920,
+      "write": 0,
+      "output": 759
+    },
+    "cost_usd": 0.326444,
+    "tests": {
+      "failing": 1,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T20:15:30.695Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/lcd.js is deleted; panel-header.js removes the screen, poses and pastime machinery; panel.html and scripts/panel.mjs remove loading and serving it. Four corresponding AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Doto.ttf and OFL.txt are deleted; panel-base.css removes the font face and scripts/panel.mjs removes its route. AC2's file and live-reference checks pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The Delivery log records removed LCD tests and reasons. Retained card, bar, Settings, log and server checks remain; the reported run passes those tests. Removed assertions concern the retired renderer."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "git diff main...HEAD -- docs/design/lcd is empty. The passing AC4 test also verifies the design files remain and have no uncommitted changes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The run reports 3319 passes and one browser timing failure. Inspection of panel-0517.test.mjs shows that failure measures machine-dependent frame latency; the slide implementation is unchanged. The builder reports three successful isolated reruns. No functional regression is evident."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The obsolete LCD code, font and dedicated tests are removed, while the black bar and its retained checks remain intact. The design archive is unchanged. One timing test failed under concurrent load; the unchanged slide code and reported successful reruns support treating it as intermittent. No blocking issues found."
+  }
+}
+```
+
+</details>
