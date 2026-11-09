@@ -1,7 +1,7 @@
 ---
 id: "0583"
 title: "Redesign a ticket's full view"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0577"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:34:51.709Z"
+approved: "2026-11-09T19:05:53.837Z"
 
 ---
 # 0583 · Redesign a ticket's full view
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket's full view (the "side pane", `#full-ticket`) still has the LCD-era look, with tags and bordered boxes. In the redesign it's the one place a ticket's detail lives, so it needs to read clearly on a phone and end in the action that's needed.
@@ -58,9 +59,14 @@ Worth keeping an eye on: a shipped ticket's costs and timings are no longer in t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 173,020
+- Elapsed since build started: 31 min
+- Changed lines: 286 (limit 5000)
 Old-look tests updated to the new one (AC5):
 - `test/panel-0054`, `0061`, `0063`: Outcome and Acceptance criteria now come before Problem, and the pane closes from its back link. `0063`'s section comparison leaves out the rows.
 - `test/panel-0133`: an approved ticket's full view now has Ship, in its bar.
