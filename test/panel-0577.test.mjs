@@ -57,7 +57,7 @@ test('0577 AC2: the panel\'s text is in Inter, ids, times and figures in JetBrai
   assert.match(tokens['--font-ui'], /^"Inter", .*sans-serif$/);
   assert.match(tokens['--font-mono'], /^"JetBrains Mono", .*monospace$/);
   assert.match(cssValue(cssRules('body'), 'font'), /^400 14px\/1\.5 var\(--font-ui\)$/);
-  for (const sel of ['code', '.id', '.sh .n', 'td.num', '.stat .num', '.stat .count', '.q.row .where .sub', '.facts .value.time .sub', '#shipped-stats .num', '#shipped .meta']) assert.equal(cssValue(cssRules(sel), 'font-family'), 'var(--font-mono)', sel);
+  for (const sel of ['code', '.id', '.sh .n', 'td.num', '.stat .num', '.stat .count', '.q.row .where .sub', '.facts .value.time .sub', '#shipped .meta']) assert.equal(cssValue(cssRules(sel), 'font-family'), 'var(--font-mono)', sel);
   assert.match(cssValue(cssRules('.foreman ol.run-log'), 'font'), /var\(--font-mono\)$/, 'a log\'s lines, with their times');
   const left = [...plain().matchAll(/font(?:-family)?:[^;}]*(?:Segoe WPC|SF Mono)[^;}]*/g)].filter(m => !m[0].startsWith('font-family: "Inter"') && !m[0].includes('--font'));
   assert.deepEqual(left.map(m => m[0]), [], 'every font list is one of the two');

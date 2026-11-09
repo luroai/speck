@@ -13,7 +13,7 @@ const paneId = p => (paneOpen(p) ? pane(p).children[0].children[0].textContent :
 const headings = (p, node) => p.all(node).filter(n => n.tagName === 'h4').map(n => n.textContent);
 const named = (p, node, text) => p.all(node).find(n => n.tagName === 'button' && n.textContent === text);
 const fullOf = (p, node) => named(p, node, 'Full ticket');
-// 0137: a Shipped row opened the full ticket from its title. 0466: from Full ticket in its open card, as in Plan and Build.
+// 0137: a Shipped row opened the full ticket from its title. 0466: from Full ticket in its open card. 0587: from its row.
 const titleOf = (p, row) => shippedFull(p, () => shipOf(p, p.all(row).find(n => n.className === 'id')._text));
 const itemOf = (p, id) => items(p).find(n => n.textContent.startsWith(id));
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
@@ -83,14 +83,14 @@ test('0063 AC1: pressing a queue ticket\'s row opens the pane on it and opens, c
   assert.deepEqual(openStates(p), before, 'nothing else opens or closes');
 });
 
-test('0063 AC1: each Shipped card\'s Full ticket opens the pane on that ticket and nothing else (from its open card since 0466)', async () => {
+test('0063 AC1: each Shipped row opens the pane on that ticket and nothing else (0587: pressing the row)', async () => {
   const p = livePage(board());
   await p.settle();
   await openFull(p, '0002');
   p.all(pane(p)).find(n => n.className === 'close').listeners.click();
-  for (const id of ['0005', '0006']) assert.ok(titleOf(p, shipOf(p, id)), `${id}: a Full ticket button`);
+  for (const id of ['0005', '0006']) assert.ok(titleOf(p, shipOf(p, id)), `${id}: a row to press`);
   const before = openStates(p);
-  assert.ok(press(titleOf(p, shipOf(p, '0006'))), 'the click goes no further');
+  press(titleOf(p, shipOf(p, '0006')));
   assert.equal(paneId(p), '0006');
   assert.ok(pane(p).textContent.includes('Shipped two'));
   assert.deepEqual(openStates(p), before, 'nothing else opens or closes');
@@ -255,7 +255,7 @@ test('0063 self-check: built-in names as ids, and an id in more than one list, s
   assert.ok(pane(p).textContent.includes('Draft 9'), 'the first ticket with that id');
 });
 
-test('0063 AC1-AC4: in a real browser, Full ticket from the queue and from an open Shipped card open the pane and leaves the log where it was', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
+test('0063 AC1-AC4: in a real browser, a queue row and a Shipped row open the pane and leave the log where it was', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
   const body = `## Problem\nWatching a build.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n`;
   r.write('0002-build.md', fm({ id: '"0002"', title: 'A build to watch', status: 'building', started: at(9) }), body);
@@ -284,9 +284,7 @@ test('0063 AC1-AC4: in a real browser, Full ticket from the queue and from an op
     assert.ok(await isHidden(), 'Escape closes it');
     assert.ok(await b.js(`!(${row}).classList.contains('open')`), 'and the row is as it was');
     await b.until(`!!document.querySelector('#shipped tr .title')`, 'the Shipped row\'s title');
-    await b.js(`document.querySelector('#shipped tr .title').click()`); // 0466: it opens the card, which has Full ticket
-    await b.until(`!!document.querySelector('#shipped tr.open .full-open')`, 'the open Shipped card');
-    await b.js(`document.querySelector('#shipped tr.open .full-open').click()`);
+    await b.js(`document.querySelector('#shipped tr .title').click()`); // 0587: its row opens the full view
     await b.until(`!document.getElementById('full-ticket').hidden`, 'the pane from Shipped');
     assert.ok(await b.js(`document.querySelector('#full-ticket .id').textContent === '0003' && document.getElementById('full-ticket').textContent.includes('Watching a build.')`));
   } finally {

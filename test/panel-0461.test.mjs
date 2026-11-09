@@ -6,7 +6,7 @@ import { rules, tokens, get, rule } from './support/css.mjs';
 import { looks, contrast, rgba } from './support/contrast.mjs';
 
 // ---------- 0461: an open ticket's five steps as a track of coloured bars ----------
-// 0585: a Build row doesn't open as a card, so Build's track is the full view's (0583); the five-step colours are Shipped's.
+// 0585: a Build row doesn't open as a card, so Build's track is the full view's (0583); the five-step colours are an open Plan ticket's (0587: a shipped ticket no longer opens as a card).
 
 const NOW = Date.now();
 const ago = s => new Date(NOW - s * 1000).toISOString();
@@ -56,18 +56,18 @@ const all = rules();
 const val = (sel, prop) => all.filter(r => !r.at.length && r.sel.split(',').map(s => s.trim()).includes(sel)).map(r => get(r, prop)).filter(v => v !== undefined).pop();
 
 test('0461 AC2: a finished or current step\'s bar is in its step\'s colour, the current name in it and bold, the rest grey', () => {
-  assert.deepEqual(tokens(val('#shipped .track .step', 'border-top')), ['--line'], 'a step not reached: grey bar');
-  assert.deepEqual(tokens(val('#shipped .track .step', 'color')), ['--muted'], 'and grey name');
+  assert.deepEqual(tokens(val('.item.ticket .track .step', 'border-top')), ['--line'], 'a step not reached: grey bar');
+  assert.deepEqual(tokens(val('.item.ticket .track .step', 'color')), ['--muted'], 'and grey name');
   for (const k of KEYS) {
-    for (const state of ['done', 'now']) assert.deepEqual(tokens(val(`#shipped .track .step.${state}.${k}`, 'border-top-color')), [BAR[k]], `${k} ${state}: its bar`);
-    assert.deepEqual(tokens(val(`#shipped .track .step.now.${k}`, 'color')), [NAME[k]], `${k} now: its name's colour`);
+    for (const state of ['done', 'now']) assert.deepEqual(tokens(val(`.item.ticket .track .step.${state}.${k}`, 'border-top-color')), [BAR[k]], `${k} ${state}: its bar`);
+    assert.deepEqual(tokens(val(`.item.ticket .track .step.now.${k}`, 'color')), [NAME[k]], `${k} now: its name's colour`);
   }
-  assert.equal(val('#shipped .track .step.now', 'font-weight'), '600', 'the current step\'s name is bold');
-  assert.deepEqual(tokens(val('#shipped .track.stopped .step.now', 'border-top-color')), ['--bad'], 'blocked or stopped: crimson bar');
-  assert.deepEqual(tokens(val('#shipped .track.stopped .step.now', 'color')), ['--bad'], 'and crimson name');
+  assert.equal(val('.item.ticket .track .step.now', 'font-weight'), '600', 'the current step\'s name is bold');
+  assert.deepEqual(tokens(val('.item.ticket .track.stopped .step.now', 'border-top-color')), ['--bad'], 'blocked or stopped: crimson bar');
+  assert.deepEqual(tokens(val('.item.ticket .track.stopped .step.now', 'color')), ['--bad'], 'and crimson name');
   // the stopped rule comes after every step's own, so it wins at the same specificity
   const at = sel => all.findIndex(r => !r.at.length && r.sel.split(',').map(s => s.trim()).includes(sel));
-  for (const k of KEYS) assert.ok(at('#shipped .track.stopped .step.now') > at(`#shipped .track .step.now.${k}`), `crimson after ${k}`);
+  for (const k of KEYS) assert.ok(at('.item.ticket .track.stopped .step.now') > at(`.item.ticket .track .step.now.${k}`), `crimson after ${k}`);
 });
 
 test('0461 AC2: the colours are Cursor\'s blue, cyan, yellow and green, and a purple well apart from the crimson', () => {
@@ -90,7 +90,7 @@ test('0461 AC2: the colours are Cursor\'s blue, cyan, yellow and green, and a pu
 // What an open in-flight card can sit on: an open card's raised fill, a blocked one's tint, a waiting one's tint.
 const CARDS = ['--raise', '--panel', '--bad-bg', '--ok-bg'];
 test('0461 AC4: every bar reaches 3:1 and every name 0161\'s 7:1 against the card, in both looks', () => {
-  assert.equal(val('#shipped .track .step', 'font-size'), '12px', 'the names are 12 px');
+  assert.equal(val('.item.ticket .track .step', 'font-size'), '12px', 'the names are 12 px');
   for (const [name, look] of Object.entries(looks())) {
     for (const bg of CARDS) {
       for (const t of [...Object.values(BAR), '--bad']) assert.ok(contrast(look[t], look[bg]) >= 3, `${name}: bar ${t} on ${bg} is ${contrast(look[t], look[bg]).toFixed(2)}:1`);

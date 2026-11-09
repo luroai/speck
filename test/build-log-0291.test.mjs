@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { readableLog, readablePiece, logTail } from '../scripts/build-log.mjs';
 import { builderSpend } from '../scripts/core.mjs';
-import { T, round, fakePage, shippedRows, openDetails } from './support/panel.mjs';
+import { T, round, fakePage, shippedRows } from './support/panel.mjs';
 
 // ---------- 0291: Codex and Cursor build logs and tokens ----------
 
@@ -142,13 +142,14 @@ test('0291 AC3: the panel shows a Codex or Cursor build\'s tokens, and no $0 cos
     T('0011', 'done', { started: iso(now - 4 * 60000), finished: iso(now), rounds: [round(1, 1200)], ...builderOf(builderSpend(CURSOR)) }),
   ], ideas: [] }]);
   await p.settle();
-  await openDetails(p);
   const [row] = shippedRows(p);
-  assert.equal(figsOf(row), 'Time4 minReview rounds1Builder cost—Reviewer cost—Total cost—Builder tokens1,240Reviewer tokens1,200', 'no cost recorded: a dash (0464)');
-  assert.ok(!p.all(row).some(n => /\$0/.test(n.textContent || '')), 'no $0 anywhere on the card');
+  p.press(row); // 0587: a ticket's own figures are in its full view
+  await p.settle();
+  assert.equal(figsOf(p), 'Builder cost—Reviewer cost—Total cost—Builder tokens1,240Reviewer tokens1,200', 'no cost recorded: a dash (0464)');
+  for (const box of [row, p.byId('full-ticket')]) assert.ok(!p.all(box).some(n => /\$0/.test(n.textContent || '')), 'no $0 on the row or in its full view');
 });
-// 0464: an open card's figures are in its facts table, after its Shipped cell, whose time depends on the clock
-const figsOf = tr => tr.children.find(n => n.className === 'steps').children.find(n => n.className === 'facts').children.slice(1).map(c => c.textContent).join('');
+// 0587: the last five cells of the full view's facts table
+const figsOf = p => p.all(p.byId('full-ticket')).find(n => n.className === 'facts').children.slice(-5).map(c => c.textContent).join('');
 const builderOf = s => ({ builder_tokens: s.tokens, builder_cost_usd: s.cost_usd });
 
 // ---------- AC4 ----------

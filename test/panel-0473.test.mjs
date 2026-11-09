@@ -19,7 +19,7 @@ async function openPack(response, more = []) {
 // ---------- 0473: the pop-ups' script in a file of its own ----------
 
 // What opens, draws, updates and closes the full ticket (with its review pack), a document's pop-up and the Pipeline log.
-const POPUP_NAMES = ['openFull', 'fullButton', 'packButton', 'loadPack', 'renderFull', 'fullTicket', 'packPane', 'shipPart', 'shipTicket', 'askForChanges',
+const POPUP_NAMES = ['openFull', 'fullButton', 'loadPack', 'renderFull', 'fullTicket', 'packPane', 'shipPart', 'shipTicket', 'askForChanges',
   'closeFull', 'returnFocus', 'openDocument', 'drawDoc', 'drawDocActs', 'closeDoc', 'holdPane', 'renderForeman', 'wantRunLog', 'drawRunLog', 'closeForeman',
   'fullId', 'packOf', 'docOpen', 'foremanOpen', 'runLog', 'shippingId', 'shipped', 'changesNotes'];
 const declares = (js, name) => new RegExp(`^(?:async function|function|let|const) ${name}\\b`, 'm').test(js);

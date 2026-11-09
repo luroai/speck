@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 // 0411: Shipped lists the latest ten finished tickets, and the board the panel sends keeps those ten whole.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { panelModel, fakePage, full, round, shippedRows, openDetails } from './support/panel.mjs';
+import { panelModel, fakePage, full, round, shippedRows } from './support/panel.mjs';
 import { panelBoard } from '../scripts/board-feed.mjs';
 
 const words = (what, n) => `Words about ${what}. `.repeat(n);
@@ -55,14 +55,12 @@ test('0411 AC2: each of the ten opens its full ticket with its whole text, and i
   const b = board(30), want = latest(b, 10);
   const p = fakePage([panelBoard(b)]);
   await p.settle();
-  await openDetails(p);
   for (const id of want) {
-    const row = shippedRows(p).find(r => r.textContent.includes(id));
-    p.press(p.all(row).find(n => n.tagName === 'button' && n.textContent === 'Full ticket')); // 0466: in its open card
+    p.press(shippedRows(p).find(r => r.textContent.includes(id))); // 0587: its row opens the full ticket
     await p.settle();
     const text = p.byId('full-ticket').textContent, t = b.tickets.find(x => x.id === id);
     assert.ok(text.includes(t.notes.trim()) && text.includes(t.problem.trim()), `${id}: the full ticket has its whole notes and problem`);
-    const pack = p.all(shippedRows(p).find(r => r.textContent.includes(id))).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
+    const pack = p.all(p.byId('full-ticket')).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
     assert.ok(pack, `${id} has a Review pack button`);
     p.press(pack);
     await p.settle();

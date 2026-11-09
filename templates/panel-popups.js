@@ -47,15 +47,6 @@ function openFull(t, from = null) {
   if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
 }
 // 0132: shows the ticket's review pack in the side pane, as `speck pack <id>` prints it from the panel's checkout now.
-function packButton(t) {
-  const b = el('button', 'full-open', 'Review pack');
-  b.type = 'button';
-  b.addEventListener('click', e => {
-    e.stopPropagation(); // the click is for the button, not the ticket
-    openPack(t.id);
-  });
-  return b;
-}
 function openPack(id) {
   fullId = String(id);
   fullFrom = null;
@@ -460,7 +451,7 @@ function paneFacts(t) {
   const name = named(t.reviewer), model = typeof t.review_model === 'string' && t.review_model.trim() ? t.review_model.trim() : typeof t.reviewer_model === 'string' ? t.reviewer_model.trim() : '';
   return el('dl', 'facts', null, factCell('Priority', priority, null), factCell('Size', t.size ? String(t.size) : '–', null), factCell('Risk', t.risk ? String(t.risk) : '–', null),
     factCell('Ships by itself', ships, null), factCell('Builder', workerOf(t, { round: null }).value, null), factCell('Reviewer', name ? `${name}${model ? ` · ${model}` : ''}` : '–', null),
-    ...paneFrom === 'queue' ? queueFacts(t) : []);
+    ...paneFrom === 'queue' ? queueFacts(t) : paneFrom === 'shipped' ? shippedFacts(t) : []);
 }
 // 0585: what a Build row can't show: its type, and, on one that hasn't started, its ready check.
 function queueFacts(t) {

@@ -289,6 +289,8 @@ function panelModel(state) {
     // 0204: a ship that merged it but couldn't push the base branch, until speck sees the commit on the remote, with speck ship's message.
     const unpushed = !!t.ship && typeof t.ship === 'object' && t.ship.unpushed === true;
     return { ...t, end, unpushed, unpushed_message: unpushed && typeof t.ship.message === 'string' && t.ship.message ? t.ship.message : null, when: shippedAt(end, now), roundCount: total ? Number(total.rounds) || 0 : rounds(t).length,
+      // 0587: whether its first review round approved it. Merge rounds after that approval don't change this.
+      firstApproved: total ? total.first_approved === true : rounds(t)[0]?.verdict === 'approve',
       tokens: total ? Number(total.tokens) || 0 : rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
       builderTokens: spent(t.builder_tokens), builderCost: spent(t.builder_cost_usd),
       // 0526: its reviewer's cost and its total, with the parts the total leaves out because their cost is unknown.
@@ -379,6 +381,8 @@ function panelModel(state) {
       today: done.filter(t => t.end !== null && sameDay(new Date(t.end), new Date(now))).length,
       minutes: stat(done.filter(t => t.exactMinutes !== null).map(t => t.exactMinutes), Math.round),
       rounds: stat(done.filter(t => t.roundCount > 0).map(t => t.roundCount), n => Math.round(n * 10) / 10),
+      // 0587: the share of those with review rounds that the first round approved, as a whole percentage, or null with none.
+      firstRound: (all => ({ share: all.length ? Math.round(all.filter(t => t.firstApproved).length / all.length * 100) : null, count: all.length }))(done.filter(t => t.roundCount > 0)),
       tokens: stat(done.filter(t => t.tokens > 0).map(t => t.tokens), Math.round),
       builderTokens: stat(done.filter(t => t.builderTokens !== null).map(t => t.builderTokens), Math.round),
       builderCost: stat(done.filter(t => t.builderCost !== null).map(t => t.builderCost), n => Math.round(n * 100) / 100),

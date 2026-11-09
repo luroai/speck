@@ -16,16 +16,17 @@ const lastCompound = s => s.trim().split(/\s+|>|\+|~/).filter(Boolean).pop() || 
 const isCard = s => /^(section|#shaping-section|\.item|\.q)(?![\w-])/.test(lastCompound(s)) || /#shipped tr(?![\w-])/.test(s);
 const plain = () => rules().filter(r => !r.sel.startsWith(':root') && !r.at.some(a => a.startsWith('@keyframes')));
 
-test('0167 AC1: no section or card rule draws a top or left stripe, and each card has a border on all sides', () => {
+test('0167 AC1: no section or card rule draws a top or left stripe, and each card has a border on all sides, and a shipped row (0587) a hairline under it', () => {
   const stripes = [];
   for (const r of plain()) {
     if (!selectors(r).some(isCard)) continue;
     for (const [k, v] of r.decls) if (/^border-(top|left)/.test(k)) stripes.push(`${r.sel} { ${k}: ${v} }`);
   }
   assert.deepEqual(stripes, [], 'no stripes');
-  for (const sel of ['section', '.item', '.q', '#shipped tr']) {
+  for (const sel of ['section', '.item', '.q']) {
     assert.match(get(rule(sel), 'border') || '', /^\S+ solid var\(--line\)$/, `${sel}: a border all round in the line colour`);
   }
+  assert.match(get(rule('#shipped tr'), 'border-bottom') || '', /^\S+ solid var\(--line\)$/, '#shipped tr: a hairline under it in the line colour');
 });
 
 test('0167 AC2: a ticket that needs you has an orange dot, one worked on a blue dot and one waiting a grey one, and a row has no tint of its own', () => {
@@ -192,7 +193,7 @@ for (const theme of ['light', 'dark']) {
         assert.ok(open.length >= 1, `${kind}: an open card`);
         for (const card of open) hairline(card, `${kind} ${card.id}, open`);
       }
-      for (const card of await b.js(LOOK('#shipped tr'))) sameAllRound(card, c.line, `shipped ${card.id}`);
+      for (const card of await b.js(LOOK('#shipped tr'))) hairline(card, `shipped ${card.id}`); // 0587: a row
     }, theme);
   });
 

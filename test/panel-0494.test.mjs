@@ -32,15 +32,12 @@ const measure = lane => `(async () => {
   const text = Math.min(...[...r.getClientRects()].filter(x => x.width > 0).map(x => x.top));
   return { open: c.classList.contains('open'), text: text - c.getBoundingClientRect().top, height: c.getBoundingClientRect().height };
 })()`;
-// The rows of the page, a pixel apart, down through the shipped title, where a tap reaches it, as one run from top to bottom.
+// Where a tap can reach the first shipped row: left of its title's start, its text's top and the row's top and bottom.
 const TAP = `(() => {
-  const c = document.querySelector('#shipped tr'), t = c.querySelector('.line .title'), b = t.getBoundingClientRect(), x = b.left + 8;
-  const ys = [];
-  for (let y = Math.floor(b.top) - 30; y <= b.bottom + 30; y++) if (document.elementFromPoint(x, y) === t) ys.push(y);
-  const r = document.createRange();
+  const c = document.querySelector('#shipped tr'), t = c.querySelector('.line .title'), b = t.getBoundingClientRect(), r = document.createRange();
   r.selectNodeContents(t);
   const text = Math.min(...[...r.getClientRects()].filter(q => q.width > 0).map(q => q.top));
-  return { x, ys, text, card: c.getBoundingClientRect().top, cardBottom: c.getBoundingClientRect().bottom };
+  return { x: b.left + 8, text, card: c.getBoundingClientRect().top, cardBottom: c.getBoundingClientRect().bottom };
 })()`;
 
 async function inPanel(fn) {
@@ -75,15 +72,14 @@ test('0494 AC1 and AC3: a closed shipped ticket\'s title text starts as far down
   }
 }));
 
-test('0494 AC2: on a touch screen, the closed shipped title is a tap area at least 44 px tall that opens it, with no space added above its text', skip, () => inPanel(async (b, go) => {
+test('0494 AC2: on a touch screen, a shipped row is a tap area at least 44 px tall that opens its full view, with no space added above its title (0587: the row, not the title)', skip, () => inPanel(async (b, go) => {
   await go(390, true);
   await b.js(openLane('shipped'));
-  const { x, ys, text, card } = await b.js(TAP);
-  assert.ok(ys.length >= 44, `a tap reaches the title in ${ys.length} rows`);
-  assert.equal(ys[ys.length - 1] - ys[0] + 1, ys.length, 'in one run, with no gaps');
-  assert.ok(text - card <= 9, `its text starts ${text - card} px down the card, right under the card's padding`);
-  // a tap at the bottom of the tap area, below the title's text, opens the card, as tapping the title does today
-  const y = ys[ys.length - 2];
+  const { x, text, card, cardBottom } = await b.js(TAP);
+  assert.ok(cardBottom - card >= 44, `the row is ${cardBottom - card} px tall`);
+  assert.ok(text - card <= 9, `its text starts ${text - card} px down the row, right under the row's padding`);
+  // a tap at the bottom of the row, below the title's text, opens it, as tapping the title does
+  const y = Math.floor(cardBottom) - 3;
   for (const type of ['touchStart', 'touchEnd']) await b.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
-  await b.until(`document.querySelector('#shipped tr').classList.contains('open')`, 'the tap to open the shipped card');
+  await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .top .id')`, 'the tap to open the full view');
 }));
