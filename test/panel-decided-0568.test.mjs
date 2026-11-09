@@ -86,8 +86,8 @@ test('0568 AC1: a shipped ticket still says whether its criteria changed, though
   assert.deepEqual(statusData(same.dir).decided.map(d => d.criteria_changed), [false]);
 });
 
-test('0568 AC1: no recommendations taken gives an empty list', () => {
-  assert.deepEqual(statusData(changesRepo().dir).decided, []);
+test('0568 AC1: with no recommendations taken there is nothing to list', () => {
+  assert.equal(statusData(changesRepo().dir).decided, undefined);
 });
 
 // ----- the panel -----

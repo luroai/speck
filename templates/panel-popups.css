@@ -58,8 +58,8 @@
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #doc-view .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
-  #full-ticket .close, #doc-view .close, #foreman .close, #decided .close { margin-left: auto; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover, #decided .close:hover { color: var(--text); }
+  #full-ticket .close, #doc-view .close, #foreman .close { margin-left: auto; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
   /* 0424: the full ticket and a review pack set out as a document: the id and status in small type, the title the
      largest text with its tags under it, then each section's heading, smaller than the title and larger than the text,
@@ -84,14 +84,12 @@
      padding, the room for a phone's notch, is in the line instead, so nothing shows through above it. Above a setting's
      explanation (z-index 2), which scrolls under it too. */
   #full-ticket .top, #doc-view .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
-  /* 0568: the line under speck's status saying how many it decided, and the Decided for you list it opens, over the whole
+  /* 0568: the Decided for you list, over the whole
      panel in a column at most 720 px wide. Long titles and options wrap, so it fits a phone's width. */
-  .decided-line { display: block; box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 16px; font: inherit; font-size: 14px; color: var(--muted); background: var(--bg); border: 0; border-radius: 0; border-bottom: .5px solid var(--line); cursor: pointer; }
-  .decided-line:hover { color: var(--text); }
-  .decided-line[hidden] { display: none; }
   #decided { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #decided[hidden] { display: none; }
-  #decided:focus { outline: none; }
+  #decided .close { margin-left: auto; font: inherit; font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #decided .close:hover { color: var(--text); }
   #decided .top, #decided .decided-list, #decided .decided-none { max-width: 720px; margin-left: auto; margin-right: auto; }
   #decided .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: .5px solid var(--line-soft); background: var(--panel); }
   #decided .top .title { font-weight: 600; }

@@ -481,9 +481,9 @@ export function statusData(repo) {
   });
   // The command that reopens a build's session, for the panel. A config without the setting gets the default (0289:
   // Codex's, for Codex builds).
-  // 0568: what speck decided in the last 7 days. A shipped ticket has no branch to compare, so its criteria come from history.
+  // 0568: what speck decided in the last 7 days. A shipped ticket has no branch to compare, so its criteria come from history. Left out when there are none.
   const decided = decidedFor(entries, e => (e.status === 'done' ? shippedCriteriaChanged(repo, cfg, e.id, tickets.find(t => t.fm.id === e.id)?.sections['acceptance criteria']) : e.criteria_changed));
-  return { tickets: entries, decided, ideas, idea_counts: ideaCounts(repo), resume_command: resumeCommandOf(cfg) };
+  return { tickets: entries, ...(decided.length ? { decided } : {}), ideas, idea_counts: ideaCounts(repo), resume_command: resumeCommandOf(cfg) };
 }
 
 function cmdStatus(args = []) {
