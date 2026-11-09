@@ -41,6 +41,8 @@ Capture and Plan list their items as compact rows, and an empty lane shows speck
 - The design is the mock agreed with the user on 2026-11-08 and 9 (a private claude.ai design canvas, "speck panel, grown up": Lanes, Decided for you, a ticket waiting at Ship, Pipeline log, each light and dark, the bridge, and the Character page). The user picked the Premium screen for speck and asked for these tickets for 1.0.0 on 2026-11-09.
 - Today: `captureItem`, `noteItem`, `starButton`, `ticketItem`, `ticketHead`, `priorityPicker`, `readiness`, `setReadyButton` in `templates/panel.js`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
+- AC3's "an empty lane" is read as Capture's and Plan's, as the ticket's title and problem say: Build keeps its 0449 message, and Shipped is 0587's.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
