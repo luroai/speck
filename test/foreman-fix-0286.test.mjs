@@ -99,7 +99,7 @@ test('0286 AC2: with fix, speck run takes the recommendation on its check, notes
   assert.deepEqual(started[0].argv, ['claude', '-p', goWithMessage('0001', OPTION, '/speck-build', 'foreman'), '--resume', 'sess-1']);
   assert.match(started[0].argv[2], /^speck \(watch: fix\) chose the recommended option/);
   assert.equal(started[0].rec.went_with.by, 'foreman');
-  assert.ok(said.some(m => /0001: speck went with its recommendation/.test(m)));
+  assert.ok(said.some(m => /0001: I went with the recommendation/.test(m)));
 });
 
 test('0286 AC3: a question that changes what you\'d notice, is a close call or has any fact unknown is left for you, even with fix', () => {
@@ -139,7 +139,7 @@ test('0286 AC4: the Foreman takes a ticket\'s recommendation once; when it block
   assert.equal(r.head(), head);
   assert.equal(again.started.length, 0);
   assert.equal(ticketOf(r).status, 'blocked');
-  assert.equal(said.filter(m => /0001: speck didn't take its recommendation: speck has already gone with a recommendation for ticket 0001 once/.test(m)).length, 1);
+  assert.equal(said.filter(m => /0001: I didn't take its recommendation: speck has already gone with a recommendation for ticket 0001 once/.test(m)).length, 1);
   runCheck(r, 'fix', { said, queue: again.queue });
   assert.equal(said.length, 1, 'said once, not on every check');
 });

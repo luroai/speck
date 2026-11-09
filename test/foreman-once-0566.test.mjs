@@ -51,7 +51,7 @@ test('0566 AC1: a new commit doesn\'t start the agent again while its question w
   w.key = 'base2 head2'; w.stop(); w.check(); // and on the ticket's branch
   assert.equal(w.starts.length, 1, 'not started again');
   assert.deepEqual(readAgentState(w.runs).queue, [], 'nothing waits to start');
-  assert.deepEqual(w.said.filter(l => /will look into it/.test(l)), [], 'and it doesn\'t say it will');
+  assert.deepEqual(w.said.filter(l => /I'll look into it/.test(l)), [], 'and it doesn\'t say it will');
 });
 
 test('0566 AC1: a stop queued while the agent was running is dropped once that agent has asked', () => {
