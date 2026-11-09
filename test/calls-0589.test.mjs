@@ -114,6 +114,12 @@ test('0589 AC2: an agent choosing an option its build didn\'t recommend counts t
   assert.deepEqual(recordOf(r).calls, [{ question: ASKED, option: OTHER, other_options: [CHOSEN, THIRD], at: NOW.toISOString() }]);
 });
 
+test('0589 AC2: an agent choosing outside the listed options keeps every option it didn\'t choose', () => {
+  const r = watched('decide');
+  agentDecides(r, 'Defer the decision');
+  assert.deepEqual(recordOf(r).calls, [{ question: ASKED, option: 'Defer the decision', other_options: [CHOSEN, OTHER, THIRD], at: NOW.toISOString() }]);
+});
+
 test('0589 AC2: an agent deciding on a ticket that isn\'t blocked keeps no old question', () => {
   const r = watched('decide', { status: 'building' });
   agentDecides(r, 'Carry on', 'building');

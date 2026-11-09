@@ -49,11 +49,11 @@ const pendingOf = rec => (rec?.go_with && typeof rec.go_with === 'object' && typ
 
 // 0589: each recommendation speck takes is kept in the run record's `calls`, so the question and the options it didn't
 // choose outlast the ticket's Blocked question: { question, option, other_options, at }. `facts` are the question's
-// (questionFacts), and {} when the ticket isn't blocked. The watch agent can choose an option its build didn't recommend,
-// and then the recommended one is the one not chosen.
+// (questionFacts), and {} when the ticket isn't blocked. The watch agent can choose other than its build recommended,
+// and then the recommended one is among those not chosen.
 export function callOf(facts, option, now) {
-  const others = facts.otherOptions ?? [];
-  return { question: facts.question || null, option, other_options: others.includes(option) ? [...(facts.recommendation ? [facts.recommendation] : []), ...others.filter(o => o !== option)] : others, at: now.toISOString() };
+  const offered = [...(facts.recommendation ? [facts.recommendation] : []), ...(facts.otherOptions ?? [])];
+  return { question: facts.question || null, option, other_options: [...new Set(offered)].filter(o => o !== option), at: now.toISOString() };
 }
 const usableCall = c => c && typeof c === 'object' && typeof c.option === 'string' && typeof c.at === 'string';
 // The calls kept for a ticket, oldest first, leaving out anything in its record that isn't one.

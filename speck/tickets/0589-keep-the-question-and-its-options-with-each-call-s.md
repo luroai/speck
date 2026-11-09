@@ -1,7 +1,7 @@
 ---
 id: "0589"
 title: Keep the whole question with each call speck makes                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T18:30:55.350Z"
 ---
 # 0589 · Keep the whole question with each call speck makes
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Decided for you lists only the option speck took. To judge a call, and to change it, you need the question it answered and the options it didn't choose, which today live only in free text in the build's question, if at all.
@@ -55,3 +55,89 @@ Each call speck makes keeps its question and its other options, and Decided for 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "75bf81b31ac56309b926230e62ae0e6ace994778",
+    "session": "fresh",
+    "thread_id": "01a1c199-273c-78d1-849a-61e4d14bef65",
+    "builder_response": "- Tests run: test/calls-0589.test.mjs, through speck test --related, which also ran every existing test file naming a file this branch changed.\n- Round 1. Calls are listed from the ticket's Notes as before, and joined by option and minute to what the run record's `calls` kept. `decidedFor` is unchanged, as 0568's test pins its output exactly; `withCalls` adds the two fields in statusData.\n",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 156180,
+      "cached_input_tokens": 110976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1002,
+      "reasoning_output_tokens": 162
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 45204,
+      "cached": 110976,
+      "write": 0,
+      "output": 1002
+    },
+    "cost_usd": 0.1115256,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:37:17.010Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The build skill includes Other options beside Recommended. The passing AC1 tests exercise questionFacts parsing and board output."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "goWith and foremanAction retain calls, with passing tests for each requested route. However, callOf drops the unchosen recommendation when the watch agent chooses text outside the listed alternatives."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The passing AC3 test exercises status --json and its required fields, but withCalls exposes the incomplete other_options recorded by callOf (F1)."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 tests verify that historical Notes entries remain visible with question null and other_options empty."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported related tests: 1704 passed, zero failed, three skipped. No existing tests were weakened in the diff."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/go-with.mjs",
+        "issue": "callOf includes the original recommendation among other_options only if the chosen text exactly matches a listed alternative. foremanAction accepts arbitrary choice text. For recommendation 'Keep it', alternatives ['Remove it'], and choice 'Defer the decision', the saved alternatives omit 'Keep it'. Verified by directly calling callOf.",
+        "suggested_fix": "Build other_options from the recommendation and listed alternatives, remove the chosen option and duplicates, and test a watch-agent choice outside the listed alternatives.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The main paths work and the reported tests pass. One gap remains: when the watch agent chooses a different option, the saved call can lose the original recommendation. Fix this so users can see all the options speck declined."
+  }
+}
+```
+
+</details>
