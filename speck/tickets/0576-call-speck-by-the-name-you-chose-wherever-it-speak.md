@@ -1,7 +1,7 @@
 ---
 id: "0576"
 title: "Call speck by the name you chose wherever it speaks"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0575"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:03:21.956Z"
-approved: "2026-11-09T18:17:40.767Z"
+approved: "2026-11-09T18:23:26.753Z"
 
 ---
 # 0576 · Call speck by the name you chose wherever it speaks
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once you've named your engineering manager (0575), speck should call it by that name wherever it speaks or acts, or the name means nothing. Today `speck status`, the panel and `speck run`'s log all say "speck asked you…", "speck will take its recommendation…" and "speck will look into it…".
@@ -59,12 +59,13 @@ On a phone-width card, the short status can be cut off, as "Virgil will a…". H
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 271,359
-- Elapsed since build started: 14 min
+- Reviewer tokens: 444,808
+- Elapsed since build started: 20 min
 - Changed lines: 158 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
