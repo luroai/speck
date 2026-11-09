@@ -1,7 +1,7 @@
 ---
 id: "0586"
 title: "Show Capture and Plan as compact rows"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0585"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T21:24:53.557Z"
+approved: "2026-11-09T21:46:36.864Z"
 
 ---
 # 0586 · Show Capture and Plan as compact rows
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Capture and Plan still show the LCD-era cards. In the redesign they're compact rows like Build's, and an empty lane shows speck resting instead of a blank space.
@@ -54,9 +55,15 @@ To see it, open Capture and Plan in the panel; a lane with nothing in it shows s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Opening a Capture note makes its title span both grid columns, including the column occupied by its star.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 340,090
+- Elapsed since build started: 22 min
+- Changed lines: 106 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Tests updated from the old look (AC5), each to the rows' new look with what it checks otherwise left as it was:
