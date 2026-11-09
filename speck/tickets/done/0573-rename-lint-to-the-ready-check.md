@@ -1,7 +1,7 @@
 ---
 id: "0573"
 title: "Rename lint to the ready check"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0563","0564","0565","0566","0567","0568","0569","0570","0571","0572"]  
 created: 2026-11-08
 started: "2026-11-09T00:39:05.212Z"
 approved: "2026-11-09T00:47:15.713Z"
+finished: "2026-11-09T00:51:35.785Z"
 
 ---
 # 0573 · Rename lint to the ready check
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 "Lint" is programmer jargon and doesn't say what the check does, and the user once had to ask what "lint passes" meant. The panel already calls the same checks Readiness, so speck uses two names for one thing, in the CLI, the skills, the docs and its messages.
