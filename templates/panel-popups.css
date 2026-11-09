@@ -143,7 +143,7 @@
   #bridge .bridge-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
   #bridge .bridge-tile { display: flex; flex-direction: column; min-width: 0; padding: 8px; border: .5px solid var(--bar-line); border-radius: 8px; }
   #bridge .bridge-tile .num { font-size: 20px; line-height: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  #bridge .bridge-tile .label { font-size: 12px; line-height: 16px; color: var(--bar-muted); }
+  #bridge .bridge-tile .label { font-size: 12px; line-height: 16px; color: var(--bar-muted); background: var(--bar); }
   #bridge .bridge-section { margin: 20px 0 8px; font-size: 14px; line-height: 20px; font-weight: 600; }
   #bridge .bridge-none { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
   #bridge .bridge-error { margin: 0 0 10px; font-size: 14px; line-height: 20px; color: var(--bad); }
@@ -153,10 +153,10 @@
   #bridge .bridge-title { font-size: 14px; line-height: 20px; font-weight: 600; overflow-wrap: anywhere; }
   #bridge .bridge-reason { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 20px; color: var(--muted); } /* one line */
   #bridge .bridge-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 10px 12px; }
-  #bridge .bridge-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-  #bridge .bridge-dot.needs { background: var(--needs-you); }
-  #bridge .bridge-dot.busy { background: var(--run); }
-  #bridge .bridge-dot.gone { background: transparent; box-shadow: inset 0 0 0 1px var(--muted); }
+  #bridge .bridge-dot { flex: none; box-sizing: border-box; width: 8px; height: 8px; border: 4px solid var(--muted); border-radius: 50%; } /* a border all the way in: a dot, with no fill to hold text */
+  #bridge .bridge-dot.needs { border-color: var(--needs-you); }
+  #bridge .bridge-dot.busy { border-color: var(--run); }
+  #bridge .bridge-dot.gone { border-width: 1px; }
   #bridge .bridge-about { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
   #bridge .bridge-name { font-size: 14px; line-height: 20px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #bridge .bridge-line { font-size: 12px; line-height: 16px; color: var(--muted); }

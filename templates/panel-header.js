@@ -58,6 +58,12 @@ if (typeof globalThis.fetch === 'function') {
     return res;
   };
 }
+// 0596: All projects, in the bar before Settings, made here as it shows only with two or more panels running.
+const bridgeOpener = el('button', 'bridge-open', 'All projects');
+bridgeOpener.type = 'button';
+bridgeOpener.title = 'Every project at once';
+bridgeOpener.hidden = true;
+$('bezel').insertBefore(bridgeOpener, $('settings-open'));
 let projectsGoneList = null, projectsDrawn = null; // the panels still running while the one shown has stopped; what the menu was drawn from
 // The project shown, by the name the menu last gave it.
 function projectShown() {
@@ -79,7 +85,7 @@ function drawProjects() {
   const projects = state && state.projects, list = projectsGoneList || (projects && Array.isArray(projects.list) ? projects.list : []);
   const self = projectsGoneList ? null : projects && projects.self, show = list.length > (projectsGoneList ? 0 : 1);
   $('project-pick').hidden = !show;
-  $('bridge-open').hidden = list.length < 2; // 0596: every project at once, from two running panels
+  bridgeOpener.hidden = list.length < 2; // 0596: every project at once, from two running panels
   const drawn = JSON.stringify([show && list, self]);
   if (!show || drawn === projectsDrawn) return;
   projectsDrawn = drawn;
@@ -127,7 +133,7 @@ function closeBridge() {
   bridgeTimer = null;
   $('bridge').hidden = true;
   holdPage(pageHeld()); // let go first, or the focus can't return to the header
-  if ($('bridge-open').focus) $('bridge-open').focus();
+  if (bridgeOpener.focus) bridgeOpener.focus();
 }
 async function askBridge() {
   if (bridgeAsking || !bridgeOpen) return;
@@ -253,7 +259,7 @@ function openAskedTicket(m) {
   try { v = JSON.parse(kept); } catch { return; }
   if (v && state && state.projects && v.port === state.projects.self) openTicket(String(v.id), m);
 }
-$('bridge-open').addEventListener('click', e => { e.stopPropagation(); openBridge(); });
+bridgeOpener.addEventListener('click', e => { e.stopPropagation(); openBridge(); });
 // 0410: Plan, Build and Shipped are tabs under the header (0520: with Capture first), and only the open one's lane shows. 0582: each says
 // how many its lane holds. Build opens with the
 // page. Each lane's list keeps its own scroll position, put back when its tab opens again.
