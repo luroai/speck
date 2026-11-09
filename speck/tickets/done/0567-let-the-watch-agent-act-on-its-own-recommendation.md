@@ -1,7 +1,7 @@
 ---
 id: "0567"
 title: "Let the watch agent act on its own recommendation"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0564","0566"]                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-09T00:02:07.058Z"
 approved: "2026-11-09T00:09:35.705Z"
+finished: "2026-11-09T00:13:44.894Z"
 
 ---
 # 0567 · Let the watch agent act on its own recommendation
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When speck's watch agent looks into a stop, it usually ends by asking you a question with its recommendation, and you go with it: 10 of its 13 actions in this repo were questions. With `watch: decide`, it should act on its recommendation and tell you, rather than wait for you.
