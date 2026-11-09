@@ -50,7 +50,7 @@ Nothing looks different: the black bar took the old LCD screen's place in an ear
 
 To see it, open the panel: the bar, its status, the Pipeline log's red dot and the lane swipes all work as before.
 
-Worth keeping an eye on: one timing test failed once on a very busy run and passed when run alone. It's unrelated to this change, and it's in the inbox as a follow-up. The design record of the LCD screen is kept as it was.
+Worth keeping an eye on: one timing test failed once on a very busy run and passed when run alone. It's unrelated to this change, and it was already in the inbox. The design record of the LCD screen is kept as it was.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -67,7 +67,7 @@ Round 1 (codex): approve.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
-- To the inbox: `speck/ideas/2026-11-09-steady-0517-s-slide-timing-under-a-busy-run.md`, the one timing test that failed once under load.
+- Skipped as a duplicate: the 0517 AC3 timing test failing once under load (58 ms against the 50 ms limit in this build's related run) matches `speck/ideas/2026-11-08-steady-the-0517-ac3-frame-time-test-under-load.md`.
 - Tidy-up, not sent to the inbox: `foremanOf` in `templates/panel.js` still passes on the Foreman's `why` and `base`, which only the screen's captions read. `foremanView` and its tests still give them.
 
 Tests removed because they checked only the LCD screen (AC3):
