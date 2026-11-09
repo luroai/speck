@@ -1,7 +1,7 @@
 ---
 id: "0579"
 title: "Choose speck's mood from what the pipeline is doing"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-09
 ---
 # 0579 · Choose speck's mood from what the pipeline is doing
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 speck's face should say what the pipeline is doing at a glance, as the LCD's speck did, but with the new character's six moods.
