@@ -57,4 +57,13 @@ A ticket's full view reads top to bottom as in the mock and ends in the action i
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Old-look tests updated to the new one (AC5):
+- `test/panel-0054`, `0061`, `0063`: Outcome and Acceptance criteria now come before Problem, and the pane closes from its back link. `0063`'s section comparison leaves out the rows.
+- `test/panel-0133`: an approved ticket's full view now has Ship, in its bar.
+- `test/panel-0143`, `0165`, `0213`, `0424`: priority, size and risk are separate cells in the new grid, for shipped tickets too; type isn't one of its facts.
+- `test/panel-0161`, `0453`: the back link is a link with no border, so it's no longer one of the bordered controls they check.
+- `test/panel-0423`, `0466`, `panel-focus-0326`: the pane closes from its back link.
+- `test/panel-0465`: the full view has its own four bars and six facts rather than its card's track and table, values wrap, and there is no counter in it.
+
+Follow-ups:
+- A draft's Set ready is still at the top of its body, in its readiness list, rather than at the end of the view: only an approved ticket has the bar (AC4).
