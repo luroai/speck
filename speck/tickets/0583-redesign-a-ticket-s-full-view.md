@@ -1,7 +1,7 @@
 ---
 id: "0583"
 title: "Redesign a ticket's full view"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-09
 ---
 # 0583 · Redesign a ticket's full view
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A ticket's full view (the "side pane", `#full-ticket`) still has the LCD-era look, with tags and bordered boxes. In the redesign it's the one place a ticket's detail lives, so it needs to read clearly on a phone and end in the action that's needed.
