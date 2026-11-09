@@ -246,6 +246,7 @@ test('0476 AC3: the tabs stay in step with the cards, and the lane open and each
     await b.js(`document.getElementById('queue').scrollTop = 220, 1`);
     await swipe(b, [x, y], w, -1);
     await settles(b, 'shipped', 'after another swipe');
+    await b.js(`document.getElementById('shipped-list').style.maxHeight = '300px', 1`); // 0580: under the thin bar its ten rows fit without scrolling, so it's held short enough to scroll
     await b.js(`document.getElementById('shipped-list').scrollTop = 90, 1`);
     const place = lane => b.js(`document.getElementById('${LIST[lane]}').scrollTop`);
     // A closed lane's list isn't drawn, so each lane's place is read with it open, by a swipe.

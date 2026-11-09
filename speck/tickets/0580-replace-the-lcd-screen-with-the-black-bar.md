@@ -76,6 +76,8 @@ Tests updated to the new look (AC5):
 - `test/panel-0147`: Doto's font list went with the title.
 - `test/panel-0543`: under a proxy's path it checks the page's files load, not Doto.
 - `test/pipeline-0415`, `0470`, `0479`: they wait for the bar's status, and compare the log's title with the bar's lettering.
+- `test/panel-0041`, `0134`, `0451`, `panel.test.mjs`: the old title's name and text, the status button's label and the project with its base branch on one line are the bar's now.
+- `test/panel-0476`: the thin bar leaves the Shipped list room for all its rows, so the test holds that list short enough to scroll, and still checks its place survives.
 
 Tests removed, because what they checked is gone (AC5):
 - `test/panel-0471` (the big "speck" title and its dot), `test/panel-0513` (the title's dot going grey while off: speck's asleep face says that now).

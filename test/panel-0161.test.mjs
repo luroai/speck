@@ -358,7 +358,7 @@ async function everyView(b, theme) {
   await b.js(`document.querySelector('#shaping .full-open').click()`);
   await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .facts')`, 'the full ticket'); // 0465: its table, in place of its tags
   checkTexts(await b.js(TEXTS), `${theme}, the full ticket`);
-  checkEdges(await b.js(EDGES), `${theme}, the full ticket`, 7); // 0580: the bar's status has no edge of its own
+  checkEdges(await b.js(EDGES), `${theme}, the full ticket`, 6); // 0583: its Close is a back link now, with no edge. 0580: and the bar's status has none of its own
   tags.push(...(await b.js(TAGS)).filter(t => t.where === 'pane'));
   // 0420: a shipped ticket's tag is a small box in its title's line, so the full ticket's were the boxed ones left to
   // check. 0465: its tags are in its table now, as its card's are, so no boxed tag is left on show.

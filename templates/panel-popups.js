@@ -19,6 +19,8 @@ const changesNotes = new Map(); // 0357: id → the note in its pack's box, kept
 let changesSending = null; // the id whose Ask for changes request hasn't been answered yet
 const changesSaid = new Map(); // id → what speck changes printed when the panel sent its note
 const changesRefused = new Map(); // id → why speck changes refused it, until its next Ask for changes
+const changesOpen = new Set(); // 0583: ids whose note box is unfolded in the full view's bar
+let packFromFull = false; // 0583: the review pack showing was opened from the full view, so closing it goes back there
 // Shows the whole ticket in the side pane, leaving the ticket open in the list. `list` is the id of the list it's in.
 function fullButton(t, list) {
   const b = el('button', 'full-open', 'Full ticket');
@@ -34,6 +36,8 @@ function openFull(t, from = null) {
   fullId = String(t.id);
   packOf = null;
   fullFrom = from;
+  clearSaid(fullId); // 0583: its bar starts afresh, as the pack does
+  changesOpen.delete(fullId);
   render();
   const pane = $('full-ticket');
   if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
@@ -52,16 +56,16 @@ function openPack(id) {
   fullId = String(id);
   fullFrom = null;
   packOf = { id: fullId, state: 'loading' };
-  shipRefused.delete(fullId);
-  shipped.delete(fullId);
+  packFromFull = false;
+  clearSaid(fullId);
   for (const k of packFolders) if (k.startsWith(`${fullId}/`)) packFolders.delete(k); // 0562: its folders fold again
-  changesSaid.delete(fullId); // 0357: the box comes back, holding any note that wasn't sent
-  changesRefused.delete(fullId);
   render();
   const pane = $('full-ticket');
   if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
   loadPack(fullId);
 }
+// What speck ship or speck changes last said about it. 0357: the box comes back, holding any note that wasn't sent.
+function clearSaid(id) { shipRefused.delete(id); shipped.delete(id); changesSaid.delete(id); changesRefused.delete(id); }
 // Fetches the pack once, when it's opened. An answer for a pack that's been closed, or replaced since, is dropped.
 let packSeq = 0;
 async function loadPack(id) {
@@ -257,11 +261,11 @@ function packPane(t) {
 // /speck-ship is: the server runs speck ship for it. Under it, that it's shipping, what speck ship said, or why it refused.
 // That it's shipping, and what speck ship said, show whatever the ticket's status: speck ship sets it done before it
 // pushes, so an update can show it done while the push is still going, or after a push that failed.
-function shipPart(t) {
+function shipPart(t, inBar = false) { // 0583: inBar: for the full view's bar, which opens no pack first and folds the note's box
   const id = String(t.id), pending = shippingId === id || t.shipping === true, out = [];
   if (shipped.has(id)) return [el('div', 'ship-said', shipped.get(id))];
   out.push(...prPart(t)); // 0295
-  if (pending || (t.status === 'approved' && packOf.state === 'ok')) {
+  if (pending || (t.status === 'approved' && (inBar || packOf.state === 'ok'))) {
     const b = el('button', 'ship', pending ? 'Shipping…' : 'Ship');
     b.type = 'button';
     b.disabled = shippingId !== null || t.shipping === true || changesSending === id; // one ship at a time, and none while one runs from elsewhere (0153)
@@ -269,7 +273,7 @@ function shipPart(t) {
     b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) shipTicket(id); });
     // 0357: and, until it's shipping or its note has gone, a box for a note and an Ask for changes button beside Ship.
     const asking = !pending && t.status === 'approved' && !changesSaid.has(id);
-    out.push(asking ? el('div', 'pack-actions', null, ...changesPart(id, b)) : b);
+    out.push(asking ? el('div', 'pack-actions', null, ...changesPart(id, b, inBar)) : b);
   }
   if (pending) out.push(el('div', 'ship-said', `Shipping ${id}: running the tests, then merging and pushing. This can take a few minutes.`));
   if (shipRefused.has(id)) out.push(el('div', 'ship-said bad', shipRefused.get(id)));
@@ -279,7 +283,9 @@ function shipPart(t) {
 }
 // 0357: the note's box, and a row of the Ship button `ship` and Ask for changes, which can't be pressed while the box is
 // empty or only spaces. Typing changes only the button, so the pane isn't redrawn under it.
-function changesPart(id, ship) {
+// 0583: `fold`: in the full view's bar the box starts folded, Ask for changes comes first and Ship last in the accent,
+// and pressing Ask for changes with no note unfolds or folds the box.
+function changesPart(id, ship, fold = false) {
   const box = el('textarea', 'changes-note'), sending = changesSending === id;
   box.value = changesNotes.get(id) || '';
   box.placeholder = 'What you want changed';
@@ -289,8 +295,10 @@ function changesPart(id, ship) {
   const b = el('button', 'ask-changes', sending ? 'Sending…' : 'Ask for changes');
   b.type = 'button';
   b.title = 'Send your note back to the build, as speck changes does: the ticket is built and reviewed again before it ships';
-  const can = () => !sending && changesSending === null && shippingId === null && String(box.value ?? '').trim() !== '';
+  const noted = () => String(box.value ?? '').trim() !== '';
+  const can = () => !sending && changesSending === null && shippingId === null && (fold || noted());
   b.disabled = !can();
+  box.hidden = fold && !changesOpen.has(id);
   // 0363: the pack and the document's pop-up each have a box for the note: typing in one puts the same note in the other.
   box.noteOf = id;
   box.sync = () => { box.value = changesNotes.get(id) || ''; b.disabled = !can(); };
@@ -301,8 +309,15 @@ function changesPart(id, ship) {
     for (const at of ['full-ticket', 'doc-view']) each($(at));
   });
   box.addEventListener('click', e => e.stopPropagation());
-  b.addEventListener('click', e => { e.stopPropagation(); if (can()) askForChanges(id); });
-  return [box, el('div', 'pack-buttons', null, ship, b)];
+  b.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!can()) return;
+    if (!fold || (changesOpen.has(id) && noted())) { askForChanges(id); return; }
+    if (changesOpen.has(id)) changesOpen.delete(id); else changesOpen.add(id);
+    box.hidden = !changesOpen.has(id);
+    if (!box.hidden && box.focus) box.focus();
+  });
+  return [box, el('div', 'pack-buttons', null, ...(fold ? [b, ship] : [ship, b]))];
 }
 async function askForChanges(id) {
   const note = String(changesNotes.get(id) || '').trim();
@@ -314,7 +329,7 @@ async function askForChanges(id) {
     const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/changes`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ note }) });
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
-    if (res.ok) { changesNotes.delete(id); changesSaid.set(id, body && typeof body.message === 'string' && body.message ? body.message : `Your note was sent back to ${id}'s build.`); }
+    if (res.ok) { changesNotes.delete(id); changesOpen.delete(id); changesSaid.set(id, body && typeof body.message === 'string' && body.message ? body.message : `Your note was sent back to ${id}'s build.`); }
     else changesRefused.set(id, body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`);
   } catch {
     changesRefused.set(id, "Couldn't reach the panel server, so your note wasn't sent. Try again.");
@@ -362,46 +377,108 @@ function packBlocks(text) {
   }
   return [...out, ...md(text.slice(at))];
 }
-// The side pane: the ticket's id and title, then (0465) the step track and facts table its card shows open, for a draft
-// its readiness list and buttons as in the list, without Full ticket, then each of its sections that has something in
-// it, its Markdown formatted.
-function fullTicket(t, draft, steps) {
-  const close = el('button', 'close', 'Close');
-  close.type = 'button';
-  close.addEventListener('click', closeFull);
+// The side pane (0583): a back link to the lane it came from, its id, a status pill and its title; then its step track and
+// facts; then, for a draft, its readiness list and buttons as in the list, without Full ticket; then its outcome, its
+// criteria with a tick on each one the reviewer passed, rows that open its review pack and build log, and its other
+// sections that have something in them, their Markdown formatted; then, for an approved ticket, the bar with its actions.
+function fullTicket(t, draft, steps, barShown) {
+  const lane = LANE_OF[backList()], back = el('span', 'close', lane);
+  back.tabIndex = 0;
+  back.setAttribute('role', 'link');
+  back.setAttribute('aria-label', `Back to ${lane}`);
+  back.addEventListener('click', closeFull);
+  back.addEventListener('keydown', pressWithKeys);
   const body = el('div', null, null, draft ? paneReadiness(t) : null);
-  mdPart(body, 'Problem', t.problem);
   mdPart(body, 'Outcome', t.outcome);
-  const criteria = list(t.acceptance_criteria);
+  const criteria = list(t.acceptance_criteria), passed = new Set(list(t.criteria_passed));
   if (criteria.length) {
     const ol = el('ol', 'criteria');
-    for (const c of criteria) {
+    criteria.forEach((c, i) => {
       const [first, ...rest] = markdown(c);
       // A criterion's first paragraph sits in its numbered item, not in a paragraph of its own.
       const lead = first && first.type === 'paragraph' ? mdInline(first.inline) : first ? mdBlocks([first]) : [];
-      ol.appendChild(el('li', null, null, ...lead, ...mdBlocks(rest)));
-    }
+      ol.appendChild(el('li', null, null, passed.has(i + 1) ? tick() : null, ...lead, ...mdBlocks(rest)));
+    });
     body.appendChild(el('h4', null, 'Acceptance criteria'));
     body.appendChild(ol);
   }
+  const rows = paneRows(t);
+  if (rows) body.appendChild(rows);
+  mdPart(body, 'Problem', t.problem);
   mdPart(body, 'Out of scope', t.out_of_scope);
   mdPart(body, 'Notes', t.notes);
-  // 0424: its id and status above its title. 0465: its track and table under it, in place of its tags.
-  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'state', String(t.status ?? '')), close, el('span', 'title', t.title)), steps, body];
+  // 0424: its id and status beside its title. They're laid out by the stylesheet.
+  const pill = el('span', 'state', String(t.status ?? ''));
+  setTone(pill, paneTone(t));
+  return [el('div', 'top', null, el('span', 'id', t.id), pill, back, el('span', 'title', t.title)), steps, body, barShown ? shipBar(t) : null].filter(Boolean);
 }
-// 0465: the track and table the ticket's card shows open, drawn as the list it's in draws them: a draft's as in Plan, a
-// ready one's as in Build, one in flight's as in Build, and a shipped one's as in Shipped. Its priority is a value
-// alone, with no menu (0143).
+const LANE_OF = { shaping: 'Plan', queue: 'Build', shipped: 'Shipped' };
+// The list the back link returns to: the one its Full ticket button is in, or the one the ticket is in now.
+const backList = () => (fullFrom && LANE_OF[fullFrom.list] ? fullFrom.list : paneFrom === 'draft' ? 'shaping' : paneFrom);
+function tick() {
+  const n = el('span', 'tick');
+  n.setAttribute('role', 'img');
+  n.setAttribute('aria-label', 'Passed by the reviewer');
+  return n;
+}
+const setTone = (pill, tone) => pill.setAttribute('data-tone', tone);
+// 0583: the pill's colour: 'waits' when it waits for you, 'working' while it's being worked on, otherwise nothing.
+function paneTone(t) {
+  if (paneFrom === 'draft') return 'waits';
+  if (paneFrom === 'shipped' || !t.inFlight) return '';
+  const d = doing(t, t.shipping || shippingId === String(t.id), speckCalled());
+  if (d.moving) return 'working';
+  return d.tone === 'to-ship' || (d.tone === 'bad' && t.foreman_will !== true) ? 'waits' : '';
+}
+// 0583: its four bars, each 'done', 'now' (filled, where it is), 'waits' (filled in orange: it waits for you there) or empty.
+const PANE_STEPS = ['Ready', 'Built', 'Reviewed', 'Ship'];
+function paneTrack(t, tone) {
+  const now = t.inFlight ? (Array.isArray(t.steps) ? t.steps : []).findIndex(s => s.state === 'now') : -1;
+  const at = paneFrom === 'shipped' ? 4 : paneFrom === 'draft' ? 0 : !t.inFlight ? -1 : now < 2 ? 1 : now === 2 ? 2 : 3;
+  const reached = at === -1 ? 1 : at; // queued: Ready is done, and nothing is current
+  return el('div', 'track', null, ...PANE_STEPS.map((label, i) => {
+    const state = i < reached ? 'done' : i === at ? (tone === 'waits' ? 'waits' : 'now') : '';
+    const n = el('span', `step${state ? ` ${state}` : ''}`, label);
+    n.title = state === 'waits' ? `${label}: waiting for you` : label;
+    return n;
+  }));
+}
+// 0583: its facts, two to a row. A value that's too long wraps, so nothing is cut short on a phone.
+function paneFacts(t) {
+  const priority = t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : '–';
+  const why = typeof t.auto_ship_why === 'string' ? t.auto_ship_why.trim() : '';
+  const ships = t.auto_ship === true ? (t.run_waiting ? 'No · Auto-build is off' : 'Yes') : t.auto_ship === false ? (why ? `No · ${why}` : 'No') : '–';
+  const named = s => (typeof s === 'string' && s.trim() ? `${s.trim()[0].toUpperCase()}${s.trim().slice(1)}` : '');
+  const name = named(t.reviewer), model = typeof t.review_model === 'string' && t.review_model.trim() ? t.review_model.trim() : typeof t.reviewer_model === 'string' ? t.reviewer_model.trim() : '';
+  return el('dl', 'facts', null, factCell('Priority', priority, null), factCell('Size', t.size ? String(t.size) : '–', null), factCell('Risk', t.risk ? String(t.risk) : '–', null),
+    factCell('Ships by itself', ships, null), factCell('Builder', workerOf(t, { round: null }).value, null), factCell('Reviewer', name ? `${name}${model ? ` · ${model}` : ''}` : '–', null));
+}
+// 0583: the rows that open what it has so far: a review pack once a round has run or it waits to ship, and a build log once its build has started.
+const hasPack = t => list(t.rounds).length > 0 || t.roundCount > 0 || t.status === 'approved' || t.shipping === true || t.doc_finished === true;
+const hasLog = t => paneFrom === 'shipped' || t.inFlight === true;
+function paneRows(t) {
+  const row = (label, go) => { const b = el('button', 'pane-row', label); b.type = 'button'; b.addEventListener('click', e => { e.stopPropagation(); go(); }); return b; };
+  const pack = hasPack(t) ? row('Review pack', () => { const from = fullFrom; openPack(t.id); fullFrom = from; packFromFull = true; }) : null;
+  const log = hasLog(t) ? row('Build log', () => openLogFromPane(String(t.id))) : null;
+  if (log) log.buildLogOf = String(t.id); // so the focus can come back to it
+  return pack || log ? el('div', 'pane-rows', null, pack, log) : null;
+}
+// Opens its build log's pop-up. With its card closed, nothing has loaded its log yet.
+function openLogFromPane(id) {
+  buildLogOf = id;
+  if (!openQueue.has(id)) loadLog(id);
+  render();
+}
+// 0583: the bar fixed to the bottom of an approved ticket's full view: Ask for changes and Ship, then what they said.
+const barShows = t => t.status === 'approved' || t.shipping === true || shippingId === String(t.id) || shipped.has(String(t.id));
+const shipBar = t => el('div', 'ship-bar', null, ...shipPart(t, true));
+// 0465, 0583: the track and facts, by the list the ticket is in, and (0467) its dependency box.
 function paneSteps(t) {
-  const [track, facts] = paneFrom === 'draft' ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', false)]
-    : paneFrom === 'shipped' ? [trackOf({ steps: shippedSteps(t) }), shippedFacts(t, shippedDay)]
-      : !t.inFlight ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Queued', 'Waiting on', false)]
-        : [trackOf(t), factsOf(t, doing(t, t.shipping || shippingId === String(t.id), speckCalled()))];
-  return el('div', 'steps', null, track, facts, paneFrom === 'shipped' ? null : withDeps(t, true)); // 0467: and its dependency box
+  return el('div', 'steps', null, paneTrack(t, paneTone(t)), paneFacts(t), paneFrom === 'shipped' ? null : withDeps(t, true));
 }
-// What the pane's track and table show, apart from the counter in a Time cell, which the clock puts right.
-const stepsShown = n => signature([n.children[0].className, ...[...n.children[0].children].map(s => [s.className, s.textContent]),
-  ...[...n.children[1].children].map(c => { const v = c.children[1]; return [c.children[0].textContent, v.className, v.className === 'value time' ? null : [v.title, v.textContent]]; }), n.children[2] ? n.children[2].sig : null]);
+// What the pane's track and table show.
+const stepsShown = n => signature([[...n.children[0].children].map(s => [s.className, s.textContent]),
+  ...[...n.children[1].children].map(c => [c.children[0].textContent, c.children[1].title, c.children[1].textContent]), n.children[2] ? n.children[2].sig : null]);
 // A heading and its Markdown, formatted, or nothing when the text is empty.
 function mdPart(body, heading, text) {
   if (text === null || text === undefined || text === '') return;
@@ -411,14 +488,14 @@ function mdPart(body, heading, text) {
 const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false);
 // What the pane shows apart from its readiness list and its track and table, and what that list shows, with the view
 // state it depends on.
-const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes];
+const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes, t.criteria_passed ?? null, hasPack(t), hasLog(t), backList()];
 const readyData = t => [ownData(t), settingReady.has(t.id), refused.get(t.id) ?? null];
 // Shows the ticket whose id is in fullId wherever it shows: in the Tickets list, the queue or the Shipped list, the
 // first one in that order when ids repeat. It closes the pane when the ticket shows in none of them. The pane keeps
 // its nodes while what they show is unchanged, so text selected in it survives the refresh. When only a draft's
 // readiness list data or its Set ready state changes, a new list replaces the old and the rest stays. The same goes
 // for the track and table under the title (0465), whose counter is put right in place, as a card's is.
-let fullBuilt = null, readyBuilt = null, stepsBuilt = null; // the signatures of what the pane, its readiness list and its track and table show
+let fullBuilt = null, readyBuilt = null, stepsBuilt = null, barBuilt = null; // the signatures of what the pane, its readiness list and its track and table show
 let paneFrom = null; // 0465: which list the pane's ticket is in: 'draft', 'queue' or 'shipped'
 function renderFull(m) {
   const pane = $('full-ticket'), find = ts => ts.find(d => String(d.id) === fullId);
@@ -430,7 +507,8 @@ function renderFull(m) {
   paneFrom = !t ? null : draft ? 'draft' : find(m.queue) ? 'queue' : 'shipped';
   drawDocActs(); // 0363
   const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null, changesSending, changesSaid.get(fullId) ?? null, changesRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
-  const steps = t && !packOf ? paneSteps(t) : null, stepsSig = steps ? signature([fullId, t.status, stepsShown(steps)]) : null;
+  const tone = t && !packOf ? paneTone(t) : '', steps = t && !packOf ? paneSteps(t) : null, stepsSig = steps ? signature([fullId, t.status, tone, stepsShown(steps)]) : null;
+  const barSig = t && !packOf && barShows(t) ? docActsSig(t) : null; // 0583
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
   holdPage(pageHeld());
@@ -438,7 +516,8 @@ function renderFull(m) {
     fullBuilt = sig;
     readyBuilt = readySig;
     stepsBuilt = stepsSig;
-    pane.replaceChildren(...(t ? (packOf ? packPane(t) : fullTicket(t, !!draft, steps)) : []));
+    barBuilt = barSig;
+    pane.replaceChildren(...(t ? (packOf ? packPane(t) : fullTicket(t, !!draft, steps, barSig !== null)) : []));
     return;
   }
   if (readySig !== readyBuilt) {
@@ -452,17 +531,22 @@ function renderFull(m) {
   if (stepsSig !== stepsBuilt) {
     stepsBuilt = stepsSig;
     const state = [...pane.children[0].children].find(n => n.className === 'state');
-    if (state) state.textContent = String(t.status ?? ''); // 0424
+    if (state) { state.textContent = String(t.status ?? ''); setTone(state, tone); } // 0424
     pane.insertBefore(steps, pane.children[1]);
     pane.removeChild(pane.children[2]);
-  } else if (steps) {
-    const sub = paneCounter();
-    if (sub) putCounter(sub, queueCounter(t));
+  }
+  if (barSig !== barBuilt) { // 0583: the bar, drawn again when what it shows changes, with the focus kept in the pane
+    barBuilt = barSig;
+    const old = pane.children[3] || null, had = !!old && within(document.activeElement, old);
+    if (old) pane.removeChild(old);
+    if (barSig !== null) pane.appendChild(shipBar(t));
+    if (had && pane.focus) pane.focus({ preventScroll: true });
   }
 }
-// 0465: the counter in the pane's Time cell, for a ticket in flight in the queue, or null.
-const paneCounter = () => (paneFrom === 'queue' && paneTicket.inFlight && !packOf ? timeOf($('full-ticket').children[1].children[1]) : null);
-function closeFull() { fullId = null; packOf = null; focusBack = true; render(); } // 0362: the pop-up goes with it (renderFull)
+function closeFull() {
+  if (packOf && packFromFull) { packOf = null; packFromFull = false; render(); const pane = $('full-ticket'); if (pane.focus) pane.focus({ preventScroll: true }); return; } // 0583: back to the full view
+  fullId = null; packOf = null; focusBack = true; render(); // 0362: the pop-up goes with it (renderFull)
+}
 // 0326: once the pane has closed and the board is drawn, the focus goes back to the Full ticket button that opened it,
 // the one drawn in its place since, or, when its ticket has none on the board now, to the top of the list it was in.
 // 0466: a shipped one's, or the Shipped lane.
@@ -478,7 +562,7 @@ function returnFocus() {
   if (to.focus) to.focus({ preventScroll: true }); // 0441: the list stays where it was, as 0060 asks, even with the button out of view
 }
 // 0362, 0368: while a document's pop-up or Settings covers the panel, the side pane and its backdrop can't be reached either.
-function holdPane() { for (const id of ['full-ticket', 'full-backdrop']) $(id).inert = !!docOpen || settingsView !== null; }
+function holdPane() { for (const id of ['full-ticket', 'full-backdrop']) $(id).inert = !!docOpen || settingsView !== null || buildLogOf !== null; } // 0583: and a build log opened from it
 // A click on the backdrop closes the pane and nothing else. A drag from the pane to the backdrop clicks a node above both.
 $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-backdrop')) closeFull(); });
 // 0415: a click beside the Pipeline pop-up's column is a click outside it, as with Settings (0368).
@@ -558,6 +642,7 @@ function renderForeman(stale) {
   box.hidden = shows === null;
   box.shows = shows;
   holdPage(pageHeld());
+  holdPane(); // 0583
   if (shows === null) { box.replaceChildren(); return; }
   if (!foremanOpen) { renderBuildLog(was); return; }
   let body = was ? box.children[1] : null;
@@ -682,9 +767,10 @@ function buildLogButton(id) {
 function closeBuildLog() {
   const id = buildLogOf;
   buildLogOf = null;
+  if (!openQueue.has(id)) closeLog(id); // 0583: opened from the full view, with its card closed
   render();
   const find = n => { if (n.buildLogOf === id) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
-  const to = find($('queue')) || $('build-section');
+  const to = find($('full-ticket')) || find($('queue')) || $('build-section'); // 0583: its row in the full view first
   if (to.focus) to.focus({ preventScroll: true });
 }
 // 0548: the ticket's build log in the pop-up, titled "<id> build log", in place of the Pipeline log, which has no stale

@@ -80,7 +80,7 @@ test('0133 AC1: a ticket in any other status has no Ship button, and there is no
   r.press(buttonsIn(r, rowOf(r, '0005'), 'Full ticket')[0]);
   await r.settle();
   assert.equal(pane(r).hidden, false);
-  assert.equal(shipOf(r), null, 'the full ticket of an approved ticket has none');
+  assert.ok(shipOf(r).parentNode.className.includes('pack-buttons'), '0583: an approved ticket\'s full view has it, in its bar');
 });
 
 test('0133 AC2: clicking Ship asks first; confirming sends the ship with the token and shows it is shipping until it finishes', async () => {

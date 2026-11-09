@@ -142,7 +142,6 @@ const NAMED = [
   ['Shipped, a ticket open', '#shipped .full-cell .full-open:first-child'], // 0466: Full ticket, where Details was
   ['Shipped, a ticket open', '#shipped .full-cell .full-open:last-child'],
   ['Build, a ticket open', '#queue .q.open .full-open'],
-  ['the full ticket', '#full-ticket .close'],
   ['a review pack with a document', '#full-ticket .close'],
   ['a review pack with a document', '#full-ticket .pack-document'],
   ['a document', '#doc-view .close'],

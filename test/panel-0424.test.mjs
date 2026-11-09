@@ -55,12 +55,12 @@ const TITLE = '#full-ticket .top .title', SECTION = '#full-ticket h4', TEXT = '#
 test('0424 AC1: the id and status come before the title, and the priority, size, risk and type after it', async () => {
   const p = await openTicket();
   const head = pane(p).children[0];
-  const kids = head.children.filter(n => n.tagName !== 'button');
+  const kids = head.children.filter(n => n.className !== 'close'); // 0583: its back link
   assert.deepEqual(kids.map(n => n.className), ['id', 'state', 'title']);
   assert.deepEqual(kids.map(n => n.textContent), ['0001', 'draft', 'A draft']);
   // 0465: in the table under the top row, in place of the tags
   const facts = pane(p).children[1].children[1].children.map(c => c.children[1].textContent);
-  assert.deepEqual(facts.slice(3), ['P3', 'M · high', 'bug'], 'its priority, size, risk and type');
+  assert.deepEqual(facts.slice(0, 3), ['P3', 'M', 'high'], 'its priority, size and risk (0583)');
 });
 
 test('0424 AC1: the title is the largest text, on a line of its own, and the id and status are in small type', () => {
