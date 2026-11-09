@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
-import { ICONS, PNGS, logo, draw, png, readPng, shapes } from './support/icons.mjs';
+import { logo } from './support/icons.mjs';
 
 // ---------- 0320: the design's new logo in the header and the app icons ----------
 
@@ -39,46 +39,8 @@ test('0320 AC1: the tests that pin the renderer pin the new one', () => {
 
 // 0413: the header's mark went with the header row; speck's screen is the top of the panel now (panel-0413.test.mjs).
 
-test('0320 AC3: icon.svg is the renderer\'s faviconSVG(), which follows the browser\'s light or dark look', () => {
-  const svg = read(ICONS, 'icon.svg').toString();
-  assert.equal(svg, logo().faviconSVG());
-  assert.match(svg, /@media \(prefers-color-scheme:dark\)/);
-  assert.doesNotMatch(svg, /<script|on\w+=/i, 'no script');
-});
-
-test('0320 AC4: the PNG icons are the renderer\'s appIconSVG(\'light\') drawn at their sizes', () => {
-  assert.deepEqual(PNGS, { 'icon-192.png': 192, 'icon-512.png': 512, 'apple-touch-icon.png': 180 });
-  for (const [name, size] of Object.entries(PNGS)) {
-    const file = read(ICONS, name), img = readPng(file);
-    assert.deepEqual([img.w, img.h, img.type], [size, size, 2], `${name}: ${size} px square, RGB`);
-    assert.ok(file.equals(png(size)), `${name} is drawn from appIconSVG('light'): make it again with writeIcons() in test/support/icons.mjs`);
-  }
-});
-
-test('0320 AC4: in the design\'s own colours: its shell, bezel and screen, not the panel\'s lighter screen', () => {
-  const L = logo().LOOKS.light, hex = c => `#${c.map(n => n.toString(16).padStart(2, '0')).join('')}`;
-  for (const [name, size] of Object.entries(PNGS)) {
-    const img = readPng(read(ICONS, name)), at = (x, y) => hex(img.at(Math.floor(x * size / 100), Math.floor(y * size / 100)));
-    assert.equal(at(5, 5), L.shell, `${name}: the shell`);
-    assert.equal(at(14, 50), L.bezel, `${name}: the bezel`);
-    // The middle of the screen's first dot, which is unlit.
-    assert.equal(at(18.5 + 63 / 40, 18.5 + 63 / 40), L.off, `${name}: the design's unlit dots`);
-    // None of the panel's lighter screen, from 0308, anywhere.
-    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) assert.ok(!['230,233,219', '221,225,207'].includes(img.at(x, y).join()), `${name}: shade C at ${x}, ${y}`);
-  }
-  // The gap between the first two dots, wide enough at 512 px to show the screen itself.
-  const big = readPng(read(ICONS, 'icon-512.png'));
-  assert.equal(hex(big.at(110, 102)), L.bg, 'icon-512.png: the design\'s screen');
-});
-
-test('0320 AC4: the drawing reads only the shapes the design draws, and refuses any it can\'t', () => {
-  const s = shapes(logo().appIconSVG('light'));
-  assert.deepEqual(s.slice(0, 3).map(x => x.fill), ['#f2f1ec', '#262722', '#c3c9b1']);
-  assert.ok(s.some(x => /^rgba/.test(x.fill)), 'the dots\' shadow');
-  assert.throws(() => shapes('<svg viewBox="0 0 100 100"><circle r="3"/></svg>'), /<circle>/);
-  assert.throws(() => shapes('<svg viewBox="0 0 100 100"><path fill="#000" d="M0 0l3 3z"/></svg>'), /can't read/);
-  assert.throws(() => draw(10, '<svg viewBox="0 0 100 100"><rect width="1" height="1" fill="red"/></svg>'), /colour/);
-});
+// 0320 AC3 and AC4 made icon.svg and the PNGs the renderer's logo. Since 0594 they're speck as the Premium screen, so
+// what they show is checked in icons-0594.test.mjs.
 
 // The old renderer's drawing code, lines 1 to 706 as 0302 copied them from the design, before its export line.
 const DRAWING = 'aab9409deb0458e88c7d6f82c55f1bca0272eb836c71e00dfee627026c966a75';

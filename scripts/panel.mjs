@@ -259,7 +259,7 @@ export async function panelServer() {
   // 0149: what lets a phone add the panel to its home screen as an app, from templates/icons/: its manifest and icons.
   const iconsDir = path.join(TEMPLATES, 'icons');
   const icons = { '/manifest.webmanifest': 'application/manifest+json', '/icon.svg': 'image/svg+xml',
-    '/icon-192.png': 'image/png', '/icon-512.png': 'image/png', '/apple-touch-icon.png': 'image/png' };
+    '/icon-16.png': 'image/png', '/icon-32.png': 'image/png', '/icon-192.png': 'image/png', '/icon-512.png': 'image/png', '/apple-touch-icon.png': 'image/png' };
   // 0177: /api/state. Requests that arrive while the board is being read share that reading, unless a write has finished
   // since it started: then they wait for the next one, so every answer after a write shows it. A request whose
   // connection has closed by the time its reading would start doesn't cause one.
