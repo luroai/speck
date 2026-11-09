@@ -1,7 +1,7 @@
 ---
 id: "0580"
 title: "Replace the LCD screen with the black bar"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ approved: "2026-11-09T19:40:40.951Z"
 ---
 # 0580 · Replace the LCD screen with the black bar
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 The LCD screen at the top of the panel, with its dot-matrix speck, clock and captions, has become decoration: the user finds it pointless now. The redesign keeps only what was liked, its black frame, as a thin dark bar holding speck and the status.
@@ -155,6 +155,81 @@ Tests removed, because what they checked is gone (AC5):
     "findings": [],
     "escalation_question": "",
     "summary": "The LCD screen is replaced by a compact dark bar showing speck, pipeline status and queue details. The Pipeline log, project switcher and Settings remain available. Tests cover the narrow layout, both looks and scrolling, with no failures in the recorded run. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1c10b36be5ae1e2099bc4e8a39a3959123f70b03",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c1d2-c084-7c52-bf0e-490336b84d56",
+    "builder_response": "- Tests run: test/docs-0267.test.mjs test/panel-0041.test.mjs test/panel-0134.test.mjs test/panel-0451.test.mjs test/panel-0476.test.mjs test/panel.test.mjs test/panel-0161.test.mjs test/panel-0580.test.mjs\n- Merge: test/panel-0161.test.mjs conflicted (class logic): both sides lowered the full ticket's control count to 7, 0583 for its Close and 0580 for the bar's status. Both changes hold, so it is 6, with both reasons in the comment.\n- Why ship failed: seven tests the whole suite runs, and this ticket's related run did not.\n- 0031, 0033 (test/panel.test.mjs), 0041, 0134, 0451: they read the old header: the project and base branch on one line, the speck title, its static text, and the \"speck's screen\" label. Updated to the bar, as AC5 asks; each still checks what it did (the project and base branch are shown, hover ends away from the chain, no text beyond the bar's separators, no mention of fixing).\n- 0267: not changed. It runs the tests that read documents, and passes now that those pass.\n- 0476 AC3: Shipped's list shows ten rows and, under the 69 px header, they fit, so scrollTop stayed 0 (measured: scrollHeight 546, clientHeight 546). The test now sets that list's max-height to 300 px before scrolling it to 90. The check that the place survives is unchanged. No code change: nothing is wrong with the scrolling.\n- No code outside tests changed in this merge. The Delivery log lists these tests.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 474827,
+      "cached_input_tokens": 375296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1252,
+      "reasoning_output_tokens": 58
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 41903,
+      "cached": 178944,
+      "write": 0,
+      "output": 495
+    },
+    "cost_usd": 0.1066504,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T19:54:09.029Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html, panel-header.css and drawBar in panel-header.js retain the thin, rounded, inset bar with the 44 px mood face, status, project, queue details, orange needs-you count, base branch and Settings. All corresponding panel-0580 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The panel-0580 AC2 test passed: pressing the status opens the Pipeline log and updates aria-expanded."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The panel-0580 AC3 test passed: the menu lists running projects, posts the selected project's port and reloads. The merge preserves drawProjects and chooseProject."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The panel-0580 AC4 browser test passed, checking the first line at 320 px, matching colours in both looks and a stationary bar while the lane list scrolls."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the additional test updates. The panel-0161 conflict resolution preserves both changes by lowering the full-ticket control count to six. panel-0476 still verifies actual scroll positions survive navigation, refresh and a pop-up; its height constraint makes the shorter-header fixture scrollable. The recorded run passed 218 tests, skipped three and failed none."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change preserves the compact bar and the newer ticket view. The additional test updates retain their behavioural checks, including scroll-position preservation. All acceptance criteria pass, with no blocking concerns."
   }
 }
 ```
