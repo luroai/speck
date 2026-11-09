@@ -1,7 +1,7 @@
 ---
 id: "0584"
 title: "Show a build's live details in its full view"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0583"]                # ticket ids that must be done first
 created: 2026-11-09
+started: "2026-11-09T19:26:25.966Z"
 
 ---
 # 0584 · Show a build's live details in its full view
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A building ticket's card holds its live log, its progress, its paused or blocked state and its Stop button. The redesign turns Build cards into compact rows (0585), so those details need a home first, or they'd be lost.
