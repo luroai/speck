@@ -45,6 +45,7 @@ The panel has a Decided for you list of the recommendations speck took, with a w
 - Waits for 0564 and 0567, which write the lines it lists, and 0565, which gives `criteria_changed`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: the Decided for you line behind the open list is now held with the rest of the page, so Tab can't reach it; and a shipped ticket's criteria change is read from history, as its branch has gone.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

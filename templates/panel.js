@@ -362,14 +362,14 @@ function mdInline(nodes) {
 }
 // While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
 // 0366: the same while Settings or the Foreman's pop-up is open.
-const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen || buildLogOf !== null; // 0548: and a build log's pop-up
+const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen || buildLogOf !== null || decidedOpen; // 0548: and a build log's pop-up, 0568: and the Decided for you list
 let heldAt = null; // the page's scroll position when the pane opened, or null while it's closed
 function holdPage(on) {
   const root = document.documentElement;
   if (!root || (heldAt !== null) === on) return;
   if (on) heldAt = [scrollX, scrollY];
   root.classList.toggle('held', on);
-  for (const n of document.querySelectorAll('header, #offline, #restart, #tabs, main')) n.inert = on; // Tab can't reach, press or scroll to it (0410: nor the tabs)
+  for (const n of document.querySelectorAll('header, #decided-open, #offline, #restart, #tabs, main')) n.inert = on; // Tab can't reach, press or scroll to it (0410: nor the tabs)
   if (!on) { scrollTo(...heldAt); heldAt = null; }
 }
 // 0453: a phone draws a side of a button's border only when that edge is on a whole pixel (0281), so each button with a
@@ -434,6 +434,7 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return laneKey(e); // 0476: the left and right arrow keys change lane
   if (tipTag !== null) closeTip();
   else if (docOpen !== null) closeDoc(); // 0362: the pop-up, over everything else
+  else if (decidedOpen) closeDecided(); // 0568
   else if (foremanOpen && settingsView === null) closeForeman(); // 0285: the Foreman's detail
   else if (buildLogOf !== null && settingsView === null) closeBuildLog(); // 0548: a build log's pop-up
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
@@ -1325,6 +1326,7 @@ function render() {
     t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), 'No draft tickets.');
   renderFull(m);
+  renderDecided(m); // 0568
 
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).

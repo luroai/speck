@@ -7,6 +7,7 @@ let fullId = null; // the id of the ticket in the side pane, or null
 let fullFrom = null; // 0326: { id, list } of the Full ticket button that opened the pane, or null when something else did
 let focusBack = false; // 0326: the pane has closed, so the next render puts the focus back
 let foremanOpen = false; // 0285: whether the Foreman's detail is open
+let decidedOpen = false, decidedBuilt = null; // 0568: whether the Decided for you list is open, and what it was last drawn from
 let runLog = null, runLogFor = null, runLogAsking = false, runLogShown, runLogDrawn = null; // 0415: runLogShown: the log's lines as drawn (runLogDrawn), joined, undefined when not drawn
 let buildLogOf = null; // 0548: the id of the ticket whose build log the Pipeline log's pop-up shows instead, or null
 let buildLogShown, buildLogDrawn = null, buildLogBuild = null; // 0548: as runLogShown and runLogDrawn, and the build they're from
@@ -43,20 +44,23 @@ function packButton(t) {
   b.type = 'button';
   b.addEventListener('click', e => {
     e.stopPropagation(); // the click is for the button, not the ticket
-    fullId = String(t.id);
-    fullFrom = null;
-    packOf = { id: fullId, state: 'loading' };
-    shipRefused.delete(fullId);
-    shipped.delete(fullId);
-    for (const k of packFolders) if (k.startsWith(`${fullId}/`)) packFolders.delete(k); // 0562: its folders fold again
-    changesSaid.delete(fullId); // 0357: the box comes back, holding any note that wasn't sent
-    changesRefused.delete(fullId);
-    render();
-    const pane = $('full-ticket');
-    if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
-    loadPack(fullId);
+    openPack(t.id);
   });
   return b;
+}
+function openPack(id) {
+  fullId = String(id);
+  fullFrom = null;
+  packOf = { id: fullId, state: 'loading' };
+  shipRefused.delete(fullId);
+  shipped.delete(fullId);
+  for (const k of packFolders) if (k.startsWith(`${fullId}/`)) packFolders.delete(k); // 0562: its folders fold again
+  changesSaid.delete(fullId); // 0357: the box comes back, holding any note that wasn't sent
+  changesRefused.delete(fullId);
+  render();
+  const pane = $('full-ticket');
+  if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
+  loadPack(fullId);
 }
 // Fetches the pack once, when it's opened. An answer for a pack that's been closed, or replaced since, is dropped.
 let packSeq = 0;
@@ -489,6 +493,52 @@ $('run').addEventListener('click', e => {
   foremanOpen = true;
   render();
 });
+// 0568: the Decided for you list, in a pop-up over the whole panel, opened from the line under speck's status. A
+// decision whose ticket has a review pack with Ask for changes (approved and not shipping) has a Change button, which
+// opens that pack. It's drawn again only when what it shows changes, so a refresh doesn't take the focus or the scroll.
+$('decided-open').addEventListener('click', e => {
+  e.stopPropagation();
+  decidedOpen = true;
+  render();
+});
+function closeDecided() {
+  decidedOpen = false;
+  render();
+  const line = $('decided-open');
+  if (line.focus) line.focus();
+}
+function decidedRow(d, can) {
+  const id = String(d.id), row = el('div', 'decided-row', null, el('div', 'decided-head', null, el('span', 'id', id), el('span', 'decided-title', String(d.title ?? ''))),
+    el('div', 'decided-option', String(d.option ?? '')), el('div', 'decided-when', `${tookAt(d.at)}${d.criteria_changed === true ? ' · changed a criterion' : ''}`));
+  if (can) {
+    const b = el('button', 'full-open decided-change', 'Change');
+    b.type = 'button';
+    b.setAttribute('aria-label', `Change ${id}`);
+    b.addEventListener('click', e => { e.stopPropagation(); decidedOpen = false; openPack(id); });
+    row.appendChild(b);
+  }
+  return row;
+}
+function renderDecided(m) {
+  const list = (Array.isArray(state.decided) ? state.decided : []).filter(d => d && typeof d === 'object');
+  const line = $('decided-open'), box = $('decided'), was = !box.hidden;
+  line.hidden = !list.length;
+  line.textContent = list.length ? `speck decided ${list.length} for you in the last 7 days` : '';
+  const can = d => m.queue.some(t => String(t.id) === String(d.id) && t.status === 'approved' && t.shipping !== true) && shippingId !== String(d.id);
+  box.hidden = !decidedOpen;
+  holdPage(pageHeld());
+  if (!decidedOpen) { box.replaceChildren(); decidedBuilt = null; return; }
+  const sig = signature(list.map(d => [d, can(d)]));
+  if (sig === decidedBuilt) return;
+  decidedBuilt = sig;
+  const had = within(document.activeElement, box), shut = el('button', 'close', 'Close');
+  shut.type = 'button';
+  shut.addEventListener('click', e => { e.stopPropagation(); closeDecided(); });
+  box.replaceChildren(el('div', 'top', null, el('span', 'title', 'Decided for you'), shut),
+    list.length ? el('div', 'decided-list', null, ...list.map(d => decidedRow(d, can(d)))) : el('p', 'decided-none', 'Nothing decided in the last 7 days.'));
+  if (!was) box.scrollTop = 0;
+  if ((!was || had) && box.focus) box.focus({ preventScroll: true });
+}
 // 0366: closes the Foreman's pop-up, with the focus back on speck's screen (0413), which opened it.
 function closeForeman() {
   foremanOpen = false;
