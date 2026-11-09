@@ -85,7 +85,7 @@ test('0434 AC3: a Build row shows no priority, size or risk; its full view does'
   assert.deepEqual(factsOf(await fullViewOf(p, '0426')).slice(0, 3), [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'high']], '0426: its full view shows its priority, size and risk');
 });
 
-test('0434 AC4: a closed Plan or Shipped ticket\'s title is one line, cut off with an ellipsis, with the whole title as its tooltip; an open one wraps; a Build row\'s wraps', async () => {
+test('0434 AC4: a closed Shipped ticket\'s title is one line, cut off with an ellipsis, with the whole title as its tooltip; an open one wraps; a Build or Plan row\'s wraps (0586)', async () => {
   const s = board();
   s.tickets.push(T('0911', 'done', { title: LONG, end: ago(60) }));
   const p = page(s);
@@ -98,12 +98,13 @@ test('0434 AC4: a closed Plan or Shipped ticket\'s title is one line, cut off wi
   }
   assert.equal(p.all(card(p, '0426')).find(n => n.className === 'title').textContent, LONG, 'Build: the whole title is its text');
   const style = css();
-  const rule = /\.item\.ticket:not\(\.open\) \.line \.title, #shipped tr:not\(\.open\) \.line \.title \{([^}]*)\}/.exec(style);
-  assert.ok(rule, 'one rule for a closed ticket\'s title in Plan and Shipped');
+  const rule = /#shipped tr:not\(\.open\) \.line \.title \{([^}]*)\}/.exec(style);
+  assert.ok(rule, 'the rule for a closed Shipped ticket\'s title');
   assert.match(rule[1], /white-space: nowrap;/);
   assert.match(rule[1], /overflow: hidden;/);
   assert.match(rule[1], /text-overflow: ellipsis;/);
   assert.match(style, /\.q\.row \.top \.line \.title \{ white-space: normal; overflow: visible;/, 'a Build row\'s title wraps');
+  assert.match(style, /\.item\.row \.line \.title \{[^}]*white-space: normal; overflow: visible;/, 'a Plan or Capture row\'s title wraps');
   // an open one is marked open, so the rule leaves it to wrap
   click(topOf(card(p, '0801')));
   await p.settle();

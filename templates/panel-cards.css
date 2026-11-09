@@ -35,7 +35,6 @@
   /* Shaping */
   /* 0151: each item is a card of its own, with space between cards */
   #shaping, #capture { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
-  #shaping .empty, #capture .empty { padding: 0 4px; }
   .item { padding: 10px 14px; border: 1px solid var(--line); }
   .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
   .item .head { margin: -10px -14px; padding: 10px 14px; } /* the item's padding opens and closes it too */
@@ -57,10 +56,9 @@
   .item .line .id { flex: none; font-size: 14px; }
   .item .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
   .item .path { margin-bottom: 6px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; } /* 0435: an open note's path, above its text */
-  /* 0538: a note's star in Capture, boxed as every button is, in a 44 px square at the card's right: its top level with
-     the title, reaching down beside the second line, so the card is no taller. Empty, or filled in the warm colour once
-     starred. The focus ring is every control's. */
-  .item .head .star { align-self: start; display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 44px; height: 44px; margin: 0 -4px -20px 0; padding: 0; background: transparent; color: var(--muted); border: .5px solid var(--muted); cursor: pointer; }
+  /* 0538: a note's star in Capture, boxed as every button is, in a 44 px square at the row's right. Empty, or filled in
+     the warm colour once starred. The focus ring is every control's. */
+  .item .head .star { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 44px; height: 44px; padding: 0; background: transparent; color: var(--muted); border: .5px solid var(--muted); cursor: pointer; }
   .item .head .star svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
   .item .head .star.on { color: var(--warn); border-color: var(--warn); }
   .item .head .star.on svg { fill: currentColor; }
@@ -138,22 +136,31 @@
      Its lights move across it only when the browser allows motion (below); held still, one diagonal is lit. */
   /* 0434: a closed ticket's title is one line, cut off with an ellipsis when it doesn't fit, and a closed Build ticket's
      status line is one line too. An open one wraps as needed. */
-  .item.ticket:not(.open) .line .title, #shipped tr:not(.open) .line .title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* 0435: a closed idea's or inbox note's title too, so the card is its title line and its second line */
-  .item.idea:not(.open) .line .title, .item.inbox:not(.open) .line .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item.idea:not(.open) .head .line, .item.inbox:not(.open) .head .line { min-width: 0; } /* its grid column no wider than the card */
-  /* 0419: a Plan or Build ticket is its title line and one line of details, in smaller type: a Build ticket's parts
-     separated by " · ", and (0519) a Plan ticket's labels side by side. */
-  .item.ticket, .q { padding: 6px 10px; }
-  .item.ticket .head { display: block; margin: -6px -10px; padding: 6px 10px; }
+  #shipped tr:not(.open) .line .title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* 0419: a Plan or Build ticket is its title line and one line of details, in smaller type, its parts separated by " · ". */
+  .q { padding: 6px 10px; }
   .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
   .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
-  /* 0519: a closed Plan ticket's second row is its priority, size, risk and type, each a small boxed label, side by side
-     on one line that never wraps. A closed Build ticket's bug, fix or task tag is the same small box, as Shipped's is.
-     --label-border is the boxes' border: a whole pixel below a pixel ratio of 2 (below) */
-  .item.ticket .head .checks { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; font-size: 12px; line-height: 16px; color: var(--muted); white-space: nowrap; }
-  .item.ticket .head .checks { --label-border: .5px; }
-  .item.ticket .head .checks .tag { flex: none; display: inline-block; font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; vertical-align: middle; }
+  /* 0586: Capture's and Plan's rows, as Build's: a hairline under each, its title wrapping, then one line of smaller
+     type, with its star or Set ready at its right */
+  #shaping:has(.item.row), #capture:has(.item.row) { gap: 0; padding: 0; }
+  .item.row { display: block; padding: 0; border: 0; border-bottom: .5px solid var(--line); border-radius: 0; }
+  .item.row .head { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; align-items: center; min-height: 44px; margin: 0; padding: 7px 14px 8px; }
+  .item.row .head > * { grid-column: 1; }
+  .item.row .head > .track, .item.row .head > .facts { grid-column: 1 / -1; }
+  .item.row .line .title { font-size: 17px; line-height: 20px; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+  .item.row .checks { display: block; font-size: 12px; line-height: 16px; color: var(--muted); }
+  .item.row .checks .tag { border: 0; padding: 0; font: inherit; font-family: var(--font-mono); line-height: 16px; vertical-align: baseline; }
+  .item.row .checks .agent { margin-left: 8px; }
+  .item.row .checks .tag:not(.pick) { position: relative; z-index: 1; } /* above the priority's 44 px box, which reaches over the dot after it */
+  .item.row .head .star, .item.row .head .set-ready { grid-column: 2; grid-row: 1 / span 2; align-self: center; margin: 0; }
+  .item.row > .bad, .item.row > .bad.refused { margin: 0; padding: 0 14px 8px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .item.row .detail { margin: 0; padding: 8px 14px 10px; }
+  .item.row.open { border-color: var(--line); }
+  .item.ticket.row.open .head .line { grid-column: 1 / -1; } /* open, a ticket's title has the whole row and Set ready is under the table */
+  .item.ticket.row.open .head .set-ready { grid-column: 1 / -1; grid-row: auto; justify-self: start; margin-top: 8px; }
+  /* 0586: an empty Capture or Plan: speck asleep over its line, centred */
+  #shaping .asleep, #capture .asleep { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; font-size: 14px; line-height: 20px; text-align: center; color: var(--muted); }
   @media (prefers-reduced-motion: no-preference) {
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
@@ -405,9 +412,6 @@
   .dep-chip { min-width: 44px; min-height: 44px; margin: -13px 0; } /* 0468: its pill in the middle, and the title line no taller */
 
   /* 0419: wide gaps either side of each " · " in a Build card's status line, so the tags' tap areas in it stay apart */
-  /* 0519: every closed card is as tall as its 44 px top row: its title line, then a second row of 24 px (22 px in
-     Shipped, whose title line is 22 px), so the cards in every lane are the same height, with no room under the row */
-  .item.ticket:not(.open) .head .checks { height: 24px; line-height: 24px; }
   /* A closed Build card's status line is cut off at its edges, so it's a 44 px line, for its tag's 44 px tap area, that
      reaches 10 px up behind the title line and 10 px down past the card's padding, taking only 24 px of the card's
      height, its text where a 24 px line's is. Its tag, 16 px and its two borders high, is in the line's exact middle, so
@@ -419,9 +423,9 @@
   /* 0484: when the line doesn't fit, its words (or, while an agent is at work, the reviewer's model) give up room first:
      the page script sets their width to what the stage, time and tag leave, and they end in … there. Clipped across
      only, so nothing is cut off below and they keep their baseline. */
-  /* The priority's 44 px box takes no more room in the row than its label does. 0519: it's first in the row, so its box
-     reaches left of the label, into the card's edge, and not over the label beside it */
-  .item.ticket .head .checks .prio { justify-content: flex-end; padding: 0; margin: -14px 0 -14px calc(2ch + 10px + 2 * var(--label-border) - 44px); font-family: var(--font-mono); font-size: 12px; }
+  /* The priority's 44 px box takes no more room in the row than its label does (0586: it's first in the line, so its
+     box reaches left into the row's padding, and only over the dot after it). */
+  .item.ticket .head .checks .prio { justify-content: flex-start; padding: 0 0 0 14px; margin: -14px calc(2ch - 30px) -14px -14px; font-family: var(--font-mono); font-size: 12px; }
   /* 0463: in a draft's facts table, the priority's 44 px box starts at the value's left, and its negative margins give
      back what it reaches above and below the line, so the cell stays as tall as the others. A tap anywhere in it
      reaches the priority. */
@@ -447,8 +451,8 @@
     .item.ticket .facts .set-prio::after { content: ''; position: absolute; inset: 0; }
     /* 0224: a linked id's tap area reaches past its text, so the tags beside it in the line (0419) are above it: a tap
        anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
-    /* 0519: a closed Plan card's second row is only 24 px high, so a label's tap area reaches from the row's top to the
-       card's bottom, never into the title line above it, and only halfway into the gap beside it */
+    /* 0519: a closed Plan row's line is short, so a label's tap area reaches from the row's top to the
+       row's bottom, never into the title line above it, and only halfway into the gap beside it */
     .item.ticket:not(.open) .head .checks .tag:not(.pick)::after { inset: -3.5px -2px -10.5px; }
   }
 
@@ -457,6 +461,4 @@
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
     .prio-menu button, .set-ready, .q .stop-build, .q .back-to-plan, .q .go-with, .resume .copy, .foreman-ask .ask-reply, .full-open { border-width: 1px; }
-    .item.ticket .head .checks { --label-border: 1px; } /* 0519: the labels' border, as a whole pixel */
-    .item.ticket .head .checks .tag { border-width: 1px; }
   }

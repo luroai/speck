@@ -54,7 +54,7 @@ test('0467 AC1: an open card waiting on four shows the counts, the bar, the unsh
   const p = boardPage([board()]);
   await p.settle();
   const [card0, head] = await openCard(p, '0100');
-  assert.equal(head.children[head.children.length - 1].className, 'facts', 'its top row ends with its table');
+  assert.equal(head.children[head.children.length - 2].className, 'facts', 'its top row ends with its table, then Set ready (0586)');
   const box = card0.children[card0.children.indexOf(head) + 1].children[0]; // first in its details, under its top row
   assert.equal(box.className, 'deps deps-waits', 'right under its table');
   assert.deepEqual(cls(box, /^deps-head$/).children.map(n => n.textContent), ['Waits on', '2 shipped · 1 building · 1 queued']);
@@ -109,7 +109,7 @@ test('0467 AC2: an open card in a chain shows the Chain box: its header, then fi
     assert.equal(box.className, 'deps deps-chain');
     if (inView(p, card)) assert.deepEqual(card.children[1].children.map(n => n.className).slice(0, 3), ['track', 'facts', 'deps deps-chain'], `${id}: right under its table`); // 0584: then its live section
     else {
-      assert.equal(head.children[head.children.length - 1].className, 'facts', `${id}: its top row ends with its table`);
+      assert.equal(head.children[head.children.length - 2].className, 'facts', `${id}: its top row ends with its table, then Set ready (0586)`);
       const under = card.children[card.children.indexOf(head) + 1];
       assert.equal(under.className === 'detail' ? under.children[0] : under, box, `${id}: right under it`);
     }

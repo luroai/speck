@@ -113,12 +113,12 @@ test('0520 AC2: a closed card opens to the note\'s whole text and closes again',
   assert.doesNotMatch(notes(p)[1].className, /\bopen\b/, 'closed again');
 });
 
-test('0520 AC2: with no idea or inbox note, Capture says "Nothing captured."', async () => {
+test('0520 AC2: with no idea or inbox note, Capture says "Nothing captured · Ideas you capture in chat land here."', async () => {
   const b = board();
   b.ideas = b.ideas.filter(i => !['idea', 'inbox'].includes(i.status));
   const p = await opened(b);
   assert.equal(notes(p).length, 0);
-  assert.equal(p.byId('capture').textContent, 'Nothing captured.');
+  assert.equal(p.byId('capture').textContent, 'Nothing captured · Ideas you capture in chat land here.');
 });
 
 // ---------- AC3 ----------

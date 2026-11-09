@@ -33,7 +33,7 @@ test('0056 AC1, AC2 (0520: in Capture): the page lists no ticketed idea, whateve
   assert.doesNotMatch(p.byId('capture').textContent, /Done|Two|Three/);
 });
 
-test('0056 AC3 (0520: in Capture): with every idea ticketed, Capture has no idea card, and with nothing else says "Nothing captured."', async () => {
+test('0056 AC3 (0520: in Capture): with every idea ticketed, Capture has no idea card, and with nothing else says "Nothing captured · Ideas you capture in chat land here."', async () => {
   const s = { tickets: [], ideas: [idea('Done A', 'ticketed (0002)'), idea('Note', 'inbox'), idea('Gone', 'dropped')] };
   const p = fakePage([s]);
   await p.settle();
@@ -41,13 +41,13 @@ test('0056 AC3 (0520: in Capture): with every idea ticketed, Capture has no idea
   const q = fakePage([{ tickets: [], ideas: [idea('Done A', 'ticketed (0002)'), idea('Gone', 'dropped')] }]);
   await q.settle();
   assert.equal(notes(q).length, 0);
-  assert.equal(q.byId('capture').textContent, 'Nothing captured.');
+  assert.equal(q.byId('capture').textContent, 'Nothing captured · Ideas you capture in chat land here.');
 });
 
-test('0056 AC3 (0520: in Capture): with no ideas at all, Capture says "Nothing captured."', async () => {
+test('0056 AC3 (0520: in Capture): with no ideas at all, Capture says "Nothing captured · Ideas you capture in chat land here."', async () => {
   const p = fakePage([{ tickets: [], ideas: [] }]);
   await p.settle();
-  assert.equal(p.byId('capture').textContent, 'Nothing captured.');
+  assert.equal(p.byId('capture').textContent, 'Nothing captured · Ideas you capture in chat land here.');
 });
 
 test('0056 AC4: an open idea that becomes ticketed leaves the list on the next refresh, and the other open ideas stay open', async () => {

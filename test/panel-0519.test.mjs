@@ -20,15 +20,14 @@ const board = () => ({ run: { on: true }, ideas: [], tickets: [
   full('0605', { priority: '', size: '', risk: '' }),
 ] });
 
-test('0519 AC1: a closed Plan card\'s second row is its priority, size, risk and type, each a label, with no " · ", criteria or lint result', async () => {
+test('0519, 0586 AC1: a closed Plan row\'s second line is its priority, size, risk and type, separated by " · ", with no criteria or lint result', async () => {
   const p = fakePage([board()]);
   await p.settle();
   for (const [id, want] of [['0601', ['P3', 'M', 'low']], ['0602', ['P1', 'S', 'high', 'bug']], ['0603', ['P0', 'S', 'low', 'fix']], ['0604', ['P2', 'M', 'low', 'task']], ['0605', []]]) {
     const row = rowOf(card(p, id));
     assert.equal(row.className, 'checks', `${id}: its second row`);
     assert.deepEqual(tags(p, row).map(n => n.textContent), want, `${id}: its labels`);
-    assert.equal(row.textContent, want.join(''), `${id}: nothing but its labels`);
-    assert.ok(!p.all(row).some(n => /\bsep\b/.test(n.className)), `${id}: no " · " between them`);
+    assert.equal(row.textContent.replace(/\s+/g, ' ').trim(), want.join(' · '), `${id}: nothing but its labels and their dots`);
     assert.doesNotMatch(row.textContent, /criteri|lint|warning/, `${id}: no criteria count or lint result`);
   }
 });
@@ -91,12 +90,12 @@ async function inPanel(fn) {
   } finally { await b.close(); await stop(panel); }
 }
 
-test('0519 AC3 and AC4: at 320, 375 and 420 px, in both looks, every closed card in Plan and Shipped is the same height, its title and second row on one line each with no room under the row', skip, () => inPanel(async (b, go) => {
+test('0519 AC3 and AC4: at 320, 375 and 420 px, in both looks, every closed card in Shipped (0586: Plan is rows) is the same height, its title and second row on one line each with no room under the row', skip, () => inPanel(async (b, go) => {
   for (const width of [320, 375, 420]) for (const look of ['light', 'dark']) {
     const at = `${width} px, ${look}`;
     await go(width, look);
     const heights = [];
-    for (const [lane, sel] of LANES) {
+    for (const [lane, sel] of LANES.filter(([l]) => l !== 'plan')) {
       await b.js(openLane(lane));
       const cards = await b.js(MEASURE(sel));
       assert.ok(cards.length >= 3, `${at}: the ${lane} lane's closed cards`);
@@ -114,7 +113,7 @@ test('0519 AC3 and AC4: at 320, 375 and 420 px, in both looks, every closed card
   }
 }));
 
-test('0519 AC1 and AC2: in a real browser, a closed Plan card\'s labels are small boxes side by side with a small gap, and a tap on the priority opens its menu', skip, () => inPanel(async (b, go) => {
+test('0586 AC2: in a real browser, a closed Plan row\'s labels are plain text side by side, and a tap on the priority opens its menu', skip, () => inPanel(async (b, go) => {
   for (const width of [320, 420]) {
     await go(width, 'light');
     await b.js(openLane('plan'));
@@ -123,13 +122,13 @@ test('0519 AC1 and AC2: in a real browser, a closed Plan card\'s labels are smal
       const at = `${width} px, ${c.id}`;
       assert.ok(c.labels.length >= 3, `${at}: its labels`);
       for (const l of c.labels) {
-        assert.ok(l.border > 0, `${at}: ${l.text} has a border`);
+        assert.equal(l.border, 0, `${at}: ${l.text} has no border`);
         assert.ok(l.size < c.titleSize, `${at}: ${l.text} is smaller type (${l.size} px) than the title (${c.titleSize} px)`);
         assert.ok(Math.abs(l.top - c.labels[0].top) < 0.5, `${at}: ${l.text} is beside the others`);
       }
       for (let i = 1; i < c.labels.length; i++) {
         const gap = c.labels[i].left - c.labels[i - 1].right;
-        assert.ok(gap > 0 && gap <= 8, `${at}: ${gap} px between ${c.labels[i - 1].text} and ${c.labels[i].text}`);
+        assert.ok(gap > 0 && gap <= 24, `${at}: ${gap} px between ${c.labels[i - 1].text} and ${c.labels[i].text}`);
       }
     }
     // the priority, tapped where its label is, opens the menu

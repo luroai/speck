@@ -28,7 +28,7 @@ test('0537 AC1: a note with a time has the same card date as one without', async
   const shown = await cards([note('timed', 'idea', `${Y}-10-27 14:32`), note('untimed', 'idea', `${Y}-10-27`)]);
   assert.equal(shown.length, 2, 'both are listed as ideas');
   for (const [title, text] of shown) {
-    assert.match(text, /Captured 27 Oct/, `${title} says when it was captured`);
+    assert.match(text, /Idea · 27 Oct/, `${title} says when it was captured`);
     assert.doesNotMatch(text, /14:32/, `${title} shows no time`);
   }
 });
@@ -67,7 +67,7 @@ test('0537 AC3: a time that is not a real time sorts as no time', () => {
 test('0537 AC3: a note with a time that is not real shows its date as one with no time', async () => {
   const shown = await cards([note('bad', 'idea', `${Y}-10-27 25:00`), note('worse', 'idea', `${Y}-10-27 9:5`)]);
   assert.equal(shown.length, 2);
-  for (const [title, text] of shown) assert.match(text, /Captured 27 Oct/, title);
+  for (const [title, text] of shown) assert.match(text, /Idea · 27 Oct/, title);
 });
 
 test('0537 AC4: the capture and follow-up note formats write the time on the Captured line', () => {

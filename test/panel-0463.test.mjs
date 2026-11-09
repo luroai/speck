@@ -43,7 +43,7 @@ test('0463 AC1: an open Plan ticket shows the grey track, then the table, under 
   for (const id of PLAN) {
     const c = card(p, id), kids = topOf(c).children, track = trackIn(c), f = factsIn(c);
     assert.ok(/\bopen\b/.test(c.className), `${id}: open`);
-    assert.deepEqual(kids.map(k => k.className.split(' ')[0]), ['line', 'track', 'facts'], `${id}: title, track, table`);
+    assert.deepEqual(kids.map(k => k.className.split(' ')[0]), ['line', 'track', 'facts', 'set-ready'], `${id}: title, track, table, then Set ready (0586)`);
     assert.equal(track.className, 'track', `${id}: not stopped`);
     assert.deepEqual(track.children.map(s => s.className), ['step build', 'step check', 'step review', 'step approve', 'step ship'], `${id}: five grey steps`);
     assert.deepEqual(track.children.map(s => s.textContent), ['Build', 'Self-check', 'Review', 'Approve', 'Ship'], `${id}: the steps' names`);
@@ -110,7 +110,7 @@ test('0463 AC2: a queued Build ticket\'s full view shows its Ready check and its
 test('0463 AC3: the dotted line is gone from an open Plan ticket, closed ones keep theirs, and what\'s under it stays', async () => {
   const p = page();
   await p.settle();
-  for (const id of PLAN) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className), ['line', 'checks'], `${id}: closed, its line`);
+  for (const id of PLAN) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className), ['line', 'checks', 'set-ready'], `${id}: closed, its line, then Set ready (0586)`);
   for (const id of QUEUED) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className.split(' ')[0]), ['line', 'where'], `${id}: its line, then where it is (0585)`);
   assert.equal(p.all(card(p, '0812')).find(n => /^where\b/.test(n.className)).textContent, 'Ready · after 0811'); // 0585: its ids in its line
   await openAll(p);
@@ -121,7 +121,8 @@ test('0463 AC3: the dotted line is gone from an open Plan ticket, closed ones ke
   const plan = card(p, '0802');
   assert.equal(plan.children[1].className, 'detail');
   const text = plan.children[1].textContent;
-  for (const s of ['Problem of 0802.', 'Outcome of 0802.', '2 criteria', 'Set ready', 'Full ticket']) assert.ok(text.includes(s), `0802: ${s}`);
+  for (const s of ['Problem of 0802.', 'Outcome of 0802.', '2 criteria', 'Full ticket']) assert.ok(text.includes(s), `0802: ${s}`);
+  assert.ok(topOf(plan).children.some(n => /^set-ready\b/.test(n.className)), '0802: Set ready, on its row (0586)');
   // its priority control is in its Priority cell, and opens the menu that sets it
   const prio = p.all(factsIn(plan).children[3]).find(n => /\bpick\b/.test(n.className || '') && n.attrs?.role === 'button');
   assert.ok(prio, 'the priority control');

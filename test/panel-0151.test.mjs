@@ -176,7 +176,7 @@ for (const width of [375, 1280]) {
     await withPanel(async b => {
       const got = await b.js(`(() => { const item = ${ITEM('0202')}, checks = item.querySelector('.checks');
         return { text: checks.textContent, tagsIn: [...item.querySelectorAll('.head .tag')].every(n => checks.contains(n)) }; })()`);
-      assert.equal(got.text, 'P2Slow');
+      assert.equal(got.text, 'P2 · S · low');
       assert.ok(got.tagsIn, 'the tags are in the same line');
     }, { width });
   });
@@ -198,7 +198,7 @@ const CARDS = list => `(() => {
 
 for (const theme of ['light', 'dark']) {
   for (const width of [375, 1280]) {
-    test(`0151 AC4: at ${width} px in the ${theme} look, every ticket in Plan and idea and inbox note in Capture (0520) is a bordered card, 8 px or more from the next`, skip, async () => {
+    test(`0151 AC4: at ${width} px in the ${theme} look, every ticket in Plan and idea and inbox note in Capture (0586) is a row with a hairline under it and no gap`, skip, async () => {
       await withPanel(async b => {
         const line = await b.js(RGB('var(--line)'));
         for (const [view, list, count] of [['plan', 'shaping', 3], ['capture', 'capture', 4]]) {
@@ -207,13 +207,10 @@ for (const theme of ['light', 'dark']) {
           const cards = await b.js(CARDS(list));
           assert.equal(cards.length, count, `${view}: ${count} cards`);
           for (const c of cards) {
-            for (const k of ['top', 'right', 'bottom', 'left']) {
-              assert.ok(c[k].width >= 0.5 && c[k].style === 'solid', `${c.what}: no ${k} border`);
-              assert.ok(c[k].contrast >= 1.2, `${c.what}: the ${k} border (${c[k].color}) is hard to see, contrast ${c[k].contrast.toFixed(2)}`);
-            }
-            if (c.gap !== null) assert.ok(c.gap >= 7.99, `${c.what}: only ${c.gap} px to the next card`);
-            // 0167: no stripe. A closed card's left edge is as plain as its other sides.
-            if (!/\bopen\b/.test(c.what)) assert.deepEqual([c.left.width, c.left.color], [c.right.width, line], `${c.what}: no stripe on its left edge`);
+            assert.ok(c.bottom.width >= 0.5 && c.bottom.style === 'solid', `${c.what}: no hairline under it`);
+            assert.ok(c.bottom.contrast >= 1.2, `${c.what}: the hairline (${c.bottom.color}) is hard to see, contrast ${c.bottom.contrast.toFixed(2)}`);
+            for (const k of ['top', 'right', 'left']) assert.equal(c[k].width, 0, `${c.what}: a ${k} border`);
+            if (c.gap !== null) assert.ok(Math.abs(c.gap) < 0.5, `${c.what}: ${c.gap} px to the next row`);
           }
         }
       }, { width, theme });

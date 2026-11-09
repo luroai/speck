@@ -39,8 +39,8 @@ test('0435 AC1: an idea card is its title with no label, then when it was captur
   const { cards: c } = await cards('idea');
   assert.deepEqual(c.map(n => lineOf(n).children.map(x => x.className)), c.map(() => ['title']), 'no `idea` label before the title');
   assert.equal(lineOf(c[0]).textContent, 'Note 2026-10-08-plain');
-  assert.equal(secondOf(c[0]), 'Captured 8 Oct');
-  assert.equal(secondOf(titled(c, '2025-10-08-last-year')), 'Captured 8 Oct 2025', 'the year, when it isn\'t this year');
+  assert.equal(secondOf(c[0]), 'Idea · 8 Oct');
+  assert.equal(secondOf(titled(c, '2025-10-08-last-year')), 'Idea · 8 Oct 2025', 'the year, when it isn\'t this year');
   // 0520: Capture lists only notes whose status is idea or inbox, so no card shows another status.
   assert.ok(!titled(c, '2026-10-08-shaped') && !titled(c, '2026-10-08-bad-date'), 'a note with another status isn\'t listed');
   const style = styles();
@@ -50,15 +50,15 @@ test('0435 AC1: an idea card is its title with no label, then when it was captur
 test('0435 AC2: an inbox card is its title with no label, then the ticket it came from and when it was captured', async () => {
   const { cards: c } = await cards('inbox');
   assert.deepEqual(c.map(n => lineOf(n).children.map(x => x.className)), c.map(() => ['title']), 'no `inbox` label before the title');
-  assert.equal(secondOf(c[0]), 'From 0139 · captured 9 Oct');
-  assert.equal(secondOf(c[2]), 'Captured 31 Dec 2025', 'no ticket named');
+  assert.equal(secondOf(c[0]), 'From 0139 · 9 Oct');
+  assert.equal(secondOf(c[2]), 'Idea · 31 Dec 2025', 'no ticket named');
 });
 
 test('0435 AC3: a note with no Captured line, or one with no real date in it, says No capture date there', async () => {
   const { cards: ideas } = await cards('idea');
-  assert.deepEqual(['2026-10-08-no-date', '2026-10-08-not-a-day'].map(n => secondOf(titled(ideas, n))), ['No capture date', 'No capture date']);
+  assert.deepEqual(['2026-10-08-no-date', '2026-10-08-not-a-day'].map(n => secondOf(titled(ideas, n))), ['Idea · no capture date', 'Idea · no capture date']);
   const { cards: inbox } = await cards('inbox');
-  assert.deepEqual(inbox.slice(3).map(secondOf), ['From 0140 · No capture date', 'No capture date']);
+  assert.deepEqual(inbox.slice(3).map(secondOf), ['From 0140 · no capture date', 'Idea · no capture date']);
 });
 
 test('0435 AC4: a collapsed card shows no file path; an open one shows it in small type above the note\'s text', async () => {
@@ -95,7 +95,7 @@ const CARDS = `(async () => {
     return out.length; };
   return [...document.querySelectorAll('#capture .item:not(.open)')].map(c => {
     const head = c.querySelector('.head'), title = head.querySelector('.title'), second = head.querySelector('.checks');
-    const rows = [...head.children].filter(n => n.getBoundingClientRect().height > 0).map(n => Math.round(n.getBoundingClientRect().top));
+    const rows = [...head.children].filter(n => !n.classList.contains('star') && n.getBoundingClientRect().height > 0).map(n => Math.round(n.getBoundingClientRect().top));
     return { text: title.textContent, tip: title.title, children: c.children.length, rows: new Set(rows).size, titleLines: lines(title), secondLines: lines(second),
       cut: title.scrollWidth > title.clientWidth, inside: title.getBoundingClientRect().right <= c.getBoundingClientRect().right + 0.5,
       gap: second.getBoundingClientRect().top - title.getBoundingClientRect().bottom };
@@ -122,13 +122,13 @@ for (const touch of [true, false]) {
         for (const c of seen) {
           assert.equal(c.children, 1, `${c.text}: nothing under its top row`);
           assert.equal(c.rows, 2, `${c.text}: two rows`);
-          assert.equal(c.titleLines, 1, `${c.text}: its title on one line`);
           assert.ok(c.inside, `${c.text}: its title stays inside the card`);
           assert.equal(c.tip, c.text, `${c.text}: the whole title is its tooltip`);
           assert.equal(c.secondLines, 1, `${c.text}: its second line on one line`);
           assert.ok(c.gap <= 8, `${c.text}: ${c.gap} px between its title and second line`);
         }
-        assert.ok(seen.find(c => c.text === LONG).cut, 'a long title is cut off');
+        assert.ok(seen.find(c => c.text === LONG).titleLines > 1, 'a long title wraps');
+        assert.ok(!seen.find(c => c.text === LONG).cut, 'and is not cut off');
         // open, a long title wraps again
         await b.js(`[...document.querySelectorAll('#capture .item .head')].find(h => h.querySelector('.title').textContent === ${JSON.stringify(LONG)}).click(), true`);
         await b.until(`!!document.querySelector('#capture .item.open')`, 'the open card');

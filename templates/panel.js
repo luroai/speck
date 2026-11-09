@@ -185,15 +185,16 @@ const list = v => (Array.isArray(v) ? v : []);
 function ticketItem(t) {
   const isOpen = open.has(t.id);
   const why = priorityRefused.has(String(t.id)) ? el('div', 'bad prio-refused', priorityRefused.get(String(t.id))) : null;
-  return goable(hoverable(el('div', `item ticket${isOpen ? ' open' : ''}`, null, ticketHead(t), why, isOpen ? ticketDetail(t, list(t.acceptance_criteria)) : null), t), t);
+  const no = refused.has(t.id) ? el('div', 'bad refused', refused.get(t.id)) : null; // 0586: under the row, whose button it answers
+  return goable(hoverable(el('div', `item ticket row${isOpen ? ' open' : ''}`, null, ticketHead(t), why, no, isOpen ? ticketDetail(t, list(t.acceptance_criteria)) : null), t), t);
 }
 // A ticket's top row. When only its chain changes, through other tickets, a new top row replaces the old one and the
 // details stay on the page.
-// 0519: its second row is its priority, size and risk, then its bug, fix or task tag, each a small boxed label, side by
-// side (0468: the tickets it waits on or unlocks are in its chip). 0463: only while it's closed; open, its steps and
-// facts are in a track and a table, as an open one in flight's are, and its criteria and lint result in its readiness.
+// 0586: its second row is one line of its priority, size and risk, then its bug, fix or task tag (0468: the tickets it
+// waits on or unlocks are in its chip). 0463: only while it's closed; open, its steps and facts are in a track and a
+// table, as an open one in flight's are, and its criteria and lint result in its readiness. Set ready is on the row.
 function ticketHead(t) {
-  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [el('div', 'checks', null, ...tagsOf(t, true))]);
+  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [detailsLine('checks', tagsOf(t, true))], setReadyButton(t, lintErrorsOf(t)));
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
   return head;
@@ -250,9 +251,9 @@ function ticketDetail(t, criteria) {
   part(body, 'Outcome', t.outcome);
   return el('div', 'detail', null, withDeps(t), body, readiness(t, criteria, true)); // 0467: first, its dependency box
 }
-// A ticket's readiness list from what speck can check, its Set ready button, the Full ticket button when `withFull`,
-// and why the server last refused to set it ready.
-function readiness(t, criteria, withFull) {
+// A ticket's readiness list from what speck can check. `onRow`: it's under the ticket's row, which has Set ready and
+// why the server last refused, so it adds the Full ticket button. In the side pane it has those two itself.
+function readiness(t, criteria, onRow) {
   const ready = el('div', 'ready', null, el('h4', null, 'Ready check'));
   const line = (cls, ok, text) => ready.appendChild(el('div', cls, null, el('span', ok ? 'tick' : 'sq'), el('span', null, text)));
   const sizeOk = t.size === 'S' || t.size === 'M';
@@ -269,11 +270,12 @@ function readiness(t, criteria, withFull) {
     line(done ? 'ok' : 'warn', done, `after: ${id} ${done ? 'done' : 'not done'}`);
   }
   if (!after.length) line('ok', true, 'no after: tickets');
-  ready.appendChild(setReadyButton(t, errors.length || (t.lint && t.lint.errors) || 0));
-  if (withFull) ready.appendChild(fullButton(t, 'shaping'));
+  if (onRow) { ready.appendChild(fullButton(t, 'shaping')); return ready; }
+  ready.appendChild(setReadyButton(t, lintErrorsOf(t)));
   if (refused.has(t.id)) ready.appendChild(el('div', 'bad refused', refused.get(t.id)));
   return ready;
 }
+const lintErrorsOf = t => list((t.lint_messages || {}).errors).length || (t.lint && t.lint.errors) || 0;
 // Gate 1 from the panel: the server sets the ticket ready and commits it, and the next refresh moves it to the queue.
 function setReadyButton(t, lintErrors) {
   const pending = settingReady.has(t.id);
@@ -496,7 +498,7 @@ function capturedOn(body) {
   if (at.getFullYear() !== y || at.getMonth() !== mo - 1 || at.getDate() !== d) return null; // such as 2026-02-30
   return `${d} ${MONTHS[mo - 1]}${y === new Date().getFullYear() ? '' : ` ${y}`}`;
 }
-// A collapsed idea or inbox card is its title and one short line (0435); open, the note's path is above its text.
+// A collapsed idea or inbox row is its title and one short line (0435, 0586); open, the note's path is above its text.
 // 0521: closed, a note an agent raised has an agent tag after that line, as a ticket has its task tag.
 // 0538: right of its title, its star, and under its top row the server's reason when a star was refused.
 function noteItem(i, kind, open, second) {
@@ -504,7 +506,7 @@ function noteItem(i, kind, open, second) {
   const head = el('div', 'head', null, el('div', 'line', null, titled(el('span', 'title', i.title))), starButton(i),
     el('div', 'checks', null, el('span', null, second), !isOpen && i.agent === true ? agentTag() : null));
   head.addEventListener('click', () => flip(open, i.path));
-  return el('div', `item ${kind}${isOpen ? ' open' : ''}`, null, head, starRefused.has(i.path) ? el('div', 'bad star-refused', starRefused.get(i.path)) : null,
+  return el('div', `item ${kind} row${isOpen ? ' open' : ''}`, null, head, starRefused.has(i.path) ? el('div', 'bad star-refused', starRefused.get(i.path)) : null,
     isOpen ? el('div', 'detail', null, el('div', null, null, el('div', 'path mono', i.path), noteOf(i))) : null);
 }
 // 0538: a note's star: filled when it's starred, empty when not. Pressing it stars or unstars the note, and doesn't
@@ -554,12 +556,11 @@ async function setStar(at, on) {
   if (why !== null) { starWanted.delete(at); starRefused.set(at, why); } else starAnswered.set(at, state);
   render();
 }
-// 0520: Capture lists ideas and inbox notes together, each card as it was in Plan's Ideas or Inbox list. Reading is all
-// it does, apart from its star (0538): a note is changed only in chat.
+// 0520: Capture lists ideas and inbox notes together. Reading is all it does, apart from its star (0538): a note is
+// changed only in chat. 0586: its line says where it came from, a ticket for a follow-up and otherwise an idea, and when.
 function captureItem(i) {
-  const on = capturedOn(i.body);
-  if (String(i.status).trim() === 'idea') return noteItem(i, 'idea', openNotes, on ? `Captured ${on}` : 'No capture date');
-  return noteItem(i, 'inbox', openNotes, i.from ? `From ${i.from} · ${on ? `captured ${on}` : 'No capture date'}` : on ? `Captured ${on}` : 'No capture date');
+  const kind = String(i.status).trim() === 'idea' ? 'idea' : 'inbox';
+  return noteItem(i, kind, openNotes, `${i.from ? `From ${i.from}` : 'Idea'} · ${capturedOn(i.body) || 'no capture date'}`);
 }
 // An opened idea's or inbox note's whole text, its Markdown formatted as in the review pack, tables included.
 const noteOf = i => el('div', 'note md', null, ...mdBlocks(markdown(typeof i.body === 'string' ? i.body : '', { tables: true })));
@@ -1154,6 +1155,13 @@ function fill(id, nodes, emptyText) {
   for (const c of [...box.children]) if (!want.includes(c)) box.removeChild(c);
   want.forEach((n, i) => { if (box.children[i] !== n) box.insertBefore(n, box.children[i] || null); });
 }
+// 0586: an empty Capture or Plan: speck asleep and one line saying what lands there. Each is made once, so a refresh
+// leaves it on the page and doesn't restart its face's breathing. Without the face's script the line still shows.
+const asleepLanes = new Map();
+function asleepLane(box, line) {
+  if (!asleepLanes.has(box)) asleepLanes.set(box, el('div', 'empty asleep', null, globalThis.SpeckFace ? SpeckFace.draw({ mood: 'asleep', size: 56 }) : null, el('div', 'asleep-line', line)));
+  return asleepLanes.get(box);
+}
 // 0449: an empty Build lane says it's clear, when the last ticket shipped and how many shipped today (leaving those
 // out with nothing shipped yet), and the next step: a button to Plan's drafts, or to talk to your agent with none.
 function idleLane(m) {
@@ -1233,13 +1241,13 @@ function render() {
   for (const at of starRefused.keys()) if (!inCapture.has(at)) starRefused.delete(at);
   for (const at of starButtons.keys()) if (!inCapture.has(at)) starButtons.delete(at);
   const starFocus = typeof document.activeElement === 'object' && document.activeElement ? document.activeElement.starKey : undefined;
-  fill('capture', keptItems('capture', m.capture, i => i.path, i => [openNotes.has(i.path), starWanted.get(i.path) ?? null, starRefused.get(i.path) ?? null], captureItem), 'Nothing captured.');
+  fill('capture', keptItems('capture', m.capture, i => i.path, i => [openNotes.has(i.path), starWanted.get(i.path) ?? null, starRefused.get(i.path) ?? null], captureItem), asleepLane('capture', 'Nothing captured · Ideas you capture in chat land here.'));
   if (starFocus !== undefined && starButtons.has(starFocus) && document.activeElement !== starButtons.get(starFocus)) starButtons.get(starFocus).focus();
   $('capture-n').textContent = m.capture.length ? `${m.capture.length} note${m.capture.length === 1 ? '' : 's'}` : ''; // 0536
   $('capture-n').hidden = !m.capture.length;
   fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
     t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null], ticketItem,
-    { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), 'No draft tickets.');
+    { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), asleepLane('shaping', 'Nothing to plan · Draft tickets wait here for you to set them ready.'));
   renderFull(m);
   renderDecided(m); // 0568
 

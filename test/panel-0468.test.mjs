@@ -159,7 +159,7 @@ const CHIPS = sel => `(async () => {
 })()`;
 
 for (const width of [320, 390, 600, 1000]) {
-  test(`0468 AC3: at ${width} px, a closed card's title is one line with its ellipsis and its chip stays beside it`, skip, async () => {
+  test(`0468 AC3: at ${width} px, a closed row's long title wraps (0586) and its chip stays beside it`, skip, async () => {
     const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
     const b = await browserPage('about:blank');
     try {
@@ -173,12 +173,11 @@ for (const width of [320, 390, 600, 1000]) {
         const cards = await b.js(CHIPS(sel));
         for (const id of ids) assert.ok(cards.some(c => c.id === id), `${lane}: ${id} is shown`);
         for (const c of cards) {
-          assert.equal(c.titleLines, 1, `${width} px, ${c.id}: its title on one line`);
           assert.equal(c.chipLines, 1, `${width} px, ${c.id}: its chip on one line`);
           assert.ok(c.beside, `${width} px, ${c.id}: its chip beside its title, not under it`);
           assert.ok(c.inside, `${width} px, ${c.id}: its chip inside the card`);
         }
-        if (width < 1000) for (const id of [ids[0]]) assert.ok(cards.find(c => c.id === id).cut, `${width} px, ${id}: a long title ends in its ellipsis`);
+        if (width < 1000) for (const id of [ids[0]]) { assert.ok(cards.find(c => c.id === id).titleLines > 1, `${width} px, ${id}: a long title wraps`); assert.ok(!cards.find(c => c.id === id).cut, `${width} px, ${id}: and isn't cut off`); }
       }
     } finally { await b.close(); await stop(panel); }
   });

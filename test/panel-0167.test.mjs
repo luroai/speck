@@ -179,16 +179,18 @@ for (const theme of ['light', 'dark']) {
       const c = await colours(b);
       for (const s of await b.js(LOOK('main > section'))) assert.ok(s.sides.every(([, w, st]) => w === 0 && st === 'none'), `section ${s.cls} has no border (0418)`);
       // 0520: Plan's tickets, and the ideas and inbox notes in Capture
+      // 0586: each a row, with only the hairline under it, open or closed
+      const hairline = (s, what) => s.sides.forEach(([col, w, st], k) => { if (k === 2) { assert.equal(col, c.line, `${what}: its hairline`); assert.ok(w > 0 && w <= 1 && st === 'solid', `${what}: a plain hairline`); } else assert.equal(w, 0, `${what}: no side ${k}`); });
       for (const [view, list, kind] of [['plan', 'shaping', 'ticket'], ['capture', 'capture', 'idea'], ['capture', 'capture', 'inbox']]) {
         await b.js(openLane(view)); await settle(b);
         for (const s of await b.js(LOOK(`#${list}-section`))) assert.ok(s.sides.every(([, w, st]) => w === 0 && st === 'none'), `${view} has no border (0418)`);
         const cards = await b.js(LOOK(`#${list} .item.${kind}`));
         assert.ok(cards.length >= 1, `${kind}: some cards`);
-        for (const card of cards) sameAllRound(card, c.line, `${kind} ${card.id}`);
+        for (const card of cards) hairline(card, `${kind} ${card.id}`);
         await b.js(`document.querySelector('#${list} .item.${kind} .head').click()`); await settle(b);
         const open = await b.js(LOOK(`#${list} .item.${kind}.open`));
         assert.ok(open.length >= 1, `${kind}: an open card`);
-        for (const card of open) sameAllRound(card, c.text, `${kind} ${card.id}, open`);
+        for (const card of open) hairline(card, `${kind} ${card.id}, open`);
       }
       for (const card of await b.js(LOOK('#shipped tr'))) sameAllRound(card, c.line, `shipped ${card.id}`);
     }, theme);

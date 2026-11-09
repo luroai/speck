@@ -17,7 +17,7 @@ const clone = s => JSON.parse(JSON.stringify(s));
 const readyBox = (p, n) => p.all(n).find(x => /\bready\b/.test(x.className) && x.tagName === 'div');
 // The readiness list's lines: each line's text and its colour class, without the buttons or a refusal.
 const lines = (p, n) => readyBox(p, n).children.filter(x => x.tagName === 'div' && !/\brefused\b/.test(x.className)).map(x => [x.className, x.textContent]);
-const refusal = (p, n) => (readyBox(p, n).children.find(x => /\brefused\b/.test(x.className)) || {}).textContent;
+const refusal = (p, n) => (p.all(n).find(x => /\brefused\b/.test(x.className)) || {}).textContent; // 0586: in the list, on its row
 const paneBody = p => pane(p).children.at(-1); // 0465: the body is last, after the track and table
 
 const MIXED = {
@@ -59,13 +59,13 @@ test('0062 AC1: the pane shows the same readiness lines as the open ticket, afte
   assert.ok(lines(q, pane(q)).some(l => l[1] === 'Ready check passes') && lines(q, pane(q)).some(l => l[1] === 'no after: tickets'));
 });
 
-test('0062 AC2: the pane has the same buttons as the open ticket except Full ticket, disabled with the same hover text', async () => {
+test('0062 AC2: the pane\'s Set ready is as on the ticket\'s row (0586), with Full ticket under the open row, disabled with the same hover text', async () => {
   for (const o of [MIXED, {}]) {
     const p = await openPane([full('0001', o)]);
     const listButtons = buttons(p, readyBox(p, itemOf(p, '0001'))).map(b => b.textContent);
     const paneButtons = buttons(p, readyBox(p, pane(p))).map(b => b.textContent);
-    assert.deepEqual(listButtons, ['Set ready', 'Full ticket']);
-    assert.deepEqual(paneButtons, listButtons.filter(b => b !== 'Full ticket'));
+    assert.deepEqual(listButtons, ['Full ticket']);
+    assert.deepEqual(paneButtons, ['Set ready']);
     const a = setReadyOf(p, itemOf(p, '0001')), b = setReadyOf(p, pane(p));
     assert.equal(b.disabled, a.disabled);
     assert.equal(b.title, a.title);
