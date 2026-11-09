@@ -1,7 +1,7 @@
 // 0578: speck's character, the design's Premium screen: a small dark device whose red visor is its eye, one drawing at
 // every size from 16 px. SpeckFace.draw({ mood, size, look, label }) gives an <svg> to put on the page. It follows the
 // page's light or dark look unless look says which. Only the red light moves, and only by the stylesheet below, so with
-// reduced motion set it rests in its mood's shape.
+// reduced motion set it rests in its mood's shape. 0579: speck-mood.js changes a drawn face's mood as the pipeline's does.
 (() => {
   'use strict';
   const SVG = 'http://www.w3.org/2000/svg';
@@ -72,33 +72,61 @@
   };
   const curve = v => `M ${v.x1} ${v.y1} Q ${v.cx} ${v.cy} ${v.x2} ${v.y2}`;
   const SCREEN = { x: -18, y: -38, width: 36, height: 26, rx: 7 };
+  const known = mood => (Object.hasOwn(VISORS, mood) ? String(mood) : 'watching');
+  const shapeOf = (name, small) => VISORS[small && name === 'asking' ? 'watching' : name];
+  const marksOf = (name, small) => (small ? [] : name === 'asking' ? [make('path', { class: 'sf-hook sf-light', d: HOOK, 'stroke-width': 3 })]
+    : name === 'asleep' ? ZS.map((z, i) => make('path', { class: `sf-z sf-z${i + 1} sf-light`, 'stroke-width': 1.3,
+      d: `M ${z.x} ${z.y} L ${z.x + z.size} ${z.y} L ${z.x} ${z.y + z.size} L ${z.x + z.size} ${z.y + z.size}` })) : []);
+  const faces = new WeakMap(); // 0579: what setMood needs of each face draw made
 
   const draw = options => {
     const { mood, size, look, label } = options || {};
-    const name = Object.hasOwn(VISORS, mood) ? String(mood) : 'watching';
+    const name = known(mood);
     const px = typeof size === 'number' && Number.isFinite(size) ? Math.max(MIN_SIZE, size) : DEFAULT_SIZE;
     const small = px < MARKS_FROM;
-    const shape = VISORS[small && name === 'asking' ? 'watching' : name], d = curve(shape);
+    const shape = shapeOf(name, small), d = curve(shape);
     const id = ++drawn, bezel = `sf-bezel-${id}`, clip = `sf-clip-${id}`;
     addStyle();
-    const marks = small ? [] : name === 'asking' ? [make('path', { class: 'sf-hook sf-light', d: HOOK, 'stroke-width': 3 })]
-      : name === 'asleep' ? ZS.map((z, i) => make('path', { class: `sf-z sf-z${i + 1} sf-light`, 'stroke-width': 1.3,
-        d: `M ${z.x} ${z.y} L ${z.x + z.size} ${z.y} L ${z.x} ${z.y + z.size} L ${z.x + z.size} ${z.y + z.size}` })) : [];
+    const glow = make('path', { class: 'sf-glow sf-light', d, 'stroke-width': shape.stroke + GLOW, 'stroke-opacity': 0.28, opacity: shape.opacity });
+    const visor = make('path', { class: 'sf-visor sf-light', d, 'stroke-width': shape.stroke, opacity: shape.opacity });
+    const move = make('g', { class: 'sf-move' }, make('g', { class: 'sf-blink' }, glow, visor));
+    const glass = make('path', { class: 'sf-glass', d: 'M -18 -38 L 6 -38 L -10 -12 L -18 -12 Z', fill: '#FFFFFF', 'fill-opacity': 0.07 });
+    const lit = make('g', { class: 'sf-lit', 'clip-path': `url(#${clip})` }, move, ...marksOf(name, small), glass);
     const svg = make('svg', { class: 'speck-face', viewBox: '-26 -50 52 52', width: px, height: px, role: 'img', 'aria-label': label || name, 'data-mood': name, ...(small ? { 'data-small': 'true' } : {}), ...(look === 'light' || look === 'dark' ? { 'data-look': look } : {}) },
       make('defs', {},
         make('linearGradient', { id: bezel, x1: 0, y1: 0, x2: 0, y2: 1 }, make('stop', { class: 'sf-stop-a', offset: 0 }), make('stop', { class: 'sf-stop-b', offset: 1 })),
         make('clipPath', { id: clip }, make('rect', SCREEN))),
       make('rect', { class: 'sf-body', x: -22, y: -42, width: 44, height: 34, rx: 11, fill: `url(#${bezel})`, 'stroke-width': 0.8 }),
       make('rect', { class: 'sf-screen', ...SCREEN }),
-      make('g', { class: 'sf-lit', 'clip-path': `url(#${clip})` },
-        make('g', { class: 'sf-move' },
-          make('g', { class: 'sf-blink' },
-            make('path', { class: 'sf-glow sf-light', d, 'stroke-width': shape.stroke + GLOW, 'stroke-opacity': 0.28, opacity: shape.opacity }),
-            make('path', { class: 'sf-visor sf-light', d, 'stroke-width': shape.stroke, opacity: shape.opacity }))),
-        ...marks,
-        make('path', { class: 'sf-glass', d: 'M -18 -38 L 6 -38 L -10 -12 L -18 -12 Z', fill: '#FFFFFF', 'fill-opacity': 0.07 })));
+      lit);
+    faces.set(svg, { name, small, labelled: !!label, shape, glow, visor, lit, move, glass, turn: 0 });
     return svg;
   };
 
-  globalThis.SpeckFace = { draw, moods: Object.freeze(Object.keys(VISORS)) };
+  // 0579: changes a face draw made to another mood, leaving a face already in it alone. Without `ease` the visor goes
+  // straight there. With it, ease(from, to, paint) moves it, from wherever it is now, by calling paint with each shape
+  // on the way: paint says false once a later change has taken over. speck-mood.js has the one the panel uses.
+  const paint = (face, shape) => {
+    const d = curve(shape);
+    face.shape = shape;
+    face.glow.setAttribute('d', d);
+    face.glow.setAttribute('stroke-width', shape.stroke + GLOW);
+    face.glow.setAttribute('opacity', shape.opacity);
+    face.visor.setAttribute('d', d);
+    face.visor.setAttribute('stroke-width', shape.stroke);
+    face.visor.setAttribute('opacity', shape.opacity);
+  };
+  const setMood = (svg, mood, ease) => {
+    const face = faces.get(svg), name = known(mood);
+    if (!face || name === face.name) return;
+    face.name = name;
+    svg.setAttribute('data-mood', name);
+    if (!face.labelled) svg.setAttribute('aria-label', name);
+    face.lit.replaceChildren(face.move, ...marksOf(name, face.small), face.glass);
+    const turn = ++face.turn, to = shapeOf(name, face.small);
+    const step = shape => { if (turn !== face.turn) return false; paint(face, shape); return true; };
+    if (typeof ease === 'function') ease(face.shape, to, step); else step(to);
+  };
+
+  globalThis.SpeckFace = { draw, setMood, moods: Object.freeze(Object.keys(VISORS)) };
 })();
