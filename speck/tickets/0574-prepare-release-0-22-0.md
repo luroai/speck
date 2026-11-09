@@ -1,7 +1,7 @@
 ---
 id: "0574"
 title: "Prepare release 0.22.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0563","0564","0565","0566","0567","0568","0569","0570","0571","0572","0573"]                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-09T00:51:48.142Z"
+approved: "2026-11-09T00:57:19.230Z"
 
 ---
 # 0574 · Prepare release 0.22.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0.21.1, speck is on its way to deciding for you rather than asking: `watch: decide` takes every recommendation (0564), and its agent acts on its own (0567), asking about a stop only once (0566). A ticket whose criteria changed waits for you at Ship (0565), the panel lists what speck decided (0568), a size-guard split is taken by itself (0563), and speck looks into a build that runs long (0569). `speck doctor` says whether the commit check is on (0570), lint is now the ready check (0573), and two more tests are steadier (0571, 0572). Anyone following the setup prompt, or updating speck in a project, still gets 0.21.1 without them.
@@ -66,9 +67,15 @@ Worth knowing: nothing decides for you until you pick decide under Watching in S
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new test "CHANGELOG.md's 0.21.1 and earlier sections are as v0.21.1 left them" compares the entire historical document text character for character.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 609,781
+- Elapsed since build started: 6 min
+- Changed lines: 733 (limit 5000)
 - Follow-up (tidy-up): earlier release tests, such as 0560 AC2, still compare older changelog sections in full; review round 1 of this ticket found that against the rule on exact wording, so 0574 doesn't, and the older ones could go too.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
