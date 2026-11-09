@@ -123,7 +123,8 @@
      name, then the timer. 0416: in words only, with no builder badge. */
   .q .top .say { display: inline-block; color: var(--text); font-size: 14px; line-height: 13px; } /* 0427: the stage sentence is body text, in a line of smaller details: a block one line of 13 px tall, so it starts under the title and keeps the line its height */
   .q .top .ship-at { color: var(--text); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-  .q .top .progress > .sub, .q .facts .value.time .sub, #shipped .facts .value.time .sub { font-family: var(--font-mono); } /* 0577: a build's timer */
+  .q .top .progress > .sub { font-family: var(--font-mono); } /* 0577: a build's timer */
+  .facts .value.time .sub { font-family: var(--font-mono); } /* 0577: and in the facts table, in every view that has one */
   .q .top .say.bad { color: var(--bad); }
   .q .top .say.to-ship { color: var(--ok); }
   .q .top .stage { color: var(--run); }
