@@ -1,7 +1,7 @@
 ---
 id: "0574"
 title: "Prepare release 0.22.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T00:51:48.142Z"
 ---
 # 0574 · Prepare release 0.22.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0.21.1, speck is on its way to deciding for you rather than asking: `watch: decide` takes every recommendation (0564), and its agent acts on its own (0567), asking about a stop only once (0566). A ticket whose criteria changed waits for you at Ship (0565), the panel lists what speck decided (0568), a size-guard split is taken by itself (0563), and speck looks into a build that runs long (0569). `speck doctor` says whether the commit check is on (0570), lint is now the ready check (0573), and two more tests are steadier (0571, 0572). Anyone following the setup prompt, or updating speck in a project, still gets 0.21.1 without them.
@@ -66,3 +66,89 @@ speck is ready to be released as 0.22.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "24490300dd31a1a5d9db60feab283bc231937c4d",
+    "session": "fresh",
+    "thread_id": "01a1bdcd-ba6f-7821-b5c3-e5a0ab379cc0",
+    "builder_response": "- Tests run (speck test --related): test/release-0574.test.mjs test/release-0560.test.mjs test/docs-0491.test.mjs, plus every existing test file naming a changed file (1230 tests, 0 failing).\n- test/release-0560.test.mjs: its checks that named 0.21.1 as the current version now check the current version, as 0560 did for 0539.\n- test/docs-0491.test.mjs: release-0574 added to the release tests allowed to name the version.\n- Price table refreshed today with `npm run prices` (taken 2026-11-09, 3534 models).\n- Built with speck figures computed with test/support/figures.mjs from main at \"speck(0573): Rename lint to the ready check\": 557 shipped, 16 cancelled, 13 min median, 1 round median, 284 first-round approvals.\n- Tickets shipped since v0.21.1: 0563 to 0573; no others.\n",
+    "seconds": 52,
+    "usage": {
+      "input_tokens": 417285,
+      "cached_input_tokens": 327424,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1639,
+      "reasoning_output_tokens": 193
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 89861,
+      "cached": 327424,
+      "write": 0,
+      "output": 1639
+    },
+    "cost_usd": 0.2288544,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T00:56:31.027Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.22.0. The reported passing 0574 AC1 tests check both the package version and actual speck init output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.22.0 above 0.21.1 and describes shipped tickets 0563–0573. Git history confirms that scope; independent comparison confirms all earlier sections are unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say 0.22.0, a public preview. Passing AC3 tests cover versions and the latest-release setup prompt. scripts/prices.json contains 3534 models dated 2026-11-09, consistent with the refresh recorded in the ticket."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.22.0.md leads with deciding and reporting choices, covers the shipped changes and upgrade instructions, explains the lint alias and estimated costs, and links to the changelog. It uses no person's name. Passing AC4 tests cover commands, installation and the changelog anchor."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent recalculation from speck/tickets/done matches the README: 557 shipped, 16 cancelled, 13 minutes median, 1 round median and 284 first-round approvals. Reported tests have zero failures, including the version/changelog consistency check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0574.test.mjs",
+        "issue": "The new test \"CHANGELOG.md's 0.21.1 and earlier sections are as v0.21.1 left them\" compares the entire historical document text character for character. This freezes its wording and paragraph order, contrary to the explicit review rule prohibiting newly added exact-wording document tests.",
+        "suggested_fix": "Remove the full-text equality test and verify preservation of the older sections by review of the release diff. Retain tests of document facts such as versions, commands and links.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release content, versions, prices and published figures meet the ticket, and the reported tests pass. One new test must be removed because it would make future editorial corrections to older changelog entries fail the suite."
+  }
+}
+```
+
+</details>
