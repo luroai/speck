@@ -279,7 +279,7 @@ export async function panelServer() {
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
       const run = panelRunState(repo, runs), name = nameNow(), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets, name), base: baseNow(), name });
-      const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, mood: speckMood({ board: out.board, foreman, run }), ...runLogPart(runs), ...pageNow(), ...(projects ? projects.part() : {}) }); // 0415: run_log. 0516: projects
+      const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman: { ...foreman, mood: speckMood({ board: out.board, foreman, run }) }, ...runLogPart(runs), ...pageNow(), ...(projects ? projects.part() : {}) }); // 0415: run_log. 0516: projects
       return { status: 200, body: snap.body, snap, summary: () => projectSummary({ board: out.board, foreman, run }) }; // 0595: worked out when asked, as its 7 days move on
     }
     catch (e) { return { status: 500, body: JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) }) }; }

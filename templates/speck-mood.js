@@ -1,5 +1,5 @@
 // 0579: what speck's face does as the pipeline changes, on top of speck-face.js (which this needs loaded first). The mood
-// the board gives comes from speckMood on the server, as /api/state's mood.
+// the board gives comes from speckMood on the server, as /api/state's foreman.mood.
 (() => {
   'use strict';
   const EASE_MS = 420, PLEASED_MS = 10000;
@@ -28,7 +28,7 @@
     ...(Array.isArray(state.foreman?.took) ? state.foreman.took : []).filter(Boolean).map(w => `took ${w.id} ${w.at} ${w.option}`),
   ]);
   // Follows the pipeline: give the function this returns each /api/state the page gets, and it calls onMood with the mood
-  // each time that changes. That's the state's mood, or pleased for PLEASED_MS after speck takes a recommendation or a
+  // each time that changes. That's the state's foreman.mood, or pleased for PLEASED_MS after speck takes a recommendation or a
   // ticket ships. It goes by what's new since the last state, as a choice's recorded time is only to the minute, so what
   // happened before the page opened doesn't count.
   const watcher = onMood => {
@@ -39,7 +39,7 @@
     };
     return state => {
       if (!state || typeof state !== 'object') return;
-      base = SpeckFace.moods.includes(state.mood) ? state.mood : 'watching';
+      base = SpeckFace.moods.includes(state.foreman?.mood) ? state.foreman.mood : 'watching';
       if (Array.isArray(state.tickets)) {
         const now = eventsOf(state), fresh = seen !== null && [...now].some(e => !seen.has(e));
         seen = now;

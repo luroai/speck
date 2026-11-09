@@ -66,7 +66,7 @@ test('0579 AC1: the panel sends the page the mood, and serves the script that fo
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   try {
-    assert.equal(JSON.parse(String((await raw(panel.port, '/api/state')).body)).mood, 'asleep', 'speck run isn\'t on');
+    assert.equal(JSON.parse(String((await raw(panel.port, '/api/state')).body)).foreman.mood, 'asleep', 'speck run isn\'t on');
     const script = await raw(panel.port, '/speck-mood.js');
     assert.equal(script.status, 200);
     assert.equal(String(script.body), fs.readFileSync(MOOD, 'utf8'));
@@ -78,7 +78,7 @@ function watch() {
   const clock = heldTimeouts(), told = [], update = load(clock).moodWatcher(m => told.push(m));
   return { clock, told, update };
 }
-const state = (mood, tickets = [], took = []) => ({ mood, tickets, foreman: { took } });
+const state = (mood, tickets = [], took = []) => ({ tickets, foreman: { mood, took } });
 const took = { id: '0001', title: 'A', option: 'Yes', at: '2026-11-09T10:00:00.000Z' };
 
 test('0579 AC2: for 10 seconds after a ticket ships the mood is pleased, then it returns', () => {
@@ -137,10 +137,10 @@ test('0579 AC2: an unusable state changes nothing, and a state with no tickets d
   for (const s of [null, undefined, 'x', {}]) update(s);
   assert.deepEqual([...told], ['watching'], 'an unknown mood draws as watching, and no state tells nothing');
   update(state('watching', [{ id: '0001', status: 'done' }]));
-  update({ mood: 'watching' });
+  update({ foreman: { mood: 'watching' } });
   update(state('watching', [{ id: '0001', status: 'done' }]));
   assert.equal(clock.pending(10000), 0);
-  assert.doesNotThrow(() => update({ mood: '__proto__', tickets: [null, { id: '__proto__', status: 'done' }], foreman: { took: [null] } }));
+  assert.doesNotThrow(() => update({ tickets: [null, { id: '__proto__', status: 'done' }], foreman: { mood: '__proto__', took: [null] } }));
 });
 
 test('0579 AC3: a face beside a ticket whose criteria changed is sheepish', () => {
