@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { fakePage, page, ROOT, findChrome, browserPage, styles, model, settingsScript, pageScript, popupsScript, headerScript } from './support/panel.mjs';
+import { fakePage, page, findChrome, browserPage, styles, model, settingsScript, pageScript, popupsScript, headerScript } from './support/panel.mjs';
 
 const ON = { on: true, pid: 4242 };
 const state = (o = {}) => ({ tickets: [], ideas: [], resume_command: '', run: ON, foreman: { word: 'Idle' }, run_log: '1', ...o });
@@ -88,7 +88,7 @@ test('0470 AC3: a stale page\'s Reload page button sits between the top row and 
   assert.match(body.children[1].children[0].className, /\brun-log\b/);
 });
 
-// ---------- AC2: in a real browser, the title is in Doto at the header's weight, at least 18 px, on one line ----------
+// ---------- AC2: in a real browser, the title is in the header's lettering and weight, at least 18 px, on one line ----------
 
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const FAKE = (board, log) => `(() => {
@@ -105,23 +105,19 @@ test('0470 AC2 and AC3: in a real browser, the title is in Inter at 18 px or mor
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: FAKE(state(), { lines, stamp: '1' }) });
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: model() });
     await b.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 640, deviceScaleFactor: 1, mobile: true });
-    // As in 0415 AC5: a page opened from its file can't load its scripts, styles or font from the panel, so they're put in.
+    // As in 0415 AC5: a page opened from its file can't load its scripts or styles from the panel, so they're put in.
     const copy = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0470-')), 'panel.html');
     fs.writeFileSync(copy, page().replace('<script src="panel-settings.js"></script>', () => `<script>${settingsScript()}</script>`)
       .replace('<script src="panel.js" data-page="{{page}}" data-token="{{token}}"></script>', () => `<script data-page="{{page}}" data-token="{{token}}">${pageScript()}</script>`)
       .replace('<script src="panel-popups.js"></script>', () => `<script>${popupsScript()}</script>`)
       .replace('<script src="panel-header.js"></script>', () => `<script>${headerScript()}</script>`));
-    const url = pathToFileURL(copy).href, font = fs.readFileSync(path.join(ROOT, 'templates', 'fonts', 'Doto.ttf')).toString('base64');
+    const url = pathToFileURL(copy).href;
     await b.send('Page.navigate', { url });
     await b.until(`location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`, 'the page');
     await b.js(`(() => { const s = document.createElement('style'); s.textContent = ${JSON.stringify(styles())}; document.head.appendChild(s); return true; })()`);
-    // A file page can't load /fonts/Doto.ttf either, so the font is put in from its own file.
-    await b.js(`(async () => { const f = new FontFace('Doto', Uint8Array.from(atob(${JSON.stringify(font)}), c => c.charCodeAt(0)).buffer, { weight: '100 900' });
-      document.fonts.add(await f.load()); return true; })()`);
     await b.until(`!!document.getElementById('bar-word') && document.getElementById('bar-word').textContent !== ''`, 'the board');
     await b.js(`document.getElementById('run').click(), true`);
     await b.until(`!!document.querySelector('#foreman ol.run-log li')`, 'the log in the pop-up');
-    assert.ok(await b.js(`[...document.fonts].some(f => f.family.replace(/"/g, '') === 'Doto' && f.status === 'loaded')`), 'Doto loaded');
     for (const width of [320, 375, 414, 600, 768, 1024, 1280]) {
       await b.send('Emulation.setDeviceMetricsOverride', { width, height: 640, deviceScaleFactor: 1, mobile: width < 600 });
       for (const look of ['light', 'dark']) {

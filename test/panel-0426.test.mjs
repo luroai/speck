@@ -166,9 +166,9 @@ test('0426 AC3: needs you, waiting for you, passing checks, links, the focus rin
 test('0426 AC4: speck\'s colours and the bar keep their own colours', () => {
   const all = looks();
   const KEPT = {
-    light: { '--lcd-bg': '#e6e9db', '--lcd-off': '#dde1cf', '--lcd-ink': '#20241d', '--lcd-red': '#d63f28', '--lcd-shadow': 'rgba(30, 40, 15, .14)',
+    light: { '--speck-red': '#d63f28',
       '--bezel': '#262722', '--bezel-ink': '#e6e7df', '--bezel-muted': '#b8b9b1', '--dot': '#b0412e' },
-    dark: { '--lcd-bg': '#0d130f', '--lcd-off': '#151d17', '--lcd-ink': '#cfe6c6', '--lcd-red': '#ff5a3f', '--lcd-shadow': 'transparent',
+    dark: { '--speck-red': '#ff5a3f',
       '--bezel': '#080907', '--bezel-ink': '#e6e7df', '--bezel-muted': '#b8b9b1', '--dot': '#d4664e' },
   };
   for (const [name, kept] of Object.entries(KEPT)) for (const [k, v] of Object.entries(kept)) assert.equal(all[name][k], v, `${name}: ${k}`);

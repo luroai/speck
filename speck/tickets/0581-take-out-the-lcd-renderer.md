@@ -42,6 +42,7 @@ The LCD screen's code, font and tests are gone from the panel.
 - LCD tests to look at include `test/panel-0413`, `panel-0414` (with `test/support/screen-speck.mjs`), `panel-0416`, `panel-0474`, `panel-0513`, `panel-0302` to `panel-0304`, `pipeline-0470`, `pipeline-0458` and `logo-0320`; keep any part that checks behaviour the bar keeps.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: found no further problems; `--lcd-red` became `--speck-red` so that nothing named after the LCD is left in the panel's styles. `docs/brief.md` still mentions the LCD screen: ticket 0597 updates the docs.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -54,3 +55,32 @@ The LCD screen's code, font and tests are gone from the panel.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Tests removed because they checked only the LCD screen (AC3):
+
+| Removed | Why |
+|---|---|
+| `panel-0302.test.mjs` | Serving the renderer and the screen's colour tokens. |
+| `panel-0303.test.mjs` | The renderer's tile and mini builder, through a stand-in renderer; with no renderer they could only pass. That the header shows without it is in `panel-0581.test.mjs` AC5. |
+| `panel-0304.test.mjs` | Serving Doto and its licence. Its check that no font comes from Google Fonts moved to `panel-0581.test.mjs` AC2. |
+| `panel-0308.test.mjs` | The screen's shade and the renderer's hash. |
+| `panel-0414.test.mjs` | speck's poses and captions on the screen. |
+| `panel-0436.test.mjs` | speck's pastimes and naps. |
+| `panel-0502.test.mjs` | The TVs speck watched on the screen. |
+| `panel-0503.test.mjs` | speck's habits on the screen. |
+| `panel-0504.test.mjs` | speck's comic moments on the screen. |
+| `panel-0505.test.mjs` | speck's TV tricks on the screen. |
+| `panel-0512.test.mjs` | The rhythm of those beats on the screen. |
+| `support/screen.mjs`, `support/screen-speck.mjs`, `support/watch-rhythm.mjs` | Helpers for those tests. The two that the bar's tests still use, `foreman` and `state`, moved to `support/bar.mjs`. |
+
+Tests removed from files that keep the rest:
+
+| File | Removed | Kept |
+|---|---|---|
+| `panel-0413` | The word in the dot font, a long word scrolling, watch fix's word on the screen, and the screen's resize. | The bar's frame, needs-you edge, Settings, opening the log, Reload page, tooltip and the 320 px browser check. |
+| `panel-0416` | The counts of what the renderer drew. | Every card check. |
+| `panel-0446` | speck's events while the page was hidden (15 tests). | What the Foreman agent's board says. |
+| `panel-0451` | The screen's clock and its blinking colon. | The button not mentioning fixing, and the brief's check. |
+| `panel-0495` | speck's captions. | What the Foreman gives for the base branch and a wait. |
+| `logo-0320` | The check on `templates/lcd.js` and the check that `panel-0302` and `panel-0308` pin the renderer. | The design record's pin. |
+| `panel-0474`, `panel-0473`, `panel-0433`, `panel-0432`, `panel-0426`, `panel-0543`, `panel-0147`, `panel-0364`, `pipeline-0470`, `pipeline-0479` | Only the mentions of `lcd.js`, Doto, `--lcd-red` and the stand-in renderer. | All their tests. |

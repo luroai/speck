@@ -21,8 +21,7 @@ const board = (word = 'Building 1', tone = 'ok', fixing = null) => ({
 
 // ---------- the Foreman's button, on the fake page ----------
 
-const SpeckLCD = { badge() { return { set() {}, scr: { still: false, size() {} }, cast: { still: false } }; }, mini() { throw new Error('no mini builder in the header'); } };
-const foremanPage = (word, tone) => fakePage([board(word, tone), board(word, tone)], { SpeckLCD });
+const foremanPage = (word, tone) => fakePage([board(word, tone), board(word, tone)]);
 
 test('0364 AC4: pressing the Foreman\'s button still opens and closes its detail', async () => {
   const p = foremanPage('Building 1', 'ok');
