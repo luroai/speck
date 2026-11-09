@@ -360,11 +360,13 @@ export const readT = (r, name) => fs.readFileSync(path.join(r.dir, 'speck', 'tic
 export const button = row => (function find(n) { if (n.tagName === 'button') return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 
 export const shippedRows = p => p.byId('shipped').children.filter(n => n.tagName === 'tr');
-// 0466: a Shipped card's Full ticket button, after opening the card by its title as the user does. `row` gives the card,
-// as opening it draws it again.
-export function shippedFull(p, row) {
-  if (!/\bopen\b/.test(row().className)) p.press(p.all(row()).find(n => n.className === 'title'));
-  return p.all(row()).find(n => n.tagName === 'button' && n.textContent === 'Full ticket');
+// 0587: what opens a Shipped ticket's full view: its row. `row` gives the row, as a test may have it drawn again.
+export const shippedFull = (p, row) => row();
+// 0587: a Shipped ticket's Review pack button, which is in its full view: opens the view and returns the button.
+export async function shippedPack(p, row) {
+  p.press(row());
+  await p.settle();
+  return p.all(p.byId('full-ticket')).find(n => n.tagName === 'button' && n.textContent === 'Review pack');
 }
 // 0162: opens every Shipped card, which holds its labelled figures and its Review pack button. 0466: by its title.
 export async function openDetails(p) {
