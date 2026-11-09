@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T17:42:11.877Z"
-approved: "2026-11-09T17:52:49.099Z"
+approved: "2026-11-09T17:59:29.693Z"
 
 ---
 # 0595 · Read every project's board for the bridge
@@ -57,12 +57,13 @@ The bridge, which comes next, is what will show this, so that's where you'll see
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 221,222
-- Elapsed since build started: 11 min
+- Reviewer tokens: 341,279
+- Elapsed since build started: 17 min
 - Changed lines: 103 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -142,6 +143,81 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The panel can now collect every running project's board summary, including tickets needing your attention and the past week's shipping and spending totals. Unresponsive panels are marked unavailable without hiding the others. The tests cover the required behaviour, and I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "151a1419cdb773c28393c15f74e247175f0fdda4",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c170-1d66-7e22-8d3f-da6f6451e420",
+    "builder_response": "- Tests run: test/panel-0118.test.mjs test/panel-summary-0595.test.mjs\n- Ship failed on one test: 0118 AC3, every test that starts a panel on a picked port sends its requests to the port the panel started on. The cause was this ticket's own new test, which passed a `String(port)` variable straight to startPanel on one line.\n- Changed: that test now gives `String(await freePort())` inline and drops the variable. It already read the port back from what startPanel returned, so what it checks is unchanged. No code under scripts/ changed.\n- Merging main: already up to date, so no files were merged or resolved.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 339917,
+      "cached_input_tokens": 278144,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1362,
+      "reasoning_output_tokens": 99
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5373,
+      "cached": 114176,
+      "write": 0,
+      "output": 508
+    },
+    "cost_usd": 0.0272436,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T17:59:25.834Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-projects.mjs summaries() collects each registered panel's name and summary. panel-summary.mjs projectSummary() supplies status, counts and seven-day shipping and spending totals. All AC1 tests passed, including the real-panel test."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "projectSummary() supplies ids, titles, reasons and question details. Passing AC2 tests cover questions, manager requests, Ship waits, high risk and agreement with the existing page model."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "summaryOf() retains its 2,000 ms deadline and isolates failed responses. Passing AC3 tests exercise silent, incomplete, refused and invalid responses alongside successful peers."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "summaries() requires POST and the project menu's Origin check; /api/projects/own requires x-speck-via. All origin, method and real-panel access tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The previously failing 0118 port check and all ticket tests now pass: 131 passed, zero failed, three skipped. The revised test still sends requests to the port returned by startPanel; no existing test was weakened or production code changed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The summary service remains ready for merge. The test now follows the repository's port-selection rule while preserving its checks. All tests run for this round passed, and there are no open findings."
   }
 }
 ```
