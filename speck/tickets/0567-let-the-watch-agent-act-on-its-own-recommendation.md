@@ -46,7 +46,11 @@ With `watch: decide`, the watch agent takes its own recommendation instead of as
 - Self-check: added the size-guard refusal to the docs, and refused a size guard's block so raising the limit can never be chosen.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+With the watch setting on decide, speck no longer stops to ask when it looks into stuck work and already knows what it would recommend. On a low-risk ticket it goes with its recommendation, notes that in the ticket and carries the build on. It still asks when it has no recommendation or the ticket is high risk.
+
+To see it, set watch to decide and leave a build to stop partway. The ticket's notes then say speck went with the recommendation, and speck's status lists it, without adding to Needs you.
+
+Keep an eye on what speck chooses at first, as it now acts without asking. It takes at most 3 recommendations per ticket, and if the build has already carried on when speck's turn comes, it leaves the build as it is.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,7 @@ With `watch: decide`, the watch agent takes its own recommendation instead of as
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up: a waiting `speck watch resume` isn't dropped when its ticket moves on, as a waiting `decide` now is (speck/ideas/2026-11-09-drop-a-waiting-watch-resume-once-the-ticket-has-moved-on.md).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -137,6 +142,89 @@ With `watch: decide`, the watch agent takes its own recommendation instead of as
     ],
     "escalation_question": "",
     "summary": "The new action records and resumes recommendations, and its refusal checks work in the tested cases. One issue needs fixing: a delayed recommendation can restart work after the user has already moved on, including after the ticket has finished."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e0714271bd87c06dc2a2721654b9424968a133b4",
+    "session": "continued",
+    "thread_id": "01a1bda1-396d-7f51-84f4-13ba8a5e48b3",
+    "builder_response": "- Tests run: test/watch-decide-0567.test.mjs (and the `commands.checks` files, which `speck test --files` adds).\n- F1: fixed. `decide` now records in its logged action the ticket's commit after its Notes commit, its build's session and its status as it now is. `check` in `foremanAgentQueue` drops a waiting decide when the ticket's status differs (so done or cancelled too), the branch's head has moved, the run record has another session, or the session is in use, saying so in speck run's log. It applies only to `by: 'decide'`, so `speck watch resume` behaves as before. New tests cover a decide waiting for a slot while the branch advances, the session changes, the session is in use, and the ticket becomes done, cancelled or reviewing.\n",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 252790,
+      "cached_input_tokens": 191104,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1541,
+      "reasoning_output_tokens": 94
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 9908,
+      "cached": 109952,
+      "write": 0,
+      "output": 648
+    },
+    "cost_usd": 0.0372912,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T00:09:15.947Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "foremanAction records the required Notes line and one logged action. foremanAgentQueue resumes with the option after the watcher ends and now drops stale decisions. Passing AC1 tests cover these behaviours, including changes to the branch, session and ticket status."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cantDecide refuses before writes when watch is not decide or risk is high. Passing AC2 tests verify the messages and unchanged state."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-watch/SKILL.md section 2 directs the agent to use decide for a low-risk recommendation and ask only without a recommendation, for high risk or after a refusal."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests verify that decide adds no outstanding question and an unanswered ask still produces Needs you 1."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Round 2 reports 134 passes, zero failures and three skips; the earlier related-test run also had zero failures. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs",
+        "issue": "A pending decision could resume obsolete work after the ticket or build had moved on.",
+        "suggested_fix": "Implemented: decisions retain their commit, session and resulting status; the queue discards them when these change or the session is in use. Passing regression tests exercise each case.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The watcher can now act on its recommendation for low-risk tickets when watch is decide. Refusal checks and question counts work as required. The delayed-decision issue is fixed, and all reported tests pass."
   }
 }
 ```
