@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0564","0565","0567"]                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-09T00:13:58.642Z"
-approved: "2026-11-09T00:24:20.841Z"
+approved: "2026-11-09T00:35:03.905Z"
 
 ---
 # 0568 · List what speck decided for you in the panel
@@ -60,13 +60,14 @@ Worth keeping an eye on: a ticket shipped through a squashed pull request can't 
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 206,549
-- Elapsed since build started: 10 min
-- Changed lines: 146 (limit 5000)
+- Reviewer tokens: 332,200
+- Elapsed since build started: 21 min
+- Changed lines: 144 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ### Follow-ups
@@ -144,6 +145,81 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The panel now lists speck’s recent decisions and lets you request changes while a ticket waits to ship. The tests cover the data, controls and phone layout, including criteria changes on shipped tickets. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d2d7ec78620022a8110f0a2ebde571345b045d3c",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1bdb0-6a77-7111-a51d-35c64621149e",
+    "builder_response": "- Tests run: test/panel-0161.test.mjs test/panel-0417.test.mjs test/panel-0427.test.mjs test/resume-0044.test.mjs test/status-json.test.mjs test/panel-decided-0568.test.mjs, plus the commands.checks files.\n- Merge round. `speck ship` found five existing tests failing on this ticket merged with main. main merged in with no conflicts. All five came from this ticket's own change, not from main's newer work, and none of those existing tests was changed.\n- 0030 AC1 and 0044 AC3 pin `speck status --json`'s exact top-level keys. `decided` is now left out when there is nothing to list (scripts/speck.mjs), so a board with no decisions keeps those keys. The panel already treats a missing `decided` as none. This ticket's own test changed to match: with no recommendations taken, `decided` is undefined rather than [].\n- 0161 AC4 allows only #full-ticket:focus to remove the focus ring: removed `#decided:focus { outline: none }`.\n- 0417 AC1 allows a plain 44 px minimum only in the header's and cards' stylesheets: moved the `.decided-line` rules to templates/panel-header.css, unchanged.\n- 0427 AC4 finds the Close rule by its exact selector list: put that selector list back, and gave `#decided .close` its own rule with the same declarations.\n",
+    "seconds": 85,
+    "usage": {
+      "input_tokens": 330920,
+      "cached_input_tokens": 267008,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1280,
+      "reasoning_output_tokens": 74
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 15969,
+      "cached": 109184,
+      "write": 0,
+      "output": 498
+    },
+    "cost_usd": 0.0478364,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T00:35:00.022Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/foreman-took.mjs decidedFor filters and orders recent recommendations; scripts/speck.mjs statusData supplies details and criteria-change flags. Passing AC1 tests cover real notes, branch changes and shipped history. Omitting decided when empty preserves existing JSON compatibility."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel-popups.js renderDecided and decidedRow display the count and all requested details. Passing AC2 tests exercise opening, contents and absence of the line when empty."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "renderDecided limits Change to approved tickets that are not shipping; openPack opens the existing review pack. Passing AC3 tests verify eligibility, Ask for changes and status updates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Close and Escape handlers remain intact. Passing AC4 tests cover closing, holding the background page and actual browser layout at 320 px. Moving the line's CSS preserves its styling."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0568-tests.txt reports 170 passes, zero failures and three skips. Previously failing test files were included; existing tests were not modified. Compatibility fixes preserve the feature and main's behaviour."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still meets all five criteria. The compatibility fixes address the failures found during shipping without weakening existing tests or changing the intended behaviour. No blocking concerns remain."
   }
 }
 ```
