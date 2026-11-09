@@ -455,8 +455,8 @@ export async function panelServer() {
       try { return send(res, 200, 'text/html', page()); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
     }
-    // 0302: the design's LCD renderer, which draws the builder badges, served as it is. 0430, 0431, 0432, 0433, 0473, 0474: and the page's styles, model, Settings, the rest of its script, its pop-ups and its header, read afresh as the page is. 0472: its styles are a file for each area.
-    if (where === '/lcd.js' || styleNames.includes(where.slice(1)) || where === '/panel-model.js' || where === '/panel-settings.js' || where === '/panel.js' || where === '/panel-popups.js' || where === '/panel-header.js') {
+    // 0302: the design's LCD renderer, which draws the builder badges, served as it is. 0430, 0431, 0432, 0433, 0473, 0474: and the page's styles, model, Settings, the rest of its script, its pop-ups and its header, read afresh as the page is. 0472: its styles are a file for each area. 0578: and speck's character.
+    if (where === '/lcd.js' || styleNames.includes(where.slice(1)) || where === '/panel-model.js' || where === '/panel-settings.js' || where === '/panel.js' || where === '/panel-popups.js' || where === '/panel-header.js' || where === '/speck-face.js') {
       try { return send(res, 200, where.endsWith('.css') ? 'text/css' : 'text/javascript', fs.readFileSync(path.join(TEMPLATES, where.slice(1)))); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${path.join(TEMPLATES, where.slice(1))}: ${e.message}\nPut the file back, then reload.\n`); }
     }

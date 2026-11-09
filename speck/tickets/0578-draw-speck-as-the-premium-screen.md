@@ -44,6 +44,10 @@ The panel has speck's new character as one reusable drawing, in six moods, alive
 - Timings from the mock: watching drift 16 s, focused scan 5.2 s, glow 6.2 s, pleased lift 6.5 s, sheepish glance 9.5 s, asking pulse 5.6 s, asleep fade 9 s and line breathing 11 s, the z's on a 9 s cycle, a blink every 8.5 s, and 0.8 s easing between shapes.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- The panel serves the script at /speck-face.js, but the page doesn't load it yet: placing speck is 0580, and a new script tag would fail the existing tests that list the page's scripts, which AC5 protects. 0580 adds the tag, and adds the file to the page's stamp in `scripts/panel.mjs` so that a change to it reloads an open page.
+- Asking's dot and asleep's line don't blink: the dot pulses and the line is already closed. Below 24 px, asking shows the plain visor, which does blink.
+- AC5 has no test of its own: it's the whole suite, which `speck ship` runs.
+- Self-check: took the new script back out of the page's stamp, as the page doesn't load it until 0580.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
