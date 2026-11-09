@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fakePage, T, click, gitEnv, ROOT, openQueueRows, nowOf, startPanel, stop, freePort, request, CLI } from './support/panel.mjs';
 import { OPTION, blockedRepo } from './support/blocked.mjs';
 import { loadConfig, statusData } from '../scripts/speck.mjs';
+import { speckSays } from '../scripts/core.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
 import { foremanTicketLines } from '../scripts/foreman-took.mjs';
 import { foremanFixQueue } from '../scripts/foreman-fix.mjs';
@@ -169,46 +170,46 @@ test('0576 AC2: the real panel sends the name from speck_name', async () => {
   } finally { await stop(p); }
 });
 
-test('0576 AC3: speck run\'s log says the name for what it looks into, does and asks', () => {
+test('0576 AC3, 0591: speck run\'s log says what it looks into, does and asks in the first person', () => {
   const { r, q, said, starts, end } = asked();
   q.stuck({ id: '0001', what: 'its build ended', log: '' });
-  assert.equal(said[0], '0001: Virgil will look into it, as watch is fix: its build ended');
+  assert.equal(said[0], speckSays('0001: I\'ll look into it, as watch is fix: its build ended'));
   q.check([T('0001', 'building')]);
-  assert.ok(said.some(m => /^0001: Virgil \(.+\) is looking into it\./.test(m)), said.join('\n'));
+  assert.ok(said.some(m => /^» 0001: I'm looking into it on .+\./.test(m)), said.join('\n'));
   end();
   q.check([T('0001', 'building')]);
-  assert.ok(said.some(m => m.startsWith('0001: Virgil looked into it and took no action.')), said.join('\n'));
+  assert.ok(said.some(m => m.startsWith(speckSays('0001: I looked into it and took no action.'))), said.join('\n'));
   assert.ok(starts.length);
   assert.ok(!said.some(m => /: speck (?:will|looked|\()/.test(m)), said.join('\n'));
 });
 
-test('0576 AC3: its actions, and an unset name, in the log', () => {
+test('0576 AC3, 0591: its actions, and an unset name, in the log', () => {
   const { r, q, said, starts, end } = asked();
   q.stuck({ id: '0001', what: 'its build ended', log: '' });
   q.check([T('0001', 'building')]);
   foremanAction(r.dir, ['ask', '0001', 'Keep it?', '--why=it stopped'], { token: starts[0].token, now: new Date('2026-10-18T14:00:00Z') });
   end();
   q.check([T('0001', 'building')]);
-  assert.ok(said.some(m => m === '0001: Virgil asked you: Keep it? (it stopped)'), said.join('\n'));
+  assert.ok(said.some(m => m === speckSays('0001: I asked you: Keep it? (it stopped)')), said.join('\n'));
   const plain = asked('building', '');
   fs.appendFileSync(path.join(plain.r.dir, 'speck', 'config.yml'), 'watch: fix\n');
   plain.q.stuck({ id: '0001', what: 'its build ended', log: '' });
-  assert.equal(plain.said[0], '0001: speck will look into it, as watch is fix: its build ended');
+  assert.equal(plain.said[0], speckSays('0001: I\'ll look into it, as watch is fix: its build ended'));
 });
 
-test('0576 AC3: taking a recommendation, or not, says the name in the log', () => {
+test('0576 AC3, 0591: taking a recommendation, or not, is first person in the log', () => {
   const r = blockedRepo(), said = [];
   named(r);
   const fixes = foremanFixQueue({ repo: r.dir, readConfig: () => loadConfig(r.dir), say: m => said.push(m) });
   fixes.check(statusData(r.dir).tickets);
-  assert.ok(said.some(m => m.startsWith('0001: Virgil went with its recommendation (')), said.join('\n'));
+  assert.ok(said.some(m => m.startsWith(speckSays('0001: I went with the recommendation: '))), said.join('\n'));
   const refused = [];
   foremanFixQueue({ repo: r.dir, running: new Set(), readConfig: () => ({ watch: 'fix', speck_name: 'Virgil' }), say: m => refused.push(m), goWith: () => ({ status: 409, body: { error: 'no' } }) })
     .check([BLOCKED('0002', { risk: 'low' })]);
-  assert.deepEqual(refused, ['0002: Virgil didn\'t take its recommendation: no']);
+  assert.deepEqual(refused, [speckSays('0002: I didn\'t take its recommendation: no')]);
 });
 
-test('0576 AC3: the resume log line says the name when it went with a recommendation', () => {
+test('0576 AC3, 0591: the resume log line is first person when it went with a recommendation', () => {
   const r = blockedRepo();
   named(r);
   assert.equal(goWith(r.dir, '0001', new Date(), { by: 'foreman' }).status, 200);
@@ -218,7 +219,7 @@ test('0576 AC3: the resume log line says the name when it went with a recommenda
     goWithQueue({ cfg: loadConfig(r.dir), words: ['claude', '-p', '/speck-build {id}', '--session-id', '{session}'], max: 1, running: new Set(), startBuild: () => {}, saveRecord: (f, v) => fs.writeFileSync(f, JSON.stringify(v)), runs: () => r.runs, repo: r.dir })
       .check([{ id: '0001', status: 'building' }]);
   } finally { console.log = was; }
-  assert.ok(logged.some(m => /^0001: Virgil went with its recommendation/.test(m)), logged.join('\n'));
+  assert.ok(logged.some(m => /^» 0001: I went with its recommendation/.test(m)), logged.join('\n'));
 });
 
 test('0576 AC2: refusing your reply speaks of its question by name', () => {

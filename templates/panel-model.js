@@ -667,8 +667,12 @@ function runLogSummary(text) {
   const plain = runFirst(runPlain(s)), id = plain.match(RUN_ID);
   return runCut(id && !plain.startsWith(id[1]) ? `${id[1]} ${plain}` : plain);
 }
+// 0591: what starts a line that is the engineering manager speaking (speckSays in scripts/core.mjs): `speck` says so, and
+// the summary is shown without it.
+const RUN_SPECK_MARK = '» ';
 function runLogLine(line) {
-  const m = String(line).match(/^(\d\d:\d\d:\d\d )([\s\S]*)$/), text = runLogSummary(m ? m[2] : line);
+  const m = String(line).match(/^(\d\d:\d\d:\d\d )([\s\S]*)$/), said = String(m ? m[2] : line), speck = said.startsWith(RUN_SPECK_MARK);
+  const text = runLogSummary(speck ? said.slice(RUN_SPECK_MARK.length) : said);
   const fail = /^\d{4,} (?:build failed|didn't ship)/.test(text);
-  return { at: m ? m[1] : '', text, kind: fail ? 'fail' : 'msg' };
+  return { at: m ? m[1] : '', text, kind: fail ? 'fail' : 'msg', ...(speck ? { speck } : {}) };
 }

@@ -28,7 +28,7 @@ import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint, runState } from './run.mjs';
 import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs';
-import { withForeman, foremanBoard, foremanTicketLines, decidedFor } from './foreman-took.mjs';
+import { withForeman, foremanBoard, foremanTicketLines, decidedFor, withCalls } from './foreman-took.mjs';
 import { agentView, cmdForeman, cmdWatch } from './foreman-agent.mjs';
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
@@ -36,7 +36,7 @@ import { removeScratch } from './scratch.mjs';
 import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
 import { questionFacts } from './question-facts.mjs'; import { cmdSplitOff } from './split-off.mjs'; // 0563
-import { goWithResumable, goWithWaiting } from './go-with.mjs';
+import { goWithResumable, goWithWaiting, callsOf } from './go-with.mjs';
 import { handedBack } from './hand-back.mjs';
 import { buildSession } from './build-records.mjs';
 import { noteThisBuild } from './seen-builds.mjs';
@@ -434,6 +434,7 @@ export function statusData(repo) {
       blocked_question: facts.question || null,
       // 0283: the option the build recommends, whether any option changes what you'd notice, and whether it's a clear winner; null when unknown
       blocked_recommendation: facts.recommendation,
+      blocked_other_options: facts.otherOptions ?? null, // 0589
       blocked_noticeable: facts.noticeable,
       blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, // 0563: true on a block by the size guard
       // 0284: whether speck run can resume its build, so the panel can offer to go with the recommendation
@@ -485,7 +486,8 @@ export function statusData(repo) {
   // The command that reopens a build's session, for the panel. A config without the setting gets the default (0289:
   // Codex's, for Codex builds).
   // 0568: what speck decided in the last 7 days. A shipped ticket has no branch to compare, so its criteria come from history. Left out when there are none.
-  const decided = decidedFor(entries, e => (e.status === 'done' ? shippedCriteriaChanged(repo, cfg, e.id, tickets.find(t => t.fm.id === e.id)?.sections['acceptance criteria']) : e.criteria_changed));
+  // 0589: with each one's question and other options.
+  const decided = withCalls(decidedFor(entries, e => (e.status === 'done' ? shippedCriteriaChanged(repo, cfg, e.id, tickets.find(t => t.fm.id === e.id)?.sections['acceptance criteria']) : e.criteria_changed)), id => callsOf(runs, id));
   return { tickets: entries, ...(decided.length ? { decided } : {}), ideas, idea_counts: ideaCounts(repo), resume_command: resumeCommandOf(cfg) };
 }
 
