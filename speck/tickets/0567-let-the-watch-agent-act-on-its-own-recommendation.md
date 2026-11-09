@@ -1,7 +1,7 @@
 ---
 id: "0567"
 title: "Let the watch agent act on its own recommendation"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0564","0566"]                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-09T00:02:07.058Z"
+approved: "2026-11-09T00:09:35.705Z"
 
 ---
 # 0567 · Let the watch agent act on its own recommendation
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When speck's watch agent looks into a stop, it usually ends by asking you a question with its recommendation, and you go with it: 10 of its 13 actions in this repo were questions. With `watch: decide`, it should act on its recommendation and tell you, rather than wait for you.
@@ -56,9 +57,15 @@ Keep an eye on what speck chooses at first, as it now acts without asking. It ta
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A pending decide can resume obsolete work.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 254,331
+- Elapsed since build started: 7 min
+- Changed lines: 82 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: a waiting `speck watch resume` isn't dropped when its ticket moves on, as a waiting `decide` now is (speck/ideas/2026-11-09-drop-a-waiting-watch-resume-once-the-ticket-has-moved-on.md).
 
