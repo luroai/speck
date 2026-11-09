@@ -6,12 +6,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fakePage, styles } from './support/panel.mjs';
-import { panelRunState } from '../scripts/panel-run.mjs';
+import { runSince } from '../scripts/panel-run.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
 
 const SINCE = (() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 9, 5).toISOString(); })();
-const FM = { word: 'Building 2', mood: 'pleased', building: ['0001', '0002'], max: 4 };
-const state = (o = {}) => ({ tickets: [], ideas: [], resume_command: '', run: { on: true, pid: 4242, since: SINCE }, foreman: FM, run_log: '1', ...o });
+const FM = { word: 'Building 2', mood: 'pleased', building: ['0001', '0002'], max: 4, since: SINCE };
+const state = (o = {}) => ({ tickets: [], ideas: [], resume_command: '', run: { on: true, pid: 4242 }, foreman: FM, run_log: '1', ...o });
 const LINES = [ // newest first, as the server gives them
   '21:06:00 Shipped 0003.',
   '21:05:00 speck run switched to the new code.',
@@ -92,7 +92,7 @@ test('0592 AC1: the line follows the board: its words and speck\'s mood change a
 });
 
 test('0592 AC1: a start on an earlier day gives its date, one slot is singular', async () => {
-  const p = await opened(state({ run: { on: true, pid: 1, since: new Date(Date.now() - 3 * 864e5).toISOString() }, foreman: { ...FM, building: ['0001'], max: 1 } }));
+  const p = await opened(state({ foreman: { ...FM, building: ['0001'], max: 1, since: new Date(Date.now() - 3 * 864e5).toISOString() } }));
   assert.match(of(p, 'log-said')[0].textContent, /^speck run has been on since \d{1,2} [A-Z][a-z]{2}, \d\d:\d\d, with 1 of 1 build slot in use\.$/);
 });
 
@@ -110,11 +110,14 @@ test('0592 AC1: the server gives when speck run took its lock, and the limit fro
   const lock = path.join(dir, 'run.lock');
   fs.writeFileSync(lock, String(process.pid));
   fs.utimesSync(lock, at, at);
-  assert.deepEqual(panelRunState(dir, dir), { on: true, pid: process.pid, since: at.toISOString() });
+  assert.equal(runSince(dir), at.toISOString());
+  assert.equal(runSince(path.join(dir, 'none')), null, 'no lock, no start time');
   const run = { on: true, pid: 7 }, seen = record => foremanView({ run, record, tickets: [] }).max;
   assert.equal(seen({ lock: 7, max: 4, building: [] }), 4);
   assert.equal(seen({ lock: 8, max: 4, building: [] }), null, 'another speck run\'s record says nothing about this one');
   assert.equal(seen({ lock: 7, max: 'many', building: [] }), null);
+  assert.equal(foremanView({ run, record: null, since: 'x', tickets: [] }).since, 'x');
+  assert.equal(foremanView({ run: { on: false, pid: null }, record: null, since: 'x', tickets: [] }).since, null, 'off: no start time');
 });
 
 test('0592: closed, the box is no longer the full view, so a build log in it keeps the pop-up\'s look', async () => {

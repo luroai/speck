@@ -149,7 +149,7 @@ test('0413 AC1, AC4 and AC5: at 320 px the frame fits without sideways scrolling
       await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode: vk, text: key === 'Enter' ? '\r' : ' ' });
       await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: vk });
       await b.until(`!document.querySelector('#foreman').hidden`, `the detail, with ${code}`);
-      await b.js(`document.querySelector('#foreman .close').click()`);
+      await b.js(`document.querySelector('#foreman .back').click()`); // 0592: its back link
       await b.until(`document.querySelector('#foreman').hidden`, 'the detail closed');
     }
   } finally { await b.close(); }

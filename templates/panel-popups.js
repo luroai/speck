@@ -925,7 +925,7 @@ function chooseLogFilter(key) {
 // slots in use.
 function drawLogStatus() {
   if (logMood) logMood(state);
-  const f = foremanOf(state), n = f.building.length, since = state && state.run ? Date.parse(state.run.since) : NaN;
+  const f = foremanOf(state), n = f.building.length, since = Date.parse(f.since);
   const slots = f.max === null ? plural(n, 'build slot') : `${n} of ${plural(f.max, 'build slot')}`;
   setText(logSaid, !f.on ? 'speck run is off, so no build slots are in use.'
     : `speck run ${Number.isFinite(since) ? `has been on since ${shippedAt(since, Date.now())}` : 'is on'}, with ${slots} in use.`);

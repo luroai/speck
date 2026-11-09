@@ -148,7 +148,7 @@
   #foreman.log-view .log-status { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--muted); }
   #foreman.log-view .log-said { min-width: 0; }
   #foreman.log-view .log-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  #foreman.log-view .log-filter { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+  #foreman.log-view .log-filter { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
   #foreman.log-view .log-filter:hover { color: var(--text); }
   #foreman.log-view .log-filter[aria-pressed="true"] { color: var(--text); background: var(--raise); border-color: var(--text); }
   #foreman.log-view .fm-body { padding: 0; color: var(--text); background: none; border-radius: 0; }

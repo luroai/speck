@@ -63,7 +63,7 @@ Round 2 (codex): approve.
 - Elapsed since build started: 80 min
 - Changed lines: 133 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
-- Tests of the old look updated to the full view (test files): `test/panel-0366.test.mjs` (the back link for Close), `test/panel-0472.test.mjs` (the view's opened check), `test/pipeline-0415.test.mjs` (the back link for Close), `test/pipeline-0458.test.mjs` (what the view holds, the back link), `test/pipeline-0459.test.mjs` (a row's classes and time), `test/pipeline-0470.test.mjs` (the back link above the heading, and a short window scrolls to the log rather than keeping the top in view), `test/pipeline-0479.test.mjs` (no dark frame round the log, the back link).
+- Tests of the old look updated to the full view (test files): `test/panel-0366.test.mjs` (the back link for Close), `test/panel-0472.test.mjs` (the view's opened check), `test/pipeline-0415.test.mjs` (the back link for Close), `test/pipeline-0458.test.mjs` (what the view holds, the back link), `test/pipeline-0459.test.mjs` (a row's classes and time), `test/pipeline-0470.test.mjs` (the back link above the heading, and a short window scrolls to the log rather than keeping the top in view), `test/pipeline-0479.test.mjs` (no dark frame round the log, the back link), `test/build-log-0548.test.mjs` (the build log keeps the old frame, and the Pipeline log no longer shares it), `test/panel-0413.test.mjs` (the back link for Close), `test/panel-0453.test.mjs` (the Pipeline log's filter buttons for its Close).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
