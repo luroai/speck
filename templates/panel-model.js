@@ -694,8 +694,8 @@ function runLogLine(line) {
 // 0592: the Pipeline log's filters, and which of them a line is in: the engineering manager's own lines and anyone going
 // with a recommendation are decisions.
 const RUN_LOG_FILTERS = Object.freeze([['all', 'Everything'], ['decisions', 'Decisions'], ['ships', 'Ships'], ['builds', 'Builds']]);
-const RUN_LOG_SHIPS = /^(?:Shipping \d{4,}|Shipped \d{4,}|Shipping is on hold|\d{4,} didn't ship|\d{4,}'s ship\b|\d{4,} merged into)|\bspeck run is shipping\b/;
-const RUN_LOG_BUILDS = /^(?:(?:Launched|Resumed) \d{4,}|\d{4,} build\b|\d{4,} (?:carries on through the switch|is already being built|is being built outside|is still ready, so the build never started))/;
+const RUN_LOG_SHIPS = /^(?:Shipping \d{4,}|Shipped \d{4,}|Shipping is on hold|\d{4,} didn't ship|\d{4,}'s ship\b|\d{4,}'s last auto-ship\b|\d{4,} merged into)|\bspeck run is shipping\b/;
+const RUN_LOG_BUILDS = /^(?:(?:Launched|Resumed) \d{4,}|\d{4,}(?:'s)? .*\b(?:build|built|launch))/; // any line about a ticket's build, or about launching it, once it isn't a ship's
 function runLogFilterOf(said) {
   if (said.startsWith(RUN_SPECK_MARK) || /\bwent with (?:its|the) recommendation\b/.test(said)) return 'decisions';
   return RUN_LOG_SHIPS.test(said) ? 'ships' : RUN_LOG_BUILDS.test(said) ? 'builds' : null;

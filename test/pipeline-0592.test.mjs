@@ -180,6 +180,29 @@ test('0592 AC2: the filter chosen stays through a refresh, and the new line goes
   assert.deepEqual(texts(p), ['0001 build started', '0001 build finished', '0005 build started']);
 });
 
+test('0592 AC2: Builds and Ships hold every form of those lines speck run writes', async () => {
+  const builds = [
+    '10:00:00 Launched 0001 (session a). Log: x.log', '10:00:01 Resumed 0001 (session a). Log: x.log', "10:00:02 0001 build couldn't start: no agent",
+    '10:00:03 0001 build ended by `speck stop`.', '10:00:04 0001 build exited with signal SIGTERM.', '10:00:05 0001 is still ready, so the build never started it. speck run won\'t launch it again.',
+    "10:00:06 0001 is already being built (session a), so speck run won't launch it.", "10:00:07 0001 is being built outside speck run (session a), so speck run won't launch it.",
+    "10:00:08 0001 carries on through the switch (session a, process 1), so speck run won't launch it.", '10:00:09 0001 is approved, so its build outside speck run no longer counts towards max_parallel_builds.',
+    "10:00:10 0001's build was resumed outside speck run.", '10:00:11 0001 build (session a) ended by `speck stop`.', '10:00:12 0001 build (session a, process 1) stopped.',
+    '10:00:13 0001 build (session a) stopped unexpectedly, so speck run is resuming it once.', "10:00:14 0001 was ended by `speck stop`, so speck run won't launch it again until its ticket is set ready again and committed.",
+    '10:00:15 0001 is ready but not committed as ready on main, so speck run is waiting for it to be committed before launching it.',
+  ];
+  const ships = [
+    '10:01:00 Shipping 0001: speck ship 0001 --auto. Log: x.log', '10:01:01 Shipped 0001.', "10:01:02 0001 didn't ship: its tests failed.", "10:01:03 0001's ship was stopped partway, so speck run will try it again.",
+    "10:01:04 0001's ship needs work on the ticket, so speck run is handing it back to its build (session a).", "10:01:05 0001 merged into main but wasn't pushed: no access.", "10:01:06 0001's last auto-ship didn't finish.",
+    '10:01:07 0001 is a fix ticket, so speck run is shipping it despite the hold on main.', '10:01:08 main has a new commit, so speck run is shipping again.', '10:01:09 Shipping is on hold until main passes.',
+  ];
+  const p = await opened(state(), [...ships, ...builds, '10:02:00 speck run switched to the new code.'].reverse());
+  const times = () => rows(p).map(r => of(p, 'at', r)[0].textContent);
+  await choose(p, 'Builds');
+  assert.deepEqual(times(), builds.map(l => l.slice(0, 8)));
+  await choose(p, 'Ships');
+  assert.deepEqual(times(), ships.map(l => l.slice(0, 8)));
+});
+
 // ---------- AC3: rows ----------
 
 test('0592 AC3: a row has its time, its text, and under it its log file or agent', async () => {
