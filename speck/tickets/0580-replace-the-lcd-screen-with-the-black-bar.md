@@ -1,7 +1,7 @@
 ---
 id: "0580"
 title: "Replace the LCD screen with the black bar"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0577","0579"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T19:22:31.098Z"
+approved: "2026-11-09T19:40:40.951Z"
 
 ---
 # 0580 · Replace the LCD screen with the black bar
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The LCD screen at the top of the panel, with its dot-matrix speck, clock and captions, has become decoration: the user finds it pointless now. The redesign keeps only what was liked, its black frame, as a thin dark bar holding speck and the status.
@@ -56,9 +57,14 @@ The clock and speck's little animations went with the screen. The old screen's c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 254,737
+- Elapsed since build started: 18 min
+- Changed lines: 109 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups: none.
 
