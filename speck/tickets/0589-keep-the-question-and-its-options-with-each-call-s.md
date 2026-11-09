@@ -1,7 +1,7 @@
 ---
 id: "0589"
 title: Keep the whole question with each call speck makes                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0576"]                # ticket ids that must be done first
 created: 2026-11-09
+started: "2026-11-09T18:30:55.350Z"
 
 ---
 # 0589 · Keep the whole question with each call speck makes
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Decided for you lists only the option speck took. To judge a call, and to change it, you need the question it answered and the options it didn't choose, which today live only in free text in the build's question, if at all.
