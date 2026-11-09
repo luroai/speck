@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0577"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:34:51.709Z"
-approved: "2026-11-09T19:05:53.837Z"
+approved: "2026-11-09T19:17:22.398Z"
 
 ---
 # 0583 · Redesign a ticket's full view
@@ -60,12 +60,13 @@ Worth keeping an eye on: a shipped ticket's costs and timings are no longer in t
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 173,020
-- Elapsed since build started: 31 min
+- Reviewer tokens: 369,288
+- Elapsed since build started: 43 min
 - Changed lines: 286 (limit 5000)
 Old-look tests updated to the new one (AC5):
 - `test/panel-0054`, `0061`, `0063`: Outcome and Acceptance criteria now come before Problem, and the pane closes from its back link. `0063`'s section comparison leaves out the rows.
@@ -150,6 +151,81 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The full ticket view now has clearer navigation, progress, facts and reviewer ticks, with shipping actions at the bottom of approved tickets. The implementation and reported tests support all five criteria. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a6da0351003f376ea61a82c3d4934ad580441155",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c1b2-f3a3-7010-a834-01f09e637d96",
+    "builder_response": "- Tests run: every test file that uses the panel page or reads its stylesheet (187 files, chosen by content: full-ticket, Full ticket, openFull, boardPage, fakePage, POPUPS, panel-popups, support/css or styles()), including test/panel-0167.test.mjs and test/panel-0583.test.mjs.\n- Merged main, with no conflicts.\n- Failing test: 0167 AC2, which requires that no style rule uses --accent. It failed because of this ticket's own CSS, the first to use that token; the merge with main didn't cause it, and the earlier test selection didn't include that file.\n- Fix: templates/panel-popups.css now uses --run for the accent's text and --blue for its fills and bars, as panel-base.css does for links and the focus ring since 0577. Both have the same value as --accent in the light look (#2F55D4) and the dark look (#86A2FF), so the page looks the same and the pictures still hold. test/panel-0167.test.mjs is unchanged. test/panel-0583.test.mjs now expects those two tokens.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 367742,
+      "cached_input_tokens": 268544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1546,
+      "reasoning_output_tokens": 226
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 35145,
+      "cached": 160512,
+      "write": 0,
+      "output": 611
+    },
+    "cost_usd": 0.0924512,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T19:17:18.541Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "fullTicket, backList and paneTone retain the required navigation, id, title and status pill. Passing 0583 AC1 tests cover the lanes and status colours. panel-base.css confirms --run matches the accent in both themes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "paneTrack renders the four named bars and their progress and waiting states. Passing 0583 AC2 tests cover draft through shipped. The replacement --blue token matches the accent in both themes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "paneFacts renders the six requested facts in two columns, using auto_ship_why from statusData. Passing 0583 AC3 tests cover models, shipping explanations and missing fields."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "fullTicket, criteriaPassed, paneRows and shipBar retain the outcome, reviewer ticks, navigation rows and bottom actions. Passing 0583 AC4 tests exercise pack navigation, log loading, shipping and change requests."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the updated old-look tests. The latest supplied run reports 1,829 passes, zero failures and three skips. panel-0167.test.mjs is unchanged; the CSS fix removes the prohibited token usage without changing the colours."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change preserves the redesigned ticket view. The colour fix keeps its appearance while satisfying the existing style checks. All criteria pass, with no blocking issues found."
   }
 }
 ```
