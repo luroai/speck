@@ -252,8 +252,7 @@ test('0595 AC4: only POST, so that the browser says which page is asking', async
 
 test('0595 AC1, AC4: a real panel gives its own summary through its record, and its own part only to another panel', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'panels-')), repo = panelRepo();
-  const port = await freePort();
-  const p = await startPanel(repo.dir, ['--port', String(port)], undefined, { SPECK_PANELS_DIR: dir });
+  const p = await startPanel(repo.dir, ['--port', String(await freePort())], undefined, { SPECK_PANELS_DIR: dir });
   try {
     const res = await ask(p.port);
     assert.equal(res.status, 200, res.body);
