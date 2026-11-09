@@ -171,6 +171,12 @@ test('0586 AC4: at 320 px wide each row is at least 44 px tall, long titles wrap
       assert.ok(long.titleHeight > long.line * 1.5, `${box}: it wraps (${long.titleHeight} px at ${long.line} px a line)`);
       assert.ok(long.right <= 320.5, `${box}: it stays on the screen`);
     }
+    // open, a note's star keeps its own column, and a long title never runs behind it
+    await b.js(`document.getElementById('tab-capture').click(), [...document.querySelectorAll('#capture .item .head')].find(h => h.querySelector('.title').textContent === ${JSON.stringify(LONG)}).click(), true`);
+    await b.until(`!!document.querySelector('#capture .item.open')`, 'the open note');
+    const open = await b.js(`(() => { const c = document.querySelector('#capture .item.open'), range = document.createRange(); range.selectNodeContents(c.querySelector('.title'));
+      return { titleRight: Math.max(...[...range.getClientRects()].map(r => r.right)), starLeft: c.querySelector('.star').getBoundingClientRect().left }; })()`);
+    assert.ok(open.titleRight <= open.starLeft + 0.5, `the open title ends at ${open.titleRight}, past the star at ${open.starLeft}`);
     await b.js(`sessionStorage.setItem('emptied', '1'); 1`);
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`document.querySelector('#shaping .asleep svg[data-mood="asleep"]') && document.querySelector('#capture .asleep svg[data-mood="asleep"]')`, 'speck asleep in the empty lanes', 15000);

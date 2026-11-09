@@ -157,7 +157,7 @@
   .item.row > .bad, .item.row > .bad.refused { margin: 0; padding: 0 14px 8px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .item.row .detail { margin: 0; padding: 8px 14px 10px; }
   .item.row.open { border-color: var(--line); }
-  .item.row.open .head .line { grid-column: 1 / -1; } /* open, the title has the whole row and Set ready is under the table */
+  .item.ticket.row.open .head .line { grid-column: 1 / -1; } /* open, a ticket's title has the whole row and Set ready is under the table */
   .item.ticket.row.open .head .set-ready { grid-column: 1 / -1; grid-row: auto; justify-self: start; margin-top: 8px; }
   /* 0586: an empty Capture or Plan: speck asleep over its line, centred */
   #shaping .asleep, #capture .asleep { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; font-size: 14px; line-height: 20px; text-align: center; color: var(--muted); }

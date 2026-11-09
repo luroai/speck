@@ -1,7 +1,7 @@
 ---
 id: "0586"
 title: "Show Capture and Plan as compact rows"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T21:24:53.557Z"
 ---
 # 0586 · Show Capture and Plan as compact rows
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Capture and Plan still show the LCD-era cards. In the redesign they're compact rows like Build's, and an empty lane shows speck resting instead of a blank space.
@@ -64,3 +64,89 @@ Tests updated from the old look (AC5), each to the rows' new look with what it c
 - Rows, not bordered cards: `test/panel-0151.test.mjs` (AC4), `test/panel-0167.test.mjs`, `test/panel-0418.test.mjs`.
 - The priority, size and risk as words: `test/panel-0151.test.mjs` (AC3), `test/panel-0419.test.mjs` (AC1), `test/panel-0519.test.mjs`.
 - Long titles wrap: `test/panel-0419.test.mjs` (AC1, AC2 and AC5), `test/panel-0434.test.mjs`, `test/panel-0435.test.mjs` (AC5), `test/panel-0468.test.mjs`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "afd2ba561b8017b48ff165972ba7e08f5391f439",
+    "session": "fresh",
+    "thread_id": "01a1c245-071c-7533-a0f1-35ea33a07e7d",
+    "builder_response": "- Tests run: test/panel-0586.test.mjs test/panel-0038.test.mjs test/panel-0039.test.mjs test/panel-0056.test.mjs test/panel-0062.test.mjs test/panel-0151.test.mjs test/panel-0167.test.mjs test/panel-0214.test.mjs test/panel-0418.test.mjs test/panel-0419.test.mjs test/panel-0434.test.mjs test/panel-0435.test.mjs test/panel-0463.test.mjs test/panel-0467.test.mjs test/panel-0468.test.mjs test/panel-0519.test.mjs test/panel-0520.test.mjs test/panel-0536.test.mjs test/panel-0537.test.mjs test/panel.test.mjs  (with --related, so also every existing test file that names a changed file). Also run outside this output, all passing: the other panel tests that exercise Capture's and Plan's rows through helpers (988 tests).\n- AC3 is read as Capture's and Plan's empty lanes, as the ticket's title and problem say (in its Notes): Build keeps its 0449 message and Shipped is 0587's.\n- Press on a Plan row still opens it in place, as today (the ticket asks only that Set ready and priority stay on the row and do what they do today). Open, Set ready goes under the table, so a title keeps its 0441 line limits.\n",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 209332,
+      "cached_input_tokens": 149248,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 944,
+      "reasoning_output_tokens": 110
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 60084,
+      "cached": 149248,
+      "write": 0,
+      "output": 944
+    },
+    "cost_usd": 0.1445328,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T21:45:03.060Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel-cards.css: .item.row.open .head .line spans both columns, while an open Capture note's star remains explicitly in column 2, spanning rows 1–2. The title and star therefore occupy overlapping grid cells. panel-0586 tests opening notes but measures only closed rows."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticketHead and setReadyButton in templates/panel.js retain the controls and stop button clicks propagating. Passing panel-0586 tests exercise readiness, refusal and priority changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "asleepLane and render provide both empty states. Passing panel-0586 AC3 tests check the asleep face, explanatory text and preservation across refreshes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing panel-0586 AC4 browser test measures minimum row height and title wrapping at 320 px for both lanes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the updated appearance tests. Their changes match the requested redesign; /tmp/speck-0586-tests.txt confirms 435 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css",
+        "issue": "Opening a Capture note makes its title span both grid columns, including the column occupied by its star. A long open title can run behind the star because both are explicitly placed in the same grid area.",
+        "suggested_fix": "Restrict the full-width open-title rule to ticket rows, or explicitly move the open note's star to a separate area. Add a browser check that an open Capture note's long title and star do not overlap at 320 px.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Capture and Plan now use compact rows, and their empty states show speck asleep. The controls and narrow-screen layout have useful passing tests. One layout defect needs fixing: opening a Capture note lets its title overlap its star."
+  }
+}
+```
+
+</details>
