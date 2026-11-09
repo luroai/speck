@@ -50,7 +50,11 @@ The panel uses the redesign's colours and fonts in both looks, and every view pi
 - speck (2026-11-09 18:16 UTC) told you: Nothing is stuck and main isn't broken: 0577 is slow because new colours and fonts broke about 65 older tests that pinned the old look, so the build has been fixing them and re-running large test batches, up to all 3,263 tests, which took about 20 of its first 31 minutes. It's on its last test run before review round 1, and the machine's high load is probably slowing the browser tests too. Why: The build's log shows steady progress with no test hanging, every failure came from the new look, one of them a browser timing check that passed on re-run, and main's last recorded test run passed; I couldn't see which processes are causing the load.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel has its new look in both light and dark: white or near-black pages, soft grey surfaces, one blue accent, and orange for anything that needs you. Text is now in Inter, with ticket numbers, timers and figures in JetBrains Mono, and these fonts come with the panel, so it looks the same with no internet.
+
+To see it, open the panel and look through the lanes, a ticket, Settings and the Pipeline log, then switch the look in Settings. Lane titles and the Pipeline log's title are no longer in the dot-matrix lettering. The top screen keeps its old colours for now, as a later ticket replaces it.
+
+Worth watching: the edges of cards and buttons are much fainter than before, and small grey text is a little lighter, which may be harder for people with low vision. An idea for checking this is in the inbox.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -92,6 +96,8 @@ Tests updated to the new look (AC5):
 - `test/review.test.mjs` is in that list for a different reason: its check for hard-coded model names read every file as text, and a woff2 font's compressed bytes can spell one by chance, so it now skips `.woff2` files only.
 
 `test/panel-0472.test.mjs` is unchanged: its AC3 compares the styles from before and after 0472's split, both read from git history, so the redesign doesn't touch what it checks, and it still passes.
+
+Follow-up saved to the inbox: `speck/ideas/2026-11-09-check-the-redesign-for-low-vision-readers.md`.
 
 Follow-ups for the tickets after this one: state colours other than what needs you and the accent (green for approved, the purple Ship track, the bug, fix and task tags) keep their old hues until the views that use them are redesigned. The build log's terminal colours, including its red-pink failure lines, are unchanged.
 
@@ -175,6 +181,89 @@ Follow-ups for the tickets after this one: state colours other than what needs y
     ],
     "escalation_question": "",
     "summary": "The new colours and locally bundled fonts are in place, and the reported tests pass. Some visible timers and figures still use the ordinary text font, so the typography requirement needs one further fix before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8a85631b0d24155989327814d69616d55664b249",
+    "session": "continued",
+    "thread_id": "01a1c186-8fb1-7cc1-8a38-f00334ab7ff8",
+    "builder_response": "- Tests run: test/panel-0577.test.mjs test/icons-0305.test.mjs test/mockup-0126.test.mjs test/panel-0051.test.mjs test/panel-0055.test.mjs test/panel-0134.test.mjs test/panel-0135.test.mjs test/panel-0136.test.mjs test/panel-0147.test.mjs test/panel-0149.test.mjs test/panel-0151.test.mjs test/panel-0155.test.mjs test/panel-0156.test.mjs test/panel-0157.test.mjs test/panel-0161.test.mjs test/panel-0420.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0440.test.mjs test/panel-0442.test.mjs test/panel-0445.test.mjs test/panel-0448.test.mjs test/panel-0449.test.mjs test/panel-0455.test.mjs test/panel-0461.test.mjs test/panel-0478.test.mjs test/panel-0480.test.mjs test/pipeline-0470.test.mjs test/pipeline-0479.test.mjs test/review.test.mjs, and the files of every test that failed in the last run.\n- F1: fixed. templates/panel-cards.css puts build timers (`.q .top .progress > .sub`, `.q .facts .value.time .sub`, `#shipped .facts .value.time .sub`), `.q .top .ship-at`, `#shipped-stats .num` (weight 500, as the font has) and shipped metadata (`#shipped .meta`) in `var(--font-mono)`. test/panel-0577.test.mjs AC2 checks each of those rules.\n- Mono figures are a little wider, so test/panel-0420.test.mjs now asserts the 420 px stats line doesn't overflow rather than keeping spare room for three more digits; a bigger figure wraps between the stats, as on a phone. The Delivery log says so.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 604988,
+      "cached_input_tokens": 506112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1407,
+      "reasoning_output_tokens": 26
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8305,
+      "cached": 184576,
+      "write": 0,
+      "output": 529
+    },
+    "cost_usd": 0.0403576,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:19:00.542Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-base.css retains all specified light, dark and black-bar tokens. Both 0577 AC1 tests pass, checking exact values and legacy-token mappings."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing 0577 AC2 tests cover bundled woff2 files and licences, relative @font-face addresses, font assignments and removal of Doto from lane and Pipeline log titles. templates/panel-cards.css now also assigns JetBrains Mono to build timers, shipping times, shipped figures and metadata, resolving F1."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0577 AC3 test calculates at least 4.5:1 contrast for muted, accent and needs-you text against background and surface in both looks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing 0577 AC4 tests check that font and stylesheet addresses are local and exercise the server routes for every named font."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists updated tests and explains font-related measurement changes. The fresh run reports 346 passed, zero failed and three skipped. The updated 0420 browser test still checks that the stats fit without overflowing; whole-suite verification remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css",
+        "issue": "Timers and shipped summary figures previously inherited Inter instead of JetBrains Mono.",
+        "suggested_fix": "Completed: the relevant timer, shipping-time, summary-number and metadata selectors now use --font-mono, with expanded passing AC2 coverage.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The new colours and locally bundled fonts meet the ticket. Timers and shipped figures now use the required font, and the updated tests pass. No blocking concerns remain."
   }
 }
 ```
