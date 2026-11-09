@@ -24,7 +24,7 @@ import { panelForemanReply } from './foreman-answer.mjs';
 import { goWith } from './go-with.mjs';
 import { panelAway } from './panel-background.mjs'; // 0509: --background and --stop
 import { panelProjects } from './panel-projects.mjs'; // 0516: the project menu, and showing another panel's project here
-import { projectSummary } from './panel-summary.mjs'; // 0595: this panel's part of the bridge
+import { projectSummary, speckMood } from './panel-summary.mjs'; // 0595: this panel's part of the bridge. 0579: speck's mood
 import { panelStarNote } from './panel-star.mjs'; // 0538: the star on a note in Capture
 import { panelUrl } from './panel-url.mjs'; // 0538: moved out, to keep this under 600 lines
 
@@ -259,7 +259,7 @@ export async function panelServer() {
   // 0149: what lets a phone add the panel to its home screen as an app, from templates/icons/: its manifest and icons.
   const iconsDir = path.join(TEMPLATES, 'icons');
   const icons = { '/manifest.webmanifest': 'application/manifest+json', '/icon.svg': 'image/svg+xml',
-    '/icon-192.png': 'image/png', '/icon-512.png': 'image/png', '/apple-touch-icon.png': 'image/png' };
+    '/icon-16.png': 'image/png', '/icon-32.png': 'image/png', '/icon-192.png': 'image/png', '/icon-512.png': 'image/png', '/apple-touch-icon.png': 'image/png' };
   // 0177: /api/state. Requests that arrive while the board is being read share that reading, unless a write has finished
   // since it started: then they wait for the next one, so every answer after a write shows it. A request whose
   // connection has closed by the time its reading would start doesn't cause one.
@@ -279,7 +279,7 @@ export async function panelServer() {
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
       const run = panelRunState(repo, runs), name = nameNow(), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets, name), base: baseNow(), name });
-      const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...runLogPart(runs), ...pageNow(), ...(projects ? projects.part() : {}) }); // 0415: run_log. 0516: projects
+      const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman: { ...foreman, mood: speckMood({ board: out.board, foreman, run }) }, ...runLogPart(runs), ...pageNow(), ...(projects ? projects.part() : {}) }); // 0415: run_log. 0516: projects
       return { status: 200, body: snap.body, snap, summary: () => projectSummary({ board: out.board, foreman, run }) }; // 0595: worked out when asked, as its 7 days move on
     }
     catch (e) { return { status: 500, body: JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) }) }; }
@@ -455,8 +455,8 @@ export async function panelServer() {
       try { return send(res, 200, 'text/html', page()); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
     }
-    // 0302: the design's LCD renderer, which draws the builder badges, served as it is. 0430, 0431, 0432, 0433, 0473, 0474: and the page's styles, model, Settings, the rest of its script, its pop-ups and its header, read afresh as the page is. 0472: its styles are a file for each area.
-    if (where === '/lcd.js' || styleNames.includes(where.slice(1)) || where === '/panel-model.js' || where === '/panel-settings.js' || where === '/panel.js' || where === '/panel-popups.js' || where === '/panel-header.js') {
+    // 0302: the design's LCD renderer, which draws the builder badges, served as it is. 0430, 0431, 0432, 0433, 0473, 0474: and the page's styles, model, Settings, the rest of its script, its pop-ups and its header, read afresh as the page is. 0472: its styles are a file for each area. 0578: and speck's character.
+    if (where === '/lcd.js' || styleNames.includes(where.slice(1)) || where === '/panel-model.js' || where === '/panel-settings.js' || where === '/panel.js' || where === '/panel-popups.js' || where === '/panel-header.js' || where === '/speck-face.js' || where === '/speck-mood.js') {
       try { return send(res, 200, where.endsWith('.css') ? 'text/css' : 'text/javascript', fs.readFileSync(path.join(TEMPLATES, where.slice(1)))); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${path.join(TEMPLATES, where.slice(1))}: ${e.message}\nPut the file back, then reload.\n`); }
     }

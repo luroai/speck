@@ -37,8 +37,8 @@ test('0149 AC1: /manifest.webmanifest names the app speck, opens it full screen 
     assert.equal(m.start_url, './');
     assert.equal(m.scope, './');
     assert.equal(m.display, 'standalone');
-    assert.equal(m.background_color, colour('--bg'));
-    assert.equal(m.theme_color, colour('--bg'));
+    assert.equal(m.background_color, '#1C1D19'); // 0594: the black bar's, with the new icon
+    assert.equal(m.theme_color, '#1C1D19');
   } finally { await stop(p); }
 });
 
@@ -168,13 +168,12 @@ test('0149 AC4: in a browser, the page reports no manifest errors, and its icons
       assert.notEqual(i.got, 'failed', `${i.src} loads`);
       if (i.want && !i.src.endsWith('.svg')) assert.equal(i.got, i.want, i.src);
     }
-    // The browser's own drawing of the design's app icon (since 0320: its renderer's appIconSVG('light'), which the page
-    // loads with lcd.js), at 180 × 180, is the apple-touch-icon to within a little anti-aliasing.
+    // The browser's own drawing of icon.svg (since 0594: speck as the Premium screen), at 180 × 180, is the
+    // apple-touch-icon to within a little anti-aliasing.
     const diff = await b.js(`(async () => {
       const draw = src => new Promise(ok => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = c.height = 180;
         const x = c.getContext('2d'); x.drawImage(i, 0, 0, 180, 180); ok(x.getImageData(0, 0, 180, 180).data); }; i.src = src; });
-      const app = 'data:image/svg+xml,' + encodeURIComponent(SpeckLCD.logo.appIconSVG('light'));
-      const [a, b] = await Promise.all([draw(app), draw('/apple-touch-icon.png')]);
+      const [a, b] = await Promise.all([draw('/icon.svg'), draw('/apple-touch-icon.png')]);
       let sum = 0; for (let k = 0; k < a.length; k++) if (k % 4 !== 3) sum += Math.abs(a[k] - b[k]);
       return sum / (180 * 180 * 3);
     })()`);

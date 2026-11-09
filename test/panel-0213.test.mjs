@@ -20,7 +20,7 @@ const openPane = (p, id) => {
   return prioTags(p, p.byId('full-ticket'));
 };
 // 0465: the full ticket pane's Priority cell, in the table under its title
-const panePriority = p => p.byId('full-ticket').children[1].children[1].children[3].children.map(n => n.textContent);
+const panePriority = p => p.byId('full-ticket').children[1].children[1].children[0].children.map(n => n.textContent); // 0583: first in its grid
 
 test('0213 AC1: a P0 tag gets the p0 class in Plan, the Build queue and the full ticket pane', async () => {
   const p = fakePage([STATE(), STATE(), STATE()]);

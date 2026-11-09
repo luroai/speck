@@ -303,7 +303,7 @@ test('0569 AC3: speck watch tell writes what it found in the ticket\'s Notes and
   assert.deepEqual(readActions(a.runs).map(x => [x.action, x.text]), [['tell', 'The tests were slow, as four builds ran at once.']]);
   a.said.length = 0;
   a.end();
-  assert.ok(a.said.some(l => /^0001: speck told you what it found: The tests were slow, as four builds ran at once\./.test(l)), a.said.join('\n'));
+  assert.ok(a.said.some(l => /^» 0001: I told you what I found: The tests were slow, as four builds ran at once\./.test(l)), a.said.join('\n'));
   assert.equal(a.starts.length, 1, 'and it starts nothing more');
 });
 

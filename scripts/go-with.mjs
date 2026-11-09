@@ -3,7 +3,7 @@
 // run's next check then resumes the build's own session with a message saying so, as it does after a hand-back (0194).
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, sh, loadConfig, speckNameOf, setField, syncHeader, contentLines, waitFields, worktreeList } from './core.mjs';
+import { SpeckError, sh, loadConfig, speckNameOf, speckSays, setField, syncHeader, contentLines, waitFields, worktreeList, earlierBuilds } from './core.mjs';
 import { replaceSection, commitTicketOnly } from './close.mjs';
 import { buildTicket, saveRecord, resumeHint } from './build-records.mjs';
 import { questionFacts } from './question-facts.mjs';
@@ -46,6 +46,27 @@ function runsOf(repo) {
 // The choice waiting in a run record: { option, at, head }, head being the commit the ticket's branch was at once the
 // choice was committed. null when there's none.
 const pendingOf = rec => (rec?.go_with && typeof rec.go_with === 'object' && typeof rec.go_with.option === 'string' && rec.go_with.option && typeof rec.go_with.head === 'string' && rec.go_with.head ? rec.go_with : null);
+
+// 0589: each recommendation speck takes is kept in the run record's `calls`, so the question and the options it didn't
+// choose outlast the ticket's Blocked question: { question, option, other_options, at }. `facts` are the question's
+// (questionFacts), and {} when the ticket isn't blocked. The watch agent can choose other than its build recommended,
+// and then the recommended one is among those not chosen.
+export function callOf(facts, option, now) {
+  const offered = [...(facts.recommendation ? [facts.recommendation] : []), ...(facts.otherOptions ?? [])];
+  return { question: facts.question || null, option, other_options: [...new Set(offered)].filter(o => o !== option), at: now.toISOString() };
+}
+const usableCall = c => c && typeof c === 'object' && typeof c.option === 'string' && typeof c.at === 'string';
+// The calls kept for a ticket, oldest first, leaving out anything in its record that isn't one.
+export function callsOf(runs, id) {
+  const calls = readRecord(runs, id)?.calls;
+  return (Array.isArray(calls) ? calls : []).filter(usableCall).map(c => ({ question: typeof c.question === 'string' && c.question ? c.question : null, option: c.option, other_options: Array.isArray(c.other_options) ? c.other_options.filter(o => typeof o === 'string') : [], at: c.at }));
+}
+export const withCall = (runs, id, rec, call) => ({ ...rec, calls: [...callsOf(runs, id), call] });
+// What a new build of a ticket keeps from the record it replaces. 0523: what earlier builds spent. 0589: its calls.
+export function newBuildKeeps(runs, id) {
+  const earlier = earlierBuilds(runs, id), calls = callsOf(runs, id);
+  return { ...(earlier.length ? { earlier_builds: earlier } : {}), ...(calls.length ? { calls } : {}) };
+}
 
 // The words speck run starts builds with, as it reads them from speck/config.yml, or [] when it has none it can use.
 export function runWords(cfg) {
@@ -101,7 +122,8 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   if (commit.status !== 0)
     return { status: 500, body: { error: `Couldn't commit ${path.relative(at, t.file)}, so it's still blocked:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
   const head = sh('git', ['rev-parse', 'HEAD'], { cwd: at }).stdout.trim();
-  try { saveRecord(file, { ...rec, go_with: { option, at: now.toISOString(), head, ...(by === 'foreman' ? { by } : {}), ...(split ? { split } : {}), ...(by === 'foreman' && watch === 'decide' ? { watch } : {}) } }); }
+  const kept = by === 'foreman' ? withCall(runs, pad, rec, callOf(facts, option, now)) : rec; // 0589: only speck's are its calls
+  try { saveRecord(file, { ...kept, go_with: { option, at: now.toISOString(), head, ...(by === 'foreman' ? { by } : {}), ...(split ? { split } : {}), ...(by === 'foreman' && watch === 'decide' ? { watch } : {}) } }); }
   catch (e) { return { status: 500, body: { error: `Your choice is in ${pad}'s Notes and it's set building, but its run record couldn't be saved (${e.message}), so speck run won't resume it. ${resumeHint(cfg, rec)}, and tell it you went with the recommendation.` } }; }
   const on = runState(runs).on;
   return { status: 200, body: { ok: true, id: pad, message: on ? `speck run resumes ${pad}'s build with it.` : `speck run is off: turn it on and it resumes ${pad}'s build with it.` } };
@@ -118,11 +140,11 @@ export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, m
       if ((t.status !== 'building' && t.status !== 'reviewing') || t.build_running || running.has(t.id)) continue;
       const rec = readRecord(runs(), t.id), g = pendingOf(rec);
       if (!g) continue;
-      const file = path.join(runs(), `${t.id}.json`), who = g.by === 'foreman' ? speckNameOf(settings()?.cfg || cfg) : 'you'; // 0286, 0576: what you call speck
+      const file = path.join(runs(), `${t.id}.json`), who = g.by === 'foreman' ? 'I' : 'you', log = m => console.log(g.by === 'foreman' ? speckSays(m) : m); // 0286, 0591: the engineering manager's lines are its own
       const { go_with: _, exited: _e, exit_code: _c, ...kept } = rec;
       if (g.head !== refsOf(repo, cfg, t.id).head || sessionInUse(rec.session)) {
         try { save(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* tried again next check */ }
-        console.log(`${t.id}: ${who} went with its recommendation, but its build has been carried on since, so speck run left it as it is.`);
+        log(`${t.id}: ${who} went with its recommendation, but its build has been carried on since, so speck run left it as it is.`);
         continue;
       }
       const s = settings();
@@ -130,13 +152,13 @@ export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, m
       const { argv, why } = resumeFor(s.words, s.cfg, t.id, rec, goWithMessage(t.id, g.option, rec.agent === 'codex' ? '$speck-build' : '/speck-build', g.by, g.split === true, g.watch === 'decide' ? 'decide' : 'fix'));
       if (!argv) {
         try { save(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said again next check */ }
-        console.log(`${t.id}: ${who} went with its recommendation, but speck run can't resume its build session: ${why}. ${hint(s.cfg, rec)}, and tell it ${who} went with the recommendation.`);
+        log(`${t.id}: ${who} went with its recommendation, but speck run can't resume its build session: ${why}. ${hint(s.cfg, rec)}, and tell it ${who} went with the recommendation.`);
         continue;
       }
       const next = { ...resumedRecord(kept), went_with: g, resume_command: argv };
-      try { save(file, next); } catch (e) { console.log(`${t.id}: ${who} went with its recommendation, but speck run couldn't save its run record (${e.message}), so it tries again on its next check.`); continue; }
+      try { save(file, next); } catch (e) { log(`${t.id}: ${who} went with its recommendation, but speck run couldn't save its run record (${e.message}), so it tries again on its next check.`); continue; }
       const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
-      console.log(`${t.id}: ${who} went with its recommendation, so speck run is resuming its build (session ${rec.session}).`);
+      log(`${t.id}: ${who} went with its recommendation, so speck run is resuming its build (session ${rec.session}).`);
       startBuild(t.id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
     }
   };

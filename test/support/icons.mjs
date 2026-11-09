@@ -1,5 +1,5 @@
 // 0149: the panel's PNG icons, and since 0305 its icon.svg too, with no dependencies, so the icons can be checked against
-// the design and made again when it changes (since 0320, from its renderer's logo): node -e "import('./test/support/icons.mjs').then(m => m.writeIcons())"
+// the design and made again when it changes (since 0594, from speck's own drawing, templates/speck-face.js): node -e "import('./test/support/icons.mjs').then(m => m.writeIcons())"
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -7,8 +7,9 @@ import zlib from 'node:zlib';
 import { ROOT } from './panel.mjs';
 
 export const ICONS = path.join(ROOT, 'templates', 'icons');
-// Each PNG the panel serves, with its size in pixels.
-export const PNGS = { 'icon-192.png': 192, 'icon-512.png': 512, 'apple-touch-icon.png': 180 };
+// Each PNG the panel serves, with its size in pixels. The tab's two show the plain visor (0594).
+export const APP_ICONS = { 'icon-192.png': 192, 'icon-512.png': 512, 'apple-touch-icon.png': 180 };
+export const TAB_ICONS = { 'icon-16.png': 16, 'icon-32.png': 32 };
 const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
 
 // 0320: the design's logo, from its renderer, run once here with stand-ins for the browser, so the icons run no script.
@@ -19,71 +20,104 @@ export function logo() {
   return ctx.window.SpeckLCD.logo;
 }
 
-// 0320: icon.svg is the logo's browser-tab icon, as the renderer writes it.
-export const iconSvg = () => logo().faviconSVG();
+// 0594: speck's character, from the panel's own drawing, run once here with stand-ins for the browser, so the icons run
+// no script and can't drift from it: the parts of its watching drawing and its colours on a dark background.
+function face() {
+  const make = tag => ({ tag, attrs: {}, children: [], setAttribute(k, v) { this.attrs[k] = String(v); }, appendChild(c) { this.children.push(c); return c; } });
+  const styles = [], cx = { document: { createElementNS: (ns, tag) => make(tag), createElement: make, head: { appendChild: c => styles.push(c) } } };
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'templates', 'speck-face.js'), 'utf8'), cx);
+  const all = (n, out = []) => { out.push(n); n.children.forEach(c => all(c, out)); return out; };
+  const nodes = all(cx.SpeckFace.draw({ mood: 'watching', size: 512, look: 'dark' }));
+  const part = name => {
+    const n = nodes.find(x => (x.attrs.class || '').split(' ').includes(name));
+    if (!n) throw new Error(`speck's drawing has no .${name} for the icons`);
+    return n.attrs;
+  };
+  const dark = styles[0].textContent.match(/\[data-look="dark"\] \{ ([^}]*)\}/)[1];
+  const colour = name => dark.match(new RegExp(`--sf-${name}: (#[0-9A-Fa-f]{6})`))[1];
+  return { body: part('sf-body'), screen: part('sf-screen'), glow: part('sf-glow'), visor: part('sf-visor'), glass: part('sf-glass'),
+    bezel: [colour('bezel-a'), colour('bezel-b')], rim: colour('rim'), eye: colour('eye'), screenFill: styles[0].textContent.match(/\.sf-screen \{ fill: (#[0-9A-Fa-f]{6})/)[1] };
+}
+const SLAB_RADIUS = 22, SCALE = 1.8;
+const bar = () => fs.readFileSync(path.join(ROOT, 'templates', 'panel-base.css'), 'utf8').match(/--bar: (#[0-9A-Fa-f]{6})/)[1];
+const box = a => ['x', 'y', 'width', 'height', 'rx'].map(k => `${k}="${a[k]}"`).join(' ');
 
-// The shapes an SVG from the renderer's logo paints, in order: its rects, and its paths, which are only squares and
-// runs of them (M x y h w v h h -w z), each with its fill and a group's translate. Anything else is refused, so a
-// change to how the design draws its icon can't be drawn wrong without a test failing.
-export function shapes(svg) {
-  const out = [], groups = [];
-  const attrs = s => Object.fromEntries([...s.matchAll(/([\w-]+)="([^"]*)"/g)].map(a => [a[1], a[2]]));
-  for (const [, close, tag, rest] of svg.matchAll(/<(\/?)(\w+)([^>]*?)\/?>/g)) {
-    if (tag === 'svg') { if (!close && attrs(rest).viewBox !== '0 0 100 100') throw new Error(`a viewBox of ${attrs(rest).viewBox}`); continue; }
-    if (tag === 'g') { if (close) groups.pop(); else groups.push(attrs(rest)); continue; }
-    const a = attrs(rest), g = groups.at(-1) || {}, fill = a.fill || g.fill;
-    const [tx, ty] = g.transform ? g.transform.match(/^translate\(([-\d.]+) ([-\d.]+)\)$/).slice(1).map(Number) : [0, 0];
-    if (tag === 'rect') out.push({ x: +(a.x || 0) + tx, y: +(a.y || 0) + ty, w: +a.width, h: +a.height, rx: +(a.rx || 0), fill });
-    else if (tag === 'path') {
-      for (const m of (a.d || '').matchAll(/M(-?[\d.]+) (-?[\d.]+)h(-?[\d.]+)v(-?[\d.]+)h(-?[\d.]+)z|(.)/g)) {
-        if (m[6] !== undefined) throw new Error(`a path the icon drawing can't read: ${a.d}`);
-        const [x, y, w, h, back] = m.slice(1, 6).map(Number);
-        if (back !== -w) throw new Error(`a path that isn't a rectangle: ${m[0]}`);
-        out.push({ x: x + tx, y: y + ty, w, h, rx: 0, fill });
-      }
-    } else throw new Error(`a <${tag}> the icon drawing can't read`);
-  }
-  return out;
+// 0594: the icon's SVG. speck's device sits in the middle of the slab at 1.8 times its size. The glow and the reflection
+// are marked d, for a browser to leave out when it draws the icon small: a tab is 16 px, or up to 48 on a sharper screen.
+export function iconSvg() {
+  const f = face();
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><style>@media (max-width:48px){.d{display:none}}</style>`
+    + `<rect width="100" height="100" rx="${SLAB_RADIUS}" fill="${bar()}"/><defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${f.bezel[0]}"/><stop offset="1" stop-color="${f.bezel[1]}"/></linearGradient><clipPath id="c"><rect ${box(f.screen)}/></clipPath></defs>`
+    + `<g transform="translate(50 95) scale(${SCALE})">`
+    + `<rect ${box(f.body)} fill="url(#b)" stroke="${f.rim}" stroke-width="${f.body['stroke-width']}"/><rect ${box(f.screen)} fill="${f.screenFill}"/>`
+    + `<g clip-path="url(#c)" fill="none" stroke="${f.eye}" stroke-linecap="round"><path class="d" d="${f.glow.d}" stroke-width="${f.glow['stroke-width']}" stroke-opacity="${f.glow['stroke-opacity']}"/><path d="${f.visor.d}" stroke-width="${f.visor['stroke-width']}"/>`
+    + `<path class="d" d="${f.glass.d}" stroke="none" fill="${f.glass.fill}" fill-opacity="${f.glass['fill-opacity']}"/></g></g></svg>`;
 }
 
-const colour = c => {
-  if (/^#[0-9a-f]{6}$/i.test(c)) return [...rgb(c), 1];
-  const m = c.match(/^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/);
-  if (!m) throw new Error(`a colour the icon drawing can't read: ${c}`);
-  return m.slice(1).map(Number);
+const inRound = (s, x, y) => {
+  const cx = Math.min(Math.max(x, s.x + s.rx), s.x + s.w - s.rx), cy = Math.min(Math.max(y, s.y + s.rx), s.y + s.h - s.rx);
+  return x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h && (x - cx) ** 2 + (y - cy) ** 2 <= s.rx ** 2;
 };
-// How much of the pixel at (px, py) a shape covers, from 0 to 1: the exact area for a square-cornered one, and 16 × 16
-// samples where a rounded corner crosses the pixel.
-function cover(s, px, py) {
-  const w = Math.max(0, Math.min(px + 1, s.x + s.w) - Math.max(px, s.x)), h = Math.max(0, Math.min(py + 1, s.y + s.h) - Math.max(py, s.y));
-  if (!w || !h || !s.rx) return w * h;
-  const r = s.rx, inCorner = (x, y) => (x < s.x + r || x > s.x + s.w - r) && (y < s.y + r || y > s.y + s.h - r);
-  if (!inCorner(px, py) && !inCorner(px + 1, py) && !inCorner(px, py + 1) && !inCorner(px + 1, py + 1)) return w * h;
-  let n = 0;
-  for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) {
-    const x = px + (i + .5) / 16, y = py + (j + .5) / 16;
-    if (x < s.x || x > s.x + s.w || y < s.y || y > s.y + s.h) continue;
-    const cx = Math.min(Math.max(x, s.x + r), s.x + s.w - r), cy = Math.min(Math.max(y, s.y + r), s.y + s.h - r);
-    if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) n++;
-  }
-  return n / 256;
+// A point is inside a convex path when it's on the same side of every edge.
+const inPolygon = (pts, x, y) => pts.every(([ax, ay], i) => { const [bx, by] = pts[(i + 1) % pts.length]; return (bx - ax) * (y - ay) - (by - ay) * (x - ax) >= 0; });
+
+// 0594: what the icon paints, in order, in the icon's own 0 to 100 units: every shape convex, each with what's inside it
+// and a colour for each point. The rim is drawn as a slightly larger body behind the body, as a stroke centred on its edge
+// looks. plain leaves out the glow and the reflection, as iconSvg's small sizes do.
+function layers(plain) {
+  const f = face(), place = a => ({ x: 50 + SCALE * +a.x, y: 95 + SCALE * +a.y, w: SCALE * +a.width, h: SCALE * +a.height, rx: SCALE * +a.rx });
+  const round = (s, fill, alpha = 1) => ({ box: s, inside: (x, y) => inRound(s, x, y), fill, alpha });
+  const grow = (s, by) => ({ x: s.x - by, y: s.y - by, w: s.w + 2 * by, h: s.h + 2 * by, rx: s.rx + by });
+  // The visor is a straight line with round ends: a rounded rectangle as tall as its stroke.
+  const line = a => {
+    const [x1, y1, cx, cy, x2, y2] = [...a.d.matchAll(/-?[\d.]+/g)].map(m => +m[0]), width = +a['stroke-width'];
+    if (y1 !== cy || cy !== y2) throw new Error(`a visor the icon drawing can't read: ${a.d}`);
+    return place({ x: x1 - width / 2, y: y1 - width / 2, width: x2 - x1 + width, height: width, rx: width / 2 });
+  };
+  const body = place(f.body), screen = place(f.screen), edge = SCALE * +f.body['stroke-width'] / 2;
+  const [top, bottom] = f.bezel.map(rgb);
+  const bezel = (x, y) => top.map((c, i) => c + (bottom[i] - c) * Math.min(1, Math.max(0, (y - body.y) / body.h)));
+  const glass = [...f.glass.d.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map(m => [50 + SCALE * +m[1], 95 + SCALE * +m[2]]);
+  return [
+    round({ x: 0, y: 0, w: 100, h: 100, rx: SLAB_RADIUS }, rgb(bar())),
+    round(grow(body, edge), rgb(f.rim)),
+    round(grow(body, -edge), bezel),
+    round(screen, rgb(f.screenFill)),
+    ...(plain ? [] : [round(line(f.glow), rgb(f.eye), +f.glow['stroke-opacity'])]),
+    round(line(f.visor), rgb(f.eye)),
+    ...(plain ? [] : [{ box: screen, inside: (x, y) => inRound(screen, x, y) && inPolygon(glass, x, y), fill: rgb(f.glass.fill), alpha: +f.glass['fill-opacity'] }]),
+  ];
 }
 
-// 0320: the app icon at `size` pixels, as RGB rows: the renderer's appIconSVG('light'), each shape painted in turn over
-// what's below it, by how much of each pixel it covers, as a browser draws it.
-export function draw(size, svg = logo().appIconSVG('light')) {
-  const k = size / 100, px = new Float64Array(size * size * 3);
-  for (const s0 of shapes(svg)) {
-    const s = { x: s0.x * k, y: s0.y * k, w: s0.w * k, h: s0.h * k, rx: s0.rx * k }, [r, g, b, a] = colour(s0.fill);
-    for (let y = Math.max(0, Math.floor(s.y)); y < Math.min(size, Math.ceil(s.y + s.h)); y++) {
-      for (let x = Math.max(0, Math.floor(s.x)); x < Math.min(size, Math.ceil(s.x + s.w)); x++) {
-        const t = a * cover(s, x, y), i = (y * size + x) * 3;
+// 0594: the icon at `size` pixels, as RGBA rows, each shape painted in turn over what's below it, by how much of each
+// pixel it covers, as a browser draws it: 8 × 8 samples, or none when all four of a pixel's corners are inside, as every
+// shape is convex. plain is the small icon.
+export function draw(size, plain = false) {
+  const k = size / 100, px = new Float64Array(size * size * 4), N = 8;
+  for (const l of layers(plain)) {
+    const hit = (x, y) => l.inside(x / k, y / k);
+    for (let y = Math.max(0, Math.floor(l.box.y * k)); y < Math.min(size, Math.ceil((l.box.y + l.box.h) * k)); y++) {
+      for (let x = Math.max(0, Math.floor(l.box.x * k)); x < Math.min(size, Math.ceil((l.box.x + l.box.w) * k)); x++) {
+        let n = N * N;
+        if (!(hit(x, y) && hit(x + 1, y) && hit(x, y + 1) && hit(x + 1, y + 1))) {
+          n = 0;
+          for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) if (hit(x + (i + .5) / N, y + (j + .5) / N)) n++;
+        }
+        const t = l.alpha * n / (N * N), i = (y * size + x) * 4;
         if (!t) continue;
-        px[i] += (r - px[i]) * t; px[i + 1] += (g - px[i + 1]) * t; px[i + 2] += (b - px[i + 2]) * t;
+        const c = typeof l.fill === 'function' ? l.fill((x + .5) / k, (y + .5) / k) : l.fill;
+        for (let ch = 0; ch < 3; ch++) px[i + ch] += (c[ch] - px[i + ch]) * t; // premultiplied, undone below
+        px[i + 3] += (1 - px[i + 3]) * t;
       }
     }
   }
-  return Buffer.from(px.map(Math.round));
+  const out = Buffer.alloc(size * size * 4);
+  for (let i = 0; i < out.length; i += 4) {
+    const a = px[i + 3];
+    for (let ch = 0; ch < 3; ch++) out[i + ch] = a ? Math.round(px[i + ch] / a) : 0;
+    out[i + 3] = Math.round(a * 255);
+  }
+  return out;
 }
 
 const CRC = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
@@ -93,22 +127,25 @@ const chunk = (type, data) => {
   len.writeUInt32BE(data.length); sum.writeUInt32BE(crc(t));
   return Buffer.concat([len, t, sum]);
 };
-// An 8-bit RGB PNG, with no alpha channel, so it has no transparency. Compressed bytes can happen to hold text such as
+// An 8-bit RGBA PNG, so its rounded corners are see-through (0594). Compressed bytes can happen to hold text such as
 // "O6" that the "no model name is hard-coded" scan of templates/ flags (the eye's PNGs at level 9 in 0184, the 512 px
-// icon at the default level in 0308), so it takes the first zlib level, from the default, whose bytes hold none.
+// icon at the default level in 0308), so it takes the first zlib settings, from the default, whose bytes hold none.
 const NAMED = /\bo[1-9]|gpt-|claude-|opus|sonnet|haiku|gemini-|codex-mini/i;
-export function png(size, px = draw(size)) {
+export function png(size, plain = false, px = draw(size, plain)) {
   const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4); ihdr[8] = 8; ihdr[9] = 2;
-  const rows = Buffer.concat(Array.from({ length: size }, (_, y) => Buffer.concat([Buffer.from([0]), px.subarray(y * size * 3, (y + 1) * size * 3)])));
-  const make = level => Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(rows, { level })), chunk('IEND', Buffer.alloc(0))]);
-  for (const level of [6, 7, 8, 9, 5, 4, 3, 2, 1]) { const b = make(level); if (!NAMED.test(b.toString('utf8'))) return b; }
-  throw new Error(`every zlib level leaves text the model-name scan flags in the ${size} px icon`);
+  ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4); ihdr[8] = 8; ihdr[9] = 6;
+  const rows = Buffer.concat(Array.from({ length: size }, (_, y) => Buffer.concat([Buffer.from([0]), px.subarray(y * size * 4, (y + 1) * size * 4)])));
+  const make = options => Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(rows, options)), chunk('IEND', Buffer.alloc(0))]);
+  for (const memLevel of [8, 9, 7, 6, 5, 4, 3]) for (const strategy of [zlib.constants.Z_DEFAULT_STRATEGY, zlib.constants.Z_FILTERED, zlib.constants.Z_RLE]) {
+    for (const level of [6, 7, 8, 9, 5, 4, 3, 2, 1]) { const b = make({ level, strategy, memLevel }); if (!NAMED.test(b.toString('utf8'))) return b; }
+  }
+  throw new Error(`all the zlib settings leave text the model-name scan flags in the ${size} px icon`);
 }
 
 export function writeIcons() {
   fs.writeFileSync(path.join(ICONS, 'icon.svg'), iconSvg());
-  for (const [name, size] of Object.entries(PNGS)) fs.writeFileSync(path.join(ICONS, name), png(size));
+  for (const [name, size] of Object.entries(APP_ICONS)) fs.writeFileSync(path.join(ICONS, name), png(size));
+  for (const [name, size] of Object.entries(TAB_ICONS)) fs.writeFileSync(path.join(ICONS, name), png(size, true));
 }
 
 // A PNG's width, height, colour type and pixels (8-bit RGB or RGBA, as the browser or this file writes them).

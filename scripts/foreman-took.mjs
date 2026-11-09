@@ -63,6 +63,18 @@ export function decidedFor(entries, changed, now = Date.now()) {
     return recent.map(w => ({ id: e.id, title: e.title, option: w.option, at: w.at, criteria_changed }));
   }).sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }
+// 0589: `decided` (decidedFor) with each call's question and other options, from what callsOf(id) kept for its ticket. A
+// Notes line goes by minute, so each takes the first kept call with its option and minute, once. One with no kept call,
+// because it was made before speck kept them or its record has gone, has them blank.
+export function withCalls(decided, callsOf) {
+  const kept = new Map();
+  return decided.map(d => {
+    if (!kept.has(d.id)) kept.set(d.id, [...callsOf(d.id)]);
+    const calls = kept.get(d.id), i = calls.findIndex(c => c.option === d.option && c.at.slice(0, 16) === d.at.slice(0, 16));
+    const call = i < 0 ? null : calls.splice(i, 1)[0];
+    return { ...d, question: call?.question ?? null, other_options: call?.other_options ?? [] };
+  });
+}
 // The lines `speck status` puts under a ticket from its board entry `b`: a blocked one's question `q` and whether it
 // waits for the Foreman or for you, and who went with the recommendation its build is carrying on with.
 export function foremanTicketLines(b, q, name = 'speck') {

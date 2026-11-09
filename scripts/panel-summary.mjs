@@ -44,3 +44,14 @@ export function projectSummary({ board, foreman, run, now = Date.now() }) {
     spent_week_usd: spent.total_cost_usd, spent_week_unknown: spent.total_cost_unknown.length > 0,
   };
 }
+
+// 0579: speck's mood from the board, for its face: asleep while speck run is off, asking while anything needs you (as
+// projectSummary counts it), focused while a build is building or reviewing or a ticket is shipping, otherwise watching.
+// Its other moods aren't the board's: the page's SpeckMood.watcher and SpeckMood.beside add them.
+export function speckMood({ board, foreman, run, now = Date.now() }) {
+  if (!(run && run.on)) return 'asleep';
+  const summary = projectSummary({ board, foreman, run, now }), f = foreman && typeof foreman === 'object' ? foreman : {};
+  if (summary.needs_you) return 'asking';
+  const busy = summary.building || list(f.building).length || (f.ship && f.ship.running) || list(board && board.tickets).some(t => t && shipping(t));
+  return busy ? 'focused' : 'watching';
+}

@@ -81,7 +81,7 @@ for (const how of ['Close', 'Escape']) {
     await p.settle();
     click(named(p, itemOf(p, '0001'), 'Full ticket'));
     assert.equal(p.focused(), pane(p), 'the focus is in it');
-    if (how === 'Close') click(named(p, pane(p), 'Close'));
+    if (how === 'Close') click(p.all(pane(p)).find(n => n.className === 'close')); // 0583: the back link
     else p.key('Escape');
     assert.ok(!paneOpen(p), 'it closes');
     assert.equal(p.focused(), named(p, itemOf(p, '0001'), 'Full ticket'), 'the focus is back on its button');
