@@ -1,7 +1,7 @@
 ---
 id: "0590"
 title: "Redesign Decided for you"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0589","0588","0580"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T21:37:00.355Z"
-approved: "2026-11-09T21:44:50.150Z"
+approved: "2026-11-09T21:50:12.163Z"
 
 ---
 # 0590 · Redesign Decided for you
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Decided for you (0568) is a plain list. In the redesign it's where speck reports to you: in its own voice, with its face, showing what it decided, what it didn't choose, and what's waiting for you because of it.
@@ -54,12 +54,13 @@ When speck has made calls for you in the last week, a line under the bar now sho
 ## Review log
 Round 1 (codex): changes requested: F1 Criterion 5 explicitly requires the Delivery log to list tests updated from the old presentation, but that section is empty.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 306,846
-- Elapsed since build started: 8 min
+- Reviewer tokens: 416,534
+- Elapsed since build started: 13 min
 - Changed lines: 70 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
