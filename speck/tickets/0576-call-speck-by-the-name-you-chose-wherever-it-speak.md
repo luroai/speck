@@ -1,7 +1,7 @@
 ---
 id: "0576"
 title: "Call speck by the name you chose wherever it speaks"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ approved: "2026-11-09T18:17:40.767Z"
 ---
 # 0576 · Call speck by the name you chose wherever it speaks
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 Once you've named your engineering manager (0575), speck should call it by that name wherever it speaks or acts, or the name means nothing. Today `speck status`, the panel and `speck run`'s log all say "speck asked you…", "speck will take its recommendation…" and "speck will look into it…".
@@ -144,6 +144,81 @@ Follow-ups (known limits, none needing its own ticket):
     "findings": [],
     "escalation_question": "",
     "summary": "The chosen name now appears in the manager’s status messages, panel questions, recommendations and run logs. Commands, the panel title and ticket records retain speck. The tests exercise the changed behaviour and report no failures; no blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "edccbf4c36db9795d46fff7cacf183b25e337bd0",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c186-f962-75b3-9cbc-ee36f5f391d8",
+    "builder_response": "- Merge of main into the ticket branch. Resolved files:\n  - scripts/panel.mjs (class: logic, 1 conflict): main (0595) changed the `boards = boardVersions()` line to also declare `SUMMARY`; this ticket added `nameNow` to the line above it. Kept both: this ticket's `fixingNow`/`baseNow`/`nameNow` line and main's `const SUMMARY = Symbol('summary'), boards = boardVersions(), stateOf = out => {`. Nothing else changed.\n- Checked main's new code (scripts/panel-summary.mjs and the rest of its diff under scripts/ and templates/) for new places where the engineering manager speaks: none.\n- Tests run: test/speck-name-0576.test.mjs, with the commands.checks files that `speck test --files` adds.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 443393,
+      "cached_input_tokens": 355072,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1415,
+      "reasoning_output_tokens": 93
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 25075,
+      "cached": 147968,
+      "write": 0,
+      "output": 406
+    },
+    "cost_usd": 0.0690068,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:23:22.411Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cmdStatus still passes speckNameOf(cfg) to foremanView, agentView and foremanTicketLines. All AC1 tests passed, including the real CLI and unset-name fallback."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The merged panel.mjs retains nameNow and passes the name to both view functions. Panel renderers retain named cards, questions and recommendation messages. All AC2 tests passed, including the real panel API and redraw after renaming."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanAgentQueue, foremanFixQueue and goWithQueue retain configured names in manager log messages. All AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Commands, panel title and persistent ticket attribution retain speck. Both AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified fresh test output: 130 tests, 127 passed, zero failed, three skipped. The panel conflict resolution preserves main's SUMMARY declaration, summary callback and response handling alongside the naming changes."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves both the chosen manager name and main’s new project summary handling. All ticket tests pass, with no new concerns. Approved."
   }
 }
 ```
