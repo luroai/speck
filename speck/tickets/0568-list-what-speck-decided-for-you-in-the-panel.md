@@ -1,7 +1,7 @@
 ---
 id: "0568"
 title: "List what speck decided for you in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0564","0565","0567"]                # ticket ids that must be done first
 created: 2026-11-08
 started: "2026-11-09T00:13:58.642Z"
+approved: "2026-11-09T00:24:20.841Z"
 
 ---
 # 0568 · List what speck decided for you in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 With speck deciding, you need one place to see what it chose and to change any you'd have chosen differently. Today each choice is a line in its ticket's Notes, and `speck status` lists only the last 24 hours.
@@ -58,9 +59,14 @@ Worth keeping an eye on: a ticket shipped through a squashed pull request can't 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 206,549
+- Elapsed since build started: 10 min
+- Changed lines: 146 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ### Follow-ups
