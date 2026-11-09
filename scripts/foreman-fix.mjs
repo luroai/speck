@@ -3,7 +3,7 @@
 // the panel's Go with the recommendation button does (0284), so the same check's goWithQueue resumes its build. It
 // does so at most once per ticket: goWith refuses a second time, leaving the question for you.
 // 0564: with watch: decide, every recommendation of a low-risk ticket, whatever its facts, up to 3 per ticket.
-import { speckNameOf } from './core.mjs';
+import { speckSays } from './core.mjs';
 import { fixingOf, speckActs, speckTakes } from './foreman.mjs';
 import { goWith as goWithDefault } from './go-with.mjs';
 
@@ -17,7 +17,6 @@ export function foremanFixQueue({ repo, readConfig, running = new Set(), goWith 
     try { cfg = readConfig(); } catch { return; } // read again next check
     const watch = fixingOf(cfg);
     if (!speckActs(watch)) return;
-    const name = speckNameOf(cfg); // 0576
     for (const t of tickets) {
       if (!speckTakes(watch, t)) { told.delete(t.id); continue; }
       if (running.has(t.id)) continue;
@@ -26,11 +25,11 @@ export function foremanFixQueue({ repo, readConfig, running = new Set(), goWith 
       if (out.status === 200) {
         told.delete(t.id);
         t.status = 'building';
-        say(`${t.id}: ${name} went with its recommendation (${t.blocked_recommendation}), as watch is ${watch}, and noted it in the ticket.`);
+        say(speckSays(`${t.id}: I went with the recommendation: ${t.blocked_recommendation}, as watch is ${watch}, and noted it in the ticket.`)); // 0591
         continue;
       }
       const why = String(out.body?.error || `refused (${out.status})`);
-      if (told.get(t.id) !== why) say(`${t.id}: ${name} didn't take its recommendation: ${why}`);
+      if (told.get(t.id) !== why) say(speckSays(`${t.id}: I didn't take its recommendation: ${why}`));
       told.set(t.id, why);
     }
   };

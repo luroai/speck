@@ -42,6 +42,8 @@ In the redesign, speck speaks in the first person wherever its face appears, the
 - Lines today: `scripts/foreman-agent.mjs` ("speck will look into it"), `scripts/go-with.mjs`, `scripts/foreman-fix.mjs`, `scripts/split-off.mjs`; the panel reads them with `runLogLine` in `templates/panel-model.js`. Waits for 0576, which changes the same lines.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a tool line can't be taken for the manager's, as only the mark counts and a test feeds first-person words without it; a `runLogLine` result gains `speck` only on a marked line, so what it returns for the tool's lines is unchanged.
+- Pictures: none, because the look of the log doesn't change here (0592 does that); only the words of the manager's lines do.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
