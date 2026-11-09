@@ -1,7 +1,7 @@
 ---
 id: "0590"
 title: "Redesign Decided for you"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0589","0588","0580"]                # ticket ids that must be done firs
 created: 2026-11-09
 started: "2026-11-09T21:37:00.355Z"
 approved: "2026-11-09T21:50:12.163Z"
+finished: "2026-11-09T21:56:33.756Z"
 
 ---
 # 0590 · Redesign Decided for you
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Decided for you (0568) is a plain list. In the redesign it's where speck reports to you: in its own voice, with its face, showing what it decided, what it didn't choose, and what's waiting for you because of it.
