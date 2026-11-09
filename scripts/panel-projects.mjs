@@ -10,7 +10,7 @@ import path from 'node:path';
 import http from 'node:http';
 import { pidAlive } from './run-switch.mjs';
 
-const LIST_MS = 1000, WATCH_MS = 2000, GONE_RETRY_MS = 3000;
+const LIST_MS = 1000, WATCH_MS = 2000, GONE_RETRY_MS = 3000, SUMMARY_MS = 2000, SUMMARY_BYTES = 1 << 21; // 0595's: how long a panel has to answer, and how much of an answer is read
 // Hop-by-hop headers, which belong to one connection and aren't passed on.
 const HOP = new Set(['connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'proxy-connection', 'te', 'trailer']);
 
@@ -86,6 +86,39 @@ export function panelProjects({ port, name, repo, origins, changed, id }) {
     return json(res, 200, { ok: true }, { 'Set-Cookie': `${cookieName(port)}=${to}; Path=/; Max-Age=31536000; SameSite=Strict` });
   }
 
+  // 0595: the summary the panel on `to` gives of itself (projectSummary's), or null when it doesn't give one within SUMMARY_MS.
+  function summaryOf(to) {
+    return new Promise(resolve => {
+      const up = http.get({ host: '127.0.0.1', port: to, path: '/api/projects/own', headers: { host: `127.0.0.1:${to}`, 'x-speck-via': String(port) }, agent: false }, answer => {
+        let body = '';
+        answer.setEncoding('utf8');
+        answer.on('data', d => { body += d; if (body.length > SUMMARY_BYTES) done(null); });
+        answer.on('end', () => {
+          let v = null;
+          try { v = JSON.parse(body); } catch { /* not a panel's answer */ }
+          done(answer.statusCode === 200 && v && typeof v === 'object' && !Array.isArray(v) && typeof v.status === 'string' ? v : null);
+        });
+        answer.on('error', () => done(null));
+      });
+      const timer = setTimeout(() => done(null), SUMMARY_MS);
+      function done(v) { clearTimeout(timer); up.destroy(); resolve(v); }
+      up.on('error', () => done(null));
+    });
+  }
+
+  // POST /api/projects/summary: 0595's summary of every panel running on this machine, each from its own panel at the same
+  // time. POST, so the browser says which page is asking: only one at this address, as choosing a project needs.
+  async function summaries(req, res) {
+    res.removeHeader('X-Speck-Panel'); // the address's own answer, whichever panel's page asked
+    if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed.' }, { Allow: 'POST' });
+    if (!ours(req)) return json(res, 403, { error: 'Forbidden: only a panel page at this address can do that. Reload it.' });
+    const projects = await Promise.all(list().map(async p => {
+      const s = await summaryOf(p.port);
+      return s ? { ...s, ...p, running: true } : { ...p, running: false };
+    }));
+    return json(res, 200, { self: port, projects });
+  }
+
   // Passes the request on to the panel on `to`, on this machine, as one made to it directly, and its answer back.
   function pass(req, res, to) {
     const headers = {};
@@ -128,6 +161,7 @@ export function panelProjects({ port, name, repo, origins, changed, id }) {
       if (req.headers['x-speck-via']) return false; // passed on by another panel: its own, as asked
       const where = req.url.split('?')[0], pick = where.match(/^\/api\/projects\/(\d{1,5})$/);
       if (pick) { choose(req, res, +pick[1]); return true; }
+      if (where === '/api/projects/summary') { cached = null; void summaries(req, res); return true; } // 0595
       const to = chosen(req, port);
       if (to === null) return false;
       cached = null;

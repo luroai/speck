@@ -23,6 +23,7 @@ import { panelForemanReply } from './foreman-answer.mjs';
 import { goWith } from './go-with.mjs';
 import { panelAway } from './panel-background.mjs'; // 0509: --background and --stop
 import { panelProjects } from './panel-projects.mjs'; // 0516: the project menu, and showing another panel's project here
+import { projectSummary } from './panel-summary.mjs'; // 0595: this panel's part of the bridge
 import { panelStarNote } from './panel-star.mjs'; // 0538: the star on a note in Capture
 import { panelUrl } from './panel-url.mjs'; // 0538: moved out, to keep this under 600 lines
 
@@ -270,20 +271,22 @@ export async function panelServer() {
   // the page shows only in the Shipped figures cut down to those (0178, see panelBoard).
   // 0286: watch as speck/config.yml has it now, or its default when that can't be read. 0495: and the base branch's name, or blank.
   const fixingNow = () => { try { return fixingOf(loadConfig(repo)); } catch { return 'tell'; } }, baseNow = () => { try { return String(loadConfig(repo).base_branch || ''); } catch { return ''; } };
-  const boards = boardVersions(), stateOf = out => {
+  const SUMMARY = Symbol('summary'), boards = boardVersions(), stateOf = out => {
     if (out.error) return { status: 500, body: JSON.stringify({ error: out.error }) };
     // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
       const run = panelRunState(repo, runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets), base: baseNow() });
       const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...runLogPart(runs), ...pageNow(), ...(projects ? projects.part() : {}) }); // 0415: run_log. 0516: projects
-      return { status: 200, body: snap.body, snap };
+      return { status: 200, body: snap.body, snap, summary: () => projectSummary({ board: out.board, foreman, run }) }; // 0595: worked out when asked, as its 7 days move on
     }
     catch (e) { return { status: 500, body: JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) }) }; }
   };
   const answerState = (res, have) => {
     if (closed(res)) return;
-    const { state: { status, body, snap }, version } = latest, out = snap ? boards.answer(snap, version, have) : { body, name: null };
+    const { state: { status, body, snap, summary }, version } = latest;
+    if (have === SUMMARY) return send(res, status, 'application/json', summary ? JSON.stringify(summary()) : body);
+    const out = snap ? boards.answer(snap, version, have) : { body, name: null };
     send(res, status, 'application/json', out.body, out.name ? { 'X-Speck-Board': out.name } : {});
   };
   // 0187: each board that differs from the last is announced to every open page's event stream (see boardFeed), and
@@ -479,6 +482,7 @@ export async function panelServer() {
       const told = String(req.headers['x-speck-board'] ?? '');
       return askState(res, /^\d{1,15}$/.test(told) ? Number(told) : null, String(req.headers['x-speck-have'] ?? ''));
     }
+    if (where === '/api/projects/own') return req.headers['x-speck-via'] ? askState(res, latest ? latest.version : null, SUMMARY) : send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only another speck panel can ask for this.' })); // 0595: a page can't send that header from another site, and an unchanged board isn't read again
     if (where === '/api/panel') return send(res, 200, 'application/json', JSON.stringify({ repo: fs.realpathSync(repo), url: url ? url.origin : null })); // 0509: which repo's panel, and its --url
     if (where === '/api/run-log') { const out = runLogAnswer(runs); return send(res, out.status, 'application/json', JSON.stringify(out.body)); } // 0415: always run.log
     const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log(\/close)?$/);
