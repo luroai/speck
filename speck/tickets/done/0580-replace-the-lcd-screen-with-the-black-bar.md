@@ -1,7 +1,7 @@
 ---
 id: "0580"
 title: "Replace the LCD screen with the black bar"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0577","0579"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T19:22:31.098Z"
 approved: "2026-11-09T19:54:13.245Z"
+finished: "2026-11-09T20:00:24.743Z"
 
 ---
 # 0580 · Replace the LCD screen with the black bar
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The LCD screen at the top of the panel, with its dot-matrix speck, clock and captions, has become decoration: the user finds it pointless now. The redesign keeps only what was liked, its black frame, as a thin dark bar holding speck and the status.
