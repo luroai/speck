@@ -14,7 +14,7 @@ const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What 
 const EFFORTS = { choices: ['', 'low', 'medium', 'high', 'xhigh', 'max'] };
 // The view from the config alone, as GET /api/settings?quick=1 answers it.
 const quick = () => ({ groups: [
-  { title: 'Watching', settings: [S('watch_agent', '', { choices: ['', 'claude', 'codex'] }), S('watch_model', ''), S('watch_effort', '', EFFORTS)] },
+  { title: 'Your engineering manager', settings: [S('watch_agent', '', { choices: ['', 'claude', 'codex'] }), S('watch_model', ''), S('watch_effort', '', EFFORTS)] },
   { title: 'Building and reviewing', settings: [
     S('builder', 'claude', { choices: ['claude', 'codex'], build_command: { value: '', own: { claude: '', codex: '' }, each_ticket: true } }),
     S('builder_model', ''), S('builder_effort', '', EFFORTS), S('reviewer', 'codex', { choices: ['codex', 'claude', 'claude-subagent'] }),
@@ -67,7 +67,7 @@ test('0407 AC1: Settings draws every group and its values before the agents\' li
   const p = settingsPage([quick(), deferred()]); // the whole answer never comes
   await openSettings(p);
   assert.doesNotMatch(pane(p).textContent, /Loading the settings/);
-  for (const g of ['Your agents', 'Watching', 'Building and reviewing']) assert.ok(groupTitles(p).includes(g), `${g} is drawn`);
+  for (const g of ['Your agents', 'Your engineering manager', 'Building and reviewing']) assert.ok(groupTitles(p).includes(g), `${g} is drawn`);
   assert.equal(controlOf(p, 'max_parallel_builds').value, '2');
   assert.deepEqual(p.settingsCalls.filter(c => c.method === 'GET' && c.url.startsWith('/api/settings')).map(c => c.url), ['/api/settings?quick=1', '/api/settings']);
 });

@@ -11,7 +11,7 @@ import { settingsPage, openSettings, posted } from './support/settings.mjs';
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, ...o });
 const VIEW = () => ({ groups: [
   { title: 'Shipping', settings: [S('auto_ship', false, { choices: ['true', 'false'] })] },
-  { title: 'Watching', settings: [S('watch', 'fix', { choices: ['off', 'tell', 'fix'] })] },
+  { title: 'Your engineering manager', settings: [S('watch', 'fix', { choices: ['off', 'tell', 'fix'] })] },
 ] });
 
 // The Settings view on the fake page, in `theme`, with speck run off, a localStorage that records what's stored,
@@ -46,7 +46,7 @@ test('0396 AC1: Settings opens with Appearance, then Auto-build, above every oth
   assert.ok(!p.all(first).some(n => n.tagName === 'h4'), 'no heading over them');
   assert.ok(pane(p).children.indexOf(first) < pane(p).children.indexOf(groupsOf(p)[1]), 'above the other groups');
   for (const g of groupsOf(p).slice(1)) assert.ok(!p.all(g).some(n => n.id === 'look' || n.id === 'run-switch'), 'not in another group');
-  assert.ok(groupsOf(p).slice(1).some(g => g.textContent.startsWith('Watching')), 'the Foreman group is still there');
+  assert.ok(groupsOf(p).slice(1).some(g => g.textContent.startsWith('Your engineering manager')), 'the Foreman group is still there');
   assert.equal(rowOfSwitch(p, lookSwitch(p)), rows[0]);
   assert.equal(rowOfSwitch(p, runSwitch(p)), rows[1]);
   for (const row of rows) {

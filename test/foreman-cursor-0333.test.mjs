@@ -36,7 +36,7 @@ test('0333 AC1: speck config set foreman cursor and the Settings view accept cur
   const out = r.run('config', 'set', 'watch_agent', 'cursor');
   assert.equal(out.status, 0, out.stderr);
   assert.equal(loadConfig(r.dir).watch_agent, 'cursor');
-  const g = panelSettings(r.dir).groups.find(x => x.title === 'Watching');
+  const g = panelSettings(r.dir).groups.find(x => x.title === 'Your engineering manager');
   const foreman = g.settings.find(s => s.key === 'watch_agent');
   assert.ok(foreman.choices.includes('cursor'), String(foreman.choices));
   assert.match(foreman.explain, /cursor/);

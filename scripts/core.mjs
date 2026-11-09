@@ -112,6 +112,11 @@ function scalar(v) {
 
 // 0487: the settings once named after the Foreman, by their old names. A config that sets only an old name is read as
 // if it set the new one, and where both are set the new name wins.
+// 0575: what you call speck, your engineering manager, in each project: 1 to 24 letters, digits, spaces, hyphens and
+// apostrophes, starting with a letter. speck when it's unset, or when the file holds something that isn't a name.
+export const SPECK_NAME = /^\p{L}[\p{L}\p{M}\p{Nd} '’-]{0,23}$/u;
+export const speckNameOf = cfg => (typeof cfg?.speck_name === 'string' && SPECK_NAME.test(cfg.speck_name) ? cfg.speck_name.trimEnd() : 'speck');
+
 export const RENAMED = Object.freeze({ foreman_fixing: 'watch', foreman: 'watch_agent', foreman_model: 'watch_model', foreman_effort: 'watch_effort' });
 export const settingName = key => (Object.hasOwn(RENAMED, key) ? RENAMED[key] : key);
 export function renameOld(cfg) {

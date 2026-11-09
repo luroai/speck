@@ -198,7 +198,7 @@ test('0287 AC3: speck config set accepts the Foreman agent\'s settings, and refu
 
 test('0287 AC3: the Settings view\'s Foreman group offers them, explained and editable', () => {
   const r = panelRepo();
-  const g = panelSettings(r.dir).groups.find(x => x.title === 'Watching');
+  const g = panelSettings(r.dir).groups.find(x => x.title === 'Your engineering manager');
   const by = Object.fromEntries(g.settings.map(s => [s.key, s]));
   for (const key of ['watch_agent', 'watch_model', 'watch_effort']) {
     assert.ok(by[key], key);

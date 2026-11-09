@@ -120,14 +120,14 @@ test('0487 AC2: speck config set with an old name saves the new name and leaves 
 });
 
 test('0487 AC3: Settings shows and saves only the new names, explained with speck', () => {
-  assert.deepEqual(SETTING_GROUPS.find(g => g.title === 'Watching').settings.map(s => s.key), NEW);
+  assert.deepEqual(SETTING_GROUPS.find(g => g.title === 'Your engineering manager').settings.map(s => s.key), ['speck_name', ...NEW]); // 0575
   for (const k of NEW) assert.ok(EDITABLE.includes(k));
   for (const k of OLD) assert.ok(!EDITABLE.includes(k));
   for (const s of SETTING_GROUPS.flatMap(g => g.settings)) assert.doesNotMatch(s.explain, /Foreman/, s.key);
   const dir = repo('builder: claude\nforeman_fixing: fix\nforeman: codex\n');
   const keys = panelSettings(dir, { providers: [] }).groups.flatMap(g => g.settings.map(s => s.key));
   for (const k of OLD) assert.ok(!keys.includes(k), `${k} isn't shown`);
-  const watching = panelSettings(dir, { providers: [] }).groups.find(g => g.title === 'Watching').settings;
+  const watching = panelSettings(dir, { providers: [] }).groups.find(g => g.title === 'Your engineering manager').settings.filter(s => s.key !== 'speck_name'); // 0575
   assert.deepEqual(watching.map(s => [s.key, s.repo_value]), [['watch', 'fix'], ['watch_agent', 'codex'], ['watch_model', ''], ['watch_effort', '']]);
   assert.equal(watching[0].default, false, 'an old name in the file counts as set');
   const out = panelSaveSettings(dir, [{ key: 'watch', value: 'off' }, { key: 'watch_agent', value: 'cursor' }]);
@@ -139,7 +139,7 @@ test('0487 AC3: Settings shows and saves only the new names, explained with spec
 test('0487 AC3: the role\'s list is drawn for watch_agent with its model', async () => {
   const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, for_machine: true, from: 'repo', repo_value: value, ...o });
   const view = { groups: [
-    { title: 'Watching', settings: [S('watch', 'tell', { choices: ['off', 'tell', 'fix'] }), S('watch_agent', 'codex', { choices: ['', 'claude', 'codex'] }), S('watch_model', 'gpt-6.1-sol'),
+    { title: 'Your engineering manager', settings: [S('watch', 'tell', { choices: ['off', 'tell', 'fix'] }), S('watch_agent', 'codex', { choices: ['', 'claude', 'codex'] }), S('watch_model', 'gpt-6.1-sol'),
       S('watch_effort', '', { choices: ['', 'low', 'high'] })] },
     { title: 'Building and reviewing', settings: [S('builder', 'claude', { choices: ['claude', 'codex'], build_command: { value: '', own: { claude: '', codex: '' }, each_ticket: true } }),
       S('builder_model', ''), S('reviewer', 'codex', { choices: ['codex', 'claude'] }), S('reviewer_model', '')] }],
