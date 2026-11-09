@@ -12,7 +12,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { SpeckError, sh, loadConfig, worktreeList, ticketBranches, findRepoRoot, setting, setField, syncHeader, contentLines, waitFields } from './core.mjs';
+import { SpeckError, sh, loadConfig, speckNameOf, worktreeList, ticketBranches, findRepoRoot, setting, setField, syncHeader, contentLines, waitFields } from './core.mjs';
 import { replaceSection, commitTicketOnly } from './close.mjs';
 import { buildTicket, saveRecord, foremanSubject, oldForemanSubject, byWatch } from './build-records.mjs';
 import { readableLog } from './build-log.mjs';
@@ -191,8 +191,8 @@ export function readActions(runs) {
 // What the Foreman's status detail shows of the agent: the stop it's looking into, those waiting, its last actions
 // (newest first) and its questions still waiting for you: those whose ticket is still as it was when it asked, and that
 // you haven't answered or dismissed (0318). 0328: each question among its last actions has an outcome saying what became
-// of it, '' while it still waits for you.
-export function agentView(runs, tickets = []) {
+// of it, '' while it still waits for you. 0576: `name` is what you call speck.
+export function agentView(runs, tickets = [], name = 'speck') {
   const s = readAgentState(runs), actions = readActions(runs), dealt = dealtWith(runs);
   const statusOf = new Map((Array.isArray(tickets) ? tickets : []).filter(t => t && typeof t === 'object').map(t => [String(t.id), t.status]));
   const latest = new Map(actions.map(a => [a.id, a]));
@@ -202,7 +202,7 @@ export function agentView(runs, tickets = []) {
     const key = askKey(a.id, a.at), r = replies.get(key);
     if (r) return r.action === 'answer' ? `You answered it${utc(r.at)}${oneLine(r.text) ? `: ${sentence(oneLine(r.text))}` : '.'}` : `You dismissed it${utc(r.at)}.`;
     if (dealt.has(key)) return 'No longer waiting: your reply is being noted.';
-    if (latest.get(a.id) !== a) return `No longer waiting: speck has done something else about ${a.id} since.`;
+    if (latest.get(a.id) !== a) return `No longer waiting: ${name} has done something else about ${a.id} since.`;
     if (!statusOf.has(a.id)) return `No longer waiting: ${a.id} is no longer on the board.`;
     if (statusOf.get(a.id) !== a.status) return `No longer waiting: ${a.id} is ${statusOf.get(a.id)} now.`;
     return '';
@@ -252,7 +252,8 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
   const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const carried = new Set(); // 0318: the same for your answers to its questions
   const config = () => { try { return readConfig(); } catch { return null; } };
-  const save = s => { try { persist(runs(), s); return true; } catch (e) { say(`speck couldn't save its record of what it looks into (${e.message}), so it tries again on speck run's next check.`); return false; } };
+  const called = () => speckNameOf(config() || cfg); // 0576: what you call speck, as speck/config.yml has it now
+  const save = s => { try { persist(runs(), s); return true; } catch (e) { say(`${called()} couldn't save its record of what it looks into (${e.message}), so it tries again on speck run's next check.`); return false; } };
 
   const stuck = ({ id, what, log }) => {
     const c = config();
@@ -264,7 +265,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     const s = readAgentState(runs()), k = key(id);
     if (s.tried[id] === k || s.running?.id === id && s.running.key === k || s.queue.some(q => q.id === id && q.key === k)) return;
     s.queue = [...s.queue.filter(q => q.id !== id), { id, key: k, what: String(what), log: String(log || '') }];
-    if (save(s)) say(`${id}: speck will look into it, as watch is ${fixingOf(c)}: ${what}`);
+    if (save(s)) say(`${id}: ${called()} will look into it, as watch is ${fixingOf(c)}: ${what}`);
   };
 
   // 0569: each build running long: said once in speck run's log with watch: tell, or queued once for the agent with fix or
@@ -281,7 +282,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
       if (acts && agentView(runs(), tickets).asks.some(a => a.id === t.id)) continue;
       s.long[t.id] = long.key;
       if (acts) s.queue = [...s.queue.filter(q => q.id !== t.id), { id: t.id, key: long.key, what: long.what, log: path.join(runs(), `${t.id}.log`), long: true }];
-      if (save(s)) say(`${t.id}: ${acts ? `speck will look into it, as watch is ${watch}: ` : ''}${long.what}`);
+      if (save(s)) say(`${t.id}: ${acts ? `${called()} will look into it, as watch is ${watch}: ` : ''}${long.what}`);
     }
   };
 
@@ -294,14 +295,14 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     finished.add(r.token);
     // 0525: what it spent, kept for its ticket before the next run replaces its log.
     try { recordWatchSpend(runs(), { id: r.id, run: r.token, command: r.command, log: path.join(runs(), LOG) }); }
-    catch (e) { say(`${r.id}: speck couldn't keep what looking into it spent (${e.message}).`); }
+    catch (e) { say(`${r.id}: ${called()} couldn't keep what looking into it spent (${e.message}).`); }
     const mine = readActions(runs()).filter(a => a.run === r.token && a.id === r.id);
     for (const a of mine) {
-      if (a.action === 'reship') { ships.again(a.id); say(`${a.id}: speck asked for its ship to be tried again: ${a.why}`); }
+      if (a.action === 'reship') { ships.again(a.id); say(`${a.id}: ${called()} asked for its ship to be tried again: ${a.why}`); }
       else if (a.action === 'resume' || a.action === 'decide') s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text, ...(a.action === 'decide' ? { by: 'decide', head: a.head, session: a.session, status: a.status } : {}) }];
-      else say(`${a.id}: speck ${ACTIONS[a.action]}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
+      else say(`${a.id}: ${called()} ${ACTIONS[a.action]}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
     }
-    if (!mine.length) say(`${r.id}: speck looked into it and took no action. Its log: ${path.relative(repo, path.join(runs(), LOG))}`);
+    if (!mine.length) say(`${r.id}: ${called()} looked into it and took no action. Its log: ${path.relative(repo, path.join(runs(), LOG))}`);
   };
 
   const launch = (s, c, next) => {
@@ -317,13 +318,13 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
       command: argv.filter(w => w !== brief), ...(next.long ? { long: true } : {}) }; // 0525: for its model, when its spend is read
     if (!save(s)) return;
     const cant = cantStart(c); // 0392: a provider's without Claude Code or this machine's key for it
-    if (cant) { s.running = null; save(s); return say(`${next.id}: speck couldn't start looking into it on ${label}: ${cant}`); }
+    if (cant) { s.running = null; save(s); return say(`${next.id}: ${called()} couldn't start looking into it on ${label}: ${cant}`); }
     const started = start(argv, repo, path.join(runs(), LOG), { ...process.env, SPECK_FOREMAN_RUN: token });
-    if (started.error || !started.pid) { s.running = null; save(s); return say(`${next.id}: speck couldn't start ${label} to look into it: ${started.error || 'it has no process id'}.`); }
+    if (started.error || !started.pid) { s.running = null; save(s); return say(`${next.id}: ${called()} couldn't start ${label} to look into it: ${started.error || 'it has no process id'}.`); }
     child = { token, exited: started.exited };
     s.running = { ...s.running, pid: started.pid };
     save(s);
-    say(`${next.id}: speck (${label}) is looking into it. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
+    say(`${next.id}: ${called()} (${label}) is looking into it. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
   };
 
   const resume = (s, t, { cfg, words }) => {
@@ -337,11 +338,11 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
       ? `speck (watch: decide) looked into why ticket ${t.id}'s work stopped and went with its recommendation: ${r.message}. It's recorded in the ticket's Notes. Carry on with ${skill} ${t.id} from where you left off, going with that option.`
       : `speck looked into why ticket ${t.id}'s work stopped, and asks the build to carry on: ${r.message} Carry on with ${skill} ${t.id} from where you left off.`;
     const { argv, why } = rec ? resumeFor(words, cfg, t.id, rec, message) : { argv: null, why: 'it has no run record' };
-    if (!argv) return say(`${t.id}: speck asked for its build to be resumed, but speck run can't: ${why}.`);
+    if (!argv) return say(`${t.id}: ${called()} asked for its build to be resumed, but speck run can't: ${why}.`);
     const { exited: _e, exit_code: _c, ...kept } = rec, next = { ...resumedRecord(kept), foreman_resumed: new Date().toISOString(), resume_command: argv };
-    try { saveRecord(file, next); } catch (e) { return say(`${t.id}: speck asked for its build to be resumed, but its run record couldn't be saved (${e.message}).`); }
+    try { saveRecord(file, next); } catch (e) { return say(`${t.id}: ${called()} asked for its build to be resumed, but its run record couldn't be saved (${e.message}).`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
-    say(`${t.id}: speck run is resuming its build, as speck asked (session ${rec.session}).`);
+    say(`${t.id}: speck run is resuming its build, as ${called()} asked (session ${rec.session}).`);
     startBuild(t.id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
   };
 
@@ -382,18 +383,18 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
       s.answered = [...s.answered, x.key];
       changed = true;
       const t = tickets.find(y => String(y.id) === x.id);
-      if (!t || t.status !== x.status) { say(`${x.id}: your answer to speck wasn't carried out, as the ticket has moved on since.`); continue; }
-      if (x.carry === 'reship') { ships.again(x.id); say(`${x.id}: speck run is shipping it again, once, as you answered speck.`); }
+      if (!t || t.status !== x.status) { say(`${x.id}: your answer to ${called()} wasn't carried out, as the ticket has moved on since.`); continue; }
+      if (x.carry === 'reship') { ships.again(x.id); say(`${x.id}: speck run is shipping it again, once, as you answered ${called()}.`); }
       else s.resumes = [...s.resumes.filter(y => y.id !== x.id), { id: x.id, message: x.text, by: 'user', question: x.question, status: x.status }];
     }
     // An answer waiting for a build slot is dropped once its ticket has moved on.
     const stale = s.resumes.filter(x => x.by === 'user' && !tickets.some(t => String(t.id) === x.id && t.status === x.status));
-    for (const x of stale) say(`${x.id}: your answer to speck wasn't carried out, as the ticket has moved on since.`);
+    for (const x of stale) say(`${x.id}: your answer to ${called()} wasn't carried out, as the ticket has moved on since.`);
     if (stale.length) { s.resumes = s.resumes.filter(x => !stale.includes(x)); changed = true; }
     // 0567: so is a recommendation speck went with, as goWithQueue drops the button's, once its build has been carried on.
     const movedOn = x => { const session = readObject(path.join(runs(), `${x.id}.json`))?.session; return !tickets.some(t => String(t.id) === x.id && t.status === x.status) || refsOf(repo, cfg, x.id).head !== x.head || session !== x.session || inUse(session); };
     const gone = s.resumes.filter(x => x.by === 'decide' && movedOn(x));
-    for (const x of gone) say(`${x.id}: speck went with its recommendation, but its build has been carried on since, so speck run left it as it is.`);
+    for (const x of gone) say(`${x.id}: ${called()} went with its recommendation, but its build has been carried on since, so speck run left it as it is.`);
     if (gone.length) { s.resumes = s.resumes.filter(x => !gone.includes(x)); changed = true; }
     for (const t of tickets) {
       if (!s.resumes.some(x => x.id === t.id) || running.has(t.id) || t.build_running) continue;
@@ -454,7 +455,7 @@ function cantDecide(cfg, t, at, rec) {
   const pad = t.fm.id, watch = fixingOf(cfg);
   if (watch !== 'decide') return `speck watch decide works only with watch: decide, and watch is ${watch} here`;
   if (t.fm.risk !== 'low') return `Ticket ${pad} is ${t.fm.risk === 'high' ? 'high risk' : 'of unknown risk'}, so its question waits for the user`;
-  if (choseCount(t.sections.notes) >= MAX_DECIDED) return `speck has already taken ${MAX_DECIDED} recommendations for ticket ${pad}, so its question waits for the user`;
+  if (choseCount(t.sections.notes) >= MAX_DECIDED) return `${speckNameOf(cfg)} has already taken ${MAX_DECIDED} recommendations for ticket ${pad}, so its question waits for the user`;
   if (t.fm.status === 'blocked' && questionFacts(contentLines(t.sections['blocked question'])).sizeGuard === true) return `Ticket ${pad} is blocked by the size guard, so its question waits for the user`;
   if (!Object.hasOwn(rec || {}, 'exited') && Number.isInteger(rec?.pid) && rec.pid > 0 && pidAlive(rec.pid)) return `Ticket ${pad}'s build is still running`;
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: at }).stdout.trim();

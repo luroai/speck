@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ideaCounts } from './idea-counts.mjs';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketKind, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, reviewerCost, watchSpent, delegatedSpent, totalSpent, roundTokenCount, cmdSpend, cmdPrices, pausedSince, waitFields } from './core.mjs';
+import { speckNameOf, TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketKind, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, reviewerCost, watchSpent, delegatedSpent, totalSpent, roundTokenCount, cmdSpend, cmdPrices, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdPr, prShown } from './pull-request.mjs';
@@ -490,11 +490,11 @@ function cmdStatus(args = []) {
   const repo = findRepoRoot();
   if (args.includes('--json')) return console.log(JSON.stringify(statusData(repo), null, 2));
   const cfg = loadConfig(repo), runs = runsOf(repo);
-  const tickets = statusTickets(repo, cfg);
+  const tickets = statusTickets(repo, cfg), name = speckNameOf(cfg); // 0576
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   // 0285: the Foreman, as the panel's header shows it, from speck run's own record. Blocked tickets are listed below.
   const board = foremanBoard(tickets, cfg, runs), foremanOn = new Map(board.map(b => [b.id, b])); // 0317
-  for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg), agent: agentView(runs, board) }))) console.log(line);
+  for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg), agent: agentView(runs, board, name), name }))) console.log(line);
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
     const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, type: ticketType(t), priority: ticketPriority(t) })).sort(byPriority);
@@ -505,7 +505,7 @@ function cmdStatus(args = []) {
       if (t.at) console.log(`        ↳ being built in ${t.at}`);
       const killed = inHand(t) ? buildKilled(runs, t.fm.id) : null;
       if (killed) console.log(`        ! Build stopped unexpectedly. ${resumeHint(cfg, killed)}`);
-      for (const line of foremanTicketLines(foremanOn.get(t.fm.id), contentLines(t.sections['blocked question']).join(' '))) console.log(line); // 0317
+      for (const line of foremanTicketLines(foremanOn.get(t.fm.id), contentLines(t.sections['blocked question']).join(' '), name)) console.log(line); // 0317
       if (s === 'cancelled' && !blank(t.fm.cancel_reason)) console.log(`        ❌ ${t.fm.cancel_reason}`);
     }
   }

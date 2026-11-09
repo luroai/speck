@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { SpeckError, contentLines, findRepoRoot, listTickets, loadConfig, parseTicket, setField, sh, syncHeader, worktreeList } from './core.mjs';
+import { SpeckError, contentLines, findRepoRoot, listTickets, loadConfig, speckNameOf, parseTicket, setField, sh, syncHeader, worktreeList } from './core.mjs';
 import { fixingOf } from './foreman.mjs';
 import { buildTicket } from './build-records.mjs';
 import { commitTicketOnly, replaceSection } from './close.mjs';
@@ -42,7 +42,7 @@ export function splitOff(repo, rawId, title, from) {
   const id = t.fm.id, recommended = questionFacts(contentLines(t.sections['blocked question']));
   const chose = (t.sections.notes || []).some(line => line.includes(`Went with the recommendation: ${recommended.recommendation} (${FOREMAN_CHOSE}`));
   if (!['building', 'reviewing'].includes(t.fm.status) || recommended.sizeGuard !== true || !chose)
-    throw new SpeckError(`A split-off ticket is made only once speck chose the size guard's split for a ticket being built, and it didn't for ${id}. Nothing changed. Ask for the ticket you need with /speck-ticket.`);
+    throw new SpeckError(`A split-off ticket is made only once ${speckNameOf(cfg)} chose the size guard's split for a ticket being built, and it didn't for ${id}. Nothing changed. Ask for the ticket you need with /speck-ticket.`);
   let text;
   try { text = fs.readFileSync(path.resolve(from), 'utf8'); } catch (e) { throw new SpeckError(`Couldn't read the scope file ${from} (${e.code || e.message}), so no ticket was made. ${USAGE}`); }
   const scope = scopeSections(text), missing = NEEDED.filter(n => !scope.get(n.toLowerCase()));

@@ -396,7 +396,7 @@ function paneSteps(t) {
   const [track, facts] = paneFrom === 'draft' ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', false)]
     : paneFrom === 'shipped' ? [trackOf({ steps: shippedSteps(t) }), shippedFacts(t, shippedDay)]
       : !t.inFlight ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Queued', 'Waiting on', false)]
-        : [trackOf(t), factsOf(t, doing(t, t.shipping || shippingId === String(t.id)))];
+        : [trackOf(t), factsOf(t, doing(t, t.shipping || shippingId === String(t.id), speckCalled()))];
   return el('div', 'steps', null, track, facts, paneFrom === 'shipped' ? null : withDeps(t, true)); // 0467: and its dependency box
 }
 // What the pane's track and table show, apart from the counter in a Time cell, which the clock puts right.
@@ -523,7 +523,7 @@ function renderDecided(m) {
   const list = (Array.isArray(state.decided) ? state.decided : []).filter(d => d && typeof d === 'object');
   const line = $('decided-open'), box = $('decided'), was = !box.hidden;
   line.hidden = !list.length;
-  line.textContent = list.length ? `speck decided ${list.length} for you in the last 7 days` : '';
+  line.textContent = list.length ? `${speckCalled()} decided ${list.length} for you in the last 7 days` : '';
   const can = d => m.queue.some(t => String(t.id) === String(d.id) && t.status === 'approved' && t.shipping !== true) && shippingId !== String(d.id);
   box.hidden = !decidedOpen;
   holdPage(pageHeld());
