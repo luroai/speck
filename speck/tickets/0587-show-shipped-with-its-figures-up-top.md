@@ -43,6 +43,7 @@ Shipped opens with three figure tiles and lists its tickets as compact rows.
 - Today: the Shipped part of `render()` in `templates/panel.js` (`#shipped-stats`, `#more-stats`, `#shipped-more`), figures from `panelModel()` in `templates/panel-model.js`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a press on a row's bug or fix tag explains the tag and opens nothing (test added); removed the leftover 44 px title rule and rounded corners from the old card; a ticket's own costs and tokens moved into its full view so they aren't lost with the open card.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -55,3 +56,12 @@ Shipped opens with three figure tiles and lists its tickets as compact rows.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+### Tests updated to the new look (AC5)
+`test/build-log-0291`, `panel` (the main file), `panel-0050`, `0058`, `0063`, `0132`, `0133`, `0137`, `0141`, `0157`, `0162`, `0167`, `0411`, `0417`, `0418`, `0420`, `0427`, `0428`, `0434`, `0442`, `0453`, `0461`, `0464`, `0465`, `0466`, `0469`, `0472`, `0473`, `0494`, `0577`, `panel-focus-0326`, `spend-0120` and `total-cost-0526`, plus the `shippedFull` helper in `test/support/panel.mjs` (`shippedPack` added, `openDetails` removed).
+
+Each test still checks its behaviour where that exists on the new look. Checks of what's gone were removed: opening and closing a card in place, the step track and facts table inside a card, the bordered card, the one-line stats, a closed title cut with an ellipsis, and the card's Full ticket and Review pack buttons.
+
+### Known limits
+- A ticket with a merge round after its first approval has more than one round, so it counts as not approved in the first round. The figure uses the round count, as the other figures do.
+- A shipped ticket with no review rounds has no Review pack row in its full view. The old open card showed a button that said there was no pack.
