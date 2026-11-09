@@ -1,7 +1,7 @@
 ---
 id: "0595"
 title: "Read every project's board for the bridge"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T17:42:11.877Z"
 ---
 # 0595 · Read every project's board for the bridge
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The bridge shows what needs you across every project on this machine (0596), but each panel today knows only its own board. The panels already find each other through 0516's records, so one can ask the others for a summary.
@@ -47,7 +47,9 @@ A panel can give a summary of every speck panel running on this machine.
 - Self-check: widened the 2-second test's upper limit so a busy machine can't fail it; no code changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing looks different yet. A speck panel can now gather a short report from every project running on this machine: what each is doing, what needs you and why, and what it shipped and spent in the last 7 days. A project that doesn't reply within 2 seconds is reported as not running, and the others still show.
+
+The bridge, which comes next, is what will show this, so that's where you'll see it. Worth keeping an eye on: a very large project whose panel has nobody looking at it can take over 2 seconds to reply the first time, so it may show as not running until the next check. A project on an older speck also shows as not running until it's updated.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +59,85 @@ A panel can give a summary of every speck panel running on this machine.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Follow-ups:
+- Skipped, already covered: the bridge's median build time isn't in this summary; 0596's AC2 asks for it, so 0596 needs to add it (ticket 0596).
+- Known limit: the first reading of a very large project's board with no page open can pass the 2-second limit, so it's listed as not running until the next request, when the reading it started has finished.
+- Known limit: a panel on code older than this ticket has no summary to give, so it's listed as not running until it's updated.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0872621a5734755914eed9d540f1a36c677b6810",
+    "session": "fresh",
+    "thread_id": "01a1c170-1d66-7e22-8d3f-da6f6451e420",
+    "builder_response": "- Tests run: test/panel-summary-0595.test.mjs and, with --related, every existing test file naming a changed script.\n- AC5 is left to the whole suite, which speck ship runs; the related run passed (1474 pass, 0 fail, 3 skipped).\n- Design note: POST /api/projects/summary, because browsers send Origin on a same-origin POST but not on a GET, and 0516's check is on Origin. Each panel answers GET /api/projects/own only with x-speck-via, which a page on another site can't send without a preflight the panel refuses.\n- No visual change: 0596 shows this.\n",
+    "seconds": 45,
+    "usage": {
+      "input_tokens": 220368,
+      "cached_input_tokens": 163968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 854,
+      "reasoning_output_tokens": 99
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56400,
+      "cached": 163968,
+      "write": 0,
+      "output": 854
+    },
+    "cost_usd": 0.1377368,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T17:52:37.221Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/panel-projects.mjs summaries() reads 0516 records and requests each panel's summary concurrently. scripts/panel-summary.mjs projectSummary() supplies counts, status and seven-day totals. Passing AC1 tests cover aggregation, spend filtering and a real panel's board."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "projectSummary() returns ticket ids, titles, reasons and question details. Passing AC2 tests cover blocked questions, manager questions, high-risk approvals, Ship waits and agreement with the existing page model."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "summaryOf() applies a 2,000 ms deadline to each complete response and returns running:false on failure. Passing AC3 tests cover silent and incomplete responses, refused connections, invalid answers and successful peers remaining available."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "summaries() requires POST and the same Origin check used by the project menu. The own-summary route requires x-speck-via. Passing AC4 tests cover rejected origins, missing Origin, GET rejection and the real panel's restricted own-summary route."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported related test run passed 1,474 tests with zero failures and three skips. Existing tests were not weakened. The whole-suite check remains part of shipping, as specified."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel can now collect every running project's board summary, including tickets needing your attention and the past week's shipping and spending totals. Unresponsive panels are marked unavailable without hiding the others. The tests cover the required behaviour, and I found no blocking issues."
+  }
+}
+```
+
+</details>
