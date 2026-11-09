@@ -1,7 +1,7 @@
 ---
 id: "0591"
 title: "Have speck's own log lines speak in the first person"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0576"]                # ticket ids that must be done first
 created: 2026-11-09
+started: "2026-11-09T18:30:56.036Z"
 
 ---
 # 0591 · Have speck's own log lines speak in the first person
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 In the redesign, speck speaks in the first person wherever its face appears, the Pipeline log included. Today `speck run`'s log speaks about speck in the third person, and the panel can't tell speck's own lines from the tool's.
