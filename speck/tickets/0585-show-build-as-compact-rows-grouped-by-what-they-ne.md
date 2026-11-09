@@ -1,7 +1,7 @@
 ---
 id: "0585"
 title: "Show Build as compact rows grouped by what they need"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T20:35:51.962Z"
 ---
 # 0585 · Show Build as compact rows grouped by what they need
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Build cards are tall and busy, with progress lights, logs and buttons on each, so on a phone you see two or three tickets at a time. The redesign shows Build as compact rows grouped by what each ticket needs, with the detail one tap away.
@@ -47,7 +47,11 @@ Failing before this build: none
 - speck (2026-11-09 21:10 UTC) told you: This build is slow because of the size of its test update, and nothing is stuck. Replacing the Build cards with rows broke 449 of the 3353 tests that checked the old look, so the builder split that work between six helper agents, which took about 7 to 19 minutes each, and it is now fixing the last few and re-running every panel test. Why: The build's log shows the 449 failures on its first full test run and later runs with only two failures left, the failures are all about the old cards with no test hanging, and the last full test run saved, on 0584 which this ticket builds on, passed; the high machine load fits the builder re-running the panel tests, though I couldn't list running processes to confirm it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Build now lists each ticket as one short row instead of a tall card, so far more fit on a phone. Rows are grouped under Needs you, Building and Queued, each with its count, and a group with nothing in it doesn't show. Each row gives the ticket's number, its title and one line saying where it is, with an orange, blue or grey dot.
+
+Press a row to open the ticket: the log, Stop, the question to answer and Back to Plan are all there now. To see it, open the panel's Build tab while something is building.
+
+Worth keeping an eye on: a build that stopped by itself shows under Building with a grey dot rather than under Needs you, as the ticket asked. That's saved as an idea to change.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -75,4 +79,83 @@ Removed, as they checked only the old look, with nothing to carry over:
 
 Follow-ups:
 - A stopped build shows under Building with a grey dot, saying Build stopped. Criterion 1 doesn't count it as needing you, though nothing moves it on by itself when the Foreman is off.
-- test/panel-0472.test.mjs's real-browser test fails on and off on main too, unrelated to this ticket.
+- A stopped build under Needs you: saved to the inbox as speck/ideas/2026-11-09-list-a-stopped-build-under-needs-you.md.
+- test/panel-0472.test.mjs's real-browser test fails on and off on main too, unrelated to this ticket. Not saved as an idea: speck/ideas/done/2026-10-28-steady-0232-ac3-and-0472-ac3-under-a-busy-run.md already covers it.
+- Tidy-up: some comments in templates/panel.js still say card where they mean the full view.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "246ae33be266d2afadf0e0983af6f55603b790c5",
+    "session": "fresh",
+    "thread_id": "01a1c22e-d1a0-7bc3-94b5-51f752c17fea",
+    "builder_response": "- Tests run: test/panel-0585.test.mjs, every existing test file this branch changed (see the Delivery log), and every test file naming a changed file, by speck test --related\n- Note: 448 tests that asserted the old Build cards moved to the rows or the full view (criterion 5). Removed ones are listed by name in the Delivery log. Back to Plan, Type and the Ready check moved to the full view so nothing the card did is lost.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 996426,
+      "cached_input_tokens": 740224,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 741,
+      "reasoning_output_tokens": 83
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 256202,
+      "cached": 740224,
+      "write": 0,
+      "output": 741
+    },
+    "cost_usd": 0.5938364,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T21:20:37.729Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-model.js buildGroup and panel.js render group tickets, count them and omit empty groups. Passing 0585 AC1 tests cover questions, blocked tickets, approval and shipping."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel.js queueRow and whereLine render the id, title, status and minutes; panel-cards.css supplies the mono font and coloured dots. Passing 0585 AC2 tests exercise these states and clock updates."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "queueRow opens openFull by click or keyboard and contains no live details. Passing 0585 AC3 and updated 0584 tests cover opening, controls and live updates in the full view."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-cards.css sets a 44 px minimum and wrapping titles. The passing 0585 AC4 real-browser test measures both at 320 px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists updated and removed tests. Verified /tmp/speck-0585-tests.txt reports 3375 passes, zero failures and three skips. Test changes move behaviour checks to the full view and remove checks for obsolete visuals."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Build now shows compact rows under counted groups, with status dots and full details one press away. The reviewed code and passing tests support all five criteria. No blocking issues found."
+  }
+}
+```
+
+</details>
