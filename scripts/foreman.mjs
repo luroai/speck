@@ -41,6 +41,8 @@ export const FIXING_SAYS = Object.freeze({
   fix: 'fix. speck takes the recommendation of a blocked question that changes nothing you\'d notice and has a clear winner, once per ticket.',
   decide: 'decide. speck takes the recommendation of every blocked question that has one, up to 3 per ticket, and leaves high-risk tickets to you.',
 });
+// 0576: what the setting has it do, with speck_name's name for it.
+export const fixingSays = (fixing, name = 'speck') => (Object.hasOwn(FIXING_SAYS, fixing) ? FIXING_SAYS[fixing].replace('speck', name) : '');
 export const fixingOf = cfg => (FIXING.includes(setting(cfg, 'watch')) ? setting(cfg, 'watch') : 'tell');
 // 0564: whether watch has speck act at all, as fix does: decide does everything fix does.
 export const speckActs = fixing => fixing === 'fix' || fixing === 'decide';
@@ -87,8 +89,9 @@ export function switchingReady(tickets, running, own) {
 // Foreman will take its recommendation (foreman_will on the board's ticket), those aren't counted under Needs you, and
 // `took` lists the recommendations the Foreman took in the 24 hours before `now`, newest first.
 // 0495: `base` is the base branch's name, given back as it is, and `why` the full reason while the word is Waiting, '' otherwise.
-export function foremanView({ run, record, tickets, fixing = 'tell', agent = null, now = Date.now(), base = '' }) {
-  const on = !!(run && run.on);
+// 0576: `name` is what you call it (speck_name), given back as it is, for all that says it.
+export function foremanView({ run, record, tickets, fixing = 'tell', agent = null, now = Date.now(), base = '', name = 'speck' }) {
+  const on = !!(run && run.on), called = text(name) || 'speck';
   const rec = on && record && record.lock === run.pid ? record : null;
   const all = list(tickets).filter(t => t && typeof t === 'object');
   const blocked = all.filter(t => t.status === 'blocked').map(t => ({ id: String(t.id), title: text(t.title), question: text(t.blocked_question), foreman: t.foreman_will === true }));
@@ -118,7 +121,7 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
   if (ship && ship.hold) held.push(`Shipping is ${ship.hold.message}`);
   const ag = agent && typeof agent === 'object' ? agent : { running: null, waiting: [], did: [], asks: [] };
   const asks = list(ag.asks).filter(a => a && !blocked.some(b => b.id === a.id));
-  const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), fixing, fixing_says: Object.hasOwn(FIXING_SAYS, fixing) ? FIXING_SAYS[fixing] : '', building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag });
+  const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), name: called, fixing, fixing_says: fixingSays(fixing, called), building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag });
   if (!on) return view('Off', 'off');
   if ((yours && fixing !== 'off') || asks.length) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length}`, 'bad');
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
@@ -134,18 +137,19 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
 // 0317: with watch fix (0564: or decide), the status says so and what fix does, and the recommendations the Foreman took lately follow.
 // 0501: it names the watch setting, which was called Fixing.
 export function foremanLines(v) {
-  const lines = [`SPECK: ${v.word}${speckActs(v.fixing) ? ` · watch: ${v.fixing}` : ''}`, ...(speckActs(v.fixing) ? [`  watch: ${FIXING_SAYS[v.fixing]}`] : [])];
+  const name = text(v.name) || 'speck'; // 0576
+  const lines = [`SPECK: ${v.word}${speckActs(v.fixing) ? ` · watch: ${v.fixing}` : ''}`, ...(speckActs(v.fixing) ? [`  watch: ${fixingSays(v.fixing, name)}`] : [])];
   for (const h of v.held || []) lines.push(`  ${h}`); // 0299: once, before the tickets it holds up
   for (const r of v.ready) lines.push(`  ${r.id} ready, not building: ${r.why}`);
   for (const w of v.ship ? v.ship.waiting : []) lines.push(`  ${w.id} waiting to ship: ${w.why}`);
   const a = v.agent; // 0287: the Foreman agent
-  if (a?.running) lines.push(`  speck is looking into ${a.running.id}: ${a.running.what}`);
-  for (const q of a?.asks || []) lines.push(`  speck asks you about ${q.id}: ${q.question}`, `    Answer with speck answer ${q.id} "<your answer>", or dismiss it with speck dismiss ${q.id}`); // 0318
+  if (a?.running) lines.push(`  ${name} is looking into ${a.running.id}: ${a.running.what}`);
+  for (const q of a?.asks || []) lines.push(`  ${name} asks you about ${q.id}: ${q.question}`, `    Answer with speck answer ${q.id} "<your answer>", or dismiss it with speck dismiss ${q.id}`); // 0318
   // 0328: a question is asked about its ticket, followed by what became of it once it no longer waits for you
   for (const d of a?.did || []) {
     const said = typeof d.outcome === 'string' && d.outcome ? ` ${d.outcome}` : '';
-    lines.push(`  speck ${d.did} ${d.action === 'ask' ? 'about' : 'for'} ${d.id}${d.text ? `: ${d.text}` : ''}. Why: ${said && d.why ? sentence(d.why) : d.why}${said}`);
+    lines.push(`  ${name} ${d.did} ${d.action === 'ask' ? 'about' : 'for'} ${d.id}${d.text ? `: ${d.text}` : ''}. Why: ${said && d.why ? sentence(d.why) : d.why}${said}`);
   }
-  for (const w of v.took || []) lines.push(`  speck went with the recommendation for ${w.id}: ${w.option} (${w.at.slice(0, 16).replace('T', ' ')} UTC)`);
+  for (const w of v.took || []) lines.push(`  ${name} went with the recommendation for ${w.id}: ${w.option} (${w.at.slice(0, 16).replace('T', ' ')} UTC)`);
   return lines;
 }

@@ -6,6 +6,7 @@ import net from 'node:net';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { speckNameOf } from './core.mjs';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
 import { stopBuild } from './run.mjs';
 import { panelShip, panelChanges, requestBody, panelRunOn, panelRunOff, panelRunState, runLogPart, runLogAnswer } from './panel-run.mjs';
@@ -269,13 +270,13 @@ export async function panelServer() {
   // parts so a page gets only what changed since the board it has (0188, see boardVersions), with the finished tickets
   // the page shows only in the Shipped figures cut down to those (0178, see panelBoard).
   // 0286: watch as speck/config.yml has it now, or its default when that can't be read. 0495: and the base branch's name, or blank.
-  const fixingNow = () => { try { return fixingOf(loadConfig(repo)); } catch { return 'tell'; } }, baseNow = () => { try { return String(loadConfig(repo).base_branch || ''); } catch { return ''; } };
+  const fixingNow = () => { try { return fixingOf(loadConfig(repo)); } catch { return 'tell'; } }, baseNow = () => { try { return String(loadConfig(repo).base_branch || ''); } catch { return ''; } }, nameNow = () => { try { return speckNameOf(loadConfig(repo)); } catch { return 'speck'; } }; // 0576
   const boards = boardVersions(), stateOf = out => {
     if (out.error) return { status: 500, body: JSON.stringify({ error: out.error }) };
     // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
-      const run = panelRunState(repo, runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets), base: baseNow() });
+      const run = panelRunState(repo, runs), name = nameNow(), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets, name), base: baseNow(), name });
       const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...runLogPart(runs), ...pageNow(), ...(projects ? projects.part() : {}) }); // 0415: run_log. 0516: projects
       return { status: 200, body: snap.body, snap };
     }

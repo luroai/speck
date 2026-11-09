@@ -5,7 +5,7 @@
 // build's own session with it, or ships an approved ticket auto_ship covers again, once.
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, loadConfig, worktreeList, findRepoRoot } from './core.mjs';
+import { SpeckError, loadConfig, speckNameOf, worktreeList, findRepoRoot } from './core.mjs';
 import { buildTicket } from './build-records.mjs';
 import { resumeFor } from './hand-back.mjs';
 import { runWords } from './go-with.mjs';
@@ -50,7 +50,7 @@ export function foremanReply(repo, action, rawId, text, { now = new Date(), env 
   if (textOf(env.SPECK_FOREMAN_RUN)) throw new SpeckError('speck can\'t answer or dismiss its own question: only you can.');
   const answer = oneLine(text);
   if (action === 'answer' && !answer) throw new SpeckError(`speck answer needs your answer: speck answer ${rawId} "<your answer>".`);
-  const cfg = loadConfig(repo);
+  const cfg = loadConfig(repo), name = speckNameOf(cfg); // 0576
   let main = repo;
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   const runs = path.join(main, 'speck', '.cache', 'runs');
@@ -59,16 +59,16 @@ export function foremanReply(repo, action, rawId, text, { now = new Date(), env 
   const id = t.fm.id;
   const mine = readActions(runs).filter(a => a.id === id);
   const ask = mine.filter(a => a.action === 'ask').pop();
-  if (!ask) throw new SpeckError(`speck hasn't asked you anything about ${id}, so there's nothing to answer or dismiss.`);
-  if (typeof ask.at !== 'string' || !Number.isFinite(Date.parse(ask.at))) throw new SpeckError(`speck's question about ${id} has no time in ${path.relative(main, runs)}, so it can't be answered or dismissed here. Answer it in the ticket's Notes, then carry on with /speck-build ${id}.`);
+  if (!ask) throw new SpeckError(`${name} hasn't asked you anything about ${id}, so there's nothing to answer or dismiss.`);
+  if (typeof ask.at !== 'string' || !Number.isFinite(Date.parse(ask.at))) throw new SpeckError(`${name}'s question about ${id} has no time in ${path.relative(main, runs)}, so it can't be answered or dismissed here. Answer it in the ticket's Notes, then carry on with /speck-build ${id}.`);
   const key = askKey(id, ask.at), done = fileOf(runs, key, 'json'), claim = fileOf(runs, key, 'claim');
   const already = () => {
     const r = readObject(done);
-    return new SpeckError(`speck's question about ${id} has already been dealt with${r ? `: you ${r.action === 'answer' ? 'answered' : 'dismissed'} it at ${when(r.at)}` : ''}. Nothing changed.`);
+    return new SpeckError(`${name}'s question about ${id} has already been dealt with${r ? `: you ${r.action === 'answer' ? 'answered' : 'dismissed'} it at ${when(r.at)}` : ''}. Nothing changed.`);
   };
   if (dealtWith(runs).has(key)) throw already();
-  if (mine[mine.length - 1] !== ask) throw new SpeckError(`speck's question about ${id} no longer waits for you: it has done something else about the ticket since. Nothing changed.`);
-  if (t.fm.status !== ask.status) throw new SpeckError(`speck's question about ${id} no longer waits for you: the ticket has moved on from ${ask.status} to ${t.fm.status}. Nothing changed.`);
+  if (mine[mine.length - 1] !== ask) throw new SpeckError(`${name}'s question about ${id} no longer waits for you: it has done something else about the ticket since. Nothing changed.`);
+  if (t.fm.status !== ask.status) throw new SpeckError(`${name}'s question about ${id} no longer waits for you: the ticket has moved on from ${ask.status} to ${t.fm.status}. Nothing changed.`);
   let carry = null;
   if (action === 'answer') {
     const row = t.fm.status === 'approved' ? (tickets || statusData(repo).tickets).find(x => String(x.id) === id) : null;
@@ -92,7 +92,7 @@ export function foremanReply(repo, action, rawId, text, { now = new Date(), env 
   try { fs.renameSync(claim, done); } catch (e) {
     throw new SpeckError(`Your reply is noted in ${id}'s Notes, but speck run couldn't be told of it (${e.message}). Check you can write to ${path.relative(main, runs)}, then carry on with /speck-build ${id} yourself.`);
   }
-  if (action === 'dismiss') return `Dismissed speck's question about ${id}, and noted it in its Notes. The ticket is left as it is.`;
+  if (action === 'dismiss') return `Dismissed ${name}'s question about ${id}, and noted it in its Notes. The ticket is left as it is.`;
   return carry === 'reship' ? `Noted your answer in ${id}'s Notes. speck run ships it again, once, on its next check while it's on.`
     : `Noted your answer in ${id}'s Notes. speck run resumes its build with your answer on its next check while it's on.`;
 }

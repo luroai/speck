@@ -3,7 +3,7 @@
 // run's next check then resumes the build's own session with a message saying so, as it does after a hand-back (0194).
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, sh, loadConfig, setField, syncHeader, contentLines, waitFields, worktreeList } from './core.mjs';
+import { SpeckError, sh, loadConfig, speckNameOf, setField, syncHeader, contentLines, waitFields, worktreeList } from './core.mjs';
 import { replaceSection, commitTicketOnly } from './close.mjs';
 import { buildTicket, saveRecord, resumeHint } from './build-records.mjs';
 import { questionFacts } from './question-facts.mjs';
@@ -79,8 +79,8 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   if (!option) return refuse(`Ticket ${pad}'s question has no recommendation to go with. ${byHand}`);
   if (by === 'foreman' && watch === 'decide') {
     if (t.fm.risk !== 'low') return refuse(`Ticket ${pad} is ${t.fm.risk === 'high' ? 'high risk' : 'of unknown risk'}, so this question waits for you. ${byHand}`);
-    if (choseCount(t.sections.notes) >= MAX_DECIDED) return refuse(`speck has already taken ${MAX_DECIDED} recommendations for ticket ${pad}, so this question waits for you. ${byHand}`);
-  } else if (by === 'foreman' && choseOnce(t.sections.notes)) return refuse(`speck has already gone with a recommendation for ticket ${pad} once, so this question waits for you. ${byHand}`);
+    if (choseCount(t.sections.notes) >= MAX_DECIDED) return refuse(`${speckNameOf(cfg)} has already taken ${MAX_DECIDED} recommendations for ticket ${pad}, so this question waits for you. ${byHand}`);
+  } else if (by === 'foreman' && choseOnce(t.sections.notes)) return refuse(`${speckNameOf(cfg)} has already gone with a recommendation for ticket ${pad} once, so this question waits for you. ${byHand}`);
   const split = by === 'foreman' && facts.sizeGuard === true; // 0563
   const runs = runsOf(repo);
   const file = path.join(runs, `${pad}.json`), rec = readRecord(runs, pad);
@@ -118,7 +118,7 @@ export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, m
       if ((t.status !== 'building' && t.status !== 'reviewing') || t.build_running || running.has(t.id)) continue;
       const rec = readRecord(runs(), t.id), g = pendingOf(rec);
       if (!g) continue;
-      const file = path.join(runs(), `${t.id}.json`), who = g.by === 'foreman' ? 'speck' : 'you'; // 0286
+      const file = path.join(runs(), `${t.id}.json`), who = g.by === 'foreman' ? speckNameOf(settings()?.cfg || cfg) : 'you'; // 0286, 0576: what you call speck
       const { go_with: _, exited: _e, exit_code: _c, ...kept } = rec;
       if (g.head !== refsOf(repo, cfg, t.id).head || sessionInUse(rec.session)) {
         try { save(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* tried again next check */ }

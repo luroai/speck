@@ -44,6 +44,7 @@ Wherever the engineering manager speaks or acts, speck uses the name you gave it
 - Waits for 0575, which adds `speck_name`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

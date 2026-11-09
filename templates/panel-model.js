@@ -31,15 +31,15 @@ const SHORT = {
   'Approved · waiting for you to ship it': 'Ready to ship',
   'Approved · waiting to ship': 'Shipping next',
   'Blocked · it has a question for you': 'Has a question',
-  'Blocked · speck will take its recommendation': 'speck will answer',
   'The build stopped': 'Build stopped',
   'Approved · turn on Auto-build to ship it': 'Turn on Auto-build',
   'Finished · read the result': 'Read the result',
   'Approved · waiting for you because a criterion changed': 'Criterion changed',
 };
-function doing(t, shipping) {
-  const d = doingNow(t, shipping);
-  const short = Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null;
+// 0576: `name` is what you call speck, which a ticket's sentence and short words say when it will answer.
+function doing(t, shipping, name = 'speck') {
+  const d = doingNow(t, shipping, name);
+  const short = d.sentence === willTake(name) ? `${name} will answer` : Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null;
   return { ...d, short, word: wordOf(t, d, short) };
 }
 // 0462: what it's doing in a word or two, for an open card's Now cell: reviewing, fixing, checking or writing while an
@@ -59,14 +59,15 @@ function workerOf(t, d) {
   const model = typeof t.builder_model === 'string' ? t.builder_model.trim() : '';
   return { label: 'Builder', value: name ? `${name[0].toUpperCase()}${name.slice(1)}${model ? ` · ${model}` : ''}` : '–' };
 }
-function doingNow(t, shipping) {
+const willTake = name => `Blocked · ${name} will take its recommendation`;
+function doingNow(t, shipping, called) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
   if (t.ship_waiting) return { sentence: 'Approved · waiting to ship', tone: '', moving: true };
   const approved = t.status === 'approved' || t.status === 'done';
   const autoShips = t.status === 'approved' && t.auto_ship === true && !t.red && !t.to_ship;
   const tone = t.red ? 'bad' : t.to_ship || (approved && !autoShips) ? 'to-ship' : '';
   const at = sentence => ({ sentence, tone, moving: false });
-  if (t.status === 'blocked') return at(t.foreman_will === true ? 'Blocked · speck will take its recommendation' : 'Blocked · it has a question for you'); // 0317
+  if (t.status === 'blocked') return at(t.foreman_will === true ? willTake(called) : 'Blocked · it has a question for you'); // 0317
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
   if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');

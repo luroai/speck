@@ -567,7 +567,7 @@ const noteOf = i => el('div', 'note md', null, ...mdBlocks(markdown(typeof i.bod
 // A queue row: the ticket, its progress when it's in flight (0156), then what's under it. A blocked ticket is red, and so
 // is one whose build has exited, unless it's approved: then it's waiting for you to ship it, and green (0440).
 function queueItem(t) {
-  const id = String(t.id), isOpen = openQueue.has(id), d = t.inFlight ? doing(t, t.shipping || shippingId === id) : null;
+  const id = String(t.id), isOpen = openQueue.has(id), d = t.inFlight ? doing(t, t.shipping || shippingId === id, speckCalled()) : null;
   const stage = d && !t.red && !t.to_ship ? stageOf(t, d) : null; // 0171: a running ticket's border shows its stage
   const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : stage ? ` at-${stage}` : !t.inFlight ? ' queued' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   // 0419: the id and title, then one details line: what it's doing, or that it's queued, then its priority, size and risk.
@@ -615,10 +615,10 @@ function queueItem(t) {
   const pack = t.status === 'approved' || t.shipping || t.doc_finished; // 0361: a finished task's result is in its review pack
   // 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
   // build carries on with a recommendation says who went with it, until it moves on
-  if (t.status === 'blocked' && t.foreman_will === true) q.appendChild(el('div', 'act foreman-will', `speck will take its recommendation: ${t.blocked_recommendation}`));
+  if (t.status === 'blocked' && t.foreman_will === true) q.appendChild(el('div', 'act foreman-will', `${speckCalled()} will take its recommendation: ${t.blocked_recommendation}`));
   else if (t.status === 'blocked') q.appendChild(el('div', 'act', `Waiting for you. Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
   const went = wentWithOf(t);
-  if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? 'speck went with the recommendation' : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
+  if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? `${speckCalled()} went with the recommendation` : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
   q.appendChild(fullButton(t, 'queue'));
   if (pack) q.appendChild(packButton(t));
   q.appendChild(buildLogButton(id)); // 0548: with the card's other buttons, in the row above its log box, Stop build last (0421)
@@ -875,6 +875,11 @@ async function goWithIt(id, option) {
   goingWith.delete(id);
   render();
 }
+// 0576: what you call speck, as the server gives it, or speck.
+function speckCalled() {
+  const n = state && state.foreman && typeof state.foreman === 'object' ? state.foreman.name : null;
+  return typeof n === 'string' && n ? n : 'speck';
+}
 // 0318: the Foreman agent's question about a ticket, as the server gives it, or null.
 function foremanAskOf(id) {
   const a = state && state.foreman && typeof state.foreman === 'object' ? state.foreman.agent : null;
@@ -888,7 +893,7 @@ function foremanAskBox(id, question, where) {
   box.placeholder = 'Your answer';
   box.rows = 2;
   box.disabled = !!pending;
-  box.setAttribute('aria-label', `Your answer to speck's question about ${id}`);
+  box.setAttribute('aria-label', `Your answer to ${speckCalled()}'s question about ${id}`);
   box.askKey = `${where}:${id}`;
   askBoxes.set(box.askKey, box);
   box.addEventListener('input', () => askDrafts.set(id, String(box.value ?? '')));
@@ -903,7 +908,7 @@ function foremanAskBox(id, question, where) {
   const answer = press('Answer', 'Answering…', 'answer'), dismiss = press('Dismiss', 'Dismissing…', 'dismiss');
   answer.title = 'Send your answer: speck run carries the work on with it';
   dismiss.title = 'Dismiss the question, leaving the ticket as it is';
-  return el('div', 'foreman-ask', null, el('p', 'question', `speck asks you: ${question}`), box, el('div', 'ask-buttons', null, answer, dismiss),
+  return el('div', 'foreman-ask', null, el('p', 'question', `${speckCalled()} asks you: ${question}`), box, el('div', 'ask-buttons', null, answer, dismiss),
     askRefused.has(id) ? el('div', 'ask-refused', askRefused.get(id)) : null);
 }
 async function replyToForeman(id, action, question) {
@@ -911,7 +916,7 @@ async function replyToForeman(id, action, question) {
   const text = String(askDrafts.get(id) || '').trim();
   askRefused.delete(id);
   if (action === 'answer' && !text) { askRefused.set(id, 'Write your answer in the box first.'); render(); return; }
-  if (action === 'dismiss' && (typeof confirm !== 'function' || !confirm(`Dismiss speck's question about ${id}: "${question}"? It's noted in the ticket's Notes, and the ticket is left as it is.`))) return;
+  if (action === 'dismiss' && (typeof confirm !== 'function' || !confirm(`Dismiss ${speckCalled()}'s question about ${id}: "${question}"? It's noted in the ticket's Notes, and the ticket is left as it is.`))) return;
   askPending.set(id, action);
   render();
   try {
@@ -1332,7 +1337,7 @@ function render() {
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
   const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null,
     unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null, goingWith.has(String(t.id)), goWithRefused.get(String(t.id)) ?? null,
-    foremanAskOf(t.id)?.question ?? null, askPending.get(String(t.id)) ?? null, askRefused.get(String(t.id)) ?? null], queueItem,
+    foremanAskOf(t.id)?.question ?? null, askPending.get(String(t.id)) ?? null, askRefused.get(String(t.id)) ?? null, speckCalled()], queueItem,
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks, depsSig(t)], update: queueUpdate });
   fill('queue', rows, m.queue.length ? '' : idleLane(m));
   if (m.queue.length) idleClock(null, null);

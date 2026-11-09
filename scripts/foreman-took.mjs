@@ -41,8 +41,8 @@ export const withForeman = (t, fixing, entry) => ({ ...entry, ...foremanFacts(t,
 
 // A choice's time as the Notes give it, for the panel and `speck status`.
 export const tookAt = at => (typeof at === 'string' && Number.isFinite(Date.parse(at)) ? `${new Date(at).toISOString().slice(0, 16).replace('T', ' ')} UTC` : '');
-// Who went with it, as a ticket says it.
-export const whoWent = w => (w && w.by === 'foreman' ? 'speck went with the recommendation' : 'You went with the recommendation');
+// Who went with it, as a ticket says it. 0576: `name` is what you call speck.
+export const whoWent = (w, name = 'speck') => (w && w.by === 'foreman' ? `${name} went with the recommendation` : 'You went with the recommendation');
 
 // The board `speck status` gives the Foreman, from its parsed tickets: each with the facts above, as the panel has them.
 export function foremanBoard(tickets, cfg, runs) {
@@ -65,10 +65,10 @@ export function decidedFor(entries, changed, now = Date.now()) {
 }
 // The lines `speck status` puts under a ticket from its board entry `b`: a blocked one's question `q` and whether it
 // waits for the Foreman or for you, and who went with the recommendation its build is carrying on with.
-export function foremanTicketLines(b, q) {
+export function foremanTicketLines(b, q, name = 'speck') {
   const lines = [];
   if (b?.status === 'blocked' && q) lines.push(`        ? ${q}`);
-  if (b?.status === 'blocked') lines.push(b.foreman_will ? `        → speck will take its recommendation: ${b.blocked_recommendation}` : '        → Waiting for you');
-  if (b?.went_with) lines.push(`        ✓ ${whoWent(b.went_with)}: ${b.went_with.option} (${tookAt(b.went_with.at)})`);
+  if (b?.status === 'blocked') lines.push(b.foreman_will ? `        → ${name} will take its recommendation: ${b.blocked_recommendation}` : '        → Waiting for you');
+  if (b?.went_with) lines.push(`        ✓ ${whoWent(b.went_with, name)}: ${b.went_with.option} (${tookAt(b.went_with.at)})`);
   return lines;
 }
