@@ -56,7 +56,11 @@ speck is ready to be released as 0.22.0.
 - Self-check: the changelog and release notes first said a size-guard split never waits with `decide`, but a high-risk ticket's does, so both now say so; the changelog says the panel's Decided for you line shows only when speck has taken one in the last 7 days.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is now ready to go out as version 0.22.0, the release where speck can decide for you and tell you what it chose. The changelog and the release page's notes describe what's new since 0.21.1: the decide choice for the watch setting, the list of what speck decided in the panel, tickets with changed criteria waiting for you at Ship, speck asking about a stop only once, speck noticing a build that runs long, the doctor's line on the commit check and the ready check's new name. The README's and the brief's status lines say 0.22.0, the prices are today's, and the README's "Built with speck" figures are up to date (557 tickets shipped).
+
+To see it, read the 0.22.0 section at the top of the changelog. Once this lands on the main branch, check that the 0.22.0 release page appears on GitHub; if it doesn't, it can be published by hand as the ticket's Notes say.
+
+Worth knowing: nothing decides for you until you pick decide under Watching in Settings. Anyone already on fix will notice that size-limit splits are taken for them and that long builds get looked into.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -65,6 +69,7 @@ speck is ready to be released as 0.22.0.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+- Follow-up (tidy-up): earlier release tests, such as 0560 AC2, still compare older changelog sections in full; review round 1 of this ticket found that against the rule on exact wording, so 0574 doesn't, and the older ones could go too.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -147,6 +152,89 @@ speck is ready to be released as 0.22.0.
     ],
     "escalation_question": "",
     "summary": "The release content, versions, prices and published figures meet the ticket, and the reported tests pass. One new test must be removed because it would make future editorial corrections to older changelog entries fail the suite."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "452400e7f2ba52fde0bb26f8537bff01f51c2d05",
+    "session": "continued",
+    "thread_id": "01a1bdcd-ba6f-7821-b5c3-e5a0ab379cc0",
+    "builder_response": "- Tests run: test/release-0574.test.mjs test/release-0560.test.mjs test/docs-0491.test.mjs\n- F1: fixed. Removed the full-text comparison of the older changelog sections from test/release-0574.test.mjs; that the 0.21.1 and earlier sections are unchanged is left to review of the diff, and the test file's comment says so.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 607380,
+      "cached_input_tokens": 509952,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2401,
+      "reasoning_output_tokens": 193
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7567,
+      "cached": 182528,
+      "write": 0,
+      "output": 762
+    },
+    "cost_usd": 0.0410068,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T00:57:07.808Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.22.0. Both AC1 tests passed, including running speck init and checking its version output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.22.0 above 0.21.1 and describes shipped tickets 0563–0573 in plain English. Independent comparison with v0.21.1 confirms the older sections remain unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines say 0.22.0, a public preview. AC3 version and setup-prompt tests passed. scripts/prices.json contains 3534 models dated 2026-11-09, matching the recorded refresh."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.22.0.md leads with speck deciding and reporting its choices, explains the shipped changes, update steps, watch setting, lint alias and estimated costs, and links to the changelog. It names no person. All three AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README figures match the previously independently recalculated done-ticket figures: 557 shipped, 16 cancelled, 13 minutes median, 1 round median and 284 first-round approvals. Both AC5 tests passed. This round reports 138 passing tests, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0574.test.mjs",
+        "issue": "The added full-text comparison froze the wording of older changelog sections.",
+        "suggested_fix": "Remove the full-text comparison and verify preservation through review of the diff.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release preparation meets all five criteria. The test that froze older changelog wording has been removed, and the remaining checks pass. The change is ready for the product owner's merge decision."
   }
 }
 ```
