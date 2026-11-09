@@ -1,7 +1,7 @@
 ---
 id: "0593"
 title: "Restyle the Settings view in the new look"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0577","0575"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:38:04.469Z"
-blocked_at: "2026-11-09T18:38:59.715Z"
+blocked_at: ""
+waited_seconds: 3810
 
 ---
 # 0593 · Restyle the Settings view in the new look
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 The Settings view still uses the LCD-era boxes and borders. It should match the rest of the redesign, and its engineering manager group should show who it's about.
@@ -43,6 +44,7 @@ The Settings view is in the redesign's look, with speck's face beside its name.
 - Today: `templates/panel-settings.js` (`renderSettings`, `settingRow`, `saveBar`) and `templates/panel-settings.css`. Waits for 0575, which renames the group.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Went with the recommendation: Wait for 0578, then build as written (chosen by the user in the panel, 2026-11-09 19:42 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
