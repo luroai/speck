@@ -41,6 +41,7 @@ The lanes are shown as four tabs with their counts, and the open one is plain to
 - The design is the mock agreed with the user on 2026-11-08 and 9 (a private claude.ai design canvas, "speck panel, grown up": Lanes, Decided for you, a ticket waiting at Ship, Pipeline log, each light and dark, the bridge, and the Character page). The user picked the Premium screen for speck and asked for these tickets for 1.0.0 on 2026-11-09.
 - Today: `nav.tabs#tabs` in `templates/panel.html`, drawn by `openTab` and `drawTabs` in `templates/panel-header.js`, with the swipe code beside them (`placeLanes`, `slideFrom`, `stepLane`), styled in `templates/panel-header.css`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
