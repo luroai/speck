@@ -50,7 +50,7 @@ test('0474 AC1: on the fake page, speck\'s screen, its frame and the tabs still 
 
 test('0474 AC2: panel.html loads panel-header.js after the page\'s own script, which it uses, and before the pop-ups', () => {
   const tags = pageScripts().map(s => s.src);
-  assert.deepEqual(tags, ['panel-model.js', 'lcd.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
+  assert.deepEqual(tags, ['panel-model.js', 'lcd.js', 'speck-face.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
   assert.match(page(), /<script src="panel-header\.js"><\/script>/, 'an empty tag');
 });
 
@@ -87,7 +87,7 @@ test('0474 AC2: the server answers /panel-header.js with the file, as text/javas
 
 test('0474 AC3: the fake page runs panel-header.js from its file, in the page\'s order, without a browser', async () => {
   const p = fakePage([{ tickets: [T('0001', 'building')], ideas: [], page: 'ffffffffffffffff' }]);
-  assert.deepEqual(p.scripts, ['panel-model.js', 'lcd.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
+  assert.deepEqual(p.scripts, ['panel-model.js', 'lcd.js', 'speck-face.js', 'panel.js', 'panel-header.js', 'panel-popups.js', 'panel-settings.js']);
   await p.settle();
   assert.match(p.byId('run').title, /^speck: Reload page · /, 'a page whose stamp differs says it is out of date');
   assert.match(p.byId('run').title, /newer code/);

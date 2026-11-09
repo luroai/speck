@@ -246,7 +246,7 @@ function renderSettings() {
       for (const x of Array.isArray(g.settings) ? g.settings : []) if (!roleModelKey(x.key)) rows.push(settingRow(x, settingTips.size));
       pairSettings(rows); // 0381
       if (g.title === 'Your engineering manager') { foremanRows = rows; continue; } // 0575: the server's title, was Watching
-      // 0273: a box like the panel's sections, with a heading bar
+      // 0593: a plain section, its heading over a divider
       kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
     }
   }
@@ -321,6 +321,8 @@ function pairSettings(rows) {
   }
 }
 // A setting's row, whose explanation is the view's `n`th. 0381: an agent's model's is drawn to sit in the agent's row.
+// 0593: speck's face beside its name, watching, as the name stands saved.
+const nameFace = x => SpeckFace.draw({ mood: 'watching', size: 24, label: `${String(x.value || 'speck')}, watching` });
 function settingRow(x, n) {
   const role = yourModels() !== null && Object.hasOwn(ROLES, x.key) ? x.key : null; // 0400: a role's one list
   const edit = x.editable === true ? (role !== null ? roleEditor(x) : settingEditor(x)) : null;
@@ -332,7 +334,7 @@ function settingRow(x, n) {
   const [info, tip] = nested ? [null, null] : effort === undefined ? settingInfo(x, n, ownLine(x))
     : settingInfo({ key: x.key, explain: sharedEnd(String(x.explain ?? ''), String(effort.explain ?? '')) }, n, [ownLine(x), ownLine(effort, x.key)], typeof effort.explain === 'string' && effort.explain ? effort.explain : null);
   const shown = edit ? edit : [el('code', 'value', settingValue(x.value))];
-  const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown);
+  const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, x.key === 'speck_name' ? nameFace(x) : null, ...shown);
   const row = el('div', model ? 'setting model' : 'setting', null,
     model ? el('span', 'pick', null, settingName(x.key), el('span', 'list', null, ...shown, info))
       : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
