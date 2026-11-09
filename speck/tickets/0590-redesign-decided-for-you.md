@@ -1,7 +1,7 @@
 ---
 id: "0590"
 title: "Redesign Decided for you"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ approved: "2026-11-09T21:44:50.150Z"
 ---
 # 0590 · Redesign Decided for you
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 Decided for you (0568) is a plain list. In the redesign it's where speck reports to you: in its own voice, with its face, showing what it decided, what it didn't choose, and what's waiting for you because of it.
@@ -234,6 +234,90 @@ Follow-ups (known limits, no ticket needed):
     ],
     "escalation_question": "",
     "summary": "The redesigned report meets all five criteria. It shows speck's faces, groups calls by day, explains the choices and preserves Change. The missing test record is now complete, and the reviewed test runs have no failures. Ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d53fdb76b09c38dc5ba714b6583bd202548fb4ac",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c244-4175-7393-8948-ae3550572f41",
+    "builder_response": "Merge round: ship's test run failed on one test, \"0167 AC2: the speck red is used only for the speck itself\".\n\n- Why: .decided-review used var(--accent), and that test allows --accent only on .where.run::before. It's this ticket's own change; `git merge main` said already up to date, so no files were resolved and there's no merge commit.\n- Change: .decided-review now uses var(--run), the panel's link colour (0426). The two tokens hold the same value in both looks (#2F55D4 light, #86A2FF dark), so nothing looks different and the pictures stand. The test was not changed.\n- Tests run: test/panel-0167.test.mjs test/panel-decided-0590.test.mjs test/panel-decided-0568.test.mjs test/speck-name-0576.test.mjs\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 414533,
+      "cached_input_tokens": 357760,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2001,
+      "reasoning_output_tokens": 43
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5555,
+      "cached": 103552,
+      "write": 0,
+      "output": 581
+    },
+    "cost_usd": 0.0272752,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T21:50:07.556Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "drawDecidedLine and renderDecided in templates/panel-popups.js retain the pleased face, count and working Review control. All 0590 AC1 tests pass. The Review colour now uses --run, which has the same value as --accent in both themes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "renderDecided and decidedDays retain the opening speech bubble and Today/Earlier groups. Passing 0590 AC2 tests cover the introduction, grouping, midnight updates and empty state."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "decidedRow and decidedChanged retain the ticket details, question, options, timestamp and sheepish criterion message. All 0590 AC3 tests pass, including legacy records, escaping and status updates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "renderDecided limits Change to approved tickets that are not shipping; decidedRow opens their review pack. The 0590 AC4 and existing 0568 tests pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the three updated presentation tests. The latest run reports 171 passes, zero failures and three skips, including the previously failing 0167 test. The fix changes only the Review colour token; no tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0590-redesign-decided-for-you.md",
+        "issue": "The required list of updated presentation tests was missing from the Delivery log.",
+        "suggested_fix": "List the updated 0568 AC2, 0568 phone-width and 0576 AC2 tests with brief explanations.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The redesign still meets all five criteria. The colour-token fix preserves its appearance and resolves the failure found during shipping without changing the test. No blocking findings remain."
   }
 }
 ```
