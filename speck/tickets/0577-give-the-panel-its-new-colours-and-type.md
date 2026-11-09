@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T17:42:55.310Z"
-approved: "2026-11-09T18:19:46.081Z"
+approved: "2026-11-09T18:28:16.190Z"
 
 ---
 # 0577 · Set the panel's new design tokens
@@ -63,13 +63,14 @@ Worth watching: the edges of cards and buttons are much fainter than before, and
 ## Review log
 Round 1 (codex): changes requested: F1 AC2 requires JetBrains Mono for times and figures, but build timers (progressOf()'s .sub and factsOf()'s .time .sub), shipped summary figures (#shipped-stats .num), and shipped metadata still inherit Inter.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 606,395
-- Elapsed since build started: 37 min
-- Changed lines: 403 (limit 5000)
+- Reviewer tokens: 910,895
+- Elapsed since build started: 45 min
+- Changed lines: 404 (limit 5000)
 Tests updated to the new look (AC5):
 - `test/icons-0305.test.mjs`
 - `test/mockup-0126.test.mjs`
@@ -271,6 +272,90 @@ Follow-ups for the tickets after this one: state colours other than what needs y
     ],
     "escalation_question": "",
     "summary": "The new colours and locally bundled fonts meet the ticket. Timers and shipped figures now use the required font, and the updated tests pass. No blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "401d91613e47490d2c4631cb9488d791959dcf9f",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c186-8fb1-7cc1-8a38-f00334ab7ff8",
+    "builder_response": "- Tests run: test/panel-0463.test.mjs test/panel-0464.test.mjs test/panel-0465.test.mjs test/panel-0577.test.mjs test/panel-0427.test.mjs test/panel-0161.test.mjs\n- Ship ran the tests on the ticket merged with main; three failed: 0463, 0464 and 0465 AC1 (\"the track and the table look the same\"). Main's changes didn't cause them, and the merge had no conflicts.\n- Cause: my round-1 fix for F1 grouped `.q .top .progress > .sub` with `.q .facts .value.time .sub` in one rule. Those tests require every `.q .facts` / `.q .track` rule's selector list to also name the same selector for a Plan ticket, a shipped card and the full view.\n- Fix: templates/panel-cards.css splits it into `.q .top .progress > .sub` and `.facts .value.time .sub`, which applies to the facts table in every view. test/panel-0577.test.mjs AC2 checks the new selector. No test was weakened; 0463, 0464 and 0465 are unchanged.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 908925,
+      "cached_input_tokens": 755328,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1970,
+      "reasoning_output_tokens": 26
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 54721,
+      "cached": 249216,
+      "write": 0,
+      "output": 563
+    },
+    "cost_usd": 0.1399936,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T18:28:12.364Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-base.css retains the specified light, dark and black-bar tokens. Both 0577 AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0577 AC2 tests cover bundled fonts, licences, relative loading, font assignments and title changes. The shared .facts .value.time .sub rule now applies JetBrains Mono consistently across ticket views, preserving F1's fix."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0577 AC3 test checks all required text/background combinations reach 4.5:1 in both looks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0577 AC4 tests verify local font/style addresses and successful serving of every named font."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the updated appearance tests. The three failures found at ship now pass without changes to their tests: 0463, 0464 and 0465 AC1. The fresh run reports 159 passed, zero failed and three skipped; remaining whole-suite verification runs at ship."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css",
+        "issue": "Timers and shipped figures previously inherited Inter instead of JetBrains Mono.",
+        "suggested_fix": "Completed. Timers and figures use --font-mono; the shared facts-table selector also keeps their appearance consistent across Plan, Build, Shipped and the full view.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The new colours and bundled fonts still meet the ticket after the merge. The timer styling now applies consistently across ticket views, and all three tests that failed during shipping pass unchanged. No blocking concerns remain."
   }
 }
 ```
