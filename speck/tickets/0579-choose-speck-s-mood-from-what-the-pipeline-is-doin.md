@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0578"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:54:00.698Z"
-approved: "2026-11-09T19:01:46.681Z"
+approved: "2026-11-09T19:10:03.039Z"
 
 ---
 # 0579 · Choose speck's mood from what the pipeline is doing
@@ -56,12 +56,13 @@ Worth keeping an eye on: pleased only shows for things that happen while the pan
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 151,337
-- Elapsed since build started: 8 min
+- Reviewer tokens: 262,741
+- Elapsed since build started: 16 min
 - Changed lines: 129 (limit 5000)
 Follow-ups:
 - 0580 and the other tickets that show the face need to load `speck-mood.js` after `speck-face.js` in `templates/panel.html`, and use `SpeckMood.watcher`, `SpeckMood.change` and `SpeckMood.beside`. No idea note: skipped as covered by ticket 0580 (criterion 1, speck in its current mood).
@@ -137,6 +138,81 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The mood logic matches pipeline activity, adds a ten-second pleased reaction and supports smooth visor changes. The related tests pass. These functions are ready for the later tickets that place the face on the page."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "98c13cf9b18a63f24b15130db28a108ad36f2a29",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c1af-7708-7923-ba11-d4f76667f309",
+    "builder_response": "- Tests run: test/panel-0059.test.mjs, test/panel.test.mjs, test/speck-mood-0579.test.mjs, test/speck-face-0578.test.mjs\n- Merged main with no conflicts (0589's work came in).\n- Failing tests: `0059 AC3` (test/panel-0059.test.mjs) and `0031 AC2` (test/panel.test.mjs). Both compare /api/state, with `foreman` set aside, to `speck status --json` exactly. The ticket's own change broke them: it added a top-level `mood` key, which the board doesn't have. main's newer changes had nothing to do with it.\n- Fix: the mood is now inside the Foreman's part of the state, `foreman.mood` (scripts/panel.mjs), which those tests already set aside. `SpeckMood.watcher` reads `state.foreman.mood`. The tests are unchanged apart from this ticket's own, which now look at `foreman.mood`.\n- foremanView and projectSummary are unchanged: panel.mjs adds the mood only to what it sends the page, and the bridge summary still gets the view without it.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 261500,
+      "cached_input_tokens": 205184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1241,
+      "reasoning_output_tokens": 60
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 12210,
+      "cached": 98688,
+      "write": 0,
+      "output": 506
+    },
+    "cost_usd": 0.0393488,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T19:09:59.433Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/panel-summary.mjs speckMood implements the required mood priority. Passing AC1 tests cover off, attention, building, reviewing, shipping and waiting. The endpoint test verifies foreman.mood."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/speck-mood.js watcher now reads state.foreman.mood consistently with the server. Passing AC2 tests cover both event types, the 10-second duration, timer replacement and return to the latest mood."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "SpeckMood.beside selects sheepish when criteria_changed is true; the passing AC3 test exercises changed and unchanged tickets. Face placement remains outside scope."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "SpeckMood.ease and SpeckFace.setMood interpolate visor shapes. Passing AC4 tests cover intermediate geometry, completion, interrupted transitions and reduced motion."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The current test log records 193 passes, zero failures and three skips. Both previously failing API comparison tests pass, and git diff confirms their files are unchanged. The merged change contains only this ticket's implementation, tests and records."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Approved. Moving the mood into the pipeline status fixes the API compatibility regressions without weakening existing tests. Mood selection, the pleased reaction and smooth visor changes remain covered and passing. Later tickets will place the face on the page."
   }
 }
 ```
