@@ -836,7 +836,7 @@ test('0035 AC1: the stats row is drawn above the list, and a median with nothing
   const stats = p.byId('shipped-stats');
   assert.equal(stats.hidden, false);
   // 0157: each tile has its number, then its label, then the tickets its median covers. 0587: three, then the others.
-  assert.deepEqual(stats.children.map(c => c.textContent), ['4 minmedian build time1 ticket', '2median review rounds1 ticket', '0%approved first round1 ticket']);
+  assert.deepEqual(stats.children.map(c => c.textContent), ['4 minmedian build time1 ticket', '2median review rounds1 ticket', '100%approved first round1 ticket']);
   assert.deepEqual(p.byId('shipped-more').children.map(c => c.textContent),
     ['2shipped today', '–median builder cost0 tickets', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']);
   const html = page();

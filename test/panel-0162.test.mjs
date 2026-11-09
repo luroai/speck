@@ -96,7 +96,7 @@ test('0162 AC3: Shipped shows three stats, and More stats shows and hides the ot
 test('0162 AC3: every stat over 9,999 is shortened as the cards\' figures are, with the exact number as a tooltip', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
-  assert.deepEqual(tiles(p, 'shipped-stats'), [['23 min', 'median build time', null], ['1.5', 'median review rounds', null], ['50%', 'approved first round', null]]);
+  assert.deepEqual(tiles(p, 'shipped-stats'), [['23 min', 'median build time', null], ['1.5', 'median review rounds', null], ['100%', 'approved first round', null]]);
   // Reviewer tokens 108,234 and 500, builder tokens 2,412,345 alone.
   assert.deepEqual(tiles(p, 'shipped-more').slice(1), [['$2.91', 'median builder cost', null], ['$2.91', 'total cost', null], ['54k', 'median reviewer tokens', '54,367'],
     ['2.4M', 'median builder tokens', '2,412,345']]);

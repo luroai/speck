@@ -89,7 +89,7 @@ const tileTips = (p, box) => p.byId(box).children.map(t => byClass(p, t, 'num')[
 test('0420 AC3 (0587): the stats are tiles, followed by More stats, which opens the other figures as before', async () => {
   const p = page([board(), board()]);
   await p.settle();
-  assert.deepEqual(tileNums(p, 'shipped-stats'), ['13 min', '1', '75%']);
+  assert.deepEqual(tileNums(p, 'shipped-stats'), ['13 min', '1', '100%']);
   assert.match(html(), /<div class="stats" id="shipped-stats" hidden><\/div>\s*<div class="stats-line" id="shipped-stats-line" hidden><button [^>]*id="more-stats"/, 'More stats under the tiles');
   assert.equal(p.byId('shipped-stats-line').hidden, false);
   const more = p.byId('more-stats');

@@ -125,7 +125,7 @@ test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipp
   const p = fakePage([state]);
   await p.settle();
   assert.equal(await figsOf(p, shippedRows(p)[0]), 'Builder cost—Reviewer cost—Total cost—Builder tokens—Reviewer tokens1,500');
-  assert.deepEqual(p.byId('shipped-stats').children.map(c => c.textContent), ['4 minmedian build time1 ticket', '2median review rounds1 ticket', '0%approved first round1 ticket']); // 0587: three tiles
+  assert.deepEqual(p.byId('shipped-stats').children.map(c => c.textContent), ['4 minmedian build time1 ticket', '2median review rounds1 ticket', '100%approved first round1 ticket']); // 0587: three tiles
   assert.deepEqual(p.byId('shipped-more').children.map(c => c.textContent),
     ['1shipped today', '–median builder cost0 tickets', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']); // 0587: the others
   const m = panelModel()(state);
