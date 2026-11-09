@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fakePage, findChrome, browserPage, gitEnv, panelRepo } from './support/panel.mjs';
+import { T, findChrome, browserPage, gitEnv, panelRepo } from './support/panel.mjs';
+import { D, board, buttons, rows, openList } from './support/decided.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 import { gIn } from './support/ship.mjs';
 import { read, TICKET } from './support/merge-rounds.mjs';
@@ -92,24 +93,6 @@ test('0568 AC1: with no recommendations taken there is nothing to list', () => {
 
 // ----- the panel -----
 
-const D = (id, o = {}) => ({ id, title: `Ticket ${id}`, option: `Option of ${id}`, at: '2026-11-08T10:30:00.000Z', criteria_changed: false, ...o });
-function board(tickets, decided) {
-  const answers = [];
-  const p = fakePage([], { scrollX: 0, scrollY: 0, scrollTo() {}, fetch: async url => {
-    answers.push(String(url));
-    if (/\/pack$/.test(url)) return { ok: true, status: 200, json: async () => ({ pack: '# Pack', pictures: [], documents: [] }) };
-    return { ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets, ideas: [], decided }))) };
-  } });
-  p.document.documentElement = { dataset: {}, classList: { toggle() {} } };
-  p.document.querySelectorAll = sel => sel.split(', ').filter(x => x.startsWith('#')).map(x => p.byId(x.slice(1)));
-  p.document.activeElement = null;
-  p.answers = answers;
-  return p;
-}
-const buttons = (p, text) => p.all(p.byId('decided')).filter(n => n.tagName === 'button' && n.textContent === text);
-const rows = p => p.all(p.byId('decided')).filter(n => /\bdecided-row\b/.test(n.className));
-const openList = async p => { await p.settle(); p.press(p.byId('decided-open')); await p.settle(); };
-
 test('0568 AC2: with none taken there is no line, and an older server gives none either', async () => {
   const none = board([T('0001', 'done')], []);
   await none.settle();
@@ -131,9 +114,9 @@ test('0568 AC2: the line says how many, and pressing it opens the list with each
   assert.match(p.byId('decided').textContent, /Decided for you/);
   const [first, second] = rows(p);
   assert.equal(rows(p).length, 2);
-  for (const want of ['0002', 'Ticket 0002', 'Option of 0002', '2026-11-08 10:30 UTC', 'changed a criterion']) assert.ok(first.textContent.includes(want), `${want} in ${first.textContent}`);
+  for (const want of ['0002', 'Ticket 0002', 'Option of 0002', '2026-11-08 10:30 UTC', 'so this one waits for you at Ship']) assert.ok(first.textContent.includes(want), `${want} in ${first.textContent}`);
   for (const want of ['0001', 'Ticket 0001', 'Option of 0001', '2026-11-08 10:30 UTC']) assert.ok(second.textContent.includes(want), `${want} in ${second.textContent}`);
-  assert.ok(!second.textContent.includes('changed a criterion'), 'only where it did');
+  assert.ok(!second.textContent.includes('so this one waits'), 'only where it did');
 });
 
 test('0568 AC2: one decision is said in the singular, and text from a ticket stays text', async () => {
@@ -202,7 +185,7 @@ test('0568 AC4: at 320 px the list and its line fit the width, however long the 
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && typeof state !== 'undefined' && !!state`, 'the panel');
     const long = 'x'.repeat(200);
-    const decided = [{ id: '0001', title: long, option: long, at: '2026-11-08T10:30:00.000Z', criteria_changed: true }, { id: '0002', title: 'Short', option: 'A much longer sentence than the short title, which has to wrap on a phone', at: '2026-11-08T10:00:00.000Z', criteria_changed: false }];
+    const decided = [{ id: '0001', title: long, option: long, question: long, other_options: [long, long], at: '2026-11-08T10:30:00.000Z', criteria_changed: true }, { id: '0002', title: 'Short', option: 'A much longer sentence than the short title, which has to wrap on a phone', at: '2026-11-08T10:00:00.000Z', criteria_changed: false }];
     await b.js(`state = { ...state, decided: ${JSON.stringify(decided)}, tickets: [{ ...${JSON.stringify(T('0001', 'approved'))} }] }; render(); document.getElementById('decided-open').click(); true`);
     await b.until(`!document.getElementById('decided').hidden && document.querySelectorAll('#decided .decided-row').length === 2`, 'the list');
     const m = await b.js(`(() => {

@@ -7,7 +7,7 @@ let fullId = null; // the id of the ticket in the side pane, or null
 let fullFrom = null; // 0326: { id, list } of the Full ticket button that opened the pane, or null when something else did
 let focusBack = false; // 0326: the pane has closed, so the next render puts the focus back
 let foremanOpen = false; // 0285: whether the Foreman's detail is open
-let decidedOpen = false, decidedBuilt = null; // 0568: whether the Decided for you list is open, and what it was last drawn from
+let decidedOpen = false, decidedBuilt = null, decidedLineSaid = null; // 0568: whether the Decided for you list is open, and what it was last drawn from. 0590: and what the line under the bar last said
 let runLog = null, runLogFor = null, runLogAsking = false, runLogShown, runLogDrawn = null; // 0415: runLogShown: the log's lines as drawn (runLogDrawn), joined, undefined when not drawn
 let buildLogOf = null; // 0548: the id of the ticket whose build log the Pipeline log's pop-up shows instead, or null
 let buildLogShown, buildLogDrawn = null, buildLogBuild = null; // 0548: as runLogShown and runLogDrawn, and the build they're from
@@ -552,13 +552,14 @@ const shipBar = t => el('div', 'ship-bar', null, ...shipPart(t, true));
 // 0588: what status says changed in its criteria, without anything that isn't one of its changes.
 const changesOf = t => list(t.criteria_changes).filter(c => c && typeof c === 'object' && typeof c.change === 'string');
 const joined = xs => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}` : xs[0]);
-function calloutHead(items) {
+function criteriaSaid(items) {
   const said = ['changed', 'added', 'removed'].map(word => {
     const ns = items.filter(c => c.change === word && Number.isInteger(c.n)).map(c => c.n);
     return ns.length ? `${word} ${ns.length > 1 ? 'criteria' : 'criterion'} ${joined(ns)}` : null;
   }).filter(Boolean);
-  return `I ${said.length ? joined(said) : items.length ? 'changed the order or layout of the criteria' : 'changed its criteria'} while building`;
+  return said.length ? joined(said) : items.length ? 'changed the order or layout of the criteria' : 'changed its criteria';
 }
+const calloutHead = items => `I ${criteriaSaid(items)} while building`;
 const wasNow = (label, text) => el('div', 'was-now', null, el('span', 'label', label),
   typeof text === 'string' && text !== '' ? el('div', 'md', null, ...mdBlocks(markdown(text))) : el('div', 'md', '(none)'));
 // 0588: above its facts, on a ticket whose criteria changed: speck's face, sheepish, what changed and that it won't ship by itself.
@@ -691,7 +692,7 @@ $('run').addEventListener('click', e => {
   foremanOpen = true;
   render();
 });
-// 0568: the Decided for you list, in a pop-up over the whole panel, opened from the line under speck's status. A
+// 0568: the Decided for you list, in a pop-up over the whole panel, opened from the line under the bar (0590: speck's report). A
 // decision whose ticket has a review pack with Ask for changes (approved and not shipping) has a Change button, which
 // opens that pack. It's drawn again only when what it shows changes, so a refresh doesn't take the focus or the scroll.
 $('decided-open').addEventListener('click', e => {
@@ -705,9 +706,23 @@ function closeDecided() {
   const line = $('decided-open');
   if (line.focus) line.focus();
 }
+// 0590: speck's face beside its own words, in this mood.
+const decidedFace = (mood, size) => (globalThis.SpeckFace ? SpeckFace.draw({ mood, size, label: `${speckCalled()}, ${mood}` }) : null);
+// 0590: what speck says on a call that changed the ticket's criteria, or null. A shipped or cancelled ticket isn't waiting any more.
+function decidedChanged(d) {
+  if (d.criteria_changed !== true) return null;
+  const t = list(state.tickets).find(x => x && String(x.id) === String(d.id));
+  const end = t?.status === 'done' ? ', so this one waited for you at Ship.' : t?.status === 'cancelled' ? '.' : ', so this one waits for you at Ship.';
+  return `I ${criteriaSaid(changesOf(t || {}))}${end}`;
+}
 function decidedRow(d, can) {
-  const id = String(d.id), row = el('div', 'decided-row', null, el('div', 'decided-head', null, el('span', 'id', id), el('span', 'decided-title', String(d.title ?? ''))),
-    el('div', 'decided-option', String(d.option ?? '')), el('div', 'decided-when', `${tookAt(d.at)}${d.criteria_changed === true ? ' · changed a criterion' : ''}`));
+  const id = String(d.id), said = decidedChanged(d), others = list(d.other_options).filter(o => typeof o === 'string' && o);
+  const fact = (label, text) => el('div', 'decided-fact', null, el('span', 'label', label), el('span', 'decided-value', text));
+  const row = el('div', 'decided-row', null, el('div', 'decided-head', null, el('span', 'id', id), el('span', 'decided-title', String(d.title ?? ''))),
+    typeof d.question === 'string' && d.question ? el('div', 'decided-question', d.question) : null,
+    fact('Went with', String(d.option ?? '')), others.length ? fact('Not chosen', others.join(' · ')) : null,
+    el('div', 'decided-when', tookAt(d.at)),
+    said ? el('div', 'decided-changed', null, decidedFace('sheepish', 28), el('span', 'decided-says', said)) : null);
   if (can) {
     const b = el('button', 'full-open decided-change', 'Change');
     b.type = 'button';
@@ -717,23 +732,37 @@ function decidedRow(d, can) {
   }
   return row;
 }
+// 0590: the calls under Today and Earlier, by the day where you are, leaving out a heading with none.
+function decidedDays(list, can) {
+  const now = new Date(), today = d => sameDay(new Date(d.at), now);
+  return [['Today', list.filter(today)], ['Earlier', list.filter(d => !today(d))]].filter(([, ds]) => ds.length)
+    .flatMap(([day, ds]) => [el('h2', 'decided-day', day), ...ds.map(d => decidedRow(d, can(d)))]);
+}
+// 0590: the line under the bar, drawn again only when what it says changes, so a refresh doesn't restart the face's animation.
+function drawDecidedLine(line, n) {
+  const sig = signature([n, speckCalled()]);
+  if (sig === decidedLineSaid) return;
+  decidedLineSaid = sig;
+  line.replaceChildren(...(n ? [decidedFace('pleased', 24), el('span', 'decided-say', `I made ${plural(n, 'call')} for you this week`), el('span', 'decided-review', 'Review')].filter(Boolean) : []));
+}
 function renderDecided(m) {
   const list = (Array.isArray(state.decided) ? state.decided : []).filter(d => d && typeof d === 'object');
   const line = $('decided-open'), box = $('decided'), was = !box.hidden;
   line.hidden = !list.length;
-  line.textContent = list.length ? `${speckCalled()} decided ${list.length} for you in the last 7 days` : '';
+  drawDecidedLine(line, list.length);
   const can = d => m.queue.some(t => String(t.id) === String(d.id) && t.status === 'approved' && t.shipping !== true) && shippingId !== String(d.id);
   box.hidden = !decidedOpen;
   holdPage(pageHeld());
   if (!decidedOpen) { box.replaceChildren(); decidedBuilt = null; return; }
-  const sig = signature(list.map(d => [d, can(d)]));
+  const sig = signature([list.map(d => [d, can(d), decidedChanged(d)]), speckCalled(), new Date().toDateString()]);
   if (sig === decidedBuilt) return;
   decidedBuilt = sig;
   const had = within(document.activeElement, box), shut = el('button', 'close', 'Close');
   shut.type = 'button';
   shut.addEventListener('click', e => { e.stopPropagation(); closeDecided(); });
+  const intro = el('div', 'decided-intro', null, decidedFace('pleased', 44), el('div', 'decided-bubble', "I went with my recommendation. You can change any you'd have called differently."));
   box.replaceChildren(el('div', 'top', null, el('span', 'title', 'Decided for you'), shut),
-    list.length ? el('div', 'decided-list', null, ...list.map(d => decidedRow(d, can(d)))) : el('p', 'decided-none', 'Nothing decided in the last 7 days.'));
+    ...(list.length ? [intro, el('div', 'decided-list', null, ...decidedDays(list, can))] : [el('p', 'decided-none', 'Nothing decided in the last 7 days.')]));
   if (!was) box.scrollTop = 0;
   if ((!was || had) && box.focus) box.focus({ preventScroll: true });
 }

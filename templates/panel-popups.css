@@ -98,15 +98,24 @@
   #decided[hidden] { display: none; }
   #decided .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #decided .close:hover { color: var(--text); }
-  #decided .top, #decided .decided-list, #decided .decided-none { max-width: 720px; margin-left: auto; margin-right: auto; }
+  #decided .top, #decided .decided-intro, #decided .decided-list, #decided .decided-none { max-width: 720px; margin-left: auto; margin-right: auto; }
   #decided .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: .5px solid var(--line-soft); background: var(--panel); }
   #decided .top .title { font-weight: 600; }
   #decided .decided-row { padding: 10px 0; border-bottom: .5px solid var(--line-soft); overflow-wrap: anywhere; }
   #decided .decided-head { display: flex; gap: 8px; align-items: baseline; }
   #decided .decided-head .id { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
   #decided .decided-title { min-width: 0; font-weight: 600; }
-  #decided .decided-option { margin-top: 2px; color: var(--text); }
-  #decided .decided-when { margin-top: 2px; font-size: 12px; color: var(--muted); }
+  #decided .decided-question { margin-top: 4px; }
+  #decided .decided-fact { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; margin-top: 4px; }
+  #decided .decided-fact .label { font-size: 12px; color: var(--muted); }
+  #decided .decided-when { margin-top: 4px; font-size: 12px; color: var(--muted); }
+  #decided .decided-changed { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--needs-you-text); }
+  #decided .decided-says { min-width: 0; }
+  /* 0590: speck's opening words, a speech bubble with its tail towards the face */
+  #decided .decided-intro { display: flex; align-items: flex-start; gap: 12px; padding: 16px 0 4px; }
+  #decided .decided-bubble { position: relative; min-width: 0; padding: 10px 12px; border-radius: 12px; background: var(--raise); line-height: 20px; }
+  #decided .decided-bubble::before { content: ""; position: absolute; left: -5px; top: 15px; width: 10px; height: 10px; background: var(--raise); transform: rotate(45deg); }
+  #decided .decided-day { margin: 16px 0 0; font-size: 12px; font-weight: 600; color: var(--muted); }
   #decided .decided-change { margin: 6px 0 0; }
   /* 0479: the Pipeline log is one card in a dark frame that fills the window, as a lane's (0478): the frame is the
      screen's colour and corners, 4 px at the sides and bottom, in a column as wide as the lanes' (720 px less their

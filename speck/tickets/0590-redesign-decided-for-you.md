@@ -42,6 +42,7 @@ Decided for you reads as speck's report, as in the mock.
 - Today: `#decided-open` under the header and `renderDecided`, `decidedRow` in `templates/panel-popups.js`. speck speaks in the first person wherever its face is beside the words, and is called by its chosen name elsewhere (0575, 0576).
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a call that changed a criterion now says "waited" once shipped and drops the Ship clause once cancelled, as neither still waits; the speech bubble is left out when the list empties while open; the list regroups when the day changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -139,14 +139,15 @@ test('0576 AC2: its question and Answer box in the full view say the name, and D
   assert.match(confirms[0], /^Dismiss Virgil's question about 0001: "Keep it\?"/);
 });
 
-test('0576 AC2: the Decided for you line says the name, and a board without one says speck', async () => {
+test('0576 AC2: the Decided for you line names its face, and a board without a name says speck', async () => {
   const decided = [{ id: '0001', title: 'T', option: 'A', at: AT, criteria_changed: false }];
   const p = fakePage([state(view({ name: 'Virgil', agent: undefined, tickets: [] }), [], { decided })]);
   await p.settle();
-  assert.equal(p.byId('decided-open').textContent, 'Virgil decided 1 for you in the last 7 days');
+  const face = q => q.all(q.byId('decided-open')).find(n => n.attrs?.['data-mood']).attrs['aria-label'];
+  assert.equal(face(p), 'Virgil, pleased');
   const old = fakePage([state(view({ agent: undefined, tickets: [] }), [BLOCKED('0001', { foreman_will: true })], { decided })]);
   await old.settle();
-  assert.equal(old.byId('decided-open').textContent, 'speck decided 1 for you in the last 7 days');
+  assert.equal(face(old), 'speck, pleased');
   assert.match(old.all(rowOf(old, '0001')).find(n => /^where\b/.test(n.className || '')).textContent, /^speck will answer/);
 });
 

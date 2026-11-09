@@ -28,9 +28,11 @@
   .bezel .settings-open:hover { border-color: var(--bar-ink); color: var(--bar-ink); }
   .bezel .settings-open svg { width: 15px; height: 15px; }
   .bezel :focus-visible { outline-color: var(--bar-ink); }
-  /* 0568: the line under speck's status saying how many it decided, which opens the Decided for you list */
-  .decided-line { display: block; box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 16px; font: inherit; font-size: 14px; color: var(--muted); background: var(--bg); border: 0; border-radius: 0; border-bottom: .5px solid var(--line); cursor: pointer; }
-  .decided-line:hover { color: var(--text); }
+  /* 0568, 0590: the line under the bar: speck, how many calls it made, and Review, which opens the Decided for you list */
+  .decided-line { display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%; min-height: 44px; padding: 6px 16px; font: inherit; font-size: 14px; line-height: 20px; text-align: left; color: var(--text); background: var(--bg); border: 0; border-radius: 0; border-bottom: .5px solid var(--line); cursor: pointer; }
+  .decided-say { flex: 1; min-width: 0; }
+  .decided-review { flex: none; color: var(--accent); }
+  .decided-line:hover .decided-review { text-decoration: underline; }
   .decided-line[hidden] { display: none; }
   /* 0582: the lanes are four tabs under the bar, each with its lane's name and how many it holds. The open one has an
      underline in the accent and its name in the text colour, the others are muted. Every tab has the underline's 2 px,
