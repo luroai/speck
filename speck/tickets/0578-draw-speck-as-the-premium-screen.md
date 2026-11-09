@@ -1,7 +1,7 @@
 ---
 id: "0578"
 title: "Draw speck as the Premium screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0577"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T18:34:48.451Z"
+approved: "2026-11-09T18:43:11.261Z"
 
 ---
 # 0578 · Draw speck as the Premium screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The redesign replaces the LCD's dot-drawn speck with a new character: the Premium screen, a small dark device whose red visor is its eye. It shows wherever speck acts or speaks, so it has to be one drawing that works at every size, in both looks, and that feels alive without the device ever moving.
@@ -60,9 +61,14 @@ Worth keeping an eye on: the smallest sizes, where the question mark and the z's
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 197,151
+- Elapsed since build started: 8 min
+- Changed lines: 108 (limit 5000)
 Follow-ups:
 - 0580, when it adds the script to the page, should also add `templates/speck-face.js` to the page's stamp in `scripts/panel.mjs`, so a change to it reloads an open page.
 
