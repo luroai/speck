@@ -7,7 +7,7 @@ import { T, gitEnv } from './support/panel.mjs';
 import { OPTION, blockedRepo } from './support/blocked.mjs';
 import { statusData, loadConfig } from '../scripts/speck.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
-import { foremanAgentQueue, foremanAction, foremanBrief, agentView, readActions } from '../scripts/foreman-agent.mjs';
+import { foremanAgentQueue, foremanAction, foremanBrief, agentView, readActions, readAgentState } from '../scripts/foreman-agent.mjs';
 
 Object.assign(process.env, gitEnv); // speck watch commits in this process
 
@@ -31,9 +31,9 @@ const notes = n => Array.from({ length: n }, (_, i) => `- Went with the recommen
 function looking({ status = 'building', watch = 'decide', question, record } = {}) {
   const r = blockedRepo({ status, ...(question !== undefined ? { question } : {}), ...(record !== undefined ? { record } : {}) });
   setWatch(r, watch);
-  const a = { starts: [], resumed: [], said: [], live: new Set(), running: new Set() };
+  const a = { starts: [], resumed: [], said: [], live: new Set(), running: new Set(), inUse: new Set() };
   a.q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => loadConfig(r.dir), words: WORDS, cfg: CFG, max: 1, running: a.running, ships: { again: () => {} },
-    say: m => a.said.push(m), key: () => 'base head', statusOf: () => status, providers: [], cantStart: () => '', alive: pid => a.live.has(pid), withToken: () => [],
+    say: m => a.said.push(m), key: () => 'base head', statusOf: () => status, providers: [], cantStart: () => '', alive: pid => a.live.has(pid), withToken: () => [], inUse: session => a.inUse.has(session),
     startBuild: (id, argv, cwd, session, flags, rec) => { a.resumed.push({ id, argv, rec: JSON.parse(rec(4242)) }); a.running.add(id); },
     start: (argv, cwd, log, env) => { const pid = 90000 + a.starts.length; a.starts.push({ argv, token: env.SPECK_FOREMAN_RUN, pid }); a.live.add(pid); return { pid, exited: () => !a.live.has(pid) }; } });
   a.check = (s = status) => a.q.check([T('0001', s)]);
@@ -81,6 +81,38 @@ test('0567 AC1: once the agent has ended, its build is resumed with that option,
   a.running.clear();
   a.check();
   assert.equal(a.resumed.length, 1, 'once');
+});
+
+// A decide whose agent has ended and whose resume waits for a build slot, with the ticket then moved on by `move`.
+function waitingThen(move, status = 'building') {
+  const s = looking({ status });
+  s.a.decide();
+  s.a.running.add('other'); // no build slot free, so it waits
+  s.a.end();
+  s.a.check();
+  assert.equal(s.a.resumed.length, 0);
+  assert.equal(readAgentState(s.r.runs).resumes.length, 1, 'it waits');
+  s.a.said.length = 0;
+  s.a.running.clear();
+  const after = move(s) || status;
+  s.a.check(after);
+  assert.equal(s.a.resumed.length, 0, 'not resumed');
+  assert.deepEqual(readAgentState(s.r.runs).resumes, [], 'and dropped');
+  assert.ok(s.a.said.some(l => /went with its recommendation, but its build has been carried on since/.test(l)), s.a.said.join('\n'));
+}
+
+test('0567 AC1: a waiting decide is dropped once the ticket\'s branch has a new commit', () => waitingThen(({ r }) => { r.g('commit', '-q', '--allow-empty', '-m', 'carried on by hand'); }));
+test('0567 AC1: a waiting decide is dropped once its build has another session', () => waitingThen(({ r }) => { fs.writeFileSync(r.record, JSON.stringify({ ...JSON.parse(fs.readFileSync(r.record, 'utf8')), session: 'sess-2' })); }));
+test('0567 AC1: a waiting decide is dropped while its build\'s session is in use', () => waitingThen(({ a }) => { a.inUse.add('sess-1'); }));
+for (const status of ['done', 'cancelled', 'reviewing'])
+  test(`0567 AC1: a waiting decide is dropped once the ticket is ${status}`, () => waitingThen(() => status));
+
+test('0567 AC1: a waiting decide on a ticket that was blocked still resumes, as it is now building', () => {
+  const { a } = looking({ status: 'blocked' });
+  a.decide();
+  a.end();
+  a.check('building');
+  assert.equal(a.resumed.length, 1);
 });
 
 test('0567 AC1: a blocked ticket is set building, as the button does', () => {

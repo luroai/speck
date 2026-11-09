@@ -16,7 +16,8 @@ import { readableLog } from './build-log.mjs';
 import { resumeFor, resumedRecord } from './hand-back.mjs';
 import { pidAlive } from './run-switch.mjs';
 import { runWords, choseCount, FOREMAN_CHOSE } from './go-with.mjs';
-import { processesWithEnv } from './build-procs.mjs';
+import { processesWithEnv, sessionInUse } from './build-procs.mjs';
+import { refsOf } from './ship-queue.mjs';
 import { fixingOf, speckActs, MAX_DECIDED } from './foreman.mjs';
 import { questionFacts } from './question-facts.mjs';
 import { statusData } from './speck.mjs';
@@ -224,11 +225,11 @@ function spawnAgent(argv, cwd, log, env) {
 // and resumes builds it asked to, while a build slot is free. Each ticket is looked into at most once for the same
 // commits (codeKey), and not at all while its question to you still waits (0566). `ships` is speck run's ship queue, whose again(id) ships a ticket once more. 0392: `providers` are
 // the model providers speck knows, and `cantStart(cfg)` says why the Foreman can't start on one now. 0566: `statusOf(id)`
-// is a ticket's status now.
+// is a ticket's status now. 0567: `inUse(session)` says whether a build's session is running now.
 export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, settings = () => ({ cfg, words, max }), running, startBuild, ships,
   start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState,
   withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`), providers = null, cantStart = c => foremanCantStart(repo, c, providers ? { providers } : {}),
-  statusOf = id => statusData(repo).tickets.find(t => String(t.id) === id)?.status }) {
+  statusOf = id => statusData(repo).tickets.find(t => String(t.id) === id)?.status, inUse = sessionInUse }) {
   let child = null; // the agent this speck run started: { token, exited }. While it runs, no other starts, whatever the record says
   const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const carried = new Set(); // 0318: the same for your answers to its questions
@@ -261,7 +262,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     const mine = readActions(runs()).filter(a => a.run === r.token && a.id === r.id);
     for (const a of mine) {
       if (a.action === 'reship') { ships.again(a.id); say(`${a.id}: speck asked for its ship to be tried again: ${a.why}`); }
-      else if (a.action === 'resume' || a.action === 'decide') s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text, ...(a.action === 'decide' ? { by: 'decide' } : {}) }];
+      else if (a.action === 'resume' || a.action === 'decide') s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text, ...(a.action === 'decide' ? { by: 'decide', head: a.head, session: a.session, status: a.status } : {}) }];
       else say(`${a.id}: speck ${ACTIONS[a.action]}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
     }
     if (!mine.length) say(`${r.id}: speck looked into it and took no action. Its log: ${path.relative(repo, path.join(runs(), LOG))}`);
@@ -345,6 +346,11 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     const stale = s.resumes.filter(x => x.by === 'user' && !tickets.some(t => String(t.id) === x.id && t.status === x.status));
     for (const x of stale) say(`${x.id}: your answer to speck wasn't carried out, as the ticket has moved on since.`);
     if (stale.length) { s.resumes = s.resumes.filter(x => !stale.includes(x)); changed = true; }
+    // 0567: so is a recommendation speck went with, as goWithQueue drops the button's, once its build has been carried on.
+    const movedOn = x => { const session = readObject(path.join(runs(), `${x.id}.json`))?.session; return !tickets.some(t => String(t.id) === x.id && t.status === x.status) || refsOf(repo, cfg, x.id).head !== x.head || session !== x.session || inUse(session); };
+    const gone = s.resumes.filter(x => x.by === 'decide' && movedOn(x));
+    for (const x of gone) say(`${x.id}: speck went with its recommendation, but its build has been carried on since, so speck run left it as it is.`);
+    if (gone.length) { s.resumes = s.resumes.filter(x => !gone.includes(x)); changed = true; }
     for (const t of tickets) {
       if (!s.resumes.some(x => x.id === t.id) || running.has(t.id) || t.build_running) continue;
       const now = settings(); // 0549: the builder settings as they are now, or null while they can't start a build
@@ -459,7 +465,9 @@ export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RU
   if (action === 'decide') noteInTicket(at, t, `- Went with the recommendation: ${text} (${FOREMAN_CHOSE}, as watch is decide, ${when}).`, `${foremanSubject(id)} decide`,
     raw => (t.fm.status === 'blocked' ? syncHeader(waitFields(setField(raw, 'status', 'building'), 'blocked', 'building', now.getTime())) : raw));
   else noteInTicket(at, t, `- speck (${when}) ${did}. Why: ${why}`, `${foremanSubject(id)} ${action}`);
-  const entry = { run: token, id, action, text, why, at: now.toISOString(), status: t.fm.status, ...(fixId ? { fix_id: fixId } : {}) };
+  // 0567: a decide keeps what its resume checks the ticket against: its commit, its build's session and its status now.
+  const decided = action === 'decide' ? { status: t.fm.status === 'blocked' ? 'building' : t.fm.status, head: sh('git', ['rev-parse', 'HEAD'], { cwd: at }).stdout.trim(), session: readObject(path.join(runs, `${id}.json`))?.session } : {};
+  const entry = { run: token, id, action, text, why, at: now.toISOString(), status: t.fm.status, ...decided, ...(fixId ? { fix_id: fixId } : {}) };
   fs.appendFileSync(path.join(runs, DID), `${JSON.stringify(entry)}\n`);
   return {
     resume: `Noted in ${id}'s Notes. speck run resumes its build with your instruction once you've ended. Stop here.`,

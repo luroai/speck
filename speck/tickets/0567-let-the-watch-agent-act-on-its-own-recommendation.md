@@ -1,7 +1,7 @@
 ---
 id: "0567"
 title: "Let the watch agent act on its own recommendation"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T00:02:07.058Z"
 ---
 # 0567 · Let the watch agent act on its own recommendation
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When speck's watch agent looks into a stop, it usually ends by asking you a question with its recommendation, and you go with it: 10 of its 13 actions in this repo were questions. With `watch: decide`, it should act on its recommendation and tell you, rather than wait for you.
@@ -56,3 +56,89 @@ With `watch: decide`, the watch agent takes its own recommendation instead of as
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9863d99cfcf27bbbd51ed9ba7f6f4e67b1c97ae9",
+    "session": "fresh",
+    "thread_id": "01a1bda1-396d-7f51-84f4-13ba8a5e48b3",
+    "builder_response": "- Tests run: test/watch-decide-0567.test.mjs, with `speck test --related` adding the 118 existing test files that name a changed file.\n- Design note: the watch agent starts for stops on tickets that usually aren't blocked (a refused ship, a build that ended partway), so `goWith`, which refuses anything not blocked and takes the option from the question, can't be called as it is. `decide` writes goWith's Notes line and sets a blocked ticket building as goWith does, then goes through the same \"once the agent has ended\" resume path as `speck watch resume`, with its own message naming the option.\n- Beyond AC2, `decide` also refuses where goWith with watch: decide does: 3 recommendations already taken, a build still running, a branch not checked out where the build left it. It refuses every size guard block too, so an agent can never choose raising the limit.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 132930,
+      "cached_input_tokens": 81152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 893,
+      "reasoning_output_tokens": 94
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 51778,
+      "cached": 81152,
+      "write": 0,
+      "output": 893
+    },
+    "cost_usd": 0.1206012,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T00:07:26.962Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The AC1 tests cover the Notes line, option delivery and one-action limit. However, foremanAgentQueue.finish/check resumes a queued decide without the stale-choice checks that goWithQueue applies; see F1."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cantDecide checks the watch setting and risk before writes. The passing AC2 tests verify refusal messages and unchanged tickets, commits, records and action logs."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-watch/SKILL.md section 2 explicitly requires decide instead of asking for a recommendation on a low-risk ticket, with questions reserved for no recommendation, high risk or a refused decide."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both passing AC4 tests exercise foremanView: decide leaves agent.asks empty, while an unanswered ask produces Needs you 1."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied related-test run reports 1265 passes, zero failures and three skips. Existing tests were not changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs",
+        "issue": "A pending decide can resume obsolete work. finish queues only the option and by: decide; check excludes only user answers from stale resumes. If the user carries on the build while the watcher finishes or while no build slot is free, the queued decision later resumes the latest session with the old option. It can even resume a ticket that has since become done or cancelled. The recommendation button's goWithQueue drops choices when the branch has moved or the session is in use and restricts eligible statuses.",
+        "suggested_fix": "Record the decision's committed head and relevant session/state, and discard pending decide actions when the ticket has moved on or the build has already carried on. Apply this specifically to decide to preserve the out-of-scope resume behaviour. Add tests for a decision waiting while the branch advances, the session changes, or the ticket finishes.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The new action records and resumes recommendations, and its refusal checks work in the tested cases. One issue needs fixing: a delayed recommendation can restart work after the user has already moved on, including after the ticket has finished."
+  }
+}
+```
+
+</details>
