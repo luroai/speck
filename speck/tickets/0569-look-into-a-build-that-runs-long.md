@@ -1,7 +1,7 @@
 ---
 id: "0569"
 title: "Look into a build that runs long"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-09T00:14:01.074Z"
 ---
 # 0569 · Look into a build that runs long
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a build runs far longer than usual, nobody notices until you ask why. On 2026-10-13 a test added by 0149 hung about half of all full test runs, builds went from 6 to 9 minutes to 26 and 45+, and spotting it and raising the fix (0159) took a human, though speck already knows its usual build time.
@@ -58,3 +58,97 @@ When a build runs well past the usual time, speck looks into why and tells you w
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8d9735db1130c9efde37ebd3a57ad413b7652815",
+    "session": "fresh",
+    "thread_id": "01a1bdaf-08b6-73e3-9667-1f1c210d708d",
+    "builder_response": "- Tests run: test/long-build-0569.test.mjs and, through --related, every test file naming a changed file (2058 tests: 0 failed, 3 skipped).\n",
+    "seconds": 46,
+    "usage": {
+      "input_tokens": 271289,
+      "cached_input_tokens": 219264,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1416,
+      "reasoning_output_tokens": 253
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 52025,
+      "cached": 219264,
+      "write": 0,
+      "output": 1416
+    },
+    "cost_usd": 0.1401364,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-09T00:22:52.952Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/foreman-agent.mjs longBuilds and check cover thresholds and briefs, but exclude adopted external builds and can launch a queued investigation after its build is paused. The passing AC1 tests do not cover the queued-then-paused case."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Passing AC2 tests cover tell/off and figures for builds launched by speck run. However, longBuilds excludes records with seen: true, so watched builds started outside speck run receive no long-running notice."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanAction records tell in Notes; finish writes it to the log; agentView treats only ask as requiring an answer. Passing AC3 tests exercise these behaviours and the draft fix action."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "skills/speck-watch/SKILL.md, ‘A build that runs long’, instructs reading the build log, cached test results and machine load, then making a draft fix for a broken base branch or reporting findings with tell, including harmless slowness."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported related-test run: 2055 passed, 0 failed, 3 skipped. Existing tests were not modified. Whole-suite verification remains the ship check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs",
+        "issue": "A queued long-build investigation can start after the build is paused. If another watch agent is busy, longBuilds queues the investigation. On subsequent checks, queue cleanup checks only whether running still contains the ticket; paused builds remain there. When the busy agent ends, launch starts the investigation despite the pause.",
+        "suggested_fix": "Revalidate queued long-build eligibility before launching, including pause and ticket status. Preserve the opportunity to investigate after the build resumes. Add a regression test that pauses a build while its investigation is queued.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs",
+        "issue": "longBuilds explicitly excludes records with seen: true, which represent builds started outside speck run and adopted into its running set. Criteria 1 and 2 contain no such exclusion, and the existing workflow watches these builds too. They silently receive neither investigation nor a tell-mode warning.",
+        "suggested_fix": "Include adopted external builds in long-running detection and test both agent and tell modes for them. Handle unavailable log information explicitly rather than excluding the build.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Slow-build detection and reporting work on the tested paths, and the investigation guidance is clear. Two gaps need fixing: builds started outside speck run are ignored, and an investigation waiting in the queue can start after its build is paused."
+  }
+}
+```
+
+</details>

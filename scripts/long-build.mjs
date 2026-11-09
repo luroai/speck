@@ -32,10 +32,13 @@ function ranFor(t, rec, now) {
   return { ms: now - from - (from === own ? waited(t) : 0), from };
 }
 
-// A build running long: its key, so it's dealt with once, and a sentence with its figures, or null when it isn't. A
-// paused build doesn't count, and nor does a ticket no build has in hand. `usual` is from usualBuild.
+// Whether ticket `t`'s build can count as running long: a paused build doesn't, and nor does a ticket no build has in hand.
+export const canRunLong = t => !t.paused && ['ready', 'building', 'reviewing'].includes(t.status);
+
+// A build running long: its key, so it's dealt with once, and a sentence with its figures, or null when it isn't. `usual`
+// is from usualBuild.
 export function runningLong(t, rec, usual, now, load) {
-  if (!usual || t.paused || !['ready', 'building', 'reviewing'].includes(t.status)) return null;
+  if (!usual || !canRunLong(t)) return null;
   const ran = ranFor(t, rec, now);
   if (!ran || ran.ms < AT_LEAST_MINUTES * 60000 || ran.ms <= usual.minutes * 2 * 60000) return null;
   const tickets = usual.count === 1 ? 'the last shipped ticket' : `the last ${usual.count} shipped tickets`;

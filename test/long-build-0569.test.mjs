@@ -124,12 +124,45 @@ test('0569 AC1: only a build still running counts', () => {
   assert.equal(notRunning.starts.length, 0, 'not in speck run\'s builds');
   const exited = watcher({ record: { exited: ago(1), exit_code: 0 } }); exited.check();
   assert.equal(exited.starts.length, 0, 'its record says it ended');
-  const outside = watcher({ record: { seen: true } }); outside.check();
-  assert.equal(outside.starts.length, 0, 'someone\'s own session, which speck run didn\'t start');
   for (const status of ['approved', 'blocked', 'done']) {
     const w = watcher(); w.status = status; w.check();
     assert.equal(w.starts.length, 0, `a ${status} ticket`);
   }
+});
+
+test('0569 AC1: a build started outside speck run counts too, whether or not it has a log', () => {
+  const w = watcher({ record: { seen: true } });
+  fs.rmSync(path.join(w.runs, '0001.log'));
+  w.check();
+  assert.equal(w.starts.length, 1);
+  assert.match(w.brief(), /the log is empty or missing/);
+});
+
+test('0569 AC1: a look waiting for the agent doesn\'t start while its build is paused, and comes once it plays', () => {
+  const w = watcher();
+  w.q.stuck({ id: '0002', what: 'its ship was refused', log: '' });
+  w.check(); // the agent starts for 0002, and 0001's look waits
+  assert.equal(readAgentState(w.runs).queue.length, 1);
+  w.o = { ...w.o, paused: true };
+  w.end();
+  assert.equal(w.starts.length, 1, 'not started on a paused build');
+  assert.deepEqual(readAgentState(w.runs).queue, []);
+  w.o = { ...w.o, paused: false };
+  w.check();
+  assert.equal(w.starts.length, 2);
+  assert.match(w.brief(), /still running/);
+});
+
+test('0569 AC1: a look waiting for the agent comes back if its ticket is blocked meanwhile and carries on', () => {
+  const w = watcher();
+  w.q.stuck({ id: '0002', what: 'its ship was refused', log: '' });
+  w.check();
+  w.status = 'blocked';
+  w.end();
+  assert.equal(w.starts.length, 1);
+  w.status = 'building';
+  w.check();
+  assert.equal(w.starts.length, 2);
 });
 
 test('0569 AC1: a ticket handed back or resumed after a wait is timed from then, not from when it first started', () => {
@@ -213,6 +246,14 @@ test('0569 AC2: with watch: tell, speck run says so once in its log, with the fi
   const next = watcher({ watch: 'tell', state: w.runs });
   next.check();
   assert.deepEqual(next.said, [], 'not said again after a restart');
+});
+
+test('0569 AC2: with watch: tell, a build started outside speck run is said once too', () => {
+  const w = watcher({ watch: 'tell', record: { seen: true } });
+  w.check();
+  w.check();
+  assert.equal(w.said.length, 1);
+  assert.match(w.said[0], /running long/);
 });
 
 test('0569 AC2: with watch: off, it neither says so nor starts an agent, and an unset watch tells', () => {

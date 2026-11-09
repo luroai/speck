@@ -32,7 +32,7 @@ import { PROVIDER_SCRIPT, CLAUDE_FLAGS, FOREMAN_MODE } from './provider-build.mj
 import { onPath } from './install.mjs';
 import { recordWatchSpend } from './spend.mjs';
 import { providerKey } from './keys.mjs';
-import { usualBuild, runningLong } from './long-build.mjs';
+import { usualBuild, runningLong, canRunLong } from './long-build.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 
@@ -268,7 +268,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
   };
 
   // 0569: each build running long: said once in speck run's log with watch: tell, or queued once for the agent with fix or
-  // decide, while no question of its still waits for you (0566). A build outside speck run is someone's own session.
+  // decide, while no question of its still waits for you (0566).
   const longBuilds = (s, tickets, c) => {
     const watch = c ? fixingOf(c) : 'off', acts = speckActs(watch);
     if ((!acts && watch !== 'tell') || !running.size) return;
@@ -276,7 +276,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     for (const t of tickets) {
       if (!running.has(t.id)) continue;
       const rec = readObject(path.join(runs(), `${t.id}.json`));
-      const long = rec && !Object.hasOwn(rec, 'exited') && rec.seen !== true ? runningLong(t, rec, usual, now(), load()) : null;
+      const long = rec && !Object.hasOwn(rec, 'exited') ? runningLong(t, rec, usual, now(), load()) : null;
       if (!long || s.long[t.id] === long.key) continue;
       if (acts && agentView(runs(), tickets).asks.some(a => a.id === t.id)) continue;
       s.long[t.id] = long.key;
@@ -360,7 +360,13 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     longBuilds(s, tickets, c); // 0569
     // A stop whose ticket has since finished needs no look.
     const over = new Set(tickets.filter(t => t.status === 'done' || t.status === 'cancelled').map(t => String(t.id)));
-    for (const q of s.queue) if (q.long && !running.has(q.id)) over.add(q.id); // 0569: nor does a long build that has ended
+    // 0569: nor does a long build that has ended. One paused or out of hand meanwhile gets its look once it's running again.
+    for (const q of s.queue.filter(x => x.long)) {
+      const t = tickets.find(x => String(x.id) === q.id);
+      if (running.has(q.id) && t && canRunLong(t)) continue;
+      over.add(q.id);
+      if (running.has(q.id)) delete s.long[q.id];
+    }
     // 0566: nor does one that came while the agent was still asking you about its ticket.
     if (s.queue.length) for (const a of agentView(runs(), tickets).asks) over.add(a.id);
     if (s.queue.some(q => over.has(q.id))) { s.queue = s.queue.filter(q => !over.has(q.id)); changed = true; }
