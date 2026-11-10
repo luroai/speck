@@ -81,7 +81,7 @@ export function stagedPrivateLines(repo) {
 }
 
 // 0627: each line of the commit message in the file `file` that holds a private word or the home folder's path, as
-// { line, what }. Lines below the scissors line `git commit --verbose` adds are left out, as git drops them.
+// { line, what }. Every line counts, even below a scissors line: git keeps that text in a message given with -m.
 export function messagePrivateLines(file) {
   let text;
   try { text = fs.readFileSync(file, 'utf8'); }
@@ -89,12 +89,10 @@ export function messagePrivateLines(file) {
   const check = checkList('the commit message');
   if (!check) return [];
   const found = [];
-  const lines = text.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    if (/^. -+ >8 -+$/.test(lines[i])) break;
-    const what = privateHit(lines[i], check.words, check.re);
+  text.split('\n').forEach((l, i) => {
+    const what = privateHit(l, check.words, check.re);
     if (what) found.push({ line: i + 1, what });
-  }
+  });
   return found;
 }
 

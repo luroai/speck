@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { doctorChecks } from '../scripts/install.mjs';
-import { COPIED_FILES, MESSAGE_HOOK, installCommitHook, messagePrivateLines } from '../scripts/commit-check.mjs';
+import { COPIED_FILES, MESSAGE_HOOK, installCommitHook } from '../scripts/commit-check.mjs';
 import { speck } from './support/cli.mjs';
 import { commitFile, fakeHome, hookedRepo, write } from './support/commit-check.mjs';
 
@@ -69,17 +69,15 @@ test('0627 AC3: a commit message holding a private word or the home folder\'s pa
   assert.equal(spawnSync('git', ['commit', '-q', '-m', 'Fix it'], { cwd: r.dir, env: r.env }).status, 0, 'a clean message commits');
 });
 
-test('0627 AC3: lines git drops below the scissors line of a verbose commit are left out', () => {
-  const h = fakeHome();
-  const file = path.join(h.home, 'MSG');
-  fs.writeFileSync(file, 'Fix it\n# ------------------------ >8 ------------------------\n-hushword\n');
-  const env = { ...process.env };
-  process.env.HOME = h.home;
-  try {
-    assert.deepEqual(messagePrivateLines(file), []);
-    fs.writeFileSync(file, 'Fix it\nhushword\n');
-    assert.deepEqual(messagePrivateLines(file), [{ line: 2, what: 'word' }]);
-  } finally { process.env.HOME = env.HOME; }
+test('0627 AC3 F1: a message with a private word or the home folder\'s path below a scissors line is refused, as git keeps it', () => {
+  const r = hookedRepo();
+  const scissors = '# ------------------------ >8 ------------------------';
+  for (const [rest, what] of [['hushword', 'one of your private words'], [`${r.home}/x`, "your home folder's path"]]) {
+    const c = commitFile(r, 'src/a.txt', 'clean\n', r.dir, `Fix it\n${scissors}\n${rest}`);
+    assert.notEqual(c.status, 0);
+    assert.match(c.stderr, new RegExp(`commit message line 3: ${what}`));
+  }
+  assert.equal(r.commits(), 1);
 });
 
 test('0627 AC3: speck init installs the commit-msg hook beside the pre-commit one, and leaves a hook that isn\'t speck\'s', () => {
