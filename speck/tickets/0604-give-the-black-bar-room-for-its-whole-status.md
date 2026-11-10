@@ -50,7 +50,7 @@ The black bar is a little taller, with a larger speck and room for the whole sta
 - Went with the recommendation: A, cut an unusually wide name short with "…" (chosen by speck, as watch is decide, 2026-11-10 09:08 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The black bar at the top of the panel is a little taller, with a bigger speck and three lines beside it: what speck is doing, such as "Shipping 0599", then the project's name with its branch, then what's queued and how many things need you, in orange. On a phone the status is never cut short, and an ordinary project name of up to 20 characters shows in full. With two or more projects open, the project's name is the switcher: tap it to pick another project or All projects. It always shows the project you're looking at. To see it, open the panel on a phone or in a narrow window. Worth watching: a name made of unusually wide letters can still end in "…", as agreed, and with the switcher showing, tapping the start of the line under the name opens the switcher rather than the Pipeline log.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -67,6 +67,10 @@ Tests changed from the bar's old one-line layout to the new one (AC5):
 - `test/panel-0413.test.mjs`: the project's name is on the project's line (`.bar-where`), which is the one thing after the status button.
 - `test/panel-0140.test.mjs`: the base branch is on the project's line.
 - `test/panel-0454.test.mjs`: a point on the project's line over the status counts as the status, as it passes the press on.
+
+Follow-ups (known limits, no idea notes):
+- With two or more projects running, the project menu is 44 px tall (0417), so it reaches down over the start of the line under it: a press on the left of "2 queued" opens the menu, not the Pipeline log. Pressing the status itself always opens the log.
+- The bar's layout uses CSS subgrid (Chrome 117, Safari 16, Firefox 71 and later).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -231,6 +235,89 @@ Tests changed from the bar's old one-line layout to the new one (AC5):
     ],
     "escalation_question": "May the project name be truncated when its rendered width exceeds the available space, even if it contains 20 characters or fewer, while keeping speck at 56 px and Settings at least 44 px square?",
     "summary": "The revised bar fits the ordinary project names tested, and all reported tests pass. Wider names can still be shortened despite the ticket's explicit 20-character guarantee. Approval now needs an owner decision on that exception."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f27d56766c9edd7edf81172888cbee6a6568e967",
+    "session": "continued",
+    "thread_id": "01a1c4b3-7c8b-7402-92d1-e72a8fd3b21f",
+    "builder_response": "- Tests run: test/panel-0604.test.mjs test/panel-0140.test.mjs test/panel-0413.test.mjs test/panel-0454.test.mjs test/panel-0516.test.mjs test/panel-0580.test.mjs test/panel-0596.test.mjs test/panel-0161.test.mjs test/panel-0427.test.mjs test/panel-0417.test.mjs (226 pass, 0 fail).\n- F1: answered by the owner's decision. The blocked question was settled as option A, \"cut an unusually wide name short with '…'\", recorded in the ticket's Notes (Went with the recommendation, 2026-11-10). So AC3's guarantee covers ordinary 20-character names (letters, digits, hyphens, underscores), which the 320 px browser test checks with seven status/name pairs, and a name too wide for the room, even at 20 characters, ends in \"…\". The browser test now also checks that agreed behaviour: 'WWWWWWWWWWWWWWWWWWWW' with 'Waiting: other tickets' ends in \"…\" on one line, the status stays whole on one line, and nothing scrolls sideways. No code changed this round.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 525261,
+      "cached_input_tokens": 457856,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2414,
+      "reasoning_output_tokens": 225
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4791,
+      "cached": 127488,
+      "write": 0,
+      "output": 565
+    },
+    "cost_usd": 0.0279808,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T09:09:42.336Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-header.css defines three text rows beside a 56 px face. Passing AC1 and browser tests check the layout, status, project/base branch and orange needs-you count."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawProjects, openBridge and closeBridge keep the displayed project selected except while the bridge is open. Passing AC2 tests cover the menu, single-project case and All projects selection."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Judged with the recorded Notes decision allowing unusually wide names to be shortened. The passing 320 px browser test checks ordinary 20-character names, longer names and the wide-character counterexample, while preserving the full status and preventing sideways scrolling."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The final Settings rule retains a 44 px square button in the right-hand grid column. Passing AC4 and browser tests check placement and opening the Pipeline log."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the updated layout tests. The current test output confirms 226 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.css",
+        "issue": "The original 20-character guarantee excluded truncating unusually wide names. The ticket now records a decision permitting that exception, and the browser test exercises it.",
+        "suggested_fix": "No further change required under the recorded decision.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The taller bar shows the status clearly, enlarges speck and puts project switching on the project name. Tests pass, including the agreed exception for unusually wide names. That exception was chosen by speck under watch: decide, as recorded in the ticket. No blocking concerns remain."
   }
 }
 ```
