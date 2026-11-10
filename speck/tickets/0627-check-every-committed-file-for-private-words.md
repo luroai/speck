@@ -44,6 +44,7 @@ speck refuses any commit that adds a private word or the home folder's path, in 
 - Waits for 0626, so the test's names are gone before every file is checked.
 - Relies on git's pre-commit and commit-msg hooks.
 - Failing before this build: none
+- Self-check: added a plain error, with a test, when the commit message file can't be read; kept one `git diff` per staged file, as one diff for all of them can split a file whose type changed into two patches and misname lines.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
