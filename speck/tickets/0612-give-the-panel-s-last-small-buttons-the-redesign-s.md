@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-11-10-give-the-panel-s-last-small-buttons-the-red
 after: ["0611"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:15:35.422Z"
-approved: "2026-11-10T10:46:57.344Z"
+approved: "2026-11-10T10:57:34.286Z"
 
 ---
 # 0612 · Give the panel's last small buttons the redesign's size
@@ -57,12 +57,13 @@ The panel's last small buttons now match the rest: the Save in Settings' "Unsave
 Round 1 (codex): changes requested: F1 The All projects view still has 12 px text inside its project and attention buttons: .bridge-line and .bridge-where.; F2 AC4 explicitly requires the Delivery log to list tests updated from the old behaviour, but that section is empty.
 Round 2 (codex): approve.
 Round 3 (codex, merge round): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3, 1 of them a merge round
+- Review rounds: 4, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 543,184
-- Elapsed since build started: 31 min
+- Reviewer tokens: 731,448
+- Elapsed since build started: 42 min
 - Changed lines: 52 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new look (AC4): `test/panel-0428.test.mjs`, whose 0428 AC1 now expects 10 px corners on every button, with selects, text boxes, tags and the priority menu still 8 px; and `test/panel-0453.test.mjs`, whose AC1 AC3 now expects every button's corners to be 10 px in a real browser, and whose AC2 checks the border of Discard in Settings' unsaved-changes question rather than its Save, which is now filled in the accent with no border to show.
@@ -326,6 +327,93 @@ Round 3 (codex, merge round): approve.
     ],
     "escalation_question": "",
     "summary": "The merged change meets all acceptance criteria and preserves main's tab changes. The larger text passes the existing typography and phone-layout checks. Both earlier findings remain resolved, with no new blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "347fb6059168a907fc83767e2b9bf6f2be5ed3fe",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c506-a7e0-71e1-947f-8d1557ca04cf",
+    "builder_response": "- Merge of main after speck ship hit a conflict. Both conflicting files were classed `logic` by speck merge-check, one conflict each:\n  - test/panel-0428.test.mjs: main (0606) renamed the 'More stats / Details' entry to 'Details' in BUTTONS and in its SECONDARY set, and this branch had removed the SECONDARY set because every button is now 10 px. Resolved: BUTTONS keeps main's 'Details' entry (merged cleanly), and the test keeps this branch's version: every button 10 px, with no SECONDARY set.\n  - test/panel-0453.test.mjs: main (0606) added \"0606: as is Shipped's All figures\" to the log-filter line's comment and dropped More stats from NAMED, and this branch had pointed the unsaved-changes entry at its Discard (.secondary). Resolved: this branch's .secondary entry and main's comment on the log-filter line. Main's removal of More stats from NAMED and from the list of names checked merged cleanly.\n- No code outside tests changed in the merge. 0612's AC3 test still passes on main's new 0606 styles, so 0606 added no button with 8 px corners or 12 px text.\n- Tests run: test/panel-0612.test.mjs test/panel-0428.test.mjs test/panel-0453.test.mjs test/panel-0427.test.mjs test/panel-0417.test.mjs test/panel-0582.test.mjs test/panel-0606.test.mjs, plus every related test `speck test --related` chose. 1438 passed, 0 failed.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 728388,
+      "cached_input_tokens": 632064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3060,
+      "reasoning_output_tokens": 45
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 16989,
+      "cached": 170624,
+      "write": 0,
+      "output": 651
+    },
+    "cost_usd": 0.0575504,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:57:31.593Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-settings.css retains the accent Save styling; panel-cards.css supplies 44 px height. The 0612 AC1 test passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The specified controls retain secondary styling, 10 px corners, 14 px panel typography and at least 44 px height. The 0612 AC2 test passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The 0612 AC3 test checks buttons and their descendants and passes after the merge. Main's new All figures styling uses 14 px text and introduces no prohibited corners."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log lists the updated 0428 and 0453 tests. Both conflict resolutions preserve main's Details and All figures changes alongside this ticket's expectations. The recorded run reports 1438 passed, three skipped and no failures, including the 0606 tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-popups.css",
+        "issue": "The previously missed All projects button text remains corrected to 14 px and covered by the descendant regression check.",
+        "suggested_fix": "Completed.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0612-give-the-panel-s-last-small-buttons-the-redesign-s.md",
+        "issue": "The Delivery log retains both updated tests and explains their changed expectations.",
+        "suggested_fix": "Completed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All acceptance criteria still pass. The test conflict resolutions preserve both the button redesign and main's Shipped-view changes. Both earlier findings remain resolved, with no new blocking issues."
   }
 }
 ```
