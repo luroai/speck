@@ -1,7 +1,7 @@
 ---
 id: "0621"
 title: "Tell speck's 1.0 story in the README"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:42:30.541Z"
+approved: "2026-11-10T10:47:25.801Z"
 
 ---
 # 0621 · Tell speck's 1.0 story in the README
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 1.0 changes what speck is: it works as your engineering manager, which you can name, takes the obvious calls itself and reports them in Decided for you, looks into stops and slow builds, and asks you only when there's no clear answer. The README still tells the 0.x story: "How it works" says speck waits for you at two decisions, "speck asks, then moves on" is its headline behaviour, the watcher is one bullet about `watch: fix`, and the engineering manager is a single sentence tacked onto the first paragraph. Anyone arriving at 1.0 wouldn't learn its main idea, or how to switch it on.
@@ -58,9 +59,14 @@ To see it, open the README on GitHub once this ships. Nothing in the product its
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 98,164
+- Elapsed since build started: 5 min
+- Changed lines: 41 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
