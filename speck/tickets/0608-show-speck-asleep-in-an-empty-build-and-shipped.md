@@ -45,7 +45,7 @@ Every empty lane shows speck asleep with one line saying what lands there.
 - Self-check: no changes (checked a lane emptied, filled and emptied again keeps one set of lines under speck, and the page without the face script still shows the line)
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+All four lanes now look the same when they're empty: speck asleep, with one line saying what's missing and what lands there. An empty Build says "Nothing building · Ready tickets land here." and still shows when the last ticket shipped and its button to Plan underneath. An empty Shipped says "Nothing shipped yet · Approved tickets land here once they ship." To see it, open Build with nothing building, or Shipped in a project that hasn't shipped anything yet.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +59,7 @@ Every empty lane shows speck asleep with one line saying what lands there.
   - test/panel-0449.test.mjs: the `lines()` helper reads speck's line and the lines under it; the 0449 AC1 and AC2 tests expect "Nothing building · Ready tickets land here." where they expected "Nothing building"; 0449 AC4's contrast check measures speck's line and each line under it.
   - test/panel-0162.test.mjs: "0162 AC2: with nothing in flight or ready, Build says "Nothing building"…" expects the lane's class `empty asleep idle` and speck's line; "0162 AC2: at 375/1280 px an empty Build says "Nothing building" at the top of its lane, once" reads speck's line.
   - test/panel.test.mjs and test/panel-0410.test.mjs match "Nothing shipped yet" and "Nothing building" loosely and pass unchanged.
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -135,6 +136,84 @@ Every empty lane shows speck asleep with one line saying what lands there.
     ],
     "escalation_question": "",
     "summary": "Empty Build and Shipped now show sleeping speck consistently with Capture and Plan, and the relevant tests pass. Before approval, the ticket needs the required record of which existing tests were updated."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "be866a5f05b96e8923e3911e69a337b2c74ff005",
+    "session": "continued",
+    "thread_id": "01a1c519-80d0-7852-9b2b-98298b58bb87",
+    "builder_response": "- Tests run: test/panel-0608.test.mjs test/panel-0449.test.mjs test/panel-0162.test.mjs (unchanged since round 1; this round changes only the ticket)\n- F1: fixed. The ticket's Delivery log now lists each test changed from the old behaviour, in test/panel-0449.test.mjs and test/panel-0162.test.mjs, and the two that pass unchanged.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 188756,
+      "cached_input_tokens": 156544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1204,
+      "reasoning_output_tokens": 32
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 2779,
+      "cached": 84864,
+      "write": 0,
+      "output": 515
+    },
+    "cost_usd": 0.0191944,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:56:50.952Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js idleLane() shows sleeping speck and the ready-ticket message, retaining shipment details and Plan navigation underneath. All three 0608 AC1 tests passed; implementation and tests are unchanged since round 1."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.js render() uses asleepLane() for empty Shipped. Both 0608 AC2 tests passed, verifying the face, message and replacement by shipped tickets."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css shares asleep styling across all four lanes. The 0608 AC3 browser test passed, comparing face placement and line styling at 320 px in light and dark looks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log now lists the updated checks in test/panel-0449.test.mjs and test/panel-0162.test.mjs. The recorded test run has 242 passes, three skips and no failures; code and tests are unchanged since that run."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0608-show-speck-asleep-in-an-empty-build-and-shipped.md",
+        "issue": "The Delivery log previously omitted the tests updated from the old behaviour. It now lists the changed test files and checks, satisfying criterion 4.",
+        "suggested_fix": "No further action required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Empty Build and Shipped now show sleeping speck consistently with Capture and Plan. Build retains its shipment details and Plan button. The relevant tests pass, and the required test record is now complete."
   }
 }
 ```
