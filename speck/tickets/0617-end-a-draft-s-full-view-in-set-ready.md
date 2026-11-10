@@ -45,7 +45,7 @@ A draft's full view ends in a bar with Set ready, as an approved ticket's ends i
 - Self-check: a ticket with a ready check error count but no error messages said "Fix the 1 ready check error above first." with nothing listed above; it now says to fix the ready check without pointing at a list, and a test covers it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you open a draft ticket's full view, it now ends in a bar at the bottom of the window with Set ready in the accent colour, just as an approved ticket's view ends in Ship. The ready check list is still near the top, but its button has moved down to the bar. If the draft fails the ready check, the button is greyed out and a short line beside it says why. If the server turns it down, its reason shows there instead. To see it, open any draft from Plan and press Full ticket. Worth a look: a long reason gets cut off on one line, and you can hover over it to read all of it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -136,6 +136,84 @@ A draft's full view ends in a bar with Set ready, as an approved ticket's ends i
     ],
     "escalation_question": "",
     "summary": "The draft’s bottom action bar works as requested, with the readiness list retained and passing tests for disabled states and setting ready. Approval is held only because the required list of updated tests is missing from the Delivery log."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "897ebfb3467e9ce5ff39b527d943467ec59ebc34",
+    "session": "continued",
+    "thread_id": "01a1c682-c6ee-75a3-80fc-4e62b151a72b",
+    "builder_response": "- Tests run: none: only the ticket's Delivery log changed since round 1, so round 1's output (/tmp/speck-0617-tests.txt) still stands for this code.\n- F1: fixed. The Delivery log now lists panel-0061, panel-0062, panel-0063 and panel-0465 and what changed in each.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 276506,
+      "cached_input_tokens": 226176,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1291,
+      "reasoning_output_tokens": 21
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 3370,
+      "cached": 144768,
+      "write": 0,
+      "output": 561
+    },
+    "cost_usd": 0.0268268,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T17:31:25.717Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "fullTicket and readyBar in templates/panel-popups.js retain the bottom Set ready bar and reuse setReadyButton. templates/panel-popups.css supplies sticky bottom positioning and the accent colour. Passing 0617 AC1 tests cover layout rules, posting and transition to the queue."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "readyBar supplies the disabled-state explanation; setReadyButton disables on lint errors. Passing 0617 AC2 tests cover single and multiple errors, missing messages, server refusals and refreshed state. CSS keeps readiness explanations on one line."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "fullTicket retains paneReadiness in the body above readyBar. The passing 0617 AC3 test verifies the readiness lines remain above the bar."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log now lists panel-0061, panel-0062, panel-0063 and panel-0465 with their assertion updates. The unchanged implementation retains round 1's test result: 1619 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0617-end-a-draft-s-full-view-in-set-ready.md",
+        "issue": "The required list of updated tests was missing from the Delivery log.",
+        "suggested_fix": "Add a Delivery log entry naming the four updated test files and describing their changes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The draft’s full view now ends with Set ready, explains why it is disabled, and keeps the readiness list above it. The missing Delivery log entry is fixed. All criteria pass, with no remaining blocking findings."
   }
 }
 ```
