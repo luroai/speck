@@ -60,6 +60,15 @@ function detailsLine(cls, parts) {
   parts.filter(Boolean).forEach((p, i) => { if (i) { line.appendChild(el('span', 'sep', ' ·')); line.appendChild(document.createTextNode(' ')); } line.appendChild(p); });
   return line;
 }
+// 0615: a closed row's details line is cut off with an ellipsis when it doesn't fit, so its whole text is its tooltip,
+// with `more` on a line of its own after it when there is any. A tag in it keeps only its own tip, not the line's too.
+function wholeTip(line, more = null, text = line.textContent) {
+  line.more = more;
+  line.title = [text, more].filter(Boolean).join('\n');
+  const quiet = n => { for (const c of n.children) { if (c.tip !== undefined) c.title = ''; quiet(c); } };
+  quiet(line);
+  return line;
+}
 // Its priority, size and risk, then a bug, fix or task tag, as words in the details line.
 const tagsOf = (t, pick) => [...fieldTags(t, pick), typeTag(t), taskTag(t)];
 // A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
@@ -194,7 +203,7 @@ function ticketItem(t) {
 // waits on or unlocks are in its chip). 0463: only while it's closed; open, its steps and facts are in a track and a
 // table, as an open one in flight's are, and its criteria and lint result in its readiness. Set ready is on the row.
 function ticketHead(t) {
-  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [detailsLine('checks', tagsOf(t, true))], setReadyButton(t, lintErrorsOf(t)));
+  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [wholeTip(detailsLine('checks', tagsOf(t, true)))], setReadyButton(t, lintErrorsOf(t)));
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
   return head;
@@ -496,7 +505,7 @@ function capturedOn(body) {
 function noteItem(i, kind, open, second) {
   const isOpen = open.has(i.path);
   const head = el('div', 'head', null, el('div', 'line', null, titled(el('span', 'title', i.title))), starButton(i),
-    el('div', 'checks', null, el('span', null, second), !isOpen && i.agent === true ? agentTag() : null));
+    wholeTip(el('div', 'checks', null, el('span', null, second), !isOpen && i.agent === true ? agentTag() : null), null, [second, !isOpen && i.agent === true ? 'agent' : null].filter(Boolean).join(' · ')));
   head.addEventListener('click', () => flip(open, i.path));
   return el('div', `item ${kind} row${isOpen ? ' open' : ''}`, null, head, starRefused.has(i.path) ? el('div', 'bad star-refused', starRefused.get(i.path)) : null,
     isOpen ? el('div', 'detail', null, el('div', null, null, el('div', 'path mono', i.path), noteOf(i))) : null);
@@ -564,8 +573,7 @@ function whereLine(t) {
   const waits = !t.inFlight ? list(t.waiting_on).map(String) : [];
   const line = detailsLine(`where ${rowDot(buildGroup(t, d, asked), d)}`, [el('span', 'said', said), waits.length ? el('span', 'after', `after ${waits.join(', ')}`) : null,
     t.counter !== null ? el('span', 'sub', rowTime((t.held_at ?? Date.now()) - t.since)) : null]);
-  if (d && d.sentence !== said) line.title = d.sentence;
-  return line;
+  return wholeTip(line, d && d.sentence !== said ? d.sentence : null);
 }
 const rowDoing = t => (t.inFlight ? doing(t, t.shipping || shippingId === String(t.id), speckCalled()) : null);
 function queueRow(t) {
@@ -1040,10 +1048,11 @@ function putCounter(sub, text) {
   const cell = sub.parentNode && sub.parentNode.className === 'value time' ? sub.parentNode : null;
   setText(sub, cell ? text || '–' : text);
   if (cell) cell.title = sub.textContent;
+  else if (sub.parentNode && sub.parentNode.more !== undefined) wholeTip(sub.parentNode, sub.parentNode.more); // a Build row's minutes
 }
 function queueUpdate(q, t) {
   const sub = rowTimeOf(q);
-  if (sub && t.since !== null) setText(sub, rowTime((t.held_at ?? Date.now()) - t.since));
+  if (sub && t.since !== null) { setText(sub, rowTime((t.held_at ?? Date.now()) - t.since)); wholeTip(sub.parentNode, sub.parentNode.more); }
 }
 // The counters run on their own 1-second timer, apart from the state updates and render(), so they move on between updates.
 // Each tick puts only the counters right, and the timer is cleared once no in-flight ticket in the queue has a started.

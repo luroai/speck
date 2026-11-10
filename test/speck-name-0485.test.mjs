@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, fullViewOf, page as panelHtml } from './support/panel.mjs';
+import { T, fakePage, queueRows, tipSentence, fullViewOf, page as panelHtml } from './support/panel.mjs';
 import { openSettings } from './support/settings.mjs';
 import { settingsWithAgents, YOURS_VIEW, agentsBox } from './support/your-agents.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
@@ -102,7 +102,7 @@ test('0485 AC2: the rows, the full views and the dismiss confirm use the new wor
   assert.ok(row.textContent.includes('speck will answer'), row.textContent);
   const one = await fullViewOf(p, '0001');
   assert.ok(one.textContent.includes(`speck will take its recommendation: ${OPTION}`), one.textContent);
-  const nowCell = [row, ...p.all(row)].find(n => n.title === 'Blocked · speck will take its recommendation');
+  const nowCell = [row, ...p.all(row)].find(n => n.title === 'Blocked · speck will take its recommendation' || tipSentence(n) === 'Blocked · speck will take its recommendation');
   assert.ok(nowCell, 'the sentence is its tooltip');
   const three = await fullViewOf(p, '0003');
   assert.ok(three.textContent.includes(`speck went with the recommendation: ${OPTION} · ${time}`), three.textContent);

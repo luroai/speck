@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, round, fakePage, items, queueRows, shippedRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles, factsOf, fullViewOf } from './support/panel.mjs';
+import { T, full, round, fakePage, items, queueRows, tipSentence, shippedRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles, factsOf, fullViewOf } from './support/panel.mjs';
 
 // ---------- 0434: each closed ticket is two single lines, with a grid of moving lights while an agent works ----------
 
@@ -42,7 +42,7 @@ test('0434 AC1: while its builder or reviewer is at work, the row\'s line names 
   const working = { '0901': 'Writing tests and code', '0902': 'Checking its own work', '0903': 'gpt-6.1-sol is reviewing · round 1', '0904': "Claude is fixing round 1's findings" };
   for (const [id, sentence] of Object.entries(working)) {
     const line = statusOf(card(p, id));
-    assert.equal(line.title, sentence, `${id}: its tooltip`);
+    assert.equal(tipSentence(line), sentence, `${id}: its tooltip`);
     assert.ok(!line.textContent.includes(sentence), `${id}: the sentence itself is not in the line`);
     assert.match(line.className, /\brun\b/, `${id}: its dot`);
   }

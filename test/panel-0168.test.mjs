@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, exitOf, round, page, styles, fullViewOf } from './support/panel.mjs';
+import { T, fakePage, queueRows, tipSentence, exitOf, round, page, styles, fullViewOf } from './support/panel.mjs';
 
 // ---------- 0168: the builder badge on each in-flight ticket's Build card ----------
 // 0416: the badge has gone, so only the words beside it are checked here: test/panel-0416.test.mjs checks no card has a picture.
@@ -52,7 +52,7 @@ test('0168 AC1: each in-flight ticket\'s full view has the sentence and the stag
     const top = topOf(rowOf(p, id)), lines = top.children.filter(n => classes(n)[0] === 'where');
     assert.equal(lines.length, 1, `${id}: one line saying where it is`);
     assert.ok(top.children.indexOf(lines[0]) > top.children.findIndex(n => n.className === 'line'), `${id}: under the title`);
-    if (lines[0].title) assert.equal(lines[0].title, sentence, `${id}: the sentence is its tooltip`);
+    if (tipSentence(lines[0])) assert.equal(tipSentence(lines[0]), sentence, `${id}: the sentence is its tooltip`);
     else assert.ok(lines[0].textContent.startsWith(sentence), `${id}: the line is the sentence`);
     const view = await fullViewOf(p, id), live = p.all(view).find(n => n.className === 'live-now');
     const shown = live.children.filter(n => n.className && n.className !== 'sep').map(n => [n.className.split(' ')[0], n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);

@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, round, page, styles } from './support/panel.mjs';
+import { T, fakePage, queueRows, tipSentence, round, page, styles } from './support/panel.mjs';
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 const approved = o => ({ started: ago(900), approved: ago(60), self_check: 'no changes', rounds: [round(1, 10)], ...o });
@@ -60,7 +60,7 @@ test('0416 AC2: each row says its stage in the same words, with its stage under 
   for (const [t, words, sentence, dot] of CARDS) {
     const row = rowOf(p, t.id), top = topOf(row), where = whereOf(p, row);
     assert.ok(where.textContent.startsWith(words), `${t.id}: "${where.textContent}"`);
-    assert.equal(where.title, sentence, `${t.id}: its sentence in full`);
+    assert.equal(tipSentence(where), sentence ?? '', `${t.id}: its sentence in full`);
     assert.ok(top.children.indexOf(where) > top.children.findIndex(n => n.className === 'line'), `${t.id}: under its title`);
     assert.deepEqual(classes(where), ['where', dot], `${t.id}: its dot`);
     assert.deepEqual(classes(row), ['q', 'row'], `${t.id}: a row is not coloured by its stage`);

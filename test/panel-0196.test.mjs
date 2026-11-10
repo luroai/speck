@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, round, panelModel, fullViewOf } from './support/panel.mjs';
+import { T, fakePage, queueRows, tipSentence, round, panelModel, fullViewOf } from './support/panel.mjs';
 
 // ---------- 0196: show an auto-shipping ticket as shipping from approval until it ships ----------
 
@@ -30,7 +30,7 @@ async function shows(p, id) {
   const row = rowOf(p, id), where = p.all(row).find(n => /^where\b/.test(n.className));
   const kids = p.byId('queue').children;
   const head = kids.slice(0, kids.indexOf(row)).filter(n => n.tagName === 'h3').pop();
-  const say = where.title || p.all(where).find(n => n.className === 'said').textContent;
+  const say = tipSentence(where) || p.all(where).find(n => n.className === 'said').textContent;
   const full = await fullViewOf(p, id);
   return { say, group: head.children[0].textContent, dot: classes(where)[1],
     acts: p.all(full).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent) };

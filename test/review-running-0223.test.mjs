@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { T, fakePage, queueRows, round, fullViewOf } from './support/panel.mjs';
+import { T, fakePage, queueRows, tipSentence, round, fullViewOf } from './support/panel.mjs';
 import { CLI, commandRepo, reviewRepo, changesVerdict, approveVerdict, skillText } from './support/speck.mjs';
 import { statusData } from '../scripts/speck.mjs';
 
@@ -23,7 +23,7 @@ function fake(tickets) {
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const find = (p, row, re) => p.all(row).filter(n => re.test(n.className || ''));
 // 0585: the sentence is the tooltip of the row's line saying where it is, and also what the full view says
-const say = (p, id) => find(p, rowOf(p, id), /^where\b/)[0].title;
+const say = (p, id) => tipSentence(find(p, rowOf(p, id), /^where\b/)[0]);
 const stage = async (p, id) => find(p, await fullViewOf(p, id), /^stage\b/)[0]?.textContent;
 
 test('0223 AC1: while a round is running, its row names the round being run: 1 for the first, otherwise the last recorded plus one', async () => {

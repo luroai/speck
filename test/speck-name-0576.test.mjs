@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fakePage, T, click, gitEnv, ROOT, fullViewOf, startPanel, stop, freePort, request, CLI } from './support/panel.mjs';
+import { fakePage, T, tipSentence, click, gitEnv, ROOT, fullViewOf, startPanel, stop, freePort, request, CLI } from './support/panel.mjs';
 import { OPTION, blockedRepo } from './support/blocked.mjs';
 import { loadConfig, statusData } from '../scripts/speck.mjs';
 import { speckSays } from '../scripts/core.mjs';
@@ -109,7 +109,7 @@ test('0576 AC2: a blocked ticket says the name when it will take the recommendat
   const p = fakePage([state(view({ name: 'Virgil', agent: undefined, tickets: [] }), [BLOCKED('0001', { foreman_will: true })])]);
   await p.settle();
   assert.match(whereOf(p, '0001').textContent, /^Virgil will answer/);
-  assert.equal(whereOf(p, '0001').title, 'Blocked · Virgil will take its recommendation');
+  assert.equal(tipSentence(whereOf(p, '0001')), 'Blocked · Virgil will take its recommendation');
   assert.doesNotMatch(rowOf(p, '0001').textContent, /speck will/);
   const full = await fullViewOf(p, '0001'); // 0585: and its full view says what it will take
   assert.ok(full.textContent.includes(`Virgil will take its recommendation: ${OPTION}`), full.textContent);

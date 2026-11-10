@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, fullViewOf, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
+import { T, fakePage, queueRows, tipSentence, fullViewOf, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 // ---------- 0156: a running build's progress shown with the speck going round an ensō ----------
 // Since 0168 the builder badge stood in for the ensō and the stage dots (test/panel-0168.test.mjs); the sentence and the
@@ -101,7 +101,7 @@ test('0156 AC3: one plain sentence says what is happening, in its full view, in 
     assert.equal(say[0].textContent, text, id);
     assert.equal(say[0].className, tone ? `say ${tone}` : 'say', `${id}: its colour`);
     const where = find(p, rowOf(p, id), /^where\b/)[0]; // 0585: and its row says it in short words, the sentence as its tooltip when they differ
-    assert.ok(where.title === text || sentenceIn(find(p, where, /^said$/)[0]) === text, `${id}: its row says it too`);
+    assert.ok(tipSentence(where) === text || sentenceIn(find(p, where, /^said$/)[0]) === text, `${id}: its row says it too`);
   }
   const css = styles();
   assert.match(css, /\.live-now \.say\.bad \{ color: var\(--bad\); \}/);

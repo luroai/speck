@@ -41,6 +41,9 @@ A cut-off details line shows its whole text in its tooltip, in every lane.
 - From 0599's build: a Build row's line has a tooltip only when its sentence differs from what it says. Today: `queuedLine`, `titleLine` in `templates/panel.js`. Waits for 0614.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- A Build row's tooltip is its whole line, then, on a line of its own, its sentence when that says more than the line (as before 0615, when the sentence was the whole tooltip). A tag in a details line keeps only its own tip, so hovering it doesn't show the line's tooltip as well.
+- Self-check: a Build row's tooltip now follows its minutes as the clock moves them (test added); tags in the line no longer show the line's tooltip on top of their own tip.
+- Pictures: none, because nothing on the page looks different; the change is only hover tooltips, which a screenshot doesn't show.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

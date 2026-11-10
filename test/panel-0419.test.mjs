@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, items, queueRows, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, fullViewOf, factsOf } from './support/panel.mjs';
+import { T, full, fakePage, items, queueRows, tipSentence, click, exitOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, fullViewOf, factsOf } from './support/panel.mjs';
 import { chipSaid } from './support/dep-chip.mjs';
 
 // ---------- 0419: a closed Plan or Build ticket is a title line and one line of details ----------
@@ -54,7 +54,7 @@ test('0419 AC2: a Build row is its id and title, then its stage and timer; a rea
   assert.deepEqual(linesOf(b), ['line', 'where run']);
   assert.equal(topOf(b).children[0].textContent, '0501Writing its code', 'its id and title');
   assert.equal(detailsOf(b).textContent, 'Writing · 19 min');
-  assert.equal(detailsOf(b).title, 'Writing tests and code');
+  assert.equal(tipSentence(detailsOf(b)), 'Writing tests and code');
   const q = card(p, '0502');
   assert.deepEqual(linesOf(q), ['line', 'where wait']);
   assert.equal(detailsOf(q).textContent, 'Ready · after 0501, 0503');
