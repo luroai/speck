@@ -71,6 +71,7 @@ Round 2 (codex): approve.
 - Tests changed from the old behaviour (a stopped build's grey dot, now orange as it needs you):
   - `test/panel-0155.test.mjs`: "0155 AC2: at … px in the … look, each row's dot is coloured by its state" (0305 now `needs`)
   - `test/panel-0171.test.mjs`: "0171 AC3: blocked, stopped and waiting tickets have no blue dot" (0508 now `needs`)
+  - `test/panel-0167.test.mjs`: "0167 AC2 AC5: in the light look, only a ticket's dot is coloured, and a Build row has only a hairline under it and no tint" and its dark-look twin (0304 now `--needs-you`), found when the ship ran the whole suite merged with main
   - `test/panel-0416.test.mjs`: "0416 AC2: each row says its stage in the same words, with its stage under its title and a dot for what it needs" (0907 now `needs`)
 - Follow-ups:
   - The bridge (All projects) doesn't count a stopped build under Needs you yet, so it can disagree with a project's bar: speck/ideas/2026-11-10-count-stopped-builds-on-the-bridge.md.
