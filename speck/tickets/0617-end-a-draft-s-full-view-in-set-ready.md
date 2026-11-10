@@ -1,7 +1,7 @@
 ---
 id: "0617"
 title: "End a draft's full view in Set ready"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-09-end-a-draft-s-full-view-in-set-ready.md"   
 after: ["0613","0616"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T17:23:49.145Z"
+approved: "2026-11-10T17:31:32.450Z"
 
 ---
 # 0617 · End a draft's full view in Set ready
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 An approved ticket's full view ends in a bar with Ask for changes and Ship, the action it's waiting for. A draft's ends with nothing to do: its Set ready sits at the top with its readiness list, so someone who reads to the end finds no action there.
@@ -51,9 +52,15 @@ When you open a draft ticket's full view, it now ends in a bar at the bottom of 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC4 explicitly requires the Delivery log to list the tests changed for the new behaviour, but that section is empty.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 277,797
+- Elapsed since build started: 8 min
+- Changed lines: 48 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new behaviour (AC4):
   - `test/panel-0061.test.mjs`: its section helper finds the view's body as its third part, not its last, as a draft's view now ends in the bar.
