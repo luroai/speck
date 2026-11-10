@@ -41,6 +41,7 @@ Every empty lane shows speck asleep with one line saying what lands there.
 - Decided: Build keeps its last-shipped line and its Go to Plan button, under speck.
 - Today: the empty states are built in `render()` in `templates/panel.js`. Waits for 0606, which changes the Shipped part of the same function.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
