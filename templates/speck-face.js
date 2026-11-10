@@ -11,7 +11,7 @@
   const VISORS = {
     watching: { x1: -5, y1: -25, cx: 0, cy: -25, x2: 5, y2: -25, stroke: 5, opacity: 1 },
     focused: { x1: -3, y1: -22, cx: 0, cy: -22, x2: 3, y2: -22, stroke: 4, opacity: 1 },
-    pleased: { x1: -6, y1: -27, cx: 0, cy: -20, x2: 6, y2: -27, stroke: 4, opacity: 1 },
+    pleased: { x1: -6, y1: -23, cx: 0, cy: -31, x2: 6, y2: -23, stroke: 4, opacity: 1 }, // 0605: a closed eye arched upwards, like ^
     sheepish: { x1: -3, y1: -19, cx: 0, cy: -20.1, x2: 3, y2: -21.2, stroke: 4, opacity: 1 },
     asking: { x1: 0, y1: -16.5, cx: 0, cy: -16.5, x2: 0.01, y2: -16.5, stroke: 4.6, opacity: 1 }, // the dot of the question mark
     asleep: { x1: -9, y1: -20, cx: -5, cy: -20, x2: -1, y2: -20, stroke: 2.2, opacity: 0.5 },

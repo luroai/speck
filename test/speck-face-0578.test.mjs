@@ -126,7 +126,7 @@ test('0578 AC2: each mood\'s visor has the shape the ticket gives', () => {
   assert.equal(w.y1, w.y2, 'watching is level');
   assert.ok(f.long < w.long, 'focused is narrower');
   assert.ok(f.y > w.y, 'focused is lower');
-  assert.ok(p.cy > p.y1 && p.cy > p.y2, 'pleased curves up at its ends, into a smile');
+  assert.ok(p.cy < p.y1 && p.cy < p.y2, 'pleased arches upwards in the middle, like a closed eye (0605)');
   assert.ok(s.long < w.long, 'sheepish is shorter');
   assert.ok(s.y > w.y, 'sheepish is lower');
   assert.notEqual(s.y1, s.y2, 'sheepish is tilted');
