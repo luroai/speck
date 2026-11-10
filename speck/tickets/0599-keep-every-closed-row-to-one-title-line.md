@@ -1,7 +1,7 @@
 ---
 id: "0599"
 title: "Keep every closed row to one title line"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T07:42:07.828Z"
+approved: "2026-11-10T07:54:03.017Z"
 
 ---
 # 0599 · Keep every closed row to one title line
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since the redesign's compact rows (0585 to 0587), a closed row's title wraps, so rows in the same lane are one or two lines tall depending on how long their titles are. The lanes look uneven, and the user wants every collapsed ticket to look the same.
@@ -55,9 +56,15 @@ To see it, open the panel on a phone or in a narrow window and look at any lane 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC5 explicitly requires the Delivery log to list the updated wrapping tests.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 219,333
+- Elapsed since build started: 12 min
+- Changed lines: 20 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Tests changed from checking a closed row's title wrapping to checking it's cut off on one line (AC5):
 - test/panel-0585.test.mjs: 0585 AC4 (Build row at 320 px)
@@ -73,7 +80,6 @@ Tests changed from checking a closed row's title wrapping to checking it's cut o
 
 Follow-ups:
 - A cut-off details line in Build or Plan has no tooltip with its whole text (inbox: speck/ideas/2026-11-10-show-a-cut-off-details-line-whole-in-its-tooltip.md).
-
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
