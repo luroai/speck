@@ -46,7 +46,9 @@ All projects is an entry in the project menu's list, not a separate button.
 - Pictures: none, because the change is only the order of the entries in the browser's own drop-down list, which headless Chromium doesn't draw in a screenshot; the bar itself looks exactly as before.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+With two or more projects' panels running, All projects is now the first entry in the project menu on the black bar, with your projects listed under it. It used to be at the bottom of that list. Nothing else changes: choosing it still opens the view of every project, and the menu still shows the project you're looking at.
+
+To see it, start a second project's panel, then open the menu on the project's name in the bar. With only one panel running, there's no menu and no All projects, as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -133,6 +135,84 @@ All projects is an entry in the project menu's list, not a separate button.
     ],
     "escalation_question": "",
     "summary": "The menu change works and its behaviour is covered by passing tests. Approval is held only because the required list of updated tests is missing from the Delivery log."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "914497bd3e342692ebac9c6c7c1629aa6271ee00",
+    "session": "continued",
+    "thread_id": "01a1c50b-c7de-7242-b03d-bd688280f992",
+    "builder_response": "- Tests run: test/panel-0610.test.mjs test/panel-0604.test.mjs test/panel-0580.test.mjs test/panel-0596.test.mjs test/panel-0516.test.mjs (with the repo's checks).\n- F1: fixed. The ticket's Delivery log now lists the tests changed for the new order (panel-0604, panel-0580) and, separately, the comment-only updates (panel-0596, panel-0516).\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 208262,
+      "cached_input_tokens": 161792,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1421,
+      "reasoning_output_tokens": 20
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 2888,
+      "cached": 88192,
+      "write": 0,
+      "output": 607
+    },
+    "cost_usd": 0.0206652,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:42:06.079Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-header.js drawProjects() puts All projects first when at least two panels run. The three passing AC1 tests in test/panel-0610.test.mjs check ordering, opening the bridge, absence of a separate button and the stopped-project case."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawProjects() adds All projects only when list.length >= 2. The passing 0610 AC2 test checks single-panel and missing-project-data cases."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "drawProjects() selects the shown project unless bridgeOpen is true. The passing 0610 AC3 test checks selection before opening the bridge, while open and after Escape."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-0604 and panel-0580 assert the new order, and the ticket's Delivery log now names both, separately identifying comment-only updates. The latest test output reports 178 passes, three skips and zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0610-put-all-projects-in-the-project-menu-s-list.md",
+        "issue": "The Delivery log previously omitted the tests changed for the new behaviour.",
+        "suggested_fix": "Completed: the Delivery log now lists the changed assertions and distinguishes comment-only updates.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All projects now appears first in the project menu, opens the bridge and preserves the correct selection. The tests pass, the required Delivery log is complete, and no blocking concerns remain."
   }
 }
 ```
