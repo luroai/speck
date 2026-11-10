@@ -1,7 +1,7 @@
 ---
 id: "0623"
 title: "Carry a build on by itself once the reviewer's usage limit resets"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-10
 ---
 # 0623 · Carry a build on by itself once the reviewer's usage limit resets
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When the reviewer's usage limit is reached, such as Codex's, a review round fails, and the build stops or blocks with nothing to carry it on once the limit resets. Earlier builds blocked on "wait for Codex after 3:41 AM", which you then had to answer by hand.
