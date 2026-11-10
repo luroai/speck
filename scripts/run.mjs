@@ -226,7 +226,7 @@ function runOn(worker) {
       try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
       const pid = rec.pid, valid = Number.isInteger(pid) && pid > 0 && pid !== process.pid, ran = carried.includes(id);
-      if (!(valid && (ran || pidAlive(pid)))) { if (!killedInHand(id)) recordExit(id, file, null); continue; }
+      if (!(valid && (ran || pidAlive(pid)))) { stopPanelsOfRun(id, file); if (!killedInHand(id)) recordExit(id, file, null); continue; } // 0619
       adopt(id, file, rec, ran ? 'carries on through the switch' : 'is already being built');
     }
   };

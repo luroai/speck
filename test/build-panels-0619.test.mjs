@@ -7,7 +7,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { panelsDir, buildPanelsDir, runningPanels } from '../scripts/panel-projects.mjs';
 import { stopBuildPanels } from '../scripts/build-panels.mjs';
-import { ROOT, runRepo, startRun, stopRun, waitFor, alive, killAll, ownSession } from './support/run.mjs';
+import { ROOT, runRepo, startRun, stopRun, waitFor, alive, killAll, ownSession, leftRunning } from './support/run.mjs';
 import { keptFile } from './support/copy.mjs';
 import { panelLike, recordIn, until } from './support/build-panels.mjs';
 
@@ -86,6 +86,25 @@ fs.writeFileSync(path.join(process.env.SPECK_BUILD_PANELS_DIR, 'panel-0619.pid')
     assert.match(run.out(), /0001: stopped the panel its build left running at http:\/\/127\.0\.0\.1:41922\//);
     assert.ok(alive(user.pid), 'your own panel is still running');
   } finally { await stopRun(run); killAll([user.pid, ...(panel ? [panel] : [])]); }
+});
+
+test('0619 AC3: a build that ended while speck run was off has its panel stopped when speck run starts again', async () => {
+  const s = ownSession('ac3-off');
+  const r = runRepo();
+  const build = leftRunning(r.dir, '0001', { session: s }); // an earlier speck run's build
+  const panel = panelLike(inBuild(s), 41941), other = panelLike(inBuild(ownSession('ac3-on')), 41942);
+  const user = panelLike({ ...process.env }, 41943);
+  let run = null;
+  try {
+    await waitFor(() => [`${s}/41941.json`, `${ownSession('ac3-on')}/41942.json`].every(f => fs.existsSync(path.join(buildRoot(), f))) && fs.existsSync(path.join(userDir(), '41943.json')), 'the panels\' records');
+    killAll([build.pid]); // the build ends while speck run is off
+    await waitFor(() => !alive(build.pid), 'the build to end');
+    run = startRun(r.dir);
+    await waitFor(() => !alive(panel.pid), 'speck run to stop the ended build\'s panel', run.out);
+    assert.match(run.out(), /0001: stopped the panel its build left running at http:\/\/127\.0\.0\.1:41941\//);
+    assert.ok(alive(other.pid), 'another build\'s panel is still running');
+    assert.ok(alive(user.pid), 'your own panel is still running');
+  } finally { if (run) await stopRun(run); killAll([build.pid, panel.pid, other.pid, user.pid]); }
 });
 
 test('0619 AC4: a panel you started is never stopped by a build\'s clean-up, even with its record in the build\'s folder', async () => {
