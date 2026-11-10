@@ -1,7 +1,7 @@
 ---
 id: "0624"
 title: "Show a ticket's facts as tiles"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0617"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T22:59:55.843Z"
+approved: "2026-11-10T23:08:03.152Z"
 
 ---
 # 0624 · Show a ticket's facts as tiles
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Shipped's figures are now even grey tiles that are easy to scan (0606). A ticket's full view still lists its facts (priority, size, risk, whether it ships by itself, builder, reviewer, costs and tokens) as loose labels and values, so the two views look like different designs and the facts are harder to read.
@@ -52,9 +53,14 @@ A ticket's full view now shows its facts (priority, size, risk, builder, reviewe
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 102,577
+- Elapsed since build started: 8 min
+- Changed lines: 17 (limit 5000)
 Tests changed from the old facts layout to the tiles: test/panel-0583.test.mjs (0583 AC3: its facts are tiles) and test/panel-0465.test.mjs (0465 AC4: tiles two or three to a row, the last taking what's left).
 
 ## Review rounds
