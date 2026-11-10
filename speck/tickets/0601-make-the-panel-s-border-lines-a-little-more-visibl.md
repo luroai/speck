@@ -46,7 +46,11 @@ The panel's border lines are a little more visible, alike on every screen, in bo
 - Self-check: no changes. Borders that start in a line colour and are recoloured on hover or when picked (tags, priority buttons, Close) take the new 1 px with them. The disabled Set ready and Save all buttons keep their half-pixel outline, as it is the enabled button's own width only recoloured, so the button doesn't change size when it is disabled.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The thin lines in the panel, between rows, round boxes and under headings, are now a shade darker and a full pixel wide, so they're easier to see, in both the light and the dark look. On an ordinary screen they used to look fainter than on a sharp one; now they look the same on both. The lines between the figures at the top of the Shipped lane changed the same way. Nothing else changed colour, and rows keep their spacing.
+
+To see it, open the panel and look at the rows in any lane, or at Settings; switch between the light and dark look in Settings to compare.
+
+Worth knowing: a greyed-out Set ready or Save all button keeps its finer outline, so it stays the same size as when it's enabled. Small outlined parts, such as tags, are now half a pixel bigger on each side.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,6 +66,10 @@ Tests changed to the new line colours or widths:
 - `test/mockup-0126.test.mjs` (0126 AC2), `test/panel-0134.test.mjs` (0134), `test/panel-0136.test.mjs` (0136) and `test/panel-0147.test.mjs` (0147 AC1): the new light and dark line colours.
 - `test/panel-0426.test.mjs` (0426 AC2) and `test/panel-0577.test.mjs` (0577 AC1): `--line` no longer equals the design's `--border`, which stays as it was; they now check the new colours.
 - `test/panel-0160.test.mjs` (the sticky header's bottom line) and `test/panel-0600.test.mjs` (0600 AC1, the rows' hairline): 1 px instead of half a pixel.
+
+Follow-ups (Delivery log only, no inbox note):
+- Known limit: the disabled Set ready and Save all buttons still draw a half-pixel outline in the line colour, as they only recolour the enabled button's outline. Making them 1 px would need the enabled buttons to change too.
+- Tidy-up: `docs/design/lcd/panel-mock.html`, the old LCD design mock, still has the half-pixel lines; it isn't the panel and was left alone.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +146,84 @@ Tests changed to the new line colours or widths:
     ],
     "escalation_question": "",
     "summary": "The requested darker colours and most thicker lines are implemented, and the reported tests pass. One divider was missed: the lines between statistics tiles remain half a pixel wide. Fix that divider and add coverage before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5d085f5910d4fd8e44c898c476e3e9fe2fb42803",
+    "session": "continued",
+    "thread_id": "01a1c49c-6d0c-7823-81f9-26a244b5fcdd",
+    "builder_response": "- Tests run: test/panel-0601.test.mjs test/panel-0134.test.mjs test/panel-0136.test.mjs test/panel-0147.test.mjs test/mockup-0126.test.mjs test/panel-0160.test.mjs test/panel-0577.test.mjs test/panel-0600.test.mjs test/panel-0426.test.mjs test/panel-0157.test.mjs test/panel-0161.test.mjs test/panel-0420.test.mjs test/panel-0428.test.mjs test/panel-0162.test.mjs test/panel-0427.test.mjs test/panel-0453.test.mjs (this ticket's own file, the existing test files it changed, and the test files about the Shipped lane's stats tiles).\n- F1: fixed. `.stats` in templates/panel-cards.css now has `gap: 1px` over its `var(--line)` background. The 0601 AC2 test now also finds every rule with a line-coloured background and fails on any `gap`, `row-gap` or `column-gap` under 1 px, and checks `.stats` directly; with the old `.5px` gap put back it fails. A search of all five stylesheets found no other line-coloured background, box-shadow or pseudo-element divider.\n- Pictures retaken, adding the Shipped lane with its stats in both looks.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 290941,
+      "cached_input_tokens": 225152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1150,
+      "reasoning_output_tokens": 10
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4444,
+      "cached": 124672,
+      "write": 0,
+      "output": 533
+    },
+    "cost_usd": 0.0266852,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T08:41:45.963Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-base.css defines --line and --line-soft as #D9DCE1 in light and #383B41 in dark. Passing test 0601 AC1 checks both tokens in both looks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The five panel stylesheets use 1px for the formerly half-pixel line borders. templates/panel-cards.css .stats now also uses gap: 1px. Passing test 0601 AC2 checks border widths and background-drawn statistics dividers. Disabled button outlines retain their widths as specified in the ticket's Notes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The CSS diff preserves other colour tokens, fills, padding and spacing declarations. Passing test 0601 AC3 checks representative bar and text colours, unchanged button outlines and row padding."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Existing colour and width tests are updated and listed in the ticket's Delivery log. The current test output reports 257 passes, zero failures and three skips; the previous broader run also had zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css:182",
+        "issue": "The statistics tiles previously retained half-pixel dividers through their grid gap.",
+        "suggested_fix": "Use a 1px statistics grid gap and cover the background-drawn divider in the AC2 test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel's lines are slightly darker and thicker in both looks, including the previously missed statistics dividers. Other styling remains unchanged. The relevant tests pass, and no blocking concerns remain."
   }
 }
 ```
