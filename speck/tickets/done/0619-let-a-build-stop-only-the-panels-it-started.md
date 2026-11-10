@@ -1,7 +1,7 @@
 ---
 id: "0619"
 title: "Let a build stop only the panels it started"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T09:57:14.735Z"
 approved: "2026-11-10T10:13:45.227Z"
+finished: "2026-11-10T10:32:39.080Z"
 
 ---
 # 0619 · Let a build stop only the panels it started
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On 2026-11-09, while clearing up after a screenshot script that hung, 0583's build stopped every speck panel on the machine. The user's speck panel restarted itself, but their Alpha panel didn't, and the project menu disappeared. The same evening 0565's build left a demo panel running in the user's project menu after it ended. Builds should touch only the panels they start.
