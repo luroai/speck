@@ -1,7 +1,7 @@
 ---
 id: "0610"
 title: "Put All projects in the project menu's list"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-09-put-all-projects-in-the-project-menu-s-list
 after: ["0609"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:37:22.396Z"
+approved: "2026-11-10T10:42:12.836Z"
 
 ---
 # 0610 · Put All projects in the project menu's list
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 With two or more projects running, All projects is a button beside the project menu's caret in the black bar, taking room from the status on a phone, where the menu's own list is where it belongs.
@@ -54,9 +55,15 @@ To see it, start a second project's panel, then open the menu on the project's n
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Criterion 4 explicitly requires the Delivery log to list the tests changed for the new behaviour, but that section is empty.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 209,683
+- Elapsed since build started: 5 min
+- Changed lines: 8 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed for the new behaviour: `test/panel-0604.test.mjs` (0604 AC2, the menu's entries now start with All projects) and `test/panel-0580.test.mjs` (0580 AC3, the same order). Comments only, saying All projects is the first entry: `test/panel-0596.test.mjs` and `test/panel-0516.test.mjs`.
 
