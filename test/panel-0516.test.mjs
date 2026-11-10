@@ -13,7 +13,8 @@ import { runningPanels, registerPanel, panelProjects } from '../scripts/panel-pr
 
 const projects = (self, ...list) => ({ self, list: list.map(([port, name]) => ({ port, name })) });
 const board = extra => ({ tickets: [T('0001', 'ready')], ideas: [], ...extra });
-const optionsOf = p => p.byId('project').children.map(o => ({ value: o.value, text: o.textContent, selected: o.selected, disabled: !!o.disabled }));
+// 0604: the projects in the menu, less its last choice, All projects, which panel-0604's tests check
+const optionsOf = p => p.byId('project').children.filter(o => o.value !== 'all').map(o => ({ value: o.value, text: o.textContent, selected: o.selected, disabled: !!o.disabled }));
 const until = async (check, ms = 10000) => { for (const end = Date.now() + ms; Date.now() < end; await new Promise(r => setTimeout(r, 100))) if (await check()) return true; return false; };
 const deadPid = () => { const c = spawn(process.execPath, ['-e', '']); return new Promise(r => c.on('exit', () => r(c.pid))); };
 

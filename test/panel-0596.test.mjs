@@ -17,13 +17,15 @@ const two = { self: 4777, projects: [
     needs: [{ id: '0007', title: 'Pick a colour', why: 'question', detail: 'Blue or green?\nMore words.' }, { id: '0009', title: 'Risky move', why: 'high_risk', detail: '' }] }),
 ] };
 const nodes = (n, out = []) => { out.push(n); for (const c of n.children || []) nodes(c, out); return out; };
-const opener = p => p.byId('bezel').children.find(c => c.className === 'bridge-open');
+// 0604: All projects is the project menu's last choice, and choosing it opens the bridge
+const opener = p => p.byId('project').children.find(o => o.value === 'all');
+const openAll = p => { p.byId('project').value = 'all'; p.byId('project').listeners.change(); };
 const within = (p, cls) => nodes(p.byId('bridge')).filter(n => String(n.className || '').split(' ').includes(cls));
 // The page with the bridge open; `then` are the answers to its next requests.
 const opened = async (body = two, globals, st = board(list()), then = []) => {
   const p = fakePage([st, body, ...then], globals);
   await p.settle();
-  opener(p).listeners.click({ stopPropagation() {} });
+  openAll(p);
   await p.settle();
   return p;
 };
@@ -66,12 +68,12 @@ test('0596 AC2: build times are capped at each project\'s latest 20', () => {
 test('0596 AC1: with two or more panels running the bar offers All projects, and with one it does not', async () => {
   const p = fakePage([board(list())]);
   await p.settle();
-  assert.equal(opener(p).hidden, false);
+  assert.equal(p.byId('project-pick').hidden, false);
   assert.equal(opener(p).textContent, 'All projects');
-  assert.equal(opener(p).tagName, 'button');
+  assert.equal(opener(p).tagName, 'option');
   const one = fakePage([board(null)]);
   await one.settle();
-  assert.equal(opener(one).hidden, true);
+  assert.equal(opener(one), undefined);
   assert.match(page(), /id="bridge"[^>]*hidden/, 'the bridge starts closed');
 });
 
@@ -82,9 +84,9 @@ test('0596 AC1: while the project shown has stopped, it is offered only with two
   const p = fakePage([board(list())], { EventSource: Source });
   await p.settle();
   sources[0].on.gone({ data: JSON.stringify(gone(['alpha'])) });
-  assert.equal(opener(p).hidden, true, 'one left');
+  assert.equal(opener(p), undefined, 'one left');
   sources[0].on.gone({ data: JSON.stringify(gone(['alpha', 'site'])) });
-  assert.equal(opener(p).hidden, false, 'two left');
+  assert.ok(opener(p), 'two left');
 });
 
 test('0596 AC1: All projects opens the bridge from this address\'s summary, and Back and Escape close it', async () => {
@@ -95,7 +97,7 @@ test('0596 AC1: All projects opens the bridge from this address\'s summary, and 
   assert.equal(call.opts.method, 'POST');
   press(within(p, 'back')[0]);
   assert.equal(p.byId('bridge').hidden, true, 'the back link closes it');
-  opener(p).listeners.click({ stopPropagation() {} });
+  openAll(p);
   p.key('Escape');
   assert.equal(p.byId('bridge').hidden, true, 'and so does Escape');
 });
@@ -229,7 +231,7 @@ test('0596 AC3: a switch that fails closes the bridge so its message shows, and 
   const s = storage(), answers = [board(list()), two, { status: 404, body: { error: 'Gone.' } }];
   const p = fakePage(answers, { sessionStorage: s });
   await p.settle();
-  opener(p).listeners.click({ stopPropagation() {} });
+  openAll(p);
   await p.settle();
   press(within(p, 'bridge-card')[0]);
   await p.settle();
@@ -285,7 +287,7 @@ test('0596: a failed read says so, and the last figures stay', async () => {
   const answers = [board(list()), { status: 403, body: { error: 'Forbidden.' } }];
   const p = fakePage(answers);
   await p.settle();
-  opener(p).listeners.click({ stopPropagation() {} });
+  openAll(p);
   await p.settle();
   assert.match(within(p, 'bridge-error')[0].textContent, /Forbidden\./);
 });
@@ -311,8 +313,8 @@ test('0596: the page behind is held while the bridge is open, and let go before 
   p.document.querySelectorAll = () => behind;
   await p.settle();
   let inertAtFocus = null;
-  opener(p).focus = () => { inertAtFocus = behind[0].inert; };
-  opener(p).listeners.click({ stopPropagation() {} });
+  p.byId('project').focus = () => { inertAtFocus = behind[0].inert; };
+  openAll(p);
   await p.settle();
   assert.equal(classes.has('held'), true, 'held as it opens');
   assert.deepEqual(behind.map(n => n.inert), [true, true]);
