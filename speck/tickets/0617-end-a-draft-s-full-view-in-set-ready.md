@@ -1,7 +1,7 @@
 ---
 id: "0617"
 title: "End a draft's full view in Set ready"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-09-end-a-draft-s-full-view-in-set-ready.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0613","0616"]                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T17:23:49.145Z"
 
 ---
 # 0617 · End a draft's full view in Set ready
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 An approved ticket's full view ends in a bar with Ask for changes and Ship, the action it's waiting for. A draft's ends with nothing to do: its Set ready sits at the top with its readiness list, so someone who reads to the end finds no action there.
