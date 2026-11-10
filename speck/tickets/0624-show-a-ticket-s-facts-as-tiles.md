@@ -1,7 +1,7 @@
 ---
 id: "0624"
 title: "Show a ticket's facts as tiles"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0617"]                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T22:59:55.843Z"
 
 ---
 # 0624 · Show a ticket's facts as tiles
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Shipped's figures are now even grey tiles that are easy to scan (0606). A ticket's full view still lists its facts (priority, size, risk, whether it ships by itself, builder, reviewer, costs and tokens) as loose labels and values, so the two views look like different designs and the facts are harder to read.
