@@ -42,6 +42,7 @@ A ticket's facts in its full view are tiles like Shipped's figures.
 - Asked for 2026-11-10: "I really like what you've done with the stats in the shipped column … I'm wondering if that would be really useful on the expanded ticket views as well for all of the stats."
 - Today: `factsOf`, `factCell` in `templates/panel.js`; Shipped's tiles are styled in `templates/panel-cards.css` (0606). Waits for 0617, which changes the full view.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
