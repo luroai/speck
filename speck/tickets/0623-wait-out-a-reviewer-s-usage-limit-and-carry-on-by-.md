@@ -1,7 +1,7 @@
 ---
 id: "0623"
 title: "Carry a build on by itself once the reviewer's usage limit resets"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T23:16:26.656Z"
 ---
 # 0623 · Carry a build on by itself once the reviewer's usage limit resets
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When the reviewer's usage limit is reached, such as Codex's, a review round fails, and the build stops or blocks with nothing to carry it on once the limit resets. Earlier builds blocked on "wait for Codex after 3:41 AM", which you then had to answer by hand.
@@ -48,7 +48,11 @@ When a review round fails on the reviewer's usage limit, speck waits until it re
 - Self-check: repeated refusals with no reset time now say the limit once rather than once per build; the refusal's wording no longer claims more about other reviewers than was checked (Cursor's limit wording is unknown); added a test.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When your reviewer runs out of usage partway through a build, speck now waits for the limit to reset, then picks the build up where it stopped and runs the review again, without you answering anything. While it waits, the build isn't counted as needing you, and if nothing else is building the status bar reads "Waiting: usage limit until 03:41". Other builds keep going until they reach their own review, and then wait too.
+
+To see it, wait for a review to hit the limit with speck run on: its log says when speck will carry on, and a minute after that time the build resumes.
+
+Worth keeping an eye on: if the reviewer doesn't say when the limit resets, speck tries again every 30 minutes. Codex's and Claude's messages are understood; Cursor's wording hasn't been seen, so a Cursor limit may still stop a build as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +62,83 @@ When a review round fails on the reviewer's usage limit, speck waits until it re
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Known limit: Cursor's usage-limit wording hasn't been seen, so it's only caught if it uses the same words as Codex or Claude.
+- Known limit: a reset time in a named zone other than UTC or this machine's own is treated as unreadable, so it retries every 30 minutes.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2f2fd70dcca8e2c2bdaa56a81f80688c5a89e6d6",
+    "session": "fresh",
+    "thread_id": "01a1c7ca-0335-7421-bede-8161f606c570",
+    "builder_response": "- Tests run: test/reviewer-limit-0623.test.mjs and test/codex-failure-0554.test.mjs, with `speck test --related`, which also ran every existing test file naming a changed file, and the repo-wide checks.\n- One existing test changed: in test/codex-failure-0554.test.mjs, \"a failed round says codex exited with its reason, and records no round\" used a usage-limit message as its sample and expected exit 1. AC1 gives exactly that case its own exit, so the sample is now a non-limit reason; the test still checks exit 1, the reason, no round and an unchanged ticket. Please say if you disagree with this change, given AC5.\n- `speck review` exits 18. Each build's `speck review` writes only its own record in the main checkout's runs folder (`reviewer-limits/<id>.json`), and only in a build speck run started (SPECK_BUILD_SESSION), so a round run by hand leaves nothing to wait on and still asks the reviewer.\n- AC3's \"starts no review\": speck run doesn't start reviews itself, so the hold is in `speck review`, for builds speck run started.\n- AC2: a refused round leaves the ticket `reviewing`, uncommitted, as `requireCommitted` already allows, so an approved ticket in a merge round is also carried on.\n- Codex's wording was checked against saved sessions and its 0.159.0 program. Claude's is from 0622's logs. Cursor's limit wording is unknown: it's caught only if it uses the same words.\n- No pictures: the bar reuses 0622's existing \"Waiting: usage limit\" words, and nothing's look changes.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 138157,
+      "cached_input_tokens": 86528,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 754,
+      "reasoning_output_tokens": 197
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 51629,
+      "cached": 86528,
+      "write": 0,
+      "output": 754
+    },
+    "cost_usd": 0.1194508,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T23:28:13.294Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "review.mjs and reviewers.mjs call stopOnLimit, which emits exit 18 and records the reviewer's reset time. Passing 0623 CLI tests cover Codex events, command reviewers, and records shared through the main checkout."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md explicitly instructs builders to end their session on exit 18 and leave the ticket reviewing. Passing AC2 tests check the exit-code instruction and that a refused round leaves the ticket reviewing and allows another round."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewerLimitQueue.check resumes stopped builds through carryOn after reset plus GRACE_MS; holdOnLimit prevents managed builds from starting reviews during the wait. Passing tests cover timing, session reuse, review instructions, available slots, and a real speck run process."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "stopOnLimit uses RETRY_MS when no usable reset is available. Passing AC4 tests exercise the 30-minute delay and three repeated retry cycles."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing AC5 tests preserve ordinary Codex and command-reviewer failure behaviour. The revised 0554 test retains its non-limit failure assertions. Reported validation passed 1,338 tests with zero failures and three skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change automatically waits out a reviewer's usage limit and resumes the build in its existing session to retry review. Tests cover reset times, repeated retries, shared waiting across builds, and ordinary failures. No blocking issues found."
+  }
+}
+```
+
+</details>
