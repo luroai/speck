@@ -1,7 +1,7 @@
 ---
 id: "0601"
 title: "Make the panel's border lines a little more visible"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T08:31:49.058Z"
 ---
 # 0601 · Make the panel's border lines a little more visible
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel's border lines, between rows, round boxes and under headings, are hard to see: they're a very pale grey (#E4E6EA in the light look, #2A2D31 in the dark) and most are drawn half a pixel wide, which a standard-density screen draws fainter still. The user asked for them to be a tiny bit more visible.
@@ -62,3 +62,84 @@ Tests changed to the new line colours or widths:
 - `test/mockup-0126.test.mjs` (0126 AC2), `test/panel-0134.test.mjs` (0134), `test/panel-0136.test.mjs` (0136) and `test/panel-0147.test.mjs` (0147 AC1): the new light and dark line colours.
 - `test/panel-0426.test.mjs` (0426 AC2) and `test/panel-0577.test.mjs` (0577 AC1): `--line` no longer equals the design's `--border`, which stays as it was; they now check the new colours.
 - `test/panel-0160.test.mjs` (the sticky header's bottom line) and `test/panel-0600.test.mjs` (0600 AC1, the rows' hairline): 1 px instead of half a pixel.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5ec5a4150bf6ee21418595d7ae21df63453bdba3",
+    "session": "fresh",
+    "thread_id": "01a1c49c-6d0c-7823-81f9-26a244b5fcdd",
+    "builder_response": "- Tests run: `speck test --related` with test/panel-0601.test.mjs (this ticket's own), the changed test files test/panel-0134, 0136, 0147, 0160, 0426, 0577, 0600, test/mockup-0126 and test/support/panel.mjs, and test/panel-0517.test.mjs (its 0517 AC3 timing check failed once in the first related run, under the load of 375 files, at 63 ms against 50 ms; it passed on its own and in this run). The changed support module brought in every test file that imports it: 375 files, all passing.\n- AC1: the light and dark `--line` and `--line-soft` values in templates/panel-base.css. The design's own `--border` (used only for the 4 px track steps) is unchanged, per AC3.\n- AC2: every `.5px solid var(--line…)` in the five panel stylesheets is now `1px`. Borders set in a line colour and recoloured on hover or when picked share the element's width, so they are 1 px too. The disabled Set ready and Save all buttons only recolour their enabled outline (`.5px solid var(--text)` / `var(--blue)`) to `--line`; they keep that half-pixel width so the button doesn't change size when disabled (AC3).\n- AC4: the changed tests are listed in the ticket's Delivery log.\n- Pictures: Build lane and Settings, in the light and dark looks.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 161825,
+      "cached_input_tokens": 100480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 617,
+      "reasoning_output_tokens": 10
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 61345,
+      "cached": 100480,
+      "write": 0,
+      "output": 617
+    },
+    "cost_usd": 0.138908,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T08:39:32.746Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-base.css defines both line tokens as #D9DCE1 for light and #383B41 for dark. The passing 0601 AC1 test checks both."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "templates/panel-cards.css:182 leaves .stats at gap: .5px over background: var(--line), drawing half-pixel dividers between tiles. The 0601 AC2 test scans border and outline declarations only, so misses these dividers."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The CSS diff changes only the requested line tokens and border widths; other colours, padding and spacing declarations remain unchanged. Passing 0601 AC3 checks representative colours, button outlines and row padding."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Existing colour and width assertions were updated and listed in the ticket's Delivery log. /tmp/speck-0601-tests.txt confirms 3451 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css:182",
+        "issue": "The statistics tiles still draw half-pixel dividers: their .5px grid gap exposes the --line background. This misses AC2 despite its test passing.",
+        "suggested_fix": "Change the statistics grid gap to 1px and extend the AC2 test to check this background-drawn divider.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The requested darker colours and most thicker lines are implemented, and the reported tests pass. One divider was missed: the lines between statistics tiles remain half a pixel wide. Fix that divider and add coverage before approval."
+  }
+}
+```
+
+</details>

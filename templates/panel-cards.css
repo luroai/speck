@@ -179,7 +179,7 @@
 
   /* Shipped */
   /* 0157: the stats a grid of tiles of equal size, each number over its label and the tickets its median covers */
-  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line); border-bottom: 1px solid var(--line-soft); }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 1px; background: var(--line); border-bottom: 1px solid var(--line-soft); }
   .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 6px; background: var(--panel); }
   .stat .num { font-family: var(--font-mono); font-size: 18px; font-weight: 500; line-height: 1.3; }
   .stat .label { font-size: 14px; line-height: 1.4; color: var(--muted); }
