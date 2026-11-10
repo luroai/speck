@@ -1,7 +1,7 @@
 ---
 id: "0606"
 title: "Tidy up Shipped's figures"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T09:51:33.342Z"
+approved: "2026-11-10T10:13:18.533Z"
 
 ---
 # 0606 · Tidy up Shipped's figures
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Shipped's figures look messy on a phone: the first three tiles have square corners at the top and rounded ones at the bottom, a large bordered More stats or Fewer stats button sits between them and the other figures, the other figures fill three columns with a gap left in the last row, labels wrap onto two lines so tiles differ in height, every tile repeats "588 tickets", and a "588 in total" line above them repeats the tab's own count.
@@ -53,9 +54,15 @@ Shipped's figures are now one tidy grid of matching rounded tiles: two to a row 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The Delivery log does not list the updated tests, as acceptance criterion 5 explicitly requires.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 315,646
+- Elapsed since build started: 22 min
+- Changed lines: 61 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new tiles, link and missing total line (AC5): test/panel-0058 (median tile now second), panel-0134 (no shipped-n id), panel-0157 (one grid of 2/4 columns, one-line labels, "from N tickets"), panel-0162 (All figures toggle; its browser test now checks 0606 AC1, AC2 and AC4 at 375 and 1280 px), panel-0188 (dead ids dropped), panel-0410 and panel-0425 (no "in total" line), panel-0420 (two to a row at 420 px, the link under the grid), panel-0427 (All figures wording), panel-0428 (corners on each tile, not the grid; the link no longer a bordered button), panel-0453 (the link has no border, so it's out of the bordered-button checks), panel-0476 (no Shipped lane line), panel-0478 (the long-line check uses Build's line), panel-0577 (number in the panel's font), panel-0587 (four tiles, total cost a dash when unknown), panel-0603 (the link isn't .full-open), panel.test (0035's stats), spend-0120 and total-cost-0526 (the others in the one grid). No other test that passed before fails: the round's related run had 1,573 passing, 0 failing, 3 skipped.
 - Follow-ups:
