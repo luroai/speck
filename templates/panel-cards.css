@@ -178,19 +178,20 @@
   .next { color: var(--ok); font-family: var(--font-ui); font-size: 12px; border: .5px solid var(--ok); padding: 0 5px; }
 
   /* Shipped */
-  /* 0157: the stats a grid of tiles of equal size, each number over its label and the tickets its median covers */
-  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 1px; background: var(--line); border-bottom: 1px solid var(--line-soft); }
-  .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 6px; background: var(--panel); }
-  .stat .num { font-family: var(--font-mono); font-size: 18px; font-weight: 500; line-height: 1.3; }
-  .stat .label { font-size: 14px; line-height: 1.4; color: var(--muted); }
-  .stat .count { font-family: var(--font-mono); font-size: 12px; color: var(--faint); }
+  /* 0606: the figures one grid of even tiles: two columns on a phone, four from 480 px, so the four that always show and
+     the four All figures adds each fill whole rows. The window's width picks, as a media query would, scrollbar and
+     all, so the phone query stays the only width query (0140): under 480 px the clamp gives a column half the grid,
+     from it a quarter, each a tenth of a pixel narrower so rounding can't drop one. A tile is the surface colour,
+     rounded alike at every corner, its label on one line so the tiles in a row are the same height. */
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(25% - 6.1px, (480px - 100vw) * 100000, 50% - 4.1px), 1fr)); grid-auto-rows: 1fr; gap: 8px; margin-top: 12px; }
+  .stat { display: flex; flex-direction: column; min-width: 0; padding: 10px 9px; background: var(--surface); color: var(--text); border: 0; border-radius: 12px; }
+  .stat .num { font-family: var(--font-ui); font-size: 18px; font-weight: 600; line-height: 1.3; }
+  .stat .label { font-size: 14px; line-height: 1.4; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat .count { font-family: var(--font-mono); font-size: 12px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .stats[hidden] { display: none; }
-  .stat:last-child:nth-child(3n + 2) { grid-column: span 2; } /* 0587: the last tile fills its row, so no gap shows the grid's line colour */
-  .stat:last-child:nth-child(3n + 1) { grid-column: span 3; }
-  /* 0587: under the three tiles, the toggle for the other figures, at the right */
-  .stats-line { display: flex; justify-content: flex-end; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
-  .stats-line[hidden] { display: none; }
-  .full-open.more-stats { flex: none; margin: 0; }
+  /* 0606: under the grid, a quiet link shows and hides the other figures, in the links' blue, the accent's in each look */
+  .more-stats { display: inline-flex; align-items: center; margin: 0 0 4px; padding: 0; border: 0; background: none; color: var(--run); font: inherit; font-size: 14px; cursor: pointer; }
+  .more-stats:hover { text-decoration: underline; }
   .more-stats[hidden] { display: none; }
   /* 0587: a shipped ticket is a row, as Capture's and Plan's are: a hairline under it, its title (one line since 0599), then one line
      of smaller type, each part whole so a line too long for a phone wraps between them. */
@@ -356,7 +357,6 @@
   /* 0428: rounded corners as Cursor's: 8 px for a control, 12 px for a card or a box */
   .question-fact, .next, .prio-menu { border-radius: 8px; }
   .item, .q { border-radius: 12px; }
-  .stats { border-radius: 12px; overflow: hidden; }
 
   /* 0140: a phone screen */
   @media (max-width: 699.98px) {

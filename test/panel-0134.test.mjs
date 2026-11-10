@@ -83,7 +83,8 @@ test('0134 AC3 (undone by 0135): no section heading has a number beside it', () 
 // AC4: the ids and visible text in the page's static HTML before this ticket. 0150 removed the connection pill, its id
 // and its "connecting…", and 0162 the three hints beside the section headings.
 // 0520: Plan's Tickets, Ideas and Inbox buttons are gone, with their row, shaping-toggle; Capture's card is new.
-const IDS = ['offline', 'restart', 'capture-section', 'capture', 'shaping-section', 'shaping', 'queue-n', 'queue', 'shipped-n', 'shipped-stats', 'shipped', 'full-backdrop', 'full-ticket'];
+// 0606: Shipped's "in total" line, shipped-n, is gone, as its tab gives the count.
+const IDS = ['offline', 'restart', 'capture-section', 'capture', 'shaping-section', 'shaping', 'queue-n', 'queue', 'shipped-stats', 'shipped', 'full-backdrop', 'full-ticket'];
 // 0413: the title row of speck's screen's frame is speck, then the project and base branch.
 const TEXT = ['·', '{{repo}}', '·', '{{base}}', // 0580: the bar's separators, its words drawn by the page. 0604: the status on a line of its own, so none after it
   'Disconnected: can\'t reach speck panel. Showing the last state received. Retrying every 2 seconds…',

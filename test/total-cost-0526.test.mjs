@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { totalSpent, recordWatchSpend } from '../scripts/spend.mjs';
 import { statusData, runsOf } from '../scripts/speck.mjs';
-import { T, round, fakePage, shippedRows, stoppedClock, panelModel } from './support/panel.mjs';
+import { T, round, fakePage, shippedRows, stoppedClock, panelModel, click } from './support/panel.mjs';
 import { runRepo } from './support/run.mjs';
 
 const NOW = new Date(2026, 9, 27, 12, 0).getTime();
@@ -168,17 +168,22 @@ test('0526 AC4 (0587): a shipped ticket\'s total cost is its row\'s tooltip, out
 test('0526 AC5: the stats add the total cost of the shipped tickets with a known total, saying how many it covers', async () => {
   const p = page();
   await p.settle();
-  const tile = p.byId('shipped-more').children.find(c => /total cost/.test(c.textContent)); // 0587: a tile under More stats
-  assert.equal(tile.textContent, '$6.01total cost3 tickets');
+  click(p.byId('more-stats')); // 0606: All figures adds it to the grid
+  await p.settle();
+  const tile = p.byId('shipped-stats').children.find(c => /total cost/.test(c.textContent));
+  assert.equal(tile.textContent, '$6.01total costfrom 3 tickets');
   assert.equal(tile.title, 'Total AI cost of the shipped tickets shown, over 3 tickets, at least: some of their costs are unknown');
   const m = panelModel({ Date: stoppedClock(NOW) })({ run: { on: false }, ideas: [], tickets: TICKETS });
   assert.deepEqual(m.stats.totalCost, { sum: 6.01, count: 3, partial: true });
 });
 
-test('0526 AC5: with no known total the stats show no total', async () => {
+test('0526 AC5: with no known total the stats show no total (0606: its tile keeps its place, with a dash)', async () => {
   const p = page([TICKETS[1]]);
   await p.settle();
-  assert.deepEqual(p.byId('shipped-more').children.map(c => c.children.find(n => n.className === 'label').textContent), ['shipped today', 'median builder cost', 'median reviewer tokens', 'median builder tokens']);
+  click(p.byId('more-stats'));
+  await p.settle();
+  const tile = p.byId('shipped-stats').children.find(c => /total cost/.test(c.textContent));
+  assert.equal(tile.textContent, '–total costfrom 0 tickets');
 });
 
 test('0526 AC1: the brief names the total fields speck status --json gives', () => {
