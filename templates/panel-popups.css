@@ -87,7 +87,7 @@
      panel in a column at most 720 px wide. Long titles and options wrap, so it fits a phone's width. */
   #decided { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #decided[hidden] { display: none; }
-  #decided .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #decided .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 14px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #decided .close:hover { color: var(--text); }
   #decided .top, #decided .decided-intro, #decided .decided-list, #decided .decided-none { max-width: 720px; margin-left: auto; margin-right: auto; }
   #decided .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: 1px solid var(--line-soft); background: var(--panel); }
@@ -169,7 +169,7 @@
   #foreman.log-view .log-status { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--muted); }
   #foreman.log-view .log-said { min-width: 0; }
   #foreman.log-view .log-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  #foreman.log-view .log-filter { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 2px 10px; cursor: pointer; }
+  #foreman.log-view .log-filter { box-sizing: border-box; padding: 0 12px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; } /* 0612: the secondary style, muted until pressed, its sides 12 px so the four fit a phone's line */
   #foreman.log-view .log-filter:hover { color: var(--text); }
   #foreman.log-view .log-filter[aria-pressed="true"] { color: var(--text); background: var(--raise); border-color: var(--text); }
   #foreman.log-view .fm-body { padding: 0; color: var(--text); background: none; border-radius: 0; }
@@ -234,7 +234,7 @@
   #full-ticket .ship-bar .changes-note { margin-bottom: 8px; }
   #full-ticket .ship-bar .changes-note[hidden] { display: none; } /* folded until Ask for changes is pressed */
   #full-ticket .ship-bar .pack-buttons { justify-content: flex-end; }
-  #full-ticket .ship-bar .ship, #full-ticket .ship-bar .ask-changes { margin: 0; padding: 8px 18px; font-size: 14px; font-weight: 500; border-radius: 8px; }
+  #full-ticket .ship-bar .ship, #full-ticket .ship-bar .ask-changes { margin: 0; } /* 0612: the redesign's size, from their own rules */
   #full-ticket .ship-bar .ship { background: var(--blue); border-color: var(--blue); color: var(--bg); }
   #full-ticket .ship-bar .ship-said { margin: 8px 0 0; }
   /* Each section's Markdown. Its headings rank below the section's own (h4) and are no taller than body text. */
@@ -271,24 +271,25 @@
   #full-ticket .md details, #doc-view .md details { margin: 0 0 8px; }
   #full-ticket .md summary, #doc-view .md summary { cursor: pointer; color: var(--muted); }
   /* 0133: an approved ticket's Ship button, above its review pack, and what speck ship said. 0363: and above its document */
-  #full-ticket .ship, #doc-view .ship { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 0 0 10px; padding: 3px 14px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
+  #full-ticket .ship, #doc-view .ship { box-sizing: border-box; margin: 0 0 10px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; background: var(--text); color: var(--panel); border: .5px solid var(--text); border-radius: 10px; cursor: pointer; } /* 0612: the redesign's size */
   #full-ticket .ship:disabled, #doc-view .ship:disabled { cursor: default; opacity: .6; }
   #full-ticket .ship-said, #doc-view .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad, #doc-view .ship-said.bad { color: var(--bad); }
   /* 0357: beside it, a box for a note and an Ask for changes button, which sends the note back to the build */
   #full-ticket .changes-note, #doc-view .changes-note { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 0 0 6px; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: 1px solid var(--line); resize: vertical; }
   #full-ticket .pack-buttons, #doc-view .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-  #full-ticket .ask-changes, #doc-view .ask-changes { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
+  #full-ticket .ask-changes, #doc-view .ask-changes { margin: 0 0 10px; box-sizing: border-box; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; } /* 0612: the secondary style */
+  #full-ticket .ask-changes:hover, #doc-view .ask-changes:hover { border-color: var(--text); }
   #full-ticket .ask-changes:disabled, #doc-view .ask-changes:disabled { cursor: default; opacity: .6; }
   /* 0359: a task's files, as buttons at the top of its review pack. 0562: one row each, and each folder one row, folded at first */
   #full-ticket .pack-documents, #full-ticket .pack-folder-row, #full-ticket .pack-folder-files { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   #full-ticket .pack-documents { margin: 0 0 10px; }
   #full-ticket .pack-folder-files { padding-left: 14px; }
-  #full-ticket .pack-document, #full-ticket .pack-folder { font: inherit; font-family: var(--font-mono); font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
+  #full-ticket .pack-document, #full-ticket .pack-folder { box-sizing: border-box; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; overflow-wrap: anywhere; text-align: left; } /* 0612: the secondary style */
   #full-ticket .pack-folder { border-style: dashed; }
   #full-ticket .pack-folder::before { content: ''; display: inline-block; width: 4px; height: 4px; margin: 0 8px 2px 0; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); }
   #full-ticket .pack-folder[aria-expanded="true"]::before { transform: rotate(135deg); }
-  #full-ticket .pack-document:hover, #full-ticket .pack-folder:hover { background: var(--panel); }
+  #full-ticket .pack-document:hover, #full-ticket .pack-folder:hover { border-color: var(--text); }
   /* 0354: the button back from a task's file to its review pack */
   #full-ticket .md a, #full-ticket .criteria a, #doc-view .md a { color: var(--run); }
   /* 0294: the pictures of a visual change in its review pack, each opening full size when pressed */

@@ -51,7 +51,6 @@ function measure() {
 }
 const MEASURE = `(${measure})()`;
 const whole = x => Math.abs(x - Math.round(x)) < 1e-6;
-const SECONDARY = /\b(full-open|stop-build|back-to-plan|go-with|ask-reply|copy|reload|close|secondary)\b/; // 0603: the secondary buttons, with 10 px corners
 const frames = `new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`;
 
 // A repo whose panel has a draft in Plan, an approved ticket in Build and a shipped one.
@@ -122,9 +121,9 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
             assert.ok(parseFloat(w) * dpr >= 1 - 1e-6, `${at}: ${o.what} has a ${w} border on side ${i}`);
             assert.notEqual(o.styles[i], 'none', `${at}: ${o.what}'s side ${i} is drawn`);
           });
-          // AC3: its 8 px corners (0428), a tab's on top only, speck's screen its own (0438), and a secondary button's 10 px (0603), and every side drawn in the one colour
+          // AC3: its 10 px corners (0603, 0612: every button's, once 0428's 8 px), a tab's on top only, speck's screen its own (0438), and every side drawn in the one colour
           const corner = /\btab\b/.test(o.cls) ? ['8px', '8px', '0px', '0px'] : /\bglass\b/.test(o.cls) ? ['4px', '4px', '4px', '4px']
-            : SECONDARY.test(o.cls) ? ['10px', '10px', '10px', '10px'] : ['8px', '8px', '8px', '8px'];
+            : ['10px', '10px', '10px', '10px'];
           assert.deepEqual(o.corners, corner, `${at}: ${o.what}'s corners`);
           if (!/\btab\b/.test(o.cls)) assert.equal(new Set(o.colours).size, 1, `${at}: ${o.what}'s sides are one colour: ${o.colours}`);
         }
@@ -146,7 +145,7 @@ const NAMED = [
   ['a document', '#doc-view .close'],
   ['Settings', '#settings .close'],
   ['Settings', '#settings .save-all'],
-  ['Settings\' question about unsaved changes', '#settings-unsaved .save-all'],
+  ['Settings\' question about unsaved changes', '#settings-unsaved .secondary'], // 0612: its Save is filled in the accent, with no border to show
   ['the Foreman', '#foreman .log-filter'], // 0592: its filters, as its back link is a link with no border
 ];
 const sidesShown = (png, r, dpr) => {

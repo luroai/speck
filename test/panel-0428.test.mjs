@@ -65,13 +65,10 @@ const BUTTONS = {
   // 0520: Plan's Tickets, Ideas and Inbox buttons (.toggle) are gone
 };
 
-// 0603: the secondary buttons, in the redesign's secondary style, have 10 px corners
-const SECONDARY = new Set(['Full ticket / Review pack on an open card', 'Stop build', 'Back to Plan', 'Go with the recommendation', 'Full ticket elsewhere',
-  'More stats / Details', 'Copy', 'Answer / Dismiss', 'Reload page', 'Close', 'Settings\' question\'s other buttons']);
-test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu have an 8 px corner radius, and (0603) a secondary button 10 px', () => {
-  for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], SECONDARY.has(what) ? '10px' : '8px', what);
+test('0428 AC1: inputs, selects, tags, toggles and the priority menu have an 8 px corner radius, and (0603, 0612) every button 10 px', () => {
+  for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], '10px', what);
   for (const sel of ['select', 'textarea', '.tag', '.prio-menu']) // 0520: Plan's toggles are gone
-    assert.equal(resolve(['button', sel])['border-radius'], '8px', sel);
+    assert.equal(resolve([sel])['border-radius'], '8px', sel);
   for (const sel of ['input:not([type="checkbox"]):not([type="radio"])', 'textarea', 'select'])
     assert.ok(RS.some(r => !r.at.length && selectors(r).includes(sel) && r.decls.some(([k, v]) => k === 'border-radius' && v === '8px')), `${sel} is rounded`);
   assert.equal(resolve(['#settings .setting .edit', 'input:not([type="checkbox"]):not([type="radio"])'])['border-radius'], '8px', 'Settings\' text boxes');

@@ -42,6 +42,8 @@ Every button in the panel has the redesign's size and style.
 - Today: `templates/panel-settings.js` (`saveBar`, the unsaved-changes question), `templates/panel-popups.js` (`documentsPart`, `changesPart`) and their stylesheets. Waits for 0611, which changes `panel-popups.js`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: the Save in the unsaved-changes question now takes only the accent's border colour, so the half-pixel border rule for screens below a pixel ratio of 2 still makes its border a whole pixel; every new 44 px height is in panel-cards.css with 0603's, as 0417 allows a 44 px size for every pointer only there.
+- Every <button> the panel draws, and text inside one, now has 10 px corners and no 12 px text. The tab's counts are 13 px, not the names' 14 px, because at 14 px the four tabs' names don't fit whole at 320 px (0582's check). A priority tag, which is a tag with a button's role, keeps the tags' 8 px look. The Pipeline log's filters have 12 px sides rather than 16, so the four fit on one line at 390 px.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
