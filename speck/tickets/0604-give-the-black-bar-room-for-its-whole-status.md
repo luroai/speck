@@ -1,7 +1,7 @@
 ---
 id: "0604"
 title: "Give the black bar room for its whole status"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-11-10
 started: "2026-11-10T08:45:59.870Z"
 blocked_at: ""
 waited_seconds: 10
+approved: "2026-11-10T09:09:52.597Z"
 
 ---
 # 0604 · Give the black bar room for its whole status
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 On a phone the black bar (0580) fits the status, the project's name, the project menu and Settings on one line, so they're cut off: the user saw "Shipping 05… · s…" and couldn't tell which ticket was shipping or which project it was. The project menu beside them also read "All projects" while the panel was showing speck.
@@ -56,9 +57,16 @@ The black bar at the top of the panel is a little taller, with a bigger speck an
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 At 320 px, names of up to 20 characters can still be cut off.
+Round 2 (codex): escalate.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 527,675
+- Elapsed since build started: 24 min
+- Changed lines: 106 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Tests changed from the bar's old one-line layout to the new one (AC5):
 - `test/panel-0580.test.mjs`: the bar is a grid, not one row; speck at 56 px; the status on its own line, the project on the next and the base branch after it; the old rule hiding the lines before the first board replaced by the status's line keeping its height; All projects in the menu's list; at 320 px the status on one line, speck 56 px and the bar up to 72 px.
