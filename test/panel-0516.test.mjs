@@ -68,13 +68,13 @@ test('0516 AC1: a panel\'s record is deleted as it stops, unless a newer process
 // ---------- the header's menu, on the fake page ----------
 
 test('0516 AC1: with two or more panels running, the header has a menu of their projects, the one shown chosen', async () => {
-  const p = fakePage([board({ projects: projects(4777, [4778, 'alpha'], [4777, 'speck'], [4779, 'speck-site']) })]);
+  const p = fakePage([board({ projects: projects(4777, [4778, 'alpha'], [4777, 'speck'], [4779, 'beta']) })]);
   await p.settle();
   assert.equal(p.byId('project-pick').hidden, false, 'the menu shows');
   assert.deepEqual(optionsOf(p), [
     { value: '4778', text: 'alpha', selected: false, disabled: false },
     { value: '4777', text: 'speck', selected: true, disabled: false },
-    { value: '4779', text: 'speck-site', selected: false, disabled: false },
+    { value: '4779', text: 'beta', selected: false, disabled: false },
   ]);
 });
 
@@ -120,14 +120,14 @@ test('0516 AC2: a choice the panel refuses says why and leaves the project shown
 
 test('0516 AC3: the menu follows the panels running without a reload, and says so when the project shown has stopped', async () => {
   const { EventSource, sources } = manualSources();
-  const p = fakePage([board({ projects: projects(4778, [4777, 'speck'], [4778, 'alpha']) }), board({ projects: projects(4778, [4777, 'speck'], [4778, 'alpha'], [4779, 'site']) }), board({ projects: projects(4778, [4777, 'speck'], [4778, 'alpha']) })], { EventSource });
+  const p = fakePage([board({ projects: projects(4778, [4777, 'speck'], [4778, 'alpha']) }), board({ projects: projects(4778, [4777, 'speck'], [4778, 'alpha'], [4779, 'beta']) }), board({ projects: projects(4778, [4777, 'speck'], [4778, 'alpha']) })], { EventSource });
   const s = sources[0];
   s.emit('open'); s.emit('message', '1'); await p.settle();
   assert.deepEqual(optionsOf(p).map(o => o.text), ['speck', 'alpha']);
   s.emit('message', '2'); await p.settle();
-  assert.deepEqual(optionsOf(p).map(o => o.text), ['speck', 'alpha', 'site'], 'a panel that starts joins the menu');
+  assert.deepEqual(optionsOf(p).map(o => o.text), ['speck', 'alpha', 'beta'], 'a panel that starts joins the menu');
   // alpha's panel stops: the panel at the address says so on the page's stream, with the panels still running.
-  s.emit('gone', JSON.stringify({ port: 4778, list: [{ port: 4777, name: 'speck' }, { port: 4779, name: 'site' }] }));
+  s.emit('gone', JSON.stringify({ port: 4778, list: [{ port: 4777, name: 'speck' }, { port: 4779, name: 'beta' }] }));
   await p.settle();
   assert.equal(p.byId('offline').hidden, false);
   assert.match(p.byId('offline').textContent, /^alpha's panel has stopped/);
@@ -135,7 +135,7 @@ test('0516 AC3: the menu follows the panels running without a reload, and says s
   assert.deepEqual(optionsOf(p), [
     { value: '', text: 'alpha (stopped)', selected: true, disabled: true },
     { value: '4777', text: 'speck', selected: false, disabled: false },
-    { value: '4779', text: 'site', selected: false, disabled: false },
+    { value: '4779', text: 'beta', selected: false, disabled: false },
   ]);
   s.emit('gone', JSON.stringify({ port: 4778, list: [{ port: 4777, name: 'speck' }] }));
   await p.settle();
