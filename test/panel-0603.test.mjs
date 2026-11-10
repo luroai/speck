@@ -136,7 +136,7 @@ test('0603 AC2: the chain section has no border or filled circle in its styles',
 // ---------- AC3: the secondary buttons ----------
 
 // Each secondary button the panel draws: Full ticket, Full log, Go to Plan and More stats are .full-open.
-const SECONDARY = ['.full-open', '.q .stop-build', '.q .back-to-plan', '.q .go-with', '.foreman-ask .ask-reply', '.resume .copy', '.foreman .reload', '#doc-view .close', '#settings .close'];
+const SECONDARY = ['.full-open', '.q .stop-build', '.q .back-to-plan', '.q .go-with', '.foreman-ask .ask-reply', '.resume .copy', '.foreman .reload', '#doc-view .close', '#settings .close', '#settings-unsaved button.secondary'];
 const WANT = { border: '1px solid var(--line)', 'border-radius': '10px', color: 'var(--text)', 'min-height': '44px' };
 // Its plain rules' declarations, later ones winning, as the cascade has rules of equal weight.
 const cascaded = (sel, rs) => Object.fromEntries(rs.filter(r => !r.at.length && selectors(r).includes(sel)).flatMap(r => r.decls));
@@ -155,7 +155,7 @@ test('0603 AC3: nothing more particular takes the style back off a secondary but
   for (const r of rs.filter(r => !r.at.length)) {
     for (const s of selectors(r)) {
       if (SECONDARY.includes(s) || /:(hover|disabled|focus)/.test(s)) continue;
-      if (!/\.(full-open|stop-build|back-to-plan|go-with|ask-reply|copy|reload|close)(?![\w-])/.test(s) || !/(\.full-open|\.q |\.foreman|\.resume|#doc-view|#settings)/.test(s)) continue;
+      if (!/\.(full-open|stop-build|back-to-plan|go-with|ask-reply|copy|reload|close|secondary)(?![\w-])/.test(s) || !/(\.full-open|\.q |\.foreman|\.resume|#doc-view|#settings)/.test(s)) continue;
       if (/#full-ticket \.top/.test(s) || /#decided/.test(s)) continue; // back links, not buttons
       for (const k of looks) if (get(r, k) !== undefined) assert.equal(get(r, k), WANT[k] ?? get(r, k), `${s}: ${k}`);
       assert.ok(get(r, 'border-radius') === undefined || get(r, 'border-radius') === '10px', `${s}: corners`);
@@ -164,11 +164,12 @@ test('0603 AC3: nothing more particular takes the style back off a secondary but
   }
 });
 
-test('0603 AC3: the pack, Settings and More stats draw their secondary buttons with these classes', async () => {
+test('0603 AC3: the cards, Settings\' question and More stats draw their secondary buttons with these classes', async () => {
   const html = fs.readFileSync(path.join(ROOT, 'templates', 'panel.html'), 'utf8');
   assert.match(html, /<button class="full-open more-stats"/);
   const js = ['panel.js', 'panel-popups.js', 'panel-settings.js'].map(f => fs.readFileSync(path.join(ROOT, 'templates', f), 'utf8')).join('\n');
   for (const c of ['stop-build', 'back-to-plan', 'full-open go-plan']) assert.match(js, new RegExp(`el\\('button', '${c}'`));
+  for (const label of ['Discard', 'Keep editing']) assert.match(js, new RegExp(`choice\\('${label}', 'secondary'`), `Settings' ${label}`);
 });
 
 // ---------- AC4: the old colours ----------

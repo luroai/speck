@@ -51,7 +51,7 @@ function measure() {
 }
 const MEASURE = `(${measure})()`;
 const whole = x => Math.abs(x - Math.round(x)) < 1e-6;
-const SECONDARY = /\b(full-open|stop-build|back-to-plan|go-with|ask-reply|copy|reload|close)\b/; // 0603: the secondary buttons, with 10 px corners
+const SECONDARY = /\b(full-open|stop-build|back-to-plan|go-with|ask-reply|copy|reload|close|secondary)\b/; // 0603: the secondary buttons, with 10 px corners
 const frames = `new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`;
 
 // A repo whose panel has a draft in Plan, an approved ticket in Build and a shipped one.

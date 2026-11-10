@@ -52,7 +52,8 @@ const BUTTONS = {
   'Settings\' Save beside a setting': ['button', '#settings .setting .save', '#settings .arow .save'],
   'Settings\' Save': ['button', '#settings .save-all'],
   'Settings\' info buttons': ['button', '#settings .switch-row .info', '#settings .setting .info'],
-  'Settings\' question\'s buttons': ['button', '#settings-unsaved button'],
+  'Settings\' question\'s buttons': ['button', '#settings-unsaved button', '#settings-unsaved button.save-all'],
+  'Settings\' question\'s other buttons': ['button', '#settings-unsaved button', '#settings-unsaved button.secondary'], // 0603: Discard and Keep editing
   'Close': ['button', '#full-ticket .close', '#doc-view .close', '#foreman .close', '#settings .close'],
   'Ship': ['button', '#full-ticket .ship', '#doc-view .ship'],
   'Ask for changes': ['button', '#full-ticket .ask-changes', '#doc-view .ask-changes'],
@@ -66,7 +67,7 @@ const BUTTONS = {
 
 // 0603: the secondary buttons, in the redesign's secondary style, have 10 px corners
 const SECONDARY = new Set(['Full ticket / Review pack on an open card', 'Stop build', 'Back to Plan', 'Go with the recommendation', 'Full ticket elsewhere',
-  'More stats / Details', 'Copy', 'Answer / Dismiss', 'Reload page', 'Close']);
+  'More stats / Details', 'Copy', 'Answer / Dismiss', 'Reload page', 'Close', 'Settings\' question\'s other buttons']);
 test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu have an 8 px corner radius, and (0603) a secondary button 10 px', () => {
   for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], SECONDARY.has(what) ? '10px' : '8px', what);
   for (const sel of ['select', 'textarea', '.tag', '.prio-menu']) // 0520: Plan's toggles are gone

@@ -1,7 +1,7 @@
 ---
 id: "0603"
 title: "Retire the panel's last old-style parts"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T09:17:38.700Z"
 ---
 # 0603 · Retire the panel's last old-style parts
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A few parts of a ticket still have the LCD-era look: the review pack opens with a small bordered Close button instead of a back link and marks its verdict and criteria with emoji, the full view's Chain is a bordered box with filled circles, and secondary buttons (Close, Full log, Stop build, More stats, Go to Plan) are small boxes with a faint border, unlike the redesign's buttons. The old colours (`--bezel`, `--log-*`, `--purple`) are still in the styles.
@@ -57,3 +57,105 @@ The review pack, the ticket's chain and the panel's secondary buttons are in the
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Tests changed from the old looks to the new ones (AC5):
+  - `test/pack-0562.test.mjs`, `test/panel-0357.test.mjs`, `test/panel-0583.test.mjs`, `test/panel-0158.test.mjs`: leave the review pack by its back link, not its Close.
+  - `test/panel-0132.test.mjs`: a criterion's result is the panel's tick or cross, not an emoji.
+  - `test/panel-0041.test.mjs`, `test/panel-0463.test.mjs`, `test/panel-0467.test.mjs`, `test/panel-0468.test.mjs`: a chain in the full view is facts, not a box of circles.
+  - `test/panel-0140.test.mjs`, `test/panel-0161.test.mjs`, `test/panel-0427.test.mjs`: the pack's back link and the document's Close in place of the pack's Close.
+  - `test/panel-0428.test.mjs`, `test/panel-0453.test.mjs`: secondary buttons have 10 px corners.
+  - `test/panel-0461.test.mjs`: the Shipped step is in the accent, not purple.
+  - `test/panel-0426.test.mjs`, `test/panel-0480.test.mjs`: `--bezel` and its shades are gone.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "838df9bd06d4b93a5cdb2af034f25eaccf3eb65b",
+    "session": "fresh",
+    "thread_id": "01a1c4d0-4ae8-77e2-a23e-f8cfa236cabc",
+    "builder_response": "- Tests run (speck test --related): test/pack-0562.test.mjs test/panel-0041.test.mjs test/panel-0132.test.mjs test/panel-0140.test.mjs test/panel-0158.test.mjs test/panel-0161.test.mjs test/panel-0357.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0453.test.mjs test/panel-0461.test.mjs test/panel-0463.test.mjs test/panel-0467.test.mjs test/panel-0468.test.mjs test/panel-0480.test.mjs test/panel-0583.test.mjs test/panel-0603.test.mjs \n- Round 1. Notes for the reviewer:\n  - AC1: the pack's emoji are replaced in the panel only, on the Markdown's inline runs (packMarks in templates/panel-popups.js), since the pack's content is out of scope: ✅ is the tick, ❌ and ⛔ the cross, ⚠️ the word Unclear. The back link goes to the ticket's full view wherever the pack was opened from.\n  - AC2: only a chain (one before / after) in the full view becomes facts (chainFacts in templates/panel.js); Plan cards keep their box, as the ticket names the full view. The class is chain-facts because .chain is already the chain icon's.\n  - AC3: secondary buttons taken as .full-open (Full ticket, Full log, Go to Plan, More stats), Stop build, Back to Plan, Go with the recommendation, Answer/Dismiss, Copy, Reload page, and the Close of Settings and the document pop-up. Ship, Ask for changes, Set ready, the Pipeline log's filters and Settings' Save buttons are left as they are (primary or already redesigned). The 44 px height of Reload, the document's Close and Settings' Close is set in panel-cards.css, as 0417/0469 allow a 44 px size for every pointer only in the header's and cards' rules.\n  - AC4: --purple-text went too, as it was only the Shipped step's name colour.\n  - AC5: old tests changed to the new looks: pack-0562, panel-0041, 0132, 0140, 0158, 0161, 0357, 0426, 0427, 0428, 0453, 0461, 0463, 0467, 0468, 0480, 0583. They'll be listed in the Delivery log at close.\n",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 201828,
+      "cached_input_tokens": 145408,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 964,
+      "reasoning_output_tokens": 129
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56420,
+      "cached": 145408,
+      "write": 0,
+      "output": 964
+    },
+    "cost_usd": 0.1370208,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T09:36:34.994Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "packPane, packMarks and backToTicket in templates/panel-popups.js implement navigation and drawn result marks. The reported passing panel-0603 tests exercise approval, rejection, criterion results and returning to the ticket."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "chainFacts in templates/panel.js renders a facts section with ticket states and navigation. Passing panel-0603 AC2 tests cover its content, links and removal of circles and the box."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The secondary Discard and Keep editing buttons created by drawSettingsLeaving in templates/panel-settings.js retain the old #settings-unsaved button styling: muted text, inherited 8 px corners and no unconditional 44 px height."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-base.css removes the listed variables; panel-cards.css uses --accent for Shipped. Passing panel-0603 AC4 tests check variable removal and Shipped styling."
+      },
+      {
+        "id": 5,
+        "status": "unclear",
+        "evidence": "The changed tests exercise the new appearance, and the reported run has 429 passes, zero failures and three skips. The current ticket's Delivery log remains an empty placeholder, so its required test list cannot yet be verified."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.css",
+        "issue": "The unsaved Settings dialogue still has old-style secondary buttons. Discard and Keep editing are omitted from the new test's hard-coded secondary-button list, allowing AC3 to pass despite this gap.",
+        "suggested_fix": "Apply the required secondary style to these buttons and extend coverage to the unsaved Settings dialogue.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0603-bring-the-review-pack-and-the-ticket-view-s-last-b.md",
+        "issue": "AC5 requires the Delivery log to list the updated tests, but it currently contains only its placeholder.",
+        "suggested_fix": "Ensure the Delivery log records the updated test files before the next review, using the normal speck recording mechanism.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The review pack and ticket chain have the requested new appearance, and the reported tests pass. The unsaved Settings dialogue still contains old-style secondary buttons that the new tests overlook. The required test list is also missing from the Delivery log."
+  }
+}
+```
+
+</details>

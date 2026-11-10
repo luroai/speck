@@ -93,7 +93,7 @@
   /* 0603: it and the panel's other secondary buttons in the redesign's secondary style: a 1 px border in the line colour,
      10 px corners, the text colour, 44 px tall for every pointer, as 0602's Full log and Stop build */
   .q .stop-build { margin: 6px 0 2px; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
-  .foreman .reload, #doc-view .close, #settings .close { min-height: 44px; } /* 0603: their height here, as every control's for every pointer is (0469); the rest of their style in their own files */
+  .foreman .reload, #doc-view .close, #settings .close, #settings-unsaved button.secondary { min-height: 44px; } /* 0603: their height here, as every control's for every pointer is (0469); the rest of their style in their own files */
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
   /* 0602: Full log and Stop build in the redesign's secondary style: a 1 px border in the line colour, 10 px corners, the text colour, 44 px tall, for every pointer as the cards' controls are (0469) */
