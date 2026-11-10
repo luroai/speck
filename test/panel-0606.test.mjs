@@ -1,7 +1,9 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, round, fakePage, click, page, styles, cssRules, cssValue } from './support/panel.mjs';
+import { T, round, fakePage, click, page, styles, cssRules, cssValue, panelRepo, freePort, startPanel, stop, browserPage, findChrome, openLane } from './support/panel.mjs';
+
+const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
 // ---------- 0606: Shipped's figures, one tidy grid of even tiles ----------
 
@@ -44,14 +46,45 @@ test('0606 AC1: its number is in the panel\'s font, and its label in the muted c
   assert.equal(cssValue(cssRules('.stats'), 'grid-auto-rows'), '1fr', 'tiles in a row the same height');
 });
 
-// A 480 px window's grid is 448 px wide, inside the lane's 16 px margins. The real-browser checks are in panel-0162 and panel-0157.
-test('0606 AC2: two columns below 480 px wide and four from 480 px, chosen by the grid\'s own width, with no media query of its own (0140)', () => {
-  assert.equal(cssValue(cssRules('.lane-list'), 'padding'), '0 16px');
-  assert.equal(cssValue(cssRules('.stats'), 'grid-template-columns'), 'repeat(auto-fill, minmax(clamp(25% - 6.1px, (448px - 100%) * 1000, 50% - 4.1px), 1fr))');
+// The window's width picks, as a media query would, with no media query of its own (0140). The real-browser checks at
+// 479 and 480 px with a scrollbar are below; panel-0162 and panel-0157 check 375, 700 and 1280 px.
+test('0606 AC2: two columns below 480 px wide and four from 480 px, chosen by the window\'s width, with no media query of its own (0140)', () => {
+  assert.equal(cssValue(cssRules('.stats'), 'grid-template-columns'), 'repeat(auto-fill, minmax(clamp(25% - 6.1px, (480px - 100vw) * 100000, 50% - 4.1px), 1fr))');
   assert.equal(cssValue(cssRules('.stats'), 'gap'), '8px');
-  // auto-fill with the column the clamp gives at each grid width: how many fit, gaps included
-  const columns = w => { const track = Math.min(Math.max(w / 4 - 6.1, (448 - w) * 1000), w / 2 - 4.1); return Math.floor((w + 8) / (track + 8)); };
-  for (const [window, want] of [[320, 2], [375, 2], [479, 2], [480, 4], [600, 4], [720, 4]]) assert.equal(columns(window - 32), want, `${window} px`);
+  // auto-fill with the column the clamp gives for a grid `w` wide in a window `vw` wide: how many fit, gaps included
+  const columns = (w, vw) => { const track = Math.min(Math.max(w / 4 - 6.1, (480 - vw) * 100000), w / 2 - 4.1); return Math.floor((w + 8) / (track + 8)); };
+  for (const [vw, want] of [[320, 2], [375, 2], [479, 2], [479.5, 2], [480, 4], [600, 4], [720, 4]]) for (const bar of [0, 15]) assert.equal(columns(Math.min(vw, 720) - 32 - bar, vw), want, `${vw} px, a ${bar} px scrollbar`);
+});
+
+test('0606 AC2: in a real browser with a scrollbar on the lane, 479 px shows two to a row and 480 px four, closed and open', skip, async () => {
+  const r = panelRepo();
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const b = await browserPage('about:blank');
+  const stamp = new Date().toISOString();
+  const state = { run: { on: false }, ideas: [], tickets: Array.from({ length: 40 }, (_, i) => T(String(900 + i).padStart(4, '0'), 'done', { started: stamp, finished: stamp, rounds: [round(1, 500)] })) };
+  const stub = `(() => { const real = window.fetch.bind(window); window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? new Response(${JSON.stringify(JSON.stringify(state))}, { status: 200, headers: { 'content-type': 'application/json' } }) : real(url, opts); })();`;
+  const perRow = () => b.js(`(() => { const tops = [...document.querySelectorAll('#shipped-stats .stat')].map(n => Math.round(n.getBoundingClientRect().top)); return { n: tops.length, rows: new Set(tops).size,
+    bar: (l => l.offsetWidth - l.clientWidth)(document.getElementById('shipped-list')) }; })()`);
+  try {
+    await b.send('Emulation.setDeviceMetricsOverride', { width: 480, height: 600, deviceScaleFactor: 1, mobile: false });
+    await b.send('Page.enable');
+    await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub });
+    await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
+    await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#shipped tr').length >= 10`, 'the rows'); // the lane draws the first rows, enough to scroll
+    await b.js(openLane('shipped'));
+    for (const open of [false, true]) {
+      if (open) await b.js(`(document.getElementById('more-stats').click(), true)`);
+      for (const [width, want] of [[480, 4], [479, 2]]) {
+        await b.send('Emulation.setDeviceMetricsOverride', { width, height: 600, deviceScaleFactor: 1, mobile: false });
+        await b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(1))))`);
+        const g = await perRow();
+        const at = `${width} px, ${open ? 'open' : 'closed'}`;
+        assert.ok(g.bar > 0, `${at}: the lane has a scrollbar (${g.bar} px)`);
+        assert.equal(g.n, open ? 8 : 4, at);
+        assert.equal(g.n / g.rows, want, `${at}: ${want} to a row`);
+      }
+    }
+  } finally { await b.close(); await stop(panel); }
 });
 
 test('0606 AC2: four figures always show, and the other four join them when the rest are open', async () => {
