@@ -44,6 +44,7 @@ A ticket's build log and its live log read like the Pipeline log: flat, in the p
 - Today: the build log reuses `#foreman` (`renderBuildLog`, `drawBuildLog` in `templates/panel-popups.js`) without the `.log-view` class 0592 gave the Pipeline log, so it keeps `#foreman .top` and `.fm-body` on `var(--bezel)` and `.run-log` on `var(--log-bg)` in `templates/panel-popups.css`. The live log is `.q .log` on `var(--log-bg)` in `templates/panel-cards.css` (`logBox` in `templates/panel.js`).
 - Waits for 0601, which changes the borders in the same files.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
