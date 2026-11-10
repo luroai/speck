@@ -178,7 +178,7 @@ test('0051 AC3: the log shows as text with ANSI escapes removed, blank runs as o
   assert.ok(rule, 'a .log rule');
   assert.match(rule[1], /max-height:/);
   assert.match(rule[1], /overflow(-y)?:\s*auto/);
-  assert.match(rule[1], /--font-mono/);
+  assert.match(rule[1], /--font-ui/); // 0602: the panel's own font, with only its times in the mono one
 });
 
 test('0051 AC3: the formatting on its own', () => {
@@ -289,7 +289,7 @@ test('0051 AC2-AC5: in a real browser, a click opens the log in the full view, i
     await b.until(`(${box} || {}).textContent?.includes('line 300')`, 'the log');
     assert.match(await b.js(`${box}.textContent`), /^Earlier lines aren't shown/);
     assert.ok(!(await b.js(`${box}.textContent`)).includes('\x1b'));
-    assert.match(await b.js(`getComputedStyle(${box}).fontFamily`), /mono/i);
+    assert.match(await b.js(`getComputedStyle(${box}).fontFamily`), /^Inter\b/); // 0602: the panel's own font
     assert.ok(await b.js(`${box}.scrollHeight > ${box}.clientHeight`), 'a fixed height, with its own scrollbar');
     await b.js(`${box}.scrollTop = 150`);
     await refreshed(b, 'a refresh'); await refreshed(b, 'a second refresh');

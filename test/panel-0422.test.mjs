@@ -36,7 +36,7 @@ test('0422 AC1: each entry\'s time is in a span of its own, with its text after 
   assert.equal(r[3].at, '12:00:02 ');
   assert.equal(r[1].at, '', 'a line with no time has no time span');
   const css = styles();
-  assert.match(css, /\.q \.log \.at \{[^}]*color: var\(--log-muted\)/, 'the time is muted (0455: the log\'s own muted colour)');
+  assert.match(css, /\.q \.log \.at \{[^}]*color: var\(--muted\)/, 'the time is muted (0602: the panel\'s muted colour)');
 });
 
 test('0422 AC2: tool calls, messages, failures and the cut-short note each have a kind of their own', async () => {
@@ -55,15 +55,17 @@ const luminance = hex => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-const colourOf = selector => (css().match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{[^}]*?color: var\\((--[\\w-]+)\\)`)) || [])[1];
+// 0602: the selector may be one of a rule's list, as the build log's full view shares the live log's rules
+const colourOf = selector => (css().match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:, [^{]*)? \\{[^}]*?color: var\\((--[\\w-]+)\\)`)) || [])[1];
 
-test('0422 AC2: each kind has a colour of its own, with at least 4.5:1 contrast on the log\'s background in both looks', () => {
-  const kinds = ['.q .log .tool', '.q .log .msg', '.q .log .fail', '.q .log .note'].map(colourOf);
+test('0422 AC2, since 0602: a tool call, a message and a failure each have a colour of their own, the note the tool call\'s, each at least 4.5:1 on the panel in both looks', () => {
+  const kinds = ['.q .log .ln.tool', '.q .log .ln', '.q .log .ln.fail', '.q .log .ln.note'].map(colourOf);
   assert.ok(kinds.every(Boolean), `every kind has a colour: ${kinds}`);
-  assert.equal(new Set(kinds).size, 4, 'each colour is different');
-  assert.match(css(), /\.q \.log \{[^}]*background: var\(--log-bg\)/, 'the log sits on its own background (0455: a terminal\'s, in every look)');
+  assert.equal(new Set(kinds.slice(0, 3)).size, 3, 'a tool call, a message and a failure differ');
+  assert.equal(kinds[3], kinds[0], 'the note is muted as a tool call is');
+  assert.doesNotMatch(css(), /\.q \.log \{[^}]*background/, 'the log sits on the panel (0602: not a terminal)');
   for (const [look, v] of [['light', light()], ['dark', dark()]]) {
-    for (const k of [...kinds, colourOf('.q .log .at')]) assert.ok(contrast(v.get(k), v.get('--log-bg')) >= 4.5, `${k} on --log-bg in the ${look} look: ${contrast(v.get(k), v.get('--log-bg')).toFixed(2)}`);
+    for (const k of [...kinds, colourOf('.q .log .at')]) assert.ok(contrast(v.get(k), v.get('--panel')) >= 4.5, `${k} on --panel in the ${look} look: ${contrast(v.get(k), v.get('--panel')).toFixed(2)}`);
   }
 });
 

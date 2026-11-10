@@ -67,7 +67,7 @@ test('0577 AC2: the panel\'s text is in Inter, ids, times and figures in JetBrai
 
 test('0577 AC2: lane titles and the Pipeline log\'s title no longer use Doto', () => {
   assert.deepEqual(cssRules('.lane-title'), [], '0600: the lanes have no titles of their own');
-  for (const sel of ['#foreman .top .title']) {
+  for (const sel of ['#foreman.log-view .top .title']) { // 0602: every log in #foreman is a full view
     assert.equal(cssValue(cssRules(sel), 'font-family'), 'var(--font-ui)', sel);
     assert.equal(cssValue(cssRules(sel), 'font-weight'), '600', `${sel}: a weight Inter has here`);
   }

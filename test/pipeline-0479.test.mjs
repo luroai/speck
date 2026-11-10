@@ -16,12 +16,13 @@ const within = (n, box) => { for (; n; n = n.parentNode) if (n === box) return t
 
 // ---------- quick: the frame's rules ----------
 
-test('0479 AC1: the pop-up is clear of a phone\'s status bar and home indicator, and its frame is the lane card\'s colour', () => {
+test('0479 AC1, since 0602: the view is clear of a phone\'s status bar and home indicator, and has no dark frame or red dot', () => {
   const pad = cssValue(cssRules('#foreman'), 'padding');
   assert.match(pad, /env\(safe-area-inset-top\)/, 'clear of the status bar');
   assert.match(pad, /env\(safe-area-inset-bottom\)/, 'and the home indicator');
-  for (const sel of ['#foreman .top', '#foreman .fm-body']) assert.equal(cssValue(cssRules(sel), 'background'), 'var(--bezel)', `${sel} is on the frame`);
-  assert.equal(cssValue(cssRules('#foreman .top .title::before'), 'background'), 'var(--speck-red)', 'speck\'s red dot, as the header\'s');
+  for (const sel of ['#foreman .top', '#foreman .fm-body']) assert.notEqual(cssValue(cssRules(sel), 'background'), 'var(--bezel)', `${sel} is not on a dark frame`);
+  assert.equal(cssValue(cssRules('#foreman.log-view .top'), 'background'), 'var(--panel)', 'its top on the panel\'s own colour');
+  assert.notEqual(cssValue(cssRules('#foreman .top .title::before'), 'background'), 'var(--speck-red)', 'no red dot');
 });
 
 function popPage(responses, globals = {}) {

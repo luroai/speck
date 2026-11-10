@@ -2,37 +2,9 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 // 0548: a Build card's build log opens in the Pipeline log's full-screen pop-up, showing only that ticket's log.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, T, queueRows, click, styles, fullViewOf } from './support/panel.mjs';
-import { manualSources } from './support/stream.mjs';
+import { T, queueRows, click, styles, fullViewOf } from './support/panel.mjs';
+import { NAME, logPage } from './support/build-log.mjs';
 
-const NAME = 'ab'.repeat(16);
-// A page with the board `tickets`, on a stream the test drives, whose log requests are answered by `logOf(id)`: a log,
-// an Error for a request that fails, or a promise the test settles later. `made` is called with each node made.
-function logPage(tickets, logOf, made = () => {}) {
-  const { EventSource, sources } = manualSources();
-  const calls = [];
-  const fetch = async url => {
-    calls.push(String(url));
-    const m = String(url).match(/^\/api\/tickets\/(\w+)\/log$/);
-    if (m) { const log = await logOf(m[1]); if (log instanceof Error) throw log; return { ok: true, status: 200, json: async () => log }; }
-    if (/\/log\/close$/.test(url)) return { ok: true, status: 200, json: async () => ({ ok: true }) };
-    if (/\/api\/run-log$/.test(url)) return { ok: true, status: 200, json: async () => ({ lines: ['10:00:00 Shipped 0457.'] }) };
-    return { ok: true, status: 200, json: async () => ({ tickets, ideas: [], run: { on: true, pid: 1 }, run_log: '1' }) };
-  };
-  let focused = null;
-  const p = fakePage([], { fetch, EventSource, getSelection: () => ({ isCollapsed: true, rangeCount: 0 }), scrollX: 0, scrollY: 0, scrollTo() {} },
-    { made: n => { n.focus = () => { focused = n; }; made(n); } });
-  for (const id of ['foreman', 'run', 'build-section']) p.byId(id).focus = () => { focused = p.byId(id); };
-  p.document.documentElement = { classList: { toggle() {} } };
-  const held = [p.byId('main-stand-in')];
-  p.document.querySelectorAll = sel => (/\bmain\b/.test(sel) ? held : []);
-  Object.defineProperty(p.document, 'activeElement', { get: () => focused });
-  p.focused = () => focused;
-  p.calls2 = calls;
-  p.main = held[0];
-  p.source = () => sources[sources.length - 1];
-  return p;
-}
 const building = (id = '0001') => T(id, 'building', { started: new Date().toISOString() });
 // 0585: a ticket's log box and Full log button are in its full view, which pressing its row opens.
 const rowOf = (p, id = '0001') => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
@@ -100,12 +72,12 @@ test('0548 AC1: the button opens the pop-up titled "<id> build log", and the dia
 
 const shape = n => ({ tag: String(n.tagName).toLowerCase(), cls: n.className, kids: (n.children || []).filter(c => c.tagName !== '#text' && !/^(ol|li|p)$/i.test(c.tagName)).map(shape) });
 
-test('0548 AC2, since 0592: the build log keeps the pop-up\'s frame, title row, Close and log box, and the Pipeline log, now a full view, opens in the same element', async () => {
+test('0548 AC2, since 0602: the build log is a full view as the Pipeline log is, with a back link, its heading and log box, and the Pipeline log opens in the same element', async () => {
   const p = await poppedUp();
   const ours = shape(pop(p));
-  assert.equal(ours.cls, 'foreman', 'not the full view');
+  assert.equal(ours.cls, 'foreman log-view', 'the full view');
   assert.deepEqual(ours.kids.map(n => n.cls), ['top', 'fm-body']);
-  assert.deepEqual(ours.kids[0].kids.map(n => n.cls), ['title', 'close']);
+  assert.deepEqual(ours.kids[0].kids.map(n => n.cls), ['back', 'title']);
   assert.deepEqual(ours.kids[1].kids.map(n => n.cls), ['fm-stale', 'fm-log']);
   p.key('Escape');
   await p.settle();
@@ -123,8 +95,8 @@ test('0548 AC2: each line is laid out as a Pipeline log line, a time column then
   assert.deepEqual(rows.map(r => r.className), ['ln msg timed', 'ln tool timed', 'ln fail timed']);
   assert.ok(rows.every(r => r.children[0].className === 'at'));
   assert.equal(rows[0].children[0].textContent, '09:00:00 ');
-  const css = styles();
-  for (const [kind, v] of [['tool', '--log-run'], ['note', '--log-warn']]) assert.match(css, new RegExp(`\\.foreman \\.run-log \\.${kind} \\{ color: var\\(${v}\\); \\}`), kind);
+  const css = styles(); // 0602: in the panel's own colours
+  for (const [kind, v] of [['tool', '--muted'], ['note', '--muted'], ['fail', '--bad']]) assert.match(css, new RegExp(`#foreman\\.log-view \\.run-log \\.ln\\.${kind}[,\\s][^{]*\\{ color: var\\(${v}\\); \\}`), kind);
 });
 
 test('0548 AC2: it shows only this ticket\'s log, never speck run\'s or another ticket\'s', async () => {
@@ -152,7 +124,7 @@ test('0548 AC3: the same lines as the card\'s box, oldest at the top, and each n
 test('0548 AC3: a cut-short log starts with the card\'s note, and a blank line keeps its place', async () => {
   const p = await poppedUp({ text: '09:00:00 a\n\n09:00:01 b', truncated: true, build: 1, at: 0 });
   assert.deepEqual(listOf(p).children.map(r => r.className), ['ln note', 'ln msg timed', 'ln gap', 'ln msg timed']);
-  assert.match(styles(), /\.foreman \.run-log \.ln\.gap \{ min-height: 1\.5em; \}/, 'a blank line is a line high');
+  assert.match(styles(), /#foreman\.log-view \.run-log \.ln\.gap[^{]*\{ min-height: 20px; \}/, 'a blank line is a line high'); // 0602: the rows' line height
 });
 
 // A browser's layout: the log box 200 px high from 100 px down, each line 20 px.
@@ -223,11 +195,11 @@ test('0548 AC3: before the log has loaded, and when it can\'t be loaded, it says
 
 // ---------- AC4: closing, focus and the page behind ----------
 
-test('0548 AC4: Close, Escape and a click beside its column close it, with the focus back on the button that opened it', async () => {
-  for (const how of ['Close', 'Escape', 'beside']) {
+test('0548 AC4, since 0602: the back link, Escape and a click beside its column close it, with the focus back on the button that opened it', async () => {
+  for (const how of ['back', 'Escape', 'beside']) {
     const made = n => { n.getBoundingClientRect = () => (n.className === 'top' ? { left: 300, right: 1060, top: 0, bottom: 40 } : { left: 0, right: 0, top: 0, bottom: 0 }); };
     const p = await poppedUp(LOG, made);
-    if (how === 'Close') p.press(p.all(pop(p)).find(n => n.className === 'close'));
+    if (how === 'back') p.press(p.all(pop(p)).find(n => n.className === 'back'));
     else if (how === 'Escape') p.key('Escape');
     else {
       const e = { target: pop(p), clientX: 100, stopPropagation() {}, preventDefault() {} };

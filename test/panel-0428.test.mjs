@@ -77,9 +77,10 @@ test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu ha
 
 // 0477: the tabs, and their corners, are gone: the lanes are a strip of their names.
 
-test('0428 AC2: cards, the build log, the stats and the pop-ups have a 12 px corner radius', () => {
+test('0428 AC2, since 0602: cards, the stats and the pop-ups have a 12 px corner radius, and the build log, now flat, none', () => {
+  assert.equal(resolve(['.q .log'])['border-radius'], undefined, 'the build log');
   const BOXES = {
-    'a Plan card': ['.item'], 'a Build card': ['.q'], 'the build log': ['.q .log'],
+    'a Plan card': ['.item'], 'a Build card': ['.q'],
     'the stats': ['.stats'], // 0593: Settings' groups are plain sections
     'Settings\' question': ['#settings-unsaved .box'],
   };

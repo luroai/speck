@@ -45,6 +45,7 @@ A ticket's build log and its live log read like the Pipeline log: flat, in the p
 - Waits for 0601, which changes the borders in the same files.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: kept the log's markup as it was and pulled each time into its column rather than laying rows out in a grid, so a copied line keeps its time and text together (0422's real-browser test); Full log's hover now darkens its border rather than filling it, which 0161 counts as a too-faint edge.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

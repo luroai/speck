@@ -2,21 +2,12 @@
    log, each over the whole panel. */
   /* 0285: the Foreman's detail, in a pop-up over the whole panel (0366) */
   .foreman { font-size: 14px; overflow-anchor: none; } /* 0415: the page keeps a reader's place in the log itself */
-  /* 0459: the log is a terminal, as a ticket's build log is (0455), filling the pop-up under its heading, its oldest
-     line at the top. Each line's time is in a column of its own and its text past it, as a build log's (0422) */
+  /* 0459: the log fills the view under its heading, its oldest line at the top. 0602: no longer a terminal, in either log */
   .foreman .run-log { box-sizing: border-box; margin: 0; padding: 6px 10px; overflow-y: auto; overflow-anchor: none;
-    background: var(--log-bg); border: 1px solid var(--line); list-style: none; color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; }
+    border: 1px solid var(--line); list-style: none; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
   .foreman ol.run-log { font: 12px/1.5 var(--font-mono); }
   .foreman div.run-log { font: 12px/1.5 var(--font-mono); }
   .foreman .run-log p { margin: 0; }
-  .foreman .run-log .ln { display: block; padding-left: 9ch; min-width: 0; }
-  .foreman .run-log .ln.timed { text-indent: -9ch; }
-  .foreman .run-log .at { color: var(--log-muted); }
-  .foreman .run-log .msg { color: var(--log-text); }
-  .foreman .run-log .fail { color: var(--log-bad); }
-  .foreman .run-log .tool { color: var(--log-run); } /* 0548: a build log's tool calls and note, as in its card */
-  .foreman .run-log .note { color: var(--log-warn); }
-  .foreman .run-log .ln.gap { min-height: 1.5em; } /* 0548: a build log's blank line, a line high */
   .foreman p { margin: 2px 0; }
   .foreman .stale { color: var(--warn); }
   .foreman .reload { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--panel); border: 1px solid var(--line); padding: 2px 10px; cursor: pointer; }
@@ -58,8 +49,8 @@
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
   #doc-view .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
-  #full-ticket .close, #doc-view .close, #foreman .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover { color: var(--text); }
+  #full-ticket .close, #doc-view .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #full-ticket .close:hover, #doc-view .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
   /* 0424: the full ticket and a review pack set out as a document: the id and status in small type, the title the
      largest text with its tags under it, then each section's heading, smaller than the title and larger than the text,
@@ -122,12 +113,10 @@
   #decided .decided-bubble::before { content: ""; position: absolute; left: -5px; top: 15px; width: 10px; height: 10px; background: var(--raise); transform: rotate(45deg); }
   #decided .decided-day { margin: 16px 0 0; font-size: 12px; font-weight: 600; color: var(--muted); }
   #decided .decided-change { margin: 6px 0 0; }
-  /* 0479: the Pipeline log is one card in a dark frame that fills the window, as a lane's (0478): the frame is the
-     screen's colour and corners, 4 px at the sides and bottom, in a column as wide as the lanes' (720 px less their
-     16 px sides, on whole pixels as the lanes' are, 0453), clear of a phone's notch and home indicator. Its title row has
-     speck's red dot and "Pipeline log" in the header's dot-matrix lettering, with Close at its end. The pop-up and the
-     frame hold still and only the log box scrolls: it takes the room the title row and a stale page's line leave. On a
-     window too short for 12 lines of log, the pop-up scrolls instead, its title row staying at the top (0470). */
+  /* 0479: the Pipeline log fills the window, in a column as wide as the lanes' (720 px less their 16 px sides, on whole
+     pixels as the lanes' are, 0453), clear of a phone's notch and home indicator. Only the log box scrolls: it takes the
+     room its top and a stale page's line leave. On a window too short for 12 lines of log, the view scrolls instead
+     (0470). 0602: a ticket's build log opens in it too. */
   #foreman { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(12em, 1fr); overflow-y: auto; overscroll-behavior: contain; background: var(--panel);
     padding: calc(8px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     padding-left: max(16px, env(safe-area-inset-left), calc(16px + round(down, calc((100% - 720px) / 2), 1px))); padding-right: max(16px, env(safe-area-inset-right), calc(16px + round(up, calc((100% - 720px) / 2), 1px))); }
@@ -166,23 +155,16 @@
   #bridge .bridge-name { font-size: 14px; line-height: 20px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #bridge .bridge-line { font-size: 12px; line-height: 16px; color: var(--muted); }
   #bridge .bridge-spend { flex: none; font-size: 14px; line-height: 20px; font-variant-numeric: tabular-nums; }
-  #foreman .top { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; min-width: 0; margin: 0; padding: 7px 6px 6px 10px; color: var(--bezel-ink); background: var(--bezel); border-radius: 12px 12px 0 0; }
-  #foreman .top .title { display: inline-flex; align-items: center; gap: .25em; min-width: 0; font-family: var(--font-ui); font-weight: 600; font-size: 22px; line-height: 1; white-space: nowrap; color: inherit; } /* 0470: in the header's lettering (.bezel .name). In the title row's light ink, over every .title's text colour */
-  #foreman .top .title::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; background: var(--speck-red); } /* speck's own dot, as the header's: decoration, so a screen reader passes over it */
-  #foreman .fm-body { display: flex; flex-direction: column; min-height: 0; padding: 0 4px 4px; color: var(--bezel-ink); background: var(--bezel); border-radius: 0 0 12px 12px; }
+  #foreman .fm-body { display: flex; flex-direction: column; min-height: 0; }
   #foreman .fm-stale { flex: none; padding: 0 6px 6px; }
   #foreman .fm-log { flex: 1 1 0; display: flex; flex-direction: column; min-height: 0; }
   #foreman .fm-log > .run-log { flex: 1 1 0; height: auto; min-height: 0; }
-  #foreman .stale { color: var(--bezel-ink); }
-  #foreman .close, #foreman .reload { color: var(--bezel-muted); background: transparent; border-color: var(--bezel-muted); }
-  #foreman .close:hover, #foreman .reload:hover { color: var(--bezel-ink); border-color: var(--bezel-ink); }
-  #foreman :focus-visible { outline-color: var(--bezel-ink); }
-  /* 0592: the Pipeline log is a full view on the panel's own colours, in light and dark, and only a ticket's build log keeps the dark frame.
+  /* 0592: the Pipeline log is a full view on the panel's own colours, in light and dark (0602: and so is a ticket's build log).
      Each line is a row: its time, a column for speck's face on the manager's own lines, then its text with its details under it. */
   #foreman.log-view .top { position: static; display: block; padding: 4px 0 10px; color: var(--text); background: var(--panel); border-radius: 0; border-bottom: 1px solid var(--line-soft); }
   #foreman.log-view .back { display: inline-block; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); cursor: pointer; }
   #foreman.log-view .back::before { content: '‹'; margin-right: 4px; }
-  #foreman.log-view .top .title { display: block; margin-top: 4px; font-size: 20px; line-height: 24px; font-weight: 600; white-space: normal; }
+  #foreman.log-view .top .title { display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 20px; line-height: 24px; font-weight: 600; white-space: normal; }
   #foreman.log-view .top .title::before { content: none; }
   #foreman.log-view .log-status { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--muted); }
   #foreman.log-view .log-said { min-width: 0; }
@@ -203,11 +185,26 @@
   #foreman.log-view .run-log .fail .log-text { color: var(--bad); }
   #foreman.log-view .run-log .log-more { font-family: var(--font-mono); font-size: 13px; line-height: 16px; color: var(--muted); overflow-wrap: anywhere; }
   #foreman.log-view :focus-visible { outline-color: var(--text); }
+  /* 0602: a build log's lines, in its full view and in a building ticket's live log, as rows in the Pipeline log's style:
+     its time in the mono font in a column of its own, then its text in the panel's font, so a line that wraps carries on
+     under its text. The time is pulled into the column rather than laid out in a grid, so a copied line keeps its time
+     and text together. A message's next lines (untimed) stay with it, and a tool call, the note that earlier lines
+     aren't shown and a failure have their own colours. */
+  #foreman.log-view .run-log .ln, .q .log .ln { display: block; min-width: 0; padding-left: 74px; font-family: var(--font-ui); font-size: 15px; line-height: 20px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+  #foreman.log-view .run-log .ln.timed, .q .log .ln.timed { padding-top: 8px; border-top: 1px solid var(--line-soft); }
+  #foreman.log-view .run-log .ln:first-child, .q .log .ln:first-child { border-top: 0; }
+  #foreman.log-view .run-log .ln .at, .q .log .at { display: inline-block; box-sizing: border-box; width: 66px; margin: 0 8px 0 -74px; font-family: var(--font-mono); font-size: 13px; line-height: 20px; color: var(--muted); white-space: pre; }
+  #foreman.log-view .run-log .ln.note, .q .log .ln.note, .q .log .ln.plain { padding-left: 0; }
+  #foreman.log-view .run-log .ln.tool, .q .log .ln.tool, #foreman.log-view .run-log .ln.note, .q .log .ln.note, .q .log .ln.plain { color: var(--muted); }
+  #foreman.log-view .run-log .ln.fail, .q .log .ln.fail { color: var(--bad); }
+  #foreman.log-view .run-log .ln.gap, .q .log .ln.gap { min-height: 20px; } /* 0548: a blank line, a line high */
+  #foreman.log-view ol.run-log:has(> .ln) { padding-bottom: 8px; }
   #full-ticket ol.criteria > li { margin-bottom: 6px; }
   /* 0583: a tick on each criterion the reviewer passed, and the rows that open its review pack and build log */
   #full-ticket .tick { display: inline-block; width: 6px; height: 12px; margin: 0 8px 0 3px; border: solid var(--blue); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* drawn, so it needs no font to have the glyph */
   /* 0584: a build's live details, under the track and facts, styled as its card is */
   #full-ticket .live { margin-top: 14px; }
+  #full-ticket .q.live { padding: 0; border: 0; border-radius: 0; } /* 0602: in the view, not a box of its own */
   #full-ticket .live-now { font-size: 14px; line-height: 20px; color: var(--text); margin-bottom: 6px; }
   #full-ticket .live-now .sub { font-family: var(--font-mono); font-size: 12px; }
   #full-ticket .live-now .say.bad { color: var(--bad); }
@@ -287,9 +284,6 @@
   #full-ticket .pack-pictures img { display: block; width: 100%; height: auto; }
   #full-ticket .pack-pictures figcaption { margin-top: 4px; font-size: 12px; color: var(--muted); }
 
-  /* 0428: rounded corners as Cursor's: 12 px for a box. The full ticket and a document fill the window, so they stay square (0160) */
-  .foreman .run-log { border-radius: 12px; }
-
   /* The dark look's backdrop */
   :root[data-theme="dark"] #full-backdrop { background: rgba(0, 0, 0, .45); }
 
@@ -315,7 +309,7 @@
   /* 0417: a touch screen, at any width: every button and clickable control at least 44 px each way */
   @media (pointer: coarse) {
     /* The full ticket and review pack */
-    #full-ticket .pane-row, #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #foreman.log-view .back, #foreman.log-view .log-filter, #decided .close { min-width: 44px; min-height: 44px; }
+    #full-ticket .pane-row, #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman.log-view .back, #foreman.log-view .log-filter, #decided .close { min-width: 44px; min-height: 44px; }
     #full-ticket .md summary, #doc-view .md summary { min-height: 44px; padding-top: 12px; }
   }
 
@@ -323,5 +317,5 @@
      is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
      button's edges on whole pixels. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { /* 0453: below a pixel ratio of 2 */
-    .foreman .reload, #foreman.log-view .log-filter, #full-ticket .pane-row, #full-ticket .close, #doc-view .close, #foreman .close, #decided .close, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder { border-width: 1px; }
+    .foreman .reload, #foreman.log-view .log-filter, #full-ticket .pane-row, #full-ticket .close, #doc-view .close, #decided .close, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder { border-width: 1px; }
   }

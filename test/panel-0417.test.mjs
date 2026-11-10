@@ -32,11 +32,11 @@ const media = q => blocks(css()).filter(b => b.prelude === `@media ${q}`);
 
 // Every selector with a 44 px minimum (or a 44 px width and height) under 700 px before this ticket, less the ids
 // in a closed card's note, which 0468 replaced with a chip, and Plan's Tickets, Ideas and Inbox buttons (.toggle), which
-// 0520 removed.
+// 0520 removed, and the build log's Close (#foreman .close), which 0602 replaced with a back link.
 const SIZED = ['.bezel .settings-open', '.tab', '.head', '.item.ticket .prio', '.prio-menu button', '.set-ready, .full-open',
   '.q .top', '.q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply', '.resume .copy',
   '.more-stats',
-  '#full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close',
+  '#full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #settings .close',
   '#full-ticket .md summary, #doc-view .md summary'];
 
 // 0469: the header's and the cards' plain rules, which give a mouse the touch screen's sizes too
