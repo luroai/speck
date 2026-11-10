@@ -1,7 +1,7 @@
 ---
 id: "0602"
 title: "Show build logs in the new look"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0601"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T08:46:04.716Z"
+approved: "2026-11-10T09:11:10.798Z"
 
 ---
 # 0602 · Show build logs in the new look
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket's build log still opens in the LCD-era frame: a dark bezel box with a red-dot title, a small bordered Close button, and a black terminal with a white border, with every wrapped line indented under a time column. A building ticket's full view shows its live log in the same black terminal. Everywhere else the redesign has moved to light, flat views.
@@ -56,9 +57,15 @@ To see it, open a building ticket and press Full log, then switch the look in Se
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Criterion 5 explicitly requires the Delivery log to list the updated tests, but that section is empty.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 346,301
+- Elapsed since build started: 25 min
+- Changed lines: 111 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Tests changed from the build log's old frame and terminal look to the new one:
 - `test/build-log-0548.test.mjs`: the build log is a full view with a back link and heading, not the frame with Close; its kinds' colours are the panel's; a blank line is 20 px; the back link closes it. Its page helpers moved to `test/support/build-log.mjs`, which this ticket's tests share.
