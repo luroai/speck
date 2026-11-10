@@ -1,7 +1,7 @@
 ---
 id: "0614"
 title: "Give an open Plan or Capture row room inside its fill"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-11-10
 started: "2026-11-10T11:07:06.723Z"
 blocked_at: ""
 waited_seconds: 11
+approved: "2026-11-10T11:20:57.336Z"
 
 ---
 # 0614 · Give an open Plan or Capture row room inside its fill
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 An open Plan or Capture row has a raised background, and since 0600 its text runs right to that fill's edges, as the row has no side padding of its own. The text pressed against the edge, and the ring a linked id draws, look cramped on a phone.
@@ -58,9 +59,16 @@ Changes what you'd notice: yes
 Clear winner: no
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC2 is not met for Plan tickets with a chain or waiting icon: titleLine adds that icon only while open, moving the title sideways.
+Round 2 (codex): changes requested: F2 AC4 explicitly requires the Delivery log to list tests changed from the old behaviour.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 435,761
+- Elapsed since build started: 14 min
+- Changed lines: 18 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new behaviour (AC4): test/panel-0041.test.mjs (`iconOf` finds an open ticket's chain or padlock mark after its title, not right after its id) and test/panel-0483.test.mjs (AC2: an open card's line is id, title, then its mark). No other test changed, and none failed.
 - Follow-ups: a hovered closed row (desktop only) still has its raised fill run to its text's edges; saved to the inbox as speck/ideas/2026-11-10-give-a-hovered-closed-row-room-inside-its-fill.md.
