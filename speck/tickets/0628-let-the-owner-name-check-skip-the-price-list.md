@@ -44,7 +44,7 @@ The owner-name check skips the copied price list, and still catches a private wo
 - Self-check: the AC2 test also checks that a file named prices.json anywhere else, or a near-namesake such as scripts/prices.json.bak, is still caught; no code changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The check that keeps your private words out of speck's files no longer trips over the list of model prices speck copies from a public source, where a private word can happen to be part of a model's name. Ships on this machine stop failing on that list. A private word anywhere else in the project is still caught. To see it, run the owner-name check with your private words in place: it now passes. Keep in mind that a private word inside that price list itself is no longer flagged, which is fine as long as the list only holds copied model names.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -126,6 +126,79 @@ The owner-name check skips the copied price list, and still catches a private wo
     ],
     "escalation_question": "",
     "summary": "The change correctly skips the copied price list while preserving checks of other tracked files, and the reported tests pass. Before approval, add the verification details to the Delivery log as the ticket requires."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9f35aab5b4496505c5830675748085a9ec974306",
+    "session": "continued",
+    "thread_id": "01a1c72a-f2ae-7522-b4a3-65c60544661c",
+    "builder_response": "- Tests run: test/private-words-0628.test.mjs (with the commands.checks files)\n- F1: fixed. The ticket's Delivery log now says how AC2 was checked, both the passing and the still-failing side, without naming the word.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 197072,
+      "cached_input_tokens": 158464,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1041,
+      "reasoning_output_tokens": 16
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5253,
+      "cached": 106752,
+      "write": 0,
+      "output": 480
+    },
+    "cost_usd": 0.0259812,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T20:36:00.590Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/private-words.mjs filesNaming excludes scripts/prices.json. The passing 0628 AC1 test exercises this exclusion."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing tests in test/private-words-0628.test.mjs exercise real 0082 AC2 with a matching temporary private-word list and verify other paths remain checked. Existing 0084 tests cover 0082 failing on matches elsewhere. The ticket's Delivery log now describes both checks without recording the selected word."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The current run reports 111 passed, zero failed and three skipped. The previous related-test run also had zero failures; this round changes only the ticket's records."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0628-let-the-owner-name-check-skip-the-price-list.md",
+        "issue": "The required AC2 verification details were missing from the Delivery log.",
+        "suggested_fix": "Record how the passing and still-failing behaviours were checked without including the selected private word.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The owner-name check now skips the copied price list while continuing to catch matches in other tracked files. Tests pass, and the required verification details are recorded. Ready for the owner's merge decision."
   }
 }
 ```
