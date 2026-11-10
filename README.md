@@ -2,11 +2,11 @@
 
 **Plan in ten minutes. Come back to it shipped.**
 
-speck gives you a team you can trust. You spend your time where it counts: deciding what needs doing and what done looks like, in a quick conversation with your coding agent. Then you walk away. Your agents build each change tests first, a second AI reviews it, and speck ships it, the same way every time. speck works as your engineering manager, and you can rename it to whatever you like.
+speck is your engineering manager. You decide what gets built and what done looks like, in a quick conversation with your own coding agent. Then you walk away, and getting it shipped is speck's job. It runs the builder and reviewer you chose: the builder writes each change tests first and a second AI reviews it, the same way every time. When a build needs a call, speck makes the obvious ones itself. When work gets stuck, it looks into why and gets it moving. Then it tells you what it did and why, and asks you only when there's no clear answer. Give it a name of your own, and it goes by that.
 
 speck isn't only for code. A ticket can be a task instead, such as drafting an email, writing a plan or pulling together research. speck has your agent do it, a second AI checks it against what you asked for, and the result waits for you in `outputs/`.
 
-speck was built by a product manager, for product managers and anyone who has spent years working alongside tech teams without writing the code themselves. You already know how to shape a piece of work and tell when it's done. speck fits the way that work really happens, in bursts between everything else: ticket up a batch before a meeting, come back afterwards to see what's shipped, and set the next batch going before you log off. speck stops only when it needs you, with one plain question. Engineers use speck too.
+speck was built by a product manager, for product managers and anyone who has spent years working alongside tech teams without writing the code themselves. You already know how to shape a piece of work and tell when it's done. speck fits the way that work really happens, in bursts between everything else: ticket up a batch before a meeting, come back afterwards to see what's shipped, and set the next batch going before you log off. speck interrupts you only for a call that's really yours, with one plain question and its recommendation. Engineers use speck too.
 
 You don't need to read the code to check the work. Every ticket comes with a one-page review pack in plain English, with the reviewer's evidence for each criterion. Ship the first few yourself from their review packs. Once you're confident, turn on auto-ship, and speck ships approved work while you're away.
 
@@ -34,35 +34,52 @@ Your agent checks what's there, explains each choice in plain words and waits fo
 
 ## How it works
 
-speck takes every change from an idea to shipped code in the same steps, and waits for you at two of them, until you trust it with the second. Every change is a small numbered ticket in your repo, sized for one agent in one sitting. If you can write a good ticket, you can ship.
+You make one decision: what gets built. speck manages everything after it, in the same steps every time, and ships by itself once you trust it to. Every change is a small numbered ticket in your repo, sized for one agent in one sitting. If you can write a good ticket, you can ship.
 
 ```
-idea → ticket → [you: ready] → agent builds → second agent reviews, turn by turn → approved → [you: ship, then auto-ship]
+idea → ticket → [you: ready] → builder builds → reviewer reviews, turn by turn → approved → shipped (by you, then by auto-ship)
 ```
 
-### Your first decision: what gets built
+### Your decision: what gets built
 
 Talk ideas through with your agent. `/speck-capture` saves an idea to `speck/ideas/`, and `/speck-ticket` turns it into small draft tickets in `speck/tickets/`, each with a problem, an outcome and a short list of what done looks like. Read a draft, then set it ready in the panel, or with `speck set <id> status ready`. That's Gate 1: only a ready ticket gets built.
 
-### Everything in between
+### Everything in between: speck's job
 
-`speck run` starts a build for each ready ticket, each in its own git worktree, so your checkout stays yours. The builder writes a test for each acceptance criterion, then the code, then checks its own work. A second AI reviews it, and they take turns until the reviewer approves or a question comes back to you. No agent ever approves its own work.
+`speck run` starts a build for each ready ticket, each in its own git worktree, so your checkout stays yours. The builder writes a test for each acceptance criterion, then the code, then checks its own work. A second AI reviews it, and they take turns until the reviewer approves. No agent ever approves its own work.
 
-### Your second decision: what ships
+When a build hits a question it can't answer from the ticket, it stops with one plain question, the options and the one it recommends. Once you let it (see below), speck takes that recommendation itself on a low-risk ticket, resumes the build and adds the call to **Decided for you**, its report in the panel, with the options it didn't choose. Change any you'd have called differently. It leaves the question for you when the build has no recommendation, when the ticket is high risk, or once it has taken three calls on the same ticket.
+
+speck also keeps work moving. Once it's on, when a build or a ship stops for a reason it has no steps for, or a build runs far longer than usual, it has its own agent look into it and do one thing about it: resume the build with an instruction, try the ship again, raise a fix ticket, tell you what it found or ask you.
+
+### Turning it on
+
+speck takes the obvious calls once you choose `decide` for `watch`, in the Your engineering manager group of the panel's Settings, or with `speck config set watch decide`. Until then `watch` is `tell`, and every question waits for you. `fix` sits between the two: speck takes only clear-cut calls that change nothing you'd notice, and looks into stops and long builds.
+
+To give it a name of your own, set `speck_name` in the same group, or run `speck config set speck_name "<name>"`. Wherever it speaks or acts for you, in the panel, `speck status` and `speck run`'s log, it then goes by that name.
+
+### Shipping: yours, until you trust it
 
 Every approved ticket has a one-page **review pack**, written for someone who doesn't read code: each acceptance criterion with ✅/❌ and the reviewer's evidence, a plain-English summary, risk flags, the review history and what it took. Start by reading it and shipping by hand, with the Ship button in the panel or `/speck-ship <id>`. That's Gate 2.
 
-Once you trust the work, turn on auto-ship, in the panel's Settings or with `speck config set auto_ship true`, and `speck run` ships each approved ticket one at a time, while you're away. Auto-ship stays off until you turn it on, and covers low-risk tickets unless you change `auto_ship_risk`. A task never ships by itself: reading its result is its review, so it waits for you. The review pack is still there whenever you want to check the work.
+Once you trust the work, turn on auto-ship, in the panel's Settings or with `speck config set auto_ship true`, and `speck run` ships each approved ticket one at a time, while you're away. Auto-ship stays off until you turn it on, and even then some tickets wait for you at Ship:
+
+- a high-risk ticket, unless you add high to `auto_ship_risk`
+- a ticket whose acceptance criteria changed after you set it ready, with its review pack showing what changed
+- a task, as reading its result is its review
+
+The review pack is still there whenever you want to check the work.
 
 ## The clever bits
 
+- **speck makes the obvious calls, and tells you.** With `watch: decide`, speck takes a build's recommendation on a low-risk ticket instead of stopping the line, and lists each call in Decided for you with what it didn't choose.
+- **speck looks into stops and slow builds.** When a build or a ship stops for a reason speck doesn't expect, or a build runs well past its usual time, speck has its own agent look into it and do one thing about it, or ask you.
+- **speck holds back a ticket whose criteria changed.** If a ticket's acceptance criteria changed after you set it ready, it never ships by itself: it waits for you at Ship, showing what each criterion was and is now.
 - **speck raises its own fix tickets.** If `main` breaks, speck has the build that finds it write a priority-0 fix ticket and send it to the front of the queue, instead of patching it inside someone else's work.
+- **speck sorts out its own merge conflicts.** When `main` has moved on, speck has the build merge it in, keep what both sides meant and have the merge reviewed again.
 - **speck files its own follow-ups.** When a build spots a bug or a better idea, speck has it save the idea to your inbox, after checking it isn't there already.
 - **Ideas only become tickets in conversation.** Your agent saves an idea when you ask it to, and turns it into tickets only when you talk it through.
-- **speck asks, then moves on.** When a build needs your call, speck has it stop with one plain question and its recommendation, and carries on with the next ticket.
 - **speck shows where everything stands at a glance.** The panel's black bar says what speck is doing in a word or two, such as Building, Shipping or Needs you.
-- **speck looks into stops it has no steps for.** With `watch: fix`, when a build or a ship stops for a reason speck doesn't expect, speck has its own agent look into it and do one thing about it, or ask you.
-- **speck sorts out its own merge conflicts.** When `main` has moved on, speck has the build merge it in, keep what both sides meant and have the merge reviewed again.
 - **speck fits in your pocket.** Put the panel behind a private tunnel and add it to your phone's home screen (see [The panel](#the-panel)).
 - **speck keeps the receipts.** Every ticket keeps its review rounds, how long it took and what it cost, and the tickets and tests say what the product does, so there's no separate spec to keep up to date.
 
