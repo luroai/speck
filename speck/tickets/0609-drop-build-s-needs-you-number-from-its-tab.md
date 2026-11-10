@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-11-09-drop-build-s-needs-you-number-from-its-tab.
 after: ["0607"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:01:51.169Z"
-approved: "2026-11-10T10:13:12.175Z"
+approved: "2026-11-10T10:25:26.475Z"
 
 ---
 # 0609 · Drop Build's needs-you number from its tab
@@ -53,12 +53,13 @@ The Build tab now shows just its name and how many tickets are in the lane, like
 ## Review log
 Round 1 (codex): changes requested: F1 AC4 explicitly requires the Delivery log to list the updated tests.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 227,990
-- Elapsed since build started: 11 min
+- Reviewer tokens: 338,685
+- Elapsed since build started: 24 min
 - Changed lines: 13 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new behaviour (AC4):
@@ -224,6 +225,85 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The Build tab shows only its name and lane count, including for screen readers. The black bar still reports how many need attention. The required test record is now complete, and all reviewed tests passed. Ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3d6ac9d60d5fdf2dfd3e9f742fc0b7e561730837",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c4f1-65ef-71a2-801e-95e4e84a5df6",
+    "builder_response": "- Tests failed together at ship: 0135 AC1-AC2 (test/panel-0135.test.mjs), a real-browser test that lists each tab's children and still expected Build to hold a `needs` span. It's an old test of the behaviour this ticket removes, which my round 1 run didn't bring in (it names no changed file). It was not on the failing-before list.\n- Merged main into the ticket branch: no conflicts.\n- Changed: test/panel-0135.test.mjs's BEFORE list now expects Build's tab to hold ['H2', 'tab-n'], like the others. Added it to the Delivery log's list of changed tests (AC4).\n- Tests run: test/panel-0135.test.mjs test/panel-0609.test.mjs test/panel-0477.test.mjs test/panel-0410.test.mjs test/panel-0474.test.mjs test/panel-0425.test.mjs test/panel-0481.test.mjs test/panel-0582.test.mjs test/panel-0440.test.mjs test/panel-0426.test.mjs (174 pass, 0 fail, 3 skipped by 0078's checks as before).\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 337059,
+      "cached_input_tokens": 280064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1626,
+      "reasoning_output_tokens": 12
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 13427,
+      "cached": 96768,
+      "write": 0,
+      "output": 500
+    },
+    "cost_usd": 0.0415308,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:25:23.834Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains only Build's name and lane-count spans; drawTabs writes only lane counts. Both 0609 AC1 tests and the updated real-browser 0135 AC1-AC2 test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawBar's needs-you line remains unchanged by the merged diff. Passing 0609 AC2 checks singular and plural counts and hiding the line when building."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "drawTabs uses the same name-and-count accessible label for every tab. The 0609 AC3 and revised 0582 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The updated 0135 test checks actual browser tab children, preserving its other assertions. The Delivery log lists it alongside the other changed tests. Fresh output records 174 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0609-drop-build-s-needs-you-number-from-its-tab.md",
+        "issue": "The previously missing list of changed tests is now complete, including the additional 0135 browser test.",
+        "suggested_fix": "No further action required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change meets all criteria. The additional browser test now correctly expects Build's name and count only, and all tests run this round passed. The black bar and screen-reader behaviour remain correct. No blocking concerns remain."
   }
 }
 ```
