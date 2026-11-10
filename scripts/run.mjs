@@ -11,6 +11,7 @@ import { foremanFixQueue } from './foreman-fix.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { fillSession, timedArgv } from './codex-build.mjs';
 import { countStop, sleepQueue, sleepWatch } from './stop-wait.mjs';
+import { usageLimitQueue } from './usage-limit.mjs';
 import { endBuild } from './stop-end.mjs';
 import { saveForeman, switchingReady } from './foreman.mjs';
 import { prMode } from './pull-request.mjs';
@@ -19,7 +20,7 @@ import { buildEnv } from './build-env.mjs';
 import { stopPanelsOfRun } from './build-panels.mjs';
 import { builderModelNote } from './build-model.mjs';
 import { builderSettings, liveSettings } from './run-settings.mjs';
-import { launchPlan, ignoredBuildersNote } from './ticket-builder.mjs';
+import { launchPlan, launchAgent, ignoredBuildersNote } from './ticket-builder.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
 import { recordedRun, keepsLock } from './run-lock.mjs';
@@ -184,6 +185,7 @@ function runOn(worker) {
       // A build killed by a signal is left without an exit, so the next check can resume it.
       const inHand = signal && killedInHand(id);
       if (!inHand) recordExit(id, recordFile, signal ? null : code);
+      if (!signal && limits.ended(id, log, recordFile)) return tick(); // 0622: speck run carries it on once the limit resets
       reportIfStillReady(id, log);
       if (!inHand) lookInto(id, log);
     }
@@ -289,6 +291,7 @@ function runOn(worker) {
       if (!inHand) recordExit(id, b.file, null);
       if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; }
       console.log(`${id} build (session ${b.session}, process ${b.pid}) stopped.`);
+      if (!inHand && limits.ended(id, b.log, b.file)) continue; // 0622
       reportIfStillReady(id, b.log);
       if (!inHand) lookInto(id, b.log);
     }
@@ -371,11 +374,12 @@ function runOn(worker) {
     }
   };
 
-  const handBacks = handBackQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill });
-  const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo) }); // 0284
+  const limits = usageLimitQueue({ repo, runs: () => runsDir(repo), settings, running, startBuild, resumeHint, countStop, statusOf: id => statusData(repo).tickets.find(t => t.id === id)?.status ?? null }), heldBuild = id => limits.holdsBuild(id); // 0622: Claude's usage limit holds every start on Claude until it resets
+  const handBacks = handBackQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill, heldBuild });
+  const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), heldBuild }); // 0284
   const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344
   const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }); // 0286
-  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), cfg, settings, running, startBuild, ships }); // 0287: the Foreman agent, for stops speck has no steps for
+  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), cfg, settings, running, startBuild, ships, heldBuild, heldAgent: agent => limits.holds(agent) }); // 0287: the Foreman agent, for stops speck has no steps for
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => ships.running(), launched: () => [...launched], running: () => [...running],
     stopLoop: () => clearInterval(loop), handOver: () => { kept = []; }, stayed: () => { const ends = kept || []; kept = null; for (const end of ends) endOf(...end); } });
@@ -385,9 +389,10 @@ function runOn(worker) {
   const lock = worker ? process.ppid : process.pid;
   const holding = keepsLock(() => runsDir(repo), lock, stop); // 0321: one no longer holding the lock stops, leaving its builds and ship running
   const foreman = (tickets, ready, switching = null) => holding() && // 0321: only the speck run holding the lock writes it
-    saveForeman(runsDir(repo), { lock, max: last.max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) } }); // 0299; 0295: none waits to ship in pull request mode
+    saveForeman(runsDir(repo), { lock, max: last.max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) }, ...(limits.view() ? { limit: limits.view() } : {}) }); // 0299; 0295: none waits to ship in pull request mode; 0622
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
+    if (limits.waiting(t.id)) return { kind: 'limit', why: 'its build stopped on Claude\'s usage limit, and speck run will carry it on' }; // 0622
     if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
     const runs = runsDir(repo);
     // 0327: committed since its build ended still ready. 0376: or committed ready since `speck stop` ended its build.
@@ -430,6 +435,7 @@ function runOn(worker) {
     const tickets = readTickets();
     if (!tickets) return;
     adoptSeen(tickets); sleeps.check(tickets); // 0344: time asleep since the last check isn't build time for builds in hand through it
+    limits.check(tickets); // 0622: once Claude's usage limit has reset, each build that stopped on it, before anything else takes a slot
     if (prs) prs.check(tickets); else ships.check(tickets);
     foremanFixes.check(tickets); // 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
     goWiths.check(tickets); // 0284: blocked tickets you went with the recommendation for, before any killed build's resume
@@ -439,7 +445,7 @@ function runOn(worker) {
     for (const t of tickets) {
       if (running.has(t.id) || (t.status !== 'building' && t.status !== 'reviewing')) continue;
       const rec = buildKilled(runs, t.id);
-      if (!rec) continue;
+      if (!rec || heldBuild(t.id)) continue;
       if (Object.hasOwn(rec, 'resumed')) { reportStopped(t.id, rec, 'speck run had already resumed it once, so it won\'t resume it again'); continue; }
       if (now && running.size < now.max) resumeKilled(t.id, rec);
     }
@@ -452,6 +458,7 @@ function runOn(worker) {
       if (own) { wait(t, own.kind, own.why); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
       if (!now) { wait(t, 'builder', live.why()); continue; }
+      if (limits.holds(launchAgent(now.cfg, now.command, t))) { wait(t, 'limit', 'Claude\'s usage limit is reached'); continue; } // 0622
       if (running.size >= now.max) { wait(t, 'slots', `all ${now.max} build slot${now.max === 1 ? '' : 's'} in use`); continue; }
       launch(t);
       if (!launched.has(t.id) && failed.has(t.id)) wait(t, failed.get(t.id).kind, failed.get(t.id).why);

@@ -46,6 +46,7 @@ When a build stops on Claude's usage limit, speck waits until the limit resets, 
 - Checked 2026-11-10: Claude Code's stream-json output includes `rate_limit_event` lines with `status` (`allowed`, `allowed_warning`, `rejected`) and `resetsAt` as Unix seconds (this repo's own build logs).
 - Relies on Claude Code's stream-json `rate_limit_event`, as above.
 - Failing before this build: none
+- Self-check: a wait that can't be saved now leaves the build to be handled as any other stop, instead of counting it as waiting with nothing to resume it; added a test.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

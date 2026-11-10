@@ -83,7 +83,7 @@ export function resumeFor(words, cfg, id, rec, message, providers = knownProvide
 // `startBuild` starts one as speck run does, and `runs()` is its runs folder.
 // 0549: settings() gives the builder settings ({ cfg, words, max }) as they are now, or null while they can't start a
 // build, so each hand-back starts with them.
-export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, words, max }), running, startBuild, saveRecord, resumeHint, runs, fill = () => null }) {
+export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, words, max }), running, startBuild, saveRecord, resumeHint, runs, fill = () => null, heldBuild = () => false }) {
   // A ship speck run started that needs work on its ticket, kept in the build's run record as hand_back, so a restart
   // still hands it back. Carried out by resumeHandBack, from check, once a build slot is free. A ticket whose build
   // session can't be resumed is said once, here, with what to do.
@@ -137,7 +137,7 @@ export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, 
   // One whose branch has moved since its ship (worked on by hand, say) is dropped: its next ship decides afresh.
   const check = tickets => {
     for (const t of tickets) {
-      if (t.status !== 'approved' || t.build_running || running.has(t.id)) continue;
+      if (t.status !== 'approved' || t.build_running || running.has(t.id) || heldBuild(t.id)) continue; // 0622: heldBuild, while its agent's usage limit lasts
       const p = pending(t.id);
       if (!p) continue;
       if (!p.live) { const { hand_back: _, ...kept } = p.rec; try { saveRecord(p.file, kept); } catch { /* tried again next check */ } continue; }

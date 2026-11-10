@@ -134,10 +134,10 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
 // its exit and go_with, keeping the choice as went_with, so the board shows the build running and it's resumed once.
 // A choice whose branch has moved since, or whose session is in use, was carried on by hand: it's dropped.
 // 0549: settings() gives the builder settings ({ cfg, words, max }) as they are now, or null while they can't start one.
-export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, max }), running, startBuild, saveRecord: save, resumeHint: hint = resumeHint, runs, repo }) {
+export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, max }), running, startBuild, saveRecord: save, resumeHint: hint = resumeHint, runs, repo, heldBuild = () => false }) {
   const check = tickets => {
     for (const t of tickets) {
-      if ((t.status !== 'building' && t.status !== 'reviewing') || t.build_running || running.has(t.id)) continue;
+      if ((t.status !== 'building' && t.status !== 'reviewing') || t.build_running || running.has(t.id) || heldBuild(t.id)) continue; // 0622
       const rec = readRecord(runs(), t.id), g = pendingOf(rec);
       if (!g) continue;
       const file = path.join(runs(), `${t.id}.json`), who = g.by === 'foreman' ? 'I' : 'you', log = m => console.log(g.by === 'foreman' ? speckSays(m) : m); // 0286, 0591: the engineering manager's lines are its own
