@@ -12,7 +12,7 @@ function outputPath(repo, t) {
   return path.join(mainCheckout(repo), outputRel(t));
 }
 const outputRel = t => path.join('outputs', path.posix.normalize(ticketOutput(t).trim().replace(/\\/g, '/')));
-function mainCheckout(repo) {
+export function mainCheckout(repo) {
   try { return worktreeList(repo)[0]?.path || repo; } catch { return repo; /* not a git checkout: this one */ }
 }
 

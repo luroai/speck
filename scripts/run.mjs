@@ -11,7 +11,7 @@ import { foremanFixQueue } from './foreman-fix.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { fillSession, timedArgv } from './codex-build.mjs';
 import { countStop, sleepQueue, sleepWatch } from './stop-wait.mjs';
-import { usageLimitQueue } from './usage-limit.mjs';
+import { limitQueues } from './reviewer-limit.mjs';
 import { endBuild } from './stop-end.mjs';
 import { saveForeman, switchingReady } from './foreman.mjs';
 import { prMode } from './pull-request.mjs';
@@ -374,7 +374,7 @@ function runOn(worker) {
     }
   };
 
-  const limits = usageLimitQueue({ repo, runs: () => runsDir(repo), settings, running, startBuild, resumeHint, countStop, statusOf: id => statusData(repo).tickets.find(t => t.id === id)?.status ?? null }), heldBuild = id => limits.holdsBuild(id); // 0622: Claude's usage limit holds every start on Claude until it resets
+  const limits = limitQueues({ repo, runs: () => runsDir(repo), settings, running, startBuild, resumeHint, countStop, statusOf: id => statusData(repo).tickets.find(t => t.id === id)?.status ?? null }), heldBuild = id => limits.holdsBuild(id); // 0622: Claude's usage limit holds every start on Claude until it resets. 0623: and a reviewer's, each build that stopped on it
   const handBacks = handBackQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill, heldBuild });
   const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), heldBuild }); // 0284
   const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344

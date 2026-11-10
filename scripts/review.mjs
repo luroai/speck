@@ -14,6 +14,7 @@ import { tildePaths } from './private-words.mjs';
 import { codexSpend } from './round-cost.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
 import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
+import { REVIEWER_LIMITED, stopOnLimit, holdOnLimit, clearLimit } from './reviewer-limit.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -298,6 +299,7 @@ function reviewSetup(repo, id, opts) {
 
 // Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
 // reviewer starts, and puts the ticket back exactly as it was if the round fails, so only a recorded round leaves the status changed.
+// 0623: unless the reviewer's usage limit refused it: the ticket stays reviewing, for speck run to carry on.
 // 0223: the round counts as running from then until it's recorded, fails or times out.
 function reviewRound(repo, id, opts, run) {
   const s = reviewSetup(repo, id, opts);
@@ -306,7 +308,7 @@ function reviewRound(repo, id, opts, run) {
   try {
     if (marked === s.ticket.raw) return run(s);
     fs.writeFileSync(s.ticket.file, marked);
-    try { return run(s); } catch (e) { fs.writeFileSync(s.ticket.file, s.ticket.raw); throw e; }
+    try { return run(s); } catch (e) { if (e.code !== REVIEWER_LIMITED) fs.writeFileSync(s.ticket.file, s.ticket.raw); throw e; }
   } finally { ended(); }
 }
 
@@ -349,7 +351,7 @@ function runCodexReview(repo, id, s) {
   const r = runLimited('codex', args, { cwd: repo, input: prompt, ms });
   if (r.timedOut) { fs.rmSync(out, { force: true }); throw new SpeckError(tookTooLong('codex', ms)); }
   if (r.error) throw new SpeckError(`codex failed: ${r.error.message}`);
-  if (r.status !== 0) throw new SpeckError(codexFailure(r.status, r.stdout, r.stderr));
+  if (r.status !== 0) { const why = codexFailure(r.status, r.stdout, r.stderr); stopOnLimit(repo, ticket.fm.id || id, 'codex', why); throw new SpeckError(why); }
   const events = r.stdout.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return {}; } });
   const thread = events.find(e => e.type === 'thread.started')?.thread_id || (round > 1 ? lastThread : undefined);
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
@@ -402,9 +404,11 @@ export function cmdReview(args) {
   }
   keepExitCode(repo, pad, worker);
   let rec;
-  if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, s));
-  else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, s));
+  const held = s => { holdOnLimit(repo, pad, reviewer); return s; }; // 0623: inside the round, so the ticket is left as a refused round leaves it
+  if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, held(s)));
+  else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, held(s)));
   else unsupported(id, reviewer);
+  clearLimit(repo, pad);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }

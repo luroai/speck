@@ -34,6 +34,7 @@ import { recordWatchSpend } from './spend.mjs';
 import { providerKey } from './keys.mjs';
 import { usualBuild, runningLong, canRunLong } from './long-build.mjs';
 import { limitWaiting } from './usage-limit.mjs';
+import { reviewerWaiting } from './reviewer-limit.mjs';
 import { takeAt, resumeTime, resumeClock, resumeWhy } from './resume-at.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
@@ -216,7 +217,7 @@ export function agentView(runs, tickets = [], name = 'speck') {
   return {
     running: s.running ? { id: s.running.id, what: textOf(s.running.what), started: textOf(s.running.started) } : null, // started: 0446
     waiting: s.queue.map(q => q.id),
-    resuming: [...s.resumes.map(r => r.id), ...limitWaiting(runs)], // 0616: the builds speck run is to resume, taken off as it tries each. 0622: and those waiting out Claude's usage limit
+    resuming: [...new Set([...s.resumes.map(r => r.id), ...limitWaiting(runs), ...reviewerWaiting(runs)])], // 0616: the builds speck run is to resume, taken off as it tries each. 0622, 0623: and those waiting out a usage limit
     scheduled: s.resumes.filter(r => typeof r.at === 'string' && Number.isFinite(Date.parse(r.at))).map(r => ({ id: r.id, at: r.at, text: textOf(r.message), why: textOf(r.why) })), // 0625: those waiting for their time
     did: actions.slice(-RECENT).reverse().map(a => ({ id: a.id, action: a.action, did: a.resume_at ? `scheduled its build's resume${utc(a.resume_at)}` : ACTIONS[a.action], text: textOf(a.text), why: textOf(a.why), at: textOf(a.at), ...(a.fix_id ? { fix_id: a.fix_id } : {}),
       ...(a.action === 'ask' ? { outcome: askOutcome(a) } : {}) })),
