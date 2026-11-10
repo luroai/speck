@@ -70,7 +70,7 @@ Round 3 (codex): approve.
 - Elapsed since build started: 14 min
 - Changed lines: 18 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
-- Tests changed to check the new behaviour (AC4): test/panel-0041.test.mjs (`iconOf` finds an open ticket's chain or padlock mark after its title, not right after its id) and test/panel-0483.test.mjs (AC2: an open card's line is id, title, then its mark). No other test changed, and none failed.
+- Tests changed to check the new behaviour (AC4): test/panel-0041.test.mjs (`iconOf` finds an open ticket's chain or padlock mark after its title, not right after its id) and test/panel-0483.test.mjs (AC2: an open card's line is id, title, then its mark), and, after ship found it, test/panel-0416.test.mjs (AC3: the flash ring on an open row's fill is the one other animation it allows, and `animation: none` isn't one). No other test changed, and none failed.
 - Follow-ups: a hovered closed row (desktop only) still has its raised fill run to its text's edges; saved to the inbox as speck/ideas/2026-11-10-give-a-hovered-closed-row-room-inside-its-fill.md.
 
 ## Review rounds
