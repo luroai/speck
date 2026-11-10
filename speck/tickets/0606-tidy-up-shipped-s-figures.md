@@ -43,6 +43,7 @@ Shipped's figures are one tidy grid of even tiles, with a quiet link to show the
 - Decided: shipped today moves up from the other figures so the four that always show fill two rows of two on a phone, and the four others fill two more; at 480 px and wider, each group is one row of four.
 - Today: the figures are built in `templates/panel.js` (`tiles('shipped-stats', …)` and `tiles('shipped-more', …)`, with `#more-stats`, from about line 1297), styled in `templates/panel-cards.css` (from about line 181, 0157's tiles and 0587's toggle).
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
