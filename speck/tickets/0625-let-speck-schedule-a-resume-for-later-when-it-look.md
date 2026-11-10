@@ -45,6 +45,7 @@ The watcher can schedule a ticket's resume for a set time, and a look that could
 - Waits for 0622, which records when a limit resets.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a run record holding a time that isn't text no longer breaks speck status; added a test.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

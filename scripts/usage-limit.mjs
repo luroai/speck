@@ -51,10 +51,10 @@ export function readLimit(runs) {
 export const limitWaiting = runs => readLimit(runs)?.builds ?? [];
 
 // `ms` in UTC as HH:MM, with its date when it's more than a day from `now`.
-const clock = (ms, now) => new Date(ms).toISOString().slice(ms - now > 864e5 ? 0 : 11, 16).replace('T', ' ');
+export const clock = (ms, now) => new Date(ms).toISOString().slice(ms - now > 864e5 ? 0 : 11, 16).replace('T', ' ');
 
 // speck run's side. ended(id, log, file) reads a build that has ended, true when it stopped on the limit and speck run
-// will carry it on; check(tickets), on each of its checks, ends the wait once it's over and resumes each stopped build
+// will carry it on; agentEnded(agent, log) does the same for the watch agent's own run (0625); check(tickets), on each of its checks, ends the wait once it's over and resumes each stopped build
 // while a build slot is free. holds(agent) and holdsBuild(id) say whether an agent, or a ticket's build, may not start
 // now, waiting(id) whether a ticket is waiting to be carried on, and view() is what the Foreman's record keeps, or null.
 // `settings`, `running`, `startBuild` and `runs` are speck run's. `countStop` leaves the wait out of the build's time.
@@ -100,6 +100,19 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
     return waits;
   };
 
+  // 0625: the watch agent's own run, whose log is `log`: true when Claude stopped it on the limit and that's recorded, so
+  // what it was looking into waits for the limit too.
+  const agentEnded = (agent, log) => {
+    if (agent !== 'claude') return false;
+    let text;
+    try { text = fs.readFileSync(log, 'utf8'); } catch { return false; }
+    const hit = limitInLog(text);
+    if (!hit) return false;
+    const s = readLimit(runs()) ?? { resets: null, carry_on: null, builds: [] };
+    reached(s, hit);
+    return save(s);
+  };
+
   const resume = (id, rec, { cfg, words }) => {
     const recordFile = path.join(runs(), `${id}.json`);
     const { argv, why } = resumeFor(words, cfg, id, rec, `Claude's usage limit has reset, so speck run has resumed the build of ticket ${id}. Carry on with /speck-build ${id} from where you left off.`);
@@ -141,7 +154,7 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
   };
 
   return {
-    ended, check, view,
+    ended, agentEnded, check, view,
     holds: agent => agent === 'claude' && held(readLimit(runs())),
     holdsBuild: id => held(readLimit(runs())) && agentOf(readRec(path.join(runs(), `${id}.json`))) === 'claude',
     waiting: id => limitWaiting(runs()).includes(String(id)),

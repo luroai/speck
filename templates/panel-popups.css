@@ -170,8 +170,11 @@
   #foreman.log-view .back::before { content: '‹'; margin-right: 4px; }
   #foreman.log-view .top .title { display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 20px; line-height: 24px; font-weight: 600; white-space: normal; }
   #foreman.log-view .top .title::before { content: none; }
-  #foreman.log-view .log-status { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--muted); }
-  #foreman.log-view .log-said { min-width: 0; }
+  #foreman.log-view .log-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--muted); }
+  #foreman.log-view .log-said { flex: 1 1 0; min-width: 0; }
+  /* 0625: the resumes speck has scheduled, on a row of their own under its line */
+  #foreman.log-view .log-scheduled { flex: 0 0 100%; margin: 0; padding: 0; list-style: none; font-size: 14px; line-height: 20px; color: var(--text); overflow-wrap: anywhere; }
+  #foreman.log-view .log-scheduled[hidden] { display: none; }
   #foreman.log-view .log-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   #foreman.log-view .log-filter { box-sizing: border-box; padding: 0 12px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; } /* 0612: the secondary style, muted until pressed, its sides 12 px so the four fit a phone's line */
   #foreman.log-view .log-filter:hover { color: var(--text); }

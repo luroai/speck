@@ -708,6 +708,12 @@ function runLogLine(line) {
   const fail = /^\d{4,} (?:build failed|didn't ship)/.test(text);
   return { at: m ? m[1] : '', text, kind: fail ? 'fail' : 'msg', ...(speck ? { speck } : {}) };
 }
+// 0625: the resumes speck has scheduled, soonest first, each as a line for the Pipeline log.
+function scheduledLines(agent) {
+  const list = agent && Array.isArray(agent.scheduled) ? agent.scheduled : [];
+  return list.filter(r => r && typeof r.at === 'string').slice().sort((a, b) => a.at.localeCompare(b.at))
+    .map(r => `${r.id} resumes at ${r.at.slice(0, 16).replace('T', ' ')} UTC${r.why ? `: ${/[.!?]$/.test(r.why) ? r.why : `${r.why}.`}` : '.'}`);
+}
 // 0592: the Pipeline log's filters, and which of them a line is in: the engineering manager's own lines and anyone going
 // with a recommendation are decisions.
 const RUN_LOG_FILTERS = Object.freeze([['all', 'Everything'], ['decisions', 'Decisions'], ['ships', 'Ships'], ['builds', 'Builds']]);
