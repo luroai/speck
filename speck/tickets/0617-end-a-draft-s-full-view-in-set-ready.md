@@ -67,6 +67,7 @@ Round 2 (codex): approve.
   - `test/panel-0062.test.mjs`: the body helper likewise; AC2 now finds the pane's Set ready in its bar and none in its readiness list; AC3 finds a refusal in the bar rather than under a button in the list.
   - `test/panel-0063.test.mjs`: its sections helper reads the body as the view's third part.
   - `test/panel-0465.test.mjs`: a draft's view has four parts, the bar after its body.
+  - `test/panel-0142.test.mjs` and `test/panel-0424.test.mjs` (found when ship's full run failed): they read the view's body as its third part, not its last.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
