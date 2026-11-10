@@ -143,7 +143,6 @@ test('0426 AC3: every link is blue, visited or not, including the pull request l
 
 test('0426 AC3: needs you, waiting for you, passing checks, links, and the focus ring take those colours', () => {
   // needs you, a stopped build and the high-risk tag: red
-  uses('.tab .needs', 'color', '--bad');
   uses('.bezel.needs', 'border-color', '--bar-needs');
   uses('#full-ticket .live-now .say.bad', 'color', '--bad'); // 0585: a Build row has no border, the full view says it
   uses('.tag.high', 'color', '--bad');

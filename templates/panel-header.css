@@ -54,9 +54,6 @@
   .tab .tab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-ui); font-size: 14px; font-weight: 600; line-height: 1; }
   .tab .tab-n { flex: none; font-family: var(--font-ui); font-size: 12px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--muted); }
   .tab .tab-n:empty { display: none; }
-  .tab .needs { flex: none; font-family: var(--font-mono); font-size: 12px; line-height: 1; }
-  .tab .needs { color: var(--bad); }
-  .tab .needs:empty { display: none; }
 
   .bezel { border-radius: 12px; }
 

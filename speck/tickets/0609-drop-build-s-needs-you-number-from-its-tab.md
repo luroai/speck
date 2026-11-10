@@ -41,6 +41,7 @@ The Build tab shows only the lane's count, like the other tabs.
 - From 0582's build, which kept the number as its criteria didn't ask to remove it. Today: `drawTabs` in `templates/panel-header.js`, styled in `templates/panel-header.css`. Waits for 0607, which changes the same stylesheet.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
