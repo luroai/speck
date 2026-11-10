@@ -1,7 +1,7 @@
 ---
 id: "0628"
 title: "Let the owner-name check skip the price list"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T20:31:22.124Z"
+approved: "2026-11-10T20:36:06.882Z"
 
 ---
 # 0628 · Let the owner-name check skip the price list
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On a machine whose private words include a word that's also part of a model's name, the check that no tracked file names the owner (0082 AC2, in `test/luro-0082.test.mjs`) fails on `scripts/prices.json`, which holds model names copied from LiteLLM's public price list. On 2026-11-10 a word added to the private words matched Google model names there, so the check fails on `main` on this machine, and every ship's test run with it.
@@ -50,9 +51,15 @@ The check that keeps your private words out of speck's files no longer trips ove
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC2 explicitly requires the Delivery log to explain how both behaviours were checked without recording the private word.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 198,113
+- Elapsed since build started: 5 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - How AC2 was checked: `test/private-words-0628.test.mjs` picks, at run time, a word from the model names in `scripts/prices.json` that no other tracked file outside `speck/` holds, so the word is never written down. It puts that word in a temporary home's private-words list and runs 0082 AC2 against this repo in a child run: it passes with this change, and failed on `scripts/prices.json` without it (checked by reverting the change). A second test runs `filesNaming` on a temporary repo and finds the word in every other tracked file outside `speck/`, including a `prices.json` at the top or under `docs/scripts/` and `scripts/prices.json.bak`. 0084's existing tests still show 0082 AC2 failing on a listed word in any other tracked file.
 
