@@ -53,7 +53,7 @@ test('0616 AC1: with watch fix or decide, an exited build speck has looked into 
 });
 
 test('0616 AC1: a killed build speck run has already resumed once, or that it cannot resume as it is off, is under Needs you', async () => {
-  assert.deepEqual(listed(await show(board([T('0701', 'building', { ...KILLED, build_resumed: true })]))), ['Needs you 1', '0701']);
+  assert.deepEqual(listed(await show(board([T('0701', 'building', { ...KILLED, build_wont_resume: true })]))), ['Needs you 1', '0701']);
   const off = await show(board([T('0701', 'reviewing', KILLED)], { on: false }));
   assert.deepEqual(listed(off), ['Needs you 1', '0701']);
   assert.match(whereOf(off, '0701').textContent, /^Build stopped\b/);
@@ -64,19 +64,29 @@ test('0616 AC1: with speck run off, an exited build is under Needs you whatever 
   assert.deepEqual(listed(p), ['Needs you 1', '0701']);
 });
 
-test('0616 AC1: the board says when speck run has already resumed a killed build once', () => {
+test('0616 AC1: the board says when speck run won\'t resume a killed build: resumed once already, or it can\'t', () => {
   const r = panelRepo();
   assert.equal(r.run('set', '1', 'status', 'building').status, 0);
   r.g('commit', '-qam', 'building');
   const dead = spawnSync(process.execPath, ['-e', ''], { stdio: 'ignore' }).pid;
   const rec = { id: '0001', session: crypto.randomUUID(), cwd: r.dir, started: ago(1200), pid: dead, command: ['claude'] };
   fs.mkdirSync(runsPath(r.dir, ''), { recursive: true });
-  fs.writeFileSync(runsPath(r.dir, '0001.json'), JSON.stringify(rec));
-  const first = statusData(r.dir).tickets.find(t => t.id === '0001');
+  const wont = record => { fs.writeFileSync(runsPath(r.dir, '0001.json'), JSON.stringify(record)); return statusData(r.dir).tickets.find(t => t.id === '0001'); };
+  const first = wont(rec);
   assert.equal(first.build_stopped, true);
-  assert.equal(first.build_resumed, false);
-  fs.writeFileSync(runsPath(r.dir, '0001.json'), JSON.stringify({ ...rec, resumed: ago(600) }));
-  assert.equal(statusData(r.dir).tickets.find(t => t.id === '0001').build_resumed, true);
+  assert.equal(first.build_wont_resume, false, 'speck run resumes it on its next check');
+  assert.equal(wont({ ...rec, resumed: ago(600) }).build_wont_resume, true, 'resumed once already');
+  // speck run refuses to resume a build whose run record has no session (resumeFor), and says so once in its log
+  const { session, ...none } = rec;
+  const refused = wont(none);
+  assert.equal(refused.build_stopped, true);
+  assert.equal(refused.build_wont_resume, true, 'it can\'t be resumed');
+});
+
+test('0616 AC1 AC3: a killed build speck run can\'t resume is under Needs you and counted in the bar', async () => {
+  const t = T('0701', 'building', { ...KILLED, build_wont_resume: true });
+  assert.deepEqual(listed(await show(board([t]))), ['Needs you 1', '0701']);
+  assert.equal(word([t]), 'Needs you 1');
 });
 
 // ---------- AC2: speck is about to carry it on ----------
@@ -119,7 +129,7 @@ test('0616 AC2: a killed build speck run will resume on its next check stays und
 test('0616 AC3: the bar\'s Needs you counts a stopped build nothing will carry on', () => {
   assert.equal(word([T('0701', 'building', EXITED)]), 'Needs you 1');
   assert.equal(word([T('0701', 'building', EXITED)], { fixing: 'off' }), 'Needs you 1');
-  assert.equal(word([T('0701', 'reviewing', { ...KILLED, build_resumed: true }), T('0702', 'blocked', { blocked_question: 'A or B?' })]), 'Needs you 2');
+  assert.equal(word([T('0701', 'reviewing', { ...KILLED, build_wont_resume: true }), T('0702', 'blocked', { blocked_question: 'A or B?' })]), 'Needs you 2');
   assert.equal(word([T('0701', 'building', EXITED)], { fixing: 'fix', ag: agent({ did: [{ id: '0701', action: 'diagnose', at: ago(60) }] }) }), 'Needs you 1');
 });
 

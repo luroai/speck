@@ -246,14 +246,14 @@ function capturedAt(body) {
   return { on: d, time: h !== undefined && +h < 24 && +mi < 60 ? `${h}:${mi}` : null };
 }
 // 0616: whether a ticket's build stopped before finishing and nothing will carry it on, as stoppedForYou in
-// scripts/foreman.mjs, which the bar's Needs you counts by: speck run is off, or it has resumed a killed build once
-// already, or speck isn't looking into an exited one, waiting to (only with watch fix or decide) or about to resume it.
+// scripts/foreman.mjs, which the bar's Needs you counts by: speck run is off, or it won't resume a killed build (it has
+// resumed it once already, or can't), or speck isn't looking into an exited one, waiting to (only with watch fix or decide) or about to resume it.
 function leftStopped(t, on, foreman) {
   if (t.status !== 'building' && t.status !== 'reviewing') return false;
   const exit = t.build_exit && typeof t.build_exit === 'object' ? t.build_exit : null;
   if (!exit && t.build_stopped !== true) return false;
   if (!on) return true;
-  if (!exit) return t.build_resumed === true;
+  if (!exit) return t.build_wont_resume === true;
   const f = foreman && typeof foreman === 'object' ? foreman : {}, a = f.agent && typeof f.agent === 'object' ? f.agent : {};
   const id = String(t.id), has = v => (Array.isArray(v) ? v : []).map(String).includes(id);
   if ((a.running && String(a.running.id) === id) || has(a.resuming)) return false;

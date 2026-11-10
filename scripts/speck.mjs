@@ -31,7 +31,7 @@ import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs'
 import { withForeman, foremanBoard, foremanTicketLines, decidedFor, withCalls } from './foreman-took.mjs';
 import { agentView, cmdForeman, cmdWatch } from './foreman-agent.mjs';
 import { logTail } from './build-log.mjs';
-import { buildStop, countStop } from './stop-wait.mjs';
+import { buildStop, countStop, wontResume } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
 import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
@@ -472,7 +472,7 @@ export function statusData(repo) {
       build_running: buildRunning(runs, t.fm.id, leads),
       handed_back: handedBack(runs, t.fm.id),
       build_stopped: !!stop?.killed && !stop.counted,
-      build_stopped_at: stop?.killed && !stop.counted && stop.since !== null ? new Date(stop.since).toISOString() : null, build_resumed: !!stop?.killed && !stop.counted && Object.hasOwn(buildKilled(runs, t.fm.id) ?? {}, 'resumed'), // 0616: resumed once, so speck run won't again
+      build_stopped_at: stop?.killed && !stop.counted && stop.since !== null ? new Date(stop.since).toISOString() : null, build_wont_resume: !!stop?.killed && !stop.counted && wontResume(cfg, runs, t.fm.id), // 0616: resumed once already, or it can't be
       ship: shipState(runs, t.fm.id), watch_tokens: watch.tokens, watch_cost_usd: watch.cost_usd, delegated_tokens: delegated.tokens, delegated_cost_usd: delegated.cost_usd, // 0525: the watch agent's spend, 0534: Codex sessions started in its worktree
       pull_request: prShown(runs, t.fm.id, t.fm), // 0295: its pull request's link, or why it couldn't be opened
       builder_tokens: builder.tokens, builder_cost_usd: builder.cost_usd, builder_models: builder.models ?? [], reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds, runs, t.fm.id), ...totalSpent(runs, t.fm.id, ticketRounds(t.raw).rounds, Date.now() - 7 * 864e5), // 0529, 0530, 0595: and what it spent in the last 7 days: builder_models, 0526: total_cost_usd, total_tokens, total_cost_unknown

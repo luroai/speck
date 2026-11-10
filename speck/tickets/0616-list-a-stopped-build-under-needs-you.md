@@ -1,7 +1,7 @@
 ---
 id: "0616"
 title: "List a stopped build under Needs you"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ approved: "2026-11-10T17:10:42.112Z"
 ---
 # 0616 · List a stopped build under Needs you
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 A ticket whose build stopped before finishing sits under Building with a grey dot, among the tickets being worked on, even when nothing is going to carry it on. It needs someone, so it's easy to miss there.
@@ -75,7 +75,6 @@ Round 2 (codex): approve.
   - `test/panel-0416.test.mjs`: "0416 AC2: each row says its stage in the same words, with its stage under its title and a dot for what it needs" (0907 now `needs`)
 - Follow-ups:
   - The bridge (All projects) doesn't count a stopped build under Needs you yet, so it can disagree with a project's bar: speck/ideas/2026-11-10-count-stopped-builds-on-the-bridge.md.
-  - Known limit: a killed build that speck run can't resume (no resume command for its agent, or its run record can't be saved) stays under Building until speck run says so in its log, as the board doesn't record that refusal.
   - Tidy-up: the rule lives twice, in scripts/foreman.mjs (stoppedForYou) and templates/panel-model.js (leftStopped), as the page can't import node modules; a change to one needs the other.
 
 ## Review rounds
@@ -247,6 +246,101 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Stopped builds now appear under Needs you when nothing will carry them on, including after a failed resume. Builds awaiting automatic attention stay under Building. Both previous findings are resolved, and all reported tests pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · changes_requested · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "379155c1a07ff5e22b4116f4af1965bff8908029",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c66d-4389-71a2-b88b-5357a85cb1e0",
+    "builder_response": "- Merge round after speck ship's \"Tests fail together\": main merged into the ticket branch with `git merge main`, no conflicts.\n- Failing tests: \"0167 AC2 AC5: in the light look, only a ticket's dot is coloured, and a Build row has only a hairline under it and no tint\" and its dark-look twin. Why: test/panel-0167.test.mjs expects its stopped build (0304, build_exit, no watcher in the stub) to have the grey dot, the old behaviour this ticket changes, like panel-0155/0171/0416 before. The `speck test --related` run before review didn't include it, as it names none of the changed files.\n- Changed: 0304's expected dot is now `--needs-you`, with a comment. No code changed. The Delivery log lists it with the other tests changed from the old behaviour (AC4).\n- Tests run: `speck test --related` with test/panel-0167.test.mjs test/stopped-needs-0616.test.mjs test/panel-0171.test.mjs test/panel-0416.test.mjs test/panel-0155.test.mjs, plus every existing test file naming a changed file (2367 pass, 0 fail).\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 648289,
+      "cached_input_tokens": 546560,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2408,
+      "reasoning_output_tokens": 76
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 23074,
+      "cached": 176768,
+      "write": 0,
+      "output": 762
+    },
+    "cost_usd": 0.0714448,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T17:17:12.660Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The normal AC1 cases pass, but stoppedForYou in scripts/foreman.mjs and leftStopped in templates/panel-model.js exclude every killed build with build_resumed false while run is on. scripts/run.mjs resumeKilled can refuse such a resume, leaving a stopped build that nothing will carry on under Building."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing AC2 tests cover pending watcher investigations, pending resumes and killed builds awaiting their first automatic resume. The merged code retains these rules."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "foremanView counts stopped builds through stoppedForYou, so a killed build whose first resume is refused is also missing from the bar's Needs you count. Other AC3 cases pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The panel-0167 change correctly updates stopped ticket 0304 to the orange dot while retaining its other visual assertions. The Delivery log lists all four updated test files. The supplied run reports 2367 passes and zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman.mjs; templates/panel-model.js",
+        "issue": "Historical watcher resume actions previously hid stopped builds after a failed resume.",
+        "suggested_fix": "Resolved by using agentView.resuming instead of historical actions; the merged code retains this fix.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0616-list-a-stopped-build-under-needs-you.md",
+        "issue": "The Delivery log previously omitted the changed tests.",
+        "suggested_fix": "Resolved: the Delivery log lists the updated tests, including panel-0167.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/run.mjs; scripts/foreman.mjs; templates/panel-model.js",
+        "issue": "A killed build whose first automatic resume is refused still stays under Building and is excluded from Needs you. resumeKilled returns without setting resumed when resumeFor cannot produce a command or saving the run record fails. Both classification rules interpret that unchanged record as an upcoming resume indefinitely. The newly added Delivery log acknowledges this limitation, but it contradicts AC1 and AC3.",
+        "suggested_fix": "Expose when a killed build cannot be resumed and have both classification rules put it under Needs you and include it in the count. Add a regression test for a refused first resume. This changes reporting, without requiring new resume behaviour.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged colour-test update is correct and both previous fixes remain intact. A newly documented gap still hides killed builds when speck cannot restart them, which defeats the ticket's purpose for that failure case. This needs fixing before approval."
   }
 }
 ```

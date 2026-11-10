@@ -8,6 +8,7 @@ import path from 'node:path';
 import { addWaited } from './core.mjs';
 import { loadConfig, commitTicketOnly, runsOf } from './speck.mjs';
 import { buildKilled, buildTicket, pidAlive, sessionInUse } from './run.mjs';
+import { cantResume } from './go-with.mjs';
 export { sleepQueue, sleepWatch } from './sleep-wait.mjs'; // 0344: time asleep, which waits like time stopped
 
 const readObject = file => { try { const v = JSON.parse(fs.readFileSync(file, 'utf8')); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; } };
@@ -67,4 +68,11 @@ export function countStop(repo, id, now = Date.now()) {
   if (commit.status === 0) return '';
   try { if (before === null) fs.rmSync(file, { force: true }); else fs.writeFileSync(file, before); } catch { /* the stretch is lost, not counted twice */ }
   return note;
+}
+
+// 0616: whether speck run won't resume a killed build of the ticket: it has resumed it once already, or it can't (as
+// resumeKilled in scripts/run.mjs refuses it). Then nothing will carry it on, and it needs you.
+export function wontResume(cfg, runs, id) {
+  const rec = buildKilled(runs, id);
+  return !!rec && (Object.hasOwn(rec, 'resumed') || cantResume(cfg, String(id), rec) !== null);
 }

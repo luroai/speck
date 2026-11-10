@@ -76,7 +76,7 @@ export function runWords(cfg) {
   try { return command ? splitCommand(command) : []; } catch { return []; }
 }
 // Why speck run couldn't resume the build in run record `rec`, in a few words, or null when it can.
-const cantResume = (cfg, id, rec) => (!rec ? 'it has no run record from speck run' : resumeFor(runWords(cfg), cfg, id, rec, '').why ?? null);
+export const cantResume = (cfg, id, rec) => (!rec ? 'it has no run record from speck run' : resumeFor(runWords(cfg), cfg, id, rec, '').why ?? null);
 
 // Whether the panel can offer the button: speck run built it, and could resume its session.
 export const goWithResumable = (runs, id, cfg) => cantResume(cfg, id, readRecord(runs, id)) === null;

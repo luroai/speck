@@ -65,7 +65,7 @@ const list = v => (Array.isArray(v) ? v : []);
 const text = v => (typeof v === 'string' ? v : '');
 
 // 0616: whether a ticket's build stopped before finishing, leaving it building or reviewing, and nothing will carry it on.
-// speck run, while it's on, resumes a killed build once, resumes a build its agent or your answer asked it to, and with
+// speck run, while it's on, resumes a killed build once if it can, resumes a build its agent or your answer asked it to, and with
 // watch fix or decide looks into one that exited. So it needs you with speck run off, a killed build already resumed
 // once, or an exited one that speck isn't looking into, waiting to look into (only with fix or decide) or about to
 // resume. `agent` is agentView's. templates/panel-model.js has the same rule for Build's groups.
@@ -74,7 +74,7 @@ export function stoppedForYou(t, { on, fixing, agent }) {
   const exit = t.build_exit && typeof t.build_exit === 'object' ? t.build_exit : null;
   if (!exit && t.build_stopped !== true) return false;
   if (!on) return true;
-  if (!exit) return t.build_resumed === true;
+  if (!exit) return t.build_wont_resume === true;
   const id = String(t.id), a = agent && typeof agent === 'object' ? agent : {}, has = v => list(v).map(String).includes(id);
   if ((a.running && String(a.running.id) === id) || has(a.resuming)) return false;
   return !(speckActs(fixing) && has(a.waiting));
