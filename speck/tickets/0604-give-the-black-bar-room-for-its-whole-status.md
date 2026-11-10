@@ -17,7 +17,7 @@ created: 2026-11-10
 started: "2026-11-10T08:45:59.870Z"
 blocked_at: ""
 waited_seconds: 10
-approved: "2026-11-10T09:09:52.597Z"
+approved: "2026-11-10T09:15:10.849Z"
 
 ---
 # 0604 · Give the black bar room for its whole status
@@ -60,12 +60,13 @@ The black bar at the top of the panel is a little taller, with a bigger speck an
 Round 1 (codex): changes requested: F1 At 320 px, names of up to 20 characters can still be cut off.
 Round 2 (codex): escalate.
 Round 3 (codex): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 4, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 527,675
-- Elapsed since build started: 24 min
+- Reviewer tokens: 673,016
+- Elapsed since build started: 29 min
 - Changed lines: 106 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Tests changed from the bar's old one-line layout to the new one (AC5):
@@ -327,6 +328,90 @@ Follow-ups (known limits, no idea notes):
     ],
     "escalation_question": "",
     "summary": "The taller bar shows the status clearly, enlarges speck and puts project switching on the project name. Tests pass, including the agreed exception for unusually wide names. That exception was chosen by speck under watch: decide, as recorded in the ticket. No blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d52de87b130854ac65d95eae2e2db87cbc7bd855",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c4b3-7c8b-7402-92d1-e72a8fd3b21f",
+    "builder_response": "- Tests run: test/panel-0134.test.mjs test/panel-0604.test.mjs (123 pass, 0 fail).\n- Ship's full run failed on \"0134 AC4: every static id is still there, and no visible text was added\". main had nothing new to merge (already up to date), so the failure was this ticket's own: that test lists the page's static text in order, and it still expected the old bar's three separators ('·', '{{repo}}', '·', '·', '{{base}}'). The bar now has two: the one before how many need you, and the one before the base branch, as the status no longer shares a line with the project. I changed its expected list to ['·', '{{repo}}', '·', '{{base}}'] with a comment saying why; no text was added, one separator went. This is a test that checked the bar's old layout (AC5), and the Delivery log now lists it. No code changed.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 670129,
+      "cached_input_tokens": 529536,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2887,
+      "reasoning_output_tokens": 225
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 73188,
+      "cached": 71680,
+      "write": 0,
+      "output": 473
+    },
+    "cost_usd": 0.158274,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T09:15:06.128Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The three-row grid, 56 px face and status/project/count content remain unchanged. The AC1 and 320 px browser tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Project selection and bridge behaviour remain unchanged. All AC2 tests passed, covering the displayed project, All projects and the single-project case."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 320 px browser test covers ordinary 20-character names, longer names and unusually wide names under the recorded decision permitting their truncation. Status text remains fully visible."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Settings retains its 44 px square size and right-hand placement. Passing AC4 and browser tests verify that pressing the status opens the Pipeline log."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "panel-0134.test.mjs now expects the two separators present in panel.html, retaining its static-id and text checks. The Delivery log lists this adjustment. Current output confirms 123 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.css",
+        "issue": "The recorded decision permits truncating unusually wide names, and the browser test covers that exception. This round does not change that behaviour.",
+        "suggested_fix": "No further change required under the recorded decision.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The bar remains approved. This round correctly updates an older test for the separator removed by the new layout and records it in the Delivery log. The reported tests pass, with no new blocking concerns."
   }
 }
 ```
