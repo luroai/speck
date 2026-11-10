@@ -1,7 +1,7 @@
 ---
 id: "0624"
 title: "Show a ticket's facts as tiles"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T22:59:55.843Z"
 ---
 # 0624 · Show a ticket's facts as tiles
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Shipped's figures are now even grey tiles that are easy to scan (0606). A ticket's full view still lists its facts (priority, size, risk, whether it ships by itself, builder, reviewer, costs and tokens) as loose labels and values, so the two views look like different designs and the facts are harder to read.
@@ -46,7 +46,7 @@ A ticket's facts in its full view are tiles like Shipped's figures.
 - Self-check: a long Waits on line was still cut off in its tile, so in the full view it now wraps (a test covers it); the Delivery log's list is left to the reviewer, as no test may read this repo's tickets (0122).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket's full view now shows its facts (priority, size, risk, builder, reviewer, costs and so on, and what it waits for) as soft grey tiles like the figures in Shipped, instead of loose labels and values. There are two tiles to a row on a phone and three on anything 480 px wide or more, and the last tile stretches so no row ends with a gap. To see it, open any ticket in full, in either look. The facts themselves haven't changed, and long ones such as a model's name wrap inside their tile.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +56,80 @@ A ticket's facts in its full view are tiles like Shipped's figures.
 
 ## Delivery log
 Tests changed from the old facts layout to the tiles: test/panel-0583.test.mjs (0583 AC3: its facts are tiles) and test/panel-0465.test.mjs (0465 AC4: tiles two or three to a row, the last taking what's left).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a73eaf44d4f211443f93b9351b7aa7ed1f4ccfc1",
+    "session": "fresh",
+    "thread_id": "01a1c7b7-6e8b-77e1-aff3-052546ad796c",
+    "builder_response": "- Tests run: test/panel-0624.test.mjs test/panel-0583.test.mjs test/panel-0465.test.mjs test/panel-0161.test.mjs test/panel-0613.test.mjs test/panel-0140.test.mjs test/panel-0419.test.mjs test/panel-0587.test.mjs, plus the related files speck test --related picked and the repo checks.\n- The tiles are a wrapping flex row rather than a CSS grid: the last tile has to span what's left of its row at both two and three columns, and the only width media query allowed is the phone one (0140), so a grid couldn't choose the span. The real-browser test checks tiles sit on even columns.\n- The Waits for / Waiting on it and Waits on facts in the full view are tiles too, as AC1 says each fact; open Plan cards are unchanged.\n- AC5's Delivery log list is in the ticket; no test reads this repo's tickets (0122), so it's for you to read.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 101876,
+      "cached_input_tokens": 62848,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 701,
+      "reasoning_output_tokens": 50
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 39028,
+      "cached": 62848,
+      "write": 0,
+      "output": 701
+    },
+    "cost_usd": 0.0913508,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T23:07:56.331Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-popups.css styles full-view facts with Shipped's surface, padding, borderless rounded corners and 8px gaps. panel-0624 tests check these styles and label/value placement; all passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The wrapping flex layout selects two columns below 480px and three from 480px; the last tile grows to fill its row. The passing real-browser test checks row positions, gaps and full rows at 320, 479 and 480px."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "paneFacts and its value-producing functions are unchanged. Passing panel-0624 tests verify draft, building and shipped values, plus browser checks for long model names and dependency text wrapping without clipping."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing real-browser test checks both light and dark looks at 320px, including surface colours, corner radii, tile containment and absence of horizontal overflow."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "panel-0583 and panel-0465 now check the tile layout and are both listed in the ticket's Delivery log. /tmp/speck-0624-tests.txt confirms 297 passed, zero failed and three skipped; the new browser test passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The full ticket view now shows its facts as consistent rounded tiles, with two columns on phones and three on wider screens. Existing values are preserved, long text wraps, and both looks passed browser checks. Open Plan cards remain unchanged. No blocking concerns found."
+  }
+}
+```
+
+</details>
