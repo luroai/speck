@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0622"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T23:16:26.656Z"
-approved: "2026-11-10T23:28:23.088Z"
+approved: "2026-11-10T23:37:16.710Z"
 
 ---
 # 0623 · Carry a build on by itself once the reviewer's usage limit resets
@@ -60,13 +60,14 @@ Worth keeping an eye on: if the reviewer doesn't say when the limit resets, spec
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 138,911
-- Elapsed since build started: 12 min
-- Changed lines: 242 (limit 5000)
+- Reviewer tokens: 289,706
+- Elapsed since build started: 21 min
+- Changed lines: 240 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: Cursor's usage-limit wording hasn't been seen, so it's only caught if it uses the same words as Codex or Claude.
@@ -143,6 +144,81 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The change automatically waits out a reviewer's usage limit and resumes the build in its existing session to retry review. Tests cover reset times, repeated retries, shared waiting across builds, and ordinary failures. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a622630ce6cbc8185b4ac2d91a35f8d385fcc880",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c7ca-0335-7421-bede-8161f606c570",
+    "builder_response": "Merge round: main (0625, scheduling a watcher's resume) merged into this branch. Two files conflicted, both class `logic`, and each keeps both sides:\n- scripts/foreman-agent.mjs: the imports keep this ticket's `reviewerWaiting` and 0625's resume-at import. In `agentView`, `resuming` keeps this ticket's list with the builds waiting on a reviewer, and `scheduled` and the `did` line are 0625's as they are on main.\n- scripts/usage-limit.mjs: this ticket's `carryOn` helper and its one-call `resume` stay, and 0625's new `agentEnded` is kept above `resume`. 0625 didn't change the old `resume` body, so taking `carryOn` loses nothing. `limitQueues` spreads the builder queue, so run.mjs still gets `agentEnded`.\n- Tests run: test/reviewer-limit-0623.test.mjs, test/codex-failure-0554.test.mjs, test/usage-limit-0622.test.mjs and test/watch-at-0625.test.mjs, with the repo-wide checks: 213 passed, none failed, 3 skipped.\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 288430,
+      "cached_input_tokens": 210688,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1276,
+      "reasoning_output_tokens": 197
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 26113,
+      "cached": 124160,
+      "write": 0,
+      "output": 522
+    },
+    "cost_usd": 0.069862,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T23:37:14.275Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "review.mjs and reviewers.mjs still call stopOnLimit, which returns exit 18 and records the parsed reset time. Passing 0623 tests cover CLI refusals, reset parsing and the shared record."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md instructs the builder to end its session on exit 18, leave the ticket reviewing and avoid blocking it. Passing AC2 tests cover the instruction's exit code and the ticket's reviewing status."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewerLimitQueue.check and carryOn preserve session resumption after reset plus one minute; holdOnLimit prevents managed reviews during the wait. Passing AC3 tests cover timing, session reuse and a real speck run. The merge retains foreman-agent.mjs scheduled resumes and exposes usageLimitQueue.agentEnded through limitQueues."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "stopOnLimit retains the 30-minute fallback. Passing AC4 tests cover unreadable reset times and repeated retry cycles."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Ordinary reviewer failures retain their existing handling, covered by passing AC5 and 0554 tests. The extracted carryOn preserves main's resume behaviour, and agentEnded remains intact. Reported validation across 0623, 0554, 0622 and 0625 passed 213 tests with zero failures and three skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves automatic recovery from reviewer usage limits and the watcher's scheduled resumes. All acceptance criteria remain satisfied, and the relevant tests passed. No blocking issues found."
   }
 }
 ```
