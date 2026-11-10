@@ -43,6 +43,7 @@ The review pack, the ticket's chain and the panel's secondary buttons are in the
 - Checked on 2026-11-10 in a real browser at 390 px, after 0577 to 0597 shipped: the Pipeline log, Decided for you, the Settings view and the top of a ticket's full view are in the new look; the places below aren't.
 - Today: the pack is `packPane` in `templates/panel-popups.js`; the chain is `depsBox`, `withDeps`, `depChip` in `templates/panel.js`; the purple Shipped step is in `templates/panel-cards.css` (`.track .step.done.ship`).
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
