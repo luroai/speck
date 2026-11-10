@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-11-09-end-a-draft-s-full-view-in-set-ready.md"   
 after: ["0613","0616"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T17:23:49.145Z"
-approved: "2026-11-10T17:31:32.450Z"
+approved: "2026-11-10T17:36:50.795Z"
 
 ---
 # 0617 · End a draft's full view in Set ready
@@ -54,12 +54,13 @@ When you open a draft ticket's full view, it now ends in a bar at the bottom of 
 ## Review log
 Round 1 (codex): changes requested: F1 AC4 explicitly requires the Delivery log to list the tests changed for the new behaviour, but that section is empty.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 277,797
-- Elapsed since build started: 8 min
+- Reviewer tokens: 385,511
+- Elapsed since build started: 13 min
 - Changed lines: 48 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new behaviour (AC4):
@@ -222,6 +223,85 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The draft’s full view now ends with Set ready, explains why it is disabled, and keeps the readiness list above it. The missing Delivery log entry is fixed. All criteria pass, with no remaining blocking findings."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8dad609c71c13293bb5773e9279e2c2fa9bcf3bc",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c682-c6ee-75a3-80fc-4e62b151a72b",
+    "builder_response": "- Tests run: test/panel-0142.test.mjs test/panel-0424.test.mjs test/panel-0617.test.mjs test/panel-0061.test.mjs test/panel-0062.test.mjs test/panel-0063.test.mjs test/panel-0465.test.mjs\n- Ship failed with: 0142 AC1, 0424 AC2 and 0424 AC3. main was already merged in (git merge main: already up to date), so the cause was this ticket's own change, not main's newer work.\n- Why: like the four tests already updated, these read the full view's body as its last part; a draft's view now ends in the Set ready bar, so the last part is the bar. My round 1 test run didn't include them, because they don't mention Set ready or the readiness list.\n- Changed: test/panel-0142.test.mjs (paneSection's body helper) and test/panel-0424.test.mjs (lines 98 and 144) now read the body as the view's third part (children[2]), as panel-0061/0062/0063 do. No code changed. Searched the other tests for the same pattern: none left.\n- The Delivery log's list of changed tests (AC4) names both.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 383659,
+      "cached_input_tokens": 328960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1852,
+      "reasoning_output_tokens": 21
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4369,
+      "cached": 102784,
+      "write": 0,
+      "output": 561
+    },
+    "cost_usd": 0.0246264,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T17:36:48.323Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The unchanged fullTicket/readyBar implementation places Set ready in the bottom bar, reuses setReadyButton, and applies sticky positioning and accent styling. Passing 0617 AC1 tests cover placement, styling, POST and transition to the queue."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "readyBar explains readiness errors beside the disabled button, with one-line CSS. Passing 0617 AC2 tests cover single and multiple errors, missing messages, refusals and refreshed state."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "fullTicket retains paneReadiness in the body above the bar. The passing 0617 AC3 test verifies the list and its position."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-0142 and panel-0424 now locate the body at children[2], preserving their original content and heading assertions. The Delivery log lists all six updated test files. The current run reports 182 passed, zero failed and three skipped, including the previously failing files."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0617-end-a-draft-s-full-view-in-set-ready.md",
+        "issue": "The required list of updated tests was missing from the Delivery log.",
+        "suggested_fix": "List the updated test files and describe their changes in the Delivery log.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The bottom Set ready bar still meets the requirements. The two additional test fixes correctly account for its position without weakening their checks, and both are documented. All criteria pass; no blocking findings remain."
   }
 }
 ```
