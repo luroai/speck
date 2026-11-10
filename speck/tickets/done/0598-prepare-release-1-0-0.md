@@ -1,7 +1,7 @@
 ---
 id: "0598"
 title: "Prepare release 1.0.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0575","0576","0577","0578","0579","0580","0581","0582","0583","0584","0
 created: 2026-11-09
 started: "2026-11-10T17:40:35.346Z"
 approved: "2026-11-10T17:48:18.624Z"
+finished: "2026-11-10T17:52:06.687Z"
 
 ---
 # 0598 · Prepare release 1.0.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck has grown up: it works as your engineering manager, which you can name (0575, 0576), the panel is redesigned around it, with the black bar, the Premium character and the bridge across every project (0577 to 0597), and since 0.22.0 it decides and tells you. Anyone following the setup prompt, or updating speck in a project, still gets 0.22.0.
