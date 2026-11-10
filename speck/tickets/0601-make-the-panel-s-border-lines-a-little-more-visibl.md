@@ -42,6 +42,7 @@ The panel's border lines are a little more visible, alike on every screen, in bo
 - Today: the tokens are in `templates/panel-base.css` (light at about line 13, dark at about line 122); `.5px solid var(--line…)` appears about 70 times across `panel-base.css`, `panel-cards.css`, `panel-popups.css`, `panel-settings.css` and `panel-header.css`.
 - Waits for 0600, which changes the lanes' row separators.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
