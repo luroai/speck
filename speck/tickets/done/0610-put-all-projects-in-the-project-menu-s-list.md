@@ -1,7 +1,7 @@
 ---
 id: "0610"
 title: "Put All projects in the project menu's list"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0609"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:37:22.396Z"
 approved: "2026-11-10T10:52:27.087Z"
+finished: "2026-11-10T11:03:05.223Z"
 
 ---
 # 0610 · Put All projects in the project menu's list
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 With two or more projects running, All projects is a button beside the project menu's caret in the black bar, taking room from the status on a phone, where the menu's own list is where it belongs.
