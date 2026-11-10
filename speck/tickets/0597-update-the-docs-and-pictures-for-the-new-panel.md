@@ -43,6 +43,8 @@ The docs and the README's pictures describe and show the redesigned panel.
 - The `speck panel` row is one table row of several thousand characters at about line 203 of `docs/brief.md`; it may be split into a section of its own if that reads better.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Pictures taken from a copy of the demo outside the repo (as 0456's), its server updated to serve the panel's Inter and JetBrains Mono fonts and the new page's fields, with a made-up board: a 430 px pane at 2×, 1440 × 900.
+- Self-check: named `speck_name` in the Settings sentence instead of "its name setting"; checked each claim in the row against the page's scripts.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
