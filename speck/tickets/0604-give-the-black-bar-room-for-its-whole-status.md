@@ -42,6 +42,7 @@ The black bar is a little taller, with a larger speck and room for the whole sta
 - Today: the bar's markup is in `templates/panel.html`, drawn by `drawHeader` and the project menu by `drawProjects` and `chooseProject` in `templates/panel-header.js`, styled in `templates/panel-header.css`. The menu is a `select#project` whose visible option was "All projects" (0596's) while the panel showed speck.
 - Waits for 0601, which changes the borders in `templates/panel-header.css`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
