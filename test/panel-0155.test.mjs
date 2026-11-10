@@ -132,12 +132,12 @@ const LAYOUT = id => `(() => {
 })()`;
 
 for (const width of [375, 699, 700, 1000, 1280]) {
-  test(`0155 AC3: at ${width} px, a row has its id (14 px) and title (17 px) on one row, then one line saying where it is with its minutes, all from its left padding`, skip, async () => {
+  test(`0155 AC3: at ${width} px, a row has its id (14 px) and title (15 px since 0600) on one row, then one line saying where it is with its minutes, all from its left padding`, skip, async () => {
     await withPanel(async b => {
       for (const id of Object.keys(STATES)) {
         const l = await b.js(LAYOUT(id));
         assert.equal(l.idSize, '14px', `${id}: the id`);
-        assert.equal(l.titleSize, '17px', `${id}: the title`);
+        assert.equal(l.titleSize, '15px', `${id}: the title`); // 0600: 15 px, as the views' rows
         assert.equal(l.lines.length, 1, `${id}: the title on one line (0599)`);
         assert.ok(Math.abs(l.id.left - l.left) < 0.5, `${id}: the id starts at ${l.id.left}, not the row's left padding at ${l.left}`);
         // The title starts on the id's row, and a wrapped title's next lines start under the title, not under the id.

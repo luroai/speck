@@ -35,7 +35,7 @@ test('0520 AC1: the strip and the cards are Capture, Plan, Build and Shipped, in
   const main = html.slice(html.indexOf('<main>'), html.indexOf('</main>'));
   const cards = [...main.matchAll(/<section id="([\w-]+)"[^>]*aria-labelledby="tab-(\w+)"/g)].map(m => m[2]);
   assert.deepEqual(cards, ['capture', 'plan', 'build', 'shipped'], 'the cards, each named by its tab');
-  assert.match(main, /<section id="capture-section"[^>]*role="tabpanel"[^>]*>\s*<h2 class="lane-title">Capture<\/h2>/, 'Capture\'s card has its title');
+  assert.match(main, /<section id="capture-section"[^>]*role="tabpanel"[^>]*>\s*<div class="lane-n" id="capture-n">/, 'Capture\'s card opens with its line, its tab naming it (0600)');
 });
 
 test('0520 AC1: the panel opens on Build, and the strip and the arrow keys move between all four lanes', async () => {
@@ -145,7 +145,7 @@ test('0520 AC4: Plan lists only draft tickets, with no Tickets, Ideas or Inbox b
   assert.ok(!p.all(p.byId('shaping-section')).some(n => /\btoggle\b/.test(n.className || '')), 'no toggles');
   const html = page();
   assert.doesNotMatch(html, /shaping-toggle/, 'the toggles\' row is gone');
-  assert.match(html, /<section id="shaping-section"[^>]*>\s*<h2 class="lane-title">Plan<\/h2>\s*<div id="shaping" class="lane-list"><\/div>\s*<\/section>/, 'the list straight under the title');
+  assert.match(html, /<section id="shaping-section"[^>]*>\s*<div id="shaping" class="lane-list"><\/div>\s*<\/section>/, 'the list straight under the tabs (0600: no title of its own)');
   const js = fs.readFileSync(path.join(ROOT, 'templates', 'panel.js'), 'utf8');
   assert.doesNotMatch(js, /shapingView|shaping-toggle|'Ideas'|'Inbox'/, 'nothing left of the toggles in the page script');
 });

@@ -39,7 +39,7 @@ const measure = `(() => {
   const fs = getComputedStyle(frame);
   return { frame: r(frame), tabs: { left: r(strip).left + parseFloat(ss.paddingLeft), right: r(strip).right - parseFloat(ss.paddingRight) }, // 0477: the lanes' strip's row
     cards: [...document.querySelectorAll('#queue .q')].map(r), frameRadius: parseFloat(fs.borderTopLeftRadius),
-    lane: (() => { const s = document.getElementById('build-section'), b = r(s), st = getComputedStyle(s); return { left: b.left + parseFloat(st.paddingLeft), right: b.right - parseFloat(st.paddingRight) }; })(), // 0478: Build's frame
+    lane: (() => { const s = document.getElementById('queue'), b = r(s), st = getComputedStyle(s); return { left: b.left + parseFloat(st.paddingLeft), right: b.right - parseFloat(st.paddingRight) }; })(), // 0478: Build's frame. 0600: its list's 16 px side margins, as it has no frame
     width: innerWidth, page: document.documentElement.scrollWidth };
 })()`;
 
@@ -61,7 +61,7 @@ test('0438 AC2: at every width, the frame\'s edges line up with the tab row\'s a
     assert.ok(Math.abs(m.frame.left - m.tabs.left) <= 1 && Math.abs(m.frame.right - m.tabs.right) <= 1, `the frame lines up with the tab row: ${at}`);
     // 0478: the cards sit inside their lane's frame, which lines up with speck's
     assert.ok(Math.abs(m.frame.left - m.lane.left) <= 1 && Math.abs(m.frame.right - m.lane.right) <= 1, `the frame lines up with the lane's frame: ${at}`);
-    for (const c of m.cards) assert.ok(c.left > m.lane.left && c.right < m.lane.right, `the cards are inside the lane's frame: ${at}`);
+    for (const c of m.cards) assert.ok(Math.abs(c.left - m.lane.left) <= 0.5 && Math.abs(c.right - m.lane.right) <= 0.5, `the rows fill the lane's 16 px margins, in line with the bar (0600): ${at}`);
   }
 }));
 

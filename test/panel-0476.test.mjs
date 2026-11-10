@@ -83,11 +83,12 @@ async function atRest(b, lane, what) {
 
 // ---------- AC1 ----------
 
-test('0476 AC1: Capture (0520), Plan, Build and Shipped are four cards in one row in that order, each its lane\'s name at its top, over its lane line and tickets', async () => {
+test('0476 AC1: Capture (0520), Plan, Build and Shipped are four cards in one row in that order, each named by its tab (0600), its lane line over its tickets', async () => {
   const main = staticHtml().match(/<main>([\s\S]*?)<\/main>/);
   assert.ok(main, 'the lanes are in one box');
-  const sections = [...main[1].matchAll(/<section id="([^"]+)"[^>]*>\s*<h2 class="lane-title">([^<]*)<\/h2>([\s\S]*?)<\/section>/g)];
-  assert.deepEqual(sections.map(s => [s[1], s[2]]), [['capture-section', 'Capture'], ['shaping-section', 'Plan'], ['build-section', 'Build'], ['shipped-section', 'Shipped']], 'each card\'s name is the first thing in it');
+  // 0600: a lane has no name of its own now: the tab that names it labels it
+  const sections = [...main[1].matchAll(/<section id="([^"]+)"[^>]*aria-labelledby="tab-(\w+)"[^>]*>([\s\S]*?)<\/section>/g)];
+  assert.deepEqual(sections.map(s => [s[1], s[2]]), [['capture-section', 'capture'], ['shaping-section', 'plan'], ['build-section', 'build'], ['shipped-section', 'shipped']], 'each card named by its tab');
   assert.match(sections[2][3], /id="queue-n"[\s\S]*id="queue"/, 'Build\'s lane line, then its tickets');
   assert.match(sections[3][3], /id="shipped-n"[\s\S]*id="shipped-list"/, 'Shipped\'s lane line, then its tickets');
   const p = fakePage([board()]);

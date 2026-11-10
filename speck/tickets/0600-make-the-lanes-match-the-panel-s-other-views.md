@@ -46,6 +46,8 @@ The lanes look like the panel's other views: flat lists in the same margins, wit
 - Today: `main > section`, `.lane-title`, `.lane-n` and the row title rules in `templates/panel-cards.css`; the lane title markup in `templates/panel.html`. Waits for 0599, which changes the same row title rules.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: at 13 px the mixed fonts made Build's and Plan's details lines 17 px high, so the mono parts get a 14 px line and Plan's priority box sits at the line's top, a pixel lower, keeping each line 16 px with its labels on one baseline; dropped a rule that let an open Plan row's fill reach past the margins, as rows must span their list (0418); the document view's title follows the full view's down to 20 px, as 0445 keeps them the same.
+- Decided for you keeps its Close button, now styled as the back link with "‹ Close", as 0568's tests press a button named Close.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

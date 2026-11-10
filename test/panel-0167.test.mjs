@@ -26,7 +26,7 @@ test('0167 AC1: no section or card rule draws a top or left stripe, and each car
   for (const sel of ['section', '.item', '.q']) {
     assert.match(get(rule(sel), 'border') || '', /^\S+ solid var\(--line\)$/, `${sel}: a border all round in the line colour`);
   }
-  assert.match(get(rule('#shipped tr'), 'border-bottom') || '', /^\S+ solid var\(--line\)$/, '#shipped tr: a hairline under it in the line colour');
+  assert.match(get(rule('#shipped tr'), 'border-bottom') || '', /^\S+ solid var\(--line-soft\)$/, '#shipped tr: a hairline under it, the Pipeline log\'s (0600)');
 });
 
 test('0167 AC2: a ticket that needs you has an orange dot, one worked on a blue dot and one waiting a grey one, and a row has no tint of its own', () => {

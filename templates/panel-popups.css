@@ -67,10 +67,10 @@
      ticket's sections are each inside its body) has its own headings as its sections. */
   #full-ticket .top .id, #full-ticket .top .state { font-family: var(--font-ui); font-size: 12px; line-height: 16px; color: var(--muted); }
   #full-ticket .top .id { font-family: var(--font-mono); }
-  #full-ticket .top .title { order: 1; flex-basis: 100%; font-size: 26px; line-height: 1.25; font-weight: 600; } /* under the id and Close, which a review pack has after it */
+  #full-ticket .top .title { order: 1; flex-basis: 100%; font-size: 20px; line-height: 24px; font-weight: 600; } /* under the id and Close, which a review pack has after it */
   /* 0583: a ticket's full view: the back link and its id at the right on the first row, then its status pill, then its title */
   #full-ticket .top:has(> .state) { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-  #full-ticket .top:has(> .state) .close { grid-area: 1 / 1; justify-self: start; margin: 0; padding: 2px 0; border: 0; background: none; color: var(--run); font-size: 14px; text-decoration: none; }
+  #full-ticket .top:has(> .state) .close { grid-area: 1 / 1; justify-self: start; margin: 0; padding: 2px 0; border: 0; background: none; color: var(--run); font-size: 14px; line-height: 20px; font-weight: 400; text-decoration: none; }
   #full-ticket .top:has(> .state) .close::before { content: '‹'; margin-right: 4px; }
   #full-ticket .top:has(> .state) .id { grid-area: 1 / 2; align-self: center; }
   #full-ticket .top:has(> .state) .title { grid-area: 3 / 1 / 3 / 3; }
@@ -100,15 +100,20 @@
   #decided .close:hover { color: var(--text); }
   #decided .top, #decided .decided-intro, #decided .decided-list, #decided .decided-none { max-width: 720px; margin-left: auto; margin-right: auto; }
   #decided .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: .5px solid var(--line-soft); background: var(--panel); }
-  #decided .top .title { font-weight: 600; }
+  /* 0600: its back link above its heading, as the Pipeline log's and a ticket's full view's are, in the same type */
+  #decided .top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+  #decided .top .close { grid-row: 1; justify-self: start; margin: 0; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); border: 0; }
+  #decided .top .close::before { content: '‹'; margin-right: 4px; }
+  #decided .top .close:hover { color: var(--run); text-decoration: underline; }
+  #decided .top .title { grid-row: 2; margin-top: 4px; font-size: 20px; line-height: 24px; font-weight: 600; }
   #decided .decided-row { padding: 10px 0; border-bottom: .5px solid var(--line-soft); overflow-wrap: anywhere; }
   #decided .decided-head { display: flex; gap: 8px; align-items: baseline; }
   #decided .decided-head .id { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
-  #decided .decided-title { min-width: 0; font-weight: 600; }
+  #decided .decided-title { min-width: 0; font-size: 15px; line-height: 20px; font-weight: 500; }
   #decided .decided-question { margin-top: 4px; }
   #decided .decided-fact { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; margin-top: 4px; }
-  #decided .decided-fact .label { font-size: 12px; color: var(--muted); }
-  #decided .decided-when { margin-top: 4px; font-size: 12px; color: var(--muted); }
+  #decided .decided-fact .label { font-size: 13px; color: var(--muted); }
+  #decided .decided-when { margin-top: 4px; font-size: 13px; color: var(--muted); }
   #decided .decided-changed { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--needs-you-text); }
   #decided .decided-says { min-width: 0; }
   /* 0590: speck's opening words, a speech bubble with its tail towards the face */
@@ -175,9 +180,9 @@
   /* 0592: the Pipeline log is a full view on the panel's own colours, in light and dark, and only a ticket's build log keeps the dark frame.
      Each line is a row: its time, a column for speck's face on the manager's own lines, then its text with its details under it. */
   #foreman.log-view .top { position: static; display: block; padding: 4px 0 10px; color: var(--text); background: var(--panel); border-radius: 0; border-bottom: .5px solid var(--line-soft); }
-  #foreman.log-view .back { display: inline-block; padding: 2px 0; font-size: 14px; color: var(--run); cursor: pointer; }
+  #foreman.log-view .back { display: inline-block; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); cursor: pointer; }
   #foreman.log-view .back::before { content: '‹'; margin-right: 4px; }
-  #foreman.log-view .top .title { display: block; margin-top: 4px; font-size: 20px; line-height: 24px; white-space: normal; }
+  #foreman.log-view .top .title { display: block; margin-top: 4px; font-size: 20px; line-height: 24px; font-weight: 600; white-space: normal; }
   #foreman.log-view .top .title::before { content: none; }
   #foreman.log-view .log-status { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--muted); }
   #foreman.log-view .log-said { min-width: 0; }
@@ -191,12 +196,12 @@
   #foreman.log-view .run-log { padding: 0; border: 0; border-radius: 0; color: var(--muted); background: none; color-scheme: inherit; white-space: normal; }
   #foreman.log-view .run-log .none { padding: 12px 0; font-family: var(--font-ui); font-size: 14px; }
   #foreman.log-view .run-log .log-row { display: grid; grid-template-columns: 9ch 20px minmax(0, 1fr); column-gap: 8px; align-items: start; padding: 8px 0; border-bottom: .5px solid var(--line-soft); }
-  #foreman.log-view .run-log .at { grid-column: 1; font-family: var(--font-mono); font-size: 12px; line-height: 20px; color: var(--muted); }
+  #foreman.log-view .run-log .at { grid-column: 1; font-family: var(--font-mono); font-size: 13px; line-height: 20px; color: var(--muted); }
   #foreman.log-view .run-log .speck-face { grid-column: 2; }
   #foreman.log-view .run-log .log-main { grid-column: 3; min-width: 0; }
-  #foreman.log-view .run-log .log-text { font-family: var(--font-ui); font-size: 14px; line-height: 20px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+  #foreman.log-view .run-log .log-text { font-family: var(--font-ui); font-size: 15px; line-height: 20px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
   #foreman.log-view .run-log .fail .log-text { color: var(--bad); }
-  #foreman.log-view .run-log .log-more { font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--muted); overflow-wrap: anywhere; }
+  #foreman.log-view .run-log .log-more { font-family: var(--font-mono); font-size: 13px; line-height: 16px; color: var(--muted); overflow-wrap: anywhere; }
   #foreman.log-view :focus-visible { outline-color: var(--text); }
   #full-ticket ol.criteria > li { margin-bottom: 6px; }
   /* 0583: a tick on each criterion the reviewer passed, and the rows that open its review pack and build log */
@@ -208,7 +213,7 @@
   #full-ticket .live-now .say.bad { color: var(--bad); }
   #full-ticket .live-now .say.to-ship { color: var(--ok); }
   #full-ticket .pane-rows { margin: 14px 0 0; border-top: .5px solid var(--line-soft); }
-  #full-ticket .pane-row { display: flex; justify-content: space-between; width: 100%; padding: 12px 2px; font: inherit; font-family: var(--font-ui); font-size: 15px; color: var(--text); text-align: left; background: none; border: 0; border-bottom: .5px solid var(--line-soft); border-radius: 0; cursor: pointer; }
+  #full-ticket .pane-row { display: flex; justify-content: space-between; width: 100%; padding: 12px 2px; font: inherit; font-family: var(--font-ui); font-size: 15px; font-weight: 500; line-height: 20px; color: var(--text); text-align: left; background: none; border: 0; border-bottom: .5px solid var(--line-soft); border-radius: 0; cursor: pointer; }
   #full-ticket .pane-row:hover { background: var(--surface); color: var(--text); }
   #full-ticket .pane-row::after { content: '›'; color: var(--muted); }
   /* 0583: the bar an approved ticket ends in: at the bottom of the window however little there is above it, with what's above scrolling under it */
@@ -240,7 +245,7 @@
   /* 0445: a task's Markdown file set out as the full ticket is: its first heading is its title, in the title's
      size, its other headings as a review pack's are, and its text, tables, code and lists in the ticket's sizes. */
   #doc-view .md .md-h1, #doc-view .md .md-h2, #doc-view .md .md-h3 { margin: 28px 0 8px; font-family: var(--font-ui); font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
-  #doc-view .md .doc-title { margin: 0 0 14px; font-size: 26px; line-height: 1.25; font-weight: 600; }
+  #doc-view .md .doc-title { margin: 0 0 14px; font-size: 20px; line-height: 24px; font-weight: 600; } /* 0600: the full view's title, as before */
   #full-ticket code.md-code, #doc-view code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
   #full-ticket pre, #doc-view pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   #full-ticket pre code, #doc-view pre code { font-size: 12px; }

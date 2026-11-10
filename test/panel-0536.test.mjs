@@ -14,7 +14,7 @@ const next = async p => { p.timers.shift()(); await p.settle(); }; // the next b
 
 test('0536 AC1: the count sits under Capture\'s title, as a lane-n line like Build\'s and Shipped\'s', () => {
   const html = page();
-  assert.match(html, /<h2 class="lane-title">Capture<\/h2>\s*<div class="lane-n" id="capture-n"><\/div>\s*<div id="capture" class="lane-list">/);
+  assert.match(html, /<section id="capture-section"[^>]*>\s*<div class="lane-n" id="capture-n"><\/div>\s*<div id="capture" class="lane-list">/); // 0600: first in the lane, which has no title now
 });
 
 test('0536 AC1: one note in Capture says "1 note"', async () => {

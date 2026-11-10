@@ -91,7 +91,7 @@ const CARDS = sel => `[...document.querySelectorAll('${sel}')].map(item => {
       || lines.some(l => l.left < box.left || l.right > box.right + 0.5 || l.bottom > box.bottom + 0.5) };
 })`;
 
-test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox titles are 17 px, as a ticket\'s, never cut off when open, wrapping under the title (their labels gone since 0435)', skip, async () => {
+test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox titles are 15 px (0600), as a ticket\'s, never cut off when open, wrapping under the title (their labels gone since 0435)', skip, async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
@@ -104,7 +104,7 @@ test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox titles are 17 px, 
       await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#shaping .item.ticket')`, 'the panel');
       await b.js(openLane('plan')); // 0410
       const [ticket] = await b.js(CARDS('#shaping .item'));
-      assert.deepEqual([ticket.idSize, ticket.titleSize], ['14px', '17px'], `${width} px: the ticket`);
+      assert.deepEqual([ticket.idSize, ticket.titleSize], ['14px', '15px'], `${width} px: the ticket`); // 0600: 15 px, as the views' rows
       await b.js(openLane('capture')); // 0520
       for (const [view, kind] of VIEWS) {
         await b.until(`!!document.querySelector('#capture .item.${kind}')`, view);
