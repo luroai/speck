@@ -1,7 +1,7 @@
 ---
 id: "0600"
 title: "Make the lanes match the panel's other views"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0599"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T07:58:14.500Z"
 approved: "2026-11-10T08:27:36.383Z"
+finished: "2026-11-10T08:31:37.248Z"
 
 ---
 # 0600 · Make the lanes match the panel's other views
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 After the redesign, the lanes still sit in the old frame: each lane is a bordered card with rounded corners and its own big 22 px title with a coloured dot, which repeats the tab above it, and its rows' titles are 17 px semibold. The Pipeline log, Decided for you and a ticket's full view are flat, edge to edge with hairlines between rows and smaller, lighter type, so moving between them feels like two different apps.
