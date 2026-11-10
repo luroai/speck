@@ -1,7 +1,7 @@
 ---
 id: "0608"
 title: Show speck asleep in every empty lane                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0606"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:47:25.480Z"
 approved: "2026-11-10T10:56:58.571Z"
+finished: "2026-11-10T11:06:50.528Z"
 
 ---
 # 0608 · Show speck asleep in every empty lane
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0586, an empty Capture or Plan shows speck asleep with a line saying what lands there, but an empty Build keeps its older "Nothing building" message and an empty Shipped a plain line, so the four lanes don't look alike when empty.
