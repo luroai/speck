@@ -85,7 +85,7 @@ test('0434 AC3: a Build row shows no priority, size or risk; its full view does'
   assert.deepEqual(factsOf(await fullViewOf(p, '0426')).slice(0, 3), [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'high']], '0426: its full view shows its priority, size and risk');
 });
 
-test('0434 AC4: a title keeps its whole text and tooltip; a Shipped (0587), Build or Plan row\'s wraps (0586)', async () => {
+test('0434 AC4: a title keeps its whole text and tooltip; a closed Shipped, Build or Plan row\'s is cut off on one line (0599)', async () => {
   const s = board();
   s.tickets.push(T('0911', 'done', { title: LONG, end: ago(60) }));
   const p = page(s);
@@ -100,11 +100,9 @@ test('0434 AC4: a title keeps its whole text and tooltip; a Shipped (0587), Buil
   const style = css();
   const rule = /#shipped \.line \.title \{([^}]*)\}/.exec(style);
   assert.ok(rule, 'the rule for a Shipped row\'s title');
-  assert.doesNotMatch(rule[1], /nowrap|ellipsis/, 'a Shipped row\'s title wraps (0587)');
-  assert.match(rule[1], /overflow-wrap: anywhere;/);
-  assert.match(style, /\.q\.row \.top \.line \.title \{ white-space: normal; overflow: visible;/, 'a Build row\'s title wraps');
-  assert.match(style, /\.item\.row \.line \.title \{[^}]*white-space: normal; overflow: visible;/, 'a Plan or Capture row\'s title wraps');
-  // an open one is marked open, so the rule leaves it to wrap
+  const cutOff = /\.q\.row \.top \.line \.title, \.item\.row:not\(\.open\) \.line \.title, #shipped \.line \.title \{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; \}/;
+  assert.match(style, cutOff, 'a Shipped, Build, Plan or Capture row\'s title is cut off on one line (0599)');
+  // an open one is marked open, so that rule lets it wrap
   click(topOf(card(p, '0801')));
   await p.settle();
   assert.match(card(p, '0801').className, /\bopen\b/);
@@ -171,11 +169,11 @@ for (const touch of [true, false]) {
       for (const c of cards) {
         assert.equal(c.children, 1, `${c.id}: nothing under its top row`);
         assert.equal(c.rows, 2, `${c.id}: two rows`);
-        assert.ok(!c.cut, `${c.id}: its title is not cut off`);
+        assert.equal(c.titleLines, 1, `${c.id}: its title on one line (0599)`);
         assert.ok(c.inside, `${c.id}: its line stays inside the row`);
         if (c.id !== '0913') assert.equal(c.whereLines, 1, `${c.id}: it is on one line`);
       }
-      assert.ok(cards.find(c => c.id === '0426').titleLines > 1, 'a long title wraps');
+      assert.ok(cards.find(c => c.id === '0426').cut, 'a long title is cut off (0599)');
     } finally { await b.close(); await stop(panel); }
   });
 }

@@ -127,8 +127,8 @@ for (const touch of [true, false]) {
           assert.equal(c.secondLines, 1, `${c.text}: its second line on one line`);
           assert.ok(c.gap <= 8, `${c.text}: ${c.gap} px between its title and second line`);
         }
-        assert.ok(seen.find(c => c.text === LONG).titleLines > 1, 'a long title wraps');
-        assert.ok(!seen.find(c => c.text === LONG).cut, 'and is not cut off');
+        assert.equal(seen.find(c => c.text === LONG).titleLines, 1, 'a long title stays on one line (0599)');
+        assert.ok(seen.find(c => c.text === LONG).cut, 'cut off');
         // open, a long title wraps again
         await b.js(`[...document.querySelectorAll('#capture .item .head')].find(h => h.querySelector('.title').textContent === ${JSON.stringify(LONG)}).click(), true`);
         await b.until(`!!document.querySelector('#capture .item.open')`, 'the open card');

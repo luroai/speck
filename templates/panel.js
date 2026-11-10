@@ -567,7 +567,7 @@ function whereLine(t) {
 }
 const rowDoing = t => (t.inFlight ? doing(t, t.shipping || shippingId === String(t.id), speckCalled()) : null);
 function queueRow(t) {
-  const id = String(t.id), top = el('div', 'top', null, el('div', 'line', null, el('span', 'id', t.id), el('span', 'title', t.title)), whereLine(t));
+  const id = String(t.id), top = el('div', 'top', null, el('div', 'line', null, el('span', 'id', t.id), titled(el('span', 'title', t.title))), whereLine(t));
   top.tabIndex = 0;
   top.setAttribute('role', 'button');
   top.fullOf = id; // so the focus comes back to it when the full view closes

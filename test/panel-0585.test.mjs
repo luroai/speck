@@ -141,7 +141,7 @@ test('0585 AC3: Back to Plan, which was on the card, is in a ready ticket\'s ful
   assert.ok(p.calls.some(c => /\/api\/tickets\/0701\/draft$/.test(String(c.url)) && c.opts?.method === 'POST'));
 });
 
-test('0585 AC4: at 320 px wide a row is at least 44 px tall and a long title wraps, not cut off', async () => {
+test('0585 AC4: at 320 px wide a row is at least 44 px tall and a long title is cut off on one line (0599)', async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
@@ -161,9 +161,10 @@ test('0585 AC4: at 320 px wide a row is at least 44 px tall and a long title wra
       return { id: c.querySelector('.id').textContent, height: r.height, top: c.firstElementChild.getBoundingClientRect().height, right: r.right, nowrap: s.whiteSpace, overflow: t.scrollWidth > t.clientWidth + 0.5, ellipsis: s.textOverflow, titleHeight: t.getBoundingClientRect().height, line: parseFloat(s.lineHeight) }; })`);
     for (const row of m) assert.ok(row.top >= 44, `${row.id} is ${row.top} px tall`);
     const long = m.find(x => x.id === '0702');
-    assert.notEqual(long.nowrap, 'nowrap');
-    assert.equal(long.overflow, false, 'its text fits its box');
-    assert.ok(long.titleHeight > long.line * 1.5, `it wraps (${long.titleHeight} px at ${long.line} px a line)`);
+    assert.equal(long.nowrap, 'nowrap', 'its title stays on one line (0599)');
+    assert.equal(long.overflow, true, 'cut off');
+    assert.equal(long.ellipsis, 'ellipsis', 'with an ellipsis');
+    assert.ok(long.titleHeight <= long.line + 0.5, `on one line (${long.titleHeight} px at ${long.line} px a line)`);
     assert.ok(long.right <= 320.5, 'it stays on the screen');
   } finally { await b.close(); await stop(panel); }
 });

@@ -138,7 +138,7 @@ test('0586 AC3: a lane with something in it has no sleeping speck', async () => 
   for (const box of ['shaping', 'capture']) assert.equal(face(p, p.byId(box)), undefined);
 });
 
-test('0586 AC4: at 320 px wide each row is at least 44 px tall, long titles wrap, and an empty lane shows the real face', async () => {
+test('0586 AC4: at 320 px wide each row is at least 44 px tall, long titles are cut off on one line (0599), and an empty lane shows the real face', async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
@@ -149,7 +149,7 @@ test('0586 AC4: at 320 px wide each row is at least 44 px tall, long titles wrap
     window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? json(window.__state) : real(url, opts); const states = ${JSON.stringify(states)}; window.__state = states[sessionStorage.getItem('emptied') ? 1 : 0]; })();`;
   const measure = (box, tab, section) => `(() => { document.getElementById('${tab}').click(); return !document.getElementById('${section}').hidden ? [...document.querySelectorAll('#${box} .item')].map(c => { const t = c.querySelector('.title'), s = getComputedStyle(t), r = c.getBoundingClientRect();
     const control = c.querySelector('.head > .star, .head > .set-ready').getBoundingClientRect(), agent = c.querySelector('.head .agent');
-    return { title: t.textContent, gapRight: r.right - control.right, agentGap: agent ? agent.getBoundingClientRect().left - agent.previousElementSibling.getBoundingClientRect().right : null, top: c.firstElementChild.getBoundingClientRect().height, right: r.right, nowrap: s.whiteSpace, overflow: t.scrollWidth > t.clientWidth + 0.5, titleHeight: t.getBoundingClientRect().height, line: parseFloat(s.lineHeight) }; }) : null; })()`;
+    return { title: t.textContent, gapRight: r.right - control.right, agentGap: agent ? agent.getBoundingClientRect().left - agent.previousElementSibling.getBoundingClientRect().right : null, top: c.firstElementChild.getBoundingClientRect().height, right: r.right, nowrap: s.whiteSpace, overflow: t.scrollWidth > t.clientWidth + 0.5, ellipsis: s.textOverflow, titleHeight: t.getBoundingClientRect().height, line: parseFloat(s.lineHeight) }; }) : null; })()`;
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 700, deviceScaleFactor: 1, mobile: true });
     await b.send('Page.enable');
@@ -166,9 +166,10 @@ test('0586 AC4: at 320 px wide each row is at least 44 px tall, long titles wrap
         if (row.agentGap !== null) assert.ok(row.agentGap >= 6, `${box}: only ${row.agentGap} px before its agent tag`);
       }
       const long = rows.find(x => x.title === LONG);
-      assert.notEqual(long.nowrap, 'nowrap');
-      assert.equal(long.overflow, false, 'its text fits its box');
-      assert.ok(long.titleHeight > long.line * 1.5, `${box}: it wraps (${long.titleHeight} px at ${long.line} px a line)`);
+      assert.equal(long.nowrap, 'nowrap', `${box}: its title stays on one line (0599)`);
+      assert.equal(long.overflow, true, `${box}: cut off`);
+      assert.equal(long.ellipsis, 'ellipsis', `${box}: with an ellipsis`);
+      assert.ok(long.titleHeight <= long.line + 0.5, `${box}: on one line (${long.titleHeight} px at ${long.line} px a line)`);
       assert.ok(long.right <= 320.5, `${box}: it stays on the screen`);
     }
     // open, a note's star keeps its own column, and a long title never runs behind it

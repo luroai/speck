@@ -126,7 +126,7 @@ const LAYOUT = id => `(() => {
     else lines.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
   }
   const where = card.querySelector('.top .where'), sub = where.querySelector('.sub');
-  return { left, right, idSize: getComputedStyle(idN).fontSize, titleSize: ts.fontSize, id: rect(idN), lines,
+  return { overflow: t.scrollWidth > t.clientWidth + 0.5, left, right, idSize: getComputedStyle(idN).fontSize, titleSize: ts.fontSize, id: rect(idN), lines,
     cut: t.scrollWidth > t.clientWidth + 0.5 || t.scrollHeight > t.clientHeight + 0.5 || ts.textOverflow === 'ellipsis' || lines.some(l => l.left < box.left || l.right > box.right + 0.5),
     where: rect(where), sub: sub ? rect(sub) : null, line: rect(card.querySelector('.top .line')), children: [...card.children].map(n => n.className), topChildren: [...top.children].map(n => n.className) };
 })()`;
@@ -138,7 +138,7 @@ for (const width of [375, 699, 700, 1000, 1280]) {
         const l = await b.js(LAYOUT(id));
         assert.equal(l.idSize, '14px', `${id}: the id`);
         assert.equal(l.titleSize, '17px', `${id}: the title`);
-        assert.ok(!l.cut, `${id}: the title is cut off`);
+        assert.equal(l.lines.length, 1, `${id}: the title on one line (0599)`);
         assert.ok(Math.abs(l.id.left - l.left) < 0.5, `${id}: the id starts at ${l.id.left}, not the row's left padding at ${l.left}`);
         // The title starts on the id's row, and a wrapped title's next lines start under the title, not under the id.
         const [first] = l.lines;
@@ -165,12 +165,13 @@ for (const width of [375, 699, 700, 1000, 1280]) {
 // 0168 so does a ticket in flight's, whose timer is on its progress's row (from 0156 its ensō was beside its title).
 // 0441: 3 lines at 375 px, as the longest title takes in a proportional font with Arial's widths
 for (const [width, most] of [[375, 3], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
-  test(`0155 AC3: at ${width} px, the longest title wraps as in Plan, on at most ${most} ${most === 1 ? 'line' : 'lines'}, in flight or not`, skip, async () => {
+  test(`0155 AC3: at ${width} px, the longest title is on one line, cut off when it doesn't fit (0599), in flight or not`, skip, async () => {
     await withPanel(async b => {
       const ready = await b.js(LAYOUT('0306'));
-      assert.ok(ready.lines.length >= 1 && ready.lines.length <= most, `0306: the title is on ${ready.lines.length} lines`);
+      assert.equal(ready.lines.length, 1, `0306: the title is on ${ready.lines.length} lines`);
       const flying = await b.js(LAYOUT('0301'));
-      assert.ok(flying.lines.length >= 1 && flying.lines.length <= most && !flying.cut, `0301: the title is on ${flying.lines.length} lines, uncut`);
+      assert.equal(flying.lines.length, 1, `0301: the title is on ${flying.lines.length} lines`);
+      if (width === 375) assert.ok(ready.overflow && flying.overflow, 'a title too long for a phone\'s row is cut off');
     }, { width });
   });
 }
