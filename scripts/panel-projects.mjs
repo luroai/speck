@@ -8,16 +8,37 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { pidAlive } from './run-switch.mjs';
+import { BUILD_ENV } from './build-env.mjs';
 
 const LIST_MS = 1000, WATCH_MS = 2000, GONE_RETRY_MS = 3000, SUMMARY_MS = 2000, SUMMARY_BYTES = 1 << 21; // 0595's: how long a panel has to answer, and how much of an answer is read
 // Hop-by-hop headers, which belong to one connection and aren't passed on.
 const HOP = new Set(['connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'proxy-connection', 'te', 'trailer']);
 
 // SPECK_PANELS_DIR is for the tests, so their panels don't join the menus of yours. '' when there's no home folder.
-export function panelsDir() {
-  if (process.env.SPECK_PANELS_DIR) return process.env.SPECK_PANELS_DIR;
+// 0619: a panel a build speck run launched started (its environment holds the build's session) records itself in a
+// folder of the build's own instead, so it stays out of your menus and speck run can stop it once the build ends.
+export function panelsDir(env = process.env) {
+  if (env.SPECK_PANELS_DIR) return env.SPECK_PANELS_DIR;
+  const session = env[BUILD_ENV];
+  if (session) return buildPanelsDir(session, env);
   try { return path.join(os.homedir(), '.config', 'speck', 'panels'); } catch { return ''; }
+}
+
+// The folder holding the records of every build's panels, a folder for each build's session.
+// SPECK_BUILD_PANELS_DIR is for the tests. '' when there's no home folder.
+export function buildPanelsRoot(env = process.env) {
+  if (env.SPECK_BUILD_PANELS_DIR) return env.SPECK_BUILD_PANELS_DIR;
+  try { return path.join(os.homedir(), '.config', 'speck', 'build-panels'); } catch { return ''; }
+}
+
+// The folder for one build's panels: its session, or a hash of it when it isn't safe as a folder's name.
+export function buildPanelsDir(session, env = process.env) {
+  const root = buildPanelsRoot(env);
+  if (!root) return '';
+  const name = /^[A-Za-z0-9_-]{1,100}$/.test(session) ? session : crypto.createHash('sha256').update(String(session)).digest('hex').slice(0, 32);
+  return path.join(root, name);
 }
 
 // The running panels, as [{ port, name }] by name and then port. A record whose process has gone (a panel killed, or
