@@ -1,7 +1,7 @@
 ---
 id: "0608"
 title: Show speck asleep in every empty lane                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-09-show-speck-asleep-in-an-empty-build-and-shi
 after: ["0606"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:47:25.480Z"
+approved: "2026-11-10T10:56:58.571Z"
 
 ---
 # 0608 · Show speck asleep in every empty lane
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0586, an empty Capture or Plan shows speck asleep with a line saying what lands there, but an empty Build keeps its older "Nothing building" message and an empty Shipped a plain line, so the four lanes don't look alike when empty.
@@ -51,9 +52,15 @@ All four lanes now look the same when they're empty: speck asleep, with one line
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Acceptance criterion 4 explicitly requires the Delivery log to list the tests updated from the old behaviour, but that section is empty.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 189,960
+- Elapsed since build started: 10 min
+- Changed lines: 26 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed from the old behaviour to the new one (AC4):
   - test/panel-0449.test.mjs: the `lines()` helper reads speck's line and the lines under it; the 0449 AC1 and AC2 tests expect "Nothing building · Ready tickets land here." where they expected "Nothing building"; 0449 AC4's contrast check measures speck's line and each line under it.
