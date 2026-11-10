@@ -1,7 +1,7 @@
 ---
 id: "0622"
 title: "Carry a build on by itself once Claude's usage limit resets"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T22:59:55.125Z"
 ---
 # 0622 · Carry a build on by itself once Claude's usage limit resets
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When Claude's usage limit is reached, a build stops partway and stays stopped until someone notices: on 2026-11-10 one waited five hours after the limit had reset. The watcher makes it worse, as it looks into the stop on the same agent, hits the same limit and gives up. Yet Claude's own log says when the limit resets.
@@ -59,3 +59,89 @@ When a build stops on Claude's usage limit, speck waits until the limit resets, 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "02d220da24c70841316c2eb26057687617dced45",
+    "session": "fresh",
+    "thread_id": "01a1c7b8-55c9-74e3-a7aa-eb1561ceb65c",
+    "builder_response": "- Tests run: test/usage-limit-0622.test.mjs, with `speck test --related`, which also ran every existing test file naming a changed file, and the repo-wide checks.\n- A ticket still `ready` when its build hit the limit is resumed in its session like the others (AC3), rather than launched afresh.\n- With no usable reset time (none, already past, or over 31 days off), it retries after 30 minutes (AC4). The past case is treated as none so a stale time can't loop.\n- The bar: \"Needs you\" still comes first; the limit outranks Shipping and Building.\n",
+    "seconds": 52,
+    "usage": {
+      "input_tokens": 314800,
+      "cached_input_tokens": 252544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1398,
+      "reasoning_output_tokens": 272
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 62256,
+      "cached": 252544,
+      "write": 0,
+      "output": 1398
+    },
+    "cost_usd": 0.1637464,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T23:09:20.150Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "limitInLog and usageLimitQueue.ended have passing tests for recording and announcing rejections. However, scripts/run.mjs:231 records an already-ended build's exit during startup without checking its log for a usage limit."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Passing tests cover launch holds, watch holds and the waiting bar. The startup path in adoptEarlierBuilds bypasses limits.ended, so a refusal occurring while speck run is stopped establishes no hold and new Claude builds can start immediately."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Passing queue and process tests cover resuming once in the original session. A build that finishes on the limit while speck run is stopped is never added to the waiting queue when it restarts, so it is not resumed after reset."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "usageLimitQueue.reached uses RETRY_MS when no usable reset exists. The passing '0622 AC4: with no reset time it tries again after 30 minutes...' test exercises repeated refusals and eventual progress."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing AC5 tests cover unrelated errors, other agents and previously handled refusals. The recorded related-test run reports 842 passed, zero failed and three skipped; no unrelated changes were found."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs:231",
+        "issue": "Usage-limit recovery is bypassed for builds that end while speck run is stopped. Builds deliberately continue running after speck run stops. If Claude then refuses a build and exits, adoptEarlierBuilds records its exit on restart and continues without calling limits.ended. Because the log contains a result, buildKilled also excludes it from automatic recovery. The build stays stopped and new Claude work can launch during the limit.",
+        "suggested_fix": "Check the usage-limit log when recovering an already-ended build at startup, before ordinary stop handling. Add a regression test covering a build that reaches the limit while speck run is stopped, then restart and verify the hold and eventual session resume.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The normal waiting and automatic resume flow is well tested. One recovery gap remains: if a build hits the limit while speck run is stopped, restarting speck misses the refusal, leaves that build stranded and can start more work during the limit."
+  }
+}
+```
+
+</details>

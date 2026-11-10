@@ -15,6 +15,7 @@ import { saveRecord } from '../scripts/build-records.mjs';
 import { T } from './support/panel.mjs';
 import { runRepo, startRun, stopRun, waitFor, record } from './support/run.mjs';
 import { keptFile } from './support/copy.mjs';
+import { deadPid } from './support/blocked.mjs';
 
 const RESET = Date.parse('2026-11-10T12:30:00Z'), MIN = 60000;
 const event = (status, resetsAt = RESET / 1000) => ({ type: 'rate_limit_event', rate_limit_info: { status, ...(resetsAt === null ? {} : { resetsAt }), rateLimitType: 'five_hour' } });
@@ -466,5 +467,27 @@ test('0622 AC1 AC2 AC3: speck run waits out a limit a build stopped on, then res
     await waitFor(() => Object.hasOwn(record(r.dir, '0001'), 'exited'), 'the resumed build to end', run.out);
     assert.equal(record(r.dir, '0001').session, first.session);
     assert.doesNotMatch(run.out(), /I'll look into it/);
+  } finally { await stopRun(run); }
+});
+
+// Just records itself, as a build Claude lets through.
+const RECORDING = REFUSING.replace(/if \(n === 0\) \{[\s\S]*\}\n$/, '');
+
+test('0622 AC1 AC2 AC3: a build that hit the limit while speck run was off is waited out when it starts, and holds new work too', async () => {
+  const r = runRepo({ tickets: [['0001', { status: 'building' }], ['0002', {}]], command: `"${process.execPath}" "${keptFile('fake-recording.cjs', RECORDING)}" @repo --session-id {session} "/speck-build {id}"` });
+  const runs = path.join(r.dir, 'speck', '.cache', 'runs'), resets = Math.ceil(Date.now() / 1000) + 3;
+  fs.mkdirSync(runs, { recursive: true });
+  fs.writeFileSync(path.join(runs, '0001.log'), log(event('rejected', resets), failedResult));
+  saveRecord(path.join(runs, '0001.json'), { id: '0001', session: 'off-session', cwd: r.dir, pid: deadPid(), started: new Date().toISOString() });
+  const run = startRun(r.dir, { SPECK_RUN_LIMIT_GRACE_MS: '0' });
+  try {
+    await waitFor(() => r.calls().length === 2, 'the build to be resumed and the next launched', run.out);
+    assert.match(run.out(), /usage limit is reached until/);
+    const [first, second] = r.calls();
+    assert.equal(first.flag, '--resume');
+    assert.equal(first.session, 'off-session');
+    assert.ok(first.at >= resets * 1000, 'nothing started before the reset');
+    assert.ok(second.at >= resets * 1000, 'nor did new work');
+    assert.match(second.prompt, /speck-build 0002/);
   } finally { await stopRun(run); }
 });
