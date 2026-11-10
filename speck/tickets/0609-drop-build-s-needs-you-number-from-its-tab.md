@@ -1,7 +1,7 @@
 ---
 id: "0609"
 title: "Drop Build's needs-you number from its tab"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T10:01:51.169Z"
 ---
 # 0609 · Drop Build's needs-you number from its tab
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The Build tab can read "Build 11 3": the lane's count and, beside it, a red needs-you number, two numbers side by side with only one labelled by its colour. The black bar already says how many need you whichever lane is open, so the second number repeats it and costs width at 320 px.
@@ -54,3 +54,92 @@ The Build tab shows only the lane's count, like the other tabs.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Tests changed to check the new behaviour (AC4):
+  - `test/panel-0477.test.mjs`: 0477 AC2 (no number, Build's name and count only) and its real-browser strip test (no longer pins a number on Build).
+  - `test/panel-0410.test.mjs`: 0410 AC4 and 0410 AC4 (review F1) now check the bar's needs-you line instead of Build's tab.
+  - `test/panel-0474.test.mjs`: 0474 AC1 checks the bar's needs-you line while Build is closed.
+  - `test/panel-0425.test.mjs`: both 0425 AC2 tests (Build's tab holds its name and count; its accessible name has no needs-you part).
+  - `test/panel-0481.test.mjs`: the real-browser bar test no longer pins or measures a number on Build.
+  - `test/panel-0582.test.mjs`: the 320 px real-browser test no longer pins a number on Build; 0582 AC3's Build name is "Build, 4 tickets".
+  - `test/panel-0440.test.mjs` (0440 AC1) and `test/panel-0426.test.mjs` (0426 AC3): no longer check the removed `.tab .needs` colour rule.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "245fc378b06d440b49cc2375d8cc8c827102296a",
+    "session": "fresh",
+    "thread_id": "01a1c4f1-65ef-71a2-801e-95e4e84a5df6",
+    "builder_response": "- Tests run: test/panel-0609.test.mjs test/panel-0477.test.mjs test/panel-0410.test.mjs test/panel-0474.test.mjs test/panel-0425.test.mjs test/panel-0481.test.mjs test/panel-0582.test.mjs test/panel-0440.test.mjs test/panel-0426.test.mjs, with --related (27 more files brought in by the changed templates; 351 pass, 3 skipped by 0078 as before).\n- Changed tests (AC4), each now checking the new behaviour: 0477 AC2 and its browser test, 0410 AC4 and AC4 (review F1) (now check the bar's needs-you line), 0474 AC1, 0425 AC2 (both), 0481 browser test, 0582 AC1 browser test and AC3 Build name, 0440 AC1 and 0426 AC3 (the removed `.tab .needs` colour rule).\n- Note: the fake page makes any element asked for by id, so \"no number\" is checked as the HTML having no `build-needs` and the page writing nothing to it.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 141723,
+      "cached_input_tokens": 101248,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 654,
+      "reasoning_output_tokens": 12
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 40475,
+      "cached": 101248,
+      "write": 0,
+      "output": 654
+    },
+    "cost_usd": 0.0976148,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:12:29.676Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.html removes build-needs; drawTabs in templates/panel-header.js retains only lane counts. Both 0609 AC1 tests passed, checking markup and updates across needs-you states and lanes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawBar remains unchanged. The passing 0609 AC2 test checks plural and singular needs-you counts and hiding the line when building."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "drawTabs now gives every tab the same name-and-count aria-label. Passing 0609 AC3 and revised 0582 AC3 tests exercise this behaviour."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "The old tests were updated appropriately, and /tmp/speck-0609-tests.txt records 351 passed, zero failed and three skipped. However, the ticket's Delivery log contains only its placeholder and does not list the changed tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0609-drop-build-s-needs-you-number-from-its-tab.md",
+        "issue": "AC4 explicitly requires the Delivery log to list the updated tests. That list appears in the builder response but is absent from the ticket.",
+        "suggested_fix": "Add the changed test files and affected tests from the builder response to the ticket's Delivery log.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Build tab now shows only its name and lane count, including for screen readers. The black bar still reports what needs attention, and the reported tests pass. Before approval, add the required list of updated tests to the ticket's Delivery log."
+  }
+}
+```
+
+</details>
