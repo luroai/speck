@@ -37,48 +37,31 @@ async function openCard(p, id) {
   return [view, view.children[0]];
 }
 const inView = (p, card) => card === p.byId('full-ticket');
-const boxOf = (p, n) => p.all(n).find(x => /^deps\b/.test(x.className || ''));
-const chipsOf = (p, box) => cls(box, /^deps-grid$/).children;
+const boxOf = (p, n) => p.all(n).find(x => /^deps\b|\bwaits-facts\b/.test(x.className || '')); // 0613: or its Waits on facts
+// 0613: the links and plain ids in its Waits on facts, one for each ticket
+const chipsOf = (p, box) => p.all(box).filter(n => /^waits-link\b/.test(n.className || ''));
+const idIn = n => n.children.find(c => c.className === 'sid').textContent;
 const slotsOf = box => cls(box, /^deps-slots$/).children;
 const slotText = s => [s.className, s.textContent];
 
 test('0467 AC1: the model gives a ticket waiting on two or more a Waits on box, in id order, with each one\'s state', () => {
   assert.deepEqual(depsIn(model(), '0100'), { kind: 'waits', shipped: 2, building: 1, queued: 1,
-    items: [{ id: '0201', state: 'shipped' }, { id: '0202', state: 'shipped' }, { id: '0203', state: 'building' }, { id: '0204', state: 'queued' }] });
+    items: [{ id: '0201', title: 'Ticket 0201', state: 'shipped' }, { id: '0202', title: 'Ticket 0202', state: 'shipped' }, { id: '0203', title: 'Ticket 0203', state: 'building' }, { id: '0204', title: 'Ticket 0204', state: 'queued' }] });
   // repeated and its own id count once and not at all; an id not on the board is shipped when waiting_on leaves it out
   const odd = depsIn(model([full('0100', { after: ['0100', '9', '0203', '0203'], waiting_on: ['0203'] }), T('0203', 'blocked')]), '0100');
-  assert.deepEqual(odd.items, [{ id: '9', state: 'shipped' }, { id: '0203', state: 'building' }]);
+  assert.deepEqual(odd.items, [{ id: '9', title: '', state: 'shipped' }, { id: '0203', title: 'Ticket 0203', state: 'building' }]);
 });
 
-test('0467 AC1: an open card waiting on four shows the counts, the bar, the unshipped chips and a +2 shipped chip that shows and hides the rest', async () => {
+// 0613: the box, bar and chips gave way to facts (test/panel-0613.test.mjs), listing the shipped ones too
+test('0467 AC1: an open card waiting on four lists each one under its table, with its state, shipped ones too', async () => {
   const p = boardPage([board()]);
   await p.settle();
   const [card0, head] = await openCard(p, '0100');
   assert.equal(head.children[head.children.length - 2].className, 'facts', 'its top row ends with its table, then Set ready (0586)');
   const box = card0.children[card0.children.indexOf(head) + 1].children[0]; // first in its details, under its top row
-  assert.equal(box.className, 'deps deps-waits', 'right under its table');
-  assert.deepEqual(cls(box, /^deps-head$/).children.map(n => n.textContent), ['Waits on', '2 shipped · 1 building · 1 queued']);
-  assert.deepEqual(cls(box, /^deps-bar$/).children.map(n => n.className), ['shipped', 'shipped', 'building', 'queued']);
-  assert.deepEqual(chipsOf(p, box).map(c => [c.className, c.textContent]), [['chip building', '0203'], ['chip queued', '0204'], ['chip more', '+2 shipped']]);
-  const more = chipsOf(p, box)[2];
-  assert.equal(more.tagName, 'button');
-  assert.equal(more.attrs['aria-expanded'], 'false');
-  p.press(more);
-  await p.settle();
-  const [card] = await openCard(p, '0100');
-  assert.match(card.className, /\bopen\b/, 'pressing it leaves the card open');
-  const shown = boxOf(p, card);
-  assert.deepEqual(chipsOf(p, shown).map(c => c.textContent), ['0203', '0204', '0201', '0202', 'Hide shipped']);
-  assert.deepEqual(chipsOf(p, shown).slice(2, 4).map(c => c.className), ['chip shipped', 'chip shipped']);
-  p.press(chipsOf(p, shown)[4]);
-  await p.settle();
-  assert.deepEqual(chipsOf(p, boxOf(p, (await openCard(p, '0100'))[0])).map(c => c.textContent), ['0203', '0204', '+2 shipped'], 'hidden again');
-  // a count of 0 is left out, and none shipped means no shipped chip
-  const q = boardPage([board([full('0100', { after: ['0204', '0205'], waiting_on: ['0204', '0205'] }), T('0204', 'ready'), T('0205', 'ready')])]);
-  await q.settle();
-  const b = boxOf(q, (await openCard(q, '0100'))[0]);
-  assert.equal(cls(b, /^deps-head$/).children[1].textContent, '2 queued');
-  assert.deepEqual(chipsOf(q, b).map(c => c.textContent), ['0204', '0205']);
+  assert.equal(box.className, 'facts waits-facts', 'right under its table');
+  assert.deepEqual(chipsOf(p, box).map(c => [c.className, idIn(c)]), [['waits-link shipped', '0201'], ['waits-link shipped', '0202'], ['waits-link building', '0203'], ['waits-link queued', '0204']]);
+  assert.equal(p.all(box).find(n => n.tagName === 'button' && !/^waits-link/.test(n.className)), undefined, 'nothing to show or hide');
 });
 
 test('0467 AC2: the model gives a chain its five slots, with +n at an end that has more', () => {
@@ -133,11 +116,11 @@ test('0467 AC2: an open card in a chain shows the Chain box: its header, then fi
   assert.equal(boxOf(p, alone), undefined);
 });
 
-test('0467 AC3: pressing a chip or a circle goes to that ticket, opening its tab; one not on the page is no button', async () => {
+test('0467 AC3: pressing a link or a circle goes to that ticket, opening its tab; one not on the page is no button', async () => {
   const p = boardPage([board()]);
   await p.settle();
   const [card] = await openCard(p, '0100');
-  const chip = chipsOf(p, boxOf(p, card))[1];
+  const chip = chipsOf(p, boxOf(p, card))[3];
   assert.equal(chip.tagName, 'button');
   assert.equal(chip.attrs['aria-label'], 'Go to ticket 0204, queued');
   p.press(chip);
@@ -153,16 +136,13 @@ test('0467 AC3: pressing a chip or a circle goes to that ticket, opening its tab
   assert.equal(p.byId('full-ticket').children[0].children[0].textContent, '0014', 'the pane shows 0014');
   p.press(p.all(p.byId('full-ticket')).find(n => n.className === 'close'));
   await p.settle();
-  // a shipped ticket isn't on the page, so its chip is plain
-  const [again] = await openCard(p, '0100');
-  p.press(chipsOf(p, boxOf(p, again))[2]);
-  await p.settle();
-  const shipped = chipsOf(p, boxOf(p, (await openCard(p, '0100'))[0]))[2];
-  assert.equal(shipped.textContent, '0201');
+  // a shipped ticket isn't on the page, so its link is plain (0613: shown always)
+  const shipped = chipsOf(p, boxOf(p, (await openCard(p, '0100'))[0]))[0];
+  assert.equal(idIn(shipped), '0201');
   assert.equal(shipped.tagName, 'span');
 });
 
-test('0467 AC4: the full ticket shows the same box under its table, and no open card has the line of ids', async () => {
+test('0467 AC4: the full ticket shows the same box (0613: or Waits on facts) under its table, and no open card has the line of ids', async () => {
   const p = boardPage([board()]);
   await p.settle();
   for (const id of ['0100', '0014']) {
@@ -183,14 +163,14 @@ test('0467 AC4: the full ticket shows the same box under its table, and no open 
   assert.deepEqual(steps.children.map(n => n.className), ['track', 'facts', 'facts chain-facts', 'q live'], '0013: track, table, its chain (0603), then its live section (0584)');
 });
 
-test('0467 AC3: in the full ticket, which covers the page, pressing a chip shows that ticket there', async () => {
+test('0467 AC3: in the full ticket, which covers the page, pressing a link shows that ticket there', async () => {
   const p = boardPage([board()]);
   await p.settle();
   const [card] = await openCard(p, '0100');
   p.press(p.all(card).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
   await p.settle();
-  const chip = chipsOf(p, p.byId('full-ticket').children[1].children[2])[1];
-  assert.equal(chip.textContent, '0204');
+  const chip = chipsOf(p, p.byId('full-ticket').children[1].children[2])[3];
+  assert.equal(idIn(chip), '0204');
   p.press(chip);
   await p.settle();
   assert.equal(p.byId('full-ticket').hidden, false);
@@ -226,10 +206,9 @@ const MEASURE = id => `(async () => {
   document.getElementById('tab-plan').click();
   const card = () => [...document.querySelectorAll('#shaping .item.ticket')].find(n => n.querySelector('.id').textContent === ${JSON.stringify(id)});
   if (!card().classList.contains('open')) card().querySelector('.head').click();
-  await wait(() => card().classList.contains('open') && card().querySelector('.deps'));
-  const more = card().querySelector('.chip.more');
-  if (more && more.getAttribute('aria-expanded') === 'false') { more.click(); await wait(() => card().querySelector('.chip.more').getAttribute('aria-expanded') === 'true'); }
-  const box = card().querySelector('.deps'), grid = box.querySelector('.deps-grid, .deps-slots'), g = grid.getBoundingClientRect(), c = card().getBoundingClientRect();
+  await wait(() => card().classList.contains('open') && card().querySelector('.deps, .waits-facts'));
+  if (!card().querySelector('.deps')) { const c = card().getBoundingClientRect(); return { lines: [...card().querySelectorAll('.waits-item')].map(n => { const r = n.getBoundingClientRect(); return { text: n.textContent, left: r.left, right: r.right, height: r.height, card: [c.left, c.right] }; }) }; }
+  const box = card().querySelector('.deps'), grid = box.querySelector('.deps-slots'), g = grid.getBoundingClientRect(), c = card().getBoundingClientRect();
   const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').map(parseFloat);
   const out = { card: [c.left, c.right], grid: [g.left, g.right], box: [box.getBoundingClientRect().left, box.getBoundingClientRect().right], cols,
     kids: [...grid.children].map(n => { const r = n.getBoundingClientRect(), t = n.querySelector('.sid') || n.querySelector('span') || n; const s = getComputedStyle(t);
@@ -238,7 +217,7 @@ const MEASURE = id => `(async () => {
   return out;
 })()`;
 
-test('0467 AC3: in a real browser from 320 px up, every chip and circle keeps to its slot with its id on one line, 27 tickets in after:', skip, async () => {
+test('0467 AC3: in a real browser from 320 px up, every circle keeps to its slot with its id on one line, and 27 tickets in after: each keep to one line (0613)', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -248,19 +227,21 @@ test('0467 AC3: in a real browser from 320 px up, every chip and circle keeps to
       await b.send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 600 });
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
       await b.until(`document.querySelectorAll('#shaping .item.ticket').length === 5`, 'the panel');
-      for (const [id, per] of [['0452', 6], ['0903', 5]]) {
+      // 0613: what 0452 waits on is a line for each, kept inside its card
+      const w = await b.js(MEASURE('0452'));
+      assert.equal(w.lines.length, 27, `${width}: 27 lines`);
+      for (const l of w.lines) assert.ok(l.left >= l.card[0] - 0.5 && l.right <= l.card[1] + 0.5 && l.height < 50, `${width}: ${l.text} on one line inside its card (${JSON.stringify(l)})`);
+      for (const [id, per] of [['0903', 5]]) {
         const m = await b.js(MEASURE(id)), at = `${width} ${id}`;
         assert.equal(m.cols.length, per, `${at}: ${per} columns`);
         assert.ok(m.box[0] >= m.card[0] - 0.5 && m.box[1] <= m.card[1] + 0.5, `${at}: the box inside its card`);
-        if (id === '0452') assert.equal(m.kids.length, 28, `${at}: 27 chips and the shipped chip`);
         const col = (m.grid[1] - m.grid[0] - (per - 1) * 4) / per;
         for (const [i, k] of m.kids.entries()) {
-          const wide = /shipped|Hide/.test(k.text) ? 2 : 1;
+          const wide = 1;
           // Chrome draws a button a whole number of pixels wide, so one can reach under a pixel into the 4 px gap
           assert.ok(k.left >= m.grid[0] - 0.5 && k.right < m.grid[1] + 1, `${at}: ${k.text} inside the box`);
           assert.ok(Math.abs(k.width - (col * wide + (wide - 1) * 4)) < 1, `${at}: ${k.text} fills its slot (${k.width} vs ${col})`);
           assert.ok(!k.over && k.nowrap && k.lines === 1, `${at}: ${k.text}'s id on one line, not cut (${JSON.stringify(k)})`);
-          if (id === '0452' && i < 24) assert.ok(Math.abs(k.top - m.kids[i - (i % 6)].top) < 0.5, `${at}: ${k.text} in its row of six`);
         }
       }
     }

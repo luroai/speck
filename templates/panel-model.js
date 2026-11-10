@@ -184,7 +184,8 @@ function depsOf(t, byId, unlocks) {
   const stateOf = d => { const o = byId.get(d); return o ? o.status === 'done' ? 'shipped' : IN_FLIGHT.includes(o.status) ? 'building' : 'queued' : after.includes(d) && !waiting.has(d) ? 'shipped' : 'queued'; };
   if (after.length >= 2) {
     // Shipped or not as its facts table counts them, from waiting_on.
-    const items = after.sort(byNumber).map(d => ({ id: d, state: !waiting.has(d) ? 'shipped' : stateOf(d) === 'building' ? 'building' : 'queued' }));
+    // 0613: and its title, or '' for one not on the board.
+    const items = after.sort(byNumber).map(d => ({ id: d, title: String(byId.get(d)?.title ?? ''), state: !waiting.has(d) ? 'shipped' : stateOf(d) === 'building' ? 'building' : 'queued' }));
     const count = s => items.filter(i => i.state === s).length;
     return { kind: 'waits', items, shipped: count('shipped'), building: count('building'), queued: count('queued') };
   }

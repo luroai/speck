@@ -216,6 +216,8 @@
   #full-ticket .chain-facts button.chain-id { color: var(--run); cursor: pointer; }
   #full-ticket .chain-facts button.chain-id:hover { text-decoration: underline; }
   #full-ticket .chain-facts .chain-state, #full-ticket .chain-facts .chain-more { color: var(--muted); }
+  /* 0613: what it waits on, one line for each across the view */
+  #full-ticket .facts.waits-facts { display: block; margin-top: 12px; }
   /* 0584: a build's live details, under the track and facts, styled as its card is */
   #full-ticket .live { margin-top: 14px; }
   #full-ticket .q.live { padding: 0; border: 0; border-radius: 0; } /* 0602: in the view, not a box of its own */

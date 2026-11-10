@@ -27,6 +27,8 @@ const idOf = (p, n) => p.all(n).find(x => x.className === 'id')._text;
 const shaping = (p, id) => items(p).find(n => idOf(p, n) === id);
 const queued = (p, id) => queueRows(p).find(n => idOf(p, n) === id);
 const gotos = (p, n) => p.all(n).filter(x => x.tagName === 'button' && /^Go to ticket /.test((x.attrs || {})['aria-label'] || ''));
+// 0613: a link in a Waits on fact holds the ticket's title after its id
+const idIn = b => (b.children.find(c => c.className === 'sid') || b).textContent;
 const goto = (p, n, id) => gotos(p, n).find(b => b.textContent === id);
 const lit = n => /\bhl\b/.test(n.className);
 const dim = n => /\bdim\b/.test(n.className);
@@ -166,10 +168,8 @@ test('0154 AC3: an id whose ticket isn\'t on the page is plain text, not a butto
   const p = fakePage([board(), board()]);
   await p.settle();
   await openUp(p, '0004');
-  p.press(p.all(pane(p)).find(n => n.className === 'chip more')); // its shipped one too
-  await p.settle();
-  assert.deepEqual(gotos(p, pane(p)).map(b => b.textContent), ['0001'], 'a shipped ticket\'s id is not a button');
-  assert.ok(p.all(pane(p)).some(n => n.tagName === 'span' && n.textContent === '0009'), 'but it is still shown');
+  assert.deepEqual(gotos(p, pane(p)).map(idIn), ['0001'], 'a shipped ticket\'s id is not a button');
+  assert.ok(p.all(pane(p)).some(n => n.tagName === 'span' && n.className === 'sid' && n.textContent === '0009'), 'but it is still shown (0613: with its shipped ones always)');
   // 0520: Plan's Tickets, Ideas and Inbox buttons are gone, so Plan always lists its drafts and a link to one stays a button.
   await openUp(p, '0002');
   assert.deepEqual(gotos(p, pane(p)).map(b => b.textContent), ['0001'], 'a draft in Plan is a button');
@@ -200,7 +200,7 @@ test('0154 AC4: each id button says where it goes to a screen reader and is at l
   assert.equal(all.length, 2);
   for (const b of all) assert.match(b.attrs['aria-label'], new RegExp(`^Go to ticket ${b.textContent}, `));
   const touch = (css().match(/@media \(pointer: coarse\) \{([\s\S]*)$/) || [])[1] || '';
-  assert.match(touch, /\.deps \.chip, \.deps \.slot \{ min-height: 44px; \}/, 'a tap area 44 px high on a touch screen');
+  assert.match(touch, /\.deps \.slot, \.waits-facts button\.waits-link \{ min-height: 44px; \}/, 'a tap area 44 px high on a touch screen (0613: a Waits on link)');
 });
 
 async function withBoard(fn, { width = 1280 } = {}) {

@@ -646,17 +646,14 @@ function lintCell(t) {
   const text = bits.length ? bits.map(b => b.textContent).join(' · ') : 'passes';
   return factCell('Ready check', text, null, text, null, bits.length ? bits.flatMap((b, i) => (i ? [document.createTextNode(' · '), b] : [b])) : null);
 }
-// 0467: an open ticket's dependency box, under its table, from the model's deps, or nothing when it has none. A Waits
-// on box: a header counting its tickets by state, a bar with one even segment for each, then a grid of chips six to a
-// row, one for each that hasn't shipped, and one chip two columns wide that shows and hides the shipped ones. A Chain
-// box: a header counting the tickets before and after it, then five even slots, each a circle over an id. A chip or a
-// circle for a ticket on the page goes to it, as an id in a note does (goTo). In the side pane, which covers the page,
-// it shows that ticket in the pane instead.
-const depsShown = new Set(); // ids whose Waits on box shows its shipped tickets too
+// 0467: an open ticket's dependency box, under its table, from the model's deps, or nothing when it has none. 0613: a
+// ticket waiting on two or more shows them as facts (waitsFacts). A Chain box: a header counting the tickets before and
+// after it, then five even slots, each a circle over an id. A link or a circle for a ticket on the page goes to it, as
+// an id in a note does (goTo). In the side pane, which covers the page, it shows that ticket in the pane instead.
 const DEP_WORDS = { shipped: 'shipped', building: 'building', queued: 'queued', self: 'this ticket' };
 const depsIds = t => (!t.deps ? [] : t.deps.kind === 'waits' ? t.deps.items.map(i => i.id) : t.deps.slots.filter(s => s && s.id && s.state !== 'self').map(s => s.id));
 const depsLinks = t => depsIds(t).filter(id => onPage.has(String(id))); // the ones that go to their ticket
-// A chip or a slot: a button that goes to the ticket when it's on the page, otherwise the same, not a button.
+// A link or a slot: a button that goes to the ticket when it's on the page, otherwise the same, not a button.
 function depNode(cls, id, state, kids, inPane) {
   const go = state !== 'self' && onPage.has(String(id));
   const n = el(go ? 'button' : 'span', cls, null, ...kids);
@@ -670,28 +667,21 @@ function depNode(cls, id, state, kids, inPane) {
 function depsBox(t, inPane = false) {
   const d = t.deps;
   if (!d) return null;
-  const id = String(t.id);
-  if (d.kind === 'waits') {
-    const counts = ['shipped', 'building', 'queued'].filter(s => d[s] > 0).map(s => `${d[s]} ${s}`).join(' · ');
-    const bar = el('div', 'deps-bar', null, ...d.items.map(i => el('i', i.state)).sort((a, b) => STATE_ORDER[a.className] - STATE_ORDER[b.className]));
-    bar.setAttribute('role', 'img');
-    bar.setAttribute('aria-label', counts);
-    const shown = depsShown.has(id), open = d.items.filter(i => i.state !== 'shipped'), done = d.items.filter(i => i.state === 'shipped');
-    const chips = [...open, ...shown ? done : []].map(i => depNode(`chip ${i.state}`, i.id, i.state, [el('span', null, i.id)], inPane));
-    if (done.length) {
-      const more = el('button', 'chip more', shown ? 'Hide shipped' : `+${done.length} shipped`);
-      more.type = 'button';
-      more.setAttribute('aria-expanded', String(shown));
-      more.addEventListener('click', e => { e.stopPropagation(); flip(depsShown, id); });
-      chips.push(more);
-    }
-    return el('div', 'deps deps-waits', null, el('div', 'deps-head', null, el('b', null, 'Waits on'), el('span', null, counts)), bar, el('div', 'deps-grid', null, ...chips));
-  }
+  if (d.kind === 'waits') return waitsFacts(d, inPane);
   if (inPane) return chainFacts(d);
   const slots = d.slots.map(s => (!s ? el('span', 'slot')
     : s.more ? el('span', 'slot more', null, el('span', 'dot'), el('span', 'sid', `+${s.more}`))
       : depNode(`slot ${s.state}`, s.id, s.state, [el('span', 'dot'), el('span', 'sid', s.id)], inPane)));
   return el('div', 'deps deps-chain', null, el('div', 'deps-head', null, el('b', null, 'Chain'), el('span', null, `${d.before} before · ${d.after} after`)), el('div', 'deps-slots', null, ...slots));
+}
+// 0613: the tickets a ticket waits on as one fact in the facts' style, in the full view and an open Plan card alike:
+// one line for each, in id order, its id and title as a link to it, then its state.
+function waitsFacts(d, inPane) {
+  const words = d.items.map(i => [i.id, i.title, DEP_WORDS[i.state]].filter(Boolean).join(' '));
+  const lines = d.items.map(i => el('span', 'waits-item', null,
+    depNode(`waits-link ${i.state}`, i.id, i.state, [el('span', 'sid', i.id), ...i.title ? [document.createTextNode(' '), el('span', 'waits-title', i.title)] : []], inPane),
+    document.createTextNode(' '), el('span', 'waits-state', DEP_WORDS[i.state])));
+  return el('dl', 'facts waits-facts', null, factCell('Waits on', '—', null, words.join(', '), null, lines));
 }
 // 0603: in the full view, a chain is two facts in the facts' style: the tickets it waits for, nearest first, and those
 // waiting on it, each id with its state, and "+n more" for the ones the model's slots leave out.
@@ -705,13 +695,13 @@ function chainFacts(d) {
   };
   return el('dl', 'facts chain-facts', null, cell('Waits for', d.slots.slice(0, at).reverse()), cell('Waiting on it', d.slots.slice(at + 1)));
 }
-const STATE_ORDER = { shipped: 0, building: 1, queued: 2 };
 // What a dependency box shows, to tell when it needs drawing again.
-const depsSig = t => signature([t.deps || null, depsShown.has(String(t.id)), depsLinks(t)]);
+const depsSig = t => signature([t.deps || null, depsLinks(t)]);
+const isDeps = n => /^deps\b|\bwaits-facts\b/.test(n.className || '');
 // Puts an open card's dependency box right in `card`, straight after `top`, or first in it when `top` is null: a new
 // one in place of the old when what it shows has changed, or none when it has none now.
 function putDeps(card, top, t) {
-  const kids = [...card.children], old = kids.find(n => /^deps\b/.test(n.className)) || null;
+  const kids = [...card.children], old = kids.find(isDeps) || null;
   const sig = depsSig(t);
   if (old && old.sig === sig) return;
   const next = depsBox(t);

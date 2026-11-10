@@ -59,7 +59,7 @@ const small = ([k, v]) => ((k === 'font-size' || k === 'font') && /(^|\s)12px\b/
 
 test('0612 AC3: no style gives a button, or anything drawn inside one, 8 px corners or 12 px text', () => {
   const classes = buttonClasses();
-  for (const c of ['save', 'save-all', 'pack-document', 'pack-folder', 'ask-changes', 'ship', 'info', 'log-filter', 'set-ready', 'dep-chip', 'chip', 'tab',
+  for (const c of ['save', 'save-all', 'pack-document', 'pack-folder', 'ask-changes', 'ship', 'info', 'log-filter', 'set-ready', 'dep-chip', 'tab',
     'tab-n', 'dep-pill', 'bridge-where', 'bridge-line'])
     assert.ok(classes.has(c), `${c} is found as a button's class`);
   const left = [];

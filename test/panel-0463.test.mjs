@@ -95,8 +95,8 @@ test('0463 AC2: a queued Build ticket\'s full view shows its priority, size, ris
     assert.deepEqual(Object.fromEntries(Object.entries(factsOfFull(p, full)).filter(([k]) => facts[k] !== undefined)), facts, id);
     assert.equal(p.all(full).some(n => n.className === 'state' && n.textContent === 'ready'), true, `${id}: its state`);
   }
-  assert.ok(p.all(await fullViewOf(p, '0812')).some(n => /^(deps|facts chain-facts)\b/.test(n.className)), '0812: what it waits on');
-  assert.ok(p.all(await fullViewOf(p, '0813')).some(n => /^(deps|facts chain-facts)\b/.test(n.className)), '0813: what it waits on');
+  assert.ok(p.all(await fullViewOf(p, '0812')).some(n => /^(deps|facts chain-facts|facts waits-facts)\b/.test(n.className)), '0812: what it waits on');
+  assert.ok(p.all(await fullViewOf(p, '0813')).some(n => /^(deps|facts chain-facts|facts waits-facts)\b/.test(n.className)), '0813: what it waits on');
 });
 
 test('0463 AC2: a queued Build ticket\'s full view shows its Ready check and its type', async () => {
