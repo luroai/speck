@@ -1,7 +1,7 @@
 ---
 id: "0605"
 title: "Arch speck's pleased eye upwards"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T08:07:02.770Z"
 approved: "2026-11-10T08:09:28.933Z"
+finished: "2026-11-10T08:14:24.724Z"
 
 ---
 # 0605 · Arch speck's pleased eye upwards
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When speck is pleased, its red visor curves down in the middle, like a smiling mouth. But the visor is speck's eye, and a pleased eye is a closed one arched upwards, like ^, as in the mock. As drawn, speck looks like it's grinning at you rather than looking pleased.
