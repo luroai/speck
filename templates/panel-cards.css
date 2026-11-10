@@ -83,24 +83,21 @@
   .where.needs::before { background: var(--needs-you); }
   .where.run::before { background: var(--accent); }
   .where.wait::before { background: var(--muted); }
-  .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--log-bg); border: 1px solid var(--line);
-    font: 12px/1.5 var(--font-mono); color: var(--log-muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; color-scheme: dark; } /* 0455: a terminal in every look */
-  /* 0422: one line of the log a row, its text past a column for the time, so a line that wraps, or a message's next line,
-     starts under the text. Each kind of entry has its own colour; anything else keeps the log's muted one */
+  /* 0602: a building ticket's live log, in the full view's own colours: a box that scrolls, between two lines, its rows
+     as a build log's (panel-popups.css) */
+  .q .log { margin: 10px 0 4px; padding: 0 0 8px; height: 24em; max-height: 24em; overflow-y: auto; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
+    font: 15px/20px var(--font-ui); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
   .q .log { overflow-anchor: none; } /* 0422: rows taken out at the top leave the box's scroll place as it was, as text did */
-  .q .log .ln { display: block; padding-left: 9ch; }
-  .q .log .ln.timed { text-indent: -9ch; }
-  .q .log .ln.plain { padding-left: 0; }
-  .q .log .at { color: var(--log-muted); }
-  .q .log .msg { color: var(--log-text); }
-  .q .log .tool { color: var(--log-run); }
-  .q .log .fail { color: var(--log-bad); }
-  .q .log .note { color: var(--log-warn); }
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
   /* 0421: an open card's Full ticket, Review pack and Stop build are small buttons on one line. 0428: each boxed, as every button is */
   .q .stop-build { font: inherit; font-family: var(--font-ui); font-size: 12px; line-height: 16px; margin: 6px 0 2px; padding: 1px 10px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
+  /* 0602: Full log and Stop build in the redesign's secondary style: a 1 px border in the line colour, 10 px corners, the text colour, 44 px tall, for every pointer as the cards' controls are (0469) */
+  #full-ticket .live-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  #full-ticket .live-buttons .full-open, #full-ticket .live-buttons .stop-build { box-sizing: border-box; margin: 0; min-height: 44px; padding: 0 16px; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; }
+  #full-ticket .live-buttons .full-open:hover { color: var(--text); border-color: var(--text); }
+  #full-ticket .live-buttons .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   /* An open ready ticket's Back to Plan button, beside Full ticket, and why the server refused it */
   .q .back-to-plan { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
   .q .back-to-plan:hover { color: var(--text); border-color: var(--text); }
@@ -355,7 +352,7 @@
 
   /* 0428: rounded corners as Cursor's: 8 px for a control, 12 px for a card or a box */
   .question-fact, .next, .prio-menu { border-radius: 8px; }
-  .item, .q, .q .log { border-radius: 12px; }
+  .item, .q { border-radius: 12px; }
   .stats { border-radius: 12px; overflow: hidden; }
 
   /* 0140: a phone screen */

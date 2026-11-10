@@ -771,13 +771,13 @@ function closeForeman() {
 // 0415: the Pipeline pop-up, with speck run's output as its Log section. 0458: the log is all it shows, apart from a
 // stale page's Reload page button above it. 0470: titled Pipeline log, with no Log heading over the log box.
 // 0548: or, while buildLogOf is set, a ticket's build log in its place (renderBuildLog). 0592: the Pipeline log is a full view
-// (pipelineFrame, class log-view) and only a build log is still the pop-up.
+// (pipelineFrame, class log-view). 0602: and so is a build log (buildLogFrame).
 function renderForeman(stale) {
   const box = $('foreman'), shows = foremanOpen ? 'run' : buildLogOf !== null ? `build ${buildLogOf}` : null;
   const was = !box.hidden && box.children.length > 0 && box.shows === shows;
   box.hidden = shows === null;
   box.shows = shows;
-  box.className = foremanOpen ? 'foreman log-view' : 'foreman';
+  box.className = shows === null ? 'foreman' : 'foreman log-view';
   holdPage(pageHeld());
   holdPane(); // 0583
   if (shows === null) { box.replaceChildren(); return; }
@@ -921,15 +921,18 @@ function drawLogStatus() {
   setText(logSaid, !f.on ? 'speck run is off, so no build slots are in use.'
     : `speck run ${Number.isFinite(since) ? `has been on since ${shippedAt(since, Date.now())}` : 'is on'}, with ${slots} in use.`);
 }
-// 0548: the pop-up's frame: its title row, with the title and Close, then its body, with room for a stale page's line
-// and the log box. Returns the body.
-function popFrame(title, close) {
-  const box = $('foreman'), shut = el('button', 'close', 'Close');
-  shut.type = 'button';
-  shut.addEventListener('click', e => { e.stopPropagation(); close(); });
+// 0602: a build log's frame, as the Pipeline log's: on top a back link to its ticket and its heading, then its body,
+// with room for a stale page's line and the log box. Returns the body.
+function buildLogFrame(id) {
+  const box = $('foreman'), back = el('span', 'back', id), title = `${id} build log`;
+  back.tabIndex = 0;
+  back.setAttribute('role', 'link');
+  back.setAttribute('aria-label', `Back to ${id}`);
+  back.addEventListener('click', e => { e.stopPropagation(); closeBuildLog(); });
+  back.addEventListener('keydown', pressWithKeys);
   const body = el('div', 'fm-body', null, el('div', 'fm-stale'), el('div', 'fm-log'));
   box.setAttribute('aria-label', title);
-  box.replaceChildren(el('div', 'top', null, el('span', 'title', title), shut), body);
+  box.replaceChildren(el('div', 'top', null, back, el('span', 'title', title)), body);
   return body;
 }
 // 0548: opens an open Build card's build log in the Pipeline log's pop-up, leaving the card as it is.
@@ -958,11 +961,12 @@ function closeBuildLog() {
   if (to.focus) to.focus({ preventScroll: true });
 }
 // 0548: the ticket's build log in the pop-up, titled "<id> build log", in place of the Pipeline log, which has no stale
-// page's line. Its frame is kept while it's open and only the log under it is drawn again.
+// page's line. Its frame is kept while it's open and only the log under it is drawn again. 0602: a full view, as the
+// Pipeline log is.
 function renderBuildLog(was) {
   const box = $('foreman');
   if (!was) {
-    const body = popFrame(`${buildLogOf} build log`, closeBuildLog);
+    const body = buildLogFrame(buildLogOf);
     body.children[0].hidden = true;
     buildLogShown = undefined; buildLogDrawn = null; buildLogBuild = null;
   }

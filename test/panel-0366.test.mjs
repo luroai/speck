@@ -61,17 +61,13 @@ test('0366 AC1: pressing the notice board opens a view with a back link and, sin
   assert.doesNotMatch(pop(p).textContent, /0004 waiting for 0003|Which one\?/);
 });
 
-test('0366 AC1: the pop-up is a modal dialog after the board, not under the header, sharing the document pop-up\'s rules', () => {
+test('0366 AC1: the pop-up is a modal dialog after the board, not under the header, with no Close of the document pop-up\'s (0602)', () => {
   const html = page(), tag = html.match(/<div class="foreman" id="foreman"[^>]*>/)?.[0] || '';
   assert.match(tag, /role="dialog"/);
   assert.match(tag, /aria-modal="true"/);
   assert.match(tag, /tabindex="-1"/);
   assert.ok(html.indexOf(tag) > html.indexOf('</main>'), 'not between the header and the board');
-  for (const sel of ['#foreman .close']) { // 0470: its title is in Doto, the document's isn't. 0479: it's framed as a lane card, filling the window, so only its Close is the document's
-    const shared = sel.replace('#foreman', '#doc-view');
-    assert.ok(rules(sel).length >= 1, `${sel} is styled`);
-    assert.ok(rules(sel).some(r => rules(shared).includes(r)), `${sel} shares ${shared}'s rules`); // 0479: and has the frame's colours as well
-  }
+  assert.equal(rules('#foreman .close').length, 0, 'no Close: 0602 gave the build log a back link, as 0592 gave the Pipeline log');
   assert.match(rules('#foreman')[0], /position: fixed/);
   assert.match(rules('#foreman')[0], /inset: 0/);
   assert.ok(rules('#foreman').some(r => /round\(down, calc\(\(100% - 720px\) \/ 2\), 1px\)/.test(r)), 'its text in a centred column (0479: the lanes\' column)');

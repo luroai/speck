@@ -22,16 +22,14 @@ const decls = sel => [...css().matchAll(new RegExp(`^\\s*${sel.replace(/[.]/g, '
   .flatMap(m => [...m[1].matchAll(/([\w-]+)\s*:\s*([^;]+)/g)].map(d => [d[1], d[2].trim()]));
 const decl = (sel, name) => (decls(sel).filter(([k]) => k === name).pop() || [])[1];
 
-test('0459 AC1: the log box has the build log\'s black background, light text, four-sided border and corners, in both looks', () => {
-  for (const name of ['background', 'color', 'border', 'color-scheme']) {
-    assert.ok(decl('.q .log', name), `the build log has ${name}`);
-    assert.equal(decl('.foreman .run-log', name), decl('.q .log', name), name);
+test('0459 AC1, since 0602: neither the log box nor the build log is a terminal: no background of their own, the muted colour, in both looks', () => {
+  for (const sel of ['.foreman .run-log', '.q .log']) {
+    assert.equal(decl(sel, 'background'), undefined, `${sel} has no background`);
+    assert.equal(decl(sel, 'color-scheme'), undefined, `${sel} isn't dark in the light look`);
+    assert.equal(decl(sel, 'color'), 'var(--muted)', `${sel} is muted`);
   }
-  for (const kind of ['at', 'msg', 'fail']) assert.equal(decl(`.foreman .run-log .${kind}`, 'color'), decl(`.q .log .${kind}`, 'color'), `.${kind}`);
-  assert.match(css(), /\.foreman \.run-log \{ border-radius: 12px; \}|, \.foreman \.run-log[,\s][^{]*\{ border-radius: 12px; \}/, 'its 12 px corners');
   assert.doesNotMatch(css(), /\[data-theme[^{]*\.run-log[^{]*\{/, 'no look has a rule of its own for it');
   assert.equal(decl('.foreman .run-log', 'overflow-y'), 'auto', 'it scrolls');
-  assert.equal(decl('.foreman ol.run-log', 'font'), decl('.q .log', 'font'), 'the build log\'s font');
 });
 
 // ---------- AC2: each line laid out as a build log's ----------
@@ -45,8 +43,7 @@ test('0459 AC2, since 0592: a line\'s time is in a column of its own with its te
   assert.equal(at.textContent, '10:17:22');
   assert.equal(rows[0].textContent, '10:17:220457 shipped');
   assert.ok(rows.slice(1).every(r => !r.children.some(c => c.className === 'at')), 'no time column on a line with none');
-  assert.match(css(), /\.foreman \.run-log \.ln \{ display: block; padding-left: 9ch;/, 'the text past a column for the time');
-  assert.match(css(), /\.foreman \.run-log \.ln\.timed \{ text-indent: -9ch; \}/, 'the time pulled back into its column, on the first row only');
+  assert.match(css(), /#foreman\.log-view \.run-log \.ln, [^{]*\{ display: block; min-width: 0; padding-left: 74px;/, 'the text past a column for the time'); // 0602: a build log's rows
   assert.match(decl('.foreman .run-log', 'white-space'), /pre-wrap/, 'a long line wraps');
   assert.equal(decl('.foreman .run-log', 'overflow-wrap'), 'anywhere');
 });

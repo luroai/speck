@@ -89,7 +89,7 @@ test('0584 AC1: Full log opens the build log\'s pop-up, and closing it leaves th
   p.press(button(p, 'Full log'));
   await p.settle();
   assert.equal(p.byId('foreman').hidden, false);
-  p.press(p.all(p.byId('foreman')).find(n => n.className === 'close'));
+  p.press(p.all(p.byId('foreman')).find(n => n.className === 'back')); // 0602: its back link
   await p.settle();
   assert.equal(p.focused(), button(p, 'Full log'));
 });
@@ -100,7 +100,7 @@ test('0584 AC1: the Build log row still gets the focus back when it was the one 
   const row = () => p.all(pane(p)).find(n => n.className === 'pane-row' && n.textContent === 'Build log');
   p.press(row());
   await p.settle();
-  p.press(p.all(p.byId('foreman')).find(n => n.className === 'close'));
+  p.press(p.all(p.byId('foreman')).find(n => n.className === 'back')); // 0602: its back link
   await p.settle();
   assert.equal(p.focused(), row());
 });

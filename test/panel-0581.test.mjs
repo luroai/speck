@@ -54,7 +54,7 @@ test('0581 AC1: the server has no route for lcd.js', () => {
 test('0581 AC1: the screen\'s colours are gone, and speck\'s red dot keeps its colour under a name of its own', () => {
   const css = styles();
   assert.doesNotMatch(`${css}${page()}${popupsScript()}`, /--lcd-/, 'no --lcd- colours');
-  assert.match(css, /#foreman \.top \.title::before \{[^}]*background: var\(--speck-red\)/, 'the Pipeline log\'s dot');
+  assert.doesNotMatch(css, /#foreman \.top \.title::before \{[^}]*background: var\(--speck-red\)/, 'the build log\'s dot, gone since 0602');
   assert.ok((css.match(/--speck-red: #/g) || []).length === 2, 'set for both looks');
 });
 

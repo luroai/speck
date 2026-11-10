@@ -45,7 +45,8 @@ test('0427 AC1 and AC2: every font list in the stylesheet is the interface font,
 });
 
 // 0600: but for the details under a row's title, in the lanes and the views, and the lanes' own lines, which are 13 px as the mock's
-const DETAILS_13 = ['.lane-n', '.q.row .where', '.item.row .checks', '.item.ticket .head .checks .prio', '#shipped .meta', '#foreman.log-view .run-log .at', '#foreman.log-view .run-log .log-more', '#decided .decided-fact .label', '#decided .decided-when'];
+const DETAILS_13 = ['.lane-n', '.q.row .where', '.item.row .checks', '.item.ticket .head .checks .prio', '#shipped .meta', '#foreman.log-view .run-log .at', '#foreman.log-view .run-log .log-more', '#decided .decided-fact .label', '#decided .decided-when',
+  '#foreman.log-view .run-log .ln .at, .q .log .at']; // 0602: a build log's times, as the Pipeline log's
 
 test('0427 AC1: no text is set at 13 px any more, but for rows\' details (0600)', () => {
   for (const r of rules()) {
@@ -61,7 +62,7 @@ test('0427 AC1: no text is set at 13 px any more, but for rows\' details (0600)'
 test('0427 AC2: ids, the build log, code and figures use Cursor\'s monospace', () => {
   assert.equal(get(rule('code, .mono, .id'), 'font-family'), MONO, 'code and ids');
   assert.equal(get(rule('#full-ticket .top .id'), 'font-family'), MONO, 'the id at the top of the full ticket');
-  assert.equal(get(rule('.q .log'), 'font'), `12px/1.5 ${MONO}`, 'the build log');
+  assert.equal(family(rule('#foreman.log-view .run-log .ln .at, .q .log .at')), MONO, 'the build log\'s times'); // 0602: its text is in the interface font, as the Pipeline log's
   // 0464: a shipped card's figures are in the facts table, as an in-flight ticket's are, no longer in monospace
   for (const sel of ['td.num', '.stat .count', '.foreman ol.run-log', '.tag']) assert.equal(family(rule(sel)), MONO, sel);
 });
@@ -83,7 +84,8 @@ test('0427 AC4: no label is in spaced capitals: buttons and labels are sentence 
     if (ls !== undefined) assert.ok(parseFloat(ls) <= 0, `${r.sel}: letter-spacing ${ls}`);
   }
   for (const sel of ['.full-open', '.set-ready', '.q .stop-build', '.q .back-to-plan', '.resume .copy', '.group', '.detail h4',
-    '#full-ticket .close, #doc-view .close, #foreman .close', '#settings .close', '#full-ticket .ship, #doc-view .ship', '#settings .save-all']) { // 0472: Settings' Close in its own file
+    '#full-ticket .close, #doc-view .close', '#settings .close', // 0602: the build log has no Close
+    '#full-ticket .live-buttons .full-open, #full-ticket .live-buttons .stop-build', '#full-ticket .ship, #doc-view .ship', '#settings .save-all']) { // 0472: Settings' Close in its own file
     assert.equal(family(rule(sel)), UI, `${sel}: the interface font`);
   } // 0520: Plan's Tickets, Ideas and Inbox buttons (.toggle, labelled `${label} · ${n}`) are gone
   // The words themselves are already sentence case: the capitals were only the stylesheet's.

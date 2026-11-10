@@ -52,10 +52,9 @@ const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--ok-bg', '--inb
 // card, so its title row sits on the surfaces, as 0478's dark frame had it not.)
 const onBar = sel => sel.split(',').every(s => /^\.bezel\b/.test(s.trim())); // 0580: the bar at the top
 const onFrame = sel => sel.split(',').every(s => /^#foreman (?:\.top|\.fm-body|\.stale|\.close|\.reload|:focus-visible)\b/.test(s.trim()));
-// 0455: and what's in a ticket's build log (its rules start ".q .log") sits on the log's own black, in every look. 0459:
-// so does what's in the pipeline log (".foreman .run-log").
-const inLog = sel => sel.split(',').every(s => /^(?:\.q \.log|\.foreman \.run-log)\b/.test(s.trim()));
-const behind = sel => (onBar(sel) ? ['--bar'] : onFrame(sel) ? ['--bezel'] : inLog(sel) ? ['--log-bg'] : SURFACES);
+// 0455: what was in a ticket's build log sat on the log's own black. 0602: it sits on the surfaces now, as the Pipeline
+// log's does.
+const behind = sel => (onBar(sel) ? ['--bar'] : onFrame(sel) ? ['--bezel'] : SURFACES);
 // Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
 // stage dots and the ensō's speck went in 0168.)
 const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats', '.where.needs::before', '.where.run::before', '.where.wait::before', '.lane-title::before', '#capture-section .lane-title::before', '#shaping-section .lane-title::before', '#build-section .lane-title::before', '#shipped-section .lane-title::before', '#foreman .top .title::before']; // 0478: nor do the dots before each lane's title (0520: Capture's too). 0585: nor do a Build row's dots. 0438: nor does the dot before speck's title, grey or not (0513)
@@ -295,7 +294,7 @@ const TEXTS = `(() => { ${LIB}
 // The edge of every control and card on show against what's next to it: each border side with a width, or its fill.
 const EDGES = `(() => { ${LIB}
   const out = [];
-  const sel = 'button:not(.prio-menu button):not(.dep-chip):not(.tab):not(.bar-status), .dep-pill, .tag:not(:is(.checks, .progress, .act) .tag), .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge. 0419: a card's tags are words. 0468: a chip's edge is its pill's. 0477: a lane's name in the strip is a word
+  const sel = 'button:not(.prio-menu button):not(.dep-chip):not(.tab):not(.bar-status), .dep-pill, .tag:not(:is(.checks, .progress, .act) .tag), .item, .q:not(.live), #shipped tr, section:not(main > section), .prio-menu'; // 0602: a full view's live section is no card. 0418: a lane has no edge. 0419: a card's tags are words. 0468: a chip's edge is its pill's. 0477: a lane's name in the strip is a word
   for (const el of document.querySelectorAll(sel)) {
     if (!shown(el)) continue;
     const s = getComputedStyle(el), next = behind(el.parentElement);
