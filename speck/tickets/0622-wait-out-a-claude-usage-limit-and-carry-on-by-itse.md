@@ -1,7 +1,7 @@
 ---
 id: "0622"
 title: "Carry a build on by itself once Claude's usage limit resets"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T22:59:55.125Z"
+approved: "2026-11-10T23:11:32.192Z"
 
 ---
 # 0622 · Carry a build on by itself once Claude's usage limit resets
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When Claude's usage limit is reached, a build stops partway and stays stopped until someone notices: on 2026-11-10 one waited five hours after the limit had reset. The watcher makes it worse, as it looks into the stop on the same agent, hits the same limit and gives up. Yet Claude's own log says when the limit resets.
@@ -59,9 +60,15 @@ Worth keeping an eye on: if Claude doesn't say when the limit resets, speck trie
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Usage-limit recovery is bypassed for builds that end while speck run is stopped.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 523,121
+- Elapsed since build started: 12 min
+- Changed lines: 195 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: a build handed back on an approved ticket that stops on the limit isn't carried on (`speck/ideas/2026-11-10-carry-on-a-handed-back-build-after-the-usage-limit.md`).
