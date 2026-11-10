@@ -1,7 +1,7 @@
 ---
 id: "0598"
 title: "Prepare release 1.0.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0575","0576","0577","0578","0579","0580","0581","0582","0583","0584","0585","0586","0587","0588","0589","0590","0591","0592","0593","0594","0595","0596","0597","0599","0600","0601","0602","0603","0604","0605","0606","0607","0608","0609","0610","0611","0612","0613","0614","0615","0616","0617","0618","0619","0620","0621"]                # ticket ids that must be done first
 created: 2026-11-09
+started: "2026-11-10T17:40:35.346Z"
 
 ---
 # 0598 · Prepare release 1.0.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck has grown up: it works as your engineering manager, which you can name (0575, 0576), the panel is redesigned around it, with the black bar, the Premium character and the bridge across every project (0577 to 0597), and since 0.22.0 it decides and tells you. Anyone following the setup prompt, or updating speck in a project, still gets 0.22.0.
