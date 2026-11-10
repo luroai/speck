@@ -1,7 +1,7 @@
 ---
 id: "0599"
 title: "Keep every closed row to one title line"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T07:42:07.828Z"
 ---
 # 0599 · Keep every closed row to one title line
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since the redesign's compact rows (0585 to 0587), a closed row's title wraps, so rows in the same lane are one or two lines tall depending on how long their titles are. The lanes look uneven, and the user wants every collapsed ticket to look the same.
@@ -57,3 +57,101 @@ Every closed row in a lane is the same height: one line of title and one line of
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Tests changed from checking a closed row's title wrapping to checking it's cut off on one line (AC5):
+- test/panel-0585.test.mjs: 0585 AC4 (Build row at 320 px)
+- test/panel-0586.test.mjs: 0586 AC4 (Plan and Capture rows at 320 px)
+- test/panel-0587.test.mjs: 0587 AC4 (Shipped rows at 320 px)
+- test/panel-0434.test.mjs: 0434 AC4 (the title rules) and both 0434 AC5 tests (Build rows at 390 px)
+- test/panel-0468.test.mjs: the four 0468 AC3 tests (a Plan row's title beside its chip)
+- test/panel-0155.test.mjs: 0155 AC3, both sets (a Build row's title on one line, and the longest title)
+- test/panel-0419.test.mjs: 0419 AC1, AC2 and AC5 (0702's long title, and 0707's details line now one line too)
+- test/panel-0420.test.mjs: 0420 AC1, AC2, AC3 and AC5 (0407's long Shipped title)
+- test/panel-0435.test.mjs: both 0435 AC5 tests (a long Capture title)
+- test/panel-0441.test.mjs: 0441 AC2, which read 0155's test for its old line limits on Build titles
+
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7926a9ecece719b4d7a5db2e25439d2aca418329",
+    "session": "fresh",
+    "thread_id": "01a1c471-b6d9-73d3-8138-0d8f3fb9a0fd",
+    "builder_response": "- Tests run: `speck test --related` with test/panel-0599.test.mjs and the existing test files this ticket changed (panel-0585, 0586, 0587, 0434, 0468, 0155, 0419, 0420, 0435, 0441), plus panel-0151, 0214, 0164 and 0234, which measure or read the same titles. --related added the files naming a changed file. Before that I ran every test file that uses a real browser or reads the styles (145 files), and all passed after the updates.\n- AC5: tests changed from \"a closed title wraps\" to \"cut off on one line\": 0585 AC4, 0586 AC4, 0587 AC4, 0434 AC4 and AC5, 0468 AC3, 0155 AC3 (both), 0419 AC1/AC2/AC5 (0702's title and 0707's details), 0420 AC1–AC5 (0407), 0435 AC5, and 0441 AC2 (which reads 0155's source for the old line limits). I'll list them in the Delivery log at close.\n- Pictures: the four lanes at 390 px in both looks are in the review pack.\n",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 117615,
+      "cached_input_tokens": 71680,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 877,
+      "reasoning_output_tokens": 109
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 45935,
+      "cached": 71680,
+      "write": 0,
+      "output": 877
+    },
+    "cost_usd": 0.107808,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T07:53:07.763Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css applies single-line truncation to closed titles and details. Passing test '0599 AC1, AC3, AC4' measures all four lanes at 320 and 1280 px, including equal row heights."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel.js uses titled() for titles in every lane, including queueRow(). Passing '0599 AC2' checks full title text and tooltip; CSS clipping preserves the accessible text."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing '0599 AC1, AC3, AC4' opens Capture and Plan rows and a Build ticket's full view, verifying that long titles wrap without clipping."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing '0599 AC1, AC3, AC4' checks id alignment and minimum 44 px height in both viewport sizes, plus the Plan priority control's tap area."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "Existing wrapping assertions were updated, and /tmp/speck-0599-tests.txt records 339 passes, zero failures and three skips. However, the ticket's Delivery log contains only its placeholder, with no list of changed tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0599-keep-every-closed-row-to-one-title-line.md",
+        "issue": "AC5 explicitly requires the Delivery log to list the updated wrapping tests. That list exists only in the builder response; the Delivery log is empty.",
+        "suggested_fix": "Add the changed test files and affected tests to the Delivery log before requesting approval.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The row changes work in all four lanes at narrow and wide widths, and full titles remain available. The reviewed tests pass. Approval is held only because the required list of updated tests is missing from the ticket's Delivery log."
+  }
+}
+```
+
+</details>
