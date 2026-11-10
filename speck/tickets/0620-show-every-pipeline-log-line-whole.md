@@ -42,6 +42,7 @@ Every line in the Pipeline log view shows in full.
 - Today lines are shortened by `runCut` in `templates/panel-model.js`, to `RUN_LOG_WIDTH` characters. Waits for 0612, which changes `templates/panel-popups.js` and its styles.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes. A long refused ship's reason, which used to be dropped, now shows whole; the privacy stripping is unchanged. The id-first rule from 0459 now also finds an id in a later sentence.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
