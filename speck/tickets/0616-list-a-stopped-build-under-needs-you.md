@@ -50,7 +50,7 @@ A stopped build that nothing will carry on is listed under Needs you.
 ## In plain words
 When a ticket's build stops partway and nothing is going to pick it up again, the Build lane now lists it under Needs you with an orange dot and "Build stopped", and the bar's Needs you number counts it. Before, it sat under Building with a grey dot, among the work in progress.
 
-A stopped build speck is about to pick up stays under Building: one speck run will restart once after it was killed, or, with watch set to fix or decide, one speck is looking into or is about to resume. If that doesn't happen, it moves to Needs you.
+A stopped build speck is about to pick up stays under Building: one speck run will restart once after it was killed (unless it can't, which also needs you), or, with watch set to fix or decide, one speck is looking into or is about to resume. If that doesn't happen, it moves to Needs you.
 
 To see it, look at the Build lane while a build has stopped, with watch on off or tell. Worth knowing: the All projects view doesn't count these yet (a follow-up is in the inbox).
 
@@ -341,6 +341,101 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The merged colour-test update is correct and both previous fixes remain intact. A newly documented gap still hides killed builds when speck cannot restart them, which defeats the ticket's purpose for that failure case. This needs fixing before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1a03268b6f81e4d84c0a6ec9a1f75ea4ad7ca59c",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c66d-4389-71a2-b88b-5357a85cb1e0",
+    "builder_response": "- Tests run: `speck test --related` with test/panel-0167.test.mjs test/stopped-needs-0616.test.mjs test/panel-0171.test.mjs test/panel-0416.test.mjs test/panel-0155.test.mjs, plus every existing test file naming a changed file (2368 pass, 0 fail).\n- F3: fixed for the refusal that lasts. The board fact `build_resumed` is now `build_wont_resume`: true when speck run has resumed the killed build once already, or can't resume it. That uses resumeFor, the same check resumeKilled makes, through go-with.mjs's cantResume (now exported) and a new `wontResume` in scripts/stop-wait.mjs. Both rules read it. New tests: \"0616 AC1: the board says when speck run won't resume a killed build: resumed once already, or it can't\" (a run record with no session, which resumeFor refuses) and \"0616 AC1 AC3: a killed build speck run can't resume is under Needs you and counted in the bar\". The known-limit note is gone from the Delivery log.\n- F3, the failure to save the run record: not treated as \"won't resume\", on purpose. resumeKilled sets nothing when the save fails, so buildKilled still returns the record without `resumed`, and the next check in run.mjs's loop calls resumeKilled again. Only the log line is said once (stoppedReported). So speck run is still trying to resume it, which AC2 keeps under Building.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 864036,
+      "cached_input_tokens": 753920,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3063,
+      "reasoning_output_tokens": 76
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8387,
+      "cached": 207360,
+      "write": 0,
+      "output": 655
+    },
+    "cost_usd": 0.04406,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T17:20:02.918Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Both classification rules now read build_wont_resume. statusData derives it through wontResume using the runner's resumeFor eligibility check. Passing AC1 tests cover stopped builds, prior resumes and an unresumable record; panel tests cover grouping, orange dots and stopped-build text."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 tests cover pending investigations, pending resumes and killed builds awaiting automatic resume. The runner retries after a record-save failure: it leaves resumed unset and calls resumeKilled again on subsequent checks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests cover counts and exclusions, including the new test that an unresumable killed build appears under Needs you and contributes to the bar's count."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log lists all four existing test files updated from the old behaviour. The supplied related-test run reports 2368 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman.mjs; templates/panel-model.js",
+        "issue": "Historical watcher resume actions previously hid stopped builds after a failed resume.",
+        "suggested_fix": "Implemented: classification uses actual pending resumes rather than historical actions.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0616-list-a-stopped-build-under-needs-you.md",
+        "issue": "The Delivery log previously omitted the changed tests.",
+        "suggested_fix": "Implemented: the Delivery log lists the four updated test files.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/stop-wait.mjs; scripts/foreman.mjs; templates/panel-model.js",
+        "issue": "Killed builds that could not be resumed previously remained under Building and were omitted from Needs you.",
+        "suggested_fix": "Implemented: build_wont_resume includes resume eligibility failures and is used by both rules, with regression coverage. The explanation for retaining Building during retried save failures is supported by the runner's loop.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Stopped builds now appear under Needs you when speck cannot carry them on, including builds it cannot resume. Builds awaiting investigation or retry remain under Building. All previous findings are resolved, and the reported tests pass."
   }
 }
 ```
