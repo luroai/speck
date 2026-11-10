@@ -40,6 +40,9 @@ The Settings button, and speck's face, sit in the black bar with the same space 
 - Asked for 2026-11-10: "the larger panel at the top has now meant that the border between the settings button and the right-hand side of the black panel is really thin. Can you just make it more equal?"
 - Today in `templates/panel-header.css`: `.bezel` has `padding: 4px` and a 2 px border in the bar's colour, and `.bezel .settings-open` is 44 px with `margin: 0 -2px 0 0` (about line 64), so the button sits about 4 px from the right edge while the 56 px face makes the bar about 68 px tall, leaving about 12 px above and below the button.
 - Relies on nothing outside this repo.
+- Failing before this build: none
+- 0604's real-browser test checked Settings sat within 4 px of the bar's old right edge less its 2 px border, the spacing this ticket changes: its assertion now checks Settings is as far from the right edge as from the top.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

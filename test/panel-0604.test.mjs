@@ -131,7 +131,7 @@ test('0604 AC1, AC3 and AC4: at 320 px the status and a 20-character project sho
       assert.ok(m.bar.height > 56, `taller than the old bar: ${at}`);
       assert.ok(m.word.bottom <= m.name.top + 0.5 && m.name.bottom <= m.more.top + 0.5, `three lines, one under the other: ${at}`);
       assert.ok(m.word.right <= m.settings.left + 0.5 && m.name.right <= m.settings.left + 0.5, `before Settings: ${at}`);
-      assert.ok(Math.abs(m.settings.right - (m.bar.right - 2)) <= 4 && m.settings.width >= 44 && m.settings.height >= 44, `Settings at the right, 44 px square: ${at}`);
+      assert.ok(Math.abs((m.bar.right - m.settings.right) - (m.settings.top - m.bar.top)) <= 1 && m.settings.width >= 44 && m.settings.height >= 44, `Settings at the right, as far from the edge as from the top (0607), 44 px square: ${at}`);
       assert.ok(m.onWord, `the whole status is the Pipeline log's button: ${at}`);
       assert.ok(m.menu.width >= 44 && m.menu.height >= 44 && m.menu.top >= m.word.bottom - 0.5, `the menu is 44 px each way, below the status: ${at}`);
       assert.equal(m.onName, 'project', `the name is the project menu: ${at}`);
