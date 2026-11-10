@@ -34,9 +34,10 @@ test('0554 AC1 AC3: a failed round says codex exited with its reason, and record
   const r = reviewRepo({ ticketFields: 'status: building' });
   r.git('add', '-A'); r.git('commit', '-qm', 'building');
   const before = r.git('status', '--porcelain').stdout;
-  const res = r.runEnv({ FAKE_CODEX_EXIT: '1', FAKE_CODEX_STDOUT: lines({ type: 'thread.started', thread_id: 'T' }, { type: 'turn.failed', error: { message: LIMIT } }), FAKE_CODEX_STDERR: 'Reading additional input from stdin...\n' }, 'review', '1');
+  const reason = "The 'x' model is not supported."; // 0623: not a usage limit, which has an exit of its own
+  const res = r.runEnv({ FAKE_CODEX_EXIT: '1', FAKE_CODEX_STDOUT: lines({ type: 'thread.started', thread_id: 'T' }, { type: 'turn.failed', error: { message: reason } }), FAKE_CODEX_STDERR: 'Reading additional input from stdin...\n' }, 'review', '1');
   assert.equal(res.status, 1, res.stderr);
-  assert.match(res.stderr, new RegExp(`codex exited 1: ${LIMIT.replace(/[.']/g, '\\$&')}`));
+  assert.match(res.stderr, new RegExp(`codex exited 1: ${reason.replace(/[.']/g, '\\$&')}`));
   assert.equal(r.roundFile(1), undefined);
   assert.equal(r.git('status', '--porcelain').stdout, before);
   const none = r.runEnv({ FAKE_CODEX_EXIT: '1' }, 'review', '1');

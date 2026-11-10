@@ -11,7 +11,7 @@ import { configBuilder } from './build-model.mjs';
 const FILE = 'run.usage-limit.json';
 export const GRACE_MS = 60000; // how long after the reset time it carries on
 export const RETRY_MS = 30 * 60000; // how long it waits when the log gives no reset time it can use
-const FURTHEST_MS = 31 * 864e5; // no limit lasts this long, so a reset time further off is misread
+export const FURTHEST_MS = 31 * 864e5; // no limit lasts this long, so a reset time further off is misread
 const IN_HAND = ['ready', 'building', 'reviewing']; // a ticket whose build has more to do
 
 const LIMIT_WORDS = /hit your .*limit|usage limit/i;
@@ -51,7 +51,22 @@ export function readLimit(runs) {
 export const limitWaiting = runs => readLimit(runs)?.builds ?? [];
 
 // `ms` in UTC as HH:MM, with its date when it's more than a day from `now`.
-const clock = (ms, now) => new Date(ms).toISOString().slice(ms - now > 864e5 ? 0 : 11, 16).replace('T', ' ');
+export const clock = (ms, now) => new Date(ms).toISOString().slice(ms - now > 864e5 ? 0 : 11, 16).replace('T', ' ');
+
+// 0623: resumes in its own session a build that stopped on a usage limit, `who` being the limit in words and `message` what
+// the build is told. The rest is speck run's.
+export function carryOn({ repo, runs, startBuild, resumeHint, countStop, now, speak }, id, rec, { cfg, words }, who, message) {
+  const recordFile = path.join(runs(), `${id}.json`);
+  const { argv, why } = resumeFor(words, cfg, id, rec, message);
+  if (!argv) return speak(`${id}: ${who} has reset, but speck run can't resume its build: ${why}. ${resumeHint(cfg, rec)}.`);
+  const note = countStop(repo, id); // while its record still has the exit it waited from
+  if (note) console.log(`${id}:${note}`);
+  const { exited: _e, exit_code: _c, ...kept } = rec, next = { ...resumedRecord(kept), limit_resumed: new Date(now()).toISOString(), resume_command: argv };
+  try { saveRecord(recordFile, next); } catch (e) { return speak(`${id}: ${who} has reset, but its run record couldn't be saved (${e.message}), so it wasn't resumed. ${resumeHint(cfg, rec)}.`); }
+  const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
+  speak(`${id}: ${who} has reset, so I'm carrying on its build (session ${rec.session}).`);
+  startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
+}
 
 // speck run's side. ended(id, log, file) reads a build that has ended, true when it stopped on the limit and speck run
 // will carry it on; check(tickets), on each of its checks, ends the wait once it's over and resumes each stopped build
@@ -100,18 +115,8 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
     return waits;
   };
 
-  const resume = (id, rec, { cfg, words }) => {
-    const recordFile = path.join(runs(), `${id}.json`);
-    const { argv, why } = resumeFor(words, cfg, id, rec, `Claude's usage limit has reset, so speck run has resumed the build of ticket ${id}. Carry on with /speck-build ${id} from where you left off.`);
-    if (!argv) return speak(`${id}: Claude's usage limit has reset, but speck run can't resume its build: ${why}. ${resumeHint(cfg, rec)}.`);
-    const note = countStop(repo, id); // while its record still has the exit it waited from
-    if (note) console.log(`${id}:${note}`);
-    const { exited: _e, exit_code: _c, ...kept } = rec, next = { ...resumedRecord(kept), limit_resumed: new Date(now()).toISOString(), resume_command: argv };
-    try { saveRecord(recordFile, next); } catch (e) { return speak(`${id}: Claude's usage limit has reset, but its run record couldn't be saved (${e.message}), so it wasn't resumed. ${resumeHint(cfg, rec)}.`); }
-    const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
-    speak(`${id}: Claude's usage limit has reset, so I'm carrying on its build (session ${rec.session}).`);
-    startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
-  };
+  const resume = (id, rec, current) => carryOn({ repo, runs, startBuild, resumeHint, countStop, now, speak }, id, rec, current, 'Claude\'s usage limit',
+    `Claude's usage limit has reset, so speck run has resumed the build of ticket ${id}. Carry on with /speck-build ${id} from where you left off.`);
 
   const check = tickets => {
     const s = readLimit(runs());

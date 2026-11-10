@@ -144,7 +144,7 @@ export function foremanView({ run, record, since = null, tickets, fixing = 'tell
   const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), name: called, fixing, fixing_says: fixingSays(fixing, called), building, max: rec && Number.isInteger(rec.max) && rec.max > 0 ? rec.max : null, since: on ? since : null, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag }); // 0592: max, the build slots, and since, when speck run started
   if (!on) return view('Off', 'off');
   if ((yours && fixing !== 'off') || asks.length || stopped) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length + stopped}`, 'bad');
-  if (limit) return view(`Waiting: usage limit${text(limit.until) ? ` until ${limit.until}` : ''}`, 'warn', text(limit.why));
+  if (limit && !(limit.reviewer === true && (building.length || (ship && ship.running)))) return view(`Waiting: usage limit${text(limit.until) ? ` until ${limit.until}` : ''}`, 'warn', text(limit.why)); // 0623: a reviewer's limit doesn't stop what's building
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
   if (building.length) return view(`Building ${building.length}`, 'ok');
   const short = ready.find(r => SHORT[r.kind]);

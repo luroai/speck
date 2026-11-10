@@ -35,6 +35,8 @@ This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effor
 
 Exit code 12 means the round is still running: speck waits up to 9 minutes for a reviewer, so that each command ends within your shell's time limit, while the reviewer carries on. It prints the command to wait for that same round, `speck review <id> --wait`. Run it in the foreground, and again each time it exits 12, until it exits with any other code. It then prints the round and exits just as `speck review` would have. Never start another `speck review` round to get past it: while a round is running, `speck review <id>` waits for it too.
 
+Exit code 18 means the reviewer's usage limit is reached. No round was recorded, and it prints when the limit resets. Follow the `speck-build` skill: end your session, saying you're waiting for the reviewer's limit, and leave the ticket `reviewing`.
+
 **`claude`**: run the same `speck review` command as for Codex. speck runs Claude Code itself, without a person and read-only, with the reviewer model (`--model`) and effort (`--effort`) if they're set, reads the verdict from its output and records the round, just as for Codex. It works whatever the builder. Exit codes are the same.
 
 **`cursor`**: run the same `speck review` command as for Codex. speck runs Cursor's CLI itself, without a person and read-only, with the reviewer model (`--model`) if it's set, reads the verdict from its output and records the round, just as for Codex. It works whatever the builder. Exit codes are the same.
