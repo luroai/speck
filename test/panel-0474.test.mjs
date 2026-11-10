@@ -41,7 +41,7 @@ test('0474 AC1: on the fake page, speck\'s screen, its frame and the tabs still 
   assert.equal(p.byId('tab-plan').attrs['aria-selected'], 'true', 'a tab opens on a press');
   assert.equal(p.byId('shaping-section').hidden, false);
   assert.equal(p.byId('build-section').hidden, true);
-  assert.equal(p.byId('build-needs').textContent, '2', 'Build\'s tab says how many need you while it is closed');
+  assert.equal(p.byId('bar-needs').textContent, '2 need you', 'the bar says how many need you while Build is closed (0609)');
 });
 
 test('0474 AC2: panel.html loads panel-header.js after the page\'s own script, which it uses, and before the pop-ups', () => {

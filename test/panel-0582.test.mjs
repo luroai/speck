@@ -65,7 +65,7 @@ test('0582 AC1: each tab is at least 44 px tall, in a strip that holds it', () =
   assert.doesNotMatch(decls('.tabs'), /(^|;|\s)height:/, 'no fixed height that the tabs would stick out of');
 });
 
-test('0582 AC1: in a real browser at 320 px, with big counts and a needs-you number, each name is whole and each tab at least 44 px tall', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
+test('0582 AC1: in a real browser at 320 px, with big counts, each name is whole and each tab at least 44 px tall', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
   r.write('0010-ready.md', fm({ id: '"0010"', title: 'Ready ticket', status: 'ready' }), good);
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
@@ -74,7 +74,7 @@ test('0582 AC1: in a real browser at 320 px, with big counts and a needs-you num
     await b.until(`(document.getElementById('tab-build-n')?.textContent || '') !== ''`, 'the counts');
     await b.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 700, deviceScaleFactor: 1, mobile: true });
     // Kept at these whenever the page draws them again
-    await b.js(`(() => { for (const [id, v] of [['tab-capture-n', '22'], ['tab-plan-n', '14'], ['tab-build-n', '11'], ['tab-shipped-n', '570'], ['build-needs', '3']]) {
+    await b.js(`(() => { for (const [id, v] of [['tab-capture-n', '22'], ['tab-plan-n', '14'], ['tab-build-n', '11'], ['tab-shipped-n', '570']]) {
       const n = document.getElementById(id), put = () => { if (n.textContent !== v) n.textContent = v; };
       put(); new MutationObserver(put).observe(n, { childList: true, characterData: true, subtree: true }); } return 1; })()`);
     const tabs = await b.js(`[...document.querySelectorAll('#tabs [role="tab"]')].map(t => { const n = t.querySelector('.tab-name'); return { id: t.id, height: t.getBoundingClientRect().height, cut: n.scrollWidth > n.clientWidth }; })`);
@@ -132,9 +132,9 @@ test('0582 AC3: each tab\'s name to a screen reader has its lane and its count, 
   assert.equal(label(p, 'shipped'), 'Shipped, 1 ticket');
 });
 
-test('0582 AC3: Build\'s name still says how many need you', async () => {
+test('0582 AC3: Build\'s name is its name and count, whatever needs you (0609)', async () => {
   const p = await started({ ...board(), foreman: { word: 'Needs you 2', tone: 'idle' } });
-  assert.equal(label(p, 'build'), 'Build, 4 tickets, 2 needs you');
+  assert.equal(label(p, 'build'), 'Build, 4 tickets');
 });
 
 // ---------- AC4 ----------

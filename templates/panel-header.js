@@ -292,16 +292,12 @@ function drawTabs(m) {
     $(section).hidden = !on;
   }
   placeLanes(touch && touch.way === 'x' ? touch.shown : 0); // a refresh leaves a card a finger is moving where it is
-  // Build says how many things need you, as the Foreman's status does (0477: whichever lane is in view)
-  const needs = /^Needs you (\d+)$/.exec(foremanOf(state).word);
-  // 0425: the number alone; its accessible name says what it is
-  setText($('build-needs'), needs ? needs[1] : '');
-  // 0582: each tab's count, and its accessible name says what the count is
+  // 0582: each tab's count, and its accessible name says what the count is. 0609: Build has no needs-you number, as the bar says it
   for (const l of TAB_ORDER) {
     const n = laneCounts && laneCounts[l], name = l[0].toUpperCase() + l.slice(1);
     setText($(`${LANES[l][0]}-n`), laneCounts ? String(n) : '');
     const held = laneCounts ? `, ${n} ${l === 'capture' ? 'note' : 'ticket'}${n === 1 ? '' : 's'}` : '';
-    $(LANES[l][0]).setAttribute('aria-label', `${name}${held}${l === 'build' && needs ? `, ${needs[1]} needs you` : ''}`);
+    $(LANES[l][0]).setAttribute('aria-label', `${name}${held}`);
   }
 }
 for (const [i, l] of TAB_ORDER.entries()) {
