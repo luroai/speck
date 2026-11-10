@@ -68,6 +68,7 @@ Round 2 (codex): approve.
   - `test/panel-0425.test.mjs`: both 0425 AC2 tests (Build's tab holds its name and count; its accessible name has no needs-you part).
   - `test/panel-0481.test.mjs`: the real-browser bar test no longer pins or measures a number on Build.
   - `test/panel-0582.test.mjs`: the 320 px real-browser test no longer pins a number on Build; 0582 AC3's Build name is "Build, 4 tickets".
+  - `test/panel-0135.test.mjs`: 0135 AC1-AC2's real-browser test expects Build's tab to hold its name and count only (found when ship ran the whole suite).
   - `test/panel-0440.test.mjs` (0440 AC1) and `test/panel-0426.test.mjs` (0426 AC3): no longer check the removed `.tab .needs` colour rule.
 
 ## Review rounds
