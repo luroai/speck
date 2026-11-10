@@ -90,7 +90,10 @@
   .q .log { overflow-anchor: none; } /* 0422: rows taken out at the top leave the box's scroll place as it was, as text did */
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
   /* 0421: an open card's Full ticket, Review pack and Stop build are small buttons on one line. 0428: each boxed, as every button is */
-  .q .stop-build { font: inherit; font-family: var(--font-ui); font-size: 12px; line-height: 16px; margin: 6px 0 2px; padding: 1px 10px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
+  /* 0603: it and the panel's other secondary buttons in the redesign's secondary style: a 1 px border in the line colour,
+     10 px corners, the text colour, 44 px tall for every pointer, as 0602's Full log and Stop build */
+  .q .stop-build { margin: 6px 0 2px; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+  .foreman .reload, #doc-view .close, #settings .close, #settings-unsaved button.secondary { min-height: 44px; } /* 0603: their height here, as every control's for every pointer is (0469); the rest of their style in their own files */
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
   /* 0602: Full log and Stop build in the redesign's secondary style: a 1 px border in the line colour, 10 px corners, the text colour, 44 px tall, for every pointer as the cards' controls are (0469) */
@@ -99,7 +102,7 @@
   #full-ticket .live-buttons .full-open:hover { color: var(--text); border-color: var(--text); }
   #full-ticket .live-buttons .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   /* An open ready ticket's Back to Plan button, beside Full ticket, and why the server refused it */
-  .q .back-to-plan { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
+  .q .back-to-plan { margin: 6px 0 2px 8px; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
   .q .back-to-plan:hover { color: var(--text); border-color: var(--text); }
   .q .back-to-plan:disabled { cursor: default; opacity: .6; }
   .q .stop-refused, .q .plan-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
@@ -108,7 +111,7 @@
   .question-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; white-space: normal; }
   .question-fact { font-family: var(--font-ui); font-size: 12px; padding: 0 8px; border: 1px solid var(--line); color: var(--muted); }
   /* 0284: on a blocked question with a recommendation, the button that takes it and has speck run carry the build on */
-  .q .go-with { display: block; font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 6px 0 0; padding: 1px 10px; background: transparent; color: var(--text); border: 1px solid var(--line); cursor: pointer; white-space: normal; }
+  .q .go-with { display: block; margin: 6px 0 0; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; white-space: normal; }
   .q .go-with:hover { border-color: var(--text); }
   .q .go-with:disabled { cursor: default; opacity: .6; }
   .q .go-with-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
@@ -163,8 +166,8 @@
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: var(--font-mono); font-size: 12px; }
   .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px; }
   .resume .cmd { font-family: var(--font-mono); font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
-  .resume .copy { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
-  .resume .copy:hover { color: var(--text); }
+  .resume .copy { box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; white-space: nowrap; }
+  .resume .copy:hover { border-color: var(--text); }
   /* 0418: in the lanes, the narrow layout at every width: a Plan item's readiness under its details, and a resume command
      that wraps. Elsewhere these keep their own layout. */
   main .sh { flex-wrap: wrap; align-items: center; }
@@ -187,7 +190,7 @@
   /* 0587: under the three tiles, the toggle for the other figures, at the right */
   .stats-line { display: flex; justify-content: flex-end; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
   .stats-line[hidden] { display: none; }
-  .full-open.more-stats { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
+  .full-open.more-stats { flex: none; margin: 0; }
   .more-stats[hidden] { display: none; }
   /* 0587: a shipped ticket is a row, as Capture's and Plan's are: a hairline under it, its title (one line since 0599), then one line
      of smaller type, each part whole so a line too long for a phone wraps between them. */
@@ -215,7 +218,7 @@
   .foreman-ask { margin: 6px 0 6px; white-space: normal; }
   .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: 1px solid var(--line); resize: vertical; }
   .foreman-ask .ask-buttons { display: flex; gap: 8px; margin: 6px 0 0; }
-  .foreman-ask .ask-reply { font: inherit; font-family: var(--font-ui); font-size: 12px; padding: 1px 10px; background: transparent; color: var(--text); border: 1px solid var(--line); cursor: pointer; }
+  .foreman-ask .ask-reply { box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
   .foreman-ask .ask-reply:hover { border-color: var(--text); }
   .foreman-ask .ask-reply:disabled { cursor: default; opacity: .6; }
   .foreman-ask .ask-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
@@ -268,12 +271,12 @@
   .item.ticket .track .step.done.check, .item.ticket .track .step.now.check{ border-top-color: var(--inbox); }
   .item.ticket .track .step.done.review, .item.ticket .track .step.now.review{ border-top-color: var(--yellow); }
   .item.ticket .track .step.done.approve, .item.ticket .track .step.now.approve{ border-top-color: var(--green); }
-  .item.ticket .track .step.done.ship, .item.ticket .track .step.now.ship{ border-top-color: var(--purple); }
+  .item.ticket .track .step.done.ship, .item.ticket .track .step.now.ship{ border-top-color: var(--accent); } /* 0603: Shipped in the accent */
   .item.ticket .track .step.now.build{ color: var(--run); }
   .item.ticket .track .step.now.check{ color: var(--cyan-text); }
   .item.ticket .track .step.now.review{ color: var(--warn); }
   .item.ticket .track .step.now.approve{ color: var(--ok); }
-  .item.ticket .track .step.now.ship{ color: var(--purple-text); }
+  .item.ticket .track .step.now.ship{ color: var(--accent); }
   .item.ticket .track.stopped .step.now{ border-top-color: var(--bad); color: var(--bad); } /* blocked, or its build stopped */
   /* 0462: an open in-flight ticket's facts, under its track: six even cells in three columns and two rows, with lines
      between them and round them. Each is its label above its value, each on one line, cut short with … */
@@ -328,8 +331,8 @@
   /* 0154: a ticket gone to from a dependency box (0467) lights briefly. It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
   @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
 
-  .full-open { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
-  .full-open:hover { color: var(--text); }
+  .full-open { margin: 10px 0 0 8px; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+  .full-open:hover { border-color: var(--text); }
   #shipped td.unpushed { cursor: auto; } /* 0587: what's under a row doesn't open it */
   /* 0142: an opened draft's, idea's or inbox note's Markdown in Plan, formatted as in the full ticket pane */
   .shaping .md { overflow-wrap: anywhere; }

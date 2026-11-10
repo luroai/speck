@@ -222,8 +222,8 @@ for (const width of [375, 1280]) {
     const order = [...tables.filter(t => t.pane), ...tables.filter(t => !t.pane)]; // the pane's first: the note sits under it
     assert.deepEqual(order.map(t => t.pane), [true, true, false]);
     for (const t of order) {
-      // 0585: the pack was opened from the ticket's full view, so closing it goes back there, and closing that leaves the panel.
-      for (let i = 0; !t.pane && !(await b.js(`document.getElementById('full-ticket').hidden`)) && i < 3; i++) { await b.js(`document.querySelector('#full-ticket .close').click()`); await new Promise(res => setTimeout(res, 100)); }
+      // 0585: the pack was opened from the ticket's full view, so its back link (0603) goes back there, and closing that leaves the panel.
+      for (let i = 0; !t.pane && !(await b.js(`document.getElementById('full-ticket').hidden`)) && i < 3; i++) { await b.js(`document.querySelector('#full-ticket .top > .back, #full-ticket .close').click()`); await new Promise(res => setTimeout(res, 100)); }
       if (!t.pane) await b.js(openLane('capture')); // closing the full view shows Build again
       await b.js(`getSelection().removeAllRanges()`);
       // The table at the top of the screen, so the drag's two ends are on it.

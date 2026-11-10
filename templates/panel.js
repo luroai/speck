@@ -340,6 +340,7 @@ function mdInline(nodes) {
   return nodes.map(n => {
     if (n.type === 'text') return document.createTextNode(n.text);
     if (n.type === 'code') return el('code', 'md-code', n.text);
+    if (n.type === 'node') return n.node; // 0603: a node made for it, such as the review pack's tick
     if (n.type === 'link') {
       const a = el('a', null, null, ...mdInline(n.inline));
       a.href = n.href;
@@ -686,10 +687,23 @@ function depsBox(t, inPane = false) {
     }
     return el('div', 'deps deps-waits', null, el('div', 'deps-head', null, el('b', null, 'Waits on'), el('span', null, counts)), bar, el('div', 'deps-grid', null, ...chips));
   }
+  if (inPane) return chainFacts(d);
   const slots = d.slots.map(s => (!s ? el('span', 'slot')
     : s.more ? el('span', 'slot more', null, el('span', 'dot'), el('span', 'sid', `+${s.more}`))
       : depNode(`slot ${s.state}`, s.id, s.state, [el('span', 'dot'), el('span', 'sid', s.id)], inPane)));
   return el('div', 'deps deps-chain', null, el('div', 'deps-head', null, el('b', null, 'Chain'), el('span', null, `${d.before} before · ${d.after} after`)), el('div', 'deps-slots', null, ...slots));
+}
+// 0603: in the full view, a chain is two facts in the facts' style: the tickets it waits for, nearest first, and those
+// waiting on it, each id with its state, and "+n more" for the ones the model's slots leave out.
+function chainFacts(d) {
+  const at = d.slots.findIndex(s => s && s.state === 'self');
+  const cell = (label, slots) => {
+    const ss = slots.filter(Boolean), words = ss.map(s => (s.more ? `+${s.more} more` : `${s.id} ${DEP_WORDS[s.state]}`));
+    const names = ss.map((s, i) => (s.more ? el('span', 'chain-more', words[i])
+      : el('span', 'chain-item', null, depNode(`chain-id ${s.state}`, s.id, s.state, [el('span', 'sid', s.id)], true), document.createTextNode(' '), el('span', 'chain-state', DEP_WORDS[s.state]))));
+    return factCell(label, '—', null, words.join(', ') || '—', null, names.length ? names.flatMap((n, i) => (i ? [document.createTextNode(', '), n] : [n])) : null);
+  };
+  return el('dl', 'facts chain-facts', null, cell('Waits for', d.slots.slice(0, at).reverse()), cell('Waiting on it', d.slots.slice(at + 1)));
 }
 const STATE_ORDER = { shipped: 0, building: 1, queued: 2 };
 // What a dependency box shows, to tell when it needs drawing again.

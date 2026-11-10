@@ -169,12 +169,12 @@ function renderLeaving() {
   $('settings').inert = asking; // Tab stays in the question
   if (!asking) { box.replaceChildren(); return; }
   const choice = (label, cls, fn) => { const b = el('button', cls, label); b.type = 'button'; b.addEventListener('click', fn); return b; };
-  const keep = choice('Keep editing', null, keepEditing);
+  const keep = choice('Keep editing', 'secondary', keepEditing);
   const title = el('h3', null, 'Unsaved changes');
   title.id = 'settings-unsaved-title';
   box.replaceChildren(el('div', 'box', null, title,
     el('p', null, 'You have unsaved changes in Settings. Save them before closing, or discard them?'),
-    el('div', 'choices', null, choice(settingsLeaving.saving ? 'Saving…' : 'Save', 'save-all', saveAndLeave), choice('Discard', null, closeSettings), keep)));
+    el('div', 'choices', null, choice(settingsLeaving.saving ? 'Saving…' : 'Save', 'save-all', saveAndLeave), choice('Discard', 'secondary', closeSettings), keep)));
   box.setAttribute('role', 'alertdialog');
   box.setAttribute('aria-modal', 'true');
   box.setAttribute('aria-labelledby', title.id);

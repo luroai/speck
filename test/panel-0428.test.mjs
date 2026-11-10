@@ -52,7 +52,8 @@ const BUTTONS = {
   'Settings\' Save beside a setting': ['button', '#settings .setting .save', '#settings .arow .save'],
   'Settings\' Save': ['button', '#settings .save-all'],
   'Settings\' info buttons': ['button', '#settings .switch-row .info', '#settings .setting .info'],
-  'Settings\' question\'s buttons': ['button', '#settings-unsaved button'],
+  'Settings\' question\'s buttons': ['button', '#settings-unsaved button', '#settings-unsaved button.save-all'],
+  'Settings\' question\'s other buttons': ['button', '#settings-unsaved button', '#settings-unsaved button.secondary'], // 0603: Discard and Keep editing
   'Close': ['button', '#full-ticket .close', '#doc-view .close', '#foreman .close', '#settings .close'],
   'Ship': ['button', '#full-ticket .ship', '#doc-view .ship'],
   'Ask for changes': ['button', '#full-ticket .ask-changes', '#doc-view .ask-changes'],
@@ -64,8 +65,11 @@ const BUTTONS = {
   // 0520: Plan's Tickets, Ideas and Inbox buttons (.toggle) are gone
 };
 
-test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu have an 8 px corner radius', () => {
-  for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], '8px', what);
+// 0603: the secondary buttons, in the redesign's secondary style, have 10 px corners
+const SECONDARY = new Set(['Full ticket / Review pack on an open card', 'Stop build', 'Back to Plan', 'Go with the recommendation', 'Full ticket elsewhere',
+  'More stats / Details', 'Copy', 'Answer / Dismiss', 'Reload page', 'Close', 'Settings\' question\'s other buttons']);
+test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu have an 8 px corner radius, and (0603) a secondary button 10 px', () => {
+  for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], SECONDARY.has(what) ? '10px' : '8px', what);
   for (const sel of ['select', 'textarea', '.tag', '.prio-menu']) // 0520: Plan's toggles are gone
     assert.equal(resolve(['button', sel])['border-radius'], '8px', sel);
   for (const sel of ['input:not([type="checkbox"]):not([type="radio"])', 'textarea', 'select'])
@@ -94,7 +98,7 @@ test('0428 AC3: every button has a border on all four sides, in a colour 0161 ch
     const got = sides(sels);
     for (const [d, s] of Object.entries(got)) {
       assert.ok(s.width && parseFloat(s.width) > 0, `${what}: its ${d} border is ${s.width}`);
-      assert.ok(['--line', '--text', '--bad', '--bezel-muted', '--bar-muted', '--blue'].includes(s.colour), `${what}: its ${d} border is in ${s.colour}`);
+      assert.ok(['--line', '--text', '--bad', '--bar-muted', '--blue'].includes(s.colour), `${what}: its ${d} border is in ${s.colour}`);
     }
   }
 });

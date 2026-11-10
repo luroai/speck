@@ -116,9 +116,11 @@
   #settings-unsaved button { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 4px 14px; cursor: pointer; }
   #settings-unsaved button:hover { color: var(--text); border-color: var(--text); }
   #settings-unsaved button.save-all { color: var(--text); background: var(--raise); border-color: var(--text); }
+  #settings-unsaved button.secondary { box-sizing: border-box; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; } /* 0603: Discard and Keep editing in the secondary style (panel-cards.css) */
+  #settings-unsaved button.secondary:hover { color: var(--text); border-color: var(--text); }
   #settings .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
-  #settings .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #settings .close:hover { color: var(--text); }
+  #settings .close { margin-left: auto; box-sizing: border-box; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; } /* 0603: the secondary style (panel-cards.css) */
+  #settings .close:hover { border-color: var(--text); }
   #settings .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
 
   /* 0428: rounded corners as Cursor's: 8 px for a tip, as small as a control, and 12 px for a box */

@@ -315,7 +315,7 @@ for (const width of [375, 699]) {
       // The controls the ticket names were all among those checked. 0520: Plan's Tickets, Ideas and Inbox buttons are
       // gone, so button.toggle.tickets.on is no longer one of them.
       for (const c of ['button.set-ready', 'button.on', 'button.stop-build', 'button.full-open',
-        'button.ship', 'button.settings-open', 'span.tag.p1.pick', 'span.set-prio.pick', 'button.copy', 'button.close', 'tr.', 'summary.']) { // tr.: a shipped card, which opens from anywhere on it since 0466
+        'button.ship', 'button.settings-open', 'span.tag.p1.pick', 'span.set-prio.pick', 'button.copy', 'span.back', 'tr.', 'summary.']) { // tr.: a shipped card, which opens from anywhere on it since 0466. 0603: the pack's back link in place of its Close
         assert.ok(seen.has(c), `${c} was checked (saw ${[...seen].join(', ')})`);
       }
       assert.ok([...seen].some(c => c === 'button.'), "speck run's on/off button was checked");

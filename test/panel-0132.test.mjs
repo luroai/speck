@@ -98,7 +98,9 @@ test('0132 AC2: the pack\'s headings, table and lists are formatted, not shown a
   assert.equal(table.length, 1, 'one table');
   assert.deepEqual(tags(p, table[0], 'th').map(c => c.textContent), ['#', 'Criterion', 'Result', 'Evidence']);
   const cells = tags(p, table[0], 'tr').slice(1).map(r => tags(p, r, 'td').map(c => c.textContent));
-  assert.deepEqual(cells, [['1', 'One.', '✅', 'test/a.mjs passes | really'], ['2', 'Two.', '❌', '<b>missing</b>']]);
+  assert.deepEqual(cells, [['1', 'One.', '', 'test/a.mjs passes | really'], ['2', 'Two.', '', '<b>missing</b>']]); // 0603: the results are marks, not emoji
+  const marks = tags(p, table[0], 'tr').slice(1).map(r => tags(p, r, 'td')[2].children.map(c => c.className));
+  assert.deepEqual(marks, [['tick'], ['cross']]);
   assert.ok(tags(p, table[0], 'code').some(c => c.textContent === 'test/a.mjs'), 'a code span in a cell');
   assert.ok(tags(p, n, 'li').some(li => li.textContent === 'Ticket risk: low'), 'a list');
   assert.ok(tags(p, n, 'strong').some(s => s.textContent === 'Verdict:'), 'bold');

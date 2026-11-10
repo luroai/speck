@@ -20,10 +20,11 @@ const iconOf = (p, row) => {
 };
 // 0483: only an open card has its icon, so a test opens the cards whose icons it checks.
 const opened = async (p, ...rows) => { for (const row of rows) click(row.children[0]); await p.settle(); };
-// 0585: a Build row says what it waits on in its where line; its chain is a box in its full view.
+// 0585: a Build row says what it waits on in its where line; its chain is in its full view (0603: as facts, naming
+// the tickets before and after it, without itself).
 const whereOf = (p, id) => p.all(queued(p, id)).find(n => /^where\b/.test(n.className)).textContent;
-const chainBox = async (p, id) => p.all(await fullViewOf(p, id)).find(n => /\bdeps\b/.test(n.className));
-const slotTitles = (p, box) => p.all(box).filter(n => /\bslot\b/.test(n.className) && n.title).map(n => n.title);
+const chainBox = async (p, id) => p.all(await fullViewOf(p, id)).find(n => n.className === 'facts chain-facts');
+const slotTitles = (p, box) => p.all(box).filter(n => /\bchain-id\b/.test(n.className) && n.title).map(n => n.title);
 const css = () => styles();
 const rule = sel => (css().match(new RegExp(`(^|\\n)\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[2] || '';
 
@@ -53,8 +54,8 @@ test('0041 AC1: a ticket that starts a chain shows a chain icon after its id and
   const icon = iconOf(p, shaping(p, '0001'));
   assert.ok(icon && /\bchain\b/.test(icon.className), 'Shaping: a chain icon after its id');
   const box = await chainBox(p, '0006'); // 0585: in the queue, its full view's Chain box says what it unlocks
-  assert.match(box.textContent, /Chain.*0 before · 1 after/, 'queue: a ready ticket that starts a chain shows its chain');
-  assert.deepEqual(slotTitles(p, box), ['0006 · this ticket', '0007 · queued']);
+  assert.match(box.textContent, /Waits for—Waiting on it0007 queued/, 'queue: a ready ticket that starts a chain shows its chain');
+  assert.deepEqual(slotTitles(p, box), ['0007 · queued']);
   assert.match(rule('.chain'), /var\(--muted\)/, 'the chain icon is in the muted colour, as the speck red is only for the speck (0167)');
 });
 
@@ -76,7 +77,7 @@ test('0041 AC2: a waiting ticket shows a dimmed padlock after its id, with "wait
   await p.settle();
   assert.equal(chipSaid(p, shaping(p, '0003')), 'Waits on 2 tickets', 'Shaping: its chip (0468)');
   assert.equal(whereOf(p, '0007'), 'Ready · after 0006', 'queue: its row says what it waits on (0585)');
-  assert.deepEqual(slotTitles(p, await chainBox(p, '0007')), ['0006 · queued', '0007 · this ticket'], 'and its full view shows the chain');
+  assert.deepEqual(slotTitles(p, await chainBox(p, '0007')), ['0006 · queued'], 'and its full view shows the chain');
   await opened(p, shaping(p, '0003'), shaping(p, '0009'));
   assert.ok(/\block\b/.test(iconOf(p, shaping(p, '0003')).className), 'Shaping: a padlock after its id');
   assert.ok(/\block\b/.test(iconOf(p, shaping(p, '0009')).className), 'waiting on an in-flight ticket');
@@ -96,9 +97,9 @@ test('0041 AC3: a ticket with neither shows no icon, and each icon says what it 
   assert.equal(iconOf(p, shaping(p, '0001')).title, 'Starts a chain: unlocks 0002, 0003');
   assert.equal(iconOf(p, shaping(p, '0003')).title, 'Waiting on 0001, 0099');
   // 0585: in the queue, the full view's boxes say it, with each ticket's state as its tooltip
-  assert.match((await chainBox(p, '0008')).className, /deps-chain/, 'an in-flight one with a ticket waiting on it shows its chain');
-  assert.deepEqual(slotTitles(p, await chainBox(p, '0006')), ['0006 · this ticket', '0007 · queued']);
-  assert.deepEqual(slotTitles(p, await chainBox(p, '0007')), ['0006 · queued', '0007 · this ticket']);
+  assert.match((await chainBox(p, '0008')).className, /\bchain\b/, 'an in-flight one with a ticket waiting on it shows its chain');
+  assert.deepEqual(slotTitles(p, await chainBox(p, '0006')), ['0007 · queued']);
+  assert.deepEqual(slotTitles(p, await chainBox(p, '0007')), ['0006 · queued']);
 });
 
 test('0041 AC4: when the chain\'s first ticket is done, the next refresh takes the padlock off what waited only on it and moves the chain on', async () => {
@@ -110,11 +111,11 @@ test('0041 AC4: when the chain\'s first ticket is done, the next refresh takes t
   await p.settle();
   await opened(p, shaping(p, '0003'));
   assert.equal(whereOf(p, '0002'), 'Ready · after 0001'); // 0585: the queue's row, not an icon
-  assert.deepEqual(slotTitles(p, await chainBox(p, '0001')), ['0001 · this ticket', '0002 · queued', '0003 · queued'], 'the first starts the chain');
+  assert.deepEqual(slotTitles(p, await chainBox(p, '0001')), ['0002 · queued', '0003 · queued'], 'the first starts the chain');
   await refresh(p);
   assert.equal(queued(p, '0001'), undefined, 'the done ticket has left the queue');
   assert.equal(whereOf(p, '0002'), 'Ready', 'the wait is off its row');
-  assert.deepEqual(slotTitles(p, await chainBox(p, '0002')), ['0001 · shipped', '0002 · this ticket', '0003 · queued'], 'it starts the chain now');
+  assert.deepEqual(slotTitles(p, await chainBox(p, '0002')), ['0001 · shipped', '0003 · queued'], 'it starts the chain now');
   assert.ok(/\block\b/.test(iconOf(p, shaping(p, '0003')).className), 'the next one still waits');
 
   // Waiting on nothing else and with nothing waiting on it in turn: no icon at all.
@@ -222,8 +223,8 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
     await b.until(`!!document.querySelector('#shaping .item .lock')`, 'the icon');
     assert.equal(await b.js(`document.querySelector('#shaping .item .lock').title`), 'Waiting on 0001');
     await b.js(`document.querySelector('#queue .q .top').click()`); // 0585: in the queue, its full view shows the chain
-    await b.until(`!!document.querySelector('#full-ticket .deps-chain .slot[title="0002 · queued"]')`, 'the chain in its full view');
-    assert.ok(await b.js(`document.querySelector('#full-ticket .deps-chain .slot').getBoundingClientRect().width > 0`), 'the chain takes up room');
+    await b.until(`!!document.querySelector('#full-ticket .chain-facts .chain-id[title="0002 · queued"]')`, 'the chain in its full view'); // 0603: as facts
+    assert.ok(await b.js(`document.querySelector('#full-ticket .chain-facts .chain-id').getBoundingClientRect().width > 0`), 'the chain takes up room');
     await b.js(`document.querySelector('#full-ticket .close').click()`);
     await b.until(`document.getElementById('full-ticket').hidden`, 'the full view to close');
     await b.js(openLane('plan')); // 0410

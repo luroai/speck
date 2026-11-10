@@ -84,7 +84,7 @@ test('0427 AC4: no label is in spaced capitals: buttons and labels are sentence 
     if (ls !== undefined) assert.ok(parseFloat(ls) <= 0, `${r.sel}: letter-spacing ${ls}`);
   }
   for (const sel of ['.full-open', '.set-ready', '.q .stop-build', '.q .back-to-plan', '.resume .copy', '.group', '.detail h4',
-    '#full-ticket .close, #doc-view .close', '#settings .close', // 0602: the build log has no Close
+    '#doc-view .close', '#settings .close', // 0602: the build log has no Close. 0603: nor the review pack
     '#full-ticket .live-buttons .full-open, #full-ticket .live-buttons .stop-build', '#full-ticket .ship, #doc-view .ship', '#settings .save-all']) { // 0472: Settings' Close in its own file
     assert.equal(family(rule(sel)), UI, `${sel}: the interface font`);
   } // 0520: Plan's Tickets, Ideas and Inbox buttons (.toggle, labelled `${label} · ${n}`) are gone

@@ -12,8 +12,9 @@ const NOW = Date.now();
 const ago = s => new Date(NOW - s * 1000).toISOString();
 const KEYS = ['build', 'check', 'review', 'approve', 'ship'];
 // Each step's bar colour, and its name's colour when it's the current step.
-const BAR = { build: '--blue', check: '--inbox', review: '--yellow', approve: '--green', ship: '--purple' };
-const NAME = { build: '--run', check: '--cyan-text', review: '--warn', approve: '--ok', ship: '--purple-text' };
+// 0603: Ship in the accent, as the redesign has it, in place of 0461's purple
+const BAR = { build: '--blue', check: '--inbox', review: '--yellow', approve: '--green', ship: '--accent' };
+const NAME = { build: '--run', check: '--cyan-text', review: '--warn', approve: '--ok', ship: '--accent' };
 
 const TICKETS = [
   T('0901', 'building', { started: ago(65), build_running: true }),
@@ -70,7 +71,7 @@ test('0461 AC2: a finished or current step\'s bar is in its step\'s colour, the 
   for (const k of KEYS) assert.ok(at('.item.ticket .track.stopped .step.now') > at(`.item.ticket .track .step.now.${k}`), `crimson after ${k}`);
 });
 
-test('0461 AC2: the colours are Cursor\'s blue, cyan, yellow and green, and a purple well apart from the crimson', () => {
+test('0461 AC2: the colours are Cursor\'s blue, cyan, yellow and green, and (0603) the accent well apart from the crimson', () => {
   const hue = hex => {
     const [r, g, b] = rgba(hex), max = Math.max(r, g, b), d = max - Math.min(r, g, b);
     if (d === 0) return 0;
@@ -79,10 +80,7 @@ test('0461 AC2: the colours are Cursor\'s blue, cyan, yellow and green, and a pu
   };
   const gap = (a, b) => { const d = Math.abs(hue(a) - hue(b)); return Math.min(d, 360 - d); };
   for (const [name, look] of Object.entries(looks())) {
-    for (const [k, t] of [['purple bar', '--purple'], ['purple name', '--purple-text']]) {
-      assert.ok(hue(look[t]) >= 250 && hue(look[t]) <= 290, `${name}: the ${k} ${look[t]} is purple`);
-      assert.ok(gap(look[t], look['--bad']) >= 60, `${name}: the ${k} is ${gap(look[t], look['--bad']).toFixed(0)}° from --bad`);
-    }
+    assert.ok(gap(look['--accent'], look['--bad']) >= 60, `${name}: Ship's accent is ${gap(look['--accent'], look['--bad']).toFixed(0)}° from --bad`);
     assert.ok(Math.abs(hue(look['--cyan-text']) - hue(look['--inbox'])) < 3, `${name}: the cyan name is a shade of the inbox's cyan`);
   }
 });
