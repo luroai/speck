@@ -298,6 +298,9 @@ export const items = p => p.byId('shaping').children.filter(n => /\bitem\b/.test
 export const notes = p => p.byId('capture').children.filter(n => /\bitem\b/.test(n.className)); // 0520: Capture's cards
 export const top = item => item.children.find(n => /\bhead\b/.test(n.className)); // an item's top row, which opens and closes it (0039)
 
+// 0615: the sentence a Build row's details line has in its tooltip, on the line after its whole text, or '' when the
+// line says it already.
+export const tipSentence = n => (n.title || '').split('\n')[1] || '';
 export const queueRows = p => p.byId('queue').children.filter(n => /\bq\b/.test(n.className));
 // 0434: a fake page whose boards come in turn, as fakePage's responses do, with each log request answered apart, so
 // opening a Build card, which asks for its log, doesn't take the next board. The last board stays.

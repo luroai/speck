@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, round, panelModel, deferred, fullViewOf } from './support/panel.mjs';
+import { T, fakePage, queueRows, tipSentence, round, panelModel, deferred, fullViewOf } from './support/panel.mjs';
 
 const ago = (s, now = Date.now()) => new Date(now - s * 1000).toISOString();
 const PACK = '## 0805 · Ticket 0805\n**Verdict:** ✅ Approved by reviewer\n';
@@ -32,7 +32,7 @@ const topOf = row => row.children.find(n => n.className === 'top');
 // 0585: the row's line saying where the ticket is, its words, and the sentence (the line's hover text when it differs)
 const whereOf = (p, row) => p.all(row).find(n => /^where\b/.test(n.className));
 const lineOf = (p, row) => p.all(whereOf(p, row)).find(n => n.className === 'said').textContent;
-const sentenceOf = (p, row) => whereOf(p, row).title || lineOf(p, row);
+const sentenceOf = (p, row) => tipSentence(whereOf(p, row)) || lineOf(p, row);
 const count = (s, re) => (s.match(re) || []).length;
 const acts = (p, row) => p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent);
 

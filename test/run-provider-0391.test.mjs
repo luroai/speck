@@ -6,7 +6,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { runRepo, startRun, until, stopRun, killAll, record, ROOT } from './support/run.mjs';
 import { fakeClaude, after } from './support/provider-builder.mjs';
-import { T, fakePage, queueRows, round, fullViewOf } from './support/panel.mjs';
+import { T, fakePage, queueRows, tipSentence, round, fullViewOf } from './support/panel.mjs';
 import { findProvider } from '../scripts/providers.mjs';
 import { saveProviderKey, removeProviderKey } from '../scripts/keys.mjs';
 import { buildPlan, launchPlan } from '../scripts/ticket-builder.mjs';
@@ -232,7 +232,7 @@ test('0391 AC1: the board and the panel name the builder as DeepSeek', async () 
   await p.settle();
   const row = queueRows(p).find(x => p.all(x).some(n => n.className === 'id' && n._text === '0801'));
   const sentence = 'DeepSeek is fixing round 1\'s findings';
-  assert.equal(p.all(row).find(n => /^where\b/.test(n.className)).title, sentence); // 0585: the sentence is its where line's tooltip
+  assert.equal(tipSentence(p.all(row).find(n => /^where\b/.test(n.className))), sentence); // 0585: the sentence is its where line's tooltip
   const view = await fullViewOf(p, '0801');
   assert.equal(p.all(view).find(n => /(^| )say( |$)/.test(n.className || '')).textContent, sentence, 'and its full view says it'); // 0585: the lights are gone
 });

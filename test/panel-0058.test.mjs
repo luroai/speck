@@ -112,7 +112,8 @@ test('0058 AC3: the counter moves on once a second from its own timer, between p
     assert.equal(n.className, cls, 'no class changed: tags, bar and motion stay');
     assert.deepEqual(n.children || [], kids, 'no child changed');
     assert.equal(n.detached || 0, detached, 'nothing was taken out');
-    assert.equal(n.title, title, 'no hover text changed');
+    if (subs.some(s => s && s.parentNode === n)) assert.ok(n.title.startsWith(n.textContent), 'a counter\'s line: its tooltip follows it (0615)');
+    else assert.equal(n.title, title, 'no hover text changed');
     if (!subs.includes(n)) assert.equal(n._text, text, 'only a counter\'s text changed');
   }
   c.now += 60000;

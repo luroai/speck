@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, round, fakePage, queueRows, fullViewOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, round, fakePage, queueRows, tipSentence, fullViewOf, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
 
 // ---------- 0443: a Build row's long status in short words, so its time fits on a phone (0585: its where line) ----------
 
@@ -57,7 +57,7 @@ test('0443 AC1: Paused, Shipping and Ready stay as they are', async () => {
   const p = page(true);
   await p.settle();
   for (const c of SAME) assert.ok(statusOf(p, card(p, c.id)).textContent.startsWith(c.words), `${c.id}: ${statusOf(p, card(p, c.id)).textContent}`);
-  for (const id of ['0811', '0812']) assert.equal(statusOf(p, card(p, id)).title || '', '', `${id}: no tooltip, as its words are the sentence`);
+  for (const id of ['0811', '0812']) assert.equal(tipSentence(statusOf(p, card(p, id))), '', `${id}: no sentence in its tooltip, as its words are the sentence`);
 });
 
 test('0443 AC2: the full sentence is the short words\' tooltip', async () => {
@@ -65,7 +65,7 @@ test('0443 AC2: the full sentence is the short words\' tooltip', async () => {
     const p = page(on);
     await p.settle();
     for (const c of CASES.filter(x => x.on === on)) {
-      assert.equal(statusOf(p, card(p, c.id)).title, c.sentence, `${c.id}: its tooltip`);
+      assert.equal(tipSentence(statusOf(p, card(p, c.id))), c.sentence, `${c.id}: its tooltip`);
     }
   }
 });

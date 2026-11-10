@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fakePage, T, click, gitEnv, ROOT, fullViewOf, queueRows } from './support/panel.mjs';
+import { fakePage, T, click, gitEnv, ROOT, fullViewOf, queueRows, tipSentence } from './support/panel.mjs';
 import { OPTION, blockedRepo } from './support/blocked.mjs';
 import { statusData, loadConfig } from '../scripts/speck.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
@@ -86,7 +86,7 @@ test('0317 AC2: a blocked card says the Foreman will take its recommendation, an
   // 0585: its row's where line says it in short words, with the sentence as its tooltip
   const where = p.all(queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === '0001'))).find(n => /^where\b/.test(n.className));
   assert.match(where.textContent, /^speck will answer/);
-  assert.equal(where.title, 'Blocked · speck will take its recommendation');
+  assert.equal(tipSentence(where), 'Blocked · speck will take its recommendation');
   for (const id of ['0002', '0003']) {
     const text = (await fullViewOf(p, id)).textContent;
     assert.match(text, /Waiting for you\. Answer the question, then run \/speck-build /);

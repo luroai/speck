@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, popupsScript, panelModel, T, round, fakePage, deferred, full, idea, click, items, notes, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, fullViewOf, boardPage, styles } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, pageScript, popupsScript, panelModel, T, round, fakePage, deferred, full, idea, click, items, notes, queueRows, tipSentence, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems, fullViewOf, boardPage, styles } from './support/panel.mjs';
 
 // 0585: a Build row's line saying where the ticket is, by its id, and the Build list's group heads, as one string
 const whereIn = (p, id) => p.all(queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id))).find(n => /^where\b/.test(n.className)).textContent;
@@ -558,7 +558,7 @@ test('0034 AC3: a blocked ticket is under Needs you, with its dot in the colour 
   const rows = queueRows(p), red = n => /\b(bad|blocked)\b/.test(n.className || '');
   assert.equal(groupOf(p, rows[0]), 'Needs you');
   assert.match(whereOf(p, rows[0]).className, /\bneeds\b/);
-  assert.equal(whereOf(p, rows[0]).title, 'Blocked · it has a question for you', 'its sentence (0156)');
+  assert.equal(tipSentence(whereOf(p, rows[0])), 'Blocked · it has a question for you', 'its sentence (0156)');
   assert.ok((await fullViewOf(p, '0001')).textContent.includes('Split it or keep it?'));
   for (const r of rows.slice(1)) assert.ok(!/\bneeds\b/.test(whereOf(p, r).className) && !p.all(r).some(red), `${idOf(p, r)} has nothing red`);
   assert.match(styles(), /\.where\.needs::before \{ background: var\(--needs-you\); \}/);
@@ -920,7 +920,7 @@ test('0045 AC3: an approved ticket with a build_exit waits for you under Needs y
   await p.settle();
   const [a, b] = queueRows(p);
   assert.equal(groupOf(p, a), 'Needs you'); // purple since 0138, now its group
-  assert.equal(whereOf(p, a).title, 'Approved · waiting for you to ship it', 'its sentence waits for you');
+  assert.equal(tipSentence(whereOf(p, a)), 'Approved · waiting for you to ship it', 'its sentence waits for you');
   const full = await fullViewOf(p, '0001');
   assert.ok(!p.all(full).some(isRed) && !p.all(a).some(isRed), 'nothing red');
   assert.ok(findText(p, full, 'Build finished without shipping'), 'the label');
@@ -951,7 +951,7 @@ test('0045 AC4: a building or reviewing ticket with a build_exit says the build 
   assert.deepEqual(m.queue.map(t => t.exit_label), ['Build stopped before finishing', 'Build stopped before finishing']);
   const p = fakePage([state]);
   await p.settle();
-  for (const row of queueRows(p)) assert.equal(whereOf(p, row).title, 'The build stopped', 'its sentence'); // 0585: the row's line
+  for (const row of queueRows(p)) assert.equal(tipSentence(whereOf(p, row)), 'The build stopped', 'its sentence'); // 0585: the row's line
   for (const [id, msg] of [['0001', 'Stopped here.'], ['0002', 'Out of turns.']]) {
     const full = await fullViewOf(p, id);
     assert.ok(findText(p, full, 'Build stopped before finishing'));
