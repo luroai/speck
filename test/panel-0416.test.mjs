@@ -15,7 +15,7 @@ const CARDS = [
   [T('0904', 'approved', approved({ auto_ship: true, build_exit: { at: ago(30), code: 0 }, ship: { running: true, auto: true, started: ago(4) } })), 'Shipping', undefined, 'run'],
   [T('0905', 'approved', approved({ auto_ship: false, build_exit: { at: ago(30), code: 0 } })), 'Ready to ship', 'Approved · waiting for you to ship it', 'needs'],
   [T('0906', 'blocked', { started: ago(300), blocked_question: 'Which one?' }), 'Has a question', 'Blocked · it has a question for you', 'needs'],
-  [T('0907', 'building', { started: ago(300), build_exit: { at: ago(30), code: 1 } }), 'Build stopped', 'The build stopped', 'wait'],
+  [T('0907', 'building', { started: ago(300), build_exit: { at: ago(30), code: 1 } }), 'Build stopped', 'The build stopped', 'needs'], // 0616: nothing will carry it on, so it needs you,
 ];
 
 function fake(tickets = CARDS.map(c => c[0])) {

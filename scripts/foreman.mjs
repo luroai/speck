@@ -63,6 +63,22 @@ export const speckTakes = (fixing, t) => (fixing === 'decide' ? decidable(t) : f
 
 const list = v => (Array.isArray(v) ? v : []);
 const text = v => (typeof v === 'string' ? v : '');
+
+// 0616: whether a ticket's build stopped before finishing, leaving it building or reviewing, and nothing will carry it on.
+// speck run, while it's on, resumes a killed build once if it can, resumes a build its agent or your answer asked it to, and with
+// watch fix or decide looks into one that exited. So it needs you with speck run off, a killed build already resumed
+// once, or an exited one that speck isn't looking into, waiting to look into (only with fix or decide) or about to
+// resume. `agent` is agentView's. templates/panel-model.js has the same rule for Build's groups.
+export function stoppedForYou(t, { on, fixing, agent }) {
+  if (!t || (t.status !== 'building' && t.status !== 'reviewing')) return false;
+  const exit = t.build_exit && typeof t.build_exit === 'object' ? t.build_exit : null;
+  if (!exit && t.build_stopped !== true) return false;
+  if (!on) return true;
+  if (!exit) return t.build_wont_resume === true;
+  const id = String(t.id), a = agent && typeof agent === 'object' ? agent : {}, has = v => list(v).map(String).includes(id);
+  if ((a.running && String(a.running.id) === id) || has(a.resuming)) return false;
+  return !(speckActs(fixing) && has(a.waiting));
+}
 const sentence = v => (/[.!?]$/.test(v) ? v : `${v}.`);
 
 // 0299: a ticket's line while speck run switches to new code and nothing of its own holds it up. The detail says once,
@@ -121,9 +137,11 @@ export function foremanView({ run, record, since = null, tickets, fixing = 'tell
   if (ship && ship.hold) held.push(`Shipping is ${ship.hold.message}`);
   const ag = agent && typeof agent === 'object' ? agent : { running: null, waiting: [], did: [], asks: [] };
   const asks = list(ag.asks).filter(a => a && !blocked.some(b => b.id === a.id));
+  // 0616: each stopped build nothing will carry on, unless a question about it is counted already.
+  const stopped = all.filter(t => stoppedForYou(t, { on, fixing, agent: ag }) && !asks.some(a => a && String(a.id) === String(t.id))).length;
   const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), name: called, fixing, fixing_says: fixingSays(fixing, called), building, max: rec && Number.isInteger(rec.max) && rec.max > 0 ? rec.max : null, since: on ? since : null, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag }); // 0592: max, the build slots, and since, when speck run started
   if (!on) return view('Off', 'off');
-  if ((yours && fixing !== 'off') || asks.length) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length}`, 'bad');
+  if ((yours && fixing !== 'off') || asks.length || stopped) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length + stopped}`, 'bad');
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
   if (building.length) return view(`Building ${building.length}`, 'ok');
   const short = ready.find(r => SHORT[r.kind]);

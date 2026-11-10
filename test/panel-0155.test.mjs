@@ -27,8 +27,9 @@ const STATE = {
   ],
   ideas: [],
 };
-// 0585: each ticket's dot by its state: orange for needs you (blocked, waiting to ship), blue while it's worked on, grey while it waits (a build that stopped, a ready ticket).
-const STATES = { '0301': 'run', '0302': 'run', '0303': 'needs', '0304': 'needs', '0305': 'wait', '0306': 'wait', '0307': 'wait' };
+// 0585: each ticket's dot by its state: orange for needs you (blocked, waiting to ship), blue while it's worked on, grey while it waits (a ready ticket).
+// 0616: a build that stopped is orange too, as nothing here will carry it on.
+const STATES = { '0301': 'run', '0302': 'run', '0303': 'needs', '0304': 'needs', '0305': 'needs', '0306': 'wait', '0307': 'wait' };
 
 // Before the page's own script runs: the look to use, a confirm that says yes, and a fetch that answers with the board
 // above and records each POST.

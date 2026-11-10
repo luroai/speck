@@ -129,7 +129,8 @@ const STATE = {
     idea('2026-10-14-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0161\n\nSome text.\n')],
 };
 // 0585: each Build row's dot, which is all that shows its state: orange for needs you, blue while it is worked on, grey while it waits.
-const DOTS = { '0301': '--accent', '0302': '--needs-you', '0303': '--needs-you', '0304': '--muted', '0305': '--muted', '0306': '--needs-you' };
+// 0616: a build that stopped is orange, as nothing here will carry it on.
+const DOTS = { '0301': '--accent', '0302': '--needs-you', '0303': '--needs-you', '0304': '--needs-you', '0305': '--muted', '0306': '--needs-you' };
 
 const stub = theme => `(() => {
   try { localStorage.setItem('speck-theme', ${JSON.stringify(theme)}); } catch {}
