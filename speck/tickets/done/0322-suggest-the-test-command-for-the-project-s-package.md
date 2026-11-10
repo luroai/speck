@@ -23,7 +23,7 @@ finished: "2026-10-19T07:32:13.597Z"
 **Status:** ✅ done
 
 ## Problem
-`speck detect` suggests `npm test` for any project whose `package.json` has a real test script, even when the project uses pnpm, yarn or bun. Setup then offers a test command the project doesn't normally use, and the user has to correct it: Alpha, which uses pnpm, is one.
+`speck detect` suggests `npm test` for any project whose `package.json` has a real test script, even when the project uses pnpm, yarn or bun. Setup then offers a test command the project doesn't normally use, and the user has to correct it: one of the user's projects, which uses pnpm, is one.
 
 ## Outcome
 `speck detect` suggests the test command for the package manager the project uses.
@@ -48,7 +48,7 @@ finished: "2026-10-19T07:32:13.597Z"
 - Self-check: made the packageManager match strict (`name@version` or a bare name, as Corepack writes it) instead of allowing spaces.
 
 ## In plain words
-When you set speck up in a project that uses pnpm, yarn or bun, setup now offers that tool's test command (`pnpm test`, `yarn test` or `bun run test`) instead of always offering `npm test`. If the project says in its package file which tool it uses, speck goes by that, even when an older lock file from another tool is lying around. The install command it offers always names the same tool as the test command. Projects without a test script in their package file get the same suggestion as before. To see it, run speck's detect step in a pnpm project, such as Alpha, and look at the suggested test command. Worth watching: when the package file names one tool but only another tool's lock file is there, the install suggestion is a plain install, which may update the lock file the first time.
+When you set speck up in a project that uses pnpm, yarn or bun, setup now offers that tool's test command (`pnpm test`, `yarn test` or `bun run test`) instead of always offering `npm test`. If the project says in its package file which tool it uses, speck goes by that, even when an older lock file from another tool is lying around. The install command it offers always names the same tool as the test command. Projects without a test script in their package file get the same suggestion as before. To see it, run speck's detect step in a pnpm project and look at the suggested test command. Worth watching: when the package file names one tool but only another tool's lock file is there, the install suggestion is a plain install, which may update the lock file the first time.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

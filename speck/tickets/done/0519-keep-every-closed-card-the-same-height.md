@@ -24,7 +24,7 @@ finished: "2026-10-26T22:18:38.800Z"
 **Status:** ✅ done
 
 ## Problem
-A closed card's height still depends on what's in it. Build's status line stays on one line (0484), but Plan's details line wraps when it doesn't fit, so a ticket with a `task` tag takes an extra line (alpha's 0009, 2026-10-26), and Plan's cards have empty space under their details. Plan's details also spend their room on the criteria count and lint result, which the user doesn't need on a closed card, spaced widely with ` · ` between them.
+A closed card's height still depends on what's in it. Build's status line stays on one line (0484), but Plan's details line wraps when it doesn't fit, so a ticket with a `task` tag takes an extra line (another project's 0009, 2026-10-26), and Plan's cards have empty space under their details. Plan's details also spend their room on the criteria count and lint result, which the user doesn't need on a closed card, spaced widely with ` · ` between them.
 
 ## Outcome
 Every closed card in every lane is the same height, and a closed Plan card's second row is its priority, size, risk and type as small labels.
@@ -42,7 +42,7 @@ Every closed card in every lane is the same height, and a closed Plan card's sec
 - The Plan lane's Tickets, Ideas and Inbox buttons, which 0520 removes.
 
 ## Notes
-- Asked for 2026-10-26: "did we not make the tickets stay consistent with heights … we need to make it all uniform please", with a screenshot of alpha's Plan lane on a phone: 0007, 0008 and 0010 on two lines with space under them, 0009 on three. Then: "The data we need to show on the second row really is Priority. Size. Risk. Type … in little labels or boxes … no need for the wide spacing. I'd still like to update priorities. I don't need to know criteria or whether lint passes."
+- Asked for 2026-10-26: "did we not make the tickets stay consistent with heights … we need to make it all uniform please", with a screenshot of another project's Plan lane on a phone: 0007, 0008 and 0010 on two lines with space under them, 0009 on three. Then: "The data we need to show on the second row really is Priority. Size. Risk. Type … in little labels or boxes … no need for the wide spacing. I'd still like to update priorities. I don't need to know criteria or whether lint passes."
 - Today: 0419 lets Plan's details line wrap "only when it doesn't fit", with ` · ` between its parts; 0484 cuts Build's status words short with `…` and keeps the stage, time and tag whole; 0420 and 0494 set out Shipped's closed card. A ticket's type is `type:` (bug or fix) or `kind: task`.
 - Cards: `templates/panel-cards.css`, and the closed cards in `templates/panel.js` (`ticketItem`, the Build queue's and Shipped's rows).
 - Failing before this build: none

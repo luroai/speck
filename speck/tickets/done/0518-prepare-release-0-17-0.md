@@ -24,7 +24,7 @@ finished: "2026-10-26T16:46:39.788Z"
 **Status:** ✅ done
 
 ## Problem
-Since 0.16.1, the panel can switch between every speck project running on the machine from its header (0516), and lane swipes are snappier (0517). The switcher only lists a project whose own copy of speck has it, so alpha and speck-site can't join it until there's a release to update to: anyone following the setup prompt, or updating speck in another project, still gets 0.16.1.
+Since 0.16.1, the panel can switch between every speck project running on the machine from its header (0516), and lane swipes are snappier (0517). The switcher only lists a project whose own copy of speck has it, so the user's other projects can't join it until there's a release to update to: anyone following the setup prompt, or updating speck in another project, still gets 0.16.1.
 
 ## Outcome
 speck is ready to be released as 0.17.0.
@@ -58,7 +58,7 @@ speck is ready to be released as 0.17.0.
 ## In plain words
 speck is now ready to go out as version 0.17.0. It gathers the two changes since 0.16.1: switching between every project whose panel is running on your computer from the arrow beside the project's name, at the address you already have open, and quicker lane swipes. The changelog, the release page's notes, the version shown when you install speck and the "Built with speck" figures in the README are all updated.
 
-Once this lands, the release page and its tag should appear by themselves. Check the repository's Actions tab afterwards: if they didn't, the ticket's Notes give the one command to publish it by hand. Other projects, such as alpha and speck-site, only appear in the switcher once they've been updated to 0.17.0.
+Once this lands, the release page and its tag should appear by themselves. Check the repository's Actions tab afterwards: if they didn't, the ticket's Notes give the one command to publish it by hand. Other projects, such as the user's other projects, only appear in the switcher once they've been updated to 0.17.0.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

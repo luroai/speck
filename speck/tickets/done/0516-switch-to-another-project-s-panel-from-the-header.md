@@ -24,7 +24,7 @@ finished: "2026-10-26T15:55:51.893Z"
 **Status:** ✅ done
 
 ## Problem
-Each speck project has its own panel on its own web address, and the panel's home-screen app belongs to one address. Someone with several projects on speck (speck, speck-site, alpha) has to keep a separate address, or a separate app, for each, and has no way to get from one project's panel to another's.
+Each speck project has its own panel on its own web address, and the panel's home-screen app belongs to one address. Someone with several projects on speck (speck, speck-site and another) has to keep a separate address, or a separate app, for each, and has no way to get from one project's panel to another's.
 
 ## Outcome
 From one panel, at the address it was opened at, including its home-screen app, you can switch between every speck project whose panel is running on the same machine, each still run entirely by its own panel.
