@@ -41,6 +41,7 @@ A draft's full view ends in a bar with Set ready, as an approved ticket's ends i
 - Decided: the same kind of fixed bar as an approved ticket's.
 - From 0583's build. Today: `fullTicket` in `templates/panel-popups.js` and `setReadyButton`, `readiness` in `templates/panel.js`. Waits for 0613 and 0616, which change the same files.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
