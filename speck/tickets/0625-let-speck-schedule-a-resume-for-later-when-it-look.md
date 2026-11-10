@@ -1,7 +1,7 @@
 ---
 id: "0625"
 title: "Let speck schedule a resume for later when it looks into a stop"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0622"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T23:16:01.465Z"
+approved: "2026-11-10T23:28:23.056Z"
 
 ---
 # 0625 · Let speck schedule a resume for later when it looks into a stop
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When speck's watcher looks into a stop that will clear by itself at a known time, such as a limit or an outage with a stated end, it can only act now: resume, reship, fix, ask, decide or tell. So it either resumes too early or leaves the ticket for you. And when the watcher's own agent is out of usage, as on 2026-11-10, its look fails at once and is noted as "I looked into it and took no action", so nothing is ever looked at again.
@@ -57,9 +58,14 @@ Worth keeping an eye on: a booked restart stops the ticket counting under Needs 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 139,709
+- Elapsed since build started: 12 min
+- Changed lines: 128 (limit 5000)
 - Follow-up: steady two speck run tests that failed once each under load (`speck/ideas/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md`).
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
