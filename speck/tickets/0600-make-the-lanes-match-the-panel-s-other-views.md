@@ -50,7 +50,9 @@ The lanes look like the panel's other views: flat lists in the same margins, wit
 - Decided for you keeps its Close button, now styled as the back link with "‹ Close", as 0568's tests press a button named Close.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The lanes now look like the rest of the panel. Capture, Plan, Build and Shipped are plain lists under the tabs, with no rounded box round them and no big lane name with a coloured dot, since the tab above already says which lane you're in and how many it holds. A lane's own figures, such as "1 in flight · 1 queued", sit on a small line under the tabs. Rows use smaller, lighter titles with their details in grey beneath, the same type as the Pipeline log and Decided for you, and those views and a ticket's full view now share one heading size and one blue back link.
+
+To see it, open the panel on a phone or a narrow window and move between the lanes, then open the Pipeline log, Decided for you and a ticket: they should feel like one app. Worth a look: an open Plan row's text now sits right against its grey background, and Decided for you's back link says "Close" rather than the lane's name; both are in the inbox.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -68,6 +70,11 @@ Tests changed to check the new look (AC5), each because it checked the lane's ca
 - `test/panel-0427.test.mjs`: 13 px allowed for rows' details, as the mock's; a shipped row's title is 500, not 600.
 - `test/panel-0167.test.mjs`: a shipped row's hairline is the Pipeline log's `--line-soft`.
 - `test/panel-0417.test.mjs`, `test/panel-0438.test.mjs`, `test/pipeline-0479.test.mjs`: the lane's 16 px side margins are its list's padding now, as the lane has none.
+
+Follow-ups:
+- Decided for you's back link still reads "‹ Close" rather than its lane's name: inbox note `speck/ideas/2026-11-10-name-the-lane-on-decided-for-you-s-back-link.md`.
+- An open Plan or Capture row's fill has no room round its text: inbox note `speck/ideas/2026-11-10-give-an-open-plan-or-capture-row-room-inside-its-fill.md`.
+- Known limits: Shipped's figures keep their own rounded tiles inside the flat lane; the document view's title went from 26 px to 20 px with the full view's, as 0445 keeps them the same.
 
 
 ## Review rounds
@@ -150,6 +157,89 @@ Tests changed to check the new look (AC5), each because it checked the lane's ca
     ],
     "escalation_question": "",
     "summary": "The visual changes meet the requested layout and typography, with passing browser checks in both looks. Before approval, record the updated tests in the ticket's Delivery log as required."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "862867211f1b755275340166ef159a11c3245fb4",
+    "session": "continued",
+    "thread_id": "01a1c48f-f3b3-7780-9177-71f382a8223f",
+    "builder_response": "- Tests run: test/panel-0600.test.mjs test/panel-0134.test.mjs test/panel-0151.test.mjs test/panel-0155.test.mjs test/panel-0157.test.mjs test/panel-0165.test.mjs test/panel-0167.test.mjs test/panel-0214.test.mjs test/panel-0417.test.mjs test/panel-0418.test.mjs test/panel-0425.test.mjs test/panel-0427.test.mjs test/panel-0438.test.mjs test/panel-0443.test.mjs test/panel-0445.test.mjs test/panel-0476.test.mjs test/panel-0478.test.mjs test/panel-0480.test.mjs test/panel-0520.test.mjs test/panel-0536.test.mjs test/panel-0577.test.mjs test/pipeline-0479.test.mjs, with the repo checks.\n- F1: fixed. The ticket's Delivery log now lists every changed test file and why it changed. No code changed this round.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 377560,
+      "cached_input_tokens": 305664,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1201,
+      "reasoning_output_tokens": 60
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 3922,
+      "cached": 138112,
+      "write": 0,
+      "output": 475
+    },
+    "cost_usd": 0.0264052,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T08:27:11.517Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Unchanged panel-cards.css removes lane frames, applies 16 px list margins and matches the log's hairlines. Passing panel-0600 browser tests verify all four lanes in both looks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Unchanged panel.html removes lane headings and retains lane-n figures. Passing panel-0600 and panel-0478 tests verify these remain beneath the tabs."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel-cards.css and panel-popups.css retain the requested title and details scale. Passing panel-0600 tests check computed typography across all lanes and the other views."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing panel-0600 browser tests compare headings and back links across all three views at 320 px in both looks."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The ticket's Delivery log now lists every changed existing test file and its reason. This round changes no implementation or tests; the supplied test run reports 318 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0600-make-the-lanes-match-the-panel-s-other-views.md",
+        "issue": "The required list of updated tests was missing from the Delivery log. It is now present, with reasons for each group of changes.",
+        "suggested_fix": "No further action required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The lanes now match the panel's other views in layout and typography, with passing checks in both looks. The Delivery log now records the updated tests. No blocking concerns remain."
   }
 }
 ```
