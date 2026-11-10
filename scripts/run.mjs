@@ -16,6 +16,7 @@ import { saveForeman, switchingReady } from './foreman.mjs';
 import { prMode } from './pull-request.mjs';
 import { prQueue } from './pr-queue.mjs';
 import { buildEnv } from './build-env.mjs';
+import { stopPanelsOfRun } from './build-panels.mjs';
 import { builderModelNote } from './build-model.mjs';
 import { builderSettings, liveSettings } from './run-settings.mjs';
 import { launchPlan, ignoredBuildersNote } from './ticket-builder.mjs';
@@ -172,6 +173,7 @@ function runOn(worker) {
   const endOf = (id, log, code, signal, failed, recordFile) => {
     running.delete(id);
     fill(id);
+    if (recordFile) stopPanelsOfRun(id, recordFile); // 0619
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
     else if (stoppedBySpeck(recordFile)) {
       console.log(`${id} build ended by \`speck stop\`.`);
@@ -224,7 +226,7 @@ function runOn(worker) {
       try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
       const pid = rec.pid, valid = Number.isInteger(pid) && pid > 0 && pid !== process.pid, ran = carried.includes(id);
-      if (!(valid && (ran || pidAlive(pid)))) { if (!killedInHand(id)) recordExit(id, file, null); continue; }
+      if (!(valid && (ran || pidAlive(pid)))) { stopPanelsOfRun(id, file); if (!killedInHand(id)) recordExit(id, file, null); continue; } // 0619
       adopt(id, file, rec, ran ? 'carries on through the switch' : 'is already being built');
     }
   };
@@ -281,6 +283,7 @@ function runOn(worker) {
       b.session = fill(id)?.session ?? b.session;
       adopted.delete(id);
       running.delete(id);
+      stopPanelsOfRun(id, b.file); // 0619
       if (b.seen && b.fresh) launched.delete(id);
       const byStop = stoppedBySpeck(b.file), inHand = killedInHand(id);
       if (!inHand) recordExit(id, b.file, null);

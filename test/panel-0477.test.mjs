@@ -45,24 +45,23 @@ test('0477 AC1: the lanes are a strip of their names in order, the one in view i
 
 // ---------- AC2 ----------
 
-test('0477 AC2: Build shows how many tickets need you, in the colour the tab\'s number had, whichever lane is in view, and nothing at none', async () => {
-  assert.match(decls('.tab .needs'), /color:\s*var\(--bad\)/, 'the number in the needs-you colour, as the tab had it');
+// 0609: Build's tab no longer shows a needs-you number, as the bar says how many need you
+test('0477 AC2: Build shows no needs-you number and its name is Build and its count, whichever lane is in view (0609)', async () => {
   const p = livePage(board({ word: 'Needs you 3', tone: 'bad' }));
   await p.settle();
   const label = () => (p.byId('tab-build').attrs || {})['aria-label'];
   for (const lane of ['build', 'plan', 'shipped', 'capture', 'build']) {
     click(p.byId(TAB[lane]));
     assert.deepEqual(open(p), [lane]);
-    assert.equal(p.byId('build-needs').textContent, '3', `${lane} in view: the number`);
-    assert.match(label(), /^Build, \d+ tickets?, 3 needs you$/, `${lane} in view: its accessible name (0582: with its count)`);
+    assert.equal(p.byId('build-needs').textContent, '', `${lane} in view: no number (0609)`);
+    assert.match(label(), /^Build, \d+ tickets?$/, `${lane} in view: its accessible name (0582: with its count; 0609: and no more)`);
   }
   p.set(board({ word: 'Needs you 12', tone: 'bad' }));
   await refresh(p);
-  assert.equal(p.byId('build-needs').textContent, '12');
+  assert.match(label(), /^Build, \d+ tickets?$/);
   for (const word of ['Building', 'Idle', 'Needs you', 'Needs you 0x']) {
     p.set(board({ word, tone: 'idle' }));
     await refresh(p);
-    assert.equal(p.byId('build-needs').textContent, '', `"${word}": no number`);
     assert.match(label(), /^Build, \d+ tickets?$/, `"${word}": its name is Build and its count (0582)`);
   }
 });
@@ -144,9 +143,6 @@ test('0477 AC1, AC3, AC4: in a real browser the strip is one row at most 45 px t
       assert.ok(shut.every(l => l.colour !== open[0].colour), `${at}: the lane in view stands out from the others`);
       for (const [id, got] of await presses(s.lanes)) assert.deepEqual(got, Array(5).fill(id), `${at}: a press anywhere in ${id} lands on it`);
     };
-    // With a two-digit needs-you number on Build, its widest, kept there when the page draws it again
-    await b.js(`(() => { const n = document.getElementById('build-needs'), put = () => { if (n.textContent !== '12') n.textContent = '12'; };
-      put(); new MutationObserver(put).observe(n, { childList: true, characterData: true, subtree: true }); return 1; })()`);
     // AC4: 0520's Capture is the fourth lane, so the four real lanes are checked at every width
     for (const width of [320, 360, 414, 600, 900]) {
       await b.send('Emulation.setDeviceMetricsOverride', { width, height: 700, deviceScaleFactor: 1, mobile: width < 700 });

@@ -55,7 +55,6 @@ test('0440 AC1: the green is Cursor\'s, its words at the shade 0161 needs and it
 test('0440 AC1: a ticket that needs you is in the needs-you text', () => {
   assert.equal(ruleVar('#full-ticket .live-now .say.bad', 'color'), '--bad', 'its sentence in the full view');
   assert.equal(ruleVar('.where.needs::before', 'background'), '--needs-you', 'its row\'s dot');
-  assert.equal(ruleVar('.tab .needs', 'color'), '--bad');
   assert.equal(ruleVar('.bezel.needs', 'border-color'), '--bar-needs');
   const { light, dark } = looks();
   assert.equal(light.get('--bad').toLowerCase(), '#a84f06');

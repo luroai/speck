@@ -39,32 +39,28 @@ const open = p => Object.keys(LANE).filter(l => !p.byId(LANE[l]).hidden);
 
 // ---------- AC2 ----------
 
-test('0425 AC2: each tab holds its name and nothing else, except Build\'s needs-you number', () => {
+test('0425 AC2: each tab holds its name and its count, and nothing else (0609: Build too)', () => {
   assert.equal(tabHtml('tab-plan'), '<span class="tab-name">Plan</span><span class="tab-n" id="tab-plan-n"></span>'); // 0582: with its count
-  assert.equal(tabHtml('tab-build'), '<span class="tab-name">Build</span><span class="tab-n" id="tab-build-n"></span><span class="needs" id="build-needs"></span>');
+  assert.equal(tabHtml('tab-build'), '<span class="tab-name">Build</span><span class="tab-n" id="tab-build-n"></span>');
   assert.equal(tabHtml('tab-shipped'), '<span class="tab-name">Shipped</span><span class="tab-n" id="tab-shipped-n"></span>');
-  assert.match(css(), /\.tab \.needs \{ color: var\(--bad\); \}/, 'the number is in the panel\'s crimson');
   assert.match(css(), /\.tab \{[^}]*white-space: nowrap;/, 'a tab never wraps its name');
 });
 
-test('0425 AC2: with the Foreman reading "Needs you <n>", Build shows <n> alone, and its accessible name says "<n> needs you"', async () => {
+test('0425 AC2: with the Foreman reading "Needs you <n>", Build shows no number and its accessible name is its name and count (0609)', async () => {
   const p = livePage(board({ word: 'Needs you 3', tone: 'bad' }));
   await p.settle();
   const label = () => (p.byId('tab-build').attrs || {})['aria-label'];
-  assert.equal(p.byId('build-needs').textContent, '3', 'Build open: the number too (0477)');
+  assert.equal(p.byId('build-needs').textContent, '', 'Build open: no number (0609)');
   for (const lane of ['plan', 'shipped']) {
     click(p.byId(TAB[lane]));
-    assert.equal(p.byId('build-needs').textContent, '3', `${lane} open: the number alone`);
-    assert.match(label(), /^Build\b.*\b3 needs you$/, `${lane} open: the accessible name`);
+    assert.match(label(), /^Build, \d+ tickets?$/, `${lane} open: the accessible name`);
   }
   p.set(board({ word: 'Needs you 12', tone: 'bad' }));
   await refresh(p);
-  assert.equal(p.byId('build-needs').textContent, '12');
-  assert.match(label(), /\b12 needs you$/);
+  assert.match(label(), /^Build, \d+ tickets?$/);
   for (const word of ['Building', 'Idle', 'Needs you', 'Blocked 2']) {
     p.set(board({ word, tone: 'idle' }));
     await refresh(p);
-    assert.equal(p.byId('build-needs').textContent, '', `"${word}": no number`);
     assert.match(label(), /^Build, \d+ tickets?$/, `"${word}": its name is Build and its count (0582)`);
   }
 });

@@ -34,8 +34,7 @@ const measure = b => b.js(`(() => {
     const n = t.querySelector('.tab-name'), s = getComputedStyle(n), own = getComputedStyle(t), nb = n.getBoundingClientRect(), tb = t.getBoundingClientRect();
     return { id: t.id, open: t.getAttribute('aria-selected') === 'true', colour: getComputedStyle(t).color, weight: s.fontWeight, size: s.fontSize,
       bar: own.borderBottomStyle === 'none' || own.borderBottomColor === 'rgba(0, 0, 0, 0)' ? 0 : parseFloat(own.borderBottomWidth), barColour: own.borderBottomColor, barStyle: own.borderBottomStyle,
-      nameLeft: nb.left, nameWidth: nb.width, textWidth: n.scrollWidth, left: tb.left, width: tb.width, height: tb.height,
-      needs: t.querySelector('.needs') && { colour: getComputedStyle(t.querySelector('.needs')).color, left: t.querySelector('.needs').getBoundingClientRect().left } };
+      nameLeft: nb.left, nameWidth: nb.width, textWidth: n.scrollWidth, left: tb.left, width: tb.width, height: tb.height };
   }) };
 })()`);
 const rgb = c => c.match(/[\d.]+/g).map(Number);
@@ -52,9 +51,6 @@ test('0481 AC1–AC4: in a real browser at 390 px, in both looks, the bar is und
     await b.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
     await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 700, deviceScaleFactor: 1, mobile: true });
     await b.until(`!!document.querySelector('#queue .id') && !!document.querySelector('#shaping .item')`, 'the board');
-    // Build's needs-you number, kept at 3 whenever the page draws it again, so its place and colour can be checked
-    await b.js(`(() => { const n = document.getElementById('build-needs'), put = () => { if (n.textContent !== '3') n.textContent = '3'; };
-      put(); new MutationObserver(put).observe(n, { childList: true, characterData: true, subtree: true }); return 1; })()`);
     await b.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 690 }); // off the strip
     let first;
     const check = async (lane, at) => {
@@ -76,10 +72,9 @@ test('0481 AC1–AC4: in a real browser at 390 px, in both looks, the bar is und
       }
       const open = s.lanes.find(l => l.open);
       assert.ok(s.lanes.filter(l => !l.open).every(l => l.colour !== open.colour), `${at}: the others stay muted`);
-      const build = s.lanes.find(l => l.id === 'tab-build');
-      const where = s.lanes.map(l => [l.left, l.width, l.nameLeft]).concat([[build.needs.left, build.needs.colour]]);
+      const where = s.lanes.map(l => [l.left, l.width, l.nameLeft]); // 0609: Build has no needs-you number
       if (!first) first = where;
-      else assert.deepEqual(where, first, `${at}: nothing in the strip moved, and Build's number kept its place and colour`);
+      else assert.deepEqual(where, first, `${at}: nothing in the strip moved`);
     };
     const key = async k => { for (const type of ['rawKeyDown', 'keyUp']) await b.send('Input.dispatchKeyEvent', { type, key: k, code: k, windowsVirtualKeyCode: k === 'ArrowLeft' ? 37 : 39 }); };
     const middle = () => b.js(`(() => { const r = document.querySelector('main').getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; })()`);

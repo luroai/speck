@@ -195,36 +195,37 @@ test('0410 AC3: in a real browser, the open lane\'s list keeps its scroll positi
 
 // ---------- AC4 ----------
 
-test('0410 AC4: with Plan or Shipped open and the Foreman reading "Needs you <n>", the Build tab says "<n>" (0425)', async () => {
+// 0609: the bar says how many need you, not Build's tab, so these check the bar
+test('0410 AC4: with Plan or Shipped open and the Foreman reading "Needs you <n>", the bar says "<n> need you" (0609)', async () => {
   const needs = { word: 'Needs you 2', tone: 'bad' };
   const p = livePage(board({ foreman: needs }));
   await p.settle();
-  assert.equal(p.byId('build-needs').textContent, '2', 'Build open'); // 0477: whichever lane is open
+  assert.equal(p.byId('bar-needs').textContent, '2 need you', 'Build open'); // 0477: whichever lane is open
   click(p.byId(TAB.plan));
-  assert.equal(p.byId('build-needs').textContent, '2', 'Plan open'); // 0425: the number alone
+  assert.equal(p.byId('bar-needs').textContent, '2 need you', 'Plan open'); // 0425: the number alone
   click(p.byId(TAB.shipped));
-  assert.equal(p.byId('build-needs').textContent, '2', 'Shipped open');
+  assert.equal(p.byId('bar-needs').textContent, '2 need you', 'Shipped open');
   for (const word of ['Building', 'Idle', 'Off', 'Needs you', 'Needs you soon', 'Blocked 2']) {
     p.set(board({ foreman: { word, tone: 'idle' } }));
     await refresh(p);
-    assert.equal(p.byId('build-needs').textContent, '', `"${word}": nothing extra`);
+    assert.equal(p.byId('bar-needs-part').hidden, true, `"${word}": nothing extra`);
   }
   p.set(board({ foreman: { word: 'Needs you 11', tone: 'bad' } }));
   await refresh(p);
-  assert.equal(p.byId('build-needs').textContent, '11', 'and it follows the count');
+  assert.equal(p.byId('bar-needs').textContent, '11 need you', 'and it follows the count');
   click(p.byId(TAB.build));
-  assert.equal(p.byId('build-needs').textContent, '11', 'still there once Build opens (0477)');
+  assert.equal(p.byId('bar-needs').textContent, '11 need you', 'still there once Build opens (0477)');
 });
 
-test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back there, puts "<n>" on Build straight away', async () => {
+test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back there, leaves "<n> need you" on the bar (0609)', async () => {
   const p = livePage(secondDraft(board({ foreman: { word: 'Needs you 2', tone: 'bad' } })));
   await p.settle();
   p.press(await gotoIn(p, items(p).find(n => idOf(p, n) === '0004'), '0001'));
   openIs(p, 'plan', 'after going to a Plan ticket');
-  assert.equal(p.byId('build-needs').textContent, '2', 'before any refresh');
+  assert.equal(p.byId('bar-needs').textContent, '2 need you', 'before any refresh');
   // Back to Build through a link, then opened from Build and closed once it's back in Plan.
   p.press(await gotoIn(p, items(p).find(n => idOf(p, n) === '0001'), '0002'));
-  assert.equal(p.byId('build-needs').textContent, '2', 'Build open again (0477: whichever lane is open)');
+  assert.equal(p.byId('bar-needs').textContent, '2 need you', 'Build open again (0477: whichever lane is open)');
   const row = queueRows(p).find(n => idOf(p, n) === '0003');
   click(row.children.find(n => n.className === 'top')); // 0585: its row opens its full view
   await p.settle();
@@ -234,7 +235,7 @@ test('0410 AC4 (review F1): going to a ticket in Plan, or the focus going back t
   await p.settle();
   p.key('Escape');
   openIs(p, 'plan', 'after the focus went back to Plan');
-  assert.equal(p.byId('build-needs').textContent, '2');
+  assert.equal(p.byId('bar-needs').textContent, '2 need you');
 });
 
 // ---------- AC5 ----------

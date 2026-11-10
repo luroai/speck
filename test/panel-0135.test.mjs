@@ -12,7 +12,7 @@ const staticHtml = () => page().replace(/<script>[\s\S]*?<\/script>/g, '').repla
 // 0410: the headings are the tabs' names now, Build's and Shipped's counts beside them, and Build's "<n> needs you".
 // 0425: the counts are the first line of their lane, so Build's tab holds its needs-you number alone.
 // 0520: and Capture's, first, holds its name alone.
-const BEFORE = [['Capture', ['H2', 'tab-n']], ['Plan', ['H2', 'tab-n']], ['Build', ['H2', 'tab-n', 'needs']], ['Shipped', ['H2', 'tab-n']]]; // 0582: each with its count
+const BEFORE = [['Capture', ['H2', 'tab-n']], ['Plan', ['H2', 'tab-n']], ['Build', ['H2', 'tab-n']], ['Shipped', ['H2', 'tab-n']]]; // 0582: each with its count. 0609: Build without a needs-you number
 
 test('0135 AC1-AC2: in a real browser, each section header starts with its heading and shows only what it did before 0134', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();

@@ -44,8 +44,8 @@ Every button in the panel has the redesign's size and style.
 - Relies on nothing outside this repo.
 - Failing before this build: none
 - Self-check: the Save in the unsaved-changes question now takes only the accent's border colour, so the half-pixel border rule for screens below a pixel ratio of 2 still makes its border a whole pixel; every new 44 px height is in panel-cards.css with 0603's, as 0417 allows a 44 px size for every pointer only there.
-- Every <button> the panel draws, and text inside one, now has 10 px corners and no 12 px text. The tab's counts are 13 px, not the names' 14 px, because at 14 px the four tabs' names don't fit whole at 320 px (0582's check). A priority tag, which is a tag with a button's role, keeps the tags' 8 px look. The Pipeline log's filters have 12 px sides rather than 16, so the four fit on one line at 390 px.
-- The small lines inside the header bar's status button and the All projects view's cards and rows are 13 px, as the tab counts are, with their line heights unchanged, so the bar and the cards are no taller.
+- Every <button> the panel draws, and text inside one, now has 10 px corners and no 12 px text. The tab's counts are 14 px, as the names are (0612 merge: once main dropped the tab's needs-you count, they fit whole at 320 px). A priority tag, which is a tag with a button's role, keeps the tags' 8 px look. The Pipeline log's filters have 12 px sides rather than 16, so the four fit on one line at 390 px.
+- The small lines inside the header bar's status button and the All projects view's cards and rows are 14 px, with their line heights unchanged, so the bar and the cards are no taller (0612 merge: 0427 keeps 13 px for rows' details only).
 
 ## In plain words
 The panel's last small buttons now match the rest: the Save in Settings' "Unsaved changes" question is a blue button the same size as Discard and Keep editing, and a setting's own Save, the review pack's file and folder buttons and Ask for changes are full-size outlined buttons. Every button now has the same rounded corners, and no button has the old tiny text. To see it, change a setting and close Settings, or open a task's review pack. Keep an eye on the Pipeline log's four filters, which are now taller and only just fit one line on a phone, and on rows in Settings that have their own Save, which are taller than before.
@@ -67,7 +67,6 @@ Round 2 (codex): approve.
 - Tests changed to check the new look (AC4): `test/panel-0428.test.mjs`, whose 0428 AC1 now expects 10 px corners on every button, with selects, text boxes, tags and the priority menu still 8 px; and `test/panel-0453.test.mjs`, whose AC1 AC3 now expects every button's corners to be 10 px in a real browser, and whose AC2 checks the border of Discard in Settings' unsaved-changes question rather than its Save, which is now filled in the accent with no border to show.
 - Follow-ups (Delivery log only, none to the inbox):
   - Known limit: a draft's priority tag acts as a button but is drawn as a tag, so it keeps the tags' 8 px corners.
-  - Known limit: the tab counts, the header bar's third line and the All projects view's small lines are 13 px, not 14, so they still fit at 320 px and the bar and cards are no taller.
   - Skipped, already in the inbox: the 0517 AC3 frame-timing test missing its 50 ms limit under load (`speck/ideas/2026-11-08-steady-the-0517-ac3-frame-time-test-under-load.md`).
 
 ## Review rounds
