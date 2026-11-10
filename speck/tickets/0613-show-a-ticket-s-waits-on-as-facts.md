@@ -41,6 +41,7 @@ A ticket's Waits on is shown as plain facts, as its chain is.
 - Decided: the open Plan card changes too, so there's one look for dependencies.
 - Today: `depsBox`, `withDeps`, `depChip` in `templates/panel.js` and their styles in `templates/panel-cards.css`. Waits for 0612.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
