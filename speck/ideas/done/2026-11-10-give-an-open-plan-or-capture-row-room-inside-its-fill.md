@@ -1,6 +1,6 @@
 # Give an open Plan or Capture row room inside its fill
 
-Captured: 2026-11-10 08:27 · Status: inbox
+Captured: 2026-11-10 08:27 · Status: ticketed (0614)
 From ticket: 0600
 Raised by: agent
 

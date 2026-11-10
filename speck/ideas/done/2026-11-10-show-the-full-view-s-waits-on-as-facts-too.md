@@ -1,6 +1,6 @@
 # Show the full view's Waits on as facts too
 
-Captured: 2026-11-10 09:38 · Status: inbox
+Captured: 2026-11-10 09:38 · Status: ticketed (0613)
 From ticket: 0603
 Raised by: agent
 

@@ -1,6 +1,6 @@
 # List a stopped build under Needs you
 
-Captured: 2026-11-09 21:20 · Status: inbox
+Captured: 2026-11-09 21:20 · Status: ticketed (0616)
 From ticket: 0585
 Raised by: agent
 

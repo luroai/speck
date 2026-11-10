@@ -1,6 +1,6 @@
 # Show speck asleep in an empty Build and Shipped
 
-Captured: 2026-11-09 21:46 · Status: inbox
+Captured: 2026-11-09 21:46 · Status: ticketed (0608)
 From ticket: 0586
 Raised by: agent
 

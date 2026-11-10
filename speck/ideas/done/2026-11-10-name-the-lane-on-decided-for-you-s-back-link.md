@@ -1,6 +1,6 @@
 # Name the lane on Decided for you's back link
 
-Captured: 2026-11-10 08:27 · Status: inbox
+Captured: 2026-11-10 08:27 · Status: ticketed (0611)
 From ticket: 0600
 Raised by: agent
 

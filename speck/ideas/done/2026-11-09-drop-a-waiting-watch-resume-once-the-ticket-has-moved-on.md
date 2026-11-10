@@ -1,6 +1,6 @@
 # Drop a waiting watch resume once the ticket has moved on
 
-Captured: 2026-11-09 00:09 · Status: inbox
+Captured: 2026-11-09 00:09 · Status: ticketed (0618)
 From ticket: 0567
 Raised by: agent
 

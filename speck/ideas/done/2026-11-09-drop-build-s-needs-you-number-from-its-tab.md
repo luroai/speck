@@ -1,6 +1,6 @@
 # Drop Build's needs-you number from its tab
 
-Captured: 2026-11-09 20:23 · Status: inbox
+Captured: 2026-11-09 20:23 · Status: ticketed (0609)
 From ticket: 0582
 Raised by: agent
 

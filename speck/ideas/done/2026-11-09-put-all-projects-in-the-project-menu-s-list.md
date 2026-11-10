@@ -1,6 +1,6 @@
 # Put All projects in the project menu's list
 
-Captured: 2026-11-09 23:47 · Status: inbox
+Captured: 2026-11-09 23:47 · Status: ticketed (0610)
 From ticket: 0596
 Raised by: agent
 
