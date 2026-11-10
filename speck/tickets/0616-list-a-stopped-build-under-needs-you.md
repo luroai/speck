@@ -1,7 +1,7 @@
 ---
 id: "0616"
 title: "List a stopped build under Needs you"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0615"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T11:52:59.104Z"
 waited_seconds: 18338
+approved: "2026-11-10T17:10:42.112Z"
 
 ---
 # 0616 · List a stopped build under Needs you
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket whose build stopped before finishing sits under Building with a grey dot, among the tickets being worked on, even when nothing is going to carry it on. It needs someone, so it's easy to miss there.
@@ -57,9 +58,15 @@ To see it, look at the Build lane while a build has stopped, with watch on off o
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A historical resume/decide action is treated as proof that speck is still about to resume the build.; F2 AC4 explicitly requires the Delivery log to list tests changed from the old behaviour, but that section is empty.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 450,093
+- Elapsed since build started: 318 min
+- Changed lines: 45 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed from the old behaviour (a stopped build's grey dot, now orange as it needs you):
   - `test/panel-0155.test.mjs`: "0155 AC2: at … px in the … look, each row's dot is coloured by its state" (0305 now `needs`)
