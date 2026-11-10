@@ -1,7 +1,7 @@
 ---
 id: "0610"
 title: "Put All projects in the project menu's list"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-10
 ---
 # 0610 · Put All projects in the project menu's list
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 With two or more projects running, All projects is a button beside the project menu's caret in the black bar, taking room from the status on a phone, where the menu's own list is where it belongs.
