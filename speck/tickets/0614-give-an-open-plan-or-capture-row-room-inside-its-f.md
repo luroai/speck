@@ -17,7 +17,7 @@ created: 2026-11-10
 started: "2026-11-10T11:07:06.723Z"
 blocked_at: ""
 waited_seconds: 11
-approved: "2026-11-10T11:20:57.336Z"
+approved: "2026-11-10T11:29:46.576Z"
 
 ---
 # 0614 · Give an open Plan or Capture row room inside its fill
@@ -62,12 +62,13 @@ Clear winner: no
 Round 1 (codex): changes requested: F1 AC2 is not met for Plan tickets with a chain or waiting icon: titleLine adds that icon only while open, moving the title sideways.
 Round 2 (codex): changes requested: F2 AC4 explicitly requires the Delivery log to list tests changed from the old behaviour.
 Round 3 (codex): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 4, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 435,761
-- Elapsed since build started: 14 min
+- Reviewer tokens: 571,629
+- Elapsed since build started: 23 min
 - Changed lines: 18 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new behaviour (AC4): test/panel-0041.test.mjs (`iconOf` finds an open ticket's chain or padlock mark after its title, not right after its id) and test/panel-0483.test.mjs (AC2: an open card's line is id, title, then its mark), and, after ship found it, test/panel-0416.test.mjs (AC3: the flash ring on an open row's fill is the one other animation it allows, and `animation: none` isn't one). No other test changed, and none failed.
@@ -320,6 +321,93 @@ Round 3 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Open Plan and Capture rows now give their text room in both looks, keep titles steady and retain full list width. The required test record is complete. All criteria pass, with no outstanding findings."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fc844e99ae73f5aab86186a9271747b20209db4e",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c52a-4bb6-7853-90b0-c0be0cecfa9f",
+    "builder_response": "- Merge round after ship's tests failed on the ticket merged with main. Merged main (no conflicts).\n- Failing test: test/panel-0416.test.mjs \"0416 AC3\", which lists every CSS rule with an animation. It failed because of this ticket's own change, not main's: the open row's flash rules add `.item.row.open.flash { animation: none }` (turning the row's own ring off) and `.item.row.open.flash::after { animation: flash 1.5s ease-out }` (the same 1.5 s ring after \"Go to ticket\", drawn round the open row's whole fill). I didn't run 0416 in the build.\n- Fix: changed 0416 AC3's check to ignore `animation: none` (as its transition check already ignores `none`) and to allow `.item.row.open.flash::after` beside `.item.flash, .q.flash`. Still the same single @keyframes flash. No code changed. Listed in the Delivery log as a test changed to check the new behaviour (AC4).\n- Tests run: test/panel-0416.test.mjs, test/panel-0614.test.mjs, test/panel-0041.test.mjs, test/panel-0483.test.mjs\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 568848,
+      "cached_input_tokens": 499712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2781,
+      "reasoning_output_tokens": 193
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 10251,
+      "cached": 125056,
+      "write": 0,
+      "output": 561
+    },
+    "cost_usd": 0.0386176,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T11:29:43.807Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Merged templates/panel-cards.css retains the 12 px fill extensions. Both passing browser tests in test/panel-0614.test.mjs measure text clearance in light and dark looks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.js titleLine still places open-ticket marks after the title. Passing browser tests verify stable title positions for Capture notes and linked and unlinked Plan tickets."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The merged CSS preserves row dimensions. Passing test/panel-0614.test.mjs assertions verify that each tested row spans its list; the earlier 0418 checks also passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log lists all three updated existing test files. The 0416 adjustment excludes disabled animations and permits only the additional flash pseudo-element, retaining the single-keyframes check. The current run reports 135 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "The linked-ticket title shift remains fixed after merging main, with browser coverage for chain starters and waiting tickets.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0614-give-an-open-plan-or-capture-row-room-inside-its-f.md",
+        "issue": "The Delivery log records the changed tests, including the animation check updated after shipping checks found it.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change preserves the spacing, steady titles and full-width rows. The animation test update correctly recognises the relocated flash ring without allowing unrelated animations. All criteria pass; no findings remain open."
   }
 }
 ```
