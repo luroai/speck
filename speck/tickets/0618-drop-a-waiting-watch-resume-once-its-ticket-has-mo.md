@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-11-09-drop-a-waiting-watch-resume-once-the-ticket
 after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T09:57:13.396Z"
-approved: "2026-11-10T10:01:23.999Z"
+approved: "2026-11-10T10:12:13.897Z"
 
 ---
 # 0618 · Drop a waiting watch resume once its ticket has moved on
@@ -52,12 +52,13 @@ When the watch agent asks for a stopped build to be resumed but every build slot
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 183,774
-- Elapsed since build started: 4 min
+- Reviewer tokens: 289,108
+- Elapsed since build started: 15 min
 - Changed lines: 14 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -127,6 +128,76 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Waiting watch resumes now remember the ticket’s state and are discarded with one log message if it moves on. Unchanged requests still resume normally, including blocked tickets and older queued requests. The tests exercise the required behaviour, and I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6af775bb7eefd2f4e524100f27a5cb43d35dbd04",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c4e6-ec7d-7621-8a4e-92a54b75d4c6",
+    "builder_response": "- Tests run: test/panel-0517.test.mjs, test/watch-resume-0618.test.mjs (plus the commands.checks files): 133 tests, 0 failing.\n- Tests fail together: speck ship reported \"0517 AC3: in a real browser with 500 shipped tickets, a slide's first frame comes within 50 ms of the lane change, with no redraw in it\" failing on the branch merged with main.\n- Merged main into the branch (`git merge main`, clean, no conflicts). No code changed beyond the merge.\n- Why: that test times the panel's lane slide in a real Chromium against a 50 ms budget. This ticket changes only scripts/foreman-agent.mjs (speck run's watch resume queue) and its own test file; nothing the panel page loads. After the merge the test passes in the round's run and in three further runs on its own, so the failure at ship was a timing miss under the full suite's load, not this change. Nothing to fix in this ticket's code, and the test is left as it is.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 287694,
+      "cached_input_tokens": 234112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1414,
+      "reasoning_output_tokens": 57
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7546,
+      "cached": 97280,
+      "write": 0,
+      "output": 508
+    },
+    "cost_usd": 0.0299,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:12:11.071Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "foremanAction captures status, branch head and session; foremanAgentQueue.finish preserves them. The AC1 test passes. Implementation and tests are unchanged from round 1."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanAgentQueue.check applies movedOn to watch resumes, removes stale requests and logs once. All six AC2 tests pass, covering status, commit, session and session-use changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "All four AC3 tests pass: unchanged waiting requests resume once with their instruction and session, immediate requests run, legacy requests run and blocked tickets remain resumable."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0618-tests.txt: 130 passed, three skipped, zero failed. The previously failing 0517 browser timing test passes and was not modified. The merge preserved the reviewed implementation and tests."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves the fix: outdated waiting resumes are dropped with one log message, while unchanged requests still run normally. All required behaviour tests pass. The unrelated browser timing test also passes unchanged; I found no blocking issues."
   }
 }
 ```
