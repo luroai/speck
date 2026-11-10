@@ -43,6 +43,7 @@ speck refuses any commit that adds a private word or the home folder's path, in 
 - Today: `scripts/commit-check.mjs` lists staged files with `git diff --cached … -- speck/` (about line 40), its hook is installed by `installCommitHook`, and `speck doctor`'s line for it is 0570's.
 - Waits for 0626, so the test's names are gone before every file is checked.
 - Relies on git's pre-commit and commit-msg hooks.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
