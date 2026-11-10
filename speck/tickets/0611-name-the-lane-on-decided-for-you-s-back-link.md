@@ -41,6 +41,7 @@ Decided for you's back link names the lane it goes back to.
 - From 0600's build: the button kept "Close" because 0568's tests press a button named Close, which this ticket may change. Today: `renderDecided` in `templates/panel-popups.js`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: the list is drawn again when the open lane changes, so its back link can't keep a stale lane's name.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
