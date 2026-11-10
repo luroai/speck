@@ -19,7 +19,7 @@
   .foreman .run-log .ln.gap { min-height: 1.5em; } /* 0548: a build log's blank line, a line high */
   .foreman p { margin: 2px 0; }
   .foreman .stale { color: var(--warn); }
-  .foreman .reload { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
+  .foreman .reload { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--panel); border: 1px solid var(--line); padding: 2px 10px; cursor: pointer; }
   /* 0583: the step track: four bars with their names under them, filled in the accent up to where it is, and orange at a
      step that waits for you */
   #full-ticket .track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 4px 0 18px; }
@@ -56,11 +56,11 @@
   #full-ticket { position: fixed; inset: 0; overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); padding-left: max(16px, env(safe-area-inset-left), round(down, calc((100% - 720px) / 2), 1px)); padding-right: max(16px, env(safe-area-inset-right), round(up, calc((100% - 720px) / 2), 1px)); }
   #full-ticket[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
-  #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
-  #doc-view .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
-  #full-ticket .close, #doc-view .close, #foreman .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
+  #doc-view .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
+  #full-ticket .close, #doc-view .close, #foreman .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover { color: var(--text); }
-  #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
+  #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
   /* 0424: the full ticket and a review pack set out as a document: the id and status in small type, the title the
      largest text with its tags under it, then each section's heading, smaller than the title and larger than the text,
      with more room above it than between the section's paragraphs. A review pack's text (the pane's own .md, where a
@@ -96,17 +96,17 @@
      panel in a column at most 720 px wide. Long titles and options wrap, so it fits a phone's width. */
   #decided { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #decided[hidden] { display: none; }
-  #decided .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #decided .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #decided .close:hover { color: var(--text); }
   #decided .top, #decided .decided-intro, #decided .decided-list, #decided .decided-none { max-width: 720px; margin-left: auto; margin-right: auto; }
-  #decided .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: .5px solid var(--line-soft); background: var(--panel); }
+  #decided .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: 1px solid var(--line-soft); background: var(--panel); }
   /* 0600: its back link above its heading, as the Pipeline log's and a ticket's full view's are, in the same type */
   #decided .top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
   #decided .top .close { grid-row: 1; justify-self: start; margin: 0; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); border: 0; }
   #decided .top .close::before { content: '‹'; margin-right: 4px; }
   #decided .top .close:hover { color: var(--run); text-decoration: underline; }
   #decided .top .title { grid-row: 2; margin-top: 4px; font-size: 20px; line-height: 24px; font-weight: 600; }
-  #decided .decided-row { padding: 10px 0; border-bottom: .5px solid var(--line-soft); overflow-wrap: anywhere; }
+  #decided .decided-row { padding: 10px 0; border-bottom: 1px solid var(--line-soft); overflow-wrap: anywhere; }
   #decided .decided-head { display: flex; gap: 8px; align-items: baseline; }
   #decided .decided-head .id { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
   #decided .decided-title { min-width: 0; font-size: 15px; line-height: 20px; font-weight: 500; }
@@ -179,7 +179,7 @@
   #foreman :focus-visible { outline-color: var(--bezel-ink); }
   /* 0592: the Pipeline log is a full view on the panel's own colours, in light and dark, and only a ticket's build log keeps the dark frame.
      Each line is a row: its time, a column for speck's face on the manager's own lines, then its text with its details under it. */
-  #foreman.log-view .top { position: static; display: block; padding: 4px 0 10px; color: var(--text); background: var(--panel); border-radius: 0; border-bottom: .5px solid var(--line-soft); }
+  #foreman.log-view .top { position: static; display: block; padding: 4px 0 10px; color: var(--text); background: var(--panel); border-radius: 0; border-bottom: 1px solid var(--line-soft); }
   #foreman.log-view .back { display: inline-block; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); cursor: pointer; }
   #foreman.log-view .back::before { content: '‹'; margin-right: 4px; }
   #foreman.log-view .top .title { display: block; margin-top: 4px; font-size: 20px; line-height: 24px; font-weight: 600; white-space: normal; }
@@ -187,7 +187,7 @@
   #foreman.log-view .log-status { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--muted); }
   #foreman.log-view .log-said { min-width: 0; }
   #foreman.log-view .log-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  #foreman.log-view .log-filter { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
+  #foreman.log-view .log-filter { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 2px 10px; cursor: pointer; }
   #foreman.log-view .log-filter:hover { color: var(--text); }
   #foreman.log-view .log-filter[aria-pressed="true"] { color: var(--text); background: var(--raise); border-color: var(--text); }
   #foreman.log-view .fm-body { padding: 0; color: var(--text); background: none; border-radius: 0; }
@@ -195,7 +195,7 @@
   #foreman.log-view .reload { color: var(--muted); border-color: var(--line); }
   #foreman.log-view .run-log { padding: 0; border: 0; border-radius: 0; color: var(--muted); background: none; color-scheme: inherit; white-space: normal; }
   #foreman.log-view .run-log .none { padding: 12px 0; font-family: var(--font-ui); font-size: 14px; }
-  #foreman.log-view .run-log .log-row { display: grid; grid-template-columns: 9ch 20px minmax(0, 1fr); column-gap: 8px; align-items: start; padding: 8px 0; border-bottom: .5px solid var(--line-soft); }
+  #foreman.log-view .run-log .log-row { display: grid; grid-template-columns: 9ch 20px minmax(0, 1fr); column-gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
   #foreman.log-view .run-log .at { grid-column: 1; font-family: var(--font-mono); font-size: 13px; line-height: 20px; color: var(--muted); }
   #foreman.log-view .run-log .speck-face { grid-column: 2; }
   #foreman.log-view .run-log .log-main { grid-column: 3; min-width: 0; }
@@ -212,14 +212,14 @@
   #full-ticket .live-now .sub { font-family: var(--font-mono); font-size: 12px; }
   #full-ticket .live-now .say.bad { color: var(--bad); }
   #full-ticket .live-now .say.to-ship { color: var(--ok); }
-  #full-ticket .pane-rows { margin: 14px 0 0; border-top: .5px solid var(--line-soft); }
-  #full-ticket .pane-row { display: flex; justify-content: space-between; width: 100%; padding: 12px 2px; font: inherit; font-family: var(--font-ui); font-size: 15px; font-weight: 500; line-height: 20px; color: var(--text); text-align: left; background: none; border: 0; border-bottom: .5px solid var(--line-soft); border-radius: 0; cursor: pointer; }
+  #full-ticket .pane-rows { margin: 14px 0 0; border-top: 1px solid var(--line-soft); }
+  #full-ticket .pane-row { display: flex; justify-content: space-between; width: 100%; padding: 12px 2px; font: inherit; font-family: var(--font-ui); font-size: 15px; font-weight: 500; line-height: 20px; color: var(--text); text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; cursor: pointer; }
   #full-ticket .pane-row:hover { background: var(--surface); color: var(--text); }
   #full-ticket .pane-row::after { content: '›'; color: var(--muted); }
   /* 0583: the bar an approved ticket ends in: at the bottom of the window however little there is above it, with what's above scrolling under it */
   #full-ticket:has(> .ship-bar) { display: flex; flex-direction: column; padding-bottom: 0; }
   #full-ticket:has(> .ship-bar) > * { flex: none; }
-  #full-ticket .ship-bar { position: sticky; bottom: 0; z-index: 3; margin-top: auto; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); background: var(--panel); border-top: .5px solid var(--line-soft); }
+  #full-ticket .ship-bar { position: sticky; bottom: 0; z-index: 3; margin-top: auto; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); background: var(--panel); border-top: 1px solid var(--line-soft); }
   #full-ticket .ship-bar .changes-note { margin-bottom: 8px; }
   #full-ticket .ship-bar .changes-note[hidden] { display: none; } /* folded until Ask for changes is pressed */
   #full-ticket .ship-bar .pack-buttons { justify-content: flex-end; }
@@ -246,12 +246,12 @@
      size, its other headings as a review pack's are, and its text, tables, code and lists in the ticket's sizes. */
   #doc-view .md .md-h1, #doc-view .md .md-h2, #doc-view .md .md-h3 { margin: 28px 0 8px; font-family: var(--font-ui); font-size: 19px; line-height: 1.3; color: var(--text); font-weight: 600; }
   #doc-view .md .doc-title { margin: 0 0 14px; font-size: 20px; line-height: 24px; font-weight: 600; } /* 0600: the full view's title, as before */
-  #full-ticket code.md-code, #doc-view code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
-  #full-ticket pre, #doc-view pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
+  #full-ticket code.md-code, #doc-view code.md-code { background: var(--raise); border: 1px solid var(--line-soft); padding: 0 4px; }
+  #full-ticket pre, #doc-view pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: 1px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   #full-ticket pre code, #doc-view pre code { font-size: 12px; }
   /* 0132: a review pack's table, and its findings, which fold away */
   #full-ticket .md table, #doc-view .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 14px; }
-  #full-ticket .md th, #full-ticket .md td, #doc-view .md th, #doc-view .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
+  #full-ticket .md th, #full-ticket .md td, #doc-view .md th, #doc-view .md td { border: 1px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
   #full-ticket .md table, #full-ticket pre code, #doc-view .md table, #doc-view pre code { font-size: 15px; } /* 0424: a table's and a code block's text is the ticket's text size too */
   #full-ticket .md th, #doc-view .md th { font-weight: 600; background: var(--raise); }
   /* 0444: the criteria table's Result column is as wide as its heading and its mark. The pack lets a word break
@@ -265,7 +265,7 @@
   #full-ticket .ship-said, #doc-view .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad, #doc-view .ship-said.bad { color: var(--bad); }
   /* 0357: beside it, a box for a note and an Ask for changes button, which sends the note back to the build */
-  #full-ticket .changes-note, #doc-view .changes-note { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 0 0 6px; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: .5px solid var(--line); resize: vertical; }
+  #full-ticket .changes-note, #doc-view .changes-note { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 0 0 6px; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: 1px solid var(--line); resize: vertical; }
   #full-ticket .pack-buttons, #doc-view .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
   #full-ticket .ask-changes, #doc-view .ask-changes { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
   #full-ticket .ask-changes:disabled, #doc-view .ask-changes:disabled { cursor: default; opacity: .6; }
@@ -283,7 +283,7 @@
   /* 0294: the pictures of a visual change in its review pack, each opening full size when pressed */
   #full-ticket .pack-pictures { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 0 0 8px; }
   #full-ticket .pack-pictures figure { margin: 0; }
-  #full-ticket .pack-pictures a { display: block; border: .5px solid var(--line-soft); background: var(--raise); }
+  #full-ticket .pack-pictures a { display: block; border: 1px solid var(--line-soft); background: var(--raise); }
   #full-ticket .pack-pictures img { display: block; width: 100%; height: auto; }
   #full-ticket .pack-pictures figcaption { margin-top: 4px; font-size: 12px; color: var(--muted); }
 
@@ -299,7 +299,7 @@
     /* 0158: each table row is a block, its heading row hidden (but still copied) and each cell labelled with its heading */
     #full-ticket .md table, #full-ticket .md tbody, #doc-view .md table, #doc-view .md tbody, #full-ticket .md tr, #full-ticket .md td, #doc-view .md tr, #doc-view .md td { display: block; }
     #full-ticket .md thead, #doc-view .md thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    #full-ticket .md tr, #doc-view .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
+    #full-ticket .md tr, #doc-view .md tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
     #full-ticket .md tr:last-child, #doc-view .md tr:last-child { border-bottom: 0; }
     #full-ticket .md td, #doc-view .md td { border: 0; padding: 2px 0; overflow-wrap: normal; overflow-x: auto; } /* a word too long for the line scrolls in its cell, unbroken */
     #full-ticket .md td::before, #doc-view .md td::before { content: attr(data-label); display: block; font-family: var(--font-ui); font-size: 12px; color: var(--muted); white-space: nowrap; }

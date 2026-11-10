@@ -9,15 +9,15 @@
   .lane-n { grid-row: 1; grid-column: 1; min-width: 0; padding: 8px 16px 0; font-family: var(--font-ui); font-size: 13px; line-height: 18px; text-align: right; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .lane-n[hidden] { display: none; }
   .lane-list { grid-row: 2; grid-column: 1; min-height: 0; margin: 0; padding: 0 16px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); }
-  .group { padding: 7px 14px; font-family: var(--font-ui); font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
+  .group { padding: 7px 14px; font-family: var(--font-ui); font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line-soft); background: var(--raise); }
   .group.attn { color: var(--warn); }
   .group.run { color: var(--run); }
   .prio { position: relative; display: inline-block; }
   .tag.pick { cursor: pointer; }
   .tag.pick:hover { color: var(--text); border-color: var(--muted); }
   .tag.p0.pick:hover { color: var(--bad); border-color: var(--bad); } /* 0213: P0 stays red on hover */
-  .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; gap: 2px; padding: 2px; background: var(--panel); border: .5px solid var(--line); }
-  .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted-large); border: .5px solid var(--line); cursor: pointer; } /* 0428: boxed, as every button is */
+  .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; gap: 2px; padding: 2px; background: var(--panel); border: 1px solid var(--line); }
+  .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted-large); border: 1px solid var(--line); cursor: pointer; } /* 0428: boxed, as every button is */
   .prio-menu button:hover { color: var(--text); border-color: var(--text); }
   .prio-menu button.on { color: var(--text); border-color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
   .item .prio-refused { margin-top: 6px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -30,12 +30,12 @@
   .item .head { margin: -10px -14px; padding: 10px 14px; } /* the item's padding opens and closes it too */
   .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; }
   .item.open { background: var(--raise); border-color: var(--text); }
-  .detail { margin-top: 10px; border-top: .5px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
+  .detail { margin-top: 10px; border-top: 1px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
   .detail h4 { margin: 0 0 4px; font-family: var(--font-ui); font-size: 12px; color: var(--muted); font-weight: 400; }
   .detail p { margin: 0 0 8px; color: var(--text); }
   .detail ol { margin: 0; padding-left: 18px; color: var(--text); }
   .detail ol li { margin-bottom: 4px; }
-  .ready { border-left: .5px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
+  .ready { border-left: 1px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
   .ready div { padding: 3px 0; }
   .set-ready { font: inherit; font-family: var(--font-ui); font-size: 12px; margin-top: 10px; padding: 4px 12px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
   .set-ready:disabled { background: transparent; color: var(--faint); border-color: var(--line); cursor: not-allowed; }
@@ -75,7 +75,7 @@
   #queue:has(.q.row) { gap: 0; padding: 0 16px; } /* 0600: inside the lane's side margins */
   #queue .group-head { margin: 0; padding: 14px 0 6px; font-family: var(--font-ui); font-weight: 600; font-size: 14px; line-height: 16px; color: var(--muted); }
   #queue .group-head .group-n { font-family: var(--font-mono); font-weight: 400; font-size: 12px; }
-  .q.row { padding: 0; border: 0; border-bottom: .5px solid var(--line-soft); border-radius: 0; }
+  .q.row { padding: 0; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; }
   .q.row .top { box-sizing: border-box; min-width: 0; min-height: 44px; padding: 7px 0 8px; } /* 0599: no wider than the row, so its one-line title and details cut off */
   .q.row .where { font-size: 13px; line-height: 16px; color: var(--muted); }
   .q.row .where .sub { font-family: var(--font-mono); line-height: 14px; } /* 0600: at 13 px its own line is shorter, so it leaves the line 16 px high */
@@ -98,20 +98,20 @@
   .q .log .note { color: var(--log-warn); }
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
   /* 0421: an open card's Full ticket, Review pack and Stop build are small buttons on one line. 0428: each boxed, as every button is */
-  .q .stop-build { font: inherit; font-family: var(--font-ui); font-size: 12px; line-height: 16px; margin: 6px 0 2px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .q .stop-build { font: inherit; font-family: var(--font-ui); font-size: 12px; line-height: 16px; margin: 6px 0 2px; padding: 1px 10px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
   /* An open ready ticket's Back to Plan button, beside Full ticket, and why the server refused it */
-  .q .back-to-plan { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .q .back-to-plan { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
   .q .back-to-plan:hover { color: var(--text); border-color: var(--text); }
   .q .back-to-plan:disabled { cursor: default; opacity: .6; }
   .q .stop-refused, .q .plan-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .question { margin: 6px 0 4px; padding: 6px 10px; border-left: 2px solid var(--bad); background: var(--bad-bg); color: var(--text); }
   /* 0283: under a blocked question, whether it changes what you'd notice and whether the recommendation is a clear one */
   .question-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; white-space: normal; }
-  .question-fact { font-family: var(--font-ui); font-size: 12px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); }
+  .question-fact { font-family: var(--font-ui); font-size: 12px; padding: 0 8px; border: 1px solid var(--line); color: var(--muted); }
   /* 0284: on a blocked question with a recommendation, the button that takes it and has speck run carry the build on */
-  .q .go-with { display: block; font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 6px 0 0; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; white-space: normal; }
+  .q .go-with { display: block; font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 6px 0 0; padding: 1px 10px; background: transparent; color: var(--text); border: 1px solid var(--line); cursor: pointer; white-space: normal; }
   .q .go-with:hover { border-color: var(--text); }
   .q .go-with:disabled { cursor: default; opacity: .6; }
   .q .go-with-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
@@ -132,7 +132,7 @@
   /* 0586: Capture's and Plan's rows, as Build's: a hairline under each, its title (one line closed, since 0599), then one line of smaller
      type, with its star or Set ready at its right */
   #shaping:has(.item.row), #capture:has(.item.row) { gap: 0; padding: 0 16px; } /* 0600: inside the lane's side margins */
-  .item.row { display: block; padding: 0; border: 0; border-bottom: .5px solid var(--line-soft); border-radius: 0; }
+  .item.row { display: block; padding: 0; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; }
   .item.row .head { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; align-items: center; min-height: 44px; margin: 0; padding: 7px 0 8px; }
   .item.row .head > * { grid-column: 1; }
   .item.row .head > .track, .item.row .head > .facts { grid-column: 1 / -1; }
@@ -166,20 +166,20 @@
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: var(--font-mono); font-size: 12px; }
   .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px; }
   .resume .cmd { font-family: var(--font-mono); font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
-  .resume .copy { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
+  .resume .copy { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
   .resume .copy:hover { color: var(--text); }
   /* 0418: in the lanes, the narrow layout at every width: a Plan item's readiness under its details, and a resume command
      that wraps. Elsewhere these keep their own layout. */
   main .sh { flex-wrap: wrap; align-items: center; }
   main .detail { grid-template-columns: minmax(0, 1fr); }
-  main .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
+  main .ready { border-left: 0; padding-left: 0; border-top: 1px solid var(--line-soft); padding-top: 8px; }
   main .resume { flex-wrap: wrap; }
   main .resume .cmd { min-width: 0; }
   .next { color: var(--ok); font-family: var(--font-ui); font-size: 12px; border: .5px solid var(--ok); padding: 0 5px; }
 
   /* Shipped */
   /* 0157: the stats a grid of tiles of equal size, each number over its label and the tickets its median covers */
-  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line); border-bottom: .5px solid var(--line-soft); }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 1px; background: var(--line); border-bottom: 1px solid var(--line-soft); }
   .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 6px; background: var(--panel); }
   .stat .num { font-family: var(--font-mono); font-size: 18px; font-weight: 500; line-height: 1.3; }
   .stat .label { font-size: 14px; line-height: 1.4; color: var(--muted); }
@@ -188,7 +188,7 @@
   .stat:last-child:nth-child(3n + 2) { grid-column: span 2; } /* 0587: the last tile fills its row, so no gap shows the grid's line colour */
   .stat:last-child:nth-child(3n + 1) { grid-column: span 3; }
   /* 0587: under the three tiles, the toggle for the other figures, at the right */
-  .stats-line { display: flex; justify-content: flex-end; padding: 6px 0; border-bottom: .5px solid var(--line-soft); }
+  .stats-line { display: flex; justify-content: flex-end; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
   .stats-line[hidden] { display: none; }
   .full-open.more-stats { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
   .more-stats[hidden] { display: none; }
@@ -200,7 +200,7 @@
   section.shipped table { display: block; }
   #shipped { display: flex; flex-direction: column; }
   #shipped .empty { padding: 10px 0; }
-  #shipped tr { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 7px 0 8px; border-bottom: .5px solid var(--line-soft); cursor: pointer; }
+  #shipped tr { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 7px 0 8px; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
   #shipped td { display: block; padding: 0; border: 0; }
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
   #shipped .line .id { flex: none; font-size: 14px; line-height: 14px; }
@@ -216,9 +216,9 @@
   #shipped .unpushed-said { margin-top: 2px; font-size: 12px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
   /* 0318: the Foreman's question, with an Answer box and Answer and Dismiss buttons, on its ticket's card and in its detail */
   .foreman-ask { margin: 6px 0 6px; white-space: normal; }
-  .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: .5px solid var(--line); resize: vertical; }
+  .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 14px; color: var(--text); background: var(--input); border: 1px solid var(--line); resize: vertical; }
   .foreman-ask .ask-buttons { display: flex; gap: 8px; margin: 6px 0 0; }
-  .foreman-ask .ask-reply { font: inherit; font-family: var(--font-ui); font-size: 12px; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; }
+  .foreman-ask .ask-reply { font: inherit; font-family: var(--font-ui); font-size: 12px; padding: 1px 10px; background: transparent; color: var(--text); border: 1px solid var(--line); cursor: pointer; }
   .foreman-ask .ask-reply:hover { border-color: var(--text); }
   .foreman-ask .ask-reply:disabled { cursor: default; opacity: .6; }
   .foreman-ask .ask-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
@@ -242,7 +242,7 @@
      arrow and how many wait on it. It never shrinks or wraps, so the title gives way and ends in its ellipsis */
   .dep-chip { flex: none; align-self: center; display: inline-flex; align-items: center; justify-content: center; padding: 0; font: inherit; font-size: 12px; line-height: 14px;
     font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); background: none; border: 0; cursor: pointer; }
-  .dep-pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border: .5px solid var(--line); border-radius: 8px; }
+  .dep-pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 8px; }
   .dep-chip:hover { color: var(--text); } .dep-chip:hover .dep-pill { border-color: var(--text); }
   .dep-icon { display: inline-block; position: relative; width: 11px; height: 10px; }
   .dep-icon.link { transform: rotate(-35deg); }
@@ -280,8 +280,8 @@
   .item.ticket .track.stopped .step.now{ border-top-color: var(--bad); color: var(--bad); } /* blocked, or its build stopped */
   /* 0462: an open in-flight ticket's facts, under its track: six even cells in three columns and two rows, with lines
      between them and round them. Each is its label above its value, each on one line, cut short with … */
-  .item.ticket .facts{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 4px; border-top: .5px solid var(--line); border-left: .5px solid var(--line); }
-  .item.ticket .facts .fact{ min-width: 0; padding: 4px 6px; border-right: .5px solid var(--line); border-bottom: .5px solid var(--line); }
+  .item.ticket .facts{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 4px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .item.ticket .facts .fact{ min-width: 0; padding: 4px 6px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   .item.ticket .facts .label, .item.ticket .facts .value{ display: block; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item.ticket .facts .label{ font-size: 12px; line-height: 14px; color: var(--muted); }
   .item.ticket .facts .value{ font-size: 12px; line-height: 16px; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -299,7 +299,7 @@
   /* 0467: an open ticket's dependency box, under its table. Waits on: a header with its counts, a bar of even
      segments, then a grid of id chips six to a row, the one that shows the shipped ones two columns wide. Chain: five
      even slots on a line, each a circle over its id. Every chip and slot keeps to its column, its id on one line. */
-  .deps { margin: 6px 0 4px; padding: 6px; border: .5px solid var(--line); }
+  .deps { margin: 6px 0 4px; padding: 6px; border: 1px solid var(--line); }
   .deps-head { display: flex; gap: 8px; justify-content: space-between; font-size: 12px; line-height: 16px; color: var(--muted); white-space: nowrap; }
   .deps-head b { font-weight: 600; color: var(--text); }
   .deps-head span { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
@@ -309,7 +309,7 @@
   .deps-bar i.building { border-top-color: var(--blue); }
   .deps-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
   .deps .chip { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 4px 0; font: inherit; font-size: 12px; line-height: 16px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip;
-    color: var(--text); background: var(--raise); border: .5px solid var(--line); border-radius: 3px; font-variant-numeric: tabular-nums; }
+    color: var(--text); background: var(--raise); border: 1px solid var(--line); border-radius: 3px; font-variant-numeric: tabular-nums; }
   .deps .chip.building { color: var(--run); border-color: var(--blue); }
   .deps .chip.shipped { color: var(--ok); border-color: var(--green); }
   .deps .chip.more { grid-column: span 2; color: var(--muted); }
@@ -331,7 +331,7 @@
   /* 0154: a ticket gone to from a dependency box (0467) lights briefly. It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
   @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
 
-  .full-open { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .full-open { font: inherit; font-family: var(--font-ui); font-size: 12px; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
   #shipped td.unpushed { cursor: auto; } /* 0587: what's under a row doesn't open it */
   /* 0142: an opened draft's, idea's or inbox note's Markdown in Plan, formatted as in the full ticket pane */
@@ -345,11 +345,11 @@
   .shaping .md-h1 { font-size: 14px; }
   .shaping .md-h2 { font-size: 12px; }
   .shaping .md-h3 { font-size: 12px; color: var(--muted); }
-  .shaping code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
-  .shaping .md pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
+  .shaping code.md-code { background: var(--raise); border: 1px solid var(--line-soft); padding: 0 4px; }
+  .shaping .md pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: 1px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   .shaping .md pre code { font-size: 12px; }
   .shaping .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 14px; }
-  .shaping .md th, .shaping .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
+  .shaping .md th, .shaping .md td { border: 1px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
   .shaping .md th { font-weight: 600; background: var(--raise); }
   .shaping .md a { color: var(--run); }
 
@@ -361,14 +361,14 @@
   /* 0140: a phone screen */
   @media (max-width: 699.98px) {
     .detail { grid-template-columns: minmax(0, 1fr); }
-    .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
+    .ready { border-left: 0; padding-left: 0; border-top: 1px solid var(--line-soft); padding-top: 8px; }
     .resume { flex-wrap: wrap; }
     .resume .cmd { min-width: 0; }
     /* 0142: an opened note's Markdown in Plan, as in the full ticket. 0158: each table row is a block, its heading row
        hidden (but still copied) and each cell labelled with its heading */
     .shaping .md table, .shaping .md tbody, .shaping .md tr, .shaping .md td { display: block; }
     .shaping .md thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    .shaping .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
+    .shaping .md tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
     .shaping .md tr:last-child { border-bottom: 0; }
     .shaping .md td { border: 0; padding: 2px 0; overflow-wrap: normal; overflow-x: auto; } /* a word too long for the line scrolls in its cell, unbroken */
     .shaping .md td::before { content: attr(data-label); display: block; font-family: var(--font-ui); font-size: 12px; color: var(--muted); white-space: nowrap; }

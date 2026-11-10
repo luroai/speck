@@ -29,8 +29,10 @@ test('0577 AC1: panel-base.css has the redesign\'s colours in each look, and the
 test('0577 AC1: the views\' own names for the page, its surfaces, its lines and its text take the same colours, so every view picks them up', () => {
   const { light, dark } = looks();
   for (const [look, t, want] of [['light', light, LIGHT], ['dark', dark, DARK]]) {
-    for (const [name, from] of [['--panel', '--bg'], ['--raise', '--surface'], ['--line', '--border'], ['--line-soft', '--border'], ['--muted-large', '--muted'], ['--faint', '--muted'], ['--run', '--accent'], ['--blue', '--accent'], ['--bad', '--needs-you-text'], ['--warn', '--needs-you-text']])
+    for (const [name, from] of [['--panel', '--bg'], ['--raise', '--surface'], ['--muted-large', '--muted'], ['--faint', '--muted'], ['--run', '--accent'], ['--blue', '--accent'], ['--bad', '--needs-you-text'], ['--warn', '--needs-you-text']])
       assert.equal(t[name]?.toUpperCase(), want[from], `${look} ${name}`);
+    // 0601: the lines are a step darker than the design's border, so they show
+    for (const name of ['--line', '--line-soft']) assert.equal(t[name]?.toUpperCase(), look === 'light' ? '#D9DCE1' : '#383B41', `${look} ${name}`);
   }
 });
 

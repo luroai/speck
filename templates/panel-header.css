@@ -2,7 +2,7 @@
   /* 0580: the top of the panel is a thin dark bar, as wide as the tabs and cards under it, its corners a card's 12 px
      (0438). It holds speck, the status with the project over what's queued, how many need you and the base branch, the
      project menu and Settings. Its colours (--bar) are the same in both looks, and speck is drawn for a dark background. */
-  header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; padding: calc(8px + env(safe-area-inset-top)) 16px 8px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; padding: calc(8px + env(safe-area-inset-top)) 16px 8px; border-bottom: 1px solid var(--line); background: var(--bg); }
   .bezel { box-sizing: border-box; display: flex; align-items: center; min-width: 0; padding: 2px 4px 2px 2px; color: var(--bar-ink); background: var(--bar); border: 2px solid var(--bar); }
   .bezel.needs { border-color: var(--bar-needs); } /* the Foreman's word is "Needs you <n>" */
   /* 0580: pressing the status, speck included, opens the Pipeline log. Its first line is cut short with "…", the project first. */
@@ -33,7 +33,7 @@
   .bezel .settings-open svg { width: 15px; height: 15px; }
   .bezel :focus-visible { outline-color: var(--bar-ink); }
   /* 0568, 0590: the line under the bar: speck, how many calls it made, and Review, which opens the Decided for you list */
-  .decided-line { display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%; min-height: 44px; padding: 6px 16px; font: inherit; font-size: 14px; line-height: 20px; text-align: left; color: var(--text); background: var(--bg); border: 0; border-radius: 0; border-bottom: .5px solid var(--line); cursor: pointer; }
+  .decided-line { display: flex; align-items: center; gap: 8px; box-sizing: border-box; width: 100%; min-height: 44px; padding: 6px 16px; font: inherit; font-size: 14px; line-height: 20px; text-align: left; color: var(--text); background: var(--bg); border: 0; border-radius: 0; border-bottom: 1px solid var(--line); cursor: pointer; }
   .decided-say { flex: 1; min-width: 0; }
   .decided-review { flex: none; color: var(--run); }
   .decided-line:hover .decided-review { text-decoration: underline; }
@@ -42,7 +42,7 @@
      underline in the accent and its name in the text colour, the others are muted. Every tab has the underline's 2 px,
      transparent unless open, so nothing moves when the lane changes, and it's a border so it shows without colours
      (0161). Each tab is 44 px tall, and shares what's left of the row after the names and counts. */
-  .tabs { position: relative; z-index: 8; display: flex; align-items: stretch; gap: 1px; padding: 0 16px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  .tabs { position: relative; z-index: 8; display: flex; align-items: stretch; gap: 1px; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--bg); }
   .tab { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; column-gap: 4px; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 1px; font: inherit; color: var(--muted); background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; cursor: pointer; white-space: nowrap; } /* square, so a tap in a corner of it lands */
   .tab:hover, .tab[aria-selected="true"] { color: var(--text); }
   .tab[aria-selected="true"] { border-bottom-color: var(--blue); } /* 0577: the accent, as the focus ring has it */
