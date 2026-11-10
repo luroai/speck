@@ -104,13 +104,13 @@ test('0583 AC2: the bars are four across, filled in the accent, and orange for a
   assert.match(get(rule('#full-ticket .track .step.waits'), 'border-top-color'), /--needs-you/);
 });
 
-test('0583 AC3: its facts are a two-column grid of priority, size, risk, shipping, builder and reviewer', async () => {
+test('0583 AC3: its facts are tiles (0624) of priority, size, risk, shipping, builder and reviewer', async () => {
   const p = await page();
   await open(p, '0806');
   const { Type, ...six } = facts(p); // 0585: a Build ticket's has its type too
   assert.equal(Type, 'code');
   assert.deepEqual(six, { Priority: 'P1', Size: 'M', Risk: 'high', 'Ships by itself': 'No · auto_ship is off in speck/config.yml', Builder: 'Claude · opus', Reviewer: 'Codex · gpt-6.1-sol' });
-  assert.match(get(rules().find(r => selectors(r).includes('#full-ticket .facts')), 'grid-template-columns'), /repeat\(2,/);
+  assert.equal(get(rules().find(r => selectors(r).includes('#full-ticket .facts')), 'flex-wrap'), 'wrap'); // 0624: tiles, two or three to a row
 });
 
 test('0583 AC3: one that ships by itself says yes; with speck run off, it says why it won\'t', async () => {

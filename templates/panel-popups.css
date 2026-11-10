@@ -18,7 +18,10 @@
   #full-ticket .track .step.done, #full-ticket .track .step.now { border-top-color: var(--blue); color: var(--text); }
   #full-ticket .track .step.now { font-weight: 600; }
   #full-ticket .track .step.waits { border-top-color: var(--needs-you); color: var(--needs-you-text); font-weight: 600; }
-  /* 0583: its facts, two to a row, each its label over its value, which wraps rather than being cut short */
+  /* 0583: its facts, each its label over its value, which wraps rather than being cut short. 0624: as tiles like Shipped's
+     figures (0606): two columns on a phone, three from 480 px, the window's width picking as .stats' does, so the phone
+     query stays the only width query (0140). A flex row rather than a grid, so the last tile can take what's left of its
+     row however many there are; a twentieth of a pixel narrower so rounding can't drop one. */
   /* 0588: what changed in its criteria, above its facts */
   #full-ticket .criteria-callout { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; margin: 0 0 18px; padding: 12px; border-left: 3px solid var(--needs-you); border-radius: 8px; background: var(--raise); }
   #full-ticket .callout-body { min-width: 0; }
@@ -29,8 +32,9 @@
   #full-ticket .was-now .md, #full-ticket .was-now .md p { margin: 0; font-size: 14px; line-height: 20px; }
   #full-ticket .callout-line { margin-top: 10px; font-size: 14px; line-height: 20px; color: var(--needs-you-text); }
   #full-ticket .criterion-mark { margin-left: 8px; font-size: 12px; color: var(--needs-you-text); }
-  #full-ticket .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin: 0 0 4px; }
-  #full-ticket .facts .fact { min-width: 0; }
+  #full-ticket .facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+  #full-ticket .facts .fact { flex: 0 0 clamp((100% - 16px) / 3 - .05px, (480px - 100vw) * 100000, (100% - 8px) / 2 - .05px); min-width: 0; padding: 10px 9px; background: var(--surface); color: var(--text); border: 0; border-radius: 12px; }
+  #full-ticket .facts .fact:last-child { flex-grow: 1; }
   #full-ticket .facts .label, #full-ticket .facts .value { display: block; margin: 0; min-width: 0; overflow-wrap: anywhere; }
   #full-ticket .facts .label { font-size: 12px; line-height: 16px; color: var(--muted); }
   #full-ticket .facts .value { font-size: 14px; line-height: 20px; color: var(--text); font-variant-numeric: tabular-nums; }
@@ -210,14 +214,15 @@
   #full-ticket .top > .back { display: inline-block; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); cursor: pointer; }
   #full-ticket .top > .back::before { content: '‹'; margin-right: 4px; }
   /* 0603: a chain in the full view: two facts, each ticket's id a link when it's on the page, then its state */
-  #full-ticket .facts.chain-facts { margin-top: 12px; }
+  #full-ticket .facts.chain-facts { margin-top: 8px; }
   #full-ticket .chain-facts .chain-id { display: inline-flex; align-items: center; margin: 0; padding: 0; font: inherit; color: var(--text); background: none; border: 0; }
   #full-ticket .chain-facts .sid { font-family: var(--font-mono); }
   #full-ticket .chain-facts button.chain-id { color: var(--run); cursor: pointer; }
   #full-ticket .chain-facts button.chain-id:hover { text-decoration: underline; }
   #full-ticket .chain-facts .chain-state, #full-ticket .chain-facts .chain-more { color: var(--muted); }
   /* 0613: what it waits on, one line for each across the view */
-  #full-ticket .facts.waits-facts { display: block; margin-top: 12px; }
+  #full-ticket .facts.waits-facts { margin-top: 8px; }
+  #full-ticket .waits-facts .waits-link { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; } /* 0624: wraps within its tile */
   /* 0584: a build's live details, under the track and facts, styled as its card is */
   #full-ticket .live { margin-top: 14px; }
   #full-ticket .q.live { padding: 0; border: 0; border-radius: 0; } /* 0602: in the view, not a box of its own */

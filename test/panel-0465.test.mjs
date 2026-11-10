@@ -215,10 +215,10 @@ test('0465 AC4: in a real browser at 320 and 390 px and on a wide window, the fu
           assert.ok(s.height <= s.line + 6 + 4 + 0.5, `${at}: each step's name on one line (${JSON.stringify(s)})`);
           assert.deepEqual(s.look, ['rgba(0, 0, 0, 0)', 'none', 'none', 'none', '0px', '0px'], `${at}: ${s.name} is a bar with its name, not a button`);
         }
-        const [first] = m.cells;
+        const [first] = m.cells, cols = width < 480 ? 2 : 3; // 0624: tiles, two or three to a row, the last taking what's left
         for (const [i, c] of m.cells.entries()) {
-          assert.ok(Math.abs(c.top - m.cells[i - i % 2].top) < 0.5, `${at}: ${c.label} is in its row, two to a row (0583)`);
-          assert.ok(Math.abs(c.width - first.width) < 1, `${at}: ${c.label} as wide as the others`);
+          assert.ok(Math.abs(c.top - m.cells[i - i % cols].top) < 0.5, `${at}: ${c.label} is in its row, ${cols} to a row (0624)`);
+          if (i < m.cells.length - 1) assert.ok(Math.abs(c.width - first.width) < 1, `${at}: ${c.label} as wide as the others`);
           assert.ok(!c.nowrap && c.valueHeight <= c.height + 0.5, `${at}: ${c.label}'s value wraps within its cell`);
         }
       }
