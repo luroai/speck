@@ -15,6 +15,7 @@ source: "speck/ideas/done/2026-11-09-list-a-stopped-build-under-needs-you.md"   
 after: ["0615"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T11:52:59.104Z"
+waited_seconds: 18338
 
 ---
 # 0616 · List a stopped build under Needs you
