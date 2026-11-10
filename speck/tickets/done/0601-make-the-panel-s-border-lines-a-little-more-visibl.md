@@ -1,7 +1,7 @@
 ---
 id: "0601"
 title: "Make the panel's border lines a little more visible"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0600"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T08:31:49.058Z"
 approved: "2026-11-10T08:41:56.237Z"
+finished: "2026-11-10T08:45:47.434Z"
 
 ---
 # 0601 · Make the panel's border lines a little more visible
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel's border lines, between rows, round boxes and under headings, are hard to see: they're a very pale grey (#E4E6EA in the light look, #2A2D31 in the dark) and most are drawn half a pixel wide, which a standard-density screen draws fainter still. The user asked for them to be a tiny bit more visible.
