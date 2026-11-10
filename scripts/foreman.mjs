@@ -65,22 +65,19 @@ const list = v => (Array.isArray(v) ? v : []);
 const text = v => (typeof v === 'string' ? v : '');
 
 // 0616: whether a ticket's build stopped before finishing, leaving it building or reviewing, and nothing will carry it on.
-// speck run, while it's on, resumes a killed build once, and with watch fix or decide looks into one that exited, then may
-// resume it. So it needs you with speck run off, a killed build already resumed once, or an exited one with watch off or
-// tell, or that speck has looked into and left: neither looking into it, waiting to, nor about to resume it since it stopped.
-// `agent` is agentView's. templates/panel-model.js has the same rule for Build's groups.
+// speck run, while it's on, resumes a killed build once, resumes a build its agent or your answer asked it to, and with
+// watch fix or decide looks into one that exited. So it needs you with speck run off, a killed build already resumed
+// once, or an exited one that speck isn't looking into, waiting to look into (only with fix or decide) or about to
+// resume. `agent` is agentView's. templates/panel-model.js has the same rule for Build's groups.
 export function stoppedForYou(t, { on, fixing, agent }) {
   if (!t || (t.status !== 'building' && t.status !== 'reviewing')) return false;
   const exit = t.build_exit && typeof t.build_exit === 'object' ? t.build_exit : null;
   if (!exit && t.build_stopped !== true) return false;
   if (!on) return true;
   if (!exit) return t.build_resumed === true;
-  if (!speckActs(fixing)) return true;
-  const id = String(t.id), a = agent && typeof agent === 'object' ? agent : {}, at = Date.parse(exit.at);
-  if ((a.running && String(a.running.id) === id) || list(a.waiting).map(String).includes(id)) return false;
-  const last = list(a.did).find(d => d && String(d.id) === id); // newest first
-  const when = last ? Date.parse(last.at) : NaN; // an action at a time that can't be read isn't about this stop
-  return !(last && (last.action === 'resume' || last.action === 'decide') && Number.isFinite(when) && !(when < at));
+  const id = String(t.id), a = agent && typeof agent === 'object' ? agent : {}, has = v => list(v).map(String).includes(id);
+  if ((a.running && String(a.running.id) === id) || has(a.resuming)) return false;
+  return !(speckActs(fixing) && has(a.waiting));
 }
 const sentence = v => (/[.!?]$/.test(v) ? v : `${v}.`);
 

@@ -8,7 +8,10 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { T, boardPage, queueRows, panelRepo } from './support/panel.mjs';
 import { runsPath } from './support/ticker.mjs';
+import os from 'node:os';
+import path from 'node:path';
 import { foremanView } from '../scripts/foreman.mjs';
+import { agentView } from '../scripts/foreman-agent.mjs';
 import { statusData } from '../scripts/speck.mjs';
 
 const NOW = Date.now();
@@ -16,7 +19,7 @@ const ago = s => new Date(NOW - s * 1000).toISOString();
 const STARTED = { started: ago(18 * 60) };
 const EXITED = { ...STARTED, build_exit: { at: ago(120), code: 1, message: 'gone' } };
 const KILLED = { ...STARTED, build_stopped: true, build_stopped_at: ago(120) };
-const agent = (a = {}) => ({ running: null, waiting: [], did: [], asks: [], ...a });
+const agent = (a = {}) => ({ running: null, waiting: [], resuming: [], did: [], asks: [], ...a });
 const board = (tickets, { on = true, fixing = 'tell', ag = agent() } = {}) => ({ run: { on }, ideas: [], tickets, foreman: { fixing, agent: ag } });
 const show = async b => { const p = boardPage([b], { getSelection: () => ({ isCollapsed: true, rangeCount: 0 }) }); await p.settle(); return p; };
 const listed = p => p.byId('queue').children.map(n => (/\bq\b/.test(n.className) ? p.all(n).find(c => c.className === 'id')._text : n.textContent));
@@ -43,9 +46,9 @@ test('0616 AC1: with watch fix or decide, an exited build speck has looked into 
     assert.deepEqual(listed(await show(board([T('0701', 'building', EXITED)], { fixing, ag }))), ['Needs you 1', '0701'], fixing);
     // nothing running or waiting: it was looked into before for the same commits, so it won't be again
     assert.deepEqual(listed(await show(board([T('0701', 'building', EXITED)], { fixing }))), ['Needs you 1', '0701'], fixing);
-    // a resume asked for before this build stopped is not about this stop
-    const old = agent({ did: [{ id: '0701', action: 'resume', at: ago(600) }] });
-    assert.deepEqual(listed(await show(board([T('0701', 'building', EXITED)], { fixing, ag: old }))), ['Needs you 1', '0701'], fixing);
+    // a resume it asked for that speck run has taken off its list, having tried it, is no longer about to happen
+    const tried = agent({ did: [{ id: '0701', action: 'resume', at: ago(60) }] });
+    assert.deepEqual(listed(await show(board([T('0701', 'building', EXITED)], { fixing, ag: tried }))), ['Needs you 1', '0701'], fixing);
   }
 });
 
@@ -85,13 +88,24 @@ test('0616 AC2: an exited build speck is about to look into, or is looking into,
   }
 });
 
-test('0616 AC2: an exited build speck has looked into and is about to resume stays under Building', async () => {
-  for (const action of ['resume', 'decide']) {
-    const ag = agent({ did: [{ id: '0702', action: 'diagnose', at: ago(10) }, { id: '0701', action, at: ago(60) }] });
-    const p = await show(board([T('0701', 'building', EXITED)], { fixing: 'fix', ag }));
-    assert.deepEqual(listed(p), ['Building 1', '0701'], action);
+test('0616 AC2: an exited build speck run is about to resume stays under Building, whatever watch is now', async () => {
+  for (const fixing of ['tell', 'fix', 'decide']) {
+    const ag = agent({ resuming: ['0701'], did: [{ id: '0701', action: 'resume', at: ago(60) }] });
+    const p = await show(board([T('0701', 'building', EXITED)], { fixing, ag }));
+    assert.deepEqual(listed(p), ['Building 1', '0701'], fixing);
     assert.doesNotMatch(whereOf(p, '0701').className, /\bneeds\b/);
   }
+});
+
+test('0616 AC2: agentView lists the builds speck run is to resume, and drops one once it has tried it', () => {
+  const runs = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0616-'));
+  const save = resumes => fs.writeFileSync(path.join(runs, 'run.foreman-agent.json'), JSON.stringify({ running: null, queue: [], tried: {}, long: {}, resumes, answered: [] }));
+  save([{ id: '0701', message: 'Carry on.' }, { id: '0702', message: 'Go.', by: 'user' }]);
+  const ag = agentView(runs, [T('0701', 'building', EXITED)]);
+  assert.deepEqual(ag.resuming, ['0701', '0702']);
+  assert.doesNotMatch(word([T('0701', 'building', EXITED)], { fixing: 'fix', ag }), /Needs you/);
+  save([]); // speck run took it off before trying it, and the resume failed: nothing will carry it on now
+  assert.equal(word([T('0701', 'building', EXITED)], { fixing: 'fix', ag: agentView(runs, []) }), 'Needs you 1');
 });
 
 test('0616 AC2: a killed build speck run will resume on its next check stays under Building', async () => {
@@ -111,13 +125,8 @@ test('0616 AC3: the bar\'s Needs you counts a stopped build nothing will carry o
 
 test('0616 AC3: the bar leaves out one speck will carry on, and counts one with a question from speck once', () => {
   assert.doesNotMatch(word([T('0701', 'building', EXITED)], { fixing: 'fix', ag: agent({ waiting: ['0701'] }) }), /Needs you/);
-  assert.doesNotMatch(word([T('0701', 'building', EXITED)], { fixing: 'decide', ag: agent({ did: [{ id: '0701', action: 'resume', at: ago(60) }] }) }), /Needs you/);
+  assert.doesNotMatch(word([T('0701', 'building', EXITED)], { fixing: 'decide', ag: agent({ resuming: ['0701'] }) }), /Needs you/);
+  assert.equal(word([T('0701', 'building', EXITED)], { fixing: 'decide', ag: agent({ did: [{ id: '0701', action: 'resume', at: ago(60) }] }) }), 'Needs you 1');
   assert.doesNotMatch(word([T('0701', 'building', KILLED)]), /Needs you/);
   assert.equal(word([T('0701', 'building', EXITED)], { fixing: 'fix', ag: agent({ asks: [{ id: '0701', question: 'Which?' }] }) }), 'Needs you 1');
-});
-
-test('0616 AC1 self-check: a resume speck asked for at a time that cannot be read is not taken to be about this stop', async () => {
-  const ag = agent({ did: [{ id: '0701', action: 'resume', at: 'whenever' }] });
-  assert.deepEqual(listed(await show(board([T('0701', 'building', EXITED)], { fixing: 'fix', ag }))), ['Needs you 1', '0701']);
-  assert.equal(word([T('0701', 'building', EXITED)], { fixing: 'fix', ag }), 'Needs you 1');
 });

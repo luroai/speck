@@ -247,20 +247,17 @@ function capturedAt(body) {
 }
 // 0616: whether a ticket's build stopped before finishing and nothing will carry it on, as stoppedForYou in
 // scripts/foreman.mjs, which the bar's Needs you counts by: speck run is off, or it has resumed a killed build once
-// already, or watch isn't fix or decide, or speck has looked into an exited one and isn't about to resume it.
+// already, or speck isn't looking into an exited one, waiting to (only with watch fix or decide) or about to resume it.
 function leftStopped(t, on, foreman) {
   if (t.status !== 'building' && t.status !== 'reviewing') return false;
   const exit = t.build_exit && typeof t.build_exit === 'object' ? t.build_exit : null;
   if (!exit && t.build_stopped !== true) return false;
   if (!on) return true;
   if (!exit) return t.build_resumed === true;
-  const f = foreman && typeof foreman === 'object' ? foreman : {};
-  if (f.fixing !== 'fix' && f.fixing !== 'decide') return true;
-  const id = String(t.id), a = f.agent && typeof f.agent === 'object' ? f.agent : {}, list = v => (Array.isArray(v) ? v : []);
-  if ((a.running && String(a.running.id) === id) || list(a.waiting).map(String).includes(id)) return false;
-  const last = list(a.did).find(d => d && String(d.id) === id); // newest first
-  const when = last ? Date.parse(last.at) : NaN; // an action at a time that can't be read isn't about this stop
-  return !(last && (last.action === 'resume' || last.action === 'decide') && Number.isFinite(when) && !(when < Date.parse(exit.at)));
+  const f = foreman && typeof foreman === 'object' ? foreman : {}, a = f.agent && typeof f.agent === 'object' ? f.agent : {};
+  const id = String(t.id), has = v => (Array.isArray(v) ? v : []).map(String).includes(id);
+  if ((a.running && String(a.running.id) === id) || has(a.resuming)) return false;
+  return !((f.fixing === 'fix' || f.fixing === 'decide') && has(a.waiting));
 }
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
