@@ -781,11 +781,14 @@ function renderDecided(m) {
   box.hidden = !decidedOpen;
   holdPage(pageHeld());
   if (!decidedOpen) { box.replaceChildren(); decidedBuilt = null; return; }
-  const sig = signature([list.map(d => [d, can(d), decidedChanged(d)]), speckCalled(), new Date().toDateString()]);
+  const sig = signature([list.map(d => [d, can(d), decidedChanged(d)]), speckCalled(), new Date().toDateString(), openLane]);
   if (sig === decidedBuilt) return;
   decidedBuilt = sig;
-  const had = within(document.activeElement, box), shut = el('button', 'close', 'Close');
+  // 0611: its back link names the lane it goes back to, as the Pipeline log's does (pipelineFrame)
+  const lane = openLane[0].toUpperCase() + openLane.slice(1);
+  const had = within(document.activeElement, box), shut = el('button', 'close', lane);
   shut.type = 'button';
+  shut.setAttribute('aria-label', `Back to ${lane}`);
   shut.addEventListener('click', e => { e.stopPropagation(); closeDecided(); });
   const intro = el('div', 'decided-intro', null, decidedFace('pleased', 44), el('div', 'decided-bubble', "I went with my recommendation. You can change any you'd have called differently."));
   box.replaceChildren(el('div', 'top', null, el('span', 'title', 'Decided for you'), shut),

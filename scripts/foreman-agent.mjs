@@ -166,7 +166,7 @@ export function codeKey(repo, cfg, id) {
 const readObject = file => { try { const v = JSON.parse(fs.readFileSync(file, 'utf8')); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; } };
 
 // speck run's record of the Foreman agent: { running: { id, token, pid, key, what, started, command, long? } | null, queue: [{ id, key,
-// what, log, long? }], tried: { <id>: key }, long: { <id>: key }, resumes: [{ id, message, by?, question?, status? }], answered: [askKey] }.
+// what, log, long? }], tried: { <id>: key }, long: { <id>: key }, resumes: [{ id, message, by?, question?, status?, head?, session? }], answered: [askKey] }.
 // 0318: answered lists your answers to its questions already carried out, and a resume `by` 'user' carries one out. 0569:
 // long is the build of each ticket last dealt with for running long, kept apart from tried so a stop is still looked into.
 export function readAgentState(runs) {
@@ -299,7 +299,8 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     const mine = readActions(runs()).filter(a => a.run === r.token && a.id === r.id);
     for (const a of mine) {
       if (a.action === 'reship') { ships.again(a.id); speak(`${a.id}: I asked for its ship to be tried again: ${a.why}`); }
-      else if (a.action === 'resume' || a.action === 'decide') s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text, ...(a.action === 'decide' ? { by: 'decide', head: a.head, session: a.session, status: a.status } : {}) }];
+      // 0618: a resume keeps what it was asked against too, as a decide does, unless it was asked before speck kept it.
+      else if (a.action === 'resume' || a.action === 'decide') s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text, ...(a.action === 'decide' ? { by: 'decide', head: a.head, session: a.session, status: a.status } : a.head ? { by: 'watch', head: a.head, session: a.session, status: a.status } : {}) }];
       else speak(`${a.id}: I ${ACTIONS[a.action].replace('what it found', 'what I found')}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
     }
     if (!mine.length) speak(`${r.id}: I looked into it and took no action. Its log: ${path.relative(repo, path.join(runs(), LOG))}`);
@@ -393,8 +394,9 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     if (stale.length) { s.resumes = s.resumes.filter(x => !stale.includes(x)); changed = true; }
     // 0567: so is a recommendation speck went with, as goWithQueue drops the button's, once its build has been carried on.
     const movedOn = x => { const session = readObject(path.join(runs(), `${x.id}.json`))?.session; return !tickets.some(t => String(t.id) === x.id && t.status === x.status) || refsOf(repo, cfg, x.id).head !== x.head || session !== x.session || inUse(session); };
-    const gone = s.resumes.filter(x => x.by === 'decide' && movedOn(x));
-    for (const x of gone) speak(`${x.id}: I went with its recommendation, but its build has been carried on since, so speck run left it as it is.`);
+    const gone = s.resumes.filter(x => (x.by === 'decide' || x.by === 'watch') && movedOn(x)); // 0618: and so is a resume the agent asked for
+    for (const x of gone) speak(x.by === 'decide' ? `${x.id}: I went with its recommendation, but its build has been carried on since, so speck run left it as it is.`
+      : `${x.id}: I asked for its build to be resumed, but the ticket has moved on since, so speck run left it as it is.`);
     if (gone.length) { s.resumes = s.resumes.filter(x => !gone.includes(x)); changed = true; }
     for (const t of tickets) {
       if (!s.resumes.some(x => x.id === t.id) || running.has(t.id) || t.build_running) continue;
@@ -512,8 +514,8 @@ export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RU
   if (action === 'decide') noteInTicket(at, t, `- Went with the recommendation: ${text} (${FOREMAN_CHOSE}, as watch is decide, ${when}).`, `${foremanSubject(id)} decide`,
     raw => (t.fm.status === 'blocked' ? syncHeader(waitFields(setField(raw, 'status', 'building'), 'blocked', 'building', now.getTime())) : raw));
   else noteInTicket(at, t, `- speck (${when}) ${did}. Why: ${why}`, `${foremanSubject(id)} ${action}`);
-  // 0567: a decide keeps what its resume checks the ticket against: its commit, its build's session and its status now.
-  const decided = action === 'decide' ? { status: t.fm.status === 'blocked' ? 'building' : t.fm.status, head: sh('git', ['rev-parse', 'HEAD'], { cwd: at }).stdout.trim(), session: readObject(path.join(runs, `${id}.json`))?.session } : {};
+  // 0567: a decide keeps what its resume checks the ticket against: its commit, its build's session and its status now. 0618: so does a resume.
+  const decided = action === 'decide' || action === 'resume' ? { status: action === 'decide' && t.fm.status === 'blocked' ? 'building' : t.fm.status, head: sh('git', ['rev-parse', 'HEAD'], { cwd: at }).stdout.trim(), session: readObject(path.join(runs, `${id}.json`))?.session } : {};
   if (action === 'decide') { // 0589: a run record that can't be saved loses only the call's question and other options, as the choice stands
     const file = path.join(runs, `${id}.json`), facts = t.fm.status === 'blocked' ? questionFacts(contentLines(t.sections['blocked question'])) : {}; // any other ticket's section is an old question
     try { saveRecord(file, withCall(runs, id, readObject(file), callOf(facts, text, now))); } catch { /* the Notes still list it */ }
