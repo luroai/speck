@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0602"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T09:17:38.700Z"
-approved: "2026-11-10T09:39:08.395Z"
+approved: "2026-11-10T09:44:39.448Z"
 
 ---
 # 0603 · Retire the panel's last old-style parts
@@ -58,12 +58,13 @@ To see it, open any shipped ticket's review pack, or the full view of a ticket t
 ## Review log
 Round 1 (codex): changes requested: F1 The unsaved Settings dialogue still has old-style secondary buttons.; F2 AC5 requires the Delivery log to list the updated tests, but it currently contains only its placeholder.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 327,528
-- Elapsed since build started: 21 min
+- Reviewer tokens: 514,525
+- Elapsed since build started: 27 min
 - Changed lines: 140 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed from the old looks to the new ones (AC5):
@@ -259,6 +260,98 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The review pack, ticket chain and secondary buttons now meet the requested design, including the unsaved Settings dialogue. Old colours are removed, the updated tests are documented, and the review test run has no failures. Both previous findings are resolved."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "34cb7183ebeb415db66af65aba46655ea20180f8",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c4d0-4ae8-77e2-a23e-f8cfa236cabc",
+    "builder_response": "- Tests run (speck test --files): test/pack-0562.test.mjs test/panel-0041.test.mjs test/panel-0132.test.mjs test/panel-0140.test.mjs test/panel-0158.test.mjs test/panel-0161.test.mjs test/panel-0357.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0453.test.mjs test/panel-0461.test.mjs test/panel-0463.test.mjs test/panel-0467.test.mjs test/panel-0468.test.mjs test/panel-0480.test.mjs test/panel-0583.test.mjs test/panel-0603.test.mjs  test/panel-0368.test.mjs test/panel-0372.test.mjs test/panel-0275.test.mjs test/panel-0472.test.mjs test/settings-0370.test.mjs test/settings-0412.test.mjs test/panel-0167.test.mjs\n- Merge round: speck ship's tests failed on the ticket merged with main on one test, 0167 AC2: the speck red is used only for the speck itself.\n- Why: that test lists every rule that uses --accent, from when --accent was speck's red; its own comment says --accent is the panel's blue now. AC4 puts the Shipped step in the accent, so its two rules now use --accent. It failed because of this ticket's own change, not main's.\n- What I changed: merged main (no conflicts), and added the Shipped step's two rules to the list in test/panel-0167.test.mjs, so the test still catches any other use of --accent. No code changed. The Delivery log lists the test with the others changed.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 512322,
+      "cached_input_tokens": 417664,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2203,
+      "reasoning_output_tokens": 129
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 31630,
+      "cached": 154752,
+      "write": 0,
+      "output": 615
+    },
+    "cost_usd": 0.0848852,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T09:44:37.325Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "packPane, packMarks and backToTicket in templates/panel-popups.js preserve the back link and drawn verdict and criterion marks. All panel-0603 AC1 tests pass after the merge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "chainFacts in templates/panel.js preserves the plain facts section, ticket states and navigation. All panel-0603 AC2 tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Secondary button styles retain the required border, corners, text colour and minimum height, including Settings' Discard and Keep editing. Updated panel-0603, panel-0428 and panel-0453 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The obsolete colour variables remain removed and Shipped uses --accent. Both panel-0603 AC4 tests pass. panel-0167 now explicitly allows the two required Shipped rules while retaining its other checks."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the updated tests, including panel-0167. The current test output confirms 363 passes, zero failures and three skips. The additional test change directly follows AC4's required colour change."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.css",
+        "issue": "The unsaved Settings dialogue's secondary buttons previously retained the old appearance.",
+        "suggested_fix": "Completed: both buttons retain the required secondary styling and test coverage after the merge.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0603-bring-the-review-pack-and-the-ticket-view-s-last-b.md",
+        "issue": "The Delivery log previously omitted the required list of updated tests.",
+        "suggested_fix": "Completed: the log lists the changed tests, including the additional colour test updated this round.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change preserves the approved redesign. The additional colour test update correctly accounts for the Shipped step's required blue accent, and the review test run has no failures. Both earlier findings remain resolved."
   }
 }
 ```
