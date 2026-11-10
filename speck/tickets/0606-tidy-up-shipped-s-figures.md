@@ -47,7 +47,7 @@ Shipped's figures are one tidy grid of even tiles, with a quiet link to show the
 - Self-check: total cost with no known total said "over 0 tickets" in its tooltip, now "No shipped ticket has a known total cost"; the link fits its text rather than the row's width. Also: the brief's Shipped sentence matched to the new figures, "median reviewer tokens" shown as "median review tokens" so every label is whole at 375 px (tooltip keeps "reviewer"), and labels kept at 14 px as 0427 forbids 13 px.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Shipped's figures are now one tidy grid of matching rounded tiles: two to a row on a phone and four on a wider screen, with every row full. Four figures always show (shipped today, median build time, median review rounds and approved first round), and a quiet blue "All figures" link under them adds the other four to the same grid. "Fewer figures" hides them again. A tile only says how many tickets it comes from when that's fewer than all those shipped, and the "588 in total" line is gone, as the Shipped tab shows the count. To see it, open Shipped on your phone. Keep an eye on mid-sized windows (roughly 480 to 760 px wide), where the longer labels are cut short with "…".
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +58,9 @@ Shipped's figures are one tidy grid of even tiles, with a quiet link to show the
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new tiles, link and missing total line (AC5): test/panel-0058 (median tile now second), panel-0134 (no shipped-n id), panel-0157 (one grid of 2/4 columns, one-line labels, "from N tickets"), panel-0162 (All figures toggle; its browser test now checks 0606 AC1, AC2 and AC4 at 375 and 1280 px), panel-0188 (dead ids dropped), panel-0410 and panel-0425 (no "in total" line), panel-0420 (two to a row at 420 px, the link under the grid), panel-0427 (All figures wording), panel-0428 (corners on each tile, not the grid; the link no longer a bordered button), panel-0453 (the link has no border, so it's out of the bordered-button checks), panel-0476 (no Shipped lane line), panel-0478 (the long-line check uses Build's line), panel-0577 (number in the panel's font), panel-0587 (four tiles, total cost a dash when unknown), panel-0603 (the link isn't .full-open), panel.test (0035's stats), spend-0120 and total-cost-0526 (the others in the one grid). No other test that passed before fails: the round's related run had 1,573 passing, 0 failing, 3 skipped.
+- Follow-ups:
+  - Between 480 and about 760 px wide, four columns cut the longer labels with an ellipsis: saved to the inbox as speck/ideas/2026-11-10-keep-shipped-s-figure-labels-whole-at-middle-widths.md.
+  - Known limit: below 375 px (for example 320 px), some labels end in an ellipsis at 14 px; the tooltip gives the figure in full.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -139,6 +142,89 @@ Shipped's figures are one tidy grid of even tiles, with a quiet link to show the
     ],
     "escalation_question": "",
     "summary": "The figures now form one consistent grid with a quiet expand link, and the supplied test results support the behaviour. The change needs one completion step: list the updated tests in the ticket's Delivery log."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0ba1fe20a55e9d23f7563af8a8eeb006f2fa0558",
+    "session": "continued",
+    "thread_id": "01a1c4f0-63cf-7792-9adb-2f7cefa4e74d",
+    "builder_response": "- Tests run: test/panel-0606.test.mjs and every existing test file this ticket changed (panel-0058, 0134, 0157, 0162, 0188, 0410, 0420, 0425, 0427, 0428, 0453, 0476, 0478, 0577, 0587, 0603, panel, spend-0120, total-cost-0526), with the commands.checks files.\n- F1: fixed. The ticket's Delivery log now lists each changed test file and what it checks now, and the result of the related run (1,573 passing, 0 failing, 3 skipped). Only the ticket changed this round.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 314096,
+      "cached_input_tokens": 245376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1550,
+      "reasoning_output_tokens": 48
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4512,
+      "cached": 130688,
+      "write": 0,
+      "output": 668
+    },
+    "cost_usd": 0.0287728,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:12:58.261Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css gives tiles a uniform surface, no border, equal rounded corners, consistent gaps, UI-font numbers and muted single-line labels. Passing panel-0606 tests and panel-0162 browser tests cover these properties."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "render() in templates/panel.js supplies four permanent and four optional figures in one grid. CSS sets two columns below 480 px and four from 480 px. Passing AC2 tests cover the figures, breakpoint and unknown-total placeholder; browser tests verify full rows."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "render() displays ticket counts only when s.count < m.shippedTotal; panel.html removes shipped-n. Passing panel-0606 AC3 tests verify partial counts, omitted full counts and the tab count."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The toggle follows the single grid, uses accent text without a border and has a 44 px minimum height. Passing panel-0606 AC4 and panel-0162 browser tests verify its appearance, position and All figures/Fewer figures behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log now lists the updated existing tests and their changed checks. The fresh test output confirms 351 passes, zero failures and three skips. Only the ticket changed since round 1."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0606-tidy-up-shipped-s-figures.md",
+        "issue": "The Delivery log previously omitted the updated tests required by criterion 5.",
+        "suggested_fix": "Completed: the Delivery log lists the changed tests, their coverage and the earlier related-run result.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The figures form one consistent grid with a quiet expand link and fewer repeated counts. All five criteria pass, the missing test record is complete, and no blocking concerns remain."
   }
 }
 ```
