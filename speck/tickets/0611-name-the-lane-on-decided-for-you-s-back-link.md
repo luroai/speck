@@ -40,6 +40,7 @@ Decided for you's back link names the lane it goes back to.
 - Asked for 2026-11-10 for release 1.0.0: "Create them all, set them all ready", from the follow-ups builders filed during the redesign.
 - From 0600's build: the button kept "Close" because 0568's tests press a button named Close, which this ticket may change. Today: `renderDecided` in `templates/panel-popups.js`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
