@@ -44,6 +44,7 @@ The watcher can schedule a ticket's resume for a set time, and a look that could
 - Today: the actions are `ACTIONS` and `foremanAction` in `scripts/foreman-agent.mjs`, whose queue of resumes and `movedOn` check (0618) this builds on; the agent's instructions are `skills/speck-watch/SKILL.md`.
 - Waits for 0622, which records when a limit resets.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
