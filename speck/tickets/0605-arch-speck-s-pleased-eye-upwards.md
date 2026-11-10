@@ -40,6 +40,7 @@ speck's pleased visor arches upwards, its middle higher than its ends, like a ha
 - Asked for 2026-11-10: "the happy animation is the wrong way. It should be the opposite arch because it's an eye not a mouth." The phone screenshot showed the visor curving down in the middle.
 - Today: `VISORS.pleased` in `templates/speck-face.js` is `{ x1: -6, y1: -27, cx: 0, cy: -20, x2: 6, y2: -27 }`, so it bends down towards y -20. Something like `{ x1: -6, y1: -23, cx: 0, cy: -31, x2: 6, y2: -23 }` arches it up instead, keeping it inside the screen.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
