@@ -1,7 +1,7 @@
 ---
 id: "0618"
 title: "Drop a waiting watch resume once its ticket has moved on"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-09-drop-a-waiting-watch-resume-once-the-ticket-has-moved-on.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T09:57:13.396Z"
 
 ---
 # 0618 · Drop a waiting watch resume once its ticket has moved on
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When the watch agent asks for a build to be resumed and speck run has to wait for a free build slot, the resume still runs once a slot frees up, even if the ticket has moved on meanwhile, so it can restart a build you've already carried on, or one on a ticket that has since finished, on an old instruction.
