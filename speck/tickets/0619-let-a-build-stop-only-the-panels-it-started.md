@@ -42,6 +42,7 @@ A build's panels stay out of your project menu, and a build only ever stops the 
 - Decided: both a rule in the skill and speck enforcing what it can.
 - `speck run` gives each build `SPECK_BUILD_SESSION` (`scripts/build-env.mjs`); panels record themselves in `~/.config/speck/panels/` (`registerPanel` in `scripts/panel-projects.mjs`). The skill's step is section 2's step 6, "Pictures of a visual change", in `skills/speck-build/SKILL.md`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
