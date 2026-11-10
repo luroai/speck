@@ -1,7 +1,7 @@
 ---
 id: "0609"
 title: "Drop Build's needs-you number from its tab"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-09-drop-build-s-needs-you-number-from-its-tab.
 after: ["0607"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:01:51.169Z"
+approved: "2026-11-10T10:13:12.175Z"
 
 ---
 # 0609 · Drop Build's needs-you number from its tab
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Build tab can read "Build 11 3": the lane's count and, beside it, a red needs-you number, two numbers side by side with only one labelled by its colour. The black bar already says how many need you whichever lane is open, so the second number repeats it and costs width at 320 px.
@@ -50,9 +51,15 @@ The Build tab now shows just its name and how many tickets are in the lane, like
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC4 explicitly requires the Delivery log to list the updated tests.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 227,990
+- Elapsed since build started: 11 min
+- Changed lines: 13 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new behaviour (AC4):
   - `test/panel-0477.test.mjs`: 0477 AC2 (no number, Build's name and count only) and its real-browser strip test (no longer pins a number on Build).
