@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-11-10-show-the-full-view-s-waits-on-as-facts-too.
 after: ["0612"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T11:10:35.473Z"
-approved: "2026-11-10T11:18:29.272Z"
+approved: "2026-11-10T11:26:05.448Z"
 
 ---
 # 0613 · Show a ticket's Waits on as facts
@@ -54,12 +54,13 @@ A ticket waiting on two or more others no longer shows a boxed panel with a colo
 ## Review log
 Round 1 (codex): changes requested: F1 Acceptance criterion 4 explicitly requires the Delivery log to list the updated tests, but it is empty.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 211,521
-- Elapsed since build started: 8 min
+- Reviewer tokens: 342,570
+- Elapsed since build started: 15 min
 - Changed lines: 84 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -227,6 +228,85 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Dependencies now appear as plain facts in both views, and their links work. The missing test record has been added. All criteria pass, with no remaining blocking findings."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f1c28a39b509b6767bd481765540807ff6317e20",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c52d-0ecd-7a71-8093-cf68aa73942a",
+    "builder_response": "- Tests run: test/panel-0463.test.mjs test/panel-0613.test.mjs test/panel-0467.test.mjs test/panel-0154.test.mjs test/panel-0419.test.mjs test/panel-0468.test.mjs test/panel-0612.test.mjs (167 passed, 0 failed)\n- Merge round after ship's tests failed together. Merged main into the branch with no conflicts.\n- Failing test: `0463 AC2: a queued Build ticket's full view shows its priority, size, risk and what it waits on`. Why: main's newer version of this test finds what a ticket waits on in its full view by the class `deps` or `facts chain-facts`; since this ticket, Waits on is `facts waits-facts`, so 0813 (which waits on two or more) wasn't found. Changed: the test's two checks also accept `facts waits-facts` (an old test changed to check the new behaviour, per AC4), and the ticket's Delivery log lists it. No code changed.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 341004,
+      "cached_input_tokens": 286720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1566,
+      "reasoning_output_tokens": 12
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 18577,
+      "cached": 112000,
+      "write": 0,
+      "output": 472
+    },
+    "cost_usd": 0.053074,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T11:26:02.814Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js waitsFacts still renders dependency ids, titles and states as facts. Passing panel-0613 AC1 tests cover full-view content and missing tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "depsBox still uses waitsFacts for open Plan cards. Passing panel-0613 AC2 tests verify the content, placement and absence of the old box, bar and chips."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "waitsFacts retains depNode navigation. Both panel-0613 AC3 navigation tests pass for Plan cards and the full view."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log lists all updated existing tests, including panel-0463. Its merged test retains the priority, size, risk and state assertions while accepting the new dependency facts. Recorded results: 167 passed, 0 failed, 3 skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0613-show-a-ticket-s-waits-on-as-facts.md",
+        "issue": "The Delivery log previously omitted the changed tests required by criterion 4.",
+        "suggested_fix": "Completed: the log lists the changed tests and their purpose, including the adjustment after merging main.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change preserves the dependency display and navigation. The newer test now recognises the new facts while keeping its original checks. All criteria pass, with no remaining blocking findings."
   }
 }
 ```
