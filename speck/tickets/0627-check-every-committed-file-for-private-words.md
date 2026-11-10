@@ -1,7 +1,7 @@
 ---
 id: "0627"
 title: "Check every committed file for private words"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0626"]                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T20:48:40.484Z"
 
 ---
 # 0627 · Check every committed file for private words
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck's commit check (0550) refuses a commit that adds a private word or the home folder's path, but only to files under `speck/`. A private name was committed in a test file and in several tickets before it was on the list, and code, tests, docs and commit messages are still unchecked.
