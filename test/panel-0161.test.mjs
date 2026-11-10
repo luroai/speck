@@ -294,7 +294,7 @@ const TEXTS = `(() => { ${LIB}
 // The edge of every control and card on show against what's next to it: each border side with a width, or its fill.
 const EDGES = `(() => { ${LIB}
   const out = [];
-  const sel = 'button:not(.prio-menu button):not(.dep-chip):not(.tab):not(.bar-status), .dep-pill, .tag:not(:is(.checks, .progress, .act) .tag), .item, .q:not(.live), #shipped tr, section:not(main > section), .prio-menu'; // 0602: a full view's live section is no card. 0418: a lane has no edge. 0419: a card's tags are words. 0468: a chip's edge is its pill's. 0477: a lane's name in the strip is a word
+  const sel = 'button:not(.prio-menu button):not(.dep-chip):not(.tab):not(.bar-status):not(.more-stats), .dep-pill, .tag:not(:is(.checks, .progress, .act) .tag), .item, .q:not(.live), #shipped tr, section:not(main > section), .prio-menu'; // 0602: a full view's live section is no card. 0418: a lane has no edge. 0419: a card's tags are words. 0468: a chip's edge is its pill's. 0477: a lane's name in the strip is a word 0606: All figures is a text link, as the views' back links are
   for (const el of document.querySelectorAll(sel)) {
     if (!shown(el)) continue;
     const s = getComputedStyle(el), next = behind(el.parentElement);
@@ -340,7 +340,7 @@ async function everyView(b, theme) {
   for (const lane of ['capture', 'plan', 'build', 'shipped']) { // 0520: and Capture, its notes closed
     await b.js(openLane(lane));
     checkTexts(await b.js(TEXTS), `${theme}, ${lane}, with a Plan ticket open`, lane === 'capture' ? 10 : 21); // 0520: Capture holds two closed notes
-    checkEdges(await b.js(EDGES), `${theme}, ${lane}, with a Plan ticket open`, lane === 'capture' ? 2 : 4); // Shipped has fewer controls than the others (0580: the bar's status has no edge of its own), and Capture (0520) only its notes
+    checkEdges(await b.js(EDGES), `${theme}, ${lane}, with a Plan ticket open`, lane === 'capture' ? 2 : lane === 'shipped' ? 3 : 4); // Shipped has fewer controls than the others (0580: the bar's status has no edge of its own; 0606: All figures is a text link), and Capture (0520) only its notes
     tags.push(...await b.js(TAGS));
   }
   // 0585: a Build row opens a full view, which has what a Build card showed open
@@ -414,7 +414,8 @@ test('0161 AC4: in a real browser, each button, link and tab reached with Tab sh
       }
       assert.ok(seen.length >= 10, `${theme}: Tab reaches the controls (${seen.length})`);
       // 0520: Plan's Tickets, Ideas and Inbox buttons (BUTTON.toggle) are gone; the lanes' names are buttons Tab reaches
-      for (const kind of ['BUTTON.tab', 'BUTTON.settings-open', 'SPAN.title', 'BUTTON.full-open', 'DIV.top']) {
+      // 0606: Shipped's More stats, the bordered button Tab reached from the lanes' tops, is the All figures link now
+      for (const kind of ['BUTTON.tab', 'BUTTON.settings-open', 'SPAN.title', 'BUTTON.more-stats', 'DIV.top']) {
         assert.ok(seen.some(f => f.what.startsWith(kind)), `${theme}: Tab reaches a ${kind}: ${seen.map(f => f.what).join(' | ')}`);
       }
       for (const f of seen) {

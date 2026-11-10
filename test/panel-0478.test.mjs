@@ -66,8 +66,8 @@ for (const theme of ['light', 'dark']) {
     const b = await panel();
     try {
       await b.js(`document.documentElement.dataset.theme = ${JSON.stringify(theme)}, 1`);
-      // A lane line far too long for the row, to see it give way, kept there when the page draws it again
-      await b.js(`(() => { const n = document.getElementById('shipped-n'), long = '1234567890 in total, ' + 'and a great deal more to say about it, '.repeat(6), put = () => { if (n.textContent !== long) n.textContent = long; };
+      // A lane line far too long for the row (Build's since 0606, as Shipped's is gone), to see it give way, kept there when the page draws it again
+      await b.js(`(() => { const n = document.getElementById('queue-n'), long = '1234567890 in flight, ' + 'and a great deal more to say about it, '.repeat(6), put = () => { if (n.textContent !== long) n.textContent = long; };
         put(); new MutationObserver(put).observe(n, { childList: true, characterData: true, subtree: true }); return 1; })()`);
       for (const width of [320, 360, 414, 600, 720, 1280]) {
         await b.send('Emulation.setDeviceMetricsOverride', { width, height: 700, deviceScaleFactor: 1, mobile: width < 700 });
@@ -85,7 +85,7 @@ for (const theme of ['light', 'dark']) {
             assert.ok(l.line.top >= m.tabs - 0.5 && l.line.bottom <= l.list.top + 0.5, `${w}: the lane's line under the tabs, above its list`);
             assert.ok(near(l.line.right, l.line.boxRight - 16, 3), `${w}: at the row's right end, inside the 16 px margin`);
             assert.equal(l.line.wrap, 'nowrap', `${w}: on one line`);
-            if (l.lane === 'shipped') assert.ok(l.line.cut && l.line.overflow === 'ellipsis', `${w}: a line too long for the row gives way with …`);
+            if (l.lane === 'build') assert.ok(l.line.cut && l.line.overflow === 'ellipsis', `${w}: a line too long for the row gives way with …`);
           }
           // AC4: all four sides in view
           assert.ok(l.box.left >= 0 && l.box.right <= m.vw && l.box.top >= 0 && l.box.bottom <= 700, `${w}: all four sides in view (${JSON.stringify(l.box)})`);

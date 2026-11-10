@@ -39,7 +39,7 @@ test('0162 AC1: the three fixed hints are gone from the page', async () => {
   assert.doesNotMatch(html, /class="hint"/);
   const p = fakePage([STATE()]);
   await p.settle();
-  const text = ['shaping-section', 'queue', 'queue-n', 'shipped-n', 'shipped'].map(id => p.byId(id).textContent.toLowerCase()).join(' ');
+  const text = ['shaping-section', 'queue', 'queue-n', 'shipped'].map(id => p.byId(id).textContent.toLowerCase()).join(' '); // 0606: shipped-n is gone
   for (const h of HINTS) assert.ok(!text.includes(h), `"${h}" is shown`);
 });
 
@@ -69,48 +69,51 @@ test('0162 AC2: a ticket in flight also brings the full layout back', async () =
 
 // ---------- AC3 ----------
 
-// 0587: three tiles up top, and More stats shows and hides the rest.
-test('0162 AC3: Shipped shows three stats, and More stats shows and hides the others', async () => {
+// 0587: three tiles up top, and More stats shows and hides the rest. 0606: four, and All figures adds the rest to the grid.
+const ALWAYS = ['shipped today', 'median build time', 'median review rounds', 'approved first round'];
+const OTHERS = ['median builder cost', 'total cost', 'median review tokens', 'median builder tokens'];
+test('0162 AC3: Shipped shows four stats (0606), and All figures shows and hides the others', async () => {
   const p = fakePage([STATE(), STATE()]);
   await p.settle();
-  assert.deepEqual(tiles(p, 'shipped-stats').map(t => t[1]), ['median build time', 'median review rounds', 'approved first round']);
+  assert.deepEqual(tiles(p, 'shipped-stats').map(t => t[1]), ALWAYS);
   const more = p.byId('more-stats');
   assert.equal(more.hidden, false);
-  assert.equal(more.textContent, 'More stats');
+  assert.equal(more.textContent, 'All figures');
   assert.equal(more.attrs['aria-expanded'], 'false');
-  assert.equal(p.byId('shipped-more').hidden, true, 'the others start hidden');
-  assert.deepEqual(tiles(p, 'shipped-more').map(t => t[1]), ['shipped today', 'median builder cost', 'total cost', 'median reviewer tokens', 'median builder tokens']);
   p.press(more);
   await p.settle();
-  assert.equal(p.byId('shipped-more').hidden, false);
+  assert.deepEqual(tiles(p, 'shipped-stats').map(t => t[1]), [...ALWAYS, ...OTHERS]);
   assert.equal(more.attrs['aria-expanded'], 'true');
-  assert.equal(more.textContent, 'Fewer stats');
+  assert.equal(more.textContent, 'Fewer figures');
   await refresh(p);
-  assert.equal(p.byId('shipped-more').hidden, false, 'still open after the next poll');
+  assert.equal(p.byId('shipped-stats').children.length, 8, 'still open after the next poll');
   p.press(more);
   await p.settle();
-  assert.equal(p.byId('shipped-more').hidden, true);
-  assert.equal(more.textContent, 'More stats');
+  assert.deepEqual(tiles(p, 'shipped-stats').map(t => t[1]), ALWAYS);
+  assert.equal(more.textContent, 'All figures');
 });
 
 test('0162 AC3: every stat over 9,999 is shortened as the cards\' figures are, with the exact number as a tooltip', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
-  assert.deepEqual(tiles(p, 'shipped-stats'), [['23 min', 'median build time', null], ['1.5', 'median review rounds', null], ['100%', 'approved first round', null]]);
+  p.press(p.byId('more-stats')); // 0606: the others join the grid
+  await p.settle();
+  assert.deepEqual(tiles(p, 'shipped-stats').slice(1, 4), [['23 min', 'median build time', null], ['1.5', 'median review rounds', null], ['100%', 'approved first round', null]]);
   // Reviewer tokens 108,234 and 500, builder tokens 2,412,345 alone.
-  assert.deepEqual(tiles(p, 'shipped-more').slice(1), [['$2.91', 'median builder cost', null], ['$2.91', 'total cost', null], ['54k', 'median reviewer tokens', '54,367'],
+  assert.deepEqual(tiles(p, 'shipped-stats').slice(4), [['$2.91', 'median builder cost', null], ['$2.91', 'total cost', null], ['54k', 'median review tokens', '54,367'],
     ['2.4M', 'median builder tokens', '2,412,345']]);
   const big = fakePage([{ tickets: [T('0011', 'done', { started: ago(20000 * 60), finished: ago(0), builder_cost_usd: 12345.678 })], ideas: [] }]);
   await big.settle();
-  assert.deepEqual(tiles(big, 'shipped-stats')[0], ['20k min', 'median build time', '20,000']);
-  assert.deepEqual(tiles(big, 'shipped-more')[1], ['$12k', 'median builder cost', '$12,345.68']);
+  assert.deepEqual(tiles(big, 'shipped-stats')[1], ['20k min', 'median build time', '20,000']);
+  big.press(big.byId('more-stats'));
+  await big.settle();
+  assert.deepEqual(tiles(big, 'shipped-stats')[4], ['$12k', 'median builder cost', '$12,345.68']);
 });
 
-test('0162 AC3: with nothing shipped there are no stats and no More stats button', async () => {
+test('0162 AC3: with nothing shipped there are no stats and no All figures link (0606)', async () => {
   const p = fakePage([{ tickets: [T('0001', 'building')], ideas: [] }]);
   await p.settle();
   assert.equal(p.byId('shipped-stats').hidden, true);
-  assert.equal(p.byId('shipped-more').hidden, true);
   assert.equal(p.byId('more-stats').hidden, true);
 });
 
@@ -225,22 +228,52 @@ for (const width of [375, 1280]) {
     }, { width, state: STATE({ queue: false }) });
   });
 
-  // 0587: three tiles in a row, More stats under them, and the others in tiles under that.
-  test(`0162 AC3: at ${width} px three stats show as tiles in one row, and More stats shows the others`, skip, async () => {
+  // 0587: three tiles in a row, More stats under them, and the others in tiles under that. 0606: one grid of even tiles,
+  // two to a row on a phone and four from 480 px, every row full, each label whole on one line, and All figures under it.
+  test(`0606 AC1 AC2 AC4 (was 0162 AC3): at ${width} px the figures are even tiles ${width < 480 ? 2 : 4} to a row, every row full, and All figures under them adds the others`, skip, async () => {
+    const perRow = width < 480 ? 2 : 4;
     await withPanel(async b => {
       await b.js(openLane('shipped')); // 0410
-      const shown = () => b.js(`[...document.querySelectorAll('section.shipped .stat')].filter(n => n.getBoundingClientRect().height > 0).map(n => { const r = n.getBoundingClientRect(); return { top: Math.round(r.top), bottom: r.bottom, label: n.querySelector('.label').textContent }; })`);
+      await b.js(`document.fonts.ready.then(() => 1)`);
+      const shown = () => b.js(`[...document.querySelectorAll('section.shipped .stat')].filter(n => n.getBoundingClientRect().height > 0).map(n => { const r = n.getBoundingClientRect(), l = n.querySelector('.label'), s = getComputedStyle(n);
+        return { top: Math.round(r.top), bottom: r.bottom, width: r.width, height: r.height, label: l.textContent, cut: l.scrollWidth > l.clientWidth, lines: Math.round(l.getBoundingClientRect().height / parseFloat(getComputedStyle(l).lineHeight)),
+          corners: [s.borderTopLeftRadius, s.borderTopRightRadius, s.borderBottomRightRadius, s.borderBottomLeftRadius], border: s.borderTopWidth, bg: s.backgroundColor }; })`);
+      const surface = await b.js(`(() => { const s = document.createElement('span'); s.style.color = 'var(--surface)'; document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c; })()`);
+      const even = (tiles, what) => {
+        const rows = [...new Set(tiles.map(t => t.top))];
+        assert.equal(rows.length, tiles.length / perRow, `${what}: ${rows.length} rows of ${perRow}`);
+        for (const row of rows) {
+          const inRow = tiles.filter(t => t.top === row);
+          assert.equal(inRow.length, perRow, `${what}: a full row`);
+          assert.ok(inRow.every(t => Math.abs(t.height - inRow[0].height) < 1), `${what}: one height in a row`);
+        }
+        for (const t of tiles) {
+          assert.ok(Math.abs(t.width - tiles[0].width) < 1, `${what}: one width`);
+          assert.equal(new Set(t.corners).size, 1, `${what}: ${t.label}'s corners alike (${t.corners})`);
+          assert.notEqual(t.corners[0], '0px', `${what}: rounded`);
+          assert.equal(t.border, '0px', `${what}: no border`);
+          assert.equal(t.bg, surface, `${what}: the surface colour`);
+          assert.equal(t.lines, 1, `${what}: ${t.label} on one line`);
+          assert.ok(!t.cut, `${what}: ${t.label} whole`);
+        }
+      };
       const before = await shown();
-      assert.deepEqual(before.map(t => t.label), ['median build time', 'median review rounds', 'approved first round'], 'three tiles until More stats');
-      assert.equal(new Set(before.map(t => t.top)).size, 1, 'one row');
-      const more = await b.js(`(() => { const r = document.getElementById('more-stats').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, height: r.height, text: document.getElementById('more-stats').innerText }; })()`);
-      assert.ok(more.top >= before[0].bottom - 0.5, 'More stats under the tiles');
-      assert.equal(more.text.toLowerCase(), 'more stats');
-      if (width < 700) assert.ok(more.height >= 43.5, `More stats is ${more.height} px high`);
+      assert.deepEqual(before.map(t => t.label), ALWAYS, 'four tiles until All figures');
+      even(before, 'closed');
+      const link = () => b.js(`(() => { const n = document.getElementById('more-stats'), r = n.getBoundingClientRect(), s = getComputedStyle(n); return { top: r.top, height: r.height, text: n.innerText, border: s.borderTopWidth, colour: s.color }; })()`);
+      const more = await link();
+      const accent = await b.js(`(() => { const s = document.createElement('span'); s.style.color = 'var(--accent)'; document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c; })()`);
+      assert.ok(more.top >= Math.max(...before.map(t => t.bottom)) - 0.5, 'All figures under the tiles');
+      assert.deepEqual([more.text, more.border, more.colour], ['All figures', '0px', accent], 'a text link in the accent colour');
+      assert.ok(more.height >= 43.5, `All figures is ${more.height} px high`);
       await b.js(`document.getElementById('more-stats').click()`);
       await settle(b);
       const after = await shown();
-      assert.deepEqual(after.slice(3).map(t => t.label), ['shipped today', 'median builder cost', 'total cost', 'median reviewer tokens', 'median builder tokens']);
+      assert.deepEqual(after.map(t => t.label), [...ALWAYS, ...OTHERS]);
+      even(after, 'open');
+      const open = await link();
+      assert.ok(open.top >= Math.max(...after.map(t => t.bottom)) - 0.5, 'Fewer figures under the grid');
+      assert.equal(open.text, 'Fewer figures');
       assert.deepEqual(await b.js(`[...document.querySelectorAll('section.shipped .stat .num')].filter(n => n.title).map(n => [n.textContent, n.title])`), [['54k', '54,367'], ['2.4M', '2,412,345']]);
     }, { width });
   });

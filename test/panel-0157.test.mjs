@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, round, shippedRows, startOfToday, shippedPack, openLane } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, round, shippedRows, startOfToday, shippedPack, openLane, click } from './support/panel.mjs';
 
 // ---------- 0157: a tidy Shipped section ----------
 
@@ -40,23 +40,23 @@ const COST = ['Builder cost', 'Reviewer cost', 'Total cost', 'Builder tokens', '
 const figures = async (p, id) => { p.press(cardOf(p, id)); await p.settle();
   return byClass(p, p.byId('full-ticket'), 'fact').filter(f => COST.includes(f.children[0].textContent)).map(f => { const v = f.children[1]; return [f.children[0].textContent, v.textContent, v.title !== v.textContent ? v.title : null]; }); };
 
-// 0587: the three up top and those under More stats are all tiles.
+// 0587: the three up top and those under More stats are all tiles. 0606: one grid, All figures adding the others.
 test('0157 AC2: each stat is a tile with its number, then a short label, then the tickets its median covers', async () => {
   const p = fakePage([STATE()]);
   await p.settle();
-  const parts = id => p.byId(id).children.map(t => [t.className, ...t.children.map(c => [c.tagName, c.className, c.textContent])]);
-  const top = parts('shipped-stats'), more = parts('shipped-more');
-  assert.deepEqual(top.map(t => t[2][2]), ['median build time', 'median review rounds', 'approved first round']);
-  assert.deepEqual(more.map(t => t[2][2]), ['shipped today', 'median builder cost', 'median reviewer tokens', 'median builder tokens']);
-  for (const t of [...top, ...more]) {
+  click(p.byId('more-stats'));
+  await p.settle();
+  const all = p.byId('shipped-stats').children.map(t => [t.className, ...t.children.map(c => [c.tagName, c.className, c.textContent])]);
+  assert.deepEqual(all.map(t => t[2][2]), ['shipped today', 'median build time', 'median review rounds', 'approved first round', 'median builder cost', 'total cost', 'median review tokens', 'median builder tokens']);
+  for (const t of all) {
     assert.deepEqual(t[1].slice(0, 2), ['b', 'num']);
     if (t[2][2] === 'shipped today') { assert.equal(t.length, 3, 'number and label: it covers no median'); continue; }
     assert.equal(t.length, 4, `${t[2][2]}: number, label and count`);
     assert.deepEqual(t[3].slice(0, 2), ['span', 'count']);
   }
-  assert.deepEqual(top.map(t => t[3][2]), ['4 tickets', '4 tickets', '4 tickets']);
-  assert.deepEqual(more.slice(1).map(t => t[3][2]), ['1 ticket', '4 tickets', '2 tickets']);
-  assert.equal(top[1][1][2], '1', 'median review rounds: 1, 1, 1, 2');
+  // 0606: each from fewer than the five shipped, so each says how many
+  assert.deepEqual(all.slice(1).map(t => t[3][2]), ['from 4 tickets', 'from 4 tickets', 'from 4 tickets', 'from 1 ticket', 'from 0 tickets', 'from 4 tickets', 'from 2 tickets']);
+  assert.equal(all[2][1][2], '1', 'median review rounds: 1, 1, 1, 2');
 });
 
 test('0157 AC3: a row has the id, then the title that opens its full view (0587), with a bug or fix tag after them (0420)', async () => {
@@ -169,25 +169,24 @@ const TILES = `[...document.querySelectorAll('#shipped-stats .stat')].map(n => {
     lines: Math.round(lr.height / parseFloat(ls.lineHeight)), labelSize: parseFloat(ls.fontSize), labelColor: ls.color,
     count: count && { size: parseFloat(getComputedStyle(count).fontSize), color: getComputedStyle(count).color, below: count.getBoundingClientRect().top >= lr.bottom - 0.5 } };
 })`;
-for (const [width, perRow] of [[375, 3], [700, 3], [1280, 3]]) { // three to a row since 0162
-  // 0587: the three tiles up top.
-  test(`0157 AC2: at ${width} px the three stats up top are tiles of equal size, ${perRow} to a row, each number above its label, no label past three lines at 375 px (since 0162)`, skip, async () => {
+for (const [width, perRow] of [[375, 2], [700, 4], [1280, 4]]) { // three to a row since 0162. 0606: two below 480 px, four from it
+  // 0587: the three tiles up top. 0606: the four that always show.
+  test(`0157 AC2: at ${width} px the four stats up top are tiles of equal size, ${perRow} to a row, each number above its label, each label on one line (0606)`, skip, async () => {
     await withPanel(async b => {
       const tiles = await b.js(TILES);
-      assert.equal(tiles.length, 3);
+      assert.equal(tiles.length, 4);
       const rows = [...new Set(tiles.map(t => Math.round(t.top)))];
-      assert.equal(rows.length, 3 / perRow, `${rows.length} rows`);
+      assert.equal(rows.length, 4 / perRow, `${rows.length} rows`);
       for (const row of rows) assert.equal(tiles.filter(t => Math.round(t.top) === row).length, perRow);
       for (const t of tiles) {
-        // 0162: the same width, and the same height as the others in its row: More stats' row can have longer labels.
+        // 0162: the same width, and the same height as the others in its row.
         const first = tiles.find(x => Math.round(x.top) === Math.round(t.top));
         assert.ok(Math.abs(t.width - tiles[0].width) < 1 && Math.abs(t.height - first.height) < 1, `every tile the same size: ${JSON.stringify(tiles.map(x => [x.width, x.height]))}`);
         assert.ok(t.numAbove, 'the number above its label');
-        // 0162: three to a row, the labels ("median review rounds") break a word to a line at 375 px.
-        if (width === 375) assert.ok(t.lines <= 3, `a label on ${t.lines} lines`);
+        assert.equal(t.lines, 1, `a label on ${t.lines} lines`); // 0606: one line, cut off with … if it can't fit
       }
       const faint = await b.js(RGB('var(--faint)'));
-      for (const t of tiles) {
+      for (const t of tiles.filter(x => x.count)) { // 0606: shipped today covers no median
         assert.ok(t.count && t.count.below, 'the count under the label');
         assert.ok(t.count.size < t.labelSize, `the count (${t.count.size} px) smaller than the label (${t.labelSize} px)`);
         assert.equal(t.count.color, faint, 'the count muted');

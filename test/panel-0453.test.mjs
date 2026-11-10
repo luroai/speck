@@ -129,7 +129,7 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
         }
       });
     }
-    for (const name of ['More stats', 'Close', 'Save', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'plan.md', 'notes/', 'Light', 'Discard', 'Keep editing']) // 0562: plan.md named from inside its output folder, and notes/ a folder's button
+    for (const name of ['Close', 'Save', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'plan.md', 'notes/', 'Light', 'Discard', 'Keep editing']) // 0562: plan.md named from inside its output folder, and notes/ a folder's button
       assert.ok(seen.has(name) || [...seen].some(t => t.startsWith(name)), `the ${name} button was checked`);
   } finally { await b.close(); await stop(panel); }
 });
@@ -140,13 +140,12 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
 // middle, the device pixels at its edge differ from the button's own background just inside it.
 const NAMED = [
   ['Plan, a ticket open', '#shaping .item.open .full-open'], // 0587: Full ticket, which a shipped row no longer has
-  ['Shipped', '#more-stats'],
   ['a review pack with a document', '#full-ticket .pack-document'],
   ['a document', '#doc-view .close'],
   ['Settings', '#settings .close'],
   ['Settings', '#settings .save-all'],
   ['Settings\' question about unsaved changes', '#settings-unsaved .secondary'], // 0612: its Save is filled in the accent, with no border to show
-  ['the Foreman', '#foreman .log-filter'], // 0592: its filters, as its back link is a link with no border
+  ['the Foreman', '#foreman .log-filter'], // 0592: its filters, as its back link is a link with no border. 0606: as is Shipped's All figures
 ];
 const sidesShown = (png, r, dpr) => {
   const px = (x, y) => png.at(Math.max(0, Math.min(png.w - 1, x)), Math.max(0, Math.min(png.h - 1, y)));
