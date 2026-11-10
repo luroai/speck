@@ -38,6 +38,10 @@ The project menu's tests use made-up project names.
 ## Notes
 - Asked for 2026-11-10: remove a private name from everything and "make sure it doesn't happen again … I don't even want a mention of the user's other projects." The name itself is in the user's private words, so it isn't written here.
 - Relies on nothing outside this repo.
+- Failing before this build: not checked
+- Found while building: the project's real name in these tests was another folder beside this repo, not one of the words in the private-words file, so a private-words check alone wouldn't have caught it. The new test checks every sample project's name against a list of made-up ones as well.
+- AC2 and AC3 are checked by the 0516 tests themselves: only the names changed, and the file's tests all pass with them. The owner-name check (luro-0082 AC2) fails on the price list, a file this ticket doesn't touch; 0628 covers it.
+- Self-check: no changes. With no private-words file the private-words test checks nothing, which the made-up names test covers.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
