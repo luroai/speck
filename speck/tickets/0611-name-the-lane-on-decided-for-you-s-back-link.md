@@ -1,7 +1,7 @@
 ---
 id: "0611"
 title: "Name the lane on Decided for you's back link"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-10-name-the-lane-on-decided-for-you-s-back-lin
 after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T09:57:09.392Z"
+approved: "2026-11-10T10:01:47.436Z"
 
 ---
 # 0611 · Name the lane on Decided for you's back link
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Decided for you's back link reads "‹ Close", while the Pipeline log's and a ticket's full view's name the lane they go back to, such as "‹ Build". Since 0600 the three share one style, so "Close" is the odd one out and says less about where it goes.
@@ -50,9 +51,15 @@ The link at the top of Decided for you now says where it goes back to, such as "
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Acceptance criterion 4 requires the Delivery log to list tests changed from the old behaviour, but the log is empty.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 232,285
+- Elapsed since build started: 5 min
+- Changed lines: 7 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed for the new behaviour: `test/panel-decided-0568.test.mjs`, "0568 AC4", pressed the button named Close; it now presses the back link named "Back to Build" (renamed "the back link and Escape close the list…").
 
