@@ -1,7 +1,7 @@
 ---
 id: "0613"
 title: "Show a ticket's Waits on as facts"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-10-show-the-full-view-s-waits-on-as-facts-too.
 after: ["0612"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T11:10:35.473Z"
+approved: "2026-11-10T11:18:29.272Z"
 
 ---
 # 0613 · Show a ticket's Waits on as facts
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket waiting on two or more others still shows, in its full view and open Plan card, the LCD-era Waits on box: a border, a coloured bar and a grid of boxed chips. Since 0603 a chain is shown as plain facts beside it, so the two kinds of dependency look different for no reason.
@@ -51,9 +52,15 @@ A ticket waiting on two or more others no longer shows a boxed panel with a colo
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Acceptance criterion 4 explicitly requires the Delivery log to list the updated tests, but it is empty.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 211,521
+- Elapsed since build started: 8 min
+- Changed lines: 84 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Tests changed to check the new behaviour (AC4):
