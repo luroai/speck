@@ -41,6 +41,7 @@ A watch resume that's waiting for a slot is dropped once its ticket has moved on
 - From round 1 of 0567's review. The check is `movedOn` in `foremanAgentQueue` in `scripts/foreman-agent.mjs`, used today only for `decide`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a resume on a blocked ticket kept `building`, as a decide does, so it would have been dropped though nothing moved on; it now keeps the ticket's own status.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
