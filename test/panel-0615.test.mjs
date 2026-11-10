@@ -77,7 +77,27 @@ test('0615 AC2: a screen reader reads the whole details line: its whole text is 
   assert.match(styles(), /\.q\.row \.where, \.item\.row:not\(\.open\) \.checks, #shipped \.meta \{ white-space: nowrap; overflow-x: clip; overflow-y: visible; text-overflow: ellipsis; \}/);
 });
 
-test('0615 AC3: rows look as they do today: the change adds only tooltips, no style', () => {
+// A node as it shows: its tag, class and text, then its children's, leaving out its tooltip.
+const look = n => (n.tagName === '#text' ? n.textContent : [n.tagName, n.className, n._text || '', ...(n.children || []).map(look)]);
+const LOOKS = {
+  Plan: ['div', 'checks', '', ['span', 'prio', '', ['span', 'tag pick', 'P2']], ['span', 'sep', ' ·'], ' ', ['span', 'tag', 'S'], ['span', 'sep', ' ·'], ' ', ['span', 'tag high', 'high'], ['span', 'sep', ' ·'], ' ', ['span', 'tag bug', 'bug']],
+  Build: ['div', 'where run', '', ['span', 'said', 'Reviewing · round 2'], ['span', 'sep', ' ·'], ' ', ['span', 'sub', '18 min']],
+  Capture: ['div', 'checks', '', ['span', '', 'From 0599 · 20 Oct'], ['span', 'tag agent', 'agent']],
+};
+
+test('0615 AC3: rows look as they do today: each details line has the same nodes, classes and text, its tags the same names', async () => {
+  const p = await show();
+  const lines = {
+    Plan: detailsOf(p, items(p).find(r => idOf(p, r) === '0701')),
+    Build: detailsOf(p, queueRows(p).find(r => idOf(p, r) === '0712')),
+    Capture: detailsOf(p, notes(p)[0]),
+  };
+  for (const [lane, line] of Object.entries(lines)) assert.deepEqual(look(line), LOOKS[lane], lane);
+  const [p2, size, risk, bug] = p.all(lines.Plan).filter(c => /\btag\b/.test(c.className || ''));
+  assert.equal(p2.attrs['aria-label'], 'Priority 2: built after P0 to P1 tickets. Opens the priority menu');
+  assert.equal(p2.title, 'Set the priority', 'the priority keeps its own tooltip');
+  assert.deepEqual([size, risk, bug].map(t => [t.attrs.role, t.attrs['aria-label']]), [['button', 'Size S: a small, contained change'], ['button', 'High risk: waits for you to ship it'], ['button', 'Bug: fixes a defect']]);
+  // No style names the tooltip, so nothing about how a row is laid out or coloured changed with it.
   const css = ['panel-base.css', 'panel-cards.css'].map(f => fs.readFileSync(new URL(`../templates/${f}`, import.meta.url), 'utf8')).join('\n');
-  assert.doesNotMatch(css, /0615/);
+  assert.doesNotMatch(css, /\[title\]|wholeTip/);
 });
