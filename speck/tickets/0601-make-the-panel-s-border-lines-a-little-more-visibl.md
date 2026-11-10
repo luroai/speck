@@ -1,7 +1,7 @@
 ---
 id: "0601"
 title: "Make the panel's border lines a little more visible"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0600"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T08:31:49.058Z"
+approved: "2026-11-10T08:41:56.237Z"
 
 ---
 # 0601 · Make the panel's border lines a little more visible
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's border lines, between rows, round boxes and under headings, are hard to see: they're a very pale grey (#E4E6EA in the light look, #2A2D31 in the dark) and most are drawn half a pixel wide, which a standard-density screen draws fainter still. The user asked for them to be a tiny bit more visible.
@@ -56,9 +57,15 @@ Worth knowing: a greyed-out Set ready or Save all button keeps its finer outline
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The statistics tiles still draw half-pixel dividers: their .5px grid gap exposes the --line background.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 292,091
+- Elapsed since build started: 10 min
+- Changed lines: 146 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Tests changed to the new line colours or widths:
