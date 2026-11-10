@@ -44,6 +44,7 @@ The README leads with speck as your engineering manager, who gets your tickets s
 - The role, as agreed on 2026-11-09: speck is your engineering manager. Once you set a ticket ready, getting it shipped is its job: it runs the builder and reviewer you've chosen, makes the obvious calls when a build asks, gets stuck work moving again, checks the result and tells you what it did and why. You decide what gets built; your own agent is who you plan it with. You can call it whatever you like (the user's is Virgil).
 - Keep the README's voice: plain British English, written for product managers, no one's name. Use the no-ai-slop pass the README has had before if it helps.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
