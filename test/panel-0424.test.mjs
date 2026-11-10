@@ -95,7 +95,7 @@ test('0424 AC1: the status follows a change to the ticket, and the rest of the p
 
 test('0424 AC2: each section has a heading smaller than the title and larger than the text', async () => {
   const p = await openTicket();
-  const heads = p.all(pane(p).children.at(-1)).filter(n => n.tagName === 'h4').map(n => n.textContent);
+  const heads = p.all(pane(p).children[2]).filter(n => n.tagName === 'h4').map(n => n.textContent);
   for (const h of ['Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']) assert.ok(heads.includes(h), h);
   assert.ok(px(SECTION) < px(TITLE), 'smaller than the title');
   assert.ok(px(SECTION) > px(TEXT), 'larger than the text');
@@ -141,7 +141,7 @@ test('0424 AC3: a heading in a section\'s text is smaller than the section\'s he
 test('0424 AC3: a ticket\'s sections sit inside its body, so a review pack\'s heading rules never reach them', async () => {
   const p = await openTicket();
   assert.ok(!pane(p).children.some(n => n.className === 'md'), 'no section\'s text straight in the pane');
-  assert.ok(p.all(pane(p).children.at(-1)).some(n => n.className === 'md'), 'the sections\' text is in the body');
+  assert.ok(p.all(pane(p).children[2]).some(n => n.className === 'md'), 'the sections\' text is in the body');
 });
 
 // ---------- AC4: lists ----------

@@ -395,9 +395,9 @@ function packBlocks(text, marks = b => b) {
   return [...out, ...md(text.slice(at))];
 }
 // The side pane (0583): a back link to the lane it came from, its id, a status pill and its title; then its step track and
-// facts; then, for a draft, its readiness list and buttons as in the list, without Full ticket; then its outcome, its
-// criteria with a tick on each one the reviewer passed, rows that open its review pack and build log, and its other
-// sections that have something in them, their Markdown formatted; then, for an approved ticket, the bar with its actions.
+// facts; then, for a draft, its readiness list; then its outcome, its criteria with a tick on each one the reviewer
+// passed, rows that open its review pack and build log, and its other sections that have something in them, their
+// Markdown formatted; then, for an approved ticket, the bar with its actions, and for a draft (0617) the bar with Set ready.
 // 0584: a ticket in the Build lane has its live section under its track and facts.
 function fullTicket(t, draft, steps, barShown) {
   const lane = LANE_OF[backList()], back = el('span', 'close', lane);
@@ -431,7 +431,7 @@ function fullTicket(t, draft, steps, barShown) {
   // 0424: its id and status beside its title. They're laid out by the stylesheet.
   const pill = el('span', 'state', String(t.status ?? ''));
   setTone(pill, paneTone(t));
-  return [el('div', 'top', null, el('span', 'id', t.id), pill, back, el('span', 'title', t.title)), steps, body, barShown ? shipBar(t) : null].filter(Boolean);
+  return [el('div', 'top', null, el('span', 'id', t.id), pill, back, el('span', 'title', t.title)), steps, body, barShown ? shipBar(t) : draft ? readyBar(t) : null].filter(Boolean);
 }
 const LANE_OF = { shaping: 'Plan', queue: 'Build', shipped: 'Shipped' };
 // The list the back link returns to: the one its Full ticket button is in, or the one the ticket is in now.
@@ -569,6 +569,16 @@ const liveCounters = () => (liveSub && paneTicket && paneTicket.counter !== null
 // 0583: the bar fixed to the bottom of an approved ticket's full view: Ask for changes and Ship, then what they said.
 const barShows = t => t.status === 'approved' || t.shipping === true || shippingId === String(t.id) || shipped.has(String(t.id));
 const shipBar = t => el('div', 'ship-bar', null, ...shipPart(t, true));
+// 0617: the bar fixed to the bottom of a draft's full view: in one line, why it can't be set ready yet or why the server
+// refused, then Set ready, which the stylesheet puts in the accent.
+function readyBar(t) {
+  const n = lintErrorsOf(t), errors = list((t.lint_messages || {}).errors);
+  const said = refused.has(t.id) ? refused.get(t.id) : n > 0 && !settingReady.has(t.id)
+    ? errors.length === 1 ? `Fix the ready check error first: ${errors[0]}` : errors.length ? `Fix the ${plural(errors.length, 'ready check error')} above first.` : 'Fix the ready check first: a ticket that fails it can\'t be ready.' : null;
+  const why = said === null ? null : el('div', refused.has(t.id) ? 'bad refused why' : 'why', said);
+  if (why) why.title = said; // the whole of it, when one line cuts it short
+  return el('div', 'ready-bar', null, why, setReadyButton(t, n));
+}
 // 0588: what status says changed in its criteria, without anything that isn't one of its changes.
 const changesOf = t => list(t.criteria_changes).filter(c => c && typeof c === 'object' && typeof c.change === 'string');
 const joined = xs => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}` : xs[0]);
@@ -607,7 +617,7 @@ function mdPart(body, heading, text) {
   body.appendChild(el('h4', null, heading));
   body.appendChild(el('div', 'md', null, ...mdBlocks(markdown(text))));
 }
-const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false);
+const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false); // 0617: its Set ready is in the bar
 // What the pane shows apart from its readiness list and its track and table, and what that list shows, with the view
 // state it depends on.
 const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes, t.criteria_passed ?? null, t.criteria_changes ?? null, hasPack(t), hasLog(t), backList()];
@@ -646,12 +656,14 @@ function renderFull(m) {
     pane.replaceChildren(...(t ? (packOf ? packPane(t) : fullTicket(t, !!draft, steps, barSig !== null)) : []));
     return;
   }
-  if (readySig !== readyBuilt) {
+  if (readySig !== readyBuilt) { // the readiness list and (0617) the bar with Set ready
     readyBuilt = readySig;
-    const body = pane.children[2], old = body.children[0];
-    const focused = !!old.contains && old.contains(document.activeElement); // its Set ready, just clicked
+    const body = pane.children[2], old = body.children[0], oldBar = pane.children[3] || null;
+    const focused = within(document.activeElement, old) || (!!oldBar && within(document.activeElement, oldBar)); // its Set ready, just clicked
     body.insertBefore(paneReadiness(t), old);
     body.removeChild(old);
+    if (oldBar) pane.removeChild(oldBar);
+    pane.appendChild(readyBar(t));
     if (focused && pane.focus) pane.focus({ preventScroll: true }); // so the keys still scroll the pane
   }
   if (stepsSig !== stepsBuilt) {

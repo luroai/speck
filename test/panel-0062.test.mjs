@@ -18,7 +18,8 @@ const readyBox = (p, n) => p.all(n).find(x => /\bready\b/.test(x.className) && x
 // The readiness list's lines: each line's text and its colour class, without the buttons or a refusal.
 const lines = (p, n) => readyBox(p, n).children.filter(x => x.tagName === 'div' && !/\brefused\b/.test(x.className)).map(x => [x.className, x.textContent]);
 const refusal = (p, n) => (p.all(n).find(x => /\brefused\b/.test(x.className)) || {}).textContent; // 0586: in the list, on its row
-const paneBody = p => pane(p).children.at(-1); // 0465: the body is last, after the track and table
+const paneBody = p => pane(p).children[2]; // 0465: the body, after the top and the track and table (0617: and before a draft's bar)
+const readyBar = p => pane(p).children.find(x => x.className === 'ready-bar'); // 0617: its Set ready
 
 const MIXED = {
   size: 'M', risk: 'high', acceptance_criteria: ['One.', 'Two.', 'Three.'],
@@ -59,13 +60,13 @@ test('0062 AC1: the pane shows the same readiness lines as the open ticket, afte
   assert.ok(lines(q, pane(q)).some(l => l[1] === 'Ready check passes') && lines(q, pane(q)).some(l => l[1] === 'no after: tickets'));
 });
 
-test('0062 AC2: the pane\'s Set ready is as on the ticket\'s row (0586), with Full ticket under the open row, disabled with the same hover text', async () => {
+test('0062 AC2: the pane\'s Set ready, in its bar (0617), is as on the ticket\'s row (0586), with Full ticket under the open row, disabled with the same hover text', async () => {
   for (const o of [MIXED, {}]) {
     const p = await openPane([full('0001', o)]);
     const listButtons = buttons(p, readyBox(p, itemOf(p, '0001'))).map(b => b.textContent);
-    const paneButtons = buttons(p, readyBox(p, pane(p))).map(b => b.textContent);
     assert.deepEqual(listButtons, ['Full ticket']);
-    assert.deepEqual(paneButtons, ['Set ready']);
+    assert.deepEqual(buttons(p, readyBox(p, pane(p))), [], "0617: the pane's readiness list has none");
+    assert.deepEqual(buttons(p, readyBar(p)).map(b => b.textContent), ['Set ready']);
     const a = setReadyOf(p, itemOf(p, '0001')), b = setReadyOf(p, pane(p));
     assert.equal(b.disabled, a.disabled);
     assert.equal(b.title, a.title);
@@ -112,7 +113,7 @@ test('0062 AC3: Set ready in the pane posts, keeps the pane open, and a success 
   assert.ok(queueRows(p).some(r => r.textContent.includes('0002')), 'and the ticket is in the queue');
 });
 
-test('0062 AC3: a refusal shows under both buttons until the next click on either', async () => {
+test('0062 AC3: a refusal shows by both buttons until the next click on either', async () => {
   const draft = { tickets: [full('0002')], ideas: [] };
   const reason = 'Not ready:\n  ✗ size L can never be ready: split it into sibling tickets.';
   for (const again of ['list', 'pane']) {
@@ -124,11 +125,8 @@ test('0062 AC3: a refusal shows under both buttons until the next click on eithe
     click(setReadyOf(p, pane(p)));
     await p.settle();
     assert.ok(paneOpen(p), 'still open');
-    assert.equal(refusal(p, pane(p)), reason, 'under the button in the pane');
+    assert.equal(refusal(p, readyBar(p)), reason, "in the pane's bar, beside its button (0617)");
     assert.equal(refusal(p, itemOf(p, '0002')), reason, 'and in the list');
-    const [b] = readyBox(p, pane(p)).children.filter(x => x.tagName === 'button');
-    const after = readyBox(p, pane(p)).children;
-    assert.ok(after.indexOf(b) < after.findIndex(x => /\brefused\b/.test(x.className)), 'the reason is under the button');
     await refresh(p);
     assert.equal(refusal(p, pane(p)), reason, 'kept through a refresh');
     click(again === 'list' ? setReadyOf(p, itemOf(p, '0002')) : setReadyOf(p, pane(p)));

@@ -107,7 +107,7 @@ test('0063 AC2: a ticket that isn\'t a draft shows the same id, title and sectio
   press(fullOf(p, itemOf(p, '0001')));
   const draftHeadings = headings(p, pane(p));
   assert.deepEqual(draftHeadings, ['Ready check', 'Outcome', 'Acceptance criteria', 'Problem', 'Out of scope', 'Notes']);
-  const sections = node => node.children.at(-1).children.filter(n => !/\bready\b|\bpane-rows\b/.test(n.className)).map(n => n.textContent); // 0583: and the rows, which depend on how far it's got
+  const sections = node => node.children[2].children.filter(n => !/\bready\b|\bpane-rows\b/.test(n.className)).map(n => n.textContent); // 0583: and the rows, which depend on how far it's got
   const draftSections = sections(pane(p));
   p.all(pane(p)).find(n => n.className === 'close').listeners.click();
   for (const [id, from] of [['0002', 'queue'], ['0004', 'queue'], ['0005', 'shipped']]) {
