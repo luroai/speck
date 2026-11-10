@@ -43,6 +43,7 @@ The panel's border lines are a little more visible, alike on every screen, in bo
 - Waits for 0600, which changes the lanes' row separators.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes. Borders that start in a line colour and are recoloured on hover or when picked (tags, priority buttons, Close) take the new 1 px with them. The disabled Set ready and Save all buttons keep their half-pixel outline, as it is the enabled button's own width only recoloured, so the button doesn't change size when it is disabled.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

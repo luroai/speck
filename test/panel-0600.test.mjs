@@ -18,7 +18,7 @@ test('0600 AC1: a lane has no card of its own, and its list sits in the 16 px si
   assert.equal(cssValue(list, 'padding'), '0 16px', 'its rows inside the 16 px side margins');
   assert.equal(cssValue(list, 'border-radius'), undefined);
   const hairline = cssValue(cssRules('#foreman.log-view .run-log .log-row'), 'border-bottom');
-  assert.equal(hairline, '.5px solid var(--line-soft)');
+  assert.equal(hairline, '1px solid var(--line-soft)'); // 0601: a full pixel
   for (const sel of ['.q.row', '.item.row', '#shipped tr']) assert.equal(cssValue(cssRules(sel), 'border-bottom'), hairline, `${sel}: the log's hairline`);
 });
 

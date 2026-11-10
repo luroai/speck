@@ -18,7 +18,7 @@ test('0126 AC1: the panel mockup is not on disk and not tracked by git', () => {
 });
 
 test('0126 AC2: the agreed colour block is written in the test support, not read from the mockup', () => {
-  assert.equal(PALETTE, '--bg: #FFFFFF; --panel: #FFFFFF; --raise: #F4F5F7; --line: #E4E6EA; --line-soft: #E4E6EA; --text: #15171A; --muted: #5F6670; --faint: #5F6670; --accent: #2F55D4; --ok: #145a42; --warn: #A84F06; --bad: #A84F06; --run: #2F55D4; --idea: #833063');
+  assert.equal(PALETTE, '--bg: #FFFFFF; --panel: #FFFFFF; --raise: #F4F5F7; --line: #D9DCE1; --line-soft: #D9DCE1; --text: #15171A; --muted: #5F6670; --faint: #5F6670; --accent: #2F55D4; --ok: #145a42; --warn: #A84F06; --bad: #A84F06; --run: #2F55D4; --idea: #833063');
   assert.doesNotMatch(read('test/panel.test.mjs'), /panel-mockup/);
 });
 

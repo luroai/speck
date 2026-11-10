@@ -160,7 +160,7 @@ export const headerScript = () => fs.readFileSync(HEADER, 'utf8');
 export const pageScripts = (html = page()) => [...html.matchAll(/<script src="([^"]+)"([^>]*)><\/script>/g)].map(m => ({ src: m[1], attrs: m[2] }));
 
 // 0126: the panel's agreed colours. 0134 changed them to the zen look's, 0147 to the landing page's, 0577 to the redesign's.
-export const PALETTE = '--bg: #FFFFFF; --panel: #FFFFFF; --raise: #F4F5F7; --line: #E4E6EA; --line-soft: #E4E6EA; --text: #15171A; --muted: #5F6670; --faint: #5F6670; --accent: #2F55D4; --ok: #145a42; --warn: #A84F06; --bad: #A84F06; --run: #2F55D4; --idea: #833063';
+export const PALETTE = '--bg: #FFFFFF; --panel: #FFFFFF; --raise: #F4F5F7; --line: #D9DCE1; --line-soft: #D9DCE1; --text: #15171A; --muted: #5F6670; --faint: #5F6670; --accent: #2F55D4; --ok: #145a42; --warn: #A84F06; --bad: #A84F06; --run: #2F55D4; --idea: #833063';
 
 // Each agreed colour the page's first :root block is missing or has changed, as '--name should be #value'.
 export function paletteProblems(html) {

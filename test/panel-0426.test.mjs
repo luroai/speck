@@ -99,7 +99,7 @@ test('0426 AC2: muted text and edges are the redesign\'s muted and border, at ev
   for (const [name, c] of Object.entries(CURSOR)) {
     const look = all[name];
     for (const t of ['--muted', '--muted-large', '--faint']) same(look[t], c.muted, `${name}: ${t}`);
-    same(look['--line'], look['--border'], `${name}: the edges of controls and cards`);
+    same(look['--line'], name === 'light' ? '#D9DCE1' : '#383B41', `${name}: the edges of controls and cards, a step darker than the border (0601)`);
   }
   for (const sel of ['.tag', '.prio-menu button', '#full-ticket .md-h3']) uses(sel, 'color', '--muted-large');
   assert.match(css(), /:where\([^)]*#shipped \.line \.tags\) \.tag \{ color: var\(--muted\); \}/);

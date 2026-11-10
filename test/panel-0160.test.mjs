@@ -70,7 +70,7 @@ test('0160 AC1: the header stays at the top of the screen with a solid backgroun
   assert.match(rule, /top:\s*0/);
   assert.match(rule, /z-index:\s*8\b/, 'above the cards, below the full ticket\'s backdrop (9) and pane (10)');
   assert.match(rule, /background:\s*var\(--bg\)/);
-  assert.match(rule, /border-bottom:\s*\.5px solid var\(--line\)/);
+  assert.match(rule, /border-bottom:\s*1px solid var\(--line\)/);
 });
 
 for (const width of [375, 1280]) {

@@ -11,7 +11,7 @@ const rootVars = html => {
   const root = (html.match(/:root \{([\s\S]*?)\}/) || [])[1] || '';
   return new Map([...root.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 };
-const ZEN = { '--bg': '#FFFFFF', '--panel': '#FFFFFF', '--raise': '#F4F5F7', '--line': '#E4E6EA', '--line-soft': '#E4E6EA',
+const ZEN = { '--bg': '#FFFFFF', '--panel': '#FFFFFF', '--raise': '#F4F5F7', '--line': '#D9DCE1', '--line-soft': '#D9DCE1',
   '--text': '#15171A', '--muted': '#5F6670', '--faint': '#5F6670', '--accent': '#2F55D4', '--bad': '#A84F06' };
 const OWN = ['--ok', '--warn', '--run', '--idea', '--inbox', '--bug', '--fix'];
 // 0426: the fix tag is in Cursor's yellow, as --warn is. 0577: what's wrong or waiting is in the needs-you text, and

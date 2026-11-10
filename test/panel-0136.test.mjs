@@ -6,11 +6,11 @@ import { page, paletteProblems, panelRepo, freePort, startPanel, stop, findChrom
 
 // ---------- 0136: a dark look you can switch to ----------
 
-const DARK = { '--bg': '#111214', '--panel': '#111214', '--raise': '#1B1D20', '--line': '#2A2D31', '--line-soft': '#2A2D31',
+const DARK = { '--bg': '#111214', '--panel': '#111214', '--raise': '#1B1D20', '--line': '#383B41', '--line-soft': '#383B41',
   '--text': '#ECEDEF', '--muted': '#9AA0A8', '--faint': '#9AA0A8', '--accent': '#86A2FF', '--bad': '#F0A35A',
   '--ok': '#7fbc95', '--warn': '#F0A35A', '--run': '#86A2FF', '--idea': '#c4a6be', '--inbox': '#88c0d0', '--bug': '#e69d83', '--fix': '#d9a65e',
   '--accent-bg': '#27221b', '--ok-bg': '#191f1d', '--inbox-bg': '#212527', '--bad-bg': '#1B1D20' };
-const ZEN = { '--bg': '#FFFFFF', '--panel': '#FFFFFF', '--raise': '#F4F5F7', '--line': '#E4E6EA', '--line-soft': '#E4E6EA',
+const ZEN = { '--bg': '#FFFFFF', '--panel': '#FFFFFF', '--raise': '#F4F5F7', '--line': '#D9DCE1', '--line-soft': '#D9DCE1',
   '--text': '#15171A', '--muted': '#5F6670', '--faint': '#5F6670', '--accent': '#2F55D4', '--bad': '#A84F06',
   '--ok': '#145a42', '--warn': '#A84F06', '--run': '#2F55D4', '--idea': '#833063', '--inbox': '#4c7f8c', '--bug': '#86371b', '--fix': '#6d4700' };
 // The light tints, set in the later plain :root block.
