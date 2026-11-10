@@ -637,11 +637,9 @@ function linkTarget(s, from) {
   return null;
 }
 // 0459: a line of speck run's log as the Pipeline pop-up shows it: its time (HH:MM:SS and a space, 0460) or '', a short
-// summary of its text, starting with the ticket's id when it names one, and its kind, 'fail' or 'msg'. The summary is
-// at most RUN_LOG_WIDTH characters and never shows a session id, a process id, a file path or a command.
-const RUN_LOG_WIDTH = 48;
+// summary of its text, starting with the ticket's id when it names one, and its kind, 'fail' or 'msg'. The summary
+// never shows a session id, a process id, a file path or a command. 0620: nor is it cut short: the view wraps it.
 const RUN_ID = /(?<![\w:./-])(\d{4,})(?![\w:/-]|\.\w)/;
-const runCut = s => (s.length > RUN_LOG_WIDTH ? `${s.slice(0, RUN_LOG_WIDTH - 1).trimEnd()}…` : s);
 // A sentence without what it mustn't show: parentheses with a session or process in them, `code`, ids of sessions,
 // processes, paths, links, file names and speck's or a tool's commands. Whatever is left is tidied of the gaps they leave.
 function runPlain(s) {
@@ -661,13 +659,11 @@ function runPlain(s) {
     .replace(/([,;:])(?=[.,;:]|$)/g, '')
     .trim();
 }
-const runFirst = s => { const m = s.match(/^.*?[.!?](?=\s|$)/); return m ? m[0] : s; };
-// The short reasons a ship gives, for `<id> didn't ship`, or null for one it doesn't.
+// The short reasons a ship gives, for `<id> didn't ship`, or null for one it doesn't. 0620: any other reason whole.
 function shipWhy(why) {
   if (/\bconflict/i.test(why)) return 'a conflict';
   if (/\b(?:tests? failed|failing tests)\b/i.test(why)) return 'tests failed';
-  const first = runPlain(runFirst(why)).replace(/[.!?]$/, '');
-  return first || null;
+  return runPlain(why) || null;
 }
 function runLogSummary(text) {
   const s = String(text).trim();
@@ -678,12 +674,12 @@ function runLogSummary(text) {
   if ((m = s.match(/^Shipping (\d{4,}):/))) return `${m[1]} shipping`;
   if ((m = s.match(/^Shipped (\d{4,})\.?$/))) return `${m[1]} shipped`;
   if ((m = s.match(/^(\d{4,}) didn't ship(?::\s*([\s\S]*))?$/))) {
-    const why = m[2] ? shipWhy(m[2]) : null, long = why ? `${m[1]} didn't ship: ${why}` : '';
-    return long && long.length <= RUN_LOG_WIDTH ? long : `${m[1]} didn't ship`;
+    const why = m[2] ? shipWhy(m[2]) : null;
+    return why ? `${m[1]} didn't ship: ${why}` : `${m[1]} didn't ship`;
   }
   if ((m = s.match(/^(\d{4,}) build\b.*\bstopped\.$/))) return `${m[1]} build stopped`;
-  const plain = runFirst(runPlain(s)), id = plain.match(RUN_ID);
-  return runCut(id && !plain.startsWith(id[1]) ? `${id[1]} ${plain}` : plain);
+  const plain = runPlain(s), id = plain.match(RUN_ID);
+  return id && !plain.startsWith(id[1]) ? `${id[1]} ${plain}` : plain;
 }
 // 0591: what starts a line that is the engineering manager speaking (speckSays in scripts/core.mjs): `speck` says so, and
 // the summary is shown without it.
