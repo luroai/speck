@@ -1,7 +1,7 @@
 ---
 id: "0628"
 title: "Let the owner-name check skip the price list"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T20:31:22.124Z"
 approved: "2026-11-10T20:36:06.882Z"
+finished: "2026-11-10T20:45:02.287Z"
 
 ---
 # 0628 · Let the owner-name check skip the price list
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a machine whose private words include a word that's also part of a model's name, the check that no tracked file names the owner (0082 AC2, in `test/luro-0082.test.mjs`) fails on `scripts/prices.json`, which holds model names copied from LiteLLM's public price list. On 2026-11-10 a word added to the private words matched Google model names there, so the check fails on `main` on this machine, and every ship's test run with it.
