@@ -1,7 +1,7 @@
 ---
 id: "0602"
 title: "Show build logs in the new look"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T08:46:04.716Z"
 ---
 # 0602 · Show build logs in the new look
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A ticket's build log still opens in the LCD-era frame: a dark bezel box with a red-dot title, a small bordered Close button, and a black terminal with a white border, with every wrapped line indented under a time column. A building ticket's full view shows its live log in the same black terminal. Everywhere else the redesign has moved to light, flat views.
@@ -58,3 +58,104 @@ A ticket's build log and its live log read like the Pipeline log: flat, in the p
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Tests changed from the build log's old frame and terminal look to the new one:
+- `test/build-log-0548.test.mjs`: the build log is a full view with a back link and heading, not the frame with Close; its kinds' colours are the panel's; a blank line is 20 px; the back link closes it. Its page helpers moved to `test/support/build-log.mjs`, which this ticket's tests share.
+- `test/panel-0051.test.mjs`: the log box is in the interface font, not the mono one.
+- `test/panel-0161.test.mjs`: the log's text sits on the panel's surfaces, not the log's black; the full view's live section is no longer a card with an edge.
+- `test/panel-0366.test.mjs`: the build log has no Close sharing the document's rules.
+- `test/panel-0417.test.mjs`: `#foreman .close` is gone from the controls sized for touch.
+- `test/panel-0422.test.mjs`: the time and each kind's colour are the panel's, at 4.5:1 on `--panel` in both looks.
+- `test/panel-0427.test.mjs`: the log's 13 px times are allowed, as the Pipeline log's are; the times are mono; Full log and Stop build are in the interface font; no `#foreman .close`.
+- `test/panel-0428.test.mjs`: the build log has no corners.
+- `test/panel-0455.test.mjs`: rewritten for the flat look: no background of its own, readable text on the panel in every look, a line above and below rather than a four-sided box.
+- `test/panel-0577.test.mjs`: the heading's rule is `#foreman.log-view .top .title`.
+- `test/panel-0581.test.mjs`: the build log's red dot is gone.
+- `test/panel-0584.test.mjs`: the back link closes the build log.
+- `test/pipeline-0459.test.mjs`: neither log is a terminal; a line's time is pulled into its own column.
+- `test/pipeline-0479.test.mjs`: no dark frame or red dot.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "482a72d93b96a9204f8260a3c5bc7aa672ae2e79",
+    "session": "fresh",
+    "thread_id": "01a1c4b8-7344-7680-9faf-b2db29bf94c5",
+    "builder_response": "- Tests run: test/build-log-0602.test.mjs test/build-log-0548.test.mjs test/panel-0051.test.mjs test/panel-0161.test.mjs test/panel-0366.test.mjs test/panel-0417.test.mjs test/panel-0422.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0455.test.mjs test/panel-0577.test.mjs test/panel-0581.test.mjs test/panel-0584.test.mjs test/pipeline-0459.test.mjs test/pipeline-0479.test.mjs, with `--related` (all pass, including the real-browser tests in 0051, 0422 and 0455).\n- Also run once, not in this output: every test/panel-*, pipeline-*, build-log-*, foreman-*, settings-*, speck-face-* and icons-* file (2152 pass, 0 fail).\n- Design notes:\n  - The build log now opens in #foreman with class log-view, as the Pipeline log does (buildLogFrame replaces popFrame): back link \"‹ <id>\" (role link, \"Back to <id>\"), heading \"<id> build log\", no Close. The old dark-frame rules (#foreman .top/.fm-body bezel, red dot, #foreman .close) and the terminal rules for .foreman .run-log rows are gone.\n  - Rows keep their markup (span.at, then the text node, then the newline) so selection and copying behave as before. The time is an inline-block pulled into a 74 px column with a negative margin rather than a grid: a grid split each copied line's time and text onto separate lines.\n  - The live log (.q .log) and the full view's live section (.q.live) have no box: a scrolling area between two hairlines, rows styled as the build log's.\n  - Full log and Stop build in the live section follow 0603's secondary style (1 px --line border, 10 px corners, --text, min-height 44 px). The rule is in panel-cards.css, as 0417/0469 only allow a 44 px size for every pointer in the header's and cards' files.\n- AC5: changed tests, for the Delivery log: build-log-0548 (frame, kind colours, gap height, closing by back link; helpers moved to test/support/build-log.mjs), panel-0051 (log font), panel-0161 (log text sits on the surfaces; the live section is no card), panel-0366 (no #foreman .close), panel-0417 (#foreman .close dropped from the sized list), panel-0422 (time and kind colours on --panel), panel-0427 (13 px time allowed, as the Pipeline log's; times mono; no #foreman .close), panel-0428 (log has no corners), panel-0455 (rewritten for the flat look), panel-0577 (title selector), panel-0581 (no red dot), panel-0584 (back link closes), pipeline-0459 (no terminal; new row layout), pipeline-0479 (no dark frame or red dot).\n- Pictures: four, the build log and the live log in light and dark, at 390 px.\n",
+    "seconds": 34,
+    "usage": {
+      "input_tokens": 216829,
+      "cached_input_tokens": 156032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 887,
+      "reasoning_output_tokens": 70
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 60797,
+      "cached": 156032,
+      "write": 0,
+      "output": 887
+    },
+    "cost_usd": 0.1460672,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T09:10:18.527Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-popups.js buildLogFrame and renderForeman provide the full view, ticket back link and heading. Passing 0602 AC1 tests cover navigation and removal of the old frame."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel-popups.css shares row typography, time alignment and kind colours between both logs. Passing 0602 AC2 tests cover these rules; the passing 0422 browser test checks wrapped-line alignment and copying, and 0455 checks colours in both looks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel-cards.css removes the terminal background; panel-popups.css removes the live section's box. Passing 0602 AC3 tests exercise line order, incoming updates and scrolling to the newest line."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-cards.css styles both live-buttons controls with the secondary button dimensions and colours specified by 0603. The passing 0602 AC4 test checks both controls."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "The old-look tests have been updated and the supplied run reports 330 passes, zero failures and three skips. However, the ticket's Delivery log still contains only its placeholder; the changed tests are listed solely in the builder response."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0602-show-build-logs-in-the-new-look.md",
+        "issue": "Criterion 5 explicitly requires the Delivery log to list the updated tests, but that section is empty.",
+        "suggested_fix": "Add the updated test files and what their checks now cover to the Delivery log, using the list already provided in the builder response.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The build and live logs now use the panel's flat styling, with working back navigation, readable colours and preserved live updates. The tests support the implementation. Before approval, record the updated tests in the ticket's Delivery log as required."
+  }
+}
+```
+
+</details>
