@@ -29,7 +29,7 @@ const TICKETS = [
 // 0585: what each row's where line says first and its dot's class: the card's stage border went, so the stage is in
 // the words and a blue dot while an agent is at work, orange for a ticket that needs you and grey for the rest.
 const EXPECT = { '0501': ['Writing', 'run'], '0502': ['Checking', 'run'], '0503': ['Reviewing · round 1', 'run'], '0504': ['Reviewing · round 1', 'run'], '0505': ['Shipping', 'run'], '0506': ['Shipping', 'run'],
-  '0507': ['Has a question', 'needs'], '0508': ['Build stopped', 'wait'], '0509': ['Ready to ship', 'needs'], '0510': ['Ready', 'wait'], '0511': ['Paused', 'wait'], '0512': ['Shipping next', 'wait'] };
+  '0507': ['Has a question', 'needs'], '0508': ['Build stopped', 'needs'], '0509': ['Ready to ship', 'needs'], '0510': ['Ready', 'wait'], '0511': ['Paused', 'wait'], '0512': ['Shipping next', 'wait'] };
 
 // speck run is on, as its ship queue ships the approved tickets auto-ship covers (0203: with it off, they wait for you).
 function fake(state) {
@@ -62,6 +62,7 @@ test('0171 AC2: when a running ticket moves to its next stage, its row says the 
   assert.deepEqual(looks(p, '0601'), ['Shipping', 'run']);
 });
 
+// 0616: a stopped build nothing will carry on has the orange dot, as it needs you.
 test('0171 AC3: blocked, stopped and waiting tickets have no blue dot', async () => {
   const p = fake({ tickets: TICKETS });
   await p.settle();

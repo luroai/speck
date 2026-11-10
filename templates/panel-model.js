@@ -98,13 +98,15 @@ function doingNow(t, shipping, called) {
   return { sentence, tone, moving: working, working, round, by: round !== null ? reviewer : null };
 }
 // 0585: Build's groups, top to bottom. A ticket is under Needs you when it's blocked and waiting for you, approved and
-// waiting at Ship, or has the engineering manager's question (`asked`); under Queued when it's ready; otherwise under
+// waiting at Ship, or has the engineering manager's question (`asked`), or its build stopped and nothing will carry it on
+// (0616: left_stopped); under Queued when it's ready; otherwise under
 // Building, which has one the manager will answer or speck run will ship too.
 const BUILD_GROUPS = [['needs', 'Needs you'], ['building', 'Building'], ['queued', 'Queued']];
 function buildGroup(t, d, asked) {
   if (asked) return 'needs';
   if (!d) return 'queued';
   if (d.sentence === 'Shipping') return 'building';
+  if (t.left_stopped === true) return 'needs'; // 0616
   return (t.status === 'blocked' && t.foreman_will !== true) || (t.status === 'approved' && (t.to_ship || t.red)) ? 'needs' : 'building';
 }
 // A row's dot: orange for needs you, blue while it's worked on, grey while it waits.
@@ -243,6 +245,23 @@ function capturedAt(body) {
   if (!(Number.isFinite(at) && new Date(at).toISOString().startsWith(d))) return { on: null, time: null };
   return { on: d, time: h !== undefined && +h < 24 && +mi < 60 ? `${h}:${mi}` : null };
 }
+// 0616: whether a ticket's build stopped before finishing and nothing will carry it on, as stoppedForYou in
+// scripts/foreman.mjs, which the bar's Needs you counts by: speck run is off, or it has resumed a killed build once
+// already, or watch isn't fix or decide, or speck has looked into an exited one and isn't about to resume it.
+function leftStopped(t, on, foreman) {
+  if (t.status !== 'building' && t.status !== 'reviewing') return false;
+  const exit = t.build_exit && typeof t.build_exit === 'object' ? t.build_exit : null;
+  if (!exit && t.build_stopped !== true) return false;
+  if (!on) return true;
+  if (!exit) return t.build_resumed === true;
+  const f = foreman && typeof foreman === 'object' ? foreman : {};
+  if (f.fixing !== 'fix' && f.fixing !== 'decide') return true;
+  const id = String(t.id), a = f.agent && typeof f.agent === 'object' ? f.agent : {}, list = v => (Array.isArray(v) ? v : []);
+  if ((a.running && String(a.running.id) === id) || list(a.waiting).map(String).includes(id)) return false;
+  const last = list(a.did).find(d => d && String(d.id) === id); // newest first
+  const when = last ? Date.parse(last.at) : NaN; // an action at a time that can't be read isn't about this stop
+  return !(last && (last.action === 'resume' || last.action === 'decide') && Number.isFinite(when) && !(when < Date.parse(exit.at)));
+}
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
   const links = chains(tickets), byId = new Map(tickets.map(t => [String(t.id), t]));
@@ -369,7 +388,7 @@ function panelModel(state) {
       // 0217: and while its build has stopped before finishing, at its exit, or at when speck noticed it had been killed.
       const stopped_at = stopped ? time(t.build_stopped_at) : exit_label === 'Build stopped before finishing' ? time(t.build_exit.at) : null;
       const held_at = approved_at ?? (t.status === 'blocked' ? time(t.blocked_at) : null) ?? (paused ? time(t.paused_at) : null) ?? stopped_at;
-      return { ...t, inFlight, pausable, paused, steps: progress(t.status === 'done' ? { ...t, status: 'approved' } : t), red: t.status === 'blocked' || (exit_label !== null && !to_ship && !carried_by), to_ship, carried_by, doc_finished, exit_label: doc_finished ? null : exit_label, resume: resumeOf(t, state.resume_command, stopped),
+      return { ...t, inFlight, pausable, paused, steps: progress(t.status === 'done' ? { ...t, status: 'approved' } : t), red: t.status === 'blocked' || (exit_label !== null && !to_ship && !carried_by), to_ship, carried_by, left_stopped: !shipping && leftStopped(t, runOn, state && state.foreman), doc_finished, exit_label: doc_finished ? null : exit_label, resume: resumeOf(t, state.resume_command, stopped),
         exit_message: auto_failed || blocked_failed ? (typeof ship.message === 'string' && ship.message ? ship.message : null)
           : exited && exit_label && !doc_finished && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
         ship_hint: auto_failed && !carried_by ? `Ship it from its review pack, or run /speck-ship ${t.id}` : null,

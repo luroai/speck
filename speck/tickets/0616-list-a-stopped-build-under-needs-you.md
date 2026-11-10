@@ -43,6 +43,8 @@ A stopped build that nothing will carry on is listed under Needs you.
 - From 0585's build. Today: the grouping in `templates/panel.js` (0585) and the board's facts in `scripts/speck.mjs` and `scripts/foreman.mjs`. Waits for 0615, which changes the same file.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a watcher resume or decide recorded at a time that can't be read no longer counts as about to carry the stopped build on (both copies of the rule), with a test.
+- Pictures: the Build lane in the light and dark looks, from a stubbed board with a stopped build nothing carries on.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
