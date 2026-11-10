@@ -1,7 +1,7 @@
 ---
 id: "0619"
 title: "Let a build stop only the panels it started"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-09-stop-builds-killing-panels-they-didnt-start
 after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T09:57:14.735Z"
+approved: "2026-11-10T10:13:45.227Z"
 
 ---
 # 0619 · Let a build stop only the panels it started
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On 2026-11-09, while clearing up after a screenshot script that hung, 0583's build stopped every speck panel on the machine. The user's speck panel restarted itself, but their Alpha panel didn't, and the project menu disappeared. The same evening 0565's build left a demo panel running in the user's project menu after it ended. Builds should touch only the panels they start.
@@ -54,9 +55,15 @@ To see it, let speck run build a ticket that changes how the panel looks: its pa
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A build can finish while speck run is stopped: stopping the runner deliberately leaves builds running.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 242,984
+- Elapsed since build started: 17 min
+- Changed lines: 79 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: a build's panel folder under `~/.config/speck/build-panels/` is only removed when speck run sees that build end. A build whose run record is lost keeps an empty or stale folder there; it's harmless (dead pids are skipped), but nothing tidies it.
