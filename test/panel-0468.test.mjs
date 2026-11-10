@@ -33,7 +33,7 @@ const chipOf = (p, n) => p.all(lineOf(n)).find(x => x.className === 'dep-chip') 
 const chipSaid = (p, n) => chipOf(p, n)?.title ?? null;
 const secondLine = n => topOf(n).children[1];
 const whereOf = (p, id) => p.all(card(p, id)).find(n => /^where\b/.test(n.className)).textContent;
-const depsOf = async (p, id) => p.all(await fullViewOf(p, id)).find(n => /\b(deps|chain-facts)\b/.test(n.className)); // 0603: a chain in the full view is facts
+const depsOf = async (p, id) => p.all(await fullViewOf(p, id)).find(n => /\b(deps|chain-facts|waits-facts)\b/.test(n.className)); // 0603, 0613: a chain or Waits on in the full view is facts
 
 test('0468 AC1: a closed ticket waiting on unshipped ones ends its title row with a link chip and how many', async () => {
   const p = boardPage([board()]);
@@ -46,7 +46,7 @@ test('0468 AC1: a closed ticket waiting on unshipped ones ends its title row wit
   }
   // 0585: in Build, the row says what it waits on, and its full view counts them
   assert.equal(whereOf(p, '0500'), `Ready · after ${ELEVEN.join(', ')}`);
-  assert.match((await depsOf(p, '0500')).textContent, /Waits on.*11 queued/);
+  assert.equal((await depsOf(p, '0500')).textContent.match(/ queued/g).length, 11, 'its full view lists the 11 queued (0613)');
 });
 
 test('0468 AC1: one waiting on none, that others wait on, shows an arrow chip and how many wait on it directly', async () => {

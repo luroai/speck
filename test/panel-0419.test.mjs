@@ -173,10 +173,10 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
       }
     }
     assert.deepEqual(seen, ['0701', '0702', '0703', '0704', '0705', '0706', '0707']);
-    // 0585: pressing its row opens its full view, whose dependency box counts the tickets it waits on
+    // 0585: pressing its row opens its full view, which lists the tickets it waits on (0613: as facts)
     await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '0707').querySelector('.top').click()`);
-    await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .deps-waits')`, '0707 to open');
-    assert.equal(await b.js(`document.querySelector('#full-ticket .deps-head').textContent`), `Waits on${LONG_WAIT.length} queued`, '0707 open');
+    await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .waits-facts')`, '0707 to open');
+    assert.equal(await b.js(`document.querySelectorAll('#full-ticket .waits-facts .waits-item').length`), LONG_WAIT.length, '0707 open');
   } finally { await b.close(); await stop(panel); }
 });
 

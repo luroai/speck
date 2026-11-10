@@ -42,6 +42,7 @@ A ticket's Waits on is shown as plain facts, as its chain is.
 - Today: `depsBox`, `withDeps`, `depChip` in `templates/panel.js` and their styles in `templates/panel-cards.css`. Waits for 0612.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: on a touch screen the link lines were 44 px tall and the plain ones 20 px, so the list was unevenly spaced; every line is now 44 px there. A link's text in a Plan card is 14 px, not the card facts' 12 px, as 0612 asks of anything in a button.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
