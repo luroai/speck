@@ -47,7 +47,11 @@ speck refuses any commit that adds a private word or the home folder's path, in 
 - Self-check: added a plain error, with a test, when the commit message file can't be read; kept one `git diff` per staged file, as one diff for all of them can split a file whose type changed into two patches and misname lines.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's check on commits used to look only at tickets and notes. Now it looks at every file a commit changes (code, tests, docs and all), and at the commit message too, and refuses the commit if any new line holds one of your private words or your home folder's path. It says which file and line, or which line of the message, without repeating the word. The price list speck copies from LiteLLM is left out, because its model names can match a private word by chance.
+
+To see it, run `speck init` again in a project (this one included) so the new message check is added, then `speck doctor`, which now shows one line for each check. Try committing a file or a message with one of your private words: it's refused. `git commit --no-verify` still skips both for one commit.
+
+Worth knowing: `git commit --verbose` puts the diff into the message file, so a private word on a line the commit only removes or keeps can get the message refused. Take it out of the message, or commit without `--verbose`.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +61,10 @@ speck refuses any commit that adds a private word or the home folder's path, in 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (Delivery log only, no inbox notes):
+  - Known limit: with `git commit --verbose`, the diff below the scissors line is in the message file, so a private word on a removed or kept line gets the message refused (round 1 F1 chose checking every line over missing text git keeps with -m).
+  - Known limit: the commit check runs one `git diff` per staged file, so a very large commit (thousands of files) is checked more slowly than one under speck/ was.
+  - speck's own repository has no pre-commit or commit-msg hook installed: run `speck init` here to turn both checks on.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +146,89 @@ speck refuses any commit that adds a private word or the home folder's path, in 
     ],
     "escalation_question": "",
     "summary": "The change checks files throughout the project, excludes the copied price lists, and installs and reports both hooks. The recorded tests pass, but the message check can miss private text after a scissors marker even when Git saves it. Fix that gap before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3d75fe7d4e0158e5081eb665471f6c9ef83cb049",
+    "session": "continued",
+    "thread_id": "01a1c73d-6040-75d3-bb06-85cbd1d16c46",
+    "builder_response": "- Tests run: test/commit-check-0627.test.mjs test/commit-check-0550.test.mjs (plus the commands.checks files speck test runs itself): 129 pass, 0 fail.\n- F1: fixed. `messagePrivateLines` in scripts/commit-check.mjs no longer stops at a scissors line: it checks every line of the message, since git keeps text below the marker in a message given with -m. The unit test that assumed git drops it is replaced by \"0627 AC3 F1\", which runs `git commit -m` through the real hooks with a private word, then the home folder's path, below a scissors line, and checks each is refused at message line 3.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 251981,
+      "cached_input_tokens": 202496,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1507,
+      "reasoning_output_tokens": 199
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6261,
+      "cached": 88704,
+      "write": 0,
+      "output": 533
+    },
+    "cost_usd": 0.0267224,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T20:55:36.116Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/commit-check.mjs: stagedPrivateLines checks added lines across staged files and reports file and line. Passing 0627 AC1 tests cover private words, home paths, and unchanged or removed lines."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "COPIED_FILES excludes scripts/prices.json and .speck/scripts/prices.json. Passing AC2 tests exercise these exclusions; docs/brief.md explains their LiteLLM origin."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "messagePrivateLines now scans every line. Passing AC3 integration tests cover message rejection, the scissors-marker regression, hook installation, preservation of foreign hooks and unreadable message files."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests verify --no-verify skips both hooks and doctorChecks reports both checks as on or off with reasons."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified current recorded output: 129 passed, zero failed, three skipped. Round 1's broader related-test run also had zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/commit-check.mjs",
+        "issue": "The message check previously skipped private text below a scissors marker even when Git retained it. It now scans every line, and a real-hook regression test verifies rejection of both private words and home paths below the marker.",
+        "suggested_fix": "Completed; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change checks added lines throughout the project and commit messages, while excluding the documented copied price lists. The message-check gap is fixed and covered by an integration test. All criteria pass, with no blocking concerns remaining."
   }
 }
 ```
