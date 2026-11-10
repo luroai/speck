@@ -1,7 +1,7 @@
 ---
 id: "0598"
 title: "Prepare release 1.0.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T17:40:35.346Z"
 ---
 # 0598 · Prepare release 1.0.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck has grown up: it works as your engineering manager, which you can name (0575, 0576), the panel is redesigned around it, with the black bar, the Premium character and the bridge across every project (0577 to 0597), and since 0.22.0 it decides and tells you. Anyone following the setup prompt, or updating speck in a project, still gets 0.22.0.
@@ -63,3 +63,89 @@ speck is ready to be released as 1.0.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7e6c0e15a24c93e888a63486285f99c8db2282f2",
+    "session": "fresh",
+    "thread_id": "01a1c691-5513-7762-b1e9-6fbccbe0cd3c",
+    "builder_response": "- Tests run (speck test --related): test/release-0598.test.mjs test/release-0574.test.mjs test/docs-0491.test.mjs test/docs-0267.test.mjs, plus every existing test file naming a changed file (1263 tests, 0 failing, 3 skipped).\n- Tickets shipped since v0.22.0: 0575 to 0597 and 0599 to 0621; no others.\n- test/release-0574.test.mjs: its checks that named 0.22.0 as the current version now check the current version, as 0574 did for 0560.\n- test/docs-0491.test.mjs: release-0598 added to the release tests allowed to name the version.\n- Price table refreshed today with `npm run prices` (taken 2026-11-10, 3564 models).\n- Built with speck figures computed with test/support/figures.mjs from main at \"speck(0617): End a draft's full view in Set ready\": 604 shipped, 16 cancelled, 14 min median, 2 rounds median, 296 first-round approvals.\n- Demo pictures retaken from the panel as it is in this branch, with the demo 0597 used (outside the repo), at 2880 × 1800; also kept with the review pack.\n- README and brief status lines say 1.0.0 without \"a public preview\".\n",
+    "seconds": 46,
+    "usage": {
+      "input_tokens": 254882,
+      "cached_input_tokens": 191488,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1332,
+      "reasoning_output_tokens": 74
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 63394,
+      "cached": 191488,
+      "write": 0,
+      "output": 1332
+    },
+    "cost_usd": 0.1592568,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T17:47:01.870Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 1.0.0. Both AC1 tests passed, including running speck init and checking its output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds 1.0.0 above 0.22.0 without changing older sections. Its descriptions cover the shipped naming, panel redesign, bridge and run improvements since v0.22.0."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Inspected both refreshed PNGs: they show the current compact Build rows, black bar, tabs and decision strip in light and dark. README and brief status lines say 1.0.0 without public preview. Setup-prompt tests passed; prices.json records 2026-11-10 with refreshed rates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.0.0.md covers the engineering manager, shipped changes, per-project update command, LCD removal, speck_name, estimated costs and changelog link. No person's name appears. Command, setting and link tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recomputed the current done-ticket figures: 604 shipped, 16 cancelled, 14 minutes median, 2 rounds median, 296 first-round approvals, matching README. The reported run has 1260 passes, zero failures and three skips; version/changelog matching passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0598.test.mjs",
+        "issue": "The new status-line test reads README.md and asserts that its text does not contain 'preview'. The review rules permit testing the README status line's version, but require other wording and facts there to be checked by review. test/docs-0491.test.mjs also explicitly limits release tests to the version and setup prompt.",
+        "suggested_fix": "Keep the README version assertion, but remove its preview-word assertion and check that wording by review. The brief's assertion may remain.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release content, refreshed pictures, prices and published figures look correct, and the reported tests pass. One new test checks README wording that the project's rules reserve for human review; remove that assertion before approval."
+  }
+}
+```
+
+</details>

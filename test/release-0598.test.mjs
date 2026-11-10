@@ -56,13 +56,12 @@ test('0598 AC3: the README\'s demo pictures were taken again since 0597', t => {
   }
 });
 
-// Only the version and the dropped words are facts: the rest of the status line's wording is checked by review.
-test('0598 AC3: the README\'s and the brief\'s status lines name 1.0.0 and no longer say public preview', () => {
-  for (const f of ['README.md', 'docs/brief.md']) {
-    const line = read(f).match(/^.*Status: 1\.0\.0\b.*$/m)?.[0];
-    assert.ok(line, `${f}'s status line names 1.0.0`);
-    assert.doesNotMatch(line, /preview/i, f);
-  }
+// Only the version is a fact in the README's status line (0491): that it no longer says public preview there is
+// checked by review. The brief's status line is checked for both.
+test('0598 AC3: the README\'s and the brief\'s status lines name 1.0.0, and the brief\'s no longer says public preview', () => {
+  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), /Status: 1\.0\.0\b/, f);
+  const line = read('docs/brief.md').match(/^.*Status: 1\.0\.0\b.*$/m)?.[0];
+  assert.doesNotMatch(line, /preview/i);
 });
 
 test('0598 AC3: the setup prompt still installs the latest release, as 0253 left it', () => {
