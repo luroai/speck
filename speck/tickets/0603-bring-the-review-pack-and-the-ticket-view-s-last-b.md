@@ -72,7 +72,7 @@ Round 2 (codex): approve.
   - `test/panel-0041.test.mjs`, `test/panel-0463.test.mjs`, `test/panel-0467.test.mjs`, `test/panel-0468.test.mjs`: a chain in the full view is facts, not a box of circles.
   - `test/panel-0140.test.mjs`, `test/panel-0161.test.mjs`, `test/panel-0427.test.mjs`: the pack's back link and the document's Close in place of the pack's Close.
   - `test/panel-0428.test.mjs`, `test/panel-0453.test.mjs`: secondary buttons have 10 px corners.
-  - `test/panel-0461.test.mjs`: the Shipped step is in the accent, not purple.
+  - `test/panel-0461.test.mjs`, `test/panel-0167.test.mjs`: the Shipped step is in the accent, not purple, so it's among the rules 0167 lets use `--accent`.
   - `test/panel-0426.test.mjs`, `test/panel-0480.test.mjs`: `--bezel` and its shades are gone.
 - Follow-ups:
   - Inbox: `speck/ideas/2026-11-10-show-the-full-view-s-waits-on-as-facts-too.md` (the full view's Waits on box is still the old box).

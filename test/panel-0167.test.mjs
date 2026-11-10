@@ -40,7 +40,8 @@ test('0167 AC2: a ticket that needs you has an orange dot, one worked on a blue 
 test('0167 AC2: the speck red is used only for the speck itself', () => {
   // From 0168 the speck was the builder badge's eye, drawn on its canvas, and the badge went in 0416, so no rule uses the speck red.
   const users = plain().filter(r => r.decls.some(([, v]) => tokens(v).some(t => t === '--accent' || t === '--accent-bg'))).map(r => r.sel);
-  assert.deepEqual(users, ['.where.run::before'], '0585: but for a row\'s blue dot while it is worked on'); // --accent is the panel\'s blue now
+  assert.deepEqual(users, ['.where.run::before', '.item.ticket .track .step.done.ship, .item.ticket .track .step.now.ship', '.item.ticket .track .step.now.ship'],
+    '0585: but for a row\'s blue dot while it is worked on, and (0603) the Shipped step'); // --accent is the panel\'s blue now
   // 0303: the builders are drawn on the LCD screen, whose speck is its own red. 0413: the header's mark, whose speck was
   // in the panel's --dot, went with the header row, so nothing uses --dot now.
   const dots = plain().flatMap(r => r.decls.filter(([, v]) => tokens(v).includes('--dot')).map(([k]) => `${r.sel} { ${k} }`));
