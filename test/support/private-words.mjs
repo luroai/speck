@@ -20,9 +20,10 @@ export function readPrivateWords(home = os.homedir()) {
 
 // Tracked files outside speck/ that contain any of the words (case-insensitive, literal). Files under speck/ are
 // skipped: a test result is reused while nothing outside speck/ changes (0112), and tickets are checked for the
-// words by speck lint (0121).
+// words by speck lint (0121). scripts/prices.json is skipped too (0628): it holds model names copied from LiteLLM's
+// public price list, which a private word can happen to match.
 export function filesNaming(words, cwd) {
-  const r = spawnSync('git', ['grep', '-l', '-i', '-F', ...words.flatMap(w => ['-e', w]), '--', '.', ':!speck/'],
+  const r = spawnSync('git', ['grep', '-l', '-i', '-F', ...words.flatMap(w => ['-e', w]), '--', '.', ':!speck/', ':!scripts/prices.json'],
     { cwd, encoding: 'utf8' });
   if (r.status > 1 || r.error) throw new Error(`git grep failed: ${r.stderr || r.error?.message}`);
   return r.stdout.split('\n').filter(Boolean);

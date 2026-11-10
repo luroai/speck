@@ -41,6 +41,7 @@ The owner-name check skips the copied price list, and still catches a private wo
 - Today: `filesNaming` runs `git grep -l -i -F … -- . ':!speck/'`; adding `':!scripts/prices.json'` is the likely change.
 - Relies on nothing outside this repo.
 - Failing before this build: not checked
+- Self-check: the AC2 test also checks that a file named prices.json anywhere else, or a near-namesake such as scripts/prices.json.bak, is still caught; no code changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
