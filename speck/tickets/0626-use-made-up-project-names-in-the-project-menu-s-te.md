@@ -1,7 +1,7 @@
 ---
 id: "0626"
 title: "Use made-up project names in the project menu's tests"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T20:27:58.622Z"
 ---
 # 0626 · Use made-up project names in the project menu's tests
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The project menu's tests (0516) use real project names from the user's machine as their sample projects, so a private name sits in the public repo's test code.
@@ -44,7 +44,7 @@ The project menu's tests use made-up project names.
 - Self-check: no changes. With no private-words file the private-words test checks nothing, which the made-up names test covers.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes for anyone using speck. The project menu's tests used to name one of the owner's other projects as a sample. They now use made-up names, and a new check fails if a sample project there is ever given a name that isn't on its list of made-up ones. One thing to watch: that project's name wasn't in the private-words list, so the private-words checks wouldn't have caught it anywhere else. Adding it to the list closes that gap.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,3 +54,72 @@ The project menu's tests use made-up project names.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up (owner's setup, not code): the name taken out here isn't in the private-words list, so add it there for the private-words checks to catch it elsewhere. No idea note, as it needs no ticket.
+- Follow-up: the owner-name check fails on the price list; 0628 covers it.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b41a56dcadbc0b3acc94c636097f6b77ba9f4492",
+    "session": "fresh",
+    "thread_id": "01a1c726-ec57-7782-9875-cbf8d4f7af66",
+    "builder_response": "- Tests run: test/panel-0626.test.mjs test/panel-0516.test.mjs (with --related, which added the commands.checks files)\n- Round 1. The only real project name in test/panel-0516.test.mjs was another folder beside this repo on the user's machine (two lines), plus a shortened form of it (four lines). Both are now `beta`. That name isn't in ~/.config/speck/private-words, so the new AC1 test checks every sample project name against a list of made-up names, and checks for the private words too.\n- AC2/AC3: only string literals changed in panel-0516. All its tests pass. The one failure in the run is luro-0082 AC2 on scripts/prices.json, a file this ticket doesn't touch (ticket 0628 covers it).\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 128289,
+      "cached_input_tokens": 89088,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 660,
+      "reasoning_output_tokens": 18
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 39201,
+      "cached": 89088,
+      "write": 0,
+      "output": 660
+    },
+    "cost_usd": 0.0939108,
+    "tests": {
+      "failing": 1,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T20:30:03.038Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/panel-0516.test.mjs now uses beta for the affected sample projects; the other sample names are fictional or speck. Both AC1 checks in test/panel-0626.test.mjs pass, checking the sample-name allowlist and absence of configured private words."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The diff in test/panel-0516.test.mjs changes only sample-name literals and their matching expectations. All 19 existing 0516 tests pass in /tmp/speck-0626-tests.txt; their assertions retain the original behavioural coverage."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The recorded run has 128 passes, three skips and one unrelated failure. That failure checks owner names and identifies scripts/prices.json; neither that file nor the failing test changes against main. No regression attributable to this change was found."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The project-menu tests now use fictional sample names and retain their existing checks. Added checks guard against reintroducing private names. All affected tests pass. The reported failure concerns an unchanged price-list file and is unrelated to this change."
+  }
+}
+```
+
+</details>
