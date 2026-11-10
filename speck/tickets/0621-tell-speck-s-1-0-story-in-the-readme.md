@@ -45,6 +45,9 @@ The README leads with speck as your engineering manager, who gets your tickets s
 - Keep the README's voice: plain British English, written for product managers, no one's name. Use the no-ai-slop pass the README has had before if it helps.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Tests: every criterion except 5 is about how the README reads, so it has no test of its own: the reviewer checks it by reading the README. Criterion 5 is checked by the existing README tests (setup prompt, status line, pictures, links), run with `speck test --related`.
+- Self-check: said that speck takes calls and looks into stops only once `watch` lets it, as `tell` is the default; said the name shows wherever it speaks for you (panel, `speck status`, `speck run`'s log), as 0576 did, rather than everywhere; added asking you to what its agent can do.
+- Pictures: none, because the change is wording only and the demo pictures are out of scope.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
