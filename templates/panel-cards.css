@@ -37,7 +37,7 @@
   .detail ol li { margin-bottom: 4px; }
   .ready { border-left: 1px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
   .ready div { padding: 3px 0; }
-  .set-ready { font: inherit; font-family: var(--font-ui); font-size: 12px; margin-top: 10px; padding: 4px 12px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
+  .set-ready { box-sizing: border-box; margin-top: 10px; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; background: var(--text); color: var(--panel); border: .5px solid var(--text); border-radius: 10px; cursor: pointer; } /* 0612: the redesign's size */
   .set-ready:disabled { background: transparent; color: var(--faint); border-color: var(--line); cursor: not-allowed; }
   .ready div.refused { white-space: pre-wrap; }
   /* 0151: a ticket's id and title on one line, a wrapped title's next line starting under the title, then its tags.
@@ -94,6 +94,8 @@
      10 px corners, the text colour, 44 px tall for every pointer, as 0602's Full log and Stop build */
   .q .stop-build { margin: 6px 0 2px; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
   .foreman .reload, #doc-view .close, #settings .close, #settings-unsaved button.secondary { min-height: 44px; } /* 0603: their height here, as every control's for every pointer is (0469); the rest of their style in their own files */
+  #foreman.log-view .log-filter, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder,
+    #settings .setting .save, #settings .arow .save, #settings .save-all, #settings-unsaved button { min-height: 44px; } /* 0612: the same, for the last small buttons */
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
   /* 0602: Full log and Stop build in the redesign's secondary style: a 1 px border in the line colour, 10 px corners, the text colour, 44 px tall, for every pointer as the cards' controls are (0469) */
@@ -241,9 +243,9 @@
   .lock::after { content: ''; position: absolute; left: 2px; top: 4px; width: 8px; height: 6px; background: currentColor; }
   /* 0468: a closed ticket's dependency chip, at the end of its title line: a link icon and how many it waits on, or an
      arrow and how many wait on it. It never shrinks or wraps, so the title gives way and ends in its ellipsis */
-  .dep-chip { flex: none; align-self: center; display: inline-flex; align-items: center; justify-content: center; padding: 0; font: inherit; font-size: 12px; line-height: 14px;
+  .dep-chip { flex: none; align-self: center; display: inline-flex; align-items: center; justify-content: center; padding: 0; font: inherit; font-size: 14px; line-height: 16px;
     font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); background: none; border: 0; cursor: pointer; }
-  .dep-pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 8px; }
+  .dep-pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 10px; }
   .dep-chip:hover { color: var(--text); } .dep-chip:hover .dep-pill { border-color: var(--text); }
   .dep-icon { display: inline-block; position: relative; width: 11px; height: 10px; }
   .dep-icon.link { transform: rotate(-35deg); }
@@ -309,8 +311,8 @@
   .deps-bar i.shipped { border-top-color: var(--green); }
   .deps-bar i.building { border-top-color: var(--blue); }
   .deps-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
-  .deps .chip { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 4px 0; font: inherit; font-size: 12px; line-height: 16px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip;
-    color: var(--text); background: var(--raise); border: 1px solid var(--line); border-radius: 3px; font-variant-numeric: tabular-nums; }
+  .deps .chip { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 4px 0; font: inherit; font-size: 14px; line-height: 16px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip;
+    color: var(--text); background: var(--raise); border: 1px solid var(--line); border-radius: 10px; font-variant-numeric: tabular-nums; }
   .deps .chip.building { color: var(--run); border-color: var(--blue); }
   .deps .chip.shipped { color: var(--ok); border-color: var(--green); }
   .deps .chip.more { grid-column: span 2; color: var(--muted); }
