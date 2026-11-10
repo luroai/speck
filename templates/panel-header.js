@@ -10,13 +10,18 @@ if (pageHeader) {
   new ResizeObserver(() => document.documentElement.style.setProperty('--head', `${pageHeader.offsetHeight}px`)).observe(pageHeader);
   const repo = pageHeader.querySelector('.repo');
   if (repo) repo.title = repo.textContent.trim();
-  const base = pageHeader.querySelector('.bar-more code');
+  const pick = pageHeader.querySelector('.project-pick'); // 0604: the menu covers the name, so its tooltip gives the name too
+  if (repo && pick) pick.title = `${repo.title} · Switch project`;
+  const base = pageHeader.querySelector('.bar-where code');
   if (base) base.title = base.textContent.trim();
+  // 0604: the project's line is over the status's middle line, so a press on it, but on the project menu, presses the status
+  const where = pageHeader.querySelector('.bar-where');
+  if (where) where.addEventListener('click', e => { if (!e.target.closest('#project-pick')) $('run').click(); });
 }
 function reducedMotion() { return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches; }
 const NEEDS_YOU = /^Needs you \d+$/;
 // 0285: the Foreman, speck run's one status for the whole pipeline. Pressing it opens its detail. 0580: its word is on
-// the bar's first line, and the bar's edge is in the needs-you colour while the word is "Needs you <n>". The button stays
+// the bar's first line (0604: a line of its own), and the bar's edge is in the needs-you colour while the word is "Needs you <n>". The button stays
 // put and only what's in it changes, so it keeps the focus.
 function drawHeader(f, stale) {
   const run = $('run'), word = stale ? 'Reload page' : f.word;
@@ -26,11 +31,11 @@ function drawHeader(f, stale) {
   run.title = `speck: ${word} · ${stale ? 'The panel is running newer code than this page shows: open to reload it' : 'The pipeline: speck run\'s log'}`;
   drawProjects(); // 0516
 }
-// 0580: what's on the bar. speck's face is made once, in the pipeline's mood, and SpeckMood eases it from one to the next.
+// 0580: what's on the bar. 0604: speck at 56 px. speck's face is made once, in the pipeline's mood, and SpeckMood eases it from one to the next.
 let barFace = null, barMood = null;
 function drawBar(f, word) {
   if (!barFace && globalThis.SpeckFace) { // without its script the bar still shows the status
-    barFace = SpeckFace.draw({ mood: state && state.foreman && state.foreman.mood, size: 44, look: 'dark' });
+    barFace = SpeckFace.draw({ mood: state && state.foreman && state.foreman.mood, size: 56, look: 'dark' });
     $('bar-face').replaceChildren(barFace);
     barMood = SpeckMood.watcher(mood => SpeckMood.change(barFace, mood));
   }
@@ -41,8 +46,8 @@ function drawBar(f, word) {
   $('bar-needs-part').hidden = !needs;
   if (needs) setText($('bar-needs'), `${needs[1]} need${needs[1] === '1' ? 's' : ''} you`);
 }
-// 0516: the project menu. While two or more speck panels are running on this machine, a menu after the project's name
-// in the title row lists every running panel's project, by its folder name (and its port, when two share a name), with
+// 0516: the project menu. While two or more speck panels are running on this machine, a menu on the project's name
+// (0604: the bar's second line) lists every running panel's project, by its folder name (and its port, when two share a name), with
 // the one shown chosen. Choosing another shows that project's panel here, at this address: the panel serving this address
 // passes the page's requests on to it from then on. While the project shown has stopped, the page says so, and the
 // menu lists the ones still running.
@@ -58,12 +63,9 @@ if (typeof globalThis.fetch === 'function') {
     return res;
   };
 }
-// 0596: All projects, in the bar before Settings, made here as it shows only with two or more panels running.
-const bridgeOpener = el('button', 'bridge-open', 'All projects');
-bridgeOpener.type = 'button';
-bridgeOpener.title = 'Every project at once';
-bridgeOpener.hidden = true;
-$('bezel').insertBefore(bridgeOpener, $('settings-open'));
+// 0596: All projects, which opens the bridge, with two or more panels running. 0604: the project menu's last choice,
+// chosen only while the bridge is open; otherwise the menu has the project shown chosen.
+const ALL_PROJECTS = 'all';
 let projectsGoneList = null, projectsDrawn = null; // the panels still running while the one shown has stopped; what the menu was drawn from
 // The project shown, by the name the menu last gave it.
 function projectShown() {
@@ -85,15 +87,15 @@ function drawProjects() {
   const projects = state && state.projects, list = projectsGoneList || (projects && Array.isArray(projects.list) ? projects.list : []);
   const self = projectsGoneList ? null : projects && projects.self, show = list.length > (projectsGoneList ? 0 : 1);
   $('project-pick').hidden = !show;
-  bridgeOpener.hidden = list.length < 2; // 0596: every project at once, from two running panels
-  const drawn = JSON.stringify([show && list, self]);
+  const drawn = JSON.stringify([show && list, self, bridgeOpen]);
   if (!show || drawn === projectsDrawn) return;
   projectsDrawn = drawn;
   const named = new Map();
   for (const p of list) named.set(p.name, (named.get(p.name) || 0) + 1);
   const option = (value, text, chosen) => { const o = el('option', null, text); o.value = value; o.selected = chosen; return o; };
-  const options = list.map(p => option(String(p.port), named.get(p.name) > 1 ? `${p.name} · ${p.port}` : String(p.name), p.port === self));
-  if (projectsGoneList) { const o = option('', `${projectShown()} (stopped)`, true); o.disabled = true; options.unshift(o); }
+  const options = list.map(p => option(String(p.port), named.get(p.name) > 1 ? `${p.name} · ${p.port}` : String(p.name), p.port === self && !bridgeOpen));
+  if (projectsGoneList) { const o = option('', `${projectShown()} (stopped)`, !bridgeOpen); o.disabled = true; options.unshift(o); }
+  if (list.length >= 2) options.push(option(ALL_PROJECTS, 'All projects', bridgeOpen)); // 0596: every project at once, from two running panels
   $('project').replaceChildren(...options);
 }
 async function chooseProject(port) {
@@ -107,8 +109,8 @@ async function chooseProject(port) {
   drawProjects(); // the menu goes back to the project shown
   return false;
 }
-$('project').addEventListener('change', () => chooseProject($('project').value));
-// 0596: the bridge, every project at once: a full view over the lanes, opened by All projects beside the project menu. It
+$('project').addEventListener('change', () => ($('project').value === ALL_PROJECTS ? openBridge() : chooseProject($('project').value)));
+// 0596: the bridge, every project at once: a full view over the lanes, opened by All projects in the project menu. It
 // reads 0595's summaries from the panel at this address, and again every few seconds while it's open. A panel that isn't
 // answering stays in Projects, and counts for nothing in the figures.
 const BRIDGE_MS = 5000, BRIDGE_GIVE_UP_MS = 15000, ASKED_TICKET = 'speck-open-ticket';
@@ -121,6 +123,7 @@ function openBridge() {
   bridgeOpen = true;
   bridgeBody = null; bridgeError = null; bridgeDrawn = null; bridgeFace = null;
   drawBridge();
+  drawProjects(); // 0604: All projects chosen in the menu while it's open
   $('bridge').hidden = false;
   holdPage(pageHeld()); // only the bridge can be clicked, scrolled or reached with Tab
   if ($('bridge').focus) $('bridge').focus({ preventScroll: true });
@@ -133,7 +136,8 @@ function closeBridge() {
   bridgeTimer = null;
   $('bridge').hidden = true;
   holdPage(pageHeld()); // let go first, or the focus can't return to the header
-  if (bridgeOpener.focus) bridgeOpener.focus();
+  drawProjects(); // 0604: the menu has the project shown chosen again
+  if ($('project').focus) $('project').focus();
 }
 async function askBridge() {
   if (bridgeAsking || !bridgeOpen) return;
@@ -259,7 +263,6 @@ function openAskedTicket(m) {
   try { v = JSON.parse(kept); } catch { return; }
   if (v && state && state.projects && v.port === state.projects.self) openTicket(String(v.id), m);
 }
-bridgeOpener.addEventListener('click', e => { e.stopPropagation(); openBridge(); });
 // 0410: Plan, Build and Shipped are tabs under the header (0520: with Capture first), and only the open one's lane shows. 0582: each says
 // how many its lane holds. Build opens with the
 // page. Each lane's list keeps its own scroll position, put back when its tab opens again.

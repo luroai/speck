@@ -22,15 +22,15 @@ test('0580 AC1: the top of the panel is a rounded, inset dark bar with no LCD sc
   assert.doesNotMatch(h, /class="name"/, 'no dot-matrix title');
   assert.match(decl('.bezel', 'border-radius'), /^\d+px$/, 'rounded');
   assert.match(decl('header', 'padding'), /16px/, 'inset from the edges');
-  assert.equal(decl('.bezel', 'display'), 'flex', 'one row');
+  assert.equal(decl('.bezel', 'display'), 'grid', 'speck, the lines beside it and Settings'); // 0604: three lines, not one row
 });
 
-test('0580 AC1: the bar holds speck at 44 px in its current mood, and follows it', async () => {
+test('0580 AC1: the bar holds speck at 56 px (0604: 44 before) in its current mood, and follows it', async () => {
   const f = foreman({ mood: 'focused' }), p = fakePage([board(f), board({ ...f, word: 'Off', mood: 'asleep' })]);
   await p.settle();
   const face = () => p.byId('bar-face').children[0];
-  assert.equal(face().attrs.width, '44');
-  assert.equal(face().attrs.height, '44');
+  assert.equal(face().attrs.width, '56');
+  assert.equal(face().attrs.height, '56');
   assert.equal(face().attrs['data-mood'], 'focused');
   for (const t of p.timers.splice(0)) t();
   await p.settle();
@@ -38,19 +38,23 @@ test('0580 AC1: the bar holds speck at 44 px in its current mood, and follows it
   assert.equal(p.byId('bar-face').children.length, 1, 'one face, kept between redraws');
 });
 
-test('0580 AC1: the first line is the status word and the project', async () => {
+test('0580 AC1: the first line is the status word, and (0604) the project is on the line under it', async () => {
   const h = headerHtml();
-  assert.match(h, /<span class="bar-word" id="bar-word"><\/span> · <span class="repo">\{\{repo\}\}<\/span>/);
+  assert.match(h, /<span class="bar-word" id="bar-word"><\/span><span class="bar-more">/);
+  assert.match(h, /<span class="bar-where"><span class="bar-name"><span class="repo">\{\{repo\}\}<\/span>/);
   const p = await opened(board(foreman()));
   assert.equal(p.byId('bar-word').textContent, 'Building 4');
 });
 
-test('0580 AC1: until the first board arrives the status lines stay hidden, rather than show their separators alone', () => {
-  assert.match(styles(), /\.bezel \.bar-lines:has\(\.bar-word:empty\) \{ visibility: hidden; \}/);
+test('0580 AC1: until the first board arrives no separator shows alone (0604: the status has a line of its own, which keeps its height)', () => {
+  assert.doesNotMatch(headerHtml(), /id="bar-word"><\/span> · /, 'nothing after the status on its line');
+  assert.match(headerHtml(), /<span id="bar-needs-part" hidden> · /, 'the separator before how many need you shows with it');
+  assert.match(styles(), /\.bezel \.bar-word:empty::before \{ content: "\\00a0"; \}/);
 });
 
-test('0580 AC1: the second line says what is queued, how many need you, in orange, and the base branch', async () => {
-  assert.match(headerHtml(), /id="bar-queued"><\/span><span id="bar-needs-part" hidden> · <span class="needs" id="bar-needs"><\/span><\/span> · <code>\{\{base\}\}<\/code>/);
+test('0580 AC1: the second line says what is queued, how many need you, in orange, and the base branch (0604: the last line, and the base branch after the project)', async () => {
+  assert.match(headerHtml(), /id="bar-queued"><\/span><span id="bar-needs-part" hidden> · <span class="needs" id="bar-needs"><\/span><\/span><\/span>/);
+  assert.match(headerHtml(), /<span class="bar-base"> · <code>\{\{base\}\}<\/code><\/span>/);
   assert.equal(decl('.bezel .bar-more .needs', 'color'), 'var(--bar-needs)');
   for (const [f, queued, needs] of [
     [foreman({ ready: ready(3) }), '3 queued', null],
@@ -83,7 +87,7 @@ test('0580 AC3: the project menu stays in the bar, lists the running panels and 
   let reloaded = 0;
   const p = await opened(st, { location: { reload() { reloaded++; } } });
   assert.equal(p.byId('project-pick').hidden, false);
-  assert.deepEqual(p.byId('project').children.map(o => o.textContent), ['speck', 'alpha']);
+  assert.deepEqual(p.byId('project').children.map(o => o.textContent), ['speck', 'alpha', 'All projects']); // 0604: and All projects
   p.byId('project').value = '5002';
   p.byId('project').listeners.change();
   await p.settle();
@@ -104,7 +108,7 @@ test('0580 AC4: the bar has its own colours, so both looks show the same one, an
 
 const STATE = { tickets: Array.from({ length: 30 }, (_, i) => T(String(1000 + i), 'ready')), ideas: [], run: { on: true, pid: 1 },
   foreman: foreman({ word: 'Waiting: other tickets', mood: 'watching', ready: ready(30) }) };
-test('0580 AC4: at 320 px the first line stays on one line, and the bar looks the same in both looks and stays put while a list scrolls', skip, async () => {
+test('0580 AC4: at 320 px the status stays on one line, and the bar looks the same in both looks and stays put while a list scrolls', skip, async () => {
   const panel = await sharedPanel();
   const b = await browserPage('about:blank');
   try {
@@ -117,13 +121,13 @@ test('0580 AC4: at 320 px the first line stays on one line, and the bar looks th
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelector('#bar-word').textContent === 'Waiting: other tickets' && !!document.querySelector('#bar-face svg')`, 'the bar');
     await b.js('document.fonts.ready.then(() => true)');
-    await b.js(`document.querySelector('.bar-top .repo').textContent = 'a-client-project-with-a-long-name'; true`);
+    await b.js(`document.querySelector('.bar-where .repo').textContent = 'a-client-project-with-a-long-name'; true`);
     const m = await b.js(`(() => {
       const r = s => { const b = document.querySelector(s).getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, width: b.width, height: b.height }; };
-      const top = document.querySelector('.bar-top'), range = document.createRange();
+      const top = document.querySelector('#bar-word'), range = document.createRange(); // 0604: the status, on its own line
       range.selectNodeContents(top);
       return { page: document.documentElement.scrollWidth, width: innerWidth, lines: new Set([...range.getClientRects()].map(x => Math.round(x.top + x.height / 2))).size,
-        word: r('#bar-word').width, top: r('.bar-top'), bar: r('.bezel'), face: r('#bar-face svg'), settings: r('#settings-open') };
+        word: r('#bar-word').width, top: r('.bar-where'), bar: r('.bezel'), face: r('#bar-face svg'), settings: r('#settings-open') };
     })()`);
     const at = JSON.stringify(m);
     assert.ok(m.page <= m.width, `no sideways scrolling: ${at}`);
@@ -131,8 +135,8 @@ test('0580 AC4: at 320 px the first line stays on one line, and the bar looks th
     assert.ok(m.word > 40, `the word still shows: ${at}`);
     assert.ok(m.top.right <= m.settings.left + 0.5, `it stops before Settings: ${at}`);
     assert.ok(m.bar.left >= 8 && m.bar.right <= m.width - 8, `inset: ${at}`);
-    assert.equal(m.face.width, 44, `speck at 44 px: ${at}`);
-    assert.ok(m.bar.height <= 56, `thin: ${at}`);
+    assert.equal(m.face.width, 56, `speck at 56 px (0604): ${at}`);
+    assert.ok(m.bar.height <= 72, `still a bar (0604: three lines): ${at}`);
     const look = async theme => b.js(`(() => {
       setLook(${JSON.stringify(theme)});
       const s = n => getComputedStyle(document.querySelector(n));
