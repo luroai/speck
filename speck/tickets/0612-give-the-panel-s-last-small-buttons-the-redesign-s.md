@@ -47,7 +47,7 @@ Every button in the panel has the redesign's size and style.
 - The small lines inside the header bar's status button and the All projects view's cards and rows are 13 px, as the tab counts are, with their line heights unchanged, so the bar and the cards are no taller.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel's last small buttons now match the rest: the Save in Settings' "Unsaved changes" question is a blue button the same size as Discard and Keep editing, and a setting's own Save, the review pack's file and folder buttons and Ask for changes are full-size outlined buttons. Every button now has the same rounded corners, and no button has the old tiny text. To see it, change a setting and close Settings, or open a task's review pack. Keep an eye on the Pipeline log's four filters, which are now taller and only just fit one line on a phone, and on rows in Settings that have their own Save, which are taller than before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +58,10 @@ Every button in the panel has the redesign's size and style.
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new look (AC4): `test/panel-0428.test.mjs`, whose 0428 AC1 now expects 10 px corners on every button, with selects, text boxes, tags and the priority menu still 8 px; and `test/panel-0453.test.mjs`, whose AC1 AC3 now expects every button's corners to be 10 px in a real browser, and whose AC2 checks the border of Discard in Settings' unsaved-changes question rather than its Save, which is now filled in the accent with no border to show.
+- Follow-ups (Delivery log only, none to the inbox):
+  - Known limit: a draft's priority tag acts as a button but is drawn as a tag, so it keeps the tags' 8 px corners.
+  - Known limit: the tab counts, the header bar's third line and the All projects view's small lines are 13 px, not 14, so they still fit at 320 px and the bar and cards are no taller.
+  - Skipped, already in the inbox: the 0517 AC3 frame-timing test missing its 50 ms limit under load (`speck/ideas/2026-11-08-steady-the-0517-ac3-frame-time-test-under-load.md`).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -142,6 +146,92 @@ Every button in the panel has the redesign's size and style.
     ],
     "escalation_question": "",
     "summary": "The requested Save and review-pack buttons have the new size and styling, and the reported tests pass. Two gaps remain: All projects buttons still contain small text, and the required record of updated tests is missing."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "564dccd0490228579cb073711807e2c87079ce58",
+    "session": "continued",
+    "thread_id": "01a1c506-a7e0-71e1-947f-8d1557ca04cf",
+    "builder_response": "- Tests run: test/panel-0612.test.mjs test/panel-0428.test.mjs test/panel-0453.test.mjs test/panel-0417.test.mjs test/panel-0582.test.mjs test/panel-0413.test.mjs test/panel-0580.test.mjs test/panel-0607.test.mjs test/panel-0596.test.mjs test/panel-0604.test.mjs, plus every related test `speck test --related` chose.\n- F1: fixed. The AC3 test now also collects the classes of everything drawn inside a button: every el() inside an el('button', …) or bridgeButton(…) call, and every class inside a <button> in panel.html. That found .bridge-where, .bridge-line and also .bezel .bar-more (the status button's third line in the header bar). All three are now 13 px with their line heights unchanged, so the header bar and the All projects cards keep their heights (the 0413, 0580, 0596, 0604 and 0607 header and bridge tests pass). The ticket's Notes record why it's 13 px.\n- F2: fixed. The Delivery log lists test/panel-0428.test.mjs and test/panel-0453.test.mjs and what each now expects.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 387095,
+      "cached_input_tokens": 325120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1739,
+      "reasoning_output_tokens": 45
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 11310,
+      "cached": 164992,
+      "write": 0,
+      "output": 770
+    },
+    "cost_usd": 0.0468192,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:37:59.322Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-settings.css gives the unsaved-changes Save the accent colours and redesign typography; panel-cards.css supplies 44 px height. The passing 0612 AC1 test checks styling and placement beside the secondary choices."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel-settings.css and panel-popups.css give the specified controls secondary styling, 10 px corners and 14 px panel typography; panel-cards.css supplies 44 px height. The 0612 AC2 test passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The remaining .bridge-where, .bridge-line and .bar-more button text now uses 13 px. The expanded, passing 0612 AC3 test checks button classes and their descendants for 8 px corners and 12 px text."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-0428.test.mjs and panel-0453.test.mjs check the revised appearance and are now listed in the Delivery log. The recorded run reports 253 passed, three skipped and no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-popups.css",
+        "issue": "Previously identified 12 px text inside All projects buttons has been increased, with descendant coverage added to the regression test.",
+        "suggested_fix": "Completed.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0612-give-the-panel-s-last-small-buttons-the-redesign-s.md",
+        "issue": "The Delivery log now lists both updated tests and explains their changed expectations.",
+        "suggested_fix": "Completed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The buttons now meet the requested sizing and styling, including the previously missed small text. Both review findings are resolved, and the reported tests pass. Ready for the product owner's merge decision."
   }
 }
 ```
