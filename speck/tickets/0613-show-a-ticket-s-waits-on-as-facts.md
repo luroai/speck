@@ -45,7 +45,7 @@ A ticket's Waits on is shown as plain facts, as its chain is.
 - Self-check: on a touch screen the link lines were 44 px tall and the plain ones 20 px, so the list was unevenly spaced; every line is now 44 px there. A link's text in a Plan card is 14 px, not the card facts' 12 px, as 0612 asks of anything in a button.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket waiting on two or more others no longer shows a boxed panel with a coloured bar and little boxed numbers. Instead, under "Waits on", it lists each ticket on its own line: its number and title, then whether it has shipped, is building or is queued. Shipped ones are always listed now, with no button to show or hide them. Open a draft that waits on two or more tickets in Plan, or its full view, to see it; press a ticket's number or title to go to it. A long title is cut off to fit on one line. A ticket in a chain still shows the old box with circles in a Plan card: that's saved as an idea.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,6 +62,9 @@ Tests changed to check the new behaviour (AC4):
 - `test/panel-0419.test.mjs`: the real-browser check counts the full view's Waits on lines instead of reading the box's header.
 - `test/panel-0468.test.mjs`: the full view's Waits on is found as facts, and checked to list its 11 queued tickets.
 - `test/panel-0612.test.mjs`: `chip` dropped from its list of button classes it must find, as no chip button exists now.
+
+Follow-ups:
+- An open Plan card still shows a chain in the old Chain box: saved as `speck/ideas/2026-11-10-show-a-plan-card-s-chain-as-facts.md`.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +141,84 @@ Tests changed to check the new behaviour (AC4):
     ],
     "escalation_question": "",
     "summary": "The new dependency facts work in both views, and navigation is covered by passing tests. The implementation looks ready, but the ticket must record the updated tests in its Delivery log before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a89d049bd5a9febeda2ebf62a91559a7310dba5e",
+    "session": "continued",
+    "thread_id": "01a1c52d-0ecd-7a71-8093-cf68aa73942a",
+    "builder_response": "- Tests run: same as round 1; no code changed this round, so /tmp/speck-0613-tests.txt is that run (264 passed, 0 failed)\n- F1: fixed. The ticket's Delivery log now lists each changed test file (panel-0467, panel-0154, panel-0419, panel-0468, panel-0612) and what it now checks.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 210427,
+      "cached_input_tokens": 174720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1094,
+      "reasoning_output_tokens": 12
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4769,
+      "cached": 89856,
+      "write": 0,
+      "output": 464
+    },
+    "cost_usd": 0.0231636,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T11:18:12.896Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js waitsFacts renders each dependency's id, title and state as facts, retaining links for tickets on the page. Passing panel-0613 AC1 tests cover full-view rendering and absent tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "depsBox uses waitsFacts for open Plan cards. Passing panel-0613 AC2 tests check placement, content and styles without the old box, bar or chips."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "waitsFacts uses depNode for navigation. Passing panel-0613 AC3 tests verify navigation from both Plan cards and the full view."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The ticket's Delivery log now lists all five updated existing test files and their changed checks. Recorded results remain 264 passed, 0 failed and 3 skipped; only the ticket record changed this round."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0613-show-a-ticket-s-waits-on-as-facts.md",
+        "issue": "The Delivery log previously omitted the changed tests required by acceptance criterion 4.",
+        "suggested_fix": "Completed: the Delivery log lists panel-0467, panel-0154, panel-0419, panel-0468 and panel-0612 with explanations.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Dependencies now appear as plain facts in both views, and their links work. The missing test record has been added. All criteria pass, with no remaining blocking findings."
   }
 }
 ```
