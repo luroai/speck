@@ -18,7 +18,7 @@ test('0413 AC1: the header is a dark frame with the status, the project and the 
   const h = headerHtml();
   assert.match(h, /^\s*<div class="bezel" id="bezel">\s*<button class="bar-status" id="run"[^>]*>[\s\S]*<span class="repo">\{\{repo\}\}<\/span>[\s\S]*<code>\{\{base\}\}<\/code>/);
   assert.match(decl('.bezel', 'background'), /var\(--bar\)/);
-  assert.equal(decl('.bezel .bar-top .repo', 'text-overflow'), 'ellipsis');
+  assert.equal(decl('.bezel .bar-where .repo', 'text-overflow'), 'ellipsis'); // 0604: on the project's line
   assert.equal(decl('.bezel .bar-more', 'white-space'), 'nowrap');
   const css = styles();
   assert.match(css.match(/:root \{([^}]*)\}/)[1], /--bar: #[0-9a-f]{6}/i, 'one bar colour, for both looks');
@@ -48,7 +48,7 @@ test('0413 AC2: the frame\'s edge is in the needs-you colour only while the word
 });
 
 test('0413 AC2: there\'s no text under the screen and no A, B or C button', () => {
-  const h = headerHtml(), after = h.slice(h.indexOf('</button>'));
+  const h = headerHtml(), after = h.slice(h.indexOf('</button>')).replace(/<span class="bar-where">[\s\S]*?<\/code><\/span><\/span>/, ''); // 0604: but the project's line, over the screen's middle line
   assert.equal(after.replace(/<[^>]*>/g, '').trim(), '', 'nothing after the screen');
   assert.ok(!/>\s*[ABC]\s*</.test(h), 'no A, B or C key');
   assert.equal((h.match(/<button\b/g) || []).length, 2, 'Settings and the screen');
@@ -126,8 +126,8 @@ test('0413 AC1, AC4 and AC5: at 320 px the frame fits without sideways scrolling
     await b.js('document.fonts.ready.then(() => true)');
     const m = await b.js(`(() => {
       const r = s => { const b = document.querySelector(s).getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, height: b.height }; };
-      const repo = document.querySelector('.bar-top .repo');
-      return { page: document.documentElement.scrollWidth, width: innerWidth, bezel: r('.bezel'), repo: r('.bar-top .repo'),
+      const repo = document.querySelector('.bar-where .repo'); // 0604: on the project's line
+      return { page: document.documentElement.scrollWidth, width: innerWidth, bezel: r('.bezel'), repo: r('.bar-where .repo'),
         settings: r('#settings-open'), screen: r('#run'), face: r('#bar-face svg'), repoCut: repo.scrollWidth > repo.clientWidth, edge: getComputedStyle(document.querySelector('.bezel')).borderTopColor };
     })()`);
     const at = JSON.stringify(m);

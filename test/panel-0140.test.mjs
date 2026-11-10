@@ -256,7 +256,7 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
       else assert.ok(!r.cut, `${what} isn't cut short`);
       if (sel !== '#settings-open' && sel !== '#run') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
     }
-    assert.match(await b.js(`document.querySelector('.bar-more code').textContent`), /^main$/); // 0580: the base branch, on the second line
+    assert.match(await b.js(`document.querySelector('.bar-where code').textContent`), /^main$/); // 0580: the base branch. 0604: after the project, on the second line
     assert.ok(await b.js(`document.querySelector('#bar-face svg').getBoundingClientRect().height > 0`), 'speck is shown'); // 0580
   });
 });

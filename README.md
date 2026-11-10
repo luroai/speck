@@ -94,7 +94,7 @@ The panel is a phone-width column you keep beside your agent, or open on your ph
 - **Capture, Plan, Build and Shipped** are tabs you press or swipe between, each a list of compact rows. Capture lists your ideas and inbox notes to read. Plan has your draft tickets. Build groups the queue under Needs you, Building and Queued. Shipped opens with three figures, then what's shipped and what it took.
 - **A ticket's full view** opens when you press its row in Build or Shipped: how far it has got, what it should do, its log, any question for you, its review pack, and its Ship button once it's approved.
 - **Decided for you**, from a line under the bar, is speck's report of the calls it made for you this week, with what it didn't choose. Change any you'd have called differently.
-- **All projects** appears in the bar once two or more projects' panels are running. It opens the bridge: what needs you and how each project is doing, across all of them.
+- **All projects** appears in the project menu, on the project's name in the bar, once two or more projects' panels are running. It opens the bridge: what needs you and how each project is doing, across all of them.
 - **Settings**, from the button in the bar, turns `speck run` on and off, picks your builder and reviewer, and holds the settings people tune.
 
 To use it from your phone, put it behind a private tunnel that makes you log in, such as `tailscale serve` or Cloudflare Tunnel with Cloudflare Access, and start it with `node .speck/scripts/speck.mjs panel --url https://<hostname>`. Add it to your home screen to open it as an app. Never expose it openly: anyone who can load the page can start builds and ship.

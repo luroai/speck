@@ -43,6 +43,8 @@ The black bar is a little taller, with a larger speck and room for the whole sta
 - Waits for 0601, which changes the borders in `templates/panel-header.css`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a press on the project's line, which sits over the status button's middle line, did nothing with one project; it now presses the status (outside the menu), and the line keeps its tooltips. The base branch now gives way before the project's name is cut, and the menu's tooltip names the project, as it covers the name. The menu keeps 0417's 44 px each way by reaching down over the start of the line under it (what's queued), never up over the status. The brief and the README say where All projects is now.
+- With one project running there's no menu, as before (0516): the name is plain text, and pressing it opens the Pipeline log.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -55,3 +57,10 @@ The black bar is a little taller, with a larger speck and room for the whole sta
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Tests changed from the bar's old one-line layout to the new one (AC5):
+- `test/panel-0580.test.mjs`: the bar is a grid, not one row; speck at 56 px; the status on its own line, the project on the next and the base branch after it; the old rule hiding the lines before the first board replaced by the status's line keeping its height; All projects in the menu's list; at 320 px the status on one line, speck 56 px and the bar up to 72 px.
+- `test/panel-0596.test.mjs`: All projects is the project menu's last choice, opened by choosing it, not a button beside the menu.
+- `test/panel-0516.test.mjs`: its menu lists leave out All projects, which this ticket's tests check.
+- `test/panel-0413.test.mjs`: the project's name is on the project's line (`.bar-where`), which is the one thing after the status button.
+- `test/panel-0140.test.mjs`: the base branch is on the project's line.
+- `test/panel-0454.test.mjs`: a point on the project's line over the status counts as the status, as it passes the press on.

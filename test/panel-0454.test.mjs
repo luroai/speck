@@ -83,7 +83,8 @@ for (const touch of [true, false]) {
       const under = Math.min(Math.max(m.button.left + m.button.width / 2, s.left + 4), s.right - 4);
       const xs = [s.left + 4, (s.left + s.right) / 2, under, s.right - 4];
       const ys = [s.top + 1, (s.top + s.bottom) / 2, s.bottom - 4];
-      const hits = await b.js(`${JSON.stringify(xs.flatMap(x => ys.map(y => [x, y])))}.map(([x, y]) => !!document.elementFromPoint(x, y)?.closest('#run'))`);
+      // 0604: or the project's line over its middle, which passes a press on to it
+      const hits = await b.js(`${JSON.stringify(xs.flatMap(x => ys.map(y => [x, y])))}.map(([x, y]) => !!document.elementFromPoint(x, y)?.closest('#run, .bar-where'))`);
       assert.ok(hits.every(Boolean), `every point on the screen is the screen: ${JSON.stringify(hits)}, ${at}`);
       const bx = [m.button.left + 4, m.button.left + m.button.width / 2, m.button.right - 4], by = [m.button.top + 4, m.button.top + m.button.height / 2, m.button.bottom - 4];
       const own = await b.js(`${JSON.stringify(bx.flatMap(x => by.map(y => [x, y])))}.map(([x, y]) => !!document.elementFromPoint(x, y)?.closest('#settings-open'))`);
