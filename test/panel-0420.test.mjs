@@ -192,8 +192,8 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
         assert.ok(c.meta.right <= c.card.right + 0.5, `${c.id}: the details inside the card`);
       }
       if (c.tag) assert.ok(c.tag.top < c.title.bottom && c.tag.bottom > c.title.top, `${c.id}: the tag on the title's line`);
-      // 0587: a long title wraps, in full
-      if (c.id === '0407') { assert.ok(c.titleLines > 1 && !c.titleCut, `0407: a long title wraps (${c.titleLines} lines)`); continue; }
+      // 0599: a long title is cut off on one line
+      if (c.id === '0407') assert.ok(c.titleCut, '0407: a long title is cut off');
       if (c.id === '0406') continue; // its warning is under its two lines (AC4)
       // AC5
       assert.equal(c.titleLines, 1, `${c.id}: the title fits on one line`);

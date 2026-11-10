@@ -168,7 +168,7 @@ test('0587 AC3: total cost is left out when no ticket has one, and says when it 
   assert.match(tile.title, /at least/);
 });
 
-test('0587 AC4: at 320 px wide each row is at least 44 px tall, long titles wrap, and the tiles fit', async () => {
+test('0587 AC4: at 320 px wide each row is at least 44 px tall, long titles are cut off on one line (0599), and the tiles fit', async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
@@ -185,12 +185,13 @@ test('0587 AC4: at 320 px wide each row is at least 44 px tall, long titles wrap
     await b.js(openLane('shipped'));
     await b.until(`!document.getElementById('shipped-section').hidden && document.querySelectorAll('#shipped-stats .stat').length === 3`, 'the tiles');
     const rows = await b.js(`[...document.querySelectorAll('#shipped tr')].map(r => { const t = r.querySelector('.title'), s = getComputedStyle(t), box = r.getBoundingClientRect();
-      return { title: t.textContent, height: box.height, right: box.right, nowrap: s.whiteSpace, overflow: t.scrollWidth > t.clientWidth + 0.5, titleHeight: t.getBoundingClientRect().height, line: parseFloat(s.lineHeight) }; })`);
+      return { title: t.textContent, height: box.height, right: box.right, nowrap: s.whiteSpace, overflow: t.scrollWidth > t.clientWidth + 0.5, ellipsis: s.textOverflow, titleHeight: t.getBoundingClientRect().height, line: parseFloat(s.lineHeight) }; })`);
     for (const row of rows) { assert.ok(row.height >= 44, `"${row.title}" is ${row.height} px tall`); assert.ok(row.right <= 320.5, `"${row.title}" stays on the screen`); }
     const long = rows.find(x => x.title === LONG);
-    assert.notEqual(long.nowrap, 'nowrap');
-    assert.equal(long.overflow, false, 'its text fits its box');
-    assert.ok(long.titleHeight > long.line * 1.5, `it wraps (${long.titleHeight} px at ${long.line} px a line)`);
+    assert.equal(long.nowrap, 'nowrap', 'its title stays on one line (0599)');
+    assert.equal(long.overflow, true, 'cut off');
+    assert.equal(long.ellipsis, 'ellipsis', 'with an ellipsis');
+    assert.ok(long.titleHeight <= long.line + 0.5, `on one line (${long.titleHeight} px at ${long.line} px a line)`);
     const fit = await b.js(`[...document.querySelectorAll('#shipped-stats .stat')].map(s => ({ right: s.getBoundingClientRect().right, over: s.scrollWidth > s.clientWidth + 0.5 }))`);
     for (const tile of fit) { assert.ok(tile.right <= 320.5); assert.equal(tile.over, false, 'its text fits the tile'); }
   } finally { await b.close(); await stop(panel); }

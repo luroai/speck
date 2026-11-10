@@ -44,6 +44,7 @@ Every closed row in a lane is the same height: one line of title and one line of
 - Today the redesign made closed titles wrap in `templates/panel-cards.css`: `.q.row .top .line .title` (0585) and `.item.row .line .title` (0586), with Shipped's rows from 0587; 0434's rule for closed titles sits just above them.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: clipping Plan's details line sideways cut the left edge off the priority's 44 px tap box, so its clip box now takes in the row's padding (checked in 0599's browser test); the open-row title rule now applies only to closed rows, so an open title has no ellipsis left in its style.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

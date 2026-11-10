@@ -86,8 +86,7 @@
   #queue .group-head { margin: 0; padding: 14px 14px 6px; font-family: var(--font-ui); font-weight: 600; font-size: 14px; line-height: 16px; color: var(--muted); }
   #queue .group-head .group-n { font-family: var(--font-mono); font-weight: 400; font-size: 12px; }
   .q.row { padding: 0; border: 0; border-bottom: .5px solid var(--line); border-radius: 0; }
-  .q.row .top { box-sizing: border-box; min-height: 44px; padding: 7px 14px 8px; }
-  .q.row .top .line .title { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+  .q.row .top { box-sizing: border-box; min-width: 0; min-height: 44px; padding: 7px 14px 8px; } /* 0599: no wider than the row, so its one-line title and details cut off */
   .q.row .where { font-size: 12px; line-height: 16px; color: var(--muted); }
   .q.row .where .sub { font-family: var(--font-mono); }
   .where::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; vertical-align: 1px; } /* decoration: its group says the same */
@@ -140,14 +139,14 @@
   .q { padding: 6px 10px; }
   .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
   .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
-  /* 0586: Capture's and Plan's rows, as Build's: a hairline under each, its title wrapping, then one line of smaller
+  /* 0586: Capture's and Plan's rows, as Build's: a hairline under each, its title (one line closed, since 0599), then one line of smaller
      type, with its star or Set ready at its right */
   #shaping:has(.item.row), #capture:has(.item.row) { gap: 0; padding: 0; }
   .item.row { display: block; padding: 0; border: 0; border-bottom: .5px solid var(--line); border-radius: 0; }
   .item.row .head { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; align-items: center; min-height: 44px; margin: 0; padding: 7px 14px 8px; }
   .item.row .head > * { grid-column: 1; }
   .item.row .head > .track, .item.row .head > .facts { grid-column: 1 / -1; }
-  .item.row .line .title { font-size: 17px; line-height: 20px; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+  .item.row .line .title { font-size: 17px; line-height: 20px; overflow-wrap: anywhere; }
   .item.row .checks { display: block; font-size: 12px; line-height: 16px; color: var(--muted); }
   .item.row .checks .tag { border: 0; padding: 0; font: inherit; font-family: var(--font-mono); line-height: 16px; vertical-align: baseline; }
   .item.row .checks .agent { margin-left: 8px; }
@@ -158,6 +157,13 @@
   .item.row.open { border-color: var(--line); }
   .item.ticket.row.open .head .line { grid-column: 1 / -1; } /* open, a ticket's title has the whole row and Set ready is under the table */
   .item.ticket.row.open .head .set-ready { grid-column: 1 / -1; grid-row: auto; justify-self: start; margin-top: 8px; }
+  /* 0599: every closed row in a lane is the same height: its title on one line, cut off with an ellipsis when it doesn't
+     fit (its tooltip has it whole), and its details on one line. Clipped only across, so the priority's 44 px box
+     still reaches above and below its line. Open, a Capture or Plan row's title wraps as needed. */
+  .q.row .top .line .title, .item.row:not(.open) .line .title, #shipped .line .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q.row .where, .item.row:not(.open) .checks, #shipped .meta { white-space: nowrap; overflow-x: clip; overflow-y: visible; text-overflow: ellipsis; }
+  .item.row:not(.open) .checks { margin-left: -14px; padding-left: 14px; } /* the row's padding inside the clip, where the priority's box reaches */
+  #shipped .line { height: 20px; } /* the title's line, so a tag in it, a pixel or two taller on its baseline, leaves the row as tall as one without */
   /* 0586: an empty Capture or Plan: speck asleep over its line, centred */
   #shaping .asleep, #capture .asleep { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; font-size: 14px; line-height: 20px; text-align: center; color: var(--muted); }
   @media (prefers-reduced-motion: no-preference) {
@@ -196,7 +202,7 @@
   .stats-line[hidden] { display: none; }
   .full-open.more-stats { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
   .more-stats[hidden] { display: none; }
-  /* 0587: a shipped ticket is a row, as Capture's and Plan's are: a hairline under it, its title wrapping, then one line
+  /* 0587: a shipped ticket is a row, as Capture's and Plan's are: a hairline under it, its title (one line since 0599), then one line
      of smaller type, each part whole so a line too long for a phone wraps between them. */
   #shipped .sum { display: block; margin-top: 2px; }
   #shipped .meta { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--muted); }
@@ -208,7 +214,7 @@
   #shipped td { display: block; padding: 0; border: 0; }
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
   #shipped .line .id { flex: none; font-size: 14px; line-height: 14px; }
-  #shipped .line .title { flex: 0 1 auto; font-family: var(--font-ui); font-weight: 600; font-size: 17px; line-height: 20px; min-width: 0; overflow-wrap: anywhere; }
+  #shipped .line .title { flex: 0 1 auto; font-family: var(--font-ui); font-weight: 600; font-size: 17px; line-height: 20px; min-width: 0; }
   /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the row taller */
   #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
   #shipped .line .tags .tag { font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; }

@@ -139,7 +139,7 @@ const CARDS = sel => `(async () => {
     return { id: c.querySelector('.id').textContent, height: c.getBoundingClientRect().height, titleLines: lines(title), detailLines: lines(details),
       titleSize: parseFloat(getComputedStyle(title).fontSize), detailSize: parseFloat(getComputedStyle(details).fontSize),
       broken: [...details.children].filter(n => !n.matches('.sep, .ids, .after') && n.getClientRects().length > 1).map(n => n.textContent),
-      // 0434: a closed Plan card's title is cut off with an ellipsis when it doesn't fit; 0585: a Build row's wraps
+      // 0434: a closed Plan card's title is cut off with an ellipsis when it doesn't fit, and since 0599 a Build row's too
       cut: title.scrollWidth > title.clientWidth + 0.5 && getComputedStyle(title).textOverflow === 'ellipsis',
       overflows: (getComputedStyle(details).textOverflow !== 'ellipsis' && details.scrollWidth > details.clientWidth + 0.5) || details.getBoundingClientRect().right > c.getBoundingClientRect().right };
   });
@@ -164,11 +164,10 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         assert.ok(c.detailSize < c.titleSize, `${c.id}: the details (${c.detailSize} px) are smaller than the title (${c.titleSize} px)`);
         assert.deepEqual(c.broken, [], `${c.id}: the details line wraps only between its parts`);
         assert.ok(!c.overflows, `${c.id}: the details stay inside the card`);
-        // 0586: a Plan row's long title wraps
-        if (c.id === '0702') { assert.ok(c.titleLines > 1, '0702: a long title wraps'); continue; }
+        // 0599: a Plan row's long title is cut off on one line
+        if (c.id === '0702') assert.ok(c.cut, '0702: a long title is cut off');
         assert.equal(c.titleLines, 1, `${c.id}: the title is on one line`);
-        // 0585: a Build row's line wraps between its parts when a long list of tickets it waits on doesn't fit
-        if (c.id === '0707') { assert.ok(c.detailLines > 1, '0707: the long list wraps'); continue; }
+        // 0599: a Build row's line stays on one line, cut off, when a long list of tickets it waits on doesn't fit
         assert.equal(c.detailLines, 1, `${c.id}: the details fit on one line`);
         assert.ok(c.height <= 80, `${c.id}: ${c.height} px tall`); // 0469: with the touch screen's 44 px title row and details line
       }

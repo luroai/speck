@@ -159,7 +159,7 @@ const CHIPS = sel => `(async () => {
 })()`;
 
 for (const width of [320, 390, 600, 1000]) {
-  test(`0468 AC3: at ${width} px, a closed row's long title wraps (0586) and its chip stays beside it`, skip, async () => {
+  test(`0468 AC3: at ${width} px, a closed row's long title is cut off on one line (0599) and its chip stays beside it`, skip, async () => {
     const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
     const b = await browserPage('about:blank');
     try {
@@ -177,7 +177,7 @@ for (const width of [320, 390, 600, 1000]) {
           assert.ok(c.beside, `${width} px, ${c.id}: its chip beside its title, not under it`);
           assert.ok(c.inside, `${width} px, ${c.id}: its chip inside the card`);
         }
-        if (width < 1000) for (const id of [ids[0]]) { assert.ok(cards.find(c => c.id === id).titleLines > 1, `${width} px, ${id}: a long title wraps`); assert.ok(!cards.find(c => c.id === id).cut, `${width} px, ${id}: and isn't cut off`); }
+        for (const id of [ids[0]]) { assert.equal(cards.find(c => c.id === id).titleLines, 1, `${width} px, ${id}: a long title stays on one line`); if (width < 1000) assert.ok(cards.find(c => c.id === id).cut, `${width} px, ${id}: and is cut off`); }
       }
     } finally { await b.close(); await stop(panel); }
   });
