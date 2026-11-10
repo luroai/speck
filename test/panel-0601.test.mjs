@@ -25,9 +25,8 @@ test('0601 AC2: no border in a line colour is half a pixel wide, and the rows, b
   // A divider can also be a gap between tiles, over a line-coloured background (the Shipped lane's stats).
   const gaps = [...plain().matchAll(/([^{}]+)\{([^{}]*background(?:-color)?\s*:\s*var\(--line(?:-soft)?\)[^{}]*)\}/g)]
     .flatMap(m => [...m[2].matchAll(/(?:^|;)\s*((?:row-|column-)?gap)\s*:\s*([^;]+)/g)].map(g => `${m[1].trim()} ${g[1]}: ${g[2].trim()}`));
-  assert.ok(gaps.some(g => g.startsWith('.stats ')), `found the stats' dividers (${gaps.join(' | ')})`);
   assert.deepEqual(gaps.filter(g => /(^|\s)0?\.\d+px\b/.test(g.split(': ')[1])), [], 'a divider gap thinner than 1 px');
-  assert.equal(cssValue(cssRules('.stats'), 'gap'), '1px', 'the lines between the stats\' tiles');
+  assert.ok(!gaps.some(g => g.startsWith('.stats ')), '0606: the stats\' tiles stand apart, with no line-coloured gap between them');
   for (const [sel, prop, want] of [['.item.row', 'border-bottom', '1px solid var(--line-soft)'], ['.q.row', 'border-bottom', '1px solid var(--line-soft)'],
     ['#shipped tr', 'border-bottom', '1px solid var(--line-soft)'], ['section', 'border', '1px solid var(--line)'], ['.sh', 'border-bottom', '1px solid var(--line)']])
     assert.equal(cssValue(cssRules(sel), prop), want, `${sel} ${prop}`);

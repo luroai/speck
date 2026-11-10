@@ -17,8 +17,6 @@ const byClass = (p, n, cls) => p.all(n).filter(c => String(c.className || '').sp
 const one = (p, n, cls) => byClass(p, n, cls)[0];
 const labels = p => p.byId('shipped-stats').children.map(c => one(p, c, 'label').textContent);
 const plain = () => styles().replace(/\/\*[\s\S]*?\*\//g, '');
-// The declarations for a selector inside the @media block that opens with `query`.
-const inMedia = (query, sel) => { const at = plain().indexOf(query); assert.ok(at >= 0, query); const block = plain().slice(at, plain().indexOf('}', plain().indexOf(sel, at)) + 1); return block.slice(block.indexOf(sel)); };
 
 const ALWAYS = ['shipped today', 'median build time', 'median review rounds', 'approved first round'];
 const OTHERS = ['median builder cost', 'total cost', 'median review tokens', 'median builder tokens'];
@@ -34,6 +32,7 @@ test('0606 AC1: every figure is a tile of one style: the surface colour, no bord
   assert.equal(cssValue(grid, 'background'), undefined, 'no grid colour showing between tiles');
   assert.equal(cssValue(grid, 'border-radius'), undefined, 'the grid itself has no rounded corners to cut tiles');
   assert.ok(!/\.stat:last-child/.test(plain()), 'no tile spans its row');
+  assert.equal(cssValue(tile, 'color'), 'var(--text)', 'its own text colour on its fill (0161)');
 });
 
 test('0606 AC1: its number is in the panel\'s font, and its label in the muted colour on one line', () => {
@@ -45,9 +44,14 @@ test('0606 AC1: its number is in the panel\'s font, and its label in the muted c
   assert.equal(cssValue(cssRules('.stats'), 'grid-auto-rows'), '1fr', 'tiles in a row the same height');
 });
 
-test('0606 AC2: two columns below 480 px wide and four from 480 px', () => {
-  assert.equal(cssValue(cssRules('.stats').slice(0, 1), 'grid-template-columns'), 'repeat(2, minmax(0, 1fr))');
-  assert.match(inMedia('@media (min-width: 480px)', '.stats'), /grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
+// A 480 px window's grid is 448 px wide, inside the lane's 16 px margins. The real-browser checks are in panel-0162 and panel-0157.
+test('0606 AC2: two columns below 480 px wide and four from 480 px, chosen by the grid\'s own width, with no media query of its own (0140)', () => {
+  assert.equal(cssValue(cssRules('.lane-list'), 'padding'), '0 16px');
+  assert.equal(cssValue(cssRules('.stats'), 'grid-template-columns'), 'repeat(auto-fill, minmax(clamp(25% - 6.1px, (448px - 100%) * 1000, 50% - 4.1px), 1fr))');
+  assert.equal(cssValue(cssRules('.stats'), 'gap'), '8px');
+  // auto-fill with the column the clamp gives at each grid width: how many fit, gaps included
+  const columns = w => { const track = Math.min(Math.max(w / 4 - 6.1, (448 - w) * 1000), w / 2 - 4.1); return Math.floor((w + 8) / (track + 8)); };
+  for (const [window, want] of [[320, 2], [375, 2], [479, 2], [480, 4], [600, 4], [720, 4]]) assert.equal(columns(window - 32), want, `${window} px`);
 });
 
 test('0606 AC2: four figures always show, and the other four join them when the rest are open', async () => {
@@ -93,7 +97,9 @@ test('0606 AC4: All figures is a text link in the accent colour under the grid, 
   assert.match(html, /<div class="stats" id="shipped-stats" hidden><\/div>\s*<button class="more-stats" id="more-stats" type="button" aria-expanded="false" aria-controls="shipped-stats" hidden><\/button>/);
   assert.doesNotMatch(html, /id="shipped-more"|id="shipped-stats-line"/, 'one grid, no line round the link');
   const link = cssRules('.more-stats');
-  assert.equal(cssValue(link, 'color'), 'var(--accent)');
+  assert.equal(cssValue(link, 'color'), 'var(--run)', 'the links\' blue');
+  const base = styles();
+  for (const look of [/--accent: (#\w+)[\s\S]*?--run: (#\w+)/, /--bg: #111214[\s\S]*?--accent: (#\w+)[\s\S]*?--run: (#\w+)/]) { const [, accent, run] = base.match(look); assert.equal(run, accent, 'the accent colour in each look'); }
   assert.equal(cssValue(link, 'border'), '0');
   assert.equal(cssValue(link, 'background'), 'none');
   assert.equal(cssValue(link, 'min-height'), '44px');
