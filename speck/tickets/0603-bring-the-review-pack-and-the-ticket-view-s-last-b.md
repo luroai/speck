@@ -1,7 +1,7 @@
 ---
 id: "0603"
 title: "Retire the panel's last old-style parts"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0602"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T09:17:38.700Z"
+approved: "2026-11-10T09:39:08.395Z"
 
 ---
 # 0603 · Retire the panel's last old-style parts
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A few parts of a ticket still have the LCD-era look: the review pack opens with a small bordered Close button instead of a back link and marks its verdict and criteria with emoji, the full view's Chain is a bordered box with filled circles, and secondary buttons (Close, Full log, Stop build, More stats, Go to Plan) are small boxes with a faint border, unlike the redesign's buttons. The old colours (`--bezel`, `--log-*`, `--purple`) are still in the styles.
@@ -55,9 +56,15 @@ To see it, open any shipped ticket's review pack, or the full view of a ticket t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The unsaved Settings dialogue still has old-style secondary buttons.; F2 AC5 requires the Delivery log to list the updated tests, but it currently contains only its placeholder.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 327,528
+- Elapsed since build started: 21 min
+- Changed lines: 140 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed from the old looks to the new ones (AC5):
   - `test/pack-0562.test.mjs`, `test/panel-0357.test.mjs`, `test/panel-0583.test.mjs`, `test/panel-0158.test.mjs`: leave the review pack by its back link, not its Close.
