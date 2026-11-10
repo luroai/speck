@@ -1,7 +1,7 @@
 ---
 id: "0610"
 title: "Put All projects in the project menu's list"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T10:37:22.396Z"
 ---
 # 0610 · Put All projects in the project menu's list
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 With two or more projects running, All projects is a button beside the project menu's caret in the black bar, taking room from the status on a phone, where the menu's own list is where it belongs.
@@ -56,3 +56,85 @@ All projects is an entry in the project menu's list, not a separate button.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Tests changed for the new behaviour: `test/panel-0604.test.mjs` (0604 AC2, the menu's entries now start with All projects) and `test/panel-0580.test.mjs` (0580 AC3, the same order). Comments only, saying All projects is the first entry: `test/panel-0596.test.mjs` and `test/panel-0516.test.mjs`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "00ffb49a45020e2b527e775652d06c51d8afdabf",
+    "session": "fresh",
+    "thread_id": "01a1c50b-c7de-7242-b03d-bd688280f992",
+    "builder_response": "- Tests run: `speck test --related` with test/panel-0610.test.mjs test/panel-0604.test.mjs test/panel-0580.test.mjs test/panel-0596.test.mjs test/panel-0516.test.mjs, which also ran every test file naming docs/brief.md or templates/panel-header.js (117 files, 0 failures).\n- Found at build: 0604 had already removed the separate All projects button and made All projects the project menu's last entry. This build moves it to the first entry (`unshift` in `drawProjects`), and adds tests for AC1 to AC3, including the stopped-project list.\n- AC4: tests changed for the new order: test/panel-0604.test.mjs (0604 AC2, list order) and test/panel-0580.test.mjs (0580 AC3, list order); comments only in test/panel-0596.test.mjs and test/panel-0516.test.mjs. docs/brief.md's sentence saying \"last, All projects\" now says it's the first entry.\n",
+    "seconds": 34,
+    "usage": {
+      "input_tokens": 117182,
+      "cached_input_tokens": 73600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 814,
+      "reasoning_output_tokens": 20
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 43582,
+      "cached": 73600,
+      "write": 0,
+      "output": 814
+    },
+    "cost_usd": 0.102664,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:41:19.144Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-header.js drawProjects() puts All projects first with unshift when at least two panels run. The three passing AC1 tests in test/panel-0610.test.mjs exercise ordering, opening the bridge, absence of a separate button and the stopped-project case."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawProjects() adds All projects only when list.length >= 2. The passing 0610 AC2 test checks a single panel and missing project data."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "drawProjects() selects the current project unless bridgeOpen is true. The passing 0610 AC3 test checks the current project, All projects while open, and restoration after Escape."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "test/panel-0580.test.mjs and test/panel-0604.test.mjs now assert the new order. The saved test output reports 1,280 passes, three skips and zero failures. However, the ticket's Delivery log contains only its placeholder and does not list the changed tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0610-put-all-projects-in-the-project-menu-s-list.md",
+        "issue": "Criterion 4 explicitly requires the Delivery log to list the tests changed for the new behaviour, but that section is empty.",
+        "suggested_fix": "Add a Delivery log entry naming the changed order assertions in test/panel-0580.test.mjs and test/panel-0604.test.mjs. Distinguish the comment-only updates in panel-0516 and panel-0596 if listing those too.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The menu change works and its behaviour is covered by passing tests. Approval is held only because the required list of updated tests is missing from the Delivery log."
+  }
+}
+```
+
+</details>
