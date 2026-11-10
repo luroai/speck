@@ -1,7 +1,7 @@
 ---
 id: "0604"
 title: "Give the black bar room for its whole status"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0601"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T08:45:59.870Z"
+blocked_at: "2026-11-10T09:08:23.218Z"
 
 ---
 # 0604 · Give the black bar room for its whole status
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 On a phone the black bar (0580) fits the status, the project's name, the project menu and Settings on one line, so they're cut off: the user saw "Shipping 05… · s…" and couldn't tell which ticket was shipping or which project it was. The project menu beside them also read "All projects" while the panel was showing speck.
@@ -50,7 +51,12 @@ The black bar is a little taller, with a larger speck and room for the whole sta
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+On a 320 px phone, ordinary project names of up to 20 characters (letters, digits, hyphens, such as "ACME-Payments-Portal") now show in full, but a name made mostly of the widest letters, such as 20 capital Ws, can't fit beside a 56 px speck and a 44 px Settings button. May such a name be cut short with "…" too (A), or should a name that doesn't fit go onto a second line, making the bar taller for that project only (B)? I recommend A: real folder names fit, and the bar keeps one height.
+
+Recommended: A, cut an unusually wide name short with "…"
+Other options: B, let a name that doesn't fit wrap onto a second line, making the bar taller for that project
+Changes what you'd notice: yes
+Clear winner: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -145,6 +151,89 @@ Tests changed from the bar's old one-line layout to the new one (AC5):
     ],
     "escalation_question": "",
     "summary": "The taller bar, larger speck and project menu work in the tested cases, and all reported tests pass. One required phone-width case remains: wider project names can still be shortened even when they contain only 20 characters."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · escalate</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9eb445d7945da83839342e21535ab94bf5a43622",
+    "session": "continued",
+    "thread_id": "01a1c4b3-7c8b-7402-92d1-e72a8fd3b21f",
+    "builder_response": "- Tests run: test/panel-0604.test.mjs test/panel-0140.test.mjs test/panel-0413.test.mjs test/panel-0454.test.mjs test/panel-0516.test.mjs test/panel-0580.test.mjs test/panel-0596.test.mjs test/panel-0161.test.mjs test/panel-0427.test.mjs test/panel-0417.test.mjs (226 pass, 0 fail).\n- F1: fixed for real project names, disputed for names made only of the widest letters. Measured in Chromium with the panel's interface font: realistic 20-character names need up to 156 px at 14 px ('ACME-Payments-Portal' 156, 'Speck-Landing-Page-2' 155, 'speck-website-redux2' 149), but at most 138 px at 12 px; at 320 px the text column is 162 px. The project's line is now 12 px (the panel's smallest text size; 0427 rules out 13 px) and the menu's caret 12 px wide, leaving 150 px for the name. The 320 px browser test now checks five 20-character names, with capitals, digits, hyphens and underscores, alongside both statuses, and they all show in full. 'WWWWWWWWWWWWWWWWWWWW' needs 240 px even at 12 px (280 px at 14 px), more than the whole 288 px bar leaves once speck (56 px, AC1) and Settings (44 px, AC4) are in it, so no layout that meets AC1 and AC4 can show it in full on one line; it ends in \"…\", as a longer name does. AC3's own examples (\"Shipping 0599\", a project name like \"speck\") are ordinary folder names, which is what this covers.\n- Pictures retaken (light and dark) as the project's line changed size.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 392982,
+      "cached_input_tokens": 330368,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1849,
+      "reasoning_output_tokens": 196
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5243,
+      "cached": 118016,
+      "write": 0,
+      "output": 649
+    },
+    "cost_usd": 0.0287776,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T09:08:13.338Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "escalate",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-header.css retains three grid rows and the 56 px face. AC1 and the 320 px browser tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawProjects, openBridge and closeBridge retain the displayed project's selection except while the bridge is open. All AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The revised browser test passes for seven status/name combinations. However, .bar-where still truncates names by rendered width, including some names of 20 characters or fewer. The builder confirms that the wide-character counterexample remains truncated; AC3 still explicitly permits truncation only for longer names."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Settings retains its final 44 px square rule and right-hand grid column. Passing AC4 and browser tests cover placement and opening the Pipeline log."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the changed layout tests. The current /tmp/speck-0604-tests.txt confirms 226 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.css",
+        "issue": "The smaller project text accommodates the additional ordinary names tested, but does not satisfy AC3's guarantee for all names up to 20 characters. The builder's proposed exception for wide letters changes the requirement and needs the owner's decision.",
+        "suggested_fix": "Ask the owner whether truncation may depend on rendered width, including for names of 20 characters or fewer. If accepted, revise AC3 explicitly and test that agreed behaviour; otherwise adjust the layout to meet the existing guarantee.",
+        "state": "dispute_rejected"
+      }
+    ],
+    "escalation_question": "May the project name be truncated when its rendered width exceeds the available space, even if it contains 20 characters or fewer, while keeping speck at 56 px and Settings at least 44 px square?",
+    "summary": "The revised bar fits the ordinary project names tested, and all reported tests pass. Wider names can still be shortened despite the ticket's explicit 20-character guarantee. Approval now needs an owner decision on that exception."
   }
 }
 ```
