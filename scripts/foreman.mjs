@@ -28,7 +28,7 @@ export function readForeman(runs) {
 }
 
 // The reason a ready ticket isn't building, in a word or two, for the status: by the kind speck run recorded.
-const SHORT = { after: 'other tickets', slots: 'build slots', switching: 'new code', uncommitted: 'not committed', stopped: 'stopped', unstarted: 'not started', chat: 'Cursor chat', builder: 'builder' };
+const SHORT = { after: 'other tickets', slots: 'build slots', switching: 'new code', uncommitted: 'not committed', stopped: 'stopped', unstarted: 'not started', chat: 'Cursor chat', builder: 'builder', limit: 'usage limit' };
 
 // 0286: watch (0487: was foreman_fixing), what the Foreman does with a blocked question: off (nothing), tell (counts it under Needs you)
 // or fix (takes the recommendation of one that changes nothing you'd notice and has a clear winner). tell by default,
@@ -135,6 +135,8 @@ export function foremanView({ run, record, since = null, tickets, fixing = 'tell
   const held = [];
   if (switching) held.push(text(rec.switching.why) || 'speck run is switching to new code');
   if (ship && ship.hold) held.push(`Shipping is ${ship.hold.message}`);
+  const limit = rec && rec.limit && typeof rec.limit === 'object' ? rec.limit : null; // 0622: Claude's usage limit, while speck run waits it out
+  if (limit && text(limit.why)) held.push(limit.why);
   const ag = agent && typeof agent === 'object' ? agent : { running: null, waiting: [], did: [], asks: [] };
   const asks = list(ag.asks).filter(a => a && !blocked.some(b => b.id === a.id));
   // 0616: each stopped build nothing will carry on, unless a question about it is counted already.
@@ -142,6 +144,7 @@ export function foremanView({ run, record, since = null, tickets, fixing = 'tell
   const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), name: called, fixing, fixing_says: fixingSays(fixing, called), building, max: rec && Number.isInteger(rec.max) && rec.max > 0 ? rec.max : null, since: on ? since : null, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag }); // 0592: max, the build slots, and since, when speck run started
   if (!on) return view('Off', 'off');
   if ((yours && fixing !== 'off') || asks.length || stopped) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length + stopped}`, 'bad');
+  if (limit) return view(`Waiting: usage limit${text(limit.until) ? ` until ${limit.until}` : ''}`, 'warn', text(limit.why));
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
   if (building.length) return view(`Building ${building.length}`, 'ok');
   const short = ready.find(r => SHORT[r.kind]);

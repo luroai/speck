@@ -57,6 +57,9 @@ function providerPlan(cfg, p, installed, repo, providers) {
   return { agent: p.name, words: providerStartWords(configFor(cfg, p.name), p) };
 }
 
+// 0622: the agent ticket `t`'s build would run on: its own builder, or the configured one when build_command, written by you, ignores that.
+export const launchAgent = (cfg, command, t) => (buildsEachTicket(command ?? '') ? ticketBuilder(t, cfg) : configBuilder(cfg));
+
 // How speck run launches ticket `t`: { agent, words, tag }, with build_command's `words` and no agent when `command` is
 // one you've written yourself (0324), `tag` being the build's session (a Cursor build's chat, made for it here). null when it can't be started now: the
 // reason is said once until it changes, and kept in `failed` as { kind, why } for the Foreman's record. `chat` makes a

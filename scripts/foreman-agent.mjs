@@ -33,6 +33,7 @@ import { onPath } from './install.mjs';
 import { recordWatchSpend } from './spend.mjs';
 import { providerKey } from './keys.mjs';
 import { usualBuild, runningLong, canRunLong } from './long-build.mjs';
+import { limitWaiting } from './usage-limit.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 
@@ -212,7 +213,7 @@ export function agentView(runs, tickets = [], name = 'speck') {
   return {
     running: s.running ? { id: s.running.id, what: textOf(s.running.what), started: textOf(s.running.started) } : null, // started: 0446
     waiting: s.queue.map(q => q.id),
-    resuming: s.resumes.map(r => r.id), // 0616: the builds speck run is to resume, taken off as it tries each
+    resuming: [...s.resumes.map(r => r.id), ...limitWaiting(runs)], // 0616: the builds speck run is to resume, taken off as it tries each. 0622: and those waiting out Claude's usage limit
     did: actions.slice(-RECENT).reverse().map(a => ({ id: a.id, action: a.action, did: ACTIONS[a.action], text: textOf(a.text), why: textOf(a.why), at: textOf(a.at), ...(a.fix_id ? { fix_id: a.fix_id } : {}),
       ...(a.action === 'ask' ? { outcome: askOutcome(a) } : {}) })),
     asks,
@@ -248,7 +249,7 @@ function spawnAgent(argv, cwd, log, env) {
 export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, settings = () => ({ cfg, words, max }), running, startBuild, ships,
   start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState,
   withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`), providers = null, cantStart = c => foremanCantStart(repo, c, providers ? { providers } : {}),
-  statusOf = id => statusData(repo).tickets.find(t => String(t.id) === id)?.status, inUse = sessionInUse, now = Date.now, load = os.loadavg }) {
+  statusOf = id => statusData(repo).tickets.find(t => String(t.id) === id)?.status, inUse = sessionInUse, now = Date.now, load = os.loadavg, heldBuild = () => false, heldAgent = () => false }) {
   let child = null; // the agent this speck run started: { token, exited }. While it runs, no other starts, whatever the record says
   const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const carried = new Set(); // 0318: the same for your answers to its questions
@@ -374,7 +375,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     if (s.queue.length) for (const a of agentView(runs(), tickets).asks) over.add(a.id);
     if (s.queue.some(q => over.has(q.id))) { s.queue = s.queue.filter(q => !over.has(q.id)); changed = true; }
     if (!s.running && s.queue.length) {
-      if (c && speckActs(fixingOf(c))) { launch(s, c, s.queue[0]); changed = false; }
+      if (c && speckActs(fixingOf(c))) { if (!heldAgent(foremanAgentOf(c, providers ?? knownProviders(repo)))) { launch(s, c, s.queue[0]); changed = false; } } // 0622: what waits is looked into once its agent's usage limit has reset
       else { s.queue = []; changed = true; } // turned off meanwhile: nothing waits
     }
     // 0318: your answers to its questions, each carried out once, as it would its own instruction, while the ticket is
@@ -400,7 +401,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
       : `${x.id}: I asked for its build to be resumed, but the ticket has moved on since, so speck run left it as it is.`);
     if (gone.length) { s.resumes = s.resumes.filter(x => !gone.includes(x)); changed = true; }
     for (const t of tickets) {
-      if (!s.resumes.some(x => x.id === t.id) || running.has(t.id) || t.build_running) continue;
+      if (!s.resumes.some(x => x.id === t.id) || running.has(t.id) || t.build_running || heldBuild(t.id)) continue; // 0622
       const now = settings(); // 0549: the builder settings as they are now, or null while they can't start a build
       if (!now || running.size >= now.max) break;
       resume(s, t, now);
