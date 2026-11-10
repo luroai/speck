@@ -87,7 +87,7 @@ test('0580 AC3: the project menu stays in the bar, lists the running panels and 
   let reloaded = 0;
   const p = await opened(st, { location: { reload() { reloaded++; } } });
   assert.equal(p.byId('project-pick').hidden, false);
-  assert.deepEqual(p.byId('project').children.map(o => o.textContent), ['speck', 'alpha', 'All projects']); // 0604: and All projects
+  assert.deepEqual(p.byId('project').children.map(o => o.textContent), ['All projects', 'speck', 'alpha']); // 0604: and All projects, 0610: first
   p.byId('project').value = '5002';
   p.byId('project').listeners.change();
   await p.settle();

@@ -48,7 +48,7 @@ test('0604 AC2: the project\'s name is the menu, listing the projects and All pr
   assert.equal(decl('.bezel .bar-name', 'position'), 'relative');
   const p = await opened([board(foreman(), { projects: two })]);
   assert.equal(p.byId('project-pick').hidden, false);
-  assert.deepEqual(options(p).map(o => o.text), ['speck', 'alpha', 'All projects']);
+  assert.deepEqual(options(p).map(o => o.text), ['All projects', 'speck', 'alpha']); // 0610: All projects first
   assert.equal(chosen(p).text, 'speck', 'the project shown, not All projects');
   assert.equal(p.byId('bezel').children.some(c => c.className === 'bridge-open'), false, 'no All projects beside the menu');
 });
