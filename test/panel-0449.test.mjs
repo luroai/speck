@@ -14,12 +14,14 @@ const STATE = (tickets, o = {}) => ({ run: { on: false }, tickets, ideas: [], ..
 const pageOf = (state, now = NOW) => fakePage([state], { Date: stoppedClock(now) });
 const lane = p => p.byId('queue');
 const textOf = n => n.textContent;
-// The lines of the empty lane's message, by class, in order.
+// The lines of the empty lane's message, by class, in order. 0608: speck asleep's line, then the lines under it.
 const lines = p => {
   const box = lane(p).children;
   assert.equal(box.length, 1, 'the lane holds one message');
-  return box[0].children.map(n => [n.className, textOf(n)]);
+  const [line, more] = box[0].children.filter(n => n.tagName !== 'svg');
+  return [line, ...more.children].map(n => [n.className, textOf(n)]);
 };
+const HEAD = 'Nothing building · Ready tickets land here.';
 const SHIPPED = () => [shippedAt('0431', at(9, 5)), shippedAt('0433', at(14, 18)), shippedAt('0420', at(16, 0, 22))];
 
 // ---------- AC1 ----------
@@ -27,7 +29,7 @@ const SHIPPED = () => [shippedAt('0431', at(9, 5)), shippedAt('0433', at(14, 18)
 test('0449 AC1: an empty Build lane says "Nothing building" once, and the counts line doesn\'t repeat it', async () => {
   const p = pageOf(STATE([]));
   await p.settle();
-  assert.equal(lines(p)[0][1], 'Nothing building');
+  assert.equal(lines(p)[0][1], HEAD);
   assert.equal(p.byId('queue-n').textContent, '', 'the counts line says nothing');
   assert.equal(p.byId('queue-n').hidden, true, 'and is hidden');
   const all = `${p.byId('queue-n').textContent} ${lane(p).textContent}`;
@@ -51,7 +53,7 @@ test('0449 AC2: under it, when the last ticket shipped and which, and how many s
   const p = pageOf(STATE(SHIPPED()));
   await p.settle();
   const l = lines(p);
-  assert.deepEqual(l.slice(0, 3).map(x => x[1]), ['Nothing building', 'Last shipped 0433 · 12 min ago', '2 shipped today']);
+  assert.deepEqual(l.slice(0, 3).map(x => x[1]), [HEAD, 'Last shipped 0433 · 12 min ago', '2 shipped today']);
 });
 
 test('0449 AC2: earlier today it gives the time, and before today the date', async () => {
@@ -77,7 +79,7 @@ test('0449 AC2: with nothing shipped yet, it leaves those lines out', async () =
     const p = pageOf(STATE(tickets));
     await p.settle();
     assert.doesNotMatch(lane(p).textContent, /shipped/i);
-    assert.equal(lines(p)[0][1], 'Nothing building');
+    assert.equal(lines(p)[0][1], HEAD);
   }
 });
 
@@ -138,7 +140,7 @@ const MEASURE = `(() => {
   const back = n => { const chain = []; for (let x = n; x; x = x.parentElement) chain.push(rgba(getComputedStyle(x).backgroundColor)); return chain.reverse().reduce((b, c) => over(c, b), [1, 1, 1, 1]); };
   const ratio = n => { const b = back(n), f = over(rgba(getComputedStyle(n).color), b); const [x, y] = [lum(f), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
   const lane = document.getElementById('queue'), msg = lane.firstElementChild, L = lane.getBoundingClientRect(), M = msg.getBoundingClientRect();
-  const parts = [...msg.children].map(n => { const r = n.getBoundingClientRect(); return { text: n.innerText, size: parseFloat(getComputedStyle(n).fontSize), ratio: ratio(n), left: r.left - L.left, right: L.right - r.right }; });
+  const parts = [msg.querySelector('.asleep-line'), ...msg.querySelector('.idle-more').children].map(n => { const r = n.getBoundingClientRect(); return { text: n.innerText, size: parseFloat(getComputedStyle(n).fontSize), ratio: ratio(n), left: r.left - L.left, right: L.right - r.right }; });
   return { theme: document.documentElement.dataset.theme, left: M.left - L.left, right: L.right - M.right, parts };
 })()`;
 

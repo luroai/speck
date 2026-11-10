@@ -1154,13 +1154,15 @@ function fill(id, nodes, emptyText) {
 }
 // 0586: an empty Capture or Plan: speck asleep and one line saying what lands there. Each is made once, so a refresh
 // leaves it on the page and doesn't restart its face's breathing. Without the face's script the line still shows.
+// 0608: Build and Shipped too.
 const asleepLanes = new Map();
-function asleepLane(box, line) {
-  if (!asleepLanes.has(box)) asleepLanes.set(box, el('div', 'empty asleep', null, globalThis.SpeckFace ? SpeckFace.draw({ mood: 'asleep', size: 56 }) : null, el('div', 'asleep-line', line)));
+function asleepLane(box, line, cls = '') {
+  if (!asleepLanes.has(box)) asleepLanes.set(box, el('div', `empty asleep${cls && ` ${cls}`}`, null, globalThis.SpeckFace ? SpeckFace.draw({ mood: 'asleep', size: 56 }) : null, el('div', 'asleep-line', line)));
   return asleepLanes.get(box);
 }
 // 0449: an empty Build lane says it's clear, when the last ticket shipped and how many shipped today (leaving those
 // out with nothing shipped yet), and the next step: a button to Plan's drafts, or to talk to your agent with none.
+// 0608: under speck asleep and its line, kept as Capture's and Plan's are, with only the lines under them made afresh.
 function idleLane(m) {
   const last = m.shipped.find(t => t.end !== null) || null;
   const when = last ? el('div', 'idle-last', `Last shipped ${last.id} · ${shippedAgo(last.end, Date.now())}`) : null;
@@ -1175,8 +1177,10 @@ function idleLane(m) {
       if ($('tab-plan').focus) $('tab-plan').focus();
     });
   } else next = el('div', 'idle-hint', 'Talk to your agent to capture an idea or make a ticket.');
-  return el('div', 'empty idle', null, el('div', 'idle-head', 'Nothing building'), when,
-    last ? el('div', 'idle-today', `${m.stats.today} shipped today`) : null, next);
+  const box = asleepLane('queue', 'Nothing building · Ready tickets land here.', 'idle');
+  for (const c of [...box.children]) if (/\bidle-more\b/.test(c.className)) box.removeChild(c);
+  box.appendChild(el('div', 'idle-more', null, when, last ? el('div', 'idle-today', `${m.stats.today} shipped today`) : null, next));
+  return box;
 }
 // The last-shipped line's minutes move on between updates of the board, on a timer cleared once the line has gone.
 const IDLE_MS = 30000;
@@ -1293,7 +1297,7 @@ function render() {
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => {
     const meta = child(child(tr, 'sum') || tr, 'meta'), w = meta && child(meta, 'when');
     if (w) { setText(w, t.when); meta.title = metaTip(t); }
-  } }), 'Nothing shipped yet.');
+  } }), asleepLane('shipped', 'Nothing shipped yet · Approved tickets land here once they ship.'));
   // 0587: figures as tiles, the number over its label. A figure over 9,999 is shortened as a ticket's are, with the exact
   // number as its tooltip. Each tile says what it is, and the tickets a median covers, as its tooltip.
   // 0606: one grid, four tiles that always show and four that All figures adds. A tile names the tickets its figure

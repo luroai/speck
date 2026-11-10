@@ -42,6 +42,7 @@ Every empty lane shows speck asleep with one line saying what lands there.
 - Today: the empty states are built in `render()` in `templates/panel.js`. Waits for 0606, which changes the Shipped part of the same function.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes (checked a lane emptied, filled and emptied again keeps one set of lines under speck, and the page without the face script still shows the line)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

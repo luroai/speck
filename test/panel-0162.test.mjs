@@ -46,17 +46,18 @@ test('0162 AC1: the three fixed hints are gone from the page', async () => {
 // ---------- AC2 ----------
 
 // 0410: Build is a tab now. 0449: an empty lane says "Nothing building" in its message alone, and its counts line is hidden.
+// 0608: on speck asleep's line, with what lands there.
 test('0162 AC2: with nothing in flight or ready, Build says "Nothing building"; a ready ticket brings its full layout back', async () => {
   const p = fakePage([STATE({ queue: false }), STATE(), STATE({ queue: false })]);
   await p.settle();
-  const empty = () => p.byId('queue').children.map(n => [n.className, n.children[0].textContent]);
+  const empty = () => p.byId('queue').children.map(n => [n.className, n.children.find(c => /^asleep-line\b/.test(c.className)).textContent]);
   assert.equal(p.byId('queue-n').hidden, true);
-  assert.deepEqual(empty(), [['empty idle', 'Nothing building']], 'the lane says so');
+  assert.deepEqual(empty(), [['empty asleep idle', 'Nothing building · Ready tickets land here.']], 'the lane says so');
   await refresh(p);
   assert.equal(p.byId('queue-n').textContent, '0 in flight · 1 queued');
   assert.equal(queueRows(p).length, 1);
   await refresh(p);
-  assert.deepEqual(empty(), [['empty idle', 'Nothing building']], 'and again once it has gone');
+  assert.deepEqual(empty(), [['empty asleep idle', 'Nothing building · Ready tickets land here.']], 'and again once it has gone');
   assert.equal(p.byId('queue-n').hidden, true);
 });
 
@@ -213,17 +214,17 @@ for (const width of [375, 1280]) {
   });
 
   // 0410: Build is a tab, open on load. 0425: its message is the first line of its lane, above the lane's list. 0449: an
-  // empty lane's counts line is hidden, and its list says "Nothing building" first.
+  // empty lane's counts line is hidden, and its list says "Nothing building" first. 0608: on the line under speck asleep.
   test(`0162 AC2: at ${width} px an empty Build says "Nothing building" at the top of its lane, once`, skip, async () => {
     await withPanel(async b => {
       const s = await b.js(`(() => { const name = document.querySelector('#tab-build .tab-name'), n = document.getElementById('queue-n'), sec = document.getElementById('build-section');
         return { text: n.innerText, shown: n.getBoundingClientRect().height > 0, name: name.innerText,
-          first: document.querySelector('#queue .idle').firstElementChild.innerText, lane: sec.innerText, open: !sec.hidden }; })()`);
+          first: document.querySelector('#queue .idle .asleep-line').innerText, lane: sec.innerText, open: !sec.hidden }; })()`);
       assert.equal(s.name, 'Build');
       assert.equal(s.text, '');
       assert.ok(!s.shown, 'the counts line takes no room');
       assert.ok(s.open, 'Build is open');
-      assert.equal(s.first, 'Nothing building');
+      assert.equal(s.first, 'Nothing building · Ready tickets land here.');
       assert.equal(s.lane.split('Nothing building').length - 1, 1, 'it says so once');
     }, { width, state: STATE({ queue: false }) });
   });
