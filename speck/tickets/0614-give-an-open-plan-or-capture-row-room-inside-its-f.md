@@ -62,6 +62,7 @@ Clear winner: no
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Tests changed to check the new behaviour (AC4): test/panel-0041.test.mjs (`iconOf` finds an open ticket's chain or padlock mark after its title, not right after its id) and test/panel-0483.test.mjs (AC2: an open card's line is id, title, then its mark). No other test changed, and none failed.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +139,92 @@ Clear winner: no
     ],
     "escalation_question": "",
     "summary": "The added space works in both looks, and rows retain their full width. However, linked Plan tickets still move their titles sideways when opened. The new tests deliberately omit that case, so the change does not yet meet every acceptance criterion."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "75f7691b75ef41c503d58ef33c96d43602e7ebf6",
+    "session": "continued",
+    "thread_id": "01a1c52a-4bb6-7853-90b0-c0be0cecfa9f",
+    "builder_response": "- Tests run: test/panel-0614.test.mjs, test/panel-0041.test.mjs, test/panel-0483.test.mjs, test/panel-0418.test.mjs, test/panel-0600.test.mjs, test/panel-0608.test.mjs, test/panel-0154.test.mjs, test/panel-0167.test.mjs, test/panel-0185.test.mjs, test/panel-0519.test.mjs, test/panel-0151.test.mjs, test/panel-0164.test.mjs, test/panel-0419.test.mjs, test/panel-0434.test.mjs, test/panel-0468.test.mjs, test/panel-0053.test.mjs, with --related (which added 15 more, listed at the top of the output)\n- F1: fixed, with the owner's decision recorded in the ticket's Notes (speck's watch took the recommendation: move the mark to the end of the open title line). templates/panel.js titleLine now puts the open ticket's chain or padlock mark after the title, where a closed row's chip sits, so the title doesn't move. templates/panel-cards.css gives the chain mark 4 px after it at the line's end, as its tilted links reach past its 12 px box. test/panel-0614.test.mjs now opens a chain starter (0701) and a waiting ticket (0703) as well as an unlinked one, and checks the title stays put, the mark is there, and the mark too is 12 px inside the fill.\n- AC4: tests changed to check the new behaviour: test/panel-0041.test.mjs (iconOf finds the mark after the title, not after the id) and test/panel-0483.test.mjs (AC2: the line's shape is id, title, mark). Both listed in the Delivery log at close.\n",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 317250,
+      "cached_input_tokens": 260224,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1699,
+      "reasoning_output_tokens": 193
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 9247,
+      "cached": 157056,
+      "write": 0,
+      "output": 819
+    },
+    "cost_usd": 0.0423896,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T11:20:10.707Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css .item.row.open extends the fill 12 px each side. Both passing browser tests in test/panel-0614.test.mjs measure text clearance in light and dark looks, including linked tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.js titleLine now places the open ticket's mark after its title. Passing browser tests verify unchanged title position for Capture, unlinked Plan tickets, chain starters and waiting tickets."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The row's box dimensions remain unchanged. Passing test/panel-0614.test.mjs browser assertions check list alignment; test/panel-0418.test.mjs also passed."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "test/panel-0041.test.mjs and test/panel-0483.test.mjs honestly update the expected icon position. The run reports 358 passes and no failures, but the ticket's Delivery log remains empty and does not list those changed tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "The linked-ticket title shift is fixed: the chain or padlock mark follows the title, and browser coverage now includes both cases.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0614-give-an-open-plan-or-capture-row-room-inside-its-f.md",
+        "issue": "AC4 explicitly requires the Delivery log to list tests changed from the old behaviour. It still contains only its placeholder; promising to populate it after review does not meet the criterion as written.",
+        "suggested_fix": "Record test/panel-0041.test.mjs and test/panel-0483.test.mjs in the Delivery log, explaining that their icon-position expectations changed.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The spacing and linked-ticket title fix now meet the behaviour requirements, with no reported test failures. One required record remains: list the two updated tests in the ticket's Delivery log."
   }
 }
 ```
