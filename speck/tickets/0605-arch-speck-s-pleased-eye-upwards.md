@@ -41,6 +41,8 @@ speck's pleased visor arches upwards, its middle higher than its ends, like a ha
 - Today: `VISORS.pleased` in `templates/speck-face.js` is `{ x1: -6, y1: -27, cx: 0, cy: -20, x2: 6, y2: -27 }`, so it bends down towards y -20. Something like `{ x1: -6, y1: -23, cx: 0, cy: -31, x2: 6, y2: -23 }` arches it up instead, keeping it inside the screen.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Pictures: the real `templates/speck-face.js` drawn on a plain page in headless Chromium (the face is the same drawing wherever the panel shows it), with reduced motion so it rests in its mood's shape.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
