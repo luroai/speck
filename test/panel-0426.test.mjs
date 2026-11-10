@@ -160,10 +160,8 @@ test('0426 AC3: needs you, waiting for you, passing checks, links, and the focus
 test('0426 AC4: speck\'s colours and the bar keep their own colours', () => {
   const all = looks();
   const KEPT = {
-    light: { '--speck-red': '#d63f28',
-      '--bezel': '#262722', '--bezel-ink': '#e6e7df', '--bezel-muted': '#b8b9b1', '--dot': '#b0412e' },
-    dark: { '--speck-red': '#ff5a3f',
-      '--bezel': '#080907', '--bezel-ink': '#e6e7df', '--bezel-muted': '#b8b9b1', '--dot': '#d4664e' },
+    light: { '--speck-red': '#d63f28', '--dot': '#b0412e' }, // 0603: the screen's frame colours (--bezel) are gone
+    dark: { '--speck-red': '#ff5a3f', '--dot': '#d4664e' },
   };
   for (const [name, kept] of Object.entries(KEPT)) for (const [k, v] of Object.entries(kept)) assert.equal(all[name][k], v, `${name}: ${k}`);
   uses('.bezel', 'background', '--bar'); // 0580: the frame is the bar now, one colour in both looks

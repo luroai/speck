@@ -14,18 +14,13 @@
     --muted-large: #5F6670; --faint: #5F6670;
     --ok: #145a42; --warn: #A84F06; --bad: #A84F06; --run: #2F55D4; --idea: #833063;
     --blue: #2F55D4; --yellow: #a16900; --green: #1f8a65;
-    /* 0461: a step's track: a purple for Ship, well apart from --bad's crimson, and text shades of the cyan and purple
-       that reach 0161's 7:1 */
-    --purple: #7c5cc4; --purple-text: #593c98; --cyan-text: #295560;
+    /* 0461: a step's track: a text shade of the cyan that reaches 0161's 7:1. 0603: Ship is in the accent */
+    --cyan-text: #295560;
     --speck-red: #d63f28; /* the Pipeline log's dot */
-    --bezel: #262722; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1; /* 0413: the screen's dark frame, from the design's console */
     --dot: #b0412e; /* 0303: the speck in the header's mark */
     --inbox: #4c7f8c; /* the inbox's own colour: Cursor's cyan */
     --bug: #86371b; /* the bug tag's own colour: Cursor's orange */
     --fix: #6d4700; /* the fix tag's own colour: Cursor's yellow, as --warn */
-    /* 0455: a ticket's build log is a terminal in every look, so the dark look leaves these as they are: black, and its
-       text in the dark look's colours */
-    --log-bg: #000000; --log-text: #e4e4e4; --log-muted: #a9a9a9; --log-run: #97b2cc; --log-bad: #ef95ad; --log-warn: #d9a65e;
     --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif;
     --font-mono: "JetBrains Mono", "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace;
   }
@@ -124,10 +119,9 @@
     --ok: #7fbc95; --warn: #F0A35A; --bad: #F0A35A; --run: #86A2FF; --idea: #c4a6be;
     --blue: #86A2FF; --yellow: #d2943e; --green: #70b489;
     --inbox: #88c0d0; --bug: #e69d83; --fix: #d9a65e;
-    --purple: #a08ad6; --purple-text: #b9a7e4; --cyan-text: #8cc3d2; /* a shade apart from --inbox, which keeps a colour of its own (0038) */
+    --cyan-text: #8cc3d2; /* a shade apart from --inbox, which keeps a colour of its own (0038) */
     --accent-bg: #27221b; --ok-bg: #191f1d; --inbox-bg: #212527; --bad-bg: #1B1D20;
     --speck-red: #ff5a3f;
-    --bezel: #080907; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1;
     --dot: #d4664e;
     color-scheme: dark;
   }

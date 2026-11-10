@@ -135,7 +135,7 @@ test('0357 AC2 (self-check): once a note is sent the box goes, and opening the p
   await p.settle();
   assert.equal(boxOf(p), null, 'no box while what speck said shows');
   assert.ok(buttonsIn(p, pane(p), 'Ship')[0], 'Ship is still there');
-  p.press(p.all(pane(p)).find(n => n.className === 'close')); // 0585: back to the full view, whose button opens the pack again
+  p.press(p.all(pane(p)).find(n => n.className === 'back')); // 0585: back to the full view, whose button opens the pack again (0603: by its back link)
   await p.settle();
   p.press(buttonsIn(p, pane(p), 'Review pack')[0]);
   await p.settle();

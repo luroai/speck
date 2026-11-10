@@ -170,13 +170,13 @@ test('0583 AC4: a ticket with nothing to open yet has no rows', async () => {
   assert.equal(of(p, 'pane-rows'), undefined);
 });
 
-test('0583 AC4: the Review pack row opens the pack, and closing the pack comes back to the full view', async () => {
+test('0583 AC4: the Review pack row opens the pack, and (0603) its back link comes back to the full view', async () => {
   const p = await page();
   await open(p, '0806');
   p.press(button(p, 'Review pack'));
   await p.settle();
   assert.equal(of(p, 'title', pane(p).children[0]).textContent, 'Review pack');
-  p.press(button(p, 'Close'));
+  p.press(of(p, 'back', pane(p).children[0]));
   await p.settle();
   assert.equal(pane(p).hidden, false, 'the pane stays open');
   assert.equal(of(p, 'title', pane(p).children[0]).textContent, 'Approved', 'on the full view');

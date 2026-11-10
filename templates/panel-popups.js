@@ -231,16 +231,20 @@ function drawDocActs() {
 }
 // The side pane with a review pack: its Markdown formatted, tables included, and the findings in a <details> element
 // that folds away, as the pack's own <details> does where Markdown is shown with HTML.
+// 0603: it opens with a back link to its ticket's full view, as a build log's does.
 function packPane(t) {
-  const close = el('button', 'close', 'Close');
-  close.type = 'button';
-  close.addEventListener('click', closeFull);
+  const back = el('span', 'back', String(t.id));
+  back.tabIndex = 0;
+  back.setAttribute('role', 'link');
+  back.setAttribute('aria-label', `Back to ${t.id}`);
+  back.addEventListener('click', e => { e.stopPropagation(); backToTicket(); });
+  back.addEventListener('keydown', pressWithKeys);
   const body = el('div', 'md');
   if (packOf.state === 'loading') body.appendChild(el('p', null, 'Loading the review pack…'));
   else if (packOf.state === 'none') body.appendChild(el('p', null, `There's no review pack for ${t.id}: it has no review rounds recorded.`));
   else if (packOf.state === 'error') body.appendChild(el('p', 'bad', packOf.text));
   else {
-    const blocks = packBlocks(packOf.text);
+    const blocks = packBlocks(packOf.text, packMarks);
     // The pictures go under the acceptance criteria, or at the end of a pack without them.
     if (packOf.pictures.length) { const at = blocks.findIndex(n => n.className === 'ac-table'); blocks.splice(at < 0 ? blocks.length : at + 1, 0, ...picturesPart(packOf.pictures)); }
     for (const n of blocks) body.appendChild(n);
@@ -249,7 +253,7 @@ function packPane(t) {
   // the other files straight after it.
   const docs = packOf.state === 'ok' ? packOf.documents : [], summary = docs[0]?.summary === true ? docs.slice(0, 1) : [];
   const rest = docs.slice(summary.length), files = rest.length ? documentsPart(rest) : [];
-  const top = el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close);
+  const top = el('div', 'top', null, back, el('span', 'title', 'Review pack'));
   return summary.length ? [top, ...documentsPart(summary), ...shipPart(t), ...files, body] : [top, ...files, ...shipPart(t), body];
 }
 // 0133: an approved ticket's pack has a Ship button, above the pack. Clicking it is the user shipping (Gate 2), as
@@ -363,8 +367,26 @@ async function shipTicket(id) {
   shippingId = null;
   render();
 }
-function packBlocks(text) {
-  const out = [], md = s => mdBlocks(markdown(s, { tables: true }));
+// 0603: the pack's verdict and each criterion's result marked with the panel's own tick and cross, not the emoji
+// speck pack writes: a tick for approved or passed, a cross for what it marks ⛔ or ❌, and "Unclear" for ⚠️. Done on
+// the Markdown's inline runs, before they're made into nodes.
+const PACK_MARKS = [['✅', () => tick('Passed')], ['❌', () => cross('Failed')], ['⛔', () => cross('Not approved')], ['⚠️', () => el('span', 'unclear', 'Unclear')]];
+function packMark(inline, at) {
+  const n = inline[at], lead = n && n.type === 'text' ? n.text.replace(/^\s+/, '') : '', hit = PACK_MARKS.find(([e]) => lead.startsWith(e));
+  if (!hit) return inline;
+  const rest = lead.slice(hit[0].length).replace(/^\s+/, '');
+  return [...inline.slice(0, at), ...at ? [{ type: 'text', text: ' ' }] : [], { type: 'node', node: hit[1]() }, ...rest ? [{ type: 'text', text: ` ${rest}` }] : [], ...inline.slice(at + 1)];
+}
+function packMarks(blocks) {
+  return blocks.map(b => {
+    const first = b.type === 'paragraph' && b.inline[0];
+    if (first && first.type === 'strong' && first.inline.length === 1 && first.inline[0].text === 'Verdict:') return { ...b, inline: packMark(b.inline, 1) };
+    if (b.type === 'table' && b.head.map(plainText).join('|') === '#|Criterion|Result|Evidence') return { ...b, rows: b.rows.map(r => r.map((c, i) => (i === 2 ? packMark(c, 0) : c))) };
+    return b;
+  });
+}
+function packBlocks(text, marks = b => b) {
+  const out = [], md = s => mdBlocks(marks(markdown(s, { tables: true })));
   let at = 0;
   for (const m of text.matchAll(/^<details><summary>(.*)<\/summary>[ \t]*$([\s\S]*?)^<\/details>[ \t]*$/gm)) {
     out.push(...md(text.slice(at, m.index)), el('details', null, null, el('summary', null, m[1]), ...md(m[2])));
@@ -414,10 +436,16 @@ function fullTicket(t, draft, steps, barShown) {
 const LANE_OF = { shaping: 'Plan', queue: 'Build', shipped: 'Shipped' };
 // The list the back link returns to: the one its Full ticket button is in, or the one the ticket is in now.
 const backList = () => (fullFrom && LANE_OF[fullFrom.list] ? fullFrom.list : paneFrom === 'draft' ? 'shaping' : paneFrom);
-function tick() {
+function tick(label = 'Passed by the reviewer') {
   const n = el('span', 'tick');
   n.setAttribute('role', 'img');
-  n.setAttribute('aria-label', 'Passed by the reviewer');
+  n.setAttribute('aria-label', label);
+  return n;
+}
+function cross(label) { // 0603: drawn as the tick is, in the bad colour
+  const n = el('span', 'cross');
+  n.setAttribute('role', 'img');
+  n.setAttribute('aria-label', label);
   return n;
 }
 const setTone = (pill, tone) => pill.setAttribute('data-tone', tone);
@@ -649,6 +677,13 @@ function renderFull(m) {
     if (barSig !== null) pane.appendChild(shipBar(t));
     if (had && pane.focus) pane.focus({ preventScroll: true });
   }
+}
+// 0603: the review pack's back link: the ticket's full view, wherever the pack was opened from.
+function backToTicket() {
+  packOf = null; packFromFull = false;
+  render();
+  const pane = $('full-ticket');
+  if (pane.focus) pane.focus({ preventScroll: true });
 }
 function closeFull() {
   if (packOf && packFromFull) { packOf = null; packFromFull = false; render(); const pane = $('full-ticket'); if (pane.focus) pane.focus({ preventScroll: true }); return; } // 0583: back to the full view

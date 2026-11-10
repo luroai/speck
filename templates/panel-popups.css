@@ -10,7 +10,7 @@
   .foreman .run-log p { margin: 0; }
   .foreman p { margin: 2px 0; }
   .foreman .stale { color: var(--warn); }
-  .foreman .reload { font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--panel); border: 1px solid var(--line); padding: 2px 10px; cursor: pointer; }
+  .foreman .reload { box-sizing: border-box; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; } /* 0603: the secondary style (panel-cards.css) */
   /* 0583: the step track: four bars with their names under them, filled in the accent up to where it is, and orange at a
      step that waits for you */
   #full-ticket .track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 4px 0 18px; }
@@ -49,8 +49,8 @@
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
   #doc-view .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
-  #full-ticket .close, #doc-view .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #full-ticket .close:hover, #doc-view .close:hover { color: var(--text); }
+  #doc-view .close { margin-left: auto; box-sizing: border-box; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; } /* 0603: the secondary style (panel-cards.css) */
+  #doc-view .close:hover { border-color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
   /* 0424: the full ticket and a review pack set out as a document: the id and status in small type, the title the
      largest text with its tags under it, then each section's heading, smaller than the title and larger than the text,
@@ -61,7 +61,7 @@
   #full-ticket .top .title { order: 1; flex-basis: 100%; font-size: 20px; line-height: 24px; font-weight: 600; } /* under the id and Close, which a review pack has after it */
   /* 0583: a ticket's full view: the back link and its id at the right on the first row, then its status pill, then its title */
   #full-ticket .top:has(> .state) { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-  #full-ticket .top:has(> .state) .close { grid-area: 1 / 1; justify-self: start; margin: 0; padding: 2px 0; border: 0; background: none; color: var(--run); font-size: 14px; line-height: 20px; font-weight: 400; text-decoration: none; }
+  #full-ticket .top:has(> .state) .close { grid-area: 1 / 1; justify-self: start; margin: 0; padding: 2px 0; border: 0; background: none; color: var(--run); font-family: var(--font-ui); font-size: 14px; line-height: 20px; font-weight: 400; text-decoration: none; cursor: pointer; }
   #full-ticket .top:has(> .state) .close::before { content: '‹'; margin-right: 4px; }
   #full-ticket .top:has(> .state) .id { grid-area: 1 / 2; align-self: center; }
   #full-ticket .top:has(> .state) .title { grid-area: 3 / 1 / 3 / 3; }
@@ -174,7 +174,6 @@
   #foreman.log-view .log-filter[aria-pressed="true"] { color: var(--text); background: var(--raise); border-color: var(--text); }
   #foreman.log-view .fm-body { padding: 0; color: var(--text); background: none; border-radius: 0; }
   #foreman.log-view .stale { color: var(--warn); }
-  #foreman.log-view .reload { color: var(--muted); border-color: var(--line); }
   #foreman.log-view .run-log { padding: 0; border: 0; border-radius: 0; color: var(--muted); background: none; color-scheme: inherit; white-space: normal; }
   #foreman.log-view .run-log .none { padding: 12px 0; font-family: var(--font-ui); font-size: 14px; }
   #foreman.log-view .run-log .log-row { display: grid; grid-template-columns: 9ch 20px minmax(0, 1fr); column-gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
@@ -202,6 +201,21 @@
   #full-ticket ol.criteria > li { margin-bottom: 6px; }
   /* 0583: a tick on each criterion the reviewer passed, and the rows that open its review pack and build log */
   #full-ticket .tick { display: inline-block; width: 6px; height: 12px; margin: 0 8px 0 3px; border: solid var(--blue); border-width: 0 2px 2px 0; transform: rotate(45deg); } /* drawn, so it needs no font to have the glyph */
+  /* 0603: the review pack's cross, drawn as the tick is, in the bad colour, and its Unclear in the muted one */
+  #full-ticket .cross { position: relative; display: inline-block; width: 12px; height: 12px; margin: 0 6px 0 1px; vertical-align: -1px; }
+  #full-ticket .cross::before, #full-ticket .cross::after { content: ''; position: absolute; left: 5px; top: -1px; height: 14px; border-left: 2px solid var(--bad); transform: rotate(45deg); }
+  #full-ticket .cross::after { transform: rotate(-45deg); }
+  #full-ticket .unclear { color: var(--muted); }
+  /* 0603: the review pack's back link to its ticket, as a build log's is */
+  #full-ticket .top > .back { display: inline-block; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); cursor: pointer; }
+  #full-ticket .top > .back::before { content: '‹'; margin-right: 4px; }
+  /* 0603: a chain in the full view: two facts, each ticket's id a link when it's on the page, then its state */
+  #full-ticket .facts.chain-facts { margin-top: 12px; }
+  #full-ticket .chain-facts .chain-id { display: inline-flex; align-items: center; margin: 0; padding: 0; font: inherit; color: var(--text); background: none; border: 0; }
+  #full-ticket .chain-facts .sid { font-family: var(--font-mono); }
+  #full-ticket .chain-facts button.chain-id { color: var(--run); cursor: pointer; }
+  #full-ticket .chain-facts button.chain-id:hover { text-decoration: underline; }
+  #full-ticket .chain-facts .chain-state, #full-ticket .chain-facts .chain-more { color: var(--muted); }
   /* 0584: a build's live details, under the track and facts, styled as its card is */
   #full-ticket .live { margin-top: 14px; }
   #full-ticket .q.live { padding: 0; border: 0; border-radius: 0; } /* 0602: in the view, not a box of its own */
@@ -309,7 +323,7 @@
   /* 0417: a touch screen, at any width: every button and clickable control at least 44 px each way */
   @media (pointer: coarse) {
     /* The full ticket and review pack */
-    #full-ticket .pane-row, #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman.log-view .back, #foreman.log-view .log-filter, #decided .close { min-width: 44px; min-height: 44px; }
+    #full-ticket .pane-row, #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman.log-view .back, #foreman.log-view .log-filter, #decided .close, #full-ticket .top > .back, #full-ticket .chain-facts button.chain-id { min-width: 44px; min-height: 44px; }
     #full-ticket .md summary, #doc-view .md summary { min-height: 44px; padding-top: 12px; }
   }
 

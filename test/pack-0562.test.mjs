@@ -50,9 +50,9 @@ test('0562 AC2: a folder stays unfolded when the pane is drawn again, and folds 
   assert.notEqual(pane(p).children[1], was, 'with new nodes');
   assert.ok(rows(p).includes('first.md'), 'still unfolded');
   assert.equal(folder(p, 'drafts').attrs['aria-expanded'], 'true');
-  p.press(p.all(pane(p)).find(n => n.tagName === 'button' && n.textContent === 'Close'));
+  p.press(p.all(pane(p)).find(n => n.className === 'back')); // 0603: the pack's back link, in place of its Close
   await p.settle();
-  p.press(p.all(pane(p)).find(n => n.tagName === 'button' && n.textContent === 'Review pack')); // 0585: Close goes back to the full view, which has it
+  p.press(p.all(pane(p)).find(n => n.tagName === 'button' && n.textContent === 'Review pack')); // 0585: it goes back to the full view, which has it
   await p.settle();
   assert.deepEqual(rows(p), ['Start here', 'drafts/ · 1 file', 'imports/ · 3 files', 'memo.md', 'report.pdf'], 'folded again');
 });

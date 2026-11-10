@@ -61,7 +61,7 @@ const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.sta
 // Every control and card with an edge of its own, by its main rule. 0520: Plan's Tickets, Ideas and Inbox buttons
 // (.toggle) are gone.
 const EDGED = ['.tag', '.bezel .settings-open', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
-  '#full-ticket .close', '#full-ticket .ship', '.prio-menu', '.item', '.q', '#shipped tr', 'section'];
+  '#doc-view .close', '#full-ticket .ship', '.prio-menu', '.item', '.q', '#shipped tr', 'section']; // 0603: #doc-view's Close in place of the review pack's, a back link now with no edge
 const CONTROL = /(?:^|[^\w-])(?:\.(?:tag|settings-open|run-state|set-ready|full-open|stop-build|back-to-plan|copy|close|ship|prio-menu|item|q)|section)(?![\w-])/;
 // 0443: what's inside a :not() or :has() is no part of the element the selector picks
 const lastCompound = s => s.replace(/\((?:[^()]|\([^()]*\))*\)/g, '()').trim().split(/\s+|>|\+|~/).filter(Boolean).pop() || '';

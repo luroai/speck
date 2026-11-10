@@ -33,7 +33,7 @@ const chipOf = (p, n) => p.all(lineOf(n)).find(x => x.className === 'dep-chip') 
 const chipSaid = (p, n) => chipOf(p, n)?.title ?? null;
 const secondLine = n => topOf(n).children[1];
 const whereOf = (p, id) => p.all(card(p, id)).find(n => /^where\b/.test(n.className)).textContent;
-const depsOf = async (p, id) => p.all(await fullViewOf(p, id)).find(n => /\bdeps\b/.test(n.className));
+const depsOf = async (p, id) => p.all(await fullViewOf(p, id)).find(n => /\b(deps|chain-facts)\b/.test(n.className)); // 0603: a chain in the full view is facts
 
 test('0468 AC1: a closed ticket waiting on unshipped ones ends its title row with a link chip and how many', async () => {
   const p = boardPage([board()]);
@@ -57,8 +57,8 @@ test('0468 AC1: one waiting on none, that others wait on, shows an arrow chip an
     assert.ok(chip, `${id}: a chip`);
     assert.deepEqual(chip.children[0].children.map(c => [c.className, c.textContent]), [['dep-icon arrow', ''], ['dep-count', n]], `${id}: an arrow and ${n}`);
   }
-  // 0585: in Build, the full view's chain box says how many come after it
-  assert.match((await depsOf(p, '0600')).textContent, /Chain.*0 before · 5 after/);
+  // 0585: in Build, the full view's chain says how many come after it (0603: the first, then how many more)
+  assert.match((await depsOf(p, '0600')).textContent, /^Waits for—Waiting on it\d+ queued, \+4 more$/);
   // 0601 waits on 0600 and is waited on by 0605: its row says it waits
   assert.equal(whereOf(p, '0601'), 'Ready · after 0600');
 });
@@ -118,12 +118,12 @@ test('0468 AC1: a Build ticket in flight shows its dependents in its full view, 
   const p = boardPage([board(tickets([])), board(tickets(['0905']))]);
   await p.settle();
   assert.equal(chipOf(p, card(p, '0900')), null, 'its row has no chip');
-  assert.match((await depsOf(p, '0900')).textContent, /Chain.*0 before · 4 after/, 'a building ticket four wait on shows them');
+  assert.match((await depsOf(p, '0900')).textContent, /^Waits for—Waiting on it\d+ queued, \+3 more$/, 'a building ticket four wait on shows them');
   const kept = card(p, '0900');
   p.timers.shift()(); // the next board, with one more waiting on it
   await p.settle();
   assert.equal(card(p, '0900'), kept, 'the same row, changed in place');
-  assert.match((await depsOf(p, '0900')).textContent, /Chain.*0 before · 5 after/);
+  assert.match((await depsOf(p, '0900')).textContent, /^Waits for—Waiting on it\d+ queued, \+4 more$/);
 });
 
 test('0468 AC3: the after, unlocks and waiting on ids are gone from closed cards\' second lines', async () => {

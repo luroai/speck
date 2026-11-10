@@ -44,6 +44,7 @@ The review pack, the ticket's chain and the panel's secondary buttons are in the
 - Today: the pack is `packPane` in `templates/panel-popups.js`; the chain is `depsBox`, `withDeps`, `depChip` in `templates/panel.js`; the purple Shipped step is in `templates/panel-cards.css` (`.track .step.done.ship`).
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: the review pack's back link no longer clears what speck ship last said, as the old Close back to the full view didn't; the chain section's class is chain-facts, as `.chain` is already the chain icon's.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

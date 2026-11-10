@@ -49,8 +49,9 @@ const MEASURE = `(async () => {
   await document.fonts.ready;
   const colour = v => { const p = document.createElement('i'); p.style.color = v; document.body.appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; };
   const root = getComputedStyle(document.documentElement), val = v => colour(root.getPropertyValue(v).trim());
-  const want = { panel: val('--panel'), line: val('--line'), soft: val('--line-soft'), text: val('--text'), muted: val('--muted'), blue: val('--blue'), purple: val('--purple'),
-    frame: [getComputedStyle(document.querySelector('.bezel')).backgroundColor, val('--bezel'), val('--bezel-ink'), val('--bezel-muted')] };
+  const want = { panel: val('--panel'), line: val('--line'), soft: val('--line-soft'), text: val('--text'), muted: val('--muted'), blue: val('--blue'),
+    frame: [getComputedStyle(document.querySelector('.bezel')).backgroundColor], // 0603: the frame's own colours (--bezel) are gone, so the bar's is the one left
+    oldInk: root.getPropertyValue('--bezel-ink').trim() ? val('--bezel-ink') : null }; // only BEFORE's rules, below, set the frame's ink now
   const main = document.querySelector('main').getBoundingClientRect(), out = { want, main: { left: main.left, right: main.right }, lanes: [] };
   for (const lane of ['plan', 'build', 'shipped']) {
     document.getElementById('tab-' + lane).click(); ${REST_LANES};
@@ -104,7 +105,7 @@ test('0480 AC1 AC2, since 0600: in both looks, each lane is flat on its own ligh
 
 // The lane rules as they were before 0480 (0478's dark frame), laid over the page to measure it as it was.
 const BEFORE = `
-  :root { --bezel-step: #e4e4e462; }
+  :root { --bezel-step: #e4e4e462; --bezel: #262722; --bezel-ink: #e6e7df; --bezel-muted: #b8b9b1; } /* 0603: the frame's colours as they were, gone from the panel */
   main > section { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); column-gap: 10px; padding: 8px 16px; color: var(--bezel-ink); background-color: var(--bezel); background-clip: content-box; border-radius: 28px / 20px; }
   main > section::before { content: none; }
   .lane-title { grid-row: 1; grid-column: 1; display: inline-flex; align-items: center; gap: .25em; min-width: 0; margin: 0; padding: 7px 0 6px 6px; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 22px; line-height: 1; white-space: nowrap; color: var(--bezel-ink); }
@@ -119,7 +120,7 @@ test('0480 AC3: at 390 × 844, with the same tickets, each lane\'s ticket list i
     const after = await b.js(MEASURE);
     await b.js(`(() => { const s = document.createElement('style'); s.id = 'before-0480'; s.textContent = ${JSON.stringify(BEFORE)}; document.head.appendChild(s); return 1; })()`);
     const before = await b.js(MEASURE);
-    assert.ok(before.lanes.every(l => l.card.colour === before.want.frame[2]), 'the old rules are in place for the measure'); // 0600: the lane's ink, its title being gone
+    assert.ok(before.lanes.every(l => l.card.colour === before.want.oldInk), 'the old rules are in place for the measure'); // 0600: the lane's ink, its title being gone
     for (const lane of Object.keys(LANES)) {
       const a = after.lanes.find(l => l.lane === lane).listHeight, was = before.lanes.find(l => l.lane === lane).listHeight;
       assert.ok(a > was, `${lane}: its list is taller (${a} px, was ${was} px)`);

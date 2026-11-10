@@ -95,8 +95,8 @@ test('0463 AC2: a queued Build ticket\'s full view shows its priority, size, ris
     assert.deepEqual(Object.fromEntries(Object.entries(factsOfFull(p, full)).filter(([k]) => facts[k] !== undefined)), facts, id);
     assert.equal(p.all(full).some(n => n.className === 'state' && n.textContent === 'ready'), true, `${id}: its state`);
   }
-  assert.ok(p.all(await fullViewOf(p, '0812')).some(n => /^deps\b/.test(n.className)), '0812: what it waits on');
-  assert.ok(p.all(await fullViewOf(p, '0813')).some(n => /^deps\b/.test(n.className)), '0813: what it waits on');
+  assert.ok(p.all(await fullViewOf(p, '0812')).some(n => /^(deps|facts chain-facts)\b/.test(n.className)), '0812: what it waits on');
+  assert.ok(p.all(await fullViewOf(p, '0813')).some(n => /^(deps|facts chain-facts)\b/.test(n.className)), '0813: what it waits on');
 });
 
 test('0463 AC2: a queued Build ticket\'s full view shows its Ready check and its type', async () => {
@@ -143,10 +143,10 @@ test('0463 AC3: a queued ticket\'s full view puts its dependencies right when th
   const p = boardPage([board(), next], { Date: stoppedClock(NOW) });
   await p.settle();
   const full = await fullViewOf(p, '0814');
-  assert.ok(!p.all(full).some(n => /^deps\b/.test(n.className)), 'on its own, no dependency box');
+  assert.ok(!p.all(full).some(n => /^(deps|facts chain-facts)\b/.test(n.className)), 'on its own, no dependency box');
   p.timers.shift()();
   await p.settle();
-  assert.match(p.all(p.byId('full-ticket')).find(n => /^deps\b/.test(n.className))?.textContent ?? '', /0815/, 'its chain put right');
+  assert.match(p.all(p.byId('full-ticket')).find(n => /^(deps|facts chain-facts)\b/.test(n.className))?.textContent ?? '', /0815/, 'its chain put right');
 });
 
 test('0463 AC4: a screen reader reads each cell as its label, then its value', async () => {
