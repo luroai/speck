@@ -1,7 +1,7 @@
 ---
 id: "0612"
 title: "Give the panel's last small buttons the redesign's size"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0611"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:15:35.422Z"
 approved: "2026-11-10T10:57:34.286Z"
+finished: "2026-11-10T11:10:23.053Z"
 
 ---
 # 0612 · Give the panel's last small buttons the redesign's size
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A few buttons are still small boxes with 8 px corners and 12 px text: a setting's own Save, the Save in Settings' unsaved-changes question, the review pack's file and folder buttons, and the pack's Ask for changes. Since 0603, Discard and Keep editing are 44 px secondary buttons beside a small Save in the same question, which looks unfinished.
