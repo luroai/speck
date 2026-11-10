@@ -1,7 +1,7 @@
 ---
 id: "0625"
 title: "Let speck schedule a resume for later when it looks into a stop"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T23:16:01.465Z"
 ---
 # 0625 · Let speck schedule a resume for later when it looks into a stop
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When speck's watcher looks into a stop that will clear by itself at a known time, such as a limit or an outage with a stated end, it can only act now: resume, reship, fix, ask, decide or tell. So it either resumes too early or leaves the ticket for you. And when the watcher's own agent is out of usage, as on 2026-11-10, its look fails at once and is noted as "I looked into it and took no action", so nothing is ever looked at again.
@@ -48,7 +48,10 @@ The watcher can schedule a ticket's resume for a set time, and a look that could
 - Self-check: a run record holding a time that isn't text no longer breaks speck status; added a test.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a stop will clear by itself at a known time, speck's watcher can now book the build's restart for that time instead of restarting too early or leaving it to you. It says so in the ticket and the log, and until the restart happens or is dropped, it's listed in speck's status and at the top of the Pipeline log. If the ticket has moved on by then, speck drops the restart and says so.
+If the watcher itself runs out of Claude usage while looking into a stop, that no longer counts as having looked. It tries again once the limit resets.
+To see it, open the Pipeline log while a restart is booked: the ticket and its time, in UTC, sit under speck's line.
+Worth keeping an eye on: a booked restart stops the ticket counting under Needs you until its time, so a time set far ahead would keep it quiet. speck refuses anything more than 31 days away.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,4 +60,82 @@ The watcher can schedule a ticket's resume for a set time, and a look that could
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+- Follow-up: steady two speck run tests that failed once each under load (`speck/ideas/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md`).
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e04f66b253f4d84f4958dce967b344c348c4ebf2",
+    "session": "fresh",
+    "thread_id": "01a1c7c9-b663-7d61-9035-5d0d9d96aa62",
+    "builder_response": "- Tests run: test/watch-at-0625.test.mjs test/usage-limit-0622.test.mjs test/run-settings-0549.test.mjs test/pipeline-0458.test.mjs test/pipeline-0479.test.mjs test/watch-resume-0618.test.mjs test/foreman-agent-0287.test.mjs (plus commands.checks, which speck test adds).\n- Before this round I ran speck test --related twice on the committed code. Each of those two runs had one failure, a different test each time, both timing-dependent tests that start a real speck run, while the machine's load average was 20 to 26: \"0549 AC1, AC3, AC5\" (test/run-settings-0549.test.mjs) and \"0622 AC1 AC2 AC3: a build that hit the limit while speck run was off\" (test/usage-limit-0622.test.mjs). Each passed in the other related run, and both files passed three times out of three when run by themselves. They're included in this round's files.\n- An earlier related run failed 0458 AC1 and 0479 AC4, which pin the Pipeline log's top to back, title, log-status and log-filters. I left those tests alone and moved the scheduled list inside log-status, on a row of its own.\n- Pictures of the Pipeline log are kept with the review pack, in the light and dark looks.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 138850,
+      "cached_input_tokens": 84736,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 859,
+      "reasoning_output_tokens": 82
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 54114,
+      "cached": 84736,
+      "write": 0,
+      "output": 859
+    },
+    "cost_usd": 0.1252916,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T23:27:56.187Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "resume-at.mjs parses UTC clock times and ISO timestamps. foremanAction records the schedule and instruction in Notes, enforces one action, and finish logs it. Passing AC1 tests exercise these paths."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanAgentQueue.check waits until due and applies the existing movedOn checks. Passing AC2 tests verify the instruction and session, slot availability, and dropping once after status, commit, session or session-use changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "agentView exposes scheduled resumes; foremanLines displays them in status; drawLogStatus displays them in the Pipeline log. Passing AC3 tests cover visibility and removal, including the panel page script."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "finish requeues a usage-limited look without marking it tried. run.mjs connects this to usageLimitQueue.agentEnded and holds. Passing AC4 tests verify waiting, retrying after reset and repeated limits. Claude watcher output uses stream-json, matching the limit parser."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "skills/speck-watch/SKILL.md instructs the watcher to use --at for a stop with a known end and explain what clears then and how it knows. The supplied test output confirms 231 passed, zero failed and three skipped across the selected files."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The watcher can schedule a build to resume later, show the pending schedule, and cancel it if the ticket moves on. A watcher stopped by Claude’s usage limit now waits and tries again. The tests exercise these behaviours, and I found no blocking issues."
+  }
+}
+```
+
+</details>
