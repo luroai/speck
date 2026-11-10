@@ -379,7 +379,7 @@ function runOn(worker) {
   const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), heldBuild }); // 0284
   const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344
   const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }); // 0286
-  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), cfg, settings, running, startBuild, ships, heldBuild, heldAgent: agent => limits.holds(agent) }); // 0287: the Foreman agent, for stops speck has no steps for
+  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), cfg, settings, running, startBuild, ships, heldBuild, heldAgent: agent => limits.holds(agent), agentLimited: (agent, log) => limits.agentEnded(agent, log) }); // 0287: the Foreman agent, for stops speck has no steps for
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => ships.running(), launched: () => [...launched], running: () => [...running],
     stopLoop: () => clearInterval(loop), handOver: () => { kept = []; }, stayed: () => { const ends = kept || []; kept = null; for (const end of ends) endOf(...end); } });
