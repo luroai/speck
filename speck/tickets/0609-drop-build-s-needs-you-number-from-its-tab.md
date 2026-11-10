@@ -44,7 +44,7 @@ The Build tab shows only the lane's count, like the other tabs.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Build tab now shows just its name and how many tickets are in the lane, like the other tabs. The red number beside it that said how many things need you is gone: the black bar at the top still says that, whichever lane is open. To see it, open the panel while something needs you: the bar says "N need you", and the Build tab shows only its count. A screen reader now reads Build as "Build, N tickets", without the needs-you part, so anyone using one hears how many need them from the bar.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -138,6 +138,84 @@ The Build tab shows only the lane's count, like the other tabs.
     ],
     "escalation_question": "",
     "summary": "The Build tab now shows only its name and lane count, including for screen readers. The black bar still reports what needs attention, and the reported tests pass. Before approval, add the required list of updated tests to the ticket's Delivery log."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d5fec2ea7048579019e40cb42b4423d471a19f62",
+    "session": "continued",
+    "thread_id": "01a1c4f1-65ef-71a2-801e-95e4e84a5df6",
+    "builder_response": "- Tests run: none re-run this round; only the ticket file changed (Delivery log). /tmp/speck-0609-tests.txt is round 1's run of the same files (351 pass, 0 fail).\n- F1: fixed. The Delivery log now lists each changed test file and the tests in it.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 226864,
+      "cached_input_tokens": 183296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1126,
+      "reasoning_output_tokens": 12
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 3093,
+      "cached": 82048,
+      "write": 0,
+      "output": 472
+    },
+    "cost_usd": 0.0191108,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:13:04.100Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html gives Build only its name and lane-count spans; drawTabs in templates/panel-header.js writes only lane counts. Both passing 0609 AC1 tests cover markup and updates across needs-you states and open lanes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawBar remains unchanged. The passing 0609 AC2 test checks singular and plural needs-you counts and hides the line when building."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "drawTabs sets Build's accessible label using the same name-and-count format as other tabs. Passing 0609 AC3 and revised 0582 AC3 tests exercise this."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log now lists all changed existing test files and affected tests. Implementation and tests are unchanged since round 1, whose output records 351 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0609-drop-build-s-needs-you-number-from-its-tab.md",
+        "issue": "The required list of changed tests was missing from the Delivery log; it is now present.",
+        "suggested_fix": "No further action required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Build tab shows only its name and lane count, including for screen readers. The black bar still reports how many need attention. The required test record is now complete, and all reviewed tests passed. Ready for the owner's merge decision."
   }
 }
 ```
