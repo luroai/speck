@@ -1,7 +1,7 @@
 ---
 id: "0616"
 title: "List a stopped build under Needs you"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-09-list-a-stopped-build-under-needs-you.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0615"]                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T11:52:59.104Z"
 
 ---
 # 0616 · List a stopped build under Needs you
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A ticket whose build stopped before finishing sits under Building with a grey dot, among the tickets being worked on, even when nothing is going to carry it on. It needs someone, so it's easy to miss there.
