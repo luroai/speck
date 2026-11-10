@@ -1,7 +1,7 @@
 ---
 id: "0626"
 title: "Use made-up project names in the project menu's tests"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T20:27:58.622Z"
 approved: "2026-11-10T20:30:11.830Z"
+finished: "2026-11-10T20:48:27.739Z"
 
 ---
 # 0626 · Use made-up project names in the project menu's tests
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The project menu's tests (0516) use real project names from the user's machine as their sample projects, so a private name sits in the public repo's test code.
