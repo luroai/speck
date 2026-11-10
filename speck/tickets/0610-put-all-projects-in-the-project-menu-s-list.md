@@ -41,6 +41,9 @@ All projects is an entry in the project menu's list, not a separate button.
 - From 0596's build. `test/panel-0516.test.mjs` compares the list's entries exactly; this ticket may change it. Today: `drawProjects`, `chooseProject` in `templates/panel-header.js`. Waits for 0609, which changes the same file.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Found at build: 0604 already took the separate All projects button out and put All projects in the menu's list, last. What's left for AC1 is making it the list's first entry; AC2 and AC3 already held and get tests of their own.
+- Self-check: added a test that All projects still comes first while the project shown has stopped, above its "(stopped)" entry; no code change needed.
+- Pictures: none, because the change is only the order of the entries in the browser's own drop-down list, which headless Chromium doesn't draw in a screenshot; the bar itself looks exactly as before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

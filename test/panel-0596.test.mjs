@@ -17,7 +17,7 @@ const two = { self: 4777, projects: [
     needs: [{ id: '0007', title: 'Pick a colour', why: 'question', detail: 'Blue or green?\nMore words.' }, { id: '0009', title: 'Risky move', why: 'high_risk', detail: '' }] }),
 ] };
 const nodes = (n, out = []) => { out.push(n); for (const c of n.children || []) nodes(c, out); return out; };
-// 0604: All projects is the project menu's last choice, and choosing it opens the bridge
+// 0604: All projects is a choice in the project menu (0610: its first), and choosing it opens the bridge
 const opener = p => p.byId('project').children.find(o => o.value === 'all');
 const openAll = p => { p.byId('project').value = 'all'; p.byId('project').listeners.change(); };
 const within = (p, cls) => nodes(p.byId('bridge')).filter(n => String(n.className || '').split(' ').includes(cls));

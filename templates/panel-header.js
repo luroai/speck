@@ -63,8 +63,8 @@ if (typeof globalThis.fetch === 'function') {
     return res;
   };
 }
-// 0596: All projects, which opens the bridge, with two or more panels running. 0604: the project menu's last choice,
-// chosen only while the bridge is open; otherwise the menu has the project shown chosen.
+// 0596: All projects, which opens the bridge, with two or more panels running. 0604: a choice in the project menu,
+// chosen only while the bridge is open; otherwise the menu has the project shown chosen. 0610: its first choice.
 const ALL_PROJECTS = 'all';
 let projectsGoneList = null, projectsDrawn = null; // the panels still running while the one shown has stopped; what the menu was drawn from
 // The project shown, by the name the menu last gave it.
@@ -95,7 +95,7 @@ function drawProjects() {
   const option = (value, text, chosen) => { const o = el('option', null, text); o.value = value; o.selected = chosen; return o; };
   const options = list.map(p => option(String(p.port), named.get(p.name) > 1 ? `${p.name} · ${p.port}` : String(p.name), p.port === self && !bridgeOpen));
   if (projectsGoneList) { const o = option('', `${projectShown()} (stopped)`, !bridgeOpen); o.disabled = true; options.unshift(o); }
-  if (list.length >= 2) options.push(option(ALL_PROJECTS, 'All projects', bridgeOpen)); // 0596: every project at once, from two running panels
+  if (list.length >= 2) options.unshift(option(ALL_PROJECTS, 'All projects', bridgeOpen)); // 0596: every project at once, from two running panels. 0610: first
   $('project').replaceChildren(...options);
 }
 async function chooseProject(port) {
