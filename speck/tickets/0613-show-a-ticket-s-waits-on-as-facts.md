@@ -1,7 +1,7 @@
 ---
 id: "0613"
 title: "Show a ticket's Waits on as facts"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-10
 ---
 # 0613 · Show a ticket's Waits on as facts
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A ticket waiting on two or more others still shows, in its full view and open Plan card, the LCD-era Waits on box: a border, a coloured bar and a grid of boxed chips. Since 0603 a chain is shown as plain facts beside it, so the two kinds of dependency look different for no reason.
