@@ -41,6 +41,7 @@ Every button in the panel has the redesign's size and style.
 - Decided: Save in the unsaved-changes question is primary, as the Settings view's own Save is; the rest are secondary.
 - Today: `templates/panel-settings.js` (`saveBar`, the unsaved-changes question), `templates/panel-popups.js` (`documentsPart`, `changesPart`) and their stylesheets. Waits for 0611, which changes `panel-popups.js`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
