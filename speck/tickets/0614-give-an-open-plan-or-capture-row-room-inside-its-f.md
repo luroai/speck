@@ -1,7 +1,7 @@
 ---
 id: "0614"
 title: "Give an open Plan or Capture row room inside its fill"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: "speck/ideas/done/2026-11-10-give-an-open-plan-or-capture-row-room-insid
 after: ["0608"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T11:07:06.723Z"
-blocked_at: "2026-11-10T11:15:15.337Z"
+blocked_at: ""
+waited_seconds: 11
 
 ---
 # 0614 · Give an open Plan or Capture row room inside its fill
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 An open Plan or Capture row has a raised background, and since 0600 its text runs right to that fill's edges, as the row has no side padding of its own. The text pressed against the edge, and the ring a linked id draws, look cramped on a phone.
@@ -44,6 +45,7 @@ An open Plan or Capture row has room between its text and the edges of its fill.
 - Failing before this build: none
 - How: the open row's own box stays where it was, spanning its list inside the 16 px margins (so 0418 and 0600 still pass), and its raised fill is drawn 12 px past each side with side shadows in the fill's colour. Closed rows are unchanged, so the title stays put. A linked id's ring (hover and the flash after a tap) on an open row is drawn round the whole fill by a pseudo-element that takes no taps, rather than round the row's box at the text's edge.
 - Self-check: the hover and flash rings (`.item.hl`, `.item.flash`) set their own box-shadow, which would have hidden the fill's sides or drawn the ring at the text's edge; moved them to the fill's edge and added checks. Kept 0154's reduced-motion rule as it was, adding a second one.
+- Went with the recommendation: Move the mark to the end of the open title line (chosen by speck, as watch is decide, 2026-11-10 11:15 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
