@@ -1,7 +1,7 @@
 ---
 id: "0609"
 title: "Drop Build's needs-you number from its tab"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-09-drop-build-s-needs-you-number-from-its-tab.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0607"]                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T10:01:51.169Z"
 
 ---
 # 0609 · Drop Build's needs-you number from its tab
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The Build tab can read "Build 11 3": the lane's count and, beside it, a red needs-you number, two numbers side by side with only one labelled by its colour. The black bar already says how many need you whichever lane is open, so the second number repeats it and costs width at 320 px.
