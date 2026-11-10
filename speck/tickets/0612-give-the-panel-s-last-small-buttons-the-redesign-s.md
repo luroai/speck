@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-11-10-give-the-panel-s-last-small-buttons-the-red
 after: ["0611"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:15:35.422Z"
-approved: "2026-11-10T10:38:12.474Z"
+approved: "2026-11-10T10:46:57.344Z"
 
 ---
 # 0612 · Give the panel's last small buttons the redesign's size
@@ -56,13 +56,14 @@ The panel's last small buttons now match the rest: the Save in Settings' "Unsave
 ## Review log
 Round 1 (codex): changes requested: F1 The All projects view still has 12 px text inside its project and attention buttons: .bridge-line and .bridge-where.; F2 AC4 explicitly requires the Delivery log to list tests updated from the old behaviour, but that section is empty.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 388,834
-- Elapsed since build started: 23 min
-- Changed lines: 54 (limit 5000)
+- Reviewer tokens: 543,184
+- Elapsed since build started: 31 min
+- Changed lines: 52 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new look (AC4): `test/panel-0428.test.mjs`, whose 0428 AC1 now expects 10 px corners on every button, with selects, text boxes, tags and the priority menu still 8 px; and `test/panel-0453.test.mjs`, whose AC1 AC3 now expects every button's corners to be 10 px in a real browser, and whose AC2 checks the border of Discard in Settings' unsaved-changes question rather than its Save, which is now filled in the accent with no border to show.
 - Follow-ups (Delivery log only, none to the inbox):
@@ -238,6 +239,93 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The buttons now meet the requested sizing and styling, including the previously missed small text. Both review findings are resolved, and the reported tests pass. Ready for the product owner's merge decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e326986e8f978ea4ebfb7cdb528fa1f4fa2ab2fe",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1c506-a7e0-71e1-947f-8d1557ca04cf",
+    "builder_response": "- Merge of main after speck ship's test run failed on the ticket as it would land. Failing test: 0427 AC1 (\"no text is set at 13 px any more, but for rows' details (0600)\"). Main's 0427 allows 13 px only for the details under a row's title, and this ticket had set five button texts to 13 px: the tab counts, the tab's needs-you count, the header bar's third line, and the All projects view's .bridge-where and .bridge-line.\n- templates/panel-header.css (logic class): one conflict. Main removed the `.tab .needs` rules (the tab's needs-you count is gone), and this branch had changed their size. I kept main's removal.\n- Fix, in this ticket's code only: the tab counts, the bar's third line and the two All projects lines are now 14 px, the size of the other buttons' text, with their line heights unchanged. With main's needs-you count gone from the tabs, 0582's check that the four tab names fit whole at 320 px passes at 14 px, and the header and bridge tests (0413, 0580, 0596, 0604, 0607) pass too. No test was changed or weakened for this. The ticket's Notes and Delivery log now say 14 px.\n- Tests run: test/panel-0612.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0453.test.mjs test/panel-0582.test.mjs test/panel-0580.test.mjs test/panel-0607.test.mjs test/panel-0604.test.mjs test/panel-0596.test.mjs test/panel-0413.test.mjs, plus every related test `speck test --related` chose. 262 passed, 0 failed.\n- Pictures retaken after the merge.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 540775,
+      "cached_input_tokens": 461440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2409,
+      "reasoning_output_tokens": 45
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 17360,
+      "cached": 136320,
+      "write": 0,
+      "output": 670
+    },
+    "cost_usd": 0.055052,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:46:54.812Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-settings.css retains the accent styling for the unsaved-changes Save; panel-cards.css supplies its 44 px height. The 0612 AC1 test passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The specified Save and review-pack controls retain secondary styling, 10 px corners, 14 px panel typography and at least 44 px height. The 0612 AC2 test passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The expanded 0612 AC3 test passes. Header and All projects button text now uses 14 px. The merge preserves main's removal of the tab needs-you count; the existing 0582 browser test confirms whole tab names at 320 px."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log lists the revised 0428 and 0453 tests. The latest run reports 262 passed, three skipped and no failures, including the unchanged 0427 typography check that failed during shipping."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-popups.css",
+        "issue": "The previously missed All projects button text now uses 14 px, with regression coverage for button descendants.",
+        "suggested_fix": "Completed.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0612-give-the-panel-s-last-small-buttons-the-redesign-s.md",
+        "issue": "The Delivery log lists both updated tests and their changed expectations.",
+        "suggested_fix": "Completed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change meets all acceptance criteria and preserves main's tab changes. The larger text passes the existing typography and phone-layout checks. Both earlier findings remain resolved, with no new blocking issues."
   }
 }
 ```
