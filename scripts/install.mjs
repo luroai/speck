@@ -156,11 +156,14 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
     check('This folder is a git repository', isRepo,
       'Run `git init` here, or run speck from inside your project folder.'),
   );
-  // 0570: a warning, never a failure: someone with their own hook chose that.
+  // 0570, 0627: a warning, never a failure: someone with their own hook chose that.
   if (isRepo) {
     const state = commitCheckState(repo);
-    checks.push(state.on ? check("Commit check is on: speck refuses a commit that adds a private word or your home folder's path under speck/", true)
+    checks.push(state.on ? check("Commit check is on: speck refuses a commit that adds a private word or your home folder's path to any file", true)
       : { name: `Commit check is off: ${state.why}. ${state.todo}`, ok: false, warn: true });
+    const message = commitCheckState(repo, 'commit-msg');
+    checks.push(message.on ? check("Commit message check is on: speck refuses a commit message that holds a private word or your home folder's path", true)
+      : { name: `Commit message check is off: ${message.why}. ${message.todo}`, ok: false, warn: true });
   }
   // Only the configured builder is checked. speck can't check one it doesn't know, and that isn't a failure.
   // hasOwn, so a name like `constructor` or `toString` is an unknown builder, not a built-in object property.
@@ -352,8 +355,11 @@ ${AGENTS_SECTION.trimEnd().split('\n').map(l => l && `        ${l}`).join('\n')}
   // 0550: --skip-checks, which tests use, skips the commit check too, as it skips doctor's.
   if (!args.includes('--skip-checks')) {
     const hook = installCommitHook(repo);
-    if (hook.action === 'installed' || hook.action === 'updated') console.log("updated the git pre-commit hook (refuses a commit that adds a private word or your home folder's path under speck/)");
+    if (hook.action === 'installed' || hook.action === 'updated') console.log("updated the git pre-commit hook (refuses a commit that adds a private word or your home folder's path to any file)");
     if (hook.action === 'skipped') console.log(`kept    your git hooks: the private-words check for commits isn't installed, because ${hook.why}.`);
+    const msg = hook.message;
+    if (msg.action === 'installed' || msg.action === 'updated') console.log("updated the git commit-msg hook (refuses a commit message that holds a private word or your home folder's path)");
+    if (msg.action === 'skipped') console.log(`kept    your git hooks: the private-words check for commit messages isn't installed, because ${msg.why}.`);
   }
   const claude = path.join(repo, 'CLAUDE.md');
   const claudeText = fs.existsSync(claude) ? fs.readFileSync(claude, 'utf8') : '';
