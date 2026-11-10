@@ -1,7 +1,7 @@
 ---
 id: "0617"
 title: "End a draft's full view in Set ready"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-10
 ---
 # 0617 · End a draft's full view in Set ready
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 An approved ticket's full view ends in a bar with Ask for changes and Ship, the action it's waiting for. A draft's ends with nothing to do: its Set ready sits at the top with its readiness list, so someone who reads to the end finds no action there.
