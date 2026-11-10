@@ -41,6 +41,7 @@ Every line in the Pipeline log view shows in full.
 - Decided: long lines wrap, now that the log is a full view with room for them, rather than opening when pressed.
 - Today lines are shortened by `runCut` in `templates/panel-model.js`, to `RUN_LOG_WIDTH` characters. Waits for 0612, which changes `templates/panel-popups.js` and its styles.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
