@@ -470,7 +470,7 @@ function paneTrack(t, tone) {
     return n;
   }));
 }
-// 0583: its facts, two to a row. A value that's too long wraps, so nothing is cut short on a phone.
+// 0583: its facts. A value that's too long wraps, so nothing is cut short on a phone. 0624: each a tile.
 function paneFacts(t) {
   const priority = t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : '–';
   const why = typeof t.auto_ship_why === 'string' ? t.auto_ship_why.trim() : '';

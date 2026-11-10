@@ -43,6 +43,7 @@ A ticket's facts in its full view are tiles like Shipped's figures.
 - Today: `factsOf`, `factCell` in `templates/panel.js`; Shipped's tiles are styled in `templates/panel-cards.css` (0606). Waits for 0617, which changes the full view.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: a long Waits on line was still cut off in its tile, so in the full view it now wraps (a test covers it); the Delivery log's list is left to the reviewer, as no test may read this repo's tickets (0122).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -54,4 +55,4 @@ A ticket's facts in its full view are tiles like Shipped's figures.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Tests changed from the old facts layout to the tiles: test/panel-0583.test.mjs (0583 AC3: its facts are tiles) and test/panel-0465.test.mjs (0465 AC4: tiles two or three to a row, the last taking what's left).
