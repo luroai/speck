@@ -1,6 +1,6 @@
 # End a draft's full view in Set ready
 
-Captured: 2026-11-09 19:05 · Status: inbox
+Captured: 2026-11-09 19:05 · Status: ticketed (0617)
 From ticket: 0583
 Raised by: agent
 

@@ -1,6 +1,6 @@
 # Give the panel's last small buttons the redesign's size
 
-Captured: 2026-11-10 09:38 · Status: inbox
+Captured: 2026-11-10 09:38 · Status: ticketed (0612)
 From ticket: 0603
 Raised by: agent
 

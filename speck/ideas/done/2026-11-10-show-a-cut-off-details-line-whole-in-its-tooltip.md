@@ -1,6 +1,6 @@
 # Show a cut-off details line whole in its tooltip
 
-Captured: 2026-11-10 07:54 · Status: inbox
+Captured: 2026-11-10 07:54 · Status: ticketed (0615)
 From ticket: 0599
 Raised by: agent
 
