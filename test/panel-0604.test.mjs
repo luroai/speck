@@ -121,9 +121,9 @@ test('0604 AC1, AC3 and AC4: at 320 px the status and a 20-character project sho
         onWord: [w.left + 1, w.left + w.width / 2, w.right - 1].every(x => [w.top + 1, w.bottom - 1].every(y => document.querySelector('#run').contains(at(x, y)))),
         onName: at(name.left + 4, name.top + name.height / 2)?.id, menu: r('#project') };
     })()`);
-    for (const word of ['Shipping 0599', 'Waiting: other tickets']) {
-      const m = await measure(word, 'a-twenty-char-projct'), at = JSON.stringify(m);
-      assert.equal('a-twenty-char-projct'.length, 20);
+    for (const [word, name] of [['Shipping 0599', 'a-twenty-char-projct'], ['Waiting: other tickets', 'a-twenty-char-projct'], ['Shipping 0599', 'Speck-Landing-Page-2'], ['Shipping 0599', 'alpha-sample-project'], ['Shipping 0599', 'my_side_project_2026'], ['Shipping 0599', 'ACME-Payments-Portal'], ['Waiting: other tickets', 'speck-website-redux2']]) {
+      const m = await measure(word, name), at = JSON.stringify(m);
+      assert.equal(name.length, 20);
       assert.ok(m.page <= m.width, `no sideways scrolling: ${at}`);
       assert.ok(!m.wordCut && m.wordLines === 1, `"${word}" in full on one line: ${at}`);
       assert.ok(!m.nameCut, `a 20-character name in full: ${at}`);

@@ -1,7 +1,7 @@
 ---
 id: "0604"
 title: "Give the black bar room for its whole status"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T08:45:59.870Z"
 ---
 # 0604 · Give the black bar room for its whole status
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On a phone the black bar (0580) fits the status, the project's name, the project menu and Settings on one line, so they're cut off: the user saw "Shipping 05… · s…" and couldn't tell which ticket was shipping or which project it was. The project menu beside them also read "All projects" while the panel was showing speck.
@@ -64,3 +64,89 @@ Tests changed from the bar's old one-line layout to the new one (AC5):
 - `test/panel-0413.test.mjs`: the project's name is on the project's line (`.bar-where`), which is the one thing after the status button.
 - `test/panel-0140.test.mjs`: the base branch is on the project's line.
 - `test/panel-0454.test.mjs`: a point on the project's line over the status counts as the status, as it passes the press on.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f3195f020d071718386d9651c4df8c70c98eaad5",
+    "session": "fresh",
+    "thread_id": "01a1c4b3-7c8b-7402-92d1-e72a8fd3b21f",
+    "builder_response": "- Tests run: `speck test --related` with test/panel-0604.test.mjs test/panel-0140.test.mjs test/panel-0413.test.mjs test/panel-0454.test.mjs test/panel-0516.test.mjs test/panel-0580.test.mjs test/panel-0596.test.mjs test/panel-0161.test.mjs test/panel-0427.test.mjs, plus the 25 related files it chose (1504 pass, 0 fail). Before that, every test file naming the bar's parts (60 files) was run once to find the tests that pinned the old layout; the ones changed are listed in the ticket's Delivery log (AC5).\n- Round 1. The bar is now a three-row grid: the status button spans speck (56 px) and the three lines through a subgrid, and the project's line (`.bar-where`) sits over its middle row. A press on that line outside the menu presses the status (page script), so the line keeps its tooltips. All projects moved from a separate button into the project menu as its last choice, chosen only while the bridge is open. The menu keeps 0417's 44 px each way by reaching down over the start of the third line, never up over the status.\n- Pictures: the bar at 375 px with the project menu, light and dark.\n",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 269723,
+      "cached_input_tokens": 212352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1200,
+      "reasoning_output_tokens": 164
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 57371,
+      "cached": 212352,
+      "write": 0,
+      "output": 1200
+    },
+    "cost_usd": 0.1479772,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T09:05:03.775Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-header.css defines three grid rows and a 56 px face; drawBar renders the counts and orange needs-you text. AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawProjects, openBridge and closeBridge select the displayed project except while the bridge is open. AC2 tests cover project lists, one project and bridge selection; all passed."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The 320 px browser test checks only 'a-twenty-char-projct'. The fixed grid leaves about 160 px for text, including the 16 px menu caret. Wider names of 20 characters are still truncated by .bar-where .repo."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The final .settings-open rule sets 44 px width and height. AC4 tests and the browser test passed, covering placement and opening the Pipeline log."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log lists the six updated test files. The supplied output, verified in /tmp/speck-0604-tests.txt, records 1504 passes and zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.css",
+        "issue": "At 320 px, names of up to 20 characters can still be cut off. The fixed face, Settings and spacing leave approximately 144 px for the name when the menu is present. A 20-character name containing wide letters, such as 'WWWWWWWWWWWWWWWWWWWW', exceeds that space. The test's single narrow example does not establish AC3's guarantee.",
+        "suggested_fix": "Adjust the layout or name sizing to show wider names up to 20 characters in full, and extend the 320 px browser test with a wide-character name. Preserve ellipsis for longer names and the status's full visibility.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The taller bar, larger speck and project menu work in the tested cases, and all reported tests pass. One required phone-width case remains: wider project names can still be shortened even when they contain only 20 characters."
+  }
+}
+```
+
+</details>

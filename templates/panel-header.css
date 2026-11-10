@@ -14,9 +14,9 @@
   .bezel .bar-word { grid-column: 2; grid-row: 1; min-width: 0; overflow-wrap: anywhere; font: 600 15px/20px var(--font-ui); }
   .bezel .bar-word:empty::before { content: "\00a0"; } /* until the first board says what the status is, the line keeps its height */
   /* 0604: the project's line. The base branch has only the room the project's name leaves, so the name is cut short
-     with "…" only once the branch is gone. A press on the line, but on the project menu, presses the status (the page
+     with "…" only once the branch is gone. At 12 px, a name of 20 letters, digits and hyphens fits at 320 px wide. A press on the line, but on the project menu, presses the status (the page
      script), and the line keeps its tooltips. */
-  .bezel .bar-where { grid-column: 2; grid-row: 2; z-index: 1; justify-self: start; display: flex; max-width: 100%; min-width: 0; white-space: pre; font: 400 14px/18px var(--font-ui); color: var(--bar-muted); }
+  .bezel .bar-where { grid-column: 2; grid-row: 2; z-index: 1; justify-self: start; display: flex; max-width: 100%; min-width: 0; white-space: pre; font: 400 12px/18px var(--font-ui); color: var(--bar-muted); }
   .bezel .bar-name { position: relative; flex: 0 1 auto; display: flex; align-items: center; min-width: 0; color: var(--bar-ink); }
   .bezel .bar-where .repo { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .bezel .bar-base { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -25,7 +25,7 @@
   .bezel .bar-more .needs { color: var(--bar-needs); }
   /* 0516: the project menu, while other panels are running. 0604: the project's name is the menu: a caret after it, and
      the browser's own list of the projects, All projects among them, opens from either. */
-  .bezel .project-pick { flex: none; display: grid; place-items: center; width: 16px; color: var(--bar-muted); }
+  .bezel .project-pick { flex: none; display: grid; place-items: center; width: 12px; color: var(--bar-muted); }
   .bezel .project-pick[hidden] { display: none; }
   .bezel .project-pick::after { content: ""; width: 0; height: 0; border-top: 5px solid; border-right: 4px solid transparent; border-left: 4px solid transparent; pointer-events: none; } /* a caret drawn in the text colour, which needs no font */
   .bezel .bar-name:hover .project-pick, .bezel .project-pick:focus-within { color: var(--bar-ink); }
