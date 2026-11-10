@@ -1,7 +1,7 @@
 ---
 id: "0627"
 title: "Check every committed file for private words"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0626"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T20:48:40.484Z"
+approved: "2026-11-10T20:55:55.786Z"
 
 ---
 # 0627 · Check every committed file for private words
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck's commit check (0550) refuses a commit that adds a private word or the home folder's path, but only to files under `speck/`. A private name was committed in a test file and in several tickets before it was on the list, and code, tests, docs and commit messages are still unchecked.
@@ -57,9 +58,15 @@ Worth knowing: `git commit --verbose` puts the diff into the message file, so a 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 messagePrivateLines stops at any scissors-like line.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 253,488
+- Elapsed since build started: 7 min
+- Changed lines: 167 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox notes):
   - Known limit: with `git commit --verbose`, the diff below the scissors line is in the message file, so a private word on a removed or kept line gets the message refused (round 1 F1 chose checking every line over missing text git keeps with -m).
