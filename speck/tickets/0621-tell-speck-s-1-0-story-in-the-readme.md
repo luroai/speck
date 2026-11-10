@@ -1,7 +1,7 @@
 ---
 id: "0621"
 title: "Tell speck's 1.0 story in the README"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-10
 ---
 # 0621 · Tell speck's 1.0 story in the README
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 1.0 changes what speck is: it works as your engineering manager, which you can name, takes the obvious calls itself and reports them in Decided for you, looks into stops and slow builds, and asks you only when there's no clear answer. The README still tells the 0.x story: "How it works" says speck waits for you at two decisions, "speck asks, then moves on" is its headline behaviour, the watcher is one bullet about `watch: fix`, and the engineering manager is a single sentence tacked onto the first paragraph. Anyone arriving at 1.0 wouldn't learn its main idea, or how to switch it on.
