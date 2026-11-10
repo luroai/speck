@@ -40,6 +40,7 @@ A watch resume that's waiting for a slot is dropped once its ticket has moved on
 - Asked for 2026-11-10 for release 1.0.0: "Create them all, set them all ready", from the follow-ups builders filed during the redesign.
 - From round 1 of 0567's review. The check is `movedOn` in `foremanAgentQueue` in `scripts/foreman-agent.mjs`, used today only for `decide`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
