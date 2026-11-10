@@ -40,6 +40,9 @@ An open Plan or Capture row has room between its text and the edges of its fill.
 - Asked for 2026-11-10 for release 1.0.0: "Create them all, set them all ready", from the follow-ups builders filed during the redesign.
 - From 0600's build: letting the fill reach past the 16 px margins broke 0418's check, so the room has to come from inside them, or from padding the text in. Today: `.item.row.open` in `templates/panel-cards.css`. Waits for 0608, which changes the same stylesheet.
 - Relies on nothing outside this repo.
+- Failing before this build: none
+- How: the open row's own box stays where it was, spanning its list inside the 16 px margins (so 0418 and 0600 still pass), and its raised fill is drawn 12 px past each side with side shadows in the fill's colour. Closed rows are unchanged, so the title stays put. A linked id's ring (hover and the flash after a tap) on an open row is drawn round the whole fill by a pseudo-element that takes no taps, rather than round the row's box at the text's edge.
+- Self-check: the hover and flash rings (`.item.hl`, `.item.flash`) set their own box-shadow, which would have hidden the fill's sides or drawn the ring at the text's edge; moved them to the fill's edge and added checks. Kept 0154's reduced-motion rule as it was, adding a second one.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
