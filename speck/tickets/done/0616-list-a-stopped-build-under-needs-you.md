@@ -1,7 +1,7 @@
 ---
 id: "0616"
 title: "List a stopped build under Needs you"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-11-10
 started: "2026-11-10T11:52:59.104Z"
 waited_seconds: 18338
 approved: "2026-11-10T17:20:06.995Z"
+finished: "2026-11-10T17:23:33.396Z"
 
 ---
 # 0616 · List a stopped build under Needs you
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ticket whose build stopped before finishing sits under Building with a grey dot, among the tickets being worked on, even when nothing is going to carry it on. It needs someone, so it's easy to miss there.
