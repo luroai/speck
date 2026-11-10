@@ -44,7 +44,7 @@ Decided for you's back link names the lane it goes back to.
 - Self-check: the list is drawn again when the open lane changes, so its back link can't keep a stale lane's name.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The link at the top of Decided for you now says where it goes back to, such as "‹ Build" or "‹ Plan", instead of "‹ Close", just like the Pipeline log and a ticket's full view. Screen readers announce it as "Back to" and the lane's name. To see it, open Decided for you from the line under the bar while on any lane: the link names that lane, and pressing it or Escape takes you back there as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -131,6 +131,84 @@ Decided for you's back link names the lane it goes back to.
     ],
     "escalation_question": "",
     "summary": "The back link correctly names the lane, has the requested screen-reader label, and closes correctly by click or Escape. The tests passed. Before approval, the delivery record must list the updated test, as the ticket requires."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "05c8f242253a3dcbbac5dd5e5d26749871acb1d9",
+    "session": "continued",
+    "thread_id": "01a1c4e7-0e7b-7ae1-bdb2-16152d1e9c9a",
+    "builder_response": "- Tests run: none this round: only the ticket file changed, so the round-1 output (test/panel-decided-0611.test.mjs, test/panel-decided-0568.test.mjs and their related files, all passing) still holds.\n- F1: fixed. The ticket's Delivery log now lists test/panel-decided-0568.test.mjs's \"0568 AC4\" test and what changed in it.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 230834,
+      "cached_input_tokens": 204160,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1451,
+      "reasoning_output_tokens": 17
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 3633,
+      "cached": 109568,
+      "write": 0,
+      "output": 637
+    },
+    "cost_usd": 0.0245928,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:01:41.317Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-popups.js renderDecided sets the current lane's name; templates/panel-popups.css supplies ‹. Passing test '0611 AC1 AC2' checks all four lanes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "renderDecided sets aria-label to 'Back to ${lane}'. Passing test '0611 AC1 AC2' verifies this for every lane."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing test '0611 AC3' exercises the back link and Escape, verifying closure and that Plan remains visible."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log now lists the updated '0568 AC4' test in test/panel-decided-0568.test.mjs and explains its change. The unchanged code and tests retain the recorded result: 200 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0611-name-the-lane-on-decided-for-you-s-back-link.md",
+        "issue": "The Delivery log previously omitted the test changed from the old Close behaviour.",
+        "suggested_fix": "Completed: the Delivery log names the updated test and explains the new back-link interaction.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The back link names the lane, provides the requested screen-reader label, and closes correctly by click or Escape. The delivery record now documents the updated test. All criteria pass."
   }
 }
 ```
