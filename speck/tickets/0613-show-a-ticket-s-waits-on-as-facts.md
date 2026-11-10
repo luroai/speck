@@ -1,7 +1,7 @@
 ---
 id: "0613"
 title: "Show a ticket's Waits on as facts"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-10-show-the-full-view-s-waits-on-as-facts-too.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0612"]                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T11:10:35.473Z"
 
 ---
 # 0613 · Show a ticket's Waits on as facts
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A ticket waiting on two or more others still shows, in its full view and open Plan card, the LCD-era Waits on box: a border, a coloured bar and a grid of boxed chips. Since 0603 a chain is shown as plain facts beside it, so the two kinds of dependency look different for no reason.
