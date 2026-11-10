@@ -40,6 +40,7 @@ All projects is an entry in the project menu's list, not a separate button.
 - Asked for 2026-11-10 for release 1.0.0: "Create them all, set them all ready", from the follow-ups builders filed during the redesign.
 - From 0596's build. `test/panel-0516.test.mjs` compares the list's entries exactly; this ticket may change it. Today: `drawProjects`, `chooseProject` in `templates/panel-header.js`. Waits for 0609, which changes the same file.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
