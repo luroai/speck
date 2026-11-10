@@ -60,8 +60,9 @@
 
   .bezel { border-radius: 12px; }
 
-  /* 0417: every button at least 44 px each way. 0469: with a mouse too, at any width, as on a touch screen */
-  .bezel .settings-open { width: 44px; height: 44px; margin: 0 -2px 0 0; }
+  /* 0417: every button at least 44 px each way. 0469: with a mouse too, at any width, as on a touch screen. 0607: as far
+     from the bar's right edge as from its top and bottom, 12 px in a bar as tall as speck, as speck is 6 px from its left */
+  .bezel .settings-open { width: 44px; height: 44px; margin: 0 6px 0 0; }
 
   /* 0453: every button's border at least a device pixel on each side, as 0281 gave Settings' info buttons: a half pixel
      is a whole device pixel from a pixel ratio of 2 up, so below that it's a whole pixel. The page script keeps each
