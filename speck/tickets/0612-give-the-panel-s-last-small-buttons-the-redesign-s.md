@@ -1,7 +1,7 @@
 ---
 id: "0612"
 title: "Give the panel's last small buttons the redesign's size"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-10-give-the-panel-s-last-small-buttons-the-red
 after: ["0611"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T10:15:35.422Z"
+approved: "2026-11-10T10:38:12.474Z"
 
 ---
 # 0612 · Give the panel's last small buttons the redesign's size
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A few buttons are still small boxes with 8 px corners and 12 px text: a setting's own Save, the Save in Settings' unsaved-changes question, the review pack's file and folder buttons, and the pack's Ask for changes. Since 0603, Discard and Keep editing are 44 px secondary buttons beside a small Save in the same question, which looks unfinished.
@@ -53,9 +54,15 @@ The panel's last small buttons now match the rest: the Save in Settings' "Unsave
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The All projects view still has 12 px text inside its project and attention buttons: .bridge-line and .bridge-where.; F2 AC4 explicitly requires the Delivery log to list tests updated from the old behaviour, but that section is empty.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 388,834
+- Elapsed since build started: 23 min
+- Changed lines: 54 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new look (AC4): `test/panel-0428.test.mjs`, whose 0428 AC1 now expects 10 px corners on every button, with selects, text boxes, tags and the priority menu still 8 px; and `test/panel-0453.test.mjs`, whose AC1 AC3 now expects every button's corners to be 10 px in a real browser, and whose AC2 checks the border of Discard in Settings' unsaved-changes question rather than its Save, which is now filled in the accent with no border to show.
 - Follow-ups (Delivery log only, none to the inbox):
