@@ -1,7 +1,7 @@
 ---
 id: "0597"
 title: Bring the docs up to date with the new panel                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0581","0582","0587","0588","0590","0592","0593","0594","0596"]                # ticket ids that must be done first
 created: 2026-11-09
 started: "2026-11-09T23:57:45.071Z"
+approved: "2026-11-10T00:02:37.494Z"
 
 ---
 # 0597 · Bring the docs up to date with the new panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After the redesign, the brief's long `speck panel` row and the README's demo pictures still describe and show the LCD panel.
@@ -57,9 +58,14 @@ Worth keeping an eye on: the pictures are a moment in time, so a later change to
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 174,995
+- Elapsed since build started: 5 min
+- Changed lines: 15 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups: none for the inbox. Known limit: the demo that makes the README's pictures lives outside this repo and wasn't changed; the copy updated for the new panel was used in a temporary folder only, so the next retake needs the same small changes (serve the panel's woff2 fonts, fill in the page's `{{panel}}`).
 
