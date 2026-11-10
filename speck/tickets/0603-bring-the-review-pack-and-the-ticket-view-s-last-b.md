@@ -1,7 +1,7 @@
 ---
 id: "0603"
 title: "Retire the panel's last old-style parts"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0602"]                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T09:17:38.700Z"
 
 ---
 # 0603 · Retire the panel's last old-style parts
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A few parts of a ticket still have the LCD-era look: the review pack opens with a small bordered Close button instead of a back link and marks its verdict and criteria with emoji, the full view's Chain is a bordered box with filled circles, and secondary buttons (Close, Full log, Stop build, More stats, Go to Plan) are small boxes with a faint border, unlike the redesign's buttons. The old colours (`--bezel`, `--log-*`, `--purple`) are still in the styles.
