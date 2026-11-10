@@ -48,7 +48,9 @@ A ticket's build log and its live log read like the Pipeline log: flat, in the p
 - Self-check: kept the log's markup as it was and pulled each time into its column rather than laying rows out in a grid, so a copied line keeps its time and text together (0422's real-browser test); Full log's hover now darkens its border rather than filling it, which 0161 counts as a too-faint edge.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket's build log no longer opens in the old dark box with a red dot and a Close button. It now opens as a page like the Pipeline log: a link back to the ticket at the top, a heading such as "0597 build log", and one row per line, with the time in small grey type and the text in the panel's own font. Tool calls are grey and failures are in the panel's warning colour, in both the light and dark looks. A building ticket's own page shows its live log the same way, straight on the page instead of in a black box, and still keeps the newest line in view. Its Full log and Stop build buttons are now the larger, rounded kind.
+
+To see it, open a building ticket and press Full log, then switch the look in Settings. Worth a look: a blank line between two of the builder's messages still shows as a small gap before the next row's line.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -73,6 +75,11 @@ Tests changed from the build log's old frame and terminal look to the new one:
 - `test/panel-0584.test.mjs`: the back link closes the build log.
 - `test/pipeline-0459.test.mjs`: neither log is a terminal; a line's time is pulled into its own column.
 - `test/pipeline-0479.test.mjs`: no dark frame or red dot.
+
+Follow-ups (tidy-ups and known limits, no inbox notes):
+- `--speck-red` in `templates/panel-base.css` is no longer used now that the build log's red dot is gone; 0603, which removes the other old colours, could take it out too (`test/panel-0426.test.mjs` still names it).
+- Some rules only the old frame needed are now always overridden by `.log-view`: `.foreman ol.run-log` and `.foreman div.run-log`'s mono font, and 0161's `onFrame` (`--bezel`) in its test. Tidy-up only.
+- A blank line between two messages (a gap row) shows as 20 px of space above the next row's line, as it did in the terminal. Kept as is, as 0422 checks a blank line is one line high.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -154,6 +161,89 @@ Tests changed from the build log's old frame and terminal look to the new one:
     ],
     "escalation_question": "",
     "summary": "The build and live logs now use the panel's flat styling, with working back navigation, readable colours and preserved live updates. The tests support the implementation. Before approval, record the updated tests in the ticket's Delivery log as required."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "125c63fd0403e9141d733a67f2ca3916429f812d",
+    "session": "continued",
+    "thread_id": "01a1c4b8-7344-7680-9faf-b2db29bf94c5",
+    "builder_response": "- Tests run: none new: only the ticket file changed since round 1, so the round 1 output stands (same files, all passing).\n- F1: fixed. The ticket's Delivery log now lists each changed test file and what its checks now cover.\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 344799,
+      "cached_input_tokens": 279552,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1502,
+      "reasoning_output_tokens": 70
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4450,
+      "cached": 123520,
+      "write": 0,
+      "output": 615
+    },
+    "cost_usd": 0.027402,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T09:10:58.129Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-popups.js buildLogFrame and renderForeman provide the full view, ticket back link and heading without Close. Passing 0602 AC1 tests cover the frame and back navigation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel-popups.css shares row typography, time alignment and kind colours between both logs. Passing 0602 AC2 tests cover these rules; 0422's browser test checks wrapping and copying, and 0455 checks readability in both looks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel-cards.css and panel-popups.css remove the terminal background and live section's box. Passing 0602 AC3 tests exercise line order, incoming updates and keeping the newest line visible."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-cards.css gives both live-buttons controls the secondary style specified by 0603. The passing 0602 AC4 test checks both controls."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The ticket's Delivery log now lists all changed test files and their updated checks. The supplied test run reports 330 passes, zero failures and three skips. Git confirms that implementation and tests are unchanged since round 1."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0602-show-build-logs-in-the-new-look.md",
+        "issue": "The Delivery log previously omitted the updated tests required by criterion 5.",
+        "suggested_fix": "Completed: the Delivery log now lists the changed test files and what they check.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The build and live logs use the panel's flat styling while preserving navigation, readable colours and live updates. All criteria pass, and the missing test record is now complete. Ready for the product owner's merge decision."
   }
 }
 ```
