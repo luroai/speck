@@ -1,7 +1,7 @@
 ---
 id: "0620"
 title: "Show every Pipeline log line whole"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-10-show-a-cut-off-pipeline-log-line-whole.md" 
 after: ["0612"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T11:10:35.401Z"
+approved: "2026-11-10T11:16:49.328Z"
 
 ---
 # 0620 · Show every Pipeline log line whole
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In the Pipeline log view a long line is cut off with an ellipsis, such as "speck run will try it again once main or its br…", and there's no way to read the rest from the panel. The cut-off part is often the bit that matters, such as why a ship failed.
@@ -51,9 +52,15 @@ Every line in the Pipeline log now shows in full. A long line wraps onto as many
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Acceptance criterion 4 requires the Delivery log to list the tests changed from the old behaviour.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 265,015
+- Elapsed since build started: 6 min
+- Changed lines: 20 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed from the old behaviour to the new one:
   - `test/pipeline-0459.test.mjs`: "any other line shows its first sentence, cut to 48 characters" now expects the whole line; the privacy test no longer checks that a summary is at most 48 characters; a long refused ship's reason is now expected whole rather than dropped.
