@@ -12,7 +12,7 @@ You don't need to read the code to check the work. Every ticket comes with a one
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-dark.png">
-  <img alt="An agent conversation on the left, with speck's panel open beside it in a narrow browser pane on the right. The panel's screen shows one ticket building, and its Build lane is open: one ticket approved and ready to ship, one being built and two queued." src="docs/images/demo-light.png">
+  <img alt="An agent conversation on the left, with speck's panel open beside it in a narrow browser pane on the right. The panel's black bar shows speck and one ticket building, a line under it says speck made two calls this week, and its Build tab is open with compact rows: one ticket that needs you, ready to ship, one being built and two queued." src="docs/images/demo-light.png">
 </picture>
 
 Use the agents you already have: Claude Code, Codex or Cursor, or a model provider you have an API key for, such as DeepSeek. speck doesn't let a model review its own work unless you allow it.
@@ -60,7 +60,7 @@ Once you trust the work, turn on auto-ship, in the panel's Settings or with `spe
 - **speck files its own follow-ups.** When a build spots a bug or a better idea, speck has it save the idea to your inbox, after checking it isn't there already.
 - **Ideas only become tickets in conversation.** Your agent saves an idea when you ask it to, and turns it into tickets only when you talk it through.
 - **speck asks, then moves on.** When a build needs your call, speck has it stop with one plain question and its recommendation, and carries on with the next ticket.
-- **speck shows where everything stands at a glance.** The panel's screen says what speck is doing in a word or two, such as Building, Shipping or Needs you.
+- **speck shows where everything stands at a glance.** The panel's black bar says what speck is doing in a word or two, such as Building, Shipping or Needs you.
 - **speck looks into stops it has no steps for.** With `watch: fix`, when a build or a ship stops for a reason speck doesn't expect, speck has its own agent look into it and do one thing about it, or ask you.
 - **speck sorts out its own merge conflicts.** When `main` has moved on, speck has the build merge it in, keep what both sides meant and have the merge reviewed again.
 - **speck fits in your pocket.** Put the panel behind a private tunnel and add it to your phone's home screen (see [The panel](#the-panel)).
@@ -90,9 +90,12 @@ Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremo
 
 The panel is a phone-width column you keep beside your agent, or open on your phone. Start it with `node .speck/scripts/speck.mjs panel`, at `http://127.0.0.1:4777`. The panel runs on your machine and reads the files in your repo.
 
-- **speck's screen**, at the top, says what's happening: Building, Shipping, Idle, or Needs you when a ticket is waiting on your answer. Press it for the detail.
-- **Capture, Plan, Build and Shipped** are cards you swipe between. Capture lists your ideas and inbox notes to read. Plan has your draft tickets. Build has the queue, each build's log, blocked questions and approved tickets' review packs with their Ship button. Shipped shows what's shipped and what it took.
-- **Settings**, from the button in the header, turns `speck run` on and off, picks your builder and reviewer, and holds the settings people tune.
+- **The black bar**, at the top, shows speck and what's happening: Building, Shipping, Idle, or Needs you when a ticket is waiting on you. Press it for the Pipeline log, which you can filter to decisions, ships or builds.
+- **Capture, Plan, Build and Shipped** are tabs you press or swipe between, each a list of compact rows. Capture lists your ideas and inbox notes to read. Plan has your draft tickets. Build groups the queue under Needs you, Building and Queued. Shipped opens with three figures, then what's shipped and what it took.
+- **A ticket's full view** opens when you press its row in Build or Shipped: how far it has got, what it should do, its log, any question for you, its review pack, and its Ship button once it's approved.
+- **Decided for you**, from a line under the bar, is speck's report of the calls it made for you this week, with what it didn't choose. Change any you'd have called differently.
+- **All projects** appears in the bar once two or more projects' panels are running. It opens the bridge: what needs you and how each project is doing, across all of them.
+- **Settings**, from the button in the bar, turns `speck run` on and off, picks your builder and reviewer, and holds the settings people tune.
 
 To use it from your phone, put it behind a private tunnel that makes you log in, such as `tailscale serve` or Cloudflare Tunnel with Cloudflare Access, and start it with `node .speck/scripts/speck.mjs panel --url https://<hostname>`. Add it to your home screen to open it as an app. Never expose it openly: anyone who can load the page can start builds and ship.
 
