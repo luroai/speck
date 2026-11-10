@@ -24,7 +24,7 @@ finished: "2026-11-10T10:32:39.080Z"
 **Status:** ✅ done
 
 ## Problem
-On 2026-11-09, while clearing up after a screenshot script that hung, 0583's build stopped every speck panel on the machine. The user's speck panel restarted itself, but the panel of another of their projects didn't, and the project menu disappeared. The same evening 0565's build left a demo panel running in the user's project menu after it ended. Builds should touch only the panels they start.
+On 2026-11-09, while clearing up after a screenshot script that hung, 0583's build stopped every speck panel on the machine. A panel running as a service restarted itself, but one started by hand didn't, and the project menu disappeared. The same evening 0565's build left a demo panel running in the user's project menu after it ended. Builds should touch only the panels they start.
 
 ## Outcome
 A build's panels stay out of your project menu, and a build only ever stops the panels it started.

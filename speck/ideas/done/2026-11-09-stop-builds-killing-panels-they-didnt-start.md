@@ -7,7 +7,7 @@ Raised by: you
 A build, its tests and its picture-taking should only ever stop the speck panels they started themselves, by the process or port they recorded, never every panel on the machine by name or pattern.
 
 ## Why
-On 2026-11-09 at 18:56, while clearing up after a screenshot script that hung, 0583's build ran a command that killed every speck panel on the machine. The user's speck panel restarted, as it runs as a user service that restarts itself, but the panel of another of their projects had been started by hand and stayed down. The project menu disappeared until that panel was started again at 23:15. Builds shouldn't be able to take down the panels you're using.
+On 2026-11-09 at 18:56, while clearing up after a screenshot script that hung, 0583's build ran a command that killed every speck panel on the machine. A panel running as a user service restarted itself, but one started by hand stayed down. The project menu disappeared until that panel was started again at 23:15. Builds shouldn't be able to take down the panels you're using.
 
 ## Notes
 - Found by speck's watcher while looking into why 0583 ran long; captured at the user's request.

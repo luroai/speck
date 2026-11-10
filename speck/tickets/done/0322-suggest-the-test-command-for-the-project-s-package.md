@@ -23,7 +23,7 @@ finished: "2026-10-19T07:32:13.597Z"
 **Status:** ✅ done
 
 ## Problem
-`speck detect` suggests `npm test` for any project whose `package.json` has a real test script, even when the project uses pnpm, yarn or bun. Setup then offers a test command the project doesn't normally use, and the user has to correct it: one of the user's projects, which uses pnpm, is one.
+`speck detect` suggests `npm test` for any project whose `package.json` has a real test script, even when the project uses pnpm, yarn or bun. Setup then offers a test command the project doesn't normally use, and the user has to correct it.
 
 ## Outcome
 `speck detect` suggests the test command for the package manager the project uses.

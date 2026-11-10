@@ -38,7 +38,7 @@ speck is ready to be released as 0.18.0.
 
 ## Out of scope
 - Creating the `v0.18.0` tag and publishing the GitHub release: the workflow from 0240 does both from `docs/releases/v0.18.0.md` when this lands on `main`.
-- Updating speck in the user's other projects.
+- Updating speck in other projects.
 - The landing page, which lives in its own repo.
 - The changes themselves: 0519, 0520 and 0521.
 
