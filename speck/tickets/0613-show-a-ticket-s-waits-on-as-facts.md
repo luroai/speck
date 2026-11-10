@@ -69,6 +69,7 @@ Tests changed to check the new behaviour (AC4):
 - `test/panel-0419.test.mjs`: the real-browser check counts the full view's Waits on lines instead of reading the box's header.
 - `test/panel-0468.test.mjs`: the full view's Waits on is found as facts, and checked to list its 11 queued tickets.
 - `test/panel-0612.test.mjs`: `chip` dropped from its list of button classes it must find, as no chip button exists now.
+- `test/panel-0463.test.mjs`: a queued Build ticket's full view finds what it waits on as Waits on facts too (changed when merging main, whose newer version of this test looked for the old box).
 
 Follow-ups:
 - An open Plan card still shows a chain in the old Chain box: saved as `speck/ideas/2026-11-10-show-a-plan-card-s-chain-as-facts.md`.
