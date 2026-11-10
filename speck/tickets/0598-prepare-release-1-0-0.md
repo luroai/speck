@@ -45,6 +45,12 @@ speck is ready to be released as 1.0.0.
 - Checked 2026-11-09: `package.json` is `0.22.0`; the README's status line reads "Status: 0.22.0, a public preview."
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.22.0`: 0575 to 0597 and 0599 to 0621, and no others.
+- Built from main at `speck(0617): End a draft's full view in Set ready`: 604 shipped, 16 cancelled, 14 minutes median, 2 rounds median, 296 approved in the first round, worked out with `test/support/figures.mjs` as 0307 did.
+- `npm run prices` on 2026-11-10 wrote the rates of 3564 models, and `scripts/prices.json`'s `taken` is 2026-11-10.
+- Demo pictures taken as 0597 took them, from a copy of the demo outside the repo in a temporary folder, its server changed to serve the woff2 fonts, fill in `{{panel}}` and give two made-up calls under Decided for you: a 430 px pane at 2×, 1440 × 900.
+- 0574's checks that named 0.22.0 as the current version now check the current version, as 0574 did for 0560, and `test/docs-0491.test.mjs` allows `test/release-0598.test.mjs` to name the version.
+- Self-check: the status-line test finds the line by its `Status: 1.0.0` text, so a reworded brief still passes 0267's check; the changelog's example of a named manager says `<name>` rather than a made-up person's name; the Shipped figures line names the four extra figures rather than "costs included", and the buttons line says what 0612 changed rather than that every button is the same size.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

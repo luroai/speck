@@ -1,5 +1,67 @@
 # Changelog
 
+## 1.0.0 · 10 November 2026
+
+What's new since 0.22.0. A major release in which speck becomes your engineering manager: you decide what gets built, and speck gets it shipped, makes the obvious calls, gets stuck work moving and tells you what it did. You can give it a name of your own, and the panel is redesigned around it, with a black bar where the LCD screen was, speck's new face, tabs and short rows for the lanes, a full view for each ticket, and the bridge across every project on your machine. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.0.0 init`.
+- The README tells speck's 1.0 story: speck as your engineering manager, how to have it take the obvious calls (choose `decide` for `watch` in Settings) and how to name it. Its demo pictures, and the brief's description of the panel, show the redesigned panel.
+
+### Your engineering manager
+
+- `speck_name` is a new project setting, `speck` by default, which names your engineering manager. Set it with `speck config set speck_name "<name>"` or in Settings, where the group that was Watching is now headed Your engineering manager, with the name as its first setting. A name is 1 to 24 letters, digits, spaces, hyphens and apostrophes, starting with a letter. The brief has a section on what the engineering manager does, and the `watch` settings are its settings.
+- speck uses that name wherever the engineering manager speaks or acts: the explanations of the `watch` settings, a blocked ticket that it will answer ("<name> will answer"), its questions to you, Decided for you, `speck status` and `speck run`'s log. Where speck means the tool itself, such as its commands, the panel's title and the Notes lines it writes into tickets, it still says speck.
+- `speck run`'s log reports what the engineering manager did in the first person, such as "I'll look into it" and "I went with the recommendation". Lines about the tool's own work, such as a build starting or a ticket shipping, read as before. In a terminal the manager's lines start with a small » mark.
+- When speck makes a call for you, it keeps the question, the option it went with and the options it turned down. A build's blocked question has a new `Other options:` line beside `Recommended:`, and `speck status --json`'s list of calls gives each one's question and other options. Calls made before this have them blank.
+
+### The black bar and speck's face
+
+- The LCD screen at the top of the panel is gone, with its clock, speck's old animations and the dot-matrix font. In its place is a black bar, the same in both looks, with speck's face and three lines: what speck is doing, such as "Shipping 0599", the project's name with its base branch, and what's queued and how many things need you, in orange. Pressing the status opens the Pipeline log. On a phone the status is never cut short, and a project name of up to 20 characters shows in full.
+- speck has a new character: a small dark device whose red visor is its eye. Its mood follows the pipeline: asleep when Auto-build is off, asking when something needs you, focused while work is building, in review or shipping, and watching otherwise. It looks pleased, its visor arched upwards, for 10 seconds after a ticket ships or it takes a recommendation, and sheepish beside a ticket whose criteria changed. Only the red light moves, and it stays still if you've asked your computer for less motion.
+- speck's app icon, in a browser tab and on a phone's home screen, is the new character on a black rounded square. If you added the panel to a phone's home screen before, add it again to pick up the new icon.
+
+### The lanes
+
+- The lanes are four tabs, Capture, Plan, Build and Shipped, each with how many it holds. Press one, swipe or use the arrow keys. Build's tab no longer shows a separate number for what needs you, as the black bar says that.
+- Each lane lists its items as short rows rather than cards, every closed row the same height: one line of title and one of details, cut short with "…" when too long, and shown whole when you hover over it. Opening a row in Capture or Plan shows the whole title and the item inside a shaded fill.
+- Build groups its rows under Needs you, Building and Queued, each with its count and an orange, blue or grey dot. A build that stopped partway, which speck won't resume or look into, is listed under Needs you as "Build stopped", and the bar's count of what needs you includes it.
+- In Plan, a draft's Set ready button is on its row, greyed out with the reason when the draft fails the ready check. A ticket waiting on two or more others lists each one under "Waits on" with whether it has shipped, is building or is queued.
+- Shipped opens with a grid of figures: shipped today, the median build time, the median review rounds and the share approved in the first round, with All figures for the other four: the median builder cost, the total cost and the median reviewer and builder tokens. Each shipped ticket is a row with when it shipped, its review rounds and how long it took.
+- An empty lane shows speck asleep with a line saying what lands there.
+
+### A ticket's full view
+
+- A ticket's full view has a new layout: a back link to the lane you came from, a coloured status pill, four bars for how far it has got, its facts, what it should achieve, its acceptance criteria with a tick on each one the reviewer passed, and rows that open its review pack and build log. A shipped ticket's view also shows what it cost and how many tokens it used.
+- While a ticket builds, its full view shows what the build is doing, which step it's at, its live log, and the Full log and Stop build buttons. A blocked ticket shows its question with Go with the recommendation, or the engineering manager's question with Answer and Dismiss.
+- An approved ticket's view ends in a bar with Ask for changes and Ship, and a draft's ends in a bar with Set ready, greyed out with the reason when it fails the ready check.
+- A ticket whose acceptance criteria changed during its build says so on its Build row ("waiting at Ship: a criterion changed"), and its full view has a callout, with speck looking sheepish, giving each changed criterion's old and new wording.
+- A ticket's build log opens as a page like the Pipeline log, one row per line, rather than a dark pop-up. The review pack opens with a back link to its ticket and marks the verdict and each criterion with a blue tick or an orange cross instead of emoji. A ticket's chain is two plain lines: what it waits on and what waits on it.
+
+### Decided for you and the Pipeline log
+
+- When speck has made calls for you in the last week, a line under the bar shows its pleased face, says how many and offers Review. Decided for you reads as speck's own report, with each call under Today or Earlier: the question, what it went with, what it didn't choose and when. Its back link names the lane it returns to. Change works as before.
+- The Pipeline log is a full view: a line with speck saying whether `speck run` is on, since when and how many build slots are in use, filters for Everything, Decisions, Ships and Builds, and one row per line with its time and its log file or agent. The engineering manager's lines carry speck's face, and every line shows whole, wrapping instead of ending in "…", including a refused ship's reason.
+
+### The bridge
+
+- With panels running for two or more projects, the project menu on the black bar lists All projects first. It opens the bridge: speck in the busiest mood among your projects, how many are building, how many projects are busy and how many things need you, with shipped this week, the median build time and this week's spend across them all. Each thing that needs you is a card that takes you to that ticket in its own project, and each project is a row you can press to switch to it. A project whose panel doesn't answer within 2 seconds is marked Not answering and left out of the figures.
+
+### The new look
+
+- The panel has new colours and type in both looks: white or near-black pages, soft grey surfaces, one blue accent and orange for anything that needs you. Text is in Inter, with ticket numbers, timers and figures in JetBrains Mono. The fonts come with the panel, so it looks the same with no network.
+- Settings is plain sections with a heading and a line under each, and its Save turns blue once you've changed something. Every button has the same rounded corners, none is left with the old small text, and the thin lines between rows and round boxes are a little darker.
+
+### speck run
+
+- A resume the watch agent asked for while every build slot was busy is dropped if the ticket has moved on before a slot frees up, meaning its status changed, its branch got a new commit, or its build's session changed or is in use. `speck run` says so once in its log.
+- A panel that a build `speck run` started opens, for example to take pictures, stays out of your project menu, and `speck run` stops it when that build ends, or the next time `speck run` starts if it was off. Your own panels are never touched. The build skill now says to stop a panel by its port and never to stop programs by name.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 10 November 2026.
+
 ## 0.22.0 · 9 November 2026
 
 What's new since 0.21.1. A minor release in which speck can decide for you and tell you what it chose: `watch: decide` takes the recommendation on a blocked question and carries on, the panel lists what it decided, and a ticket whose acceptance criteria changed waits for you at Ship. The `watch` setting still starts at `tell`, so none of this happens until you choose it. Costs speck works out itself are still estimates at API list prices.
