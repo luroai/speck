@@ -1,7 +1,7 @@
 ---
 id: "0602"
 title: "Show build logs in the new look"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-10
 ---
 # 0602 · Show build logs in the new look
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A ticket's build log still opens in the LCD-era frame: a dark bezel box with a red-dot title, a small bordered Close button, and a black terminal with a white border, with every wrapped line indented under a time column. A building ticket's full view shows its live log in the same black terminal. Everywhere else the redesign has moved to light, flat views.
