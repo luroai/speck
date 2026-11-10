@@ -48,7 +48,7 @@ An open Plan or Capture row has room between its text and the edges of its fill.
 - Went with the recommendation: Move the mark to the end of the open title line (chosen by speck, as watch is decide, 2026-11-10 11:15 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you open a note in Capture or a ticket in Plan, its shaded background now reaches a little past the text on both sides, so the text no longer presses against the edges of the shading. The title stays exactly where it was when the row opens. For a ticket that starts a chain or waits on another, the chain or padlock mark now sits at the end of the title line, where the closed row's chip is, rather than between the number and the title. To see it, open any note or draft on a phone-width panel, in light and dark. Worth a look: the shading now comes close to the panel's sides, about 4 px from them on a phone.
 
 ## Blocked question
 The room inside an open row is done and the title no longer moves for most rows, but an open Plan ticket that starts a chain or waits on another still shows its chain or padlock mark between its id and its title, so its title shifts right by the mark's width when it opens (the closed row shows that link as a chip at the end instead). Should I (a) move that mark to the end of the open ticket's title line, where the closed row's chip sits, so the title never moves, (b) leave the mark where it is and accept that linked tickets' titles shift by it, as they do today, or (c) show the mark in closed rows too? I recommend (a): the title stays still for every ticket, and the link shows in the same place open or closed; it changes two older checks that pin the mark right after the id.
@@ -63,6 +63,7 @@ Clear winner: no
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed to check the new behaviour (AC4): test/panel-0041.test.mjs (`iconOf` finds an open ticket's chain or padlock mark after its title, not right after its id) and test/panel-0483.test.mjs (AC2: an open card's line is id, title, then its mark). No other test changed, and none failed.
+- Follow-ups: a hovered closed row (desktop only) still has its raised fill run to its text's edges; saved to the inbox as speck/ideas/2026-11-10-give-a-hovered-closed-row-room-inside-its-fill.md.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -225,6 +226,92 @@ Clear winner: no
     ],
     "escalation_question": "",
     "summary": "The spacing and linked-ticket title fix now meet the behaviour requirements, with no reported test failures. One required record remains: list the two updated tests in the ticket's Delivery log."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b40739913ea941a42975aacf1014ec0f56d84ebd",
+    "session": "continued",
+    "thread_id": "01a1c52a-4bb6-7853-90b0-c0be0cecfa9f",
+    "builder_response": "- Tests run: no code or test changed this round; the test output is round 2's run of the same files.\n- F2: fixed. The ticket's Delivery log now lists test/panel-0041.test.mjs and test/panel-0483.test.mjs and how their icon-position expectations changed.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 433541,
+      "cached_input_tokens": 374656,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2220,
+      "reasoning_output_tokens": 193
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 1859,
+      "cached": 114432,
+      "write": 0,
+      "output": 521
+    },
+    "cost_usd": 0.0203712,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T11:20:42.406Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css .item.row.open extends the raised fill 12 px each side. Passing browser tests in test/panel-0614.test.mjs measure text clearance in both looks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.js titleLine places the open ticket's mark after its title. Passing browser tests verify stable title positions for Capture notes, unlinked tickets, chain starters and waiting tickets."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Row dimensions remain unchanged. test/panel-0614.test.mjs verifies list alignment, and the recorded run passed test/panel-0418.test.mjs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log now lists test/panel-0041.test.mjs and test/panel-0483.test.mjs and explains their updated expectations. The unchanged code and tests retain the previous run's 358 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "Linked-ticket titles now remain in place when opened, with browser coverage for chain and waiting marks.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0614-give-an-open-plan-or-capture-row-room-inside-its-f.md",
+        "issue": "The Delivery log now records both updated tests and their changed icon-position expectations.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Open Plan and Capture rows now give their text room in both looks, keep titles steady and retain full list width. The required test record is complete. All criteria pass, with no outstanding findings."
   }
 }
 ```
