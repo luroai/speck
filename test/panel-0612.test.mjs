@@ -31,13 +31,22 @@ test("0612 AC2: a setting's own Save, the pack's file and folder buttons and its
   check(['button', '#full-ticket .ask-changes', '#doc-view .ask-changes'], SECONDARY, "Ask for changes on a task's document");
 });
 
-// The classes of every <button> the panel draws, from its page and scripts, and from the classes the scripts pass in.
+// The words of a class an el() call gives as a string or template, without what's worked out at run time.
+const words = (a, b) => (a ?? b).replace(/\$\{[^}]*\}/g, ' ').split(/\s+/).filter(w => /^[\w-]+$/.test(w));
+// The classes of every <button> the panel draws, and of what's drawn inside one, from its page and scripts, and the
+// classes the scripts pass in from a variable.
 function buttonClasses() {
-  const out = new Set(['secondary', 'save-all', 'bridge-card', 'bridge-row', 'run-switch', 'run-on', 'run-off']); // set from a variable
+  const out = new Set(['secondary', 'save-all', 'bridge-card', 'bridge-row', 'run-switch', 'run-on', 'run-off']);
   const scripts = [pageScript(), popupsScript(), settingsScript(), headerScript()].join('\n');
-  for (const m of scripts.matchAll(/el\('button',\s*(?:'([^']*)'|`([^`]*)`)/g))
-    for (const w of (m[1] ?? m[2]).replace(/\$\{[^}]*\}/g, ' ').split(/\s+/)) if (/^[\w-]+$/.test(w)) out.add(w);
-  for (const m of page().matchAll(/<button[^>]*class="([^"]*)"/g)) for (const w of m[1].split(/\s+/)) out.add(w);
+  for (const m of scripts.matchAll(/el\('button',\s*(?:'([^']*)'|`([^`]*)`)/g)) for (const w of words(m[1], m[2])) out.add(w);
+  // what's inside: every el() in the button's call, or in a call of bridgeButton, which makes one from its arguments
+  for (const m of scripts.matchAll(/el\('button',|bridgeButton\(/g)) {
+    let depth = 1, i = m.index + m[0].length;
+    while (i < scripts.length && depth) { if (scripts[i] === '(') depth++; else if (scripts[i] === ')') depth--; i++; }
+    for (const k of scripts.slice(m.index + m[0].length, i).matchAll(/el\('\w+',\s*(?:'([^']*)'|`([^`]*)`)/g)) for (const w of words(k[1], k[2])) out.add(w);
+  }
+  for (const m of page().matchAll(/<button[^>]*class="([^"]*)"[^>]*>([\s\S]*?)<\/button>/g))
+    for (const c of [m[1], ...[...m[2].matchAll(/class="([^"]*)"/g)].map(k => k[1])]) for (const w of c.split(/\s+/)) out.add(w);
   return out;
 }
 // Classes on buttons that other things share, which a rule names for those other things: the Shipped step on a
@@ -48,9 +57,10 @@ const touchesButton = (sel, classes) => !NOT_BUTTONS.some(re => re.test(sel)) &&
   [...part.matchAll(/\.([\w-]+)/g)].some(m => classes.has(m[1])));
 const small = ([k, v]) => ((k === 'font-size' || k === 'font') && /(^|\s)12px\b/.test(v)) || (k === 'border-radius' && /(^|\s)8px\b/.test(v));
 
-test('0612 AC3: no style gives a button, or text inside one, 8 px corners or 12 px text', () => {
+test('0612 AC3: no style gives a button, or anything drawn inside one, 8 px corners or 12 px text', () => {
   const classes = buttonClasses();
-  for (const c of ['save', 'save-all', 'pack-document', 'pack-folder', 'ask-changes', 'ship', 'info', 'log-filter', 'set-ready', 'dep-chip', 'chip', 'tab'])
+  for (const c of ['save', 'save-all', 'pack-document', 'pack-folder', 'ask-changes', 'ship', 'info', 'log-filter', 'set-ready', 'dep-chip', 'chip', 'tab',
+    'tab-n', 'dep-pill', 'bridge-where', 'bridge-line'])
     assert.ok(classes.has(c), `${c} is found as a button's class`);
   const left = [];
   for (const r of rules())
@@ -58,10 +68,4 @@ test('0612 AC3: no style gives a button, or text inside one, 8 px corners or 12 
       for (const d of r.decls.filter(small)) left.push(`${sel} { ${d[0]}: ${d[1]} }`);
   assert.deepEqual(left, []);
   assert.notEqual(cascaded(['button'])['border-radius'], '8px', 'the rule for every button');
-});
-
-test("0612 AC3: a dependency chip's pill, the part of the button that's drawn, has no 8 px corners", () => {
-  const d = cascaded(['.dep-pill']);
-  assert.notEqual(d['border-radius'], '8px');
-  assert.notEqual(cascaded(['.dep-chip'])['font-size'], '12px');
 });

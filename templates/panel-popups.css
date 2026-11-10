@@ -143,7 +143,7 @@
   #bridge .bridge-error { margin: 0 0 10px; font-size: 14px; line-height: 20px; color: var(--bad); }
   #bridge .bridge-card, #bridge .bridge-row { box-sizing: border-box; width: 100%; font: inherit; color: inherit; text-align: left; background: var(--raise); border: 0; border-radius: 12px; cursor: pointer; }
   #bridge .bridge-card { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; padding: 10px 12px; }
-  #bridge .bridge-where { font-size: 12px; line-height: 16px; color: var(--bad); }
+  #bridge .bridge-where { font-size: 13px; line-height: 16px; color: var(--bad); } /* 0612: no 12 px text in a button */
   #bridge .bridge-title { font-size: 14px; line-height: 20px; font-weight: 600; overflow-wrap: anywhere; }
   #bridge .bridge-reason { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 20px; color: var(--muted); } /* one line */
   #bridge .bridge-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 10px 12px; }
@@ -153,7 +153,7 @@
   #bridge .bridge-dot.gone { border-width: 1px; }
   #bridge .bridge-about { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
   #bridge .bridge-name { font-size: 14px; line-height: 20px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #bridge .bridge-line { font-size: 12px; line-height: 16px; color: var(--muted); }
+  #bridge .bridge-line { font-size: 13px; line-height: 16px; color: var(--muted); } /* 0612: no 12 px text in a button */
   #bridge .bridge-spend { flex: none; font-size: 14px; line-height: 20px; font-variant-numeric: tabular-nums; }
   #foreman .fm-body { display: flex; flex-direction: column; min-height: 0; }
   #foreman .fm-stale { flex: none; padding: 0 6px 6px; }
