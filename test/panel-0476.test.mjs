@@ -90,7 +90,7 @@ test('0476 AC1: Capture (0520), Plan, Build and Shipped are four cards in one ro
   const sections = [...main[1].matchAll(/<section id="([^"]+)"[^>]*aria-labelledby="tab-(\w+)"[^>]*>([\s\S]*?)<\/section>/g)];
   assert.deepEqual(sections.map(s => [s[1], s[2]]), [['capture-section', 'capture'], ['shaping-section', 'plan'], ['build-section', 'build'], ['shipped-section', 'shipped']], 'each card named by its tab');
   assert.match(sections[2][3], /id="queue-n"[\s\S]*id="queue"/, 'Build\'s lane line, then its tickets');
-  assert.match(sections[3][3], /id="shipped-n"[\s\S]*id="shipped-list"/, 'Shipped\'s lane line, then its tickets');
+  assert.match(sections[3][3], /id="shipped-list"/, 'Shipped\'s tickets, with no lane line since 0606');
   const p = fakePage([board()]);
   await p.settle();
   assert.deepEqual(showing(p), ['build'], 'one card in view: Build, as the page opens');

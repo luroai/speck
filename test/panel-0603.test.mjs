@@ -135,7 +135,7 @@ test('0603 AC2: the chain section has no border or filled circle in its styles',
 
 // ---------- AC3: the secondary buttons ----------
 
-// Each secondary button the panel draws: Full ticket, Full log, Go to Plan and More stats are .full-open.
+// Each secondary button the panel draws: Full ticket, Full log and Go to Plan are .full-open. 0606: All figures is a text link.
 const SECONDARY = ['.full-open', '.q .stop-build', '.q .back-to-plan', '.q .go-with', '.foreman-ask .ask-reply', '.resume .copy', '.foreman .reload', '#doc-view .close', '#settings .close', '#settings-unsaved button.secondary'];
 const WANT = { border: '1px solid var(--line)', 'border-radius': '10px', color: 'var(--text)', 'min-height': '44px' };
 // Its plain rules' declarations, later ones winning, as the cascade has rules of equal weight.
@@ -164,9 +164,9 @@ test('0603 AC3: nothing more particular takes the style back off a secondary but
   }
 });
 
-test('0603 AC3: the cards, Settings\' question and More stats draw their secondary buttons with these classes', async () => {
+test('0603 AC3: the cards and Settings\' question draw their secondary buttons with these classes, and All figures is no longer one (0606)', async () => {
   const html = fs.readFileSync(path.join(ROOT, 'templates', 'panel.html'), 'utf8');
-  assert.match(html, /<button class="full-open more-stats"/);
+  assert.match(html, /<button class="more-stats"/);
   const js = ['panel.js', 'panel-popups.js', 'panel-settings.js'].map(f => fs.readFileSync(path.join(ROOT, 'templates', f), 'utf8')).join('\n');
   for (const c of ['stop-build', 'back-to-plan', 'full-open go-plan']) assert.match(js, new RegExp(`el\\('button', '${c}'`));
   for (const label of ['Discard', 'Keep editing']) assert.match(js, new RegExp(`choice\\('${label}', 'secondary'`), `Settings' ${label}`);

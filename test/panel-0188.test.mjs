@@ -98,7 +98,7 @@ test('0188 AC1: the panel answers a page that says which board it has with only 
 // ---------- AC2: after any updates, the page shows what a fresh load would ----------
 
 // What the page shows: each part of it the board fills, as text and classes.
-const shown = p => ['shaping', 'queue', 'queue-n', 'shipped', 'shipped-n', 'shipped-stats', 'shipped-more', 'run', 'offline', 'restart']
+const shown = p => ['shaping', 'queue', 'queue-n', 'shipped', 'shipped-stats', 'run', 'offline', 'restart']
   .map(id => p.all(p.byId(id)).map(n => `${n.tagName}.${n.className || ''}${n.hidden ? '!' : ''}:${n._text ?? n.textContent ?? ''}`).join('|'));
 const whole = (b, version) => Promise.resolve({ ok: true, status: 200, headers: { get: k => (k === 'X-Speck-Board' ? version : null) }, json: async () => b });
 

@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { CLI, env, runRepo, startRun, until, stopRun, record } from './support/run.mjs';
-import { panelModel, T, round, fakePage, shippedRows } from './support/panel.mjs';
+import { panelModel, T, round, fakePage, shippedRows, click } from './support/panel.mjs';
 import { builderSpend } from '../scripts/core.mjs';
 
 // ---------- 0120: record what each build's builder spends ----------
@@ -114,9 +114,11 @@ test('0120 AC4: the stats add median builder tokens and cost, each over the done
   assert.deepEqual(m.stats.builderCost, { median: 0.88, count: 2 }, 'mean of 0.5 and 1.25, to the cent');
   const p = fakePage([state]);
   await p.settle();
-  const texts = p.byId('shipped-more').children.map(c => c.textContent);
-  assert.deepEqual(texts.slice(1), ['$0.88median builder cost2 tickets', '–median reviewer tokens0 tickets', '300median builder tokens3 tickets']); // 0587: all under More stats
-  assert.equal(p.byId('shipped-more').children[1].title, 'Median builder cost, over 2 tickets');
+  click(p.byId('more-stats')); // 0606: All figures adds them to the grid
+  await p.settle();
+  const others = p.byId('shipped-stats').children.slice(4);
+  assert.deepEqual(others.map(c => c.textContent), ['$0.88median builder costfrom 2 tickets', '–total costfrom 0 tickets', '–median review tokensfrom 0 tickets', '300median builder tokensfrom 3 tickets']);
+  assert.equal(others[0].title, 'Median builder cost, over 2 tickets');
 });
 
 test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipped is unchanged', async () => {
@@ -125,9 +127,10 @@ test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipp
   const p = fakePage([state]);
   await p.settle();
   assert.equal(await figsOf(p, shippedRows(p)[0]), 'Builder cost—Reviewer cost—Total cost—Builder tokens—Reviewer tokens1,500');
-  assert.deepEqual(p.byId('shipped-stats').children.map(c => c.textContent), ['4 minmedian build time1 ticket', '2median review rounds1 ticket', '100%approved first round1 ticket']); // 0587: three tiles
-  assert.deepEqual(p.byId('shipped-more').children.map(c => c.textContent),
-    ['1shipped today', '–median builder cost0 tickets', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']); // 0587: the others
+  click(p.byId('more-stats')); // 0606: one grid, a tile naming its tickets only when they're fewer than all those shipped
+  await p.settle();
+  assert.deepEqual(p.byId('shipped-stats').children.map(c => c.textContent), ['1shipped today', '4 minmedian build time', '2median review rounds', '100%approved first round',
+    '–median builder costfrom 0 tickets', '–total costfrom 0 tickets', '1,500median review tokens', '–median builder tokensfrom 0 tickets']);
   const m = panelModel()(state);
   assert.equal(m.shipped[0].tokens, 1500);
   assert.equal(m.shipped[0].builderTokens, null);

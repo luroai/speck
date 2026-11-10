@@ -14,7 +14,7 @@ const rowOf = (p, id) => shippedRows(p).find(r => one(p, r, 'id').textContent ==
 const sentBack = n => ({ ...round(n, 500), verdict: 'changes_requested' });
 const shippedAt = (id, o = {}) => T(id, 'done', { started: ago(1500), finished: ago(600), rounds: [round(1, 500)], ...o });
 
-test('0587 AC1: Shipped opens with three tiles: median build time, median review rounds and the share approved in the first round', async () => {
+test('0587 AC1: Shipped opens with tiles of median build time, median review rounds and the share approved in the first round, after shipped today (0606)', async () => {
   const p = await show([
     shippedAt('0701', { started: ago(1800), finished: ago(600), rounds: [round(1, 500)] }), // 20 min
     shippedAt('0702', { started: ago(1200), finished: ago(600), rounds: [round(1, 500)] }), // 10 min
@@ -22,22 +22,22 @@ test('0587 AC1: Shipped opens with three tiles: median build time, median review
   ]);
   const shown = p.byId('shipped-stats');
   assert.equal(shown.hidden, false);
-  assert.deepEqual(shown.children.map(c => c.className), ['stat', 'stat', 'stat']);
-  assert.deepEqual(shown.children.map(c => one(p, c, 'num').textContent), ['20 min', '1', '67%']);
-  assert.deepEqual(shown.children.map(c => one(p, c, 'label').textContent), ['median build time', 'median review rounds', 'approved first round']);
-  assert.deepEqual(shown.children.map(c => one(p, c, 'count').textContent), ['3 tickets', '3 tickets', '3 tickets']);
+  assert.deepEqual(shown.children.map(c => c.className), ['stat', 'stat', 'stat', 'stat']);
+  assert.deepEqual(shown.children.map(c => one(p, c, 'num').textContent), ['3', '20 min', '1', '67%']);
+  assert.deepEqual(shown.children.map(c => one(p, c, 'label').textContent), ['shipped today', 'median build time', 'median review rounds', 'approved first round']);
+  assert.deepEqual(shown.children.map(c => one(p, c, 'count')), [undefined, undefined, undefined, undefined], '0606: each from all three shipped, so none says how many');
 });
 
 test('0587 AC1: the first-round share counts the tickets the median rounds does, so one with no review rounds is left out', async () => {
   const p = await show([shippedAt('0701', { rounds: [round(1, 500)] }), shippedAt('0702', { rounds: [sentBack(1), round(2, 500)] }), shippedAt('0703', { rounds: [] })]);
-  const share = p.byId('shipped-stats').children[2];
+  const share = p.byId('shipped-stats').children[3];
   assert.equal(one(p, share, 'num').textContent, '50%');
-  assert.equal(one(p, share, 'count').textContent, '2 tickets');
+  assert.equal(one(p, share, 'count').textContent, 'from 2 tickets'); // 0606: fewer than the three shipped
 });
 
 test('0587 AC1: a ticket approved in its first round still counts when merge rounds follow, and one sent back does not', async () => {
   const p = await show([shippedAt('0701', { rounds: [round(1, 500), round(2, 500), round(3, 500)] }), shippedAt('0702', { rounds: [sentBack(1), round(2, 500)] })]);
-  assert.equal(one(p, p.byId('shipped-stats').children[2], 'num').textContent, '50%');
+  assert.equal(one(p, p.byId('shipped-stats').children[3], 'num').textContent, '50%');
 });
 
 test('0587 AC1: the board keeps whether the first round approved an older ticket when it cuts its rounds down', () => {
@@ -49,12 +49,12 @@ test('0587 AC1: the board keeps whether the first round approved an older ticket
 
 test('0587 AC1: a ticket cut down to its Shipped figures counts by what its total says of the first round', async () => {
   const p = await show([shippedAt('0701', { rounds: undefined, review_total: { rounds: 3, tokens: 500, first_approved: true } }), shippedAt('0702', { rounds: undefined, review_total: { rounds: 2, tokens: 500, first_approved: false } })]);
-  assert.equal(one(p, p.byId('shipped-stats').children[2], 'num').textContent, '50%');
+  assert.equal(one(p, p.byId('shipped-stats').children[3], 'num').textContent, '50%');
 });
 
 test('0587 AC1: a figure with nothing to work from shows a dash and no unit', async () => {
   const p = await show([T('0701', 'done', { title: 'Nothing at all' })]);
-  assert.deepEqual(p.byId('shipped-stats').children.map(c => one(p, c, 'num').textContent), ['–', '–', '–']);
+  assert.deepEqual(p.byId('shipped-stats').children.map(c => one(p, c, 'num').textContent), ['0', '–', '–', '–']);
 });
 
 test('0587 AC1: with nothing shipped there are no tiles', async () => {
@@ -145,26 +145,28 @@ test('0587 AC2: its full view keeps the ticket\'s own costs and tokens', async (
 test('0587 AC3: the toggle shows every other figure, costs included, and hides them again', async () => {
   const p = await show([shippedAt('0701', { builder_tokens: 2000, builder_cost_usd: 1.5, total_cost_usd: 2.5, rounds: [round(1, 500)] })]);
   const more = p.byId('more-stats');
-  assert.equal(p.byId('shipped-more').hidden, true);
-  assert.equal(more.textContent, 'More stats');
+  assert.equal(p.byId('shipped-stats').children.length, 4);
+  assert.equal(more.textContent, 'All figures'); // 0606
   click(more);
   await p.settle();
-  assert.equal(p.byId('shipped-more').hidden, false);
-  assert.equal(p.byId('more-stats').textContent, 'Fewer stats');
-  assert.deepEqual(p.byId('shipped-more').children.map(c => `${one(p, c, 'num').textContent} ${one(p, c, 'label').textContent}`),
-    ['1 shipped today', '$1.50 median builder cost', '$2.50 total cost', '500 median reviewer tokens', '2,000 median builder tokens']);
+  assert.equal(p.byId('more-stats').textContent, 'Fewer figures');
+  assert.deepEqual(p.byId('shipped-stats').children.slice(4).map(c => `${one(p, c, 'num').textContent} ${one(p, c, 'label').textContent}`),
+    ['$1.50 median builder cost', '$2.50 total cost', '500 median review tokens', '2,000 median builder tokens']); // 0606: in the same grid
   click(p.byId('more-stats'));
   await p.settle();
-  assert.equal(p.byId('shipped-more').hidden, true);
+  assert.equal(p.byId('shipped-stats').children.length, 4);
 });
 
-test('0587 AC3: total cost is left out when no ticket has one, and says when it is only a floor', async () => {
+test('0587 AC3: total cost is a dash when no ticket has one (0606: it keeps its tile), and says when it is only a floor', async () => {
   const none = await show([shippedAt('0701')]);
   click(none.byId('more-stats'));
   await none.settle();
-  assert.doesNotMatch(none.byId('shipped-more').textContent, /total cost/);
+  const dash = none.byId('shipped-stats').children.find(c => /total cost/.test(c.textContent));
+  assert.equal(one(none, dash, 'num').textContent, '–');
   const part = await show([shippedAt('0701', { total_cost_usd: 2.5, total_cost_unknown: ['watch'] })]);
-  const tile = part.byId('shipped-more').children.find(c => /total cost/.test(c.textContent));
+  click(part.byId('more-stats'));
+  await part.settle();
+  const tile = part.byId('shipped-stats').children.find(c => /total cost/.test(c.textContent));
   assert.match(tile.title, /at least/);
 });
 
@@ -183,7 +185,7 @@ test('0587 AC4: at 320 px wide each row is at least 44 px tall, long titles are 
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#shipped tr').length === 3`, 'the rows');
     await b.js(openLane('shipped'));
-    await b.until(`!document.getElementById('shipped-section').hidden && document.querySelectorAll('#shipped-stats .stat').length === 3`, 'the tiles');
+    await b.until(`!document.getElementById('shipped-section').hidden && document.querySelectorAll('#shipped-stats .stat').length === 4`, 'the tiles');
     const rows = await b.js(`[...document.querySelectorAll('#shipped tr')].map(r => { const t = r.querySelector('.title'), s = getComputedStyle(t), box = r.getBoundingClientRect();
       return { title: t.textContent, height: box.height, right: box.right, nowrap: s.whiteSpace, overflow: t.scrollWidth > t.clientWidth + 0.5, ellipsis: s.textOverflow, titleHeight: t.getBoundingClientRect().height, line: parseFloat(s.lineHeight) }; })`);
     for (const row of rows) { assert.ok(row.height >= 44, `"${row.title}" is ${row.height} px tall`); assert.ok(row.right <= 320.5, `"${row.title}" stays on the screen`); }

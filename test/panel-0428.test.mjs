@@ -45,7 +45,7 @@ const BUTTONS = {
   'Go with the recommendation': ['button', '.q .go-with'],
   'Set ready': ['button', '.set-ready'],
   'Full ticket elsewhere': ['button', '.full-open'],
-  'More stats / Details': ['button', '.full-open', '.full-open.more-stats', '#shipped .details', 'td .full-open'],
+  'Details': ['button', '.full-open', '#shipped .details', 'td .full-open'], // 0606: All figures is a text link, not a button
   'Copy': ['button', '.resume .copy'],
   'Answer / Dismiss': ['button', '.foreman-ask .ask-reply'],
   'Reload page': ['button', '.foreman .reload'],
@@ -67,7 +67,7 @@ const BUTTONS = {
 
 // 0603: the secondary buttons, in the redesign's secondary style, have 10 px corners
 const SECONDARY = new Set(['Full ticket / Review pack on an open card', 'Stop build', 'Back to Plan', 'Go with the recommendation', 'Full ticket elsewhere',
-  'More stats / Details', 'Copy', 'Answer / Dismiss', 'Reload page', 'Close', 'Settings\' question\'s other buttons']);
+  'Details', 'Copy', 'Answer / Dismiss', 'Reload page', 'Close', 'Settings\' question\'s other buttons']);
 test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu have an 8 px corner radius, and (0603) a secondary button 10 px', () => {
   for (const [what, sels] of Object.entries(BUTTONS)) assert.equal(resolve(sels)['border-radius'], SECONDARY.has(what) ? '10px' : '8px', what);
   for (const sel of ['select', 'textarea', '.tag', '.prio-menu']) // 0520: Plan's toggles are gone
@@ -81,15 +81,15 @@ test('0428 AC1: buttons, inputs, selects, tags, toggles and the priority menu ha
 
 // 0477: the tabs, and their corners, are gone: the lanes are a strip of their names.
 
-test('0428 AC2, since 0602: cards, the stats and the pop-ups have a 12 px corner radius, and the build log, now flat, none', () => {
+test('0428 AC2, since 0602: cards, the stats\' tiles (0606) and the pop-ups have a 12 px corner radius, and the build log, now flat, none', () => {
   assert.equal(resolve(['.q .log'])['border-radius'], undefined, 'the build log');
   const BOXES = {
     'a Plan card': ['.item'], 'a Build card': ['.q'],
-    'the stats': ['.stats'], // 0593: Settings' groups are plain sections
+    'a stat\'s tile': ['.stat'], // 0593: Settings' groups are plain sections. 0606: each tile its own corners
     'Settings\' question': ['#settings-unsaved .box'],
   };
   for (const [what, sels] of Object.entries(BOXES)) assert.equal(resolve(sels)['border-radius'], '12px', what);
-  assert.equal(resolve(['.stats'])['overflow'], 'hidden', 'the stats\' tiles keep inside its corners');
+  assert.equal(resolve(['.stats'])['border-radius'], undefined, '0606: the grid has no corners to cut its tiles');
   assert.equal(resolve(['#shipped tr'])['border-radius'], undefined, '0587: a shipped ticket is a row, with no corners');
 });
 

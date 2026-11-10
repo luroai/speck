@@ -31,7 +31,8 @@ test('0600 AC2: a lane has no title or dot of its own, and its line stays, under
   for (const [lane, id] of Object.entries(LANES)) {
     const sec = main.match(new RegExp(`<section id="${id}"[^>]*>([\\s\\S]*?)</section>`))[1];
     assert.doesNotMatch(sec, /<h2/, `${lane}: no heading`);
-    if (lane !== 'plan') assert.match(sec, /^\s*<div class="lane-n" id="[a-z]+-n"><\/div>\s*<div [^>]*class="lane-list"/, `${lane}: its line first, then its list`);
+    if (lane === 'shipped') assert.match(sec, /^\s*<div [^>]*class="lane-list"/, `${lane}: its list, with no line since 0606, as its tab gives the count`);
+    else if (lane !== 'plan') assert.match(sec, /^\s*<div class="lane-n" id="[a-z]+-n"><\/div>\s*<div [^>]*class="lane-list"/, `${lane}: its line first, then its list`);
   }
   assert.match(html, /<nav class="tabs"[\s\S]*<\/nav>\s*<main>/, 'the tabs straight above the lanes');
 });
@@ -164,7 +165,8 @@ for (const theme of ['light', 'dark']) {
         assert.deepEqual([l.title.size, l.title.weight, l.title.line], ['15px', '500', '20px'], `${lane}: its rows' titles (AC3)`);
         assert.deepEqual([l.details.size, l.details.colour], ['13px', views.muted], `${lane}: its rows' details (AC3)`);
       }
-      assert.ok(lanes.build.line && lanes.shipped.line && lanes.capture.line, 'Build, Shipped and Capture keep their lines');
+      assert.ok(lanes.build.line && lanes.capture.line, 'Build and Capture keep their lines');
+      assert.equal(lanes.shipped.line, null, '0606: Shipped\'s "in total" line is gone, as its tab gives the count');
       // AC3: the views' rows on the same scale
       assert.equal(views.log.text.size, '15px', 'a log line');
       assert.equal(views.log.text.line, '20px');

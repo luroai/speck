@@ -65,7 +65,7 @@ test('0410 AC1: pressing a tab opens its lane, and only its lane', async () => {
 });
 
 // 0425: the counts are the first line of their lane now, not in the tabs.
-test('0410 AC1: Build and Shipped show the counts their headings did; Plan shows none', async () => {
+test('0410 AC1: Build shows the count its heading did; Plan shows none, and Shipped none since 0606, as its tab has it', async () => {
   const nav = staticHtml().match(/<nav [^>]*role="tablist"[^>]*>([\s\S]*?)<\/nav>/)[1];
   const tab = id => nav.match(new RegExp(`<button [^>]*id="${id}"[^>]*>([\\s\\S]*?)</button>`))[1];
   assert.equal(tab('tab-plan'), '<span class="tab-name">Plan</span><span class="tab-n" id="tab-plan-n"></span>', '0582: Plan\'s tab is its name and its count');
@@ -73,11 +73,10 @@ test('0410 AC1: Build and Shipped show the counts their headings did; Plan shows
   const p = livePage(board());
   await p.settle();
   assert.equal(p.byId('queue-n').textContent, '0 in flight · 2 queued');
-  assert.equal(p.byId('shipped-n').textContent, '1 in total');
+  assert.doesNotMatch(staticHtml(), /id="shipped-n"/, '0606: Shipped\'s "in total" line is gone');
   p.set({ tickets: [], ideas: [] });
   await refresh(p);
   assert.equal(p.byId('queue-n').textContent, ''); // 0449: an empty lane says so in its message alone
-  assert.equal(p.byId('shipped-n').textContent, '0 in total');
   assert.match(p.byId('queue').textContent, /Nothing building/, 'an empty Build lane says so');
 });
 
