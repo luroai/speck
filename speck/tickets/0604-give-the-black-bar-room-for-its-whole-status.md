@@ -53,12 +53,7 @@ The black bar is a little taller, with a larger speck and room for the whole sta
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-On a 320 px phone, ordinary project names of up to 20 characters (letters, digits, hyphens, such as "ACME-Payments-Portal") now show in full, but a name made mostly of the widest letters, such as 20 capital Ws, can't fit beside a 56 px speck and a 44 px Settings button. May such a name be cut short with "…" too (A), or should a name that doesn't fit go onto a second line, making the bar taller for that project only (B)? I recommend A: real folder names fit, and the bar keeps one height.
-
-Recommended: A, cut an unusually wide name short with "…"
-Other options: B, let a name that doesn't fit wrap onto a second line, making the bar taller for that project
-Changes what you'd notice: yes
-Clear winner: yes
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->

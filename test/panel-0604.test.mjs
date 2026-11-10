@@ -140,6 +140,10 @@ test('0604 AC1, AC3 and AC4: at 320 px the status and a 20-character project sho
     assert.ok(tips[1] && tips[0] === `${tips[1]} · Switch project`, `the menu's tooltip gives the project in full: ${tips}`);
     const short = await measure('Shipping 0599', 'speck');
     assert.ok(!short.nameCut && !short.baseCut && short.base === ' · main', `a short name leaves room for the base branch: ${JSON.stringify(short)}`);
+    // As decided on the blocked question (A): a name of 20 of the widest letters can't fit, so it ends in "…" too, on one line
+    const wide = await measure('Waiting: other tickets', 'WWWWWWWWWWWWWWWWWWWW'), wat = JSON.stringify(wide);
+    assert.ok(wide.nameCut && wide.nameEllipsis === 'ellipsis' && wide.name.height <= 18.5, `an unusually wide name ends in "…": ${wat}`);
+    assert.ok(!wide.wordCut && wide.wordLines === 1 && wide.page <= wide.width, `the status is not, and nothing scrolls sideways: ${wat}`);
     const long = await measure('Shipping 0599', 'a-client-project-with-a-really-long-name'), at = JSON.stringify(long);
     assert.ok(long.nameCut && long.nameEllipsis === 'ellipsis', `a longer name ends in "…": ${at}`);
     assert.ok(!long.wordCut && long.wordLines === 1, `the status is not: ${at}`);
