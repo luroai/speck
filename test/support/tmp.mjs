@@ -16,6 +16,8 @@ export const RUN_TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-test-'));
 for (const k of ['TMPDIR', 'TMP', 'TEMP']) process.env[k] = RUN_TMP;
 // 0516: the records of the panels the file starts, so they don't join the project menus of the panels you're running.
 process.env.SPECK_PANELS_DIR = path.join(RUN_TMP, 'speck-keep-panels');
+// 0619: and those of the panels a build started, which speck run stops once the build ends.
+process.env.SPECK_BUILD_PANELS_DIR = path.join(RUN_TMP, 'speck-keep-build-panels');
 
 const remove = p => { try { fs.rmSync(p, { recursive: true, force: true, maxRetries: 3 }); } catch {} };
 export const emptyRunTmp = () => {
