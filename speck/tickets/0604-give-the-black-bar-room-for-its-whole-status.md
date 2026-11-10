@@ -75,6 +75,7 @@ Tests changed from the bar's old one-line layout to the new one (AC5):
 - `test/panel-0413.test.mjs`: the project's name is on the project's line (`.bar-where`), which is the one thing after the status button.
 - `test/panel-0140.test.mjs`: the base branch is on the project's line.
 - `test/panel-0454.test.mjs`: a point on the project's line over the status counts as the status, as it passes the press on.
+- `test/panel-0134.test.mjs`: the page's static text has one separator fewer, as the status no longer shares its line with the project (found when the ship queue's full run failed on it).
 
 Follow-ups (known limits, no idea notes):
 - With two or more projects running, the project menu is 44 px tall (0417), so it reaches down over the start of the line under it: a press on the left of "2 queued" opens the menu, not the Pipeline log. Pressing the status itself always opens the log.
