@@ -1,7 +1,7 @@
 ---
 id: "0622"
 title: "Carry a build on by itself once Claude's usage limit resets"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T22:59:55.125Z"
 
 ---
 # 0622 · Carry a build on by itself once Claude's usage limit resets
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When Claude's usage limit is reached, a build stops partway and stays stopped until someone notices: on 2026-11-10 one waited five hours after the limit had reset. The watcher makes it worse, as it looks into the stop on the same agent, hits the same limit and gives up. Yet Claude's own log says when the limit resets.
