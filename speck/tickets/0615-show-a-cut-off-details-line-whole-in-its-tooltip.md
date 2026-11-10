@@ -1,7 +1,7 @@
 ---
 id: "0615"
 title: "Show a cut-off details line whole in its tooltip"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-10
 ---
 # 0615 · Show a cut-off details line whole in its tooltip
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 0599 a closed row's details line stays on one line, cut off with an ellipsis when it doesn't fit. A Shipped row's details have a tooltip, but a Build or Plan row's don't, so the end of a long line, such as "Ready · after 0599, 0600, …", can only be read by opening the ticket.
