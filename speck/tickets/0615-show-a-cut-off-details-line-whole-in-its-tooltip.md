@@ -46,7 +46,9 @@ A cut-off details line shows its whole text in its tooltip, in every lane.
 - Pictures: none, because nothing on the page looks different; the change is only hover tooltips, which a screenshot doesn't show.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a row's second line is too long and ends in "…", hovering over it now shows the whole line, in every lane: Capture, Plan, Build and Shipped. On a Build row, the tooltip also says what the ticket is doing in a full sentence, under the line, as it did before. Nothing on the page looks different.
+
+To see it, narrow the panel until a ready ticket that waits on several others ends in "…", then hover over that line. Hovering a tag such as P2 or "bug" still shows only that tag's own explanation.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +61,7 @@ A cut-off details line shows its whole text in its tooltip, in every lane.
 - Tests changed for the new behaviour (AC4): a Build row's tooltip is now its whole line, then its sentence on a line of its own, so these read the sentence with the new `tipSentence` helper in `test/support/panel.mjs` rather than the whole tooltip:
   - `test/panel-0156.test.mjs` (0156 AC3), `test/panel-0168.test.mjs` (0168 AC1), `test/panel-0196.test.mjs` (0196 AC1, AC2, AC4), `test/panel-0201.test.mjs` (0201 AC1, AC4), `test/panel-0416.test.mjs` (0416 AC2), `test/panel-0419.test.mjs` (0419 AC2), `test/panel-0434.test.mjs` (0434 AC1), `test/panel-0443.test.mjs` (0443 AC1, AC2), `test/panel.test.mjs` (0034 AC3, 0045 AC3, 0045 AC4), `test/foreman-0317.test.mjs` (0317 AC2), `test/review-running-0223.test.mjs` (0223 AC1, AC2), `test/run-provider-0391.test.mjs` (0391 AC1), `test/speck-name-0485.test.mjs` (0485 AC2), `test/speck-name-0576.test.mjs` (0576 AC2).
   - `test/panel-0058.test.mjs` (0058 AC3): the counter's tick may now change its own line's tooltip, which follows the minutes; every other tooltip must still stay as it was.
+- Follow-ups: none for the inbox. Round 1's test run had one failure, 0476 AC2 (lane swipe timing in a real browser), which passed on its own and in the run before; it looked like load, not this change.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -143,6 +146,92 @@ A cut-off details line shows its whole text in its tooltip, in every lane.
     ],
     "escalation_question": "",
     "summary": "The tooltip change appears to work across all lanes, including moving Build timers, and keeps the full text available to screen readers. Before approval, record the updated tests in the Delivery log and replace the ineffective appearance test."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e80b8729bfea09e38666db143e07b5bb780f7f7a",
+    "session": "continued",
+    "thread_id": "01a1c548-7736-7243-af1d-31e410c27c60",
+    "builder_response": "- Tests run: test/panel-0615.test.mjs (with the repo's checks). Only that file changed this round; the round 1 run covered the changed older tests.\n- F1: fixed. The ticket's Delivery log lists each existing test changed for the new tooltip (AC4), by file and criterion.\n- F2: fixed. The AC3 test now checks that each lane's details line has the same nodes, classes and text as before (Plan, Build, Capture), that the tags keep their roles, accessible names and the priority's own tooltip, and that no style targets tooltips. I checked it also passes with the base branch's templates/panel.js, so it pins today's look.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 250327,
+      "cached_input_tokens": 201472,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1587,
+      "reasoning_output_tokens": 120
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4840,
+      "cached": 90240,
+      "write": 0,
+      "output": 647
+    },
+    "cost_usd": 0.025174,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T11:48:55.401Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js wholeTip(), ticketHead(), noteItem() and whereLine() provide complete details tooltips. Passing panel-0615 AC1 tests cover every lane, supplementary Build sentences, tag tips and advancing timers."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing panel-0615 AC2 test verifies that complete details text remains in the DOM without aria-hidden; the ellipsis CSS only clips its visual presentation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The revised, passing panel-0615 AC3 test checks representative rows' nodes, classes, text and accessible tag names. The implementation changes tooltips without changing layout or styling."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Existing tooltip assertions now use tipSentence(), and the Delivery log lists the changed tests by file and criterion. Round 2 reports no failures; round 1's unrelated lane-animation timing failure presents no evidence of a tooltip regression."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0615-show-a-cut-off-details-line-whole-in-its-tooltip.md",
+        "issue": "The Delivery log previously omitted the updated tests required by AC4.",
+        "suggested_fix": "Completed: the Delivery log lists the changed tests and their criteria.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0615.test.mjs",
+        "issue": "The previous AC3 assertion did not meaningfully check unchanged appearance.",
+        "suggested_fix": "Completed: the replacement checks rendered structure, classes, text and tag accessibility.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The full details text is available in tooltips across all lanes, including when Build timers advance. Screen-reader text and row appearance are preserved. Both previous findings are resolved; the change is ready for the owner's merge decision."
   }
 }
 ```
