@@ -1,7 +1,7 @@
 ---
 id: "0604"
 title: "Give the black bar room for its whole status"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0601"]                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T08:45:59.870Z"
 
 ---
 # 0604 · Give the black bar room for its whole status
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 On a phone the black bar (0580) fits the status, the project's name, the project menu and Settings on one line, so they're cut off: the user saw "Shipping 05… · s…" and couldn't tell which ticket was shipping or which project it was. The project menu beside them also read "All projects" while the panel was showing speck.
