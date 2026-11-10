@@ -1,7 +1,7 @@
 ---
 id: "0597"
 title: Bring the docs up to date with the new panel                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0581","0582","0587","0588","0590","0592","0593","0594","0596"]         
 created: 2026-11-09
 started: "2026-11-09T23:57:45.071Z"
 approved: "2026-11-10T00:02:37.494Z"
+finished: "2026-11-10T00:06:34.592Z"
 
 ---
 # 0597 · Bring the docs up to date with the new panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 After the redesign, the brief's long `speck panel` row and the README's demo pictures still describe and show the LCD panel.
