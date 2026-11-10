@@ -9,7 +9,7 @@ let focusBack = false; // 0326: the pane has closed, so the next render puts the
 let foremanOpen = false; // 0285: whether the Foreman's detail is open
 let decidedOpen = false, decidedBuilt = null, decidedLineSaid = null; // 0568: whether the Decided for you list is open, and what it was last drawn from. 0590: and what the line under the bar last said
 let runLog = null, runLogFor = null, runLogAsking = false, runLogShown, runLogDrawn = null; // 0415: runLogShown: the log's lines as drawn (runLogDrawn), joined, undefined when not drawn
-let runLogFilter = 'all', logFilters = [], logFace = null, logMood = null, logSaid = null; // 0592: the filter chosen in the Pipeline log, its buttons, and speck's face and line in it
+let runLogFilter = 'all', logFilters = [], logFace = null, logMood = null, logSaid = null, logScheduled = null; // 0592: the filter chosen in the Pipeline log, its buttons, and speck's face and line in it
 let buildLogOf = null; // 0548: the id of the ticket whose build log the Pipeline log's pop-up shows instead, or null
 let buildLogShown, buildLogDrawn = null, buildLogBuild = null; // 0548: as runLogShown and runLogDrawn, and the build they're from
 let packOf = null; // while the side pane shows a review pack instead: { id, state: 'loading' | 'ok' | 'none' | 'error', text }
@@ -951,8 +951,9 @@ function pipelineFrame() {
   const body = el('div', 'fm-body', null, el('div', 'fm-stale'), el('div', 'fm-log'));
   box.setAttribute('aria-label', 'Pipeline log');
   logSaid = el('span', 'log-said');
+  logScheduled = el('ul', 'log-scheduled'); // 0625
   box.replaceChildren(el('div', 'top', null, back, el('span', 'title', 'Pipeline log'),
-    el('div', 'log-status', null, logFace, logSaid), el('div', 'log-filters', null, ...logFilters)), body);
+    el('div', 'log-status', null, logFace, logSaid, logScheduled), el('div', 'log-filters', null, ...logFilters)), body);
   return body;
 }
 // 0592: shows only the lines of this filter (RUN_LOG_FILTERS), scrolled to the newest.
@@ -970,6 +971,9 @@ function drawLogStatus() {
   const slots = f.max === null ? plural(n, 'build slot') : `${n} of ${plural(f.max, 'build slot')}`;
   setText(logSaid, !f.on ? 'speck run is off, so no build slots are in use.'
     : `speck run ${Number.isFinite(since) ? `has been on since ${shippedAt(since, Date.now())}` : 'is on'}, with ${slots} in use.`);
+  const scheduled = scheduledLines(f.agent); // 0625: until each has run or been dropped
+  logScheduled.hidden = !scheduled.length;
+  logScheduled.replaceChildren(...scheduled.map(line => el('li', null, line)));
 }
 // 0602: a build log's frame, as the Pipeline log's: on top a back link to its ticket and its heading, then its body,
 // with room for a stale page's line and the log box. Returns the body.

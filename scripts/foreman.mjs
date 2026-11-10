@@ -166,6 +166,7 @@ export function foremanLines(v) {
   const a = v.agent; // 0287: the Foreman agent
   if (a?.running) lines.push(`  ${name} is looking into ${a.running.id}: ${a.running.what}`);
   for (const q of a?.asks || []) lines.push(`  ${name} asks you about ${q.id}: ${q.question}`, `    Answer with speck answer ${q.id} "<your answer>", or dismiss it with speck dismiss ${q.id}`); // 0318
+  for (const r of a?.scheduled || []) lines.push(`  ${name} will resume ${r.id} at ${r.at.slice(0, 16).replace('T', ' ')} UTC: ${r.why}`); // 0625
   // 0328: a question is asked about its ticket, followed by what became of it once it no longer waits for you
   for (const d of a?.did || []) {
     const said = typeof d.outcome === 'string' && d.outcome ? ` ${d.outcome}` : '';
