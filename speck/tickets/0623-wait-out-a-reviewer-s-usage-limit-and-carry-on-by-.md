@@ -41,7 +41,7 @@ When a review round fails on the reviewer's usage limit, speck waits until it re
 - Asked for 2026-11-10: "when the usage comes back into play, I would really like it if the builds just started them by themselves again … I've just wasted half a day there of not moving forwards because a usage limit was hit."
 - Earlier blocked questions recorded in tickets' Notes went with "wait for Codex's limit to reset" and "wait for Codex after 3:41 AM".
 - 0554 made `speck review` show Codex's own reason when it fails, from its JSON events (`turn.failed` or `error`).
-- Unverified: the exact wording of Codex's usage-limit message and its reset time (a limit can't be brought on to look). The builder finds it in this repo's saved review output or Codex's own source for codex-cli 0.159.0, and records it here.
+- Checked 2026-11-10: Codex 0.159.0's limit message, from its saved sessions and the installed program, is "You've hit your usage limit. Upgrade to Pro (…), visit … to purchase more credits or try again at 3:41 AM.", with a curly or straight apostrophe, or other plan wording before it ("Try again at …"). A reset on another day reads "Oct 28th, 2026 3:41 AM". The time is in the machine's local time zone. With no reset known it ends "Try again later."; `codex exec --json` gives only the message, in `turn.failed` or `error`.
 - Waits for 0622, which adds the waiting and resuming.
 
 ## In plain words
