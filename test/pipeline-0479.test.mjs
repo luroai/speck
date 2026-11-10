@@ -100,7 +100,8 @@ const MEASURE = `(() => {
   const ink = (() => { const d = document.createElement('div'); d.style.color = 'var(--bezel-ink)'; document.body.appendChild(d); const c = getComputedStyle(d).color; d.remove(); return c; })();
   const se = document.scrollingElement;
   return { w: innerWidth, h: innerHeight, top: r(top), body: r(body), log: r(log), title: r(t), back: r(back), stale: stale.hidden ? null : r(stale),
-    laneFrame: lane ? { left: lane.b.left + parseFloat(ls.paddingLeft), right: lane.b.right - parseFloat(ls.paddingRight) } : null,
+    // 0600: a lane has no frame, and its rows sit in its list's 16 px side margins, as the log's do
+    laneFrame: lane ? (() => { const l = lane.s.querySelector('.lane-list'), b = l.getBoundingClientRect(), st = getComputedStyle(l); return { left: b.left + parseFloat(st.paddingLeft), right: b.right - parseFloat(st.paddingRight) }; })() : null,
     laneSide: 4, // 0480: the lanes are light cards now, so the log keeps 0478's 4 px frame of its own
     bezel, topBg: cs.backgroundColor, bodyBg: bs.backgroundColor, corners: [cs.borderTopLeftRadius, cs.borderTopRightRadius, bs.borderBottomLeftRadius, bs.borderBottomRightRadius],
     side: [parseFloat(bs.paddingLeft), parseFloat(bs.paddingRight), parseFloat(bs.paddingBottom)],

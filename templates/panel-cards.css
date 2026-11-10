@@ -1,24 +1,14 @@
 /* The panel's styles (0472: a file for each area of the panel): the cards in Capture, Plan, Build and Shipped and everything
    in them, the build log included. */
-  /* 0478: each lane is a card with its name in the header's dot-matrix lettering. 0480: a light card, not a dark frame,
-     so the bar is the only dark frame on the page: the lane's own background with a hairline edge in the line
-     colour and a card's 12 px corners (0428). Its title row has the lane's name in the text colour, a dot in its stage's
-     colour before it (0461's: grey for a step not reached, blue for Build and purple for Ship), and the lane's line at
-     its right end in the muted colour (0425: Build's and Shipped's counts), cut short with "…" before the name gives
-     way, with a thin line under the row. The card still fills the column and slides as a whole (0476), with no border
-     of its own (0418): its padding is the gap round the card, as the header's 16 px sides, and its fill is cut to inside
-     that padding, with corners that are the card's less that gap. The edge is drawn over its contents, so a list
-     scrolled under it never hides it, and its contents sit inside it. */
-  main > section { position: relative; isolation: isolate; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); column-gap: 10px; padding: 8px 16px; color: var(--text); background-color: var(--panel); background-clip: content-box; border-radius: 28px / 20px; }
-  main > section::before { content: ""; position: absolute; inset: 8px 16px; z-index: 1; border: .5px solid var(--line); border-radius: 12px; pointer-events: none; }
-  .lane-title { grid-row: 1; grid-column: 1; display: inline-flex; align-items: center; gap: .25em; min-width: 0; margin: 0; padding: 7px 0 6px 14px; font-family: var(--font-ui); font-weight: 600; font-size: 22px; line-height: 1; white-space: nowrap; color: var(--text); }
-  .lane-title::before { content: ""; flex: none; width: .375em; height: .375em; border-radius: 50%; } /* decoration: no text, so a screen reader passes over it */
-  #capture-section .lane-title::before, #shaping-section .lane-title::before { background: var(--muted); } /* 0577: the border is too faint for a dot */
-  #build-section .lane-title::before { background: var(--blue); }
-  #shipped-section .lane-title::before { background: var(--purple); }
-  .lane-n { grid-row: 1; grid-column: 2; align-self: center; min-width: 0; padding: 7px 14px 6px 0; font-family: var(--font-ui); font-size: 12px; line-height: 1.5; text-align: right; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .lane-list { grid-row: 3; grid-column: 1 / -1; min-height: 0; margin: 0 1px 1px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); border-radius: 0 0 11px 11px; } /* the card's 12 px less the pixel its edge sits in, so what's in it stays on whole pixels (0453) */
-  .lane-n + .lane-list, .lane-title + .lane-list { border-top: 1px solid var(--line-soft); } /* 0520: Plan's and Capture's lists start under their titles */
+  /* 0600: a lane is a flat list, as the Pipeline log, Decided for you and a ticket's full view are: no card, edge or
+     corners of its own, and no title or dot, as its tab names it and gives its count. Its line (Capture's notes, Build's
+     and Shipped's counts) is a row of its own under the tabs, in the muted colour. Its list runs the column's width, its
+     rows inside the same 16 px side margins as those views', with the log's hairline between them. The lane still fills
+     the column and slides as a whole (0476). */
+  main > section { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); padding: 0; color: var(--text); background-color: var(--panel); }
+  .lane-n { grid-row: 1; grid-column: 1; min-width: 0; padding: 8px 16px 0; font-family: var(--font-ui); font-size: 13px; line-height: 18px; text-align: right; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lane-n[hidden] { display: none; }
+  .lane-list { grid-row: 2; grid-column: 1; min-height: 0; margin: 0; padding: 0 16px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); }
   .group { padding: 7px 14px; font-family: var(--font-ui); font-size: 12px; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
   .group.attn { color: var(--warn); }
   .group.run { color: var(--run); }
@@ -34,7 +24,7 @@
 
   /* Shaping */
   /* 0151: each item is a card of its own, with space between cards */
-  #shaping, #capture { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
+  #shaping, #capture { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
   .item { padding: 10px 14px; border: 1px solid var(--line); }
   .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
   .item .head { margin: -10px -14px; padding: 10px 14px; } /* the item's padding opens and closes it too */
@@ -54,7 +44,7 @@
      0214: an idea's or inbox note's title too, without a label since 0435 */
   .item .line { display: flex; align-items: baseline; gap: 8px; }
   .item .line .id { flex: none; font-size: 14px; }
-  .item .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
+  .item .line .title { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 500; }
   .item .path { margin-bottom: 6px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; } /* 0435: an open note's path, above its text */
   /* 0538: a note's star in Capture, boxed as every button is, in a 44 px square at the row's right. Empty, or filled in
      the warm colour once starred. The focus ring is every control's. */
@@ -69,7 +59,7 @@
   /* Queue */
   /* 0155: each ticket is a card of its own, laid out as a Plan ticket. 0167: only a ticket waiting for you or in trouble
      is coloured, by its border and background (below the highlights, so they win) */
-  #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px; }
+  #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
   #queue .empty { padding: 0 4px; }
   /* 0449: an empty lane's message, centred: that it's clear, what shipped lately and the next step */
   #queue .idle { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 4px; text-align: center; }
@@ -79,16 +69,16 @@
   .q .top { cursor: pointer; }
   .q .top .line { display: flex; align-items: baseline; gap: 8px; }
   .q .top .line .id { flex: none; font-size: 14px; }
-  .q .top .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
+  .q .top .line .title { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 500; }
   .q .top .sub { font-variant-numeric: tabular-nums; }
   /* 0585: Build's rows, under a head for each group */
-  #queue:has(.q.row) { gap: 0; padding: 0; }
-  #queue .group-head { margin: 0; padding: 14px 14px 6px; font-family: var(--font-ui); font-weight: 600; font-size: 14px; line-height: 16px; color: var(--muted); }
+  #queue:has(.q.row) { gap: 0; padding: 0 16px; } /* 0600: inside the lane's side margins */
+  #queue .group-head { margin: 0; padding: 14px 0 6px; font-family: var(--font-ui); font-weight: 600; font-size: 14px; line-height: 16px; color: var(--muted); }
   #queue .group-head .group-n { font-family: var(--font-mono); font-weight: 400; font-size: 12px; }
-  .q.row { padding: 0; border: 0; border-bottom: .5px solid var(--line); border-radius: 0; }
-  .q.row .top { box-sizing: border-box; min-width: 0; min-height: 44px; padding: 7px 14px 8px; } /* 0599: no wider than the row, so its one-line title and details cut off */
-  .q.row .where { font-size: 12px; line-height: 16px; color: var(--muted); }
-  .q.row .where .sub { font-family: var(--font-mono); }
+  .q.row { padding: 0; border: 0; border-bottom: .5px solid var(--line-soft); border-radius: 0; }
+  .q.row .top { box-sizing: border-box; min-width: 0; min-height: 44px; padding: 7px 0 8px; } /* 0599: no wider than the row, so its one-line title and details cut off */
+  .q.row .where { font-size: 13px; line-height: 16px; color: var(--muted); }
+  .q.row .where .sub { font-family: var(--font-mono); line-height: 14px; } /* 0600: at 13 px its own line is shorter, so it leaves the line 16 px high */
   .where::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; vertical-align: 1px; } /* decoration: its group says the same */
   .where.needs::before { background: var(--needs-you); }
   .where.run::before { background: var(--accent); }
@@ -141,20 +131,20 @@
   .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
   /* 0586: Capture's and Plan's rows, as Build's: a hairline under each, its title (one line closed, since 0599), then one line of smaller
      type, with its star or Set ready at its right */
-  #shaping:has(.item.row), #capture:has(.item.row) { gap: 0; padding: 0; }
-  .item.row { display: block; padding: 0; border: 0; border-bottom: .5px solid var(--line); border-radius: 0; }
-  .item.row .head { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; align-items: center; min-height: 44px; margin: 0; padding: 7px 14px 8px; }
+  #shaping:has(.item.row), #capture:has(.item.row) { gap: 0; padding: 0 16px; } /* 0600: inside the lane's side margins */
+  .item.row { display: block; padding: 0; border: 0; border-bottom: .5px solid var(--line-soft); border-radius: 0; }
+  .item.row .head { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; align-items: center; min-height: 44px; margin: 0; padding: 7px 0 8px; }
   .item.row .head > * { grid-column: 1; }
   .item.row .head > .track, .item.row .head > .facts { grid-column: 1 / -1; }
-  .item.row .line .title { font-size: 17px; line-height: 20px; overflow-wrap: anywhere; }
-  .item.row .checks { display: block; font-size: 12px; line-height: 16px; color: var(--muted); }
-  .item.row .checks .tag { border: 0; padding: 0; font: inherit; font-family: var(--font-mono); line-height: 16px; vertical-align: baseline; }
+  .item.row .line .title { font-size: 15px; font-weight: 500; line-height: 20px; overflow-wrap: anywhere; }
+  .item.row .checks { display: block; font-size: 13px; line-height: 16px; color: var(--muted); }
+  .item.row .checks .tag { border: 0; padding: 0; font: inherit; font-family: var(--font-mono); line-height: 14px; vertical-align: baseline; } /* 0600: 14 px, so at 13 px it leaves the line 16 px high */
   .item.row .checks .agent { margin-left: 8px; }
   .item.row .checks .tag:not(.pick) { position: relative; z-index: 1; } /* above the priority's 44 px box, which reaches over the dot after it */
   .item.row .head .star, .item.row .head .set-ready { grid-column: 2; grid-row: 1 / span 2; align-self: center; margin: 0; }
-  .item.row > .bad, .item.row > .bad.refused { margin: 0; padding: 0 14px 8px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .item.row .detail { margin: 0; padding: 8px 14px 10px; }
-  .item.row.open { border-color: var(--line); }
+  .item.row > .bad, .item.row > .bad.refused { margin: 0; padding: 0 0 8px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .item.row .detail { margin: 0; padding: 8px 0 10px; }
+  .item.row.open { border-color: var(--line-soft); }
   .item.ticket.row.open .head .line { grid-column: 1 / -1; } /* open, a ticket's title has the whole row and Set ready is under the table */
   .item.ticket.row.open .head .set-ready { grid-column: 1 / -1; grid-row: auto; justify-self: start; margin-top: 8px; }
   /* 0599: every closed row in a lane is the same height: its title on one line, cut off with an ellipsis when it doesn't
@@ -198,23 +188,23 @@
   .stat:last-child:nth-child(3n + 2) { grid-column: span 2; } /* 0587: the last tile fills its row, so no gap shows the grid's line colour */
   .stat:last-child:nth-child(3n + 1) { grid-column: span 3; }
   /* 0587: under the three tiles, the toggle for the other figures, at the right */
-  .stats-line { display: flex; justify-content: flex-end; padding: 6px 16px; border-bottom: .5px solid var(--line-soft); }
+  .stats-line { display: flex; justify-content: flex-end; padding: 6px 0; border-bottom: .5px solid var(--line-soft); }
   .stats-line[hidden] { display: none; }
   .full-open.more-stats { flex: none; margin: 0; padding: 0 5px; font-family: inherit; line-height: 16px; }
   .more-stats[hidden] { display: none; }
   /* 0587: a shipped ticket is a row, as Capture's and Plan's are: a hairline under it, its title (one line since 0599), then one line
      of smaller type, each part whole so a line too long for a phone wraps between them. */
   #shipped .sum { display: block; margin-top: 2px; }
-  #shipped .meta { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--muted); }
+  #shipped .meta { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: 13px; line-height: 16px; color: var(--muted); }
   #shipped .meta > * { white-space: nowrap; } /* whole, so a line too long for a phone wraps between its time and figures */
   section.shipped table { display: block; }
   #shipped { display: flex; flex-direction: column; }
-  #shipped .empty { padding: 10px 14px; }
-  #shipped tr { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 7px 14px 8px; border-bottom: .5px solid var(--line); cursor: pointer; }
+  #shipped .empty { padding: 10px 0; }
+  #shipped tr { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 7px 0 8px; border-bottom: .5px solid var(--line-soft); cursor: pointer; }
   #shipped td { display: block; padding: 0; border: 0; }
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
   #shipped .line .id { flex: none; font-size: 14px; line-height: 14px; }
-  #shipped .line .title { flex: 0 1 auto; font-family: var(--font-ui); font-weight: 600; font-size: 17px; line-height: 20px; min-width: 0; }
+  #shipped .line .title { flex: 0 1 auto; font-family: var(--font-ui); font-weight: 500; font-size: 15px; line-height: 20px; min-width: 0; }
   /* the tag a small box in the title's line, as tall as the details line, so it doesn't make the row taller */
   #shipped .line .tags { flex: none; display: inline-flex; gap: 6px; font-size: 12px; }
   #shipped .line .tags .tag { font: inherit; font-family: var(--font-mono); line-height: 16px; padding: 0 5px; }
@@ -417,7 +407,7 @@
      only, so nothing is cut off below and they keep their baseline. */
   /* The priority's 44 px box takes no more room in the row than its label does (0586: it's first in the line, so its
      box reaches left into the row's padding, and only over the dot after it). */
-  .item.ticket .head .checks .prio { justify-content: flex-start; padding: 0 0 0 14px; margin: -14px calc(2ch - 30px) -14px -14px; font-family: var(--font-mono); font-size: 12px; }
+  .item.ticket .head .checks .prio { justify-content: flex-start; padding: 0 0 0 14px; margin: -13px calc(2ch - 30px) -15px -14px; font-family: var(--font-mono); font-size: 13px; vertical-align: top; } /* 0600: at the line's top, a pixel lower, so its label sits on the others' baseline at 13 px */
   /* 0463: in a draft's facts table, the priority's 44 px box starts at the value's left, and its negative margins give
      back what it reaches above and below the line, so the cell stays as tall as the others. A tap anywhere in it
      reaches the priority. */

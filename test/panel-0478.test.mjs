@@ -7,23 +7,18 @@ import { page, panelRepo, fm, good, freePort, startPanel, stop, findChrome, brow
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const LANE = { capture: 'capture-section', plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
-const DOT = { capture: 'var(--muted)', plan: 'var(--muted)', build: 'var(--blue)', shipped: 'var(--purple)' };
 
-test('0478 AC1 AC2 AC3: the lane cards share one frame, in the screen\'s frame colour and corners, with the title row in it', () => {
+// 0600: the lanes are flat lists now, as the panel's other views are, with no card, title or dot of their own (see
+// panel-0600.test.mjs). These check what is left of 0478's card: the lane's line, and a lane sliding as a whole.
+test('0478 AC1 AC2 AC3, since 0600: the lanes have no card, title or dot, and the lane\'s line is muted, cut short with …', () => {
   const html = page();
   for (const [lane, id] of Object.entries(LANE)) {
     const sec = html.match(new RegExp(`<section id="${id}"[^>]*>([\\s\\S]*?)</section>`))[1];
-    assert.match(sec, /^\s*<h2 class="lane-title">[^<]+<\/h2>/, `${lane}: its name opens the card`);
-    if (!['capture', 'plan'].includes(lane)) assert.match(sec, /<\/h2>\s*<div class="lane-n"/, `${lane}: its line follows its name, in the title row`);
+    assert.doesNotMatch(sec, /lane-title|<h2/, `${lane}: no name of its own, as its tab names it`);
   }
-  // 0480: the frame's colour and corners are a light card's now, checked in panel-0480.test.mjs
-  for (const id of Object.values(LANE)) assert.deepEqual(cssRules(`#${id}`), [], `${id} has no frame of its own (AC3)`);
-  // The title, with a dot in its stage's colour
-  const title = cssRules('.lane-title');
-  assert.equal(cssValue(title, 'font-family'), 'var(--font-ui)', '0577: in Inter, no longer Doto');
-  assert.equal(cssValue(title, 'font-weight'), '600', '0577: at a weight Inter has');
-  assert.equal(cssValue(title, 'color'), 'var(--text)', '0480: in the text colour, on the light card');
-  for (const [lane, id] of Object.entries(LANE)) assert.equal(cssValue(cssRules(`#${id} .lane-title::before`), 'background'), DOT[lane], `${lane}'s dot`);
+  for (const id of Object.values(LANE)) assert.deepEqual(cssRules(`#${id}`), [], `${id} has no frame of its own`);
+  assert.deepEqual(cssRules('.lane-title'), [], 'no lane title');
+  for (const id of Object.values(LANE)) assert.deepEqual(cssRules(`#${id} .lane-title::before`), [], `${id}: no dot`);
   const line = cssRules('.lane-n');
   assert.equal(cssValue(line, 'color'), 'var(--muted)', '0480: the lane\'s line in the muted colour');
   assert.equal(cssValue(line, 'text-overflow'), 'ellipsis', 'cut short with …');
@@ -45,30 +40,20 @@ async function panel() {
   return b;
 }
 
-// Each lane's card at rest: its frame's box, the sides of the frame round its tickets, its title row and its colours.
+// Each lane at rest: its box and corners, its list's box and background, and its line.
 const MEASURE = `(async () => {
   await document.fonts.ready;
   const colour = v => { const p = document.createElement('i'); p.style.color = v; document.body.appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; };
   const root = getComputedStyle(document.documentElement), val = v => colour(root.getPropertyValue(v));
-  const out = { vw: innerWidth, bezel: { colour: getComputedStyle(document.querySelector('.bezel')).backgroundColor, radius: getComputedStyle(document.querySelector('.bezel')).borderTopLeftRadius },
-    want: { blue: val('--blue'), purple: val('--purple'), grey: val('--muted'), ink: val('--text'), muted: val('--muted'), panel: val('--panel') }, lanes: [] };
+  const out = { vw: innerWidth, want: { muted: val('--muted'), panel: val('--panel') }, tabs: document.getElementById('tabs').getBoundingClientRect().bottom, lanes: [] };
   for (const lane of ['capture', 'plan', 'build', 'shipped']) {
     document.getElementById('tab-' + lane).click(); ${REST_LANES};
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    const s = document.querySelector('main > section:not([hidden])'), r = s.getBoundingClientRect(), f = getComputedStyle(s);
-    // The frame: the card's fill, inside its padding, with its corners less that padding
-    const fr = { left: r.left + parseFloat(f.paddingLeft), top: r.top + parseFloat(f.paddingTop), right: r.right - parseFloat(f.paddingRight), bottom: r.bottom - parseFloat(f.paddingBottom) };
-    const [rx, ry = rx] = f.borderTopLeftRadius.split(' ').map(parseFloat);
-    const h = s.querySelector('.lane-title'), hs = getComputedStyle(h), dot = getComputedStyle(h, '::before'), n = s.querySelector('.lane-n'), list = s.querySelector('.lane-list');
-    const inner = s.querySelector('.sh') || list, ib = inner.getBoundingClientRect(), lb = list.getBoundingClientRect(), hb = h.getBoundingClientRect();
-    const range = document.createRange(); range.selectNodeContents(h);
-    out.lanes.push({ lane, name: h.textContent, frame: { ...fr, width: fr.right - fr.left, height: fr.bottom - fr.top, colour: f.backgroundColor, clip: f.backgroundClip, radius: [rx - parseFloat(f.paddingLeft), ry - parseFloat(f.paddingTop)] },
-      sides: { left: ib.left - fr.left, right: fr.right - ib.right, bottom: fr.bottom - lb.bottom, top: ib.top - fr.top },
-      title: { family: hs.fontFamily, weight: hs.fontWeight, colour: hs.color, lines: range.getClientRects().length, top: hb.top, bottom: hb.bottom, left: hb.left, right: hb.right },
-      dot: { colour: dot.backgroundColor, width: parseFloat(dot.width), right: hb.left + parseFloat(dot.width) },
+    const s = document.querySelector('main > section:not([hidden])'), r = s.getBoundingClientRect(), f = getComputedStyle(s), n = s.querySelector('.lane-n'), list = s.querySelector('.lane-list'), lb = list.getBoundingClientRect();
+    out.lanes.push({ lane, box: { left: r.left, right: r.right, top: r.top, bottom: r.bottom, radius: f.borderTopLeftRadius, border: f.borderTopWidth, edge: getComputedStyle(s, '::before').content },
       line: n ? (() => { const b = n.getBoundingClientRect(), st = getComputedStyle(n), t = document.createRange(); t.selectNodeContents(n);
-        return { text: n.textContent, shown: b.width > 0, colour: st.color, left: b.left, right: Math.min(t.getBoundingClientRect().right, b.right - parseFloat(st.paddingRight)), top: b.top, bottom: b.bottom, cut: n.scrollWidth > n.clientWidth, overflow: st.textOverflow, wrap: st.whiteSpace }; })() : null,
-      inside: { bg: getComputedStyle(list).backgroundColor, left: lb.left, right: lb.right } });
+        return { text: n.textContent, shown: b.width > 0 && b.height > 0, colour: st.color, top: b.top, bottom: b.bottom, right: Math.min(t.getBoundingClientRect().right, b.right - parseFloat(st.paddingRight)), boxRight: b.right, cut: n.scrollWidth > n.clientWidth, overflow: st.textOverflow, wrap: st.whiteSpace }; })() : null,
+      list: { bg: getComputedStyle(list).backgroundColor, left: lb.left, right: lb.right, top: lb.top } });
   }
   document.getElementById('tab-build').click(); ${REST_LANES};
   return out;
@@ -77,7 +62,7 @@ const MEASURE = `(async () => {
 const near = (a, b, d = 1) => Math.abs(a - b) <= d;
 
 for (const theme of ['light', 'dark']) {
-  test(`0478 AC1 AC2 AC3 AC4: in the ${theme} look, at every width from 320 px, each lane's card is framed like speck's screen, thinner, with its title row on one line`, skip, async () => {
+  test(`0478 AC1 AC3 AC4, since 0600: in the ${theme} look, at every width from 320 px, each lane is a flat list filling the column, its line under the tabs at the right`, skip, async () => {
     const b = await panel();
     try {
       await b.js(`document.documentElement.dataset.theme = ${JSON.stringify(theme)}, 1`);
@@ -90,54 +75,46 @@ for (const theme of ['light', 'dark']) {
         const at = `${theme}, ${width} px`;
         for (const l of m.lanes) {
           const w = `${at}, ${l.lane}`;
-          // AC1: its tickets inside it on the lane's own background (0480: the card's colour and corners are checked in panel-0480.test.mjs)
-          assert.ok(l.sides.left > 0 && l.sides.right > 0 && l.sides.bottom > 0, `${w}: its sides show (0580: the bar has no screen to be thinner than)`);
-          assert.equal(l.inside.bg, m.want.panel, `${w}: its tickets sit on the lane's own background`);
-          assert.ok(l.title.top >= l.frame.top && l.title.bottom <= l.frame.top + l.sides.top, `${w}: the title row is in the frame, above the tickets`);
-          // AC2: the dot-matrix title in the frame's ink, its stage's dot before it, its line at the row's right end
-          assert.match(l.title.family, /^"?Inter"?/, `${w}: in Inter (0577)`);
-          assert.equal(l.title.weight, '600', `${w}: at Inter's weight`);
-          assert.equal(l.title.colour, m.want.ink, `${w}: in the text colour (0480)`);
-          assert.equal(l.dot.colour, { capture: m.want.grey, plan: m.want.grey, build: m.want.blue, shipped: m.want.purple }[l.lane], `${w}: its stage's dot`);
-          assert.ok(l.dot.width > 0, `${w}: the dot shows`);
-          assert.equal(l.title.lines, 1, `${w}: the title on one line`);
+          assert.equal(l.box.radius, '0px', `${w}: no corners`);
+          assert.equal(l.box.border, '0px', `${w}: no border`);
+          assert.ok(l.box.edge === 'none' || l.box.edge === 'normal', `${w}: no edge drawn over it`);
+          assert.equal(l.list.bg, m.want.panel, `${w}: its tickets sit on the lane's own background`);
+          assert.ok(near(l.list.left, l.box.left) && near(l.list.right, l.box.right), `${w}: its list runs the lane's width`);
           if (l.line && l.line.shown) {
             assert.equal(l.line.colour, m.want.muted, `${w}: the lane's line in the muted colour (0480)`);
-            assert.ok(l.line.left >= l.title.right && near(l.line.top + (l.line.bottom - l.line.top) / 2, l.title.top + (l.title.bottom - l.title.top) / 2, 4), `${w}: the lane's line on the title row, after the title`);
-            assert.ok(l.line.right <= l.frame.right && near(l.line.right, l.inside.right - 14, 3), `${w}: at the row's right end, inside its 14 px padding (0480)`);
+            assert.ok(l.line.top >= m.tabs - 0.5 && l.line.bottom <= l.list.top + 0.5, `${w}: the lane's line under the tabs, above its list`);
+            assert.ok(near(l.line.right, l.line.boxRight - 16, 3), `${w}: at the row's right end, inside the 16 px margin`);
             assert.equal(l.line.wrap, 'nowrap', `${w}: on one line`);
             if (l.lane === 'shipped') assert.ok(l.line.cut && l.line.overflow === 'ellipsis', `${w}: a line too long for the row gives way with …`);
           }
           // AC4: all four sides in view
-          assert.ok(l.frame.left >= 0 && l.frame.right <= m.vw && l.frame.top >= 0 && l.frame.bottom <= 700, `${w}: all four sides in view (${JSON.stringify(l.frame)})`);
+          assert.ok(l.box.left >= 0 && l.box.right <= m.vw && l.box.top >= 0 && l.box.bottom <= 700, `${w}: all four sides in view (${JSON.stringify(l.box)})`);
         }
         assert.ok(m.lanes.find(l => l.lane === 'build').line.shown, `${at}: Build's line shows`);
-        // AC3: the same frame for every lane
+        // AC3: the same box for every lane
         const [first, ...rest] = m.lanes;
-        for (const l of rest) assert.deepEqual([l.frame.width, l.frame.height, l.frame.colour], [first.frame.width, first.frame.height, first.frame.colour], `${at}: ${l.lane}'s frame is the size and colour of ${first.lane}'s`);
-        for (const l of rest) for (const k of ['left', 'right', 'bottom']) assert.ok(near(l.sides[k], first.sides[k], .5), `${at}: ${l.lane}'s ${k} side matches ${first.lane}'s`);
-        assert.deepEqual(m.lanes.map(l => l.name), ['Capture', 'Plan', 'Build', 'Shipped']);
+        for (const l of rest) for (const k of ['left', 'right', 'top', 'bottom']) assert.ok(near(l.box[k], first.box[k], .5), `${at}: ${l.lane}'s ${k} side matches ${first.lane}'s`);
       }
     } finally { await b.end(); }
   });
 }
 
-test('0478 AC4: sliding between lanes moves the whole framed card, its title and frame with it', skip, async () => {
+test('0478 AC4, since 0600: sliding between lanes moves the whole lane, its line and list with it', skip, async () => {
   const b = await panel();
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 700, deviceScaleFactor: 1, mobile: true });
-    // Partway through a slide, held still: each card's frame and title are where its card is
+    // Partway through a slide, held still: each lane's list and line are where its lane is
     const got = await b.js(`(() => {
       const main = document.querySelector('main'); main.dataset.slide = 'drag'; main.style.setProperty('--lane', '2'); /* 0520: Build is the third card */ main.style.setProperty('--drag', '-120px');
-      const out = [...main.children].map(s => { const r = s.getBoundingClientRect(), f = getComputedStyle(s), h = s.querySelector('.lane-title').getBoundingClientRect();
-        return { id: s.id, left: r.left, frameLeft: r.left + parseFloat(f.paddingLeft), titleLeft: h.left }; });
+      const out = [...main.children].map(s => { const r = s.getBoundingClientRect(), l = s.querySelector('.lane-list').getBoundingClientRect(), n = s.querySelector('.lane-n');
+        return { id: s.id, left: r.left, listLeft: l.left, lineRight: n && !n.hidden ? n.getBoundingClientRect().right : null, right: r.right }; });
       delete main.dataset.slide; main.style.removeProperty('--drag');
       return out; })()`);
     const build = got.find(c => c.id === 'build-section');
-    assert.ok(build.left < -100, `Build's card has moved with the finger (${build.left})`);
+    assert.ok(build.left < -100, `Build's lane has moved with the finger (${build.left})`);
     for (const c of got) {
-      assert.ok(c.frameLeft > c.left && c.frameLeft - c.left < 30, `${c.id}: its frame moved with the card (${JSON.stringify(c)})`);
-      assert.ok(c.titleLeft >= c.frameLeft && c.titleLeft - c.frameLeft < 30, `${c.id}: its title moved with the card (${JSON.stringify(c)})`);
+      assert.ok(near(c.listLeft, c.left), `${c.id}: its list moved with the lane (${JSON.stringify(c)})`);
+      if (c.lineRight !== null) assert.ok(near(c.lineRight, c.right), `${c.id}: its line moved with the lane (${JSON.stringify(c)})`);
     }
   } finally { await b.end(); }
 });

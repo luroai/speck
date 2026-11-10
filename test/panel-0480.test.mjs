@@ -8,21 +8,16 @@ import { panelRepo, fm, good, freePort, startPanel, stop, findChrome, browserPag
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const LANES = { plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };
 
-test('0480 AC1 AC2 AC4: the lane card is drawn by the lane itself, light, with a hairline edge, and nothing in it is in the frame colour', () => {
-  const card = cssRules('main > section::before'), lane = cssRules('main > section');
+// 0600: the lanes are flat lists now, with no card, edge or title of their own (see panel-0600.test.mjs). What is left of
+// 0480: each lane on its own light background, never the screen's frame colours.
+test('0480 AC1 AC2 AC4, since 0600: the lane is drawn by itself, light, with no card or edge, and nothing in it is in the frame colour', () => {
+  const lane = cssRules('main > section');
   assert.equal(cssValue(lane, 'background-color'), 'var(--panel)', 'the lane\'s own background');
-  assert.equal(cssValue(lane, 'background-clip'), 'content-box', 'inside the gap round the card');
-  const [rx, ry] = cssValue(lane, 'border-radius').split('/').map(parseFloat);
-  assert.deepEqual([rx - 16, ry - 8], [12, 12], 'with the card\'s 12 px corners, as its edge has');
-  assert.equal(cssValue(card, 'border'), '.5px solid var(--line)', 'a hairline edge in the line colour');
-  assert.equal(cssValue(card, 'border-radius'), '12px');
-  assert.equal(cssValue(card, 'z-index'), '1', 'drawn over the lane\'s contents, so a list scrolled under it never hides it');
-  assert.equal(cssValue(card, 'inset'), '8px 16px', 'inside the gap round the card, 16 px in from the column\'s sides');
-  assert.equal(cssValue(card, 'position'), 'absolute');
-  // AC4: drawn inside the lane's own box, so it slides with it (0476)
-  assert.equal(cssValue(cssRules('main > section'), 'position'), 'relative');
-  assert.equal(cssValue(cssRules('main > section'), 'padding'), '8px 16px');
-  assert.equal(cssValue(cssRules('#shaping-section .lane-title::before'), 'background'), 'var(--muted)', 'Plan\'s dot is the muted grey (0577)');
+  assert.deepEqual(cssRules('main > section::before'), [], 'no edge drawn over it');
+  assert.equal(cssValue(lane, 'border-radius'), undefined, 'no corners');
+  // AC4: the lane's own box, so it slides as a whole (0476)
+  assert.equal(cssValue(lane, 'position'), 'relative');
+  assert.equal(cssValue(lane, 'padding'), '0');
   // No lane rule uses the screen's frame colours, and the token made for Plan's dot on the frame has gone
   const css = styles().replace(/\/\*[\s\S]*?\*\//g, '');
   for (const [, sel, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
@@ -61,19 +56,15 @@ const MEASURE = `(async () => {
     document.getElementById('tab-' + lane).click(); ${REST_LANES};
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     const s = document.querySelector('main > section:not([hidden])'), sb = s.getBoundingClientRect(), c = getComputedStyle(s, '::before'), ss = getComputedStyle(s);
-    const h = s.querySelector('.lane-title'), n = s.querySelector('.lane-n'), under = s.querySelector('.sh') || s.querySelector('.lane-list'), list = s.querySelector('.lane-list');
+    const n = s.querySelector('.lane-n'), list = s.querySelector('.lane-list');
     const used = [];
     for (const el of [s, ...s.querySelectorAll('*')]) for (const pseudo of [null, '::before']) {
       const st = getComputedStyle(el, pseudo);
       if (pseudo && st.content === 'none') continue;
       used.push(st.backgroundColor, st.borderTopColor, st.borderBottomColor, st.borderLeftColor, st.borderRightColor, st.color);
     }
-    out.lanes.push({ lane, card: { bg: ss.backgroundClip === 'content-box' ? ss.backgroundColor : null, edge: c.borderTopColor, edgeWidth: parseFloat(c.borderTopWidth), radius: c.borderTopLeftRadius,
-        left: sb.left + parseFloat(c.left), right: sb.right - parseFloat(c.right) },
-      title: { colour: getComputedStyle(h).color, family: getComputedStyle(h).fontFamily, dot: getComputedStyle(h, '::before').backgroundColor },
-      line: n ? getComputedStyle(n).color : null,
-      under: { colour: getComputedStyle(under).borderTopColor, width: parseFloat(getComputedStyle(under).borderTopWidth) },
-      used, listHeight: list.getBoundingClientRect().height });
+    out.lanes.push({ lane, card: { bg: ss.backgroundColor, colour: ss.color, edge: c.content, radius: ss.borderTopLeftRadius, left: sb.left, right: sb.right },
+      line: n ? getComputedStyle(n).color : null, used, listHeight: list.getBoundingClientRect().height });
   }
   document.getElementById('tab-build').click(); ${REST_LANES};
   return out;
@@ -88,7 +79,7 @@ const contrast = (fg, bg) => {
   return (x + 0.05) / (y + 0.05);
 };
 
-test('0480 AC1 AC2: in both looks, each lane is a light card with a hairline edge, its name in dark letters, and nothing in the frame colour', skip, async () => {
+test('0480 AC1 AC2, since 0600: in both looks, each lane is flat on its own light background, its line muted, and nothing in the frame colour', skip, async () => {
   const b = await panel();
   try {
     for (const theme of ['light', 'dark']) {
@@ -97,23 +88,15 @@ test('0480 AC1 AC2: in both looks, each lane is a light card with a hairline edg
       for (const l of m.lanes) {
         const w = `${theme}, ${l.lane}`;
         // AC1
-        assert.equal(l.card.bg, m.want.panel, `${w}: the card is the lane's own background`);
-        assert.equal(l.card.edge, m.want.line, `${w}: its edge is the line colour`);
-        assert.ok(l.card.edgeWidth > 0 && l.card.edgeWidth <= 1, `${w}: a hairline (${l.card.edgeWidth})`);
-        assert.equal(l.card.radius, '12px', `${w}: rounded corners`);
-        assert.equal(l.card.left - m.main.left, 16, `${w}: 16 px in from the column's left`);
-        assert.equal(m.main.right - l.card.right, 16, `${w}: and its right`);
+        assert.equal(l.card.bg, m.want.panel, `${w}: the lane's own background`);
+        assert.ok(l.card.edge === 'none' || l.card.edge === 'normal', `${w}: no edge drawn over it (0600)`);
+        assert.equal(l.card.radius, '0px', `${w}: no corners (0600)`);
+        assert.deepEqual([l.card.left, l.card.right], [m.main.left, m.main.right], `${w}: the column's width (0600)`);
         for (const c of l.used) assert.ok(!m.want.frame.includes(c), `${w}: nothing in or round the lane is in the frame's colours (${c})`);
         // AC2
-        assert.match(l.title.family, /^"?Inter"?/, `${w}: in Inter (0577)`);
-        assert.equal(l.title.colour, m.want.text, `${w}: the name in the text colour`);
-        assert.equal(l.title.dot, { plan: m.want.muted, build: m.want.blue, shipped: m.want.purple }[l.lane], `${w}: its stage's dot`);
         if (l.line) assert.equal(l.line, m.want.muted, `${w}: the lane's line in the muted colour`);
-        assert.equal(l.under.colour, m.want.soft, `${w}: a thin line in --line-soft under the row`);
-        assert.ok(l.under.width > 0 && l.under.width <= 1, `${w}: thin (${l.under.width})`);
-        assert.ok(contrast(l.title.colour, l.card.bg) >= 7, `${w}: the name reaches 0161's 7:1 (${contrast(l.title.colour, l.card.bg)})`);
+        assert.ok(contrast(l.card.colour, l.card.bg) >= 7, `${w}: its text reaches 0161's 7:1 (${contrast(l.card.colour, l.card.bg)})`);
         if (l.line) assert.ok(contrast(l.line, l.card.bg) >= 4.5, `${w}: the lane's line reaches 4.5:1 (${contrast(l.line, l.card.bg)})`); // 0577
-        if (l.lane === 'plan') assert.ok(contrast(l.title.dot, l.card.bg) >= 3, `${w}: Plan's grey dot is at least 3:1 (${contrast(l.title.dot, l.card.bg)})`);
       }
     }
   } finally { await b.end(); }
@@ -136,7 +119,7 @@ test('0480 AC3: at 390 × 844, with the same tickets, each lane\'s ticket list i
     const after = await b.js(MEASURE);
     await b.js(`(() => { const s = document.createElement('style'); s.id = 'before-0480'; s.textContent = ${JSON.stringify(BEFORE)}; document.head.appendChild(s); return 1; })()`);
     const before = await b.js(MEASURE);
-    assert.ok(before.lanes.every(l => l.title.colour === before.want.frame[2]), 'the old rules are in place for the measure');
+    assert.ok(before.lanes.every(l => l.card.colour === before.want.frame[2]), 'the old rules are in place for the measure'); // 0600: the lane's ink, its title being gone
     for (const lane of Object.keys(LANES)) {
       const a = after.lanes.find(l => l.lane === lane).listHeight, was = before.lanes.find(l => l.lane === lane).listHeight;
       assert.ok(a > was, `${lane}: its list is taller (${a} px, was ${was} px)`);

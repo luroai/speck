@@ -242,7 +242,7 @@ for (const width of [375, 1280]) {
   test(`0157 AC3 AC4: at ${width} px, a row has its id and title first, as on a Plan row, then the ship time, and no figures or buttons (0587)`, skip, async () => {
     await withPanel(async b => {
       for (const c of await b.js(CARDS)) {
-        assert.deepEqual([c.idSize, c.titleSize], ['14px', '17px'], c.id);
+        assert.deepEqual([c.idSize, c.titleSize], ['14px', '15px'], c.id); // 0600: 15 px, as the views' rows
         const [first, ...rest] = c.lines;
         assert.ok(first.top < c.idRect.bottom && first.bottom > c.idRect.top, `${c.id}: the title starts on the id's line`);
         assert.ok(first.left >= c.idRect.right, `${c.id}: the title after the id`);
