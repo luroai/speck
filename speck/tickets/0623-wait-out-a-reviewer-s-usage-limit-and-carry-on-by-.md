@@ -1,7 +1,7 @@
 ---
 id: "0623"
 title: "Carry a build on by itself once the reviewer's usage limit resets"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0622"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T23:16:26.656Z"
+approved: "2026-11-10T23:28:23.088Z"
 
 ---
 # 0623 · Carry a build on by itself once the reviewer's usage limit resets
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the reviewer's usage limit is reached, such as Codex's, a review round fails, and the build stops or blocks with nothing to carry it on once the limit resets. Earlier builds blocked on "wait for Codex after 3:41 AM", which you then had to answer by hand.
@@ -58,9 +59,14 @@ Worth keeping an eye on: if the reviewer doesn't say when the limit resets, spec
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 138,911
+- Elapsed since build started: 12 min
+- Changed lines: 242 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: Cursor's usage-limit wording hasn't been seen, so it's only caught if it uses the same words as Codex or Claude.
