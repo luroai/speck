@@ -132,7 +132,7 @@ test('0591 AC3: the panel knows each marked line as the manager\'s, timed or not
   const timed = lineOf(`18:30:00 ${speckSays('0412: I\'ll look into it, as watch is decide: its build ended')}`);
   assert.equal(timed.speck, true);
   assert.equal(timed.at, '18:30:00 ');
-  assert.equal(timed.text, '0412: I\'ll look into it, as watch is decide: it…');
+  assert.equal(timed.text, '0412: I\'ll look into it, as watch is decide: its build ended'); // 0620: whole, not cut short
   assert.equal(timed.kind, 'msg');
   const plain = lineOf(speckSays('I couldn\'t save my record of what I look into.'));
   assert.equal(plain.speck, true);

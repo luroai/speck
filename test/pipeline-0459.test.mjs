@@ -61,7 +61,7 @@ const FORMS = [
   ['0189 didn\'t ship: Merging speck/0189-stream-an-open-build-log into main hit a conflict, so nothing was shipped and main is unchanged. Conflicting files: scripts/panel.mjs.', '0189 didn\'t ship: a conflict'],
   ['0195 didn\'t ship: Tests failed on the approved branch, so nothing was shipped. Failing tests: 0176 AC1: with 200 finished builds', '0195 didn\'t ship: tests failed'],
   ['0195 didn\'t ship: it was stopped', '0195 didn\'t ship: it was stopped'],
-  ['0195 didn\'t ship: the ship of it ran on far longer than anyone would expect it to and gave no reason why at all', '0195 didn\'t ship'],
+  ['0195 didn\'t ship: the ship of it ran on far longer than anyone would expect it to and gave no reason why at all', '0195 didn\'t ship: the ship of it ran on far longer than anyone would expect it to and gave no reason why at all'], // 0620: its reason whole
   [`Resumed 0457 (session ${SESSION}). Log: speck/.cache/runs/0457.log`, '0457 build resumed'],
   [`0165 build (session ${SESSION}, process 1496391) stopped.`, '0165 build stopped'],
 ];
@@ -70,18 +70,17 @@ test('0459 AC3: each kind of line speck run writes shows as its short summary', 
   for (const [line, want] of FORMS) assert.equal(summary(line), want, line);
 });
 
-test('0459 AC3: any other line shows its first sentence, cut to 48 characters with …, starting with a ticket id it names', () => {
-  assert.equal(summary('speck run stopped. 1 build is still running: 0457.'), 'speck run stopped.');
-  assert.equal(summary('speck run: watching for ready tickets every 5s, up to 4 builds at once.'), 'speck run: watching for ready tickets every 5s,…');
-  assert.equal(summary('speck run: watching for ready tickets every 5s, up to 4 builds at once.').length, 48);
-  assert.equal(summary('0457 is already being built, so speck run won\'t launch it.'), '0457 is already being built, so speck run won\'t…');
+test('0459 AC3, since 0620: any other line shows whole, not cut short, starting with a ticket id it names', () => {
+  assert.equal(summary('speck run stopped. 1 build is still running: 0457.'), '0457 speck run stopped. 1 build is still running: 0457.');
+  assert.equal(summary('speck run: watching for ready tickets every 5s, up to 4 builds at once.'), 'speck run: watching for ready tickets every 5s, up to 4 builds at once.');
+  assert.equal(summary('0457 is already being built, so speck run won\'t launch it.'), '0457 is already being built, so speck run won\'t launch it.');
   assert.equal(summary('The ship of 0457 is still running.'), '0457 The ship of 0457 is still running.');
   assert.equal(summary('Shipping is on hold until main passes.'), 'Shipping is on hold until main passes.');
   assert.equal(summary('speck run\'s code has changed, so it\'s switching to the new code.').startsWith('speck run\'s code has changed'), true, 'speck run is a name, not a command');
   assert.equal(summary(''), '');
 });
 
-test('0459 AC3: no summary is over 48 characters or shows a session id, a process id, a file path or a command', () => {
+test('0459 AC3, since 0620: no summary shows a session id, a process id, a file path or a command', () => {
   const others = [
     `0457 build (session ${SESSION}) stopped unexpectedly, so speck run is resuming it once.`,
     `0457 stopped (session ${SESSION}).`,
@@ -97,7 +96,6 @@ test('0459 AC3: no summary is over 48 characters or shows a session id, a proces
   ];
   for (const line of [...FORMS.map(f => f[0]), ...others]) {
     const s = summary(line);
-    assert.ok(s.length <= 48, `${s.length} characters: ${s}`);
     assert.doesNotMatch(s, /[0-9a-f]{8}-[0-9a-f]{4}-/i, `a session id: ${s}`);
     assert.doesNotMatch(s, /\b(?:process|pid)\s*\d+|\b\d{5,}\b/i, `a process id: ${s}`);
     assert.doesNotMatch(s, /\/|\b[\w-]+\.(?:mjs|js|md|log|git)\b/, `a file path: ${s}`);
