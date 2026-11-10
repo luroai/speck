@@ -59,7 +59,7 @@ test('0483 AC2: an open Plan card shows its icon with its hover text, as today, 
     const icon = iconOf(p, id);
     assert.ok(icon, `${id}: an icon`);
     assert.deepEqual([icon.className, icon.title], [cls, title], id);
-    assert.deepEqual(shape(p, id).slice(0, 3), ['id', cls, 'title'], `${id}: right after its id`);
+    assert.deepEqual(shape(p, id), ['id', 'title', cls], `${id}: at the end of its line, so its title stays put (0614)`);
   }
 });
 

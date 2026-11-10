@@ -146,7 +146,13 @@
   .item.row .head .star, .item.row .head .set-ready { grid-column: 2; grid-row: 1 / span 2; align-self: center; margin: 0; }
   .item.row > .bad, .item.row > .bad.refused { margin: 0; padding: 0 0 8px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .item.row .detail { margin: 0; padding: 8px 0 10px; }
-  .item.row.open { border-color: var(--line-soft); }
+  /* 0614: an open row's raised fill reaches 12 px past its sides, into the lane's margins, so its text has room inside
+     the fill without moving, and the row's own box still spans its list. A linked id's ring is drawn round the whole
+     fill, by a box over the row that takes no taps. */
+  .item.row.open { position: relative; border-color: var(--line-soft); box-shadow: -12px 0 0 var(--raise), 12px 0 0 var(--raise); }
+  .item.row.open::after { content: ''; position: absolute; inset: 0 -12px; pointer-events: none; }
+  .item.row.open.hl::after { box-shadow: inset 0 0 0 1px var(--text); }
+  .item.row.open .line > .chain { margin-right: 4px; } /* 0614: at the line's end, its tilted links reach past its box */
   .item.ticket.row.open .head .line { grid-column: 1 / -1; } /* open, a ticket's title has the whole row and Set ready is under the table */
   .item.ticket.row.open .head .set-ready { grid-column: 1 / -1; grid-row: auto; justify-self: start; margin-top: 8px; }
   /* 0599: every closed row in a lane is the same height: its title on one line, cut off with an ellipsis when it doesn't
@@ -162,6 +168,8 @@
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
     @keyframes flash { 0%, 40% { box-shadow: inset 0 0 0 2px var(--text); } } /* 0167: a ring only, so a state's tint stays */
+    .item.row.open.flash { animation: none; } /* 0614: round an open row's whole fill */
+    .item.row.open.flash::after { animation: flash 1.5s ease-out; }
   }
   .question.exit.to-ship { border-left-color: var(--ok); }
   .question.exit.carried { border-left-color: var(--run); background: var(--raise); } /* 0338: speck run is carrying it on */
@@ -333,6 +341,7 @@
   .waits-facts .waits-state { flex: none; color: var(--muted); }
   /* 0154: a ticket gone to from a dependency box (0467) lights briefly. It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
   @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
+  @media (prefers-reduced-motion: reduce) { .item.row.open.flash::after { box-shadow: inset 0 0 0 2px var(--text); } } /* 0614: round an open row's whole fill */
 
   .full-open { margin: 10px 0 0 8px; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
   .full-open:hover { border-color: var(--text); }

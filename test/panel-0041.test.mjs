@@ -13,10 +13,10 @@ const nodes = (p, row, cls) => p.all(row).filter(n => new RegExp(`\\b${cls}\\b`)
 const shaping = (p, id) => items(p).find(n => p.all(n).some(x => x.className === 'id' && x._text === id));
 const queued = (p, id) => queueRows(p).find(n => p.all(n).some(x => x.className === 'id' && x._text === id));
 const idRow = (p, row) => p.all(row).find(n => n.className === 'line'); // the ticket's title line, with its id and title
-// 0419: in Plan and in the queue the icon comes right after the id, on the title line.
+// 0419: in Plan and in the queue the icon is on the title line. 0614: after the id and the title, so the title stays put.
 const iconOf = (p, row) => {
   const r = idRow(p, row);
-  return r.children[1] && /\b(chain|lock)\b/.test(r.children[1].className) ? r.children[1] : null;
+  return r.children[2] && /\b(chain|lock)\b/.test(r.children[2].className) ? r.children[2] : null;
 };
 // 0483: only an open card has its icon, so a test opens the cards whose icons it checks.
 const opened = async (p, ...rows) => { for (const row of rows) click(row.children[0]); await p.settle(); };

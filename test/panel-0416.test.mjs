@@ -72,8 +72,9 @@ test('0416 AC2: each row says its stage in the same words, with its stage under 
 test('0416 AC3: apart from speck\'s screen, nothing on the panel moves unless you\'ve just done something', () => {
   const style = css();
   // Each animation in the CSS: only the ring that lights a ticket you went to, on its .flash class (0585: the grid of lights has gone).
-  const animations = [...style.matchAll(/([^{}]+)\{[^{}]*\banimation\s*:[^{}]*\}/g)].map(m => m[1].trim());
-  assert.deepEqual(animations, ['.item.flash, .q.flash'], 'only the ring after "Go to ticket"');
+  // 0614: on an open Plan or Capture row, the same ring round its whole fill.
+  const animations = [...style.matchAll(/([^{}]+)\{[^{}]*\banimation\s*:\s*(?!\s|none)[^{}]*\}/g)].map(m => m[1].trim());
+  assert.deepEqual(animations, ['.item.flash, .q.flash', '.item.row.open.flash::after'], 'only the ring after "Go to ticket"');
   assert.deepEqual([...style.matchAll(/@keyframes\s+([\w-]+)/g)].map(m => m[1]), ['flash']);
   // Each transition: only the Settings switch's knob, which moves when you flip it.
   const transitions = [...style.matchAll(/([^{}]+)\{[^{}]*\btransition\s*:\s*(?!\s|none)[^{}]*\}/g)].map(m => m[1].trim());
