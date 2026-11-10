@@ -56,3 +56,9 @@ The panel's border lines are a little more visible, alike on every screen, in bo
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Tests changed to the new line colours or widths:
+- `test/support/panel.mjs`: the agreed colour block (`PALETTE`) has the new `--line` and `--line-soft`.
+- `test/mockup-0126.test.mjs` (0126 AC2), `test/panel-0134.test.mjs` (0134), `test/panel-0136.test.mjs` (0136) and `test/panel-0147.test.mjs` (0147 AC1): the new light and dark line colours.
+- `test/panel-0426.test.mjs` (0426 AC2) and `test/panel-0577.test.mjs` (0577 AC1): `--line` no longer equals the design's `--border`, which stays as it was; they now check the new colours.
+- `test/panel-0160.test.mjs` (the sticky header's bottom line) and `test/panel-0600.test.mjs` (0600 AC1, the rows' hairline): 1 px instead of half a pixel.
