@@ -45,6 +45,7 @@ When a build stops on Claude's usage limit, speck waits until the limit resets, 
 - Today: `speck run` handles a build's end in `finished`/`endOf` in `scripts/run.mjs` and starts the watch agent from `lookInto`; a build is resumed in its own session with `resumeFor` in `scripts/hand-back.mjs`, as `resumeKilled` does; the status words' reasons are `SHORT` in `scripts/foreman.mjs`.
 - Checked 2026-11-10: Claude Code's stream-json output includes `rate_limit_event` lines with `status` (`allowed`, `allowed_warning`, `rejected`) and `resetsAt` as Unix seconds (this repo's own build logs).
 - Relies on Claude Code's stream-json `rate_limit_event`, as above.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
