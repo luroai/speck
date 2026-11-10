@@ -1,7 +1,7 @@
 ---
 id: "0625"
 title: "Let speck schedule a resume for later when it looks into a stop"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-11-10
 ---
 # 0625 · Let speck schedule a resume for later when it looks into a stop
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When speck's watcher looks into a stop that will clear by itself at a known time, such as a limit or an outage with a stated end, it can only act now: resume, reship, fix, ask, decide or tell. So it either resumes too early or leaves the ticket for you. And when the watcher's own agent is out of usage, as on 2026-11-10, its look fails at once and is noted as "I looked into it and took no action", so nothing is ever looked at again.
