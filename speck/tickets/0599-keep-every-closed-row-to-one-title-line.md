@@ -47,7 +47,9 @@ Every closed row in a lane is the same height: one line of title and one line of
 - Self-check: clipping Plan's details line sideways cut the left edge off the priority's 44 px tap box, so its clip box now takes in the row's padding (checked in 0599's browser test); the open-row title rule now applies only to closed rows, so an open title has no ellipsis left in its style.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Every collapsed row in Capture, Plan, Build and Shipped is now the same height: one line of title and one line of details. A title too long for the row ends in "…", and hovering over it shows the whole title; a screen reader still reads it in full. Opening a row in Capture or Plan, or opening a ticket's full view, still shows the whole title over as many lines as it needs.
+
+To see it, open the panel on a phone or in a narrow window and look at any lane with a long title in it: the rows line up evenly. Worth keeping an eye on: a long details line, such as a queued ticket waiting on many others, is now cut off too, so the end of it shows only once you open the ticket.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -68,6 +70,9 @@ Tests changed from checking a closed row's title wrapping to checking it's cut o
 - test/panel-0420.test.mjs: 0420 AC1, AC2, AC3 and AC5 (0407's long Shipped title)
 - test/panel-0435.test.mjs: both 0435 AC5 tests (a long Capture title)
 - test/panel-0441.test.mjs: 0441 AC2, which read 0155's test for its old line limits on Build titles
+
+Follow-ups:
+- A cut-off details line in Build or Plan has no tooltip with its whole text (inbox: speck/ideas/2026-11-10-show-a-cut-off-details-line-whole-in-its-tooltip.md).
 
 
 ## Review rounds
@@ -150,6 +155,89 @@ Tests changed from checking a closed row's title wrapping to checking it's cut o
     ],
     "escalation_question": "",
     "summary": "The row changes work in all four lanes at narrow and wide widths, and full titles remain available. The reviewed tests pass. Approval is held only because the required list of updated tests is missing from the ticket's Delivery log."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7c72650e2c7061521a17d443264f26d0dcf32e57",
+    "session": "continued",
+    "thread_id": "01a1c471-b6d9-73d3-8138-0d8f3fb9a0fd",
+    "builder_response": "- Tests run: no code or test changed this round, so the round 1 test output stands (the same `speck test --related` run).\n- F1: fixed. The ticket's Delivery log now lists each changed test file and the tests in it.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 217828,
+      "cached_input_tokens": 165504,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1505,
+      "reasoning_output_tokens": 109
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6389,
+      "cached": 93824,
+      "write": 0,
+      "output": 628
+    },
+    "cost_usd": 0.0284404,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T07:53:42.100Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css keeps closed titles and details on one line. Passing test '0599 AC1, AC3, AC4' verifies ellipsis and equal row heights in all four lanes at 320 and 1280 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel.js preserves complete title text and uses titled() for tooltips in every lane. Passing '0599 AC2' checks both; CSS clipping preserves the accessible text."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing '0599 AC1, AC3, AC4' verifies that open Capture and Plan titles and the ticket's full-view title wrap without clipping."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing '0599 AC1, AC3, AC4' checks id alignment and minimum 44 px row height at both widths, plus the Plan priority control's tap area."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The ticket's Delivery log now lists all ten updated test files and affected tests. The unchanged code and tests retain round 1's result: 339 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0599-keep-every-closed-row-to-one-title-line.md",
+        "issue": "The required list of updated wrapping tests was missing from the Delivery log.",
+        "suggested_fix": "Completed: the Delivery log now lists the changed files and affected tests.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Closed rows now have consistent heights, with long titles cut off using an ellipsis. Full titles remain available through tooltips and opened views. The missing test record is complete, all criteria pass, and no blocking concerns remain."
   }
 }
 ```
