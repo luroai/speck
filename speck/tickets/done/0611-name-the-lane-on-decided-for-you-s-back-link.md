@@ -1,7 +1,7 @@
 ---
 id: "0611"
 title: "Name the lane on Decided for you's back link"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T09:57:09.392Z"
 approved: "2026-11-10T10:01:47.436Z"
+finished: "2026-11-10T10:15:17.332Z"
 
 ---
 # 0611 · Name the lane on Decided for you's back link
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Decided for you's back link reads "‹ Close", while the Pipeline log's and a ticket's full view's name the lane they go back to, such as "‹ Build". Since 0600 the three share one style, so "Close" is the odd one out and says less about where it goes.
