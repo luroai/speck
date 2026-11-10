@@ -150,6 +150,7 @@
   .item.row.open { position: relative; border-color: var(--line-soft); box-shadow: -12px 0 0 var(--raise), 12px 0 0 var(--raise); }
   .item.row.open::after { content: ''; position: absolute; inset: 0 -12px; pointer-events: none; }
   .item.row.open.hl::after { box-shadow: inset 0 0 0 1px var(--text); }
+  .item.row.open .line > .chain { margin-right: 4px; } /* 0614: at the line's end, its tilted links reach past its box */
   .item.ticket.row.open .head .line { grid-column: 1 / -1; } /* open, a ticket's title has the whole row and Set ready is under the table */
   .item.ticket.row.open .head .set-ready { grid-column: 1 / -1; grid-row: auto; justify-self: start; margin-top: 8px; }
   /* 0599: every closed row in a lane is the same height: its title on one line, cut off with an ellipsis when it doesn't

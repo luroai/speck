@@ -21,10 +21,11 @@ test('0614 AC1 AC2: an open row\'s fill reaches 12 px past each side, with a lin
   assert.equal(cssValue(cssRules('.item.row.open.flash::after'), 'box-shadow'), 'inset 0 0 0 2px var(--text)', 'asked for less motion, it stays lit');
 });
 
-// No links between them: an open ticket that starts a chain shows its chain mark before its title, which is not this ticket's.
+// 0701 starts a chain that 0703 waits on, so open they show their chain mark and padlock; 0702 has no links.
 const STATE = {
   run: { on: true },
-  tickets: [full('0701', { status: 'draft', title: 'A draft ticket with a title long enough to wrap onto a second line on a phone', priority: 2 }), T('0702', 'ready', { title: 'A ready ticket' })],
+  tickets: [full('0701', { status: 'draft', title: 'A draft ticket with a title long enough to wrap onto a second line on a phone', priority: 2 }), full('0702', { status: 'draft', title: 'A draft with no links' }),
+    full('0703', { status: 'draft', title: 'A draft waiting on another', after: ['0701'], waiting_on: ['0701'] })],
   ideas: [idea('2026-11-10-a-note-with-a-long-title-that-wraps-on-a-phone', 'inbox')],
 };
 const stub = theme => `(() => {
@@ -49,20 +50,22 @@ async function at320(theme, fn) {
   } finally { await b.close(); }
 }
 
-// For the first row of Capture and of Plan: its title's left edge closed, then open, the row's and its list's boxes,
-// the fill (the row's box and the shadows either side, in the shadows' colour), the box of each piece of text in it, and
-// the ring a linked id draws while it's lit.
+// For Capture's first note, and for Plan's ticket with no links, its chain starter and its waiting ticket (0614: whose
+// mark sits at the end of the line): its title's left edge closed, then open, the row's and its list's boxes, the fill
+// (the row's box and the shadows either side, in the shadows' colour), the box of each piece of text and each mark in
+// it, and the ring a linked id draws while it's lit.
 const MEASURE = `(async () => {
   const frames = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   const out = {};
-  for (const lane of ['capture', 'plan']) {
+  for (const [name, lane, id] of [['capture', 'capture', null], ['plan', 'plan', '0702'], ['chain starter', 'plan', '0701'], ['waiting', 'plan', '0703']]) {
     document.getElementById('tab-' + lane).click(); ${REST_LANES};
     await frames();
-    const sel = lane === 'capture' ? '#capture .item.row' : '#shaping .item.row';
-    const closed = document.querySelector(sel).querySelector('.line .title').getBoundingClientRect().left;
-    document.querySelector(sel + ' .head').click();
+    const find = () => [...document.querySelectorAll(lane === 'capture' ? '#capture .item.row' : '#shaping .item.row')].find(n => !id || n.querySelector('.id')?.textContent === id);
+    const closed = find().querySelector('.line .title').getBoundingClientRect().left;
+    find().querySelector('.head').click();
     await frames();
-    const row = document.querySelector(sel + '.open'), rb = row.getBoundingClientRect(), list = row.parentElement, cs = getComputedStyle(list);
+    const row = find(), rb = row.getBoundingClientRect(), list = row.parentElement, cs = getComputedStyle(list);
+    if (!row.classList.contains('open')) throw new Error(name + ' did not open');
     const shadows = [...getComputedStyle(row).boxShadow.matchAll(/(rgba?\\([^)]*\\))\\s+(-?[\\d.]+)px\\s+(-?[\\d.]+)px/g)].map(m => ({ colour: m[1], x: +m[2], y: +m[3] }));
     const left = Math.min(rb.left, ...shadows.map(s => rb.left + s.x)), right = Math.max(rb.right, ...shadows.map(s => rb.right + s.x));
     const texts = [];
@@ -75,10 +78,12 @@ const MEASURE = `(async () => {
         for (const b of r.getClientRects()) if (b.width > 0) texts.push({ text: w[0], left: b.left, right: b.right });
       }
     }
+    const marks = [...row.querySelectorAll('.line .chain, .line .lock')].map(n => ({ text: n.className, left: n.getBoundingClientRect().left, right: n.getBoundingClientRect().right }));
+    texts.push(...marks);
     row.classList.add('hl');
     const ring = getComputedStyle(row, '::after'), ringBox = { left: rb.left + parseFloat(ring.left), right: rb.right - parseFloat(ring.right), shadow: ring.boxShadow, events: ring.pointerEvents };
     row.classList.remove('hl');
-    out[lane] = { closed, open: row.querySelector('.line .title').getBoundingClientRect().left, row: { left: rb.left, right: rb.right },
+    out[name] = { marks: marks.map(x => x.text), closed, open: row.querySelector('.line .title').getBoundingClientRect().left, row: { left: rb.left, right: rb.right },
       list: { left: list.getBoundingClientRect().left + parseFloat(cs.paddingLeft), right: list.getBoundingClientRect().right - parseFloat(cs.paddingRight) },
       fill: { left, right, colours: shadows.map(s => s.colour), y: shadows.map(s => s.y), background: getComputedStyle(row).backgroundColor, under: cs.backgroundColor },
       texts, ring: ringBox };
@@ -87,7 +92,7 @@ const MEASURE = `(async () => {
 })()`;
 
 for (const theme of ['light', 'dark']) {
-  test(`0614 AC1 AC2 AC3: in the ${theme} look at 320 px, an open Capture and Plan row's text sits 12 px inside its fill, its title stays put and the row spans its list`, skip, async () => {
+  test(`0614 AC1 AC2 AC3: in the ${theme} look at 320 px, an open Capture and Plan row's text sits 12 px inside its fill, its title stays put, linked or not, and the row spans its list`, skip, async () => {
     await at320(theme, async b => {
       const m = await b.js(MEASURE);
       for (const [lane, r] of Object.entries(m)) {
@@ -107,6 +112,12 @@ for (const theme of ['light', 'dark']) {
         assert.equal(r.ring.events, 'none');
         // AC2: the title doesn't move sideways
         assert.equal(r.open, r.closed, `${lane}: the title stays put when the row opens`);
+      }
+      // 0614: a linked ticket's mark at the end of its open line, after its title
+      assert.deepEqual(m.plan.marks, [], 'the ticket with no links has no mark');
+      assert.deepEqual(m['chain starter'].marks, ['chain'], 'the chain starter shows its chain mark');
+      assert.deepEqual(m.waiting.marks, ['lock'], 'the waiting ticket shows its padlock');
+      for (const [lane, r] of Object.entries(m)) {
         // AC3: the row's own box still spans its list, inside the 16 px margins
         assert.deepEqual([r.row.left, r.row.right], [r.list.left, r.list.right], `${lane}: the row spans its list`);
         assert.deepEqual([r.row.left, r.row.right], [16, 304], `${lane}: inside the 16 px margins`);

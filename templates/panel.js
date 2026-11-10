@@ -31,11 +31,12 @@ function chainIcon(t) {
   if (icon) icon.title = t.chain ? `Starts a chain: unlocks ${t.unlocks.join(', ')}` : `Waiting on ${t.waiting_on.join(', ')}`;
   return icon;
 }
-// 0419: a Plan or Build ticket's first line: its id, its chain icon when it has one (`icon`), then its title.
-// 0483: only an open one has the icon, as a closed one's chip says the same.
+// 0419: a Plan or Build ticket's first line: its id, then its title, then its chain icon when it has one (`icon`).
+// 0483: only an open one has the icon, as a closed one's chip says the same. 0614: at the line's end, where a closed
+// one's chip is, so the title doesn't move sideways when the ticket opens.
 // 0434: the whole title is its tooltip, as a closed ticket's title is cut off when it doesn't fit on one line.
 // 0468: and, on a closed one, its dependency chip at the end (`closed`).
-const titleLine = (t, icon, closed) => el('div', 'line', null, el('span', 'id', t.id), icon && !closed ? chainIcon(t) : null, titled(el('span', 'title', t.title)), closed ? depChip(t) : null);
+const titleLine = (t, icon, closed) => el('div', 'line', null, el('span', 'id', t.id), titled(el('span', 'title', t.title)), icon && !closed ? chainIcon(t) : null, closed ? depChip(t) : null);
 // 0468: a closed ticket's dependencies as one chip: a link icon and how many unshipped tickets it waits on, or, waiting
 // on none, an arrow icon and how many unshipped tickets wait on it directly, or nothing. It is a button for its name and
 // tooltip; pressing it reaches its top row, which opens the card.
