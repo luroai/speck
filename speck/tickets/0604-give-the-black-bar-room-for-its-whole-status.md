@@ -1,7 +1,7 @@
 ---
 id: "0604"
 title: "Give the black bar room for its whole status"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0601"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T08:45:59.870Z"
-blocked_at: "2026-11-10T09:08:23.218Z"
+blocked_at: ""
+waited_seconds: 10
 
 ---
 # 0604 · Give the black bar room for its whole status
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 On a phone the black bar (0580) fits the status, the project's name, the project menu and Settings on one line, so they're cut off: the user saw "Shipping 05… · s…" and couldn't tell which ticket was shipping or which project it was. The project menu beside them also read "All projects" while the panel was showing speck.
@@ -46,6 +47,7 @@ The black bar is a little taller, with a larger speck and room for the whole sta
 - Failing before this build: none
 - Self-check: a press on the project's line, which sits over the status button's middle line, did nothing with one project; it now presses the status (outside the menu), and the line keeps its tooltips. The base branch now gives way before the project's name is cut, and the menu's tooltip names the project, as it covers the name. The menu keeps 0417's 44 px each way by reaching down over the start of the line under it (what's queued), never up over the status. The brief and the README say where All projects is now.
 - With one project running there's no menu, as before (0516): the name is plain text, and pressing it opens the Pipeline log.
+- Went with the recommendation: A, cut an unusually wide name short with "…" (chosen by speck, as watch is decide, 2026-11-10 09:08 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
