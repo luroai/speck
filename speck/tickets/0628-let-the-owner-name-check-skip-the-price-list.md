@@ -40,6 +40,7 @@ The owner-name check skips the copied price list, and still catches a private wo
 - Found on 2026-11-10 while rewriting the repo's history to take a private name out: `node --test test/luro-0082.test.mjs` failed on `scripts/prices.json` before and after the rewrite, once the word was in `~/.config/speck/private-words`.
 - Today: `filesNaming` runs `git grep -l -i -F … -- . ':!speck/'`; adding `':!scripts/prices.json'` is the likely change.
 - Relies on nothing outside this repo.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
