@@ -61,9 +61,9 @@
      is coloured, by its border and background (below the highlights, so they win) */
   #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
   #queue .empty { padding: 0 4px; }
-  /* 0449: an empty lane's message, centred: that it's clear, what shipped lately and the next step */
-  #queue .idle { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 4px; text-align: center; }
-  #queue .idle .idle-head { margin-bottom: 4px; font-size: 15px; color: var(--text); }
+  /* 0449: an empty lane's message, centred: that it's clear, what shipped lately and the next step. 0608: what shipped
+     and the next step under speck asleep, in the smaller type they had */
+  #queue .idle .idle-more { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; line-height: normal; color: var(--faint); }
   #queue .idle .go-plan { margin: 10px 0 0; }
   .q { padding: 10px 14px; border: 1px solid var(--line); }
   .q .top { cursor: pointer; }
@@ -154,8 +154,8 @@
   .q.row .where, .item.row:not(.open) .checks, #shipped .meta { white-space: nowrap; overflow-x: clip; overflow-y: visible; text-overflow: ellipsis; }
   .item.row:not(.open) .checks { margin-left: -14px; padding-left: 14px; } /* the row's padding inside the clip, where the priority's box reaches */
   #shipped .line { height: 20px; } /* the title's line, so a tag in it, a pixel or two taller on its baseline, leaves the row as tall as one without */
-  /* 0586: an empty Capture or Plan: speck asleep over its line, centred */
-  #shaping .asleep, #capture .asleep { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; font-size: 14px; line-height: 20px; text-align: center; color: var(--muted); }
+  /* 0586: an empty Capture or Plan: speck asleep over its line, centred. 0608: Build and Shipped too */
+  #shaping .asleep, #capture .asleep, #queue .asleep, #shipped .asleep { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; font-size: 14px; line-height: 20px; text-align: center; color: var(--muted); }
   @media (prefers-reduced-motion: no-preference) {
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
@@ -200,7 +200,7 @@
   #shipped .meta > * { white-space: nowrap; } /* whole, so a line too long for a phone wraps between its time and figures */
   section.shipped table { display: block; }
   #shipped { display: flex; flex-direction: column; }
-  #shipped .empty { padding: 10px 0; }
+  #shipped .asleep { margin-top: 10px; } /* 0608: as far down as in Capture's and Plan's lists, which have this padding over them */
   #shipped tr { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 7px 0 8px; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
   #shipped td { display: block; padding: 0; border: 0; }
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
