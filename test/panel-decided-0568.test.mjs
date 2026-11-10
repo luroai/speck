@@ -160,13 +160,13 @@ test('0568 AC3: a redraw takes the Change button away once the ticket has moved 
   assert.equal(p.byId('decided').hidden, false, 'the list stays open');
 });
 
-test('0568 AC4: Close and Escape close the list, and the page behind is held while it is open', async () => {
+test('0568 AC4: the back link and Escape close the list, and the page behind is held while it is open', async () => {
   const p = board([T('0001', 'done')], [D('0001')]);
   await openList(p);
   assert.equal(p.byId('decided-open').inert, true, 'Tab can\'t reach the line behind it');
-  p.press(buttons(p, 'Close')[0]);
+  p.press(p.all(p.byId('decided')).find(n => n.tagName === 'button' && n.attrs['aria-label'] === 'Back to Build')); // 0611: the back link, named for the lane
   await p.settle();
-  assert.equal(p.byId('decided').hidden, true, 'Close');
+  assert.equal(p.byId('decided').hidden, true, 'the back link');
   assert.equal(p.byId('decided-open').inert, false, 'and it can again');
   p.press(p.byId('decided-open'));
   await p.settle();
