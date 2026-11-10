@@ -1,7 +1,7 @@
 ---
 id: "0621"
 title: "Tell speck's 1.0 story in the README"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-10T10:42:30.541Z"
 ---
 # 0621 · Tell speck's 1.0 story in the README
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 1.0 changes what speck is: it works as your engineering manager, which you can name, takes the obvious calls itself and reports them in Decided for you, looks into stops and slow builds, and asks you only when there's no clear answer. The README still tells the 0.x story: "How it works" says speck waits for you at two decisions, "speck asks, then moves on" is its headline behaviour, the watcher is one bullet about `watch: fix`, and the engineering manager is a single sentence tacked onto the first paragraph. Anyone arriving at 1.0 wouldn't learn its main idea, or how to switch it on.
@@ -50,7 +50,9 @@ The README leads with speck as your engineering manager, who gets your tickets s
 - Pictures: none, because the change is wording only and the demo pictures are out of scope.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The README now tells speck's 1.0 story. It opens with speck as your engineering manager: you decide what gets built, and speck gets it shipped, makes the obvious calls, gets stuck work moving and tells you what it did. "How it works" walks through that flow, and a new part says how to switch it on (choose `decide` for `watch` in Settings) and how to give it a name of your own. "The clever bits" now leads with the calls speck makes, how it looks into stops and slow builds, and how it holds back a ticket whose criteria changed.
+
+To see it, open the README on GitHub once this ships. Nothing in the product itself changes. The status line and demo pictures still show 0.22.0: the 1.0.0 release ticket updates those.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,4 +61,81 @@ The README leads with speck as your engineering manager, who gets your tickets s
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ccdc8eb6285106507fb4f3d9f5df0715bcdc5b43",
+    "session": "fresh",
+    "thread_id": "01a1c511-4967-7c41-85dc-d30b9ae26b40",
+    "builder_response": "- Tests run: `speck test --related` with no ticket test files: the 41 existing test files that name README.md (setup prompt, status line, pictures, links and the repo-wide checks). All pass.\n- Criteria 1–4 are \"(checked by review)\": no tests, as the build skill forbids tests of a document's wording. Criterion 5 is covered by the existing README tests above.\n- Facts checked against docs/brief.md: `watch: decide` takes a recommendation only on a low-risk ticket, with a recommendation, up to 3 per ticket; `tell` is the default; `fix` takes only \"changes nothing you'd notice\" + \"clear winner\" calls; the agent can resume, reship, raise a fix ticket, tell or ask; long builds are >2× median and ≥20 min; auto-ship waits for tasks, changed criteria and risks not in `auto_ship_risk` (default [low]); `speck_name` is in the Your engineering manager group and 0576 uses it in the panel, `speck status` and `speck run`'s log.\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 97387,
+      "cached_input_tokens": 66560,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 777,
+      "reasoning_output_tokens": 9
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 30827,
+      "cached": 66560,
+      "write": 0,
+      "output": 777
+    },
+    "cost_usd": 0.07608,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:47:18.286Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md:5 introduces the engineering manager, planning with your own agent, chosen builder and reviewer, decisions, recovery, reporting and naming."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md:35–71 describes choosing work, managed builds and reviews, recommendations reported in Decided for you, and optional auto-ship with safeguards for high-risk tickets and changed criteria."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md:55–59 gives the Settings location, `speck config set watch decide` and `speck_name`; explicitly states that `tell` remains the default. Settings agree with scripts/settings.mjs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "README.md:73–84 leads with taking and reporting calls, investigating stops and long builds, and holding changed-criteria tickets for manual shipping. Asking is no longer the headline behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0621-tests.txt confirms 478 tests: 475 passed, 3 skipped, none failed, including existing setup-prompt, picture, link and release checks. No tests were changed or added. The diff preserves the setup prompt, status line and pictures and changes only README prose and ticket metadata."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The README now explains speck as your engineering manager, how to enable its decisions and give it a name, and when shipping still waits for you. The documented safeguards match the repository. Existing relevant tests pass, and the change stays within scope."
+  }
+}
+```
+
+</details>
