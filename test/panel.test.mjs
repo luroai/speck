@@ -835,17 +835,21 @@ test('0035 AC1: the stats row is drawn above the list, and a median with nothing
   await p.settle();
   const stats = p.byId('shipped-stats');
   assert.equal(stats.hidden, false);
-  // 0157: each tile has its number, then its label, then the tickets its median covers. 0587: three, then the others.
-  assert.deepEqual(stats.children.map(c => c.textContent), ['4 minmedian build time1 ticket', '2median review rounds1 ticket', '100%approved first round1 ticket']);
-  assert.deepEqual(p.byId('shipped-more').children.map(c => c.textContent),
-    ['2shipped today', '–median builder cost0 tickets', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']);
+  // 0157: each tile has its number, then its label, then the tickets its median covers. 0606: four, then All figures adds
+  // the others to the same grid, and a tile names its tickets only when they're fewer than all those shipped.
+  assert.deepEqual(stats.children.map(c => c.textContent), ['2shipped today', '4 minmedian build timefrom 1 ticket', '2median review roundsfrom 1 ticket', '100%approved first roundfrom 1 ticket']);
+  click(p.byId('more-stats'));
+  await p.settle();
+  assert.deepEqual(stats.children.slice(4).map(c => c.textContent),
+    ['–median builder costfrom 0 tickets', '–total costfrom 0 tickets', '1,500median review tokensfrom 1 ticket', '–median builder tokensfrom 0 tickets']);
   const html = page();
   assert.ok(html.indexOf('id="shipped-stats"') < html.indexOf('id="shipped"'), 'stats come before the list');
   const none = fakePage([{ tickets: [T('0012', 'done', { finished: iso(now), rounds: [] })], ideas: [] }]);
   await none.settle();
-  assert.deepEqual(none.byId('shipped-stats').children.map(c => c.textContent), ['–median build time0 tickets', '–median review rounds0 tickets', '–approved first round0 tickets']);
-  assert.deepEqual(none.byId('shipped-more').children.map(c => c.textContent),
-    ['1shipped today', '–median builder cost0 tickets', '–median reviewer tokens0 tickets', '–median builder tokens0 tickets']);
+  click(none.byId('more-stats'));
+  await none.settle();
+  assert.deepEqual(none.byId('shipped-stats').children.map(c => c.textContent), ['1shipped today', '–median build timefrom 0 tickets', '–median review roundsfrom 0 tickets', '–approved first roundfrom 0 tickets',
+    '–median builder costfrom 0 tickets', '–total costfrom 0 tickets', '–median review tokensfrom 0 tickets', '–median builder tokensfrom 0 tickets']);
 });
 
 test('0035 AC2: each row shows when it shipped: HH:MM today, D Mon, HH:MM before (0157), labelled, and nothing with no finished time', async () => {

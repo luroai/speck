@@ -71,20 +71,18 @@ test('0425 AC2: with the Foreman reading "Needs you <n>", Build shows <n> alone,
 
 // ---------- AC3 ----------
 
-test('0425 AC3: Build\'s and Shipped\'s counts are the first line of their lane, above its tickets, with today\'s wording', async () => {
+test('0425 AC3: Build\'s count is the first line of its lane, above its tickets, with today\'s wording, and Shipped has none since 0606', async () => {
   const html = staticHtml();
   const first = id => html.match(new RegExp(`<section id="${id}"[^>]*>\\s*<([a-z]+) [^>]*id="([^"]+)"`))[2]; // 0476: under the lane's name. 0600: which is gone, so first in the lane
   assert.equal(first('build-section'), 'queue-n', 'Build\'s count opens its lane');
-  assert.equal(first('shipped-section'), 'shipped-n', 'Shipped\'s count opens its lane');
+  assert.equal(first('shipped-section'), 'shipped-list', '0606: Shipped\'s count is gone, as its tab gives it');
   assert.doesNotMatch(nav(), /id="(queue-n|shipped-n)"/, 'and neither is in a tab');
   const p = livePage(board());
   await p.settle();
   assert.equal(p.byId('queue-n').textContent, '0 in flight · 1 queued');
-  assert.equal(p.byId('shipped-n').textContent, '1 in total');
   p.set({ tickets: [T('0007', 'building', { started: at(9) })], ideas: [] });
   await refresh(p);
   assert.equal(p.byId('queue-n').textContent, '1 in flight · 0 queued');
-  assert.equal(p.byId('shipped-n').textContent, '0 in total');
   p.set({ tickets: [], ideas: [] });
   await refresh(p);
   assert.equal(p.byId('queue-n').textContent, ''); // 0449: an empty lane says so in its message alone

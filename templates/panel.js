@@ -1294,8 +1294,10 @@ function render() {
     const meta = child(child(tr, 'sum') || tr, 'meta'), w = meta && child(meta, 'when');
     if (w) { setText(w, t.when); meta.title = metaTip(t); }
   } }), 'Nothing shipped yet.');
-  // 0587: three figures up top as tiles, and More stats shows the others. A figure over 9,999 is shortened as a ticket's
-  // are, with the exact number as its tooltip. Each tile says what it is, and the tickets a median covers, as its tooltip.
+  // 0587: figures as tiles, the number over its label. A figure over 9,999 is shortened as a ticket's are, with the exact
+  // number as its tooltip. Each tile says what it is, and the tickets a median covers, as its tooltip.
+  // 0606: one grid, four tiles that always show and four that All figures adds. A tile names the tickets its figure
+  // comes from only when that's fewer than all those shipped.
   const num = (n, money = false, unit = '') => {
     const exact = n === null ? '–' : money ? `$${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : n.toLocaleString('en-GB');
     const short = n === null ? null : shortened(n), b = el('b', 'num', `${short === null ? exact : `${money ? '$' : ''}${short}`}${n === null ? '' : unit}`);
@@ -1303,29 +1305,27 @@ function render() {
     return b;
   };
   const stat = (n, label, s, { money = false, unit = '', tip = null } = {}) => {
-    const d = el('div', 'stat', null, num(n, money, unit), el('span', 'label', label), s ? el('span', 'count', plural(s.count, 'ticket')) : null);
+    const d = el('div', 'stat', null, num(n, money, unit), el('span', 'label', label), s && s.count < m.shippedTotal ? el('span', 'count', `from ${plural(s.count, 'ticket')}`) : null);
     if (tip) d.title = tip;
     return d;
   };
-  const tiles = (box, list) => { $(box).replaceChildren(...(m.shippedTotal ? list : [])); };
   const { today, minutes, rounds, firstRound, tokens, builderTokens, builderCost, totalCost } = m.stats;
   const over = s => `over ${plural(s.count, 'ticket')}`;
-  tiles('shipped-stats', [stat(minutes.median, 'median build time', minutes, { unit: ' min', tip: `Median time to build, ${over(minutes)}` }),
+  const always = [stat(today, 'shipped today', null, { tip: 'Tickets shipped today' }),
+    stat(minutes.median, 'median build time', minutes, { unit: ' min', tip: `Median time to build, ${over(minutes)}` }),
     stat(rounds.median, 'median review rounds', rounds, { tip: `Median review rounds, ${over(rounds)}` }),
-    stat(firstRound.share, 'approved first round', firstRound, { unit: '%', tip: `Share approved in the first review round, ${over(firstRound)}` })]);
-  // 0526: the total cost of those with a known total, when there are any.
-  tiles('shipped-more', [stat(today, 'shipped today', null, { tip: 'Tickets shipped today' }),
-    stat(builderCost.median, 'median builder cost', builderCost, { money: true, tip: `Median builder cost, ${over(builderCost)}` }),
-    totalCost.count ? stat(totalCost.sum, 'total cost', totalCost, { money: true, tip: `Total AI cost of the shipped tickets shown, ${over(totalCost)}${totalCost.partial ? ', at least: some of their costs are unknown' : ''}` }) : null,
-    stat(tokens.median, 'median reviewer tokens', tokens), stat(builderTokens.median, 'median builder tokens', builderTokens)].filter(Boolean));
+    stat(firstRound.share, 'approved first round', firstRound, { unit: '%', tip: `Share approved in the first review round, ${over(firstRound)}` })];
+  // 0526: the total cost of those with a known total. 0606: a dash when none has one, so the row stays full.
+  const others = [stat(builderCost.median, 'median builder cost', builderCost, { money: true, tip: `Median builder cost, ${over(builderCost)}` }),
+    stat(totalCost.count ? totalCost.sum : null, 'total cost', totalCost, { money: true, tip: totalCost.count ? `Total AI cost of the shipped tickets shown, ${over(totalCost)}${totalCost.partial ? ', at least: some of their costs are unknown' : ''}` : 'No shipped ticket has a known total cost' }),
+    stat(tokens.median, 'median review tokens', tokens, { tip: `Median reviewer tokens, ${over(tokens)}` }),
+    stat(builderTokens.median, 'median builder tokens', builderTokens, { tip: `Median builder tokens, ${over(builderTokens)}` })];
+  $('shipped-stats').replaceChildren(...(m.shippedTotal ? [...always, ...(moreStats ? others : [])] : []));
   $('shipped-stats').hidden = m.shippedTotal === 0;
-  $('shipped-stats-line').hidden = m.shippedTotal === 0;
-  $('shipped-more').hidden = m.shippedTotal === 0 || !moreStats;
   const more = $('more-stats');
   more.hidden = m.shippedTotal === 0;
-  more.textContent = moreStats ? 'Fewer stats' : 'More stats';
+  more.textContent = moreStats ? 'Fewer figures' : 'All figures';
   more.setAttribute('aria-expanded', String(moreStats));
-  $('shipped-n').textContent = `${m.shippedTotal} in total`;
 
   // 0285: the Foreman, speck run's one status for the whole pipeline, on the bar in the header.
   const stale = pageStale(state);

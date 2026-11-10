@@ -86,40 +86,36 @@ test('0420 AC2 (0587): the second line ends with no button, and the title opens 
 const tileNums = (p, box) => p.byId(box).children.map(t => byClass(p, t, 'num')[0].textContent);
 const tileTips = (p, box) => p.byId(box).children.map(t => byClass(p, t, 'num')[0].title || null);
 
-test('0420 AC3 (0587): the stats are tiles, followed by More stats, which opens the other figures as before', async () => {
+test('0420 AC3 (0587): the stats are tiles, followed by All figures (0606), which adds the other figures to the grid', async () => {
   const p = page([board(), board()]);
   await p.settle();
-  assert.deepEqual(tileNums(p, 'shipped-stats'), ['13 min', '1', '100%']);
-  assert.match(html(), /<div class="stats" id="shipped-stats" hidden><\/div>\s*<div class="stats-line" id="shipped-stats-line" hidden><button [^>]*id="more-stats"/, 'More stats under the tiles');
-  assert.equal(p.byId('shipped-stats-line').hidden, false);
+  assert.deepEqual(tileNums(p, 'shipped-stats'), ['5', '13 min', '1', '100%']);
+  assert.match(html(), /<div class="stats" id="shipped-stats" hidden><\/div>\s*<button [^>]*id="more-stats"/, 'All figures under the tiles');
   const more = p.byId('more-stats');
-  assert.equal(more.textContent, 'More stats');
-  assert.equal(p.byId('shipped-more').hidden, true);
+  assert.equal(more.textContent, 'All figures');
   p.press(more);
   await p.settle();
-  assert.equal(p.byId('shipped-more').hidden, false);
-  assert.equal(more.textContent, 'Fewer stats');
-  assert.deepEqual(tileNums(p, 'shipped-more').slice(0, 3), ['5', '$2.20', '$4.41']); // 0526: and the total
-  assert.deepEqual(p.byId('shipped-more').children.map(n => byClass(p, n, 'label')[0].textContent), ['shipped today', 'median builder cost', 'total cost', 'median reviewer tokens', 'median builder tokens']);
+  assert.equal(more.textContent, 'Fewer figures');
+  assert.deepEqual(tileNums(p, 'shipped-stats').slice(4, 6), ['$2.20', '$4.41']); // 0526: and the total
+  assert.deepEqual(p.byId('shipped-stats').children.map(n => byClass(p, n, 'label')[0].textContent), ['shipped today', 'median build time', 'median review rounds', 'approved first round', 'median builder cost', 'total cost', 'median review tokens', 'median builder tokens']);
 });
 
 test('0420 AC3: a stat with nothing to cover shows a dash, a big one is shortened with the exact number as its tooltip, and with nothing shipped there are no tiles', async () => {
   const p = page([{ tickets: [T('0011', 'done', { started: ago(20000 * 60), finished: ago(0), builder_cost_usd: 12345.678 }), T('0012', 'done', { finished: ago(0) })], ideas: [] }]);
   await p.settle();
-  assert.deepEqual(tileNums(p, 'shipped-stats'), ['20k min', '–', '–']);
-  assert.deepEqual(tileTips(p, 'shipped-stats'), ['20,000', null, null]);
-  assert.equal(tileNums(p, 'shipped-more')[0], '2');
-  assert.equal(tileNums(p, 'shipped-more')[1], '$12k');
-  assert.equal(tileTips(p, 'shipped-more')[1], '$12,345.68');
+  p.press(p.byId('more-stats')); // 0606: one grid
+  await p.settle();
+  assert.deepEqual(tileNums(p, 'shipped-stats').slice(0, 5), ['2', '20k min', '–', '–', '$12k']);
+  assert.deepEqual(tileTips(p, 'shipped-stats').slice(0, 5), [null, '20,000', null, null, '$12,345.68']);
   const q = page([{ tickets: [T('0012', 'done', { finished: ago(0) })], ideas: [] }]);
   await q.settle();
-  assert.deepEqual(tileNums(q, 'shipped-stats'), ['–', '–', '–']);
-  assert.equal(tileNums(q, 'shipped-more')[1], '–');
+  q.press(q.byId('more-stats'));
+  await q.settle();
+  assert.deepEqual(tileNums(q, 'shipped-stats'), ['1', '–', '–', '–', '–', '–', '–', '–']);
   const none = page([{ tickets: [T('0001', 'building')], ideas: [] }]);
   await none.settle();
   assert.equal(none.byId('shipped-stats').hidden, true);
   assert.equal(none.byId('more-stats').hidden, true);
-  assert.equal(none.byId('shipped-stats-line').hidden, true, 'the whole line hidden');
 });
 
 test('0420 AC4: a ship that didn\'t push still shows its warning under its ticket', async () => {
@@ -144,8 +140,8 @@ const CARDS = `(async () => {
     for (let t; (t = w.nextNode());) { const r = document.createRange(); r.selectNodeContents(t); for (const x of r.getClientRects()) if (x.width > 0 && !out.some(b => Math.abs(b - x.bottom) <= 4)) out.push(x.bottom); }
     return out.length; };
   const box = n => { const r = n.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, height: r.height }; };
-  const row = document.getElementById('shipped-stats-line'), more = document.getElementById('more-stats');
-  return { stats: { label: more.textContent, tiles: [...document.querySelectorAll('#shipped-stats .stat')].map(box), more: box(more), row: box(row) },
+  const more = document.getElementById('more-stats');
+  return { stats: { label: more.textContent, tiles: [...document.querySelectorAll('#shipped-stats .stat')].map(box), more: box(more) },
     cards: [...document.querySelectorAll('#shipped tr')].map(c => {
       const title = c.querySelector('.line .title'), meta = c.querySelector('.meta'), tag = c.querySelector('.line .tag');
       return { id: c.querySelector('.id').textContent, height: c.getBoundingClientRect().height, titleLines: lines(c.querySelector('.line')),
@@ -156,7 +152,7 @@ const CARDS = `(async () => {
     }) };
 })()`;
 
-test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose title fits on one line is no more than 76 px tall (0469), and the tiles are one row (0587)', skip, async () => {
+test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose title fits on one line is no more than 76 px tall (0469), and the tiles are rows of two (0606)', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -173,14 +169,14 @@ test('0420 AC1, AC2, AC3 and AC5: at 420 px with a mouse, a shipped ticket whose
     assert.equal(await b.js(`matchMedia('(pointer: coarse)').matches`), false, 'a mouse is the main pointer');
     await b.js(openLane('shipped'));
     const { stats, cards } = await b.js(CARDS);
-    // AC3: the three tiles in one row, with More stats under them, and still once it says Fewer stats
-    for (const [label, st] of [['More stats', stats], ['Fewer stats', (await b.js(`(document.getElementById('more-stats').click(), true)`), await b.js(CARDS)).stats]]) {
+    // AC3: the tiles two to a row below 480 px (0606), with All figures under them, and still once it says Fewer figures
+    for (const [label, st, n] of [['All figures', stats, 4], ['Fewer figures', (await b.js(`(document.getElementById('more-stats').click(), true)`), await b.js(CARDS)).stats, 8]]) {
       assert.equal(st.label, label);
-      assert.equal(st.tiles.length, 3, `${label}: three tiles`);
-      assert.equal(new Set(st.tiles.map(t => Math.round(t.top))).size, 1, `${label}: in one row`);
+      assert.equal(st.tiles.length, n, `${label}: ${n} tiles`);
+      assert.equal(new Set(st.tiles.map(t => Math.round(t.top))).size, n / 2, `${label}: two to a row`);
       assert.ok(st.tiles.every(t => t.right <= 420.5), `${label}: on the screen`);
-      assert.ok(st.more.top >= st.tiles[0].bottom - 0.5, `${label}: under the tiles`);
-      assert.ok(st.row.height <= 57, `${label}: the toggle's line is ${st.row.height} px tall`); // 0469: with the touch screen's 44 px More stats
+      assert.ok(st.more.top >= Math.max(...st.tiles.map(t => t.bottom)) - 0.5, `${label}: under the tiles`);
+      assert.ok(st.more.height <= 57, `${label}: the link is ${st.more.height} px tall`); // 0469: with the touch screen's 44 px tap area
     }
     for (const c of cards) {
       // AC1: the details line is smaller type, on one line, inside the card (0466: with no Details button at its end)

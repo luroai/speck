@@ -44,6 +44,7 @@ Shipped's figures are one tidy grid of even tiles, with a quiet link to show the
 - Today: the figures are built in `templates/panel.js` (`tiles('shipped-stats', …)` and `tiles('shipped-more', …)`, with `#more-stats`, from about line 1297), styled in `templates/panel-cards.css` (from about line 181, 0157's tiles and 0587's toggle).
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: total cost with no known total said "over 0 tickets" in its tooltip, now "No shipped ticket has a known total cost"; the link fits its text rather than the row's width. Also: the brief's Shipped sentence matched to the new figures, "median reviewer tokens" shown as "median review tokens" so every label is whole at 375 px (tooltip keeps "reviewer"), and labels kept at 14 px as 0427 forbids 13 px.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
