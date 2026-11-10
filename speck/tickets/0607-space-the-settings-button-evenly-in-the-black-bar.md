@@ -1,7 +1,7 @@
 ---
 id: "0607"
 title: "Space the Settings button evenly in the black bar"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T09:51:32.944Z"
+approved: "2026-11-10T09:55:11.401Z"
 
 ---
 # 0607 · Space the Settings button evenly in the black bar
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since the black bar grew taller (0604), the Settings button sits tight against the bar's right edge, with only a few pixels of black beside it, while it has plenty above and below. The face on the left has more room on its side. The bar looks lopsided.
@@ -51,9 +52,14 @@ The Settings button in the black bar at the top of the panel now has the same ro
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 87,701
+- Elapsed since build started: 4 min
+- Changed lines: 5 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
