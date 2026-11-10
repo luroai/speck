@@ -53,7 +53,11 @@ speck is ready to be released as 1.0.0.
 - Self-check: the status-line test finds the line by its `Status: 1.0.0` text, so a reworded brief still passes 0267's check; the changelog's example of a named manager says `<name>` rather than a made-up person's name; the Shipped figures line names the four extra figures rather than "costs included", and the buttons line says what 0612 changed rather than that every button is the same size.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 1.0.0, the release where it becomes your engineering manager. The changelog and the release page's notes describe everything since 0.22.0: naming your manager, the black bar and speck's new face in place of the LCD screen, the lanes as tabs and short rows, each ticket's full view, Decided for you and the Pipeline log as speck's own reports, the bridge across every project, the new look and two fixes to speck run. The README's and the brief's status lines say 1.0.0 and no longer call it a public preview, the README's demo pictures were taken again from today's panel, the prices are today's, and the "Built with speck" figures are up to date (604 tickets shipped).
+
+To see it, read the 1.0.0 section at the top of the changelog and look at the README's pictures. Once this lands on the main branch, check that the 1.0.0 release page appears on GitHub; if it doesn't, it can be published by hand as the ticket's Notes say.
+
+Worth knowing: the median review rounds in the README went from 1 to 2. Anyone upgrading should run the install command again in every project, as the All projects view shows a project on an older speck as not answering.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -144,6 +148,89 @@ speck is ready to be released as 1.0.0.
     ],
     "escalation_question": "",
     "summary": "The release content, refreshed pictures, prices and published figures look correct, and the reported tests pass. One new test checks README wording that the project's rules reserve for human review; remove that assertion before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "089855787cee26987d2e2bbf725f97e341b8d59a",
+    "session": "continued",
+    "thread_id": "01a1c691-5513-7762-b1e9-6fbccbe0cd3c",
+    "builder_response": "- Tests run: test/release-0598.test.mjs test/release-0574.test.mjs test/docs-0491.test.mjs test/docs-0267.test.mjs\n- F1: fixed. The README's status line is now checked only for its version; that it no longer says public preview is left to review, as the test's comment says. The brief's status line keeps the preview check.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 390702,
+      "cached_input_tokens": 320256,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2015,
+      "reasoning_output_tokens": 74
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7052,
+      "cached": 128768,
+      "write": 0,
+      "output": 683
+    },
+    "cost_usd": 0.0338108,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T17:48:11.214Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json remains at 1.0.0. Both AC1 tests passed, including executing speck init and checking it prints speck 1.0.0."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md retains the reviewed 1.0.0 section above 0.22.0, describing the shipped changes since v0.22.0. Older sections are unchanged. Both AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both demo pictures, inspected in round 1, remain unchanged and show the current panel in light and dark. README and brief status lines say 1.0.0 without public preview. Setup-prompt and picture tests passed. prices.json records the build date, 2026-11-10."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.0.0.md retains the reviewed engineering-manager introduction, shipped changes, per-project update instructions, upgrade differences, estimated-cost explanation and changelog link. No person's name appears. All AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README figures match the independently verified done-ticket figures: 604 shipped, 16 cancelled, 14 minutes median, 2 review rounds median and 296 first-round approvals. Figure and version/changelog tests passed. This round reports 142 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0598.test.mjs",
+        "issue": "The previous test checked README wording beyond the permitted status-line version.",
+        "suggested_fix": "Remove the README preview-word assertion and check that wording by review.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release preparation meets all five criteria. The test issue is fixed, the release content and pictures remain correct, and the latest checks pass. No blocking concerns remain."
   }
 }
 ```
