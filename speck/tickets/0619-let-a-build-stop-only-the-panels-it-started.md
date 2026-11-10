@@ -46,7 +46,9 @@ A build's panels stay out of your project menu, and a build only ever stops the 
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A panel that a build starts, for example to take pictures of a change, no longer shows up in your project menu. When that build ends, speck run stops any panel it left running, and only those: your own panels, whether you started them yourself or they run as a service, are never touched. If a build ends while speck run is off, its panels are stopped the next time speck run starts. The build instructions now also tell builders to stop a panel by its port and never to stop programs by name.
+
+To see it, let speck run build a ticket that changes how the panel looks: its panel won't appear in your project menu while it takes pictures, and it's gone once the build ends. Builds you run by hand, outside speck run, still put their panels in your menu as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +58,10 @@ A build's panels stay out of your project menu, and a build only ever stops the 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Known limit: a build's panel folder under `~/.config/speck/build-panels/` is only removed when speck run sees that build end. A build whose run record is lost keeps an empty or stale folder there; it's harmless (dead pids are skipped), but nothing tidies it.
+- Known limit: builds started by hand with `/speck-build`, outside speck run, have no build session, so their panels still join your project menu (the skill's rule still applies to them).
+- Skipped (duplicate): the 0517 AC3 frame-time test failed once under load in the `--related` run and passed alone: already captured as speck/ideas/2026-11-08-steady-the-0517-ac3-frame-time-test-under-load.md.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -137,6 +143,89 @@ A build's panels stay out of your project menu, and a build only ever stops the 
     ],
     "escalation_question": "",
     "summary": "Build panels are hidden from the project menu, and normal cleanup protects the user's panels. One recovery case needs fixing: a build that finishes while the runner is stopped leaves its panels running even after the runner restarts."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "da073189a29c7a5d1def1ecda66ee00455cba055",
+    "session": "continued",
+    "thread_id": "01a1c4ef-3a0b-7bf2-9606-5453cd5fc1cb",
+    "builder_response": "- Tests run: test/build-panels-0619.test.mjs (with the commands.checks files `speck test --files` adds).\n- F1: fixed. `adoptEarlierBuilds` in scripts/run.mjs now calls `stopPanelsOfRun(id, file)` for a build whose process has gone before it records its exit (and also when it's left for resuming, since the gone build can't use its panel). New test \"0619 AC3: a build that ended while speck run was off has its panel stopped when speck run starts again\" leaves an earlier run's build record with a session, starts a panel under that session, another build's panel and a user panel, ends the build, then starts speck run: only the ended build's panel stops. Checked it fails with the call removed.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 241239,
+      "cached_input_tokens": 190336,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1745,
+      "reasoning_output_tokens": 161
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7739,
+      "cached": 88448,
+      "write": 0,
+      "output": 660
+    },
+    "cost_usd": 0.0309228,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-10T10:13:29.679Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md step 6 specifies the required start and stop commands and prohibits process-name or pattern cleanup. The AC1 command-fact test passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel-projects.mjs panelsDir routes build-session records into buildPanelsDir. Passing AC2 exercises registration in a separate process and verifies exclusion from the user's menu."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "run.mjs calls stopPanelsOfRun on normal completion, adopted-build completion and startup recovery. Passing AC3 tests exercise selective cleanup, live-runner completion and completion while the runner was off."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "build-panels.mjs stopBuildPanels requires both a recorded PID and a matching build session in its environment. Passing AC3 and AC4 tests preserve user panels, another build's panel and a user process whose record was copied."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The current test output reports 114 passed, 3 skipped and no failures. Earlier related-test coverage showed only an unrelated browser timing failure that passed in isolation; no regression attributable to this change was found."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs:229",
+        "issue": "Startup recovery previously retired an ended build's record without stopping its leftover panels.",
+        "suggested_fix": "Implemented: adoptEarlierBuilds now calls stopPanelsOfRun before retiring the record. The passing restart regression test also verifies that user panels and another build's panel remain running.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Build panels stay out of the user's project menu and are cleaned up without stopping unrelated panels. The restart recovery gap is fixed and covered by a passing regression test. All criteria pass."
   }
 }
 ```
