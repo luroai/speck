@@ -43,6 +43,7 @@ When a review round fails on the reviewer's usage limit, speck waits until it re
 - 0554 made `speck review` show Codex's own reason when it fails, from its JSON events (`turn.failed` or `error`).
 - Checked 2026-11-10: Codex 0.159.0's limit message, from its saved sessions and the installed program, is "You've hit your usage limit. Upgrade to Pro (…), visit … to purchase more credits or try again at 3:41 AM.", with a curly or straight apostrophe, or other plan wording before it ("Try again at …"). A reset on another day reads "Oct 28th, 2026 3:41 AM". The time is in the machine's local time zone. With no reset known it ends "Try again later."; `codex exec --json` gives only the message, in `turn.failed` or `error`.
 - Waits for 0622, which adds the waiting and resuming.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
