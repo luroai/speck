@@ -1,7 +1,7 @@
 ---
 id: "0615"
 title: "Show a cut-off details line whole in its tooltip"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-10-show-a-cut-off-details-line-whole-in-its-to
 after: ["0614"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T11:35:40.534Z"
+approved: "2026-11-10T11:49:03.322Z"
 
 ---
 # 0615 · Show a cut-off details line whole in its tooltip
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0599 a closed row's details line stays on one line, cut off with an ellipsis when it doesn't fit. A Shipped row's details have a tooltip, but a Build or Plan row's don't, so the end of a long line, such as "Ready · after 0599, 0600, …", can only be read by opening the ticket.
@@ -54,9 +55,15 @@ To see it, narrow the panel until a ready ticket that waits on several others en
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC4 explicitly requires the Delivery log to list the updated tests, but it contains only its placeholder.; F2 The AC3 test provides false assurance: arbitrary visual changes would pass provided the CSS does not contain the ticket number.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 251,914
+- Elapsed since build started: 13 min
+- Changed lines: 19 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Tests changed for the new behaviour (AC4): a Build row's tooltip is now its whole line, then its sentence on a line of its own, so these read the sentence with the new `tipSentence` helper in `test/support/panel.mjs` rather than the whole tooltip:
   - `test/panel-0156.test.mjs` (0156 AC3), `test/panel-0168.test.mjs` (0168 AC1), `test/panel-0196.test.mjs` (0196 AC1, AC2, AC4), `test/panel-0201.test.mjs` (0201 AC1, AC4), `test/panel-0416.test.mjs` (0416 AC2), `test/panel-0419.test.mjs` (0419 AC2), `test/panel-0434.test.mjs` (0434 AC1), `test/panel-0443.test.mjs` (0443 AC1, AC2), `test/panel.test.mjs` (0034 AC3, 0045 AC3, 0045 AC4), `test/foreman-0317.test.mjs` (0317 AC2), `test/review-running-0223.test.mjs` (0223 AC1, AC2), `test/run-provider-0391.test.mjs` (0391 AC1), `test/speck-name-0485.test.mjs` (0485 AC2), `test/speck-name-0576.test.mjs` (0576 AC2).
