@@ -45,6 +45,7 @@ The lanes look like the panel's other views: flat lists in the same margins, wit
 - The mock's rows: title 15 px, weight 500, line height about 20 px; details 13 px, muted; side margins 16 px.
 - Today: `main > section`, `.lane-title`, `.lane-n` and the row title rules in `templates/panel-cards.css`; the lane title markup in `templates/panel.html`. Waits for 0599, which changes the same row title rules.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
