@@ -24,7 +24,7 @@ async function showPane(t, more = []) {
 }
 // The node a section's heading is followed by: what that section shows.
 const section = (p, heading) => {
-  const body = pane(p).children.at(-1); // 0465: the body is last, after the track and table
+  const body = pane(p).children[2]; // 0465: the body, after the top and the track and table (0617: and before a draft's bar)
   const i = body.children.findIndex(n => n.tagName === 'h4' && n.textContent === heading);
   assert.ok(i >= 0, `the pane has a ${heading} section`);
   return body.children[i + 1];

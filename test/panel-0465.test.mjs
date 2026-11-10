@@ -67,7 +67,7 @@ test('0465 AC1: the full view shows its track and table under the title and abov
     await p.settle();
     await openFull(p, id);
     const kids = pane(p).children;
-    assert.equal(kids.length, 3, `${id}: its top, the track and table, then its body`);
+    assert.equal(kids.length, id === '0801' ? 4 : 3, `${id}: its top, the track and table, then its body, then a draft's bar (0617)`);
     assert.equal(kids[1].className, 'steps', `${id}: the track and table under the top`);
     const [t, f] = kids[1].children;
     assert.equal(t.children.length, 4, `${id}: four bars (0583)`);

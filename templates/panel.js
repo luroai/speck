@@ -261,7 +261,7 @@ function ticketDetail(t, criteria) {
   return el('div', 'detail', null, withDeps(t), body, readiness(t, criteria, true)); // 0467: first, its dependency box
 }
 // A ticket's readiness list from what speck can check. `onRow`: it's under the ticket's row, which has Set ready and
-// why the server last refused, so it adds the Full ticket button. In the side pane it has those two itself.
+// why the server last refused, so it adds the Full ticket button. In the side pane those two are in its bar (0617).
 function readiness(t, criteria, onRow) {
   const ready = el('div', 'ready', null, el('h4', null, 'Ready check'));
   const line = (cls, ok, text) => ready.appendChild(el('div', cls, null, el('span', ok ? 'tick' : 'sq'), el('span', null, text)));
@@ -279,9 +279,7 @@ function readiness(t, criteria, onRow) {
     line(done ? 'ok' : 'warn', done, `after: ${id} ${done ? 'done' : 'not done'}`);
   }
   if (!after.length) line('ok', true, 'no after: tickets');
-  if (onRow) { ready.appendChild(fullButton(t, 'shaping')); return ready; }
-  ready.appendChild(setReadyButton(t, lintErrorsOf(t)));
-  if (refused.has(t.id)) ready.appendChild(el('div', 'bad refused', refused.get(t.id)));
+  if (onRow) ready.appendChild(fullButton(t, 'shaping'));
   return ready;
 }
 const lintErrorsOf = t => list((t.lint_messages || {}).errors).length || (t.lint && t.lint.errors) || 0;
