@@ -1,7 +1,7 @@
 ---
 id: "0606"
 title: "Tidy up Shipped's figures"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-10
+started: "2026-11-10T09:51:33.342Z"
 
 ---
 # 0606 · Tidy up Shipped's figures
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Shipped's figures look messy on a phone: the first three tiles have square corners at the top and rounded ones at the bottom, a large bordered More stats or Fewer stats button sits between them and the other figures, the other figures fill three columns with a gap left in the last row, labels wrap onto two lines so tiles differ in height, every tile repeats "588 tickets", and a "588 in total" line above them repeats the tab's own count.
