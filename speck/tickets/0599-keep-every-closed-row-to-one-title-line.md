@@ -43,6 +43,7 @@ Every closed row in a lane is the same height: one line of title and one line of
 - Decided: one line with an ellipsis, as 0434 first did, rather than keeping room for two lines on every row, which would make short titles leave a gap.
 - Today the redesign made closed titles wrap in `templates/panel-cards.css`: `.q.row .top .line .title` (0585) and `.item.row .line .title` (0586), with Shipped's rows from 0587; 0434's rule for closed titles sits just above them.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
