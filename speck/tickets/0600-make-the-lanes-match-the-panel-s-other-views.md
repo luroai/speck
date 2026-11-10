@@ -1,7 +1,7 @@
 ---
 id: "0600"
 title: "Make the lanes match the panel's other views"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0599"]                # ticket ids that must be done first
 created: 2026-11-10
 started: "2026-11-10T07:58:14.500Z"
+approved: "2026-11-10T08:27:36.383Z"
 
 ---
 # 0600 · Make the lanes match the panel's other views
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After the redesign, the lanes still sit in the old frame: each lane is a bordered card with rounded corners and its own big 22 px title with a coloured dot, which repeats the tab above it, and its rows' titles are 17 px semibold. The Pipeline log, Decided for you and a ticket's full view are flat, edge to edge with hairlines between rows and smaller, lighter type, so moving between them feels like two different apps.
@@ -58,9 +59,15 @@ To see it, open the panel on a phone or a narrow window and move between the lan
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Criterion 5 explicitly requires the Delivery log to list the updated tests.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 378,761
+- Elapsed since build started: 29 min
+- Changed lines: 113 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Tests changed to check the new look (AC5), each because it checked the lane's card, its title or its rows' old type:
 - `test/panel-0478.test.mjs`, `test/panel-0480.test.mjs`: rewritten to check the flat lane, with no card, edge, title or dot, and its line under the tabs.
@@ -75,7 +82,6 @@ Follow-ups:
 - Decided for you's back link still reads "‹ Close" rather than its lane's name: inbox note `speck/ideas/2026-11-10-name-the-lane-on-decided-for-you-s-back-link.md`.
 - An open Plan or Capture row's fill has no room round its text: inbox note `speck/ideas/2026-11-10-give-an-open-plan-or-capture-row-room-inside-its-fill.md`.
 - Known limits: Shipped's figures keep their own rounded tiles inside the flat lane; the document view's title went from 26 px to 20 px with the full view's, as 0445 keeps them the same.
-
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
