@@ -1,7 +1,7 @@
 ---
 id: "0644"
 title: "Record a Codex or Cursor build's usage limit as Claude's is"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0642"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:51:45.219Z"
+approved: "2026-11-11T15:03:48.180Z"
 
 ---
 # 0644 · Record a Codex or Cursor build's usage limit as Claude's is
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck records a usage limit and carries the build on after the reset only when Claude stops a build (0622). A Codex or Cursor build that stops on its limit is treated as a build that stopped for an unknown reason.
@@ -52,9 +53,15 @@ Worth keeping an eye on: Cursor doesn't say in a fixed way when its limit resets
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
+- Review rounds: 2, 1 of them a merge round
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 431,148
+- Elapsed since build started: 12 min
+- Changed lines: 283 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - How a refused `codex exec --json` build log looks is taken from the reviewer's rounds (0623) and the session files, not from a real refused build's log; the session file fills in the reset time if the log's message lacks one.
