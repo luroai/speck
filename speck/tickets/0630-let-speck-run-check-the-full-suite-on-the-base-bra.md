@@ -1,7 +1,7 @@
 ---
 id: "0630"
 title: "Let speck run check the full suite on the base branch after ships"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T10:17:59.098Z"
 ---
 # 0630 · Let speck run check the full suite on the base branch after ships
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck ship` runs the whole of `commands.test` before every merge, so a project with a slow suite, such as speck's own with about 200 real-browser and real-process test files, ships one ticket every four minutes at best, and a flaky slow test refuses ships that broke nothing. A project can't ship on its quick tests today without losing the slow ones altogether.
@@ -57,3 +57,97 @@ With `commands.test_full` set, `speck run` runs it on the base branch after ship
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "be43c298d58b0dea54995db3cfade571d47a578e",
+    "session": "fresh",
+    "thread_id": "01a1ca26-218e-7e21-a45a-f2094ce77492",
+    "builder_response": "- Tests run: `speck test --related test/full-suite-0630.test.mjs`, which ran test/full-suite-0630.test.mjs with the 182 related test files it lists at the top of the output (those naming a changed file) and the commands.checks files: 1943 passed, 0 failed.\n- Round 1. Notes for the reviewer:\n  - New module scripts/full-suite.mjs: fullSuiteQueue (checked on each of speck run's ticks), launchFull (a detached process running this same file), runFull (a fresh detached worktree at <repo>.worktrees/.full-suite, worktree_setup, then testRun with commands.test_full, so it takes a test turn and records the result as speck test does; latest.json keeps the last result for newer commits with none).\n  - speck run's record carries a failing full run (fullRuns.view()), which foremanView counts under Needs you; speck status and the panel's bar both read foremanView, so speck.mjs and panel.mjs (both at 600 lines) are unchanged. It counts only while speck run is on, as the rest of Needs you does.\n  - scripts/run.mjs stays at 600 lines; settings.mjs lost one blank line to stay at 600.\n  - commands.test_full shows in speck config show under Shipping, not in the panel's Settings view, so the panel looks the same.\n",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 140933,
+      "cached_input_tokens": 86400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1161,
+      "reasoning_output_tokens": 156
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 54533,
+      "cached": 86400,
+      "write": 0,
+      "output": 1161
+    },
+    "cost_usd": 0.129316,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T10:28:15.200Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/full-suite.mjs provides an isolated checkout, test turn and recorded result, exercised by the passing AC1 tests. However, fullSuiteQueue.check permanently skips a commit in tried even when its run produced no result, contrary to the requirement to run whenever no result exists and none is running."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "fullSuiteQueue.check retains and reports failures; foremanView counts them under Needs you and foremanLines names failing TAP tests. The passing AC2 tests cover persistence, logging once per commit and clearing after a newer passing result. scripts/panel.mjs uses foremanView."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "runFull calls testRun using the shared test turns. scripts/ship.mjs also calls testRun, and scripts/turns.mjs waits when max_parallel_tests slots are occupied. At the default limit of 1, a running full suite holds up ship tests and build tests. The AC3 tests check asynchronous launching and source references, not this contention."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "fullSuiteQueue.check returns without launching or reporting failures when fullCommand is blank. Both blank and missing setting tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/config.mjs accepts commands.test_full; scripts/settings.mjs includes its explanation in config show. The passing AC5 test exercises setting, loading and displaying it."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/full-suite.mjs",
+        "issue": "The background full suite occupies the same limited test slots as ships and builds. With max_parallel_tests: 1, a slow full run delays the next ship or build's tests until it finishes, violating criterion 3 and preserving the throughput problem this ticket addresses.",
+        "suggested_fix": "Provide scheduling that lets foreground ship and build tests proceed while a full run is active, while retaining the required test-turn management. Add a behavioural test that starts a slow full run and verifies foreground tests can complete before it ends.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/full-suite.mjs",
+        "issue": "fullSuiteQueue adds the commit to tried before launch and never removes it. A launch failure, failed worktree_setup or interrupted run leaves no recorded result, but that commit is never checked again until speck run restarts or another commit appears. The added tests explicitly enforce this exception although criterion 1 does not permit it.",
+        "suggested_fix": "Retry commits whose runs ended without a recorded result, with an appropriate delay to avoid a tight failure loop. Replace the tests asserting permanent suppression with tests showing recovery on the same commit after a transient failure.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change adds isolated full-suite runs and reports failures, and the supplied tests passed. Two gaps prevent approval: a slow full run still delays shipping and build tests, and a run that cannot finish is abandoned until another commit or a restart."
+  }
+}
+```
+
+</details>

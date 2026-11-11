@@ -9,8 +9,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gIn, env } from './support/ship.mjs';
 import { speck } from './support/cli.mjs';
-import { fullSuiteQueue, fullDir, fullCheckout, runFull, launchFull } from '../scripts/full-suite.mjs';
-import { recordedAt, testedCode } from '../scripts/results.mjs';
+import { fullSuiteQueue, fullDir, fullCheckout, runFull, launchFull, RETRY_MS } from '../scripts/full-suite.mjs';
+import { recordedAt, testedCode, testRun } from '../scripts/results.mjs';
 import { sharedCacheDir } from '../scripts/turns.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
 import { loadConfig } from '../scripts/core.mjs';
@@ -81,28 +81,67 @@ test('0630 AC1: speck run runs commands.test_full on the base branch\'s newest c
 test('0630 AC1: no full run starts while one is running', () => {
   const r = repo();
   fs.writeFileSync(path.join(fullDir(r.dir), 'running.json'), JSON.stringify({ pid: process.pid, commit: 'x', started: new Date().toISOString() }));
-  const { q, launches } = counted(r);
+  let t = 0;
+  const launches = [];
+  const q = fullSuiteQueue({ repo: r.dir, readConfig: r.cfg, say: () => {}, now: () => t, launch: (repo, commit) => { launches.push(commit); return null; } });
   q.check();
   assert.deepEqual(launches, []);
   fs.rmSync(path.join(fullDir(r.dir), 'running.json'));
   q.check();
   assert.deepEqual(launches, [r.head()]);
+  t = RETRY_MS - 1;
   q.check();
-  assert.deepEqual(launches, [r.head()], 'one that ended without a result isn\'t started again for the same commit');
+  assert.deepEqual(launches, [r.head()], 'one that ended without a result isn\'t started again straight away');
+  t = RETRY_MS;
+  q.check();
+  assert.deepEqual(launches, [r.head(), r.head()], 'it is started again on the same commit once RETRY_MS has passed');
 });
 
-test('0630 AC1: a full run takes a test turn, waiting while max_parallel_tests runs are going', () => {
-  const r = repo();
+// Holds test turn `slot` in r's repo for about a second, with a process that isn't this one's child.
+function holdTurn(r, slot) {
   const sh = spawnSync('sh', ['-c', 'sleep 1 >/dev/null 2>&1 & echo $!'], { encoding: 'utf8' });
   const pid = Number(sh.stdout.trim());
-  fs.writeFileSync(path.join(sharedCacheDir(r.dir, 'tests'), 'slot-0.g0.lock'), JSON.stringify({ pid, cwd: '/somewhere/else' }));
+  fs.writeFileSync(path.join(sharedCacheDir(r.dir, 'tests'), `slot-${slot}.g0.lock`), JSON.stringify({ pid, cwd: '/somewhere/else' }));
+}
+const logged = fn => {
   const lines = [], log = console.log;
   console.log = (...a) => lines.push(a.join(' '));
-  let code;
-  try { code = runFull(r.dir, r.head()); } finally { console.log = log; }
-  assert.equal(code, 0);
-  assert.match(lines.join('\n'), /Waiting for a turn to run the tests/);
+  try { return { out: fn(), lines: lines.join('\n') }; } finally { console.log = log; }
+};
+
+test('0630 AC1: a full run takes a test turn, its own, waiting while another run holds it', () => {
+  const r = repo();
+  holdTurn(r, 'full');
+  const { out, lines } = logged(() => runFull(r.dir, r.head()));
+  assert.equal(out, 0);
+  assert.match(lines, /Waiting for the full suite's own turn/);
   assert.equal(recordedAt(r.dir, r.cmd, r.head()).status, 0);
+});
+
+test('0630 AC3: a full run doesn\'t wait for the max_parallel_tests turns, so it takes none a ship or build waits for', () => {
+  const r = repo();
+  holdTurn(r, 0);
+  const start = Date.now();
+  const { out, lines } = logged(() => runFull(r.dir, r.head()));
+  assert.equal(out, 0);
+  assert.doesNotMatch(lines, /Waiting/);
+  assert.ok(Date.now() - start < 900, 'it didn\'t wait for the held turn');
+});
+
+test('0630 AC3: while a slow full run is going, a ship\'s or build\'s tests run without waiting for it', async () => {
+  const r = repo();
+  fs.writeFileSync(path.join(r.dir, 'speck', 'config.yml'), `base_branch: main\nmax_parallel_tests: 1\ncommands:\n  test: "true"\n  test_full: "sleep 2"\n`);
+  gIn(r.dir, 'commit', '-qam', 'slow full suite');
+  let ended = null;
+  launchFull(r.dir, r.head(), path.join(fullDir(r.dir), 'run.log'), code => { ended = code; });
+  const tests = sharedCacheDir(r.dir, 'tests');
+  await until(() => fs.readdirSync(tests).some(f => /^run\..*\.started$/.test(f)), 'the full run to start its tests');
+  const { out, lines } = logged(() => testRun(r.dir, r.cfg(), 'true', { reuse: 'none' }));
+  assert.equal(out.status, 0);
+  assert.doesNotMatch(lines, /Waiting/);
+  assert.equal(ended, null, 'the full run was still going');
+  await until(() => ended !== null, 'the full run to end');
+  assert.equal(ended, 0);
 });
 
 test('0630 AC2: a failing full run counts under Needs you, naming its failing tests, and the log says so once per failing commit', () => {
@@ -208,14 +247,14 @@ test('0630 AC5: speck config set commands.test_full sets it, and speck config sh
   assert.match(speck(r.dir, env, 'config', 'show').stdout, /commands\.test_full: npm run test:all/);
 });
 
-test('0630 AC1: a full run that can\'t start says so in speck run\'s log, and isn\'t started again for the same commit', () => {
+test('0630 AC1: a full run that can\'t start says so in speck run\'s log, and isn\'t started again straight away', () => {
   const r = repo();
   const said = [];
   let n = 0;
   const q = fullSuiteQueue({ repo: r.dir, readConfig: r.cfg, say: l => said.push(l), launch: (repo, commit, log, done) => { n++; done(null); return null; } });
   q.check(); q.check();
   assert.equal(n, 1);
-  assert.match(said.join('\n'), /ended without a result/);
+  assert.match(said.join('\n'), /ended without a result\. speck run tries it again in 10 minutes, or sooner on a newer commit/);
   assert.ok(!fs.existsSync(path.join(fullDir(r.dir), 'running.json')));
 });
 

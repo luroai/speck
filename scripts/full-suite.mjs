@@ -1,6 +1,7 @@
 // 0630: the full suite, commands.test_full, which speck run runs on the base branch after ships, so commands.test can be
-// the quick tests ships wait for. It runs in a checkout of its own, beside the main checkout, taking a test turn as
-// `speck test` does, and its result is recorded as `speck test` records one. speck ship and builds never run it.
+// the quick tests ships wait for. It runs in a checkout of its own, beside the main checkout, taking a test turn of its
+// own beside max_parallel_tests's, so no ship's or build's tests wait for it, and its result is recorded as `speck test`
+// records one. speck ship and builds never run it.
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -66,12 +67,15 @@ export function launchFull(repo, commit, log, done) {
   } catch { end(null); return null; } finally { if (fd !== null) fs.closeSync(fd); }
 }
 
+// How long speck run waits before running a commit again whose run ended without a result.
+export const RETRY_MS = 10 * 60 * 1000;
+
 // speck run's full runs. check(), on each of its checks, starts a full run of the base branch's newest commit when it
-// has no recorded result, none is running and this speck run hasn't run it already, and says once in the log per
-// failing commit that the latest full run failed. view() is what speck run adds to its record for speck status and the
+// has no recorded result, none is running and this speck run hasn't started one of it in the last retryMs, and says
+// once in the log per failing commit that the latest full run failed. view() is what speck run adds to its record for speck status and the
 // panel: { full } while the latest full run on the base branch failed, until a run on a newer commit passes.
-export function fullSuiteQueue({ repo, readConfig, say = console.log, launch = launchFull }) {
-  const tried = new Set();
+export function fullSuiteQueue({ repo, readConfig, say = console.log, launch = launchFull, retryMs = RETRY_MS, now = Date.now }) {
+  const tried = new Map(); // each commit this speck run started a run of, and when
   let failing = null;
   const check = () => {
     let cfg;
@@ -86,10 +90,10 @@ export function fullSuiteQueue({ repo, readConfig, say = console.log, launch = l
       fs.writeFileSync(told, failing.commit);
     }
     const head = headOf(repo, base);
-    if (!head || recordedAt(repo, cmd, head) || tried.has(head)) return;
-    const running = path.join(dir, 'running.json'), now = readJson(running);
-    if (now && pidAlive(now.pid)) return;
-    tried.add(head);
+    if (!head || recordedAt(repo, cmd, head) || now() - (tried.get(head) ?? -Infinity) < retryMs) return;
+    const running = path.join(dir, 'running.json'), going = readJson(running);
+    if (going && pidAlive(going.pid)) return;
+    tried.set(head, now());
     const log = path.join(dir, 'run.log');
     say(`Running the full suite (commands.test_full) on ${base} at ${head.slice(0, 7)}, in a checkout of its own. Log: ${path.relative(repo, log)}`);
     let pid = null; // a launch that fails to start ends before it's known
@@ -99,7 +103,7 @@ export function fullSuiteQueue({ repo, readConfig, say = console.log, launch = l
         if (code !== 0 && code !== 1 && !recordedAt(repo, cmd, head)) {
           let tail = '';
           try { tail = fs.readFileSync(log, 'utf8').trim().split('\n').pop(); } catch { /* nothing written */ }
-          say(`The full suite on ${base} at ${head.slice(0, 7)} ended without a result${tail ? `: ${tail}` : ''}. speck run tries it again on the next commit, or once it's started again.`);
+          say(`The full suite on ${base} at ${head.slice(0, 7)} ended without a result${tail ? `: ${tail}` : ''}. speck run tries it again in ${Math.round(retryMs / 60000)} minutes, or sooner on a newer commit.`);
         }
       } catch (e) { say(`speck run couldn't check how the full suite on ${base} at ${head.slice(0, 7)} ended (${e.message}).`); }
     });
@@ -117,7 +121,7 @@ export function runFull(repo, commit) {
   git(['worktree', 'prune'], repo); // one whose folder has gone
   const ours = worktreeList(repo).some(w => w.path === at);
   if (ours) git(['worktree', 'remove', '--force', at], repo);
-  else if (fs.existsSync(at)) throw new SpeckError(`There's a folder at ${at} that isn't speck's full-suite checkout. Move or remove it, and speck run runs the full suite there on the next commit.`);
+  else if (fs.existsSync(at)) throw new SpeckError(`There's a folder at ${at} that isn't speck's full-suite checkout. Move or remove it, and speck run runs the full suite there on its next try.`);
   fs.mkdirSync(path.dirname(at), { recursive: true });
   git(['worktree', 'add', '-q', '--detach', at, commit], repo);
   try {
@@ -127,7 +131,7 @@ export function runFull(repo, commit) {
       const r = sh('sh', ['-c', setup], { cwd: at, stdio: 'inherit' });
       if (r.status !== 0) throw new SpeckError(`worktree_setup (${setup}) failed with exit ${r.status}, so the full suite didn't run.`);
     }
-    const r = testRun(at, cfg, cmd, { reuse: 'any', branch: `${cfg.base_branch} (full suite)` });
+    const r = testRun(at, cfg, cmd, { reuse: 'any', branch: `${cfg.base_branch} (full suite)`, lane: 'full' });
     if (r.signal || !Number.isInteger(r.status)) throw new SpeckError(`The full suite was stopped${r.signal ? ` by ${r.signal}` : ''}, so it has no result.`);
     writeJson(path.join(fullDir(repo), 'latest.json'), { cmd, commit, status: r.status, tests: r.status ? names(r.output) : [], at: new Date().toISOString() });
     return r.status === 0 ? 0 : 1;
