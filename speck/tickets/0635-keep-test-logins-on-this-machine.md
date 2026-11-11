@@ -1,7 +1,7 @@
 ---
 id: "0635"
 title: "Keep test logins on this machine"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-11-virgil-checks-the-work-in-the-running-app.m
 after: ["0633","0634"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:23:26.280Z"
+approved: "2026-11-11T11:34:26.377Z"
 
 ---
 # 0635 · Keep test logins on this machine
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Checking a change in an app often means signing in, and the logins for that must never end up in a ticket, a review round or a commit, which are often published.
@@ -56,9 +57,15 @@ Worth keeping an eye on: a very simple password, such as `test`, will refuse any
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Saved passwords containing the literal text [private] bypass commit and ship protection.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 213,081
+- Elapsed since build started: 11 min
+- Changed lines: 213 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - A short or common saved password refuses every commit holding it: speck/ideas/2026-11-11-warn-when-a-saved-test-password-is-a-common-word.md
