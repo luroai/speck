@@ -3,6 +3,7 @@
 // decide and commands.start set, speck run starts its watch agent for each low-risk ticket blocked on one, once per
 // question, with a brief to start the app, sign in when it needs to, keep a screenshot of each thing it checks, stop the
 // app and then go with the recommendation or ask you. Such a question is never taken unchecked: otherwise it waits for you.
+// 0638: with commands.start blank too, with a brief to first work out how to start the app and try it with speck app --start.
 import crypto from 'node:crypto';
 import { fixingOf, speckActs, checksInApp } from './foreman.mjs';
 import { contentLines } from './core.mjs';
@@ -14,7 +15,7 @@ export const CHECK_ACTIONS = Object.freeze(['decide', 'ask']);
 
 export const appStartSet = cfg => String(cfg?.commands?.start ?? '').trim() !== '';
 // Whether speck run checks this board ticket's question in the app with settings `cfg`.
-export const appCheckable = (cfg, t) => !!cfg && speckActs(fixingOf(cfg)) && appStartSet(cfg) && checksInApp(t) && t.status === 'blocked' && t.risk === 'low';
+export const appCheckable = (cfg, t) => !!cfg && speckActs(fixingOf(cfg)) && checksInApp(t) && t.status === 'blocked' && t.risk === 'low';
 // The question as checked, so each is checked once: its text, what to check and the recommendation.
 export const checkKey = t => crypto.createHash('sha256').update(JSON.stringify([t.blocked_question ?? '', t.blocked_check_in_app ?? '', t.blocked_recommendation ?? ''])).digest('hex').slice(0, 16);
 // The agent's queue entry for it, with what its brief needs.
@@ -32,8 +33,15 @@ export function checkStale(t, running) {
   return now === running.key ? '' : `Ticket ${t.fm.id}'s question has changed since you were started to check it`;
 }
 
+// How to work out how to start the app, as the brief's first steps, when commands.start is blank (0638).
+const workOutStart = id => [
+  `1. speck doesn't know how to start this app yet: commands.start in speck/config.yml is blank. First work out from the project (its README, its package or build files and its scripts) how to start its app on a given port, and try it with \`${CLI} app ${id} --start "<command>"\`, writing {port} where the port goes, adding \`--url "<address>"\` when it answers at an address other than app_url's (http://127.0.0.1:{port}/ unless it's set). It prints the address to open once the app answers, and speck saves that command as how to start the app. When one fails, it prints the last lines the app wrote: try the next likeliest command.`,
+  `   When nothing you try answers, don't check anything: ask with \`${CLI} watch ask ${id} "<how do I start the app?>" --saw="..." --why="..."\`, naming in the question each command you tried and the last lines it wrote.`,
+];
+
 // The brief for checking ticket `id`'s question in the app, with `watch` fix or decide. `skill` is the skill's path.
-export function checkBrief({ id, check, skill, watch }) {
+// 0638: `startSet` false when commands.start is blank.
+export function checkBrief({ id, check, skill, watch, startSet = true }) {
   const rec = String(check.recommendation || '').trim(), dec = `- ${CLI} watch decide ${id} "${rec}" --saw="..." --why="..."`;
   return [
     `You are speck, watching the pipeline. Ticket ${id}'s build is blocked on a question it wants checked in the running app, and speck run asked you to check it yourself, as watch is ${watch}.`,
@@ -42,7 +50,7 @@ export function checkBrief({ id, check, skill, watch }) {
     `The build recommends: ${rec || '(nothing)'}`,
     '',
     `Follow the speck-watch skill (${skill}), and what it says about checking in the app:`,
-    `1. Start the app with \`${CLI} app ${id}\`, which prints the address to open.`,
+    ...(startSet ? [`1. Start the app with \`${CLI} app ${id}\`, which prints the address to open.`] : workOutStart(id)),
     `2. Open it in a real browser, such as headless Chromium or a browser tool your session has. When it needs you to sign in, \`${CLI} logins\` lists the saved logins and \`${CLI} logins show <name>\` prints one's username and password: type them only into the app, never anywhere else.`,
     `3. Keep a screenshot of each thing you checked with \`${CLI} picture ${id} <file> "<what it shows>"\`, which shows it in the ticket's review pack. Save screenshots under /tmp, never in the repo.`,
     `4. Stop the app with \`${CLI} app ${id} --stop\`.`,

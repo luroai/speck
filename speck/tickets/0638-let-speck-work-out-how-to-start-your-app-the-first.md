@@ -44,6 +44,8 @@ The first time speck needs a project's app and `commands.start` isn't set, it wo
 - This repo's own `commands.start` was set by hand on 2026-11-11: `node scripts/speck.mjs panel --port {port}`.
 - `scripts/foreman-agent.mjs` is at 600 lines, so brief changes may need to live in `scripts/app-check.mjs`.
 - Failing before this build: none
+- Self-check: the watch agent's brief and skill now say a --start without --url uses app_url's address, not always http://127.0.0.1:{port}/.
+- 0636's AC5 test no longer lists `commands.start` blank as a case where the question waits for you: AC3 of this ticket changes that. Its shared helpers moved to `test/support/app-check.mjs`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

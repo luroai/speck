@@ -51,12 +51,13 @@ export function splitOff(repo, rawId, title, from) {
 }
 
 // Calls `use` with a checkout of the base branch: the one that has it, or else one made just for this and removed after.
-function onBase(repo, cfg, use) {
+// 0638: `what` is what it couldn't do without one.
+export function onBase(repo, cfg, use, what = 'commit the split-off ticket, so no ticket was made') {
   const have = worktreeList(repo).find(w => w.branch === cfg.base_branch);
   if (have) return use(have.path);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-split-off-'));
   const added = sh('git', ['worktree', 'add', '-q', '--force', dir, cfg.base_branch], { cwd: repo });
-  if (added.status !== 0) { fs.rmSync(dir, { recursive: true, force: true }); throw new SpeckError(`Couldn't check out ${cfg.base_branch} to commit the split-off ticket, so no ticket was made:\n${(added.stderr || '').trim()}`); }
+  if (added.status !== 0) { fs.rmSync(dir, { recursive: true, force: true }); throw new SpeckError(`Couldn't check out ${cfg.base_branch} to ${what}:\n${(added.stderr || '').trim()}`); }
   try { return use(dir); }
   finally { sh('git', ['worktree', 'remove', '--force', dir], { cwd: repo }); fs.rmSync(dir, { recursive: true, force: true }); }
 }

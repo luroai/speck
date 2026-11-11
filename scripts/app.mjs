@@ -3,6 +3,8 @@
 // Every process the app starts carries, in its environment (procs.mjs), a mark for the ticket in this repo and one for
 // that start, so --stop ends every process started for the ticket, even by two starts at once, and never others by
 // name. Each start keeps a record and a log in the main checkout's speck/.cache/apps/<id>/.
+// 0638: --start "<command>" and --url "<address>" start it that way for that run instead. With commands.start blank, one
+// that answers is saved as commands.start and app_url, committed on the base branch, so speck learns how the first time.
 
 import fs from 'node:fs';
 import crypto from 'node:crypto';
@@ -11,15 +13,18 @@ import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { SpeckError, findRepoRoot, loadConfig, padId } from './core.mjs';
+import { SpeckError, findRepoRoot, loadConfig, padId, parseConfig, sh, yamlValue } from './core.mjs';
 import { buildTicket } from './build-records.mjs';
 import { mainCheckout } from './output.mjs';
 import { marked, descendants } from './procs.mjs';
-import { checkConfigValue } from './config.mjs';
+import { checkConfigValue, setConfigText } from './config.mjs';
+import { onBase } from './split-off.mjs';
+import { commitTicketOnly } from './close.mjs';
 
 const MARK = 'SPECK_APP_RUN', DEFAULT_URL = 'http://127.0.0.1:{port}/', DEFAULT_SECONDS = 60;
 const POLL_MS = 200, ASK_MS = 1000, STOP_MS = 5000, LAST_LINES = 20;
-const USAGE = 'Usage: speck app <id> starts the project\'s app for a ticket, and speck app <id> --stop stops it.';
+const USAGE = 'Usage: speck app <id> [--start "<command>"] [--url "<address>"] starts the project\'s app for a ticket, and speck app <id> --stop stops it.';
+const SAVED = 'speck: set how to start the app';
 
 // The settings `speck config show` explains, with speck's defaults, under Building and reviewing.
 export const APP_SETTINGS = [
@@ -100,9 +105,38 @@ const lastLines = log => {
   return lines.length ? lines.slice(-LAST_LINES).join('\n') : '(it wrote nothing)';
 };
 
+// 0638: saves `start`, and `url` when given, as commands.start and app_url in the base branch's speck/config.yml and commits
+// only that file, unless it has uncommitted changes there or commands.start is set there. Never throws: the app runs on.
+export function saveStart(repo, cfg, start, url, say = console.log) {
+  const keep = `set it with \`speck config set commands.start ${JSON.stringify(start)}\``;
+  try {
+    onBase(repo, cfg, main => {
+      const rel = 'speck/config.yml', file = path.join(main, rel);
+      if (sh('git', ['status', '--porcelain', '--', rel], { cwd: main }).stdout.trim())
+        return say(`${rel} has uncommitted changes on ${cfg.base_branch}, so speck didn't save how to start your app: commit or undo them, then ${keep}.`);
+      const text = fs.readFileSync(file, 'utf8');
+      if (String(parseConfig(text).commands?.start ?? '').trim()) return;
+      let next = setConfigText(text, ['commands', 'start'], yamlValue(start));
+      if (url !== undefined) next = setConfigText(next, ['app_url'], yamlValue(url));
+      const read = parseConfig(next);
+      if (read.commands?.start !== start || (url !== undefined && read.app_url !== url))
+        return say(`speck couldn't write how to start your app so that it reads back as given, so it saved nothing: ${keep}.`);
+      fs.writeFileSync(file, next);
+      const done = commitTicketOnly(main, file, text, SAVED);
+      if (done.status !== 0) return say(`speck couldn't commit ${rel} on ${cfg.base_branch}, so it saved nothing (${(done.stderr || done.stdout || '').trim().split('\n').pop()}): ${keep}.`);
+      say(`Saved how to start your app as commands.start${url !== undefined ? ' and app_url' : ''} in ${rel}, committed on ${cfg.base_branch} as "${SAVED}".`);
+    }, 'save how to start your app');
+  } catch (e) {
+    if (!(e instanceof SpeckError)) throw e;
+    say(`${e.message.split('\n')[0]} So speck saved nothing: ${keep}.`);
+  }
+}
+
 // Starts the ticket's app and resolves to its address once it answers, or rejects with a SpeckError once it's stopped it.
-export async function startApp(repo, id) {
-  const cfg = loadConfig(repo), { start, url: urlTemplate, seconds } = appSettings(cfg);
+// 0638: `given.start` and `given.url` stand for commands.start and app_url for this start only.
+export async function startApp(repo, id, given = {}) {
+  const cfg = loadConfig(repo), set = appSettings(cfg), seconds = set.seconds;
+  const start = given.start ?? set.start, urlTemplate = given.url ?? set.url;
   if (!start) throw new SpeckError('commands.start isn\'t set, so speck can\'t start your app: set it with `speck config set commands.start "<command>"`, using {port} for the port it should listen on.');
   const { at } = buildTicket(repo, cfg, padId(id)), pad = padId(id); // refuses a ticket that isn't there
   const was = records(repo, pad).find(r => appProcesses(r.run).length);
@@ -133,6 +167,7 @@ export async function startApp(repo, id) {
     if (await answers(url, Math.min(ASK_MS, until - Date.now()))) {
       child.removeAllListeners();
       console.log(`Ticket ${pad}'s app is running at ${url} (from ${at}). Stop it with speck app ${pad} --stop.`);
+      if (given.start !== undefined && !set.start) saveStart(repo, cfg, given.start, given.url);
       return url;
     }
     if (exited && !appProcesses(run).length) return fail(exited); // a command that starts the app in the background and ends is fine
@@ -157,9 +192,19 @@ export async function stopApp(repo, id, say = console.log) {
 }
 
 export function cmdApp(args) {
-  const stop = args.includes('--stop'), rest = args.filter(a => a !== '--stop');
-  if (rest.length !== 1 || !/^\d+$/.test(rest[0])) throw new SpeckError(USAGE);
+  const given = {}, rest = [];
+  let stop = false;
+  for (let i = 0; i < args.length; i++) {
+    const m = args[i].match(/^--(start|url)(?:=([\s\S]*))?$/);
+    if (args[i] === '--stop') stop = true;
+    else if (!m) rest.push(args[i]);
+    else if (Object.hasOwn(given, m[1]) || (given[m[1]] = m[2] ?? args[++i]) === undefined) throw new SpeckError(USAGE);
+  }
+  if (rest.length !== 1 || !/^\d+$/.test(rest[0]) || (stop && Object.keys(given).length)) throw new SpeckError(USAGE);
+  if (given.start !== undefined && !(given.start = given.start.trim())) throw new SpeckError(`--start needs the command that starts your app. ${USAGE}`);
+  if (given.url !== undefined && given.start === undefined) throw new SpeckError(`--url goes with --start. ${USAGE}`);
+  if (given.url !== undefined) given.url = checkConfigValue('app_url', given.url);
   const repo = findRepoRoot();
   const fail = e => { console.error(e instanceof SpeckError ? e.message : `speck app: ${e?.message || e}`); process.exit(e?.code > 0 ? e.code : 1); };
-  return (stop ? stopApp(repo, rest[0]) : startApp(repo, rest[0])).then(() => process.exit(0), fail);
+  return (stop ? stopApp(repo, rest[0]) : startApp(repo, rest[0], given)).then(() => process.exit(0), fail);
 }

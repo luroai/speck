@@ -557,7 +557,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck diff <id>                     the changes since the reviewer's last round, as the reviewer sees them
   speck close <id>                    write the review and delivery logs, set approved and commit, once the reviewer approves
   speck next <id>                     what the builder should do next: review, fix, block or ship
-  speck app <id> [--stop]             start your app (commands.start) from the ticket's checkout on a free port and print its address, leaving it running (--stop: stop it, with every process it started)
+  speck app <id> [--stop]             start your app (commands.start) from the ticket's checkout on a free port and print its address, leaving it running (--stop: stop it, with every process it started; --start "<command>" [--url "<address>"]: start it that way instead, saved as commands.start when that's blank)
   speck pack <id> [--plain]           print the review pack (--plain: a short one in plain English, for someone who
                                       doesn't read code)
   speck picture <id> <file> "<caption>"  keep a picture of a visual change with the ticket's review pack (--clear instead of a file and caption: remove its pictures)

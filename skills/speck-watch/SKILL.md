@@ -48,9 +48,9 @@ Your brief says this when a build is still running at more than twice the median
 
 ## Checking in the app
 
-Your brief says this when a low-risk ticket is blocked on a question with a `Check in the app:` line, and `commands.start` is set. It gives the question, what to check and the build's recommendation.
+Your brief says this when a low-risk ticket is blocked on a question with a `Check in the app:` line. It gives the question, what to check and the build's recommendation.
 
-1. Start the app with `speck app <id>`. It starts it from the ticket's worktree and prints the address to open.
+1. Start the app with `speck app <id>`. It starts it from the ticket's worktree and prints the address to open. When your brief says `commands.start` is blank, first work out from the project (its README, its package or build files and its scripts) how to start its app on a given port, and try it with `speck app <id> --start "<command>"`, writing `{port}` where the port goes and adding `--url "<address>"` when it answers at an address other than `app_url`'s (`http://127.0.0.1:{port}/` unless it's set). speck saves the first command that answers as `commands.start`. When nothing you try answers, check nothing: ask the user how to start the app with `speck watch ask`, naming each command you tried and the last lines it wrote.
 2. Open that address in a real browser, such as headless Chromium or a browser tool your session has, and look at what the line asks for. When the app needs you to sign in, `speck logins` lists the saved test logins and `speck logins show <name>` prints one's username and password. Type them only into the app: never into a note, a question, a file or a command's `--why` or `--saw`.
 3. Keep a screenshot of each thing you checked with `speck picture <id> <file> "<what it shows>"`, saving the files under `/tmp`, never in the repo. The ticket's review pack shows them with their captions.
 4. Stop the app with `speck app <id> --stop`. speck run stops it too once you've ended, whatever you did.

@@ -181,7 +181,7 @@ Use this when the review loop says `block`, the size guard trips, a product ques
 
    A block by the size guard adds `Size guard: yes` on a fifth line (see section 3 step 3).
 
-   Ask the user to check something in the running app, such as how a page looks or that signing in works, only this way: as a blocked question, never in your report or a review round's response file. Add `Check in the app: <what to look at>` on a line of its own beside the other four, saying where to go and what to look for. With `watch` fix or decide and `commands.start` set in `speck/config.yml`, speck may check a low-risk ticket's question in the app itself.
+   Ask the user to check something in the running app, such as how a page looks or that signing in works, only this way: as a blocked question, never in your report or a review round's response file. Add `Check in the app: <what to look at>` on a line of its own beside the other four, saying where to go and what to look for. With `watch` fix or decide in `speck/config.yml`, speck may check a low-risk ticket's question in the app itself.
 
    - `Other options`: speck keeps these with the question when it takes your recommendation, so you can see what it didn't choose. Keep listing the options in the question as well.
    - `Changes what you'd notice`: `yes` when any of the options would change something the user would notice: what speck does, shows or ships. `no` when every option only changes how it's built, such as which test to fix or how the code is laid out.
