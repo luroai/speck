@@ -41,6 +41,8 @@ A build that changes how an app looks or behaves often blocks asking you to chec
 - Decided 2026-11-11: a start command and an address in `speck/config.yml`, started from the build's folder on a free port.
 - Stop by the process ids it recorded, never by name or pattern, so it can't stop your own apps or panels.
 - Failing before this build: not checked
+- Self-check: a start command that starts the app in the background and ends is no longer taken as the app failing while the processes it started still run; a blank app_url in speck/config.yml shows as the default in speck config show. The settings sit under Building and reviewing in speck config show, as the group list must match the panel's.
+- Pictures: none, because nothing anyone sees in the panel changes: speck app is a command.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
