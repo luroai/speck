@@ -1263,7 +1263,7 @@ function render() {
   const rows = keptItems('queue', listed, t => String(t.id), t => [shippingId === String(t.id), foremanAskOf(t.id)?.question ?? null, speckCalled()], queueRow,
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter], update: queueUpdate });
   const rowOf = new Map(listed.map((t, i) => [t, rows[i]]));
-  const extra = key => (key === 'needs' && failing ? [fullSuiteRow(failing)] : []);
+  const extra = key => (failing && key === (failing.fixing ? 'building' : 'needs') ? [fullSuiteRow(failing)] : []); // 0658: under Building while its fix ticket is on its way
   fill('queue', BUILD_GROUPS.flatMap(([key, label]) => { const rs = [...extra(key), ...groups.get(key).map(t => rowOf.get(t))]; return rs.length ? [groupHead(key, label, rs.length), ...rs] : []; }), m.queue.length || failing ? '' : idleLane(m));
   if (m.queue.length || failing) idleClock(null, null);
   startCounters([...listed.flatMap((t, i) => (t.counter !== null && t.held_at === null && rowTimeOf(rows[i]) ? [[rowTimeOf(rows[i]), t.since, !!t.paused, true]] : [])), ...liveCounters()]); // 0584: and the full view's

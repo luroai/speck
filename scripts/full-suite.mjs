@@ -10,6 +10,7 @@ import { SpeckError, sh, git, loadConfig, worktreeList, worktreePath } from './c
 import { testRun, recordedAt } from './results.mjs';
 import { sharedCacheDir } from './turns.mjs';
 import { failingTestFiles } from './tap.mjs';
+import { fullFixQueue } from './full-fix.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 
@@ -75,9 +76,11 @@ export const RETRY_MS = 10 * 60 * 1000;
 // has no recorded result, none is running and this speck run hasn't started one of it in the last retryMs, and says
 // once in the log per failing commit that the latest full run failed. view() is what speck run adds to its record for speck status and the
 // panel: { full } while the latest full run on the base branch failed, until a run on a newer commit passes. 0655: with
-// `log`, where the full runs' log is, from the repo.
+// `log`, where the full runs' log is, from the repo. 0658: with `fixing`, the id of the fix ticket speck made or found for
+// it with watch fix or decide (full-fix.mjs), while that ticket is on its way.
 export function fullSuiteQueue({ repo, readConfig, say = console.log, launch = launchFull, retryMs = RETRY_MS, now = Date.now }) {
   const tried = new Map(); // each commit this speck run started a run of, and when
+  const fixes = fullFixQueue({ repo, dir: fullDir(repo), say });
   let failing = null;
   const check = () => {
     let cfg;
@@ -91,6 +94,9 @@ export function fullSuiteQueue({ repo, readConfig, say = console.log, launch = l
       say(failingSays(base, failing));
       fs.writeFileSync(told, failing.commit);
     }
+    let fixing = null;
+    try { fixing = fixes.check(cfg, failing); } catch (e) { say(`speck run couldn't check the full suite's fix ticket (${e.message}).`); }
+    if (failing && fixing) failing = { ...failing, fixing };
     const head = headOf(repo, base);
     if (!head || recordedAt(repo, cmd, head) || now() - (tried.get(head) ?? -Infinity) < retryMs) return;
     const running = path.join(dir, 'running.json'), going = readJson(running);
