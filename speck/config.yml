@@ -28,6 +28,7 @@ commands:
   test_full: npm test                       # every test file, on main after ships (speck run)
   test_files: node --test {files}
   checks: [test/split-0078.test.mjs, test/history-0085.test.mjs, test/repo-speck-0122.test.mjs, test/luro-0082.test.mjs, test/tmp-cleanup.test.mjs, test/stopped-0173.test.mjs, test/product-0068.test.mjs, test/install-0253.test.mjs, test/brief-0111.test.mjs, test/build-0116.test.mjs, test/review.test.mjs, test/setup-0107.test.mjs, test/ticket-0205.test.mjs]
+  start: node scripts/speck.mjs panel --port {port}
 
 limits:
   max_acceptance_criteria: 5
