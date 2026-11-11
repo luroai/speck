@@ -57,9 +57,9 @@ test('0514 AC2: a scroll the other way changes lane after any pause, however sho
     p.scroll(swipe(3), { pause, way: -1 });
     assert.equal(lane(p), 'build', `back, after ${pause} ms`);
     p.scroll(swipe(3), { pause, way: -1 });
-    assert.equal(lane(p), 'build', `on the same way after only ${pause} ms counts as the same scroll`);
+    assert.equal(lane(p), 'plan', `on the same way after only ${pause} ms changes lane again (0641: before, it counted as the same scroll)`);
     p.scroll(swipe(3), { pause });
-    assert.equal(lane(p), 'shipped', `and back again, after ${pause} ms`);
+    assert.equal(lane(p), 'build', `and back again, after ${pause} ms`);
   }
 });
 

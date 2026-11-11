@@ -45,6 +45,9 @@ Two trackpad swipes the same way, one straight after the other, change lane twic
 - Web pages get no flag that marks a glide, so a new swipe has to be told from the glide by its steps.
 - Failing before this build: none
 - Went with the recommendation: Change the 0514 check to expect a lane change (chosen by speck, as watch is decide, 2026-11-11 13:28 UTC).
+- A new swipe during a glide is told by its steps: two shrinking in a row since the change (the glide), then three growing in a row with the last over 20 px. A swipe that slows down over two frames and speeds up over three before its glide would change lane twice; no step pattern tells that from a glide and a new swipe.
+- Self-check: no changes
+- Pictures: none, because nothing changes in how the panel looks
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
