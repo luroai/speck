@@ -43,8 +43,9 @@ export function recordBuilder(repo, cfg, id, agent) {
   return `its ticket couldn't be committed (${(commit.stderr || commit.stdout || '').trim().split('\n').pop()})`;
 }
 
-// speck run's side. pick(cfg, command, t) is called for a ready ticket about to start: null when its agent isn't held,
-// so it starts as usual; `false` when it's held and must wait; or the stand-in agent, recorded on the ticket. check() says
+// speck run's side. pick(cfg, command, t, free) is called for a ready ticket about to start: null when its agent isn't
+// held, so it starts as usual; `false` when it's held and must wait; or the stand-in agent, recorded on the ticket. With
+// no build slot `free`, nothing is chosen or recorded, so a ticket waiting for a slot starts on the builder once it resets. check() says
 // once the limit has reset that new builds go back to the builder. The move, and the move back, are each said once per
 // limit. `heldAgent`, `readyAgents` and `speak` are speck run's, and `fmOf(id)` reads a ticket's frontmatter.
 export function builderStandIn({ repo, heldAgent, readyAgents, speak, fmOf, providers = () => knownProviders(repo), installed = onPath, record = recordBuilder }) {
@@ -52,10 +53,10 @@ export function builderStandIn({ repo, heldAgent, readyAgents, speak, fmOf, prov
   const said = new Map(); // ticket id → the last reason it couldn't move, said once
   const once = (id, why) => { if (said.get(id) !== why) speak(why); said.set(id, why); };
 
-  const pick = (cfg, command, t) => {
+  const pick = (cfg, command, t, free = true) => {
     const own = configBuilder(cfg), agent = launchAgent(cfg, command, t);
     if (!heldAgent(agent)) return null;
-    if (agent !== own) return false; // a ticket of its own builder's waits for that agent's reset
+    if (agent !== own || !free) return false; // a ticket of its own builder's waits for that agent's reset
     const known = providers();
     let ready = [];
     try { ready = readyAgents(); } catch { /* none can be read: it waits for the limit */ }

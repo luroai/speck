@@ -77,6 +77,21 @@ test('0647 AC1: a ticket whose builder can\'t be recorded waits, said once', () 
   assert.match(s.said[0], /0001 can't start on Codex: its ticket couldn't be committed \(locked\)\. It waits for the limit to reset\./);
 });
 
+test('0647 AC1: a ticket waiting for a build slot isn\'t moved, so it starts on the builder once the limit resets', () => {
+  const s = running();
+  assert.equal(s.q.pick(CFG, '', { id: '0001', builder: 'claude' }, false), false); // every slot in use
+  assert.deepEqual(s.recorded, []);
+  assert.deepEqual(s.said, []);
+  s.held.clear();
+  assert.equal(s.q.pick(CFG, '', { id: '0001', builder: 'claude' }, true), null); // reset, slot free: on the builder
+  assert.deepEqual(s.recorded, []);
+});
+
+test('0647 AC1: speck run picks a stand-in only while a build slot is free', () => {
+  const src = fs.readFileSync(new URL('../scripts/run.mjs', import.meta.url), 'utf8');
+  assert.match(src, /standIns\.pick\(now\.cfg, now\.command, t, running\.size < now\.max\)/);
+});
+
 // ---------- AC2 ----------
 
 test('0647 AC2: builder_model and builder_effort aren\'t passed to a bench agent', () => {
