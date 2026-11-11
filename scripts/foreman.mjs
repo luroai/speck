@@ -53,11 +53,13 @@ export const MAX_DECIDED = 3;
 // a recommendation, no change you'd notice and a clear winner. Anything unknown is left for you.
 // 0563: a block by the size guard goes by what it recommends instead: the split is taken, and raising the limit never is.
 export const recommendsSplit = rec => typeof rec === 'string' && /^split\b/i.test(rec.trim()) && !/\b(rais|increas|lift)/i.test(rec);
-export const fixable = t => !!t && t.status === 'blocked' && typeof t.blocked_recommendation === 'string' && t.blocked_recommendation !== ''
+// 0636: a question that asks for a check in the running app is never taken unchecked: the watch agent checks it (app-check.mjs), or it waits for you.
+export const checksInApp = t => !!t && typeof t.blocked_check_in_app === 'string' && t.blocked_check_in_app.trim() !== '';
+export const fixable = t => !!t && t.status === 'blocked' && typeof t.blocked_recommendation === 'string' && t.blocked_recommendation !== '' && !checksInApp(t)
   && (t.blocked_size_guard === true ? recommendsSplit(t.blocked_recommendation) : t.blocked_noticeable === false && t.blocked_clear === true);
 // 0564: whether watch: decide may take it: any recommendation, as long as the ticket is low risk. Raising the size limit is
 // still never taken (0563), and anything unknown is left for you.
-export const decidable = t => !!t && t.status === 'blocked' && typeof t.blocked_recommendation === 'string' && t.blocked_recommendation !== ''
+export const decidable = t => !!t && t.status === 'blocked' && typeof t.blocked_recommendation === 'string' && t.blocked_recommendation !== '' && !checksInApp(t)
   && t.risk === 'low' && (t.blocked_size_guard !== true || recommendsSplit(t.blocked_recommendation));
 // 0564: whether `fixing` (watch) has speck take this ticket's recommendation, leaving aside how many it has taken.
 export const speckTakes = (fixing, t) => (fixing === 'decide' ? decidable(t) : fixing === 'fix' && fixable(t));

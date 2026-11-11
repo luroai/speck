@@ -7,7 +7,7 @@ import { questionFacts } from './question-facts.mjs';
 
 // Each "Went with the recommendation" line in a ticket's Notes, oldest first: { option, by, at }, `by` being 'foreman'
 // when the Foreman chose it and 'user' when you pressed the panel's button, and `at` its time as an ISO string.
-const LINE = /^\s*[-*]\s+Went with the recommendation: (.+) \((chosen by [^()]*), (\d{4}-\d\d-\d\d) (\d\d:\d\d) UTC\)\.?\s*$/;
+const LINE = /^\s*[-*]\s+Went with the recommendation: (.+) \((chosen by [^()]*), (\d{4}-\d\d-\d\d) (\d\d:\d\d) UTC\)\.?(?: Checked in the app: .*)?\s*$/; // 0636: and what a check in the app saw
 export function wentWithLines(lines) {
   const out = [];
   for (const line of Array.isArray(lines) ? lines : []) {
@@ -48,7 +48,7 @@ export const whoWent = (w, name = 'speck') => (w && w.by === 'foreman' ? `${name
 export function foremanBoard(tickets, cfg, runs) {
   return tickets.map(t => {
     const facts = questionFacts(contentLines(t.sections['blocked question']));
-    const entry = { id: t.fm.id, status: t.fm.status, title: t.fm.title, risk: t.fm.risk, blocked_question: null, blocked_recommendation: facts.recommendation, blocked_noticeable: facts.noticeable, blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard };
+    const entry = { id: t.fm.id, status: t.fm.status, title: t.fm.title, risk: t.fm.risk, blocked_question: null, blocked_recommendation: facts.recommendation, blocked_noticeable: facts.noticeable, blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, blocked_check_in_app: facts.checkInApp ?? null };
     return { ...entry, ...foremanFacts(t, entry, fixingOf(cfg), t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg)) };
   });
 }

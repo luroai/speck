@@ -42,6 +42,8 @@ With `watch: decide`, or `fix` for a check that clearly passes, speck checks a b
 - Question facts are in `scripts/question-facts.mjs`; the watch agent's brief and actions in `scripts/foreman-agent.mjs` and `skills/speck-watch/SKILL.md`; `speck picture` keeps pictures (0294).
 - After 0634 (`speck app`) and 0635 (`speck logins`).
 - Failing before this build: none
+- Read as: a question with a `Check in the app:` line is never taken unchecked, so with `commands.start` blank (or tell, off, high risk) it waits for you even with watch: decide, rather than being taken blind.
+- Self-check: a check's decide must name the build's own recommendation, and needs --saw; --saw is refused on any other run; the resume after a check with watch: fix says watch: fix rather than decide.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
