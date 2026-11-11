@@ -39,6 +39,7 @@ The full suite passes on `main` again, so Needs you clears.
 ## Notes
 - Raised by speck while looking into 0652's long build; completed 2026-11-11 with the other two failures from the full run at `a95b3c3`.
 - Checked 2026-11-11: each fails alone with `node --test` (0161: "#settings .sub .win .fill fills with --muted and sets no text colour"; 0427: "#full-suite .full-suite-fact .label: font-size 13px").
+- Failing before this build: the four this ticket fixes, from the full suite's recorded result at a95b3c3 (its kept output is cut short and shows only 0161 AC1): the two 0285 AC3 tests in `test/foreman-0285.test.mjs`, 0161 AC1 and 0427 AC1. No others are known.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
