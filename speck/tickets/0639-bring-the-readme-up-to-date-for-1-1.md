@@ -42,6 +42,7 @@ The README describes what speck does as of 1.1.
 - Asked for 2026-11-11: "update the docs on the repo for 1.1".
 - Covers what shipped since `v1.0.0`: 0622 to 0637, and 0638 once it ships. 0626 to 0628 changed only tests and checks, so need no mention.
 - Fit the new points into the README's existing sections, such as "Everything in between", "The clever bits" and "Under the hood", rather than adding a long new section.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
