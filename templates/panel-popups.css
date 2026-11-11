@@ -117,16 +117,17 @@
   #decided .decided-bubble::before { content: ""; position: absolute; left: -5px; top: 15px; width: 10px; height: 10px; background: var(--raise); transform: rotate(45deg); }
   #decided .decided-day { margin: 16px 0 0; font-size: 12px; font-weight: 600; color: var(--muted); }
   #decided .decided-change { margin: 6px 0 0; }
-  /* 0655: the failing full suite's view, in the Decided for you list's frame. Long test names and paths wrap, so it fits a phone's width. */
+  /* 0655: the failing full suite's view, in the Decided for you list's frame. Long test names and paths wrap, so it fits a phone's width.
+     0656: at 12 px, as the panel sets no text at 13 px but for rows' details (0427). */
   #full-suite .full-suite-body { overflow-wrap: anywhere; }
   #full-suite .full-suite-says { margin: 16px 0 8px; line-height: 20px; }
   #full-suite .full-suite-fact { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; margin-top: 4px; }
-  #full-suite .full-suite-fact .label { font-size: 13px; color: var(--muted); }
-  #full-suite .full-suite-value { min-width: 0; font-family: var(--font-mono); font-size: 13px; }
+  #full-suite .full-suite-fact .label { font-size: 12px; color: var(--muted); }
+  #full-suite .full-suite-value { min-width: 0; font-family: var(--font-mono); font-size: 12px; }
   #full-suite .full-suite-head { margin: 20px 0 0; font-size: 14px; font-weight: 600; color: var(--muted); }
   #full-suite .full-suite-head .group-n { font-family: var(--font-mono); font-weight: 400; font-size: 12px; }
   #full-suite .full-suite-tests { margin: 0; padding: 0; list-style: none; }
-  #full-suite .full-suite-tests li { padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-family: var(--font-mono); font-size: 13px; line-height: 18px; }
+  #full-suite .full-suite-tests li { padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-family: var(--font-mono); font-size: 12px; line-height: 18px; }
   #full-suite .full-suite-none { margin: 8px 0 0; color: var(--muted); }
   /* 0479: the Pipeline log fills the window, in a column as wide as the lanes' (720 px less their 16 px sides, on whole
      pixels as the lanes' are, 0453), clear of a phone's notch and home indicator. Only the log box scrolls: it takes the
