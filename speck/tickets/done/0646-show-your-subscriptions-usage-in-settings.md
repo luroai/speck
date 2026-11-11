@@ -1,7 +1,7 @@
 ---
 id: "0646"
 title: "Show your subscriptions' usage in Settings"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0643"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:17:00.249Z"
 approved: "2026-11-11T15:27:46.522Z"
+finished: "2026-11-11T15:32:05.990Z"
 
 ---
 # 0646 · Show your subscriptions' usage in Settings
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Once speck keeps each agent's usage (0642, 0643), you still can't see it unless you run `speck agents`, so you find out an agent is nearly used up when work stops.
