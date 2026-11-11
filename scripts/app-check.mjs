@@ -5,6 +5,8 @@
 // app and then go with the recommendation or ask you. Such a question is never taken unchecked: otherwise it waits for you.
 import crypto from 'node:crypto';
 import { fixingOf, speckActs, checksInApp } from './foreman.mjs';
+import { contentLines } from './core.mjs';
+import { questionFacts } from './question-facts.mjs';
 
 const CLI = 'node .speck/scripts/speck.mjs';
 // What a check run may do: go with the build's recommendation, or ask you.
@@ -20,6 +22,15 @@ export const checkItem = (t, log) => ({ id: String(t.id), key: checkKey(t), what
   check: { question: t.blocked_question ?? '', line: t.blocked_check_in_app, recommendation: t.blocked_recommendation ?? '' } });
 // The check a running agent's record holds, or null when it isn't checking in the app.
 export const checkOf = running => (running && running.check && typeof running.check === 'object' && typeof running.check.line === 'string' ? running.check : null);
+
+// Why a check run's action can't stand for parsed ticket `t` now, or '' when it can: the ticket must still be blocked on
+// the very question the agent was started to check, so what it saw is never taken for a question asked since.
+export function checkStale(t, running) {
+  if (t.fm.status !== 'blocked') return `Ticket ${t.fm.id} is ${t.fm.status} now, no longer blocked on the question you checked`;
+  const f = questionFacts(contentLines(t.sections['blocked question']));
+  const now = checkKey({ blocked_question: f.question || null, blocked_check_in_app: f.checkInApp ?? null, blocked_recommendation: f.recommendation });
+  return now === running.key ? '' : `Ticket ${t.fm.id}'s question has changed since you were started to check it`;
+}
 
 // The brief for checking ticket `id`'s question in the app, with `watch` fix or decide. `skill` is the skill's path.
 export function checkBrief({ id, check, skill, watch }) {

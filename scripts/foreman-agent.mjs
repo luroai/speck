@@ -37,7 +37,7 @@ import { usualBuild, runningLong, canRunLong } from './long-build.mjs';
 import { limitWaiting } from './usage-limit.mjs';
 import { reviewerWaiting } from './reviewer-limit.mjs';
 import { takeAt, resumeTime, resumeClock, resumeWhy } from './resume-at.mjs';
-import { appCheckable, checkKey, checkItem, checkOf, checkBrief, checkedSays, CHECK_ACTIONS } from './app-check.mjs';
+import { appCheckable, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS } from './app-check.mjs';
 import { stopApp } from './app.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
@@ -536,6 +536,7 @@ export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RU
   if (check && !CHECK_ACTIONS.includes(action)) throw new SpeckError(`This run is checking ticket ${id}'s question in the app, so speck watch ${action} can't be used. Use decide or ask.`);
   if (check && !saw) throw new SpeckError(`Say what you checked and saw in the app with --saw="<what you saw, in a sentence>". ${USAGE}`);
   if (!check && saw) throw new SpeckError(`--saw is only for checking a question in the app, so nothing was changed. ${USAGE}`);
+  if (check && checkStale(t, s.running)) throw new SpeckError(`${checkStale(t, s.running)}, so nothing was changed. Stop here: speck run checks a new question by itself.`);
   const rec = check && action === 'decide' ? String(questionFacts(contentLines(t.sections['blocked question'])).recommendation || '') : '';
   if (check && action === 'decide' && (!rec || rec.trim().toLowerCase() !== text.trim().toLowerCase()))
     throw new SpeckError(`A check in the app goes only with the build's recommendation${rec ? `, "${rec}"` : ', and it has none'}, so nothing was changed. Ask the user instead.`);

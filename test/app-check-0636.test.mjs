@@ -109,6 +109,20 @@ test('0636 AC2: otherwise it asks, saying what it saw, and a check refuses other
   assert.deepEqual(readActions(r.runs).map(x => x.action), ['ask']);
 });
 
+test('0636 AC2: a check is refused once the question has changed during it, even with the same recommendation', () => {
+  for (const change of [s => s.replace(CHECK, 'Look at the Cancel button instead'), s => s.replace('Should the old test', 'Should the new test'), s => s.replace(/^status: blocked$/m, 'status: building')]) {
+    const { r, a } = checking();
+    a.check();
+    fs.writeFileSync(r.file, change(r.ticket())); r.g('commit', '-qam', 'changed');
+    const head = r.head(), ticket = r.ticket();
+    for (const act of [['decide', '0001', OPTION], ['ask', '0001', 'Keep it?']])
+      assert.throws(() => a.act(...act, `--saw=${SAW}`, '--why=x'), /changed since|no longer blocked/);
+    assert.equal(r.head(), head);
+    assert.equal(r.ticket(), ticket);
+    assert.deepEqual(readActions(r.runs), []);
+  }
+});
+
 test('0636 AC2: such a question is never taken unchecked by speck run\'s check', () => {
   const t = blocked();
   assert.equal(decidable(t), false);

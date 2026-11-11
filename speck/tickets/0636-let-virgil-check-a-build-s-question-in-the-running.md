@@ -1,7 +1,7 @@
 ---
 id: "0636"
 title: "Let speck check a build's question in the running app"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T11:36:54.947Z"
 ---
 # 0636 · Let speck check a build's question in the running app
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Builds often block with "check this in the app yourself" or "log in and check", and you go with the recommendation almost every time. Each one stops the ticket until you're back, for a check an agent can do by starting the app, signing in and taking screenshots.
@@ -56,3 +56,89 @@ With `watch: decide`, or `fix` for a check that clearly passes, speck checks a b
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6e37392ac02f408a45cb474d225144910d41107e",
+    "session": "fresh",
+    "thread_id": "01a1ca6f-d2b3-7913-a1b1-8bc172f0ce59",
+    "builder_response": "- Tests run: `speck test --related test/app-check-0636.test.mjs` (the ticket's own test file, plus the 251 existing test files that name a changed file, and the repo's checks). All pass.\n- Read as: a question with a `Check in the app:` line is never taken unchecked by speck run's fix/decide check (fixable/decidable exclude it), so with tell, off, high risk or commands.start blank it waits for you even under watch: decide. Noted in the ticket's Notes.\n- A check run may only `decide` (only the build's own recommendation; with watch: fix too) or `ask`, and must say `--saw`. speck run stops the ticket's app (stopApp) once the agent ends, whatever it did. Claude Code's check runs may also use Playwright's tools or headless Chromium/Chrome to look at the app.\n- Pictures: two of the blocked ticket's full view with its new Check in the app line, light and dark.\n",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 197563,
+      "cached_input_tokens": 139008,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 883,
+      "reasoning_output_tokens": 174
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 58555,
+      "cached": 139008,
+      "write": 0,
+      "output": 883
+    },
+    "cost_usd": 0.1398408,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T11:48:45.468Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "question-facts.mjs parses checkInApp; statusData exposes blocked_check_in_app; panel.js renders it. The AC1 tests passed, and the build skill requires this blocked-question format."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The queue and brief are covered by passing AC2 tests, but foremanAction does not verify that the current question matches the question the agent checked before accepting its decision."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "checkBrief and the watch skill limit watch: fix decisions to clearly passing checks. The AC3 test covers launching, deciding and resuming with watch: fix."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "finish invokes stopCheckApp after the agent ends; foremanAction records the check and observation in Notes. Passing AC4 tests cover cleanup invocation and captioned pictures; pack.mjs includes picturesLines."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "appCheckable excludes tell, off, high risk and missing commands.start; fixable and decidable exclude app-check questions. The corresponding tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs",
+        "issue": "foremanAction accepts a decision after the blocked question or requested app check has changed during the agent's run. It compares the option with the current recommendation but never compares the current question with s.running.key. If the recommendation stays the same, an observation about the old check can resume the build on a new, unchecked question.",
+        "suggested_fix": "Before accepting a check decision, require the ticket to remain blocked and its current question, app-check line and recommendation to match the running check's key. Refuse stale decisions without changing anything, and test a changed check with an unchanged recommendation.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change adds app checks, recorded observations and screenshot support, and the reported tests pass. One safeguard is missing: if the question changes while the agent checks it, the agent can carry on using an observation about the old question. Fix that before merge."
+  }
+}
+```
+
+</details>
