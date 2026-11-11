@@ -1,7 +1,7 @@
 ---
 id: "0650"
 title: "Draw each team member's character"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:17:39.273Z"
+approved: "2026-11-11T14:24:17.815Z"
 
 ---
 # 0650 · Draw each team member's character
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every member of the team will appear in the panel, and they need to be told apart at a glance. Today only Virgil has a character.
@@ -52,9 +53,15 @@ speck can now draw a character for each member of the team, not only Virgil. The
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The manager's default accessible label names its mood, such as 'watching', rather than its member.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 339,990
+- Elapsed since build started: 7 min
+- Changed lines: 39 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox note):
   - A manager face drawn without a role is still labelled with its mood alone, as before. 0652 should pass a label with the manager's name, as the panel's other labelled faces do, or pass `role: 'manager'`.
