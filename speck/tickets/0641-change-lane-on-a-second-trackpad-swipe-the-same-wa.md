@@ -1,7 +1,7 @@
 ---
 id: "0641"
 title: "Change lane on a second trackpad swipe the same way while the first still glides"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-11-11
 started: "2026-11-11T13:27:21.806Z"
 blocked_at: ""
 waited_seconds: 30
+approved: "2026-11-11T13:37:36.468Z"
 
 ---
 # 0641 · Change lane on a second trackpad swipe the same way while the first still glides
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 In the panel in Cursor, a sideways trackpad swipe changes lane once, and a second swipe the same way does nothing until you wait. The panel takes every sideways scroll the same way as the first swipe's glide until scrolling has paused for 50 ms (0514), and Cursor's pane sends the next swipe straight on from the glide with no pause, so swiping from Capture to Build or Plan to Shipped takes two swipes with a wait between.
@@ -61,9 +62,16 @@ Changes what you'd notice: yes
 Clear winner: no
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): escalate: F1 The new heuristic violates AC2: a single swipe that slows down and speeds up again can skip a lane.
+Round 2 (codex): changes requested: F2 The review run fails the existing first-frame timing test, so AC4 is not satisfied.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 259,967
+- Elapsed since build started: 10 min
+- Changed lines: 29 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: a swipe whose steps shrink two in a row and then grow three in a row from under 10 px to past 20 px changes lane twice, as AC2 now says. Only the steps can tell a new swipe from the glide.
