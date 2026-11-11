@@ -38,6 +38,7 @@ While the reviewer's agent is limited, review rounds run on the first reviewer o
 - Changing the reviewer setting itself.
 
 ## Notes
+- Failing before this build: none
 - Reviewer limits: `scripts/reviewer-limit.mjs` (0623); same-model rule: `scripts/same-model.mjs`; a round whose reviewer differs from the last already starts a fresh session with the full history.
 
 ## In plain words
