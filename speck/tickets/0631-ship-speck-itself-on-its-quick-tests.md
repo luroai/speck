@@ -41,6 +41,7 @@ speck ships on its quick tests, and its whole suite runs on `main` after ships t
 ## Notes
 - The six files are the most frequent non-heavy entries in `speck/.cache/flaky/flaky.log` (wall-clock, CPU-cost and real-process tests).
 - After 0630, because the full run needs `commands.test_full` to exist.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
