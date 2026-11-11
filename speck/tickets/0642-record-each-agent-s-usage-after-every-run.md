@@ -153,3 +153,94 @@ After every build, review round and watch run on Claude Code or Codex, speck kee
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "98886d8a6a665495387dc0eda422ba791121484e",
+    "session": "continued",
+    "thread_id": "01a1cb0a-6eb0-7990-b699-1f38cae63fe5",
+    "builder_response": "- Tests run: test/agent-usage-0642.test.mjs (with the commands.checks files, as speck test --files runs them).\n- F1: fixed. saveUsage now does its read, freshness check and replacement while holding `usage.json.lock` (scripts/agent-usage.mjs, withLock): created with the `wx` flag, so only one process holds it; others wait in 10 ms steps up to 5 seconds, and a lock older than 30 seconds, left by a process that died, is taken over. A save that still can't get it fails, which keepUsage catches and says on stderr, leaving the run as it was. New test \"a save waits while another process holds the file…\": with the lock held, a separate process's save writes nothing; a write made by the holder meanwhile survives once the save goes through; the lock is removed afterwards, and a stale one is taken over. With the lock taken out of saveUsage, this test fails.\n- F2: fixed. Codex readings now have read_at = when speck read them, and reported_at = the token_count event's own time. Which of two readings is newer goes by reported_at (falling back to read_at, as Claude's have only that), both among a thread's session files and when saving. Tests: AC2's parse test checks both times; a new AC3 test shows a Codex reading reported earlier but read later doesn't replace one reported later; AC4's --json test uses an event written two hours ago, read two minutes ago, and checks `read_seconds_ago` and the text's \"read 2 minutes ago\".\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 300004,
+      "cached_input_tokens": 237440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2247,
+      "reasoning_output_tokens": 323
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 11235,
+      "cached": 108672,
+      "write": 0,
+      "output": 943
+    },
+    "cost_usd": 0.0427672,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T14:40:38.890Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "claudeUsageInLog and build/watch hooks retain both windows, percentages, reset times, refusal status and read time. The AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "codexUsageInSession now separates read_at from reported_at. Passing AC2 tests cover parsing and collection after builds, review rounds and watch runs."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Passing AC3 tests cover location, git ignoring, replacement, missing readings and ordinary lock contention. However, withLock's stale-lock removal can admit concurrent writers; see F1."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "agentsReport and usageLines expose percentages, resets and reading age. The updated passing AC4 test distinguishes an event reported two hours ago from a reading taken two minutes ago, checking JSON and text."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The current run reports 125 passed, 3 skipped and no failures, including all 17 ticket tests. Previous related-test failures passed their isolated reruns."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/agent-usage.mjs:withLock",
+        "issue": "Ordinary contention is fixed, but stale-lock recovery still permits concurrent writers. Two waiting processes can both stat the same stale lock. Process A removes it and acquires a fresh lock; process B then executes its already-decided rmSync, deleting A's fresh lock, and acquires its own. Both can now read and replace usage.json, recreating the lost-update problem. The new test exercises only one stale-lock contender.",
+        "suggested_fix": "Make stale-lock recovery mutually exclusive with acquisition, using a proven cross-process locking mechanism or a recovery protocol that cannot delete a replacement lock. Add a regression test with two contenders recovering the same stale lock and verify that their critical sections cannot overlap and both readings survive.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/agent-usage.mjs:codexUsageInSession",
+        "issue": "Resolved: read_at now records when speck reads the session, while reported_at preserves the source event time for freshness comparisons. Updated parsing, replacement and command-output tests cover the distinction and pass.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The reading-time issue is fixed, and all current tests pass. Saving is protected during normal contention, but two runs recovering an abandoned lock can still overwrite each other's readings. Fix that remaining storage race before merge."
+  }
+}
+```
+
+</details>

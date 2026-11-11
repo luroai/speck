@@ -155,23 +155,17 @@ test('0642 AC3: of two Codex readings, the one Codex reported later wins, whenev
 });
 
 test('0642 AC3: a save waits while another process holds the file, so neither undoes the other, and takes over a lock left by one that died', async () => {
-  const r = panelRepo(), mod = new URL('../scripts/agent-usage.mjs', import.meta.url).href, lock = `${usageFile(r.dir)}.lock`;
+  const r = panelRepo(), lock = `${usageFile(r.dir)}.lock`;
   keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.1, seven: 0.2 })]), { now: NOW });
   fs.writeFileSync(lock, '1\n'); // another process is reading and writing it
-  const code = `import { saveUsage } from ${JSON.stringify(mod)};
-    process.stdout.write('started\\n');
-    saveUsage(${JSON.stringify(r.dir)}, 'codex', { read_at: '2026-11-11T12:00:00.000Z', windows: { five_hour: { used_percent: 9, resets_at: null } } });`;
-  const p = spawn(process.execPath, ['--input-type=module', '-e', code], { stdio: ['ignore', 'pipe', 'pipe'] });
-  let out = '', err = '';
-  p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { err += d; });
-  const exited = new Promise(resolve => p.on('exit', resolve));
-  for (const until = Date.now() + 10000; !out.includes('started') && Date.now() < until;) await new Promise(res => setTimeout(res, 10));
+  const child = saveIn(r.dir, 'codex', { read_at: '2026-11-11T12:00:00.000Z', windows: { five_hour: { used_percent: 9, resets_at: null } } });
+  await child.started;
   await new Promise(res => setTimeout(res, 150));
   assert.equal(readUsage(r.dir).codex, undefined, 'nothing written while the lock is held');
   // What the other process writes meanwhile is kept.
   fs.writeFileSync(usageFile(r.dir), JSON.stringify({ ...readUsage(r.dir), claude: { ...readUsage(r.dir).claude, read_at: '2026-11-11T12:30:00.000Z' } }));
   fs.rmSync(lock);
-  assert.equal(await exited, 0, err);
+  assert.equal(await child.exited, 0, child.err());
   const kept = readUsage(r.dir);
   assert.equal(kept.codex.windows.five_hour.used_percent, 9);
   assert.equal(kept.claude.read_at, '2026-11-11T12:30:00.000Z', 'the other process\'s write survives');
@@ -183,6 +177,56 @@ test('0642 AC3: a save waits while another process holds the file, so neither un
   assert.equal(keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.5, seven: 0.2 })]), { now: NOW + 3600e3 }), true);
   assert.equal(fs.existsSync(lock), false);
 });
+
+test('0642 AC3: of two processes taking over the same stale lock, neither removes the lock the other made, so both readings survive', async () => {
+  const r = panelRepo(), lock = `${usageFile(r.dir)}.lock`, guard = `${lock}.stale`;
+  fs.mkdirSync(path.dirname(lock), { recursive: true });
+  // This test is the first contender: it finds the lock stale and takes the guard to take it over.
+  fs.writeFileSync(lock, '1\n');
+  const old = new Date(Date.now() - 60000);
+  fs.utimesSync(lock, old, old);
+  fs.writeFileSync(guard, `${process.pid}\n`);
+  const child = saveIn(r.dir, 'codex', { read_at: '2026-11-11T12:00:00.000Z', windows: { five_hour: { used_percent: 9, resets_at: null } } });
+  await child.started;
+  await new Promise(res => setTimeout(res, 150));
+  assert.ok(Date.now() - fs.statSync(lock).mtimeMs > 30000, 'the second contender leaves the stale lock while the first holds the guard');
+  // The first removes it, makes its own and lets go of the guard: the second must wait for that lock, not remove it.
+  fs.rmSync(lock);
+  fs.writeFileSync(lock, `${process.pid}\n`);
+  fs.rmSync(guard);
+  await new Promise(res => setTimeout(res, 150));
+  assert.ok(fs.existsSync(lock), 'the first contender\'s new lock is still there');
+  assert.equal(readUsage(r.dir).codex, undefined, 'and the second has written nothing');
+  fs.writeFileSync(usageFile(r.dir), JSON.stringify({ claude: { read_at: '2026-11-11T12:30:00.000Z', windows: { five_hour: { used_percent: 3, resets_at: null } } } }));
+  fs.rmSync(lock);
+  assert.equal(await child.exited, 0, child.err());
+  const kept = readUsage(r.dir);
+  assert.equal(kept.claude.windows.five_hour.used_percent, 3);
+  assert.equal(kept.codex.windows.five_hour.used_percent, 9);
+  assert.equal(fs.existsSync(lock) || fs.existsSync(guard), false);
+});
+
+test('0642 AC3: a guard left by a process that died is cleared, so a stale lock can still be taken over', () => {
+  const r = panelRepo(), lock = `${usageFile(r.dir)}.lock`, guard = `${lock}.stale`;
+  fs.mkdirSync(path.dirname(lock), { recursive: true });
+  const old = new Date(Date.now() - 60000);
+  for (const f of [lock, guard]) { fs.writeFileSync(f, '1\n'); fs.utimesSync(f, old, old); }
+  assert.equal(keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.5, seven: 0.2 })]), { now: NOW }), true);
+  assert.equal(fs.existsSync(lock) || fs.existsSync(guard), false);
+});
+
+// A separate process saving `reading` as `agent`'s in `dir`: { started, exited, err() }.
+function saveIn(dir, agent, reading) {
+  const mod = new URL('../scripts/agent-usage.mjs', import.meta.url).href;
+  const code = `import { saveUsage } from ${JSON.stringify(mod)};
+    process.stdout.write('started\\n');
+    saveUsage(${JSON.stringify(dir)}, ${JSON.stringify(agent)}, ${JSON.stringify(reading)});`;
+  const p = spawn(process.execPath, ['--input-type=module', '-e', code], { stdio: ['ignore', 'pipe', 'pipe'] });
+  let err = '';
+  p.stderr.on('data', d => { err += d; });
+  const started = new Promise(resolve => p.stdout.on('data', d => { if (String(d).includes('started')) resolve(); }));
+  return { started, exited: new Promise(resolve => p.on('exit', resolve)), err: () => err };
+}
 
 test('0642 AC3: an unreadable usage file reads as no readings, and the next reading replaces it', () => {
   const r = panelRepo();

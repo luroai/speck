@@ -96,17 +96,26 @@ export function readUsage(repo) {
 const LOCK_WAIT_MS = 5000, LOCK_STALE_MS = 30000;
 const pause = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 
+// How long ago `file` last changed, in ms, or null when it's gone.
+const ageOf = file => { try { return Date.now() - fs.statSync(file).mtimeMs; } catch { return null; } };
+const take = file => { try { fs.writeFileSync(file, `${process.pid}\n`, { flag: 'wx' }); return true; } catch (e) { if (e.code !== 'EEXIST') throw e; return false; } };
+
+// Removes `lock` if a process that died left it, holding `lock`.stale while it checks again and removes it, so two
+// processes taking over the same lock can't remove the one either of them has made since. A guard left for
+// LOCK_STALE_MS is removed in turn. True when it removed the lock.
+function clearStale(lock) {
+  const guard = `${lock}.stale`;
+  if (!take(guard)) { if (ageOf(guard) > LOCK_STALE_MS) fs.rmSync(guard, { force: true }); return false; }
+  try { if (ageOf(lock) > LOCK_STALE_MS) { fs.rmSync(lock, { force: true }); return true; } return false; } finally { fs.rmSync(guard, { force: true }); }
+}
+
 // Runs fn holding `file`.lock, so builds, review rounds and watch runs ending at once each read and write the file in
 // turn rather than one undoing another. A lock left for LOCK_STALE_MS by a process that died is taken over.
 function withLock(file, fn) {
   const lock = `${file}.lock`, until = Date.now() + LOCK_WAIT_MS;
-  for (;;) {
-    try { fs.writeFileSync(lock, `${process.pid}\n`, { flag: 'wx' }); break; } catch (e) { if (e.code !== 'EEXIST') throw e; }
-    let age = 0;
-    try { age = Date.now() - fs.statSync(lock).mtimeMs; } catch { continue; } // just let go of
-    if (age > LOCK_STALE_MS) { fs.rmSync(lock, { force: true }); continue; }
+  while (!take(lock)) {
     if (Date.now() > until) throw new Error(`another process has held ${lock} for over ${LOCK_WAIT_MS / 1000} seconds`);
-    pause(10);
+    if (!(ageOf(lock) > LOCK_STALE_MS && clearStale(lock))) pause(10);
   }
   try { return fn(); } finally { fs.rmSync(lock, { force: true }); }
 }
