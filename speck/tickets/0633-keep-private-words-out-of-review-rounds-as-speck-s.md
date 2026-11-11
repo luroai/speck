@@ -48,7 +48,9 @@ A review round never holds a private word, as speck takes them out when it saves
 - Went with the recommendation: A: the private-word checks skip speck's own [private] markers (chosen by speck, as watch is decide, 2026-11-11 11:09 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a reviewer quotes one of your private words, speck now writes it as [private] in the saved review, in any case, just as it already writes your home folder as ~. The ship no longer stops for a private word in a review, and a ticket that would ship by itself still does, without waiting for you.
+
+To see it, add a word to your private-words file that a reviewer is likely to quote, then look at that ticket's review rounds: the word shows as [private]. Private words anywhere else in a ticket still stop the ship as before. The check now also ignores speck's own [private] markers, so text that you type as exactly "[private]" isn't checked for private words.
 
 ## Blocked question
 speck now writes each private word in a review round as `[private]`, but a private word that is part of the word "private" itself (such as "riv" or "ate") would still be found in that marker, so the ship would still refuse. Should speck's checks skip its own `[private]` markers (A, a small change to the private-word check that ship and the commit check share), leave this as a known limit, since private words are usually names (B), or use a marker with no letters in it instead of `[private]` (C, which changes acceptance criterion 1)? I recommend A: it keeps the marker the ticket asks for and closes the gap for every word.
@@ -62,6 +64,8 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox.
+- Known limit: the private-word check skips any exact lower-case `[private]` in a line, including one a person typed, not only those speck wrote.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -146,6 +150,92 @@ Clear winner: yes
     ],
     "escalation_question": "Should generated '[private]' markers be exempt from private-word checks when a configured private word occurs inside that marker?",
     "summary": "The normal redaction and receipt flow works in the supplied tests. Two gaps remain: redaction can break home-path shortening, and some private words still block shipping because they occur inside '[private]'. The latter needs a decision about how replacement markers should be treated."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "97a9fca8aab560341324d8ffbfbd69d84b68edb6",
+    "session": "continued",
+    "thread_id": "01a1ca4a-351a-7633-bd75-85db7f83011b",
+    "builder_response": "- Tests run: `speck test --related test/private-words-0633.test.mjs` (the ticket's own test file plus every existing test file that names a changed file: 1474 tests, 0 failing, 3 skipped).\n- F1: fixed. `redactPrivateWords` (scripts/private-words.mjs) now runs each string through `tildePaths` before replacing words, so a home folder whose path holds a private word is still written as `~/`. Test: \"0633 AC1 F1\", through `speck review` with the reviewer's text and the builder's response.\n- F2: fixed, with the option chosen for the blocked question (A, recorded in the ticket's Notes): `privateHit`, which ship and the commit check share, replaces speck's own `[private]` markers with a NUL before looking for words, so a word inside a marker (\"riv\") isn't found and the text either side of a marker isn't joined into one word. Only the exact lower-case marker speck writes is skipped. Tests: \"0633 AC2 F2\" (unit, and through `speck review` then `speck ship --auto` with the word \"riv\").\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 210129,
+      "cached_input_tokens": 165888,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1619,
+      "reasoning_output_tokens": 302
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6943,
+      "cached": 77696,
+      "write": 0,
+      "output": 530
+    },
+    "cost_usd": 0.0269556,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T11:13:35.685Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "saveRound redacts reviewer text and builder responses while preserving control fields. redactPrivateWords now applies tildePaths first. Passing AC1 tests exercise mixed-case words, review, record, and home paths containing private words."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "saveRound creates the receipt from the round read back after saving. Both AC2 auto-ship integration tests passed, including the 'riv' marker case. privateHit exempts exact '[private]' markers in accordance with the recorded decision."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Without configured words, redactPrivateWords returns its input unchanged and saveRound retains existing tildePaths handling. The AC3 integration test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The reported related-test run completed with 1471 passing tests, zero failures and three skips. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review.mjs",
+        "issue": "Private-word replacement previously prevented home-path shortening when the home path contained a private word.",
+        "suggested_fix": "Resolved: home paths are shortened before redaction, with an integration test covering reviewer text and the builder response.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/private-words.mjs",
+        "issue": "Private words contained in '[private]' previously caused redacted rounds to fail shipping checks.",
+        "suggested_fix": "Resolved under the recorded marker-exemption decision: privateHit skips exact generated markers. Unit and auto-ship integration tests cover this behaviour.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both earlier findings are resolved. Review text is redacted while home paths remain shortened, and saved rounds retain valid receipts for automatic shipping. The reported tests pass, including the replacement-marker edge case."
   }
 }
 ```
