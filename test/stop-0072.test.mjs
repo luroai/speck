@@ -1,4 +1,5 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
+// Full suite only: it starts and stops real process trees and waits for them against the clock (0631).
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

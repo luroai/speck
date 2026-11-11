@@ -4,6 +4,8 @@
 // `node --test` sorts the files it's given, so the order is set here, through run() from node:test.
 // On a machine with 8 cores or fewer, the heavy files run at most 2 at a time beside the others (0233): those whose
 // code starts a real panel, browser or `speck run` (heavy.mjs, 0271).
+// With --quick (0631), the run each ship of speck waits for, it leaves out the heavy files on any machine, and those
+// marked as full-suite only (full-only.mjs), and keeps the times recorded for the files it left out.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -12,6 +14,7 @@ import { Readable } from 'node:stream';
 import { run } from 'node:test';
 import { spec, tap } from 'node:test/reporters';
 import { fileURLToPath } from 'node:url';
+import { fullOnlyFiles } from './full-only.mjs';
 import { heavyFiles } from './heavy.mjs';
 
 export const timesFile = root => path.join(root, 'speck', '.cache', 'test-times.json');
@@ -95,23 +98,29 @@ async function* merged(streams) {
 // Runs every test/*.test.mjs file under `root`, writing the report to `out` (TAP, as `node --test` writes when it isn't
 // to a terminal), and records each file's time once the run has ended. Resolves to the exit code: 1 when any test failed.
 // With `cores` at 8 or fewer, the files in `heavy` run at most heavyLimit(cores) at a time, beside the other files. By
-// default, `heavy` is the files whose own code starts a real panel, browser or `speck run` (heavyFiles).
-export async function runSuite(root, { cores = os.availableParallelism(), concurrency = Math.max(cores - 1, 1), heavy, out = process.stdout } = {}) {
+// default, `heavy` is the files whose own code starts a real panel, browser or `speck run` (heavyFiles). With `quick`,
+// the heavy files and those marked as full-suite only (fullOnlyFiles) don't run at all.
+export async function runSuite(root, { cores = os.availableParallelism(), concurrency = Math.max(cores - 1, 1), heavy, quick = false, out = process.stdout } = {}) {
   let names = [];
-  try { names = fs.readdirSync(path.join(root, 'test')).filter(f => f.endsWith('.test.mjs')); } catch { /* no test folder */ }
+  try { names = fs.readdirSync(path.join(root, 'test')).filter(f => f.endsWith('.test.mjs')).map(f => `test/${f}`); } catch { /* no test folder */ }
+  if (quick) {
+    const left = new Set([...heavy ?? heavyFiles(root, names), ...fullOnlyFiles(root, names)]);
+    names = names.filter(f => !left.has(f));
+  }
   if (!names.length) {
-    console.error(`No test files to run: there are no test/*.test.mjs files in ${root}.`);
+    console.error(`No test files to run: there are no test/*.test.mjs files in ${root}${quick ? ' that the quick run includes' : ''}.`);
     return 1;
   }
   const file = timesFile(root);
-  const files = orderFiles(names.map(f => `test/${f}`), readTimes(file));
+  const recorded = readTimes(file);
+  const files = orderFiles(names, recorded);
   // run() is given each file's full path, so the files are found wherever the process was started (Node 20's run()
   // has no cwd option), and the times are kept by the paths below root.
   const given = new Map(files.map(f => [path.join(root, f), f]));
   const times = new Map();
   let failed = false;
   const limit = heavyLimit(cores);
-  const isHeavy = new Set(limit ? heavy ?? heavyFiles(root, files) : []);
+  const isHeavy = new Set(limit && !quick ? heavy ?? heavyFiles(root, files) : []);
   const groups = [[files.filter(f => !isHeavy.has(f)), concurrency], [files.filter(f => isHeavy.has(f)), limit]].filter(([g]) => g.length);
   const streams = groups.map(([g, n]) => run({ files: g.map(f => path.join(root, f)), concurrency: n }));
   for (const stream of streams) {
@@ -130,7 +139,7 @@ export async function runSuite(root, { cores = os.availableParallelism(), concur
   });
   // Not being able to record them changes nothing about this run's result.
   if (times.size) {
-    try { writeTimes(file, times); } catch (e) {
+    try { writeTimes(file, quick ? new Map([...recorded, ...times]) : times); } catch (e) {
       console.error(`Couldn't record the test files' times in ${file} (${e.code || e.message}). The next run starts them alphabetically.`);
     }
   }
@@ -138,5 +147,5 @@ export async function runSuite(root, { cores = os.availableParallelism(), concur
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.exitCode = await runSuite(process.cwd());
+  process.exitCode = await runSuite(process.cwd(), { quick: process.argv.includes('--quick') });
 }

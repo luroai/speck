@@ -1,6 +1,7 @@
 // 0384: a review round that runs past the builder's shell limit carries on. `speck review` exits 12 after a while,
 // printing the command that waits for the same round, and that command records it once its reviewer is done.
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
+// Full suite only: it waits on real reviewer processes against the clock, which a busy machine throws off (0631).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
