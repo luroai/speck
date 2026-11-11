@@ -40,6 +40,8 @@ A build or ship that breaks one of the panel's house rules fails before review a
 - 0631 made the quick run (`--quick` in `test/support/suite.mjs`); `commands.checks` already runs alongside `speck test --files` in builds (brief: `speck test`).
 - After 0656, as these rules fail on `main` until it ships.
 - Failing before this build: none
+- Self-check: AC3's test copies skills/ too, so in its copy of the repo only the two broken rules fail, and it now requires exactly those two; heavy checks in a quick run keep to the heavy limit, with a test.
+- Also listed in commands.checks: test/panel-0543.test.mjs (the page links to nothing outside the panel) and test/panel-0577.test.mjs (fonts from the panel itself), both rules across the whole panel. The four add about 18 s to each quick run.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

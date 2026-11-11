@@ -9,6 +9,9 @@ import { SpeckError, sh, findRepoRoot, loadConfig, worktreeList } from './core.m
 import { testRun, showRecordedRun } from './results.mjs';
 import { fullCommand } from './full-suite.mjs';
 import { relatedTests, relatedReport } from './related.mjs';
+import { checkFiles } from './checks.mjs';
+
+export { checkFiles }; // 0657: in its own module, so the test runner reads it without naming this one
 
 const POLL_MS = 500;
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -190,17 +193,6 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '', 
 
 // A word the shell reads back as exactly `s`.
 export const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
-
-// The test files commands.checks lists (0272), relative to the repo root: quick checks of rules for the whole repo that
-// `speck test --files` runs with the files it's given. A SpeckError naming any that isn't a file, before anything runs.
-export function checkFiles(repo, cfg) {
-  const v = cfg.commands?.checks;
-  const list = (Array.isArray(v) ? v.map(String) : v == null ? [] : String(v).split(/[\s,]+/)).filter(Boolean);
-  const rels = [...new Set(list.map(f => path.relative(repo, path.resolve(repo, f)) || '.'))];
-  const missing = rels.filter(f => !fs.statSync(path.join(repo, f), { throwIfNoEntry: false })?.isFile());
-  if (missing.length) throw new SpeckError(`commands.checks in speck/config.yml lists ${missing.length === 1 ? 'a test file' : 'test files'} that ${missing.length === 1 ? "doesn't" : "don't"} exist: ${missing.join(', ')}. Fix the list with \`speck config set commands.checks "<file> …"\` (blank for none), then run this again. No tests were run.`);
-  return rels;
-}
 
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
 // for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just
