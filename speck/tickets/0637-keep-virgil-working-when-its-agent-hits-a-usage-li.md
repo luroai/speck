@@ -1,7 +1,7 @@
 ---
 id: "0637"
 title: "Keep speck's watch agent working when its agent hits a usage limit"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-10-keep-speck-working-when-an-agent-hits-its-u
 after: ["0636"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:52:34.359Z"
+approved: "2026-11-11T12:00:30.154Z"
 
 ---
 # 0637 · Keep speck's watch agent working when its agent hits a usage limit
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When Claude's usage limit is reached, speck's watch agent runs on Claude too, so it can't look into anything until the limit resets, while Codex or Cursor sit connected and idle. On 2026-11-10 that left a stopped build untouched for about five hours.
@@ -52,9 +53,14 @@ When Claude's usage limit is reached, speck's watcher no longer sits idle until 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 224,259
+- Elapsed since build started: 8 min
+- Changed lines: 80 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - A look on a stand-in that runs into that agent's own usage limit isn't recognised, so it's counted as a look that took no action. Skipped: the ticket puts finding Codex's and Cursor's limits out of scope, and the source idea's later stages cover it (speck/ideas/done/2026-11-10-keep-speck-working-when-an-agent-hits-its-usage-limit.md).
