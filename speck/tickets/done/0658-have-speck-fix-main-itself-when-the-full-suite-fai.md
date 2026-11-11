@@ -1,7 +1,7 @@
 ---
 id: "0658"
 title: "Have speck fix main itself when the full suite fails"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0657"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T17:59:16.015Z"
 approved: "2026-11-11T18:09:22.527Z"
+finished: "2026-11-11T18:11:45.234Z"
 
 ---
 # 0658 · Have speck fix main itself when the full suite fails
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the full suite fails on the base branch, speck counts it under Needs you with a row that reads "Full suite fails on main · a95b3c3 · 4 tests fail". You don't read code, so there's nothing you can do with it, and the fix is always the same: a fix ticket for the failing tests. On 2026-11-11 it sat under Needs you for over an hour, and the fix ticket speck did make stayed a draft.
