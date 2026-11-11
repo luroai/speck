@@ -45,6 +45,7 @@ speck is ready to be released as 1.2.0.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - After it ships, check that the `v1.2.0` tag and its GitHub release page appeared. If not: `gh release create v1.2.0 --target main --title "speck 1.2.0" --notes-file docs/releases/v1.2.0.md`.
 - Checked 2026-11-11: `package.json` is `1.1.0`, and `v1.1.0` is tagged.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
