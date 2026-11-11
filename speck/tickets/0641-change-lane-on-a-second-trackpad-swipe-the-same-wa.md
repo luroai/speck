@@ -1,7 +1,7 @@
 ---
 id: "0641"
 title: "Change lane on a second trackpad swipe the same way while the first still glides"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,13 +15,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T13:27:21.806Z"
-blocked_at: ""
+blocked_at: "2026-11-11T13:32:56.968Z"
 waited_seconds: 13
 
 ---
 # 0641 · Change lane on a second trackpad swipe the same way while the first still glides
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 In the panel in Cursor, a sideways trackpad swipe changes lane once, and a second swipe the same way does nothing until you wait. The panel takes every sideways scroll the same way as the first swipe's glide until scrolling has paused for 50 ms (0514), and Cursor's pane sends the next swipe straight on from the glide with no pause, so swiping from Capture to Build or Plan to Shipped takes two swipes with a wait between.
@@ -53,14 +53,94 @@ Two trackpad swipes the same way, one straight after the other, change lane twic
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-AC1 and AC4 contradict each other: an existing test from 0514 says that a second swipe the same way, starting 8–49 ms after the first one's glide was cut short, counts as the same scroll and must not change lane. With a 16 ms gap, that is exactly the case AC1 says must change lane, and AC4 says no test that passed may fail. Should I change that one check in the 0514 test (in `panel-0514.test.mjs`, the "on the same way after only … ms counts as the same scroll" line) so it expects the second swipe to change lane, keeping the rest of that test as it is? Or should the ticket drop AC1 and keep the current behaviour? I recommend changing the check: it pins exactly the behaviour this ticket reports as the bug.
-Recommended: Change the 0514 check to expect a lane change
-Other options: Keep the 0514 check and drop AC1 (the bug stays); Tell a new swipe from a glide by how long the glide has run, which passes both but would miss a quick second swipe
+The page can't see a trackpad's fingers, only how far each step scrolls, so a swipe that slows down and speeds up again can look exactly like a glide followed by a new swipe. AC1 and AC2 can't both hold for every swipe. As built, a second lane change needs the steps to shrink twice in a row and then grow three times in a row past 20 px a step; the reviewer found that a single swipe going 20, 30, 24, 18, 19, 22, 26 then gliding changes lane twice. Should I accept that limit, and narrow it further so the speed-up has to start from under 10 px a step, as a new swipe's fingers do when they land, with AC2 reworded to say which swipes count as one? Or should I keep AC2 as it is and drop the second change during a glide (the bug stays)? I recommend accepting the limit with the under-10-px start: it fixes the reported bug, and only a swipe that nearly stops and then speeds up hard is taken as two.
+Recommended: Accept the limit, with the speed-up starting under 10 px a step, and reword AC2
+Other options: Accept the limit as built now; Keep AC2 as it is and drop the fix (the bug stays)
 Changes what you'd notice: yes
-Clear winner: yes
-
+Clear winner: no
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · escalate</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "be968247d4b504443b189db4877bfee149c289d3",
+    "session": "fresh",
+    "thread_id": "01a1cace-e565-77c2-a1a6-913d42fc7dee",
+    "builder_response": "- Tests run: test/panel-0641.test.mjs test/panel-0514.test.mjs test/panel-0517.test.mjs test/panel-0060.test.mjs test/panel-0161.test.mjs test/panel-0476.test.mjs, plus the related tests speck test --related chose (the files naming templates/panel-header.js) and the commands.checks files.\n- Changed one existing check in test/panel-0514.test.mjs (\"on the same way after only … ms\"), and the expected lane of the line after it, which now starts from Plan. The user's chosen answer to the blocked question (see the ticket's Notes) allows this: that check pinned the very behaviour AC1 changes.\n- Rule: after a change, a same-way step counts as a new swipe once two steps in a row have shrunk since the change and then three in a row have grown, the last over 20 px. Known limit, in the Notes: a single swipe that slows over two frames and speeds up over three before its glide would change lane twice.\n",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 128295,
+      "cached_input_tokens": 92032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 845,
+      "reasoning_output_tokens": 60
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 36263,
+      "cached": 92032,
+      "write": 0,
+      "output": 845
+    },
+    "cost_usd": 0.0901792,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T13:32:39.170Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "escalate",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/panel-0641.test.mjs AC1 tests exercise consecutive swipes at 16 ms intervals, in both directions and with several glide lengths; both passed."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The wheel listener in templates/panel-header.js counts a single swipe slowing twice then accelerating three times as two swipes. Independently reproduced with pad(): [20,30,24,18,19,22,26,...glide()] moving left from Build lands on Capture instead of Plan. Existing AC2 tests omit this pattern."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The two AC3 tests in test/panel-0641.test.mjs cover pauses of at least 50 ms and immediate direction changes. Both passed; the handler retains the pause reset and reverse-direction accumulation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reported run: 214 passed, 3 skipped, zero failures. The changed 0514 expectation matches the explicitly recorded decision to permit the second same-direction swipe."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "The new heuristic violates AC2: a single swipe that slows down and speeds up again can skip a lane. The ticket Notes acknowledge this limitation, but the acceptance criterion still promises that such a swipe changes lane only once. The added tests avoid the acknowledged failing pattern.",
+        "suggested_fix": "Obtain an explicit product decision on accepting this limitation. If accepted, revise AC2 to specify the supported distinction and add a test recording the chosen behaviour; otherwise revise the implementation to meet AC2.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "May a single swipe that slows for two frames and then accelerates for three frames past 20 px change lane twice, as the proposed heuristic does, or must AC2's promise of one lane change remain?",
+    "summary": "Consecutive swipes now change lanes without waiting, and the tested pause and direction-change behaviour still works. However, one swipe can also skip a lane when its speed falls and rises. I reproduced this; accepting that trade-off needs a product decision."
+  }
+}
+```
+
+</details>
