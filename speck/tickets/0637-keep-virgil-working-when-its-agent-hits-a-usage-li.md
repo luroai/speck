@@ -42,6 +42,7 @@ While the watch agent's own agent is held by a usage limit, speck runs it on the
 - Limit records: `scripts/usage-limit.mjs` (`holds`, 0622, Claude only today) and `scripts/reviewer-limit.mjs` (0623); the watch agent's agent: `foremanAgentOf` and `foremanArgv` in `scripts/foreman-agent.mjs`.
 - Stage 1 of `speck/ideas/2026-11-10-keep-speck-working-when-an-agent-hits-its-usage-limit.md`.
 - After 0636, which also changes how `speck run` starts the watch agent in `scripts/foreman-agent.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
