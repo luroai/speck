@@ -1,7 +1,7 @@
 ---
 id: "0638"
 title: "Let speck work out how to start your app the first time it needs to"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
+started: "2026-11-11T13:05:48.682Z"
 
 ---
 # 0638 · Let speck work out how to start your app the first time it needs to
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck checks a build's question in the running app only once `commands.start` is set, and every project starts its app differently: this repo's is the panel, another's a CRM. Setting it by hand in each project is a chore you only find out about when a check-in-the-app question comes to you instead.
