@@ -1,7 +1,7 @@
 ---
 id: "0631"
 title: "Ship speck itself on its quick tests"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0630"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T10:36:36.782Z"
 approved: "2026-11-11T10:41:04.064Z"
+finished: "2026-11-11T10:45:02.222Z"
 
 ---
 # 0631 · Ship speck itself on its quick tests
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Every speck ship waits for speck's whole suite, about 560 files, of which about 200 start a real panel, browser or `speck run`. They make each ship take minutes, and the timing tests among them refuse ships that broke nothing when the machine is busy.
