@@ -77,16 +77,17 @@ test('0593 AC2: the bar is set off by the redesign\'s line, on the page\'s colou
   assert.match(bar, /background: var\(--panel\)/);
 });
 
-// ---------- AC3: speck's face beside its name ----------
+// ---------- AC3: speck's face beside its name (0652: as its card's character, beside the name the card has) ----------
 
+const headOf = p => p.all(pane(p)).find(n => /\bmhead\b/.test(n.className || ''));
 test('0593 AC3: the name setting shows speck\'s face, watching, beside its control', async () => {
   const p = await opened();
-  const control = p.all(rowOf(p, 'speck_name')).find(n => /\bcontrol\b/.test(n.className || ''));
-  const [face] = facesIn(p, control);
-  assert.ok(face, 'a face in the control');
+  const head = headOf(p);
+  const [face] = facesIn(p, head);
+  assert.ok(face, 'a face at the head of its card');
   assert.equal(face.attrs['data-mood'], 'watching');
   assert.match(face.attrs['aria-label'], /Virgil/, 'named as you named it');
-  assert.equal(control.children[0], face, 'before the name\'s box');
+  assert.equal(head.children[0], face, 'before the name');
   assert.equal(facesIn(p, pane(p)).length, 1, 'and nowhere else in the view');
 });
 
@@ -94,19 +95,20 @@ test('0593 AC3: the face is there after its row is drawn again', async () => {
   const p = await opened();
   changeTo(p, 'speck_name', 'Dante');
   await p.settle();
-  assert.equal(facesIn(p, rowOf(p, 'speck_name')).length, 1);
+  assert.equal(facesIn(p, headOf(p)).length, 1);
+  assert.equal(facesIn(p, pane(p)).length, 1);
 });
 
 test('0593 AC3: a blank name is labelled speck', async () => {
   const p = settingsPage([{ groups: [{ title: 'Your engineering manager', settings: [row('speck_name')] }] }]);
   await openSettings(p);
-  assert.match(facesIn(p, rowOf(p, 'speck_name'))[0].attrs['aria-label'], /^speck\b/);
+  assert.match(facesIn(p, headOf(p))[0].attrs['aria-label'], /^speck\b/);
 });
 
 // ---------- AC4: at 320 px wide, in both looks, in a real browser ----------
 
 const skip = findChrome() ? false : 'needs Chrome or Chromium';
-test('0593 AC1, AC4: at 320 px, in both looks, the groups are drawn with no box, nothing runs past the view and the face stays on its name\'s line', { skip, timeout: 60000 }, async () => {
+test('0593 AC1, AC4: at 320 px, in both looks, the groups are drawn with no box, nothing runs past the view and the face stays on its name\'s line (0652: its card\'s)', { skip, timeout: 60000 }, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage(`http://127.0.0.1:${panel.port}/`);
   try {
@@ -115,7 +117,7 @@ test('0593 AC1, AC4: at 320 px, in both looks, the groups are drawn with no box,
     await b.js(`document.getElementById('settings-open').click(), true`);
     await b.until(`!!document.querySelector('#settings .speck-face') && !!document.querySelector('#settings .save-all')`, 'the settings');
     // Something to save, so Save is in its accent.
-    await b.js(`(() => { const i = document.querySelector('#settings .speck-face').parentNode.querySelector('input'); i.value = 'Dante'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+    await b.js(`(() => { const i = document.querySelector('#settings input[aria-label="speck_name"]'); i.value = 'Dante'; i.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
     await b.until(`!document.querySelector('#settings .save-all').disabled`, 'Save to be pressable');
     for (const look of ['light', 'dark']) {
       await b.js(`document.getElementById('look-${look}').click(), true`);
@@ -123,15 +125,15 @@ test('0593 AC1, AC4: at 320 px, in both looks, the groups are drawn with no box,
       const d = await b.js(`(() => {
         const pane = document.getElementById('settings'), right = Math.min(innerWidth, pane.getBoundingClientRect().right);
         const wide = [...pane.querySelectorAll('*')].filter(n => n.getClientRects().length && !n.closest('p.explain') && n.getBoundingClientRect().right > right + 0.5).map(n => n.tagName + '.' + n.className);
-        const face = pane.querySelector('.speck-face'), box = face.parentNode.querySelector('input'), f = face.getBoundingClientRect(), i = box.getBoundingClientRect();
+        const face = pane.querySelector('.speck-face'), box = face.parentNode.querySelector('h5'), f = face.getBoundingClientRect(), i = box.getBoundingClientRect(), input = pane.querySelector('input[aria-label="speck_name"]').getBoundingClientRect();
         const boxed = [...pane.querySelectorAll('.sgroup, .switches')].filter(g => { const c = getComputedStyle(g); return ['Top', 'Right', 'Bottom', 'Left'].some(d => parseFloat(c['border' + d + 'Width']) > 0) || c.boxShadow !== 'none' || parseFloat(c.borderTopLeftRadius) > 0; }).map(g => g.className);
-        return { boxed, wide, sw: pane.scrollWidth, cw: pane.clientWidth, sameLine: f.top < i.bottom && i.top < f.bottom, inputWidth: i.width,
+        return { boxed, wide, sw: pane.scrollWidth, cw: pane.clientWidth, sameLine: f.top < i.bottom && i.top < f.bottom, inputWidth: input.width,
           bg: getComputedStyle(pane).backgroundColor, save: getComputedStyle(pane.querySelector('.save-all')).borderTopColor };
       })()`);
       assert.deepEqual(d.boxed, [], `${look}: no group is drawn as a card`);
       assert.deepEqual(d.wide, [], `${look}: nothing past the view`);
       assert.ok(d.sw <= d.cw, `${look}: no sideways scroll`);
-      assert.ok(d.sameLine, `${look}: the face beside the name's box`);
+      assert.ok(d.sameLine, `${look}: the face beside its card's name`);
       assert.ok(d.inputWidth >= 40, `${look}: a box wide enough to type in, was ${d.inputWidth}`);
       assert.equal(d.bg, look === 'dark' ? 'rgb(17, 18, 20)' : 'rgb(255, 255, 255)', `${look}: the look's own page colour`);
       assert.equal(d.save, look === 'dark' ? 'rgb(134, 162, 255)' : 'rgb(47, 85, 212)', `${look}: the look's own accent`);

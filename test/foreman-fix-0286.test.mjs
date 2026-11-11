@@ -76,11 +76,12 @@ test('0286 AC1: the Settings view shows watch in its Foreman group, under the sp
   await p.settle();
   p.press(p.byId('settings-open'));
   await p.settle();
-  const groups = p.byId('settings').children.filter(n => n.className === 'sgroup');
-  assert.equal(groups.filter(n => n.textContent.startsWith('Your engineering manager')).length, 1, 'one Foreman group');
+  // 0652: the engineering manager's settings are on its card in Your team, first in the view, above the speck run switch.
+  const groups = p.byId('settings').children.filter(n => /\b(sgroup|switches)\b/.test(n.className || ''));
   const foreman = groups[0];
-  assert.ok(foreman.textContent.startsWith('Your engineering manager'), 'first');
-  assert.ok(p.all(p.byId('settings').children.find(n => n.className === 'switches')).some(n => n.id === 'run-switch'), 'with the speck run switch above it (0396)');
+  assert.match(foreman.className, /\bteam\b/, 'first');
+  assert.equal(p.all(foreman).filter(n => /\bmember\b/.test(n.className || '') && n.attrs['data-member'] === 'manager').length, 1, 'one card for it');
+  assert.ok(p.all(groups.find(n => n.className === 'switches')).some(n => n.id === 'run-switch'), 'the speck run switch is still there (0396)');
   const pick = p.all(foreman).find(n => n.tagName === 'select' && n.attrs['aria-label'] === 'watch');
   assert.ok(pick, 'a list to pick from');
   assert.deepEqual(p.all(pick).filter(n => n.tagName === 'option').map(o => o.value), ['off', 'tell', 'fix']);

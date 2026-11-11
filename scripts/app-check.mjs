@@ -24,9 +24,9 @@ export const qaOn = cfg => !!cfg && typeof cfg === 'object' && QA_SETTINGS.some(
 export const qaConfig = (cfg, providers = []) => (!qaOn(cfg) ? cfg : { ...cfg, watch_agent: benchOwnAgent(cfg, 'qa_bench', providers),
   watch_model: blank(cfg.qa_model) ? '' : String(cfg.qa_model).trim(), watch_effort: blank(cfg.qa_effort) ? '' : String(cfg.qa_effort).trim() });
 
-// `speck config show`'s row for each of QA's settings, shown with the watch agent's, as the Settings view has no QA group
-// yet: the value speck uses, this machine's `mine` over speck/config.yml's `repoCfg`.
-const QA_EXPLAIN = Object.freeze({
+// `speck config show`'s row for each of QA's settings, shown with the watch agent's: the value speck uses, this machine's
+// `mine` over speck/config.yml's `repoCfg`. 0652: the Settings view shows them on QA's card.
+export const QA_EXPLAIN = Object.freeze({
   qa_agent: 'The agent QA checks a build\'s question in the running app on: claude, codex, cursor or a model provider. Blank uses the watch agent\'s agent. While all four QA settings are blank, QA\'s checks run as the watch agent\'s looks do: on its agent, watch_model, watch_effort and watch_bench.',
   qa_model: 'The model QA runs on, written as its agent names it. Blank leaves it to that agent\'s own default.',
   qa_effort: 'How hard QA thinks: low, medium, high, xhigh or max, or blank for its agent\'s own default. Cursor isn\'t given it, as its model names carry the effort.',

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv } from './support/panel.mjs';
 import { panelSettings, panelSetSetting, EDITABLE } from '../scripts/settings.mjs';
 import { machineConfig } from '../scripts/machine.mjs';
+import { TEAM_KEYS } from '../scripts/team.mjs';
 import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo } from './support/settings.mjs';
 
 // ---------- 0258: change a setting from the panel ----------
@@ -27,7 +28,7 @@ const readCfg = r => fs.readFileSync(cfgOf(r), 'utf8');
 const snapshot = r => ({ text: readCfg(r), head: headOf(r), status: r.g('status', '--porcelain') });
 
 test('0258 AC1: the eight settings can be changed, with reviewer and reviewer_effort offering only what speck accepts, and the rest stay read-only', () => {
-  assert.deepEqual([...EDITABLE], ['builder', 'builder_model', 'builder_effort', ...KEYS, 'auto_ship', 'auto_ship_risk', 'ship_mode', 'speck_name', 'watch', 'watch_agent', 'watch_model', 'watch_effort', 'allow_same_model_review']); // 0575, 0259 added auto_ship and auto_ship_risk, 0279 builder_model, 0293 builder, 0286 watch, 0287 the Foreman agent's, 0295 ship_mode, 0402 builder_effort, 0511 allow_same_model_review
+  assert.deepEqual([...EDITABLE], ['builder', 'builder_model', 'builder_effort', ...KEYS, 'auto_ship', 'auto_ship_risk', 'ship_mode', 'speck_name', 'watch', 'watch_agent', 'watch_model', 'watch_effort', 'allow_same_model_review', ...TEAM_KEYS]); // 0652 added Your team's, 0575, 0259 added auto_ship and auto_ship_risk, 0279 builder_model, 0293 builder, 0286 watch, 0287 the Foreman agent's, 0295 ship_mode, 0402 builder_effort, 0511 allow_same_model_review
   const r = panelRepo();
   fs.writeFileSync(cfgOf(r), readCfg(r).replace(/^reviewer_options:\n/m, 'reviewer_options:\n  my-reviewer:\n    command: "x {prompt}"\n'));
   const s = byKey(panelSettings(r.dir));

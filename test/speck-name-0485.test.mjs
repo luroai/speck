@@ -128,8 +128,9 @@ test('0485 AC4: Settings titles the group Your engineering manager, and the role
   const { p } = page();
   await p.settle();
   await openSettings(p);
-  const titles = p.all(p.byId('settings')).filter(n => n.tagName === 'h4').map(n => n.textContent);
-  assert.ok(titles.includes('Your engineering manager'), titles.join(', '));
+  // 0652: the group is the engineering manager's card in Your team, whose job says what it is
+  const card = p.all(p.byId('settings')).find(n => /\bmember\b/.test(n.className || '') && n.attrs['data-member'] === 'manager');
+  assert.match(p.all(card).find(n => /\bjob\b/.test(n.className || '')).textContent, /^Your engineering manager: /);
   assert.deepEqual(rolesUsing('deepseek', { builder: 'claude', reviewer: 'codex', foreman: 'deepseek' }), ['speck']);
   assert.deepEqual(rolesUsing('claude', { builder: 'claude', reviewer: 'codex' }), ['builder', 'speck']);
 });
