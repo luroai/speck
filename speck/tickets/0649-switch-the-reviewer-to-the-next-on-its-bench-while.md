@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0645"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:39:24.694Z"
-approved: "2026-11-11T15:04:55.300Z"
+approved: "2026-11-11T15:15:36.502Z"
 
 ---
 # 0649 · Switch the reviewer to the next on its bench while it's limited
@@ -59,12 +59,13 @@ Worth knowing: if nothing on the bench is free, the build waits for the reset as
 ## Review log
 Round 1 (codex): changes requested: F1 Consecutive rounds on the same stand-in resume its previous session, contrary to AC1's fresh-session requirement and the printed promise.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 352,248
-- Elapsed since build started: 26 min
+- Reviewer tokens: 513,774
+- Elapsed since build started: 36 min
 - Changed lines: 114 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
@@ -237,6 +238,90 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Eligible backup reviewers now take over while the original reviewer is limited, with the reason shown in the review pack. Every backup round starts fresh with the full history, and reviews return to the original agent after reset. The previous finding is resolved; the reviewed tests pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "68e8d8b28cb0851d96d11f00e0236418b5c97672",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1cb21-9758-7ab0-8ced-7d57d159b118",
+    "builder_response": "Merge round: main merged into the branch after ship hit a conflict.\n\n- Tests run: test/review-stand-in-0649.test.mjs test/reviewer-limit-0623.test.mjs test/usage-limit-0644.test.mjs\n- scripts/review.mjs (added-lines): both sides added an import; kept both (this ticket's review-stand-in import, main's agent-usage `keepUsage`).\n- scripts/reviewers.mjs (added-lines): the same; kept this ticket's `standInMeta` import and main's `keepUsage` import.\n- scripts/reviewer-limit.mjs (logic): main (0644) moved `reviewerRefused`/`resetIn` into limit-words.mjs and added `keepBuildUsage`; this ticket added `readLimit` to the usage-limit import. Kept all of them. Because 0644 now records a Codex or Cursor builder's usage limit as it does Claude's (`readLimit(runs, agent)`), `agentHeld` now checks the builder limit of whichever agent it's asked about, not only Claude's, so a stand-in held by its own builder limit is skipped. New test: \"0649 AC1: Codex or Cursor held by its own usage limit as a builder (0644) counts as held\".\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 511415,
+      "cached_input_tokens": 427264,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2359,
+      "reasoning_output_tokens": 214
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 21190,
+      "cached": 139776,
+      "write": 0,
+      "output": 560
+    },
+    "cost_usd": 0.0619576,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T15:15:33.942Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "standInFor retains ordered readiness, limit and same-model checks. Both runners force fresh stand-in sessions with full history and record the reviewer used. Passing AC1 tests cover consecutive stand-in rounds and builder usage limits; agentHeld now uses main's readLimit(runs, agent)."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 integration tests verify that the review pack, printed round summary and closing review log identify the stand-in and explain why it ran."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 integration test verifies exit 18, no reviewer launch or saved round, and the reset-wait record when no eligible stand-in is available."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 integration test verifies return to the original reviewer after expiry, in a fresh session containing earlier review history."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied post-merge run reports 169 passed, zero failed and three skipped, covering this ticket, reviewer-limit behaviour and main's 0644 usage-limit tests. The resolved files retain main's keepUsage calls, keepBuildUsage integration and limit-words imports."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review-stand-in.mjs",
+        "issue": "Consecutive stand-in rounds previously resumed the same session instead of starting fresh with full history.",
+        "suggested_fix": "Resolved in both reviewer runners; the passing consecutive-round integration test verifies no resume, full history and session: fresh. The merge preserves this fix.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves backup reviewer selection, fresh sessions, clear explanations and return after reset. It also preserves main's usage recording and skips backups held by their own builder limits. The reviewed tests pass, with no open blocking findings."
   }
 }
 ```
