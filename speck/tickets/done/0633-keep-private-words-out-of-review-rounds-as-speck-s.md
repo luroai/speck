@@ -1,7 +1,7 @@
 ---
 id: "0633"
 title: "Keep private words out of review rounds as speck saves them"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-11-11T11:01:26.858Z"
 blocked_at: ""
 waited_seconds: 17
 approved: "2026-11-11T11:13:44.155Z"
+finished: "2026-11-11T11:20:13.195Z"
 
 ---
 # 0633 · Keep private words out of review rounds as speck saves them
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a reviewer quotes one of your private words in its evidence, the ship refuses (exit 17) and the build rewords the round by hand. Since 0629 a reworded round no longer matches its receipt, so a ticket that should ship by itself waits for you, for a change that only rewords one line.
