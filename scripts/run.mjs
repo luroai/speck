@@ -186,7 +186,7 @@ function runOn(worker) {
       // A build killed by a signal is left without an exit, so the next check can resume it.
       const inHand = signal && killedInHand(id);
       if (!inHand) recordExit(id, recordFile, signal ? null : code);
-      if (!signal && limits.ended(id, log, recordFile)) return tick(); // 0622: speck run carries it on once the limit resets
+      limits.keepUsage(log, recordFile); if (!signal && limits.ended(id, log, recordFile)) return tick(); // 0642: the usage it reported. 0622: speck run carries it on once the limit resets
       reportIfStillReady(id, log);
       if (!inHand) lookInto(id, log);
     }
@@ -229,7 +229,7 @@ function runOn(worker) {
       try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
       const pid = rec.pid, valid = Number.isInteger(pid) && pid > 0 && pid !== process.pid, ran = carried.includes(id);
-      if (!(valid && (ran || pidAlive(pid)))) { stopPanelsOfRun(id, file); if (!killedInHand(id)) { recordExit(id, file, null); limits.ended(id, path.join(dir, `${id}.log`), file); } continue; } // 0619; 0622: one that stopped on Claude's usage limit while speck run was off
+      if (!(valid && (ran || pidAlive(pid)))) { stopPanelsOfRun(id, file); if (!killedInHand(id)) { recordExit(id, file, null); limits.keepUsage(path.join(dir, `${id}.log`), file); limits.ended(id, path.join(dir, `${id}.log`), file); } continue; } // 0619; 0622: one that stopped on Claude's usage limit while speck run was off
       adopt(id, file, rec, ran ? 'carries on through the switch' : 'is already being built');
     }
   };
@@ -290,7 +290,7 @@ function runOn(worker) {
       if (b.seen && b.fresh) launched.delete(id);
       const byStop = stoppedBySpeck(b.file), inHand = killedInHand(id);
       if (!inHand) recordExit(id, b.file, null);
-      if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; }
+      limits.keepUsage(b.log, b.file); if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; } // 0642: the usage it reported
       console.log(`${id} build (session ${b.session}, process ${b.pid}) stopped.`);
       if (!inHand && limits.ended(id, b.log, b.file)) continue; // 0622
       reportIfStillReady(id, b.log);

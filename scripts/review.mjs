@@ -16,6 +16,7 @@ import { codexSpend } from './round-cost.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
 import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
 import { REVIEWER_LIMITED, stopOnLimit, holdOnLimit, clearLimit } from './reviewer-limit.mjs';
+import { keepUsage } from './agent-usage.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -357,6 +358,7 @@ function runCodexReview(repo, id, s) {
   // A verdict file left by an earlier attempt that was ended must never be read as this one's (0180).
   fs.rmSync(out, { force: true });
   const r = runLimited('codex', args, { cwd: repo, input: prompt, ms });
+  keepUsage(repo, 'codex', r.stdout, { thread: round > 1 ? lastThread : undefined }); // 0642: the thread it started, or the one it resumed
   if (r.timedOut) { fs.rmSync(out, { force: true }); throw new SpeckError(tookTooLong('codex', ms)); }
   if (r.error) throw new SpeckError(`codex failed: ${r.error.message}`);
   if (r.status !== 0) { const why = codexFailure(r.status, r.stdout, r.stderr); stopOnLimit(repo, ticket.fm.id || id, 'codex', why); throw new SpeckError(why); }

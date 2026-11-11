@@ -14,6 +14,7 @@ import { keysStatus } from './keys.mjs';
 import { findAgents, agentLines } from './agents.mjs';
 import { foremanAgentOf } from './foreman-agent.mjs';
 import { installHint } from './install.mjs';
+import { readUsage, usageLines } from './agent-usage.mjs';
 
 export const yourAgentsFile = repo => path.join(path.dirname(machineConfigFile(repo)), 'agents.json');
 
@@ -60,9 +61,12 @@ export function yourAgents(repo, opts = {}) {
 }
 
 // `speck agents --json`: every agent speck knows, each with `yours`, and `list`: whether this machine has a list.
+// 0642: each agent with a reading of its usage has it as `usage`, with `read_seconds_ago`.
 export function agentsReport(repo, opts = {}) {
   const every = everyAgent(repo, opts), list = readYourAgents(repo, opts), mine = list ?? readyIds(every);
-  const mark = a => ({ ...a, yours: mine.includes(a.id) });
+  const usage = repo === null ? {} : readUsage(repo), now = (opts.now ?? Date.now)();
+  const usageOf = id => (usage[id] ? { usage: { ...usage[id], read_seconds_ago: Math.max(0, Math.round((now - Date.parse(usage[id].read_at)) / 1000)) } } : {});
+  const mark = a => ({ ...a, yours: mine.includes(a.id), ...usageOf(a.id) });
   return { list: list !== null, agents: every.agents.map(mark), providers: every.providers.map(mark) };
 }
 
@@ -146,11 +150,12 @@ export function yourAgentsView(repo, found, cfg, opts = {}) {
 }
 
 // `speck agents` as plain lines: each agent, then each provider, with whether it's yours.
-export function reportLines(report) {
+// 0642: under each agent with a reading, its usage.
+export function reportLines(report, now = Date.now()) {
   const yours = a => (a.yours ? 'yours' : 'not yours');
-  const agents = agentLines({ agents: report.agents }).split('\n').map(line => {
+  const agents = agentLines({ agents: report.agents }).split('\n').flatMap(line => {
     const a = report.agents.find(x => line.startsWith(`${x.name} (${x.command}): `));
-    return a ? `${line}, ${yours(a)}` : line;
+    return a ? [`${line}, ${yours(a)}`, ...(a.usage ? usageLines(a.usage, now) : [])] : [line];
   });
   const provs = report.providers.flatMap(p => [`${p.name} (${p.id}): ${p.key_set ? 'key set' : 'no key'}, ${yours(p)}`,
     ...(p.why ? [`  ${p.why}`] : []), ...p.models.map(m => `  ${m.name}`)]);

@@ -44,6 +44,8 @@ After every build, review round and watch run on Claude Code or Codex, speck kee
 - Checked 2026-11-11: Claude Code's stream-json has `rate_limit_event` lines whose `rate_limit_info.unifiedWindows` holds `five_hour` and `seven_day`, each with `utilization` (0 to 1), `resetsAt` (epoch seconds) and `status`. `scripts/usage-limit.mjs` already reads `status` and `resetsAt`.
 - Checked 2026-11-11 (Codex 0.159.0): `codex exec --json` gives only tokens; the session file `~/.codex/sessions/YYYY/MM/DD/rollout-*-<thread_id>.jsonl` has `token_count` events with `rate_limits.primary` (`window_minutes` 300) and `rate_limits.secondary` (10080), each with `used_percent` and `resets_at` (epoch seconds), plus `plan_type` and `rate_limit_reached_type`. speck already finds these files by thread id for spend (`scripts/round-cost.mjs`).
 - Failing before this build: none
+- Self-check: an unreadable or tampered usage file (a bad time, a `constructor` key) now reads as no readings rather than failing `speck agents`; a build on a model provider keeps nothing; kept `scripts/run.mjs` and `scripts/foreman-agent.mjs` within 600 lines by keeping the build hook on `limitQueues` and re-exporting the watch hook from `usage-limit.mjs`.
+- A review round on Claude Code (`--output-format json`) has no `rate_limit_event` lines, so it gives no reading; a build or watch run on Claude Code (stream-json) does.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
