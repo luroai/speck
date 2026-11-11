@@ -93,9 +93,9 @@ export function carryOn({ repo, runs, startBuild, resumeHint, countStop, now, sp
 // now, heldSays(agent) says so in words, or null, waiting(id) whether a ticket is waiting to be carried on, and view() is
 // what the Foreman's record keeps, or null. `settings`, `running`, `startBuild` and `runs` are speck run's. `countStop` leaves the wait out of the build's time.
 // 0644: each of Claude, Codex and Cursor has its own limit, held and carried on apart. `codexHome` is where Codex keeps
-// its session files.
+// its session files. 0648: `takeOver` (build-take-over.mjs) moves a stopped build to another agent while its own is held.
 export function usageLimitQueue({ repo, runs, settings, running, startBuild, resumeHint, countStop = () => '', statusOf = () => null, now = Date.now, say = console.log,
-  graceMs = process.env.SPECK_RUN_LIMIT_GRACE_MS ? Number(process.env.SPECK_RUN_LIMIT_GRACE_MS) : GRACE_MS, codexHome }) {
+  graceMs = process.env.SPECK_RUN_LIMIT_GRACE_MS ? Number(process.env.SPECK_RUN_LIMIT_GRACE_MS) : GRACE_MS, codexHome, takeOver = null }) {
   const speak = text => say(speckSays(text));
   const file = agent => path.join(runs(), fileOf(agent));
   const readRec = f => { try { const v = JSON.parse(fs.readFileSync(f, 'utf8')); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; } };
@@ -159,9 +159,24 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
       `${name}'s usage limit has reset, so speck run has resumed the build of ticket ${id}. Carry on with ${build} ${id} from where you left off.`);
   };
 
+  // 0648: while held, each stopped build that `takeOver` moves to another agent, dropped from the wait before it starts.
+  const moveOn = (agent, s, tickets) => {
+    for (const id of [...s.builds]) {
+      const t = tickets.find(x => String(x.id) === id), rec = readRec(path.join(runs(), `${id}.json`)), current = settings();
+      if (!t || !IN_HAND.includes(t.status) || t.build_running || running.has(id) || !rec || !Object.hasOwn(rec, 'exited')) continue;
+      if (!current || running.size >= current.max) return;
+      const start = takeOver(agent, id, rec, current, s);
+      if (!start) continue;
+      s.builds = s.builds.filter(x => x !== id);
+      if (!save(agent, s)) return;
+      start();
+    }
+  };
+
   const checkAgent = (agent, tickets) => {
     const s = readLimit(runs(), agent);
-    if (!s || held(s)) return;
+    if (!s) return;
+    if (held(s)) { if (takeOver) moveOn(agent, s, tickets); return; }
     if (s.carry_on) {
       s.carry_on = null; s.resets = null;
       if (!save(agent, s)) return;
