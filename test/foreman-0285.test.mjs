@@ -119,17 +119,21 @@ test('0285 AC1, AC2: a ship started outside speck run\'s queue, from the panel\'
   } finally { killAll([p.pid]); }
 });
 
-// 0396: the Foreman group shows once the settings have loaded.
+// 0396: the Foreman group shows once the settings have loaded. 0656: opening Settings asks for its usage next (0646),
+// and the Foreman's group is Your team's first card (0652).
 test('0285 AC3: Settings has a Foreman group, first, with the speck run switch, which turns speck run on and off as the header\'s did', async () => {
-  const p = fakePage([state(view({}), { run: undefined }), { groups: [{ title: 'Your engineering manager', settings: [] }] }, { ok: true, run: { on: true, pid: 7 } }, { ok: true, run: { on: false, pid: null } }]);
+  const manager = { key: 'watch', value: 'tell', default: true, explain: 'What the Foreman does.', editable: true, choices: ['off', 'tell', 'fix'] };
+  const p = fakePage([state(view({}), { run: undefined }), { groups: [{ title: 'Your engineering manager', settings: [manager] }, { title: 'Shipping', settings: [{ key: 'auto_ship', value: false, default: true, explain: 'Ships.' }] }] }, { agents: [] }, { ok: true, run: { on: true, pid: 7 } }, { ok: true, run: { on: false, pid: null } }]);
   await p.settle();
   click(p.byId('settings-open'));
   await p.settle();
-  const groups = p.byId('settings').children.filter(n => n.className === 'sgroup');
-  assert.equal(groups[0].textContent.startsWith('Your engineering manager'), true, 'the Foreman group comes first');
-  // 0396: the switch is Auto-build's, in the box above the groups.
-  const box = p.byId('settings').children.find(n => n.className === 'switches');
-  assert.ok(p.byId('settings').children.indexOf(box) < p.byId('settings').children.indexOf(groups[0]), 'Auto-build above it');
+  // 0656: since 0652 the Foreman's settings are the engineering manager's card in Your team, which comes first.
+  const kids = p.byId('settings').children, team = kids.find(n => n.className === 'sgroup team');
+  assert.equal(kids.indexOf(team), 1, 'Your team comes first, under the view\'s top');
+  assert.match(team.textContent, /Your engineering manager/, 'with the engineering manager\'s card');
+  // 0396: the switch is Auto-build's, in the box above the server's groups.
+  const box = kids.find(n => n.className === 'switches'), groups = kids.filter(n => n.className === 'sgroup');
+  assert.ok(groups.length && kids.indexOf(box) < kids.indexOf(groups[0]), 'Auto-build above the server\'s groups');
   const sw = p.all(box).find(n => n.id === 'run-switch');
   assert.equal(sw.textContent, 'Off');
   assert.equal(sw.attrs['aria-checked'], 'false');
@@ -147,7 +151,7 @@ test('0285 AC3: Settings has a Foreman group, first, with the speck run switch, 
 });
 
 test('0285 AC3: a refused switch shows speck run\'s own message, as before', async () => {
-  const p = fakePage([state(view({}), { run: undefined }), { groups: [] }, { status: 409, body: { error: 'speck run won\'t start: no build_command.' } }]);
+  const p = fakePage([state(view({}), { run: undefined }), { groups: [] }, { agents: [] }, { status: 409, body: { error: 'speck run won\'t start: no build_command.' } }]);
   await p.settle();
   click(p.byId('settings-open'));
   await p.settle();
