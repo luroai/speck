@@ -1,7 +1,7 @@
 ---
 id: "0648"
 title: "Move a build stopped on a usage limit to the next builder"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0647"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:26:16.065Z"
 approved: "2026-11-11T15:36:12.791Z"
+finished: "2026-11-11T15:42:15.818Z"
 
 ---
 # 0648 · Move a build stopped on a usage limit to the next builder
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A build that stops partway on its agent's usage limit waits for the reset, even when it's hours away and another builder on the bench is free.
