@@ -40,6 +40,7 @@ Tests that start a real `speck run` see only the agents they fake, so they give 
 - Found 2026-11-11: the full run at `fc53908` failed on it, and it fails alone every time on this machine; its log says "new builds start on Cursor, the first agent on builder_bench that's ready and free".
 - `test/support/run.mjs` passes `{ ...process.env, … }` to `speck run`, so PATH and HOME are the machine's.
 - The full suite failing on `main` counts under Needs you until a run on a newer commit passes (0630).
+- Failing before this build: none (the recorded result, from f6827fa, passed; the 0622 test is the one this ticket fixes)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
