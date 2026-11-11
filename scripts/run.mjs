@@ -10,6 +10,7 @@ import { goWithQueue, newBuildKeeps } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
 import { fullSuiteQueue } from './full-suite.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
+import { readyAgentsEvery } from './your-agents.mjs';
 import { fillSession, timedArgv } from './codex-build.mjs';
 import { countStop, sleepQueue, sleepWatch } from './stop-wait.mjs';
 import { limitQueues } from './reviewer-limit.mjs';
@@ -38,8 +39,7 @@ const RUN_POLL_MS = 5000;
 
 // The folder for speck run's records and logs, inside speck/.cache/, which git ignores.
 export function runsDir(repo) {
-  const root = path.join(repo, 'speck', '.cache');
-  const dir = path.join(root, 'runs');
+  const root = path.join(repo, 'speck', '.cache'), dir = path.join(root, 'runs');
   fs.mkdirSync(dir, { recursive: true });
   const ignore = path.join(root, '.gitignore');
   if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, '# Working files for reviews in progress. Review history is in each ticket.\n*\n');
@@ -380,7 +380,7 @@ function runOn(worker) {
   const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), heldBuild }); // 0284
   const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344
   const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }), fullRuns = fullSuiteQueue({ repo, readConfig: () => loadConfig(repo) }); // 0286. 0630: the full suite on the base branch
-  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), cfg, settings, running, startBuild, ships, heldBuild, heldAgent: agent => limits.holds(agent), agentLimited: (agent, log) => limits.agentEnded(agent, log) }); // 0287: the Foreman agent, for stops speck has no steps for
+  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), cfg, settings, running, startBuild, ships, heldBuild, heldAgent: agent => limits.holdsAgent(agent), agentLimited: (agent, log) => limits.agentEnded(agent, log), readyAgents: readyAgentsEvery(repo) }); // 0287: the Foreman agent, for stops speck has no steps for. 0637: on another of your agents while its own is held
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => ships.running(), launched: () => [...launched], running: () => [...running],
     stopLoop: () => clearInterval(loop), handOver: () => { kept = []; }, stayed: () => { const ends = kept || []; kept = null; for (const end of ends) endOf(...end); } });

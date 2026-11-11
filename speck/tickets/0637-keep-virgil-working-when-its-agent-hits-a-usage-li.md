@@ -43,6 +43,7 @@ While the watch agent's own agent is held by a usage limit, speck runs it on the
 - Stage 1 of `speck/ideas/2026-11-10-keep-speck-working-when-an-agent-hits-its-usage-limit.md`.
 - After 0636, which also changes how `speck run` starts the watch agent in `scripts/foreman-agent.mjs`.
 - Failing before this build: none
+- Self-check: an agent read back from speck run's record is named only from speck's own names, so a built-in name such as `constructor` reads as itself; a move is forgotten without a word once `watch_agent` changes or watch is turned off, so it never says it moved back to an agent that isn't its own.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -1,0 +1,41 @@
+// 0637: while the watch agent's own agent is held by a usage limit, each look runs on the first other agent of yours that's
+// ready and not held, in speck agents' order, on that agent's own model and effort. Builds and reviewers stay on theirs.
+import { providerNamed } from './provider-review.mjs';
+
+// An agent as speck run's lines about usage limits name it.
+const CLI_NAMES = { claude: 'Claude', codex: 'Codex', cursor: 'Cursor' };
+const agentName = (agent, providers) => providerNamed(agent, providers)?.label ?? (Object.hasOwn(CLI_NAMES, agent) ? CLI_NAMES[agent] : agent);
+// `cfg` with the watch agent on `agent` instead, without watch_model or watch_effort, which are for its own agent.
+const standInConfig = (cfg, agent) => ({ ...cfg, watch_agent: agent, watch_model: '', watch_effort: '' });
+
+// The record's `moved`: { from, to } while looks run on `to` because `from` is held by a usage limit, or null.
+export const movedOf = m => (m && typeof m === 'object' && typeof m.from === 'string' && typeof m.to === 'string' ? { from: m.from, to: m.to } : null);
+
+// `heldAgent(agent)` says whether a recorded usage limit holds an agent, `readyAgents()` lists your ready agents in speck
+// agents' order, `speak` says a line in speck run's log, and `agents` are the agents the watch agent can run on besides
+// model providers. The move, and the move back once the limit has reset, are each said once, and kept in the record's
+// `moved`, so a later speck run says the move back too.
+export function standIn({ heldAgent, readyAgents, speak, agents }) {
+  // Clears a move whose limit has reset, saying so while `watching` on `own`, the agent it moved from. One from an agent
+  // that's no longer its own is cleared without a word. True when it cleared one.
+  const movedBack = (s, watching, own, known) => {
+    if (!s.moved || (watching && s.moved.from === own && heldAgent(own))) return false;
+    if (watching && s.moved.from === own) speak(`${agentName(s.moved.from, known)}'s usage limit has reset, so I'm looking into stops on ${agentName(s.moved.from, known)} again.`);
+    s.moved = null;
+    return true;
+  };
+  // The config the next look runs with: `cfg` while `own` isn't held, a stand-in's, or null while none can take it.
+  const lookOn = (s, cfg, own, known) => {
+    if (!heldAgent(own)) return cfg;
+    let ready = [];
+    try { ready = readyAgents(); } catch { /* none can be read: it waits for the limit */ }
+    const to = (Array.isArray(ready) ? ready : []).find(a => typeof a === 'string' && a !== own && (agents.includes(a) || providerNamed(a, known)) && !heldAgent(a));
+    if (!to) return null;
+    if (s.moved?.from !== own || s.moved?.to !== to) {
+      s.moved = { from: own, to };
+      speak(`${agentName(own, known)}'s usage limit is reached, so I'll look into stops on ${agentName(to, known)} until it resets.`);
+    }
+    return standInConfig(cfg, to);
+  };
+  return { movedBack, lookOn };
+}

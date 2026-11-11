@@ -162,9 +162,14 @@ export function reviewerLimitQueue({ repo, runs, settings, running, startBuild, 
   return { ended, check, view, holdsBuild: id => { const s = limitOf(id); return !!s && held(s); } };
 }
 
-// speck run's usage limits together: Claude's as a builder (0622), which holds new builds, and each reviewer's.
+// 0637: whether a reviewer's limit on record holds `agent` now (a Claude subagent's is Claude's).
+const reviewerHolds = (runs, agent, now) => readLimits(runs).some(s => (s.reviewer === 'claude-subagent' ? 'claude' : s.reviewer) === agent && now < Date.parse(s.carry_on));
+
+// speck run's usage limits together: Claude's as a builder (0622), which holds new builds, and each reviewer's. 0637:
+// holdsAgent(agent) says whether any of them holds an agent, for the watch agent.
 export function limitQueues(opts) {
   const builder = usageLimitQueue(opts), reviewers = reviewerLimitQueue({ ...opts, heldBuild: id => builder.holdsBuild(id) });
   return { ...builder, ended: (id, log, file) => builder.ended(id, log, file) || reviewers.ended(id, file), check: tickets => { builder.check(tickets); reviewers.check(tickets); },
+    holdsAgent: agent => builder.holds(agent) || reviewerHolds(opts.runs(), agent, (opts.now ?? Date.now)()),
     view: () => builder.view() ?? reviewers.view(), holdsBuild: id => builder.holdsBuild(id) || reviewers.holdsBuild(id) };
 }

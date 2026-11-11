@@ -66,6 +66,19 @@ export function agentsReport(repo, opts = {}) {
   return { list: list !== null, agents: every.agents.map(mark), providers: every.providers.map(mark) };
 }
 
+// 0637: a function giving your agents that are ready, in speck agents' order, for the watch agent to stand in on while its
+// own is held by a usage limit. It asks the agents at most once every `ms`, as that takes a while.
+export function readyAgentsEvery(repo, ms = 60000, { now = Date.now, ...opts } = {}) {
+  let read = null;
+  return () => {
+    if (!read || now() - read.at > ms) {
+      const r = agentsReport(repo, { ...opts, models: false });
+      read = { at: now(), ids: [...r.agents, ...r.providers].filter(a => a.yours && a.ready).map(a => a.id) };
+    }
+    return read.ids;
+  };
+}
+
 // 0398 AC3: makes this machine's list from every ready agent when it has none. The ids added, or null when it had one.
 // With none ready it makes no list, so an agent set up later still counts as yours.
 export function fillYourAgents(repo, opts = {}) {
