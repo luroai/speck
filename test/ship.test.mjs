@@ -7,6 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { parseYaml, setField } from '../scripts/speck.mjs';
 import { ROOT, CLI, gitEnv, approveVerdict, shipRepo, doneRepo } from './support/speck.mjs';
+import { keepLatestReceipt } from './support/receipts.mjs';
 
 test('AC1: approved is a valid status, listed first by speck status as waiting for the user', () => {
   const r = shipRepo();
@@ -366,6 +367,7 @@ function autoShipRepo({ config = '', risk = 'low', sandboxFailed = false } = {})
     fs.writeFileSync(file, t.replace('"reviewer": "claude-subagent"', '"reviewer": "codex",\n    "sandbox_ok": false'));
     assert.match(fs.readFileSync(file, 'utf8'), /"sandbox_ok": false/);
   }
+  keepLatestReceipt(r.dir); // as speck review keeps (0629)
   r.run('set', '1', 'status', 'approved');
   r.g('add', '-A'); r.g('commit', '-qm', 'approved');
   return r;

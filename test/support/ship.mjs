@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { copied } from './copy.mjs';
 import { speck } from './cli.mjs';
+import { keepLatestReceipt } from './receipts.mjs';
 
 export const CLI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'scripts', 'speck.mjs');
 export const env = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
@@ -75,6 +76,7 @@ function buildShipRepo(dir, test) {
   const v = path.join(os.tmpdir(), `verdict-${path.basename(dir)}.json`);
   fs.writeFileSync(v, JSON.stringify(approveVerdict));
   assert.equal(run('record', '1', v).status, 0);
+  keepLatestReceipt(dir); // as speck review keeps (0629)
   assert.equal(run('set', '1', 'status', 'approved').status, 0);
   g('add', '-A'); g('commit', '-qm', 'approved');
 }

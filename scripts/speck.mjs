@@ -15,7 +15,7 @@ import { cmdOutput } from './output.mjs';
 import { cmdDiffstat } from './diffstat.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
-import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
+import { cmdShip, shipState, autoShipWhyNot, receiptWhyNot } from './ship.mjs';
 import { criteriaText, criteriaChange, criteriaChanges, shippedCriteriaChanged } from './criteria-changed.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
@@ -418,7 +418,7 @@ export function statusData(repo) {
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
     const criteria_change = ['done', 'cancelled'].includes(t.fm.status) ? null : criteriaChange(t.at || repo, cfg, t.fm.id), criteria_changed = criteria_change !== null; // 0565
-    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed);
+    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, ['done', 'cancelled'].includes(t.fm.status) ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds)); // 0629
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null, builder = builderSpent(runs, t.fm.id), watch = watchSpent(runs, t.fm.id), delegated = delegatedSpent(runs, t.fm.id);
     return withForeman(t, fixing, { // 0317
       ...t.fm,

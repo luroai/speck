@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { parseTicket, setField, ticketRounds } from '../../scripts/speck.mjs';
 import { copied, keptFile } from './copy.mjs';
 import { speck } from './cli.mjs';
+import { keepLatestReceipt } from './receipts.mjs';
 
 export { speck };
 
@@ -106,6 +107,7 @@ function buildShipRepo(dir, { test, approve }) {
     const v = path.join(os.tmpdir(), `verdict-${path.basename(dir)}.json`);
     fs.writeFileSync(v, JSON.stringify(approveVerdict));
     run('record', '1', v);
+    keepLatestReceipt(dir); // as speck review keeps (0629)
     run('set', '1', 'status', 'approved');
     g('add', '-A'); g('commit', '-qm', 'approved');
   }

@@ -46,6 +46,8 @@ A ticket ships by itself only when its approving round was recorded by speck's o
 - With `reviewer: claude-subagent`, every round is saved with `speck record`, so those tickets always wait for you at Ship. This repo reviews with Codex, so it isn't affected.
 - Risk high: it changes when code merges and pushes to the base branch without you.
 - Failing before this build: none
+- Self-check: a receipt that can't be written now says so in one line instead of a stack trace (the round stays saved and the ticket waits at Ship); the build skill's Private words steps and the brief now say an edited latest round waits for you.
+- The test fixtures that approve with `speck record` and then auto-ship keep a receipt with `test/support/receipts.mjs`, as `speck review` would.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
