@@ -1,7 +1,7 @@
 ---
 id: "0634"
 title: "Let speck start your app for a ticket"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:01:27.366Z"
 approved: "2026-11-11T11:18:20.629Z"
+finished: "2026-11-11T11:23:03.752Z"
 
 ---
 # 0634 · Let speck start your app for a ticket
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A build that changes how an app looks or behaves often blocks asking you to check it in the running app, and speck has no way to start a project's app itself. Before speck can check anything in the app, it needs to know how to start it and where to open it.
