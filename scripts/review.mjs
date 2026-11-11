@@ -187,7 +187,7 @@ const VERDICT_FIELDS = ['verdict', 'id', 'status', 'severity', 'state'];
 export function saveRound(repo, id, verdict, meta, { receipt = false } = {}) {
   const t = findTicket(repo, id);
   const round = rounds(repo, id).length + 1;
-  const words = privateWordList().words;
+  const list = privateWordList(repo), words = [...list.words, ...list.logins]; // 0635: and each saved test login's password
   const said = meta.builder_response ? { builder_response: redactPrivateWords(meta.builder_response, words) } : {};
   const record = { meta: { round, ...meta, ...said, saved_at: new Date().toISOString() }, verdict: redactPrivateWords(validateVerdict({ ...verdict, round }), words, VERDICT_FIELDS) };
   fs.writeFileSync(t.file, tildePaths(appendRounds(startReviewing(t.raw, round), [record])));
