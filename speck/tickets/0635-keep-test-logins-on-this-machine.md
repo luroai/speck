@@ -46,7 +46,11 @@ Test logins for a project are kept on this machine only, where speck's agents ca
 - Self-check: a logins file that can't be read (not just a missing one) now gives a plain error rather than a stack trace, and a bad login name isn't echoed back, as it may be a password typed in the wrong place.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now save logins for testing an app on this machine with `speck logins set <name>`: it asks for the username, then the password without showing it. `speck logins` lists them by name and username, `speck logins show <name>` prints one, and `speck logins remove <name>` deletes it. They're never stored anywhere git would commit.
+
+Each saved password is treated like your private words: a commit or ship that would publish one is refused, naming the file and line without the password, and speck writes it as `[private]` in review rounds it saves.
+
+Worth keeping an eye on: a very simple password, such as `test`, will refuse any commit holding that word anywhere, because of how it's protected.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,9 @@ Test logins for a project are kept on this machine only, where speck's agents ca
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - A short or common saved password refuses every commit holding it: speck/ideas/2026-11-11-warn-when-a-saved-test-password-is-a-common-word.md
+  - Tidy-up: `speck check` (lint) still reads only `~/.config/speck/private-words`, not saved passwords, so a ticket holding one passes the ready check and is caught later by the commit hook.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -137,6 +144,89 @@ Test logins for a project are kept on this machine only, where speck's agents ca
     ],
     "escalation_question": "",
     "summary": "The login commands and storage work for the tested cases, and saved review text is redacted. One secret-protection gap must be fixed: passwords containing “[private]” can pass the commit and ship checks unchanged."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b66333869ac9136df17998df46e056a630229f9f",
+    "session": "continued",
+    "thread_id": "01a1ca61-9064-7d23-8435-48f286fb2e7d",
+    "builder_response": "- Tests run: test/logins-0635.test.mjs test/private-words-0633.test.mjs test/commit-check-0550.test.mjs test/commit-check-0627.test.mjs test/private-words-0506.test.mjs\n- F1: fixed. `privateHit` in scripts/private-words.mjs now matches saved passwords against the whole lower-cased line, `[private]` markers included; private words keep 0633's marker skipping. New test `0635 AC3 F1` checks the commit hook and `privateLinesInSpeck` refuse `abc[private]def` without printing it.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 211387,
+      "cached_input_tokens": 160896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1694,
+      "reasoning_output_tokens": 228
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6965,
+      "cached": 89344,
+      "write": 0,
+      "output": 642
+    },
+    "cost_usd": 0.0292844,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T11:34:09.900Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/logins.mjs reads credentials from input, refuses extra command-line arguments and writes a shared main-checkout file atomically with 0600 permissions. Passing AC1 tests cover piped input, argument refusal, permissions and worktree sharing. Terminal password input reuses READ_SILENTLY."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdLogins implements list, show and remove; loginOf names known logins on an unknown-name error. The passing AC2 test exercises these behaviours."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Commit checks and ship checks obtain saved passwords through privateWordList(repo). privateHit now matches passwords against the complete line. Passing AC3 tests include the F1 regression exercising the commit hook and ship scanner; an independent read-only check also confirmed detection."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/review.mjs saveRound includes saved passwords in redaction. The passing AC4 test verifies replacement in reviewer text and the builder response."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing AC5 test verifies a one-line empty message, no cache creation and no git changes. The current test output records 161 passes, three skips and no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/private-words.mjs",
+        "issue": "Passwords containing [private] previously bypassed commit and ship protection. Matching now uses the complete line, closing the bypass.",
+        "suggested_fix": "Implemented, with a passing regression test covering the commit hook and ship scanner.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The login commands keep credentials in protected machine-local storage, block saved passwords from commits and shipping, and redact them from saved reviews. The previously identified bypass is fixed and covered by a regression test. Ready for the product owner's merge decision."
   }
 }
 ```
