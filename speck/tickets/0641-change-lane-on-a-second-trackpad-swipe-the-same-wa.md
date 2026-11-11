@@ -31,7 +31,7 @@ Two trackpad swipes the same way, one straight after the other, change lane twic
 
 ## Acceptance criteria
 1. A sideways scroll whose steps shrink as a glide does, followed with no pause (steps 16 ms apart) by a second swipe the same way whose steps grow again past 20 px, changes lane twice: once for each swipe.
-2. A single swipe whose steps speed up, slow down and speed up again before its glide, as fingers do, changes lane only once, and a glide on its own, however long, never changes lane a second time.
+2. A single swipe whose steps speed up, slow down and speed up again before its glide, as fingers do, changes lane only once, unless its steps shrink two in a row, then grow three in a row from under 10 px to past 20 px, which counts as a new swipe; and a glide on its own, however long, never changes lane a second time.
 3. A pause of 50 ms or more between two sideways scrolls still lets the second change lane, and a scroll the other way still changes lane after any pause or none, as 0514 made them.
 4. No test that passed before this change fails.
 
@@ -45,7 +45,7 @@ Two trackpad swipes the same way, one straight after the other, change lane twic
 - Web pages get no flag that marks a glide, so a new swipe has to be told from the glide by its steps.
 - Failing before this build: none
 - Went with the recommendation: Change the 0514 check to expect a lane change (chosen by speck, as watch is decide, 2026-11-11 13:28 UTC).
-- A new swipe during a glide is told by its steps: two shrinking in a row since the change (the glide), then three growing in a row with the last over 20 px. A swipe that slows down over two frames and speeds up over three before its glide would change lane twice; no step pattern tells that from a glide and a new swipe.
+- A new swipe during a glide is told by its steps: two shrinking in a row since the change (the glide), then three growing in a row from under 10 px, with the last over 20 px. A swipe that nearly stops for two frames and speeds up hard over three before its glide changes lane twice: no step pattern tells that from a glide and a new swipe. AC2 reworded to say so (the second answer above).
 - Self-check: no changes
 - Pictures: none, because nothing changes in how the panel looks
 - Went with the recommendation: Accept the limit, with the speed-up starting under 10 px a step, and reword AC2 (chosen by speck, as watch is decide, 2026-11-11 13:33 UTC).

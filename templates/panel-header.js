@@ -436,13 +436,15 @@ if (lanesBox.addEventListener) {
   // fingers stop the glide: one after a pause of 50 ms (three frames with no step sideways), and one the other way, 20 px
   // of it, with no pause, as a glide never turns back. How fast it goes says nothing, as fingers slow down and speed up within one swipe.
   // 0641: and one the same way with no pause, as Cursor's pane sends the next swipe straight on from the glide: once the
-  // steps have shrunk two in a row, as a glide does, and then grown three in a row, past 20 px a step, as the next
-  // swipe's fingers speed up. Fingers that slow down and speed up again within one swipe rarely do both.
+  // steps have shrunk two in a row, as a glide does, and then grown three in a row from under 10 px to past 20 px a step,
+  // as the next swipe's fingers land and speed up. Fingers that nearly stop and speed up hard within one swipe look the
+  // same, and count as two swipes.
   // `way` is the way the last change went (0 before one, and after a pause), `sum` how far it has gone towards the next
   // and `at` when its last step was, or when the page had finished changing lane, so a step held up meanwhile isn't
   // taken for one after a pause. `last` is the size of the last step the same way, `falls` and `rises` how many steps
-  // in a row have shrunk and grown since, and `glided` whether two in a row have shrunk since the change.
-  const still = at => ({ way: 0, sum: 0, at, last: 0, falls: 0, rises: 0, glided: false });
+  // in a row have shrunk and grown since, `from` the step the rises grew from and `glided` whether two in a row have
+  // shrunk since the change.
+  const still = at => ({ way: 0, sum: 0, at, last: 0, falls: 0, rises: 0, from: 0, glided: false });
   let wheel = still(-Infinity);
   lanesBox.addEventListener('wheel', e => {
     if (e.ctrlKey || Math.abs(e.deltaX) <= Math.abs(e.deltaY) || scrollsSideways(e.target)) return;
@@ -453,9 +455,9 @@ if (lanesBox.addEventListener) {
     if (again) { // the glide, which undoes any jitter the other way, or the next swipe
       wheel.sum = 0;
       if (step < wheel.last) [wheel.falls, wheel.rises, wheel.glided] = [wheel.falls + 1, 0, wheel.glided || wheel.falls >= 1];
-      else if (step > wheel.last) [wheel.falls, wheel.rises] = [0, wheel.rises + 1];
+      else if (step > wheel.last) [wheel.falls, wheel.rises, wheel.from] = [0, wheel.rises + 1, wheel.rises ? wheel.from : wheel.last];
       wheel.last = step;
-      if (!wheel.glided || wheel.rises < 3 || step <= 20) return;
+      if (!wheel.glided || wheel.rises < 3 || wheel.from >= 10 || step <= 20) return;
     } else {
       wheel.sum += e.deltaX;
       if (Math.abs(wheel.sum) < 20) return;

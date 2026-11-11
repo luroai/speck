@@ -49,6 +49,8 @@ test('0641 AC2: one swipe that speeds up, slows down and speeds up again before 
     'one that slows over frames and speeds up over two': [3, 7, 12, 18, 22, 20, 16, 12, 15, 24, 20, ...glide()],
     'one that speeds up hard after the change': [5, 12, 25, 40, 60, 70, 65, 50, ...glide().map(d => d * 4), ...glide()],
     'one that slows and speeds up twice': [3, 7, 12, 18, 22, 18, 14, 19, 24, 20, 15, 21, 26, 18, ...glide()],
+    'one that slows over two frames and speeds up over three (round 1)': [20, 30, 24, 18, 19, 22, 26, ...glide()],
+    'one that slows to 10 px and speeds up over three': [3, 7, 12, 18, 22, 16, 10, 14, 19, 25, 20, ...glide()],
   };
   for (const [what, deltas] of Object.entries(swipes)) {
     for (const way of [1, -1]) {
@@ -56,6 +58,16 @@ test('0641 AC2: one swipe that speeds up, slows down and speeds up again before 
       p.scroll(deltas, { pause: 1000, way });
       assert.equal(lane(p), 'build', `${what}, ${way > 0 ? 'right from Plan' : 'left from Shipped'}: one lane`);
     }
+  }
+});
+
+test('0641 AC2: steps that shrink two in a row, then grow three in a row from under 10 px to past 20 px, count as a new swipe', async () => {
+  for (const way of [1, -1]) {
+    const p = await padAt(way > 0 ? 'plan' : 'shipped');
+    p.scroll([3, 7, 12, 18, 22, 16, 9, 14, 19], { pause: 1000, way });
+    assert.equal(lane(p), 'build', 'one lane, and not yet a second while the steps are under 20 px');
+    p.scroll([25, 20, ...glide()], { way });
+    assert.equal(lane(p), way > 0 ? 'shipped' : 'plan', 'a second as a step passes 20 px');
   }
 });
 
