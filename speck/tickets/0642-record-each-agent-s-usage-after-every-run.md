@@ -49,7 +49,7 @@ After every build, review round and watch run on Claude Code or Codex, speck kee
 - speck (2026-11-11 14:38 UTC) told you: The build is slow because the machine is heavily loaded (load average 25 to 43) from other builds running at once. Its long related-test runs each had one or two timing-sensitive tests fail (a different one each run: 0622, then 0630 and 0264), and the build spent its time re-running them; every one passed when run on its own, and it has now committed and started its review. Why: The log shows different tests failing on each full run while the same tests pass alone, which points to load-related timing failures rather than anything broken on the base branch or in this change.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+After every build, review and watch run on Claude Code or Codex, speck now notes how much of that agent's five-hour and weekly allowance is used and when each resets. `speck agents` shows it under each agent, with how long ago it was read, so you can see you're close to a limit before a build stops on it. To see it, run a build or let `speck run` work, then run `speck agents`. Two things to keep an eye on: a review run on Claude doesn't report its usage, so Claude's figure comes from builds and watch runs; and nothing acts on these figures yet, which later tickets do.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,7 +58,10 @@ After every build, review round and watch run on Claude Code or Codex, speck kee
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- A review round on Claude Code gives no reading, as its `--output-format json` output has no `rate_limit_event` lines: saved to the inbox as `speck/ideas/2026-11-11-read-claude-s-usage-after-a-claude-review-round.md`.
+- A process that dies between writing a reading's temporary dot-file and renaming it leaves that file behind in its agent's folder. Nothing reads it, but nothing clears it either (tidy-up).
+- Skipped, as already captured: timing tests that failed under load in the related run, 0622 (`speck/ideas/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md`), 0630 AC3 (`speck/ideas/2026-11-11-steady-the-0630-full-run-turn-test-under-load.md`) and 0264 AC3 (`speck/ideas/2026-11-11-steady-the-0264-ac3-ship-queue-test.md`).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -330,6 +333,98 @@ After every build, review round and watch run on Claude Code or Codex, speck kee
     ],
     "escalation_question": "",
     "summary": "Collection, display and reading times work in the tested paths. All current tests pass. One storage race remains: simultaneous recovery of an abandoned guard can still let runs overwrite each other's readings."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · extra round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bdec00807afebf732ecdefaf67b20a9b910d9230",
+    "extra": true,
+    "session": "continued",
+    "thread_id": "01a1cb0a-6eb0-7990-b699-1f38cae63fe5",
+    "builder_response": "- Tests run: test/agent-usage-0642.test.mjs (with the commands.checks files, as speck test --files runs them).\n- F1: fixed, by taking the lock out rather than guarding it again. Each reading is now a file of its own in its agent's folder, `speck/.cache/machine/usage/<agent>/`, named `<reported time in ms, 15 digits>-<pid>-<random>.json` (saveUsage in scripts/agent-usage.mjs). It's written under a dot-name and renamed into place, so it's never read half written. No two runs ever write the same file, so there's no read-modify-write to lose and nothing to lock, recover or take over. The reading is the newest file that can be read. A save is skipped when a newer file is already there, and after writing, a save removes only files older than its own. So the newest file is never removed: removing it would need an even newer file to exist. Codex and Claude readings live in separate folders, so one agent's save can't touch the other's.\n  Tests: \"runs ending at once in separate processes lose no reading, and the newest wins\" runs four processes at once, two per agent, saving 30 readings each in interleaved or reversed time order: both agents' readings survive, the newest of each wins, even when its process saved it first, and only the newest files are left, with no temporary files. \"a reading that can't be read, or is half written, is passed over…\" covers a broken file, an invalid reading, a half-written dot-file and a stray name, and checks that an invalid reading and an unknown agent (`__proto__`) are never saved. The lock tests are gone with the lock. The brief now names the folder.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 598393,
+      "cached_input_tokens": 515456,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4035,
+      "reasoning_output_tokens": 603
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 12609,
+      "cached": 149120,
+      "write": 0,
+      "output": 734
+    },
+    "cost_usd": 0.04747,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T14:45:36.428Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "claudeUsageInLog retains both windows, percentages, resets, refusal status and read time. Passing AC1 tests cover parsing and build/watch collection."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "codexUsageInSession retains both windows, plan, limit status and read time. Passing AC2 tests cover session lookup and build/review/watch collection."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "saveUsage writes separate files per reading and agent, publishes by rename and removes only older readings. Passing AC3 tests cover concurrent processes, freshness, missing readings, ignored main-checkout storage and worktree access."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "agentsReport and usageLines expose percentages, resets and reading age. Passing AC4 tests exercise text and JSON, distinguishing report time from read time."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Current results show 125 passed, 3 skipped and no failures, including all 17 ticket tests. Earlier related-test failures passed isolated reruns."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/agent-usage.mjs:saveUsage",
+        "issue": "Resolved: independent reading files eliminate the shared read-modify-write and abandoned-lock recovery races. Concurrent-process tests verify that both agents retain their newest readings.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/agent-usage.mjs:codexUsageInSession",
+        "issue": "Resolved: read_at records when speck reads usage; reported_at separately preserves event freshness. Parsing, replacement and display tests pass.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Claude and Codex usage is retained and shown by speck agents. Both earlier issues are resolved, including concurrent saves. All current tests pass; the change is ready for the owner's merge decision."
   }
 }
 ```
