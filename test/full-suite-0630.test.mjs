@@ -194,8 +194,12 @@ test('0630 AC3: speck ship, builds and speck test never run commands.test_full, 
   const uses = fs.readdirSync(SCRIPTS).filter(f => f.endsWith('.mjs') && /test_full/.test(fs.readFileSync(path.join(SCRIPTS, f), 'utf8')));
   assert.deepEqual(uses.sort(), ['config.mjs', 'full-suite.mjs', 'settings.mjs'], 'only the full run, and the settings, read it');
   const full = fs.readFileSync(path.join(SCRIPTS, 'full-suite.mjs'), 'utf8');
-  for (const f of fs.readdirSync(SCRIPTS).filter(f => f.endsWith('.mjs') && f !== 'full-suite.mjs' && f !== 'run.mjs' && f !== 'foreman.mjs'))
+  for (const f of fs.readdirSync(SCRIPTS).filter(f => f.endsWith('.mjs') && f !== 'full-suite.mjs' && f !== 'run.mjs' && f !== 'foreman.mjs' && f !== 'turns.mjs'))
     assert.doesNotMatch(fs.readFileSync(path.join(SCRIPTS, f), 'utf8'), /from '\.\/full-suite\.mjs'/, `${f} doesn't use the full run`);
+  // 0632: speck test --recorded reads the full suite's recorded result, and only that: it takes the command's name, never runs it.
+  const turns = fs.readFileSync(path.join(SCRIPTS, 'turns.mjs'), 'utf8');
+  assert.deepEqual(turns.match(/^import .* from '\.\/full-suite\.mjs';$/gm), ["import { fullCommand } from './full-suite.mjs';"]);
+  assert.deepEqual(turns.match(/.*fullCommand\(.*/g).map(l => l.trim()), ['const kept = showRecordedRun(repo, cmd, fullCommand(cfg));']);
   assert.match(full, /detached: true/, 'the full run is a process of its own, which speck run doesn\'t wait for');
   // speck test runs commands.test, with commands.test_full set
   const r = repo();

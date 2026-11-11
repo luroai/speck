@@ -68,20 +68,25 @@ const pad = n => String(n).padStart(2, '0');
 const when = iso => { const d = new Date(iso); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
 // Prints a recorded result `kept` as a run that reuses it does: a line saying which commit it's from and when, then a
-// failure's output. Returns the result as testRun gives it.
-function showRecorded(kept, hint = '') {
+// failure's output. With `full`, the line says it's the full suite's (0632). Returns the result as testRun gives it.
+function showRecorded(kept, hint = '', full = false) {
   const result = kept.status === 0 ? 'passed' : `failed (exit code ${kept.status})`;
-  console.log(`Reusing the test result from commit ${kept.commit.slice(0, 7)} at ${when(kept.at)}: ${result}. No file outside speck/ has changed since, nor has the test command.${hint}`);
+  const which = full ? "the full suite's test result" : 'the test result';
+  console.log(`Reusing ${which} from commit ${kept.commit.slice(0, 7)} at ${when(kept.at)}: ${result}. No file outside speck/ has changed since, nor has the test command.${hint}`);
   if (kept.output) process.stdout.write(kept.output.endsWith('\n') ? kept.output : `${kept.output}\n`);
   return { status: kept.status, signal: null, stalled: false, output: kept.output };
 }
 
 // `speck test --recorded` (0238): prints the result recorded for the code in `repo` and the test command `cmd`, as a
 // run that reuses it does, without running any tests, and returns it. Null, printing nothing, when there's none.
-export function showRecordedRun(repo, cmd) {
-  const code = testedCode(repo, cmd);
-  const kept = code && recorded(repo, code, cmd);
-  return kept ? showRecorded(kept) : null;
+// 0632: one recorded for the same code with `full`, the full suite's command, comes first, saying it's the full suite's.
+export function showRecordedRun(repo, cmd, full = '') {
+  for (const [c, isFull] of [[full, true], [cmd, false]]) {
+    const code = c && testedCode(repo, c);
+    const kept = code && recorded(repo, code, c);
+    if (kept) return showRecorded(kept, '', isFull);
+  }
+  return null;
 }
 
 // A run's result as testRun gives it, from runTestsInTurn's. With `fail`, a run that ended without an exit code fails.
