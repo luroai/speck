@@ -50,7 +50,11 @@ A ticket ships by itself only when its approving round was recorded by speck's o
 - The test fixtures that approve with `speck record` and then auto-ship keep a receipt with `test/support/receipts.mjs`, as `speck review` would.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket now ships by itself only when speck itself ran the reviewer for its approving round, and nobody has changed that round's record since. speck keeps a private receipt for each round it runs, outside the ticket's branch, and checks it before shipping on its own. Anything else stays approved and waits for you to press Ship, and the panel says why.
+
+To see it: the review pack says when a round has no matching receipt, and a ticket waiting for that reason shows it as its reason not to ship by itself.
+
+Worth watching: tickets approved before this change have no receipts, so they'll wait for you at Ship once. Tickets reviewed by a Claude subagent always wait for you, and so does a ticket whose latest review round was reworded to take out a private word.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +64,8 @@ A ticket ships by itself only when its approving round was recorded by speck's o
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up (inbox): keep auto-ship after a private-words fix rewords the latest round (`speck/ideas/2026-11-11-keep-auto-ship-after-a-private-words-fix.md`).
+- Known limit: tickets approved before this change have no receipts, so each waits for you at Ship once.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -141,6 +147,89 @@ A ticket ships by itself only when its approving round was recorded by speck's o
     ],
     "escalation_question": "",
     "summary": "The receipt checks work on normal paths and the recorded tests pass. One error-handling gap remains: when the receipt folder cannot be created, status and review packs fail instead of explaining that the ticket needs manual shipping."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8183b7cde96f2ac61883d6467d8f8eadec44b593",
+    "session": "continued",
+    "thread_id": "01a1ca17-a3de-7ad1-8d52-d10defa4d270",
+    "builder_response": "- Tests run: test/receipts-0629.test.mjs test/ship.test.mjs test/worktrees.test.mjs, plus the commands.checks files.\n- F1: fixed. Receipt lookups (`unreceiptedRounds`, `receiptWhyNot`) now use `readDir` in scripts/receipts.mjs, which works out the main checkout's `speck/.cache/receipts/<id>` path without creating anything; any receipt that can't be read counts as unmatched (`matches` already caught read errors). Only `keepReceipt` creates the folder, inside its try. New test \"0629 round 1 F1\" puts a regular file at `speck/.cache/receipts`, then checks review (one-line warning, round saved), `speck status --json` (auto_ship false, the reason), both pack formats (the unreceipted round named), and `speck ship --auto` (exit 12, one line, nothing changed), and that reading created nothing.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 238189,
+      "cached_input_tokens": 190208,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1564,
+      "reasoning_output_tokens": 166
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6369,
+      "cached": 87296,
+      "write": 0,
+      "output": 537
+    },
+    "cost_usd": 0.0268376,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T10:13:33.034Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "saveRound keeps receipts for the Codex and runCommandReview paths using the shared main-checkout cache. Passing AC1 tests cover receipt creation and successful automatic shipping."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "receiptWhyNot checks the latest round's number, reviewed commit, verdict and record digest. Passing AC2 tests cover recorded and edited rounds, unchanged branches on refusal, one-line reasons and ship-queue exclusion. The F1 regression also covers an unavailable receipts directory."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "statusData supplies receiptWhyNot to autoShipWhyNot. Passing AC3 and F1 tests verify auto_ship false and the explanatory auto_ship_why, including when the receipts directory is blocked."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both pack formats use unreceiptedRounds. The passing AC4 test verifies missing-round notices and successful manual shipping; the F1 test verifies both packs still work with a blocked receipts directory."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Recorded round-two results show 167 passed, zero failed and three skipped. The broader round-one run also had zero failures; the subsequent changes are confined to the receipt lookup fix and its regression coverage."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/receipts.mjs",
+        "issue": "Receipt lookups previously tried to create cache directories and could abort status, review packs and automatic shipping checks when directory creation failed.",
+        "suggested_fix": "Implemented: readDir resolves the shared receipt path without writing, and matches treats unreadable receipts as unmatched. The passing F1 regression exercises the blocked-directory case across review, status, both packs and automatic shipping.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Automatic shipping now requires an unchanged receipt from speck's own reviewer run. Other approvals wait for manual shipping with an explanation. The cache error-handling gap is fixed, and all recorded tests pass."
   }
 }
 ```
