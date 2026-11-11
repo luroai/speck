@@ -73,6 +73,20 @@ test('0633 AC1: speck review saves a round with each private word replaced by [p
   assert.doesNotMatch(fs.readFileSync(r.ticketFile, 'utf8'), /zorblat|quux corp/i);
 });
 
+test('0633 AC1 F1: a home folder whose path holds a private word is still written as ~/ in the round', () => {
+  const r = commandRepo();
+  const home = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0633-')), 'zorblat');
+  fs.cpSync(homeWith(WORDS), home, { recursive: true });
+  const said = path.join(home, 'response.md');
+  fs.writeFileSync(said, `Ran it in ${home}/project.\n`);
+  const v = { ...approveVerdict, summary: `Looked at ${home}/project/a.md for Zorblat.` };
+  const out = r.runEnv({ HOME: home, FAKE_VERDICT: JSON.stringify(v) }, 'review', '1', `--response=${said}`);
+  assert.equal(out.status, 0, out.stdout + out.stderr);
+  const last = roundsOf(r).at(-1);
+  assert.equal(last.verdict.summary, 'Looked at ~/project/a.md for [private].');
+  assert.equal(last.meta.builder_response.trim(), 'Ran it in ~/project.');
+});
+
 test('0633 AC1: speck record saves a round with each private word replaced by [private]', () => {
   const r = subagentRepo();
   const v = path.join(r.dir, '..', `verdict-${path.basename(r.dir)}.json`);

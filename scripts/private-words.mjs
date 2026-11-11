@@ -42,13 +42,14 @@ export function privateWordList() {
 }
 
 // 0633: `value` with each of `words` (lower-cased, as privateWordList gives them), in any case, in every string in it
-// written as `[private]`, longest word first. A string under one of the `keep` keys, keys themselves, numbers and the
+// written as `[private]`, longest word first, after any home folder path in it is written as a `~/` path, so a word in
+// the home folder's path doesn't stop that. A string under one of the `keep` keys, keys themselves, numbers and the
 // like stay as they are, and `value` isn't changed.
 export function redactPrivateWords(value, words, keep = []) {
   if (!words.length) return value;
   const esc = w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp([...words].sort((a, b) => b.length - a.length).map(esc).join('|'), 'giu');
-  const walk = v => typeof v === 'string' ? v.replace(re, '[private]')
+  const walk = v => typeof v === 'string' ? tildePaths(v).replace(re, '[private]')
     : Array.isArray(v) ? v.map(walk)
     : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, keep.includes(k) ? x : walk(x)]))
     : v;
