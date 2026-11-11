@@ -12,6 +12,7 @@ import { providerNamed, providerReady, providerEnv } from './provider-review.mjs
 import { withoutProviderBuild } from './provider-build.mjs';
 import { stopOnLimit } from './reviewer-limit.mjs';
 import { standInMeta } from './review-stand-in.mjs';
+import { keepUsage } from './agent-usage.mjs';
 
 const LIMIT_SCRIPT = fileURLToPath(new URL('./limit.mjs', import.meta.url));
 
@@ -235,6 +236,7 @@ export function runCommandReview(repo, id, name, command, s, providers = knownPr
     else if (!lastThread) why = last.why;
     else {
       const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }), ms, env);
+      if (!options.provider) keepUsage(repo, name, tried.stdout); // 0642
       if (!tried.error && tried.status !== 0) stopOnLimit(repo, s.ticket.fm.id || id, name, failureWords(tried));
       if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;
       else if (tried.status !== 0) why = `resuming session ${lastThread} exited ${tried.status}`;
@@ -246,6 +248,7 @@ export function runCommandReview(repo, id, name, command, s, providers = knownPr
     const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests, s.response) : historyPrompt(repo, s, id);
     if (s.round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
     r = runReviewer(repo, name, command, values, prompt, ms, env);
+    if (!options.provider) keepUsage(repo, name, r.stdout); // 0642
   }
   if (r.error) throw new SpeckError(`Couldn't run the ${name} reviewer: ${r.error}. ${options.provider ? `${options.provider.label} reviews need Claude Code installed.` : `Check reviewer_options.${name} in speck/config.yml.`}`);
   const tail = r.stderr.trim().split('\n').slice(-5).join('\n');

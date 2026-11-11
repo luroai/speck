@@ -6,7 +6,7 @@
 // 0567: with watch: decide, it can also go with its own recommendation instead of asking.
 // 0569: speck run also starts it for a build still running far past the usual time, when it can only tell you what it
 // found or make a draft fix ticket.
-// 0636: and, with watch fix or decide, to check a blocked question in the running app (app-check.mjs). 0637: and on another agent of yours while its own is held by a usage limit (watch-stand-in.mjs).
+// 0636: and, with watch fix or decide, to check a blocked question in the running app (app-check.mjs). 0637: and on another agent of yours while its own is held by a usage limit (watch-stand-in.mjs). 0651: on QA's settings, saying QA, once they're set.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -34,10 +34,10 @@ import { onPath } from './install.mjs';
 import { recordWatchSpend } from './spend.mjs';
 import { providerKey } from './keys.mjs';
 import { usualBuild, runningLong, canRunLong } from './long-build.mjs';
-import { limitWaiting } from './usage-limit.mjs';
+import { limitWaiting, keepUsageOfLog } from './usage-limit.mjs';
 import { reviewerWaiting } from './reviewer-limit.mjs';
 import { takeAt, resumeTime, resumeClock, resumeWhy } from './resume-at.mjs';
-import { appCheckable, appStartSet, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS } from './app-check.mjs';
+import { appCheckable, appStartSet, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS, qaOn, qaConfig } from './app-check.mjs';
 import { stopApp } from './app.mjs';
 import { standIn, movedOf } from './watch-stand-in.mjs';
 
@@ -308,7 +308,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
       if (agentView(runs(), tickets).asks.some(a => a.id === t.id)) continue;
       s.checked[t.id] = checkKey(t);
       s.queue = [...s.queue.filter(q => q.id !== t.id), checkItem(t, path.join(runs(), `${t.id}.log`))];
-      if (save(s)) speak(`${t.id}: I'll check its question in the app, as watch is ${fixingOf(c)}: ${t.blocked_check_in_app}`);
+      if (save(s)) speak(`${t.id}: ${qaOn(c) ? 'QA will' : 'I\'ll'} check its question in the app, as watch is ${fixingOf(c)}: ${t.blocked_check_in_app}`);
     }
   };
 
@@ -320,33 +320,33 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     if (finished.has(r.token)) return;
     finished.add(r.token);
     // 0636: whatever it did, the app it started to check the question is stopped.
-    if (checkOf(r)) Promise.resolve().then(() => stopCheckApp(r.id)).then(was => { if (was) speak(`${r.id}: I stopped the app I started to check it.`); },
+    if (checkOf(r)) Promise.resolve().then(() => stopCheckApp(r.id)).then(was => { if (was) speak(`${r.id}: ${r.qa ? 'QA stopped the app it' : 'I stopped the app I'} started to check it.`); },
       e => speak(`${r.id}: I couldn't stop the app I started to check it (${e?.message || e}). Stop it with speck app ${r.id} --stop.`));
-    // 0525: what it spent, kept for its ticket before the next run replaces its log.
+    // 0525: what it spent, kept for its ticket before the next run replaces its log. 0642: and its agent's usage.
     try { recordWatchSpend(runs(), { id: r.id, run: r.token, command: r.command, log: path.join(runs(), LOG) }); }
-    catch (e) { speak(`${r.id}: I couldn't keep what looking into it spent (${e.message}).`); }
+    catch (e) { speak(`${r.id}: I couldn't keep what looking into it spent (${e.message}).`); } finally { keepUsageOfLog(repo, r.agent, path.join(runs(), LOG)); }
     const mine = readActions(runs()).filter(a => a.run === r.token && a.id === r.id);
     for (const a of mine) {
       if (a.action === 'reship') { ships.again(a.id); speak(`${a.id}: I asked for its ship to be tried again: ${a.why}`); }
       // 0618: a resume keeps what it was asked against too, as a decide does, unless it was asked before speck kept it.
       else if (a.action === 'resume' || a.action === 'decide') {
         s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text, ...(a.action === 'decide' ? { by: 'decide', head: a.head, session: a.session, status: a.status, ...(a.watch ? { watch: a.watch } : {}) } : a.head ? { by: 'watch', head: a.head, session: a.session, status: a.status } : {}), ...(a.resume_at ? { at: a.resume_at, why: a.why } : {}) }];
-        if (a.resume_at) speak(`${a.id}: I'll resume it at ${resumeClock(Date.parse(a.resume_at), now())}: ${resumeWhy(a.why)}`); // 0625
+        if (a.resume_at || r.qa) speak(a.resume_at ? `${a.id}: I'll resume it at ${resumeClock(Date.parse(a.resume_at), now())}: ${resumeWhy(a.why)}` : `${a.id}: QA checked it in the app and ${ACTIONS[a.action]}: ${a.text} (${a.why})`); // 0625. 0651: and QA's decide
       }
-      else speak(`${a.id}: I ${ACTIONS[a.action].replace('what it found', 'what I found')}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
+      else speak(`${a.id}: ${r.qa ? 'QA checked it in the app and' : 'I'} ${ACTIONS[a.action].replace('what it found', 'what I found')}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
     }
     // 0625: a look the usage limit stopped wasn't a look: it's looked into once the limit has reset.
     if (!mine.length && agentLimited(r.agent, path.join(runs(), LOG))) {
       if (!r.long && !checkOf(r)) delete s.tried[r.id];
       s.queue = [{ id: r.id, key: r.key, what: r.what, log: r.log, ...(r.long ? { long: true } : {}), ...(checkOf(r) ? { check: r.check } : {}) }, ...s.queue.filter(q => q.id !== r.id)];
       speak(`${r.id}: The usage limit stopped me looking into it, so I'll look again once it has reset.`);
-    } else if (!mine.length) speak(`${r.id}: I looked into it and took no action. Its log: ${path.relative(repo, path.join(runs(), LOG))}`);
+    } else if (!mine.length) speak(`${r.id}: ${r.qa ? 'QA checked it in the app' : 'I looked into it'} and took no action. Its log: ${path.relative(repo, path.join(runs(), LOG))}`);
   };
 
   const launch = (s, c, next) => {
     const known = providers ?? knownProviders(repo); // 0401: read on each start, so a provider added since counts
     const token = crypto.randomUUID(), agent = foremanAgentOf(c, known), label = agentLabel(c, known);
-    const check = checkOf(next); // 0636
+    const check = checkOf(next), qa = !!check && qaOn(c); // 0636. 0651: `c` is QA's already
     const brief = check ? checkBrief({ id: next.id, check, skill: skillPath(agent), watch: fixingOf(c), startSet: appStartSet(c) })
       : foremanBrief({ id: next.id, what: next.what, log: next.log ? path.relative(repo, next.log) : 'its log', tail: next.log ? logTail(next.log) : '', agent, decide: fixingOf(c) === 'decide', long: next.long === true });
     const argv = foremanArgv(c, brief, undefined, known, !!check);
@@ -355,7 +355,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     s.queue = s.queue.slice(1);
     if (!next.long && !check) s.tried[next.id] = next.key; // 0569: a look at a running build doesn't stand for a look at a stop. 0636: nor does a check in the app
     s.running = { id: next.id, token, pid: null, key: next.key, what: next.what, log: next.log, agent, started: new Date().toISOString(),
-      command: argv.filter(w => w !== brief), ...(next.long ? { long: true } : {}), ...(check ? { check } : {}) }; // 0525: for its model, when its spend is read
+      command: argv.filter(w => w !== brief), ...(next.long ? { long: true } : {}), ...(check ? { check } : {}), ...(qa ? { qa } : {}) }; // 0525: for its model, when its spend is read
     if (!save(s)) return;
     const cant = cantStart(c); // 0392: a provider's without Claude Code or this machine's key for it
     if (cant) { s.running = null; save(s); return speak(`${next.id}: I couldn't start looking into it on ${label}: ${cant}`); }
@@ -364,7 +364,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     child = { token, exited: started.exited };
     s.running = { ...s.running, pid: started.pid };
     save(s);
-    speak(`${next.id}: I'm looking into it on ${label}. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
+    speak(`${next.id}: ${qa ? 'QA is checking it in the app' : 'I\'m looking into it'} on ${label}. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
   };
 
   const resume = (s, t, { cfg, words }) => {
@@ -419,7 +419,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     if (s.queue.some(q => over.has(q.id))) { s.queue = s.queue.filter(q => !over.has(q.id)); changed = true; }
     if (s.moved) { const known = providers ?? knownProviders(repo); if (movedBack(s, !!c && speckActs(fixingOf(c)), c && foremanAgentOf(c, known), known)) changed = true; } // 0637
     if (!s.running && s.queue.length) {
-      if (c && speckActs(fixingOf(c))) { const known = providers ?? knownProviders(repo), on = lookOn(s, c, foremanAgentOf(c, known), known); if (on) { launch(s, on, s.queue[0]); changed = false; } } // 0622: what waits is looked into once its agent's usage limit has reset. 0637: or on another agent of yours meanwhile
+      if (c && speckActs(fixingOf(c))) { const known = providers ?? knownProviders(repo), qc = checkOf(s.queue[0]) ? qaConfig(c, known) : c, on = lookOn(s, qc, foremanAgentOf(qc, known), known, qc !== c); if (on) { launch(s, on, s.queue[0]); changed = false; } } // 0622: what waits is looked into once its agent's usage limit has reset. 0637: or on another agent of yours meanwhile
       else { s.queue = []; changed = true; } // turned off meanwhile: nothing waits
     }
     // 0318: your answers to its questions, each carried out once, as it would its own instruction, while the ticket is
@@ -569,7 +569,7 @@ export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RU
   const did = action === 'resume' ? `resumed its build: ${text}` : action === 'reship' ? 'asked speck run to ship it again, once'
     : action === 'fix' ? `made draft fix ticket ${fixId}: ${text}` : action === 'tell' ? `told you: ${text.replace(/\.$/, '')}` : `asked you: ${text}`;
   // 0567: decide says it as the button does, which is how the board reads it, and sets a blocked ticket building as it does.
-  const checked = check ? checkedSays(check.line, saw) : ''; // 0636: what it checked in the app and saw
+  const checked = check ? checkedSays(check.line, saw, s.running.qa === true) : ''; // 0636: what it checked in the app and saw
   if (action === 'decide') noteInTicket(at, t, `- Went with the recommendation: ${text} (${FOREMAN_CHOSE}, as watch is ${fixingOf(cfg)}, ${when}).${checked}`, `${foremanSubject(id)} decide`,
     raw => (t.fm.status === 'blocked' ? syncHeader(waitFields(setField(raw, 'status', 'building'), 'blocked', 'building', now.getTime())) : raw));
   else if (resumeAt !== null) noteInTicket(at, t, `- speck (${when}) I'll resume ${id} at ${resumeClock(resumeAt, now.getTime())}: ${resumeWhy(why)} Its instruction: ${text}`, `${foremanSubject(id)} ${action}`); // 0625

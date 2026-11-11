@@ -522,7 +522,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck init                          set up speck in this repo, or update it (re-run any time)
   speck doctor                        check that Node.js, git, the builder and the reviewer are ready
   speck detect                        print what setup needs to know about this folder and machine, as JSON
-  speck agents [--json]               every agent speck knows: whether it's yours, installed and signed in (or has its key), and its models; speck agents add|remove <agent> changes this machine's list of your agents
+  speck agents [--json]               every agent speck knows: whether it's yours, installed and signed in (or has its key), its models and its latest usage; speck agents add|remove <agent> changes this machine's list of your agents
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck check <id>                    the ready check: check a ticket against the size rules
   speck lint <id>                     another name for speck check, which still works

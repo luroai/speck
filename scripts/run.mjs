@@ -186,7 +186,7 @@ function runOn(worker) {
       // A build killed by a signal is left without an exit, so the next check can resume it.
       const inHand = signal && killedInHand(id);
       if (!inHand) recordExit(id, recordFile, signal ? null : code);
-      if (!signal && limits.ended(id, log, recordFile)) return tick(); // 0622: speck run carries it on once the limit resets
+      limits.keepUsage(log, recordFile); if (!signal && limits.ended(id, log, recordFile)) return tick(); // 0642: the usage it reported. 0622: speck run carries it on once the limit resets
       reportIfStillReady(id, log);
       if (!inHand) lookInto(id, log);
     }
@@ -229,7 +229,7 @@ function runOn(worker) {
       try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
       const pid = rec.pid, valid = Number.isInteger(pid) && pid > 0 && pid !== process.pid, ran = carried.includes(id);
-      if (!(valid && (ran || pidAlive(pid)))) { stopPanelsOfRun(id, file); if (!killedInHand(id)) { recordExit(id, file, null); limits.ended(id, path.join(dir, `${id}.log`), file); } continue; } // 0619; 0622: one that stopped on Claude's usage limit while speck run was off
+      if (!(valid && (ran || pidAlive(pid)))) { stopPanelsOfRun(id, file); if (!killedInHand(id)) { recordExit(id, file, null); limits.keepUsage(path.join(dir, `${id}.log`), file); limits.ended(id, path.join(dir, `${id}.log`), file); } continue; } // 0619; 0622: one that stopped on Claude's usage limit while speck run was off
       adopt(id, file, rec, ran ? 'carries on through the switch' : 'is already being built');
     }
   };
@@ -290,7 +290,7 @@ function runOn(worker) {
       if (b.seen && b.fresh) launched.delete(id);
       const byStop = stoppedBySpeck(b.file), inHand = killedInHand(id);
       if (!inHand) recordExit(id, b.file, null);
-      if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; }
+      limits.keepUsage(b.log, b.file); if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; } // 0642: the usage it reported
       console.log(`${id} build (session ${b.session}, process ${b.pid}) stopped.`);
       if (!inHand && limits.ended(id, b.log, b.file)) continue; // 0622
       reportIfStillReady(id, b.log);
@@ -393,7 +393,7 @@ function runOn(worker) {
     saveForeman(runsDir(repo), { lock, max: last.max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) }, ...(limits.view() ? { limit: limits.view() } : {}), ...fullRuns.view() }); // 0299; 0630: a failing full run; 0295: none waits to ship in pull request mode; 0622
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
-    if (limits.waiting(t.id)) return { kind: 'limit', why: 'its build stopped on Claude\'s usage limit, and speck run will carry it on' }; // 0622
+    if (limits.waiting(t.id)) return { kind: 'limit', why: 'its build stopped on its agent\'s usage limit, and speck run will carry it on' }; // 0622; 0644: Claude's, Codex's or Cursor's
     if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
     const runs = runsDir(repo);
     // 0327: committed since its build ended still ready. 0376: or committed ready since `speck stop` ended its build.
@@ -459,7 +459,7 @@ function runOn(worker) {
       if (own) { wait(t, own.kind, own.why); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
       if (!now) { wait(t, 'builder', live.why()); continue; }
-      if (limits.holds(launchAgent(now.cfg, now.command, t))) { wait(t, 'limit', 'Claude\'s usage limit is reached'); continue; } // 0622
+      const limited = limits.heldSays(launchAgent(now.cfg, now.command, t)); if (limited) { wait(t, 'limit', limited); continue; } // 0622; 0644: Codex's and Cursor's too
       if (running.size >= now.max) { wait(t, 'slots', `all ${now.max} build slot${now.max === 1 ? '' : 's'} in use`); continue; }
       launch(t);
       if (!launched.has(t.id) && failed.has(t.id)) wait(t, failed.get(t.id).kind, failed.get(t.id).why);

@@ -75,6 +75,15 @@ test('0649 AC1: Claude held by its own usage limit as a builder counts as held',
   assert.equal(agentHeld(dir, 'claude'), true);
 });
 
+test('0649 AC1: Codex or Cursor held by its own usage limit as a builder (0644) counts as held', () => {
+  const dir = bare();
+  fs.mkdirSync(runsIn(dir), { recursive: true });
+  fs.writeFileSync(path.join(runsIn(dir), 'run.usage-limit.codex.json'), JSON.stringify({ resets: null, carry_on: iso(later()), builds: [] }));
+  assert.equal(agentHeld(dir, 'codex'), true);
+  assert.equal(agentHeld(dir, 'cursor'), false);
+  assert.equal(agentHeld(dir, 'claude'), false);
+});
+
 // ---------- AC3 and AC4: none free, or the limit over ----------
 
 test('0649 AC3: with no agent free there is no stand-in', () => {
