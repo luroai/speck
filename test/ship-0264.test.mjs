@@ -1,6 +1,7 @@
 // 0264: when the base branch is failing, a ship refusal puts only the tests that also fail on the base branch down
 // to the base branch. A ticket failing tests the base branch passes is handed back to its build, with them named.
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
+// Full suite only: it runs real ships and test runs in repos of their own, slow on a busy machine (0631).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

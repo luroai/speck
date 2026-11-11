@@ -1,4 +1,5 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
+// Full suite only: it times real speck run processes against the clock, which a busy machine throws off (0631).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

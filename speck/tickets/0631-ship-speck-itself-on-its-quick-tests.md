@@ -42,6 +42,8 @@ speck ships on its quick tests, and its whole suite runs on `main` after ships t
 - The six files are the most frequent non-heavy entries in `speck/.cache/flaky/flaky.log` (wall-clock, CPU-cost and real-process tests).
 - After 0630, because the full run needs `commands.test_full` to exist.
 - Failing before this build: none
+- AC3 has no test: speck's tests don't read this repo's own `speck/` folder (0122's check). A reviewer checks it by reading `commands` in `speck/config.yml`: `test` is `node test/support/suite.mjs --quick` and `test_full` is `npm test`. AC4's test runs a repo with the same two commands.
+- Self-check: a quick run now keeps the times the full run recorded for the files it leaves out, rather than dropping them, and says when it has no files left to run (tests added for both).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

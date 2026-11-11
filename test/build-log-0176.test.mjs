@@ -1,4 +1,5 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
+// Full suite only: it measures how much CPU an idle speck run uses, which a busy machine throws off (0631).
 import { test, describe, before as beforeAll } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
