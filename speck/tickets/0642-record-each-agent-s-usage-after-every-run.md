@@ -1,7 +1,7 @@
 ---
 id: "0642"
 title: "Record each agent's usage after every run"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:17:37.761Z"
+approved: "2026-11-11T14:45:58.918Z"
 
 ---
 # 0642 · Record each agent's usage after every run
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 You can't see how close Claude or Codex is to its usage limit until a build stops on it, and speck can't pick another agent before that happens. Both agents already report their usage with every run, and speck throws it away.
@@ -55,9 +56,17 @@ After every build, review and watch run on Claude Code or Codex, speck now notes
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 saveUsage reads the shared file and later replaces it without locking.; F2 Codex's read_at is the session event timestamp rather than the time speck reads it.
+Round 2 (codex): changes requested.
+Round 3 (codex): changes requested.
+Round 4 (codex, extra round): approve.
 
 ## Delivery log
+- Review rounds: 4, round 4 an extra round
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 602,428
+- Elapsed since build started: 28 min
+- Changed lines: 226 (limit 5000)
 Follow-ups:
 - A review round on Claude Code gives no reading, as its `--output-format json` output has no `rate_limit_event` lines: saved to the inbox as `speck/ideas/2026-11-11-read-claude-s-usage-after-a-claude-review-round.md`.
 - A process that dies between writing a reading's temporary dot-file and renaming it leaves that file behind in its agent's folder. Nothing reads it, but nothing clears it either (tidy-up).
