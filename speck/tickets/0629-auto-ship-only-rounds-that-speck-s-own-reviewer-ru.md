@@ -45,6 +45,7 @@ A ticket ships by itself only when its approving round was recorded by speck's o
 - Receipts belong in the shared cache every worktree sees (as `sharedCacheDir` in `scripts/results.mjs` uses), not `cacheDir`, which is per checkout.
 - With `reviewer: claude-subagent`, every round is saved with `speck record`, so those tickets always wait for you at Ship. This repo reviews with Codex, so it isn't affected.
 - Risk high: it changes when code merges and pushes to the base branch without you.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
