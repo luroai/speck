@@ -36,8 +36,9 @@ test('0650 AC1: draw takes a role, manager by default, and draws the same Premiu
   assert.deepEqual([...SpeckFace.roles], ['manager', 'builder', 'reviewer', 'qa']);
   const today = SpeckFace.draw({ mood: 'focused', size: 44 });
   for (const role of [undefined, 'manager', 'nobody', 'constructor', '__proto__']) {
-    const svg = SpeckFace.draw({ mood: 'focused', size: 44, role });
-    assert.deepEqual(plain(svg), plain(today), `${role} draws Virgil as today`);
+    const svg = SpeckFace.draw({ mood: 'focused', size: 44, role, label: 'Virgil' }), was = SpeckFace.draw({ mood: 'focused', size: 44, label: 'Virgil' });
+    assert.deepEqual(plain(svg), plain(was), `${role} draws Virgil as today`);
+    if (role !== 'manager') assert.deepEqual(plain(SpeckFace.draw({ mood: 'focused', size: 44, role })), plain(today), `${role}: labelled as today too`);
     assert.equal(svg.attrs['data-role'], undefined, `${role}: no role mark on Virgil`);
   }
   for (const role of ROLES) {
@@ -133,4 +134,17 @@ test('0650 AC4: each draws at every size from 16 px, in both looks, labelled wit
     }
     assert.equal(SpeckFace.draw({ role, label: 'Ada, the builder' }).attrs['aria-label'], 'Ada, the builder', 'a label given is used');
   }
+});
+
+test('0650 AC4: asked for by role, the manager is labelled with its member and its mood, through mood changes too', () => {
+  const { SpeckFace } = load();
+  const svg = SpeckFace.draw({ role: 'manager', mood: 'focused' });
+  assert.equal(svg.attrs['aria-label'], 'Manager, focused');
+  SpeckFace.setMood(svg, 'asleep');
+  assert.equal(svg.attrs['aria-label'], 'Manager, asleep', 'it keeps naming its member');
+  assert.equal(SpeckFace.draw({ role: 'manager', mood: 'nonsense', size: 16 }).attrs['aria-label'], 'Manager, watching');
+  const given = SpeckFace.draw({ role: 'manager', label: 'Virgil, watching' });
+  SpeckFace.setMood(given, 'pleased');
+  assert.equal(given.attrs['aria-label'], 'Virgil, watching', 'a label given is used and kept');
+  assert.equal(SpeckFace.draw({ mood: 'pleased' }).attrs['aria-label'], 'pleased', 'without a role, labelled as today');
 });

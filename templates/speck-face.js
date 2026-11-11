@@ -95,6 +95,7 @@
       d: `M ${z.x} ${z.y} L ${z.x + z.size} ${z.y} L ${z.x} ${z.y + z.size} L ${z.x + z.size} ${z.y + z.size}` })) : []);
   const faces = new WeakMap(); // 0579: what setMood needs of each face draw made
 
+  const moodLabel = (name, named) => (named ? `Manager, ${name}` : name);
   // 0650: a member's sign, each stroke over a glow as soft and as wide as the visor's. Nothing in it moves.
   const signOf = (role, small) => {
     const sign = SIGNS[role], stroke = small ? Math.max(sign.stroke, SMALL_SIGN) : sign.stroke;
@@ -116,7 +117,8 @@
     const move = make('g', { class: 'sf-move' }, make('g', { class: 'sf-blink' }, glow, visor));
     const glass = make('path', { class: 'sf-glass', d: 'M -18 -38 L 6 -38 L -10 -12 L -18 -12 Z', fill: '#FFFFFF', 'fill-opacity': 0.07 });
     const lit = make('g', { class: 'sf-lit', 'clip-path': `url(#${clip})` }, ...(member ? signOf(member, small) : [move, ...marksOf(name, small)]), glass);
-    const who = member ? { 'aria-label': label || SIGNS[member].label, 'data-role': member } : { 'aria-label': label || name, 'data-mood': name };
+    const named = role === 'manager'; // 0650: asked for by role, the manager's label names it as well as its mood
+    const who = member ? { 'aria-label': label || SIGNS[member].label, 'data-role': member } : { 'aria-label': label || moodLabel(name, named), 'data-mood': name };
     const svg = make('svg', { class: 'speck-face', viewBox: '-26 -50 52 52', width: px, height: px, role: 'img', ...who, ...(small ? { 'data-small': 'true' } : {}), ...(look === 'light' || look === 'dark' ? { 'data-look': look } : {}) },
       make('defs', {},
         make('linearGradient', { id: bezel, x1: 0, y1: 0, x2: 0, y2: 1 }, make('stop', { class: 'sf-stop-a', offset: 0 }), make('stop', { class: 'sf-stop-b', offset: 1 })),
@@ -124,7 +126,7 @@
       make('rect', { class: 'sf-body', x: -22, y: -42, width: 44, height: 34, rx: 11, fill: `url(#${bezel})`, 'stroke-width': 0.8 }),
       make('rect', { class: 'sf-screen', ...SCREEN }),
       lit);
-    if (!member) faces.set(svg, { name, small, labelled: !!label, shape, glow, visor, lit, move, glass, turn: 0 });
+    if (!member) faces.set(svg, { name, small, labelled: !!label, named, shape, glow, visor, lit, move, glass, turn: 0 });
     return svg;
   };
 
@@ -146,7 +148,7 @@
     if (!face || name === face.name) return;
     face.name = name;
     svg.setAttribute('data-mood', name);
-    if (!face.labelled) svg.setAttribute('aria-label', name);
+    if (!face.labelled) svg.setAttribute('aria-label', moodLabel(name, face.named));
     face.lit.replaceChildren(face.move, ...marksOf(name, face.small), face.glass);
     const turn = ++face.turn, to = shapeOf(name, face.small);
     const step = shape => { if (turn !== face.turn) return false; paint(face, shape); return true; };
