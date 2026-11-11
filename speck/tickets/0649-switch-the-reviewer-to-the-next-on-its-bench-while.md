@@ -1,7 +1,7 @@
 ---
 id: "0649"
 title: "Switch the reviewer to the next on its bench while it's limited"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0645"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:39:24.694Z"
+approved: "2026-11-11T15:04:55.300Z"
 
 ---
 # 0649 · Switch the reviewer to the next on its bench while it's limited
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the reviewer's agent is limited, every build waits at its next review round until the reset (0623), even with another reviewer on its bench ready.
@@ -56,9 +57,15 @@ Worth knowing: if nothing on the bench is free, the build waits for the reset as
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Consecutive rounds on the same stand-in resume its previous session, contrary to AC1's fresh-session requirement and the printed promise.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 352,248
+- Elapsed since build started: 26 min
+- Changed lines: 114 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - A stand-in round clears its build's record of the reviewer's limit, so later rounds ask the limited reviewer first: saved as `speck/ideas/2026-11-11-remember-the-reviewer-s-limit-while-a-stand-in-reviews.md`.
