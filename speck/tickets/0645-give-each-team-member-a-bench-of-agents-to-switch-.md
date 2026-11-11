@@ -1,7 +1,7 @@
 ---
 id: "0645"
 title: "Give each team member a bench of agents to switch to"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:17:41.472Z"
+approved: "2026-11-11T14:36:49.716Z"
 
 ---
 # 0645 · Give each team member a bench of agents to switch to
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When an agent is limited, speck can only wait or, for the watch agent, take your agents in a fixed order (0637). You can't say who should take over for each job, such as Codex for the builder but Cursor for the reviewer.
@@ -55,9 +56,15 @@ Worth knowing: speck refuses a bench naming an agent it doesn't know or the memb
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Bench names are not checked when settings are read, contrary to AC1.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 397,152
+- Elapsed since build started: 19 min
+- Changed lines: 144 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The 0264 AC3 ship queue test failed once by chance under the 200-file related run: saved as `speck/ideas/2026-11-11-steady-the-0264-ac3-ship-queue-test.md`.
