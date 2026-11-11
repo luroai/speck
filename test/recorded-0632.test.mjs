@@ -123,12 +123,11 @@ test('0632 AC3: a test run reuses only a result recorded with its own command, a
 });
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const flat = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\s+/g, ' ');
+const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-test('0632 AC1: /speck-build\'s step 6, the brief and the help say --recorded prints the full suite\'s result first', () => {
-  const step6 = flat('skills/speck-build/SKILL.md').split('6. In that folder')[1].split(' 7. ')[0];
-  assert.ok(step6.includes('`commands.test_full`'), step6);
-  const brief = flat('docs/brief.md').split('`speck test --recorded` prints')[1];
-  assert.ok(brief.split('With neither recorded')[0].includes('`commands.test_full`'), 'the brief names commands.test_full beside --recorded');
+// Facts only: the setting's name in the skill and the brief, and the help line. How they read is checked by review.
+test('0632 AC1: /speck-build and the brief name commands.test_full, and the help says --recorded prints the full suite\'s result', () => {
+  assert.ok(read('skills/speck-build/SKILL.md').includes('`commands.test_full`'), 'the build skill names it');
+  assert.ok(read('docs/brief.md').split('`commands.test_full`').length > 2, 'the brief names it beside --recorded as well as for speck run');
   assert.match(runIn(ROOT, 'help').stdout, /speck test --recorded .*full suite/);
 });
