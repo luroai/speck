@@ -6,10 +6,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { worktreeList } from './core.mjs';
 import { sharedCacheDir } from './turns.mjs';
 
 const pad = id => String(id).padStart(4, '0');
 const receiptsDir = (repo, id) => sharedCacheDir(repo, path.join('receipts', pad(id)));
+// The same folder, for reading: nothing is created, and a folder that can't be found is one with no receipts.
+function readDir(repo, id) {
+  let main = repo;
+  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
+  return path.join(main, 'speck', '.cache', 'receipts', pad(id));
+}
 // The round as the ticket holds it, so any change to its record there changes this.
 const digest = rec => crypto.createHash('sha256').update(JSON.stringify(rec)).digest('hex');
 
@@ -23,7 +30,7 @@ export function keepReceipt(repo, id, rec) {
 }
 
 // Whether round `rec` has a receipt that matches it: its round number, reviewed commit and verdict, and its record unchanged.
-// `dir` is the ticket's receipts folder, receiptsDir(repo, id).
+// `dir` is the ticket's receipts folder, readDir(repo, id). A receipt that can't be read is one that doesn't match.
 function matches(dir, rec) {
   const round = rec?.meta?.round;
   if (!Number.isInteger(round) || round < 1) return false;
@@ -35,13 +42,13 @@ function matches(dir, rec) {
 // The round numbers in `all` with no receipt that matches them.
 export function unreceiptedRounds(repo, id, all) {
   if (!all.length) return [];
-  const dir = receiptsDir(repo, id);
+  const dir = readDir(repo, id);
   return all.filter(r => !matches(dir, r)).map(r => r?.meta?.round);
 }
 
 // Why the latest round in `all` can't ship by itself, or '' when speck's own run of the reviewer recorded it unchanged.
 export function receiptWhyNot(repo, id, all) {
   const last = all.at(-1);
-  if (!last || matches(receiptsDir(repo, id), last)) return '';
+  if (!last || matches(readDir(repo, id), last)) return '';
   return `review round ${last.meta?.round} of ticket ${pad(id)} wasn't recorded by speck's own run of the reviewer, or was changed in the ticket since, so it waits for you to ship it`;
 }

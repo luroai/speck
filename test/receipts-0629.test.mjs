@@ -148,3 +148,34 @@ test('0629 AC2: a receipt that can\'t be written is said in one line, and the ro
 test('0629: the brief names the folder the receipts are kept in', () => {
   assert.match(fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8'), /`speck\/\.cache\/receipts\/`/);
 });
+
+test('0629 round 1 F1: with the receipts folder blocked, review, status, both packs and speck ship --auto say the ticket waits for you, without failing', () => {
+  const r = commandRepo();
+  autoShipOn(r);
+  const cache = path.join(r.dir, 'speck', '.cache');
+  fs.mkdirSync(cache, { recursive: true });
+  fs.writeFileSync(path.join(cache, 'receipts'), 'not a folder\n'); // so no receipt folder can be made under it
+  const review = r.runEnv({ FAKE_VERDICT: JSON.stringify(approveVerdict) }, 'review', '1');
+  assert.equal(review.status, 0, review.stdout + review.stderr);
+  assert.match(review.stderr, /Couldn't keep the receipt for review round 1 of 0001 \(\w+\), so it won't ship by itself/);
+  assert.equal(r.run('set', '1', 'status', 'approved').status, 0);
+  r.git('add', '-A'); r.git('commit', '-qm', 'approved');
+  const status = r.run('status', '--json');
+  assert.equal(status.status, 0, status.stderr);
+  const t = JSON.parse(status.stdout).tickets.find(x => x.id === '0001');
+  assert.equal(t.auto_ship, false);
+  assert.match(t.auto_ship_why, REASON);
+  const pack = r.run('pack', '1');
+  assert.equal(pack.status, 0, pack.stderr);
+  assert.match(pack.stdout, /No matching review receipt for round 1\b/);
+  const plain = r.run('pack', '1', '--plain');
+  assert.equal(plain.status, 0, plain.stderr);
+  assert.match(plain.stdout, /Review round 1 wasn't recorded by speck's own run of the reviewer/);
+  const before = { main: sha(r, 'main'), branch: sha(r, 'speck/0001-x') };
+  const ship = r.run('ship', '1', '--auto');
+  assert.equal(ship.status, 12, ship.stdout + ship.stderr);
+  assert.match(ship.stderr, REASON);
+  assert.equal(ship.stderr.trim().split('\n').length, 1);
+  assert.deepEqual({ main: sha(r, 'main'), branch: sha(r, 'speck/0001-x') }, before);
+  assert.equal(fs.readFileSync(path.join(cache, 'receipts'), 'utf8'), 'not a folder\n', 'reading made nothing');
+});
