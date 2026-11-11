@@ -8,6 +8,7 @@ import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTic
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
 import { goWithQueue, newBuildKeeps } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
+import { fullSuiteQueue } from './full-suite.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { fillSession, timedArgv } from './codex-build.mjs';
 import { countStop, sleepQueue, sleepWatch } from './stop-wait.mjs';
@@ -378,7 +379,7 @@ function runOn(worker) {
   const handBacks = handBackQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill, heldBuild });
   const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), heldBuild }); // 0284
   const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344
-  const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }); // 0286
+  const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }), fullRuns = fullSuiteQueue({ repo, readConfig: () => loadConfig(repo) }); // 0286. 0630: the full suite on the base branch
   const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), cfg, settings, running, startBuild, ships, heldBuild, heldAgent: agent => limits.holds(agent), agentLimited: (agent, log) => limits.agentEnded(agent, log) }); // 0287: the Foreman agent, for stops speck has no steps for
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => ships.running(), launched: () => [...launched], running: () => [...running],
@@ -389,7 +390,7 @@ function runOn(worker) {
   const lock = worker ? process.ppid : process.pid;
   const holding = keepsLock(() => runsDir(repo), lock, stop); // 0321: one no longer holding the lock stops, leaving its builds and ship running
   const foreman = (tickets, ready, switching = null) => holding() && // 0321: only the speck run holding the lock writes it
-    saveForeman(runsDir(repo), { lock, max: last.max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) }, ...(limits.view() ? { limit: limits.view() } : {}) }); // 0299; 0295: none waits to ship in pull request mode; 0622
+    saveForeman(runsDir(repo), { lock, max: last.max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) }, ...(limits.view() ? { limit: limits.view() } : {}), ...fullRuns.view() }); // 0299; 0630: a failing full run; 0295: none waits to ship in pull request mode; 0622
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
     if (limits.waiting(t.id)) return { kind: 'limit', why: 'its build stopped on Claude\'s usage limit, and speck run will carry it on' }; // 0622
@@ -437,7 +438,7 @@ function runOn(worker) {
     adoptSeen(tickets); sleeps.check(tickets); // 0344: time asleep since the last check isn't build time for builds in hand through it
     limits.check(tickets); // 0622: once Claude's usage limit has reset, each build that stopped on it, before anything else takes a slot
     if (prs) prs.check(tickets); else ships.check(tickets);
-    foremanFixes.check(tickets); // 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
+    fullRuns.check(); foremanFixes.check(tickets); // 0630: a full run of the base branch's newest commit. 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
     goWiths.check(tickets); // 0284: blocked tickets you went with the recommendation for, before any killed build's resume
     agents.check(tickets); // 0287: the Foreman agent's next look, and the builds it asked to resume
     // Builds that were killed with their ticket in hand: each resumed once.

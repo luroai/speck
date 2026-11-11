@@ -44,6 +44,9 @@ function recorded(repo, code, cmd) {
   return ok ? r : null;
 }
 
+// 0630: the result recorded for the code commit `rev` holds and the test command `cmd`, or null.
+export const recordedAt = (repo, cmd, rev) => { const code = codeAt(repo, cmd, rev); return code && recorded(repo, code, cmd); };
+
 // The checkout's root as a test's location names it: its real path, or as given when that can't be read.
 const realRoot = repo => { try { return fs.realpathSync(repo); } catch { return path.resolve(repo); } };
 

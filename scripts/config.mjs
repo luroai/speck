@@ -20,7 +20,7 @@ const USAGE = 'Usage: speck config set <key> <value>, which saves your own setti
 // are left to hand editing.
 const KINDS = Object.assign(Object.create(null), {
   base_branch: 'text', branch_prefix: 'text', builder: 'text', builder_model: 'text', reviewer: 'text', reviewer_model: 'text',
-  worktree_setup: 'text', build_command: 'text', resume_command: 'text', 'commands.test': 'text', 'github.status_check': 'text',
+  worktree_setup: 'text', build_command: 'text', resume_command: 'text', 'commands.test': 'text', 'commands.test_full': 'text', 'github.status_check': 'text',
   'commands.test_files': 'files', 'commands.checks': 'paths',
   allow_same_model_review: 'flag', auto_ship: 'flag', worktrees: 'flag',
   reviewer_effort: 'effort', auto_ship_risk: 'risks', watch: 'fixing',

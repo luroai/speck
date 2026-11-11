@@ -321,7 +321,6 @@ export async function agentModels(agent, read = codexModelsAsync, readCursor = (
 }
 
 const shown = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : String(v);
-
 // 0259: auto_ship and auto_ship_risk as speck's ship queue reads them (see autoShipRefusal in ship.mjs).
 const shipping = cfg => ({ on: cfg.auto_ship === true, risks: [].concat(cfg.auto_ship_risk ?? []).map(String) });
 // Which tickets ship by themselves with auto_ship on and these risks, in words: "approved low-risk tickets".
@@ -336,6 +335,7 @@ export function loosens(was, will) {
 const COMMAND_EXPLAIN = {
   build_command: 'The command speck run starts each build with. Switching the builder sets it to that builder\'s own.',
   resume_command: 'The command the panel shows to reopen a blocked build\'s session.',
+  'commands.test_full': 'The full suite, when commands.test is only the quick tests that each ship waits for. While speck run is on, it runs this on the base branch\'s newest commit after ships, in a checkout of its own, one run at a time, and a failure counts under Needs you until a run on a newer commit passes. speck ship and builds never run it, so a failing or slow full suite holds up nothing. Blank runs no full suite.', // 0630
 };
 
 // `speck config show [--json]` (0269): each setting of the panel's Settings view, by group, with its value now, whether
@@ -357,6 +357,7 @@ export function cmdConfigShow(args) {
   const repoCfg = loadConfig(repo, { machine: false }), agents = groups.find(g => g.settings.some(s => s.key === 'builder'));
   for (const key of ['build_command', 'resume_command']) if (Object.hasOwn(mine, key))
     agents.settings.push({ key, value: mine[key], is_default: false, speck_default: '', explain: COMMAND_EXPLAIN[key], this_machine: true, repo_value: repoCfg[key] ?? '' });
+  groups.find(g => g.title === 'Shipping')?.settings.push({ key: 'commands.test_full', value: String(repoCfg.commands?.test_full ?? ''), is_default: !String(repoCfg.commands?.test_full ?? '').trim(), speck_default: '', explain: COMMAND_EXPLAIN['commands.test_full'] }); // 0630: with Shipping, as ships run commands.test
   if (json) { console.log(JSON.stringify({ groups }, null, 2)); return; }
   const show = v => Array.isArray(v) ? `[${v.join(', ')}]` : shown(v);
   console.log(groups.map(g => `${g.title}\n${g.settings.map(s =>

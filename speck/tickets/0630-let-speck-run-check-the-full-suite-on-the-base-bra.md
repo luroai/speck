@@ -43,6 +43,8 @@ With `commands.test_full` set, `speck run` runs it on the base branch after ship
 - `scripts/results.mjs` (`testRun`, recorded results keyed by code and test command) and the test turns in `scripts/turns.mjs` already exist; a recorded full run on the base branch also gives builds' "Failing before this build" a better baseline.
 - `scripts/run.mjs` is at 592 lines against the 600-line limit, so new code needs its own module.
 - Failing before this build: none
+- Self-check: a full run that can't start called back before its pid was known, which would have thrown; fixed, with a test. A result found recorded for the newest commit wasn't kept as the latest, so the next commit fell back to an older run's; fixed. Tests added for a folder that isn't speck's at the full run's checkout and for the brief's facts.
+- Pictures: none, because nothing anyone sees changes shape: the bar already shows Needs you <n>, and speck status gains one line.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
