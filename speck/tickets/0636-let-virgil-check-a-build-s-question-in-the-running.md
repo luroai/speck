@@ -1,7 +1,7 @@
 ---
 id: "0636"
 title: "Let speck check a build's question in the running app"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-11-virgil-checks-the-work-in-the-running-app.m
 after: ["0634","0635"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:36:54.947Z"
+approved: "2026-11-11T11:50:00.241Z"
 
 ---
 # 0636 · Let speck check a build's question in the running app
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Builds often block with "check this in the app yourself" or "log in and check", and you go with the recommendation almost every time. Each one stops the ticket until you're back, for a check an agent can do by starting the app, signing in and taking screenshots.
@@ -52,9 +53,15 @@ When a build wants something checked in the running app, it now says so on its q
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 foremanAction accepts a decision after the blocked question or requested app check has changed during the agent's run.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 325,911
+- Elapsed since build started: 13 min
+- Changed lines: 196 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): show that speck is checking a question in the app, rather than "Waiting for you" (speck/ideas/2026-11-11-show-that-speck-is-checking-a-question-in-the-app.md).
 - Known limit: only Claude Code's check runs have a fixed tool list (speck, read-only git, Playwright's tools and headless Chromium/Chrome); Codex and Cursor runs run unsandboxed as their other watch runs do, kept to the rules by the brief and skill.
