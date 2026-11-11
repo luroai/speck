@@ -1,7 +1,7 @@
 ---
 id: "0652"
 title: "Turn Settings into your team"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T15:32:26.514Z"
 ---
 # 0652 · Turn Settings into your team
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Settings is a list of agent, model and effort pickers per role. You think of the work as a team: who manages, who builds, who reviews and who checks the app, and who takes over when one runs out.
@@ -58,3 +58,89 @@ Settings opens on Your team: a card for each member, with its character, its job
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "76c10bad160745afdf017e153511ab05c2ae86d1",
+    "session": "fresh",
+    "thread_id": "01a1cb5e-5ca8-77f1-80e1-7d14c84761b0",
+    "builder_response": "- Tests run: `speck test --related` with test/settings-team-0652.test.mjs (the ticket's own) and the existing test files it changed: test/panel-0593.test.mjs, test/foreman-fix-0286.test.mjs, test/panel-0257.test.mjs, test/panel-0258.test.mjs, test/settings-0397.test.mjs, test/settings-0407.test.mjs, test/settings-agents-0399.test.mjs, test/speck-name-0485.test.mjs, test/speck-name-0575.test.mjs, test/subscriptions-0646.test.mjs, test/panel-0368.test.mjs, test/settings-0396.test.mjs, test/panel-0427.test.mjs, plus every related test file it brought in.\n- Three failures in that run, none from this change:\n  - The two `0285 AC3` tests in test/foreman-0285.test.mjs fail on the base code as well (I checked them against an export of the base commit): since 0646 the view's /api/usage fetch takes the fake page's next answer. They're noted in the ticket and left unchanged.\n  - `0630 AC3` (test/full-suite-0630.test.mjs) failed once under a load average of 24 to 44, then passed on its own here and on the base code.\n- Existing tests changed: each pinned the old layout (the Your engineering manager group under Auto-build, Your agents and Your subscriptions after the switches, speck's face beside speck_name, the exact EDITABLE list, the count of settings). Each now checks the same thing in the new layout, marked 0652. In test/panel-0368.test.mjs, the check for an empty Your engineering manager group is gone, because the view no longer draws an empty group: a card appears only when its member has settings.\n- Pictures: Settings at phone width, light and dark, kept with `speck picture`.\n",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 306079,
+      "cached_input_tokens": 238976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1049,
+      "reasoning_output_tokens": 214
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 67103,
+      "cached": 238976,
+      "write": 0,
+      "output": 1049
+    },
+    "cost_usd": 0.1685936,
+    "tests": {
+      "failing": 3,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T16:09:29.357Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel-settings.js roleEntries(), roleWords() and the QA effort control display QA's blank model and effort as defaults. scripts/app-check.mjs qaConfig() instead inherits watch_model and watch_effort while all QA settings are blank. The AC1 tests cover only inherited agent identity, not inherited model or effort."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "settings-team-0652 tests exercise Save requests, machine-only persistence and rejected bench/QA values; all passed. Existing saving and validation paths remain in use."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "renderSettings() places teamGroup() and subsGroup() before the remaining sections. The AC3 test verifies section order and retained shipping and limits controls; passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/team.mjs teamNow() and teamShown() calculate limited agents and eligible stand-ins; limitWords() displays them. AC4 tests cover ordering, readiness, held agents and reviewer restrictions; passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "AC5 tests verify retained settings with and without model catalogues and check 320 px layout in light and dark appearances; passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "With all QA settings blank, QA actually inherits the manager's model and effort, but its card presents an agent default model and blank/default effort. For example, watch_model=opus and watch_effort=high run QA on opus/high while its card does not show those effective values. This fails the requirement to show what each member runs on.",
+        "suggested_fix": "Show the inherited manager model and effort explicitly while all QA settings are blank, preserving blank saved values and explaining when setting any QA value switches to QA's own defaults. Add a test with nonblank watch_model and watch_effort.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The team cards, subscriptions placement, saving and phone layouts are covered by passing tests. One misleading detail needs fixing: QA can inherit the manager's model and effort while its card shows defaults instead."
+  }
+}
+```
+
+</details>

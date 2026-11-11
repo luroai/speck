@@ -211,3 +211,15 @@ test('0652 AC1 (self-check): a bench naming a built-in such as constructor or __
   changeTo(p, 'builder_bench', 'constructor, __proto__');
   assert.equal(p.all(rowOf(p, 'builder_bench')).find(n => has(n, 'bench')).textContent, 'Stands in, in order: constructor, then __proto__.');
 });
+
+test('0652 AC1 (round 1 F1): with QA\'s settings blank, QA\'s card says it runs on the watch agent\'s model and effort', async () => {
+  const v = viewOf(panelRepo().dir);
+  for (const g of v.groups) for (const s of g.settings) { if (s.key === 'watch_model') s.value = 'opus'; if (s.key === 'watch_effort') s.value = 'high'; }
+  const p = await opened(v);
+  const line = () => p.all(rowOf(p, 'qa_agent')).find(n => has(n, 'inherit'))?.textContent ?? null;
+  assert.equal(line(), 'With QA\'s settings blank, QA runs as Virgil\'s agent does: Claude Code · Opus, high effort. Set any of them to give QA its own, where blank is its agent\'s default.');
+  changeTo(p, 'watch_effort', 'low');
+  assert.match(line(), /Claude Code · Opus, low effort\./, 'follows the watch agent\'s effort as it\'s picked');
+  changeTo(p, 'qa_effort', 'max');
+  assert.equal(line(), null, 'QA\'s own once any is set');
+});

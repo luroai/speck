@@ -354,7 +354,7 @@ function settingRow(x, n) {
     x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
     x.key === 'builder_model' && builderModelsWhy() !== null ? el('p', null, builderModelsWhy()) : null,
     x.key === 'watch_model' && foremanModelsWhy() !== null ? el('p', null, foremanModelsWhy()) : null, // 0348
-    Object.hasOwn(BENCH_OF, x.key) ? benchLine(x.key) : null, // 0652
+    Object.hasOwn(BENCH_OF, x.key) ? benchLine(x.key) : null, x.key === 'qa_agent' ? qaInheritLine() : null, // 0652
     settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
     // 0400: a refusal of the role's model, whose list is the role's own
     role !== null && settingRefused.has(ROLES[role].model) && settingRefused.get(ROLES[role].model) !== settingRefused.get(x.key) ? el('p', 'bad', settingRefused.get(ROLES[role].model)) : null,
@@ -494,7 +494,9 @@ function settingEditor(x) {
     // those, keeping this control.
     if (AGENT_KEYS.includes(x.key) || (x.key === 'reviewer_model' && reviewerModelList() !== null)) { // 0348: and foreman. 0652: and QA's
       redrawSettings(SETTING_AFFECTS[x.key], x.key);
-    } else if (Object.hasOwn(BENCH_OF, x.key) || QA_KEYS.includes(x.key)) redrawSettings([...new Set([x.key, 'qa_bench'])], x.key); // 0652: a bench's order as typed
+    } else if (Object.hasOwn(BENCH_OF, x.key) || QA_KEYS.includes(x.key) || x.key === 'watch_model' || x.key === 'watch_effort') { // 0652: a bench's order as typed, and what QA takes from the watch agent
+      redrawSettings([...new Set([x.key, 'qa_bench', 'qa_agent'])], x.key);
+    }
     else refreshSettings();
   };
   if (settingClear.has(x.key)) { // 0261: this machine's value goes on Save, leaving the repo's
@@ -927,6 +929,15 @@ function drawTeamLimits() {
     line.textContent = words ?? '';
     line.hidden = words === null;
   }
+}
+// While QA's settings are all blank, as chosen, QA runs as the watch agent does, on its agent, watch_model and
+// watch_effort (0651), which its own blank model and effort don't show, so its card says so; null otherwise.
+function qaInheritLine() {
+  if (!QA_KEYS.every(k => settingChosen(k).trim() === '')) return null;
+  const agent = foremanAgentChosen(), a = yourAgent(agent), model = settingChosen('watch_model').trim(), effort = settingChosen('watch_effort').trim();
+  const m = model && a !== null ? agentModelsOf(a).find(x => x.slug === model) : undefined;
+  const runs = `${agentLabel(agent)} · ${model ? (m ? modelLabel(m) : model) : 'its default model'}, ${effort ? `${effort} effort` : 'its default effort'}`;
+  return el('p', 'inherit', `With QA's settings blank, QA runs as ${managerName()}'s agent does: ${runs}. Set any of them to give QA its own, where blank is its agent's default.`);
 }
 // A bench's agents in order, as speck reads what's typed: each once.
 const benchNames = v => [...new Set(String(v).trim().replace(/^\[(.*)\]$/, '$1').split(/\s*,\s*|\s+/).map(p => p.trim().toLowerCase()).filter(Boolean))];
