@@ -46,7 +46,7 @@ While the builder's agent is limited, `speck run` starts each new build on the f
 - Self-check: 0344's test reads run.mjs for `launch(t)`, so the plain launch keeps that call and the stand-in launches on its own branch; run.mjs stays at 600 lines by folding the new lines into existing ones.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When your builder's agent hits its usage limit, speck run no longer sits idle until the reset. Each new build starts on the next agent on your builder's bench that's set up, signed in and not limited itself, and the ticket notes which agent built it. An agent from the same family as the ticket's reviewer is passed over, so the review can still run. Builds already running or waiting for a free slot aren't moved. To see it, watch the Pipeline log while a limit is on: speck says once which agent is building instead, and once more when the limit resets and new builds go back to your builder. Worth keeping an eye on: a ticket moved to a stand-in keeps that agent for its whole build, even after the limit resets.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +56,9 @@ While the builder's agent is limited, `speck run` starts each new build on the f
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox note):
+  - Which agent new builds moved to is kept in speck run's memory, so a speck run restarted during a limit says the move again, and one restarted after it doesn't say the move back.
+  - A ticket whose stand-in is recorded but whose build then can't start (such as a Cursor chat that can't be made) keeps that builder, and starts on it later.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -137,6 +140,89 @@ While the builder's agent is limited, `speck run` starts each new build on the f
     ],
     "escalation_question": "",
     "summary": "The fallback selection and review safeguards are implemented, and the reported tests pass. However, tickets waiting for space are reassigned too early and can keep using the fallback after the original builder becomes available. Fix that scheduling issue before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7c1a59a4d4b0d541166713b8ae004417d85d67a7",
+    "session": "continued",
+    "thread_id": "01a1cb2c-fb4f-7c63-9f9e-c6215d969f6f",
+    "builder_response": "- Tests run: `speck test --related test/builder-stand-in-0647.test.mjs` (the ticket's own file, the repo checks, and every test file that names scripts/run.mjs).\n- F1: fixed. `pick` takes a fourth argument, `free`, and with no build slot free returns false before choosing or recording anything (scripts/builder-stand-in.mjs). run.mjs passes `running.size < now.max`, so a ticket waiting behind full slots keeps its builder and, once the limit resets, starts on the builder. New tests: a ticket picked with no slot free records nothing and says nothing, then starts on the builder (null) once the limit resets; and run.mjs passes the slot check to pick.\n",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 310862,
+      "cached_input_tokens": 259072,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1707,
+      "reasoning_output_tokens": 116
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6614,
+      "cached": 117760,
+      "write": 0,
+      "output": 679
+    },
+    "cost_usd": 0.031794,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T15:17:03.201Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "standInFor selects the first ready, unheld, compatible bench agent. recordBuilder commits its identity before launch, and run.mjs launches its own command. Passing AC1 tests cover selection, recording, command planning and waiting for build capacity without premature reassignment."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticket-builder.mjs configFor removes builder_model and builder_effort for a different builder. standInFor checks ticketSameModelProblem against the proposed builder and ticket reviewer. Both AC2 tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "builderStandIn tracks and announces the stand-in and reset through run.mjs's log output, which the Pipeline displays through run-log.mjs. The AC3 test verifies announcement deduplication and a subsequent limit. The capacity fix prevents waiting tickets retaining a premature reassignment after reset."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "When no bench agent qualifies, pick returns false and run.mjs retains the limit wait. Passing AC4 tests cover unavailable or limited bench agents and tickets belonging to another limited builder."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied related-test run reports 315 passed, zero failed and three skipped. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs:462",
+        "issue": "Stand-in assignment previously happened before checking build capacity, leaving waiting tickets assigned to the fallback after the original builder's limit reset.",
+        "suggested_fix": "Implemented: run.mjs passes available capacity to pick, which returns before selecting or recording an agent when slots are full. The new behavioural regression test verifies no recording or announcement while full and normal builder selection after reset.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The scheduling issue is fixed: tickets waiting for space keep their original builder. Eligible new builds can use the first available fallback during a usage limit, with review safeguards preserved. All reported tests pass, and no blocking findings remain."
   }
 }
 ```
