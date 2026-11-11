@@ -38,6 +38,7 @@ When the full suite fails on the base branch, Build's Needs you group shows it a
 
 ## Notes
 - From 0630's follow-up note. `speck status` already prints the line; `speck status --json` should give the panel the same.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
