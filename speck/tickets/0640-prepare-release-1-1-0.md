@@ -1,7 +1,7 @@
 ---
 id: "0640"
 title: "Prepare release 1.1.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0638","0639"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T13:24:37.152Z"
+approved: "2026-11-11T13:31:20.291Z"
 
 ---
 # 0640 · Prepare release 1.1.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck has grown since 1.0.0: it checks the work in the running app, works out how to start each app, keeps test logins on your machine, carries on after usage limits, and ships faster on quick tests. Anyone following the setup prompt, or updating speck in a project, still gets 1.0.0.
@@ -64,9 +65,15 @@ Worth knowing: anyone upgrading should run the install command again in every pr
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new test explicitly checks changelog heading order with newer < older.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 354,053
+- Elapsed since build started: 7 min
+- Changed lines: 165 (limit 5000)
 - Follow-ups: the 0630 AC3 test "a full run doesn't wait for the max_parallel_tests turns" failed once on its 900 ms wall-clock limit during this build's related run, and passed on its own twice. Skipped as a new idea: it duplicates speck/ideas/2026-11-11-steady-the-0630-full-run-turn-test-under-load.md.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
