@@ -141,17 +141,18 @@ export async function startApp(repo, id) {
 }
 
 // Stops every app started for the ticket, with every process each one started. Resolves to whether one was running.
-export async function stopApp(repo, id) {
+// 0636: `say` takes what it says.
+export async function stopApp(repo, id, say = console.log) {
   const pad = padId(id), mark = ticketMark(repo, pad), all = records(repo, pad);
   const urls = all.filter(r => appProcesses(r.run).length).map(r => r.url);
   if (!appProcesses(mark).length) {
     for (const r of all) forget(repo, pad, r.run);
-    console.log(`No app speck started for ticket ${pad} is running.`);
+    say(`No app speck started for ticket ${pad} is running.`);
     return false;
   }
   if (!(await endAll(mark))) throw new SpeckError(`Ticket ${pad}'s app didn't stop: processes ${appProcesses(mark).join(', ')} are still running. Stop them yourself.`);
   for (const r of all) forget(repo, pad, r.run);
-  console.log(`Stopped ticket ${pad}'s app${urls.length ? ` at ${urls.join(' and ')}` : ''}.`);
+  say(`Stopped ticket ${pad}'s app${urls.length ? ` at ${urls.join(' and ')}` : ''}.`);
   return true;
 }
 

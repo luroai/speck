@@ -112,6 +112,7 @@
   /* 0283: under a blocked question, whether it changes what you'd notice and whether the recommendation is a clear one */
   .question-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; white-space: normal; }
   .question-fact { font-family: var(--font-ui); font-size: 12px; padding: 0 8px; border: 1px solid var(--line); color: var(--muted); }
+  .question-check { margin-top: 6px; white-space: normal; font-family: var(--font-ui); font-size: 12px; color: var(--muted); } /* 0636 */
   /* 0284: on a blocked question with a recommendation, the button that takes it and has speck run carry the build on */
   .q .go-with { display: block; margin: 6px 0 0; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; white-space: normal; }
   .q .go-with:hover { border-color: var(--text); }

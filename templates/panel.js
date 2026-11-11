@@ -17,6 +17,8 @@ function questionFacts(t) {
   ].filter(Boolean);
   return facts.length ? el('div', 'question-facts', null, ...facts.map(f => el('span', 'question-fact', f))) : null;
 }
+// 0636: what a blocked question asks to have checked in the running app, which speck may check itself.
+const checkInApp = t => (typeof t.blocked_check_in_app === 'string' && t.blocked_check_in_app ? el('div', 'question-check', `Check in the app: ${t.blocked_check_in_app}`) : null);
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
   if (cls) node.className = cls;
@@ -591,7 +593,7 @@ function queueRow(t) {
 function buildNotes(t) {
   const id = String(t.id), ask = foremanAskOf(id), facts = t.status === 'blocked' ? questionFacts(t) : null, went = wentWithOf(t);
   return [
-    t.status === 'blocked' && (t.blocked_question || facts) ? el('div', 'question', t.blocked_question, facts, goWithButton(t), goWithRefusal(t)) : null,
+    t.status === 'blocked' && (t.blocked_question || facts) ? el('div', 'question', t.blocked_question, facts, checkInApp(t), goWithButton(t), goWithRefusal(t)) : null,
     ask ? foremanAskBox(id, ask.question) : null, // 0318
     t.resume ? resumeLine(t) : null,
     t.paused ? el('div', 'act', `Paused · carry it on with speck play ${t.id}`) : null,

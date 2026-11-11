@@ -434,7 +434,7 @@ export function statusData(repo) {
       blocked_recommendation: facts.recommendation,
       blocked_other_options: facts.otherOptions ?? null, // 0589
       blocked_noticeable: facts.noticeable,
-      blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, // 0563: true on a block by the size guard
+      blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, blocked_check_in_app: facts.checkInApp ?? null, // 0563: true on a block by the size guard. 0636: what to check in the running app
       // 0284: whether speck run can resume its build, so the panel can offer to go with the recommendation
       blocked_resumable: t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg),
       lint: { errors: lint.errors.length, warnings: lint.warnings.length },

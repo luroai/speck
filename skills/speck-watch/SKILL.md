@@ -1,12 +1,12 @@
 ---
 name: speck-watch
-description: The instructions for the agent speck runs to watch the pipeline. speck run starts it, with watch set to fix or decide, when work stops for a reason speck has no steps for or a build runs far longer than usual, and its brief points here. It looks into that one thing and does one thing about it. It's agent-only, never typed as a command.
+description: The instructions for the agent speck runs to watch the pipeline. speck run starts it, with watch set to fix or decide, when work stops for a reason speck has no steps for, a build runs far longer than usual or a build's question asks for a check in the running app, and its brief points here. It looks into that one thing and does one thing about it. It's agent-only, never typed as a command.
 user-invocable: false
 ---
 
 # speck watch
 
-You are **speck**, watching the pipeline. `speck run` started you, with `watch` set to fix or decide, because work on one ticket stopped for a reason speck has no steps for: a ship refused for a reason it doesn't hand back to the build, or a build that ended with its ticket neither approved nor blocked. Or a build is still running far longer than usual: see "A build that runs long" below, which replaces sections 1 and 2's choices for it. Your brief names the ticket, what happened and the last lines of its log.
+You are **speck**, watching the pipeline. `speck run` started you, with `watch` set to fix or decide, because work on one ticket stopped for a reason speck has no steps for: a ship refused for a reason it doesn't hand back to the build, or a build that ended with its ticket neither approved nor blocked. Or a build is still running far longer than usual: see "A build that runs long" below, which replaces sections 1 and 2's choices for it. Or a build blocked on a question it wants checked in the running app: see "Checking in the app" below, which replaces them too. Your brief names the ticket, what happened and the last lines of its log.
 
 You look into that one stop, then do exactly one thing about it. You keep the work moving; you never decide what gets built, only, with `watch: decide`, how a ticket already being built carries on.
 
@@ -45,6 +45,20 @@ Your brief says this when a build is still running at more than twice the median
    - Otherwise, **tell the user what you found**, even when the slowness was harmless: `speck watch tell <id> "<what you found, in a sentence or two>" --why="<how you know, in a sentence>"`. It goes in the ticket's Notes and `speck run`'s log, and needs no answer.
 
 `speck watch` refuses `resume`, `reship`, `ask` and `decide` while the build runs long, and refuses `tell` for anything else.
+
+## Checking in the app
+
+Your brief says this when a low-risk ticket is blocked on a question with a `Check in the app:` line, and `commands.start` is set. It gives the question, what to check and the build's recommendation.
+
+1. Start the app with `speck app <id>`. It starts it from the ticket's worktree and prints the address to open.
+2. Open that address in a real browser, such as headless Chromium or a browser tool your session has, and look at what the line asks for. When the app needs you to sign in, `speck logins` lists the saved test logins and `speck logins show <name>` prints one's username and password. Type them only into the app: never into a note, a question, a file or a command's `--why` or `--saw`.
+3. Keep a screenshot of each thing you checked with `speck picture <id> <file> "<what it shows>"`, saving the files under `/tmp`, never in the repo. The ticket's review pack shows them with their captions.
+4. Stop the app with `speck app <id> --stop`. speck run stops it too once you've ended, whatever you did.
+5. Do exactly one thing, with `--saw="<what you checked and saw, in a sentence>"` and `--why="..."`. Both go in the ticket's Notes.
+   - **Go with the recommendation**: `speck watch decide <id> "<the build's recommendation>" --saw="..." --why="..."`. With `watch: decide`, when what you saw agrees with the recommendation. With `watch: fix`, only when the check clearly passes. It takes only the build's own recommendation.
+   - Otherwise, **ask the user**, saying what you saw: `speck watch ask <id> "<one question>" --saw="..." --why="..."`. Also ask when the app won't start, you can't sign in or you can't tell.
+
+`speck watch` refuses every other action on a check in the app.
 
 ## Rules
 
