@@ -54,7 +54,11 @@ speck is ready to be released as 1.1.0.
 - Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 1.1.0, the release where it checks the work. The changelog and the release page's notes describe everything since 1.0.0: speck checking a build's question in the running app itself, starting your app and working out how the first time, test logins kept on your machine, carrying on by itself after usage limits, shipping only what its own reviewer run approved, letting ships wait for just the quick tests while the full suite runs afterwards, wider private-word checks and a ticket's facts as tiles. The README's and the brief's status lines say 1.1.0, the prices are today's, and the "Built with speck" figures are up to date (623 tickets shipped, 303 approved in the first round).
+
+To see it, read the 1.1.0 section at the top of the changelog. Once this lands on the main branch, check that the 1.1.0 release page appears on GitHub; if it doesn't, it can be published by hand as the ticket's Notes say.
+
+Worth knowing: anyone upgrading should run the install command again in every project. Tickets approved before they update wait for them at Ship once, as they have no review receipts.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -63,6 +67,7 @@ speck is ready to be released as 1.1.0.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+- Follow-ups: the 0630 AC3 test "a full run doesn't wait for the max_parallel_tests turns" failed once on its 900 ms wall-clock limit during this build's related run, and passed on its own twice. Skipped as a new idea: it duplicates speck/ideas/2026-11-11-steady-the-0630-full-run-turn-test-under-load.md.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -145,6 +150,89 @@ speck is ready to be released as 1.1.0.
     ],
     "escalation_question": "",
     "summary": "The release content, version, refreshed prices and published figures meet the ticket. One test must change before approval: it enforces document heading order, which the review rules explicitly prohibit."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a1036f8785a4df988553f789d28898c0f7ec8ca8",
+    "session": "continued",
+    "thread_id": "01a1cacc-bbf6-7010-a815-1d1181a29cb8",
+    "builder_response": "- Tests run: test/release-0640.test.mjs test/release-0598.test.mjs test/docs-0491.test.mjs test/full-suite-0630.test.mjs (155 pass, 0 fail; the 0630 file included as it failed on timing in the last run, and passed here).\n- F1: fixed. The heading-order assertion is gone; the test now only checks that both the 1.1.0 and 1.0.0 sections exist, and its comment says where the section sits is checked by review.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 352232,
+      "cached_input_tokens": 290048,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1821,
+      "reasoning_output_tokens": 75
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5563,
+      "cached": 114944,
+      "write": 0,
+      "output": 668
+    },
+    "cost_usd": 0.0293004,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T13:31:07.321Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json remains at 1.1.0. Both AC1 tests passed, including invoking speck init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Reviewed CHANGELOG.md: 1.1.0 appears above 1.0.0, covers the user-facing shipped changes, and leaves earlier sections unchanged. Section-existence and command/setting tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines say 1.1.0. The setup prompt retains semver:*. The refreshed price table is dated 2026-11-11. Corresponding AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reviewed docs/releases/v1.1.0.md: it explains checking the work, shipped changes and their benefits, updating each project, all required upgrade details, and links to the correct changelog section. It uses no person's name. AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README figures match the independently verified done-ticket totals from round 1. The figures and version/changelog tests passed again. The latest run reports 155 passed, zero failed and three skipped, including the previously failing 0630 test file."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0640.test.mjs:48",
+        "issue": "The previous test enforced changelog heading order, contrary to the document-testing rules.",
+        "suggested_fix": "Completed: the test now checks only that both version sections exist; ordering is checked by review.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release is ready for the owner's merge decision. Version numbers, release notes, prices and published figures meet the ticket. The prohibited heading-order test has been fixed, and the latest checks have no failures."
   }
 }
 ```
