@@ -1,9 +1,11 @@
 // 0634: `speck app <id>` starts the project's app, commands.start in speck/config.yml, from the ticket's checkout on a
 // free port, waits until app_url answers and prints it, leaving the app running. `speck app <id> --stop` stops it.
-// Every process the app starts carries a mark of its own in its environment (procs.mjs), and the record of it is kept
-// in the main checkout's speck/.cache/apps/<id>.json, so --stop ends exactly those processes, never others by name.
+// Every process the app starts carries, in its environment (procs.mjs), a mark for the ticket in this repo and one for
+// that start, so --stop ends every process started for the ticket, even by two starts at once, and never others by
+// name. Each start keeps a record and a log in the main checkout's speck/.cache/apps/<id>/.
 
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import net from 'node:net';
 import http from 'node:http';
 import https from 'node:https';
@@ -12,9 +14,8 @@ import { spawn } from 'node:child_process';
 import { SpeckError, findRepoRoot, loadConfig, padId } from './core.mjs';
 import { buildTicket } from './build-records.mjs';
 import { mainCheckout } from './output.mjs';
-import { markRun, marked, descendants } from './procs.mjs';
+import { marked, descendants } from './procs.mjs';
 import { checkConfigValue } from './config.mjs';
-import { pidAlive } from './run-switch.mjs';
 
 const MARK = 'SPECK_APP_RUN', DEFAULT_URL = 'http://127.0.0.1:{port}/', DEFAULT_SECONDS = 60;
 const POLL_MS = 200, ASK_MS = 1000, STOP_MS = 5000, LAST_LINES = 20;
@@ -42,24 +43,28 @@ export function appSettings(cfg) {
   return { start, url: read('app_url', cfg.app_url, DEFAULT_URL) || DEFAULT_URL, seconds: read('app_start_seconds', cfg.app_start_seconds, DEFAULT_SECONDS) };
 }
 
-const appsDir = repo => {
-  const dir = path.join(mainCheckout(repo), 'speck', '.cache', 'apps');
+const appsDir = (repo, pad) => {
+  const dir = path.join(mainCheckout(repo), 'speck', '.cache', 'apps', pad);
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 };
-const recordFile = (repo, pad) => path.join(appsDir(repo), `${pad}.json`);
-function readRecord(file) {
-  try { const r = JSON.parse(fs.readFileSync(file, 'utf8')); return Number.isInteger(r?.pid) && r.pid > 0 && typeof r.run === 'string' ? r : null; }
-  catch { return null; }
+// The ticket's mark: the same for every start of its app in this repo, and different for every other ticket and repo.
+const ticketMark = (repo, pad) => crypto.createHash('sha256').update(`${fs.realpathSync(mainCheckout(repo))}\0${pad}`).digest('hex').slice(0, 32);
+// Each start's record, with the mark of that start, `run`, and its address, newest first.
+function records(repo, pad) {
+  const dir = appsDir(repo, pad);
+  return fs.readdirSync(dir).filter(n => /^[0-9a-f-]+\.json$/.test(n)).map(n => {
+    try { const r = JSON.parse(fs.readFileSync(path.join(dir, n), 'utf8')); return typeof r?.run === 'string' && typeof r.url === 'string' ? r : null; }
+    catch { return null; }
+  }).filter(Boolean).sort((a, b) => String(b.started).localeCompare(String(a.started)));
 }
-const forget = file => { try { fs.unlinkSync(file); } catch { /* already gone */ } };
+const forget = (repo, pad, run) => { for (const ext of ['json', 'log']) { try { fs.unlinkSync(path.join(appsDir(repo, pad), `${run}.${ext}`)); } catch { /* already gone */ } } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// Every process still running that the app started: those with its mark, and those descended from its first process
-// while that one still has the mark, so a process id reused by something else is never counted.
-export function appProcesses(r) {
-  const ours = marked(MARK, r.run);
-  return [...new Set([...ours, ...(ours.includes(r.pid) ? descendants(r.pid) : [])])];
+// Every process still running with the mark, and every process they started.
+export function appProcesses(mark) {
+  const ours = marked(MARK, mark);
+  return [...new Set([...ours, ...ours.flatMap(descendants)])];
 }
 
 // A port nothing on this machine is listening on now.
@@ -78,27 +83,13 @@ export const answers = (url, ms = ASK_MS) => new Promise(resolve => {
   req.on('error', () => done(false));
 });
 
-// 0634: holds the ticket's lock while `work` runs, so two starts or stops of its app never run at once. A lock left
-// by a process that has gone is taken over.
-async function withLock(repo, pad, work) {
-  const lock = path.join(appsDir(repo), `${pad}.lock`);
-  for (let tries = 0; ; tries++) {
-    try { fs.writeFileSync(lock, String(process.pid), { flag: 'wx' }); break; } catch (e) { if (e.code !== 'EEXIST') throw e; }
-    const holder = Number(fs.readFileSync(lock, 'utf8').trim() || 0);
-    if ((holder > 0 && pidAlive(holder)) || tries > 2)
-      throw new SpeckError(`speck app is already starting or stopping ticket ${pad}'s app. Run this again once it has finished.`);
-    forget(lock);
-  }
-  try { return await work(); } finally { forget(lock); }
-}
-
-// Ends every process in `pids`, asking first and then forcing any that are left. True once they've all gone.
-async function endAll(r) {
+// Ends every process with the mark, asking first and then forcing any that are left. True once they've all gone.
+async function endAll(mark) {
   const signal = (pids, sig) => { for (const p of pids) { try { process.kill(p, sig); } catch { /* gone already */ } } };
-  signal(appProcesses(r), 'SIGTERM');
-  for (const until = Date.now() + STOP_MS; Date.now() < until; await sleep(100)) if (!appProcesses(r).length) return true;
-  signal(appProcesses(r), 'SIGKILL');
-  for (const until = Date.now() + STOP_MS; Date.now() < until; await sleep(100)) if (!appProcesses(r).length) return true;
+  signal(appProcesses(mark), 'SIGTERM');
+  for (const until = Date.now() + STOP_MS; Date.now() < until; await sleep(100)) if (!appProcesses(mark).length) return true;
+  signal(appProcesses(mark), 'SIGKILL');
+  for (const until = Date.now() + STOP_MS; Date.now() < until; await sleep(100)) if (!appProcesses(mark).length) return true;
   return false;
 }
 
@@ -114,21 +105,17 @@ export async function startApp(repo, id) {
   const cfg = loadConfig(repo), { start, url: urlTemplate, seconds } = appSettings(cfg);
   if (!start) throw new SpeckError('commands.start isn\'t set, so speck can\'t start your app: set it with `speck config set commands.start "<command>"`, using {port} for the port it should listen on.');
   const { at } = buildTicket(repo, cfg, padId(id)), pad = padId(id); // refuses a ticket that isn't there
-  return withLock(repo, pad, () => launch(repo, pad, at, start, urlTemplate, seconds));
-}
-
-async function launch(repo, pad, at, start, urlTemplate, seconds) {
-  const file = recordFile(repo, pad), was = readRecord(file);
-  if (was && appProcesses(was).length) {
+  const was = records(repo, pad).find(r => appProcesses(r.run).length);
+  if (was) {
     console.log(`Ticket ${pad}'s app is already running at ${was.url}. Stop it with speck app ${pad} --stop.`);
     return was.url;
   }
-  forget(file);
-  const port = await freePort(), url = urlTemplate.replaceAll('{port}', String(port)), log = path.join(appsDir(repo), `${pad}.log`);
-  const { run, env } = markRun(MARK);
+  const run = crypto.randomUUID(), dir = appsDir(repo, pad), file = path.join(dir, `${run}.json`), log = path.join(dir, `${run}.log`);
+  const port = await freePort(), url = urlTemplate.replaceAll('{port}', String(port));
+  const env = { ...process.env, [MARK]: `${ticketMark(repo, pad)}:${run}`, PORT: String(port) };
   const fd = fs.openSync(log, 'w');
   let child;
-  try { child = spawn(start.replaceAll('{port}', String(port)), { shell: true, cwd: at, detached: true, stdio: ['ignore', fd, fd], env: { ...env, PORT: String(port) } }); }
+  try { child = spawn(start.replaceAll('{port}', String(port)), { shell: true, cwd: at, detached: true, stdio: ['ignore', fd, fd], env }); }
   finally { fs.closeSync(fd); }
   let exited = null;
   child.on('error', e => { exited = `couldn't run: ${e.message}`; });
@@ -137,9 +124,10 @@ async function launch(repo, pad, at, start, urlTemplate, seconds) {
   const r = { pid: child.pid, run, port, url, cwd: at, log, started: new Date().toISOString() };
   fs.writeFileSync(file, `${JSON.stringify(r)}\n`);
   const fail = async why => {
-    await endAll(r);
-    forget(file);
-    throw new SpeckError(`Ticket ${pad}'s app ${why}, so everything speck app started for it was stopped. The last lines it wrote:\n${lastLines(log)}`);
+    await endAll(run);
+    const last = lastLines(log);
+    forget(repo, pad, run);
+    throw new SpeckError(`Ticket ${pad}'s app ${why}, so everything speck app started for it was stopped. The last lines it wrote:\n${last}`);
   };
   for (const until = Date.now() + seconds * 1000; Date.now() < until; await sleep(POLL_MS)) {
     if (await answers(url, Math.min(ASK_MS, until - Date.now()))) {
@@ -147,27 +135,23 @@ async function launch(repo, pad, at, start, urlTemplate, seconds) {
       console.log(`Ticket ${pad}'s app is running at ${url} (from ${at}). Stop it with speck app ${pad} --stop.`);
       return url;
     }
-    if (exited && !appProcesses(r).length) return fail(exited); // a command that starts the app in the background and ends is fine
+    if (exited && !appProcesses(run).length) return fail(exited); // a command that starts the app in the background and ends is fine
   }
   return fail(`didn't answer at ${url} within ${seconds} seconds`);
 }
 
-// Stops the app started for the ticket, with every process it started. Resolves to whether one was running.
+// Stops every app started for the ticket, with every process each one started. Resolves to whether one was running.
 export async function stopApp(repo, id) {
-  const pad = padId(id);
-  return withLock(repo, pad, () => stop(repo, pad));
-}
-
-async function stop(repo, pad) {
-  const file = recordFile(repo, pad), r = readRecord(file);
-  if (!r || !appProcesses(r).length) {
-    forget(file);
+  const pad = padId(id), mark = ticketMark(repo, pad), all = records(repo, pad);
+  const urls = all.filter(r => appProcesses(r.run).length).map(r => r.url);
+  if (!appProcesses(mark).length) {
+    for (const r of all) forget(repo, pad, r.run);
     console.log(`No app speck started for ticket ${pad} is running.`);
     return false;
   }
-  if (!(await endAll(r))) throw new SpeckError(`Ticket ${pad}'s app at ${r.url} didn't stop: processes ${appProcesses(r).join(', ')} are still running. Stop them yourself.`);
-  forget(file);
-  console.log(`Stopped ticket ${pad}'s app at ${r.url}.`);
+  if (!(await endAll(mark))) throw new SpeckError(`Ticket ${pad}'s app didn't stop: processes ${appProcesses(mark).join(', ')} are still running. Stop them yourself.`);
+  for (const r of all) forget(repo, pad, r.run);
+  console.log(`Stopped ticket ${pad}'s app${urls.length ? ` at ${urls.join(' and ')}` : ''}.`);
   return true;
 }
 

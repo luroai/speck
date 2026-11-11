@@ -125,7 +125,7 @@ test('0634 AC4: with commands.start blank or missing, speck app refuses in one l
   for (const config of ['', 'commands:\n  start: ""\n']) {
     const dir = repo(config);
     await assert.rejects(startApp(dir, '1'), e => /commands\.start/.test(e.message) && /speck config set commands\.start/.test(e.message) && !e.message.includes('\n'));
-    assert.equal(fs.existsSync(path.join(dir, 'speck', '.cache', 'apps', '0001.json')), false);
+    assert.equal(fs.existsSync(path.join(dir, 'speck', '.cache', 'apps')), false);
     assert.equal(fs.existsSync(path.join(dir, 'kid.pid')), false);
   }
 });
@@ -182,19 +182,43 @@ const speckAsync = (dir, ...args) => new Promise(resolve => {
   c.on('close', status => resolve({ status, stdout, stderr }));
 });
 
-test('0634 AC3: two starts at once leave one app, which --stop stops with all it started', async () => {
-  const dir = repo(startCmd), wt = worktree(dir);
+const urlIn = r => r.stdout.match(/http:\/\/127\.0\.0\.1:\d+\//)[0];
+
+test('0634 AC3: two starts at once, however they interleave, leave nothing running once --stop has run', async () => {
+  const dir = repo(startCmd);
+  worktree(dir);
   const both = await Promise.all([speckAsync(dir, 'app', '1'), speckAsync(dir, 'app', '1')]);
+  const urls = both.filter(r => r.status === 0).map(urlIn);
+  assert.ok(urls.length >= 1, JSON.stringify(both));
+  const s = speckProcess(dir, env, 'app', '1', '--stop');
+  assert.equal(s.status, 0, s.stderr);
+  for (const url of urls) assert.equal(await answers(url), false, `${url} still answers`);
+});
+
+test('0634 AC3: --stop stops an app whose start record was lost or overwritten, as well as the one recorded', async () => {
+  const dir = repo(startCmd), wt = worktree(dir);
+  const first = speckProcess(dir, env, 'app', '1');
+  assert.equal(first.status, 0, first.stderr);
+  const kid1 = kidOf(wt);
+  // As if a second start at the same moment had found no record: the first app runs on, unrecorded.
+  fs.rmSync(path.join(dir, 'speck', '.cache', 'apps', '0001'), { recursive: true });
+  const second = speckProcess(dir, env, 'app', '1');
+  assert.equal(second.status, 0, second.stderr);
+  const kid2 = kidOf(wt);
+  assert.notEqual(urlIn(first), urlIn(second));
+  const s = speckProcess(dir, env, 'app', '1', '--stop');
+  assert.equal(s.status, 0, s.stderr);
+  for (const url of [urlIn(first), urlIn(second)]) assert.equal(await answers(url), false, `${url} still answers`);
+  assert.ok(await until(() => !pidAlive(kid1) && !pidAlive(kid2)), 'a process an app started is still running');
+});
+
+test('0634 AC3: --stop for one ticket leaves another ticket\'s app running', async () => {
+  const dir = repo(startCmd);
+  const one = speckProcess(dir, env, 'app', '1'), two = speckProcess(dir, env, 'app', '2');
   try {
-    const ok = both.filter(r => r.status === 0);
-    assert.ok(ok.length >= 1, JSON.stringify(both));
-    for (const r of both.filter(r => r.status !== 0)) assert.match(r.stderr, /already starting or stopping ticket 0001's app/);
-    const urls = new Set(ok.map(r => r.stdout.match(/http:\/\/127\.0\.0\.1:\d+\//)[0]));
-    assert.equal(urls.size, 1, 'two apps were started');
-  } finally {
-    const s = speckProcess(dir, env, 'app', '1', '--stop');
-    assert.equal(s.status, 0, s.stderr);
-  }
-  assert.ok(await until(() => !pidAlive(kidOf(wt))), 'a process the app started is still running');
-  assert.match(speckProcess(dir, env, 'app', '1', '--stop').stdout, /No app speck started for ticket 0001 is running/);
+    assert.equal(one.status, 0, one.stderr); assert.equal(two.status, 0, two.stderr);
+    assert.equal(speckProcess(dir, env, 'app', '1', '--stop').status, 0);
+    assert.equal(await answers(urlIn(one)), false);
+    assert.equal(await answers(urlIn(two)), true);
+  } finally { speckProcess(dir, env, 'app', '2', '--stop'); }
 });
