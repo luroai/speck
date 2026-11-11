@@ -1,7 +1,7 @@
 ---
 id: "0644"
 title: "Record a Codex or Cursor build's usage limit as Claude's is"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T14:51:45.219Z"
 ---
 # 0644 · Record a Codex or Cursor build's usage limit as Claude's is
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck records a usage limit and carries the build on after the reset only when Claude stops a build (0622). A Codex or Cursor build that stops on its limit is treated as a build that stopped for an unknown reason.
@@ -54,3 +54,84 @@ A Codex or Cursor build that stops on its usage limit is waited out and carried 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "88e0eb36d43b5960c3862a54a0d34a6a0274e1c8",
+    "session": "fresh",
+    "thread_id": "01a1cb20-d737-7c70-be7f-64058a9100e5",
+    "builder_response": "- Tests run: `speck test --related test/usage-limit-0644.test.mjs`, which ran test/usage-limit-0644.test.mjs and every existing test file naming a changed file (including test/usage-limit-0622.test.mjs, test/reviewer-limit-0623.test.mjs, test/watch-at-0625.test.mjs, test/watch-fallback-0637.test.mjs, test/run-codex-0289.test.mjs and test/run-cursor-0290.test.mjs), plus the repo's checks: 814 pass, 0 fail, 3 skipped.\n- Each of Claude, Codex and Cursor now has its own limit record in the runs folder (Claude's keeps its old file name, so a wait recorded before goes on). Reading Codex and Cursor logs is in scripts/agent-limit.mjs; the refusal wording and reset-time reader moved unchanged from reviewer-limit.mjs to scripts/limit-words.mjs, which reviewer-limit.mjs re-exports.\n- Cursor: the installed CLI (2026.11.11) has no wording of its own for its limit (it shows the server's message, and classes it by codes such as PRO_USER_USAGE_LIMIT), so it's matched loosely, as the ticket's Notes say.\n- AC4 (no test that passed before fails) has no test of its own: the run above and `speck ship`'s full suite check it.\n",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 288962,
+      "cached_input_tokens": 222720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 842,
+      "reasoning_output_tokens": 115
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 66242,
+      "cached": 222720,
+      "write": 0,
+      "output": 842
+    },
+    "cost_usd": 0.163176,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T15:02:17.518Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/agent-limit.mjs detects Codex refusals and reads reset times from stamped messages or session files. The passing 0644 AC1 tests cover detection, session fallback, separate recording and resumption at reset plus one minute."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cursorLimitInLog and usageLimitQueue handle Cursor refusals, supplied reset times and the 30-minute fallback. Passing 0644 AC2 tests exercise these paths, including delayed reading of a log."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "usageLimitQueue exposes agent-specific holds and descriptions; run.mjs checks heldSays before launching ready tickets. limitQueues forwards these methods and applies holds to other resume paths. Passing 0644 AC3 tests cover independent holds and foreman/status descriptions."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The recorded related-test output confirms 814 passes, zero failures and three skips. Existing tests were not weakened or changed; the shared reset parser was moved unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "scripts/run.mjs:396",
+        "issue": "The waiting-ticket explanation still says the build stopped on Claude's usage limit, even when the new shared waiting queue contains a Codex or Cursor build. The overall limit description identifies the correct agent, but this individual ticket explanation can contradict it.",
+        "suggested_fix": "Use an agent-neutral explanation or obtain the agent's name from the limit queue.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Codex and Cursor builds now wait out usage limits and resume automatically, with separate records and holds for each agent. The relevant tests pass. One individual ticket explanation still incorrectly names Claude; this does not prevent the change from working."
+  }
+}
+```
+
+</details>
