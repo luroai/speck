@@ -67,7 +67,18 @@
   #settings .agent .state { font-family: var(--font-ui); font-size: 12px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
   #settings .agent .keyline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; min-width: 0; }
   #settings .agent .keyline input.edit { box-sizing: border-box; flex: 1 1 16ch; width: auto; min-width: 0; }
-  /* 0401: Add an API provider's form: a label above each field, two to a line where there's room */
+  /* 0646: Your subscriptions: each window a line of its name, a bar and its figure, with when it resets under the bar.
+     The bar takes what the line has left, so it fits a phone-width panel. At 90% or more, or limited, it's in the needs-you colour. */
+  #settings .sub .state { font-family: var(--font-ui); font-size: 12px; color: var(--muted); }
+  #settings .sub .win { display: grid; grid-template-columns: 7ch minmax(0, 1fr) 7ch; align-items: center; gap: 0 8px; margin-top: 6px; font-family: var(--font-ui); font-size: 12px; }
+  #settings .sub .win .wname { color: var(--text); }
+  #settings .sub .win .bar { position: relative; display: block; height: 6px; overflow: hidden; border-radius: 3px; background: var(--raise); box-shadow: inset 0 0 0 1px var(--line); }
+  #settings .sub .win .fill { display: block; height: 100%; border-radius: 3px; background: var(--muted); }
+  #settings .sub .win.high .fill { background: var(--needs-you); }
+  #settings .sub .win .figure { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+  #settings .sub .win.high .figure { color: var(--needs-you-text); }
+  #settings .sub .win .when { grid-column: 2 / -1; color: var(--muted); overflow-wrap: anywhere; }
+    /* 0401: Add an API provider's form: a label above each field, two to a line where there's room */
   #settings .provider-form .pfields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18ch), 1fr)); gap: 6px 12px; margin-top: 6px; }
   #settings .provider-form .pfield { display: grid; gap: 2px; min-width: 0; color: var(--muted); }
   #settings .provider-form .pfield .edit { box-sizing: border-box; width: 100%; }

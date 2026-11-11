@@ -41,6 +41,8 @@ The panel's Settings view shows each of your subscriptions with how much it has 
 - Mockup: the Your subscriptions shelf on the team page, https://claude.ai/artifact/2F85xNeCwn9KGxRn3ZbYZQ.
 - Readings from 0642 and 0643. Keep the panel thin: one column at phone width.
 - Failing before this build: none
+- Self-check: a figure is rounded down, so 89.9% never shows as 90% beside a bar that isn't in the needs-you colour; a plan named like a built-in key (`constructor`) shows as written; a provider's spend that can't be read from speck's records says so rather than showing $0.
+- The usage is served at its own address, GET /api/usage, apart from /api/settings, so reading Cursor's usage screen (up to 20 seconds when it's stale) holds up nothing else in Settings.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

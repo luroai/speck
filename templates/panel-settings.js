@@ -33,6 +33,7 @@ let settingClear = new Set(); // 0261: keys whose machine value is cleared on Sa
 // key is only ever sent, never read back, as the server says only whether this machine has it (0393).
 let agentsBox = null, agentsAdding = false, agentsSaid = null; // the box; whether "Add an agent" is open; the last change's { text, bad }
 let agentStates = new Map();
+let subsBox = null, subsView = null, subsSeq = 0; // 0646: Your subscriptions' box, and what GET /api/usage gave it: null, { state: 'loading' | 'ok' | 'error', … }
 let providerForm = null; // 0401: the Add an API provider form's { name, address, type, key, models, busy } until the view closes
 let settingsFailed = null; // 0274: why the last Save failed, when it wasn't one setting's fault
 let settingsSaid = null; // 0311: what the last Save changed that you didn't, such as builder_model cleared
@@ -84,6 +85,7 @@ function openSettings() {
   settingsOpening = true;
   $('settings-open').setAttribute('aria-busy', 'true');
   loadSettings();
+  loadSubs(); // 0646: read afresh each time the view opens
 }
 // 0407: the settings from the config first, at once, then the agents' lists, filled in where they show.
 async function loadSettings() {
@@ -210,6 +212,8 @@ function closeSettings() {
   settingRefused = new Map();
   settingClear = new Set();
   agentsBox = agentsSaid = null;
+  subsBox = subsView = null;
+  subsSeq++;
   agentsAdding = false;
   agentStates = new Map();
   providerForm = null;
@@ -251,8 +255,8 @@ function renderSettings() {
     }
   }
   if (settingsView.state === 'ok' && settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
-  // 0396: Appearance and Auto-build first, then 0399's Your agents and the Foreman (0285) once the settings have loaded
-  kids.splice(1, 0, toggleGroup(), ...(settingsView.state === 'ok' ? [agentsGroup(), foremanGroup(foremanRows)] : []));
+  // 0396: Appearance and Auto-build first, then 0399's Your agents, 0646's Your subscriptions and the Foreman (0285) once the settings have loaded
+  kids.splice(1, 0, toggleGroup(), ...(settingsView.state === 'ok' ? [agentsGroup(), subsGroup(), foremanGroup(foremanRows)] : []));
   pane.replaceChildren(...kids);
   refreshSettings();
   showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
@@ -900,6 +904,100 @@ function drawAgents(after = null) {
   if (was === null) return;
   const to = [was, after, 'adding'].map(k => (k === null ? null : focusKeyed(box, k))).find(n => n);
   if (to && to.focus) to.focus({ preventScroll: true });
+}
+// 0646: "Your subscriptions", after Your agents: each of your agents with how much of its plan is left and when it
+// resets, read afresh from GET /api/usage each time the view opens, in a box of its own so a slow read holds up nothing.
+function subsGroup() {
+  if (subsBox === null) subsBox = el('section', 'sgroup subs');
+  drawSubs();
+  return subsBox;
+}
+async function loadSubs() {
+  const mine = ++subsSeq;
+  subsView = { state: 'loading' };
+  drawSubs();
+  let next;
+  try {
+    const res = await fetch('/api/usage', { cache: 'no-store' });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    next = res.ok && body && Array.isArray(body.agents) ? { state: 'ok', agents: body.agents.filter(a => a && typeof a.id === 'string' && typeof a.name === 'string') }
+      : { state: 'error', text: body && typeof body.why === 'string' && body.why ? body.why : body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read your subscriptions (${res.status}).` };
+  } catch { next = { state: 'error', text: 'Couldn\'t reach speck panel to read your subscriptions. Close Settings and open it again.' }; }
+  if (mine !== subsSeq) return; // closed, or opened again, since
+  subsView = next;
+  drawSubs();
+}
+function drawSubs() {
+  const box = subsBox;
+  if (box === null) return;
+  const kids = [el('div', 'sh', null, el('h4', null, 'Your subscriptions'))];
+  if (subsView === null || subsView.state === 'loading') kids.push(el('div', 'arow note', null, el('p', 'loading', 'Reading your subscriptions…')));
+  else if (subsView.state === 'error') kids.push(el('div', 'arow note', null, el('p', 'bad', subsView.text)));
+  else if (!subsView.agents.length) kids.push(el('div', 'arow note', null, el('p', null, 'You have no agents on this machine yet, so there\'s nothing to read.')));
+  else kids.push(...subsView.agents.map(subRow));
+  box.replaceChildren(...kids);
+}
+const two = n => String(n).padStart(2, '0');
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+// When a window resets, in this browser's time: "resets 14:30" today, "resets tomorrow 09:00", "resets Thu 13 Nov 09:00"
+// later, and "resets 12 Nov" for a day alone. "Reset time unknown" without either.
+function resetWords(w, now = Date.now()) {
+  if (typeof w.resets_at === 'string' && Number.isFinite(Date.parse(w.resets_at))) {
+    const d = new Date(w.resets_at), t = new Date(now), time = `${two(d.getHours())}:${two(d.getMinutes())}`;
+    const days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 86400000);
+    if (d.getTime() <= now) return 'reset since it was read';
+    return days === 0 ? `resets ${time}` : days === 1 ? `resets tomorrow ${time}` : `resets ${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${time}`;
+  }
+  const m = typeof w.resets_on === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(w.resets_on) : null;
+  return m ? `resets ${Number(m[3])} ${MONTHS[Number(m[2]) - 1]}` : 'reset time unknown';
+}
+// How long ago `iso` was: "read just now", "read 4 min ago", "read 3 h ago" or "read 2 days ago".
+function readAgo(iso, now = Date.now()) {
+  const s = Math.max(0, Math.round((now - Date.parse(iso)) / 1000));
+  if (!Number.isFinite(s)) return 'read at an unknown time';
+  if (s < 60) return 'read just now';
+  if (s < 3600) return `read ${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `read ${Math.floor(s / 3600)} h ago`;
+  return `read ${plural(Math.floor(s / 86400), 'day')} ago`;
+}
+const money = n => `$${(Math.round(n * 100) / 100).toFixed(2)}`;
+// One window: its name, a bar and its figure, with when it resets under them. At 90% or more, or limited, the bar is in
+// the needs-you colour, and a limited one says Limited in place of its figure.
+function windowRow(w) {
+  const used = typeof w.used_percent === 'number' && Number.isFinite(w.used_percent) ? Math.max(0, Math.min(100, w.used_percent)) : null;
+  const shownUsed = w.limited === true ? 100 : used;
+  const fill = el('span', 'fill');
+  fill.setAttribute('style', `width: ${shownUsed ?? 0}%`);
+  const bar = el('span', 'bar', null, fill);
+  bar.setAttribute('role', 'meter');
+  bar.setAttribute('aria-valuemin', '0');
+  bar.setAttribute('aria-valuemax', '100');
+  if (shownUsed !== null) bar.setAttribute('aria-valuenow', String(Math.floor(shownUsed)));
+  bar.setAttribute('aria-label', `${w.label}: ${w.limited === true ? 'limited' : used === null ? 'not known' : `${Math.floor(used)}% used`}`);
+  const figure = w.limited === true ? 'Limited' : used === null ? '?' : `${Math.floor(used)}%`; // rounded down, so 89.9 isn't shown as 90
+  return el('div', `win${w.high === true || w.limited === true ? ' high' : ''}${w.limited === true ? ' limited' : ''}`, null,
+    el('span', 'wname', w.label), bar, el('span', 'figure', figure), el('span', 'when', resetWords(w)));
+}
+// One of your agents: its name and plan, how long ago it was read, then each window, or one line saying it has no reading.
+// A provider on an API key shows this week's spend, and that it has no limit to show.
+function subRow(a) {
+  const r = a.reading && typeof a.reading === 'object' ? a.reading : null;
+  const plan = r && typeof r.plan === 'string' && r.plan ? r.plan : null;
+  const at = r ? r.read_at : a.kind === 'provider' ? a.read_at : null;
+  const head = el('div', 'row', null, el('span', 'label', null, el('span', 'name', plan ? `${a.name} · ${plan}` : a.name)),
+    el('div', 'control', null, typeof at === 'string' ? el('span', 'state', readAgo(at)) : null));
+  const lines = [];
+  if (a.kind === 'provider') {
+    const s = a.spend && typeof a.spend === 'object' ? a.spend : {}, cost = typeof s.cost_usd === 'number' && Number.isFinite(s.cost_usd) ? s.cost_usd : null;
+    lines.push(el('p', 'spend', `${cost === null ? 'This week\'s spend couldn\'t be read from speck\'s records' : `This week ${s.cost_unknown === true ? 'at least ' : ''}${money(cost)}, from what speck recorded`}. On an API key, so there's no limit to show.`));
+  } else if (r) {
+    lines.push(...(Array.isArray(r.windows) ? r.windows.filter(w => w && typeof w.label === 'string') : []).map(windowRow));
+    const od = r.on_demand && typeof r.on_demand === 'object' && typeof r.on_demand.spent === 'number' ? r.on_demand : null;
+    if (od) lines.push(el('p', null, `On-demand ${money(od.spent)} spent, ${typeof od.limit === 'number' ? `${money(od.limit)} monthly limit` : 'no monthly limit'}`));
+  } else lines.push(el('p', 'none', typeof a.none === 'string' && a.none ? a.none : 'No reading yet.'));
+  if (typeof a.why === 'string' && a.why) lines.push(el('p', null, `${a.why}${r ? ' This is the last reading.' : ''}`));
+  return el('div', 'arow sub', null, head, ...lines);
 }
 // What an agent is: installed and signed in, or a provider's key.
 function agentWords(a) {
