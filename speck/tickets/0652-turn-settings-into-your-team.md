@@ -48,7 +48,9 @@ Settings opens on Your team: a card for each member, with its character, its job
 - speck (2026-11-11 15:55 UTC) made draft fix ticket 0656: Fix the two 0285 Auto-build switch panel tests failing on main. Why: Two Auto-build switch tests in Settings fail on main itself since 0646 added a usage request the fake page answers out of turn, and 0652's build spent part of its 22 minutes proving they weren't its own; the rest went on updating about ten older Settings layout tests, taking pictures and running wide test sweeps on a machine with a load average near 70.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Settings now opens on Your team: a card each for your engineering manager (under the name you gave it), the Builder, the Reviewer and QA. Each card shows the member's character, its job in a line, the agent, model and effort it runs on, and its bench: the agents, in order, that take over when its own agent hits a usage limit. You can change all of these on the card and save them with Save, as before; they're kept for your machine only. While a member's agent is limited, its card says so and names the bench agent that stands in. Your subscriptions comes next, then Appearance, Auto-build, Your agents, Shipping and the building limits, unchanged.
+
+To see it, open Settings in the panel. While QA's settings are all blank, QA's card says that it runs as your engineering manager's agent does. One thing to watch: the limited line goes by the last saved settings, so it disappears while you pick a different agent for that member.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +60,11 @@ Settings opens on Your team: a card for each member, with its character, its job
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Skipped as duplicates: the two `0285 AC3` tests failing on the base code since 0646 are already in the inbox as `speck/ideas/2026-11-11-fix-the-0285-auto-build-switch-panel-tests.md` and `speck/ideas/2026-11-11-fix-the-0285-settings-switch-tests-on-main.md`.
+- Known limit: a card's limited line comes from the saved settings and the limits on record when Settings opens. It doesn't say when the limit resets; Your subscriptions shows that.
+- Known limit: the mockup board couldn't be opened from the build's session, so the cards' layout should be compared with option D's board by eye.
+- `0630 AC3` failed once under heavy machine load and passed when rerun; it's timing-sensitive.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -222,6 +229,89 @@ Settings opens on Your team: a card for each member, with its character, its job
     ],
     "escalation_question": "",
     "summary": "The QA card now explains its inherited model and effort. One fallback path remains incomplete: when model lists are unavailable, changing the manager's agent can leave QA displaying the previous agent. The other criteria remain covered by passing tests."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "563c9a7a36783cca76b59bb0872e4db429067f73",
+    "session": "continued",
+    "thread_id": "01a1cb5e-5ca8-77f1-80e1-7d14c84761b0",
+    "builder_response": "- Tests run: test/settings-team-0652.test.mjs, test/panel-0593.test.mjs, test/foreman-fix-0286.test.mjs, test/panel-0257.test.mjs, test/panel-0258.test.mjs, test/settings-0397.test.mjs, test/settings-0407.test.mjs, test/settings-agents-0399.test.mjs, test/speck-name-0485.test.mjs, test/speck-name-0575.test.mjs, test/subscriptions-0646.test.mjs, test/panel-0368.test.mjs, test/settings-0396.test.mjs, test/panel-0427.test.mjs, test/foreman-0285.test.mjs (its two AC3 tests also fail on the base code), and the separate-picker tests test/settings-0370.test.mjs, test/settings-0381.test.mjs and test/settings-foreman-0348.test.mjs.\n- F1: fixed. SETTING_AFFECTS.builder and SETTING_AFFECTS.watch_agent now include qa_agent, so with separate pickers (no agent_models) a change to either redraws QA's row and its line. Test: `0652 AC1 (round 2 F1)`, without agent_models: the line names Claude Code, then Codex after the builder becomes codex (watch_agent blank), then Cursor after watch_agent becomes cursor.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 603340,
+      "cached_input_tokens": 524544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2177,
+      "reasoning_output_tokens": 267
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5127,
+      "cached": 148480,
+      "write": 0,
+      "output": 501
+    },
+    "cost_usd": 0.030112,
+    "tests": {
+      "failing": 2,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T16:12:09.530Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "teamGroup() and memberCard() render the four named cards with characters, jobs and settings. qaInheritLine() displays QA's inherited model and effort. SETTING_AFFECTS now redraws it for separate agent pickers too. AC1 tests and both F1 regression tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 tests passed, exercising card edits through Save, machine-only persistence in panelSaveSettings(), and validation refusals without saving changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "renderSettings() places subscriptions directly below the cards and retains the remaining sections. The passing AC3 test verifies order and the shipping and limits controls."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "teamNow() and teamShown() calculate limits and eligible stand-ins; limitWords() displays them. Passing AC4 tests cover bench order, readiness, held agents and reviewer restrictions."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing AC5 tests verify all settings remain available with and without model catalogues, and check the 320 px layout in light and dark appearances."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "QA's inherited agent, model and effort were missing or could remain stale after changing separate agent pickers.",
+        "suggested_fix": "Completed: qaInheritLine() shows inherited values, and both picker paths redraw it. Regression tests exercise inherited model/effort and agent changes without model catalogues.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Settings now opens with four editable team cards above subscriptions. QA correctly shows its inherited settings, including after agent changes. All acceptance criteria pass; the two remaining test failures are documented pre-existing failures."
   }
 }
 ```
