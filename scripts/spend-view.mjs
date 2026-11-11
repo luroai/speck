@@ -13,7 +13,7 @@ function mainOf(repo) {
   try { return worktreeList(repo)[0]?.path || repo; } catch { return repo; }
 }
 // The main checkout's speck/.cache/runs/, where speck run keeps its records and logs.
-const runsOf = repo => path.join(mainOf(repo), 'speck', '.cache', 'runs');
+export const runsOf = repo => path.join(mainOf(repo), 'speck', '.cache', 'runs'); // 0646: exported, for Your subscriptions
 
 // Every ticket, from the worktree its branch is checked out in when it's there, as speck status reads them.
 function allTickets(repo) {

@@ -26,7 +26,7 @@ import { panelAway } from './panel-background.mjs'; // 0509: --background and --
 import { panelProjects } from './panel-projects.mjs'; // 0516: the project menu, and showing another panel's project here
 import { projectSummary, speckMood } from './panel-summary.mjs'; // 0595: this panel's part of the bridge. 0579: speck's mood
 import { panelStarNote } from './panel-star.mjs'; // 0538: the star on a note in Capture
-import { panelUrl } from './panel-url.mjs'; // 0538: moved out, to keep this under 600 lines
+import { panelUrl } from './panel-url.mjs'; import { subscriptionsAnswer } from './subscriptions.mjs'; // 0538: moved out, to keep this under 600 lines. 0646: Your subscriptions in Settings
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch, a setting and a note's star) ----------
 
@@ -492,8 +492,8 @@ export async function panelServer() {
       try { return send(res, 200, 'application/json', JSON.stringify(logs.answer(req.headers, padId(log[1]), !!log[2]))); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read the build log: ${e.message}` })); }
     }
-    // 0257: the settings people tune, read afresh from speck/config.yml each time the Settings view opens, with the
-    // models the reviewer, builder and Foreman agent offer (settingsAnswer). 0407: ?quick=1, from the config alone, at once.
+    // 0257: the settings, read afresh each time the Settings view opens, with the agents' models (settingsAnswer). 0407: ?quick=1, from the config alone.
+    if (where === '/api/usage') return subscriptionsAnswer(repo).then(body => send(res, 200, 'application/json', JSON.stringify(body)), e => send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read your subscriptions: ${e.message}` }))); // 0646
     if (where === '/api/settings') return (query.get('quick') === '1' ? Promise.resolve().then(() => settingsQuick(repo)) : settingsAnswer(repo)).then(body => send(res, 200, 'application/json', JSON.stringify(body)),
       e => send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read speck/config.yml: ${e.message}` })));
     // 0369: the models of an agent chosen in the Settings view but not yet saved, read when it's chosen.

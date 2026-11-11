@@ -33,13 +33,13 @@ export const settingsWithAgents = yours => ({ groups: [
   providers: [{ name: 'deepseek', label: 'DeepSeek', models: [], default_model: 'deepseek-v4-pro', key_set: true }], your_agents: yours });
 
 // A page whose fetch answers GET /api/settings with `view`, each POST to an address in `answers` with its answer (one
-// with a status fails with it), and the rest with an empty board. Each node can take the focus, as a browser's can.
+// with a status fails with it), a GET to one given as `GET <address>` (0646) with its answer, and the rest with an empty board. Each node can take the focus, as a browser's can.
 export function agentsPage(view, answers = {}) {
   const calls = [];
   const fetch = async (url, opts = {}) => {
     const u = String(url), method = (opts.method || 'GET').toUpperCase();
     calls.push({ url: u, method, headers: opts.headers || {}, body: opts.body });
-    let body = method === 'POST' ? answers[u] : u.startsWith('/api/settings') ? structuredClone(view) : u.startsWith('/api/agent-models') ? { agent: '', why: 'no' } : { tickets: [], ideas: [], resume_command: '' };
+    let body = method === 'POST' ? answers[u] : Object.hasOwn(answers, `GET ${u}`) ? answers[`GET ${u}`] : u.startsWith('/api/settings') ? structuredClone(view) : u.startsWith('/api/agent-models') ? { agent: '', why: 'no' } : { tickets: [], ideas: [], resume_command: '' };
     if (body && body.then) body = await body;
     if (body === undefined) return { ok: false, status: 404, json: async () => ({ error: `no answer for ${u}` }) };
     if (body && body.status) return { ok: false, status: body.status, json: async () => body.body };
