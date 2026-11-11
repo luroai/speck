@@ -128,8 +128,9 @@ let holding = null;
 
 // Runs fn() once this process has a turn in `repo`, waiting for one if max_parallel_tests runs are already going, and
 // frees the turn afterwards, returning what fn returns. fn gets the run's files (see runFiles), for one run at a time.
-// In a turn this process already holds, fn runs straight away, in that turn, with the same files (0239).
-export function inTurn(repo, cfg, fn) {
+// In a turn this process already holds, fn runs straight away, in that turn, with the same files (0239). 0630: with
+// `lane` ('full'), it takes that one turn of its own instead, beside max_parallel_tests's, so no other run waits for it.
+export function inTurn(repo, cfg, fn, { lane = '' } = {}) {
   const max = maxParallelTests(cfg);
   const dir = turnsDir(repo);
   if (holding?.dir === dir) return fn(holding.files);
@@ -147,8 +148,10 @@ export function inTurn(repo, cfg, fn) {
   let lock = null, said = false;
   try {
     for (;;) {
-      for (let n = 0; n < max && !lock; n++) lock = takeTurn(dir, n, mine);
+      if (lane) lock = takeTurn(dir, lane, mine);
+      else for (let n = 0; n < max && !lock; n++) lock = takeTurn(dir, n, mine);
       if (lock) break;
+      if (!said && lane) { console.log(`Waiting for the ${lane} suite's own turn to run the tests: another run in it is already going. This run starts when it ends.`); said = true; }
       if (!said) {
         const going = holders(dir, max);
         console.log(`Waiting for a turn to run the tests: max_parallel_tests is ${max}, and ${going.length === 1 ? 'a run is' : `${going.length || max} runs are`} already going${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);

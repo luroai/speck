@@ -44,6 +44,9 @@ function recorded(repo, code, cmd) {
   return ok ? r : null;
 }
 
+// 0630: the result recorded for the code commit `rev` holds and the test command `cmd`, or null.
+export const recordedAt = (repo, cmd, rev) => { const code = codeAt(repo, cmd, rev); return code && recorded(repo, code, cmd); };
+
 // The checkout's root as a test's location names it: its real path, or as given when that can't be read.
 const realRoot = repo => { try { return fs.realpathSync(repo); } catch { return path.resolve(repo); } };
 
@@ -90,8 +93,8 @@ const result = (r, fail = false) => ({ status: fail && r.status === 0 ? 1 : r.st
 // the suite starts. Returns { status, signal, stalled, output }, stalled saying whether the run was ended for writing
 // nothing for test_stall_minutes (0152), and output what a failing run wrote ('' for a pass): all of it from a run,
 // the end kept of a reused one. A run that fails gets one more try at its failing tests' files (see retry), `branch`
-// being the branch the flaky log names (blank: the one checked out).
-export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hint = '', branch = '' } = {}) {
+// being the branch the flaky log names (blank: the one checked out). 0630: `lane` is the turn of its own it takes (see inTurn).
+export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hint = '', branch = '', lane = '' } = {}) {
   testStallMs(cfg); // a bad test_stall_minutes is refused even when a recorded result would do
   const code = testedCode(repo, cmd);
   // The result recorded for `code` that this run may reuse, or null. Asked again once the run has a turn, so a result
@@ -122,7 +125,7 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
         else if (again) text += `${text && !text.endsWith('\n') ? '\n' : ''}${again.note}\n${again.output}`;
       }
       return { r, text };
-    });
+    }, { lane });
     if (ran.reused) return reused(ran.reused);
     const { r, text } = ran;
     if (!code) return failed(result(r), text);
