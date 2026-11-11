@@ -1,7 +1,7 @@
 ---
 id: "0656"
 title: Make the full suite pass on main again                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
+started: "2026-11-11T17:32:20.318Z"
 
 ---
 # 0656 · Make the full suite pass on main again
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The full suite (`commands.test_full`) fails on `main` at `a95b3c3`, so the panel has shown Needs you since 16:11 on 2026-11-11. Four tests fail: two 0285 AC3 tests of the Auto-build switch in `test/foreman-0285.test.mjs`, since 0646 added a usage request that the fake page answers out of turn; 0161 AC1, as `#settings .sub .win .fill` (0646's usage bar) fills with `--muted` and sets no text colour; and 0427 AC1, as `#full-suite .full-suite-fact .label` (0655) is set at 13 px.
