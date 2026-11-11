@@ -41,6 +41,7 @@ Two trackpad swipes the same way, one straight after the other, change lane twic
 - The handler is the `wheel` listener at the end of the lanes code in `templates/panel-header.js`: a step the same way as the last change (`wheel.way`) resets `sum` and is ignored until a 50 ms pause. It hasn't changed since 0517 (2026-10-26), so a change in how Cursor sends the glide is the likely reason it shows now.
 - Checked 2026-11-11 against the running panel in headless Chromium: a lane change takes 1–12 ms of script and frames stay at 17 ms, so drawing isn't the delay. A real trackpad glide can't be replayed there, so the criteria give the scroll steps to test with the fake page.
 - Web pages get no flag that marks a glide, so a new swipe has to be told from the glide by its steps.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
