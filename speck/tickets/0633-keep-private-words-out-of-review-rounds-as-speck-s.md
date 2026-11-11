@@ -39,6 +39,7 @@ A review round never holds a private word, as speck takes them out when it saves
 ## Notes
 - `saveRound` in `scripts/review.mjs` already runs the round through `tildePaths`; `privateWordList` is in `scripts/private-words.mjs`.
 - Receipts are 0629's: the receipt must be made from the round as saved.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
