@@ -3,49 +3,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, gitEnv, fakePage, fullViewOf } from './support/panel.mjs';
+import { gitEnv, fakePage, fullViewOf } from './support/panel.mjs';
+import { CHECK, ASKED, blocked, checking } from './support/app-check.mjs';
 import { OPTION, QUESTION, blockedRepo } from './support/blocked.mjs';
-import { statusData, loadConfig } from '../scripts/speck.mjs';
+import { statusData } from '../scripts/speck.mjs';
 import { questionFacts } from '../scripts/question-facts.mjs';
 import { decidable, fixable } from '../scripts/foreman.mjs';
 import { foremanFixQueue } from '../scripts/foreman-fix.mjs';
-import { foremanAgentQueue, foremanAction, readActions, readAgentState, foremanArgv } from '../scripts/foreman-agent.mjs';
+import { readActions, readAgentState, foremanArgv } from '../scripts/foreman-agent.mjs';
 import { addPicture, picturesLines } from '../scripts/pictures.mjs';
 
 Object.assign(process.env, gitEnv); // speck watch commits in this process
 
 // ---------- 0636: let speck check a build's question in the running app ----------
 
-const CHECK = 'Open Settings and look at the new Save button in the dark look';
-const ASKED = `${QUESTION}\nCheck in the app: ${CHECK}`;
 const SAW = 'The Save button shows at the bottom in the dark look';
-const NOW = new Date('2026-11-11T14:00:00Z');
 const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d6a4b30000000049454e44ae426082', 'hex');
-
-function settings(r, { watch = 'decide', start = 'npm run dev -- --port {port}' } = {}) { // uncommitted, so it moves no branch
-  const file = path.join(r.dir, 'speck', 'config.yml');
-  let text = fs.readFileSync(file, 'utf8').replace(/^watch:.*$/m, `watch: ${watch}`);
-  if (start) text = text.replace(/^commands:\n/m, `commands:\n  start: "${start}"\n`);
-  fs.writeFileSync(file, text);
-}
-// The board's entry for a ticket blocked on a question to check in the app.
-const blocked = (o = {}) => T('0001', 'blocked', { blocked_question: 'Should the old test be removed (A) or kept and fixed (B)?', blocked_recommendation: OPTION, blocked_noticeable: false, blocked_clear: true, blocked_check_in_app: CHECK, ...o });
-
-// A repo whose ticket 0001 is blocked on a question to check in the app, and speck run's agent queue for it.
-function checking({ watch = 'decide', start, risk = 'low', question = ASKED } = {}) {
-  const r = blockedRepo({ question });
-  if (risk !== 'low') { fs.writeFileSync(r.file, r.ticket().replace(/^risk: .*$/m, `risk: ${risk}`)); r.g('commit', '-qam', 'risk'); }
-  settings(r, { watch, ...(start !== undefined ? { start } : {}) });
-  const a = { starts: [], said: [], stopped: [], resumed: [], live: new Set(), running: new Set() };
-  a.q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => loadConfig(r.dir), words: ['claude', '-p', '/speck-build {id}', '--session-id', '{session}'], cfg: { base_branch: 'main', branch_prefix: 'speck/' }, max: 1, running: a.running, ships: { again: () => {} },
-    say: m => a.said.push(m), statusOf: () => 'blocked', providers: [], cantStart: () => '', alive: pid => a.live.has(pid), withToken: () => [], inUse: () => false, startBuild: (id, argv) => { a.resumed.push({ id, argv }); a.running.add(id); },
-    stopCheckApp: id => { a.stopped.push(id); return Promise.resolve(true); },
-    start: (argv, cwd, log, env) => { const pid = 91000 + a.starts.length; a.starts.push({ argv, token: env.SPECK_FOREMAN_RUN, pid, brief: argv[argv.indexOf('-p') + 1] }); a.live.add(pid); return { pid, exited: () => !a.live.has(pid) }; } });
-  a.check = (t = blocked({ risk })) => a.q.check([t]);
-  a.end = () => { for (const s of a.starts) a.live.delete(s.pid); };
-  a.act = (...args) => foremanAction(r.dir, args, { token: a.starts.at(-1).token, now: NOW });
-  return { r, a };
-}
 
 test('0636 AC1: a blocked question\'s Check in the app line is read apart from the question, and speck status --json gives it', () => {
   assert.equal(questionFacts([QUESTION, `- Check in the app: ${CHECK}`]).checkInApp, CHECK);
@@ -162,7 +135,7 @@ test('0636 AC4: the review pack lists the screenshots it kept, with their captio
   assert.ok(picturesLines(r.dir, '0001').some(l => l.startsWith('- Settings, Save button, dark look: ')));
 });
 
-for (const [name, o] of [['watch: tell', { watch: 'tell' }], ['watch: off', { watch: 'off' }], ['high risk', { risk: 'high' }], ['commands.start blank', { start: '' }]])
+for (const [name, o] of [['watch: tell', { watch: 'tell' }], ['watch: off', { watch: 'off' }], ['high risk', { risk: 'high' }]]) // 0638: commands.start blank no longer stops it
   test(`0636 AC5: with ${name}, the question waits for you`, () => {
     const { a } = checking(o);
     a.check();

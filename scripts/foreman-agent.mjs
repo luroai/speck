@@ -37,7 +37,7 @@ import { usualBuild, runningLong, canRunLong } from './long-build.mjs';
 import { limitWaiting } from './usage-limit.mjs';
 import { reviewerWaiting } from './reviewer-limit.mjs';
 import { takeAt, resumeTime, resumeClock, resumeWhy } from './resume-at.mjs';
-import { appCheckable, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS } from './app-check.mjs';
+import { appCheckable, appStartSet, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS } from './app-check.mjs';
 import { stopApp } from './app.mjs';
 import { standIn, movedOf } from './watch-stand-in.mjs';
 
@@ -347,7 +347,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     const known = providers ?? knownProviders(repo); // 0401: read on each start, so a provider added since counts
     const token = crypto.randomUUID(), agent = foremanAgentOf(c, known), label = agentLabel(c, known);
     const check = checkOf(next); // 0636
-    const brief = check ? checkBrief({ id: next.id, check, skill: skillPath(agent), watch: fixingOf(c) })
+    const brief = check ? checkBrief({ id: next.id, check, skill: skillPath(agent), watch: fixingOf(c), startSet: appStartSet(c) })
       : foremanBrief({ id: next.id, what: next.what, log: next.log ? path.relative(repo, next.log) : 'its log', tail: next.log ? logTail(next.log) : '', agent, decide: fixingOf(c) === 'decide', long: next.long === true });
     const argv = foremanArgv(c, brief, undefined, known, !!check);
     // Reserved in the record before it starts, so a record that can't be saved starts nothing, and the agent's token is
