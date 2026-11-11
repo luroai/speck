@@ -39,6 +39,7 @@ A build stopped on a usage limit more than an hour from resetting is carried on 
 
 ## Notes
 - 0622 and 0623 carry builds on after the reset (`carryOn` in `scripts/usage-limit.mjs`).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
