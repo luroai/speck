@@ -1,7 +1,7 @@
 ---
 id: "0629"
 title: "Auto-ship only rounds that speck's own reviewer run recorded"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T10:03:18.551Z"
 approved: "2026-11-11T10:13:49.342Z"
+finished: "2026-11-11T10:17:48.412Z"
 
 ---
 # 0629 · Auto-ship only rounds that speck's own reviewer run recorded
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Auto-ship merges and pushes a ticket because its ticket file says the reviewer approved it, and the builder writes that file: it can record a verdict with `speck record` or edit its `## Review rounds` by hand. So "no agent approves its own work" holds only while the builder follows its skill, and a ticket that ships by itself has no proof that speck's own reviewer run approved it.
