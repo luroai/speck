@@ -1,7 +1,7 @@
 ---
 id: "0657"
 title: "Run the panel's house-rule tests before every ship"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0656"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T17:39:36.477Z"
 approved: "2026-11-11T17:56:40.026Z"
+finished: "2026-11-11T17:59:04.151Z"
 
 ---
 # 0657 · Run the panel's house-rule tests before every ship
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0631, speck ships on its quick tests, which leave out every test that starts a real panel or browser. Some of those check rules for the whole panel, such as every coloured background setting its text colour (0161 AC1) and the allowed text sizes (0427 AC1), so on 2026-11-11 two panel tickets shipped breaking them, and the full suite failed on `main` afterwards, showing Needs you.
