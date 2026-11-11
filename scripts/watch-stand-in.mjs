@@ -1,6 +1,7 @@
 // 0637: while the watch agent's own agent is held by a usage limit, each look runs on the first other agent of yours that's
 // ready and not held, in speck agents' order, on that agent's own model and effort. Builds and reviewers stay on theirs.
-// 0645: the first in watch_bench's order, which is your agents in that order when it's blank.
+// 0645: the first in watch_bench's order, which is your agents in that order when it's blank. 0651: a check in the app
+// that QA runs takes its stand-in from qa_bench instead, and the lines say QA's checks moved.
 import { providerNamed } from './provider-review.mjs';
 import { benchOf } from './bench.mjs';
 
@@ -28,14 +29,16 @@ export function standIn({ heldAgent, readyAgents, speak, agents }) {
     return true;
   };
   // The config the next look runs with: `cfg` while `own` isn't held, a stand-in's, or null while none can take it.
-  const lookOn = (s, cfg, own, known) => {
+  // `qa` when it's QA's check in the app.
+  const lookOn = (s, cfg, own, known, qa = false) => {
     if (!heldAgent(own)) return cfg;
     let ready = [];
     try { ready = readyAgents(); } catch { /* none can be read: it waits for the limit */ }
     ready = (Array.isArray(ready) ? ready : []).filter(a => typeof a === 'string');
     let bench;
-    try { bench = benchOf(cfg, 'watch_bench', { yours: ready, own, providers: known }); refused = null; } catch (e) {
-      if (refused !== e.message) speak(`${agentName(own, known)}'s usage limit is reached, but I can't take a stand-in from watch_bench: ${e.message}`);
+    const key = qa ? 'qa_bench' : 'watch_bench';
+    try { bench = benchOf(cfg, key, { yours: ready, own, providers: known }); refused = null; } catch (e) {
+      if (refused !== e.message) speak(`${agentName(own, known)}'s usage limit is reached, but ${qa ? 'QA' : 'I'} can't take a stand-in from ${key}: ${e.message}`);
       refused = e.message;
       return null;
     }
@@ -43,7 +46,7 @@ export function standIn({ heldAgent, readyAgents, speak, agents }) {
     if (!to) return null;
     if (s.moved?.from !== own || s.moved?.to !== to) {
       s.moved = { from: own, to };
-      speak(`${agentName(own, known)}'s usage limit is reached, so I'll look into stops on ${agentName(to, known)} until it resets.`);
+      speak(`${agentName(own, known)}'s usage limit is reached, so ${qa ? 'QA will check in the app' : 'I\'ll look into stops'} on ${agentName(to, known)} until it resets.`);
     }
     return standInConfig(cfg, to);
   };

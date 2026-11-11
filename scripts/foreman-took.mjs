@@ -7,7 +7,7 @@ import { questionFacts } from './question-facts.mjs';
 
 // Each "Went with the recommendation" line in a ticket's Notes, oldest first: { option, by, at }, `by` being 'foreman'
 // when the Foreman chose it and 'user' when you pressed the panel's button, and `at` its time as an ISO string.
-const LINE = /^\s*[-*]\s+Went with the recommendation: (.+) \((chosen by [^()]*), (\d{4}-\d\d-\d\d) (\d\d:\d\d) UTC\)\.?(?: Checked in the app: .*)?\s*$/; // 0636: and what a check in the app saw
+const LINE = /^\s*[-*]\s+Went with the recommendation: (.+) \((chosen by [^()]*), (\d{4}-\d\d-\d\d) (\d\d:\d\d) UTC\)\.?(?: (?:QA c|C)hecked in the app: .*)?\s*$/; // 0636: and what a check in the app saw. 0651: or QA's
 export function wentWithLines(lines) {
   const out = [];
   for (const line of Array.isArray(lines) ? lines : []) {

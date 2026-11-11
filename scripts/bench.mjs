@@ -1,13 +1,15 @@
 // 0645: each team member's bench, the agents in order that speck switches it to while its own agent is held by a usage
 // limit. builder_bench, reviewer_bench and watch_bench are your own settings (machine.mjs). Blank is your agents in
 // speck agents' order, leaving out the member's own agent and every model provider, as those bill per token.
+// 0651: and QA's, qa_bench, checked with them.
 
 import { SpeckError, setting } from './core.mjs';
 import { knownProviders } from './custom-providers.mjs';
 
 export const BENCHES = Object.freeze(['builder_bench', 'reviewer_bench', 'watch_bench']);
 const CLI_AGENTS = ['claude', 'codex', 'cursor'];
-const MEMBER = { builder_bench: 'the builder', reviewer_bench: 'the reviewer', watch_bench: 'the watch agent' };
+const CHECKED = [...BENCHES, 'qa_bench'];
+const MEMBER = { builder_bench: 'the builder', reviewer_bench: 'the reviewer', watch_bench: 'the watch agent', qa_bench: 'QA' };
 
 export const benchKnown = (providers = []) => [...CLI_AGENTS, ...providers.map(p => p.name)];
 
@@ -42,17 +44,18 @@ export function benchOf(cfg, key, { yours = [], own = '', providers = [] } = {})
 }
 
 // The agent of the member whose bench `key` is, as speck runs it with `cfg`, which its bench can't name. The watch
-// agent's is worked out as foremanAgentOf does, without importing it, as loadConfig checks benches.
+// agent's is worked out as foremanAgentOf does, without importing it, as loadConfig checks benches. 0651: QA's is
+// qa_agent, or the watch agent's when that's blank.
 export function benchOwnAgent(cfg, key, providers = []) {
   const provider = a => typeof a === 'string' && providers.some(p => p.name === a);
   if (key === 'builder_bench') return String(cfg?.builder ?? 'claude');
   if (key === 'reviewer_bench') return cfg?.reviewer === 'claude-subagent' ? 'claude' : String(cfg?.reviewer ?? '');
-  const watch = setting(cfg, 'watch_agent');
+  const qa = cfg?.qa_agent, watch = key === 'qa_bench' && (CLI_AGENTS.includes(qa) || provider(qa)) ? qa : setting(cfg, 'watch_agent');
   return CLI_AGENTS.includes(watch) || provider(watch) ? watch : ['codex', 'cursor'].includes(cfg?.builder) || provider(cfg?.builder) ? cfg.builder : 'claude';
 }
 
 // Why each bench in `cfg` can't be used as it is, with how to fix it: [] when every one can.
-export const benchProblems = (cfg, providers = []) => BENCHES.map(key => {
+export const benchProblems = (cfg, providers = []) => CHECKED.map(key => {
   const problem = benchProblem(key, cfg?.[key], benchOwnAgent(cfg, key, providers), providers);
   return problem && `${problem} ${fixHint(key)}`;
 }).filter(Boolean);

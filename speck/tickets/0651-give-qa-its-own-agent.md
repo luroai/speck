@@ -40,6 +40,8 @@ QA is a team member of its own: app checks run on QA's agent, model and effort, 
 ## Notes
 - App checks: `scripts/app-check.mjs`; the watch agent's agent: `foremanAgentOf` in `scripts/foreman-agent.mjs` (at its 600-line limit).
 - Failing before this build: none
+- QA settings blank (AC4): qa_agent, qa_model, qa_effort and qa_bench all blank. Then a check runs exactly as before, on watch_model and watch_effort, and its Notes and log lines read as before, so 0636's tests that pin those lines still pass (AC5). Once any is set, the lines say QA (AC3).
+- Self-check: no changes. One known limit noted for the Delivery log: while QA's stand-in agent differs from the watch agent's own, the "QA will check in the app on <agent>" line can be said again for each new check until the limit resets.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

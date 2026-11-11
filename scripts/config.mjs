@@ -30,6 +30,7 @@ const KINDS = Object.assign(Object.create(null), {
   speck_name: 'speckname', // 0575
   builder_effort: 'effort', // 0402
   builder_bench: 'bench', reviewer_bench: 'bench', watch_bench: 'bench', // 0645
+  qa_agent: 'agent', qa_model: 'text', qa_effort: 'effort', qa_bench: 'bench', // 0651
   'commands.start': 'text', app_url: 'url', app_start_seconds: 'count', // 0634
   max_parallel_builds: 'count', max_parallel_tests: 'count', test_stall_minutes: 'count', review_timeout_minutes: 'count', ship_wait_minutes: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
   'limits.max_review_rounds': 'count', 'limits.max_merge_rounds': 'count', 'limits.escalate_after_repeat_disputes': 'count', 'limits.max_ticket_body_lines': 'count',
@@ -97,7 +98,7 @@ export function checkConfigValue(key, value, providers = knownProviders()) {
 
 // 0645: refuses `changes` ([key, value] each, undefined: this machine's value removed) when, saved for this machine or,
 // with `toRepo`, in speck/config.yml, they'd leave a bench naming an agent speck doesn't know or its member's own.
-const BENCHED = ['builder', 'reviewer', 'watch_agent', 'builder_bench', 'reviewer_bench', 'watch_bench'];
+const BENCHED = ['builder', 'reviewer', 'watch_agent', 'builder_bench', 'reviewer_bench', 'watch_bench', 'qa_agent', 'qa_bench'];
 function refuseBenches(repo, changes, toRepo = false) {
   if (!changes.some(([k]) => BENCHED.includes(k))) return;
   const now = loadConfig(repo, { benches: false }), mine = machineConfig(repo), repoCfg = loadConfig(repo, { machine: false }), will = { ...now };
