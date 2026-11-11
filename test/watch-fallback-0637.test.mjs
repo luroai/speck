@@ -30,10 +30,10 @@ const BACK = /Claude's usage limit has reset, so I'm looking into stops on Claud
 // A repo whose ticket 0001 stopped, with watch: fix on Claude with its own model and effort, and speck run's usage limit
 // queue over the same runs folder, on a clock the test moves. `ready` is your agents that are ready, in speck agents'
 // order, and `held` the other agents held by a limit speck recorded.
-function watching({ ready = ['claude', 'codex', 'cursor'], held = new Set(), providers = [] } = {}) {
+function watching({ ready = ['claude', 'codex', 'cursor'], held = new Set(), providers = [], bench = '' } = {}) {
   const r = blockedRepo({ status: 'building' });
   const config = path.join(r.dir, 'speck', 'config.yml'); // uncommitted, so it moves no branch
-  fs.writeFileSync(config, `${fs.readFileSync(config, 'utf8').replace(/^watch:.*$/m, '').trimEnd()}\nwatch: fix\nwatch_agent: claude\nwatch_model: opus\nwatch_effort: high\n`);
+  fs.writeFileSync(config, `${fs.readFileSync(config, 'utf8').replace(/^watch:.*$/m, '').trimEnd()}\nwatch: fix\nwatch_agent: claude\nwatch_model: opus\nwatch_effort: high\n${bench ? `watch_bench: ${bench}\n` : ''}`); // 0645: a provider stands in only from watch_bench
   const a = { r, starts: [], said: [], builds: [], live: new Set(), running: new Set(), clock: START, status: 'building', readyCalls: 0, held };
   a.limits = usageLimitQueue({ repo: r.dir, runs: () => r.runs, settings: () => ({ cfg: CFG, words: WORDS, max: 1 }), running: a.running, say: m => a.said.push(m), now: () => a.clock,
     statusOf: () => a.status, resumeHint: () => 'Resume it by hand', startBuild: () => {} });
@@ -78,7 +78,7 @@ test('0637 AC1: an agent that isn\'t ready, isn\'t yours or is held by its own l
 });
 
 test('0637 AC1: a model provider of yours stands in on its own default model', () => {
-  const { a } = watching({ ready: ['claude', 'deepseek'], providers: [PROVIDER] });
+  const { a } = watching({ ready: ['claude', 'deepseek'], providers: [PROVIDER], bench: 'deepseek' });
   a.limit();
   const argv = a.starts[1].argv;
   assert.ok(argv.includes('deepseek'), argv.join(' '));

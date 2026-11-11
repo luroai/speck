@@ -41,6 +41,8 @@ Each team member has a bench: the agents, in order, that speck switches it to wh
 - From `speck/ideas/2026-11-10-set-up-your-team-instead-of-settings.md` (a bench order per member) and stage 2 of `speck/ideas/2026-11-10-keep-speck-working-when-an-agent-hits-its-usage-limit.md`.
 - 0637's stand-in is `scripts/watch-stand-in.mjs`. Settings of your own are listed in `scripts/machine.mjs`.
 - Failing before this build: none
+- AC2 changes 0637's behaviour: a blank watch_bench leaves model providers out, so 0637's test of a provider standing in now puts it on watch_bench. 0386's test of the exact list of your own settings now lists the three benches, as 0402 did for builder_effort.
+- Self-check: moved config show's bench rows into scripts/bench.mjs to keep settings.mjs within 600 lines; tested `__proto__`/`constructor` as agent names and a bench that isn't a list in this machine's file.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -6,10 +6,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SpeckError, parseYaml, parseConfig, worktreeList, yamlValue } from './core.mjs';
 import { sharedCacheDir } from './turns.mjs';
+import { BENCHES, benchList } from './bench.mjs';
 
 export const MACHINE_SETTINGS = Object.freeze(['builder', 'builder_model', 'builder_effort', 'build_command', 'resume_command', 'reviewer', 'reviewer_model',
   'reviewer_effort', 'allow_same_model_review', 'auto_ship', 'auto_ship_risk', 'watch_agent', 'watch_model', 'watch_effort', 'watch',
-  'max_parallel_builds', 'max_parallel_tests']);
+  'max_parallel_builds', 'max_parallel_tests', ...BENCHES]); // 0645: and each member's bench
 
 // What each holds as speck reads it, for checking this machine's file: a whole number, true or false, a list of
 // risks, or text. `speck config set` checks each value fully before saving it.
@@ -17,6 +18,7 @@ const COUNTS = ['max_parallel_builds', 'max_parallel_tests'], FLAGS = ['allow_sa
 function machineProblem(key, v) {
   if (COUNTS.includes(key)) return Number.isSafeInteger(v) && v >= 1 ? null : ['a whole number of 1 or more', '<number>'];
   if (FLAGS.includes(key)) return typeof v === 'boolean' ? null : ['true or false', 'true|false'];
+  if (BENCHES.includes(key)) return benchList(v) !== null ? null : ['blank or a list of agents', 'codex,cursor']; // 0645: which agents is checked as it's used
   if (key === 'auto_ship_risk') return Array.isArray(v) && v.length && v.every(r => r === 'low' || r === 'high') ? null : ['low, high or both', 'low,high'];
   return typeof v === 'string' ? null : ['text', '<value>'];
 }

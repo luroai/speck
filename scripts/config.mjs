@@ -10,7 +10,8 @@ import { ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuil
 import { offeredModels } from './agents.mjs';
 import { sameModelProblem } from './same-model.mjs';
 import { FIXING } from './foreman.mjs';
-import { FOREMAN_AGENTS } from './foreman-agent.mjs';
+import { FOREMAN_AGENTS, foremanAgentOf } from './foreman-agent.mjs';
+import { BENCHES, benchList, benchProblem } from './bench.mjs';
 import { knownProviders } from './custom-providers.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
 
@@ -28,6 +29,7 @@ const KINDS = Object.assign(Object.create(null), {
   ship_mode: 'shipmode', // 0295
   speck_name: 'speckname', // 0575
   builder_effort: 'effort', // 0402
+  builder_bench: 'bench', reviewer_bench: 'bench', watch_bench: 'bench', // 0645
   'commands.start': 'text', app_url: 'url', app_start_seconds: 'count', // 0634
   max_parallel_builds: 'count', max_parallel_tests: 'count', test_stall_minutes: 'count', review_timeout_minutes: 'count', ship_wait_minutes: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
   'limits.max_review_rounds': 'count', 'limits.max_merge_rounds': 'count', 'limits.escalate_after_repeat_disputes': 'count', 'limits.max_ticket_body_lines': 'count',
@@ -70,6 +72,12 @@ export function checkConfigValue(key, value, providers = knownProviders()) {
       throw new SpeckError(`${key} must be blank or test file names separated by spaces or commas, without quotes, # or brackets in a name (got ${JSON.stringify(value)}).`);
     return parts.length ? [...new Set(parts)] : '';
   }
+  if (kind === 'bench') { // 0645: the agents in order, each one speck knows. Blank: your agents in order
+    const problem = benchProblem(key, value, '', providers);
+    if (problem) throw new SpeckError(problem);
+    const list = benchList(value);
+    return list.length ? list : '';
+  }
   const agents = [...FOREMAN_AGENTS, ...providers.map(p => p.name)]; // 0392: or a model provider's name (0401: or one you've added)
   if (kind === 'agent' && value !== '' && !agents.includes(value)) // 0287
     throw new SpeckError(`${key} must be blank or one of ${agents.join(', ')} (got ${JSON.stringify(value)}).`);
@@ -85,6 +93,19 @@ export function checkConfigValue(key, value, providers = knownProviders()) {
     return [...new Set(parts)];
   }
   return value;
+}
+
+// 0645: the agent of the member whose bench `key` is, in `cfg`, which its bench can't name.
+export function benchOwnAgent(cfg, key, providers = knownProviders()) {
+  if (key === 'builder_bench') return String(cfg?.builder ?? 'claude');
+  if (key === 'reviewer_bench') return cfg?.reviewer === 'claude-subagent' ? 'claude' : String(cfg?.reviewer ?? '');
+  return foremanAgentOf(cfg, providers);
+}
+// Refuses a bench `value` that names its member's own agent, as speck uses the settings in `repo` now.
+function refuseOwnAgent(repo, key, value) {
+  if (!BENCHES.includes(key) || value === undefined) return;
+  const providers = knownProviders(repo), problem = benchProblem(key, value, benchOwnAgent(loadConfig(repo), key, providers), providers);
+  if (problem) throw new SpeckError(problem);
 }
 
 export { yamlValue }; // 0386: moved to core.mjs, so this machine's file is written the same way
@@ -172,6 +193,7 @@ function setMachine(key, raw, remove, replace = false) {
   if (key === 'builder' && !remove) return setBuilder(raw, replace, true);
   const value = remove ? undefined : checkConfigValue(key, raw);
   const repo = findRepoRoot();
+  refuseOwnAgent(repo, key, value); // 0645
   const values = machineConfig(repo);
   const committed = loadConfig(repo, { machine: false })[key] ?? (key.startsWith('max_parallel_') ? 1 : undefined);
   const before = Object.hasOwn(values, key) ? values[key] : committed;
@@ -199,6 +221,7 @@ export function cmdConfig(args) {
   if (key === 'builder') return setBuilder(rest.join(' '), replace);
   const value = checkConfigValue(key, rest.join(' '));
   const repo = findRepoRoot();
+  refuseOwnAgent(repo, key, value); // 0645
   const file = path.join(repo, 'speck', 'config.yml');
   const text = fs.readFileSync(file, 'utf8');
   const keys = key.split('.');
