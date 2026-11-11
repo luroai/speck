@@ -1,7 +1,7 @@
 ---
 id: "0634"
 title: "Let speck start your app for a ticket"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-11-virgil-checks-the-work-in-the-running-app.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
+started: "2026-11-11T11:01:27.366Z"
 
 ---
 # 0634 · Let speck start your app for a ticket
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A build that changes how an app looks or behaves often blocks asking you to check it in the running app, and speck has no way to start a project's app itself. Before speck can check anything in the app, it needs to know how to start it and where to open it.
