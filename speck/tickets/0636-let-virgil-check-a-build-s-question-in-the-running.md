@@ -41,6 +41,7 @@ With `watch: decide`, or `fix` for a check that clearly passes, speck checks a b
 - Decided 2026-11-11: speck makes the call with `decide`; with `fix` it only passes a check that clearly passes.
 - Question facts are in `scripts/question-facts.mjs`; the watch agent's brief and actions in `scripts/foreman-agent.mjs` and `skills/speck-watch/SKILL.md`; `speck picture` keeps pictures (0294).
 - After 0634 (`speck app`) and 0635 (`speck logins`).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
