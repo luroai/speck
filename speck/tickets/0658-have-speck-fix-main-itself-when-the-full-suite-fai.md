@@ -45,7 +45,7 @@ With `watch: fix` or `decide`, speck raises and readies a fix ticket itself when
 - Self-check: no changes. Then, from the pictures, moved "I'm fixing it in <id>" onto the row's second line, as the title cut the id off at phone width.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When speck's full check of everything on main fails and the watch setting is fix or decide, speck now writes a fix ticket for it itself, sets it ready and builds it next, rather than leaving a row under Needs you that only a developer could act on. While that fix is on its way, the Build lane shows "Some of the tests broke on main" under Building, with "I'm fixing it in" and the fix ticket's number, and nothing is counted under Needs you for it. It comes back under Needs you only if the fix ticket gets stuck or is cancelled, or the check still fails after the fix has shipped. speck's log says when it made the ticket. With watch set to tell or off, nothing changes. Worth watching: the first time main breaks, check that the fix ticket appears and builds without you.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +55,10 @@ With `watch: fix` or `decide`, speck raises and readies a fix ticket itself when
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (Delivery log only, none to the inbox):
+  - Known limit: while it's fixing, the full suite's row sits under Building and counts in that group's number, so the lane can read "Building 1" while the fix ticket is still only queued.
+  - Known limit: an open fix ticket covers a failure only if its text names every failing test, or the commit when no tests are named, so a fix ticket that describes the failure in other words gets a second one made beside it.
+  - Tidy-up: scripts/full-fix.mjs has its own small copy of replaceSection, because importing close.mjs from it loops back to full-suite.mjs.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -136,6 +140,89 @@ With `watch: fix` or `decide`, speck raises and readies a fix ticket itself when
     ],
     "escalation_question": "",
     "summary": "The automatic fix ticket and status display work in the tested lifecycle. However, speck can hide failures that its chosen ticket does not cover. Fix the coverage check before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1b2b8aa134ac31cd2c5512e54e5555ff0a0cc081",
+    "session": "continued",
+    "thread_id": "01a1cbcb-5c7f-7990-b245-1ff670baa940",
+    "builder_response": "- Tests run: test/full-fix-0658.test.mjs test/full-suite-0630.test.mjs (with the commands.checks files): 169 pass, 0 fail.\n- F1: fixed. covers() in scripts/full-fix.mjs now needs an open fix ticket to name every failing test (`every`, not `some`). The reuse test's ticket now names both failing tests, and a new test, \"0658 AC1: an open fix ticket that names only some of the failing tests doesn't cover the failure…\", checks that a ticket naming only one gets a ready fix ticket of its own made, which then keeps the failure out of Needs you.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 234760,
+      "cached_input_tokens": 180736,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1315,
+      "reasoning_output_tokens": 148
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5356,
+      "cached": 99456,
+      "write": 0,
+      "output": 521
+    },
+    "cost_usd": 0.0258676,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T18:09:10.257Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "fullFixQueue.check() creates, commits and readies a priority-0 fix ticket. covers() now requires every failing test. Passing AC1 tests cover creation, reuse, partial coverage and refusal off the base branch."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanView() excludes a failure with fixing from Needs you; fullSuiteRow() and panel render() display the fix ticket id under Building. Both AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "fullFixQueue.check() restores Needs you for blocked/cancelled fixes and when ranWithFix() detects a failing run containing the shipped fix. Passing AC3 tests cover these transitions."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "fixActs() enables automation only for fix/decide. The passing AC4 test covers tell, off and unset."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Round 2 reports 169 passing tests, zero failures and three skips, including both relevant test files and configured checks. Round 1's broader relevant run also had zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/full-fix.mjs",
+        "issue": "An existing ticket mentioning only some failing tests was incorrectly treated as covering the whole failure.",
+        "suggested_fix": "Require every failing test to be covered and test partial coverage.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Speck now creates and readies a fix ticket automatically, shows which ticket is handling the failure, and asks for help again if the fix stalls or fails. The partial-coverage bug is fixed and tested. No blocking concerns remain."
   }
 }
 ```
