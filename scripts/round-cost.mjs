@@ -50,7 +50,7 @@ const CODEX_HOME = () => process.env.CODEX_HOME || path.join(os.homedir(), '.cod
 // Every rollout file in `home`'s sessions folder (sessions/YYYY/MM/DD/rollout-<time>-<thread>.jsonl), or only those for
 // thread `thread` when it's given. 0556: with `since`, a time in milliseconds, only those that last changed at or after
 // it, found by their last change rather than their day folder, so a session resumed later is found wherever it is.
-function rollouts(home, thread, since = null) {
+export function rollouts(home, thread, since = null) {
   const recent = p => { if (since === null) return true; try { return fs.statSync(p).mtimeMs >= since; } catch { return false; } };
   const files = [];
   const walk = (dir, depth) => {

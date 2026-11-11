@@ -7,6 +7,8 @@ import { saveRecord } from './build-records.mjs';
 import { resumeFor, resumedRecord } from './hand-back.mjs';
 import { configBuilder } from './build-model.mjs';
 
+export { keepUsageOfLog } from './agent-usage.mjs'; // 0642: for the watch agent's runs
+
 // Not <id>.json, so nothing that reads the runs folder's build records takes it for one.
 const FILE = 'run.usage-limit.json';
 export const GRACE_MS = 60000; // how long after the reset time it carries on

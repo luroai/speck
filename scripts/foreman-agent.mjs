@@ -34,7 +34,7 @@ import { onPath } from './install.mjs';
 import { recordWatchSpend } from './spend.mjs';
 import { providerKey } from './keys.mjs';
 import { usualBuild, runningLong, canRunLong } from './long-build.mjs';
-import { limitWaiting } from './usage-limit.mjs';
+import { limitWaiting, keepUsageOfLog } from './usage-limit.mjs';
 import { reviewerWaiting } from './reviewer-limit.mjs';
 import { takeAt, resumeTime, resumeClock, resumeWhy } from './resume-at.mjs';
 import { appCheckable, appStartSet, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS } from './app-check.mjs';
@@ -322,9 +322,9 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     // 0636: whatever it did, the app it started to check the question is stopped.
     if (checkOf(r)) Promise.resolve().then(() => stopCheckApp(r.id)).then(was => { if (was) speak(`${r.id}: I stopped the app I started to check it.`); },
       e => speak(`${r.id}: I couldn't stop the app I started to check it (${e?.message || e}). Stop it with speck app ${r.id} --stop.`));
-    // 0525: what it spent, kept for its ticket before the next run replaces its log.
+    // 0525: what it spent, kept for its ticket before the next run replaces its log. 0642: and its agent's usage.
     try { recordWatchSpend(runs(), { id: r.id, run: r.token, command: r.command, log: path.join(runs(), LOG) }); }
-    catch (e) { speak(`${r.id}: I couldn't keep what looking into it spent (${e.message}).`); }
+    catch (e) { speak(`${r.id}: I couldn't keep what looking into it spent (${e.message}).`); } finally { keepUsageOfLog(repo, r.agent, path.join(runs(), LOG)); }
     const mine = readActions(runs()).filter(a => a.run === r.token && a.id === r.id);
     for (const a of mine) {
       if (a.action === 'reship') { ships.again(a.id); speak(`${a.id}: I asked for its ship to be tried again: ${a.why}`); }

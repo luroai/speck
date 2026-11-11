@@ -8,6 +8,7 @@ import { saveRecord } from './build-records.mjs';
 import { BUILD_ENV } from './build-env.mjs';
 import { mainCheckout } from './output.mjs';
 import { GRACE_MS, RETRY_MS, FURTHEST_MS, clock, carryOn, usageLimitQueue } from './usage-limit.mjs';
+import { keepBuildUsage } from './agent-usage.mjs';
 
 export const REVIEWER_LIMITED = 18;
 const FOLDER = 'reviewer-limits'; // in the runs folder, so nothing that reads that folder's build records takes one for a build's
@@ -166,10 +167,11 @@ export function reviewerLimitQueue({ repo, runs, settings, running, startBuild, 
 const reviewerHolds = (runs, agent, now) => readLimits(runs).some(s => (s.reviewer === 'claude-subagent' ? 'claude' : s.reviewer) === agent && now < Date.parse(s.carry_on));
 
 // speck run's usage limits together: Claude's as a builder (0622), which holds new builds, and each reviewer's. 0637:
-// holdsAgent(agent) says whether any of them holds an agent, for the watch agent.
+// holdsAgent(agent) says whether any of them holds an agent, for the watch agent. 0642: keepUsage(log, file) keeps the
+// usage a build that ended reported, its agent the one its run record names, or else the settings' builder.
 export function limitQueues(opts) {
   const builder = usageLimitQueue(opts), reviewers = reviewerLimitQueue({ ...opts, heldBuild: id => builder.holdsBuild(id) });
-  return { ...builder, ended: (id, log, file) => builder.ended(id, log, file) || reviewers.ended(id, file), check: tickets => { builder.check(tickets); reviewers.check(tickets); },
+  return { ...builder, keepUsage: (log, file) => keepBuildUsage(opts.repo, file, log, opts.settings?.()?.cfg), ended: (id, log, file) => builder.ended(id, log, file) || reviewers.ended(id, file), check: tickets => { builder.check(tickets); reviewers.check(tickets); },
     holdsAgent: agent => builder.holds(agent) || reviewerHolds(opts.runs(), agent, (opts.now ?? Date.now)()),
     view: () => builder.view() ?? reviewers.view(), holdsBuild: id => builder.holdsBuild(id) || reviewers.holdsBuild(id) };
 }
