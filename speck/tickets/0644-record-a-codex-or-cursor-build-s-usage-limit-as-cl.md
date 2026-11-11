@@ -44,7 +44,9 @@ A Codex or Cursor build that stops on its usage limit is waited out and carried 
 - Self-check: a Cursor log has no times, so a clock time in it is now read from when the log was last written, not when speck run reads it, which could have meant waiting until the next day after speck run had been off; a test covers it. run.mjs was at the 600-line limit, so the words for a ready ticket held by a limit come from the limit queue (`heldSays`).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a build on Codex or Cursor runs out of usage, speck now waits for the limit to reset and carries the build on by itself, as it already did for Claude. While an agent is out of usage, speck starts nothing new on it, but builds on your other agents carry on. The status line and `speck status` name the agent and say when it's expected back, for example "Codex's usage limit is reached until 03:41 UTC".
+
+Worth keeping an eye on: Cursor doesn't say in a fixed way when its limit resets, so speck often can't tell, and tries again every 30 minutes until a build gets through.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +56,9 @@ A Codex or Cursor build that stops on its usage limit is waited out and carried 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox notes):
+- How a refused `codex exec --json` build log looks is taken from the reviewer's rounds (0623) and the session files, not from a real refused build's log; the session file fills in the reset time if the log's message lacks one.
+- Cursor's refusal wording hasn't been seen yet: it's matched loosely (the usual limit words, or codes such as `PRO_USER_USAGE_LIMIT`).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -130,6 +135,85 @@ A Codex or Cursor build that stops on its usage limit is waited out and carried 
     ],
     "escalation_question": "",
     "summary": "Codex and Cursor builds now wait out usage limits and resume automatically, with separate records and holds for each agent. The relevant tests pass. One individual ticket explanation still incorrectly names Claude; this does not prevent the change from working."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "acb7be5357372a128b7b09b8f97a9b32066cc078",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1cb20-d737-7c70-be7f-64058a9100e5",
+    "builder_response": "- Tests run: test/usage-limit-0644.test.mjs test/usage-limit-0622.test.mjs (with the repo's checks): 162 pass, 0 fail.\n- F1: fixed. scripts/run.mjs `ownWait`: a ready ticket waiting to be carried on now says \"its build stopped on its agent's usage limit\", not Claude's. No test checks this wording (it only shows in a real speck run's record), and no existing test asserted the old one.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 429793,
+      "cached_input_tokens": 357632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1355,
+      "reasoning_output_tokens": 115
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5919,
+      "cached": 134912,
+      "write": 0,
+      "output": 513
+    },
+    "cost_usd": 0.0304592,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T15:03:37.217Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/agent-limit.mjs codexLimitInLog detects usage_limit_exceeded and obtains reset times from messages or session files. usageLimitQueue records Codex separately and resumes after GRACE_MS. The six AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cursorLimitInLog detects Cursor refusals; usageLimitQueue uses the supplied reset plus one minute or RETRY_MS of 30 minutes. All five AC2 tests pass, including delayed log reading and chat resumption."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "usageLimitQueue provides agent-specific holds and descriptions, forwarded by limitQueues and used by run.mjs before launches and resumptions. Its view identifies limited agents and reset or retry times. All four AC3 tests pass. ownWait now uses agent-neutral wording."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The current recorded test output confirms 162 passes, zero failures and three skips. Round 1's broader related run also passed. This round changes only the waiting explanation and ticket status; no tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "scripts/run.mjs:396",
+        "issue": "The individual waiting-ticket explanation previously named Claude for Codex and Cursor limits.",
+        "suggested_fix": "Use an agent-neutral explanation or obtain the agent's name from the limit queue.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Codex and Cursor builds now wait out usage limits and resume automatically, while other work on the limited agent is held. Status information identifies the agent and waiting time. The misleading Claude reference is fixed, and the relevant tests pass. No findings remain open."
   }
 }
 ```
