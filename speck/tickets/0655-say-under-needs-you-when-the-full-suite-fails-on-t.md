@@ -1,7 +1,7 @@
 ---
 id: "0655"
 title: "Say under Needs you when the full suite fails on the base branch"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,12 @@ source: "speck/ideas/done/2026-11-11-say-in-the-panel-what-a-failing-full-suite-
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:39:36.068Z"
-approved: "2026-11-11T15:50:46.873Z"
+approved: "2026-11-11T16:05:21.992Z"
 
 ---
 # 0655 · Say under Needs you when the full suite fails on the base branch
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the full suite fails on the base branch, the panel's bar says Needs you and counts it, but nothing in the panel says what it is: Build's Needs you group shows no ticket for it. On 2026-11-11 it looked like a ticket already dealt with was still counted.
@@ -51,12 +51,13 @@ When the full suite fails on the main branch, the Build lane now lists it under 
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 264,809
-- Elapsed since build started: 11 min
+- Reviewer tokens: 432,918
+- Elapsed since build started: 26 min
 - Changed lines: 125 (limit 5000)
 - Follow-ups:
   - The two 0285 AC3 Settings switch tests fail on main: `speck/ideas/2026-11-11-fix-the-0285-settings-switch-tests-on-main.md`.
