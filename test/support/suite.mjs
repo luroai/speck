@@ -5,7 +5,9 @@
 // On a machine with 8 cores or fewer, the heavy files run at most 2 at a time beside the others (0233): those whose
 // code starts a real panel, browser or `speck run` (heavy.mjs, 0271).
 // With --quick (0631), the run each ship of speck waits for, it leaves out the heavy files on any machine, and those
-// marked as full-suite only (full-only.mjs), and keeps the times recorded for the files it left out.
+// marked as full-suite only (full-only.mjs), and keeps the times recorded for the files it left out. It still runs
+// every file commands.checks lists in speck/config.yml, heavy or not (0657), so a change that breaks a rule for the
+// whole panel fails before ship.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -16,8 +18,17 @@ import { spec, tap } from 'node:test/reporters';
 import { fileURLToPath } from 'node:url';
 import { fullOnlyFiles } from './full-only.mjs';
 import { heavyFiles } from './heavy.mjs';
+import { loadConfig } from '../../scripts/core.mjs';
+import { checkFiles } from '../../scripts/checks.mjs';
 
 export const timesFile = root => path.join(root, 'speck', '.cache', 'test-times.json');
+
+// The files commands.checks lists in `root`'s speck/config.yml, relative to `root` (0657): none when it has no
+// speck/config.yml. Throws with a message saying what to fix when one isn't a file or the config can't be read.
+export function listedChecks(root) {
+  if (!fs.existsSync(path.join(root, 'speck', 'config.yml'))) return [];
+  return checkFiles(root, loadConfig(root, { machine: false }));
+}
 
 const alphabetical = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -99,13 +110,19 @@ async function* merged(streams) {
 // to a terminal), and records each file's time once the run has ended. Resolves to the exit code: 1 when any test failed.
 // With `cores` at 8 or fewer, the files in `heavy` run at most heavyLimit(cores) at a time, beside the other files. By
 // default, `heavy` is the files whose own code starts a real panel, browser or `speck run` (heavyFiles). With `quick`,
-// the heavy files and those marked as full-suite only (fullOnlyFiles) don't run at all.
+// the heavy files and those marked as full-suite only (fullOnlyFiles) don't run at all, apart from the files
+// commands.checks lists (listedChecks), which always run.
 export async function runSuite(root, { cores = os.availableParallelism(), concurrency = Math.max(cores - 1, 1), heavy, quick = false, out = process.stdout } = {}) {
   let names = [];
   try { names = fs.readdirSync(path.join(root, 'test')).filter(f => f.endsWith('.test.mjs')).map(f => `test/${f}`); } catch { /* no test folder */ }
   if (quick) {
+    let checks;
+    try { checks = listedChecks(root); } catch (e) {
+      console.error(`Couldn't read the files commands.checks lists, so the quick run can't include them: ${e.message}`);
+      return 1;
+    }
     const left = new Set([...heavy ?? heavyFiles(root, names), ...fullOnlyFiles(root, names)]);
-    names = names.filter(f => !left.has(f));
+    names = [...new Set([...names.filter(f => !left.has(f)), ...checks])];
   }
   if (!names.length) {
     console.error(`No test files to run: there are no test/*.test.mjs files in ${root}${quick ? ' that the quick run includes' : ''}.`);
@@ -120,7 +137,7 @@ export async function runSuite(root, { cores = os.availableParallelism(), concur
   const times = new Map();
   let failed = false;
   const limit = heavyLimit(cores);
-  const isHeavy = new Set(limit && !quick ? heavy ?? heavyFiles(root, files) : []);
+  const isHeavy = new Set(limit ? heavy ?? heavyFiles(root, files) : []); // in a quick run, only checks can be heavy
   const groups = [[files.filter(f => !isHeavy.has(f)), concurrency], [files.filter(f => isHeavy.has(f)), limit]].filter(([g]) => g.length);
   const streams = groups.map(([g, n]) => run({ files: g.map(f => path.join(root, f)), concurrency: n }));
   for (const stream of streams) {
