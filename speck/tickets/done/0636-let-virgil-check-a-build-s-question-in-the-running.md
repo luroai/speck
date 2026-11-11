@@ -1,7 +1,7 @@
 ---
 id: "0636"
 title: "Let speck check a build's question in the running app"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0634","0635"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:36:54.947Z"
 approved: "2026-11-11T11:50:00.241Z"
+finished: "2026-11-11T11:52:16.422Z"
 
 ---
 # 0636 · Let speck check a build's question in the running app
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Builds often block with "check this in the app yourself" or "log in and check", and you go with the recommendation almost every time. Each one stops the ticket until you're back, for a check an agent can do by starting the app, signing in and taking screenshots.
