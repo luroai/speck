@@ -1,7 +1,7 @@
 ---
 id: "0652"
 title: "Turn Settings into your team"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0646","0650","0651"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:32:26.514Z"
+approved: "2026-11-11T16:14:02.843Z"
 
 ---
 # 0652 · Turn Settings into your team
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings is a list of agent, model and effort pickers per role. You think of the work as a team: who manages, who builds, who reviews and who checks the app, and who takes over when one runs out.
@@ -56,9 +57,16 @@ To see it, open Settings in the panel. While QA's settings are all blank, QA's c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 With all QA settings blank, QA actually inherits the manager's model and effort, but its card presents an agent default model and blank/default effort.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 605,517
+- Elapsed since build started: 42 min
+- Changed lines: 234 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Skipped as duplicates: the two `0285 AC3` tests failing on the base code since 0646 are already in the inbox as `speck/ideas/2026-11-11-fix-the-0285-auto-build-switch-panel-tests.md` and `speck/ideas/2026-11-11-fix-the-0285-settings-switch-tests-on-main.md`.
