@@ -1,7 +1,7 @@
 ---
 id: "0651"
 title: "Give QA its own agent"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0645"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:39:24.858Z"
+approved: "2026-11-11T14:52:12.380Z"
 
 ---
 # 0651 · Give QA its own agent
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Checks in the running app (0636, 0638) are done by Virgil's watch agent, on its agent and model. A check that clicks through an app suits a different model from one that decides what to do about a stop, and you can't choose it separately.
@@ -54,9 +55,14 @@ Worth keeping an eye on: while QA's agent is limited, the line saying QA moved t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 169,250
+- Elapsed since build started: 13 min
+- Changed lines: 92 (limit 5000)
 - Follow-ups:
   - Inbox: speck/ideas/2026-11-11-say-qa-checked-it-even-with-qa-s-settings-blank.md (with the QA settings blank, checks still read as the engineering manager's).
   - Known limit: speck run keeps one record of a stand-in move for the watch agent and QA. While QA's agent differs from the watch agent's and is limited, the line saying QA moved to a stand-in can be said again for each new check until the limit resets.
