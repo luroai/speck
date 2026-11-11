@@ -1,7 +1,7 @@
 ---
 id: "0647"
 title: "Start new builds on the next builder while the builder is limited"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0644","0645"]                # ticket ids that must be done first
 created: 2026-11-11
+started: "2026-11-11T15:08:13.514Z"
 
 ---
 # 0647 · Start new builds on the next builder while the builder is limited
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When the builder's agent is limited, `speck run` starts no builds until the reset, even with another agent on the builder's bench ready and idle. On 2026-11-10 that cost half a day.
