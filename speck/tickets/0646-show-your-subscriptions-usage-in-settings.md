@@ -45,7 +45,9 @@ The panel's Settings view shows each of your subscriptions with how much it has 
 - The usage is served at its own address, GET /api/usage, apart from /api/settings, so reading Cursor's usage screen (up to 20 seconds when it's stale) holds up nothing else in Settings.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Settings now has a Your subscriptions group, under Your agents. It lists each of your agents with its plan, when speck knows it, and a bar for each limit it read: 5 hours and Week for Claude Code and Codex, and Month, Auto and API for Cursor, each with how much is used and when it resets. A bar at 90% or more turns orange, and a limit you've hit says Limited with when it lifts. An API provider such as DeepSeek shows what speck recorded spending on it this week instead, as it has no limit to show.
+
+To see it, open Settings. Each agent says how long ago it was read. Claude Code and Codex are read when a build or review on them ends, so an agent speck hasn't run yet says it has no reading. Cursor is read from its own usage screen when you open Settings, if the last reading is more than 10 minutes old, so that group can take a few seconds to fill in while the rest of Settings is already there.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +57,9 @@ The panel's Settings view shows each of your subscriptions with how much it has 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox.
+- Known limit: which window Codex's `rate_limit_reached_type` names is matched by its words (primary or five-hour, secondary or week); when it names neither, a window used up to 100% counts as limited. The value's exact form hasn't been seen in a session file yet.
+- Known limit: the mockup on claude.ai couldn't be opened from the build, so the layout follows the ticket's words and the panel's own Settings rows.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -136,6 +141,89 @@ The panel's Settings view shows each of your subscriptions with how much it has 
     ],
     "escalation_question": "",
     "summary": "Settings now shows subscription usage, reset times and API spend, with good coverage of the main display paths. One issue needs fixing: unreadable spending records can appear as $0 instead of saying the spend could not be read."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ec429bbb0fdcb0112308747a13145e24715730da",
+    "session": "continued",
+    "thread_id": "01a1cb36-9f3a-7201-8b0e-571a829a091b",
+    "builder_response": "- Tests run: test/subscriptions-0646.test.mjs test/spend-0527.test.mjs test/spend-0528.test.mjs test/spend-0534.test.mjs (the files that use scripts/spend-view.mjs, which this round changed), plus the commands.checks files speck test runs with them: 163 pass, 0 fail, 3 skipped.\n- F1: fixed. scripts/subscriptions.mjs spendReadable(runs) checks, before summing, that every record and log in speck's runs folder can be read (a missing folder counts as nothing recorded); if any can't, the provider's spend is null and the page says \"This week's spend couldn't be read from speck's records\". runsOf is now exported from scripts/spend-view.mjs so both read the same folder. New test \"0646 AC3: spend records that can't be read show as unreadable, not as $0\" makes a run record unreadable (chmod 000) and checks subscriptionsAnswer gives cost_usd null.\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 339336,
+      "cached_input_tokens": 278912,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1888,
+      "reasoning_output_tokens": 145
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8173,
+      "cached": 107520,
+      "write": 0,
+      "output": 621
+    },
+    "cost_usd": 0.033308,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T15:27:35.916Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "readingShown in scripts/subscriptions.mjs supplies plans, window figures and resets; subRow/windowRow in templates/panel-settings.js render them. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "readingShown marks high usage and refused windows; windowRow renders Limited and reset times. The passing AC2 test covers high usage, refusal, expired refusal and rounding down."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "subscriptionsAnswer sums this week's provider models and now checks spendReadable before reporting costs. The new passing AC3 test exercises an actual permission-denied record through subscriptionsAnswer and verifies unavailable spend rather than $0. The existing AC3 test covers totals and display text."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "subRow/readAgo display reading age and missing-reading messages. Both AC4 tests passed, covering missing readings and Cursor refresh behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "openSettings independently calls loadSubs on each opening. The passing AC5 tests cover reopening and errors; panel-settings.css uses theme colours and a flexible window grid for narrow panels."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/subscriptions.mjs",
+        "issue": "Unreadable spend records previously appeared as $0 because underlying spend readers swallowed permission errors.",
+        "suggested_fix": "Implemented: spendReadable checks record accessibility before aggregation, and subscriptionsAnswer returns unavailable spend when that check fails. A regression test exercises the underlying permission failure.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Settings shows subscription usage, reset times, warnings and recorded API spend. The unreadable-record issue is fixed and covered by a regression test. All criteria pass, with no blocking concerns remaining."
   }
 }
 ```
