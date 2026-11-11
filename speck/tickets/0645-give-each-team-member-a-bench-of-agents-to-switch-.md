@@ -40,6 +40,7 @@ Each team member has a bench: the agents, in order, that speck switches it to wh
 ## Notes
 - From `speck/ideas/2026-11-10-set-up-your-team-instead-of-settings.md` (a bench order per member) and stage 2 of `speck/ideas/2026-11-10-keep-speck-working-when-an-agent-hits-its-usage-limit.md`.
 - 0637's stand-in is `scripts/watch-stand-in.mjs`. Settings of your own are listed in `scripts/machine.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
