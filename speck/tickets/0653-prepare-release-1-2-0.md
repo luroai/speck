@@ -1,7 +1,7 @@
 ---
 id: "0653"
 title: "Prepare release 1.2.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T16:20:03.074Z"
 ---
 # 0653 · Prepare release 1.2.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 1.2, "Your team", turns Settings into a team page with a character for each member, shows each subscription's usage, and moves builds, reviews, the watch agent and QA to another agent on their bench when one runs out (0642 to 0652). Anyone following the setup prompt, or updating speck in a project, still gets 1.1.0.
@@ -56,7 +56,11 @@ speck is ready to be released as 1.2.0.
 - Also failing on the base code, found by the related run (not in the recorded quick result): `test/foreman-0285.test.mjs`'s two 0285 AC3 Settings switch tests, as 0652, 0654 and 0655 found; draft fix ticket 0656 covers them. Left as they are.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 1.2.0, the release where you set up your team. The changelog and the release page's notes describe everything since 1.1.0: Settings opening on a card for each team member with its own character, each member's bench of agents that take over when its own runs out of usage, builds, reviews and app checks moving to the next agent on the bench instead of waiting, QA as a member of its own, each subscription's usage in Settings and `speck agents`, Codex and Cursor limits being waited out, a row under Needs you for a failing full suite and the trackpad swipe fix. The README's and the brief's status lines say 1.2.0, the README says you set up your team once and speck keeps it working, the prices are today's and the "Built with speck" figures are up to date (638 tickets shipped, 305 approved in the first round).
+
+To see it, read the 1.2.0 section at the top of the changelog. Once this lands on the main branch, check that the 1.2.0 release page appears on GitHub; if it doesn't, it can be published by hand as the ticket's Notes say.
+
+Worth knowing: after updating, the benches start blank, which means your other signed-in agents. So with Codex or Cursor signed in, work moves to them while Claude is out of usage, where 1.1.0 waited. The release notes say how to choose who stands in.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -65,4 +69,82 @@ speck is ready to be released as 1.2.0.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+- Follow-ups: none new. The two 0285 AC3 Settings switch tests failing on main are already draft fix ticket 0656.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f5ad185cef3145b63bbe8243b1d855cdcc582067",
+    "session": "fresh",
+    "thread_id": "01a1cb6d-3014-7063-8dce-d22f95f0c750",
+    "builder_response": "- Tests run (speck test --related): test/release-0653.test.mjs test/release-0640.test.mjs test/docs-0491.test.mjs, plus every existing test file naming a changed file (1442 tests, 2 failing, 3 skipped).\n- The two failures are `test/foreman-0285.test.mjs`'s 0285 AC3 Settings switch tests. They fail on main without this change since 0646 added the /api/usage request the fake page answers out of turn (found by 0652, 0654 and 0655; draft fix ticket 0656). This change touches no panel code.\n- Tickets shipped since v1.1.0: 0641 to 0652, 0654 and 0655; no others. 0654 (speck run's tests no longer finding this machine's agents) changes nothing for someone using speck, so the changelog leaves it out.\n- test/release-0640.test.mjs: its checks that named 1.1.0 as the current version now check the current version, as 0640 did for 0598.\n- test/docs-0491.test.mjs: release-0653 added to the release tests allowed to name the version.\n- Price table refreshed today with `npm run prices` (taken 2026-11-11, 3622 models).\n- Built with speck figures computed with test/support/figures.mjs from main at \"speck(0652): Turn Settings into your team\": 638 shipped, 16 cancelled, 14 min median, 2 rounds median, 305 first-round approvals.\n- README and brief status lines say 1.2.0. The README's usage-limit paragraph, its clever bit, Your agents and the Settings line now describe the team and benches. No demo pictures retaken (out of scope).\n",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 180189,
+      "cached_input_tokens": 123392,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1011,
+      "reasoning_output_tokens": 30
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56797,
+      "cached": 123392,
+      "write": 0,
+      "output": 1011
+    },
+    "cost_usd": 0.1360432,
+    "tests": {
+      "failing": 2,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T16:25:28.677Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json specifies 1.2.0. The two AC1 tests in test/release-0653.test.mjs passed, including running speck init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds 1.2.0 above 1.1.0 without changing older sections. Its descriptions match shipped tickets 0641–0652 and 0655; 0654 only changes tests. AC2 tests check the release section, commands and settings."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines say 1.2.0. The README explains setting up the team once and continuing through usage limits. AC3 tests passed for status versions, the latest-release setup prompt and price-table date. scripts/prices.json records 2026-11-11 and contains refreshed rates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.2.0.md explains the team, shipped changes and their benefits, updating each project, blank benches, QA settings and Cursor's usage screen. It names no person and links to the correct changelog anchor. All three AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recalculated figures from speck/tickets/done/: 638 shipped, 16 cancelled, 14 minutes median, 2 rounds median and 305 first-round approvals, matching README.md. AC5 tests passed, including version/changelog agreement. The two related-run failures are documented on the unchanged base code in shipped tickets 0652 and 0654; no new regression is evident."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release is ready for the owner's merge decision. Version numbers, release notes, upgrade guidance, prices and published figures are consistent. All release checks passed. The two reported test failures already exist on the base branch and are unrelated to this change."
+  }
+}
+```
+
+</details>
