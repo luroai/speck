@@ -1,7 +1,7 @@
 ---
 id: "0655"
 title: "Say under Needs you when the full suite fails on the base branch"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T15:39:36.068Z"
 ---
 # 0655 · Say under Needs you when the full suite fails on the base branch
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When the full suite fails on the base branch, the panel's bar says Needs you and counts it, but nothing in the panel says what it is: Build's Needs you group shows no ticket for it. On 2026-11-11 it looked like a ticket already dealt with was still counted.
@@ -43,7 +43,7 @@ When the full suite fails on the base branch, Build's Needs you group shows it a
 - `speck test --related` also fails `test/foreman-0285.test.mjs` (two Settings switch tests) and `test/usage-limit-0622.test.mjs` (one test), which fail the same way on main without this change, so they're left as they are.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When the full suite fails on the main branch, the Build lane now lists it under Needs you as a row of its own, with an orange dot, the commit it failed on and how many tests fail, so the Needs you count always matches something you can see. Pressing the row opens a page naming each failing test, the commit, when the run happened and where its log is, with a link back to Build. The row goes by itself once a full run on newer work passes. To see it, set a full suite command, let speck run run it on main while a test fails, and look under Needs you in Build. Worth keeping an eye on: when the full suite's output isn't in the usual test format, the row gives the run's exit code instead of a test count, and the page says to look in the log.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,4 +52,79 @@ When the full suite fails on the base branch, Build's Needs you group shows it a
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - The two 0285 AC3 Settings switch tests fail on main: `speck/ideas/2026-11-11-fix-the-0285-settings-switch-tests-on-main.md`.
+  - Skipped: "0622 AC1 AC2 AC3: a build that hit the limit while speck run was off…" fails on main too, already covered by ticket 0654.
+  - The bridge doesn't count a failing full suite yet: out of scope here, already `speck/ideas/2026-11-11-count-a-failing-full-suite-on-the-bridge.md`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9312d1e180ed97746545c2d14e96ffdcd6afefbb",
+    "session": "fresh",
+    "thread_id": "01a1cb4d-0983-7f91-b788-2fb788602217",
+    "builder_response": "- Tests run: `speck test --related test/full-suite-panel-0655.test.mjs` (the ticket's own test file, the `commands.checks` files and the 174 related test files it chose).\n- The ticket's own tests all pass, including the two real-browser tests at 320 px (AC4) in the light and the dark look.\n- `test/foreman-0285.test.mjs` (two Settings switch tests) and `test/usage-limit-0622.test.mjs` (one test) fail in this run. They fail the same way on main without this change (checked in a separate checkout of main), so they're not from this build and are left alone; noted in the ticket's Notes.\n- Pictures of the row and its view, in both looks, are kept with the review pack.\n",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 264085,
+      "cached_input_tokens": 215296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 724,
+      "reasoning_output_tokens": 45
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 48789,
+      "cached": 215296,
+      "write": 0,
+      "output": 724
+    },
+    "cost_usd": 0.1263476,
+    "tests": {
+      "failing": 3,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T15:50:20.407Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.js adds fullSuiteRow() under Needs you. Passing 0655 AC1 tests cover the orange dot, short commit id, failure count and coexistence with tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "renderFullSuite() shows failing test names, commit, run time, log path and back link. Passing 0655 AC2 tests exercise opening, details, returning and Escape."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0630 AC2 test exercises a newer commit passing and clearing the failure record/count. Passing 0655 AC3 tests cover removing the panel row and closing its view."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both 0655 AC4 browser tests passed at 320 px in light and dark themes, checking row bounds, orange dot and detail-view overflow."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel now explains the failing full suite under Needs you and opens its details. The row clears when the failure clears, and phone-width checks pass in both themes. The three reported test failures are unrelated to this change."
+  }
+}
+```
+
+</details>
