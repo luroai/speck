@@ -1,7 +1,7 @@
 ---
 id: "0655"
 title: "Say under Needs you when the full suite fails on the base branch"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ approved: "2026-11-11T15:50:46.873Z"
 ---
 # 0655 · Say under Needs you when the full suite fails on the base branch
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 When the full suite fails on the base branch, the panel's bar says Needs you and counts it, but nothing in the panel says what it is: Build's Needs you group shows no ticket for it. On 2026-11-11 it looked like a ticket already dealt with was still counted.
@@ -61,6 +61,7 @@ Round 1 (codex): approve.
 - Follow-ups:
   - The two 0285 AC3 Settings switch tests fail on main: `speck/ideas/2026-11-11-fix-the-0285-settings-switch-tests-on-main.md`.
   - Skipped: "0622 AC1 AC2 AC3: a build that hit the limit while speck run was off…" fails on main too, already covered by ticket 0654.
+  - "0630 AC3: a full run doesn't wait for the max_parallel_tests turns…" failed once at ship while the whole suite ran, though it takes ~150 ms of its 900 ms limit when run alone: a timing check that can fail under load.
   - The bridge doesn't count a failing full suite yet: out of scope here, already `speck/ideas/2026-11-11-count-a-failing-full-suite-on-the-bridge.md`.
 
 ## Review rounds
@@ -129,6 +130,76 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The panel now explains the failing full suite under Needs you and opens its details. The row clears when the failure clears, and phone-width checks pass in both themes. The three reported test failures are unrelated to this change."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "910e42a31efca2b6043563a2de9292fad67f8c2b",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1cb4d-0983-7f91-b788-2fb788602217",
+    "builder_response": "Merge round after ship exit 16 (\"Tests fail together\").\n- Merged main into the ticket branch (`git merge main`, no conflicts, no files resolved).\n- Failing test at ship: \"0630 AC3: a full run doesn't wait for the max_parallel_tests turns, so it takes none a ship or build waits for\" (test/full-suite-0630.test.mjs:121). It asserts that `runFull` finishes in under 900 ms while a test turn is held. This ticket doesn't change `runFull` or the turns: its only changes to scripts/full-suite.mjs add `at` to `latestFull`'s result and `log` to the queue's view. On the merged branch the test passes alone three times in a row at ~150 ms, and in the full file run below. So I read the ship failure as a timing failure while the ship's whole suite ran at once, not as a failure this change causes. Nothing was changed, and no test was weakened.\n- Tests run: test/full-suite-0630.test.mjs test/full-suite-panel-0655.test.mjs (with the commands.checks files): 133 pass, 0 fail, 3 skipped.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 431784,
+      "cached_input_tokens": 358912,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1134,
+      "reasoning_output_tokens": 45
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 24083,
+      "cached": 143616,
+      "write": 0,
+      "output": 410
+    },
+    "cost_usd": 0.0666276,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T16:05:17.886Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.js inserts fullSuiteRow() under Needs you; passing 0655 AC1 tests verify the orange dot, short commit id, failure count and grouping."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "renderFullSuite() displays failing tests, commit, run time and log path. Passing 0655 AC2 tests exercise opening the view, its details, back link and Escape."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The 0630 AC2 test covers clearing the failure after a newer commit passes; passing 0655 AC3 tests verify removal of the row and count and closure of the view."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both 0655 AC4 browser tests pass at 320 px in light and dark themes, checking row bounds, dot colour and detail-view overflow."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still meets all four criteria. All 133 tests run passed, including the previously failing timing test. That test and the execution code it exercises were unchanged; the evidence supports an intermittent timing failure during shipping. No merge regressions or blocking concerns found."
   }
 }
 ```
