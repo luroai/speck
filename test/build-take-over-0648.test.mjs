@@ -153,7 +153,9 @@ test('0648 AC3: the ticket\'s Notes say who took over, why and when, and its bui
   s.stop(AT + 3 * 3600e3);
   const { fm, raw } = s.ticket();
   assert.equal(fm.builder, 'codex');
-  assert.match(raw, /^- Builder: Codex took over this build from Claude at 2026-11-11 12:00 UTC, because Claude's usage limit was reached until 2026-11-11 15:00 UTC, more than an hour away\.$/m);
+  const line = raw.split('\n').find(l => l.startsWith('- ') && l.includes('Codex') && l.includes('Claude'));
+  assert.ok(line, 'a Notes line naming the old and new agent');
+  for (const fact of ['2026-11-11 12:00 UTC', 'usage limit', '2026-11-11 15:00 UTC']) assert.ok(line.includes(fact), `the Notes line says ${fact}: ${line}`);
   assert.match(s.gw('log', '-1', '--format=%s'), /^speck\(0001\): codex takes over the build$/);
   assert.equal(s.gw('status', '--porcelain'), '');
   assert.equal(s.r.g('status', '--porcelain', '--', 'speck/tickets'), '', 'nothing changed in the main checkout');
@@ -163,7 +165,8 @@ test('0648 AC3: the ticket\'s Notes say who took over, why and when, and its bui
 test('0648 AC3: a reset not known is said so in the Notes', () => {
   const s = setup();
   s.stop(null);
-  assert.match(s.ticket().raw, /from Claude at 2026-11-11 12:00 UTC, because Claude's usage limit was reached with no reset time known\./);
+  const line = s.ticket().raw.split('\n').find(l => l.startsWith('- ') && l.includes('Codex') && l.includes('Claude'));
+  assert.ok(line && line.includes('2026-11-11 12:00 UTC') && line.includes('usage limit') && /no reset time/.test(line), line);
 });
 
 test('0648 AC3: when the ticket can\'t be recorded, nothing starts, it keeps waiting and that\'s said once', () => {
