@@ -1,7 +1,7 @@
 ---
 id: "0633"
 title: "Keep private words out of review rounds as speck saves them"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-11-11
 started: "2026-11-11T11:01:26.858Z"
 blocked_at: ""
 waited_seconds: 17
+approved: "2026-11-11T11:13:44.155Z"
 
 ---
 # 0633 · Keep private words out of review rounds as speck saves them
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 When a reviewer quotes one of your private words in its evidence, the ship refuses (exit 17) and the build rewords the round by hand. Since 0629 a reworded round no longer matches its receipt, so a ticket that should ship by itself waits for you, for a change that only rewords one line.
@@ -60,9 +61,15 @@ Changes what you'd notice: yes
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): escalate: F1 Redacting private words before home paths prevents the existing ~/ substitution when a private word appears in the home path.; F2 The required replacement '[private]' itself contains possible private words, such as 'riv'.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 211,748
+- Elapsed since build started: 12 min
+- Changed lines: 29 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox.
 - Known limit: the private-word check skips any exact lower-case `[private]` in a line, including one a person typed, not only those speck wrote.
