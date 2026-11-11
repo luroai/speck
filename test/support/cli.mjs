@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { runCommand } from '../../scripts/speck.mjs';
 
 const CLI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'scripts', 'speck.mjs');
-const OWN_PROCESS = new Set(['panel', 'run', 'pause', 'play', 'stop']);
+const OWN_PROCESS = new Set(['panel', 'app', 'run', 'pause', 'play', 'stop']);
 
 // For a test about the command as a process: one that kills it, signals it or looks for it among the processes.
 export const speckProcess = (dir, env, ...args) => spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', env });

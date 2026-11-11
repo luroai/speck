@@ -28,6 +28,7 @@ const KINDS = Object.assign(Object.create(null), {
   ship_mode: 'shipmode', // 0295
   speck_name: 'speckname', // 0575
   builder_effort: 'effort', // 0402
+  'commands.start': 'text', app_url: 'url', app_start_seconds: 'count', // 0634
   max_parallel_builds: 'count', max_parallel_tests: 'count', test_stall_minutes: 'count', review_timeout_minutes: 'count', ship_wait_minutes: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
   'limits.max_review_rounds': 'count', 'limits.max_merge_rounds': 'count', 'limits.escalate_after_repeat_disputes': 'count', 'limits.max_ticket_body_lines': 'count',
 });
@@ -53,6 +54,12 @@ export function checkConfigValue(key, value, providers = knownProviders()) {
     const n = Number(value);
     if (!/^\d+$/.test(value) || !Number.isSafeInteger(n) || n < 1) throw new SpeckError(`${key} must be a whole number of 1 or more (got ${JSON.stringify(value)}).`);
     return n;
+  }
+  if (kind === 'url') { // 0634: blank, or an http or https address, with {port} standing for the app's port
+    let ok = false;
+    try { ok = value === '' || ['http:', 'https:'].includes(new URL(value.replaceAll('{port}', '1')).protocol); } catch { /* not an address */ }
+    if (!ok) throw new SpeckError(`${key} must be blank or an http or https address, with {port} standing for the app's port (for example "http://127.0.0.1:{port}/"), got ${JSON.stringify(value)}.`);
+    return value;
   }
   if (kind === 'files' && value.trim() && !value.includes('{files}'))
     throw new SpeckError(`${key} must be blank or a command with {files} standing for the test files (for example "node --test {files}"), got ${JSON.stringify(value)}.`);

@@ -37,11 +37,10 @@ import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
 import { questionFacts } from './question-facts.mjs'; import { cmdSplitOff } from './split-off.mjs'; // 0563
 import { goWithResumable, goWithWaiting, callsOf } from './go-with.mjs';
-import { handedBack } from './hand-back.mjs';
-import { buildSession } from './build-records.mjs';
+import { handedBack } from './hand-back.mjs'; import { buildSession } from './build-records.mjs';
 import { noteThisBuild } from './seen-builds.mjs';
-import { changesPending } from './changes-asked.mjs';
-import { cmdChanges } from './changes.mjs';
+import { changesPending } from './changes-asked.mjs'; import { cmdChanges } from './changes.mjs';
+import { cmdApp } from './app.mjs'; // 0634
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -558,6 +557,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck diff <id>                     the changes since the reviewer's last round, as the reviewer sees them
   speck close <id>                    write the review and delivery logs, set approved and commit, once the reviewer approves
   speck next <id>                     what the builder should do next: review, fix, block or ship
+  speck app <id> [--stop]             start your app (commands.start) from the ticket's checkout on a free port and print its address, leaving it running (--stop: stop it, with every process it started)
   speck pack <id> [--plain]           print the review pack (--plain: a short one in plain English, for someone who
                                       doesn't read code)
   speck picture <id> <file> "<caption>"  keep a picture of a visual change with the ticket's review pack (--clear instead of a file and caption: remove its pictures)
@@ -577,7 +577,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, check: cmdCheck, lint: cmdCheck, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, 'split-off': cmdSplitOff, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, app: cmdApp, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, 'split-off': cmdSplitOff, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {

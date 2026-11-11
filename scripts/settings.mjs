@@ -15,10 +15,9 @@ import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync, offeredModels, offeredModelsAsync, findAgentsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
 import { buildsEachTicket } from './build-model.mjs';
-import { knownProviders } from './custom-providers.mjs';
-import { providerNamed } from './provider-review.mjs';
+import { knownProviders } from './custom-providers.mjs'; import { providerNamed } from './provider-review.mjs';
 import { keysStatus, saveProviderKey } from './keys.mjs';
-import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs';
+import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; // 0634
 export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
 
 export const SETTING_GROUPS = [
@@ -358,6 +357,7 @@ export function cmdConfigShow(args) {
   for (const key of ['build_command', 'resume_command']) if (Object.hasOwn(mine, key))
     agents.settings.push({ key, value: mine[key], is_default: false, speck_default: '', explain: COMMAND_EXPLAIN[key], this_machine: true, repo_value: repoCfg[key] ?? '' });
   groups.find(g => g.title === 'Shipping')?.settings.push({ key: 'commands.test_full', value: String(repoCfg.commands?.test_full ?? ''), is_default: !String(repoCfg.commands?.test_full ?? '').trim(), speck_default: '', explain: COMMAND_EXPLAIN['commands.test_full'] }); // 0630: with Shipping, as ships run commands.test
+  groups.find(g => g.title === 'Building and reviewing')?.settings.push(...APP_SETTINGS.map(s => { const v = lookup(repoCfg, s.key), value = v === undefined || v === null || v === '' ? s.default : v; return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(s.default), speck_default: s.default, explain: s.explain }; })); // 0634: speck app, with the builds that check the app
   if (json) { console.log(JSON.stringify({ groups }, null, 2)); return; }
   const show = v => Array.isArray(v) ? `[${v.join(', ')}]` : shown(v);
   console.log(groups.map(g => `${g.title}\n${g.settings.map(s =>
