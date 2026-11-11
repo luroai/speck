@@ -142,7 +142,7 @@ test('0642 AC3: a newer reading replaces an older one, and a run with no reading
   const kept = readUsage(r.dir);
   assert.equal(kept.claude.windows.five_hour.used_percent, 30);
   assert.equal(kept.codex, undefined);
-  assert.equal(saveUsage(r.dir, 'cursor', kept.claude), false, 'only Claude Code and Codex');
+  assert.equal(saveUsage(r.dir, 'gemini', kept.claude), false, 'only the agents speck reads usage from'); // 0643: Cursor's is kept too
 });
 
 test('0642 AC3: of two Codex readings, the one Codex reported later wins, whenever speck read it', () => {

@@ -1,0 +1,48 @@
+[>1u]11;?[2K[G
+
+  Cursor Agent
+  v2026.11.11-043ef28
+  Tip: Use /run-everything to skip all approvals.
+
+
+
+
+  → Plan, search, build anything
+
+
+  Auto
+  /tmp/cu643
+[?25l[?2004h]0;Cursor Agent[?2031h[?1004h[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G  → /usage
+
+
+  Auto
+  /tmp/cu643
+[2K[1A[2K[1A[2K[G   → /usage                    Show plan and on-demand usage
+     /context                  Show context usage breakdown
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G  → Plan, search, build anything
+
+
+   → /usage                    Show plan and on-demand usage
+     /context                  Show context usage breakdown
+
+  Loading usage data...
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G  Auto
+  /tmp/cu643
+
+  Loading usage data...
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Usage • Premium                                                                                        Resets 12 Nov
+ Monthly plan and on-demand usage
+
+ Category        Current             Usage
+ Included        1% used             █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+   Auto          1% used             █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+   API           0% used             ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ On-Demand       $0                  ————————————————————————————————————————————————————————————————————————————————
+
+ No monthly limit
+
+ View in dashboard: ]8;;https://cursor.com/dashboard?tab=usagecursor.com/dashboard?tab=usage]8;;
+
+ Esc to close
+[?2004l

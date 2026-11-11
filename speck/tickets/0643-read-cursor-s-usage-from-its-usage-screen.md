@@ -42,6 +42,9 @@ speck reads Cursor's usage from its `/usage` screen and keeps it as it keeps Cla
 - It was read by hand through a pseudo-terminal and a terminal emulator. Node has no pseudo-terminal of its own: `script` (util-linux on Linux, BSD `script` on macOS, with different flags) gives one, and the screen's drawing codes have to be followed to read the text.
 - Cursor can change this screen in any release, so a test with a recorded screen should fail loudly when the parser no longer finds the rows.
 - Failing before this build: none
+- Self-check: opens Cursor in an empty folder of speck's own (`speck/.cache/machine/cursor-usage/`) with `--trust`, not the project, after a trial run found an untrusted folder's trust prompt would take the typed `/usage` as keystrokes; still says so and stops if a trust prompt shows; says plainly when the system has no `script`; a usage screen that settles without the expected rows fails after 1.5 seconds rather than waiting out the 20.
+- A Cursor run ending marks the reading stale (`speck/.cache/machine/usage/cursor-ran`), so the next `speck agents` reads it again: speck doesn't open Cursor's screen as each run ends, which would hold up `speck run`.
+- Checked on Linux (util-linux `script` 2.41) against Cursor CLI 2026.11.11; the macOS form of `script` is tested only as the command speck builds.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
