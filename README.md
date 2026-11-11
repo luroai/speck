@@ -17,7 +17,7 @@ You don't need to read the code to check the work. Every ticket comes with a one
 
 Use the agents you already have: Claude Code, Codex or Cursor, or a model provider you have an API key for, such as DeepSeek. speck doesn't let a model review its own work unless you allow it.
 
-> Status: 1.1.0. It works end to end on your own machine.
+> Status: 1.2.0. It works end to end on your own machine.
 
 ## Get started
 
@@ -54,7 +54,7 @@ speck also keeps work moving. Once it's on, when a build or a ship stops for a r
 
 Some questions need someone to look at the app itself, such as how a page looks or whether signing in works. Once it's on, speck checks those on a low-risk ticket itself: it starts your app from that ticket's copy of the code, signs in with a test login you've saved on your machine if it needs to, takes screenshots, then carries on or asks you, saying what it saw. The screenshots show in the ticket's review pack. You don't have to tell speck how to start your app first: the first time it needs to, it works out how from your project, tries it and remembers what worked. If nothing works, it asks you.
 
-Usage limits don't stop the line either. When Claude, Codex or Cursor runs out of usage partway through a build, or Claude or Codex partway through a review, speck waits for the limit to reset and carries the build on by itself, without you answering anything. If speck's own agent runs on Claude and hits the limit, speck looks into stopped work on another of your agents, such as Codex, and moves back once the limit resets.
+Usage limits don't stop the line either. You set up your team once, in Settings: who builds, who reviews, who checks the app, and for each, the agents that take over when its own runs out of usage, such as Codex when Claude is used up. Settings also shows how much of each subscription you've used. When an agent runs out, speck moves new builds, review rounds and app checks to the next free agent on that member's bench, and hands a stopped build on too when the limit won't reset for more than an hour. Once the limit resets, new work goes back to your own choice. If nobody on the bench is free, speck waits for the reset and carries on by itself, without you answering anything.
 
 ### Turning it on
 
@@ -80,7 +80,7 @@ The review pack is still there whenever you want to check the work.
 - **speck makes the obvious calls, and tells you.** With `watch: decide`, speck takes a build's recommendation on a low-risk ticket instead of stopping the line, and lists each call in Decided for you with what it didn't choose.
 - **speck looks into stops and slow builds.** When a build or a ship stops for a reason speck doesn't expect, or a build runs well past its usual time, speck has its own agent look into it and do one thing about it, or ask you.
 - **speck checks the running app itself.** When a build asks how something looks or works, speck starts your app, signs in with your test logins and looks, and keeps the screenshots in the review pack.
-- **speck waits out usage limits.** When Claude, Codex or Cursor hits its usage limit, speck picks the work up again once it resets, so a limit overnight doesn't leave the queue stuck until morning.
+- **speck works round usage limits.** When Claude, Codex or Cursor hits its usage limit, speck hands the work to the next agent on your team's bench, or picks it up again once the limit resets, so a limit overnight doesn't leave the queue stuck until morning.
 - **speck holds back a ticket whose criteria changed.** If a ticket's acceptance criteria changed after you set it ready, it never ships by itself: it waits for you at Ship, showing what each criterion was and is now.
 - **speck raises its own fix tickets.** If `main` breaks, speck has the build that finds it write a priority-0 fix ticket and send it to the front of the queue, instead of patching it inside someone else's work.
 - **speck sorts out its own merge conflicts.** When `main` has moved on, speck has the build merge it in, keep what both sides meant and have the merge reviewed again.
@@ -94,7 +94,7 @@ The review pack is still there whenever you want to check the work.
 
 The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. `speck/config.yml` holds the project's settings, and your own choices, such as who builds and reviews, can be kept for this machine only.
 
-**Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them, and pick each role's agent and model, in the panel's Settings. API keys stay on this machine, out of git, and so do the test logins speck signs in to your app with, which you save with `speck logins set <name>`.
+**Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them in the panel's Settings, and pick each team member's agent, model and bench on its card under Your team, where Your subscriptions shows how much of each you've used. API keys stay on this machine, out of git, and so do the test logins speck signs in to your app with, which you save with `speck logins set <name>`.
 
 **Your app.** To check a question in your app, speck starts it with `commands.start`, a command with `{port}` where the port goes. Leave it blank and speck works it out the first time it needs it, then saves it. `speck app <id>` starts the app from a ticket's copy of the code for you to look at, and `speck app <id> --stop` stops it.
 
@@ -121,7 +121,7 @@ The panel is a phone-width column you keep beside your agent, or open on your ph
 - **A ticket's full view** opens when you press its row in Build or Shipped: how far it has got, what it should do, its log, any question for you, its review pack, and its Ship button once it's approved.
 - **Decided for you**, from a line under the bar, is speck's report of the calls it made for you this week, with what it didn't choose. Change any you'd have called differently.
 - **All projects** appears in the project menu, on the project's name in the bar, once two or more projects' panels are running. It opens the bridge: what needs you and how each project is doing, across all of them.
-- **Settings**, from the button in the bar, turns `speck run` on and off, picks your builder and reviewer, and holds the settings people tune.
+- **Settings**, from the button in the bar, opens on Your team, a card for each member with what it runs on and its bench, and your subscriptions' usage. It also turns `speck run` on and off and holds the settings people tune.
 
 To use it from your phone, put it behind a private tunnel that makes you log in, such as `tailscale serve` or Cloudflare Tunnel with Cloudflare Access, and start it with `node .speck/scripts/speck.mjs panel --url https://<hostname>`. Add it to your home screen to open it as an app. Never expose it openly: anyone who can load the page can start builds and ship.
 
@@ -174,9 +174,9 @@ Claude Code, Cursor and model providers such as DeepSeek need no setup: set `rev
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **623 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **638 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
 - **14 minutes** median from a build starting to its ticket shipping, leaving out time it waited for you or the machine was asleep.
-- **2 review rounds** median. 303 tickets were approved in the first round.
+- **2 review rounds** median. 305 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 
