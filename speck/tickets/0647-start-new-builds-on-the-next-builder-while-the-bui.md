@@ -39,6 +39,7 @@ While the builder's agent is limited, `speck run` starts each new build on the f
 
 ## Notes
 - Each ticket's own builder is already supported (`scripts/ticket-builder.mjs`), and `holds` in `scripts/usage-limit.mjs` says which agent is limited.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
