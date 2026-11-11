@@ -90,7 +90,7 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 
    Commit the notes and the ticket, with its `## In plain words`, on the ticket branch before `speck close`, staging each file by name (`speck(<id>): follow-ups`).
 2. Run `speck close <id>`. It refuses unless `speck next <id>` says `ship` and nothing outside the ticket file has uncommitted changes. It then replaces the ticket's `## Review log` with one line per round, adds the review rounds, reviewer, reviewer tokens, elapsed time and changed lines to the `## Delivery log` (keeping what you wrote there), sets `approved` and commits only the ticket (`speck(<id>): approved`). Change nothing outside `speck/` after the approval, or the user won't be able to ship it.
-3. Stop here: don't run `speck ship`. Check whether `auto_ship` covers the ticket: `speck status --json` gives each ticket's `auto_ship`, true when `auto_ship` is on in `speck/config.yml`, the ticket's risk is listed in `auto_ship_risk`, its acceptance criteria haven't changed since it was set ready and the reviewer could inspect the repo in every round. Then tell the user: a one-line summary, that it's approved, how many follow-ups went to the inbox or that none did, anything worth a look (risk flags, follow-up ideas), and what happens next. When `auto_ship` covers it, it now waits for `speck run`'s ship queue, which ships approved tickets one at a time while `speck run` is on. Otherwise it waits for the user: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
+3. Stop here: don't run `speck ship`. Check whether `auto_ship` covers the ticket: `speck status --json` gives each ticket's `auto_ship`, true when `auto_ship` is on in `speck/config.yml`, the ticket's risk is listed in `auto_ship_risk`, its acceptance criteria haven't changed since it was set ready, the reviewer could inspect the repo in every round and `speck review` recorded its latest round itself, unchanged since. Then tell the user: a one-line summary, that it's approved, how many follow-ups went to the inbox or that none did, anything worth a look (risk flags, follow-up ideas), and what happens next. When `auto_ship` covers it, it now waits for `speck run`'s ship queue, which ships approved tickets one at a time while `speck run` is on. Otherwise it waits for the user: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
 
 ### When speck run hands it back
 
@@ -146,7 +146,7 @@ The user read the approved result and asked for changes. The message gives their
 
 1. Take each one out: write a path under the home folder as a `~/` path, and reword a line with a private word so it doesn't need it. This is the one time you change a line in the ticket's `## Review rounds` by hand: change only the words in it, and keep its JSON valid.
 2. Commit the files, staged by name (`speck(<id>): private words out`). Change nothing outside `speck/`, so the ticket stays approved without another review round.
-3. Stop: `speck run`'s ship queue ships it once its branch has the new commit.
+3. Stop: `speck run`'s ship queue ships it once its branch has the new commit, unless you changed a line in its latest review round. That round then no longer matches the receipt `speck review` kept for it, so the ticket waits for the user to ship it.
 
 ### Base branch failing
 

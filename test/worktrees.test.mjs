@@ -7,6 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { parseYaml, parseTicket } from '../scripts/speck.mjs';
 import { ROOT, CLI, good, gitEnv, approveVerdict, shipRepo, startRepo } from './support/speck.mjs';
+import { keepLatestReceipt } from './support/receipts.mjs';
 
 function worktreeShipRepo({ addFile = false, autoShip = false, remote = false, test = 'true' } = {}) {
   const r = shipRepo({ approve: false, test });
@@ -22,6 +23,7 @@ function worktreeShipRepo({ addFile = false, autoShip = false, remote = false, t
   const v = path.join(os.tmpdir(), `verdict-${path.basename(r.dir)}.json`);
   fs.writeFileSync(v, JSON.stringify(approveVerdict));
   r.run('record', '1', v);
+  keepLatestReceipt(r.dir); // as speck review keeps (0629)
   r.run('set', '1', 'status', 'approved');
   r.g('add', '-A'); r.g('commit', '-qm', 'approved');
   let bare = null;

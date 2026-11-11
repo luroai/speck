@@ -11,6 +11,7 @@ import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 import { documentSection } from './output.mjs';
 import { tildePaths } from './private-words.mjs';
+import { keepReceipt } from './receipts.mjs';
 import { codexSpend } from './round-cost.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
 import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
@@ -179,11 +180,13 @@ export function ticketNext(raw, all, cfg) {
 
 // Round 1 also sets a building ticket to reviewing, and any round an approved one, in the same write, so a refused verdict changes nothing.
 // 0506: any path under the home folder in the ticket, such as a reviewer's evidence, is written as a `~/` path.
-export function saveRound(repo, id, verdict, meta) {
+// 0629: `receipt` (only for a round speck ran the reviewer for itself) also keeps a receipt for the round as saved.
+export function saveRound(repo, id, verdict, meta, { receipt = false } = {}) {
   const t = findTicket(repo, id);
   const round = rounds(repo, id).length + 1;
   const record = { meta: { round, ...meta, saved_at: new Date().toISOString() }, verdict: validateVerdict({ ...verdict, round }) };
   fs.writeFileSync(t.file, tildePaths(appendRounds(startReviewing(t.raw, round), [record])));
+  if (receipt) keepReceipt(repo, t.fm.id || id, rounds(repo, id).at(-1));
   return record;
 }
 
@@ -360,7 +363,7 @@ function runCodexReview(repo, id, s) {
   const spend = codexSpend(usage, { model: settings.model, thread, ...(resumed ? { before: resumed.usage ?? null } : {}) });
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
-  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), session: lastThread ? 'continued' : 'fresh', thread_id: thread, ...(response ? { builder_response: response } : {}), ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...spend, ...testsSeen });
+  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), session: lastThread ? 'continued' : 'fresh', thread_id: thread, ...(response ? { builder_response: response } : {}), ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...spend, ...testsSeen }, { receipt: true });
 }
 
 function printRound(rec, cfg, all) {

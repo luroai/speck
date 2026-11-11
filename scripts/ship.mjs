@@ -16,6 +16,8 @@ import { remoteBaseCatchUp } from './ship-remote.mjs';
 import { prMode } from './pull-request.mjs';
 import { shipPrTicket } from './pr-ship.mjs';
 import { privateLinesInSpeck } from './private-words.mjs';
+import { receiptWhyNot } from './receipts.mjs';
+export { receiptWhyNot }; // for speck status --json (0629)
 import { notPushed } from './not-pushed.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
@@ -398,13 +400,15 @@ export function autoShipBlocker(repo, cfg, id) {
   const pad = String(id).padStart(4, '0');
   const t = findTicket(repo, pad);
   const all = rounds(repo, pad);
-  return autoShipWhyNot(cfg, pad, t.fm.risk, all, ticketKind(t), changesPending(t.raw, all).length > 0, criteriaChange(repo, cfg, pad) !== null);
+  return autoShipWhyNot(cfg, pad, t.fm.risk, all, ticketKind(t), changesPending(t.raw, all).length > 0, criteriaChange(repo, cfg, pad) !== null, () => receiptWhyNot(repo, pad, all));
 }
 
 // The same, from a ticket's risk and its review rounds as already read, as `speck status --json` has them (0167).
 // 0355: a task never ships by itself, as reading it is its review. 0356: nor does one with changes the user
 // asked for (`changed`) that no round has reviewed yet. 0565: nor does one whose criteria changed since it was set ready.
-export function autoShipWhyNot(cfg, pad, risk, roundList, kind = 'code', changed = false, criteria = false) {
+// 0629: nor does one whose latest round has no matching receipt (`receipt`: receiptWhyNot's reason, or a function
+// giving it, read only when nothing else stops it).
+export function autoShipWhyNot(cfg, pad, risk, roundList, kind = 'code', changed = false, criteria = false, receipt = '') {
   if (changed) return `the user asked for changes to ticket ${pad}, and it waits for its build to make them and the reviewer to approve them`;
   if (criteria) return `ticket ${pad}'s acceptance criteria changed since it was set ready`;
   if (kind === 'task') return `ticket ${pad} is a task, and a task waits for you to ship it`;
@@ -413,7 +417,7 @@ export function autoShipWhyNot(cfg, pad, risk, roundList, kind = 'code', changed
   if (!allowed.includes(String(risk))) return `ticket ${pad} has risk "${risk}", and auto_ship_risk only allows ${allowed.length ? allowed.join(', ') : 'none'}`;
   const blind = roundList.filter(r => r?.meta?.sandbox_ok === false).map(r => r.meta.round);
   if (blind.length) return `the reviewer couldn't inspect the repo in round ${blind.join(', ')}, so it only reviewed the diff`;
-  return '';
+  return (typeof receipt === 'function' ? receipt() : receipt) || '';
 }
 
 // ---------- the ship record (0153) ----------

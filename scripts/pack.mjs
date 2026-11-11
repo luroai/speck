@@ -5,6 +5,7 @@ import { ticketsRounds, NO_INSPECT, mergeRun, ordinaryRounds } from './review.mj
 import { picturesLines, panelPictures } from './pictures.mjs';
 import { documentLines, panelDocuments } from './output.mjs';
 import { criteriaChange, criteriaChangedLines } from './criteria-changed.mjs';
+import { unreceiptedRounds } from './receipts.mjs';
 
 // Whether a round continued the reviewer's session or started fresh. Command rounds record it. Codex rounds resume
 // whenever an earlier round saved a session, so that rule gives theirs.
@@ -81,6 +82,16 @@ function testsLines(r) {
     ...(again ? [`- Passed on a second try: ${t.second_try.map(n => `\`${n}\``).join(', ')}`] : [])];
 }
 
+// 0629: which rounds have no matching receipt, so `speck ship --auto` won't ship the ticket by itself on them.
+function receiptLines(repo, t, all, plain) {
+  const missing = unreceiptedRounds(repo, t.fm.id, all);
+  if (!missing.length) return [];
+  const list = missing.length === 1 ? `round ${missing[0]}` : `rounds ${missing.slice(0, -1).join(', ')} and ${missing.at(-1)}`;
+  return ['', plain
+    ? `Review ${list} ${missing.length === 1 ? "wasn't" : "weren't"} recorded by speck's own run of the reviewer, or ${missing.length === 1 ? 'was' : 'were'} changed since, so it won't ship by itself.`
+    : `⚠️ No matching review receipt for ${list}: not recorded by speck's own run of the reviewer, or changed in the ticket since`];
+}
+
 // What reviewPack and plainPack refuse with for a ticket that has no review rounds, so the panel can tell it apart.
 export const NO_ROUNDS = 'No review rounds recorded.';
 
@@ -103,6 +114,7 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
     `## ${t.fm.id} · ${t.fm.title}`,
     `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${who(last.meta)}, ${last.meta.merge ? `merge round ${mergeRun(all)} of ${cfg.limits.max_merge_rounds}` : `round ${ordinaryRounds(all)} of ${cfg.limits.max_review_rounds}${last.meta.extra ? ', an extra round' : ''}`})`,
     ...(blind.length ? ['', ...blind.map(r => `${NO_INSPECT} (round ${r.meta.round})`)] : []),
+    ...receiptLines(repo, t, all, false),
     '', `**Summary:** ${v.summary}`,
     ...documentLines(repo, t, { links: documents }), // 0359: a task's result first, before the criteria
     ...criteriaChangedLines(criteriaChange(repo, cfg, t.fm.id)), // 0565
@@ -154,6 +166,7 @@ export function plainPack(repo, id) {
     ...(why.length ? ['', `This change ${why.join(' and ')}, so it's worth a closer look before you ship it.`] : []),
     // Any round the full pack marks with NO_INSPECT (0222).
     ...(all.some(r => r.meta.sandbox_ok === false) ? ['', 'In at least one review round, the reviewer could only see the change itself, not the rest of the code.'] : []),
+    ...receiptLines(repo, t, all, true),
     '', '### What it should do', sectionText(t, 'outcome') || "The ticket doesn't say.",
     '', '### In plain words', sectionText(t, 'in plain words') || "The builder didn't write this change up in plain words.",
     '', '### Did it do what was asked?',
