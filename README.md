@@ -104,7 +104,7 @@ The tickets, the reviews and every decision stay in your repo, as Markdown and Y
 - **Reviewer: Codex, with gpt-6.1-sol.** Codex has reviewed almost every speck ticket, usually in under a minute a round.
 - **Grok through Cursor** worked well as a builder in a short test, but is slow as a reviewer: it found the same problems as Codex but took 4 to 11 minutes a round.
 
-A build runs only the tests its change touches. The tests in `commands.test` run when a ticket ships, on the ticket merged with `main` as it is then, and one ship queue ships approved tickets one at a time, so ships never race each other. If your whole suite is slow, make `commands.test` the quick tests and set `commands.test_full` to the whole suite: ships then wait only for the quick tests, and `speck run` runs the whole suite on `main` after ships, without holding anything up. If it fails, speck counts it under Needs you, and `speck status` names the failing tests. [`docs/brief.md`](docs/brief.md) has the full design.
+A build runs only the tests its change touches. The tests in `commands.test` run when a ticket ships, on the ticket merged with `main` as it is then, and one ship queue ships approved tickets one at a time, so ships never race each other. If your whole suite is slow, make `commands.test` the quick tests and set `commands.test_full` to the whole suite: ships then wait only for the quick tests, and `speck run` runs the whole suite on `main` after ships, without holding anything up. If it fails, speck counts it under Needs you, and `speck status` and the panel's Build lane name the failing tests. [`docs/brief.md`](docs/brief.md) has the full design.
 
 ## Who it's for
 

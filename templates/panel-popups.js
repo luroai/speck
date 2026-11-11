@@ -7,6 +7,7 @@ let fullId = null; // the id of the ticket in the side pane, or null
 let fullFrom = null; // 0326: { id, list } of the Full ticket button that opened the pane, or null when something else did
 let focusBack = false; // 0326: the pane has closed, so the next render puts the focus back
 let foremanOpen = false; // 0285: whether the Foreman's detail is open
+let fullSuiteOpen = false, fullSuiteBuilt = null, fullSuiteRowKept = null; // 0655: whether the failing full suite's view is open, what it was last drawn from, and its Build row as last made
 let decidedOpen = false, decidedBuilt = null, decidedLineSaid = null; // 0568: whether the Decided for you list is open, and what it was last drawn from. 0590: and what the line under the bar last said
 let runLog = null, runLogFor = null, runLogAsking = false, runLogShown, runLogDrawn = null; // 0415: runLogShown: the log's lines as drawn (runLogDrawn), joined, undefined when not drawn
 let runLogFilter = 'all', logFilters = [], logFace = null, logMood = null, logSaid = null, logScheduled = null; // 0592: the filter chosen in the Pipeline log, its buttons, and speck's face and line in it
@@ -805,6 +806,68 @@ function renderDecided(m) {
   const intro = el('div', 'decided-intro', null, decidedFace('pleased', 44), el('div', 'decided-bubble', "I went with my recommendation. You can change any you'd have called differently."));
   box.replaceChildren(el('div', 'top', null, el('span', 'title', 'Decided for you'), shut),
     ...(list.length ? [intro, el('div', 'decided-list', null, ...decidedDays(list, can))] : [el('p', 'decided-none', 'Nothing decided in the last 7 days.')]));
+  if (!was) box.scrollTop = 0;
+  if ((!was || had) && box.focus) box.focus({ preventScroll: true });
+}
+// 0655: the latest full run on the base branch, while it failed and counts under Needs you (scripts/foreman.mjs gives it
+// only then), or null.
+function fullFailing(st) {
+  const f = st && st.foreman && typeof st.foreman === 'object' && st.foreman.full && typeof st.foreman.full === 'object' ? st.foreman.full : null;
+  if (!f || typeof f.commit !== 'string' || !f.commit) return null;
+  const str = v => (typeof v === 'string' ? v : '');
+  return { base: str(f.base) || str(st.foreman.base) || 'the base branch', commit: f.commit, status: Number.isInteger(f.status) ? f.status : 1,
+    tests: list(f.tests).filter(t => typeof t === 'string' && t), at: str(f.at), log: str(f.log) };
+}
+// 0655: how many tests fail, or its exit code when its output names none.
+const fullFails = f => (f.tests.length ? `${plural(f.tests.length, 'test')} fail${f.tests.length === 1 ? 's' : ''}` : `exit code ${f.status}`);
+// 0655: the failing full suite's row under Build's Needs you, with the orange dot. Pressing it opens its view. It's kept
+// while what it says is the same, so a refresh doesn't take its focus.
+function fullSuiteRow(f) {
+  const sig = signature([f.base, f.commit, f.status, f.tests.length]);
+  if (fullSuiteRowKept && fullSuiteRowKept.sig === sig) return fullSuiteRowKept.node;
+  const short = f.commit.slice(0, 7), said = `${short} · ${fullFails(f)}`;
+  const top = el('div', 'top', null, el('div', 'line', null, titled(el('span', 'title', `Full suite fails on ${f.base}`))), wholeTip(detailsLine('where needs', [el('span', 'said', said)])));
+  top.tabIndex = 0;
+  top.setAttribute('role', 'button');
+  top.setAttribute('aria-haspopup', 'dialog');
+  top.setAttribute('aria-controls', 'full-suite');
+  top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) { fullSuiteOpen = true; render(); } });
+  top.addEventListener('keydown', pressWithKeys);
+  const node = el('div', 'q row full-suite-row', null, top);
+  fullSuiteRowKept = { sig, node };
+  return node;
+}
+function closeFullSuite() {
+  fullSuiteOpen = false;
+  render();
+  const row = fullSuiteRowKept && fullSuiteRowKept.node.children[0];
+  if (row && row.isConnected !== false && row.focus) row.focus();
+}
+// 0655: the failing full suite's view, over the whole panel as the Decided for you list is: the failing tests, when its
+// output is TAP, the commit, when it ran and where its log is, with a back link. It closes once the run no longer fails.
+function renderFullSuite(f) {
+  const box = $('full-suite'), was = !box.hidden;
+  if (!f) fullSuiteOpen = false;
+  box.hidden = !fullSuiteOpen;
+  holdPage(pageHeld());
+  if (!fullSuiteOpen) { box.replaceChildren(); fullSuiteBuilt = null; return; }
+  const sig = signature([f, openLane]);
+  if (sig === fullSuiteBuilt) return;
+  fullSuiteBuilt = sig;
+  const lane = openLane[0].toUpperCase() + openLane.slice(1);
+  const had = within(document.activeElement, box), shut = el('button', 'close', lane);
+  shut.type = 'button';
+  shut.setAttribute('aria-label', `Back to ${lane}`);
+  shut.addEventListener('click', e => { e.stopPropagation(); closeFullSuite(); });
+  const fact = (label, text, tip = text) => { const v = el('span', 'full-suite-value', text); v.title = tip; return el('div', 'full-suite-fact', null, el('span', 'label', label), v); };
+  const ran = Number.isFinite(Date.parse(f.at)) ? shippedAt(Date.parse(f.at), Date.now()) : '–';
+  box.replaceChildren(el('div', 'top', null, el('span', 'title', `Full suite fails on ${f.base}`), shut),
+    el('div', 'full-suite-body', null,
+      el('p', 'full-suite-says', `The latest full run (commands.test_full) on ${f.base} failed. It counts under Needs you until a full run on a newer commit passes.`),
+      fact('Commit', f.commit.slice(0, 7), f.commit), fact('Ran', ran, f.at || ran), fact('Log', f.log || '–'),
+      el('h2', 'full-suite-head', null, document.createTextNode('Failing tests '), el('span', 'group-n', f.tests.length)),
+      f.tests.length ? el('ul', 'full-suite-tests', null, ...f.tests.map(t => el('li', null, t)))
+        : el('p', 'full-suite-none', `Its output names no failing tests: it ended with exit code ${f.status}. Its log says more.`)));
   if (!was) box.scrollTop = 0;
   if ((!was || had) && box.focus) box.focus({ preventScroll: true });
 }
