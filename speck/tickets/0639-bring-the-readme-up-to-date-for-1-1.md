@@ -1,7 +1,7 @@
 ---
 id: "0639"
 title: "Bring the README up to date for 1.1"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0638"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T13:17:38.060Z"
+approved: "2026-11-11T13:22:03.803Z"
 
 ---
 # 0639 · Bring the README up to date for 1.1
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 1.0.0, speck checks a build's question in the running app itself, works out how to start each project's app, keeps test logins on your machine, carries on after usage limits, ships on quick tests with the whole suite run after, and auto-ships only rounds its own reviewer run recorded. The README says none of this, so someone reading it, or you coming back to it, doesn't know speck can do these.
@@ -56,9 +57,14 @@ To see it, read the README on GitHub once this ships. Nothing in the product cha
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 124,161
+- Elapsed since build started: 4 min
+- Changed lines: 15 (limit 5000)
 Follow-ups: none.
 
 ## Review rounds
