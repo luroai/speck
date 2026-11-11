@@ -47,7 +47,7 @@ speck reads Cursor's usage from its `/usage` screen and keeps it as it keeps Cla
 - Checked on Linux (util-linux `script` 2.41) against Cursor CLI 2026.11.11; the macOS form of `script` is tested only as the command speck builds.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+`speck agents` now shows how much of your Cursor plan you've used, as it already does for Claude Code and Codex: the plan, the day it resets, how much of the included usage, Auto and API is used, and what you've spent on demand against any limit. To see it, run `speck agents` with Cursor installed and signed in. It quietly opens Cursor's usage screen and closes it again, so no AI runs and nothing is spent. That takes a few seconds, and speck only does it when its last reading is more than 10 minutes old or after one of its Cursor runs has finished, so most of the time the list comes up straight away. Cursor can change that screen in any update: if speck can't read it, it says so in one line and shows the last reading it had. Only checked on Linux so far, not on a Mac.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +57,11 @@ speck reads Cursor's usage from its `/usage` screen and keeps it as it keeps Cla
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox notes):
+  - The macOS form of `script` (`script -q /dev/null sh -c …`) is tested only as the command speck builds; nobody has run a real reading on a Mac yet.
+  - When Cursor's reading is stale, `speck agents` takes about 5–10 seconds longer while it opens Cursor's screen. A Cursor run that ends only marks the reading stale and doesn't read it straight away, so the next `speck agents` does the reading.
+  - The panel's Settings view doesn't refresh Cursor's reading itself. Showing each agent's usage in the panel is already in the inbox: `speck/ideas/2026-11-10-show-each-agent-s-usage-in-the-panel.md`.
+  - `0630 AC3: a full run doesn't wait for the max_parallel_tests turns` failed once in a related run because of its 900 ms wall-clock check while the load average was about 40. It passed on its own and in round 2's run.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +143,89 @@ speck reads Cursor's usage from its `/usage` screen and keeps it as it keeps Cla
     ],
     "escalation_question": "",
     "summary": "The change reads and caches Cursor’s usage, and the normal paths are well tested. One cleanup failure needs fixing: if Cursor exits unexpectedly, a process it started can remain running."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "70feeaf3b21e7c78fc77c75a1fde7e1a84c1950c",
+    "session": "continued",
+    "thread_id": "01a1cb25-d976-71c3-a0c6-c00a344eb600",
+    "builder_response": "- Tests run: test/cursor-usage-0643.test.mjs test/agent-usage-0642.test.mjs test/full-suite-0630.test.mjs (157 pass, 0 fail; the 0630 wall-clock test passed this time).\n- F1: fixed. `scripts/cursor-usage.mjs`: `owned(root)` now tracks the processes it started while the reading runs, polling `ps -A -o pid=,ppid=,pgid=` every 250 ms and again at the start of cleanup and after each signal. It adds each descendant, each descendant's process group (Cursor's own session group under `script` included), and every process in those groups, which catches one reparented after its parent exits. It never adds speck's own group. Cleanup signals every tracked group (`kill(-pgid)`) and every tracked pid that is still alive, with SIGTERM then SIGKILL, whether or not `script` has already exited. New test `0643 AC3: when Cursor exits early, a process it started that outlives it is stopped too`: the stand-in starts a child that ignores HUP and INT, then exits a second later without showing usage. The test checks both are stopped. It fails against the round-1 code (checked by stashing the fix) and passes now.\n- Also reworded the trust-prompt reason, since Cursor is now opened with `--trust` in speck's own folder: \"it asked whether to trust the folder speck opens it in, which speck never answers\".\n",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 315027,
+      "cached_input_tokens": 250624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1718,
+      "reasoning_output_tokens": 383
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8642,
+      "cached": 116224,
+      "write": 0,
+      "output": 550
+    },
+    "cost_usd": 0.0344064,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T15:11:06.152Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "ptyCommand and readCursorUsage open the interactive CLI without a prompt and request /usage. Passing recorded-screen and CLI integration tests cover the plan, reset day, percentages, on-demand spend and limit."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "refreshCursorUsage saves readings through saveUsage; cursorUsageStale checks the ten-minute threshold and cursor-ran marker. Passing AC2 tests cover persistence, JSON output, cache freshness and invalidation after Cursor runs."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "readCursorUsage bounds reading time and tracks owned processes and groups during execution and cleanup. Passing AC3 tests cover timeout, unexpected screens, retaining the previous reading, one-line explanations, and now a surviving subprocess after Cursor exits early."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The reader uses Node built-ins and system commands without package dependencies. Passing AC4 tests check Linux and macOS script command forms. Live macOS execution remains unverified, as disclosed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported round ran the ticket tests, changed existing tests and previously failing test file: 157 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/cursor-usage.mjs:160",
+        "issue": "The previous cleanup could lose surviving subprocesses when Cursor exited before cleanup began.",
+        "suggested_fix": "Implemented: owned tracks descendant processes and process groups while the reader runs; cleanup signals tracked groups and processes. The new early-exit regression test verifies the surviving subprocess stops.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Cursor usage is read and cached as requested. The cleanup fix addresses the earlier concern, with a regression test covering unexpected exits. All reported tests now pass. The change is ready for the product owner’s merge decision."
   }
 }
 ```
