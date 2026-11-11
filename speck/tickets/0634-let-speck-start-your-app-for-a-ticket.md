@@ -45,7 +45,9 @@ A build that changes how an app looks or behaves often blocks asking you to chec
 - Pictures: none, because nothing anyone sees in the panel changes: speck app is a command.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck can now start your project's app for a ticket. Tell it once how to start the app (`commands.start`, with `{port}` where the port goes) and, if it isn't the usual local address, where to open it. Then `speck app <id>` starts the app from that ticket's copy of the code on a free port, waits until it answers, and prints the address to open. `speck app <id> --stop` stops it, along with anything it started, and leaves your own apps and other tickets' apps alone. If the app doesn't answer in time (60 seconds unless you change it), speck stops it and shows you the last lines it printed.
+
+To try it: set `commands.start` with `speck config set`, run `speck app` on a ticket, open the address it prints, then stop it with `--stop`. Nothing uses this by itself yet: later tickets will let speck log in and check a build's question in the running app.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +57,8 @@ A build that changes how an app looks or behaves often blocks asking you to chec
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limits (no idea notes): two `speck app` starts for the same ticket at the very same moment can both start an app; `--stop` stops both. A process the app starts that clears its own environment is still found while the process that started it is running, but not once that one has gone.
+- No follow-ups went to the inbox.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -144,6 +148,188 @@ A build that changes how an app looks or behaves often blocks asking you to chec
     ],
     "escalation_question": "",
     "summary": "The normal start, stop and configuration flows pass their tests. Two lifecycle problems need fixing: a partially responding app can make startup wait forever, and simultaneous starts can leave an app running that speck can no longer stop."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c93f268cc3a52cfe30c9fb47ca960db8c5d0aa86",
+    "session": "continued",
+    "thread_id": "01a1ca4e-faec-7d23-ae78-c33f3cd19597",
+    "builder_response": "- Tests run: test/app-0634.test.mjs test/config-show-0269.test.mjs (with commands.checks): 0 failing.\n- F1: fixed. `answers(url, ms)` in scripts/app.mjs now has an absolute deadline (a timer that destroys the request), and the start loop passes it the smaller of 1 s and the time left before app_start_seconds. New test \"0634 AC2: an app that keeps sending a response it never finishes…\" starts a server that writes a status line, then a byte every 100 ms forever, and checks speck app fails within app_start_seconds.\n- F2: fixed. Start and stop for a ticket run under a per-ticket lock file in speck/.cache/apps/<id>.lock (`withLock`), created with `wx`; a second start or stop while it's held by a live process refuses in one line, and a lock left by a dead process is taken over. Records are only written, read and removed under the lock. New test \"0634 AC3: two starts at once leave one app…\" runs two starts concurrently, checks only one app address results, then --stop leaves the app's own child process gone and a second --stop finds none. The brief's row says so.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 291424,
+      "cached_input_tokens": 216448,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1624,
+      "reasoning_output_tokens": 141
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 18571,
+      "cached": 128512,
+      "write": 0,
+      "output": 752
+    },
+    "cost_usd": 0.0575132,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T11:14:33.559Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "startApp and launch select the ticket checkout, substitute a free port, wait for the address and leave the app running. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "answers now enforces an absolute timer bounded by the remaining startup time. Both AC2 tests passed, including the incomplete response regression test; launch reports the last log lines after cleanup."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The ordinary stop and concurrent-start tests passed, but withLock still permits overlapping owners during lock creation or stale-lock recovery, allowing an app record to be overwritten."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "startApp refuses blank or missing commands.start before acquiring a lock or spawning an app. The AC4 test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "checkConfigValue validates the settings, cmdConfig saves them and cmdConfigShow explains them through APP_SETTINGS. The AC5 configuration test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/app.mjs:71",
+        "issue": "The unbounded readiness request is fixed: answers now destroys the request on an absolute deadline, and launch bounds that deadline by the remaining startup time.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/app.mjs:86",
+        "issue": "The lock fix remains racy. writeFileSync with wx creates the file before writing its PID; another process can read the empty file, treat it as stale and unlink a live owner's lock. Also, two processes can both read a stale PID, after which one removes the stale lock and acquires a new one while the other unlinks that new lock using its earlier stale observation. Both can then launch apps and overwrite the same record. The unconditional finally unlink can remove another owner's lock too. The passing concurrent-start test does not force either interleaving.",
+        "suggested_fix": "Use a locking protocol that publishes ownership atomically and safely serialises stale-lock recovery. Release only the lock actually owned by the invocation. Add deterministic coverage for contention during ownership publication and simultaneous recovery of a stale lock.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The startup timeout is fixed and its regression test passes. The concurrency fix still has a race that can leave an app running without a record, so speck cannot reliably stop everything it started. That needs fixing before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "07785fd61e47e9b973708f7f57514099a4ae72f1",
+    "session": "continued",
+    "thread_id": "01a1ca4e-faec-7d23-ae78-c33f3cd19597",
+    "builder_response": "- Tests run: test/app-0634.test.mjs test/config-show-0269.test.mjs (with commands.checks): 0 failing.\n- F2: fixed by removing the need for a lock rather than hardening it. The lock and its stale-recovery are gone. Every process an app starts now carries `SPECK_APP_RUN=<ticket mark>:<start id>`, where the ticket mark is a hash of the main checkout's real path and the ticket id. `--stop` ends every process carrying the ticket mark (and anything they started), so it stops every app ever started for the ticket, whether or not its record survived, and two starts at once can't leave an app it can't find. Each start writes its own record and log, `speck/.cache/apps/<id>/<start id>.json|.log`, so no start overwrites another's, and a failed start stops and removes only its own (by its start id). Tests: \"two starts at once, however they interleave, leave nothing running once --stop has run\" (all the addresses either start printed stop answering); \"--stop stops an app whose start record was lost or overwritten\" (deterministic: start, delete the records, start again, --stop: both apps and their child processes are gone); \"--stop for one ticket leaves another ticket's app running\". The brief's row says so.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 479747,
+      "cached_input_tokens": 382976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2248,
+      "reasoning_output_tokens": 151
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 21795,
+      "cached": 166528,
+      "write": 0,
+      "output": 624
+    },
+    "cost_usd": 0.0664828,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T11:18:09.810Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/app.mjs startApp selects the ticket checkout, substitutes a free port, waits for the configured address and leaves the detached app running. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "answers enforces an absolute deadline bounded by the remaining startup time; startApp cleans up its own run and reports its last log lines. Both AC2 tests passed, including the trickling response regression."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "stopApp discovers processes using a mark specific to the repository and ticket, independently of saved records. Passed AC3 tests cover child processes, unrelated processes, concurrent starts, lost records, another ticket's app and the no-app message."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "startApp rejects blank or missing commands.start before creating app state or spawning processes. The AC4 test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "checkConfigValue validates the settings, cmdConfig saves them and cmdConfigShow explains them through APP_SETTINGS. The AC5 configuration test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/app.mjs",
+        "issue": "Readiness requests now have an absolute deadline, preventing an incomplete response from keeping startup waiting indefinitely.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/app.mjs",
+        "issue": "The shared record and lock races are removed. Each start has separate files, and stopping discovers all processes marked for the ticket even when records are lost. Concurrent-start and lost-record regression tests passed.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. Speck can start a ticket's app, print its address and stop its processes. The timeout and concurrent-start problems are resolved, with passing regression tests. All five acceptance criteria pass."
   }
 }
 ```
