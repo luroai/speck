@@ -9,10 +9,11 @@ import { spawnSync } from 'node:child_process';
 import { speck } from './support/cli.mjs';
 import { SpeckError, loadConfig } from '../scripts/core.mjs';
 import { MACHINE_SETTINGS, machineConfig, machineConfigFile } from '../scripts/machine.mjs';
-import { checkConfigValue, benchOwnAgent } from '../scripts/config.mjs';
-import { BENCHES, benchOf } from '../scripts/bench.mjs';
+import { checkConfigValue } from '../scripts/config.mjs';
+import { BENCHES, benchOf, benchOwnAgent } from '../scripts/bench.mjs';
 import { standIn } from '../scripts/watch-stand-in.mjs';
-import { FOREMAN_AGENTS } from '../scripts/foreman-agent.mjs';
+import { FOREMAN_AGENTS, foremanAgentOf } from '../scripts/foreman-agent.mjs';
+import { panelSaveSettings } from '../scripts/settings.mjs';
 
 const PROVIDER = { name: 'deepseek', label: 'DeepSeek', address: 'https://api.deepseek.example', defaultModel: 'deepseek-chat', models: ['deepseek-chat'] };
 const git = (cwd, ...a) => spawnSync('git', a, { cwd, encoding: 'utf8' });
@@ -76,6 +77,51 @@ test('0645 AC1: a bench is checked as speck reads it, refusing an unknown agent,
   fs.mkdirSync(path.dirname(machineConfigFile(r.dir)), { recursive: true });
   fs.writeFileSync(machineConfigFile(r.dir), 'watch_bench: 3\n');
   assert.throws(() => loadConfig(r.dir), e => e instanceof SpeckError && /watch_bench .* must be blank or a list of agents/.test(e.message));
+});
+
+// This machine's own settings file, written as given.
+const machineFile = (r, text) => { fs.mkdirSync(path.dirname(machineConfigFile(r.dir)), { recursive: true }); fs.writeFileSync(machineConfigFile(r.dir), text); };
+
+test('0645 AC1: speck refuses a bench naming an agent it doesn\'t know, or its member\'s own, whenever it reads its settings', () => {
+  const r = repo();
+  for (const [text, re] of [['builder_bench: [gemini]\n', /builder_bench names "gemini", an agent speck doesn't know/],
+    ['reviewer_bench: [codex]\n', /reviewer_bench names codex, which is the reviewer's own agent/],
+    ['watch_bench: [cursor, claude]\n', /watch_bench names claude, which is the watch agent's own agent/],
+    ['builder: codex\nbuilder_bench: [codex]\n', /builder_bench names codex, which is the builder's own agent/]]) {
+    machineFile(r, text);
+    assert.throws(() => loadConfig(r.dir), e => e instanceof SpeckError && re.test(e.message) && /speck config set \w+_bench ""/.test(e.message), text);
+    const run = speck(r.dir, process.env, 'status');
+    assert.notEqual(run.status, 0, `speck status refuses it too: ${text}`);
+    assert.match(run.stderr, re);
+  }
+  machineFile(r, 'builder_bench: [codex, deepseek]\nwatch_bench: [codex]\n');
+  assert.deepEqual(loadConfig(r.dir).builder_bench, ['codex', 'deepseek'], 'speck\'s own provider is known');
+});
+
+test('0645 AC1: a member switched onto an agent on its own bench is refused, and a bench already refused can still be fixed', () => {
+  const r = repo();
+  assert.equal(r.set('watch_bench', 'codex').status, 0);
+  const builder = r.set('builder', 'codex'); // with watch_agent blank, the watch agent follows a codex builder
+  assert.notEqual(builder.status, 0, 'refused');
+  assert.match(builder.stderr, /watch_bench names codex, which is the watch agent's own agent/);
+  assert.equal(machineConfig(r.dir).builder, undefined, 'the builder wasn\'t switched');
+  assert.equal(r.set('reviewer_bench', 'cursor').status, 0);
+  assert.match(r.set('reviewer', 'cursor').stderr, /reviewer_bench names cursor/);
+  assert.match(r.set('--repo', 'reviewer', 'cursor').stderr, /reviewer_bench names cursor/, 'in speck/config.yml too');
+  const panel = panelSaveSettings(r.dir, [{ key: 'watch_agent', value: 'codex' }]);
+  assert.equal(panel.status, 422, JSON.stringify(panel));
+  assert.match(panel.body.error, /watch_bench names codex/);
+  assert.equal(machineConfig(r.dir).watch_agent, undefined, 'the panel saved nothing');
+  // One made by hand is refused as speck reads it, and speck config set still fixes it, one bench at a time.
+  machineFile(r, 'builder: codex\nbuilder_bench: [codex]\nreviewer_bench: [codex]\n');
+  assert.equal(r.set('builder_bench', '').status, 0, 'fixing one while another is still refused');
+  assert.equal(r.set('reviewer_bench', 'claude').status, 0);
+  assert.doesNotThrow(() => loadConfig(r.dir));
+});
+
+test('0645 AC1: the watch agent\'s own agent is worked out as speck runs it', () => {
+  for (const cfg of [{}, { builder: 'codex' }, { builder: 'cursor', watch_agent: 'claude' }, { builder: 'deepseek' }, { watch_agent: 'deepseek' }, { foreman: 'cursor' }, { builder: 'mine', watch_agent: 'nope' }])
+    assert.equal(benchOwnAgent(cfg, 'watch_bench', [PROVIDER]), foremanAgentOf(cfg, [PROVIDER]), JSON.stringify(cfg));
 });
 
 // ---------- AC2 ----------

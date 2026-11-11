@@ -2,7 +2,8 @@
 // limit. builder_bench, reviewer_bench and watch_bench are your own settings (machine.mjs). Blank is your agents in
 // speck agents' order, leaving out the member's own agent and every model provider, as those bill per token.
 
-import { SpeckError } from './core.mjs';
+import { SpeckError, setting } from './core.mjs';
+import { knownProviders } from './custom-providers.mjs';
 
 export const BENCHES = Object.freeze(['builder_bench', 'reviewer_bench', 'watch_bench']);
 const CLI_AGENTS = ['claude', 'codex', 'cursor'];
@@ -29,13 +30,44 @@ export function benchProblem(key, value, own, providers = []) {
   return null;
 }
 
+const fixHint = key => `Fix it with \`speck config set ${key} <agents>\`, or blank it with \`speck config set ${key} ""\` to use your agents in order.`;
+
 // `key`'s bench in `cfg` as speck uses it, refusing one `benchProblem` refuses. Blank is `yours`, your agents in speck
 // agents' order, without `own` or a model provider.
 export function benchOf(cfg, key, { yours = [], own = '', providers = [] } = {}) {
   const value = cfg?.[key], problem = benchProblem(key, value, own, providers);
-  if (problem) throw new SpeckError(`${problem} Fix it with \`speck config set ${key} <agents>\`, or blank it with \`speck config set ${key} ""\` to use your agents in order.`);
+  if (problem) throw new SpeckError(`${problem} ${fixHint(key)}`);
   const list = benchList(value);
   return list.length ? list : yours.filter(a => CLI_AGENTS.includes(a) && a !== own);
+}
+
+// The agent of the member whose bench `key` is, as speck runs it with `cfg`, which its bench can't name. The watch
+// agent's is worked out as foremanAgentOf does, without importing it, as loadConfig checks benches.
+export function benchOwnAgent(cfg, key, providers = []) {
+  const provider = a => typeof a === 'string' && providers.some(p => p.name === a);
+  if (key === 'builder_bench') return String(cfg?.builder ?? 'claude');
+  if (key === 'reviewer_bench') return cfg?.reviewer === 'claude-subagent' ? 'claude' : String(cfg?.reviewer ?? '');
+  const watch = setting(cfg, 'watch_agent');
+  return CLI_AGENTS.includes(watch) || provider(watch) ? watch : ['codex', 'cursor'].includes(cfg?.builder) || provider(cfg?.builder) ? cfg.builder : 'claude';
+}
+
+// Why each bench in `cfg` can't be used as it is, with how to fix it: [] when every one can.
+export const benchProblems = (cfg, providers = []) => BENCHES.map(key => {
+  const problem = benchProblem(key, cfg?.[key], benchOwnAgent(cfg, key, providers), providers);
+  return problem && `${problem} ${fixHint(key)}`;
+}).filter(Boolean);
+
+// 0645 AC1: loadConfig's check of the benches in `cfg`, as speck uses them in `repo`.
+export function checkBenches(repo, cfg) {
+  const [problem] = benchProblems(cfg, knownProviders(repo));
+  if (problem) throw new SpeckError(problem);
+}
+
+// A problem `after` has with a bench that `before` didn't, so a change that would leave one refused is refused, while
+// one already refused can still be fixed. null when there's none.
+export function newBenchProblem(before, after, providers = []) {
+  const had = benchProblems(before, providers);
+  return benchProblems(after, providers).find(p => !had.includes(p)) ?? null;
 }
 
 // What `speck config show` says about each bench.

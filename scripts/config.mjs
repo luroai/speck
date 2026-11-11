@@ -10,8 +10,8 @@ import { ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuil
 import { offeredModels } from './agents.mjs';
 import { sameModelProblem } from './same-model.mjs';
 import { FIXING } from './foreman.mjs';
-import { FOREMAN_AGENTS, foremanAgentOf } from './foreman-agent.mjs';
-import { BENCHES, benchList, benchProblem } from './bench.mjs';
+import { FOREMAN_AGENTS } from './foreman-agent.mjs';
+import { benchList, benchProblem, newBenchProblem } from './bench.mjs';
 import { knownProviders } from './custom-providers.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
 
@@ -95,16 +95,14 @@ export function checkConfigValue(key, value, providers = knownProviders()) {
   return value;
 }
 
-// 0645: the agent of the member whose bench `key` is, in `cfg`, which its bench can't name.
-export function benchOwnAgent(cfg, key, providers = knownProviders()) {
-  if (key === 'builder_bench') return String(cfg?.builder ?? 'claude');
-  if (key === 'reviewer_bench') return cfg?.reviewer === 'claude-subagent' ? 'claude' : String(cfg?.reviewer ?? '');
-  return foremanAgentOf(cfg, providers);
-}
-// Refuses a bench `value` that names its member's own agent, as speck uses the settings in `repo` now.
-function refuseOwnAgent(repo, key, value) {
-  if (!BENCHES.includes(key) || value === undefined) return;
-  const providers = knownProviders(repo), problem = benchProblem(key, value, benchOwnAgent(loadConfig(repo), key, providers), providers);
+// 0645: refuses `changes` ([key, value] each, undefined: this machine's value removed) when, saved for this machine or,
+// with `toRepo`, in speck/config.yml, they'd leave a bench naming an agent speck doesn't know or its member's own.
+const BENCHED = ['builder', 'reviewer', 'watch_agent', 'builder_bench', 'reviewer_bench', 'watch_bench'];
+function refuseBenches(repo, changes, toRepo = false) {
+  if (!changes.some(([k]) => BENCHED.includes(k))) return;
+  const now = loadConfig(repo, { benches: false }), mine = machineConfig(repo), repoCfg = loadConfig(repo, { machine: false }), will = { ...now };
+  for (const [k, v] of changes) if (!toRepo) will[k] = v === undefined ? repoCfg[k] : v; else if (!Object.hasOwn(mine, k)) will[k] = v;
+  const problem = newBenchProblem(now, will, knownProviders(repo));
   if (problem) throw new SpeckError(problem);
 }
 
@@ -193,7 +191,6 @@ function setMachine(key, raw, remove, replace = false) {
   if (key === 'builder' && !remove) return setBuilder(raw, replace, true);
   const value = remove ? undefined : checkConfigValue(key, raw);
   const repo = findRepoRoot();
-  refuseOwnAgent(repo, key, value); // 0645
   const values = machineConfig(repo);
   const committed = loadConfig(repo, { machine: false })[key] ?? (key.startsWith('max_parallel_') ? 1 : undefined);
   const before = Object.hasOwn(values, key) ? values[key] : committed;
@@ -201,6 +198,7 @@ function setMachine(key, raw, remove, replace = false) {
     console.log(`${key} has no value for this machine, so speck uses speck/config.yml's: ${show(committed)}.`);
     return;
   }
+  refuseBenches(repo, [[key, value]]); // 0645
   // Removing a builder also removes the build_command switching to it saved, so speck/config.yml's pair applies again.
   const pair = key === 'builder' && value === undefined && Object.hasOwn(values, 'build_command') && values.build_command === ownBuildCommand(values.builder);
   saveMachineValues(repo, pair ? [[key, undefined], ['build_command', undefined]] : [[key, value]]);
@@ -221,7 +219,7 @@ export function cmdConfig(args) {
   if (key === 'builder') return setBuilder(rest.join(' '), replace);
   const value = checkConfigValue(key, rest.join(' '));
   const repo = findRepoRoot();
-  refuseOwnAgent(repo, key, value); // 0645
+  refuseBenches(repo, [[key, value]], true); // 0645
   const file = path.join(repo, 'speck', 'config.yml');
   const text = fs.readFileSync(file, 'utf8');
   const keys = key.split('.');
@@ -244,7 +242,7 @@ export function cmdConfig(args) {
 function setBuilder(value, replace, machine = false) {
   const repo = findRepoRoot();
   const file = path.join(repo, 'speck', 'config.yml');
-  const text = fs.readFileSync(file, 'utf8'), was = machine ? loadConfig(repo) : parseYaml(text);
+  const text = fs.readFileSync(file, 'utf8'), was = machine ? loadConfig(repo, { benches: false }) : parseYaml(text);
   const before = was.builder ?? 'claude', own = ownBuildCommand(value);
   const changes = [['builder', value]];
   if (value !== before && own !== null && was.build_command !== own) {
@@ -255,6 +253,7 @@ function setBuilder(value, replace, machine = false) {
   // 0311: and clears a builder_model the new builder doesn't offer, saying why.
   const cleared = value !== before ? clearsBuilderModel(was.builder_model, value, () => offeredModels(value)) : null;
   if (cleared !== null) changes.push(['builder_model', '']);
+  refuseBenches(repo, changes, !machine); // 0645
   if (machine) saveMachineValues(repo, changes);
   else {
     let next = text;
@@ -266,7 +265,7 @@ function setBuilder(value, replace, machine = false) {
   }
   const where = machine ? ' (this machine)' : '';
   for (const [k, v] of changes) console.log(`${k}${where}: ${show(was[k])} → ${show(v)}${k === 'builder_model' ? `, cleared because ${cleared}.` : ''}`);
-  const cfg = loadConfig(repo);
+  const cfg = loadConfig(repo, { benches: false });
   if (cfg.allow_same_model_review !== true) {
     const problem = sameModelProblem(value, String(cfg.reviewer ?? ''), cfg, cfg.reviewer_model);
     if (problem) console.log(`Note: ${problem} For a ${value} builder, a reviewer from another family is ${otherFamilyReviewer(value)}: \`speck config set reviewer ${otherFamilyReviewer(value)}\`.`);

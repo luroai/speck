@@ -17,7 +17,7 @@ import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyRe
 import { buildsEachTicket } from './build-model.mjs';
 import { knownProviders } from './custom-providers.mjs'; import { providerNamed } from './provider-review.mjs';
 import { keysStatus, saveProviderKey } from './keys.mjs';
-import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; import { benchRows } from './bench.mjs'; // 0634, 0645
+import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; import { benchRows, newBenchProblem } from './bench.mjs'; // 0634, 0645
 export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
 
 export const SETTING_GROUPS = [
@@ -413,7 +413,7 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
   const twice = changes.find((c, i) => changes.findIndex(d => d.key === c.key) !== i);
   if (twice) return { status: 400, body: { error: `${twice.key} is given more than once. Reload the panel, then try again.` } };
   const file = path.join(repo, 'speck', 'config.yml');
-  const text = fs.readFileSync(file, 'utf8'), cfg = loadConfig(repo), mine = machineConfig(repo);
+  const text = fs.readFileSync(file, 'utf8'), cfg = loadConfig(repo, { benches: false }), mine = machineConfig(repo); // 0645: a bench already refused can be fixed
   const checked = changes.map(c => ({ ...c, ...checkChange(repo, text, cfg, c) }));
   const bad = checked.filter(c => c.error !== undefined);
   if (bad.length) return refusal(bad[0].status, Object.fromEntries(bad.map(c => [c.key, c.error])));
@@ -428,7 +428,7 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
     }
   }
   // 0387: speck as it would be once saved, with this machine's values over speck/config.yml's.
-  const will = { ...cfg, ...Object.fromEntries(checked.map(c => [c.key, c.after])) };
+  const will = { ...cfg, ...Object.fromEntries(checked.map(c => [c.key, c.after])) }, benched = newBenchProblem(cfg, will, knownProviders(repo)); if (benched) return refusal(422, each(checked, benched)); // 0645
   // 0293: switching the builder sets build_command to its own, for this machine (0387), asking first for one set by
   // hand. Clearing this machine's builder also clears the build_command switching to it saved, as `speck config set` does.
   const own = switched && !switched.clear ? ownBuildCommand(String(switched.want), knownProviders(repo)) : null;
