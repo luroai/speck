@@ -1,7 +1,7 @@
 ---
 id: "0630"
 title: "Let speck run check the full suite on the base branch after ships"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0629"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T10:17:59.098Z"
+approved: "2026-11-11T10:32:21.831Z"
 
 ---
 # 0630 · Let speck run check the full suite on the base branch after ships
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck ship` runs the whole of `commands.test` before every merge, so a project with a slow suite, such as speck's own with about 200 real-browser and real-process test files, ships one ticket every four minutes at best, and a flaky slow test refuses ships that broke nothing. A project can't ship on its quick tests today without losing the slow ones altogether.
@@ -53,9 +54,15 @@ You can now give speck a second, slower test command, the full suite, with `spec
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The background full suite occupies the same limited test slots as ships and builds.; F2 fullSuiteQueue adds the commit to tried before launch and never removes it.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 285,812
+- Elapsed since build started: 14 min
+- Changed lines: 187 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups to the inbox: speck/ideas/2026-11-11-say-in-the-panel-what-a-failing-full-suite-is.md, speck/ideas/2026-11-11-count-a-failing-full-suite-on-the-bridge.md (close to speck/ideas/2026-11-10-count-stopped-builds-on-the-bridge.md, which counts something else), speck/ideas/2026-11-11-use-the-full-suite-s-result-as-a-build-s-baseline.md.
 - Known limit: a failing full run counts under Needs you only while speck run is on, as the rest of Needs you does, since it comes from speck run's own record.
