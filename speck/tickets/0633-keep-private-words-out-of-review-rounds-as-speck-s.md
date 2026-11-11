@@ -1,7 +1,7 @@
 ---
 id: "0633"
 title: "Keep private words out of review rounds as speck saves them"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: "speck/ideas/done/2026-11-11-keep-auto-ship-after-a-private-words-fix.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:01:26.858Z"
-blocked_at: "2026-11-11T11:09:34.621Z"
+blocked_at: ""
+waited_seconds: 17
 
 ---
 # 0633 · Keep private words out of review rounds as speck saves them
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 When a reviewer quotes one of your private words in its evidence, the ship refuses (exit 17) and the build rewords the round by hand. Since 0629 a reworded round no longer matches its receipt, so a ticket that should ship by itself waits for you, for a change that only rewords one line.
@@ -42,6 +43,7 @@ A review round never holds a private word, as speck takes them out when it saves
 - Receipts are 0629's: the receipt must be made from the round as saved.
 - Failing before this build: not checked
 - Self-check: speck's own verdict fields (verdict, id, status, severity, state) and the round's meta, apart from the builder's response, are kept as they are, so a private word such as "approve" can't break a round.
+- Went with the recommendation: A: the private-word checks skip speck's own [private] markers (chosen by speck, as watch is decide, 2026-11-11 11:09 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
