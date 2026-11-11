@@ -16,8 +16,8 @@ const firstLine = r => String(r.stderr || r.stdout || '').trim().split('\n').fil
 const fixActs = cfg => ['fix', 'decide'].includes(setting(cfg, 'watch'));
 const failingWhat = f => (f.tests.length ? f.tests.join(', ') : `the run ended with exit code ${f.status}, and its output names no failing tests`);
 
-// Whether an open fix ticket's text names this failure: one of its failing tests or, when it names none, its commit.
-const covers = (t, f) => (f.tests.length ? f.tests.some(n => t.raw.includes(n)) : t.raw.includes(f.commit.slice(0, 7)));
+// Whether an open fix ticket's text names this failure: every one of its failing tests or, when it names none, its commit.
+const covers = (t, f) => (f.tests.length ? f.tests.every(n => t.raw.includes(n)) : t.raw.includes(f.commit.slice(0, 7)));
 
 // The body of `## <name>` in `text` replaced, as close.mjs's replaceSection does (importing it here would loop back to
 // full-suite.mjs). Throws when the template has no such section.

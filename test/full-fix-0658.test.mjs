@@ -74,11 +74,22 @@ test('0658 AC1: with watch decide too, and an open fix ticket that names the fai
   assert.equal(r.fixes().length, 1);
 
   const s = repo('fix');
-  ticket(s, '0001', { status: 'building', priority: 0, type: 'fix', size: 'S', risk: 'low' }, `## Problem\n${TESTS[0]} fails.\n`);
+  ticket(s, '0001', { status: 'building', priority: 0, type: 'fix', size: 'S', risk: 'low' }, `## Problem\n${TESTS.join(' and ')} fail.\n`);
   s.fail();
   s.q.check();
   assert.deepEqual(s.fixes().map(t => t.fm.id), ['0001']);
   assert.equal(s.q.view().full.fixing, '0001');
+});
+
+test('0658 AC1: an open fix ticket that names only some of the failing tests doesn\'t cover the failure, so a fix ticket of its own is made', () => {
+  const r = repo('fix');
+  ticket(r, '0001', { status: 'building', priority: 0, type: 'fix', size: 'S', risk: 'low' }, `## Problem\n${TESTS[0]} fails.\n`);
+  r.fail();
+  r.q.check();
+  const made = r.fixes().find(t => t.fm.id !== '0001');
+  assert.ok(made, 'a new fix ticket');
+  assert.equal(made.fm.status, 'ready');
+  assert.equal(r.q.view().full.fixing, String(made.fm.id).padStart(4, '0'));
 });
 
 test('0658 AC1: when it can\'t make one, here because the main checkout isn\'t on the base branch, it says why once and the failure counts under Needs you', () => {
