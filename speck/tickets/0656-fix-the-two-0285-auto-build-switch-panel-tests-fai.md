@@ -1,7 +1,7 @@
 ---
 id: "0656"
 title: Make the full suite pass on main again                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T17:32:20.318Z"
+approved: "2026-11-11T17:36:58.260Z"
 
 ---
 # 0656 · Make the full suite pass on main again
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full suite (`commands.test_full`) fails on `main` at `a95b3c3`, so the panel has shown Needs you since 16:11 on 2026-11-11. Four tests fail: two 0285 AC3 tests of the Auto-build switch in `test/foreman-0285.test.mjs`, since 0646 added a usage request that the fake page answers out of turn; 0161 AC1, as `#settings .sub .win .fill` (0646's usage bar) fills with `--muted` and sets no text colour; and 0427 AC1, as `#full-suite .full-suite-fact .label` (0655) is set at 13 px.
@@ -52,9 +53,14 @@ The full set of speck's own checks should pass on main again, so the panel's Nee
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 183,649
+- Elapsed since build started: 5 min
+- Changed lines: 9 (limit 5000)
 Follow-ups: none. The 0285 test had gone stale twice over (0646's usage request and 0652's Your team layout) without anyone noticing, as only the full suite runs it; 0657 covers running such checks before ships.
 
 ## Review rounds
