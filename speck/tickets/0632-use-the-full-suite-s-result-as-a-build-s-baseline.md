@@ -39,6 +39,7 @@ A build's "Failing before this build" list covers the full suite whenever a full
 ## Notes
 - `speck test --recorded` is `cmdTest` in `scripts/turns.mjs` with `showRecordedRun` in `scripts/results.mjs`; results are keyed by the code and the test command.
 - The full suite's command is `fullCommand` in `scripts/full-suite.mjs` (0630).
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
