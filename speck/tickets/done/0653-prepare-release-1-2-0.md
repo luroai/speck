@@ -1,7 +1,7 @@
 ---
 id: "0653"
 title: "Prepare release 1.2.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0642","0643","0644","0645","0646","0647","0648","0649","0650","0651","0
 created: 2026-11-11
 started: "2026-11-11T16:20:03.074Z"
 approved: "2026-11-11T16:25:37.642Z"
+finished: "2026-11-11T16:28:04.708Z"
 
 ---
 # 0653 · Prepare release 1.2.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 1.2, "Your team", turns Settings into a team page with a character for each member, shows each subscription's usage, and moves builds, reviews, the watch agent and QA to another agent on their bench when one runs out (0642 to 0652). Anyone following the setup prompt, or updating speck in a project, still gets 1.1.0.
