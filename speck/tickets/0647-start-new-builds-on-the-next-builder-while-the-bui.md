@@ -40,6 +40,10 @@ While the builder's agent is limited, `speck run` starts each new build on the f
 ## Notes
 - Each ticket's own builder is already supported (`scripts/ticket-builder.mjs`), and `holds` in `scripts/usage-limit.mjs` says which agent is limited.
 - Failing before this build: none
+- The stand-in is recorded by committing `builder: <agent>` to the ticket on the base branch in the main checkout (as the panel commits Set ready), before its build starts, so `speck start`'s ready check and every review round see the agent that builds it. When the main checkout isn't on the base branch, or the commit fails, the ticket waits for the reset, said once.
+- AC2: a bench agent of the same family as the ticket's reviewer is skipped (unless allow_same_model_review), since the ready check would refuse the ticket with it, so it takes the next one on the bench rather than starting a build that can't be reviewed.
+- Only a ticket built on the builder's own agent moves: one whose own builder is another agent that's held waits for that agent, as today.
+- Self-check: 0344's test reads run.mjs for `launch(t)`, so the plain launch keeps that call and the stand-in launches on its own branch; run.mjs stays at 600 lines by folding the new lines into existing ones.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
