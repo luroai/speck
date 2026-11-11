@@ -39,6 +39,7 @@ QA is a team member of its own: app checks run on QA's agent, model and effort, 
 
 ## Notes
 - App checks: `scripts/app-check.mjs`; the watch agent's agent: `foremanAgentOf` in `scripts/foreman-agent.mjs` (at its 600-line limit).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
