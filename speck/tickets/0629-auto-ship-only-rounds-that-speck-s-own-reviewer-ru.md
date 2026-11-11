@@ -1,7 +1,7 @@
 ---
 id: "0629"
 title: "Auto-ship only rounds that speck's own reviewer run recorded"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T10:03:18.551Z"
+approved: "2026-11-11T10:13:49.342Z"
 
 ---
 # 0629 · Auto-ship only rounds that speck's own reviewer run recorded
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Auto-ship merges and pushes a ticket because its ticket file says the reviewer approved it, and the builder writes that file: it can record a verdict with `speck record` or edit its `## Review rounds` by hand. So "no agent approves its own work" holds only while the builder follows its skill, and a ticket that ships by itself has no proof that speck's own reviewer run approved it.
@@ -60,9 +61,15 @@ Worth watching: tickets approved before this change have no receipts, so they'll
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Receipt lookups call sharedCacheDir, which creates directories and may throw.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 239,753
+- Elapsed since build started: 11 min
+- Changed lines: 96 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): keep auto-ship after a private-words fix rewords the latest round (`speck/ideas/2026-11-11-keep-auto-ship-after-a-private-words-fix.md`).
 - Known limit: tickets approved before this change have no receipts, so each waits for you at Ship once.
