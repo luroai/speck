@@ -45,7 +45,11 @@ Each team member has a bench: the agents, in order, that speck switches it to wh
 - Self-check: moved config show's bench rows into scripts/bench.mjs to keep settings.mjs within 600 lines; tested `__proto__`/`constructor` as agent names and a bench that isn't a list in this machine's file.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now give the builder, the reviewer and the watch agent each a bench: the agents, in order, to switch to while its own agent has hit its usage limit. Left blank, a bench is your own agents in the usual order, without the member's own agent and without any pay-per-use API provider. For now only the watch agent uses its bench: while its agent is limited, it looks into stopped work on the first agent on its bench that's ready and not limited itself. The builder's and reviewer's benches are kept for when those can switch too.
+
+To see it, run `speck config show`: each bench appears with what it does. Set one with, for example, `speck config set watch_bench "cursor, codex"`.
+
+Worth knowing: speck refuses a bench naming an agent it doesn't know or the member's own agent, and it also refuses switching a member onto an agent already on its bench (for example, a Codex builder while the watch agent's bench names Codex, as the watch agent follows a Codex builder). If a bench is edited by hand into that state, speck commands stop with a message saying how to fix it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +59,10 @@ Each team member has a bench: the agents, in order, that speck switches it to wh
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - The 0264 AC3 ship queue test failed once by chance under the 200-file related run: saved as `speck/ideas/2026-11-11-steady-the-0264-ac3-ship-queue-test.md`.
+  - docs/brief.md's list of your own settings under `speck config set` doesn't name the three benches (nor 0402's builder_effort). A docs tidy-up, not saved to the inbox.
+  - A bench naming a provider you added yourself becomes refused, and stops every speck command, if that provider's entry is deleted by hand from this machine's providers file. speck has no command that removes a provider, so this is a known limit only.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -136,6 +144,89 @@ Each team member has a bench: the agents, in order, that speck switches it to wh
     ],
     "escalation_question": "",
     "summary": "Bench ordering, watch stand-ins and configuration explanations work in the tested paths. However, invalid benches can still be read without being refused. Complete that validation before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b26f07be895d922bcab5d63fe6840c59454480f1",
+    "session": "continued",
+    "thread_id": "01a1cafe-24c1-7b60-9034-b31f841a7156",
+    "builder_response": "- Tests run: `speck test --files test/ship-0264.test.mjs test/bench-0645.test.mjs test/watch-fallback-0637.test.mjs test/config-0386.test.mjs` (with the `commands.checks` files): this round's output. Before it I ran `speck test --related` on the same files (200 files, as core.mjs changed): 2062 passed, 1 failed, `0264 AC3` in test/ship-0264.test.mjs (\"Cannot read properties of undefined (reading 'done')\", a launch that hadn't happened yet). It passes alone twice and in this round's run, and touches no bench or setting, so I take it as a timing flake under load.\n- F1: fixed. `loadConfig` now checks every bench as speck uses it (scripts/core.mjs → `checkBenches` in scripts/bench.mjs): an agent speck doesn't know, or the member's own agent as it is now (builder, reviewer, or the watch agent worked out as `foremanAgentOf` does), is refused with a SpeckError saying how to fix it. Only `loadConfig(repo, { benches: false })` skips it, used where `speck config set` and the panel read the settings they're changing, so a bench that's already refused can still be fixed.\n  - So that a member switched after its bench was saved can't leave every command refusing, `speck config set` (for this machine and `--repo`, including `builder`, which also moves the watch agent when watch_agent is blank) and the panel's Save now refuse a change that would leave a bench naming its member's own agent (`refuseBenches` in scripts/config.mjs, `newBenchProblem` in panelSaveSettings). They refuse only a problem the change would add, so one already there can be fixed one bench at a time.\n  - New tests in test/bench-0645.test.mjs: loadConfig and `speck status` refuse an unknown agent, the reviewer's/watch agent's/builder's own agent, including a builder changed after its bench was set; switching builder, reviewer (machine and --repo) and, in the panel, watch_agent onto a bench is refused; a hand-made refused state is fixed with `speck config set`; the watch agent's own agent matches `foremanAgentOf` for several configs.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 395164,
+      "cached_input_tokens": 329472,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1988,
+      "reasoning_output_tokens": 147
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 15566,
+      "cached": 169600,
+      "write": 0,
+      "output": 778
+    },
+    "cost_usd": 0.055872,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T14:36:27.148Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "MACHINE_SETTINGS includes all three benches. config.mjs validates values before saving; core.mjs loadConfig now calls checkBenches against effective member agents and known providers. Passing AC1 integration tests cover loadConfig, speck status, conflicting member changes and correcting invalid benches."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "bench.mjs benchOf preserves agent order for blank benches while excluding the member's own agent and model providers. The passing AC2 test exercises defaults for all three members and explicit provider inclusion."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "watch-stand-in.mjs lookOn selects the first ready, unlimited agent from watch_bench. Passing AC3 tests cover ordering, unavailable agents, held agents, providers and exhaustion; existing watch fallback tests also pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "benchRows supplies each bench's value and explanation to cmdConfigShow. The passing AC4 test checks JSON and plain output, including blank defaults and machine-specific values."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Fresh round output confirms 150 passed, zero failed and three skipped. The earlier ship-0264 failure passed in this run; its test was not changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/core.mjs",
+        "issue": "Previously, settings reads accepted unknown agents and a member's own agent in benches. loadConfig now validates all effective benches, with integration coverage for the previously missing paths.",
+        "suggested_fix": "Implemented through checkBenches and tests of settings reads, conflicting changes and recovery.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The validation gap is fixed. All three benches can be configured and explained, and watch stand-ins follow the chosen order while skipping unavailable or limited agents. All criteria pass, with no blocking concerns remaining."
   }
 }
 ```
