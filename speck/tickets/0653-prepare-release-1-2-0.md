@@ -1,7 +1,7 @@
 ---
 id: "0653"
 title: "Prepare release 1.2.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0642","0643","0644","0645","0646","0647","0648","0649","0650","0651","0652"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T16:20:03.074Z"
+approved: "2026-11-11T16:25:37.642Z"
 
 ---
 # 0653 · Prepare release 1.2.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 1.2, "Your team", turns Settings into a team page with a character for each member, shows each subscription's usage, and moves builds, reviews, the watch agent and QA to another agent on their bench when one runs out (0642 to 0652). Anyone following the setup prompt, or updating speck in a project, still gets 1.1.0.
@@ -66,9 +67,14 @@ Worth knowing: after updating, the benches start blank, which means your other s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 181,200
+- Elapsed since build started: 6 min
+- Changed lines: 102 (limit 5000)
 - Follow-ups: none new. The two 0285 AC3 Settings switch tests failing on main are already draft fix ticket 0656.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
