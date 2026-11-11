@@ -43,6 +43,7 @@ The first time speck needs a project's app and `commands.start` isn't set, it wo
 - The commit on the base branch works as `speck split-off` commits a ticket: in a short-lived checkout of the base branch when no checkout has it.
 - This repo's own `commands.start` was set by hand on 2026-11-11: `node scripts/speck.mjs panel --port {port}`.
 - `scripts/foreman-agent.mjs` is at 600 lines, so brief changes may need to live in `scripts/app-check.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
