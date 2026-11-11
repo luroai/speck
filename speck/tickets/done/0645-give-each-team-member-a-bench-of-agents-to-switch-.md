@@ -1,7 +1,7 @@
 ---
 id: "0645"
 title: "Give each team member a bench of agents to switch to"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:17:41.472Z"
 approved: "2026-11-11T14:36:49.716Z"
+finished: "2026-11-11T14:39:14.878Z"
 
 ---
 # 0645 · Give each team member a bench of agents to switch to
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When an agent is limited, speck can only wait or, for the watch agent, take your agents in a fixed order (0637). You can't say who should take over for each job, such as Codex for the builder but Cursor for the reviewer.
