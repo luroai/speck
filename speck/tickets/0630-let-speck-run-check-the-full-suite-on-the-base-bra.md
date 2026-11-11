@@ -47,7 +47,7 @@ With `commands.test_full` set, `speck run` runs it on the base branch after ship
 - Pictures: none, because nothing anyone sees changes shape: the bar already shows Needs you <n>, and speck status gains one line.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now give speck a second, slower test command, the full suite, with `speck config set commands.test_full "<command>"`. Ships then wait only for the quick tests in `commands.test`, and while `speck run` is on it runs the full suite by itself on the newest work on the main branch after ships, in its own copy of the project and without holding up any ship or build. If the full suite fails, speck's bar and `speck status` count it under Needs you, naming the failing tests, until a run on newer work passes, and `speck run`'s log says so once. To see it, set the command, ship something and watch `speck run`'s log, or look in `speck/.cache/full/run.log`. Worth keeping an eye on: the full suite runs alongside the other tests rather than waiting for a turn among them, so the computer does a little more at once, and the panel counts a failure without yet saying what it is (you see that in `speck status`).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +57,10 @@ With `commands.test_full` set, `speck run` runs it on the base branch after ship
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups to the inbox: speck/ideas/2026-11-11-say-in-the-panel-what-a-failing-full-suite-is.md, speck/ideas/2026-11-11-count-a-failing-full-suite-on-the-bridge.md (close to speck/ideas/2026-11-10-count-stopped-builds-on-the-bridge.md, which counts something else), speck/ideas/2026-11-11-use-the-full-suite-s-result-as-a-build-s-baseline.md.
+- Known limit: a failing full run counts under Needs you only while speck run is on, as the rest of Needs you does, since it comes from speck run's own record.
+- Known limit: the full run's checkout is detached at the base branch's newest commit, which after a ship is the merge of the ticket's branch. While that branch still exists (only when ship couldn't remove the ticket's worktree), speck could read the checkout as the ticket's for the length of the run.
+- Known limit: a run whose result can't be recorded (for example when worktree_setup leaves untracked files that aren't ignored) is run again every 10 minutes on the same commit; latest.json still keeps its result.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -146,6 +150,97 @@ With `commands.test_full` set, `speck run` runs it on the base branch after ship
     ],
     "escalation_question": "",
     "summary": "The change adds isolated full-suite runs and reports failures, and the supplied tests passed. Two gaps prevent approval: a slow full run still delays shipping and build tests, and a run that cannot finish is abandoned until another commit or a restart."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1a8c20eb2c1d051abbd127218002cc0bf329ed69",
+    "session": "continued",
+    "thread_id": "01a1ca26-218e-7e21-a45a-f2094ce77492",
+    "builder_response": "- Tests run: `speck test --related test/full-suite-0630.test.mjs` (the ticket's own file, the 185 related test files listed at the top of the output, and the commands.checks files): 1983 passed, 0 failed.\n- F1: fixed. A full run now takes a test turn of its own, beside the max_parallel_tests turns, in the same turn queue (scripts/turns.mjs inTurn's new `lane` option; testRun passes it through; runFull uses lane 'full'). It keeps the queue's claim, stale-claim and killed-run handling, and only one full run goes at once, but no ship's or build's tests ever wait for it, and it never waits for theirs. New tests: \"a full run doesn't wait for the max_parallel_tests turns\", and the behavioural one you asked for, \"while a slow full run is going, a ship's or build's tests run without waiting for it\", which starts a real `sleep 2` full run with max_parallel_tests 1 and checks that a testRun of commands.test finishes, without waiting, while the full run is still going. The AC1 turn test now holds the full suite's own turn and checks the full run waits for it. The brief says so.\n- F2: fixed. The queue keeps when it started each commit's run, and starts a run of a commit that still has no recorded result again once RETRY_MS (10 minutes) has passed, or straight away on a newer commit. speck run's log says so when a run ends without a result. The test \"no full run starts while one is running\" now checks it isn't started again just before RETRY_MS, and is started again on the same commit at RETRY_MS (with an injected clock).\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 283906,
+      "cached_input_tokens": 209920,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1906,
+      "reasoning_output_tokens": 185
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 19453,
+      "cached": 123520,
+      "write": 0,
+      "output": 745
+    },
+    "cost_usd": 0.058708,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T10:31:53.002Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "fullSuiteQueue.check schedules unrecorded base commits and retries unsuccessful attempts after RETRY_MS. runFull uses its own checkout and test turn, then records through testRun. Passing AC1 tests cover isolation, recording, turn contention and retrying the same commit."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "fullSuiteQueue retains failures and logs once per failing commit. foremanView counts them under Needs you for status and the panel; foremanLines names failing TAP tests. Passing AC2 tests cover persistence until a newer passing result."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runFull now passes lane 'full' through testRun to inTurn, using a separate slot from foreground tests. Passing behavioural tests verify foreground tests proceed during a slow full run and full runs do not wait for foreground slots. Ships and builds do not invoke commands.test_full."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "fullSuiteQueue.check launches nothing and clears its failure view when commands.test_full is blank or missing. Both corresponding AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "config.mjs accepts commands.test_full and settings.mjs explains it in config show. The passing AC5 test exercises saving, loading and displaying the setting."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/full-suite.mjs",
+        "issue": "Full runs previously occupied foreground test slots and delayed ships and builds.",
+        "suggested_fix": "Implemented: full runs use a separate managed test slot, with behavioural coverage of foreground progress.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/full-suite.mjs",
+        "issue": "A run without a recorded result previously prevented further attempts on the same commit.",
+        "suggested_fix": "Implemented: unsuccessful attempts are retried after a bounded delay, with a test covering the retry boundary.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both blocking issues are fixed. Full-suite checks now run without delaying ship or build tests, and unsuccessful attempts are retried. Failures remain visible until a newer commit passes. All five criteria are met; the supplied test run reports 1,983 passes and no failures."
   }
 }
 ```
