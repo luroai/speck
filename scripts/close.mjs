@@ -8,6 +8,7 @@ import { changesAsked } from './changes-asked.mjs';
 import { who, reviewTotals, roundsLine } from './pack.mjs';
 import { prMode, openAndKeep } from './pull-request.mjs';
 import { tildePaths } from './private-words.mjs';
+import { standInWords } from './review-stand-in.mjs';
 
 // ---------- close (write the logs, set approved and commit, once the reviewer has approved) ----------
 
@@ -30,7 +31,8 @@ function reviewLogLines(all) {
   return all.map(r => {
     const fresh = r.verdict.findings.filter(f => f.severity === 'blocking' && !seen.has(f.id));
     for (const f of r.verdict.findings) seen.add(f.id);
-    return `Round ${r.meta.round} (${r.meta.reviewer}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''}): ${r.verdict.verdict.replace(/_/g, ' ')}${fresh.length ? `: ${fresh.map(f => `${f.id ?? '?'} ${firstSentence(f.issue ?? '')}`).join('; ')}` : ''}.`
+    const stood = standInWords(r.meta); // 0649
+    return `Round ${r.meta.round} (${r.meta.reviewer}${stood ? `, ${stood}` : ''}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''}): ${r.verdict.verdict.replace(/_/g, ' ')}${fresh.length ? `: ${fresh.map(f => `${f.id ?? '?'} ${firstSentence(f.issue ?? '')}`).join('; ')}` : ''}.`
       .replace(/\.\.$/, '.');
   });
 }

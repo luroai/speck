@@ -11,6 +11,7 @@ import { knownProviders } from './custom-providers.mjs';
 import { providerNamed, providerReady, providerEnv } from './provider-review.mjs';
 import { withoutProviderBuild } from './provider-build.mjs';
 import { stopOnLimit } from './reviewer-limit.mjs';
+import { standInMeta } from './review-stand-in.mjs';
 
 const LIMIT_SCRIPT = fileURLToPath(new URL('./limit.mjs', import.meta.url));
 
@@ -260,7 +261,7 @@ export function runCommandReview(repo, id, name, command, s, providers = knownPr
   const spend = commandSpend(envelope, { model: values.model, earlier: session === 'continued' ? s.prior.at(-1)?.meta : null });
   // A resumed run that doesn't report its session id keeps the one it resumed.
   const thread = (options.session_id_path ? atPath(envelope ?? jsonIn(r.stdout), options.session_id_path) : '') || (session === 'continued' ? lastThread : '');
-  return saveRound(repo, id, verdict, { reviewer: name, ...settingsMeta(settings), reviewed_sha: s.head, ...(s.merge ? { merge: true } : {}), ...(s.extra ? { extra: true } : {}), session,
+  return saveRound(repo, id, verdict, { reviewer: name, ...settingsMeta(settings), ...standInMeta(s), reviewed_sha: s.head, ...(s.merge ? { merge: true } : {}), ...(s.extra ? { extra: true } : {}), session,
     ...(thread ? { thread_id: thread } : {}), ...(s.response ? { builder_response: s.response } : {}),
     seconds: Math.round((Date.now() - started) / 1000), ...usage, ...spend, ...s.testsSeen }, { receipt: true });
 }

@@ -40,6 +40,10 @@ While the reviewer's agent is limited, review rounds run on the first reviewer o
 ## Notes
 - Failing before this build: none
 - Reviewer limits: `scripts/reviewer-limit.mjs` (0623); same-model rule: `scripts/same-model.mjs`; a round whose reviewer differs from the last already starts a fresh session with the full history.
+- Self-check: a stand-in is no longer refused when the bench names the ticket's own reviewer (only the settings' reviewer is checked by loadConfig); a bench that can't be read when choosing a stand-in now keeps the reviewer's own limit message; added a test of a stand-in taking over from round 2.
+- A round the reviewer refuses for its limit, in a build `speck run` started, is recorded as before and then runs on the stand-in straight away. A stand-in that is itself refused ends the round as 0623 does, under its own name: there's one stand-in try per round.
+- Changed an existing test's setup: 0623's tests of a refused or held round now give their repo an empty list of your agents, so no agent of this machine's (such as a signed-in Claude Code) stands in for them; they still check exit 18 and that the reviewer isn't started. With that list empty, no agent is asked whether it's ready.
+- Pictures: none, because the visible change is only words added to the review pack's lines, and no ticket in this repo has a round run on a stand-in to show.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
