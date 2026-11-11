@@ -1,7 +1,7 @@
 ---
 id: "0635"
 title: "Keep test logins on this machine"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T11:23:26.280Z"
 ---
 # 0635 · Keep test logins on this machine
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Checking a change in an app often means signing in, and the logins for that must never end up in a ticket, a review round or a commit, which are often published.
@@ -56,3 +56,89 @@ Test logins for a project are kept on this machine only, where speck's agents ca
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e6f31eaf86f8b4a08f4f8bec56a2dd0b7e5fc207",
+    "session": "fresh",
+    "thread_id": "01a1ca61-9064-7d23-8435-48f286fb2e7d",
+    "builder_response": "- Tests run: test/logins-0635.test.mjs, plus every related test file `speck test --related` chose (2936 tests, all passing).\n- New: scripts/logins.mjs (`speck logins`, `set`, `show`, `remove`), modelled on scripts/keys.mjs (0389): same machine folder, 0600 file written via a temp file, permissions fixed on read.\n- Saved passwords join the private-word checks through `privateWordList(repo).logins` and a new `'login'` answer from `privateHit`, shared by the pre-commit and commit-msg hooks, `speck ship` and `saveRound` (review.mjs). Refusals name the file and line via the shared `privateSaid`.\n- `speck.mjs` is at its 600-line limit, so two import lines were joined.\n",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 115078,
+      "cached_input_tokens": 71552,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1052,
+      "reasoning_output_tokens": 228
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 43526,
+      "cached": 71552,
+      "write": 0,
+      "output": 1052
+    },
+    "cost_usd": 0.1047272,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T11:33:21.628Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/logins.mjs implements input-only credentials, shared main-checkout storage and atomic 0600 writes. Passing AC1 tests cover piping, argument refusal, permissions and worktree sharing; terminal input reuses keys.mjs READ_SILENTLY."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdLogins and loginOf implement listing, showing, removal and unknown-name messages. The passing AC2 test exercises these commands across worktrees."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Passing AC3 tests cover ordinary passwords, but privateHit in scripts/private-words.mjs removes literal [private] markers before matching passwords. A saved password containing that text escapes both commit and ship checks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "saveRound combines private words and saved passwords for redaction. The passing AC4 test exercises saved reviewer text and the builder response."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing AC5 test verifies a one-line empty message, no cache creation and a clean git status. The reported related tests have no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/private-words.mjs",
+        "issue": "Saved passwords containing the literal text [private] bypass commit and ship protection. saveLogin accepts abc[private]def, but privateHit replaces the marker with a null character before searching. A read-only reproduction returned null for privateHit('password abc[private]def', [], null, ['abc[private]def']). Both stagedPrivateLines and privateLinesInSpeck use this function, so they allow that password to be published.",
+        "suggested_fix": "Match saved passwords against the original line before excluding redaction markers from private-word matching. Add regression tests showing that commit and ship checks reject a saved password containing [private], without printing it.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The login commands and storage work for the tested cases, and saved review text is redacted. One secret-protection gap must be fixed: passwords containing “[private]” can pass the commit and ship checks unchanged."
+  }
+}
+```
+
+</details>

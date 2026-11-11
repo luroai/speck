@@ -64,11 +64,13 @@ export function redactPrivateWords(value, words, keep = []) {
 // `re` (homePathPattern) finds it, or null for neither. Shared by ship and the commit check, so they agree.
 // 0633: speck's own `[private]` markers (redactPrivateWords) aren't searched for words, so a word inside one, such as
 // "riv", doesn't count, and the text either side of one isn't read as a single word.
-// 0635: 'login' for one of `logins`, a saved test login's password (lower-cased).
+// 0635: 'login' for one of `logins`, a saved test login's password (lower-cased), matched against the whole line,
+// markers and all, so a password holding `[private]` is still found.
 export function privateHit(line, words, re, logins = []) {
   const text = line.replaceAll('[private]', '\0').toLowerCase();
   if (words.some(w => text.includes(w))) return 'word';
-  if (logins.some(w => text.includes(w))) return 'login';
+  const whole = line.toLowerCase();
+  if (logins.some(w => whole.includes(w))) return 'login';
   return re && re.test(line) ? 'home' : null;
 }
 

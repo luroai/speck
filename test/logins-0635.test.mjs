@@ -187,3 +187,20 @@ test('0635 AC1 AC2: the brief and speck help name the logins commands and the fi
   const help = spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' });
   assert.match(help.stdout + help.stderr, /speck logins \[set\|show\|remove <name>\]/);
 });
+
+test('0635 AC3 F1: a saved password holding [private] is still refused by the commit and ship checks, without being shown', () => {
+  const odd = 'abc[private]def';
+  const r = hookedRepo('');
+  saveLogin(r.dir, 'admin', 'ann', odd);
+  const c = commitFile(r, 'speck/ideas/note.md', `password ${odd}\n`);
+  assert.notEqual(c.status, 0);
+  assert.match(c.stderr, /speck\/ideas\/note\.md line 1: a saved test login's password/);
+  assert.ok(!c.stderr.includes(odd));
+  const s = repo();
+  saveLogin(s.dir, 'admin', 'ann', odd);
+  fs.mkdirSync(path.join(s.wt, 'speck'), { recursive: true });
+  fs.writeFileSync(path.join(s.wt, 'speck', 'x.md'), `password ${odd.toUpperCase()}\n`);
+  git(s.wt, 'add', 'speck/x.md');
+  git(s.wt, 'commit', '-q', '--no-verify', '-m', 'x');
+  assert.deepEqual(privateLinesInSpeck(s.dir, 'main', 'side'), [{ file: 'speck/x.md', line: 1, what: 'login' }]);
+});
