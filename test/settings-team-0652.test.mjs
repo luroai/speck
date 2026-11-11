@@ -223,3 +223,15 @@ test('0652 AC1 (round 1 F1): with QA\'s settings blank, QA\'s card says it runs 
   changeTo(p, 'qa_effort', 'max');
   assert.equal(line(), null, 'QA\'s own once any is set');
 });
+
+test('0652 AC1 (round 2 F1): without your agents\' models, QA\'s line follows the watch agent and the builder it falls back on', async () => {
+  const v = viewOf(panelRepo().dir);
+  delete v.agent_models; // each agent and its model in lists of their own
+  const p = await opened(v);
+  const line = () => p.all(rowOf(p, 'qa_agent')).find(n => has(n, 'inherit'))?.textContent ?? '';
+  assert.match(line(), /Virgil's agent does: Claude Code · /);
+  changeTo(p, 'builder', 'codex');
+  assert.match(line(), /Virgil's agent does: Codex · /, 'the watch agent left blank runs on a Codex builder\'s agent');
+  changeTo(p, 'watch_agent', 'cursor');
+  assert.match(line(), /Virgil's agent does: Cursor · /);
+});

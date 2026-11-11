@@ -144,3 +144,86 @@ Settings opens on Your team: a card for each member, with its character, its job
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4537a81372e728bfe985d640bd0b5507785af1b2",
+    "session": "continued",
+    "thread_id": "01a1cb5e-5ca8-77f1-80e1-7d14c84761b0",
+    "builder_response": "- Tests run: test/settings-team-0652.test.mjs, test/panel-0593.test.mjs, test/foreman-fix-0286.test.mjs, test/panel-0257.test.mjs, test/panel-0258.test.mjs, test/settings-0397.test.mjs, test/settings-0407.test.mjs, test/settings-agents-0399.test.mjs, test/speck-name-0485.test.mjs, test/speck-name-0575.test.mjs, test/subscriptions-0646.test.mjs, test/panel-0368.test.mjs, test/settings-0396.test.mjs, test/panel-0427.test.mjs, test/foreman-0285.test.mjs (its two AC3 tests also fail on the base code, as said in round 1) and test/full-suite-0630.test.mjs (passes now).\n- F1: fixed. While all four QA settings are blank, as chosen in the view, QA's card has a line under qa_agent, `qaInheritLine()` in templates/panel-settings.js: \"With QA's settings blank, QA runs as <name>'s agent does: <agent> · <watch_model or its default model>, <watch_effort or its default effort>. Set any of them to give QA its own, where blank is its agent's default.\" It's redrawn when watch_agent, watch_model, watch_effort, the builder or any QA setting changes, and goes once any QA setting is set. Saved values are unchanged: nothing extra is sent on Save. Test: `0652 AC1 (round 1 F1)`, with watch_model opus and watch_effort high.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 449733,
+      "cached_input_tokens": 376064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1676,
+      "reasoning_output_tokens": 267
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6566,
+      "cached": 137088,
+      "write": 0,
+      "output": 627
+    },
+    "cost_usd": 0.0331108,
+    "tests": {
+      "failing": 2,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T16:11:06.954Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "qaInheritLine() now shows inherited model and effort, and the new F1 regression test passes with agent_models present. However, SETTING_AFFECTS.builder and SETTING_AFFECTS.watch_agent omit qa_agent, so changing either separate agent picker when agent_models is absent leaves that inheritance line stale."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "settings-team-0652 AC2 tests passed, exercising Save requests, machine-only persistence and validation refusals through panelSaveSettings()."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "renderSettings() places Your team and subscriptions before the remaining sections. The passing AC3 test checks section order and retained shipping and limits controls."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "teamNow(), teamShown() and limitWords() implement limit and stand-in reporting. Passing AC4 tests cover readiness, bench order, held agents and reviewer restrictions."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing AC5 tests check retained settings with and without model catalogues and the 320 px layout in both appearances."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "The inheritance display is fixed for combined agent/model pickers, but remains stale with separate pickers. When agent_models is absent, changing watch_agent or builder uses SETTING_AFFECTS, whose corresponding arrays omit qa_agent. Consequently qaInheritLine() continues naming the previous inherited agent until another redraw.",
+        "suggested_fix": "Include qa_agent in the separate-picker redraw dependencies for watch_agent and builder. Extend the regression test to remove agent_models, change the manager's agent and an inherited builder agent, and verify QA's inheritance line updates.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The QA card now explains its inherited model and effort. One fallback path remains incomplete: when model lists are unavailable, changing the manager's agent can leave QA displaying the previous agent. The other criteria remain covered by passing tests."
+  }
+}
+```
+
+</details>

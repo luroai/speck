@@ -416,8 +416,8 @@ function redrawSettings(keys, kept = null) {
 // 0370: the settings whose rows show what a change to `key` alters: its own lines, and the lists of models and efforts
 // it decides.
 // 0652: and the benches whose order leaves out the member's own agent, and QA's, which can run on the watch agent's.
-const SETTING_AFFECTS = { reviewer: ['reviewer', 'reviewer_model', 'reviewer_effort', 'reviewer_bench'], builder: ['builder', 'builder_model', 'watch_model', 'builder_bench', 'watch_bench', 'qa_bench'],
-  watch_agent: ['watch_agent', 'watch_model', 'watch_bench', 'qa_bench'], reviewer_model: ['reviewer_model', 'reviewer_effort'], qa_agent: ['qa_agent', 'qa_model', 'qa_bench'] };
+const SETTING_AFFECTS = { reviewer: ['reviewer', 'reviewer_model', 'reviewer_effort', 'reviewer_bench'], builder: ['builder', 'builder_model', 'watch_model', 'builder_bench', 'watch_bench', 'qa_agent', 'qa_bench'],
+  watch_agent: ['watch_agent', 'watch_model', 'watch_bench', 'qa_agent', 'qa_bench'], reviewer_model: ['reviewer_model', 'reviewer_effort'], qa_agent: ['qa_agent', 'qa_model', 'qa_bench'] };
 // 0273: a setting's name, which a narrow row breaks after a dot or an underscore ("max_parallel_" then "builds"),
 // rather than in the middle of a word.
 function settingName(key) {
