@@ -46,7 +46,11 @@ While the reviewer's agent is limited, review rounds run on the first reviewer o
 - Pictures: none, because the visible change is only words added to the review pack's lines, and no ticket in this repo has a round run on a stand-in to show.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When your reviewer hits its usage limit, reviews no longer just wait for the reset. Each review round runs instead on the first agent on the reviewer's bench that's set up, signed in, not limited itself and allowed to review the build (not the same model family as the builder, unless you allow that). It runs on that agent's own default model, and starts afresh with everything the earlier rounds said. Once the limit has reset, rounds go back to your own reviewer, again starting afresh with the full history.
+
+To see it, look at a ticket's review pack or its review log: a round that ran on a stand-in says, for example, "claude, standing in for codex, as the codex reviewer's usage limit is reached until 16:44 UTC". The reviewer's bench is set with `speck config set reviewer_bench "claude, cursor"`; left blank, it's your agents in order.
+
+Worth knowing: if nothing on the bench is free, the build waits for the reset as before. A round tries one stand-in only: if that one turns out to be limited too, the build waits for its reset.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,12 @@ While the reviewer's agent is limited, review rounds run on the first reviewer o
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - A stand-in round clears its build's record of the reviewer's limit, so later rounds ask the limited reviewer first: saved as `speck/ideas/2026-11-11-remember-the-reviewer-s-limit-while-a-stand-in-reviews.md`.
+  - A round tries one stand-in only: saved as `speck/ideas/2026-11-11-try-the-next-on-the-bench-when-a-stand-in-is-limited-too.md`.
+  - 0630 AC3's full-run turn test failed once under the related run's load; skipped as it matches `speck/ideas/2026-11-11-steady-the-0630-full-run-turn-test-under-load.md`.
+  - 0264 AC3's ship queue test failed once under the same load; skipped as it matches `speck/ideas/2026-11-11-steady-the-0264-ac3-ship-queue-test.md`.
+  - The build and review skills still say exit 18 means the build waits; that's now only when no stand-in is free, which they read correctly as it is. A docs tidy-up at most, not saved.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -137,6 +147,89 @@ While the reviewer's agent is limited, review rounds run on the first reviewer o
     ],
     "escalation_question": "",
     "summary": "The change selects eligible backup reviewers and explains why they took over. Reset waiting and return to the original reviewer are covered. One gap remains: repeated rounds on the same backup reuse its session despite the ticket requiring a fresh session with full history."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8ddbe3d041102af4debb0bcf183379476c503719",
+    "session": "continued",
+    "thread_id": "01a1cb21-9758-7ab0-8ced-7d57d159b118",
+    "builder_response": "- Tests run: test/review-stand-in-0649.test.mjs test/reviewer-limit-0623.test.mjs\n- F1: fixed. Every round on a stand-in now starts a fresh session with the full history, in both runners: `runCommandReview` (scripts/reviewers.mjs) no longer offers a stand-in round a session to resume, and `runCodexReview` (scripts/review.mjs) treats a stand-in round as fresh, each saying \"because it stands in for <reviewer>\". New test \"0649 AC1: each round on a stand-in starts a fresh session with the full history, the same stand-in's included\" runs two rounds on the same stand-in and checks the second isn't resumed, its prompt has the full history and its record says `session: fresh`.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 350449,
+      "cached_input_tokens": 287488,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1799,
+      "reasoning_output_tokens": 214
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6323,
+      "cached": 115968,
+      "write": 0,
+      "output": 523
+    },
+    "cost_usd": 0.0294728,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T15:04:29.425Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "standInFor checks bench order, readiness, recorded limits and the same-model rule. Both reviewer runners now force fresh stand-in sessions with full history and record stand_in metadata. Passing AC1 tests include two consecutive rounds on the same stand-in."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 tests verify that printRound, reviewPack and the closing review log identify the stand-in and explain the usage limit."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 integration test verifies exit 18, no reviewer launch or recorded round, and preservation of the reset-wait record when no eligible agent is free."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 integration test verifies return to the original reviewer after expiry, using a fresh session containing the earlier review history."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The latest supplied run reports 153 passed, zero failed and three skipped across the ticket's tests and the changed reviewer-limit test file. No regression attributable to the change was identified."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review-stand-in.mjs",
+        "issue": "Consecutive rounds on the same stand-in previously resumed its session instead of starting fresh with full history.",
+        "suggested_fix": "Implemented in both reviewer runners; the new passing consecutive-round integration test checks no resume, full history and session: fresh.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Eligible backup reviewers now take over while the original reviewer is limited, with the reason shown in the review pack. Every backup round starts fresh with the full history, and reviews return to the original agent after reset. The previous finding is resolved; the reviewed tests pass."
   }
 }
 ```
