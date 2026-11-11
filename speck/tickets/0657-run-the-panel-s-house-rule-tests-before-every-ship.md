@@ -1,7 +1,7 @@
 ---
 id: "0657"
 title: "Run the panel's house-rule tests before every ship"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0656"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T17:39:36.477Z"
+approved: "2026-11-11T17:56:40.026Z"
 
 ---
 # 0657 · Run the panel's house-rule tests before every ship
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0631, speck ships on its quick tests, which leave out every test that starts a real panel or browser. Some of those check rules for the whole panel, such as every coloured background setting its text colour (0161 AC1) and the allowed text sizes (0427 AC1), so on 2026-11-11 two panel tickets shipped breaking them, and the full suite failed on `main` afterwards, showing Needs you.
@@ -50,9 +51,14 @@ The quick tests each ship waits for now always include the panel's house rules: 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 157,072
+- Elapsed since build started: 17 min
+- Changed lines: 31 (limit 5000)
 - Follow-ups: none for the inbox.
 - Known limit: the four panel rule files add roughly 15 to 20 s to every quick run and every `speck test --files`, as each starts a real panel or browser for some of its tests.
 - Note: one stray whole-suite run with `node --test` (no heavy limit) during the build saw `0264 AC3: speck run doesn't put shipping on hold` fail once; it isn't related to this change and the recorded full suite passed. Worth watching for flakiness under load.
