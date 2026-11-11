@@ -54,7 +54,7 @@ speck also keeps work moving. Once it's on, when a build or a ship stops for a r
 
 Some questions need someone to look at the app itself, such as how a page looks or whether signing in works. Once it's on, speck checks those on a low-risk ticket itself: it starts your app from that ticket's copy of the code, signs in with a test login you've saved on your machine if it needs to, takes screenshots, then carries on or asks you, saying what it saw. The screenshots show in the ticket's review pack. You don't have to tell speck how to start your app first: the first time it needs to, it works out how from your project, tries it and remembers what worked. If nothing works, it asks you.
 
-Usage limits don't stop the line either. When Claude runs out of usage partway through a build, or Claude or Codex partway through a review, speck waits for the limit to reset and carries the build on by itself, without you answering anything. If speck's own agent runs on Claude and hits the limit, speck looks into stopped work on another of your agents, such as Codex, and moves back once the limit resets.
+Usage limits don't stop the line either. When Claude, Codex or Cursor runs out of usage partway through a build, or Claude or Codex partway through a review, speck waits for the limit to reset and carries the build on by itself, without you answering anything. If speck's own agent runs on Claude and hits the limit, speck looks into stopped work on another of your agents, such as Codex, and moves back once the limit resets.
 
 ### Turning it on
 
@@ -80,7 +80,7 @@ The review pack is still there whenever you want to check the work.
 - **speck makes the obvious calls, and tells you.** With `watch: decide`, speck takes a build's recommendation on a low-risk ticket instead of stopping the line, and lists each call in Decided for you with what it didn't choose.
 - **speck looks into stops and slow builds.** When a build or a ship stops for a reason speck doesn't expect, or a build runs well past its usual time, speck has its own agent look into it and do one thing about it, or ask you.
 - **speck checks the running app itself.** When a build asks how something looks or works, speck starts your app, signs in with your test logins and looks, and keeps the screenshots in the review pack.
-- **speck waits out usage limits.** When Claude or Codex hits its usage limit, speck picks the work up again once it resets, so a limit overnight doesn't leave the queue stuck until morning.
+- **speck waits out usage limits.** When Claude, Codex or Cursor hits its usage limit, speck picks the work up again once it resets, so a limit overnight doesn't leave the queue stuck until morning.
 - **speck holds back a ticket whose criteria changed.** If a ticket's acceptance criteria changed after you set it ready, it never ships by itself: it waits for you at Ship, showing what each criterion was and is now.
 - **speck raises its own fix tickets.** If `main` breaks, speck has the build that finds it write a priority-0 fix ticket and send it to the front of the queue, instead of patching it inside someone else's work.
 - **speck sorts out its own merge conflicts.** When `main` has moved on, speck has the build merge it in, keep what both sides meant and have the merge reviewed again.

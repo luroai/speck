@@ -393,7 +393,7 @@ function runOn(worker) {
     saveForeman(runsDir(repo), { lock, max: last.max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) }, ...(limits.view() ? { limit: limits.view() } : {}), ...fullRuns.view() }); // 0299; 0630: a failing full run; 0295: none waits to ship in pull request mode; 0622
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
-    if (limits.waiting(t.id)) return { kind: 'limit', why: 'its build stopped on Claude\'s usage limit, and speck run will carry it on' }; // 0622
+    if (limits.waiting(t.id)) return { kind: 'limit', why: 'its build stopped on its agent\'s usage limit, and speck run will carry it on' }; // 0622; 0644: Claude's, Codex's or Cursor's
     if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
     const runs = runsDir(repo);
     // 0327: committed since its build ended still ready. 0376: or committed ready since `speck stop` ended its build.
@@ -459,7 +459,7 @@ function runOn(worker) {
       if (own) { wait(t, own.kind, own.why); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
       if (!now) { wait(t, 'builder', live.why()); continue; }
-      if (limits.holds(launchAgent(now.cfg, now.command, t))) { wait(t, 'limit', 'Claude\'s usage limit is reached'); continue; } // 0622
+      const limited = limits.heldSays(launchAgent(now.cfg, now.command, t)); if (limited) { wait(t, 'limit', limited); continue; } // 0622; 0644: Codex's and Cursor's too
       if (running.size >= now.max) { wait(t, 'slots', `all ${now.max} build slot${now.max === 1 ? '' : 's'} in use`); continue; }
       launch(t);
       if (!launched.has(t.id) && failed.has(t.id)) wait(t, failed.get(t.id).kind, failed.get(t.id).why);
