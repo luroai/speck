@@ -41,6 +41,7 @@ With `watch: fix` or `decide`, speck raises and readies a fix ticket itself when
 - Asked for 2026-11-11, from the screenshot of the row: "No idea what this even means".
 - A build that finds the base branch broken already makes a fix ticket and sets it ready (`/speck-build`, exit 14); the watch agent's `speck watch fix` makes only a draft.
 - Full runs: `scripts/full-suite.mjs` (0630); the row: 0655.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
