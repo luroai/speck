@@ -1,7 +1,7 @@
 ---
 id: "0651"
 title: "Give QA its own agent"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0645"]                # ticket ids that must be done first
 created: 2026-11-11
+started: "2026-11-11T14:39:24.858Z"
 
 ---
 # 0651 · Give QA its own agent
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Checks in the running app (0636, 0638) are done by Virgil's watch agent, on its agent and model. A check that clicks through an app suits a different model from one that decides what to do about a stop, and you can't choose it separately.
