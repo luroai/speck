@@ -1,7 +1,7 @@
 ---
 id: "0638"
 title: "Let speck work out how to start your app the first time it needs to"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T13:05:48.682Z"
 ---
 # 0638 · Let speck work out how to start your app the first time it needs to
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck checks a build's question in the running app only once `commands.start` is set, and every project starts its app differently: this repo's is the panel, another's a CRM. Setting it by hand in each project is a chore you only find out about when a check-in-the-app question comes to you instead.
@@ -48,7 +48,9 @@ The first time speck needs a project's app and `commands.start` isn't set, it wo
 - 0636's AC5 test no longer lists `commands.start` blank as a case where the question waits for you: AC3 of this ticket changes that. Its shared helpers moved to `test/support/app-check.mjs`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You no longer have to tell speck how to start your app before it can check a question in it. The first time a build asks for something to be checked in the running app and speck doesn't know how to start it, speck reads the project (its README, its package files and its scripts), works out a likely start command and tries it. Once one works, speck remembers it in its settings, with a small commit of its own, and carries on with the check. If nothing it tries works, it asks you how to start the app, saying what it tried and what went wrong.
+
+To see it: leave the start command blank in a project, turn the engineering manager to fix or decide, and let a low-risk build ask for a check in the app. Worth keeping an eye on: speck only saves the command when your settings file has no unsaved edits of your own, and it never changes a start command that's already set.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +60,81 @@ The first time speck needs a project's app and `commands.start` isn't set, it wo
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox notes): when the ticket's app is already running, `speck app <id> --start` reports that running app and saves nothing, even with `commands.start` blank. `seen-builds-0319`'s AC1–AC4 test failed once on a timing race in a 231-file related run and passed alone; worth watching if it recurs.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "787b6263ffdac8f4dc8600ad9fdb8d9bb8e2a67f",
+    "session": "fresh",
+    "thread_id": "01a1cabe-b2ab-7492-bf17-d6a4ed1dad03",
+    "builder_response": "- Tests run: `speck test --related test/app-start-0638.test.mjs test/app-check-0636.test.mjs test/seen-builds-0319.test.mjs` (the ticket's own file, 0636's file it changed, and seen-builds-0319, which failed once in the first related run on a timing race under load: 0002 seen before its record was marked seen; it passed twice alone and in this run). 2555 pass, 0 fail.\n- Round 1. No visual change, so no pictures.\n- `test/app-check-0636.test.mjs`: its AC5 list drops \"commands.start blank → the question waits for you\", which this ticket's AC3 deliberately changes; its shared helpers moved unchanged to `test/support/app-check.mjs` so 0638's tests use them too.\n- `onBase` in `scripts/split-off.mjs` is exported and reused for the commit on the base branch (ticket Notes ask for it to work as split-off does); `commitTicketOnly` commits only `speck/config.yml`, leaving anything else staged as it was.\n- `scripts/foreman-agent.mjs` stays at 600 lines: only its import line and the checkBrief call changed; the brief's new steps live in `scripts/app-check.mjs`.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 159381,
+      "cached_input_tokens": 99840,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 834,
+      "reasoning_output_tokens": 159
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 59541,
+      "cached": 99840,
+      "write": 0,
+      "output": 834
+    },
+    "cost_usd": 0.137406,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T13:14:50.453Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/app.mjs cmdApp and startApp apply command and URL overrides with port substitution. Passing 0638 AC1 tests exercise real app starts and verify configured settings remain unchanged."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "saveStart checks the base checkout's config, preserves existing start settings and uncommitted changes, and uses commitTicketOnly to commit just the config. Passing AC2 tests cover persistence, optional URL, unrelated staged files, a temporary base checkout, failed starts and keeping the app running."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "appCheckable now permits blank commands.start; foremanAgentQueue passes startSet into checkBrief. The passing AC3 test exercises both fix and decide queues and verifies discovery instructions precede the app checks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "checkBrief and the watch skill instruct the agent to ask how to start the app, including attempted commands and their last output. The passing AC4 test checks these instructions and exercises watch ask, leaving the ticket blocked."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "appCheckable retains the watch-mode and low-risk gates. Passing AC5 tests verify tell, off and high-risk cases start no watch agent when commands.start is blank; existing 0636 tests cover configured starts."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Speck can try an app start command, remember it after the app answers, and use its watch agent to discover it when needed. The tests cover saving safely and leaving questions for you when required. The reported test run passed, and I found no blocking issues."
+  }
+}
+```
+
+</details>
