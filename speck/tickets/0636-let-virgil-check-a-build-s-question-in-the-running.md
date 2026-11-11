@@ -1,7 +1,7 @@
 ---
 id: "0636"
 title: "Let speck check a build's question in the running app"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-11-virgil-checks-the-work-in-the-running-app.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0634","0635"]                # ticket ids that must be done first
 created: 2026-11-11
+started: "2026-11-11T11:36:54.947Z"
 
 ---
 # 0636 · Let speck check a build's question in the running app
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Builds often block with "check this in the app yourself" or "log in and check", and you go with the recommendation almost every time. Each one stops the ticket until you're back, for a check an agent can do by starting the app, signing in and taking screenshots.
