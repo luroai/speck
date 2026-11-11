@@ -1,7 +1,7 @@
 ---
 id: "0640"
 title: "Prepare release 1.1.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0638","0639"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T13:24:37.152Z"
 approved: "2026-11-11T13:31:20.291Z"
+finished: "2026-11-11T13:33:40.300Z"
 
 ---
 # 0640 · Prepare release 1.1.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck has grown since 1.0.0: it checks the work in the running app, works out how to start each app, keeps test logins on your machine, carries on after usage limits, and ships faster on quick tests. Anyone following the setup prompt, or updating speck in a project, still gets 1.0.0.
