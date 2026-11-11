@@ -41,6 +41,7 @@ Tests that start a real `speck run` see only the agents they fake, so they give 
 - `test/support/run.mjs` passes `{ ...process.env, … }` to `speck run`, so PATH and HOME are the machine's.
 - The full suite failing on `main` counts under Needs you until a run on a newer commit passes (0630).
 - Failing before this build: none (the recorded result, from f6827fa, passed; the 0622 test is the one this ticket fixes)
+- Self-check: no changes. The related run also failed `test/foreman-0285.test.mjs`'s two 0285 AC3 tests, which fail the same way without this change (a panel test, not speck run's), and once `0549 AC4`, which passes alone each time: neither is changed here.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
