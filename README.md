@@ -52,6 +52,10 @@ When a build hits a question it can't answer from the ticket, it stops with one 
 
 speck also keeps work moving. Once it's on, when a build or a ship stops for a reason it has no steps for, or a build runs far longer than usual, it has its own agent look into it and do one thing about it: resume the build with an instruction, try the ship again, raise a fix ticket, tell you what it found or ask you.
 
+Some questions need someone to look at the app itself, such as how a page looks or whether signing in works. Once it's on, speck checks those on a low-risk ticket itself: it starts your app from that ticket's copy of the code, signs in with a test login you've saved on your machine if it needs to, takes screenshots, then carries on or asks you, saying what it saw. The screenshots show in the ticket's review pack. You don't have to tell speck how to start your app first: the first time it needs to, it works out how from your project, tries it and remembers what worked. If nothing works, it asks you.
+
+Usage limits don't stop the line either. When Claude runs out of usage partway through a build, or Claude or Codex partway through a review, speck waits for the limit to reset and carries the build on by itself, without you answering anything. If speck's own agent runs on Claude and hits the limit, speck looks into stopped work on another of your agents, such as Codex, and moves back once the limit resets.
+
 ### Turning it on
 
 speck takes the obvious calls once you choose `decide` for `watch`, in the Your engineering manager group of the panel's Settings, or with `speck config set watch decide`. Until then `watch` is `tell`, and every question waits for you. `fix` sits between the two: speck takes only clear-cut calls that change nothing you'd notice, and looks into stops and long builds.
@@ -67,6 +71,7 @@ Once you trust the work, turn on auto-ship, in the panel's Settings or with `spe
 - a high-risk ticket, unless you add high to `auto_ship_risk`
 - a ticket whose acceptance criteria changed after you set it ready, with its review pack showing what changed
 - a task, as reading its result is its review
+- a ticket whose approving review speck didn't run itself, or whose review record has changed since, so only a review speck saw for itself can ship work unseen
 
 The review pack is still there whenever you want to check the work.
 
@@ -74,6 +79,8 @@ The review pack is still there whenever you want to check the work.
 
 - **speck makes the obvious calls, and tells you.** With `watch: decide`, speck takes a build's recommendation on a low-risk ticket instead of stopping the line, and lists each call in Decided for you with what it didn't choose.
 - **speck looks into stops and slow builds.** When a build or a ship stops for a reason speck doesn't expect, or a build runs well past its usual time, speck has its own agent look into it and do one thing about it, or ask you.
+- **speck checks the running app itself.** When a build asks how something looks or works, speck starts your app, signs in with your test logins and looks, and keeps the screenshots in the review pack.
+- **speck waits out usage limits.** When Claude or Codex hits its usage limit, speck picks the work up again once it resets, so a limit overnight doesn't leave the queue stuck until morning.
 - **speck holds back a ticket whose criteria changed.** If a ticket's acceptance criteria changed after you set it ready, it never ships by itself: it waits for you at Ship, showing what each criterion was and is now.
 - **speck raises its own fix tickets.** If `main` breaks, speck has the build that finds it write a priority-0 fix ticket and send it to the front of the queue, instead of patching it inside someone else's work.
 - **speck sorts out its own merge conflicts.** When `main` has moved on, speck has the build merge it in, keep what both sides meant and have the merge reviewed again.
@@ -87,7 +94,9 @@ The review pack is still there whenever you want to check the work.
 
 The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. `speck/config.yml` holds the project's settings, and your own choices, such as who builds and reviews, can be kept for this machine only.
 
-**Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them, and pick each role's agent and model, in the panel's Settings. API keys stay on this machine, out of git.
+**Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them, and pick each role's agent and model, in the panel's Settings. API keys stay on this machine, out of git, and so do the test logins speck signs in to your app with, which you save with `speck logins set <name>`.
+
+**Your app.** To check a question in your app, speck starts it with `commands.start`, a command with `{port}` where the port goes. Leave it blank and speck works it out the first time it needs it, then saves it. `speck app <id>` starts the app from a ticket's copy of the code for you to look at, and `speck app <id> --stop` stops it.
 
 **Which to choose.** speck works with one agent building and reviewing (set `allow_same_model_review: true`), but two different agents are best: a second model reviews adversarially and catches what the builder misses. The best options from testing so far:
 
@@ -95,7 +104,7 @@ The tickets, the reviews and every decision stay in your repo, as Markdown and Y
 - **Reviewer: Codex, with gpt-6.1-sol.** Codex has reviewed almost every speck ticket, usually in under a minute a round.
 - **Grok through Cursor** worked well as a builder in a short test, but is slow as a reviewer: it found the same problems as Codex but took 4 to 11 minutes a round.
 
-A build runs only the tests its change touches. The whole suite runs when a ticket ships, on the ticket merged with `main` as it is then, and one ship queue ships approved tickets one at a time, so ships never race each other. [`docs/brief.md`](docs/brief.md) has the full design.
+A build runs only the tests its change touches. The tests in `commands.test` run when a ticket ships, on the ticket merged with `main` as it is then, and one ship queue ships approved tickets one at a time, so ships never race each other. If your whole suite is slow, make `commands.test` the quick tests and set `commands.test_full` to the whole suite: ships then wait only for the quick tests, and `speck run` runs the whole suite on `main` after ships, without holding anything up. If it fails, speck counts it under Needs you, and `speck status` names the failing tests. [`docs/brief.md`](docs/brief.md) has the full design.
 
 ## Who it's for
 
@@ -152,6 +161,8 @@ In your terminal, `speck` stands for `node .speck/scripts/speck.mjs`, which `ini
 | `config set <key> <value>` | Changes one setting. Your own are saved for this machine only, the rest in `speck/config.yml` |
 | `config show` | The main settings by group, with each one's value and what it does |
 | `keys` | Model providers' API keys on this machine: `keys set <provider>` and `keys remove <provider>` |
+| `logins` | Test logins on this machine, for speck to sign in to your app: `logins set <name>` and `logins remove <name>` |
+| `app <id>` | Starts your app from a ticket's copy of the code and prints its address (`--stop` stops it) |
 | `agents` | The agents speck knows, and which are yours: `agents add <agent>` and `agents remove <agent>` |
 | `doctor` | Checks that git, your builder and your reviewer are ready |
 
