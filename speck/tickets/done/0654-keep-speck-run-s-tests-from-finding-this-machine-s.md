@@ -1,7 +1,7 @@
 ---
 id: "0654"
 title: "Keep speck run's tests from finding this machine's agents"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:39:35.306Z"
 approved: "2026-11-11T15:50:29.573Z"
+finished: "2026-11-11T15:53:01.002Z"
 
 ---
 # 0654 · Keep speck run's tests from finding this machine's agents
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full suite fails on `main` from `fc53908` (0647) on: `0622 AC1 AC2 AC3: a build that hit the limit while speck run was off is waited out when it starts, and holds new work too`. The tests start a real `speck run` with this machine's own PATH and home folder, so it finds the real Cursor CLI installed and signed in, takes it as the builder's bench (0647) and starts the second ticket on it instead of holding it. The result depends on which agents the machine running the tests has.
