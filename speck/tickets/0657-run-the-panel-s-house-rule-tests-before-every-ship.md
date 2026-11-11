@@ -39,6 +39,7 @@ A build or ship that breaks one of the panel's house rules fails before review a
 ## Notes
 - 0631 made the quick run (`--quick` in `test/support/suite.mjs`); `commands.checks` already runs alongside `speck test --files` in builds (brief: `speck test`).
 - After 0656, as these rules fail on `main` until it ships.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
