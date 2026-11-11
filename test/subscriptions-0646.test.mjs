@@ -6,7 +6,7 @@ import path from 'node:path';
 import { panelRepo, gitEnv } from './support/panel.mjs';
 import { openSettings } from './support/settings.mjs';
 import { agentsPage, agentsBox, AGENTS_FOUND, YOURS_VIEW, settingsWithAgents } from './support/your-agents.mjs';
-import { subscriptionsAnswer, readingShown, providerSpend, weekStart } from '../scripts/subscriptions.mjs';
+import { subscriptionsAnswer, readingShown, providerSpend, weekStart, spendReadable } from '../scripts/subscriptions.mjs';
 import { saveUsage } from '../scripts/agent-usage.mjs';
 import { yourAgentsFile } from '../scripts/your-agents.mjs';
 import { knownProviders } from '../scripts/custom-providers.mjs';
@@ -120,6 +120,22 @@ test('0646 AC3: a model provider on an API key shows this week\'s spend from wha
   assert.doesNotMatch(text, /%/);
   const q = await openWith({ agents: [{ ...row, spend: { cost_usd: null, cost_unknown: false, since: row.spend.since } }] });
   assert.match(subRows(q)[0].textContent, /This week's spend couldn't be read/);
+});
+
+test('0646 AC3: spend records that can\'t be read show as unreadable, not as $0', { skip: process.getuid?.() === 0 && 'root reads any file' }, async () => {
+  const r = repoWith(['claude', 'deepseek']);
+  const runs = path.join(r.dir, 'speck', '.cache', 'runs');
+  fs.mkdirSync(runs, { recursive: true });
+  const record = path.join(runs, '0001.json');
+  fs.writeFileSync(record, '{}');
+  assert.equal(spendReadable(runs), true);
+  assert.equal(spendReadable(path.join(r.dir, 'no-such-folder')), true, 'nothing recorded yet');
+  fs.chmodSync(record, 0o000);
+  try {
+    assert.equal(spendReadable(runs), false);
+    const answer = await subscriptionsAnswer(r.dir, { find: found(), readCursor: noCursor, now: () => NOW });
+    assert.equal(rowOf(answer, 'deepseek').spend.cost_usd, null);
+  } finally { fs.chmodSync(record, 0o644); }
 });
 
 test('0646 self-check: a plan or window named like a built-in key is shown as plain words, or not at all', () => {

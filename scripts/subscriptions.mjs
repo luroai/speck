@@ -4,6 +4,7 @@
 // read, so it shows this week's spend from what speck recorded instead. The panel's GET /api/usage answers it, apart
 // from GET /api/settings, so a slow read of Cursor's screen holds up nothing else in the view.
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { sharedCacheDir } from './turns.mjs';
 import { knownProviders } from './custom-providers.mjs';
@@ -11,7 +12,7 @@ import { findAgentsAsync } from './agents.mjs';
 import { readUsage, saveUsage, cursorUsageStale } from './agent-usage.mjs';
 import { readCursorUsage } from './cursor-usage.mjs';
 import { yourAgentsView } from './your-agents.mjs';
-import { spendReport } from './spend-view.mjs';
+import { spendReport, runsOf } from './spend-view.mjs';
 import { loadConfig } from './core.mjs';
 
 // Each window's name as the view shows it, in this order.
@@ -71,6 +72,16 @@ export function providerSpend(p, rows) {
   return { cost_usd: cost, cost_unknown: mine.some(r => r.cost_unknown === true) };
 }
 
+// Whether speck's spend records in `runs` can all be read: speck spend's readers take a record they can't read as none,
+// which would show a provider's spend as $0. None at all is fine: nothing was recorded.
+export function spendReadable(runs) {
+  let names;
+  try { names = fs.readdirSync(runs); } catch (e) { return e.code === 'ENOENT'; }
+  return names.filter(n => /\.(json|jsonl|log)$/.test(n)).every(n => {
+    try { fs.accessSync(path.join(runs, n), fs.constants.R_OK); return true; } catch (e) { return e.code === 'ENOENT'; }
+  });
+}
+
 // Reads Cursor's usage again when it's yours, ready and stale, keeping it as `speck agents` does. Two Settings opened at
 // once share one read. null when it didn't read, '' when it kept a new reading, or why it couldn't, in a few words.
 let cursorReading = null;
@@ -102,7 +113,7 @@ export async function subscriptionsAnswer(repo, { find = findAgentsAsync, readCu
   const usage = readUsage(repo), at = now(), since = weekStart(at);
   let rows = null;
   const spendRows = () => {
-    if (rows === null) { try { rows = spendReport(repo, { by: 'model', since }).rows; } catch { rows = false; } }
+    if (rows === null) { try { rows = spendReadable(runsOf(repo)) ? spendReport(repo, { by: 'model', since }).rows : false; } catch { rows = false; } }
     return rows || null;
   };
   return { agents: mine.map(a => {
