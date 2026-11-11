@@ -41,6 +41,7 @@ speck reads Cursor's usage from its `/usage` screen and keeps it as it keeps Cla
 - Checked 2026-11-11 (Cursor CLI 2026.11.11): `/usage` in the interactive `agent` shows `Usage • Premium`, `Resets 12 Nov`, rows Included, Auto and API with `N% used`, and `On-Demand $0` with `No monthly limit`, without a model turn. In print mode (`agent -p`) `/usage` is sent to the model as a prompt, `agent usage` is taken as a prompt too, and `agent about --format json` gives only `subscriptionTier`.
 - It was read by hand through a pseudo-terminal and a terminal emulator. Node has no pseudo-terminal of its own: `script` (util-linux on Linux, BSD `script` on macOS, with different flags) gives one, and the screen's drawing codes have to be followed to read the text.
 - Cursor can change this screen in any release, so a test with a recorded screen should fail loudly when the parser no longer finds the rows.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
