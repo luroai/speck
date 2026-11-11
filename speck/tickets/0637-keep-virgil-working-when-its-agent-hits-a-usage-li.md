@@ -1,7 +1,7 @@
 ---
 id: "0637"
 title: "Keep speck's watch agent working when its agent hits a usage limit"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-10-keep-speck-working-when-an-agent-hits-its-usage-limit.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0636"]                # ticket ids that must be done first
 created: 2026-11-11
+started: "2026-11-11T11:52:34.359Z"
 
 ---
 # 0637 · Keep speck's watch agent working when its agent hits a usage limit
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When Claude's usage limit is reached, speck's watch agent runs on Claude too, so it can't look into anything until the limit resets, while Codex or Cursor sit connected and idle. On 2026-11-10 that left a stopped build untouched for about five hours.
