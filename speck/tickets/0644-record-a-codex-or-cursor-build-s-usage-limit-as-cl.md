@@ -1,7 +1,7 @@
 ---
 id: "0644"
 title: "Record a Codex or Cursor build's usage limit as Claude's is"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0642"]                # ticket ids that must be done first
 created: 2026-11-11
+started: "2026-11-11T14:51:45.219Z"
 
 ---
 # 0644 · Record a Codex or Cursor build's usage limit as Claude's is
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck records a usage limit and carries the build on after the reset only when Claude stops a build (0622). A Codex or Cursor build that stops on its limit is treated as a build that stopped for an unknown reason.
