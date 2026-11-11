@@ -40,6 +40,7 @@ A Codex or Cursor build that stops on its usage limit is waited out and carried 
 - Claude's limit is `scripts/usage-limit.mjs` (0622, `holds` is Claude only); reviewers' limits are `scripts/reviewer-limit.mjs` (0623), whose `REFUSED` already matches Codex's "You've hit your usage limit" text.
 - Checked 2026-11-11: a refused Codex run ends with `"codex_error_info":"usage_limit_exceeded"` and "…try again at 3:41 AM", a local time without a date.
 - Checked 2026-11-11: Cursor's CLI (2026.11.11) has no wording of its own for its limit: the message comes from Cursor's server, and the CLI classes it by error codes such as `PRO_USER_USAGE_LIMIT` and `FREE_USER_USAGE_LIMIT`. So it's matched loosely, as `REFUSED` does.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
