@@ -1,7 +1,7 @@
 ---
 id: "0641"
 title: "Change lane on a second trackpad swipe the same way while the first still glides"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,12 +15,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T13:27:21.806Z"
-blocked_at: "2026-11-11T13:28:46.717Z"
+blocked_at: ""
+waited_seconds: 13
 
 ---
 # 0641 · Change lane on a second trackpad swipe the same way while the first still glides
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 In the panel in Cursor, a sideways trackpad swipe changes lane once, and a second swipe the same way does nothing until you wait. The panel takes every sideways scroll the same way as the first swipe's glide until scrolling has paused for 50 ms (0514), and Cursor's pane sends the next swipe straight on from the glide with no pause, so swiping from Capture to Build or Plan to Shipped takes two swipes with a wait between.
@@ -43,6 +44,7 @@ Two trackpad swipes the same way, one straight after the other, change lane twic
 - Checked 2026-11-11 against the running panel in headless Chromium: a lane change takes 1–12 ms of script and frames stay at 17 ms, so drawing isn't the delay. A real trackpad glide can't be replayed there, so the criteria give the scroll steps to test with the fake page.
 - Web pages get no flag that marks a glide, so a new swipe has to be told from the glide by its steps.
 - Failing before this build: none
+- Went with the recommendation: Change the 0514 check to expect a lane change (chosen by speck, as watch is decide, 2026-11-11 13:28 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
