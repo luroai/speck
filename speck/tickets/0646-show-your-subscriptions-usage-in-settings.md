@@ -40,6 +40,7 @@ The panel's Settings view shows each of your subscriptions with how much it has 
 ## Notes
 - Mockup: the Your subscriptions shelf on the team page, https://claude.ai/artifact/2F85xNeCwn9KGxRn3ZbYZQ.
 - Readings from 0642 and 0643. Keep the panel thin: one column at phone width.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
