@@ -147,9 +147,11 @@ export function foremanView({ run, record, since = null, tickets, fixing = 'tell
   // 0630: the latest run of the full suite on the base branch failed, from speck run's record.
   const fr = rec && rec.full && typeof rec.full === 'object' && typeof rec.full.commit === 'string' ? rec.full : null;
   const failed = fr ? { base: text(fr.base), commit: fr.commit, status: Number.isInteger(fr.status) ? fr.status : 1, tests: list(fr.tests).map(String), at: text(fr.at) || null, log: text(fr.log) || null } : null; // 0655: when it ran and its log, for the panel
+  if (failed && typeof fr.fixing === 'string' && /^\d+$/.test(fr.fixing)) failed.fixing = fr.fixing; // 0658: the fix ticket on its way, which keeps it out of Needs you
+  const yoursToo = failed && !failed.fixing ? 1 : 0;
   const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), name: called, fixing, fixing_says: fixingSays(fixing, called), building, max: rec && Number.isInteger(rec.max) && rec.max > 0 ? rec.max : null, since: on ? since : null, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag, ...(failed ? { full: failed } : {}) }); // 0592: max, the build slots, and since, when speck run started
   if (!on) return view('Off', 'off');
-  if ((yours && fixing !== 'off') || asks.length || stopped || failed) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length + stopped + (failed ? 1 : 0)}`, 'bad');
+  if ((yours && fixing !== 'off') || asks.length || stopped || yoursToo) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length + stopped + yoursToo}`, 'bad');
   if (limit && !(limit.reviewer === true && (building.length || (ship && ship.running)))) return view(`Waiting: usage limit${text(limit.until) ? ` until ${limit.until}` : ''}`, 'warn', text(limit.why)); // 0623: a reviewer's limit doesn't stop what's building
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
   if (building.length) return view(`Building ${building.length}`, 'ok');
@@ -167,7 +169,7 @@ export function foremanLines(v) {
   const name = text(v.name) || 'speck'; // 0576
   const lines = [`SPECK: ${v.word}${speckActs(v.fixing) ? ` · watch: ${v.fixing}` : ''}`, ...(speckActs(v.fixing) ? [`  watch: ${fixingSays(v.fixing, name)}`] : [])];
   for (const h of v.held || []) lines.push(`  ${h}`); // 0299: once, before the tickets it holds up
-  if (v.full) lines.push(`  ${failingSays(v.full.base || 'the base branch', v.full)} It counts under Needs you until a full run on a newer commit passes.`); // 0630
+  if (v.full) lines.push(`  ${failingSays(v.full.base || 'the base branch', v.full)} ${v.full.fixing ? `${name} is fixing it in fix ticket ${v.full.fixing}.` : 'It counts under Needs you until a full run on a newer commit passes.'}`); // 0630. 0658: or the fix ticket on its way
   for (const r of v.ready) lines.push(`  ${r.id} ready, not building: ${r.why}`);
   for (const w of v.ship ? v.ship.waiting : []) lines.push(`  ${w.id} waiting to ship: ${w.why}`);
   const a = v.agent; // 0287: the Foreman agent

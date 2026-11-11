@@ -816,17 +816,19 @@ function fullFailing(st) {
   if (!f || typeof f.commit !== 'string' || !f.commit) return null;
   const str = v => (typeof v === 'string' ? v : '');
   return { base: str(f.base) || str(st.foreman.base) || 'the base branch', commit: f.commit, status: Number.isInteger(f.status) ? f.status : 1,
-    tests: list(f.tests).filter(t => typeof t === 'string' && t), at: str(f.at), log: str(f.log) };
+    tests: list(f.tests).filter(t => typeof t === 'string' && t), at: str(f.at), log: str(f.log), fixing: /^\d+$/.test(str(f.fixing)) ? f.fixing : '' }; // 0658: the fix ticket on its way
 }
 // 0655: how many tests fail, or its exit code when its output names none.
 const fullFails = f => (f.tests.length ? `${plural(f.tests.length, 'test')} fail${f.tests.length === 1 ? 's' : ''}` : `exit code ${f.status}`);
 // 0655: the failing full suite's row under Build's Needs you, with the orange dot. Pressing it opens its view. It's kept
-// while what it says is the same, so a refresh doesn't take its focus.
+// while what it says is the same, so a refresh doesn't take its focus. 0658: while its fix ticket is on its way, it says
+// so in plain words, under Building, without the dot.
 function fullSuiteRow(f) {
-  const sig = signature([f.base, f.commit, f.status, f.tests.length]);
+  const sig = signature([f.base, f.commit, f.status, f.tests.length, f.fixing]);
   if (fullSuiteRowKept && fullSuiteRowKept.sig === sig) return fullSuiteRowKept.node;
-  const short = f.commit.slice(0, 7), said = `${short} · ${fullFails(f)}`;
-  const top = el('div', 'top', null, el('div', 'line', null, titled(el('span', 'title', `Full suite fails on ${f.base}`))), wholeTip(detailsLine('where needs', [el('span', 'said', said)])));
+  const short = f.commit.slice(0, 7), said = `${f.fixing ? `I'm fixing it in ${f.fixing} · ` : ''}${short} · ${fullFails(f)}`;
+  const title = f.fixing ? `Some of the tests broke on ${f.base}` : `Full suite fails on ${f.base}`;
+  const top = el('div', 'top', null, el('div', 'line', null, titled(el('span', 'title', title))), wholeTip(detailsLine(f.fixing ? 'where' : 'where needs', [el('span', 'said', said)])));
   top.tabIndex = 0;
   top.setAttribute('role', 'button');
   top.setAttribute('aria-haspopup', 'dialog');
@@ -863,7 +865,7 @@ function renderFullSuite(f) {
   const ran = Number.isFinite(Date.parse(f.at)) ? shippedAt(Date.parse(f.at), Date.now()) : '–';
   box.replaceChildren(el('div', 'top', null, el('span', 'title', `Full suite fails on ${f.base}`), shut),
     el('div', 'full-suite-body', null,
-      el('p', 'full-suite-says', `The latest full run (commands.test_full) on ${f.base} failed. It counts under Needs you until a full run on a newer commit passes.`),
+      el('p', 'full-suite-says', `The latest full run (commands.test_full) on ${f.base} failed. ${f.fixing ? `I'm fixing it in fix ticket ${f.fixing}. It counts under Needs you again if that ticket is blocked or cancelled, or the suite still fails once it has shipped.` : 'It counts under Needs you until a full run on a newer commit passes.'}`), // 0658
       fact('Commit', f.commit.slice(0, 7), f.commit), fact('Ran', ran, f.at || ran), fact('Log', f.log || '–'),
       el('h2', 'full-suite-head', null, document.createTextNode('Failing tests '), el('span', 'group-n', f.tests.length)),
       f.tests.length ? el('ul', 'full-suite-tests', null, ...f.tests.map(t => el('li', null, t)))
