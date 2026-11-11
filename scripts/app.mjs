@@ -14,6 +14,7 @@ import { buildTicket } from './build-records.mjs';
 import { mainCheckout } from './output.mjs';
 import { markRun, marked, descendants } from './procs.mjs';
 import { checkConfigValue } from './config.mjs';
+import { pidAlive } from './run-switch.mjs';
 
 const MARK = 'SPECK_APP_RUN', DEFAULT_URL = 'http://127.0.0.1:{port}/', DEFAULT_SECONDS = 60;
 const POLL_MS = 200, ASK_MS = 1000, STOP_MS = 5000, LAST_LINES = 20;
@@ -67,14 +68,29 @@ export const freePort = () => new Promise((resolve, reject) => {
   s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)); });
 });
 
-// Whether anything answers at `url`, with any status.
-export const answers = url => new Promise(resolve => {
+// Whether anything answers at `url`, with any status, within `ms` in all, however slowly it sends.
+export const answers = (url, ms = ASK_MS) => new Promise(resolve => {
   let req;
-  try { req = (url.startsWith('https:') ? https : http).get(url, { timeout: ASK_MS, rejectUnauthorized: false }, res => { res.resume(); resolve(true); }); }
-  catch { resolve(false); return; }
-  req.on('timeout', () => req.destroy());
-  req.on('error', () => resolve(false));
+  const done = ok => { clearTimeout(timer); resolve(ok); };
+  const timer = setTimeout(() => { req?.destroy(); resolve(false); }, Math.max(1, ms));
+  try { req = (url.startsWith('https:') ? https : http).get(url, { rejectUnauthorized: false }, res => { res.resume(); done(true); }); }
+  catch { done(false); return; }
+  req.on('error', () => done(false));
 });
+
+// 0634: holds the ticket's lock while `work` runs, so two starts or stops of its app never run at once. A lock left
+// by a process that has gone is taken over.
+async function withLock(repo, pad, work) {
+  const lock = path.join(appsDir(repo), `${pad}.lock`);
+  for (let tries = 0; ; tries++) {
+    try { fs.writeFileSync(lock, String(process.pid), { flag: 'wx' }); break; } catch (e) { if (e.code !== 'EEXIST') throw e; }
+    const holder = Number(fs.readFileSync(lock, 'utf8').trim() || 0);
+    if ((holder > 0 && pidAlive(holder)) || tries > 2)
+      throw new SpeckError(`speck app is already starting or stopping ticket ${pad}'s app. Run this again once it has finished.`);
+    forget(lock);
+  }
+  try { return await work(); } finally { forget(lock); }
+}
 
 // Ends every process in `pids`, asking first and then forcing any that are left. True once they've all gone.
 async function endAll(r) {
@@ -98,6 +114,10 @@ export async function startApp(repo, id) {
   const cfg = loadConfig(repo), { start, url: urlTemplate, seconds } = appSettings(cfg);
   if (!start) throw new SpeckError('commands.start isn\'t set, so speck can\'t start your app: set it with `speck config set commands.start "<command>"`, using {port} for the port it should listen on.');
   const { at } = buildTicket(repo, cfg, padId(id)), pad = padId(id); // refuses a ticket that isn't there
+  return withLock(repo, pad, () => launch(repo, pad, at, start, urlTemplate, seconds));
+}
+
+async function launch(repo, pad, at, start, urlTemplate, seconds) {
   const file = recordFile(repo, pad), was = readRecord(file);
   if (was && appProcesses(was).length) {
     console.log(`Ticket ${pad}'s app is already running at ${was.url}. Stop it with speck app ${pad} --stop.`);
@@ -122,7 +142,7 @@ export async function startApp(repo, id) {
     throw new SpeckError(`Ticket ${pad}'s app ${why}, so everything speck app started for it was stopped. The last lines it wrote:\n${lastLines(log)}`);
   };
   for (const until = Date.now() + seconds * 1000; Date.now() < until; await sleep(POLL_MS)) {
-    if (await answers(url)) {
+    if (await answers(url, Math.min(ASK_MS, until - Date.now()))) {
       child.removeAllListeners();
       console.log(`Ticket ${pad}'s app is running at ${url} (from ${at}). Stop it with speck app ${pad} --stop.`);
       return url;
@@ -134,7 +154,12 @@ export async function startApp(repo, id) {
 
 // Stops the app started for the ticket, with every process it started. Resolves to whether one was running.
 export async function stopApp(repo, id) {
-  const pad = padId(id), file = recordFile(repo, pad), r = readRecord(file);
+  const pad = padId(id);
+  return withLock(repo, pad, () => stop(repo, pad));
+}
+
+async function stop(repo, pad) {
+  const file = recordFile(repo, pad), r = readRecord(file);
   if (!r || !appProcesses(r).length) {
     forget(file);
     console.log(`No app speck started for ticket ${pad} is running.`);

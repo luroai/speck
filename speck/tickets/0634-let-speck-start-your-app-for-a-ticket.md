@@ -1,7 +1,7 @@
 ---
 id: "0634"
 title: "Let speck start your app for a ticket"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T11:01:27.366Z"
 ---
 # 0634 · Let speck start your app for a ticket
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A build that changes how an app looks or behaves often blocks asking you to check it in the running app, and speck has no way to start a project's app itself. Before speck can check anything in the app, it needs to know how to start it and where to open it.
@@ -55,3 +55,97 @@ A build that changes how an app looks or behaves often blocks asking you to chec
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2e25b5ae9daae48080cb63b668684148c8f20354",
+    "session": "fresh",
+    "thread_id": "01a1ca4e-faec-7d23-ae78-c33f3cd19597",
+    "builder_response": "- Tests run: `speck test --related test/app-0634.test.mjs test/config-show-0269.test.mjs` (the ticket's own tests, config-show-0269 which the change first broke, and every related test file it chose, with commands.checks): 2502 tests, 0 failing.\n- Note: tests were written alongside the code rather than first, so they weren't seen failing before the code; each AC test exercises the new command or setting, which didn't exist before.\n- `speck app` runs as its own process in the test helper (test/support/cli.mjs adds `app` to OWN_PROCESS), as it calls process.exit like `speck panel --background`.\n- The app settings appear under \"Building and reviewing\" in `speck config show`, not a group of their own: config-show-0269 requires its groups to match the panel's Settings view, and the panel is unchanged.\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 144341,
+      "cached_input_tokens": 87936,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 872,
+      "reasoning_output_tokens": 111
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56405,
+      "cached": 87936,
+      "write": 0,
+      "output": 872
+    },
+    "cost_usd": 0.1303236,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T11:12:47.344Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "startApp in scripts/app.mjs selects the ticket checkout, substitutes a free port and leaves the detached app running. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The AC2 test passed for a server that never listens, but answers() has an inactivity timeout rather than an absolute deadline. startApp awaits it before checking app_start_seconds again."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The AC3 test passed for a single start. Concurrent starts can overwrite the one saved process record, leaving an app that --stop cannot find."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "startApp rejects blank or missing commands.start before spawning anything; the AC4 test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/config.mjs validates and saves the three settings; cmdConfigShow explains them through APP_SETTINGS. The AC5 configuration test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/app.mjs:71",
+        "issue": "The startup deadline can be exceeded indefinitely. answers() uses the HTTP socket inactivity timeout, so a server that continually sends an incomplete response header keeps the request pending. startApp awaits that request and never reaches its deadline check or cleanup.",
+        "suggested_fix": "Apply an absolute request deadline bounded by the remaining startup time, destroy the request when it expires, and test a server that trickles an incomplete HTTP response.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/app.mjs:101",
+        "issue": "Concurrent starts for the same ticket can both read no record, await freePort(), launch separate apps and overwrite the same JSON record. --stop then stops only the last recorded app, leaving the other running. Concurrent failure cleanup can also delete the other invocation's record.",
+        "suggested_fix": "Serialise start and stop operations with a shared per-ticket lock, retain ownership of records during cleanup, and add a concurrent-start test proving that stopping the ticket leaves no app processes running.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The normal start, stop and configuration flows pass their tests. Two lifecycle problems need fixing: a partially responding app can make startup wait forever, and simultaneous starts can leave an app running that speck can no longer stop."
+  }
+}
+```
+
+</details>

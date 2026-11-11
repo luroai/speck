@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { gitIn } from './support/speck.mjs';
 import { speck, speckProcess } from './support/cli.mjs';
 import { startApp, answers } from '../scripts/app.mjs';
@@ -29,6 +30,10 @@ const kid = spawn('sleep', ['300'], { stdio: 'ignore' }); fs.writeFileSync('kid.
 for (let i = 1; i <= 30; i++) console.log('line ' + i); console.error('cannot bind'); setInterval(() => {}, 1e6);
 `;
 
+// One that sends the start of a response, then a byte at a time, never finishing its headers.
+const TRICKLE = `require('net').createServer(c => { c.write('HTTP/1.1 200 OK\\r\\n'); setInterval(() => c.write('X'), 100); }).listen(Number(process.argv[2]), '127.0.0.1');
+`;
+
 const ticketText = (id, title) => `---\nid: "${id}"\ntitle: "${title}"\nstatus: building\nsize: S\nrisk: low\n---\n# ${id} · ${title}\n\n## Problem\nx\n## Outcome\ny\n## Acceptance criteria\n1. z\n`;
 
 // A committed repo with tickets 0001 and 0002 and both stand-in apps; `config` is added to speck/config.yml.
@@ -41,6 +46,7 @@ function repo(config) {
   fs.writeFileSync(path.join(dir, 'speck', 'tickets', '0002-two.md'), ticketText('0002', 'Two'));
   fs.writeFileSync(path.join(dir, 'app.js'), APP);
   fs.writeFileSync(path.join(dir, 'silent.js'), SILENT);
+  fs.writeFileSync(path.join(dir, 'trickle.js'), TRICKLE);
   fs.writeFileSync(path.join(dir, '.gitignore'), 'kid.pid\nspeck/.cache/\n');
   gitIn(dir, 'add', '-A'); gitIn(dir, 'commit', '-qm', 'base');
   return dir;
@@ -157,4 +163,38 @@ test('0634 AC5: the brief names speck app, its settings and their defaults', () 
   assert.ok(row, 'no row for speck app in the brief');
   for (const fact of ['`commands.start`', '`app_url`', '`http://127.0.0.1:{port}/`', '`app_start_seconds` (default 60)', '`speck app <id> --stop`', '`speck/.cache/apps/`'])
     assert.ok(row.includes(fact), `the row doesn't name ${fact}`);
+});
+
+test('0634 AC2: an app that keeps sending a response it never finishes still fails within app_start_seconds', async () => {
+  const dir = repo(`commands:\n  start: '${node} trickle.js {port}'\napp_start_seconds: 1\n`);
+  const began = Date.now(), r = speckProcess(dir, env, 'app', '1');
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /didn't answer at .* within 1 seconds/);
+  assert.ok(Date.now() - began < 8000, `took ${Date.now() - began} ms`);
+});
+
+// Runs `speck app <args>` as its own process without waiting for it: resolves to { status, stdout, stderr }.
+const CLI = fileURLToPath(new URL('../scripts/speck.mjs', import.meta.url));
+const speckAsync = (dir, ...args) => new Promise(resolve => {
+  const c = spawn(process.execPath, [CLI, ...args], { cwd: dir, env });
+  let stdout = '', stderr = '';
+  c.stdout.on('data', d => { stdout += d; }); c.stderr.on('data', d => { stderr += d; });
+  c.on('close', status => resolve({ status, stdout, stderr }));
+});
+
+test('0634 AC3: two starts at once leave one app, which --stop stops with all it started', async () => {
+  const dir = repo(startCmd), wt = worktree(dir);
+  const both = await Promise.all([speckAsync(dir, 'app', '1'), speckAsync(dir, 'app', '1')]);
+  try {
+    const ok = both.filter(r => r.status === 0);
+    assert.ok(ok.length >= 1, JSON.stringify(both));
+    for (const r of both.filter(r => r.status !== 0)) assert.match(r.stderr, /already starting or stopping ticket 0001's app/);
+    const urls = new Set(ok.map(r => r.stdout.match(/http:\/\/127\.0\.0\.1:\d+\//)[0]));
+    assert.equal(urls.size, 1, 'two apps were started');
+  } finally {
+    const s = speckProcess(dir, env, 'app', '1', '--stop');
+    assert.equal(s.status, 0, s.stderr);
+  }
+  assert.ok(await until(() => !pidAlive(kidOf(wt))), 'a process the app started is still running');
+  assert.match(speckProcess(dir, env, 'app', '1', '--stop').stdout, /No app speck started for ticket 0001 is running/);
 });
