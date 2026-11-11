@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { SpeckError, sh, findRepoRoot, loadConfig, worktreeList } from './core.mjs';
 import { testRun, showRecordedRun } from './results.mjs';
+import { fullCommand } from './full-suite.mjs';
 import { relatedTests, relatedReport } from './related.mjs';
 
 const POLL_MS = 500;
@@ -205,7 +206,8 @@ export function checkFiles(repo, cfg) {
 // for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just
 // those files (0113), from the repo root, taking a turn as a full run does (0239) but without a recorded result, as it
 // isn't a full run. `speck test
-// --recorded` runs no tests: it prints the result recorded for the same code, if any, and exits with its exit code (0238).
+// --recorded` runs no tests: it prints the result recorded for the same code, if any, and exits with its exit code (0238),
+// the full suite's when there's one (0632).
 // `speck test --related [<file>…]` runs, as --files does, the test files the branch's change affects (0437), with any
 // files it's given, after printing each one it chose and why. With none chosen and none given, it runs nothing.
 export function cmdTest(args) {
@@ -241,7 +243,7 @@ export function cmdTest(args) {
   const cmd = (cfg.commands?.test || '').trim();
   if (!cmd) throw new SpeckError('No test command is set. Set commands.test in speck/config.yml (for example `speck config set commands.test "npm test"`), then run this again.');
   if (recordedOnly) {
-    const kept = showRecordedRun(repo, cmd);
+    const kept = showRecordedRun(repo, cmd, fullCommand(cfg));
     if (!kept) { console.log('No test result is recorded for this code and test command, so no tests are listed as failing. Nothing was run.'); return; }
     if (kept.status !== 0) throw new SpeckError('', kept.status);
     return;

@@ -545,7 +545,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck stop <id>                     end a build speck run launched for good, and block its ticket
   speck diffstat                      changed lines against the size limit
   speck test [--fresh]                run the test command in a turn, or reuse the result for the same code (--fresh: always run it)
-  speck test --recorded               print the result recorded for the same code, without running any tests
+  speck test --recorded               print the result recorded for the same code (the full suite's first), without running any tests
   speck test --files <file>…          run only those test files with commands.test_files (blank: the whole suite)
                                       and the files commands.checks lists
   speck test --related [<file>…]      the same, with every test file that names a file this branch changed
