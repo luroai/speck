@@ -39,6 +39,8 @@ When the full suite fails on the base branch, Build's Needs you group shows it a
 ## Notes
 - From 0630's follow-up note. `speck status` already prints the line; `speck status --json` should give the panel the same.
 - Failing before this build: none
+- Self-check: no changes. Rows that walk Build's list for tickets (ticketRows, the hover and go-to code) look for a ticket id the full suite's row doesn't have, so they leave it alone.
+- `speck test --related` also fails `test/foreman-0285.test.mjs` (two Settings switch tests) and `test/usage-limit-0622.test.mjs` (one test), which fail the same way on main without this change, so they're left as they are.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
