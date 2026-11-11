@@ -1,7 +1,7 @@
 ---
 id: "0654"
 title: "Keep speck run's tests from finding this machine's agents"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:39:35.306Z"
+approved: "2026-11-11T15:50:29.573Z"
 
 ---
 # 0654 · Keep speck run's tests from finding this machine's agents
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on `main` from `fc53908` (0647) on: `0622 AC1 AC2 AC3: a build that hit the limit while speck run was off is waited out when it starts, and holds new work too`. The tests start a real `speck run` with this machine's own PATH and home folder, so it finds the real Cursor CLI installed and signed in, takes it as the builder's bench (0647) and starts the second ticket on it instead of holding it. The result depends on which agents the machine running the tests has.
@@ -50,9 +51,14 @@ Nothing changes in speck itself. speck's own tests of Auto-build now run as if o
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 153,437
+- Elapsed since build started: 11 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - `test/foreman-0285.test.mjs`'s two 0285 AC3 tests fail on the base code too: saved as speck/ideas/2026-11-11-fix-the-0285-auto-build-switch-panel-tests.md.
