@@ -14,7 +14,8 @@ import { keysStatus } from './keys.mjs';
 import { findAgents, agentLines } from './agents.mjs';
 import { foremanAgentOf } from './foreman-agent.mjs';
 import { installHint } from './install.mjs';
-import { readUsage, usageLines } from './agent-usage.mjs';
+import { readUsage, usageLines, saveUsage, cursorUsageStale } from './agent-usage.mjs';
+import { readCursorUsageSync } from './cursor-usage.mjs';
 
 export const yourAgentsFile = repo => path.join(path.dirname(machineConfigFile(repo)), 'agents.json');
 
@@ -179,8 +180,22 @@ export function cmdAgents(args, opts = {}) {
   // Before speck is set up, as setup asks, it still lists every agent, none with a key or a list.
   let repo = null;
   try { repo = findRepoRoot(); } catch (e) { if (!(e instanceof SpeckError)) throw e; }
-  const report = agentsReport(repo, opts);
+  let report = agentsReport(repo, opts);
+  const why = refreshCursorUsage(repo, report, opts);
+  if (why !== null) { if (why) console.error(why); report = agentsReport(repo, { ...opts, find: () => ({ agents: report.agents }) }); }
   console.log(json ? JSON.stringify(report, null, 2) : reportLines(report));
+}
+
+// 0643: reads Cursor's usage from its usage screen and keeps it, when Cursor is installed and signed in and its last
+// reading is stale (cursorUsageStale), opening it in an empty folder of speck's own beside this machine's settings. Returns null when it didn't read, '' when it kept a new reading, or the one line
+// saying why it couldn't, the last reading staying as it was. `readCursor` stands in for reading the screen.
+export function refreshCursorUsage(repo, report, { readCursor = readCursorUsageSync, now = Date.now } = {}) {
+  const cursor = report.agents.find(a => a.id === 'cursor');
+  if (repo === null || !cursor?.installed || !cursor.signed_in || !cursorUsageStale(repo, now())) return null;
+  const got = readCursor({ command: cursor.command, cwd: sharedCacheDir(repo, path.join('machine', 'cursor-usage')) });
+  if (got?.reading && saveUsage(repo, 'cursor', got.reading)) return '';
+  const why = got?.reading ? 'speck couldn\'t keep what it read' : got?.why || 'it gave nothing to read';
+  return `Couldn't read Cursor's usage: ${why}.${cursor.usage ? ' Its usage below is the last reading.' : ''}`;
 }
 
 // What `speck init` says after filling the list: one line, or null when the list was already there.
