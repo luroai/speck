@@ -1,7 +1,7 @@
 ---
 id: "0632"
 title: "Use the full suite's result as a build's baseline"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:01:26.906Z"
 approved: "2026-11-11T11:13:07.472Z"
+finished: "2026-11-11T11:15:30.887Z"
 
 ---
 # 0632 · Use the full suite's result as a build's baseline
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A build lists the tests that already fail before it changes anything from `speck test --recorded`, which reads only `commands.test`'s result. Since 0631 that's only the quick tests in this repo, so a slow test already failing on the base branch looks as if the build broke it.
