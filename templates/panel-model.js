@@ -733,9 +733,9 @@ function runLogFiltered(lines, filter) {
     return line.trim() && (filter === 'all' || (own ?? (m ? null : above)) === filter);
   });
 }
-// 0592: what a line says beyond its summary, for under it: the agent looking into it and its log file.
+// 0592: what a line says beyond its summary, for under it: the agent looking into it and its log file. 0651: or QA's.
 function runLogDetails(line) {
   const said = String(line).replace(RUN_LOG_TIME, '$2');
-  const agent = said.match(/\bI'm looking into it on (.+?)\.(?: Log: |$)/), log = said.match(/\bLog: (\S+?)\.?$/);
+  const agent = said.match(/\b(?:I'm looking into it|QA is checking it in the app) on (.+?)\.(?: Log: |$)/), log = said.match(/\bLog: (\S+?)\.?$/);
   return [agent && agent[1], log && log[1]].filter(Boolean);
 }

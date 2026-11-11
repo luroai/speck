@@ -17,7 +17,7 @@ import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyRe
 import { buildsEachTicket } from './build-model.mjs';
 import { knownProviders } from './custom-providers.mjs'; import { providerNamed } from './provider-review.mjs';
 import { keysStatus, saveProviderKey } from './keys.mjs';
-import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; import { benchRows, newBenchProblem } from './bench.mjs'; // 0634, 0645
+import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; import { benchRows, newBenchProblem } from './bench.mjs'; import { qaRows } from './app-check.mjs'; // 0634, 0645, 0651
 export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
 
 export const SETTING_GROUPS = [
@@ -358,7 +358,7 @@ export function cmdConfigShow(args) {
     agents.settings.push({ key, value: mine[key], is_default: false, speck_default: '', explain: COMMAND_EXPLAIN[key], this_machine: true, repo_value: repoCfg[key] ?? '' });
   groups.find(g => g.title === 'Shipping')?.settings.push({ key: 'commands.test_full', value: String(repoCfg.commands?.test_full ?? ''), is_default: !String(repoCfg.commands?.test_full ?? '').trim(), speck_default: '', explain: COMMAND_EXPLAIN['commands.test_full'] }); // 0630: with Shipping, as ships run commands.test
   groups.find(g => g.title === 'Building and reviewing')?.settings.push(...APP_SETTINGS.map(s => { const v = lookup(repoCfg, s.key), value = v === undefined || v === null || v === '' ? s.default : v; return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(s.default), speck_default: s.default, explain: s.explain }; })); // 0634: speck app, with the builds that check the app
-  for (const { group, row } of benchRows(repoCfg, mine)) groups.find(g => g.title === group)?.settings.push(row); if (json) { console.log(JSON.stringify({ groups }, null, 2)); return; }
+  for (const { group, row } of [...benchRows(repoCfg, mine), ...qaRows(repoCfg, mine)]) groups.find(g => g.title === group)?.settings.push(row); if (json) { console.log(JSON.stringify({ groups }, null, 2)); return; }
   const show = v => Array.isArray(v) ? `[${v.join(', ')}]` : shown(v);
   console.log(groups.map(g => `${g.title}\n${g.settings.map(s =>
     `  ${s.key}: ${show(s.value)} (${s.this_machine ? `this machine's own, over speck/config.yml's ${show(s.repo_value)}; ` : ''}${s.is_default ? 'the default' : `speck's default is ${show(s.speck_default)}`})\n    ${s.explain}`).join('\n')}`).join('\n\n'));
