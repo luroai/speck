@@ -43,7 +43,7 @@ A build's "Failing before this build" list covers the full suite whenever a full
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Before a build changes anything, it looks up which tests were already failing, so it isn't blamed for them. Until now it only saw the quick tests' result. Now, when speck run has already run the full suite on the same code, the build uses that result instead, so slow tests that were already failing are listed too, and the result says it's the full suite's. To see it, run `speck test --recorded` on a commit the full suite has run on. Nothing else changes: ordinary test runs, ships and the full run still only reuse their own results. Worth knowing: a build started on a newer commit than the full suite last ran on still gets only the quick tests' result.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,7 +52,10 @@ A build's "Failing before this build" list covers the full suite whenever a full
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - A 0630 AC3 turn test ("a full run doesn't wait for the max_parallel_tests turns") failed once under the load of a 222-file run and passed alone: speck/ideas/2026-11-11-steady-the-0630-full-run-turn-test-under-load.md.
+  - Skipped: "0193 AC1 AC4: speck run ships with speck ship --auto" failed once reading the ticket mid-write; matches speck/ideas/2026-10-23-fix-the-0193-ship-test-that-fails-by-chance.md (dropped).
+  - This ticket changed 0630 AC3's guard test so turns.mjs may import `fullCommand` for `speck test --recorded`, and nothing else from the full run.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -129,6 +132,84 @@ A build's "Failing before this build" list covers the full suite whenever a full
     ],
     "escalation_question": "",
     "summary": "The change correctly prefers the full suite's recorded result for a build's baseline while preserving command-specific reuse elsewhere. One new test must be adjusted because harmless documentation edits would break it."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "41a9159fba5e3295ffd4660e1d8d98356aa4f181",
+    "session": "continued",
+    "thread_id": "01a1ca4d-b527-7d11-8767-701fa7d6ad0c",
+    "builder_response": "- Tests run: test/recorded-0632.test.mjs test/full-suite-0630.test.mjs test/recorded-0238.test.mjs (plus commands.checks)\n- F1: fixed. The doc test in test/recorded-0632.test.mjs no longer splits on any prose: it checks only facts — the build skill names `commands.test_full`, the brief names it more than once (it named it once before, for speck run), and `speck help`'s --recorded line mentions the full suite. How the passages read is left to review.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 241899,
+      "cached_input_tokens": 187904,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1348,
+      "reasoning_output_tokens": 35
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4146,
+      "cached": 101120,
+      "write": 0,
+      "output": 600
+    },
+    "cost_usd": 0.024404,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T11:12:50.399Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/results.mjs showRecordedRun prefers the result keyed by the full command and current code. showRecorded identifies the full suite, commit and time; cmdTest propagates its exit code. Passing 0632 AC1 tests cover these behaviours and reject results for different code or commands."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "showRecordedRun falls back to commands.test; cmdTest prints one line and returns successfully when neither result exists. Passing 0632 AC2 tests cover absent results and blank or missing commands.test_full."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Only cmdTest's recorded-only branch supplies fullCommand. Ordinary tests, scripts/ship.mjs and scripts/full-suite.mjs continue using testRun with their own command. Passing 0632 AC3 tests exercise this isolation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The reported round-two run includes the ticket tests, full-suite-0630, recorded-0238 and commands.checks: 138 passed, 3 skipped and no failures. Code inspection reveals no further regression."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/recorded-0632.test.mjs:129",
+        "issue": "The documentation test previously depended on exact prose and paragraph placement. Those dependencies have been removed; it now checks setting-name facts and CLI help.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Builds now use the full suite's recorded result when available, so existing slow-test failures are included in their baseline. Other test runs retain their existing reuse behaviour. The brittle documentation test is fixed, and all reported checks pass."
   }
 }
 ```
