@@ -42,6 +42,7 @@ With `commands.test_full` set, `speck run` runs it on the base branch after ship
 - From the 2026-11-10 repo analysis: ships take a median of about 220 s, nearly all of it the suite, and about a quarter of tickets needed more than one ship attempt.
 - `scripts/results.mjs` (`testRun`, recorded results keyed by code and test command) and the test turns in `scripts/turns.mjs` already exist; a recorded full run on the base branch also gives builds' "Failing before this build" a better baseline.
 - `scripts/run.mjs` is at 592 lines against the 600-line limit, so new code needs its own module.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
