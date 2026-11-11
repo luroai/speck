@@ -9,12 +9,42 @@ import { copied, keptFile } from './copy.mjs';
 import { speck } from './cli.mjs';
 import { sessionProcess } from '../../scripts/seen-builds.mjs';
 import { sessionInUse } from '../../scripts/build-procs.mjs';
+import { CURSOR_CLIS } from '../../scripts/install.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
 export const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
+
+// 0654: speck run's tests run it as on a machine with no agents of its own, so they give the same result on any machine:
+// each folder on this machine's PATH that holds Claude Code's, Codex's or Cursor's CLI is swapped for a copy without
+// them, the home folder is an empty one, and the environment has none of the agents' settings or keys. A folder, home
+// folder or setting a test gives speck run itself is kept, so a test's own fake agents are found.
+export const AGENT_CLIS = Object.freeze(['claude', 'codex', ...CURSOR_CLIS]);
+const AGENT_VARS = /^(ANTHROPIC_|OPENAI_|CLAUDE|CODEX_|CURSOR_|XDG_(CONFIG|DATA|STATE|CACHE)_HOME$)/;
+const MACHINE = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-keep-machine-')); // speck-keep-*: kept until the file's tests end
+export const HOME = path.join(MACHINE, 'home');
+fs.mkdirSync(HOME);
+const MACHINE_PATH = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
+const agentFreeDirs = new Map();
+// `PATH` with each of `machinePath`'s folders that holds an agent's CLI swapped for one linking to everything else in it.
+export function agentFreePath(PATH, machinePath = MACHINE_PATH) {
+  return String(PATH ?? '').split(path.delimiter).filter(Boolean).map(dir => {
+    if (!machinePath.includes(dir) || !AGENT_CLIS.some(c => fs.existsSync(path.join(dir, c)))) return dir;
+    if (!agentFreeDirs.has(dir)) {
+      const copy = fs.mkdtempSync(path.join(MACHINE, 'bin-'));
+      let names = [];
+      try { names = fs.readdirSync(dir); } catch { /* unreadable: nothing in it is found */ }
+      for (const n of names) if (!AGENT_CLIS.includes(n)) try { fs.symlinkSync(path.join(dir, n), path.join(copy, n)); } catch { /* left out */ }
+      agentFreeDirs.set(dir, copy);
+    }
+    return agentFreeDirs.get(dir);
+  }).join(path.delimiter);
+}
+// The environment speck run starts with: `env` with `extra`, a test's own, over it, and the machine's agents left out.
+export const runEnv = (extra = {}) => { const e = { ...env, ...extra }; e.PATH = agentFreePath(e.PATH); return e; };
+const machineFree = Object.fromEntries(Object.entries(process.env).filter(([k]) => !AGENT_VARS.test(k)));
 // SPECK_RUN_POLL_MS shortens the 5-second wait between checks, so the tests run quickly.
-export const env = { ...process.env, ...gitEnv, SPECK_RUN_POLL_MS: '100' };
+export const env = { ...machineFree, PATH: agentFreePath(process.env.PATH), HOME, ...gitEnv, SPECK_RUN_POLL_MS: '100' };
 export const good = `## Problem\nUsers cannot export.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n`;
 export const fm = (o = {}) => Object.entries({ id: '"0001"', title: 'Export bookings as CSV', status: 'ready', size: 'S', risk: 'low', builder: 'claude', reviewer: 'codex', ...o }).map(([k, v]) => `${k}: ${v}`).join('\n');
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -81,7 +111,7 @@ function buildRunRepo(dir, { tickets, max, worktrees, cmd }) {
 
 // Starts `speck run` in the background, collecting its output. `cli` is the CLI to run it with.
 export function startRun(dir, extraEnv = {}, cli = CLI) {
-  const child = spawn(process.execPath, [cli, 'run'], { cwd: dir, env: { ...env, ...extraEnv } });
+  const child = spawn(process.execPath, [cli, 'run'], { cwd: dir, env: runEnv(extraEnv) });
   let out = '';
   child.stdout.on('data', d => { out += d; });
   child.stderr.on('data', d => { out += d; });
@@ -112,7 +142,7 @@ export const assertFoundBySession = (session, pid) => {
 export const killAll = pids => { for (const p of pids) try { process.kill(p, 'SIGKILL'); } catch {} };
 export const stopRun = async r => { if (r.child.exitCode === null) { r.child.kill('SIGINT'); await r.exited; } };
 export const record = (dir, id) => JSON.parse(fs.readFileSync(path.join(dir, 'speck', '.cache', 'runs', `${id}.json`), 'utf8'));
-export const runOnce = (dir, extraEnv = {}) => spawnSync(process.execPath, [CLI, 'run'], { cwd: dir, encoding: 'utf8', env: { ...env, ...extraEnv }, timeout: 10000 });
+export const runOnce = (dir, extraEnv = {}) => spawnSync(process.execPath, [CLI, 'run'], { cwd: dir, encoding: 'utf8', env: runEnv(extraEnv), timeout: 10000 });
 
 // A build left running by an earlier speck run: a process that isn't speck run's child, and its run file (0047).
 export function leftRunning(dir, id, rec = {}) {

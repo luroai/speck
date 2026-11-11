@@ -27,10 +27,11 @@ const readJson = file => { try { const v = JSON.parse(fs.readFileSync(file, 'utf
 const writeJson = (file, v) => { const tmp = `${file}.${process.pid}.tmp`; fs.writeFileSync(tmp, JSON.stringify(v)); fs.renameSync(tmp, file); };
 const pidAlive = pid => { if (!Number.isInteger(pid) || pid <= 0) return false; try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
 const headOf = (repo, branch) => { const r = sh('git', ['rev-parse', '--verify', '-q', `refs/heads/${branch}^{commit}`], { cwd: repo }); return r.status === 0 ? r.stdout.trim() : ''; };
+const when = at => (typeof at === 'string' && Number.isFinite(Date.parse(at)) ? at : null);
 const names = output => [...new Set(failingTestFiles(output).map(t => t.name).filter(Boolean))];
 
 // The latest full run's result on the base branch: the one recorded for the code its newest commit holds, or else the
-// last one found or run (latest.json). { commit, status, tests }, commit being the one it ran on (tests: the failing tests' names, when its output is TAP), or null for none.
+// last one found or run (latest.json). { commit, status, tests, at }, commit being the one it ran on (tests: the failing tests' names, when its output is TAP; 0655: at, when it ran, or null), or null for none.
 export function latestFull(repo, cfg) {
   const cmd = fullCommand(cfg), base = String(cfg.base_branch || '').trim();
   const head = cmd && base ? headOf(repo, base) : '';
@@ -41,11 +42,11 @@ export function latestFull(repo, cfg) {
     // Kept as the last run's, for a newer commit that has no result yet.
     const r = { commit: kept.commit, status: kept.status, tests: kept.status ? names(kept.output) : [] }, last = readJson(file);
     if (!last || last.cmd !== cmd || last.commit !== r.commit || last.status !== r.status) writeJson(file, { cmd, ...r, at: kept.at });
-    return r;
+    return { ...r, at: when(kept.at) };
   }
   const last = readJson(file);
   const ok = last && last.cmd === cmd && typeof last.commit === 'string' && Number.isInteger(last.status) && Array.isArray(last.tests);
-  return ok ? { commit: last.commit, status: last.status, tests: last.tests.map(String) } : null;
+  return ok ? { commit: last.commit, status: last.status, tests: last.tests.map(String), at: when(last.at) } : null;
 }
 
 // What speck run says of a failing full run: on which commit, and the failing tests or its exit code.
@@ -73,7 +74,8 @@ export const RETRY_MS = 10 * 60 * 1000;
 // speck run's full runs. check(), on each of its checks, starts a full run of the base branch's newest commit when it
 // has no recorded result, none is running and this speck run hasn't started one of it in the last retryMs, and says
 // once in the log per failing commit that the latest full run failed. view() is what speck run adds to its record for speck status and the
-// panel: { full } while the latest full run on the base branch failed, until a run on a newer commit passes.
+// panel: { full } while the latest full run on the base branch failed, until a run on a newer commit passes. 0655: with
+// `log`, where the full runs' log is, from the repo.
 export function fullSuiteQueue({ repo, readConfig, say = console.log, launch = launchFull, retryMs = RETRY_MS, now = Date.now }) {
   const tried = new Map(); // each commit this speck run started a run of, and when
   let failing = null;
@@ -109,7 +111,7 @@ export function fullSuiteQueue({ repo, readConfig, say = console.log, launch = l
     });
     if (pid) writeJson(running, { pid, commit: head, started: new Date().toISOString() });
   };
-  return { check, view: () => (failing ? { full: failing } : {}) };
+  return { check, view: () => (failing ? { full: { ...failing, log: path.relative(repo, path.join(fullDir(repo), 'run.log')) } } : {}) };
 }
 
 // Runs commands.test_full on `commit` in the full run's own checkout, made afresh there, after worktree_setup, and

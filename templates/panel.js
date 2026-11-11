@@ -363,7 +363,7 @@ function mdInline(nodes) {
 }
 // While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
 // 0366: the same while Settings or the Foreman's pop-up is open.
-const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen || buildLogOf !== null || decidedOpen || bridgeOpen; // 0548: and a build log's pop-up, 0568: and the Decided for you list, 0596: and the bridge
+const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen || buildLogOf !== null || decidedOpen || fullSuiteOpen || bridgeOpen; // 0548: and a build log's pop-up, 0568: and the Decided for you list, 0596: and the bridge, 0655: and the failing full suite's view
 let heldAt = null; // the page's scroll position when the pane opened, or null while it's closed
 function holdPage(on) {
   const root = document.documentElement;
@@ -436,6 +436,7 @@ document.addEventListener('keydown', e => {
   if (tipTag !== null) closeTip();
   else if (docOpen !== null) closeDoc(); // 0362: the pop-up, over everything else
   else if (decidedOpen) closeDecided(); // 0568
+  else if (fullSuiteOpen) closeFullSuite(); // 0655
   else if (bridgeOpen && settingsView === null) closeBridge(); // 0596
   else if (foremanOpen && settingsView === null) closeForeman(); // 0285: the Foreman's detail
   else if (buildLogOf !== null && settingsView === null) closeBuildLog(); // 0548: a build log's pop-up
@@ -1251,6 +1252,8 @@ function render() {
     { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), asleepLane('shaping', 'Nothing to plan · Draft tickets wait here for you to set them ready.'));
   renderFull(m);
   renderDecided(m); // 0568
+  const failing = fullFailing(state); // 0655: a failing full suite on the base branch, a row of its own under Needs you
+  renderFullSuite(failing);
 
   // 0585: Build's groups, each headed with its count and left out when empty. Its minutes come from the clock, not the
   // ticket, so they're put right on a kept row.
@@ -1260,8 +1263,9 @@ function render() {
   const rows = keptItems('queue', listed, t => String(t.id), t => [shippingId === String(t.id), foremanAskOf(t.id)?.question ?? null, speckCalled()], queueRow,
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter], update: queueUpdate });
   const rowOf = new Map(listed.map((t, i) => [t, rows[i]]));
-  fill('queue', BUILD_GROUPS.flatMap(([key, label]) => (groups.get(key).length ? [groupHead(key, label, groups.get(key).length), ...groups.get(key).map(t => rowOf.get(t))] : [])), m.queue.length ? '' : idleLane(m));
-  if (m.queue.length) idleClock(null, null);
+  const extra = key => (key === 'needs' && failing ? [fullSuiteRow(failing)] : []);
+  fill('queue', BUILD_GROUPS.flatMap(([key, label]) => { const rs = [...extra(key), ...groups.get(key).map(t => rowOf.get(t))]; return rs.length ? [groupHead(key, label, rs.length), ...rs] : []; }), m.queue.length || failing ? '' : idleLane(m));
+  if (m.queue.length || failing) idleClock(null, null);
   startCounters([...listed.flatMap((t, i) => (t.counter !== null && t.held_at === null && rowTimeOf(rows[i]) ? [[rowTimeOf(rows[i]), t.since, !!t.paused, true]] : [])), ...liveCounters()]); // 0584: and the full view's
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();

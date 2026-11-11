@@ -89,18 +89,18 @@
   #full-ticket .top, #doc-view .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
   /* 0568: the Decided for you list, over the whole
      panel in a column at most 720 px wide. Long titles and options wrap, so it fits a phone's width. */
-  #decided { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
-  #decided[hidden] { display: none; }
-  #decided .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 14px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #decided .close:hover { color: var(--text); }
-  #decided .top, #decided .decided-intro, #decided .decided-list, #decided .decided-none { max-width: 720px; margin-left: auto; margin-right: auto; }
-  #decided .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: 1px solid var(--line-soft); background: var(--panel); }
+  #decided, #full-suite { position: fixed; inset: 0; z-index: 12; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #decided[hidden], #full-suite[hidden] { display: none; }
+  #decided .close, #full-suite .close { margin-left: auto; font: inherit; font-family: var(--font-ui); font-size: 14px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #decided .close:hover, #full-suite .close:hover { color: var(--text); }
+  #decided .top, #decided .decided-intro, #decided .decided-list, #decided .decided-none, #full-suite .top, #full-suite .full-suite-body { max-width: 720px; margin-left: auto; margin-right: auto; }
+  #decided .top, #full-suite .top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 10px; border-bottom: 1px solid var(--line-soft); background: var(--panel); }
   /* 0600: its back link above its heading, as the Pipeline log's and a ticket's full view's are, in the same type */
-  #decided .top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
-  #decided .top .close { grid-row: 1; justify-self: start; margin: 0; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); border: 0; }
-  #decided .top .close::before { content: '‹'; margin-right: 4px; }
-  #decided .top .close:hover { color: var(--run); text-decoration: underline; }
-  #decided .top .title { grid-row: 2; margin-top: 4px; font-size: 20px; line-height: 24px; font-weight: 600; }
+  #decided .top, #full-suite .top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+  #decided .top .close, #full-suite .top .close { grid-row: 1; justify-self: start; margin: 0; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); border: 0; }
+  #decided .top .close::before, #full-suite .top .close::before { content: '‹'; margin-right: 4px; }
+  #decided .top .close:hover, #full-suite .top .close:hover { color: var(--run); text-decoration: underline; }
+  #decided .top .title, #full-suite .top .title { grid-row: 2; margin-top: 4px; font-size: 20px; line-height: 24px; font-weight: 600; }
   #decided .decided-row { padding: 10px 0; border-bottom: 1px solid var(--line-soft); overflow-wrap: anywhere; }
   #decided .decided-head { display: flex; gap: 8px; align-items: baseline; }
   #decided .decided-head .id { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -117,6 +117,17 @@
   #decided .decided-bubble::before { content: ""; position: absolute; left: -5px; top: 15px; width: 10px; height: 10px; background: var(--raise); transform: rotate(45deg); }
   #decided .decided-day { margin: 16px 0 0; font-size: 12px; font-weight: 600; color: var(--muted); }
   #decided .decided-change { margin: 6px 0 0; }
+  /* 0655: the failing full suite's view, in the Decided for you list's frame. Long test names and paths wrap, so it fits a phone's width. */
+  #full-suite .full-suite-body { overflow-wrap: anywhere; }
+  #full-suite .full-suite-says { margin: 16px 0 8px; line-height: 20px; }
+  #full-suite .full-suite-fact { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; margin-top: 4px; }
+  #full-suite .full-suite-fact .label { font-size: 13px; color: var(--muted); }
+  #full-suite .full-suite-value { min-width: 0; font-family: var(--font-mono); font-size: 13px; }
+  #full-suite .full-suite-head { margin: 20px 0 0; font-size: 14px; font-weight: 600; color: var(--muted); }
+  #full-suite .full-suite-head .group-n { font-family: var(--font-mono); font-weight: 400; font-size: 12px; }
+  #full-suite .full-suite-tests { margin: 0; padding: 0; list-style: none; }
+  #full-suite .full-suite-tests li { padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-family: var(--font-mono); font-size: 13px; line-height: 18px; }
+  #full-suite .full-suite-none { margin: 8px 0 0; color: var(--muted); }
   /* 0479: the Pipeline log fills the window, in a column as wide as the lanes' (720 px less their 16 px sides, on whole
      pixels as the lanes' are, 0453), clear of a phone's notch and home indicator. Only the log box scrolls: it takes the
      room its top and a stale page's line leave. On a window too short for 12 lines of log, the view scrolls instead
