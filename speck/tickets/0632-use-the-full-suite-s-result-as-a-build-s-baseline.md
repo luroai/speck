@@ -1,7 +1,7 @@
 ---
 id: "0632"
 title: "Use the full suite's result as a build's baseline"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-11-use-the-full-suite-s-result-as-a-build-s-ba
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:01:26.906Z"
+approved: "2026-11-11T11:13:07.472Z"
 
 ---
 # 0632 · Use the full suite's result as a build's baseline
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build lists the tests that already fail before it changes anything from `speck test --recorded`, which reads only `commands.test`'s result. Since 0631 that's only the quick tests in this repo, so a slow test already failing on the base branch looks as if the build broke it.
@@ -49,9 +50,15 @@ Before a build changes anything, it looks up which tests were already failing, s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new documentation test depends on exact prose and paragraph placement: it splits on '6.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 243,247
+- Elapsed since build started: 12 min
+- Changed lines: 31 (limit 5000)
 - Follow-ups:
   - A 0630 AC3 turn test ("a full run doesn't wait for the max_parallel_tests turns") failed once under the load of a 222-file run and passed alone: speck/ideas/2026-11-11-steady-the-0630-full-run-turn-test-under-load.md.
   - Skipped: "0193 AC1 AC4: speck run ships with speck ship --auto" failed once reading the ticket mid-write; matches speck/ideas/2026-10-23-fix-the-0193-ship-test-that-fails-by-chance.md (dropped).
