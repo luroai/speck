@@ -10,7 +10,7 @@ import { fullPrompt, historyPrompt, reviewerChanged, roundOneFile, runCommandRev
 import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 import { documentSection } from './output.mjs';
-import { tildePaths } from './private-words.mjs';
+import { tildePaths, privateWordList, redactPrivateWords } from './private-words.mjs';
 import { keepReceipt } from './receipts.mjs';
 import { codexSpend } from './round-cost.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
@@ -180,11 +180,16 @@ export function ticketNext(raw, all, cfg) {
 
 // Round 1 also sets a building ticket to reviewing, and any round an approved one, in the same write, so a refused verdict changes nothing.
 // 0506: any path under the home folder in the ticket, such as a reviewer's evidence, is written as a `~/` path.
+// 0633: and each of your private words in the reviewer's text and the builder's response as `[private]`, so the receipt
+// is made from the round without them. The fields speck reads (VERDICT_FIELDS) stay as they are.
 // 0629: `receipt` (only for a round speck ran the reviewer for itself) also keeps a receipt for the round as saved.
+const VERDICT_FIELDS = ['verdict', 'id', 'status', 'severity', 'state'];
 export function saveRound(repo, id, verdict, meta, { receipt = false } = {}) {
   const t = findTicket(repo, id);
   const round = rounds(repo, id).length + 1;
-  const record = { meta: { round, ...meta, saved_at: new Date().toISOString() }, verdict: validateVerdict({ ...verdict, round }) };
+  const words = privateWordList().words;
+  const said = meta.builder_response ? { builder_response: redactPrivateWords(meta.builder_response, words) } : {};
+  const record = { meta: { round, ...meta, ...said, saved_at: new Date().toISOString() }, verdict: redactPrivateWords(validateVerdict({ ...verdict, round }), words, VERDICT_FIELDS) };
   fs.writeFileSync(t.file, tildePaths(appendRounds(startReviewing(t.raw, round), [record])));
   if (receipt) keepReceipt(repo, t.fm.id || id, rounds(repo, id).at(-1));
   return record;
