@@ -40,6 +40,9 @@ A build stopped on a usage limit more than an hour from resetting is carried on 
 ## Notes
 - 0622 and 0623 carry builds on after the reset (`carryOn` in `scripts/usage-limit.mjs`).
 - Failing before this build: none
+- The takeover is `scripts/build-take-over.mjs`, given to speck run's usage-limit queue as `takeOver`: while an agent is held, each build stopped on it is offered to builder_bench on each check (so a bench agent that frees up later, with the reset still over an hour away, takes it then), using 0647's `standInFor` for the choice and the reviewer-family skip. The new builder and the Notes line are committed on the ticket's branch in its worktree (or on the base branch for a ticket stopped before `speck start`), before the build starts there with a fresh session and a new log.
+- Found failing without this change: `0622 AC1 AC2 AC3: a build that hit the limit while speck run was off…` (test/usage-limit-0622.test.mjs). On a machine where Cursor is installed and signed in, 0647's stand-in moves the test's new ticket to the real Cursor, which takes the only build slot. It fails the same with this build's changes stashed. Left as a follow-up, not changed here.
+- Self-check: a ticket whose branch exists but isn't checked out in any folder fell back to the main checkout and would have been recorded on the base branch; it now waits for the reset, said once.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
