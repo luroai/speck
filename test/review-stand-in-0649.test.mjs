@@ -215,5 +215,21 @@ test('0649 AC1: a stand-in taking over from a later round starts a fresh session
   assert.equal(sub.agent, 'claude');
   assert.ok(!sub.args.includes('--resume'), 'a fresh session');
   assert.match(sub.prompt, /# Earlier review rounds[\s\S]*## Your round 1 verdict/);
-  assert.match(res.stdout, /Started a fresh claude session with the full history, because round 1 was reviewed by codex/);
+  assert.match(res.stdout, /Started a fresh claude session with the full history, because it stands in for codex/);
+});
+
+test('0649 AC1: each round on a stand-in starts a fresh session with the full history, the same stand-in\'s included', () => {
+  const { r, calls, review, commit } = standInRepo();
+  holdReviewer(r.dir, 'codex', later());
+  assert.equal(review().status, 10);
+  commit();
+  const res = review();
+  assert.equal(res.status, 10, res.stderr);
+  const [first, second] = calls();
+  assert.equal(first.agent, 'claude');
+  assert.equal(second.agent, 'claude');
+  assert.ok(!second.args.includes('--resume'), 'not a resumed session');
+  assert.match(second.prompt, /# Earlier review rounds[\s\S]*## Your round 1 verdict/);
+  assert.match(res.stdout, /Started a fresh claude session with the full history, because it stands in for codex/);
+  assert.equal(r.roundFile(2).meta.session, 'fresh');
 });

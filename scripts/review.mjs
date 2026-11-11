@@ -341,7 +341,8 @@ function runCodexReview(repo, id, s) {
   const settings = reviewerSettings(ticket.fm, cfg);
   // Later rounds resume the Codex session recorded with the most recent round that has one. 0388: unless the last
   // round's reviewer or model differs from this one's, when a fresh session gets the full history.
-  const fresh = round > 1 ? reviewerChanged(prior, 'codex', settings) : null;
+  // 0649: as does every round on a stand-in.
+  const fresh = round > 1 ? (s.standIn ? `it stands in for ${s.standIn.for}` : reviewerChanged(prior, 'codex', settings)) : null;
   const lastThread = round > 1 && !fresh ? [...prior].reverse().find(r => r.meta?.thread_id)?.meta.thread_id : undefined;
   if (fresh && prior.some(r => r.meta?.thread_id)) console.log(`Started a fresh codex session with the full history, because ${fresh}.`);
   const prompt = round > 1 && !lastThread ? historyPrompt(repo, s, id) : reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged });

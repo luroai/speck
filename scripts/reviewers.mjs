@@ -222,7 +222,8 @@ export function runCommandReview(repo, id, name, command, s, providers = knownPr
     env = providerEnv(repo, options.provider, key, values.model);
   }
   // Only the latest round's session has seen every round so far. An older one would miss the rounds since.
-  const last = s.round > 1 ? resumableSession(s.prior, name, settings) : {};
+  // 0649: a stand-in's round always starts fresh with the full history.
+  const last = s.round > 1 ? (s.standIn ? { why: `it stands in for ${s.standIn.for}` } : resumableSession(s.prior, name, settings)) : {};
   const lastThread = last.thread;
   const resume = typeof options.resume_command === 'string' && options.resume_command.includes('{session}') ? options.resume_command : '';
   const ms = reviewTimeoutMs(s.cfg);
