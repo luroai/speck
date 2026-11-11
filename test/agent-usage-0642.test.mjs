@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { claudeUsageInLog, codexUsageInSession, codexUsage, readUsage, saveUsage, usageFile, keepUsage, keepBuildUsage, usageLines } from '../scripts/agent-usage.mjs';
 import { agentsReport, reportLines } from '../scripts/your-agents.mjs';
 import { foremanAgentQueue } from '../scripts/foreman-agent.mjs';
@@ -69,7 +69,7 @@ test('0642 AC1: a Claude build that ends keeps Claude\'s usage from its log, as 
 test('0642 AC2: Codex\'s latest usage is read from its session file: both windows, the plan and whether a limit is reached', () => {
   const text = [codexEvent({ at: '2026-11-11T11:00:00Z', five: 20, week: 1 }), codexEvent({ at: '2026-11-11T11:30:00Z', five: 25, week: 2, reached: 'primary' }),
     JSON.stringify({ type: 'event_msg', payload: { type: 'token_count', rate_limits: null } })].join('\n');
-  assert.deepEqual(codexUsageInSession(text, NOW), { read_at: '2026-11-11T11:30:00.000Z', plan: 'plus', limit_reached: true, limit_type: 'primary', windows: {
+  assert.deepEqual(codexUsageInSession(text, NOW), { read_at: '2026-11-11T12:00:00.000Z', reported_at: '2026-11-11T11:30:00.000Z', plan: 'plus', limit_reached: true, limit_type: 'primary', windows: {
     five_hour: { used_percent: 25, resets_at: '2026-11-11T14:30:00.000Z' }, seven_day: { used_percent: 2, resets_at: '2026-11-15T09:00:00.000Z' } } });
   assert.equal(codexUsageInSession(codexEvent({ at: '2026-11-11T11:00:00Z', five: 1, week: 1 }), NOW).limit_reached, false);
   assert.equal(codexUsageInSession('{"type":"turn_context"}\nnot json', NOW), null);
@@ -145,6 +145,45 @@ test('0642 AC3: a newer reading replaces an older one, and a run with no reading
   assert.equal(saveUsage(r.dir, 'cursor', kept.claude), false, 'only Claude Code and Codex');
 });
 
+test('0642 AC3: of two Codex readings, the one Codex reported later wins, whenever speck read it', () => {
+  const r = panelRepo();
+  const late = codexHomeWith('TL', [codexEvent({ at: '2026-11-11T11:30:00Z', five: 50, week: 5 })]);
+  const early = codexHomeWith('TE', [codexEvent({ at: '2026-11-11T11:00:00Z', five: 10, week: 1 })]);
+  assert.equal(keepUsage(r.dir, 'codex', '', { thread: 'TL', home: late, now: NOW }), true);
+  assert.equal(keepUsage(r.dir, 'codex', '', { thread: 'TE', home: early, now: NOW + 60000 }), false, 'read later, but reported earlier');
+  assert.equal(readUsage(r.dir).codex.windows.five_hour.used_percent, 50);
+});
+
+test('0642 AC3: a save waits while another process holds the file, so neither undoes the other, and takes over a lock left by one that died', async () => {
+  const r = panelRepo(), mod = new URL('../scripts/agent-usage.mjs', import.meta.url).href, lock = `${usageFile(r.dir)}.lock`;
+  keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.1, seven: 0.2 })]), { now: NOW });
+  fs.writeFileSync(lock, '1\n'); // another process is reading and writing it
+  const code = `import { saveUsage } from ${JSON.stringify(mod)};
+    process.stdout.write('started\\n');
+    saveUsage(${JSON.stringify(r.dir)}, 'codex', { read_at: '2026-11-11T12:00:00.000Z', windows: { five_hour: { used_percent: 9, resets_at: null } } });`;
+  const p = spawn(process.execPath, ['--input-type=module', '-e', code], { stdio: ['ignore', 'pipe', 'pipe'] });
+  let out = '', err = '';
+  p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { err += d; });
+  const exited = new Promise(resolve => p.on('exit', resolve));
+  for (const until = Date.now() + 10000; !out.includes('started') && Date.now() < until;) await new Promise(res => setTimeout(res, 10));
+  await new Promise(res => setTimeout(res, 150));
+  assert.equal(readUsage(r.dir).codex, undefined, 'nothing written while the lock is held');
+  // What the other process writes meanwhile is kept.
+  fs.writeFileSync(usageFile(r.dir), JSON.stringify({ ...readUsage(r.dir), claude: { ...readUsage(r.dir).claude, read_at: '2026-11-11T12:30:00.000Z' } }));
+  fs.rmSync(lock);
+  assert.equal(await exited, 0, err);
+  const kept = readUsage(r.dir);
+  assert.equal(kept.codex.windows.five_hour.used_percent, 9);
+  assert.equal(kept.claude.read_at, '2026-11-11T12:30:00.000Z', 'the other process\'s write survives');
+  assert.equal(fs.existsSync(lock), false);
+  // A lock left long ago is taken over.
+  fs.writeFileSync(lock, '1\n');
+  const old = new Date(Date.now() - 60000);
+  fs.utimesSync(lock, old, old);
+  assert.equal(keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.5, seven: 0.2 })]), { now: NOW + 3600e3 }), true);
+  assert.equal(fs.existsSync(lock), false);
+});
+
 test('0642 AC3: an unreadable usage file reads as no readings, and the next reading replaces it', () => {
   const r = panelRepo();
   fs.mkdirSync(path.dirname(usageFile(r.dir)), { recursive: true });
@@ -176,15 +215,17 @@ test('0642 AC4: speck agents prints each window\'s percentage and reset under ea
 
 test('0642 AC4: speck agents --json gives each reading as data, with how long ago it was read', () => {
   const r = panelRepo();
-  const home = codexHomeWith('TJ', [codexEvent({ at: new Date(Date.now() - 120000).toISOString(), five: 25, week: 1, reached: 'primary' })]);
-  keepUsage(r.dir, 'codex', '', { thread: 'TJ', home });
+  const home = codexHomeWith('TJ', [codexEvent({ at: new Date(Date.now() - 2 * 3600e3).toISOString(), five: 25, week: 1, reached: 'primary' })]);
+  keepUsage(r.dir, 'codex', '', { thread: 'TJ', home, now: Date.now() - 120000 });
   const out = speck(r.dir, envOf(ONLY), 'agents', '--json');
   assert.equal(out.status, 0, out.stderr);
   const report = JSON.parse(out.stdout), codex = report.agents.find(a => a.id === 'codex'), claude = report.agents.find(a => a.id === 'claude');
   assert.equal(codex.usage.windows.five_hour.used_percent, 25);
   assert.equal(codex.usage.windows.seven_day.resets_at, '2026-11-15T09:00:00.000Z');
   assert.equal(codex.usage.limit_reached, true);
-  assert.ok(codex.usage.read_seconds_ago >= 119 && codex.usage.read_seconds_ago < 600, String(codex.usage.read_seconds_ago));
+  assert.ok(codex.usage.read_seconds_ago >= 119 && codex.usage.read_seconds_ago < 600, `how long ago speck read it, not when Codex wrote it: ${codex.usage.read_seconds_ago}`);
+  const text = speck(r.dir, envOf(ONLY), 'agents').stdout;
+  assert.match(text, /Usage, read 2 minutes ago, plus plan, limit reached:/);
   assert.equal(claude.usage, undefined);
 });
 

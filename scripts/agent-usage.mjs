@@ -1,7 +1,8 @@
 // 0642: each agent's latest usage, as it reports it with every run: for Claude Code, the rate_limit_event lines of its
 // stream-json log; for Codex, the token_count events of its session file. Kept per agent for this machine in the main
 // checkout's speck/.cache/machine/usage.json, which git ignores, a newer reading replacing an older one. A run with no
-// reading leaves the last one as it was.
+// reading leaves the last one as it was. Each reading has read_at, when speck read it, and Codex's also reported_at,
+// when Codex wrote it, which says which of two readings is newer.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -44,8 +45,9 @@ export function claudeUsageInLog(text, now = Date.now()) {
 // Codex's windows by length: 300 minutes is the five-hour one and 10080 the weekly one.
 const CODEX_WINDOWS = { 300: 'five_hour', 10080: 'seven_day' };
 
-// Codex's latest usage in a session file's text, or null when it has none: { read_at, plan, limit_reached,
-// limit_type, windows }, each window { used_percent, resets_at }. read_at is when Codex wrote it, or `now`.
+// Codex's latest usage in a session file's text, or null when it has none: { read_at, reported_at, plan,
+// limit_reached, limit_type, windows }, each window { used_percent, resets_at }. read_at is `now`, and reported_at when
+// Codex wrote it, or `now` when its event has no time.
 export function codexUsageInSession(text, now = Date.now()) {
   let found = null;
   for (const e of jsonLines(text)) {
@@ -59,11 +61,14 @@ export function codexUsageInSession(text, now = Date.now()) {
     }
     if (!Object.keys(windows).length) continue;
     const reached = typeof r.rate_limit_reached_type === 'string' && r.rate_limit_reached_type ? r.rate_limit_reached_type : null;
-    found = { read_at: isoTime(e.timestamp) ?? new Date(now).toISOString(), plan: typeof r.plan_type === 'string' && r.plan_type ? r.plan_type : null,
+    found = { read_at: new Date(now).toISOString(), reported_at: isoTime(e.timestamp) ?? new Date(now).toISOString(), plan: typeof r.plan_type === 'string' && r.plan_type ? r.plan_type : null,
       limit_reached: reached !== null, limit_type: reached, windows };
   }
   return found;
 }
+
+// When a reading was reported, for which of two is newer: Codex's reported_at, or else when it was read.
+const newer = reading => Date.parse(isoTime(reading.reported_at) ?? reading.read_at);
 
 const CODEX_HOME = () => process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
 
@@ -75,7 +80,7 @@ export function codexUsage(thread, { home = CODEX_HOME(), now = Date.now() } = {
     let text;
     try { text = fs.readFileSync(f, 'utf8'); } catch { continue; }
     const got = codexUsageInSession(text, now);
-    if (got && (!best || Date.parse(got.read_at) >= Date.parse(best.read_at))) best = got;
+    if (got && (!best || newer(got) >= newer(best))) best = got;
   }
   return best;
 }
@@ -88,16 +93,37 @@ export function readUsage(repo) {
   return Object.fromEntries(USAGE_AGENTS.filter(a => plain(read[a]) && isoTime(read[a].read_at) && plain(read[a].windows)).map(a => [a, read[a]]));
 }
 
+const LOCK_WAIT_MS = 5000, LOCK_STALE_MS = 30000;
+const pause = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+// Runs fn holding `file`.lock, so builds, review rounds and watch runs ending at once each read and write the file in
+// turn rather than one undoing another. A lock left for LOCK_STALE_MS by a process that died is taken over.
+function withLock(file, fn) {
+  const lock = `${file}.lock`, until = Date.now() + LOCK_WAIT_MS;
+  for (;;) {
+    try { fs.writeFileSync(lock, `${process.pid}\n`, { flag: 'wx' }); break; } catch (e) { if (e.code !== 'EEXIST') throw e; }
+    let age = 0;
+    try { age = Date.now() - fs.statSync(lock).mtimeMs; } catch { continue; } // just let go of
+    if (age > LOCK_STALE_MS) { fs.rmSync(lock, { force: true }); continue; }
+    if (Date.now() > until) throw new Error(`another process has held ${lock} for over ${LOCK_WAIT_MS / 1000} seconds`);
+    pause(10);
+  }
+  try { return fn(); } finally { fs.rmSync(lock, { force: true }); }
+}
+
 // Keeps `reading` as `agent`'s, unless the one kept is newer. Returns true when it was kept.
 export function saveUsage(repo, agent, reading) {
   if (!USAGE_AGENTS.includes(agent) || !reading) return false;
-  const all = readUsage(repo), was = all[agent];
-  if (was && Date.parse(was.read_at) > Date.parse(reading.read_at)) return false;
   sharedCacheDir(repo, 'machine');
-  const file = usageFile(repo), tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify({ ...all, [agent]: reading }, null, 2)}\n`);
-  fs.renameSync(tmp, file);
-  return true;
+  const file = usageFile(repo);
+  return withLock(file, () => {
+    const all = readUsage(repo), was = all[agent];
+    if (was && newer(was) > newer(reading)) return false;
+    const tmp = `${file}.${process.pid}.tmp`;
+    fs.writeFileSync(tmp, `${JSON.stringify({ ...all, [agent]: reading }, null, 2)}\n`);
+    fs.renameSync(tmp, file);
+    return true;
+  });
 }
 
 // The reading in a run's output `text` on `agent`: Claude's from its stream-json lines, Codex's from the session file
