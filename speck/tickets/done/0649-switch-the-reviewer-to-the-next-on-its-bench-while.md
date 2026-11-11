@@ -1,7 +1,7 @@
 ---
 id: "0649"
 title: "Switch the reviewer to the next on its bench while it's limited"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0645"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:39:24.694Z"
 approved: "2026-11-11T15:15:36.502Z"
+finished: "2026-11-11T15:22:03.307Z"
 
 ---
 # 0649 · Switch the reviewer to the next on its bench while it's limited
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the reviewer's agent is limited, every build waits at its next review round until the reset (0623), even with another reviewer on its bench ready.
