@@ -6,6 +6,7 @@ import { picturesLines, panelPictures } from './pictures.mjs';
 import { documentLines, panelDocuments } from './output.mjs';
 import { criteriaChange, criteriaChangedLines } from './criteria-changed.mjs';
 import { unreceiptedRounds } from './receipts.mjs';
+import { standInWords } from './review-stand-in.mjs';
 
 // Whether a round continued the reviewer's session or started fresh. Command rounds record it. Codex rounds resume
 // whenever an earlier round saved a session, so that rule gives theirs.
@@ -25,6 +26,8 @@ export function roundsLine(all) {
 }
 
 export const who = m => `${m.reviewer}, model ${m.reviewer_model || 'default'}, effort ${m.reviewer_effort || 'default'}`;
+// 0649: and, for a round that ran on a stand-in, that it did and why.
+const ranOn = m => { const stood = standInWords(m); return stood ? `${who(m)}, ${stood}` : who(m); };
 
 // The reviewer tokens and elapsed time, worded for both the review pack and the delivery log. The time runs to `end`,
 // or else to the ticket's approval, so a pack read later leaves out the wait to ship it (0215), or else to now.
@@ -112,7 +115,7 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
   const blind = all.filter(r => r.meta.sandbox_ok === false);
   const lines = [
     `## ${t.fm.id} · ${t.fm.title}`,
-    `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${who(last.meta)}, ${last.meta.merge ? `merge round ${mergeRun(all)} of ${cfg.limits.max_merge_rounds}` : `round ${ordinaryRounds(all)} of ${cfg.limits.max_review_rounds}${last.meta.extra ? ', an extra round' : ''}`})`,
+    `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${ranOn(last.meta)}, ${last.meta.merge ? `merge round ${mergeRun(all)} of ${cfg.limits.max_merge_rounds}` : `round ${ordinaryRounds(all)} of ${cfg.limits.max_review_rounds}${last.meta.extra ? ', an extra round' : ''}`})`,
     ...(blind.length ? ['', ...blind.map(r => `${NO_INSPECT} (round ${r.meta.round})`)] : []),
     ...receiptLines(repo, t, all, false),
     '', `**Summary:** ${v.summary}`,
@@ -129,7 +132,7 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
       const f = r.verdict.findings;
       const open = f.filter(x => x.severity === 'blocking' && ['open', 'dispute_rejected'].includes(x.state)).length;
       const closed = f.filter(x => x.severity === 'blocking').length - open;
-      return `- Round ${r.meta.round}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''} (${who(r.meta)}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor; ${sessionLabel(r, all.slice(0, i))}`;
+      return `- Round ${r.meta.round}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''} (${ranOn(r.meta)}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor; ${sessionLabel(r, all.slice(0, i))}`;
     }),
     ...(latest.size ? ['', '<details><summary>Findings</summary>', '',
       ...[...latest.values()].map(f => `- **${f.id}** (${f.severity}, ${f.state}) \`${f.file}\`: ${f.issue}`), '', '</details>'] : []),

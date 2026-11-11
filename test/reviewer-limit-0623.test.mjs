@@ -17,6 +17,7 @@ import { reviewRepo, gitIn, ROOT } from './support/speck.mjs';
 import { runRepo, startRun, stopRun, waitFor, record } from './support/run.mjs';
 import { keptFile } from './support/copy.mjs';
 import { deadPid } from './support/blocked.mjs';
+import { yourAgentsFile } from '../scripts/your-agents.mjs';
 
 const MIN = 60000;
 const lines = (...events) => events.map(e => JSON.stringify(e)).join('\n') + '\n';
@@ -28,7 +29,9 @@ const refusal = ms => lines({ type: 'thread.started', thread_id: 'T' }, { type: 
 const inTwoDays = () => Math.ceil((Date.now() + 2 * 864e5) / MIN) * MIN;
 const limitFile = (dir, id) => path.join(dir, 'speck', '.cache', 'runs', 'reviewer-limits', `${id}.json`);
 const statusIn = r => parseTicket(fs.readFileSync(r.ticketFile, 'utf8')).fm.status;
-const building = () => { const r = reviewRepo({ ticketFields: 'status: building' }); r.git('add', '-A'); r.git('commit', '-qm', 'building'); return r; };
+// 0649: no agents of yours on this machine, so none on a blank reviewer_bench stands in, whatever this machine has set up.
+const noAgents = r => { fs.mkdirSync(path.dirname(yourAgentsFile(r.dir)), { recursive: true }); fs.writeFileSync(yourAgentsFile(r.dir), JSON.stringify({ agents: [] })); return r; };
+const building = () => { const r = reviewRepo({ ticketFields: 'status: building' }); r.git('add', '-A'); r.git('commit', '-qm', 'building'); return noAgents(r); };
 
 // ---------- AC1: reading the message ----------
 
@@ -111,6 +114,7 @@ function commandRepo() {
   fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('reviewer_options:\n', `reviewer_options:\n  fake:\n    command: ${JSON.stringify(fake)}\n    resume_command: ${JSON.stringify(`${fake} {session}`)}\n    session_id_path: session_id\n`));
   r.git('add', '-A'); r.git('commit', '-qm', 'fake reviewer');
   const count = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-count-')), 'n');
+  noAgents(r);
   return { r, count, starts: () => fs.existsSync(count) ? fs.readFileSync(count, 'utf8').length : 0 };
 }
 

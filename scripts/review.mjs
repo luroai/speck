@@ -16,6 +16,7 @@ import { codexSpend } from './round-cost.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
 import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
 import { REVIEWER_LIMITED, stopOnLimit, holdOnLimit, clearLimit } from './reviewer-limit.mjs';
+import { standInFor, standInRound, standInMeta, standInWords } from './review-stand-in.mjs';
 import { keepUsage } from './agent-usage.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
@@ -25,7 +26,7 @@ export function stripRounds(text) {
 }
 
 function roundBlock(rec) {
-  return `<details><summary>Round ${rec.meta.round} · ${rec.meta.reviewer} · ${rec.verdict.verdict}${rec.meta.merge ? ' · merge round' : ''}${rec.meta.extra ? ' · extra round' : ''}</summary>\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n\n</details>`;
+  return `<details><summary>Round ${rec.meta.round} · ${rec.meta.reviewer} · ${rec.verdict.verdict}${rec.meta.merge ? ' · merge round' : ''}${rec.meta.extra ? ' · extra round' : ''}${rec.meta.stand_in?.for ? ` · standing in for ${rec.meta.stand_in.for}` : ''}</summary>\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n\n</details>`;
 }
 
 // Adds rounds to the end of the Review rounds section, creating it at the end of the ticket if needed. Nothing else changes.
@@ -341,7 +342,8 @@ function runCodexReview(repo, id, s) {
   const settings = reviewerSettings(ticket.fm, cfg);
   // Later rounds resume the Codex session recorded with the most recent round that has one. 0388: unless the last
   // round's reviewer or model differs from this one's, when a fresh session gets the full history.
-  const fresh = round > 1 ? reviewerChanged(prior, 'codex', settings) : null;
+  // 0649: as does every round on a stand-in.
+  const fresh = round > 1 ? (s.standIn ? `it stands in for ${s.standIn.for}` : reviewerChanged(prior, 'codex', settings)) : null;
   const lastThread = round > 1 && !fresh ? [...prior].reverse().find(r => r.meta?.thread_id)?.meta.thread_id : undefined;
   if (fresh && prior.some(r => r.meta?.thread_id)) console.log(`Started a fresh codex session with the full history, because ${fresh}.`);
   const prompt = round > 1 && !lastThread ? historyPrompt(repo, s, id) : reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged });
@@ -370,12 +372,14 @@ function runCodexReview(repo, id, s) {
   const spend = codexSpend(usage, { model: settings.model, thread, ...(resumed ? { before: resumed.usage ?? null } : {}) });
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
-  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), session: lastThread ? 'continued' : 'fresh', thread_id: thread, ...(response ? { builder_response: response } : {}), ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...spend, ...testsSeen }, { receipt: true });
+  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), ...standInMeta(s), reviewed_sha: head, ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), session: lastThread ? 'continued' : 'fresh', thread_id: thread, ...(response ? { builder_response: response } : {}), ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...spend, ...testsSeen }, { receipt: true });
 }
 
 function printRound(rec, cfg, all) {
   const v = rec.verdict;
   console.log(`Round ${rec.meta.round}: ${v.verdict}`);
+  const stood = standInWords(rec.meta);
+  if (stood) console.log(`Ran on ${rec.meta.reviewer}, ${stood}.`);
   console.log(v.summary);
   if (rec.meta.sandbox_ok === false) console.log(NO_INSPECT);
   for (const c of v.criteria) console.log(`  AC${c.id} ${c.status}: ${c.evidence}`);
@@ -415,9 +419,19 @@ export function cmdReview(args) {
   keepExitCode(repo, pad, worker);
   let rec;
   const held = s => { holdOnLimit(repo, pad, reviewer); return s; }; // 0623: inside the round, so the ticket is left as a refused round leaves it
-  if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, held(s)));
-  else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, held(s)));
-  else unsupported(id, reviewer);
+  const runOn = (name, s) => {
+    const own = reviewerOptions(s.cfg, name).command;
+    return typeof own === 'string' && own.trim() ? runCommandReview(repo, id, name, own, s) : name === 'codex' ? runCodexReview(repo, id, s) : unsupported(id, name);
+  };
+  if (!(typeof command === 'string' && command.trim()) && reviewer !== 'codex') unsupported(id, reviewer);
+  try { rec = reviewRound(repo, id, opts, s => runOn(reviewer, held(s))); } catch (e) {
+    // 0649: held by a recorded usage limit, the round runs on the first agent on reviewer_bench that can take it.
+    let sub = null;
+    if (e.code === REVIEWER_LIMITED) try { sub = standInFor(repo, findTicket(repo, id).fm, cfg); } catch (why) { console.error(`No agent on reviewer_bench could stand in: ${why.message}`); }
+    if (!sub) throw e;
+    console.log(`The ${reviewer} reviewer's usage limit is reached, so this round runs on ${sub.name}, the first agent on reviewer_bench that can take it, in a fresh session with the full history.`);
+    rec = reviewRound(repo, id, opts, s => runOn(sub.name, standInRound(s, sub)));
+  }
   clearLimit(repo, pad);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];

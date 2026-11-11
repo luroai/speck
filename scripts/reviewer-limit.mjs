@@ -7,7 +7,7 @@ import { SpeckError, speckSays } from './core.mjs';
 import { saveRecord } from './build-records.mjs';
 import { BUILD_ENV } from './build-env.mjs';
 import { mainCheckout } from './output.mjs';
-import { GRACE_MS, RETRY_MS, FURTHEST_MS, clock, carryOn, usageLimitQueue } from './usage-limit.mjs';
+import { GRACE_MS, RETRY_MS, FURTHEST_MS, clock, carryOn, usageLimitQueue, readLimit } from './usage-limit.mjs';
 import { keepBuildUsage } from './agent-usage.mjs';
 import { reviewerRefused, resetIn } from './limit-words.mjs';
 export { reviewerRefused, resetIn };
@@ -58,9 +58,17 @@ export function stopOnLimit(repo, id, reviewer, said, { session = process.env[BU
 // A round you run yourself still asks the reviewer, which knows if the limit has lifted early.
 export function holdOnLimit(repo, id, reviewer, { session = process.env[BUILD_ENV], now = Date.now() } = {}) {
   if (!session) return;
-  const held = inDir(mainLimits(repo)).filter(s => s.reviewer === reviewer && Date.parse(s.carry_on) > now).sort((a, b) => Date.parse(b.carry_on) - Date.parse(a.carry_on))[0];
+  const held = heldBy(repo, reviewer, now);
   if (held) refuse(repo, id, reviewer, held, '', session);
 }
+
+// 0649: the limit on record that holds `reviewer` now, the one lasting longest, or null.
+export const heldBy = (repo, reviewer, now = Date.now()) => inDir(mainLimits(repo)).filter(s => s.reviewer === reviewer && Date.parse(s.carry_on) > now).sort((a, b) => Date.parse(b.carry_on) - Date.parse(a.carry_on))[0] ?? null;
+// 0649: whether a recorded usage limit holds `agent` now: a reviewer's, or its own as a builder (0622, 0644).
+export const agentHeld = (repo, agent, now = Date.now()) => {
+  const runs = path.join(mainCheckout(repo), 'speck', '.cache', 'runs'), built = readLimit(runs, agent);
+  return reviewerHolds(runs, agent, now) || (!!built?.carry_on && now < Date.parse(built.carry_on));
+};
 
 // A round was recorded, so the build got past the limit.
 export const clearLimit = (repo, id) => { try { fs.rmSync(path.join(mainLimits(repo), `${id}.json`), { force: true }); } catch { /* left to speck run */ } };
