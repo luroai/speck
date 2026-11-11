@@ -2,6 +2,8 @@
 // every size from 16 px. SpeckFace.draw({ mood, size, look, label }) gives an <svg> to put on the page. It follows the
 // page's light or dark look unless look says which. Only the red light moves, and only by the stylesheet below, so with
 // reduced motion set it rests in its mood's shape. 0579: speck-mood.js changes a drawn face's mood as the pipeline's does.
+// 0650: draw({ role }) gives each team member's face: the manager (Virgil, the default) as above, and the builder, the
+// reviewer and QA as the same device with a still sign on its screen, in their own colour with the visor's glow.
 (() => {
   'use strict';
   const SVG = 'http://www.w3.org/2000/svg';
@@ -18,6 +20,16 @@
   };
   const GLOW = 3.6, MIN_SIZE = 16, DEFAULT_SIZE = 44, MARKS_FROM = 24; // below MARKS_FROM, the question mark and the z's are too small to read
   const HOOK = 'M -5.5 -30 C -5.5 -35.5 5.5 -35.5 5.5 -30 C 5.5 -26.5 0 -26.5 0 -22';
+  // 0650: each other member's sign, centred on the screen (0, -25): its strokes, each a path or a circle.
+  const SIGNS = {
+    builder: { label: 'Builder', stroke: 3, parts: [['prompt', 'path', { d: 'M -10 -30 L -5 -25 L -10 -20' }], ['cursor', 'path', { d: 'M -1 -20 L 8 -20' }]] },
+    reviewer: { label: 'Reviewer', stroke: 3, parts: [['lens', 'circle', { cx: -2, cy: -27, r: 5.5 }], ['handle', 'path', { d: 'M 2 -23 L 7 -18' }]] },
+    qa: { label: 'QA', stroke: 2.6, parts: [
+      ['corner', 'path', { d: 'M -11 -29 L -11 -33 L -7 -33' }], ['corner', 'path', { d: 'M 7 -33 L 11 -33 L 11 -29' }],
+      ['corner', 'path', { d: 'M 11 -21 L 11 -17 L 7 -17' }], ['corner', 'path', { d: 'M -7 -17 L -11 -17 L -11 -21' }],
+      ['bar', 'path', { d: 'M -3 -25 L 3 -25' }]] },
+  };
+  const SMALL_SIGN = 3.4; // below MARKS_FROM, a little bolder so each stroke is still a pixel wide at 16 px
   const ZS = [{ x: 2, y: -21, size: 3 }, { x: 6.5, y: -27.5, size: 4 }, { x: 11, y: -34.5, size: 5 }];
 
   // Everything that moves is in the no-preference block, so reduced motion needs no code of its own. Asking's dot and
@@ -31,6 +43,10 @@
 .sf-screen { fill: #06070A; }
 .sf-light { fill: none; stroke: var(--sf-eye); stroke-linecap: round; stroke-linejoin: round; }
 .sf-blink { transform-box: fill-box; transform-origin: center; }
+.speck-face[data-role="builder"] { --sf-ink: #F3E3C3; }
+.speck-face[data-role="reviewer"] { --sf-ink: #3FD0D4; }
+.speck-face[data-role="qa"] { --sf-ink: #B08CFF; }
+.sf-sign, .sf-sign-glow { fill: none; stroke: var(--sf-ink); stroke-linecap: round; stroke-linejoin: round; }
 @media (prefers-reduced-motion: no-preference) {
   @keyframes sf-drift { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2.6px); } 75% { transform: translateX(2.6px); } }
   @keyframes sf-scan { 0%, 100% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
@@ -79,8 +95,16 @@
       d: `M ${z.x} ${z.y} L ${z.x + z.size} ${z.y} L ${z.x} ${z.y + z.size} L ${z.x + z.size} ${z.y + z.size}` })) : []);
   const faces = new WeakMap(); // 0579: what setMood needs of each face draw made
 
+  // 0650: a member's sign, each stroke over a glow as soft and as wide as the visor's. Nothing in it moves.
+  const signOf = (role, small) => {
+    const sign = SIGNS[role], stroke = small ? Math.max(sign.stroke, SMALL_SIGN) : sign.stroke;
+    const strokes = (cls, width, extra) => sign.parts.map(([part, tag, at]) => make(tag, { class: cls(part), ...at, 'stroke-width': width, ...extra }));
+    return [...strokes(() => 'sf-sign-glow', stroke + GLOW, { 'stroke-opacity': 0.28 }), ...strokes(part => `sf-sign sf-sign-${part}`, stroke, {})];
+  };
+
   const draw = options => {
-    const { mood, size, look, label } = options || {};
+    const { mood, size, look, label, role } = options || {};
+    const member = Object.hasOwn(SIGNS, role) ? String(role) : null;
     const name = known(mood);
     const px = typeof size === 'number' && Number.isFinite(size) ? Math.max(MIN_SIZE, size) : DEFAULT_SIZE;
     const small = px < MARKS_FROM;
@@ -91,15 +115,16 @@
     const visor = make('path', { class: 'sf-visor sf-light', d, 'stroke-width': shape.stroke, opacity: shape.opacity });
     const move = make('g', { class: 'sf-move' }, make('g', { class: 'sf-blink' }, glow, visor));
     const glass = make('path', { class: 'sf-glass', d: 'M -18 -38 L 6 -38 L -10 -12 L -18 -12 Z', fill: '#FFFFFF', 'fill-opacity': 0.07 });
-    const lit = make('g', { class: 'sf-lit', 'clip-path': `url(#${clip})` }, move, ...marksOf(name, small), glass);
-    const svg = make('svg', { class: 'speck-face', viewBox: '-26 -50 52 52', width: px, height: px, role: 'img', 'aria-label': label || name, 'data-mood': name, ...(small ? { 'data-small': 'true' } : {}), ...(look === 'light' || look === 'dark' ? { 'data-look': look } : {}) },
+    const lit = make('g', { class: 'sf-lit', 'clip-path': `url(#${clip})` }, ...(member ? signOf(member, small) : [move, ...marksOf(name, small)]), glass);
+    const who = member ? { 'aria-label': label || SIGNS[member].label, 'data-role': member } : { 'aria-label': label || name, 'data-mood': name };
+    const svg = make('svg', { class: 'speck-face', viewBox: '-26 -50 52 52', width: px, height: px, role: 'img', ...who, ...(small ? { 'data-small': 'true' } : {}), ...(look === 'light' || look === 'dark' ? { 'data-look': look } : {}) },
       make('defs', {},
         make('linearGradient', { id: bezel, x1: 0, y1: 0, x2: 0, y2: 1 }, make('stop', { class: 'sf-stop-a', offset: 0 }), make('stop', { class: 'sf-stop-b', offset: 1 })),
         make('clipPath', { id: clip }, make('rect', SCREEN))),
       make('rect', { class: 'sf-body', x: -22, y: -42, width: 44, height: 34, rx: 11, fill: `url(#${bezel})`, 'stroke-width': 0.8 }),
       make('rect', { class: 'sf-screen', ...SCREEN }),
       lit);
-    faces.set(svg, { name, small, labelled: !!label, shape, glow, visor, lit, move, glass, turn: 0 });
+    if (!member) faces.set(svg, { name, small, labelled: !!label, shape, glow, visor, lit, move, glass, turn: 0 });
     return svg;
   };
 
@@ -128,5 +153,5 @@
     if (typeof ease === 'function') ease(face.shape, to, step); else step(to);
   };
 
-  globalThis.SpeckFace = { draw, setMood, moods: Object.freeze(Object.keys(VISORS)) };
+  globalThis.SpeckFace = { draw, setMood, moods: Object.freeze(Object.keys(VISORS)), roles: Object.freeze(['manager', ...Object.keys(SIGNS)]) };
 })();

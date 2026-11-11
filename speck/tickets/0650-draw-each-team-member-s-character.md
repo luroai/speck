@@ -41,6 +41,9 @@ The panel can draw each team member's character: Virgil's as today, and the Buil
 - Chosen 2026-11-11: option D in https://claude.ai/artifact/2F85xNeCwn9KGxRn3ZbYZQ (the Character options board), whose SVG paths can be reused.
 - Colours keep clear of the panel's status colours (orange needs you, blue being worked on, green done, plum ideas): ivory `#F3E3C3`, cyan `#3FD0D4`, violet `#B08CFF` as mocked; check them on both looks.
 - `templates/speck-face.js`.
+- Failing before this build: none
+- The Character options board couldn't be opened from the build's session, so the three signs were drawn afresh from this ticket's description and colours.
+- Self-check: dropped a stylesheet rule that stopped animation on members' faces, as it sat outside the reduced-motion block; they have nothing animated to stop (unknown and built-in role names such as `constructor` and `__proto__` fall back to the manager; setMood leaves a member's face alone).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
