@@ -1,7 +1,7 @@
 ---
 id: "0634"
 title: "Let speck start your app for a ticket"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-11-11-virgil-checks-the-work-in-the-running-app.m
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:01:27.366Z"
+approved: "2026-11-11T11:18:20.629Z"
 
 ---
 # 0634 · Let speck start your app for a ticket
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build that changes how an app looks or behaves often blocks asking you to check it in the running app, and speck has no way to start a project's app itself. Before speck can check anything in the app, it needs to know how to start it and where to open it.
@@ -53,9 +54,16 @@ To try it: set `commands.start` with `speck config set`, run `speck app` on a ti
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The startup deadline can be exceeded indefinitely.; F2 Concurrent starts for the same ticket can both read no record, await freePort(), launch separate apps and overwrite the same JSON record.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 481,995
+- Elapsed since build started: 17 min
+- Changed lines: 188 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limits (no idea notes): two `speck app` starts for the same ticket at the very same moment can both start an app; `--stop` stops both. A process the app starts that clears its own environment is still found while the process that started it is running, but not once that one has gone.
 - No follow-ups went to the inbox.
