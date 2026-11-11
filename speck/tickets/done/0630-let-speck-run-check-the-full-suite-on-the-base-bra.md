@@ -1,7 +1,7 @@
 ---
 id: "0630"
 title: "Let speck run check the full suite on the base branch after ships"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0629"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T10:17:59.098Z"
 approved: "2026-11-11T10:32:21.831Z"
+finished: "2026-11-11T10:36:27.359Z"
 
 ---
 # 0630 · Let speck run check the full suite on the base branch after ships
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck ship` runs the whole of `commands.test` before every merge, so a project with a slow suite, such as speck's own with about 200 real-browser and real-process test files, ships one ticket every four minutes at best, and a flaky slow test refuses ships that broke nothing. A project can't ship on its quick tests today without losing the slow ones altogether.
