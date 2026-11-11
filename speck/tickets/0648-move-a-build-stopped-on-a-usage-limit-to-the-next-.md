@@ -1,7 +1,7 @@
 ---
 id: "0648"
 title: "Move a build stopped on a usage limit to the next builder"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0647"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:26:16.065Z"
+approved: "2026-11-11T15:36:12.791Z"
 
 ---
 # 0648 · Move a build stopped on a usage limit to the next builder
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build that stops partway on its agent's usage limit waits for the reset, even when it's hours away and another builder on the bench is free.
@@ -51,9 +52,15 @@ When a build stops partway because its agent has used up its allowance, and the 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The AC3 Notes test matches the generated ticket's entire Notes sentence verbatim, including its phrasing and punctuation.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 434,825
+- Elapsed since build started: 10 min
+- Changed lines: 116 (limit 5000)
 - Follow-ups:
   - Keep speck run's tests off your real agents: the 0622 "while speck run was off" test fails on a machine where Cursor is signed in, because 0647's stand-in picks the real Cursor. Saved to the inbox (`speck/ideas/2026-11-11-keep-speck-run-s-tests-off-your-real-agents.md`).
   - Known limit: if the takeover is recorded on the ticket but speck run then can't save its record of the limit, the build isn't started, and the next check records a second Notes line when it moves it. Rare (a disk error) and harmless.
