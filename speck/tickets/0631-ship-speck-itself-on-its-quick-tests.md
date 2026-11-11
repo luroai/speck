@@ -1,7 +1,7 @@
 ---
 id: "0631"
 title: "Ship speck itself on its quick tests"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0630"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T10:36:36.782Z"
+approved: "2026-11-11T10:41:04.064Z"
 
 ---
 # 0631 · Ship speck itself on its quick tests
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every speck ship waits for speck's whole suite, about 560 files, of which about 200 start a real panel, browser or `speck run`. They make each ship take minutes, and the timing tests among them refuse ships that broke nothing when the machine is busy.
@@ -52,9 +53,14 @@ Shipping a speck ticket no longer waits for every one of speck's own tests. Each
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 98,250
+- Elapsed since build started: 4 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. A new test file that is slow or timing-bound but starts no real panel, browser or speck run can leave the ships' run with a `// Full suite only: <why>` line of its own; AGENTS.md's Quick tests section could say so.
 
