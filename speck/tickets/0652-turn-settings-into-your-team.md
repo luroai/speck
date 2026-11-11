@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0646","0650","0651"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:32:26.514Z"
-approved: "2026-11-11T16:14:02.843Z"
+approved: "2026-11-11T16:17:41.501Z"
 
 ---
 # 0652 · Turn Settings into your team
@@ -60,12 +60,13 @@ To see it, open Settings in the panel. While QA's settings are all blank, QA's c
 Round 1 (codex): changes requested: F1 With all QA settings blank, QA actually inherits the manager's model and effort, but its card presents an agent default model and blank/default effort.
 Round 2 (codex): changes requested.
 Round 3 (codex): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 4, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 605,517
-- Elapsed since build started: 42 min
+- Reviewer tokens: 841,617
+- Elapsed since build started: 45 min
 - Changed lines: 234 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -320,6 +321,90 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Settings now opens with four editable team cards above subscriptions. QA correctly shows its inherited settings, including after agent changes. All acceptance criteria pass; the two remaining test failures are documented pre-existing failures."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "db3532457366a7656ea0c455f610b6757504440e",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1cb5e-5ca8-77f1-80e1-7d14c84761b0",
+    "builder_response": "Merge round after `speck ship` hit a conflict merging into main.\n- docs/brief.md (class: logic, 1 conflict): the two sides changed neighbouring rows of the commands table, not the same text. This branch rewrote the `speck panel` row's Settings sentences (Your team), and main (0655) changed the `speck run` row. Resolved by keeping this branch's `speck panel` row and main's `speck run` row, each exactly as its side has it. Nothing else in the file conflicted.\n- Every other file merged cleanly.\n- Tests run: test/settings-team-0652.test.mjs, test/panel-0593.test.mjs, test/foreman-fix-0286.test.mjs, test/panel-0257.test.mjs, test/panel-0258.test.mjs, test/settings-0397.test.mjs, test/settings-0407.test.mjs, test/settings-agents-0399.test.mjs, test/speck-name-0485.test.mjs, test/speck-name-0575.test.mjs, test/subscriptions-0646.test.mjs, test/panel-0368.test.mjs, test/settings-0396.test.mjs, test/panel-0427.test.mjs, test/foreman-0285.test.mjs, test/brief-0111.test.mjs.\n- Failures, none from this ticket or the merge: the two `0285 AC3` tests, which also fail on the base code (noted before), and `0427 AC1` on `#full-suite .full-suite-fact .label` at 13 px, which main's 0655 added. It fails on main's own code too (checked against an export of main).\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 838811,
+      "cached_input_tokens": 719872,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2806,
+      "reasoning_output_tokens": 267
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 40143,
+      "cached": 195328,
+      "write": 0,
+      "output": 629
+    },
+    "cost_usd": 0.1061088,
+    "tests": {
+      "failing": 3,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T16:17:39.323Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "teamGroup(), memberCard() and qaInheritLine() retain the four cards, characters, jobs, settings and QA inheritance display. All AC1 tests, including both F1 regressions, passed after the merge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 tests passed after the merge, exercising Save requests, machine-only persistence and validation refusals through panelSaveSettings()."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "renderSettings() retains cards first, subscriptions next and the remaining settings below. The AC3 section-order and retained-controls test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "teamNow(), teamShown() and limitWords() retain limit and stand-in reporting. All AC4 tests passed after the merge."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "AC5 tests passed for retained settings with and without model catalogues and for the 320 px layout in both appearances. The unrelated full-suite label failure comes from merged main code."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "QA's inherited settings were missing or could remain stale after changing separate agent pickers.",
+        "suggested_fix": "Completed: the inheritance line and redraw dependencies remain intact, with both regression tests passing after the merge.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved after the merge. The team cards and QA fix remain covered by passing tests. The documentation resolution preserves Your team and main's updated run description. The three reported failures are unrelated base-branch issues."
   }
 }
 ```
