@@ -1,7 +1,7 @@
 ---
 id: "0650"
 title: "Draw each team member's character"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:17:39.273Z"
 approved: "2026-11-11T14:24:17.815Z"
+finished: "2026-11-11T14:28:25.987Z"
 
 ---
 # 0650 · Draw each team member's character
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Every member of the team will appear in the panel, and they need to be told apart at a glance. Today only Virgil has a character.
