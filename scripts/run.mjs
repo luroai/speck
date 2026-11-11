@@ -22,7 +22,7 @@ import { buildEnv } from './build-env.mjs';
 import { stopPanelsOfRun } from './build-panels.mjs';
 import { builderModelNote } from './build-model.mjs';
 import { builderSettings, liveSettings } from './run-settings.mjs';
-import { launchPlan, launchAgent, ignoredBuildersNote } from './ticket-builder.mjs'; import { builderStandIn } from './builder-stand-in.mjs';
+import { launchPlan, launchAgent, ignoredBuildersNote } from './ticket-builder.mjs'; import { builderStandIn } from './builder-stand-in.mjs'; import { buildTakeOver } from './build-take-over.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
 import { recordedRun, keepsLock } from './run-lock.mjs';
@@ -375,7 +375,7 @@ function runOn(worker) {
     }
   };
 
-  const limits = limitQueues({ repo, runs: () => runsDir(repo), settings, running, startBuild, resumeHint, countStop, statusOf: id => statusData(repo).tickets.find(t => t.id === id)?.status ?? null }), heldBuild = id => limits.holdsBuild(id), standIns = builderStandIn({ repo, heldAgent: agent => limits.holdsAgent(agent), readyAgents: readyAgentsEvery(repo), speak: text => console.log(speckSays(text)), fmOf: id => findTicket(repo, id).fm }); // 0622: Claude's usage limit holds every start on Claude until it resets. 0623: and a reviewer's, each build that stopped on it
+  const limits = limitQueues({ repo, runs: () => runsDir(repo), settings, running, startBuild, resumeHint, countStop, statusOf: id => statusData(repo).tickets.find(t => t.id === id)?.status ?? null, takeOver: buildTakeOver({ repo, runs: () => runsDir(repo), startBuild, countStop, heldAgent: agent => limits.holdsAgent(agent), readyAgents: readyAgentsEvery(repo), speak: text => console.log(speckSays(text)) }) }), heldBuild = id => limits.holdsBuild(id), standIns = builderStandIn({ repo, heldAgent: agent => limits.holdsAgent(agent), readyAgents: readyAgentsEvery(repo), speak: text => console.log(speckSays(text)), fmOf: id => findTicket(repo, id).fm }); // 0622: Claude's usage limit holds every start on Claude until it resets. 0623: and a reviewer's, each build that stopped on it. 0648: or moves it to builder_bench
   const handBacks = handBackQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill, heldBuild });
   const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), heldBuild }); // 0284
   const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344
