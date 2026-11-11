@@ -41,6 +41,11 @@ Settings opens on Your team: a card for each member, with its character, its job
 - Mockup: the Your team board in https://claude.ai/artifact/2F85xNeCwn9KGxRn3ZbYZQ, option D characters.
 - From `speck/ideas/2026-11-10-set-up-your-team-instead-of-settings.md`. Keep the panel thin.
 - Failing before this build: none
+- Also failing on the base code, found while running related tests (not in the recorded quick result): `0285 AC3: Settings has a Foreman group, first, …` and `0285 AC3: a refused switch shows speck run's own message, as before` in test/foreman-0285.test.mjs. Since 0646 the view's /api/usage fetch takes a fake answer meant for another request. Left as they are.
+- The mockup board couldn't be opened from this session, so the cards were laid out afresh from the ticket.
+- Tests that pinned the old layout (the Your engineering manager group under Auto-build, Your agents and Your subscriptions after the switches, the face beside speck_name, the list of editable settings) were updated to the new layout, each marked 0652.
+- Self-check: a bench naming a built-in such as `constructor` showed "[object Object]" through the agent-name lookup; fixed, with a test. README and docs/brief.md said Settings had a Your engineering manager group under Auto-build; updated to Your team.
+- speck (2026-11-11 15:55 UTC) made draft fix ticket 0656: Fix the two 0285 Auto-build switch panel tests failing on main. Why: Two Auto-build switch tests in Settings fail on main itself since 0646 added a usage request the fake page answers out of turn, and 0652's build spent part of its 22 minutes proving they weren't its own; the rest went on updating about ten older Settings layout tests, taking pictures and running wide test sweeps on a machine with a load average near 70.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
