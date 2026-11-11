@@ -1,7 +1,7 @@
 ---
 id: "0635"
 title: "Keep test logins on this machine"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0633","0634"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T11:23:26.280Z"
 approved: "2026-11-11T11:34:26.377Z"
+finished: "2026-11-11T11:36:41.212Z"
 
 ---
 # 0635 · Keep test logins on this machine
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Checking a change in an app often means signing in, and the logins for that must never end up in a ticket, a review round or a commit, which are often published.
