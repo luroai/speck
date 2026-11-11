@@ -1,7 +1,7 @@
 ---
 id: "0643"
 title: "Read Cursor's usage from its usage screen"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0642"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T14:50:18.333Z"
 approved: "2026-11-11T15:11:20.711Z"
+finished: "2026-11-11T15:16:44.199Z"
 
 ---
 # 0643 · Read Cursor's usage from its usage screen
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Cursor reports its usage nowhere speck can read it from a run: only its interactive `/usage` screen shows it. Without it, speck can't tell how much of Cursor's monthly allowance is left.
