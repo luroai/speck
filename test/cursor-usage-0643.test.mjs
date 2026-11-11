@@ -158,10 +158,18 @@ test('0643 AC3: a screen that never shows within the time limit stops everything
   assert.ok(await allStopped(cursor), 'everything it started is stopped');
 });
 
+test('0643 AC3: when Cursor exits early, a process it started that outlives it is stopped too', async () => {
+  const cursor = fakeCursor({ exitEarly: true });
+  const got = await readCursorUsage({ command: `${cursor.dir}/agent`, timeoutMs: 8000 });
+  assert.match(got.why, /closed before showing its usage/);
+  assert.equal(cursor.pids().length, 2, 'Cursor and the process it started');
+  assert.ok(await allStopped(cursor), 'everything it started is stopped');
+});
+
 test('0643 AC3: a folder Cursor asks to trust is never trusted: it says so and stops', async () => {
   const cursor = fakeCursor({ welcome: '  Workspace Trust Required\r\n    [a] Trust this workspace\r\n    [q] Quit\r\n' });
   const got = await readCursorUsage({ command: `${cursor.dir}/agent`, timeoutMs: 5000 });
-  assert.match(got.why, /asks whether to trust this folder/);
+  assert.match(got.why, /asked whether to trust the folder speck opens it in, which speck never answers/);
   assert.ok(await allStopped(cursor), 'everything it started is stopped');
 });
 

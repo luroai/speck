@@ -21,9 +21,10 @@ export const usageScreen = ({ plan = 'Premium', resets = 'Resets 12 Nov', includ
   ' Esc to close',
 ].join('\r\n');
 
-// A folder holding the stand-in: { dir, log, opened(), pids() }. `screen` is what it draws for /usage, `welcome` what it
-// draws first, and `sleep` how long it waits once drawn.
-export function fakeCursor({ screen = usageScreen(), welcome = '  Cursor Agent\r\n  v2026.11.11\r\n\r\n  → Plan, search, build anything\r\n' } = {}) {
+// A folder holding the stand-in: { dir, log, opened(), pids() }. `screen` is what it draws for /usage and `welcome` what
+// it draws first. With `exitEarly`, it exits a second after drawing the welcome screen, leaving the process it started
+// running, ignoring the hang-up its terminal closing sends.
+export function fakeCursor({ screen = usageScreen(), welcome = '  Cursor Agent\r\n  v2026.11.11\r\n\r\n  → Plan, search, build anything\r\n', exitEarly = false } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-cursor-usage-'));
   const log = path.join(dir, 'opened.log'), pids = path.join(dir, 'pids.log');
   fs.writeFileSync(path.join(dir, 'welcome.txt'), welcome);
@@ -35,8 +36,9 @@ case "$*" in
 esac
 printf '%s\\n' "[$*]" >> "${log}"
 cat "${dir}/welcome.txt"
-sleep 30 &
+${exitEarly ? "(trap '' HUP INT; exec sleep 30) &" : 'sleep 30 &'}
 printf '%s %s\\n' "$$" "$!" >> "${pids}"
+${exitEarly ? 'sleep 1; exit 0' : ''}
 IFS= read -r line
 case "$line" in */usage*) cat "${dir}/screen.txt" ;; esac
 wait

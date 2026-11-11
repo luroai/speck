@@ -154,17 +154,27 @@ export function ptyCommand(command, platform = process.platform) {
   return platform === 'darwin' ? ['script', ['-q', '/dev/null', 'sh', '-c', inner]] : ['script', ['-qfec', inner, '/dev/null']];
 }
 
-// Every process descended from `pid`, from ps, which Linux and macOS both have.
-function descendants(pid) {
-  const r = spawnSync('ps', ['-A', '-o', 'pid=,ppid='], { encoding: 'utf8' });
-  const kids = new Map();
-  for (const line of String(r.stdout || '').split('\n')) {
-    const [p, pp] = line.trim().split(/\s+/).map(Number);
-    if (p && pp) kids.set(pp, [...(kids.get(pp) || []), p]);
-  }
-  const out = [], todo = [pid];
-  while (todo.length) for (const k of kids.get(todo.pop()) || []) if (!out.includes(k)) { out.push(k); todo.push(k); }
-  return out;
+// The processes speck started for a reading: `script`, Cursor, and everything they start. Each look at ps, which Linux
+// and macOS both have, adds the processes descended from those it has, and their process groups, and every process in
+// those groups. `script` puts Cursor in a session of its own, so its group isn't script's, and a process whose parent
+// has exited is no longer its descendant but is still in its group. Looking while the reading runs, not only at the
+// end, finds a process whose parent exits before then.
+function owned(root) {
+  const pids = new Set([root]), groups = new Set([root]);
+  const look = () => {
+    const r = spawnSync('ps', ['-A', '-o', 'pid=,ppid=,pgid='], { encoding: 'utf8' });
+    const table = String(r.stdout || '').split('\n').map(l => l.trim().split(/\s+/).map(Number)).filter(([p, pp, g]) => p > 0 && pp >= 0 && g > 0);
+    const ours = table.find(([p]) => p === process.pid)?.[2];
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const [p, pp, g] of table) {
+        if (pids.has(p) || !(pids.has(pp) || groups.has(g))) continue;
+        pids.add(p); grew = true;
+      }
+      for (const [p, , g] of table) if (pids.has(p) && g !== ours && g > 1 && !groups.has(g)) { groups.add(g); grew = true; }
+    }
+  };
+  return { look, pids: () => [...pids], groups: () => [...groups] };
 }
 const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
 const signal = (pid, sig) => { try { process.kill(pid, sig); } catch { /* already gone */ } };
@@ -179,25 +189,26 @@ export function readCursorUsage({ command = 'agent', cwd = process.cwd(), timeou
     try { child = spawn(cmd, args, { cwd, env: { ...process.env, TERM: 'xterm-256color' }, stdio: ['pipe', 'pipe', 'pipe'], detached: true }); }
     catch (e) { resolve({ why: `couldn't start it (${e.message})` }); return; }
     let raw = '', state = 'starting', done = false, exited = false, idle, settle, lastWhy = null;
-    const started = Date.now();
+    const started = Date.now(), mine = owned(child.pid), looking = setInterval(mine.look, 250);
     const type = text => { if (!exited) try { child.stdin.write(text); } catch { /* it closed */ } };
     child.stdin.on('error', () => {});
     const finish = async result => {
       if (done) return;
       done = true;
-      clearTimeout(idle); clearTimeout(settle); clearTimeout(timer);
-      const family = [child.pid, ...descendants(child.pid)];
+      clearTimeout(idle); clearTimeout(settle); clearTimeout(timer); clearInterval(looking);
+      mine.look();
       if (!exited) {
         // Close the screen, then the agent, as a person would: Esc, then Ctrl+C twice.
         type('\x1b'); await pause(300); type('\x03'); await pause(300); type('\x03');
-        for (let k = 0; k < 15 && family.some(alive); k++) await pause(100);
+        for (let k = 0; k < 15 && mine.pids().some(alive); k++) await pause(100);
+        mine.look();
       }
       for (const sig of ['SIGTERM', 'SIGKILL']) {
-        const left = family.filter(alive);
-        if (!left.length) break;
-        signal(-child.pid, sig);
-        for (const p of left) signal(p, sig);
-        for (let k = 0; k < 10 && left.some(alive); k++) await pause(100);
+        if (!mine.pids().some(alive)) break;
+        for (const g of mine.groups()) signal(-g, sig);
+        for (const p of mine.pids()) if (alive(p)) signal(p, sig);
+        for (let k = 0; k < 10 && mine.pids().some(alive); k++) await pause(100);
+        mine.look();
       }
       resolve(result);
     };
@@ -205,7 +216,7 @@ export function readCursorUsage({ command = 'agent', cwd = process.cwd(), timeou
       if (done) return;
       const lines = screenText(raw);
       if (state === 'starting') {
-        if (lines.some(l => /trust this workspace/i.test(l))) { finish({ why: `it asks whether to trust this folder: run ${command} here once and trust it` }); return; }
+        if (lines.some(l => /trust this workspace/i.test(l))) { finish({ why: 'it asked whether to trust the folder speck opens it in, which speck never answers' }); return; }
         if (!lines.some(l => /\bCursor Agent\b/.test(l))) return;
         state = 'asked';
         type('/usage');
