@@ -40,13 +40,15 @@ const nameOf = (p, row) => p.all(row).find(n => /\bname\b/.test(n.className || '
 
 test('0396 AC1: Settings opens with Appearance, then Auto-build, above every other group, each a row of its name and a switch with no description', async () => {
   const { p } = await opened();
-  const first = groupsOf(p)[0];
+  // 0652: under Your team and Your subscriptions, above the rest
+  const at = groupsOf(p).findIndex(g => /\bswitches\b/.test(g.className || '')), first = groupsOf(p)[at];
+  assert.deepEqual(groupsOf(p).slice(0, at).map(g => g.className), ['sgroup team', 'sgroup subs']);
   const rows = first.children.filter(n => /\bswitch-row\b/.test(n.className || ''));
   assert.deepEqual(rows.map(r => nameOf(p, r)), ['Appearance', 'Auto-build'], 'Appearance first, then Auto-build');
   assert.ok(!p.all(first).some(n => n.tagName === 'h4'), 'no heading over them');
-  assert.ok(pane(p).children.indexOf(first) < pane(p).children.indexOf(groupsOf(p)[1]), 'above the other groups');
-  for (const g of groupsOf(p).slice(1)) assert.ok(!p.all(g).some(n => n.id === 'look' || n.id === 'run-switch'), 'not in another group');
-  assert.ok(groupsOf(p).slice(1).some(g => g.textContent.startsWith('Your engineering manager')), 'the Foreman group is still there');
+  assert.ok(pane(p).children.indexOf(first) < pane(p).children.indexOf(groupsOf(p)[at + 1]), 'above the other groups');
+  for (const g of groupsOf(p).filter(g => g !== first)) assert.ok(!p.all(g).some(n => n.id === 'look' || n.id === 'run-switch'), 'not in another group');
+  assert.ok(p.all(groupsOf(p)[0]).some(n => n.attrs?.['data-member'] === 'manager'), 'the Foreman\'s card is still there');
   assert.equal(rowOfSwitch(p, lookSwitch(p)), rows[0]);
   assert.equal(rowOfSwitch(p, runSwitch(p)), rows[1]);
   for (const row of rows) {

@@ -16,6 +16,14 @@ const GROUPS = [
   ['Building and reviewing', ['builder', 'builder_model', 'builder_effort', 'reviewer', // 0402 added builder_effort
     'reviewer_model', 'reviewer_effort', 'allow_same_model_review', // 0406 folded in the parallel and size-limit settings
     'max_parallel_builds', 'max_parallel_tests', 'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds']],
+  ['Your team', ['watch_bench', 'builder_bench', 'reviewer_bench', 'qa_agent', 'qa_model', 'qa_effort', 'qa_bench']], // 0652: the settings only its cards show
+];
+// 0652: the view puts each member's settings on its card in Your team, first, then the server's other groups.
+const DRAWN = [
+  ['Your team', ['speck_name', 'watch', 'watch_agent', 'watch_model', 'watch_effort', 'watch_bench', 'builder', 'builder_model', 'builder_effort', 'builder_bench',
+    'reviewer', 'reviewer_model', 'reviewer_effort', 'reviewer_bench', 'qa_agent', 'qa_model', 'qa_effort', 'qa_bench']],
+  ['Shipping', GROUPS[1][1]],
+  ['Building and reviewing', GROUPS[2][1].filter(k => !/^(builder|reviewer)/.test(k))],
 ];
 const repoWith = config => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0257-'));
@@ -105,11 +113,11 @@ test('0257 AC2: the view shows each group in order, each setting\'s name and val
   await p.settle();
   await open(p);
   const text = pane(p).textContent;
-  const at = GROUPS.map(([title]) => text.indexOf(title)); // 0485: the panel titles the group as the server does
+  const at = DRAWN.map(([title]) => text.indexOf(title)); // 0485: the panel titles the group as the server does
   assert.ok(at.every(i => i >= 0), `every group is shown: ${text}`);
   assert.deepEqual([...at].sort((a, b) => a - b), at, 'in order');
   const rows = p.all(pane(p)).filter(n => /\bsetting\b/.test(n.className || ''));
-  assert.deepEqual(rows.map(r => p.all(r).find(n => /\bname\b/.test(n.className || '')).textContent), GROUPS.flatMap(([, keys]) => keys));
+  assert.deepEqual(rows.map(r => p.all(r).find(n => /\bname\b/.test(n.className || '')).textContent), DRAWN.flatMap(([, keys]) => keys));
   const row = key => rows.find(r => r.textContent.includes(key) && p.all(r).find(n => /\bname\b/.test(n.className || '')).textContent === key);
   const valueOf = key => p.all(row(key)).find(n => /\bvalue\b/.test(n.className || '')).textContent;
   assert.equal(valueOf('auto_ship'), 'true');

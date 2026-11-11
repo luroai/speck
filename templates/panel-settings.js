@@ -34,6 +34,7 @@ let settingClear = new Set(); // 0261: keys whose machine value is cleared on Sa
 let agentsBox = null, agentsAdding = false, agentsSaid = null; // the box; whether "Add an agent" is open; the last change's { text, bad }
 let agentStates = new Map();
 let subsBox = null, subsView = null, subsSeq = 0; // 0646: Your subscriptions' box, and what GET /api/usage gave it: null, { state: 'loading' | 'ok' | 'error', … }
+let teamLimits = new Map(); // 0652: each member's card's line saying its agent is limited, as drawn
 let providerForm = null; // 0401: the Add an API provider form's { name, address, type, key, models, busy } until the view closes
 let settingsFailed = null; // 0274: why the last Save failed, when it wasn't one setting's fault
 let settingsSaid = null; // 0311: what the last Save changed that you didn't, such as builder_model cleared
@@ -120,13 +121,14 @@ async function readSettings(url) {
       providers: Array.isArray(body.providers) ? body.providers.filter(x => x && typeof x.name === 'string' && typeof x.label === 'string') : [], // 0393
       your_agents: body.your_agents !== null && typeof body.your_agents === 'object' ? body.your_agents : null, // 0399
       agent_models: Array.isArray(body.agent_models) ? body.agent_models : null, // 0400
+      team: body.team !== null && typeof body.team === 'object' && !Array.isArray(body.team) ? body.team : null, // 0652
       ...(body.loading === true ? { loading: true } : {}) } // 0407
       : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
   } catch { return { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
 }
 // 0407: what the agents' checks and lists give the view, which the config alone doesn't.
-const CATALOGUES = ['reviewer_models', 'builder_models', 'foreman_models', 'your_agents', 'agent_models'];
-const AGENT_KEYS = ['builder', 'reviewer', 'watch_agent']; // 0487: watch_agent was foreman
+const CATALOGUES = ['reviewer_models', 'builder_models', 'foreman_models', 'your_agents', 'agent_models', 'team']; // 0652: and Your team's limits
+const AGENT_KEYS = ['builder', 'reviewer', 'watch_agent', 'qa_agent']; // 0487: watch_agent was foreman. 0652: and QA's
 // The choices of each role's agent, and why some are left out, from `from`'s rows into `into`'s.
 function keepChoices(into, from) {
   const rows = v => v.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []);
@@ -152,7 +154,7 @@ function fillCatalogues(full, asked) {
     pane.scrollTop = top;
     return;
   }
-  for (const key of [...AGENT_KEYS, ...Object.keys(ROLE_PAIRS), ...Object.keys(SETTING_PAIRS)]) redrawSettings([key], key);
+  for (const key of [...AGENT_KEYS, ...Object.keys(ROLE_PAIRS), ...Object.keys(SETTING_PAIRS), ...Object.keys(BENCH_OF)]) redrawSettings([key], key); // 0652: and each bench's order
   drawAgents();
 }
 // 0407: whether the agents' lists are still being read, and why they couldn't be, or null.
@@ -242,21 +244,25 @@ function renderSettings() {
   close.type = 'button';
   close.addEventListener('click', leaveSettings);
   const kids = [el('div', 'top', null, el('h3', null, 'Settings'), close)];
-  let foremanRows = []; // 0286: the server's Foreman settings, shown in the Foreman group
+  const teamRows = new Map(); // 0652: key → its row, for Your team's cards
   if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
   else {
     for (const g of settingsView.groups) {
       const rows = [];
       for (const x of Array.isArray(g.settings) ? g.settings : []) if (!roleModelKey(x.key)) rows.push(settingRow(x, settingTips.size));
       pairSettings(rows); // 0381
-      if (g.title === 'Your engineering manager') { foremanRows = rows; continue; } // 0575: the server's title, was Watching
+      // 0652: a member's settings go on its card, wherever the server grouped them. 0575: the engineering manager's are Virgil's
+      const keyOf = new Map([...settingRowsDrawn].map(([k, d]) => [d.row, k]));
+      const left = rows.filter(r => { const k = keyOf.get(r); if (!TEAM_ROW_KEYS.has(k)) return true; teamRows.set(k, r); return false; });
       // 0593: a plain section, its heading over a divider
-      kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
+      if (left.length) kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...left));
     }
   }
   if (settingsView.state === 'ok' && settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
-  // 0396: Appearance and Auto-build first, then 0399's Your agents, 0646's Your subscriptions and the Foreman (0285) once the settings have loaded
-  kids.splice(1, 0, toggleGroup(), ...(settingsView.state === 'ok' ? [agentsGroup(), subsGroup(), foremanGroup(foremanRows)] : []));
+  // 0652: Your team first, then 0646's Your subscriptions, once the settings have loaded, then the rest as they were:
+  // Appearance and Auto-build (0396), 0399's Your agents and the server's groups.
+  const ok = settingsView.state === 'ok', team = ok ? teamGroup(teamRows) : null;
+  kids.splice(1, 0, ...(ok ? [team, subsGroup()].filter(Boolean) : []), toggleGroup(), ...(ok ? [agentsGroup()] : []));
   pane.replaceChildren(...kids);
   refreshSettings();
   showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
@@ -304,9 +310,9 @@ function toggleGroup() {
   return el('section', 'switches', null, row('Appearance', lookInfo, lookGroup, lookTip), row('Auto-build', runInfo, runSwitchButton, runSwitchSaid, runTip));
 }
 // 0381: each agent's model, drawn in the agent's row: key → the agent's key.
-const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', watch_model: 'watch_agent' };
+const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', watch_model: 'watch_agent', qa_model: 'qa_agent' }; // 0652: and QA's
 // 0400: with one list for each role, its effort is drawn beside it instead, and its model has no row.
-const ROLE_PAIRS = { builder_effort: 'builder', reviewer_effort: 'reviewer', watch_effort: 'watch_agent' }; // 0402: and the builder's
+const ROLE_PAIRS = { builder_effort: 'builder', reviewer_effort: 'reviewer', watch_effort: 'watch_agent', qa_effort: 'qa_agent' }; // 0402: and the builder's. 0652: and QA's
 const settingPairs = () => yourModels() !== null ? ROLE_PAIRS : SETTING_PAIRS;
 // The agent whose row `key`'s model is drawn in, when the server put both in one group; otherwise null.
 function pairedWith(key) {
@@ -325,8 +331,7 @@ function pairSettings(rows) {
   }
 }
 // A setting's row, whose explanation is the view's `n`th. 0381: an agent's model's is drawn to sit in the agent's row.
-// 0593: speck's face beside its name, watching, as the name stands saved.
-const nameFace = x => SpeckFace.draw({ mood: 'watching', size: 24, label: `${String(x.value || 'speck')}, watching` });
+// 0652: speck's face is its card's character now, not beside its name (0593).
 function settingRow(x, n) {
   const role = yourModels() !== null && Object.hasOwn(ROLES, x.key) ? x.key : null; // 0400: a role's one list
   const edit = x.editable === true ? (role !== null ? roleEditor(x) : settingEditor(x)) : null;
@@ -338,17 +343,18 @@ function settingRow(x, n) {
   const [info, tip] = nested ? [null, null] : effort === undefined ? settingInfo(x, n, ownLine(x))
     : settingInfo({ key: x.key, explain: sharedEnd(String(x.explain ?? ''), String(effort.explain ?? '')) }, n, [ownLine(x), ownLine(effort, x.key)], typeof effort.explain === 'string' && effort.explain ? effort.explain : null);
   const shown = edit ? edit : [el('code', 'value', settingValue(x.value))];
-  const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, x.key === 'speck_name' ? nameFace(x) : null, ...shown);
+  const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown);
   const row = el('div', model ? 'setting model' : 'setting', null,
     model ? el('span', 'pick', null, settingName(x.key), el('span', 'list', null, ...shown, info))
       : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
-    role === null && ['reviewer', 'builder', 'watch_agent'].includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393
+    role === null && AGENT_KEYS.includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393, 0652
     role !== null ? notYoursLine(role) : null, role !== null ? unlistedLine(role) : null, role !== null ? needsClaudeLine() : null, // 0400
     role !== null && cataloguesWhy() !== null ? el('p', 'bad', `Couldn't read your agents' models. ${cataloguesWhy()}`) : null, // 0407
     x.key === 'builder' ? builderSwitchLine(x) : null,
     x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
     x.key === 'builder_model' && builderModelsWhy() !== null ? el('p', null, builderModelsWhy()) : null,
     x.key === 'watch_model' && foremanModelsWhy() !== null ? el('p', null, foremanModelsWhy()) : null, // 0348
+    Object.hasOwn(BENCH_OF, x.key) ? benchLine(x.key) : null, // 0652
     settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
     // 0400: a refusal of the role's model, whose list is the role's own
     role !== null && settingRefused.has(ROLES[role].model) && settingRefused.get(ROLES[role].model) !== settingRefused.get(x.key) ? el('p', 'bad', settingRefused.get(ROLES[role].model)) : null,
@@ -403,13 +409,15 @@ function redrawSettings(keys, kept = null) {
     drawn.row.parentNode.insertBefore(row, drawn.row);
     drawn.row.parentNode.removeChild(drawn.row);
   }
+  drawTeamLimits(); // 0652: a member's agent picked again
   refreshSettings();
   showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
 }
 // 0370: the settings whose rows show what a change to `key` alters: its own lines, and the lists of models and efforts
 // it decides.
-const SETTING_AFFECTS = { reviewer: ['reviewer', 'reviewer_model', 'reviewer_effort'], builder: ['builder', 'builder_model', 'watch_model'],
-  watch_agent: ['watch_agent', 'watch_model'], reviewer_model: ['reviewer_model', 'reviewer_effort'] };
+// 0652: and the benches whose order leaves out the member's own agent, and QA's, which can run on the watch agent's.
+const SETTING_AFFECTS = { reviewer: ['reviewer', 'reviewer_model', 'reviewer_effort', 'reviewer_bench'], builder: ['builder', 'builder_model', 'watch_model', 'builder_bench', 'watch_bench', 'qa_bench'],
+  watch_agent: ['watch_agent', 'watch_model', 'watch_bench', 'qa_bench'], reviewer_model: ['reviewer_model', 'reviewer_effort'], qa_agent: ['qa_agent', 'qa_model', 'qa_bench'] };
 // 0273: a setting's name, which a narrow row breaks after a dot or an underscore ("max_parallel_" then "builds"),
 // rather than in the middle of a word.
 function settingName(key) {
@@ -484,9 +492,10 @@ function settingEditor(x) {
     settingTyped.set(x.key, value);
     // 0276: the reviewer and its model decide what the model and effort lists offer, so those are drawn again. 0370: only
     // those, keeping this control.
-    if (x.key === 'reviewer' || x.key === 'builder' || x.key === 'watch_agent' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) { // 0348: and foreman
+    if (AGENT_KEYS.includes(x.key) || (x.key === 'reviewer_model' && reviewerModelList() !== null)) { // 0348: and foreman. 0652: and QA's
       redrawSettings(SETTING_AFFECTS[x.key], x.key);
-    } else refreshSettings();
+    } else if (Object.hasOwn(BENCH_OF, x.key) || QA_KEYS.includes(x.key)) redrawSettings([...new Set([x.key, 'qa_bench'])], x.key); // 0652: a bench's order as typed
+    else refreshSettings();
   };
   if (settingClear.has(x.key)) { // 0261: this machine's value goes on Save, leaving the repo's
     const shown = el('input', 'edit');
@@ -521,7 +530,7 @@ function settingEditor(x) {
       const m = off.includes(c) ? null : (list || []).find(x => x.slug === c); // 0288: with its display name and description
       const named = m && m.display_name && m.display_name !== c ? ` (${m.display_name})` : '';
       // 0393: a model provider is offered by its own name, such as DeepSeek.
-      const agent = ['builder', 'reviewer', 'watch_agent'].includes(x.key) && settingProvider(c) !== null ? settingProvider(c).label : c;
+      const agent = AGENT_KEYS.includes(x.key) && settingProvider(c) !== null ? settingProvider(c).label : c;
       const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${agent} (not offered)` : `${agent}${named}${m && m.description ? `: ${m.description}` : ''}`);
       o.value = c;
       if (off.includes(c)) o.disabled = true;
@@ -695,7 +704,7 @@ function modelsWhy() {
 }
 // 0293: what switching the builder does, said while a new one is picked, and the build_command it sets.
 const BUILDER_NAMES = { claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' };
-const builderName = b => BUILDER_NAMES[b] || settingProvider(b)?.label || b; // 0393: a model provider by its own name
+const builderName = b => (Object.hasOwn(BUILDER_NAMES, b) ? BUILDER_NAMES[b] : null) || settingProvider(b)?.label || b; // 0393: a model provider by its own name. 0652: a name such as constructor is its own
 function builderCommandWords(x, builder) {
   const own = x.build_command && x.build_command.own && typeof x.build_command.own === 'object' && Object.hasOwn(x.build_command.own, builder) ? x.build_command.own[builder] : null;
   if (typeof own !== 'string') return null;
@@ -727,7 +736,7 @@ function replacesCommand(changes) {
 const settingNow = x => x.value === null || x.value === undefined ? '' : Array.isArray(x.value) ? x.value.join(',') : String(x.value);
 // 0400: each role's one list, made of your agents' models, grouped by agent, as "<agent> · <model>". Choosing an entry
 // sets the role's agent and model together. Its effort, for an agent that takes one, sits beside it.
-const ROLES = { builder: { model: 'builder_model', name: 'builder' }, reviewer: { model: 'reviewer_model', name: 'reviewer' }, watch_agent: { model: 'watch_model', name: 'speck' } };
+const ROLES = { builder: { model: 'builder_model', name: 'builder' }, reviewer: { model: 'reviewer_model', name: 'reviewer' }, watch_agent: { model: 'watch_model', name: 'speck' }, qa_agent: { model: 'qa_model', name: 'QA' } }; // 0652: and QA's
 // Your agents' models, as the server read them, or null when it didn't say: then each role keeps its agent and model lists.
 function yourModels() {
   const list = settingsView !== null && settingsView.state === 'ok' && Array.isArray(settingsView.agent_models) ? settingsView.agent_models : null;
@@ -764,7 +773,8 @@ function defaultWords(a) {
 // `role`'s entries: { group, value, label }, each value "<agent>|<model>", a blank model being the agent's own default,
 // which stands in for that model by name (0403).
 function roleEntries(role) {
-  const out = role === 'watch_agent' ? [{ group: null, value: '|', label: `The builder's agent, now ${agentLabel(buildersAgent())}` }] : [];
+  const out = role === 'watch_agent' ? [{ group: null, value: '|', label: `The builder's agent, now ${agentLabel(buildersAgent())}` }]
+    : role === 'qa_agent' ? [{ group: null, value: '|', label: `${managerName()}'s agent, now ${agentLabel(foremanAgentChosen())}` }] : []; // 0652
   for (const a of yourModels().filter(a => !needsClaude(a.id))) {
     const own = { group: a.name, value: `${a.id}|`, label: `${a.name}${defaultWords(a)}` }, models = agentModelsOf(a);
     if (!models.some(m => m.slug === defaultSlug(a))) out.push(own);
@@ -783,7 +793,7 @@ function asEntry(value) {
 function roleWords(role, value) {
   const at = value.indexOf('|'), agent = value.slice(0, at), model = value.slice(at + 1);
   const a = yourAgent(agent), m = a !== null ? agentModelsOf(a).find(x => x.slug === model) : undefined;
-  const who = agent === '' ? 'The builder\'s agent' : agent === 'claude-subagent' ? `${agentLabel(agent)} · subagent in the builder's session` : agentLabel(agent);
+  const who = agent === '' ? (role === 'qa_agent' ? `${managerName()}'s agent` : 'The builder\'s agent') : agent === 'claude-subagent' ? `${agentLabel(agent)} · subagent in the builder's session` : agentLabel(agent);
   if (model !== '') return `${who} · ${m ? modelLabel(m) : model}`;
   return `${who}${agent === '' || agent === 'claude-subagent' ? ' (default)' : defaultWords(a)}`;
 }
@@ -838,17 +848,19 @@ function roleEditor(x) {
   return [select];
 }
 // What a change to a role's list redraws: its own row, its effort, and the Foreman's, which can run on the builder's agent.
-const ROLE_AFFECTS = { builder: ['builder', 'builder_effort', 'watch_agent', 'watch_effort'], reviewer: ['reviewer', 'reviewer_effort'], watch_agent: ['watch_agent', 'watch_effort'] };
+// 0652: and the benches whose order leaves out the member's own agent, and QA's, which can run on the watch agent's.
+const ROLE_AFFECTS = { builder: ['builder', 'builder_effort', 'watch_agent', 'watch_effort', 'qa_agent', 'qa_effort', 'builder_bench', 'watch_bench', 'qa_bench'],
+  reviewer: ['reviewer', 'reviewer_effort', 'reviewer_bench'], watch_agent: ['watch_agent', 'watch_effort', 'qa_agent', 'qa_effort', 'watch_bench', 'qa_bench'], qa_agent: ['qa_agent', 'qa_effort', 'qa_bench'] };
 // Whether the agent `role` runs on, as chosen, takes an effort: Claude Code and Codex do.
 function takesEffort(role) {
-  const agent = role === 'watch_agent' ? foremanAgentChosen() : agentOfRole(settingChosen(role)), a = yourAgent(agent);
+  const agent = agentRunning(role), a = yourAgent(agent);
   return a !== null ? a.efforts === true : ['claude', 'codex'].includes(agent);
 }
 // A role whose agent, as chosen, is one speck knows but not one of yours says so.
 function notYoursLine(role) {
   const agent = settingChosen(role);
   if (agent === '' || yourAgent(agent) !== null || knownAgent(agent) === null) return null;
-  return el('p', 'bad', `${agentLabel(agent)} isn't one of your agents on this machine any more, so choose ${role === 'watch_agent' ? '' : 'the '}${ROLES[role].name}'s model again from the list.`);
+  return el('p', 'bad', `${agentLabel(agent)} isn't one of your agents on this machine any more, so choose ${role === 'watch_agent' || role === 'qa_agent' ? '' : 'the '}${ROLES[role].name}'s model again from the list.`);
 }
 // 0393: speck runs a model provider's models through Claude Code, so while Claude Code isn't installed none is offered.
 const needsClaude = id => settingProvider(id) !== null && knownAgent('claude') !== null && knownAgent('claude').installed === false;
@@ -858,9 +870,76 @@ function needsClaudeLine() {
 }
 // Why only an agent's default is offered, while it's chosen: its models couldn't be read.
 function unlistedLine(role) {
-  const agent = role === 'watch_agent' ? foremanAgentChosen() : settingChosen(role), a = yourAgent(agent);
+  const agent = role === 'watch_agent' || role === 'qa_agent' ? agentRunning(role) : settingChosen(role), a = yourAgent(agent);
   if (a === null || agentModelsOf(a).length || typeof a.why !== 'string' || !a.why) return null;
   return el('p', null, `Only ${a.name}'s default is offered: ${a.why}`);
+}
+// 0652: Your team, a card for each member: its character, its name and job, then the settings it runs on, its bench
+// last. Virgil's card is named as speck_name names it, and holds the engineering manager's settings.
+const TEAM = [
+  { member: 'manager', agent: 'watch_agent', keys: ['speck_name', 'watch', 'watch_agent', 'watch_model', 'watch_effort', 'watch_bench'],
+    job: 'Your engineering manager: runs the builds and reviews, gets stuck work moving and makes the calls you let it.' },
+  { member: 'builder', name: 'Builder', agent: 'builder', keys: ['builder', 'builder_model', 'builder_effort', 'builder_bench'], job: 'Writes each ticket\'s tests and code.' },
+  { member: 'reviewer', name: 'Reviewer', agent: 'reviewer', keys: ['reviewer', 'reviewer_model', 'reviewer_effort', 'reviewer_bench'], job: 'Reviews each build and decides whether it\'s approved.' },
+  { member: 'qa', name: 'QA', agent: 'qa_agent', keys: ['qa_agent', 'qa_model', 'qa_effort', 'qa_bench'], job: 'Checks a build\'s question in the running app.' },
+];
+const TEAM_ROW_KEYS = new Set(TEAM.flatMap(m => m.keys));
+const QA_KEYS = ['qa_agent', 'qa_model', 'qa_effort', 'qa_bench'];
+const BENCH_OF = { watch_bench: 'watch_agent', builder_bench: 'builder', reviewer_bench: 'reviewer', qa_bench: 'qa_agent' }; // each bench → its member's agent setting
+const managerName = () => settingSaved('speck_name') || 'speck';
+// The agent the member whose agent setting is `key` runs on, as chosen in the view, as speck works it out: QA's blank is
+// the watch agent's, and the watch agent's blank is the builder's when that's Codex, Cursor or a provider, else Claude Code.
+function agentRunning(key) {
+  if (key === 'watch_agent') return foremanAgentChosen();
+  if (key === 'qa_agent') { const q = settingChosen('qa_agent'); return ['claude', 'codex', 'cursor'].includes(q) || settingProvider(q) !== null ? q : foremanAgentChosen(); }
+  return agentOfRole(settingChosen(key));
+}
+// The section, with each member that has any of its rows in `rows` (key → row); null when none has.
+function teamGroup(rows) {
+  teamLimits = new Map();
+  const cards = TEAM.map(m => { const mine = m.keys.filter(k => rows.has(k)).map(k => rows.get(k)); return mine.length ? memberCard(m, mine) : null; }).filter(Boolean);
+  if (!cards.length) return null;
+  drawTeamLimits();
+  return el('section', 'sgroup team', null, el('div', 'sh', null, el('h4', null, 'Your team')), ...cards);
+}
+function memberCard(m, rows) {
+  const name = m.member === 'manager' ? managerName() : m.name;
+  const face = SpeckFace.draw(m.member === 'manager' ? { role: 'manager', mood: 'watching', size: 40, label: `${name}, watching` } : { role: m.member, size: 40 });
+  const limit = el('p', 'limit');
+  teamLimits.set(m.member, limit);
+  const card = el('div', 'member', null, el('div', 'mhead', null, face, el('div', 'who', null, el('h5', null, name), el('p', 'job', m.job))), limit, ...rows);
+  card.setAttribute('data-member', m.member);
+  return card;
+}
+// While a recorded usage limit holds the agent a member runs on, as saved and still chosen, which agent on its bench
+// stands in, as the server worked it out; null otherwise.
+function limitWords(m) {
+  const all = settingsView !== null ? settingsView.team : null, t = all && typeof all === 'object' && Object.hasOwn(all, m.member) ? all[m.member] : null;
+  if (!t || typeof t !== 'object' || t.limited !== true || typeof t.agent !== 'string' || agentRunning(m.agent) !== t.agent) return null;
+  const sub = typeof t.stand_in === 'string' && t.stand_in ? t.stand_in : null;
+  return `${agentLabel(t.agent)} is limited, so ${sub ? `${agentLabel(sub)} stands in from the bench until the limit resets` : 'no agent on the bench can stand in, and its work waits until the limit resets'}.`;
+}
+function drawTeamLimits() {
+  for (const m of TEAM) {
+    const line = teamLimits.get(m.member);
+    if (!line) continue;
+    const words = limitWords(m);
+    line.textContent = words ?? '';
+    line.hidden = words === null;
+  }
+}
+// A bench's agents in order, as speck reads what's typed: each once.
+const benchNames = v => [...new Set(String(v).trim().replace(/^\[(.*)\]$/, '$1').split(/\s*,\s*|\s+/).map(p => p.trim().toLowerCase()).filter(Boolean))];
+// The bench `key` as chosen in the view, in order, by name. Blank is your agents in order, without the member's own
+// agent or a model provider. QA's, with all its settings blank, is the watch agent's (0651).
+function benchLine(key) {
+  const qaBlank = key === 'qa_bench' && QA_KEYS.every(k => settingChosen(k).trim() === '');
+  const named = benchNames(settingChosen(qaBlank ? 'watch_bench' : key)), own = agentRunning(BENCH_OF[key]);
+  const list = named.length ? named : (yourModels() || []).map(a => a.id).filter(id => ['claude', 'codex', 'cursor'].includes(id) && id !== own);
+  const lead = qaBlank ? `With QA's settings blank, QA uses ${managerName()}'s bench` : named.length ? 'Stands in, in order' : 'Blank: your agents in order';
+  const text = !named.length && cataloguesLoading() ? `${lead}, once they're read.` : list.length ? `${lead}: ${list.map(agentLabel).join(', then ')}.`
+    : `${lead}, and none of your other agents can stand in.`;
+  return el('p', 'bench', text);
 }
 // 0399: the Your agents group's box, drawn afresh.
 function agentsGroup() {

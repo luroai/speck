@@ -144,8 +144,9 @@ test('0368 AC3: a drag from the column, such as selecting a setting\'s text, end
 test('0368 AC4: the pop-up shows the groups, controls, this-machine choices and Save, as the side pane did', async () => {
   const p = await opened();
   const kids = pop(p).children;
-  const titles = kids.filter(n => n.className === 'sgroup').map(g => p.all(g).find(n => n.tagName === 'h4')?.textContent);
-  for (const t of ['Shipping', 'How much runs at once', 'Ticket size limits', 'Your engineering manager']) assert.ok(titles.includes(t), `the ${t} group`);
+  const titles = kids.filter(n => /\bsgroup\b/.test(n.className || '')).map(g => p.all(g).find(n => n.tagName === 'h4')?.textContent);
+  // 0652: no empty engineering manager group any more: its settings are on its card in Your team, and this view has none
+  for (const t of ['Shipping', 'How much runs at once', 'Ticket size limits']) assert.ok(titles.includes(t), `the ${t} group`);
   assert.ok(p.all(pop(p)).some(n => n.tagName === 'select' || n.tagName === 'input'), 'controls');
   assert.ok(p.all(pop(p)).some(n => n.tagName === 'button' && /\bsave-all\b/.test(n.className || '')), 'Save');
   assert.match(pop(p).textContent, /What max_parallel_builds does\./, '0397: where a change is saved is said in the explanation, not marked');
@@ -157,7 +158,7 @@ test('0368 AC4: a refused Auto-build switch shows speck run\'s message beside th
   const p = await opened([{ status: 409, body: { error: 'speck run won\'t start: no build_command.' } }]);
   p.press(p.all(pop(p)).find(n => n.id === 'run-switch'));
   await p.settle();
-  const said = p.all(pop(p)).find(n => n.tagName === 'p' && n.className === 'bad' && n.hidden === false);
+  const said = p.all(pop(p).children.find(n => n.className === 'switches')).find(n => n.tagName === 'p' && n.className === 'bad' && n.hidden === false); // 0652: Your subscriptions, above it, can say what it couldn't read
   assert.equal(said?.textContent, 'speck run won\'t start: no build_command.');
   assert.equal(p.byId('run-error').textContent, 'speck run won\'t start: no build_command.', 'and under the header, as before');
 });

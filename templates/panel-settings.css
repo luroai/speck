@@ -48,8 +48,15 @@
   #settings .setting p.explain .line { margin-top: 6px; } /* 0397: this machine's own value, under the explanation */
   /* 0381: an agent's model, a setting of its own drawn beside the agent's list in its row, its explanation floating from
      the row. Its name is the list's and the info button's label, so only the agent's shows. */
-  #settings .control:has(> .speck-face) { flex-wrap: nowrap; } /* 0593: speck's face beside its name's box, down to 320 px */
-  #settings .control:has(> .speck-face) input.edit { flex: 1 1 0; }
+  /* 0652: Your team: a card for each member, its character beside its name and job, then the settings it runs on and
+     its bench, which fit a phone-width panel as every row does. A limited agent is said in the needs-you colour. */
+  #settings .team .member { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+  #settings .member .mhead { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 12px; padding-bottom: 4px; } /* the character at the top, beside the name, however long the job runs */
+  #settings .member .mhead .speck-face { display: block; }
+  #settings .member h5 { margin: 0; font-family: var(--font-ui); font-size: 15px; font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+  #settings .member p.job { margin: 2px 0 0; color: var(--muted); }
+  #settings .member p.limit { margin: 6px 0 0; color: var(--needs-you-text); }
+  #settings .member p.limit[hidden] { display: none; }
   #settings .setting .setting { position: static; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; flex: 1 1 14ch; min-width: 0; max-width: 100%; }
   #settings .setting .setting .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; max-width: 100%; }
   #settings .setting .setting .list { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; } /* its info button kept beside it */
@@ -148,6 +155,7 @@
     #settings .looks [role="radio"] { padding: 0 1px; } /* 0412: System, Light and Dark on one line in the control's half of the row, down to 320 px. 0428: 1 px, for their own borders */
     #settings .looks { gap: 2px; }
     #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
+    #settings .team .member { padding: 8px 10px; } /* 0652: the rows keep their width at 320 px */
   }
 
   /* 0417: a touch screen, at any width: Close at least 44 px each way */

@@ -93,10 +93,11 @@ test('0575 AC2: the page heads the group Your engineering manager, under the swi
   await openSettings(p);
   const settings = p.byId('settings');
   const titles = p.all(settings).filter(n => n.tagName === 'h4').map(n => n.textContent);
-  assert.equal(titles.filter(t => t === TITLE).length, 1, titles.join(', '));
   assert.ok(!titles.includes('Watching'), titles.join(', '));
-  assert.ok(titles.indexOf('Auto-build') < titles.indexOf(TITLE) && titles.indexOf(TITLE) < titles.indexOf('Shipping'), titles.join(', '));
-  const group = p.all(settings).find(n => n.tagName === 'section' && n.textContent.startsWith(TITLE));
+  // 0652: its card in Your team, first in the view, named as you named it, its job saying what it is
+  assert.ok(titles[0] === 'Your team' && titles.includes('Shipping'), titles.join(', '));
+  const group = p.all(settings).find(n => /\bmember\b/.test(n.className || '') && n.attrs['data-member'] === 'manager');
+  assert.match(p.all(group).find(n => /\bjob\b/.test(n.className || '')).textContent, new RegExp(`^${TITLE}: `));
   assert.ok(p.all(group).includes(rowOf(p, 'speck_name')), 'in the group');
   assert.equal(p.all(rowOf(p, 'speck_name')).find(n => n.tagName === 'input').value, 'Virgil');
 });

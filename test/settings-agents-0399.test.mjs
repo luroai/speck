@@ -43,9 +43,11 @@ test('0399 AC1: Your agents comes after Auto-build, listing each of your agents 
   await openSettings(p);
   const pane = p.byId('settings');
   const groups = pane.children.filter(n => /\b(sgroup|switches)\b/.test(n.className || ''));
-  assert.match(groups[0].className, /\bswitches\b/, 'Appearance and Auto-build first');
-  assert.equal(groups[1], agentsBox(p), 'then Your agents');
-  assert.match(groups[1].textContent, /^Your agents/);
+  // 0652: after Your team and Your subscriptions
+  assert.deepEqual(groups.slice(0, 2).map(g => g.className), ['sgroup team', 'sgroup subs']);
+  assert.match(groups[2].className, /\bswitches\b/, 'then Appearance and Auto-build');
+  assert.equal(groups[3], agentsBox(p), 'then Your agents');
+  assert.match(groups[3].textContent, /^Your agents/);
   const rows = agentRows(p);
   assert.deepEqual(rows.map(r => p.all(r).find(n => /\bname\b/.test(n.className || '')).textContent), ['Claude Code', 'Codex', 'DeepSeek']);
   assert.match(rowNamed(p, 'Claude Code').textContent, /Installed, signed in/);

@@ -58,7 +58,7 @@ Usage limits don't stop the line either. When Claude, Codex or Cursor runs out o
 
 ### Turning it on
 
-speck takes the obvious calls once you choose `decide` for `watch`, in the Your engineering manager group of the panel's Settings, or with `speck config set watch decide`. Until then `watch` is `tell`, and every question waits for you. `fix` sits between the two: speck takes only clear-cut calls that change nothing you'd notice, and looks into stops and long builds.
+speck takes the obvious calls once you choose `decide` for `watch`, on your engineering manager's card under Your team in the panel's Settings, or with `speck config set watch decide`. Until then `watch` is `tell`, and every question waits for you. `fix` sits between the two: speck takes only clear-cut calls that change nothing you'd notice, and looks into stops and long builds.
 
 To give it a name of your own, set `speck_name` in the same group, or run `speck config set speck_name "<name>"`. Wherever it speaks or acts for you, in the panel, `speck status` and `speck run`'s log, it then goes by that name.
 

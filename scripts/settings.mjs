@@ -17,7 +17,7 @@ import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyRe
 import { buildsEachTicket } from './build-model.mjs';
 import { knownProviders } from './custom-providers.mjs'; import { providerNamed } from './provider-review.mjs';
 import { keysStatus, saveProviderKey } from './keys.mjs';
-import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; import { benchRows, newBenchProblem } from './bench.mjs'; import { qaRows } from './app-check.mjs'; // 0634, 0645, 0651
+import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; import { benchRows, newBenchProblem } from './bench.mjs'; import { qaRows } from './app-check.mjs'; import { TEAM_GROUP, TEAM_KEYS, teamShown } from './team.mjs'; // 0634, 0645, 0651, 0652
 export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
 
 export const SETTING_GROUPS = [
@@ -83,7 +83,7 @@ const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] :
 // 0293: and builder, which sets build_command with it. 0511: and allow_same_model_review, which the view asks about
 // before turning it on, as it weakens the independent review.
 export const EDITABLE = Object.freeze(['builder', 'builder_model', 'builder_effort', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
-  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'speck_name', 'watch', 'watch_agent', 'watch_model', 'watch_effort', 'allow_same_model_review']);
+  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'speck_name', 'watch', 'watch_agent', 'watch_model', 'watch_effort', 'allow_same_model_review', ...TEAM_KEYS]); // 0652: and Your team's benches and QA's
 const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
@@ -100,15 +100,15 @@ function choicesOf(key, file, providers = knownProviders()) {
   if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
   if (key === 'watch') return [...FIXING]; // 0286
   if (key === 'ship_mode') return [...SHIP_MODES]; // 0295
-  if (key === 'watch_agent') return [...new Set(['', ...FOREMAN_AGENTS, ...named])]; // 0287
-  if (key === 'watch_effort') return ['', ...EFFORTS];
+  if (key === 'watch_agent' || key === 'qa_agent') return [...new Set(['', ...FOREMAN_AGENTS, ...named])]; // 0287, 0652
+  if (key === 'watch_effort' || key === 'qa_effort') return ['', ...EFFORTS];
   return undefined;
 }
 
 // A setting's value as speck reads it from the file's text: the file's own, or speck's default when it's missing.
 function valueIn(text, repo, key) {
   const inFile = lookup(parseConfig(text), key) !== undefined, read = lookup(loadConfig(repo, { machine: false }), key);
-  return { value: inFile && read !== undefined ? read : SETTING_GROUPS.flatMap(g => g.settings).find(s => s.key === key).default, inFile };
+  return { value: inFile && read !== undefined ? read : [...SETTING_GROUPS, TEAM_GROUP].flatMap(g => g.settings).find(s => s.key === key).default, inFile };
 }
 
 // Each group's settings, with the value speck reads from `repo`'s speck/config.yml now, and `default: true` for one
@@ -125,11 +125,11 @@ function valueIn(text, repo, key) {
 // machine has its key (never the key), is offered as builder, reviewer and Foreman while Claude Code is installed.
 export function panelSettings(repo, { models, builderModels, foremanModels, agents, providers = knownProviders(repo) } = {}) {
   const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseConfig(text), mine = machineConfig(repo);
-  return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
+  return { groups: [...SETTING_GROUPS, TEAM_GROUP].map(g => ({ title: g.title, settings: g.settings.map(s => { // 0652: and Your team's
     const { value, inFile } = valueIn(text, repo, s.key), all = choicesOf(s.key, file, providers);
     // 0393: the one set now is the one the view shows: this machine's when it has its own.
     const now = String((MACHINE_SETTINGS.includes(s.key) && Object.hasOwn(mine, s.key) ? mine[s.key] : value) ?? '');
-    const { choices, missing } = ['reviewer', 'builder', 'watch_agent'].includes(s.key) && agents ? readyReviewers(all, agents, now, s.key, providers) : { choices: all };
+    const { choices, missing } = ['reviewer', 'builder', 'watch_agent', 'qa_agent'].includes(s.key) && agents ? readyReviewers(all, agents, now, s.key, providers) : { choices: all };
     // 0293: build_command as the file has it, whether it was set by hand, and each builder's own, for the view to say
     // what switching the builder sets it to, and to ask first when it replaces one set by hand. 0324: and whether speck
     // run builds each ticket with its own builder with it, so the view says when it doesn't.
@@ -194,7 +194,7 @@ function readyReviewers(choices, { agents }, current, key, providers = knownProv
       cant.push(`${p.label} can't run here: ${why}.`); // chosen already, so still offered
       return true;
     }
-    if (key === 'watch_agent') return true;
+    if (key === 'watch_agent' || key === 'qa_agent') return true;
     const agent = key === 'builder' ? byId.get(c) : Object.hasOwn(REVIEWER_AGENTS, c) ? byId.get(REVIEWER_AGENTS[c]) : undefined;
     if (!agent || (agent.installed && agent.signed_in) || c === current) return true;
     left.push(`${c} (${String(agent.why || `${agent.name} isn't ready.`).replace(/\.$/, '')})`);
@@ -252,7 +252,7 @@ export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCur
   try { foreman = await foremanModels(repo, read, readCursor, providers); } catch (e) { foreman = { foreman: '', why: `Couldn't read the models of the agent speck runs on (${e.message}), so type the model's name.` }; }
   const agents = await found, yours = yourAgentsShown(repo, agents, providers);
   const listed = yours.why ? null : await yourModels(yours, read, readCursor, providers);
-  return { ...panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents, providers }), your_agents: yours, ...(listed ? { agent_models: listed } : {}) };
+  return { ...panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents, providers }), your_agents: yours, ...(listed ? { agent_models: listed } : {}), team: teamShown(repo, yours, providers) }; // 0652
 }
 
 // 0407: what the panel's GET /api/settings?quick=1 answers: panelSettings from this machine's and the project's config
@@ -347,7 +347,7 @@ export function cmdConfigShow(args) {
   // 0386: a value this machine holds is shown as speck uses it, marked this_machine, with speck/config.yml's in repo_value.
   const repo = findRepoRoot(), mine = machineConfig(repo), name = speckNameOf(loadConfig(repo, { machine: false })); // 0575
   const explains = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, namedExplain(s, name)]));
-  const groups = panelSettings(repo).groups.map(g => ({ title: g.title, settings: g.settings.map(s => {
+  const groups = panelSettings(repo).groups.filter(g => g.title !== TEAM_GROUP.title).map(g => ({ title: g.title, settings: g.settings.map(s => { // 0652: Your team's are below
     const repoValue = s.repo_value ?? s.value, machine = Object.hasOwn(mine, s.key), value = machine ? mine[s.key] : repoValue;
     return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: explains[s.key],
       ...(machine ? { this_machine: true, repo_value: repoValue } : {}) };

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { panelRepo, heldTimeouts } from './support/panel.mjs';
 import { settingsPage, openSettings, rowOf, saveButton, posted } from './support/settings.mjs';
 import { panelSettings, SETTING_GROUPS, EDITABLE } from '../scripts/settings.mjs';
+import { TEAM_KEYS } from '../scripts/team.mjs';
 import { MACHINE_SETTINGS } from '../scripts/machine.mjs';
 
 // ---------- 0397: say where a setting is saved in its explanation ----------
@@ -38,7 +39,7 @@ test('0397 AC1: no setting\'s row shows a repo, repo default, default or this ma
 test('0397 AC2: each explanation ends by saying where a change is saved, and says what speck uses when it\'s left blank', () => {
   const r = panelRepo();
   const all = panelSettings(r.dir).groups.flatMap(g => g.settings);
-  assert.equal(all.length, SETTING_GROUPS.flatMap(g => g.settings).length);
+  assert.equal(all.length, SETTING_GROUPS.flatMap(g => g.settings).length + TEAM_KEYS.length); // 0652: and Your team's
   for (const x of all) {
     const ending = !EDITABLE.includes(x.key) ? /speck\/config\.yml rather than here, and saved there for the project, with a commit\.$/
       : MACHINE_SETTINGS.includes(x.key) ? /saved for your machine only, without a commit\.$/ : /saved for the project in speck\/config\.yml, with a commit\.$/;

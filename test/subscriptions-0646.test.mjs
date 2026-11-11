@@ -58,9 +58,11 @@ test('0646 AC1: Settings has a Your subscriptions group after Your agents, each 
   const p = await openWith(usage);
   const pane = p.byId('settings');
   const groups = pane.children.filter(n => /\b(sgroup|switches)\b/.test(n.className || ''));
-  assert.equal(groups[1], agentsBox(p));
-  assert.match(groups[2].className, /\bsubs\b/, 'Your subscriptions comes after Your agents');
-  assert.match(groups[2].textContent, /^Your subscriptions/);
+  // 0652: under Your team's cards, above Appearance, Auto-build and Your agents
+  assert.match(groups[0].className, /\bteam\b/);
+  assert.match(groups[1].className, /\bsubs\b/, 'Your subscriptions comes after Your team');
+  assert.match(groups[1].textContent, /^Your subscriptions/);
+  assert.ok(groups.indexOf(agentsBox(p)) > 1, 'Your agents below it');
   const rows = subRows(p);
   assert.match(rows[0].textContent, /^Claude Code/);
   assert.match(rows[1].textContent, /^Cursor · Premium/);
