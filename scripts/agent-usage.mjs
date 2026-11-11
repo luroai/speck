@@ -1,10 +1,11 @@
 // 0642: each agent's latest usage, as it reports it with every run: for Claude Code, the rate_limit_event lines of its
 // stream-json log; for Codex, the token_count events of its session file. Kept per agent for this machine in the main
-// checkout's speck/.cache/machine/usage.json, which git ignores, a newer reading replacing an older one. A run with no
+// checkout's speck/.cache/machine/usage/, which git ignores, a newer reading replacing an older one. A run with no
 // reading leaves the last one as it was. Each reading has read_at, when speck read it, and Codex's also reported_at,
 // when Codex wrote it, which says which of two readings is newer.
 
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { machineConfigFile } from './machine.mjs';
@@ -14,7 +15,7 @@ import { threadId } from './codex-build.mjs';
 import { configBuilder } from './build-model.mjs';
 
 export const USAGE_AGENTS = Object.freeze(['claude', 'codex']);
-export const usageFile = repo => path.join(path.dirname(machineConfigFile(repo)), 'usage.json');
+export const usageDir = repo => path.join(path.dirname(machineConfigFile(repo)), 'usage');
 
 const plain = v => v && typeof v === 'object' && !Array.isArray(v);
 const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
@@ -85,54 +86,46 @@ export function codexUsage(thread, { home = CODEX_HOME(), now = Date.now() } = {
   return best;
 }
 
-// This machine's readings, { claude?, codex? }, or {} when there are none or the file can't be read.
-export function readUsage(repo) {
-  let read;
-  try { read = JSON.parse(fs.readFileSync(usageFile(repo), 'utf8')); } catch { return {}; }
-  if (!plain(read)) return {};
-  return Object.fromEntries(USAGE_AGENTS.filter(a => plain(read[a]) && isoTime(read[a].read_at) && plain(read[a].windows)).map(a => [a, read[a]]));
+// Each reading is a file of its own in its agent's folder, named by when it was reported, so runs ending at once never
+// write the same file and need no lock: the newest file is the reading, and only files older than one already there
+// are removed. A file is written under a name starting with a dot, then renamed, so it's never read half written.
+const NAME = /^(\d{15})-[\w-]+\.json$/;
+const agentDir = (repo, agent) => path.join(usageDir(repo), agent);
+const timeOf = name => Number(name.slice(0, 15));
+const valid = v => plain(v) && isoTime(v.read_at) && plain(v.windows);
+function readingNames(dir) {
+  let names;
+  try { names = fs.readdirSync(dir); } catch { return []; }
+  return names.filter(n => NAME.test(n)).sort().reverse();
 }
 
-const LOCK_WAIT_MS = 5000, LOCK_STALE_MS = 30000;
-const pause = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-
-// How long ago `file` last changed, in ms, or null when it's gone.
-const ageOf = file => { try { return Date.now() - fs.statSync(file).mtimeMs; } catch { return null; } };
-const take = file => { try { fs.writeFileSync(file, `${process.pid}\n`, { flag: 'wx' }); return true; } catch (e) { if (e.code !== 'EEXIST') throw e; return false; } };
-
-// Removes `lock` if a process that died left it, holding `lock`.stale while it checks again and removes it, so two
-// processes taking over the same lock can't remove the one either of them has made since. A guard left for
-// LOCK_STALE_MS is removed in turn. True when it removed the lock.
-function clearStale(lock) {
-  const guard = `${lock}.stale`;
-  if (!take(guard)) { if (ageOf(guard) > LOCK_STALE_MS) fs.rmSync(guard, { force: true }); return false; }
-  try { if (ageOf(lock) > LOCK_STALE_MS) { fs.rmSync(lock, { force: true }); return true; } return false; } finally { fs.rmSync(guard, { force: true }); }
-}
-
-// Runs fn holding `file`.lock, so builds, review rounds and watch runs ending at once each read and write the file in
-// turn rather than one undoing another. A lock left for LOCK_STALE_MS by a process that died is taken over.
-function withLock(file, fn) {
-  const lock = `${file}.lock`, until = Date.now() + LOCK_WAIT_MS;
-  while (!take(lock)) {
-    if (Date.now() > until) throw new Error(`another process has held ${lock} for over ${LOCK_WAIT_MS / 1000} seconds`);
-    if (!(ageOf(lock) > LOCK_STALE_MS && clearStale(lock))) pause(10);
+// `agent`'s reading, the newest that can be read, or null.
+function latest(repo, agent) {
+  const dir = agentDir(repo, agent);
+  for (const name of readingNames(dir)) {
+    try { const v = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8')); if (valid(v)) return v; } catch { /* removed meanwhile, or unreadable */ }
   }
-  try { return fn(); } finally { fs.rmSync(lock, { force: true }); }
+  return null;
+}
+
+// This machine's readings, { claude?, codex? }, or {} when there are none.
+export function readUsage(repo) {
+  return Object.fromEntries(USAGE_AGENTS.map(a => [a, latest(repo, a)]).filter(([, v]) => v));
 }
 
 // Keeps `reading` as `agent`'s, unless the one kept is newer. Returns true when it was kept.
 export function saveUsage(repo, agent, reading) {
-  if (!USAGE_AGENTS.includes(agent) || !reading) return false;
-  sharedCacheDir(repo, 'machine');
-  const file = usageFile(repo);
-  return withLock(file, () => {
-    const all = readUsage(repo), was = all[agent];
-    if (was && newer(was) > newer(reading)) return false;
-    const tmp = `${file}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp, `${JSON.stringify({ ...all, [agent]: reading }, null, 2)}\n`);
-    fs.renameSync(tmp, file);
-    return true;
-  });
+  if (!USAGE_AGENTS.includes(agent) || !valid(reading)) return false;
+  const at = newer(reading);
+  if (!Number.isFinite(at) || at < 0) return false;
+  const dir = sharedCacheDir(repo, path.join('machine', 'usage', agent));
+  const top = readingNames(dir)[0];
+  if (top && timeOf(top) > at) return false;
+  const name = `${String(at).padStart(15, '0')}-${process.pid}-${crypto.randomUUID().slice(0, 8)}.json`, tmp = path.join(dir, `.${name}.tmp`);
+  fs.writeFileSync(tmp, `${JSON.stringify(reading, null, 2)}\n`);
+  fs.renameSync(tmp, path.join(dir, name));
+  for (const n of readingNames(dir)) if (timeOf(n) < at) fs.rmSync(path.join(dir, n), { force: true });
+  return true;
 }
 
 // The reading in a run's output `text` on `agent`: Claude's from its stream-json lines, Codex's from the session file

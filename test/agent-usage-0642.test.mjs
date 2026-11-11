@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { claudeUsageInLog, codexUsageInSession, codexUsage, readUsage, saveUsage, usageFile, keepUsage, keepBuildUsage, usageLines } from '../scripts/agent-usage.mjs';
+import { claudeUsageInLog, codexUsageInSession, codexUsage, readUsage, saveUsage, usageDir, keepUsage, keepBuildUsage, usageLines } from '../scripts/agent-usage.mjs';
 import { agentsReport, reportLines } from '../scripts/your-agents.mjs';
 import { foremanAgentQueue } from '../scripts/foreman-agent.mjs';
 import { loadConfig } from '../scripts/speck.mjs';
@@ -119,7 +119,7 @@ test('0642 AC2: a Codex build and a Codex watch run that end keep Codex\'s usage
 
 test('0642 AC3: readings are kept per agent in the main checkout\'s speck/.cache/machine/, which git ignores', () => {
   const r = panelRepo();
-  assert.equal(path.relative(r.dir, usageFile(r.dir)), path.join('speck', '.cache', 'machine', 'usage.json'));
+  assert.equal(path.relative(r.dir, usageDir(r.dir)), path.join('speck', '.cache', 'machine', 'usage'));
   keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.1, seven: 0.2 })]), { now: NOW });
   const home = codexHomeWith('TX', [codexEvent({ at: '2026-11-11T11:00:00Z', five: 5, week: 6 })]);
   keepUsage(r.dir, 'codex', '', { thread: 'TX', home });
@@ -128,7 +128,7 @@ test('0642 AC3: readings are kept per agent in the main checkout\'s speck/.cache
   // From a worktree, the same file in the main checkout.
   const wt = path.join(r.dir, '..', `wt-${path.basename(r.dir)}`);
   spawnSync('git', ['worktree', 'add', '-q', '-b', 'speck/0642-wt', wt], { cwd: r.dir });
-  assert.equal(usageFile(wt), usageFile(r.dir));
+  assert.equal(usageDir(wt), usageDir(r.dir));
 });
 
 test('0642 AC3: a newer reading replaces an older one, and a run with no reading leaves the last one as it was', () => {
@@ -154,90 +154,46 @@ test('0642 AC3: of two Codex readings, the one Codex reported later wins, whenev
   assert.equal(readUsage(r.dir).codex.windows.five_hour.used_percent, 50);
 });
 
-test('0642 AC3: a save waits while another process holds the file, so neither undoes the other, and takes over a lock left by one that died', async () => {
-  const r = panelRepo(), lock = `${usageFile(r.dir)}.lock`;
-  keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.1, seven: 0.2 })]), { now: NOW });
-  fs.writeFileSync(lock, '1\n'); // another process is reading and writing it
-  const child = saveIn(r.dir, 'codex', { read_at: '2026-11-11T12:00:00.000Z', windows: { five_hour: { used_percent: 9, resets_at: null } } });
-  await child.started;
-  await new Promise(res => setTimeout(res, 150));
-  assert.equal(readUsage(r.dir).codex, undefined, 'nothing written while the lock is held');
-  // What the other process writes meanwhile is kept.
-  fs.writeFileSync(usageFile(r.dir), JSON.stringify({ ...readUsage(r.dir), claude: { ...readUsage(r.dir).claude, read_at: '2026-11-11T12:30:00.000Z' } }));
-  fs.rmSync(lock);
-  assert.equal(await child.exited, 0, child.err());
+test('0642 AC3: runs ending at once in separate processes lose no reading, and the newest wins', async () => {
+  const r = panelRepo();
+  const many = (agent, from, step) => Array.from({ length: 30 }, (_, i) => ({ read_at: new Date(NOW + (from + i * step) * 60000).toISOString(),
+    windows: { five_hour: { used_percent: from + i * step, resets_at: null } } }));
+  const children = [saveIn(r.dir, 'claude', many('claude', 0, 2)), saveIn(r.dir, 'claude', many('claude', 1, 2)),
+    saveIn(r.dir, 'codex', many('codex', 0, 1)), saveIn(r.dir, 'codex', many('codex', 100, -1))];
+  for (const c of children) assert.equal(await c.exited, 0, c.err());
   const kept = readUsage(r.dir);
-  assert.equal(kept.codex.windows.five_hour.used_percent, 9);
-  assert.equal(kept.claude.read_at, '2026-11-11T12:30:00.000Z', 'the other process\'s write survives');
-  assert.equal(fs.existsSync(lock), false);
-  // A lock left long ago is taken over.
-  fs.writeFileSync(lock, '1\n');
-  const old = new Date(Date.now() - 60000);
-  fs.utimesSync(lock, old, old);
-  assert.equal(keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.5, seven: 0.2 })]), { now: NOW + 3600e3 }), true);
-  assert.equal(fs.existsSync(lock), false);
+  assert.equal(kept.claude?.windows.five_hour.used_percent, 59, 'the newest of both processes\' Claude readings');
+  assert.equal(kept.codex?.windows.five_hour.used_percent, 100, 'the newest Codex reading, though its process saved it first');
+  for (const agent of ['claude', 'codex']) {
+    const left = fs.readdirSync(path.join(usageDir(r.dir), agent));
+    assert.ok(left.length <= 2 && left.every(n => !n.endsWith('.tmp')), `only the newest is kept: ${left}`);
+  }
 });
 
-test('0642 AC3: of two processes taking over the same stale lock, neither removes the lock the other made, so both readings survive', async () => {
-  const r = panelRepo(), lock = `${usageFile(r.dir)}.lock`, guard = `${lock}.stale`;
-  fs.mkdirSync(path.dirname(lock), { recursive: true });
-  // This test is the first contender: it finds the lock stale and takes the guard to take it over.
-  fs.writeFileSync(lock, '1\n');
-  const old = new Date(Date.now() - 60000);
-  fs.utimesSync(lock, old, old);
-  fs.writeFileSync(guard, `${process.pid}\n`);
-  const child = saveIn(r.dir, 'codex', { read_at: '2026-11-11T12:00:00.000Z', windows: { five_hour: { used_percent: 9, resets_at: null } } });
-  await child.started;
-  await new Promise(res => setTimeout(res, 150));
-  assert.ok(Date.now() - fs.statSync(lock).mtimeMs > 30000, 'the second contender leaves the stale lock while the first holds the guard');
-  // The first removes it, makes its own and lets go of the guard: the second must wait for that lock, not remove it.
-  fs.rmSync(lock);
-  fs.writeFileSync(lock, `${process.pid}\n`);
-  fs.rmSync(guard);
-  await new Promise(res => setTimeout(res, 150));
-  assert.ok(fs.existsSync(lock), 'the first contender\'s new lock is still there');
-  assert.equal(readUsage(r.dir).codex, undefined, 'and the second has written nothing');
-  fs.writeFileSync(usageFile(r.dir), JSON.stringify({ claude: { read_at: '2026-11-11T12:30:00.000Z', windows: { five_hour: { used_percent: 3, resets_at: null } } } }));
-  fs.rmSync(lock);
-  assert.equal(await child.exited, 0, child.err());
-  const kept = readUsage(r.dir);
-  assert.equal(kept.claude.windows.five_hour.used_percent, 3);
-  assert.equal(kept.codex.windows.five_hour.used_percent, 9);
-  assert.equal(fs.existsSync(lock) || fs.existsSync(guard), false);
+test('0642 AC3: a reading that can\'t be read, or is half written, is passed over for the newest one that can', () => {
+  const r = panelRepo(), dir = path.join(usageDir(r.dir), 'claude');
+  assert.equal(keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.1, seven: 0.2 })]), { now: NOW }), true);
+  fs.writeFileSync(path.join(dir, `${String(NOW + 60000).padStart(15, '0')}-1-broken.json`), '{broken');
+  fs.writeFileSync(path.join(dir, `${String(NOW + 120000).padStart(15, '0')}-1-odd.json`), JSON.stringify({ read_at: 'nonsense', windows: {} }));
+  fs.writeFileSync(path.join(dir, `.${String(NOW + 180000).padStart(15, '0')}-1-half.json.tmp`), '{"read_at":');
+  fs.writeFileSync(path.join(dir, 'constructor'), '{}');
+  assert.equal(readUsage(r.dir).claude.windows.five_hour.used_percent, 10);
+  assert.equal(keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.3, seven: 0.2 })]), { now: NOW + 300000 }), true);
+  assert.equal(readUsage(r.dir).claude.windows.five_hour.used_percent, 30);
+  assert.equal(saveUsage(r.dir, 'claude', { read_at: 'nonsense', windows: {} }), false);
+  assert.equal(saveUsage(r.dir, '__proto__', readUsage(r.dir).claude), false);
 });
 
-test('0642 AC3: a guard left by a process that died is cleared, so a stale lock can still be taken over', () => {
-  const r = panelRepo(), lock = `${usageFile(r.dir)}.lock`, guard = `${lock}.stale`;
-  fs.mkdirSync(path.dirname(lock), { recursive: true });
-  const old = new Date(Date.now() - 60000);
-  for (const f of [lock, guard]) { fs.writeFileSync(f, '1\n'); fs.utimesSync(f, old, old); }
-  assert.equal(keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.5, seven: 0.2 })]), { now: NOW }), true);
-  assert.equal(fs.existsSync(lock) || fs.existsSync(guard), false);
-});
-
-// A separate process saving `reading` as `agent`'s in `dir`: { started, exited, err() }.
-function saveIn(dir, agent, reading) {
+// A separate process saving each of `readings` as `agent`'s in `dir`, in turn: { exited, err() }.
+function saveIn(dir, agent, readings) {
   const mod = new URL('../scripts/agent-usage.mjs', import.meta.url).href;
   const code = `import { saveUsage } from ${JSON.stringify(mod)};
-    process.stdout.write('started\\n');
-    saveUsage(${JSON.stringify(dir)}, ${JSON.stringify(agent)}, ${JSON.stringify(reading)});`;
-  const p = spawn(process.execPath, ['--input-type=module', '-e', code], { stdio: ['ignore', 'pipe', 'pipe'] });
+    for (const r of ${JSON.stringify(readings)}) saveUsage(${JSON.stringify(dir)}, ${JSON.stringify(agent)}, r);`;
+  const p = spawn(process.execPath, ['--input-type=module', '-e', code], { stdio: ['ignore', 'ignore', 'pipe'] });
   let err = '';
   p.stderr.on('data', d => { err += d; });
-  const started = new Promise(resolve => p.stdout.on('data', d => { if (String(d).includes('started')) resolve(); }));
-  return { started, exited: new Promise(resolve => p.on('exit', resolve)), err: () => err };
+  return { exited: new Promise(resolve => p.on('exit', resolve)), err: () => err };
 }
-
-test('0642 AC3: an unreadable usage file reads as no readings, and the next reading replaces it', () => {
-  const r = panelRepo();
-  fs.mkdirSync(path.dirname(usageFile(r.dir)), { recursive: true });
-  fs.writeFileSync(usageFile(r.dir), '{broken');
-  assert.deepEqual(readUsage(r.dir), {});
-  fs.writeFileSync(usageFile(r.dir), JSON.stringify({ claude: { read_at: 'nonsense', windows: {} }, constructor: {} }));
-  assert.deepEqual(readUsage(r.dir), {});
-  assert.equal(keepUsage(r.dir, 'claude', claudeLog([CLAUDE_EVENT({ five: 0.1, seven: 0.2 })]), { now: NOW }), true);
-  assert.equal(readUsage(r.dir).claude.windows.five_hour.used_percent, 10);
-});
 
 // ---------- AC4 ----------
 
@@ -299,7 +255,7 @@ function watch(r, cfg = {}) {
 test('0642 AC4: the brief names the file the readings are kept in, and speck agents\' help mentions usage', () => {
   const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
   const row = brief.split('\n').find(l => l.startsWith('| `speck agents [--json]`'));
-  assert.ok(row.includes('`speck/.cache/machine/usage.json`'));
+  assert.ok(row.includes('`speck/.cache/machine/usage/`'));
   assert.ok(row.includes('`usage`'));
   const help = fs.readFileSync(new URL('../scripts/speck.mjs', import.meta.url), 'utf8').split('\n').find(l => l.includes('speck agents [--json]'));
   assert.match(help, /latest usage/);

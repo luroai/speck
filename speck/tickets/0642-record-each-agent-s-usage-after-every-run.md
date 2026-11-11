@@ -244,3 +244,94 @@ After every build, review round and watch run on Claude Code or Codex, speck kee
 ```
 
 </details>
+
+<details><summary>Round 3 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "afe2e9a10737f824a0a7b1d83da6eecfaa1cabd4",
+    "session": "continued",
+    "thread_id": "01a1cb0a-6eb0-7990-b699-1f38cae63fe5",
+    "builder_response": "- Tests run: test/agent-usage-0642.test.mjs (with the commands.checks files, as speck test --files runs them).\n- F1: fixed. Taking over a stale lock is now done only while holding a second lock, `usage.json.lock.stale` (clearStale in scripts/agent-usage.mjs), made with `wx`. Under it, the lock's age is checked again before it's removed, so a contender that saw the lock stale earlier can't remove a fresh lock another contender has made since: once the first lets go of the guard, the second finds the new lock fresh and waits for it. A guard left over 30 seconds by a process that died is removed in turn. withLock also pauses between tries while another process holds the guard, and keeps its 5-second limit.\n  New test \"of two processes taking over the same stale lock…\": the test plays the first contender, holding the guard over a stale lock while a separate process saves. The second leaves the stale lock alone. The first then replaces it with its own fresh lock and lets go of the guard. The second still waits, its write appearing only after the first's lock is removed, and both readings survive. With the old removal (rm without the guard), this test fails, because the second process removes the stale lock straight away. A second new test shows that a guard left by a dead process is cleared, so the stale lock is still taken over.\n",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 436664,
+      "cached_input_tokens": 366336,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3301,
+      "reasoning_output_tokens": 551
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7764,
+      "cached": 128896,
+      "write": 0,
+      "output": 1054
+    },
+    "cost_usd": 0.0389576,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T14:43:42.341Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "claudeUsageInLog parses both windows, percentages, reset times, refusal status and read time. Passing AC1 tests cover parsing and build/watch collection."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "codexUsageInSession retains both windows, plan, limit status and separate read/report times. Passing AC2 tests exercise build, review and watch collection."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Passing AC3 tests cover storage location, git ignoring, freshness, missing readings and normal contention. clearStale still permits concurrent writers when recovering an abandoned guard; see F1."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "agentsReport and usageLines provide percentages, resets and reading age. Passing AC4 tests exercise text and JSON, including distinct report and read times."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The current test output reports 127 passed, 3 skipped and no failures, including all 19 ticket tests. Earlier related-test failures passed isolated reruns."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/agent-usage.mjs:clearStale",
+        "issue": "The guard protects ordinary stale-lock recovery, but recovering the guard repeats the same unsafe age-check-then-delete operation. Two contenders can observe an abandoned guard as stale; one removes it and acquires a fresh guard, then the other's delayed rmSync deletes that fresh guard. Both can subsequently enter stale-lock recovery, allowing a fresh main lock to be deleted and concurrent usage writes to lose readings. The new tests cover contention on a fresh guard and single-process recovery of a stale guard, but not concurrent recovery of a stale guard.",
+        "suggested_fix": "Use a cross-process locking mechanism whose abandoned-lock recovery preserves mutual exclusion, rather than moving the unprotected deletion to another guard. Add a deterministic regression test that overlaps two stale-guard recoveries and verifies that critical sections cannot overlap and both readings survive.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/agent-usage.mjs:codexUsageInSession",
+        "issue": "Resolved: read_at records when speck reads the session, while reported_at preserves event freshness. Parsing, replacement and display tests cover the distinction and pass.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Collection, display and reading times work in the tested paths. All current tests pass. One storage race remains: simultaneous recovery of an abandoned guard can still let runs overwrite each other's readings."
+  }
+}
+```
+
+</details>
