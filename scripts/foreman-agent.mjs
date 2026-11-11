@@ -6,7 +6,7 @@
 // 0567: with watch: decide, it can also go with its own recommendation instead of asking.
 // 0569: speck run also starts it for a build still running far past the usual time, when it can only tell you what it
 // found or make a draft fix ticket.
-// 0636: and, with watch fix or decide, to check a blocked question in the running app (app-check.mjs).
+// 0636: and, with watch fix or decide, to check a blocked question in the running app (app-check.mjs). 0637: and on another agent of yours while its own is held by a usage limit (watch-stand-in.mjs).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -39,6 +39,7 @@ import { reviewerWaiting } from './reviewer-limit.mjs';
 import { takeAt, resumeTime, resumeClock, resumeWhy } from './resume-at.mjs';
 import { appCheckable, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS } from './app-check.mjs';
 import { stopApp } from './app.mjs';
+import { standIn, movedOf } from './watch-stand-in.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 
@@ -186,7 +187,7 @@ export function readAgentState(runs) {
   const texts = v => { const o = Object.create(null); if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) if (typeof x === 'string') o[k] = x; return o; };
   const r = s.running;
   const answered = Array.isArray(s.answered) ? s.answered.filter(k => typeof k === 'string') : [];
-  return { running: r && typeof r === 'object' && typeof r.id === 'string' && typeof r.token === 'string' ? r : null, queue: list(s.queue), tried: texts(s.tried), long: texts(s.long), checked: texts(s.checked), resumes: list(s.resumes), answered };
+  return { running: r && typeof r === 'object' && typeof r.id === 'string' && typeof r.token === 'string' ? r : null, queue: list(s.queue), tried: texts(s.tried), long: texts(s.long), checked: texts(s.checked), resumes: list(s.resumes), answered, moved: movedOf(s.moved) }; // 0637
 }
 const saveAgentState = (runs, s) => saveRecord(path.join(runs, STATE), { ...s, tried: { ...s.tried }, long: { ...s.long }, checked: { ...s.checked } });
 
@@ -256,11 +257,11 @@ function spawnAgent(argv, cwd, log, env) {
 // commits (codeKey), and not at all while its question to you still waits (0566). `ships` is speck run's ship queue, whose again(id) ships a ticket once more. 0392: `providers` are
 // the model providers speck knows, and `cantStart(cfg)` says why the Foreman can't start on one now. 0566: `statusOf(id)`
 // is a ticket's status now. 0567: `inUse(session)` says whether a build's session is running now. 0569: `now` is the time in
-// ms and `load` the machine's load averages. 0625: `agentLimited(agent, log)` says whether the usage limit stopped an agent's own run.
+// ms and `load` the machine's load averages. 0625: `agentLimited(agent, log)` says whether the usage limit stopped an agent's own run. 0637: heldAgent and readyAgents are standIn's.
 export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, settings = () => ({ cfg, words, max }), running, startBuild, ships,
   start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState,
   withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`), providers = null, cantStart = c => foremanCantStart(repo, c, providers ? { providers } : {}),
-  statusOf = id => statusData(repo).tickets.find(t => String(t.id) === id)?.status, inUse = sessionInUse, now = Date.now, load = os.loadavg, heldBuild = () => false, heldAgent = () => false, agentLimited = () => false, stopCheckApp = id => stopApp(repo, id, () => {}) }) {
+  statusOf = id => statusData(repo).tickets.find(t => String(t.id) === id)?.status, inUse = sessionInUse, now = Date.now, load = os.loadavg, heldBuild = () => false, heldAgent = () => false, agentLimited = () => false, readyAgents = () => [], stopCheckApp = id => stopApp(repo, id, () => {}) }) {
   let child = null; // the agent this speck run started: { token, exited }. While it runs, no other starts, whatever the record says
   const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const carried = new Set(); // 0318: the same for your answers to its questions
@@ -387,6 +388,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
 
   const due = x => !(now() < Date.parse(x.at)); // 0625: one with no time, or none that can be read, doesn't wait
 
+  const { movedBack, lookOn } = standIn({ heldAgent, readyAgents, speak, agents: FOREMAN_AGENTS }); // 0637
   const check = tickets => {
     const s = readAgentState(runs());
     let changed = false;
@@ -415,8 +417,9 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     // 0566: nor does one that came while the agent was still asking you about its ticket.
     if (s.queue.length) for (const a of agentView(runs(), tickets).asks) over.add(a.id);
     if (s.queue.some(q => over.has(q.id))) { s.queue = s.queue.filter(q => !over.has(q.id)); changed = true; }
+    if (s.moved) { const known = providers ?? knownProviders(repo); if (movedBack(s, !!c && speckActs(fixingOf(c)), c && foremanAgentOf(c, known), known)) changed = true; } // 0637
     if (!s.running && s.queue.length) {
-      if (c && speckActs(fixingOf(c))) { if (!heldAgent(foremanAgentOf(c, providers ?? knownProviders(repo)))) { launch(s, c, s.queue[0]); changed = false; } } // 0622: what waits is looked into once its agent's usage limit has reset
+      if (c && speckActs(fixingOf(c))) { const known = providers ?? knownProviders(repo), on = lookOn(s, c, foremanAgentOf(c, known), known); if (on) { launch(s, on, s.queue[0]); changed = false; } } // 0622: what waits is looked into once its agent's usage limit has reset. 0637: or on another agent of yours meanwhile
       else { s.queue = []; changed = true; } // turned off meanwhile: nothing waits
     }
     // 0318: your answers to its questions, each carried out once, as it would its own instruction, while the ticket is
