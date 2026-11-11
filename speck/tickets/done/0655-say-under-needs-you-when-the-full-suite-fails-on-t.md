@@ -1,7 +1,7 @@
 ---
 id: "0655"
 title: "Say under Needs you when the full suite fails on the base branch"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:39:36.068Z"
 approved: "2026-11-11T16:05:21.992Z"
+finished: "2026-11-11T16:07:21.797Z"
 
 ---
 # 0655 · Say under Needs you when the full suite fails on the base branch
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the full suite fails on the base branch, the panel's bar says Needs you and counts it, but nothing in the panel says what it is: Build's Needs you group shows no ticket for it. On 2026-11-11 it looked like a ticket already dealt with was still counted.
