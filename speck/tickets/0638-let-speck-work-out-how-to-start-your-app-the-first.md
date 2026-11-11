@@ -1,7 +1,7 @@
 ---
 id: "0638"
 title: "Let speck work out how to start your app the first time it needs to"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T13:05:48.682Z"
+approved: "2026-11-11T13:15:00.056Z"
 
 ---
 # 0638 · Let speck work out how to start your app the first time it needs to
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck checks a build's question in the running app only once `commands.start` is set, and every project starts its app differently: this repo's is the panel, another's a CRM. Setting it by hand in each project is a chore you only find out about when a check-in-the-app question comes to you instead.
@@ -56,9 +57,14 @@ To see it: leave the start command blank in a project, turn the engineering mana
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 160,215
+- Elapsed since build started: 9 min
+- Changed lines: 96 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox notes): when the ticket's app is already running, `speck app <id> --start` reports that running app and saves nothing, even with `commands.start` blank. `seen-builds-0319`'s AC1–AC4 test failed once on a timing race in a 231-file related run and passed alone; worth watching if it recurs.
 
