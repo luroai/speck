@@ -1,7 +1,7 @@
 ---
 id: "0640"
 title: "Prepare release 1.1.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-11T13:24:37.152Z"
 ---
 # 0640 · Prepare release 1.1.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck has grown since 1.0.0: it checks the work in the running app, works out how to start each app, keeps test logins on your machine, carries on after usage limits, and ships faster on quick tests. Anyone following the setup prompt, or updating speck in a project, still gets 1.0.0.
@@ -50,7 +50,7 @@ speck is ready to be released as 1.1.0.
 - Built from main at `speck(0639): Bring the README up to date for 1.1`: 623 shipped, 16 cancelled, 14 minutes median, 2 rounds median, 303 approved in the first round, worked out with `test/support/figures.mjs` as 0598 did.
 - `npm run prices` on 2026-11-11 wrote the rates of 3620 models, and `scripts/prices.json`'s `taken` is 2026-11-11.
 - 0598's checks that named 1.0.0 as the current version now check the current version, as 0598 did for 0574, and `test/docs-0491.test.mjs` allows `test/release-0640.test.mjs` to name the version.
-- Self-check: the changelog says the black bar shows a reviewer's usage-limit wait only once nothing else is building, and names failing full-suite tests only when the suite reports in TAP, as the code does; the release notes say auto-ship's receipts stop a builder's own approval shipping by itself rather than claiming more; the test that the 1.1.0 section sits above 1.0.0 now fails when the 1.1.0 section is missing.
+- Self-check: the changelog says the black bar shows a reviewer's usage-limit wait only once nothing else is building, and names failing full-suite tests only when the suite reports in TAP, as the code does; the release notes say auto-ship's receipts stop a builder's own approval shipping by itself rather than claiming more.
 - Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
@@ -64,3 +64,89 @@ speck is ready to be released as 1.1.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "33755a58c5a5de55c291405c73b1fead8d9ce20b",
+    "session": "fresh",
+    "thread_id": "01a1cacc-bbf6-7010-a815-1d1181a29cb8",
+    "builder_response": "- Tests run (speck test --related): test/release-0640.test.mjs test/release-0598.test.mjs test/docs-0491.test.mjs, plus every existing test file naming a changed file (1395 tests, 1 failing, 3 skipped).\n- The one failure, `0630 AC3: a full run doesn't wait for the max_parallel_tests turns`, asserts its run took under 900 ms of wall time and failed at 1224 ms under the load of that big run. This change touches nothing it uses (scripts/full-suite.mjs and its config); `node --test test/full-suite-0630.test.mjs` on its own passed 15/15 twice right after.\n- Tickets shipped since v1.0.0: 0622 to 0639; no others. 0626 (test sample names) and 0628 (this repo's own owner-name check) change nothing for someone using speck, so the changelog leaves them out.\n- test/release-0598.test.mjs: its checks that named 1.0.0 as the current version now check the current version, as 0598 did for 0574.\n- test/docs-0491.test.mjs: release-0640 added to the release tests allowed to name the version.\n- Price table refreshed today with `npm run prices` (taken 2026-11-11, 3620 models).\n- Built with speck figures computed with test/support/figures.mjs from main at \"speck(0639): Bring the README up to date for 1.1\": 623 shipped, 16 cancelled, 14 min median, 2 rounds median, 303 first-round approvals.\n- README and brief status lines say 1.1.0; the brief's date is 11 November 2026. No demo pictures retaken (out of scope).\n",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 231725,
+      "cached_input_tokens": 175104,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1153,
+      "reasoning_output_tokens": 75
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56621,
+      "cached": 175104,
+      "write": 0,
+      "output": 1153
+    },
+    "cost_usd": 0.1422824,
+    "tests": {
+      "failing": 1,
+      "second_try": []
+    },
+    "saved_at": "2026-11-11T13:30:20.966Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 1.1.0. Both 0640 AC1 tests passed, including invoking speck init and checking its output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 1.1.0 above 1.0.0 and describes the user-facing changes from shipped tickets 0622–0639. The diff against v1.0.0 only adds the new section; earlier sections are unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say 1.1.0; the setup prompt retains semver:*. scripts/prices.json is dated 2026-11-11 and contains refreshed rates. All three corresponding AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.1.0.md covers checking the app, the shipped changes, updating each project, all required upgrade settings and commands, and the changelog link. Its claims correspond to shipped tickets and it uses no person's name. The AC4 command, link and private-word tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recalculated the done-ticket figures: 623 shipped, 16 cancelled, 14 minutes median, 2 rounds median and 303 first-round approvals, matching README.md. Version/changelog tests passed. The reported 0630 failure is a wall-clock threshold in unchanged code; its file subsequently passed twice in isolation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0640.test.mjs:48",
+        "issue": "The new test explicitly checks changelog heading order with newer < older. The review rules prohibit added tests that enforce the order of headings in a document, even when the criterion specifies that order.",
+        "suggested_fix": "Remove the heading-order assertion and leave ordering to review. Checks that the version sections exist may remain.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release content, version, refreshed prices and published figures meet the ticket. One test must change before approval: it enforces document heading order, which the review rules explicitly prohibit."
+  }
+}
+```
+
+</details>
