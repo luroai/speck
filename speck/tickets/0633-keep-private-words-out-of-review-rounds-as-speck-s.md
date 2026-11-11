@@ -43,6 +43,8 @@ A review round never holds a private word, as speck takes them out when it saves
 - Receipts are 0629's: the receipt must be made from the round as saved.
 - Failing before this build: not checked
 - Self-check: speck's own verdict fields (verdict, id, status, severity, state) and the round's meta, apart from the builder's response, are kept as they are, so a private word such as "approve" can't break a round.
+- Review round 1 F1: a home folder path is written as `~/` before private words are taken out.
+- Review round 1 F2: the private-word check that ship and the commit check share skips speck's own `[private]` markers.
 - Went with the recommendation: A: the private-word checks skip speck's own [private] markers (chosen by speck, as watch is decide, 2026-11-11 11:09 UTC).
 
 ## In plain words

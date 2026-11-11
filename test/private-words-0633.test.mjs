@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { commandRepo, subagentRepo, approveVerdict, gitEnv } from './support/speck.mjs';
 import { ticketRounds } from '../scripts/core.mjs';
-import { redactPrivateWords } from '../scripts/private-words.mjs';
+import { redactPrivateWords, privateHit } from '../scripts/private-words.mjs';
 
 Object.assign(process.env, gitEnv);
 
@@ -108,6 +108,27 @@ test('0633 AC2: a ticket whose only private words were in its review round ships
   const out = r.runEnv(env, 'ship', '1', '--auto');
   assert.equal(out.status, 0, out.stdout + out.stderr);
   assert.ok(fs.readdirSync(path.join(r.dir, 'speck', 'tickets', 'done')).some(n => n.startsWith('0001-')), 'shipped and filed as done');
+});
+
+test('0633 AC2 F2: the private-word check skips speck\'s own [private] markers, and only those', () => {
+  assert.equal(privateHit('Fine for [private].', ['riv', 'private'], null), null);
+  assert.equal(privateHit('riv said [private]', ['riv'], null), 'word', 'a word outside a marker is still found');
+  assert.equal(privateHit('Fine for [PRIVATE] and private', ['riv'], null), 'word', 'only the marker speck writes is skipped');
+  assert.equal(privateHit('a[private]b', ['ab'], null), null, 'a marker doesn\'t join the text either side into a word');
+});
+
+test('0633 AC2 F2: a round whose private word is part of [private] still ships with speck ship --auto', () => {
+  const r = commandRepo();
+  autoShipOn(r);
+  const env = { HOME: homeWith(['riv']) };
+  const v = { ...approveVerdict, summary: 'Checked with Riv.' };
+  const rev = r.runEnv({ ...env, FAKE_VERDICT: JSON.stringify(v) }, 'review', '1');
+  assert.equal(rev.status, 0, rev.stdout + rev.stderr);
+  assert.equal(roundsOf(r).at(-1).verdict.summary, 'Checked with [private].');
+  assert.equal(r.runEnv(env, 'set', '1', 'status', 'approved').status, 0);
+  r.git('add', '-A'); r.git('commit', '-qm', 'approved');
+  const out = r.runEnv(env, 'ship', '1', '--auto');
+  assert.equal(out.status, 0, out.stdout + out.stderr);
 });
 
 test('0633 AC3: without a private-words file, a round is saved as the reviewer wrote it', () => {

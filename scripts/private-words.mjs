@@ -58,8 +58,11 @@ export function redactPrivateWords(value, words, keep = []) {
 
 // 0550: what `line` holds: 'word' for one of `words` (lower-cased) in any case, 'home' for the home folder's path as
 // `re` (homePathPattern) finds it, or null for neither. Shared by ship and the commit check, so they agree.
+// 0633: speck's own `[private]` markers (redactPrivateWords) aren't searched for words, so a word inside one, such as
+// "riv", doesn't count, and the text either side of one isn't read as a single word.
 export function privateHit(line, words, re) {
-  if (words.some(w => line.toLowerCase().includes(w))) return 'word';
+  const text = line.replaceAll('[private]', '\0').toLowerCase();
+  if (words.some(w => text.includes(w))) return 'word';
   return re && re.test(line) ? 'home' : null;
 }
 
