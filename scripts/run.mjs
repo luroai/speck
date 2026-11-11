@@ -459,7 +459,7 @@ function runOn(worker) {
       if (own) { wait(t, own.kind, own.why); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
       if (!now) { wait(t, 'builder', live.why()); continue; }
-      if (limits.holds(launchAgent(now.cfg, now.command, t))) { wait(t, 'limit', 'Claude\'s usage limit is reached'); continue; } // 0622
+      const limited = limits.heldSays(launchAgent(now.cfg, now.command, t)); if (limited) { wait(t, 'limit', limited); continue; } // 0622; 0644: Codex's and Cursor's too
       if (running.size >= now.max) { wait(t, 'slots', `all ${now.max} build slot${now.max === 1 ? '' : 's'} in use`); continue; }
       launch(t);
       if (!launched.has(t.id) && failed.has(t.id)) wait(t, failed.get(t.id).kind, failed.get(t.id).why);

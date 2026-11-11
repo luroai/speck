@@ -41,6 +41,7 @@ A Codex or Cursor build that stops on its usage limit is waited out and carried 
 - Checked 2026-11-11: a refused Codex run ends with `"codex_error_info":"usage_limit_exceeded"` and "…try again at 3:41 AM", a local time without a date.
 - Checked 2026-11-11: Cursor's CLI (2026.11.11) has no wording of its own for its limit: the message comes from Cursor's server, and the CLI classes it by error codes such as `PRO_USER_USAGE_LIMIT` and `FREE_USER_USAGE_LIMIT`. So it's matched loosely, as `REFUSED` does.
 - Failing before this build: none
+- Self-check: a Cursor log has no times, so a clock time in it is now read from when the log was last written, not when speck run reads it, which could have meant waiting until the next day after speck run had been off; a test covers it. run.mjs was at the 600-line limit, so the words for a ready ticket held by a limit come from the limit queue (`heldSays`).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
