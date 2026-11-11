@@ -1,7 +1,7 @@
 ---
 id: "0646"
 title: "Show your subscriptions' usage in Settings"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0643"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T15:17:00.249Z"
+approved: "2026-11-11T15:27:46.522Z"
 
 ---
 # 0646 · Show your subscriptions' usage in Settings
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once speck keeps each agent's usage (0642, 0643), you still can't see it unless you run `speck agents`, so you find out an agent is nearly used up when work stops.
@@ -53,9 +54,15 @@ To see it, open Settings. Each agent says how long ago it was read. Claude Code 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Unreadable spend records can show a reassuring $0.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 341,224
+- Elapsed since build started: 11 min
+- Changed lines: 252 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox.
 - Known limit: which window Codex's `rate_limit_reached_type` names is matched by its words (primary or five-hour, secondary or week); when it names neither, a window used up to 100% counts as limited. The value's exact form hasn't been seen in a session file yet.
