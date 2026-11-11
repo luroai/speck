@@ -42,6 +42,7 @@ Test logins for a project are kept on this machine only, where speck's agents ca
 - Decided 2026-11-11: logins live on this machine, as API keys do (`scripts/keys.mjs`, 0389).
 - Private-word checks are in `scripts/private-words.mjs` and `scripts/commit-check.mjs`; 0633 adds them to saved rounds.
 - Risk high: it handles secrets.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
