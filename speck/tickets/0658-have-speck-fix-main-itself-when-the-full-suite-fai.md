@@ -1,7 +1,7 @@
 ---
 id: "0658"
 title: "Have speck fix main itself when the full suite fails"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0657"]                # ticket ids that must be done first
 created: 2026-11-11
 started: "2026-11-11T17:59:16.015Z"
+approved: "2026-11-11T18:09:22.527Z"
 
 ---
 # 0658 · Have speck fix main itself when the full suite fails
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the full suite fails on the base branch, speck counts it under Needs you with a row that reads "Full suite fails on main · a95b3c3 · 4 tests fail". You don't read code, so there's nothing you can do with it, and the fix is always the same: a fix ticket for the failing tests. On 2026-11-11 it sat under Needs you for over an hour, and the fix ticket speck did make stayed a draft.
@@ -51,9 +52,15 @@ When speck's full check of everything on main fails and the watch setting is fix
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 covers() uses some(), so an existing fix ticket for widgets alone is treated as covering a full run where both widgets and gadgets fail.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 236,075
+- Elapsed since build started: 10 min
+- Changed lines: 150 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, none to the inbox):
   - Known limit: while it's fixing, the full suite's row sits under Building and counts in that group's number, so the lane can read "Building 1" while the fix ticket is still only queued.
