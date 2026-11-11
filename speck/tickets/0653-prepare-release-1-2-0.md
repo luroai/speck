@@ -46,6 +46,14 @@ speck is ready to be released as 1.2.0.
 - After it ships, check that the `v1.2.0` tag and its GitHub release page appeared. If not: `gh release create v1.2.0 --target main --title "speck 1.2.0" --notes-file docs/releases/v1.2.0.md`.
 - Checked 2026-11-11: `package.json` is `1.1.0`, and `v1.1.0` is tagged.
 - Failing before this build: none
+- Covers every ticket shipped since `v1.1.0`: 0641 to 0652, 0654 and 0655, and no others. 0654 (the tests of `speck run` no longer finding this machine's agents) changes nothing for someone using speck, so the changelog leaves it out.
+- Built from main at `speck(0652): Turn Settings into your team`: 638 shipped, 16 cancelled, 14 minutes median, 2 rounds median, 305 approved in the first round, worked out with `test/support/figures.mjs` as 0598 did.
+- `npm run prices` on 2026-11-11 wrote the rates of 3622 models, and `scripts/prices.json`'s `taken` is 2026-11-11.
+- 0640's checks that named 1.1.0 as the current version now check the current version, as 0640 did for 0598, and `test/docs-0491.test.mjs` allows `test/release-0653.test.mjs` to name the version.
+- The README's usage-limit paragraph, clever bit, Your agents and Settings lines now describe the team and benches, as 1.1.0's said speck only waited out limits.
+- Self-check: the README says a stopped build is handed on only when its limit is more than an hour from resetting and that new work (not a moved build) goes back once it resets; the release notes drop a "half a day becomes minutes" claim no ticket backs.
+- Pictures: none, because nothing anyone sees in the panel changes.
+- Also failing on the base code, found by the related run (not in the recorded quick result): `test/foreman-0285.test.mjs`'s two 0285 AC3 Settings switch tests, as 0652, 0654 and 0655 found; draft fix ticket 0656 covers them. Left as they are.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

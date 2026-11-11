@@ -1,5 +1,45 @@
 # Changelog
 
+## 1.2.0 · 11 November 2026
+
+What's new since 1.1.0. A minor release in which you set up your team: Settings opens on a card for each member, your engineering manager, the Builder, the Reviewer and QA, each with its own character, the agent it runs on and its bench, the agents that take over when its own runs out of usage. speck now reads how much of each subscription you've used, shows it in Settings, and moves builds, reviews, the watch agent's looks and QA's checks to the next agent on the bench while one is limited, instead of waiting for the reset. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.2.0 init`.
+- The README says you set up your team once, and speck keeps it working when an agent runs out of usage.
+
+### Your team
+
+- Settings opens on Your team: a card for your engineering manager (under the name you gave it), the Builder, the Reviewer and QA. Each card shows the member's character, its job in a line, the agent, model and effort it runs on, and its bench in order. You change them on the card and save them with Save, as before, and they're kept for your machine only. While a member's agent is limited, its card says so and names the bench agent standing in. Your subscriptions comes next, then the rest of Settings, unchanged.
+- Each member has a character of its own: the Builder an ivory prompt and cursor, the Reviewer a cyan magnifying glass and QA violet viewfinder corners, on the same device as your engineering manager's face. Only your engineering manager's face moves.
+- `builder_bench`, `reviewer_bench` and `watch_bench` are new settings of your own: the agents, in order, that each member switches to while its own agent is held by a usage limit, skipping any that isn't installed and signed in or is limited itself. Set one with, for example, `speck config set reviewer_bench "claude, cursor"`. A blank bench is your agents in the order `speck agents` lists them, leaving out the member's own agent and any model provider on an API key, as those bill per token. speck refuses a bench naming an agent it doesn't know or the member's own agent, and `speck config show` shows each bench with what it does.
+- QA is a team member of its own for checks in the running app, with the new settings of your own `qa_agent`, `qa_model`, `qa_effort` and `qa_bench`. Once any is set, each check runs on QA's agent, model and effort, moves to the first ready agent on `qa_bench` while that agent is limited, and the ticket's Notes, `speck run`'s log and the Pipeline log say QA checked it. `qa_agent` blank uses the watch agent's agent, and `qa_model` and `qa_effort` blank use that agent's defaults. With all four blank, checks run and read as they did in 1.1.0.
+
+### Usage
+
+- After every build, review round and watch run on Claude Code or Codex, speck keeps that agent's latest usage for this machine: how much of each window (five hours and the week) is used, when it resets and whether it's refused. A review round on Claude Code doesn't report it, so Claude's reading comes from builds and watch runs.
+- speck reads Cursor's usage from its own usage screen, by opening Cursor's agent in an empty folder of its own, showing `/usage` and closing it, so no model runs and nothing is spent. It does so only when the last reading is more than 10 minutes old or a Cursor run speck started has ended, and needs the system's `script` command. If the screen can't be read within 20 seconds, speck says why in one line and keeps the last reading. It's been checked on Linux, not yet on a Mac.
+- `speck agents` shows, under each agent with a reading, its plan when known, each window's percentage used and when it resets, and how long ago it was read. `speck agents --json` gives the same as data.
+- Settings has a Your subscriptions group listing each of your agents with a bar and a figure for each window speck read, such as 5 hours and Week for Claude Code and Codex and Month, Auto and API for Cursor, with when each resets. A bar at 90% or more is orange, and a window you've hit says Limited with when it lifts. A model provider on an API key shows this week's spend from what speck recorded instead, as it has no limit to show. It's read afresh each time Settings opens, without holding up the rest of Settings.
+
+### When an agent runs out of usage
+
+- A Codex or Cursor build that stops on its usage limit is now waited out and carried on after the reset, as a Claude build already was. While an agent's limit is recorded, `speck run` starts nothing on it, and `speck status` and the panel say which agent is limited and until when. Cursor doesn't say in a fixed way when its limit resets, so speck often tries again every 30 minutes.
+- While the builder's agent is limited, `speck run` starts each new build on the first agent on `builder_bench` that's ready and not limited, and the ticket's `builder` records it. An agent from the same family as the ticket's reviewer is passed over, so the review can still run, and `builder_model` and `builder_effort` aren't passed to it, as they're in the builder's own format. `speck run`'s log and the Pipeline log say once which agent builds instead, and once more when new builds go back to your builder. A ticket moved to a stand-in keeps that agent for its whole build.
+- A build that stops partway on its usage limit, with the reset more than an hour away or unknown, is carried on by the first free agent on `builder_bench`, in the same worktree and on the same branch, told to read the ticket's Notes and the branch's commits first. The ticket's Notes say who took over, why and when. With the reset an hour away or less, or no bench agent free, speck waits and carries on the build's own session after the reset, as before.
+- While the reviewer's agent is limited, each review round runs on the first agent on `reviewer_bench` that's ready, not limited and allowed to review the build under the same-model rule, on that agent's own default model, in a fresh session with the full history. The review pack and the round's line in the review log say it ran on a stand-in and why. With none free, the build waits for the reset, as in 1.1.0, and once the limit has reset, rounds go back to your reviewer.
+- The watch agent's stand-in, while its own agent is limited, now comes from `watch_bench`, in order. A blank `watch_bench` leaves out model providers on an API key, which 1.1.0's stand-in could take.
+
+### The panel
+
+- When the full suite fails on the base branch, Build's Needs you group shows it as a row of its own, with the orange dot, the commit and how many tests fail, so the Needs you count always matches something you can see. Pressing it opens a view naming each failing test, when the suite reports in TAP, the commit, when it ran and where its log is. The row goes once a full run on a newer commit passes.
+- Two trackpad swipes the same way, one straight after the other, now change lane twice, as in Cursor's browser pane, where the second swipe used to need a pause first. One swipe still changes lane only once, however long it glides.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 11 November 2026.
+
 ## 1.1.0 · 11 November 2026
 
 What's new since 1.0.0. A minor release in which speck checks the work: when a build asks for something to be checked in the running app, speck can start the app, sign in with a test login kept on your machine, look for itself and carry on, with its screenshots in the review pack. It also carries on by itself after a usage limit, ships only what its own reviewer run approved, and lets ships wait for just your quick tests. Costs speck works out itself are still estimates at API list prices.
