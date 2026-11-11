@@ -40,6 +40,7 @@ A build that changes how an app looks or behaves often blocks asking you to chec
 ## Notes
 - Decided 2026-11-11: a start command and an address in `speck/config.yml`, started from the build's folder on a free port.
 - Stop by the process ids it recorded, never by name or pattern, so it can't stop your own apps or panels.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
