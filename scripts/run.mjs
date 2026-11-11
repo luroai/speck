@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { logSpend, recordDelegatedSpend, ticketsElsewhere, ticketRounds, waitFields, addPaused, pausedSince } from './core.mjs';
+import { logSpend, recordDelegatedSpend, ticketsElsewhere, ticketRounds, waitFields, addPaused, pausedSince, speckSays } from './core.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
 import { goWithQueue, newBuildKeeps } from './go-with.mjs';
@@ -22,7 +22,7 @@ import { buildEnv } from './build-env.mjs';
 import { stopPanelsOfRun } from './build-panels.mjs';
 import { builderModelNote } from './build-model.mjs';
 import { builderSettings, liveSettings } from './run-settings.mjs';
-import { launchPlan, launchAgent, ignoredBuildersNote } from './ticket-builder.mjs';
+import { launchPlan, launchAgent, ignoredBuildersNote } from './ticket-builder.mjs'; import { builderStandIn } from './builder-stand-in.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
 import { recordedRun, keepsLock } from './run-lock.mjs';
@@ -305,8 +305,8 @@ function runOn(worker) {
   // ticket is built with the builder it records (launchPlan), marked with its agent, so it's resumed as one; a ticket
   // whose builder can't be started stays ready the same way.
   const failed = new Map();
-  const launch = t => {
-    const plan = launchPlan(now.cfg, t, { command: now.command, words: now.words, repo, failed });
+  const launch = (t, standIn = false) => { // 0647: a stand-in builds with its own command
+    const plan = launchPlan(now.cfg, t, { command: standIn ? '' : now.command, words: now.words, repo, failed });
     if (!plan) return;
     const id = t.id, tag = plan.tag;
     const session = plan.agent === 'codex' ? null : tag;
@@ -375,7 +375,7 @@ function runOn(worker) {
     }
   };
 
-  const limits = limitQueues({ repo, runs: () => runsDir(repo), settings, running, startBuild, resumeHint, countStop, statusOf: id => statusData(repo).tickets.find(t => t.id === id)?.status ?? null }), heldBuild = id => limits.holdsBuild(id); // 0622: Claude's usage limit holds every start on Claude until it resets. 0623: and a reviewer's, each build that stopped on it
+  const limits = limitQueues({ repo, runs: () => runsDir(repo), settings, running, startBuild, resumeHint, countStop, statusOf: id => statusData(repo).tickets.find(t => t.id === id)?.status ?? null }), heldBuild = id => limits.holdsBuild(id), standIns = builderStandIn({ repo, heldAgent: agent => limits.holdsAgent(agent), readyAgents: readyAgentsEvery(repo), speak: text => console.log(speckSays(text)), fmOf: id => findTicket(repo, id).fm }); // 0622: Claude's usage limit holds every start on Claude until it resets. 0623: and a reviewer's, each build that stopped on it
   const handBacks = handBackQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill, heldBuild });
   const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), heldBuild }); // 0284
   const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344
@@ -436,7 +436,7 @@ function runOn(worker) {
     const tickets = readTickets();
     if (!tickets) return;
     adoptSeen(tickets); sleeps.check(tickets); // 0344: time asleep since the last check isn't build time for builds in hand through it
-    limits.check(tickets); // 0622: once Claude's usage limit has reset, each build that stopped on it, before anything else takes a slot
+    limits.check(tickets); standIns.check(); // 0622: once Claude's usage limit has reset, each build that stopped on it, before anything else takes a slot
     if (prs) prs.check(tickets); else ships.check(tickets);
     fullRuns.check(); foremanFixes.check(tickets); // 0630: a full run of the base branch's newest commit. 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
     goWiths.check(tickets); // 0284: blocked tickets you went with the recommendation for, before any killed build's resume
@@ -459,9 +459,9 @@ function runOn(worker) {
       if (own) { wait(t, own.kind, own.why); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
       if (!now) { wait(t, 'builder', live.why()); continue; }
-      const limited = limits.heldSays(launchAgent(now.cfg, now.command, t)); if (limited) { wait(t, 'limit', limited); continue; } // 0622; 0644: Codex's and Cursor's too
+      const limited = limits.heldSays(launchAgent(now.cfg, now.command, t)), on = limited && standIns.pick(now.cfg, now.command, t, running.size < now.max); if (limited && !on) { wait(t, 'limit', limited); continue; } // 0622; 0644: Codex's and Cursor's too. 0647: or on builder_bench
       if (running.size >= now.max) { wait(t, 'slots', `all ${now.max} build slot${now.max === 1 ? '' : 's'} in use`); continue; }
-      launch(t);
+      if (on) launch({ ...t, builder: on }, true); else launch(t);
       if (!launched.has(t.id) && failed.has(t.id)) wait(t, failed.get(t.id).kind, failed.get(t.id).why);
     }
     foreman(tickets, ready);
