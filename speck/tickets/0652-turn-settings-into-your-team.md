@@ -40,6 +40,7 @@ Settings opens on Your team: a card for each member, with its character, its job
 ## Notes
 - Mockup: the Your team board in https://claude.ai/artifact/2F85xNeCwn9KGxRn3ZbYZQ, option D characters.
 - From `speck/ideas/2026-11-10-set-up-your-team-instead-of-settings.md`. Keep the panel thin.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
