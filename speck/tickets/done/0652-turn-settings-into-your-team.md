@@ -1,7 +1,7 @@
 ---
 id: "0652"
 title: "Turn Settings into your team"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0646","0650","0651"]                # ticket ids that must be done firs
 created: 2026-11-11
 started: "2026-11-11T15:32:26.514Z"
 approved: "2026-11-11T16:17:41.501Z"
+finished: "2026-11-11T16:19:43.343Z"
 
 ---
 # 0652 · Turn Settings into your team
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Settings is a list of agent, model and effort pickers per role. You think of the work as a team: who manages, who builds, who reviews and who checks the app, and who takes over when one runs out.
