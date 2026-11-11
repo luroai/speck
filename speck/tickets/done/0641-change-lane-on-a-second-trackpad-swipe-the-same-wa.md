@@ -1,7 +1,7 @@
 ---
 id: "0641"
 title: "Change lane on a second trackpad swipe the same way while the first still glides"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ started: "2026-11-11T13:27:21.806Z"
 blocked_at: ""
 waited_seconds: 30
 approved: "2026-11-11T13:37:36.468Z"
+finished: "2026-11-11T14:18:35.513Z"
 
 ---
 # 0641 · Change lane on a second trackpad swipe the same way while the first still glides
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In the panel in Cursor, a sideways trackpad swipe changes lane once, and a second swipe the same way does nothing until you wait. The panel takes every sideways scroll the same way as the first swipe's glide until scrolling has paused for 50 ms (0514), and Cursor's pane sends the next swipe straight on from the glide with no pause, so swiping from Capture to Build or Plan to Shipped takes two swipes with a wait between.
