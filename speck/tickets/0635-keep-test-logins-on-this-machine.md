@@ -43,6 +43,7 @@ Test logins for a project are kept on this machine only, where speck's agents ca
 - Private-word checks are in `scripts/private-words.mjs` and `scripts/commit-check.mjs`; 0633 adds them to saved rounds.
 - Risk high: it handles secrets.
 - Failing before this build: none
+- Self-check: a logins file that can't be read (not just a missing one) now gives a plain error rather than a stack trace, and a bad login name isn't echoed back, as it may be a password typed in the wrong place.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

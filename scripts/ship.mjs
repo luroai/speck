@@ -15,7 +15,7 @@ import { shipFolders, putBranchBack } from './ship-folders.mjs';
 import { remoteBaseCatchUp } from './ship-remote.mjs';
 import { prMode } from './pull-request.mjs';
 import { shipPrTicket } from './pr-ship.mjs';
-import { privateLinesInSpeck } from './private-words.mjs';
+import { privateLinesInSpeck, privateSaid } from './private-words.mjs';
 import { receiptWhyNot } from './receipts.mjs';
 export { receiptWhyNot }; // for speck status --json (0629)
 import { notPushed } from './not-pushed.mjs';
@@ -64,7 +64,7 @@ export function shipChecks(repo, cfg, pad, branch) { // 0295: and before opening
 function privateWordsCheck(repo, cfg, branch) {
   const leaks = privateLinesInSpeck(repo, cfg.base_branch, branch);
   if (leaks.length)
-    throw new SpeckError(`Files under speck/ that ${branch} adds or changes hold your private words or your home folder's path, so nothing was shipped:\n${leaks.map(l => `  ${l.file} line ${l.line}: ${l.what === 'word' ? 'one of your private words (from ~/.config/speck/private-words)' : "your home folder's path"}`).join('\n')}\nTake each one out (write a path under your home folder as a \`~/\` path), commit it on ${branch}, then ship again.`, 17);
+    throw new SpeckError(`Files under speck/ that ${branch} adds or changes hold your private words, a saved test login's password or your home folder's path, so nothing was shipped:\n${leaks.map(l => `  ${l.file} line ${l.line}: ${privateSaid(l.what)}`).join('\n')}\nTake each one out (write a path under your home folder as a \`~/\` path), commit it on ${branch}, then ship again.`, 17);
 }
 
 // Runs the tests in `repo`: { ok, output }, output being what a failing run wrote. `branch` is the one the flaky log

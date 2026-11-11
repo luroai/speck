@@ -19,11 +19,10 @@ import { cmdShip, shipState, autoShipWhyNot, receiptWhyNot } from './ship.mjs';
 import { criteriaText, criteriaChange, criteriaChanges, shippedCriteriaChanged } from './criteria-changed.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
-import { cmdKeys } from './keys.mjs';
+import { cmdKeys } from './keys.mjs'; import { cmdLogins } from './logins.mjs'; // 0635
 import { boardBuilders } from './build-model.mjs';
 import { cmdAgents } from './your-agents.mjs';
-import { cmdConfig } from './config.mjs';
-import { cmdConfigShow } from './settings.mjs';
+import { cmdConfig } from './config.mjs'; import { cmdConfigShow } from './settings.mjs';
 import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint, runState } from './run.mjs';
@@ -533,6 +532,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck config show [--json]          the main settings by group, with each one's value, whether it's the default and
                                       what it does, as the panel's Settings view explains them
   speck keys [set|remove <provider>]  which model providers have an API key on this machine; set saves one, read unseen from the input, remove deletes it
+  speck logins [set|show|remove <name>]  the test logins saved on this machine; set saves one, its password read unseen from the input, show prints one, remove deletes it
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
@@ -576,7 +576,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck dismiss <id>                  dismiss speck's question about a ticket
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, check: cmdCheck, lint: cmdCheck, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, check: cmdCheck, lint: cmdCheck, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, logins: cmdLogins, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, app: cmdApp, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, 'split-off': cmdSplitOff, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.

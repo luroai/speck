@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROOT, SpeckError, sh } from './core.mjs';
-import { homeFolder, homePathPattern, privateHit, privateWordList } from './private-words.mjs';
+import { homeFolder, homePathPattern, privateHit, privateSaid, privateWordList } from './private-words.mjs';
 
 // The first lines of each hook. A hook without its marker isn't speck's, so init leaves it alone. The pre-commit
 // marker keeps 0550's wording, so a hook an older speck wrote still counts as speck's.
@@ -44,12 +44,13 @@ function stagedDiff(repo, file) {
   return r.stdout;
 }
 
-// The private words and the home folder's path pattern to check against, or null when there's nothing to check.
-function checkList(what) {
-  const list = privateWordList();
+// The private words, saved test logins' passwords (0635) and the home folder's path pattern to check against, or null
+// when there's nothing to check.
+function checkList(what, repo) {
+  const list = privateWordList(repo);
   if (list.error) throw new SpeckError(`Can't read ~/.config/speck/private-words (${list.error}), so ${what} couldn't be checked for your private words. Make it a readable file, or remove it to skip the check.`);
   const home = homeFolder(), re = home ? homePathPattern(home) : null;
-  return list.words.length || re ? { words: list.words, re } : null;
+  return list.words.length || list.logins.length || re ? { words: list.words, logins: list.logins, re } : null;
 }
 
 // Each line the staged commit adds to any file, apart from COPIED_FILES, that holds a private word (in any case) or
@@ -60,9 +61,9 @@ export function stagedPrivateLines(repo) {
   if (r.status !== 0) throw new SpeckError(`Couldn't list the staged files: ${(r.stderr || '').trim()}`);
   const files = r.stdout.split('\0').filter(Boolean);
   if (!files.length) return [];
-  const check = checkList('the staged files');
+  const check = checkList('the staged files', repo);
   if (!check) return [];
-  const { words, re } = check;
+  const { words, logins, re } = check;
   const found = [];
   for (const file of files) {
     let at = 0;
@@ -72,7 +73,7 @@ export function stagedPrivateLines(repo) {
       if (!at) continue;
       if (l.startsWith(' ')) { at++; continue; } // a line it keeps, should git show one
       if (!l.startsWith('+')) continue;
-      const what = privateHit(l.slice(1), words, re);
+      const what = privateHit(l.slice(1), words, re, logins);
       if (what) found.push({ file, line: at, what });
       at++;
     }
@@ -82,33 +83,33 @@ export function stagedPrivateLines(repo) {
 
 // 0627: each line of the commit message in the file `file` that holds a private word or the home folder's path, as
 // { line, what }. Every line counts, even below a scissors line: git keeps that text in a message given with -m.
-export function messagePrivateLines(file) {
+// 0635: `repo` is the checkout being committed in, whose saved test logins count too.
+export function messagePrivateLines(file, repo = process.cwd()) {
   let text;
   try { text = fs.readFileSync(file, 'utf8'); }
   catch (e) { throw new SpeckError(`Couldn't read the commit message (${e.code || e.message}).`); }
-  const check = checkList('the commit message');
+  const check = checkList('the commit message', repo);
   if (!check) return [];
   const found = [];
   text.split('\n').forEach((l, i) => {
-    const what = privateHit(l, check.words, check.re);
+    const what = privateHit(l, check.words, check.re, check.logins);
     if (what) found.push({ line: i + 1, what });
   });
   return found;
 }
 
-const said = what => what === 'word' ? 'one of your private words (from ~/.config/speck/private-words)' : "your home folder's path";
 
 // What the pre-commit hook prints when it refuses a commit.
 export function refusal(found) {
-  return `speck refused this commit: lines it adds hold your private words or your home folder's path. Nothing was committed.
-${found.map(f => `  ${f.file} line ${f.line}: ${said(f.what)}`).join('\n')}
+  return `speck refused this commit: lines it adds hold your private words, a saved test login's password or your home folder's path. Nothing was committed.
+${found.map(f => `  ${f.file} line ${f.line}: ${privateSaid(f.what)}`).join('\n')}
 Take each one out (write a path under your home folder as a \`~/\` path), stage the file again, then commit.`;
 }
 
 // What the commit-msg hook prints when it refuses a commit message.
 export function messageRefusal(found) {
-  return `speck refused this commit: its message holds your private words or your home folder's path. Nothing was committed.
-${found.map(f => `  commit message line ${f.line}: ${said(f.what)}`).join('\n')}
+  return `speck refused this commit: its message holds your private words, a saved test login's password or your home folder's path. Nothing was committed.
+${found.map(f => `  commit message line ${f.line}: ${privateSaid(f.what)}`).join('\n')}
 Take each one out of the message (write a path under your home folder as a \`~/\` path), then commit again.`;
 }
 
