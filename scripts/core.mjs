@@ -5,6 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { applyMachineConfig } from './machine.mjs';
+import { checkBenches } from './bench.mjs';
 export { lintTicket } from './lint.mjs';
 export { builderSpend, builderSpent, earlierBuilds, logSpend, reviewerCost, watchSpent, delegatedSpent, recordDelegatedSpend, totalSpent, roundTokenCount } from './spend.mjs';
 export { cmdSpend } from './spend-view.mjs'; // 0527
@@ -141,15 +142,18 @@ export function setting(cfg, name) {
 export const parseConfig = text => renameOld(parseYaml(text));
 
 // speck/config.yml with speck's defaults, and with this machine's values over the file's unless `machine` is false.
-export function loadConfig(repo, { machine = true } = {}) {
+// 0645: with this machine's values, each bench is checked as well, unless `benches` is false.
+export function loadConfig(repo, { machine = true, benches = true } = {}) {
   const cfg = parseConfig(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
   if (machine) applyMachineConfig(repo, cfg);
   const limits = {
     max_acceptance_criteria: 5, max_changed_lines: 300, max_review_rounds: 3, max_merge_rounds: 2,
     escalate_after_repeat_disputes: 2, max_ticket_body_lines: 40, ...(cfg.limits || {}),
   };
-  return { base_branch: 'main', branch_prefix: 'speck/', builder: 'claude', reviewer: 'codex',
+  const read = { base_branch: 'main', branch_prefix: 'speck/', builder: 'claude', reviewer: 'codex',
     allow_same_model_review: false, auto_ship: false, auto_ship_risk: ['low'], worktrees: false, worktree_setup: '', commands: {}, github: { status_check: 'speck/review' }, ...cfg, limits };
+  if (machine && benches) checkBenches(repo, read);
+  return read;
 }
 
 // ---------- tickets ----------

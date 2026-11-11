@@ -17,7 +17,8 @@ import { DEFAULT_BUILD_COMMAND } from '../scripts/build-model.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OWN = ['builder', 'builder_model', 'build_command', 'resume_command', 'reviewer', 'reviewer_model', 'reviewer_effort',
   'allow_same_model_review', 'auto_ship', 'auto_ship_risk', 'watch_agent', 'watch_model', 'watch_effort', 'watch',
-  'max_parallel_builds', 'max_parallel_tests', 'builder_effort']; // 0402: and the builder's effort
+  'max_parallel_builds', 'max_parallel_tests', 'builder_effort', // 0402: and the builder's effort
+  'builder_bench', 'reviewer_bench', 'watch_bench']; // 0645: and each member's bench
 const CONFIG = `base_branch: main
 builder: claude
 build_command: '${DEFAULT_BUILD_COMMAND}'
@@ -61,6 +62,7 @@ const VALUES = {
   reviewer: 'claude', reviewer_model: 'opus', reviewer_effort: 'max', allow_same_model_review: 'true', auto_ship: 'true', auto_ship_risk: 'low,high',
   watch_agent: 'codex', watch_model: 'gpt-5.5', watch_effort: 'low', watch: 'fix', max_parallel_builds: '3', max_parallel_tests: '4',
   builder_effort: 'high', // 0402
+  builder_bench: 'codex', reviewer_bench: 'codex', watch_bench: 'claude', // 0645: none the member's own
 };
 
 test('0386 AC1: your own settings are the sixteen the ticket lists, and 0402\'s builder_effort', () => {

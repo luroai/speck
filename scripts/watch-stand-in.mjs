@@ -1,6 +1,8 @@
 // 0637: while the watch agent's own agent is held by a usage limit, each look runs on the first other agent of yours that's
 // ready and not held, in speck agents' order, on that agent's own model and effort. Builds and reviewers stay on theirs.
+// 0645: the first in watch_bench's order, which is your agents in that order when it's blank.
 import { providerNamed } from './provider-review.mjs';
+import { benchOf } from './bench.mjs';
 
 // An agent as speck run's lines about usage limits name it.
 const CLI_NAMES = { claude: 'Claude', codex: 'Codex', cursor: 'Cursor' };
@@ -16,6 +18,7 @@ export const movedOf = m => (m && typeof m === 'object' && typeof m.from === 'st
 // model providers. The move, and the move back once the limit has reset, are each said once, and kept in the record's
 // `moved`, so a later speck run says the move back too.
 export function standIn({ heldAgent, readyAgents, speak, agents }) {
+  let refused = null; // the last watch_bench speck couldn't use, said once
   // Clears a move whose limit has reset, saying so while `watching` on `own`, the agent it moved from. One from an agent
   // that's no longer its own is cleared without a word. True when it cleared one.
   const movedBack = (s, watching, own, known) => {
@@ -29,7 +32,14 @@ export function standIn({ heldAgent, readyAgents, speak, agents }) {
     if (!heldAgent(own)) return cfg;
     let ready = [];
     try { ready = readyAgents(); } catch { /* none can be read: it waits for the limit */ }
-    const to = (Array.isArray(ready) ? ready : []).find(a => typeof a === 'string' && a !== own && (agents.includes(a) || providerNamed(a, known)) && !heldAgent(a));
+    ready = (Array.isArray(ready) ? ready : []).filter(a => typeof a === 'string');
+    let bench;
+    try { bench = benchOf(cfg, 'watch_bench', { yours: ready, own, providers: known }); refused = null; } catch (e) {
+      if (refused !== e.message) speak(`${agentName(own, known)}'s usage limit is reached, but I can't take a stand-in from watch_bench: ${e.message}`);
+      refused = e.message;
+      return null;
+    }
+    const to = bench.find(a => ready.includes(a) && a !== own && (agents.includes(a) || providerNamed(a, known)) && !heldAgent(a));
     if (!to) return null;
     if (s.moved?.from !== own || s.moved?.to !== to) {
       s.moved = { from: own, to };

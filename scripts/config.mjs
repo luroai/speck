@@ -11,6 +11,7 @@ import { offeredModels } from './agents.mjs';
 import { sameModelProblem } from './same-model.mjs';
 import { FIXING } from './foreman.mjs';
 import { FOREMAN_AGENTS } from './foreman-agent.mjs';
+import { benchList, benchProblem, newBenchProblem } from './bench.mjs';
 import { knownProviders } from './custom-providers.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
 
@@ -28,6 +29,7 @@ const KINDS = Object.assign(Object.create(null), {
   ship_mode: 'shipmode', // 0295
   speck_name: 'speckname', // 0575
   builder_effort: 'effort', // 0402
+  builder_bench: 'bench', reviewer_bench: 'bench', watch_bench: 'bench', // 0645
   'commands.start': 'text', app_url: 'url', app_start_seconds: 'count', // 0634
   max_parallel_builds: 'count', max_parallel_tests: 'count', test_stall_minutes: 'count', review_timeout_minutes: 'count', ship_wait_minutes: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
   'limits.max_review_rounds': 'count', 'limits.max_merge_rounds': 'count', 'limits.escalate_after_repeat_disputes': 'count', 'limits.max_ticket_body_lines': 'count',
@@ -70,6 +72,12 @@ export function checkConfigValue(key, value, providers = knownProviders()) {
       throw new SpeckError(`${key} must be blank or test file names separated by spaces or commas, without quotes, # or brackets in a name (got ${JSON.stringify(value)}).`);
     return parts.length ? [...new Set(parts)] : '';
   }
+  if (kind === 'bench') { // 0645: the agents in order, each one speck knows. Blank: your agents in order
+    const problem = benchProblem(key, value, '', providers);
+    if (problem) throw new SpeckError(problem);
+    const list = benchList(value);
+    return list.length ? list : '';
+  }
   const agents = [...FOREMAN_AGENTS, ...providers.map(p => p.name)]; // 0392: or a model provider's name (0401: or one you've added)
   if (kind === 'agent' && value !== '' && !agents.includes(value)) // 0287
     throw new SpeckError(`${key} must be blank or one of ${agents.join(', ')} (got ${JSON.stringify(value)}).`);
@@ -85,6 +93,17 @@ export function checkConfigValue(key, value, providers = knownProviders()) {
     return [...new Set(parts)];
   }
   return value;
+}
+
+// 0645: refuses `changes` ([key, value] each, undefined: this machine's value removed) when, saved for this machine or,
+// with `toRepo`, in speck/config.yml, they'd leave a bench naming an agent speck doesn't know or its member's own.
+const BENCHED = ['builder', 'reviewer', 'watch_agent', 'builder_bench', 'reviewer_bench', 'watch_bench'];
+function refuseBenches(repo, changes, toRepo = false) {
+  if (!changes.some(([k]) => BENCHED.includes(k))) return;
+  const now = loadConfig(repo, { benches: false }), mine = machineConfig(repo), repoCfg = loadConfig(repo, { machine: false }), will = { ...now };
+  for (const [k, v] of changes) if (!toRepo) will[k] = v === undefined ? repoCfg[k] : v; else if (!Object.hasOwn(mine, k)) will[k] = v;
+  const problem = newBenchProblem(now, will, knownProviders(repo));
+  if (problem) throw new SpeckError(problem);
 }
 
 export { yamlValue }; // 0386: moved to core.mjs, so this machine's file is written the same way
@@ -179,6 +198,7 @@ function setMachine(key, raw, remove, replace = false) {
     console.log(`${key} has no value for this machine, so speck uses speck/config.yml's: ${show(committed)}.`);
     return;
   }
+  refuseBenches(repo, [[key, value]]); // 0645
   // Removing a builder also removes the build_command switching to it saved, so speck/config.yml's pair applies again.
   const pair = key === 'builder' && value === undefined && Object.hasOwn(values, 'build_command') && values.build_command === ownBuildCommand(values.builder);
   saveMachineValues(repo, pair ? [[key, undefined], ['build_command', undefined]] : [[key, value]]);
@@ -199,6 +219,7 @@ export function cmdConfig(args) {
   if (key === 'builder') return setBuilder(rest.join(' '), replace);
   const value = checkConfigValue(key, rest.join(' '));
   const repo = findRepoRoot();
+  refuseBenches(repo, [[key, value]], true); // 0645
   const file = path.join(repo, 'speck', 'config.yml');
   const text = fs.readFileSync(file, 'utf8');
   const keys = key.split('.');
@@ -221,7 +242,7 @@ export function cmdConfig(args) {
 function setBuilder(value, replace, machine = false) {
   const repo = findRepoRoot();
   const file = path.join(repo, 'speck', 'config.yml');
-  const text = fs.readFileSync(file, 'utf8'), was = machine ? loadConfig(repo) : parseYaml(text);
+  const text = fs.readFileSync(file, 'utf8'), was = machine ? loadConfig(repo, { benches: false }) : parseYaml(text);
   const before = was.builder ?? 'claude', own = ownBuildCommand(value);
   const changes = [['builder', value]];
   if (value !== before && own !== null && was.build_command !== own) {
@@ -232,6 +253,7 @@ function setBuilder(value, replace, machine = false) {
   // 0311: and clears a builder_model the new builder doesn't offer, saying why.
   const cleared = value !== before ? clearsBuilderModel(was.builder_model, value, () => offeredModels(value)) : null;
   if (cleared !== null) changes.push(['builder_model', '']);
+  refuseBenches(repo, changes, !machine); // 0645
   if (machine) saveMachineValues(repo, changes);
   else {
     let next = text;
@@ -243,7 +265,7 @@ function setBuilder(value, replace, machine = false) {
   }
   const where = machine ? ' (this machine)' : '';
   for (const [k, v] of changes) console.log(`${k}${where}: ${show(was[k])} → ${show(v)}${k === 'builder_model' ? `, cleared because ${cleared}.` : ''}`);
-  const cfg = loadConfig(repo);
+  const cfg = loadConfig(repo, { benches: false });
   if (cfg.allow_same_model_review !== true) {
     const problem = sameModelProblem(value, String(cfg.reviewer ?? ''), cfg, cfg.reviewer_model);
     if (problem) console.log(`Note: ${problem} For a ${value} builder, a reviewer from another family is ${otherFamilyReviewer(value)}: \`speck config set reviewer ${otherFamilyReviewer(value)}\`.`);
