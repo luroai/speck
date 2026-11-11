@@ -58,6 +58,7 @@ Recommended: Accept the limit, with the speed-up starting under 10 px a step, an
 Other options: Accept the limit as built now; Keep AC2 as it is and drop the fix (the bug stays)
 Changes what you'd notice: yes
 Clear winner: no
+
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
