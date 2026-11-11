@@ -1,5 +1,61 @@
 # Changelog
 
+## 1.1.0 · 11 November 2026
+
+What's new since 1.0.0. A minor release in which speck checks the work: when a build asks for something to be checked in the running app, speck can start the app, sign in with a test login kept on your machine, look for itself and carry on, with its screenshots in the review pack. It also carries on by itself after a usage limit, ships only what its own reviewer run approved, and lets ships wait for just your quick tests. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.1.0 init`.
+- Running `speck init` again in a project also adds the new commit message check (see Keeping private words out), and `speck doctor` now shows one line for each check.
+- The README describes what speck does as of 1.1: checking in the running app, test logins, starting your app, carrying on after usage limits, auto-ship's receipts and the full suite. Its commands table gains `speck logins` and `speck app`.
+
+### Checking the work in the running app
+
+- A build that wants something checked in the running app, such as how a page looks or that signing in works, now asks for it only as a blocked question with a `Check in the app:` line beside its other facts, saying where to go and what to look for. The ticket's full view shows the line under the question, and `speck status --json` gives it.
+- With `watch: decide`, speck checks such a question itself on a low-risk ticket, once per question: it starts the app, signs in with a saved test login if it needs to, takes a screenshot of each thing it checked and then either goes with the build's recommendation, when what it saw agrees with it, or asks you, saying what it saw. With `watch: fix` it goes with the recommendation only when the check clearly passes. Its line in the ticket's Notes says what it checked and what it saw, the review pack shows its screenshots with their captions, and the app is stopped afterwards. With `watch: tell` or `off`, or a high-risk ticket, the question waits for you as before.
+- While speck is checking, the ticket still says it's waiting for you.
+
+### Starting your app
+
+- `commands.start` is a new setting: the command that starts your app, with `{port}` where the port goes. `app_url` is where to open it once it's running, `http://127.0.0.1:{port}/` by default, and `app_start_seconds` how long to wait for it to answer, 60 by default. Set them with `speck config set`, and `speck config show` explains them.
+- `speck app <id>` starts the app from that ticket's copy of the code (its worktree, or the main checkout when it has none) on a free port, waits until it answers and prints the address to open. The app keeps running after the command returns. If it doesn't answer in time, speck stops everything it started and prints the last lines the app wrote. `speck app <id> --stop` stops the app it started for that ticket, with every process the app started, and nothing else.
+- `speck app <id> --start "<command>"`, optionally with `--url "<address>"`, starts the app with that command and address for that run only.
+- You don't have to set `commands.start` first. The first time speck needs the app with it blank, with `watch: fix` or `decide`, it works out a likely start command from the project's README, package or build files and scripts, and tries it. Once one answers, speck saves it as `commands.start` (and `app_url` when it gave one) with a commit of only `speck/config.yml` on the base branch, `speck: set how to start the app`. It never changes a start command that's already set, and saves nothing while `speck/config.yml` has uncommitted changes of yours. If nothing it tries answers, it asks you how to start the app, naming each command it tried and the last lines it wrote.
+
+### Test logins
+
+- `speck logins set <name>` saves a login for testing your app on this machine: it asks for the username, then the password without showing it, or reads both piped in, and refuses a password on the command line. They're kept in the main checkout's `speck/.cache/machine/logins.json`, which git ignores and only you can read or write.
+- `speck logins` lists each login by name and username, never its password, `speck logins show <name>` prints one, and `speck logins remove <name>` deletes it.
+- Each saved password counts as a private word: a commit or ship that would publish one is refused, naming the file and line without the password, and speck writes it as `[private]` in the review rounds it saves. A very simple password, such as `test`, refuses any commit holding that word anywhere.
+
+### Carrying on after usage limits
+
+- When Claude's usage limit stops a build while `speck run` is on, speck waits until the limit resets, then resumes the build where it stopped and starts new work again, without you doing anything. When a review round stops on the reviewer's limit, it does the same and runs the round again. While it waits, the black bar reads "Waiting: usage limit until" the time it resets (for a reviewer's limit, once nothing else is building), and the stopped build doesn't count under Needs you. If the agent doesn't say when its limit resets, speck tries again every 30 minutes. Codex's and Claude's limit messages are understood; a Cursor limit may still stop a build as before.
+- The watch agent can book a build's resume for a set time with `speck watch resume <id> "<instruction>" --at <time>`, taking a time such as `12:30` in UTC or a full ISO date and time, up to 31 days away. It notes in the ticket and `speck run`'s log what it will do and when. Until it runs, `speck status` and the top of the Pipeline log list it, and a booked ticket doesn't count under Needs you. If the ticket has moved on by then, speck drops the resume and says so.
+- A look the watch agent couldn't finish because it hit its own usage limit no longer counts as a look: speck looks into the ticket again once the limit resets.
+- While the watch agent's own agent is held by a usage limit, speck runs its looks on the next of your agents that's installed, signed in and free, in the order `speck agents` lists them, and goes back to its own agent, model and effort once the limit resets. `speck run`'s log and the Pipeline log say once when it moves and once when it moves back. Builds and reviews stay on their own agents. speck can't yet tell when Codex or Cursor hit their own limits.
+
+### Shipping
+
+- A ticket ships by itself only when its approving round was recorded by speck's own run of the reviewer, unchanged since. `speck review` keeps a receipt for each round it runs in the main checkout's `speck/.cache/`, outside the ticket's branch, and `speck ship <id> --auto` refuses, changing nothing and saying why in one line, when the latest round has none that matches. That covers a round saved with `speck record`, and so every round from the `claude-subagent` reviewer, and a round whose record in the ticket was edited after it was saved. Such a ticket stays approved and waits for you at Ship, with that reason, and the review pack says when a round has no matching receipt.
+- `commands.test_full` is a new setting for your full suite, set with `speck config set commands.test_full "<command>"`. With it set, ships wait only for the quick tests in `commands.test`, and while `speck run` is on it runs the full suite on the base branch's newest commit after ships, in a checkout of its own, without holding up any ship or build. Its output is in `speck/.cache/full/run.log`. While the latest full run failed, and until a run on a newer commit passes, `speck status` and the black bar count it under Needs you, naming the failing tests when the suite reports in TAP, and `speck run`'s log says so once. With it blank, nothing changes.
+- A build's list of tests that were failing before it started now covers the full suite when `speck run` has run it on the same code: `speck test --recorded` prints the full suite's result then, and says so.
+- speck itself now ships on its quick tests, and runs its whole suite on `main` after ships.
+
+### Keeping private words out
+
+- The commit check now looks at every line a commit adds, in every file rather than only under `speck/`, and at the commit message, and refuses the commit when one holds a private word or your home folder's path, saying which file and line, or which line of the message, without repeating the word. The price table speck copies from LiteLLM is left out, as a model's name can match a private word by chance. `git commit --no-verify` still skips both checks for one commit. With `git commit --verbose`, the diff in the message can get the message refused, so take the word out or commit without `--verbose`.
+- When a reviewer quotes a private word, speck writes it as `[private]` in the saved review round, in any case, as it already writes your home folder as `~`. A ship is no longer refused for a private word in a review round, and a ticket that would ship by itself still does.
+
+### The panel
+
+- A ticket's facts in its full view are soft grey tiles like Shipped's figures, two to a row on a phone and three from 480 px wide, with the last one stretched so no row ends with a gap.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 11 November 2026.
+
 ## 1.0.0 · 10 November 2026
 
 What's new since 0.22.0. A major release in which speck becomes your engineering manager: you decide what gets built, and speck gets it shipped, makes the obvious calls, gets stuck work moving and tells you what it did. You can give it a name of your own, and the panel is redesigned around it, with a black bar where the LCD screen was, speck's new face, tabs and short rows for the lanes, a full view for each ticket, and the bridge across every project on your machine. Costs speck works out itself are still estimates at API list prices.

@@ -46,6 +46,12 @@ speck is ready to be released as 1.1.0.
 - After it ships, check that the `v1.1.0` tag and its GitHub release page appeared. If not: `gh release create v1.1.0 --target main --title "speck 1.1.0" --notes-file docs/releases/v1.1.0.md`.
 - Checked 2026-11-11: `package.json` is `1.0.0`; the README's status line reads "Status: 1.0.0. It works end to end on your own machine."
 - Failing before this build: none
+- Covers every ticket shipped since `v1.0.0`: 0622 to 0639, and no others. 0626 (test sample names) and 0628 (the repo's own owner-name check) change nothing for someone using speck, so the changelog leaves them out.
+- Built from main at `speck(0639): Bring the README up to date for 1.1`: 623 shipped, 16 cancelled, 14 minutes median, 2 rounds median, 303 approved in the first round, worked out with `test/support/figures.mjs` as 0598 did.
+- `npm run prices` on 2026-11-11 wrote the rates of 3620 models, and `scripts/prices.json`'s `taken` is 2026-11-11.
+- 0598's checks that named 1.0.0 as the current version now check the current version, as 0598 did for 0574, and `test/docs-0491.test.mjs` allows `test/release-0640.test.mjs` to name the version.
+- Self-check: the changelog says the black bar shows a reviewer's usage-limit wait only once nothing else is building, and names failing full-suite tests only when the suite reports in TAP, as the code does; the release notes say auto-ship's receipts stop a builder's own approval shipping by itself rather than claiming more; the test that the 1.1.0 section sits above 1.0.0 now fails when the 1.1.0 section is missing.
+- Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

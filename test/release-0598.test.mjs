@@ -17,17 +17,21 @@ const notes = () => read('docs/releases/v1.0.0.md');
 const INSTALL = /npx github:luroai\/speck#v1\.0\.0 init/;
 // The day this release was built, when it refreshed the price table.
 const BUILT_ON = '2026-11-10';
+// 0640 (release 1.1.0) made the checks below that named 1.0.0 as the current version check the current version instead.
+const version = () => JSON.parse(read('package.json')).version;
+const esc = v => v.replace(/\./g, '\\.');
 
-test('0598 AC1: package.json is version 1.0.0', () => {
-  assert.equal(JSON.parse(read('package.json')).version, '1.0.0');
+test('0598 AC1: package.json has the current release version', () => {
+  assert.match(version(), /^\d+\.\d+\.\d+$/);
+  assert.ok(changelogSection(read('CHANGELOG.md'), version()), 'with a changelog section of its own');
 });
 
-test('0598 AC1: speck init prints speck 1.0.0', () => {
+test('0598 AC1: speck init prints speck and the current version', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   const r = spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^speck 1\.0\.0: /m);
+  assert.match(r.stdout, new RegExp(`^speck ${esc(version())}: `, 'm'));
 });
 
 // Where the section sits, that it describes each change and that the older sections are unchanged are about how the
@@ -58,9 +62,10 @@ test('0598 AC3: the README\'s demo pictures were taken again since 0597', t => {
 
 // Only the version is a fact in the README's status line (0491): that it no longer says public preview there is
 // checked by review. The brief's status line is checked for both.
-test('0598 AC3: the README\'s and the brief\'s status lines name 1.0.0, and the brief\'s no longer says public preview', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), /Status: 1\.0\.0\b/, f);
-  const line = read('docs/brief.md').match(/^.*Status: 1\.0\.0\b.*$/m)?.[0];
+test('0598 AC3: the README\'s and the brief\'s status lines name the current version, and the brief\'s no longer says public preview', () => {
+  const status = new RegExp(`Status: ${esc(version())}\\b`);
+  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), status, f);
+  const line = read('docs/brief.md').split('\n').find(l => status.test(l));
   assert.doesNotMatch(line, /preview/i);
 });
 
@@ -107,7 +112,6 @@ test('0598 AC5: the Built with speck figures 1.0.0 was built from match the done
   assert.deepEqual(builtWithSpeckFigures(doneTicketsAt(commit)), { shipped: 604, cancelled: 16, medianMinutes: 14, medianRounds: 2, firstRound: 296 });
 });
 
-test('0598 AC5: package.json and the newest changelog section name 1.0.0', () => {
+test('0598 AC5: package.json and the newest changelog section name the same version', () => {
   assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md') }), []);
-  assert.equal(JSON.parse(read('package.json')).version, '1.0.0');
 });
