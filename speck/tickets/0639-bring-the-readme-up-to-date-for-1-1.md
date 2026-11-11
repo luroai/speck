@@ -43,6 +43,9 @@ The README describes what speck does as of 1.1.
 - Covers what shipped since `v1.0.0`: 0622 to 0637, and 0638 once it ships. 0626 to 0628 changed only tests and checks, so need no mention.
 - Fit the new points into the README's existing sections, such as "Everything in between", "The clever bits" and "Under the hood", rather than adding a long new section.
 - Failing before this build: none
+- AC4: no new test. `test/readme-links-0491.test.mjs` already checks that every link in the README resolves. The commands and settings it names are a README fact, which the brief's rule (enforced by `test/docs-0491.test.mjs`) leaves to review, so a reviewer checks them against `speck help` and `speck config show`. The builder checked each one by hand with a throwaway script, outside the repo: all exist as named.
+- Self-check: narrowed the usage-limit claims to what shipped (builds wait out Claude's limit, reviews Claude's or Codex's; the watch agent moves only off Claude), and said `speck status` names the full suite's failing tests, as the panel only counts them.
+- Pictures: none, because the change is to the README's text only, which renders as plain Markdown on GitHub.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
