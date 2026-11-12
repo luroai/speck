@@ -306,7 +306,7 @@ function runOn(worker) {
   // whose builder can't be started stays ready the same way.
   const failed = new Map();
   const launch = (t, standIn = false) => { // 0647: a stand-in builds with its own command. 0659: on its ticket's own model and effort, or none for a stand-in
-    const plan = launchPlan(now.cfg, launchTicket(t, standIn, id => findTicket(repo, id).fm), { command: standIn ? '' : now.command, words: now.words, repo, failed });
+    const plan = launchPlan(now.cfg, launchTicket(t, standIn, id => findTicket(repo, id).fm, now.cfg), { command: standIn ? '' : now.command, words: now.words, repo, failed });
     if (!plan) return;
     const id = t.id, tag = plan.tag;
     const session = plan.agent === 'codex' ? null : tag;

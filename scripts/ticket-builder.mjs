@@ -16,6 +16,7 @@ import { providerKey } from './keys.mjs';
 import { knownProviders, cantRun } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { providerStartWords } from './provider-build.mjs';
+import { levelled } from './levels.mjs';
 
 const LABELS = { claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' };
 const OWN = Object.keys(LABELS);
@@ -30,27 +31,29 @@ export const ticketBuilder = (t, cfg) => name(t?.builder) || configBuilder(cfg);
 export const claudeStartWords = (cfg, t = {}) => withBuilderModel(splitCommand(DEFAULT_BUILD_COMMAND), buildConfig(cfg, 'claude', t));
 
 // 0659: ticket `t` as a stand-in on builder_bench builds it (0647, 0648): on `agent`, without the ticket's own
-// builder_model or builder_effort, which are in its own builder's format.
-export const standInTicket = (t, agent) => ({ ...t, builder: agent, builder_model: '', builder_effort: '' });
+// builder_model or builder_effort, which are in its own builder's format. 0660: nor its level's.
+export const standInTicket = (t, agent) => ({ ...t, builder: agent, builder_model: '', builder_effort: '', ...(blank(t?.level) ? {} : { level: '' }) });
 
 // 0659: ticket `t`'s own builder_model and builder_effort, trimmed: '' for each it leaves blank.
 const ticketValues = t => ({ builder_model: modelOf(t ?? {}), builder_effort: effortOf(t) });
 
 // 0659: ticket text `text`, with frontmatter `fm`, recording stand-in `agent` as its builder: its own builder_model and
 // builder_effort, set for the builder it had, are cleared, so no later build, resume or board gives them to `agent`.
+// 0660: and its level, whose model and effort were set for the builder it had too.
 export function standInText(text, fm, agent) {
   let out = setField(text, 'builder', agent);
-  for (const k of ['builder_model', 'builder_effort']) if (!blank(fm?.[k])) out = setField(out, k, '');
+  for (const k of ['builder_model', 'builder_effort', 'level']) if (!blank(fm?.[k])) out = setField(out, k, '');
   return out;
 }
 
 // 0659: status ticket `t` as speck run launches it: with its own builder_model and builder_effort, read from its
 // frontmatter by `fmOf(id)`, as the board's builder_model is the model its builds run on, or a stand-in's, without them.
-export function launchTicket(t, standIn, fmOf) {
+// 0660: each it leaves blank from its level in `cfg`, as the board's builder already is (ticketAgents).
+export function launchTicket(t, standIn, fmOf, cfg = {}) {
   if (standIn) return standInTicket(t, t.builder);
   let fm = {};
   try { fm = fmOf(t.id) ?? {}; } catch { /* unreadable: it builds on the settings' */ }
-  return { ...t, ...ticketValues(fm) };
+  return { ...t, ...ticketValues(levelled(fm, cfg)) };
 }
 
 // 0659: what speck run keeps in a build's run record of ticket `t`'s own builder_model and builder_effort, so its

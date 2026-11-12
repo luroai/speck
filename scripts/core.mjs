@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { applyMachineConfig } from './machine.mjs';
 import { checkBenches } from './bench.mjs';
+import { levelled } from './levels.mjs';
 export { lintTicket } from './lint.mjs';
 export { builderSpend, builderSpent, earlierBuilds, logSpend, reviewerCost, watchSpent, delegatedSpent, recordDelegatedSpend, totalSpent, roundTokenCount } from './spend.mjs';
 export { cmdSpend } from './spend-view.mjs'; // 0527
@@ -233,7 +234,9 @@ export function reviewerSettings(fm = {}, cfg = {}) {
 }
 
 // 0388: the agents a ticket is built and reviewed with: each field it names, or else what the settings give now.
+// 0660: a builder the ticket leaves blank comes from its level first.
 export function ticketAgents(fm = {}, cfg = {}) {
+  fm = levelled(fm, cfg);
   const pick = (k, dflt) => !blank(fm[k]) ? String(fm[k]).trim() : !blank(cfg[k]) ? String(cfg[k]).trim() : dflt;
   const s = reviewerSettings(fm, cfg);
   return { builder: pick('builder', 'claude'), reviewer: pick('reviewer', 'codex'), reviewer_model: s.model, reviewer_effort: s.effort };

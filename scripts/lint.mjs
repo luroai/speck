@@ -4,6 +4,7 @@ import path from 'node:path';
 import { STATUSES, EFFORTS, TYPES, KINDS, OLD_TASKS, blank, contentLines, ticketType, ticketKind, kindFromTask, ticketOutput, ticketPriority, validPriority, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
 import { knownEffort } from './codex-models.mjs';
 import { ticketSameModelProblem } from './same-model.mjs';
+import { levelProblem, levelsOf, ticketLevel } from './levels.mjs';
 import { homeFolder, homePathPattern, privateWordList } from './private-words.mjs';
 
 export function lintTicket(ticket, cfg) {
@@ -38,6 +39,10 @@ export function lintTicket(ticket, cfg) {
     if (!blank(v) && !knownEffort(String(v).trim())) errors.push(`reviewer_effort "${v}" in ${where} must be blank or one of ${EFFORTS.join(', ')}, or an effort Codex lists for one of its models.`);
   if (!blank(fm.builder_effort) && !knownEffort(String(fm.builder_effort).trim())) // 0659: as the settings' builder_effort is checked
     errors.push(`builder_effort "${fm.builder_effort}" in ticket must be blank or one of ${EFFORTS.join(', ')}, or an effort Codex lists for one of its models.`);
+  const level = levelProblem(fm, cfg), levelEffort = level ? null : levelsOf(cfg)[ticketLevel(fm)]?.builder_effort; // 0660: as written, true or a list included
+  if (level) errors.push(level);
+  else if (!blank(levelEffort) && (typeof levelEffort !== 'string' || !knownEffort(levelEffort.trim())))
+    errors.push(`builder_effort ${JSON.stringify(levelEffort)} in level "${ticketLevel(fm)}" in speck/config.yml must be blank or one of ${EFFORTS.join(', ')}, or an effort Codex lists for one of its models.`);
   errors.push(...ticketRounds(ticket.raw).errors);
   for (const s of ['problem', 'outcome']) if (!contentLines(sections[s]).length) errors.push(`"${s}" section is empty.`);
   const ac = contentLines(sections['acceptance criteria']).filter(l => /^\d+\.\s+\S/.test(l));
