@@ -122,6 +122,7 @@ async function readSettings(url) {
       your_agents: body.your_agents !== null && typeof body.your_agents === 'object' ? body.your_agents : null, // 0399
       agent_models: Array.isArray(body.agent_models) ? body.agent_models : null, // 0400
       team: body.team !== null && typeof body.team === 'object' && !Array.isArray(body.team) ? body.team : null, // 0652
+      levels: body.levels !== null && typeof body.levels === 'object' && Array.isArray(body.levels.levels) ? body.levels : null, // 0661
       ...(body.loading === true ? { loading: true } : {}) } // 0407
       : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
   } catch { return { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
@@ -156,6 +157,7 @@ function fillCatalogues(full, asked) {
   }
   for (const key of [...AGENT_KEYS, ...Object.keys(ROLE_PAIRS), ...Object.keys(SETTING_PAIRS), ...Object.keys(BENCH_OF)]) redrawSettings([key], key); // 0652: and each bench's order
   drawAgents();
+  drawLevels(); // 0661: its builders and models as read
 }
 // 0407: whether the agents' lists are still being read, and why they couldn't be, or null.
 const cataloguesLoading = () => settingsView !== null && settingsView.catalogues === 'loading';
@@ -214,6 +216,8 @@ function closeSettings() {
   settingRefused = new Map();
   settingClear = new Set();
   agentsBox = agentsSaid = null;
+  levelsBox = levelsSaid = levelForm = null; // 0661
+  levelsBusy = false;
   subsBox = subsView = null;
   subsSeq++;
   agentsAdding = false;
@@ -909,9 +913,126 @@ function memberCard(m, rows) {
   const face = SpeckFace.draw(m.member === 'manager' ? { role: 'manager', mood: 'watching', size: 40, label: `${name}, watching` } : { role: m.member, size: 40 });
   const limit = el('p', 'limit');
   teamLimits.set(m.member, limit);
-  const card = el('div', 'member', null, el('div', 'mhead', null, face, el('div', 'who', null, el('h5', null, name), el('p', 'job', m.job))), limit, ...rows);
+  const card = el('div', 'member', null, el('div', 'mhead', null, face, el('div', 'who', null, el('h5', null, name), el('p', 'job', m.job))), limit, ...rows,
+    m.member === 'builder' ? levelsGroup() : null); // 0661
   card.setAttribute('data-member', m.member);
   return card;
+}
+// 0661: the builder's card's build levels, in the order speck/config.yml gives them, each with its builder, model and
+// effort, "settings" for one it leaves out. Each change, addition or removal is saved to speck/config.yml at once, by
+// itself, rather than with Save, and the server answers with the levels as they are then.
+const LEVEL_KEYS = ['builder', 'builder_model', 'builder_effort'];
+const levelsNow = () => { const v = settingsView !== null ? settingsView.levels : null; return v && Array.isArray(v.levels) ? v : null; };
+const levelTitle = n => n.charAt(0).toUpperCase() + n.slice(1);
+// The builder a level runs on, as speck works it out: its own, or the settings' as saved.
+const levelBuilder = l => (l.builder || settingSaved('builder') || 'claude');
+function levelWords(l) {
+  const a = yourAgent(levelBuilder(l)), m = l.builder_model && a !== null ? agentModelsOf(a).find(x => x.slug === l.builder_model) : undefined;
+  return `Builder: ${l.builder ? agentLabel(l.builder) : 'settings'} · Model: ${l.builder_model ? (m ? modelLabel(m) : l.builder_model) : 'settings'} · Effort: ${l.builder_effort || 'settings'}`;
+}
+// The choices the builder's own settings offer: its agents, and the efforts, each with blank as "settings".
+const rowChoices = key => { const r = settingRows().find(x => x.key === key); return r && Array.isArray(r.choices) ? r.choices.map(String).filter(c => c !== '') : []; };
+// The efforts a level running `builder` on `model` can take, as builder_effort offers them (settingChoices): those its
+// model lists, or every one its builder's models list when the model is blank or not listed, else speck's own. A level's
+// blank model is the settings' builder_model while its builder is the settings' builder.
+function levelEfforts(builder, model) {
+  const a = yourModels() !== null ? yourAgent(builder) : null, models = a === null ? [] : agentModelsOf(a).filter(m => Array.isArray(m.efforts));
+  const slug = model || (builder === (settingSaved('builder') || 'claude') ? settingSaved('builder_model') : ''), m = models.find(x => x.slug === slug);
+  const listed = [...new Set((m ? [m] : models).flatMap(x => x.efforts.filter(e => typeof e === 'string' && e)))];
+  return listed.length ? listed : rowChoices('builder_effort');
+}
+function levelControl(key, value, label, builder, save, model = '') {
+  let c, list = null;
+  if (key === 'builder_model') { // typed, with the level's builder's models offered
+    c = el('input', 'edit');
+    c.type = 'text';
+    c.value = value;
+    c.placeholder = 'settings';
+    const a = yourAgent(builder), models = a !== null ? agentModelsOf(a) : [];
+    if (models.length) {
+      const id = `levels-${label.replace(/[^a-z0-9-]/gi, '-')}`;
+      list = el('datalist');
+      list.id = id;
+      for (const m of models) { const o = el('option', null, modelLabel(m)); o.value = m.slug; list.appendChild(o); }
+      c.setAttribute('list', id);
+    }
+  } else {
+    c = el('select', 'edit');
+    const choices = [...new Set([...(key === 'builder_effort' ? levelEfforts(builder, model) : rowChoices(key)), ...(value ? [value] : [])])];
+    for (const v of ['', ...choices]) { const o = el('option', null, v === '' ? 'settings' : key === 'builder' ? agentLabel(v) : v); o.value = v; c.appendChild(o); }
+    c.value = value;
+  }
+  c.setAttribute('aria-label', label);
+  focusable(c, label);
+  c.addEventListener('change', () => save(String(c.value ?? '').trim()));
+  return list ? [c, list] : [c];
+}
+let levelsBox = null, levelsSaid = null, levelsBusy = false, levelForm = null; // the box; the last change's { text, bad }; a change on its way; Add a level's typed values
+function levelsGroup() {
+  levelsBox = el('div', 'levels');
+  drawLevels();
+  return levelsBox;
+}
+function drawLevels() {
+  const box = levelsBox, now = levelsNow();
+  if (box === null) return;
+  const had = document.activeElement, was = had && within(had, box) && typeof had.getAttribute === 'function' ? had.getAttribute('data-focus') : null;
+  const kids = [el('div', 'arow note', null, el('p', 'lhead', 'Build levels'),
+    el('p', null, 'A ticket that names a level is built with its builder, model and effort. Settings: the builder\'s own settings above.'))];
+  if (now === null) kids.push(el('div', 'arow note', null, el('p', null, 'speck panel didn\'t list the build levels. Close Settings and open it again.')));
+  else {
+    if (now.defaults === true) kids.push(el('div', 'arow note', null, el('p', null, 'speck/config.yml has no levels yet, so these are speck\'s three. Your first change saves all three there.')));
+    for (const l of now.levels.filter(l => l && typeof l.name === 'string')) {
+      const remove = agentButton('Remove', `remove-level:${l.name}`, () => levelAction(l.name, 'remove'));
+      remove.setAttribute('aria-label', `Remove the ${l.name} level`);
+      remove.disabled = levelsBusy;
+      const row = el('div', 'arow level', null,
+        el('div', 'row', null, el('span', 'label', null, el('span', 'name', levelTitle(l.name))), el('div', 'control', null, remove)),
+        el('p', 'lsum', levelWords(l)),
+        el('div', 'lvals', null, ...LEVEL_KEYS.flatMap(k => levelControl(k, String(l[k] ?? ''), `${l.name} ${k}`, levelBuilder(l), v => levelAction(l.name, 'set', { [k]: v }), l.builder_model))));
+      row.setAttribute('data-level', l.name);
+      kids.push(row);
+    }
+    const f = levelForm ??= { name: '', builder: '', builder_model: '', builder_effort: '' };
+    const name = el('input', 'edit');
+    name.type = 'text';
+    name.value = f.name;
+    name.placeholder = 'name, such as graphics';
+    name.setAttribute('aria-label', 'New level name');
+    focusable(name, 'new-level name');
+    name.addEventListener('input', () => { f.name = String(name.value ?? ''); });
+    const add = agentButton(levelsBusy ? 'Saving…' : 'Add level', 'add-level', () => levelAction(f.name.trim(), 'add', { builder: f.builder, builder_model: f.builder_model, builder_effort: f.builder_effort }));
+    add.disabled = levelsBusy;
+    const adding = el('div', 'arow level adding', null,
+      el('div', 'row', null, el('span', 'label', null, el('span', 'name', 'Add a level')), el('div', 'control', null, add)),
+      el('div', 'lvals', null, name, ...LEVEL_KEYS.flatMap(k => levelControl(k, f[k], `new-level ${k}`, f.builder || settingSaved('builder') || 'claude', v => { f[k] = v; if (k !== 'builder_effort') drawLevels(); }, f.builder_model))));
+    kids.push(adding);
+  }
+  if (levelsSaid !== null) kids.push(el('div', 'arow note', null, el('p', levelsSaid.bad ? 'bad' : 'said', levelsSaid.text)));
+  box.replaceChildren(...kids);
+  const to = was !== null ? focusKeyed(box, was) : null;
+  if (to && to.focus) to.focus({ preventScroll: true });
+}
+// Changes, adds or removes level `name`, with `values` its builder, builder_model and builder_effort, blank for settings.
+async function levelAction(name, action, values = {}) {
+  if (levelsBusy) return;
+  if (action === 'add' && !name) { levelsSaid = { text: 'Type the new level\'s name first.', bad: true }; drawLevels(); return; }
+  const mine = settingsSeq, q = Object.entries(values).filter(([, v]) => action !== 'add' || v !== '').map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  levelsBusy = true;
+  levelsSaid = null;
+  drawLevels();
+  const out = await agentPost(`/api/levels/${encodeURIComponent(name)}/${action}${q ? `?${q}` : ''}`, { headers: { 'X-Speck-Token': TOKEN } });
+  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  levelsBusy = false;
+  const body = out !== null && out.body !== null && typeof out.body === 'object' ? out.body : null;
+  if (body !== null && Array.isArray(body.levels)) settingsView.levels = { defaults: body.defaults === true, levels: body.levels };
+  if (out === null) levelsSaid = { text: 'Couldn\'t reach speck panel to save the level. Try again.', bad: true };
+  else if (!out.ok || body === null || body.ok !== true) levelsSaid = { text: body !== null && typeof body.error === 'string' && body.error ? body.error : `Couldn't save the level (${out.status}).`, bad: true };
+  else {
+    levelsSaid = { text: typeof body.said === 'string' ? body.said : 'Saved.', bad: false };
+    if (action === 'add') levelForm = null;
+  }
+  drawLevels();
 }
 // While a recorded usage limit holds the agent a member runs on, as saved and still chosen, which agent on its bench
 // stands in, as the server worked it out; null otherwise.

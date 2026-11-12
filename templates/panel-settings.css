@@ -57,6 +57,9 @@
   #settings .member p.job { margin: 2px 0 0; color: var(--muted); }
   #settings .member p.limit { margin: 6px 0 0; color: var(--needs-you-text); }
   #settings .member p.limit[hidden] { display: none; }
+  #settings .member .levels { margin-top: 8px; border-top: 1px solid var(--line); } /* 0661: the builder's build levels */
+  #settings .levels p.lhead { color: var(--text); font-weight: 600; }
+  #settings .levels .lvals { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; }
   #settings .setting .setting { position: static; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; flex: 1 1 14ch; min-width: 0; max-width: 100%; }
   #settings .setting .setting .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; max-width: 100%; }
   #settings .setting .setting .list { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; } /* its info button kept beside it */
