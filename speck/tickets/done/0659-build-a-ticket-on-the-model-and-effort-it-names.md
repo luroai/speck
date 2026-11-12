@@ -1,7 +1,7 @@
 ---
 id: "0659"
 title: Build each ticket on the builder settings it names                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T11:07:53.378Z"
 approved: "2026-11-12T11:20:13.006Z"
+finished: "2026-11-12T11:22:40.476Z"
 
 ---
 # 0659 · Build each ticket on the builder settings it names
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `builder_model` and `builder_effort` in `speck/config.yml` apply to every build, so a project can't build one ticket on one model and the next on another. Someone whose tickets need different strengths, such as a game with graphics tickets for one model and logic tickets for another, has to change the setting by hand between builds.
