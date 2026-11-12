@@ -17,7 +17,7 @@ source: "speck/ideas/done/2026-11-10-set-up-your-team-instead-of-settings.md"   
 after: ["0660"]                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T12:09:58.743Z"
-approved: "2026-11-12T12:42:26.900Z"
+approved: "2026-11-12T12:49:07.710Z"
 
 ---
 # 0662 · Pick a ticket's build level in the panel
@@ -56,12 +56,13 @@ To see it, open any ticket's full view, or open a draft in Plan, and press the v
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 747,051
-- Elapsed since build started: 32 min
+- Reviewer tokens: 1,074,384
+- Elapsed since build started: 39 min
 - Changed lines: 133 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -129,6 +130,71 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The panel now shows each ticket’s build level and lets you change it to a project level or Settings. Changes appear immediately, and tickets already being worked on are protected. The relevant tests passed, including reruns of the reported timing failures. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f4712e7b823aefb057f36ced2a1d5a6093357b10",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1cfc6-7e60-7ae1-9dda-145e8f7dca74",
+    "builder_response": "Merge round: main merged into the ticket branch after the ship queue's merge hit a conflict.\n- scripts/panel.mjs (class: logic, 1 conflict): only the comment above panelServer that lists the panel's write routes. main (0661) added `POST /api/levels/<name>/set, /add or /remove (0661)`, this ticket added `POST /api/tickets/<id>/level/<name> (0662)`. Kept both in the one line. No code lines conflicted; 0661's import and route and this ticket's import and route are both in, and the file is still 600 lines.\n- Tests run: test/panel-level-0662.test.mjs test/settings-levels-0661.test.mjs test/status-json.test.mjs test/resume-0044.test.mjs test/panel-0419.test.mjs test/panel-0434.test.mjs test/panel-0424.test.mjs test/panel-0462.test.mjs test/panel-0465.test.mjs test/panel-0583.test.mjs test/panel-0624.test.mjs test/panel-0463.test.mjs test/panel-0077.test.mjs test/panel-0140.test.mjs (310 pass, 0 fail).\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 1072467,
+      "cached_input_tokens": 960640,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1917,
+      "reasoning_output_tokens": 102
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 35203,
+      "cached": 291584,
+      "write": 0,
+      "output": 546
+    },
+    "cost_usd": 0.1050244,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T12:49:05.318Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "levelFact in templates/panel.js and paneFacts in templates/panel-popups.js still show Level immediately after Priority, capitalised or Settings when blank. Both 0662 AC1 tests passed after the merge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "levelPicker offers the board's project levels and Settings; setLevel updates the displayed value after success. panelSetLevel validates and commits changes, including clearing the level. The 0662 AC2 tests passed. scripts/panel.mjs preserves both the ticket-level route and 0661's separate project-level editing route."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelSetLevel retains checkNotBeingBuilt's exact CLI refusal and rejects building, reviewing, blocked and approved tickets before writing. levelFact offers no control for done or cancelled tickets. The 0662 AC3 tests passed, covering refusal messages, unchanged levels and read-only display."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves both the ticket Level picker and the project’s level editor in Settings. All three acceptance criteria remain satisfied. The recorded tests show 310 passed, none failed and three skipped. No blocking issues found."
   }
 }
 ```
