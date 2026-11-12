@@ -45,6 +45,7 @@ Each level is set with the same choices as the Builder itself, labelled in words
 ## Notes
 - The Builder's row builds its agent and model list and its effort list in `templates/panel-settings.js`. Reuse them rather than making new ones. Levels are drawn by `drawLevels` and `levelControl` there.
 - A level that leaves builder blank but names a model (possible by hand) shows as the Builder's agent with that model.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
