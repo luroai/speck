@@ -1,7 +1,7 @@
 ---
 id: "0663"
 title: "Fix the full suite failing on main at 0352dcf"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T12:42:26.455Z"
+approved: "2026-11-12T12:45:11.149Z"
 
 ---
 # 0663 · Fix the full suite failing on main at 0352dcf
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on main at commit 0352dcf (0352dcf8e6951e830369417c1b021781aa9e12ca). Failing tests:
@@ -52,9 +53,14 @@ Nothing changes in the panel. The check that the Settings view's info buttons ar
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 113,839
+- Elapsed since build started: 3 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - 0182 AC3 also failed in the same full-suite run on main; it was failing before this build and left alone. Saved to the inbox as speck/ideas/2026-11-12-fix-0182-ac3-failing-in-the-full-suite.md.
