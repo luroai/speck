@@ -1,7 +1,7 @@
 ---
 id: "0666"
 title: "Pick each level's model from the builder's list"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T21:02:41.768Z"
+approved: "2026-11-12T21:11:57.717Z"
 
 ---
 # 0666 · Pick each level's model from the builder's list
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Build levels on the Builder's card (0661) are hard to use. Each level's model is a free-text box, where the Builder's own row above offers a list such as "Claude Code · Opus". "settings" fills every box and list and isn't explained, none of the boxes say what they're for, a line above each level repeats what its boxes already show, and each level's Remove button is as large as the page's main buttons.
@@ -60,9 +61,15 @@ Worth a look: for a moment while Settings opens, before your agents' model lists
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A saved explicit default model can display the wrong Effort choices.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 275,294
+- Elapsed since build started: 9 min
+- Changed lines: 124 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (known limit, no idea note): before your agents' models have loaded, a level's lists fall back to the Builder's agents with model names as saved ("Claude Code · opus"). They redraw with the proper names once the lists arrive.
 - Follow-up (known limit, no idea note): a few rare server refusals, such as uncommitted changes to the config file, still name speck/config.yml under Build levels. AC5 kept the refusals the same.
