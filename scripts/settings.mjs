@@ -14,7 +14,7 @@ import { MACHINE_SETTINGS, machineConfig, saveMachineValues } from './machine.mj
 import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync, offeredModels, offeredModelsAsync, findAgentsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
-import { buildsEachTicket } from './build-model.mjs';
+import { buildsEachTicket } from './build-model.mjs'; import { levelsShown } from './levels.mjs'; // 0661
 import { knownProviders } from './custom-providers.mjs'; import { providerNamed } from './provider-review.mjs';
 import { keysStatus, saveProviderKey } from './keys.mjs';
 import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; import { benchRows, newBenchProblem } from './bench.mjs'; import { qaRows } from './app-check.mjs'; import { TEAM_GROUP, TEAM_KEYS, teamShown } from './team.mjs'; // 0634, 0645, 0651, 0652
@@ -88,7 +88,7 @@ const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
 // 0393: the builder, reviewer and Foreman lists offer each model provider in `providers` too.
-function choicesOf(key, file, providers = knownProviders()) {
+export function choicesOf(key, file, providers = knownProviders()) {
   const named = providers.map(p => p.name);
   if (key === 'reviewer') {
     const options = file.reviewer_options !== null && typeof file.reviewer_options === 'object' ? Object.keys(file.reviewer_options) : [];
@@ -142,7 +142,7 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s, speckNameOf(file)),
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
   }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
-    ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS, providers: providersShown(repo, providers) };
+    ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS, providers: providersShown(repo, providers), levels: levelsShown(file) }; // 0661
 }
 
 // 0397: a setting's explanation, ending with what speck uses when it isn't set, unless the explanation already says what

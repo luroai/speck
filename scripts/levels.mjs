@@ -45,3 +45,12 @@ export function levelled(fm, cfg) {
   for (const k of LEVEL_KEYS) if (!text(out[k]) && lv[k]) out[k] = lv[k];
   return out;
 }
+
+// 0661: the project's levels as the team page shows them, in the order speck/config.yml gives them: { name, builder,
+// builder_model, builder_effort } each, '' for one the level leaves out, and `defaults` true when the file has no
+// `levels:`, so they're DEFAULT_LEVELS.
+export function levelsShown(cfg) {
+  const levels = levelsOf(cfg);
+  return { defaults: !(cfg && Object.hasOwn(cfg, 'levels')),
+    levels: Object.keys(levels).map(name => ({ name, ...levelValues({ level: name }, { levels }) })) };
+}
