@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.3.0 · 12 November 2026
+
+What's new since 1.2.0. A minor release in which speck picks the crew for each ticket: a ticket can be built on a model and effort of its own, or at a build level, such as quick, balanced, deep or one of your own, that you set up on the Builder's card in Settings and pick for each ticket in the panel. speck also fixes `main` itself when its full test suite fails there, instead of waiting for you. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.3.0 init`.
+- The README says you can build a ticket at a level, or on a model of its own.
+
+### A crew for each ticket
+
+- A ticket can name its own `builder_model` and `builder_effort`. Each build of that ticket is started, resumed after a stop and handed back after a refused ship on them, passed to the builder as the settings' values are, in place of those. This works when the ticket's `builder` names a different agent from your settings, too. Leave them blank and the ticket builds on your settings, as in 1.2.0. Set them with, for example, `speck set <id> builder_model sonnet`, or in the ticket.
+- `levels:` in `speck/config.yml` names build levels, each a saved builder, `builder_model` and `builder_effort`, any of which it can leave out. A project without `levels:` has three: `quick` (low effort), `balanced` (your settings as they are) and `deep` (maximum effort). One with `levels:` has exactly the levels it lists, so you can add your own, such as one for graphics work on a particular model. `speck init` writes the three into a new project's `speck/config.yml`.
+- A ticket names a level in its `level` line, set with `speck set <id> level <name>`, in the ticket or in the panel. For each of the builder, model and effort, a build uses the ticket's own value first, then its level's, then your settings', so a blank `level`, or `balanced`, builds as your settings say.
+- `speck check` refuses a ticket whose level the project doesn't have, naming the levels it does, and refuses an effort, on a ticket or a level, that it would refuse in your settings. The rule that the builder and reviewer mustn't be the same model uses the model a ticket's own value or its level gives it.
+- A ticket `speck new` makes has blank `level`, `builder_model` and `builder_effort` lines, each with a comment saying what blank means.
+- When a usage limit moves a build to a stand-in on `builder_bench`, the stand-in isn't given the ticket's or its level's model or effort, as they're in the first builder's own format, and speck clears the ticket's level when it records the stand-in as its builder.
+
+### The panel
+
+- The Builder's card in Settings lists the project's build levels in the order `speck/config.yml` gives them, each with its builder, model and effort, or "settings" for one it leaves out. You can change any of them, add a level of your own or remove one there, and each change is saved to `speck/config.yml` straight away. A new level's name must be lowercase letters, digits and hyphens, and not one already there. A level that a ticket not yet shipped or cancelled names can't be removed, and the card names those tickets. If the project has no `levels:` yet, your first change saves all three standard levels with it.
+- A ticket's facts show its Level beside its Priority: Quick, Balanced, Deep, a level of your own, or Settings when it has none. On a ticket that hasn't started building, press it to pick another level, or Settings to take it off, and the facts show the change at once. A ticket that's building, reviewing, blocked or waiting to ship refuses the change and says why. An open draft in Plan now has seven facts, so Type sits on a row of its own.
+- In the Full suite fails view, the commit, time, log and failing tests' names are set a touch smaller, at the panel's usual size for small details.
+
+### When the full suite fails on main
+
+- With `watch` set to fix or decide, when `speck run`'s full test run fails on the base branch and no open fix ticket covers it, speck makes a priority-0 fix ticket naming the failing tests and the commit, sets it ready, commits it and builds it next. While that fix is on its way, Build shows the failure under Building, saying some of the tests broke on main and that it's fixing it in that ticket, and it doesn't count under Needs you. `speck run`'s log says when it made the ticket.
+- It's back under Needs you, as in 1.2.0, if the fix ticket is blocked or cancelled, or a fix has shipped and the next full run still fails. With `watch` set to tell or off, nothing changes from 1.2.0.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 12 November 2026.
+
 ## 1.2.0 · 11 November 2026
 
 What's new since 1.1.0. A minor release in which you set up your team: Settings opens on a card for each member, your engineering manager, the Builder, the Reviewer and QA, each with its own character, the agent it runs on and its bench, the agents that take over when its own runs out of usage. speck now reads how much of each subscription you've used, shows it in Settings, and moves builds, reviews, the watch agent's looks and QA's checks to the next agent on the bench while one is limited, instead of waiting for the reset. Costs speck works out itself are still estimates at API list prices.

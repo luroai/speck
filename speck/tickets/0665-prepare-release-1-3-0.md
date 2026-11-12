@@ -51,6 +51,10 @@ speck is ready to be released as 1.3.0.
 - Checked 2026-11-12: `package.json` is `1.2.0`, `v1.2.0` is tagged, and `CHANGELOG.md`'s newest section is 1.2.0.
 - 0653's checks that name 1.2.0 as the current version should check the current version, as 0653 did for 0640's, and `test/docs-0491.test.mjs` should allow this ticket's test to name the version.
 - Failing before this build: none
+- Self-check: narrowed the claims about which tickets stop a level being removed (any not done or cancelled, not only those in progress) and about the seven facts in Plan (an open draft's) to match 0661 and 0662.
+- Left out of the changelog as nothing someone using speck notices: 0657 (this repo's own quick test run) and 0663 (a test fix). 0656 is in only for the smaller text in the Full suite fails view.
+- Pictures: none, because nothing in the panel changes; the README's demo pictures show the Build lane, which hasn't changed.
+- Built with speck figures worked out from speck/tickets/done/ at 681d87c: 647 shipped, 16 cancelled, 14 minutes median, 2 rounds median, 309 approved in round 1.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
