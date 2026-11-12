@@ -1,7 +1,7 @@
 ---
 id: "0665"
 title: "Prepare release 1.3.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T16:12:50.872Z"
+approved: "2026-11-12T16:17:02.630Z"
 
 ---
 # 0665 · Prepare release 1.3.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 1.3, "Picks the crew", lets each ticket build on its own model and effort, adds build levels you set on the team page and pick per ticket, and has speck fix main itself when the full suite fails (0656 to 0663). Anyone following the setup prompt, or updating speck in a project, still gets 1.2.0.
@@ -63,9 +64,14 @@ speck is ready to go out as 1.3.0. Once this ships, anyone who installs or updat
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 174,826
+- Elapsed since build started: 4 min
+- Changed lines: 90 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
