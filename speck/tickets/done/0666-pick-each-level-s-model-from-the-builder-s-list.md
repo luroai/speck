@@ -1,7 +1,7 @@
 ---
 id: "0666"
 title: "Pick each level's model from the builder's list"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T21:02:41.768Z"
 approved: "2026-11-12T21:11:57.717Z"
+finished: "2026-11-12T21:15:40.968Z"
 
 ---
 # 0666 · Pick each level's model from the builder's list
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The Build levels on the Builder's card (0661) are hard to use. Each level's model is a free-text box, where the Builder's own row above offers a list such as "Claude Code · Opus". "settings" fills every box and list and isn't explained, none of the boxes say what they're for, a line above each level repeats what its boxes already show, and each level's Remove button is as large as the page's main buttons.
