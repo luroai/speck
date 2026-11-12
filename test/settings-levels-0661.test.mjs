@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, gitEnv } from './support/panel.mjs';
-import { openSettings } from './support/settings.mjs';
+import { openSettings, rowOf } from './support/settings.mjs';
 import { agentsPage, YOURS_VIEW } from './support/your-agents.mjs';
 import { panelSettings, CLAUDE_MODELS } from '../scripts/settings.mjs';
 import { panelLevelRequest, setLevelsText } from '../scripts/levels-panel.mjs';
@@ -64,14 +64,12 @@ test('0661 AC1: the builder\'s card lists the project\'s levels in speck/config.
     { name: 'plain', builder: '', builder_model: '', builder_effort: '' }] });
   const p = await opened(r.dir);
   assert.deepEqual(levelRows(p).map(n => n.attrs['data-level']), ['graphics', 'quick', 'plain']);
-  const sum = name => p.all(rowNamed(p, name)).find(n => has(n, 'lsum')).textContent;
-  assert.equal(sum('graphics'), 'Builder: Codex · Model: GPT-6.1 Sol · Effort: settings');
-  assert.equal(sum('quick'), 'Builder: settings · Model: settings · Effort: low');
-  assert.equal(sum('plain'), 'Builder: settings · Model: settings · Effort: settings');
+  // 0666: each with its builder and model in one list, Default for blank, and its effort.
   assert.equal(p.all(rowNamed(p, 'quick')).find(n => has(n, 'name')).textContent, 'Quick', 'named with a capital first letter');
-  assert.equal(controlIn(p, 'graphics builder').value, 'codex');
-  assert.equal(controlIn(p, 'graphics builder_model').value, 'gpt-6.1-sol');
-  assert.equal(controlIn(p, 'quick builder_effort').value, 'low');
+  assert.equal(controlIn(p, 'Graphics level builder').value, 'codex|', 'Codex on its default model, GPT-6.1 Sol');
+  assert.equal(controlIn(p, 'Quick level builder').value, '');
+  assert.equal(controlIn(p, 'Quick level effort').value, 'low');
+  assert.equal(controlIn(p, 'Plain level effort').value, '');
 });
 
 // ---------- AC2 ----------
@@ -79,14 +77,12 @@ test('0661 AC1: the builder\'s card lists the project\'s levels in speck/config.
 test('0661 AC2: a level\'s builder, model and effort offer the builder\'s own choices, with settings for blank', async () => {
   const r = repoWith('  quick:\n    builder_effort: low');
   const p = await opened(r.dir);
-  const view = panelSettings(r.dir), row = key => view.groups.flatMap(g => g.settings).find(s => s.key === key);
   const options = label => p.all(controlIn(p, label)).filter(n => n.tagName === 'option').map(o => o.value);
-  assert.deepEqual(options('quick builder'), ['', ...row('builder').choices.filter(c => c !== '')]);
-  assert.deepEqual(options('quick builder_effort'), ['', ...row('builder_effort').choices.filter(c => c !== '')]);
-  assert.equal(p.all(controlIn(p, 'quick builder')).find(n => n.tagName === 'option').textContent, 'settings');
-  // The model is typed, with the models of the level's builder (the settings', Claude Code, here) offered.
-  const list = p.all(builderCard(p)).find(n => n.tagName === 'datalist' && n.id === controlIn(p, 'quick builder_model').attrs.list);
-  assert.deepEqual(p.all(list).filter(n => n.tagName === 'option').map(o => o.value), CLAUDE_MODELS.map(m => m.slug));
+  // 0666: the builder's agents and models in one list, as the builder's own row offers them, after Default.
+  assert.deepEqual(options('Quick level builder'), ['', ...CLAUDE_MODELS.map(m => (m.slug === 'sonnet' ? 'claude|' : `claude|${m.slug}`)), 'codex|']);
+  const own = p.all(rowOf(p, 'builder_effort')).find(n => n.tagName === 'select'); // the builder's own effort, as its list offers it
+  assert.deepEqual(options('Quick level effort'), ['', ...p.all(own).filter(n => n.tagName === 'option' && n.value !== '').map(o => o.value)]);
+  assert.match(p.all(controlIn(p, 'Quick level builder')).find(n => n.tagName === 'option').textContent, /^Default \(/);
 });
 
 test('0661 AC2: a level\'s efforts are those its builder\'s model lists, as the builder\'s own effort offers them', async () => {
@@ -97,14 +93,11 @@ test('0661 AC2: a level\'s efforts are those its builder\'s model lists, as the 
   const p = agentsPage(view, { 'GET /api/usage': { agents: [] } });
   await openSettings(p);
   const options = label => p.all(controlIn(p, label)).filter(n => n.tagName === 'option').map(o => o.value);
-  assert.deepEqual(options('graphics builder_effort'), ['', 'low', 'ultra'], 'its model\'s, ultra included');
-  assert.deepEqual(options('wide builder_effort'), ['', 'low', 'high', 'ultra'], 'a blank model: every one its builder\'s models list');
+  assert.deepEqual(options('Graphics level effort'), ['', 'low', 'ultra'], 'its model\'s, ultra included');
+  assert.deepEqual(options('Wide level effort'), ['', 'low', 'high', 'ultra'], 'a blank model: every one its builder\'s models list');
   // The add form follows the builder and model picked there.
-  pick(p, 'new-level builder', 'codex');
-  const model = controlIn(p, 'new-level builder_model');
-  model.value = 'gpt-6.1-sol';
-  model.listeners.change({ target: model });
-  assert.deepEqual(options('new-level builder_effort'), ['', 'low', 'high']);
+  pick(p, 'New level builder', 'codex|gpt-x');
+  assert.deepEqual(options('New level effort'), ['', 'low', 'ultra']);
 });
 
 test('0661 AC2: changing a level saves it to that level in speck/config.yml, and the next build at that level uses it', async () => {
@@ -144,12 +137,12 @@ test('0661 AC2: changing a level on the page sends it and shows the levels the s
   const r = repoWith('  quick:\n    builder_effort: low');
   const answer = { ok: true, said: 'Saved the quick level.', defaults: false, levels: [{ name: 'quick', builder: '', builder_model: '', builder_effort: 'high' }] };
   const p = await opened(r.dir, { '/api/levels/quick/set?builder_effort=high': answer });
-  pick(p, 'quick builder_effort', 'high');
+  pick(p, 'Quick level effort', 'high');
   await p.settle();
   assert.deepEqual(p.posts().map(c => c.url), ['/api/levels/quick/set?builder_effort=high']);
   assert.ok(p.posts()[0].headers['X-Speck-Token'] !== undefined, 'with the page\'s token');
   assert.equal(said(p), 'Saved the quick level.');
-  assert.equal(p.all(rowNamed(p, 'quick')).find(n => has(n, 'lsum')).textContent, 'Builder: settings · Model: settings · Effort: high');
+  assert.equal(controlIn(p, 'Quick level effort').value, 'high');
 });
 
 test('0661 AC2: a level the reviewer would share a model with is refused, as a ticket at it couldn\'t be built', () => {
@@ -205,7 +198,7 @@ test('0661 AC3: the page adds a level from its name and values, and shows a refu
   const name = controlIn(p, 'New level name');
   name.value = 'graphics';
   name.listeners.input({ target: name });
-  pick(p, 'new-level builder', 'codex');
+  pick(p, 'New level builder', 'codex|');
   buttonIn(p, 'Add level').listeners.click({});
   await p.settle();
   assert.deepEqual(levelRows(p).map(n => n.attrs['data-level']), ['quick', 'graphics']);
