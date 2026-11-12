@@ -101,6 +101,9 @@ test('0660 AC3: speck check refuses a level whose builder_effort the settings wo
   const lint = lintWith({ levels: { odd: { builder_effort: 'turbo' }, fine: { builder_effort: 'ultra' } } });
   assert.match(lint({ level: 'odd' }), /builder_effort "turbo" in level "odd"/);
   assert.doesNotMatch(lint({ level: 'fine' }), /builder_effort/);
+  const odd = lintWith({ levels: parseConfig('levels:\n  yes:\n    builder_effort: true\n  list:\n    builder_effort: [low]\n  num:\n    builder_effort: 5\n  none:\n    builder_effort: ""\n').levels });
+  for (const level of ['yes', 'list', 'num']) assert.match(odd({ level }), new RegExp(`builder_effort .* in level "${level}"`), level);
+  assert.doesNotMatch(odd({ level: 'none' }), /builder_effort/, 'blank is the settings\'');
 });
 
 test('0660 AC3: the same-family ready check uses the builder and model the level gives the ticket', () => {
