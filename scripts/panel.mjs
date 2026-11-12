@@ -17,7 +17,7 @@ import { pictureFile } from './pictures.mjs';
 import { documentFile } from './output.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettingRequest, panelSaveRequestAsync, settingsAnswer, settingsQuick, agentModels, panelKeyAddRequest, panelAgentRequest, panelProviderAddRequest } from './settings.mjs';
+import { panelSettingRequest, panelSaveRequestAsync, settingsAnswer, settingsQuick, agentModels, panelKeyAddRequest, panelAgentRequest, panelProviderAddRequest } from './settings.mjs'; import { panelLevelRequest } from './levels-panel.mjs'; // 0661
 import { foremanView, readForeman, fixingOf } from './foreman.mjs';
 import { agentView } from './foreman-agent.mjs';
 import { panelForemanReply } from './foreman-answer.mjs';
@@ -212,7 +212,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes, POST /api/keys/<provider> (0393), POST /api/agents/<agent>/add or /remove (0399), POST /api/providers (0401), POST /api/ideas/<file>/star or /unstar (0538) and POST /api/run/on or /off. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes, POST /api/keys/<provider> (0393), POST /api/agents/<agent>/add or /remove (0399), POST /api/levels/<name>/set, /add or /remove (0661), POST /api/providers (0401), POST /api/ideas/<file>/star or /unstar (0538) and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html, panel.css (0430, split into a file for each area of the panel by 0472), panel-model.js (0431), panel-settings.js (0432), panel.js (0433), panel-popups.js (0473) or panel-header.js (0474) shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -380,11 +380,11 @@ export async function panelServer() {
         .catch(e => ({ status: 500, body: { error: `Couldn't save the key, so nothing was saved: ${e instanceof SpeckError ? e.message : 'the request failed'}.` } })).then(out => wrote(res, out));
       return;
     }
-    const agentPath = where.match(/^\/api\/agents\/([^/]+)\/(add|remove)$/); // 0399: Settings' "Your agents"
-    if (req.method === 'POST' && agentPath) {
+    const agentPath = where.match(/^\/api\/agents\/([^/]+)\/(add|remove)$/), levelPath = where.match(/^\/api\/levels\/([^/]+)\/(set|add|remove)$/); // 0399: Settings' "Your agents". 0661: the builder's levels
+    if (req.method === 'POST' && (agentPath || levelPath)) {
       if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
-      return void panelAgentRequest(repo, agentPath[1], agentPath[2]).catch(() => ({ status: 500, body: { error: 'Couldn\'t change your agents, so nothing changed: the request failed.' } })).then(out => wrote(res, out));
+      return void (levelPath ? Promise.resolve().then(() => panelLevelRequest(repo, levelPath[1], levelPath[2], req.url.split('?')[1] || '')) : panelAgentRequest(repo, agentPath[1], agentPath[2])).catch(() => ({ status: 500, body: { error: levelPath ? 'Couldn\'t save the level, so nothing was saved: the request failed.' : 'Couldn\'t change your agents, so nothing changed: the request failed.' } })).then(out => wrote(res, out));
     }
     const stopPath = where.match(/^\/api\/tickets\/(\d{1,4})\/stop$/);
     if (req.method === 'POST' && stopPath) {
