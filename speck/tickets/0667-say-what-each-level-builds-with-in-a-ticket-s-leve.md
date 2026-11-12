@@ -1,7 +1,7 @@
 ---
 id: "0667"
 title: "Say what each level builds with in a ticket's Level menu"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0666"]                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T21:16:01.396Z"
+approved: "2026-11-12T21:43:22.667Z"
 
 ---
 # 0667 · Say what each level builds with in a ticket's Level menu
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket's Level menu (0662) offers Quick, Balanced, Deep and "Settings" without saying what any of them builds with. "Settings" reads like a way to open the Settings page, but it takes the ticket's level off, and nothing in the menu leads to where levels are changed.
@@ -58,9 +59,14 @@ Worth knowing: a Codex model shows by its short name (such as gpt-6.1-sol) rathe
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 219,977
+- Elapsed since build started: 27 min
+- Changed lines: 76 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, in this log only, no inbox notes):
 - The menu names a Codex or Cursor model by its slug, as the board knows it without asking the agent, while Settings lists Codex's own display names (such as GPT-6.1 Sol). Claude Code's and model providers' models already match Settings.
