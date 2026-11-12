@@ -43,6 +43,7 @@ The team page shows the project's build levels, and you can change, add and remo
 
 ## Notes
 - Follow how the team page saves `builder_model` and `builder_effort` today (`scripts/settings.mjs`, `templates/panel-settings.js`), keeping the page as narrow as it is now (one column on a phone).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
