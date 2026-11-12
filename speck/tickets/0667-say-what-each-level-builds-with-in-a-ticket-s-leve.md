@@ -1,7 +1,7 @@
 ---
 id: "0667"
 title: "Say what each level builds with in a ticket's Level menu"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,12 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0666"]                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T21:16:01.396Z"
-approved: "2026-11-12T21:43:22.667Z"
+approved: "2026-11-12T22:06:11.482Z"
 
 ---
 # 0667 · Say what each level builds with in a ticket's Level menu
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket's Level menu (0662) offers Quick, Balanced, Deep and "Settings" without saying what any of them builds with. "Settings" reads like a way to open the Settings page, but it takes the ticket's level off, and nothing in the menu leads to where levels are changed.
@@ -60,13 +60,16 @@ Worth knowing: a Codex or Cursor model is named as Settings names it once speck 
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): changes requested: F1 A Cursor level can advertise low, high or max effort although Cursor builds never receive an effort setting.; F2 modelName() returns raw slugs for Codex and Cursor, whereas Settings uses model display_name when available.
+Round 3 (codex, merge round): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 4, 3 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 219,977
-- Elapsed since build started: 27 min
-- Changed lines: 76 (limit 5000)
+- Reviewer tokens: 763,699
+- Elapsed since build started: 50 min
+- Changed lines: 117 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, in this log only, no inbox notes):
 - Tests that start a real panel or `speck run` timed out under the machine's load (59–66 on 16 cores) during this build, and passed when rerun alone.
