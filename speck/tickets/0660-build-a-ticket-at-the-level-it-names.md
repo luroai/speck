@@ -45,6 +45,7 @@ Since 0659 a ticket can name its own builder model and effort, but you have to k
 ## Notes
 - Level names are lowercase letters, digits and hyphens. The panel shows them with a capital first letter.
 - Levels live in `speck/config.yml`, as tickets that name them are shared with the project. A level's model is free text in its builder's own format, as `builder_model` is.
+- Failing before this build: none
 - Builds on 0659's resolution in `scripts/build-model.mjs` and `scripts/ticket-builder.mjs`. Likely files also `scripts/core.mjs` (`ticketAgents`), `scripts/same-model.mjs`, `scripts/builder-stand-in.mjs`, `scripts/lint.mjs`, `templates/ticket.md`, `templates/config.yml`, `docs/brief.md`.
 
 ## In plain words
