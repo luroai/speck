@@ -1,7 +1,7 @@
 ---
 id: "0670"
 title: "Fix the full suite failing on main at 4f9e526"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-12
+started: "2026-11-12T21:32:13.757Z"
 
 ---
 # 0670 · Fix the full suite failing on main at 4f9e526
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The full suite fails on main at commit 4f9e526 (4f9e526d61d67540d1c62dc7bb304411ba88a8ba). Failing tests:
