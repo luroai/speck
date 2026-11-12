@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, round, boardPage, fakePage, items, shippedRows, top, panelRepo } from './support/panel.mjs';
+import { T, round, boardPage, fakePage, items, queueRows, shippedRows, top, panelRepo } from './support/panel.mjs';
 import { levelBuilds } from '../scripts/level-builds.mjs';
 import { PROVIDERS } from '../scripts/providers.mjs';
 import { statusData } from '../scripts/speck.mjs';
@@ -163,4 +163,89 @@ test('0667 AC4: picking a level, Default included, still sets it at once and clo
     assert.equal(levelCell(p, planCard(p, '0701')).children[1].textContent, shown);
     assert.equal(levelMenu(p, planCard(p, '0701')), undefined);
   }
+});
+
+// ---------- review round 2: F1, an effort the builder isn't given; F2, a model by its agent's own name ----------
+
+test('0667 AC2 F1: a builder that isn\'t given an effort shows none, whatever the level sets', () => {
+  const levels = { quick: { builder: 'cursor', builder_model: 'composer-2', builder_effort: 'max' }, deep: { builder: 'deepseek', builder_effort: 'high' }, big: { builder: 'codex', builder_effort: 'low' } };
+  const own = levelBuilds(cfg({ levels }), null, PROVIDERS);
+  assert.deepEqual(own.map(b => [b.name, b.effort]), [['quick', null], ['deep', null], ['big', 'low'], ['', 'high']]);
+  // With a build_command of its own, Codex builds through it, and aren't given the level's effort either.
+  const hand = levelBuilds(cfg({ levels, build_command: 'my-builder {id}' }), null, PROVIDERS);
+  assert.deepEqual(hand.map(b => [b.name, b.effort]), [['quick', null], ['deep', null], ['big', null], ['', 'high']]);
+});
+
+test('0667 AC2 F1: the menu leaves out an effort the builder isn\'t given', async () => {
+  const builds = [{ name: 'quick', builder: 'cursor', agent: 'Cursor', model: 'composer-2', model_slug: 'composer-2', effort: null }, ...BUILDS.slice(1)];
+  const p = menuPage(board([T('0701', 'draft')], { level_builds: builds }));
+  await p.settle();
+  const menu = await openMenu(p, '0701');
+  assert.equal(buildOf(p, menu.children[0]), 'Cursor · composer-2');
+  assert.equal(buildOf(p, menu.children[3]), 'Claude Code · Fable · high');
+});
+
+test('0667 AC2 F2: the board gives the model as the build is given it, beside its name', () => {
+  const out = levelBuilds(cfg({ levels: { quick: { builder: 'codex', builder_model: 'gpt-6.1-sol', builder_effort: 'low' } } }), null, PROVIDERS);
+  assert.deepEqual(out.map(b => [b.name, b.model, b.model_slug]), [['quick', 'gpt-6.1-sol', 'gpt-6.1-sol'], ['', 'Fable', 'fable']]);
+});
+
+// A page as menuPage's, with each agent's models answered from `models` (agent → answer), and its requests counted.
+function namesPage(builds, models, tickets = [T('0701', 'draft')]) {
+  const calls = [];
+  const b = board(tickets, { level_builds: builds });
+  const fetch = async (url, opts = {}) => {
+    const u = String(url);
+    calls.push(u);
+    const m = u.match(/^\/api\/agent-models\?agent=(\w+)$/);
+    if (m) { const a = models[m[1]]; if (a && a.fail) throw new Error('offline'); return { ok: !!a, status: a ? 200 : 500, json: async () => structuredClone(a ?? {}) }; }
+    return { ok: true, status: 200, json: async () => structuredClone(/\/log$/.test(u) ? { text: '', truncated: false } : b) };
+  };
+  const p = fakePage([], { fetch });
+  p.calls = calls;
+  return p;
+}
+const CODEX_LEVEL = { name: 'quick', builder: 'codex', agent: 'Codex', model: 'gpt-6.1-sol', model_slug: 'gpt-6.1-sol', effort: 'low' };
+
+test('0667 AC2 F2: a Codex or Cursor model goes by the name its agent\'s list gives it, asked once', async () => {
+  const cursor = { name: 'deep', builder: 'cursor', agent: 'Cursor', model: 'composer-2', model_slug: 'composer-2', effort: null };
+  const p = namesPage([CODEX_LEVEL, BUILDS[1], cursor, BUILDS[3]], {
+    codex: { agent: 'codex', models: [{ slug: 'gpt-6.1-sol', display_name: 'GPT-6.1 Sol' }] },
+    cursor: { agent: 'cursor', models: [{ slug: 'composer-2', display_name: 'Composer 2' }] } });
+  await p.settle();
+  let menu = await openMenu(p, '0701');
+  await p.settle();
+  menu = levelMenu(p, planCard(p, '0701'));
+  assert.equal(buildOf(p, menu.children[0]), 'Codex · GPT-6.1 Sol · low');
+  assert.equal(buildOf(p, menu.children[2]), 'Cursor · Composer 2');
+  p.press(levelPick(p, planCard(p, '0701'))); // closes it
+  await p.settle();
+  await openMenu(p, '0701');
+  await p.settle();
+  assert.equal(p.calls.filter(u => u.startsWith('/api/agent-models')).length, 2, p.calls.join(', '));
+});
+
+test('0667 AC2 F2: a model whose name can\'t be read keeps the name the build is given', async () => {
+  for (const answer of [undefined, { fail: true }, { agent: 'codex', why: 'Codex isn\'t signed in.' }, { agent: 'codex', models: [{ slug: 'other', display_name: 'Other' }] }]) {
+    const p = namesPage([CODEX_LEVEL, ...BUILDS.slice(1)], { codex: answer });
+    await p.settle();
+    await openMenu(p, '0701');
+    await p.settle();
+    assert.equal(buildOf(p, levelMenu(p, planCard(p, '0701')).children[0]), 'Codex · gpt-6.1-sol · low', JSON.stringify(answer));
+  }
+});
+
+test('0667 AC2 F2: a queued ticket\'s full view names the model too, once read', async () => {
+  const p = namesPage([CODEX_LEVEL, ...BUILDS.slice(1)], { codex: { agent: 'codex', models: [{ slug: 'gpt-6.1-sol', display_name: 'GPT-6.1 Sol' }] } }, [T('0802', 'ready')]);
+  await p.settle();
+  const row = () => queueRows(p).find(n => idOf(p, n) === '0802');
+  p.press(row().children[0]);
+  await p.settle();
+  p.press(p.all(row()).find(x => x.tagName === 'button' && x.textContent === 'Full ticket'));
+  await p.settle();
+  const pane = p.byId('full-ticket');
+  p.press(levelPick(p, pane));
+  await p.settle();
+  await p.settle();
+  assert.equal(buildOf(p, levelMenu(p, p.byId('full-ticket')).children[0]), 'Codex · GPT-6.1 Sol · low');
 });

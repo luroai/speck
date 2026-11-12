@@ -2,7 +2,7 @@
 // works it out: the level's own builder, model and effort, else the Builder's in speck/config.yml. The last, named '',
 // is Default, a ticket with no level, which builds with the Builder's own.
 import { ticketAgents } from './core.mjs';
-import { buildConfig, ticketBuilderModel } from './build-model.mjs';
+import { buildConfig, ticketBuilderModel, buildsEachTicket } from './build-model.mjs';
 import { levelNames, levelled } from './levels.mjs';
 import { knownProviders } from './custom-providers.mjs';
 import { findProvider } from './providers.mjs';
@@ -23,12 +23,19 @@ function modelName(id, slug, providers) {
   return slug;
 }
 
-// [{ name, builder, agent, model, effort }] for each level in speck/config.yml's order, then Default (name ''). `model`
-// and `effort` are '' when the build leaves them to the agent's own default.
+// Whether a build on `builder` is given an effort: Claude Code's always, Codex's when speck starts it with its own command
+// (codex-build.mjs). Cursor's and a model provider's never are.
+const takesEffort = (builder, cfg) => builder === 'claude' || (builder === 'codex' && buildsEachTicket(cfg?.build_command ?? ''));
+
+// [{ name, builder, agent, model, model_slug, effort }] for each level in speck/config.yml's order, then Default (name '').
+// `model` is the model by name where speck knows it without asking the agent, `model_slug` as the build is given it, both
+// '' when the build leaves it to the agent's own default, so the page can name a Codex or Cursor model as their lists do.
+// `effort` is '' when it's left to the agent's own default, and null when the builder isn't given one at all.
 export function levelBuilds(cfg, repo, providers = knownProviders(repo)) {
   return [...levelNames(cfg), ''].map(name => {
     const fm = levelled({ level: name }, cfg), builder = ticketAgents(fm, cfg).builder;
-    const model = ticketBuilderModel(fm, cfg, providers), effort = buildConfig(cfg, builder, fm).builder_effort;
-    return { name, builder, agent: agentName(builder, providers), model: model ? modelName(builder, model, providers) : '', effort: effort || '' };
+    const model = ticketBuilderModel(fm, cfg, providers) || '', effort = buildConfig(cfg, builder, fm).builder_effort;
+    return { name, builder, agent: agentName(builder, providers), model: model ? modelName(builder, model, providers) : '', model_slug: model,
+      effort: takesEffort(builder, cfg) ? effort || '' : null };
   });
 }

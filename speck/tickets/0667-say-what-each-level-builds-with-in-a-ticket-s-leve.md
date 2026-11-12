@@ -1,7 +1,7 @@
 ---
 id: "0667"
 title: "Say what each level builds with in a ticket's Level menu"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -23,7 +23,7 @@ approved: "2026-11-12T21:43:22.667Z"
 ---
 # 0667 · Say what each level builds with in a ticket's Level menu
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 A ticket's Level menu (0662) offers Quick, Balanced, Deep and "Settings" without saying what any of them builds with. "Settings" reads like a way to open the Settings page, but it takes the ticket's level off, and nothing in the menu leads to where levels are changed.
@@ -53,7 +53,7 @@ A ticket's Level menu now says what each choice builds with: under Quick, Balanc
 
 To see it, open any ticket that isn't done, tap its Level, and read the lines under each choice; then tap Change levels.
 
-Worth knowing: a Codex model shows by its short name (such as gpt-6.1-sol) rather than the fuller name Settings lists, and a choice that builds with Cursor still shows an effort, though Cursor builds don't use one.
+Worth knowing: a Codex or Cursor model is named as Settings names it once speck has asked the agent for its list, which happens the first time you open a Level menu; until then, or if the agent can't be asked, it shows the model's short name (such as gpt-6.1-sol). A choice that builds with an agent that isn't given an effort, such as Cursor, shows none.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -69,8 +69,6 @@ Round 1 (codex): approve.
 - Changed lines: 76 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, in this log only, no inbox notes):
-- The menu names a Codex or Cursor model by its slug, as the board knows it without asking the agent, while Settings lists Codex's own display names (such as GPT-6.1 Sol). Claude Code's and model providers' models already match Settings.
-- A level that builds with Cursor shows its effort, though Cursor builds aren't given one.
 - Tests that start a real panel or `speck run` timed out under the machine's load (59–66 on 16 cores) during this build, and passed when rerun alone.
 
 ## Review rounds
@@ -139,6 +137,93 @@ Follow-ups (known limits, in this log only, no inbox notes):
     "findings": [],
     "escalation_question": "",
     "summary": "The Level menu now explains each choice, calls the unset choice Default, and links to Build levels in Settings. The implementation and focused tests support all four criteria. Some broader browser checks remain limited by panel startup timeouts; I found no blocking defect in the change."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · changes_requested · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4d9a962ed3576ab7aeef3ce4a46c6f85b0ad49b9",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1d1b6-4826-79c1-a3d5-191b60009296",
+    "builder_response": "Merge round: ship's tests failed on the ticket merged with main. main's only new commit adds a ticket file (0670), so the merge was clean and the failures were this ticket's own.\n\n- Tests run: test/panel-level-0667.test.mjs test/panel-level-0662.test.mjs test/panel-0424.test.mjs test/panel-0462.test.mjs test/panel-0583.test.mjs test/panel-0612.test.mjs test/resume-0044.test.mjs test/status-json.test.mjs test/panel-0463.test.mjs test/panel-0465.test.mjs test/panel-0434.test.mjs test/panel-0624.test.mjs test/panel-0419.test.mjs test/panel-0427.test.mjs (all pass).\n- Which failed, and why:\n  - 0424 AC1, 0462 AC1, 0583 AC3 expected a ticket with no level to show \"Settings\". AC1 of this ticket renames it to \"Default\", so they now expect \"Default\". 0463, 0465, 0434, 0624 and 0419 had the same expectation (not in ship's quick suite, but in the full one) and are changed the same way.\n  - 0044 AC3 and 0030 AC1 list status --json's top-level keys exactly. They now include level_builds, which AC2 adds. 0030's whole-object check of an empty project checks level_builds' names (each level, then Default) and compares the rest as before: its values depend on the Builder's settings.\n  - 0612 AC3: the builder line under each level was 12 px text inside a button, which the panel's rules forbid. 13 px is forbidden outside rows' details too (0427 AC1), so the line now takes the menu's own size and is set apart only by its muted colour.\n- No test was weakened: each change follows the new behaviour the ticket asks for.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 425022,
+      "cached_input_tokens": 353152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1839,
+      "reasoning_output_tokens": 190
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 21409,
+      "cached": 184576,
+      "write": 0,
+      "output": 899
+    },
+    "cost_usd": 0.0702656,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T21:58:42.490Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.js levelName() uses Default. Passing 0667 AC1 tests and updated panel regression tests cover the menu and ticket facts."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "levelBuilds() resolves configured values, but reports effort for Cursor even though cursorStartWords() never passes effort. modelName() also returns Codex/Cursor slugs instead of the display names used by Settings. Existing AC2 tests omit these cases."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "levelPicker() closes the menu and opens Settings targeting levelsBox without setting a level. Passing 0667 AC3 tests verify navigation and absence of a ticket update."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Selection, refusal and finished-ticket guards remain unchanged. The 0662 and 0667 regression tests pass; this round reports 285 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/level-builds.mjs",
+        "issue": "A Cursor level can advertise low, high or max effort although Cursor builds never receive an effort setting. This misstates what the choice builds with. I missed this in round 1.",
+        "suggested_fix": "Represent effort as inapplicable for Cursor and render that accurately rather than displaying the configured effort. Add coverage for a Cursor level with an explicit effort.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/level-builds.mjs",
+        "issue": "modelName() returns raw slugs for Codex and Cursor, whereas Settings uses model display_name when available. This misses the ticket's explicit requirement to use the Builder row's model names.",
+        "suggested_fix": "Reuse the available model catalogue/display-name resolution, retaining a slug fallback when no name is available. Test a model whose display name differs from its slug.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The regression updates and text-size fix are appropriate, and all tests run this round pass. Two details missed in my first review still need fixing: Cursor choices advertise effort they do not use, and some model names differ from Settings."
   }
 }
 ```
