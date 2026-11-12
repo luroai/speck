@@ -50,6 +50,7 @@ speck is ready to be released as 1.3.0.
 - After it ships, check that the `v1.3.0` tag and its GitHub release page appeared. If not: `gh release create v1.3.0 --target main --title "speck 1.3.0" --notes-file docs/releases/v1.3.0.md`.
 - Checked 2026-11-12: `package.json` is `1.2.0`, `v1.2.0` is tagged, and `CHANGELOG.md`'s newest section is 1.2.0.
 - 0653's checks that name 1.2.0 as the current version should check the current version, as 0653 did for 0640's, and `test/docs-0491.test.mjs` should allow this ticket's test to name the version.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
