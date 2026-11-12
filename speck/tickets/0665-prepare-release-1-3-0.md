@@ -1,7 +1,7 @@
 ---
 id: "0665"
 title: "Prepare release 1.3.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-12T16:12:50.872Z"
 ---
 # 0665 · Prepare release 1.3.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 1.3, "Picks the crew", lets each ticket build on its own model and effort, adds build levels you set on the team page and pick per ticket, and has speck fix main itself when the full suite fails (0656 to 0663). Anyone following the setup prompt, or updating speck in a project, still gets 1.2.0.
@@ -57,7 +57,7 @@ speck is ready to be released as 1.3.0.
 - Built with speck figures worked out from speck/tickets/done/ at 681d87c: 647 shipped, 16 cancelled, 14 minutes median, 2 rounds median, 309 approved in round 1.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as 1.3.0. Once this ships, anyone who installs or updates speck gets build levels (quick, balanced, deep or your own, set on the Builder's card and picked per ticket in the panel), a model and effort of a ticket's own, and speck fixing main itself when its full set of checks fails there. The changelog, the release notes and the README say so, the price table has today's rates and the README's figures are up to date. To check, once it has shipped, look for the 1.3.0 release on the project's GitHub page. Worth watching: if that release page doesn't appear, it can be made by hand from the release notes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -67,3 +67,80 @@ speck is ready to be released as 1.3.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a23e52f4fd5dc7ae5489c2fbccb895a1175fcc49",
+    "session": "fresh",
+    "thread_id": "01a1d08b-a9db-7c30-a4ec-b5c7ae792338",
+    "builder_response": "- Tests run: `speck test --related test/release-0665.test.mjs test/release-0653.test.mjs test/docs-0491.test.mjs` (this ticket's own file, the two existing files it changed, every test file naming a changed file, and the commands.checks files): 1516 pass, 0 fail, 3 skipped.\n- Notes for the reviewer:\n  - Release follows 0653's pattern: version, changelog section, README and brief status lines, `npm run prices` (taken 2026-11-12), `docs/releases/v1.3.0.md`, and 0653's checks that named 1.2.0 now check the current version; `test/docs-0491.test.mjs` allows `test/release-0665.test.mjs` to name the version.\n  - Tickets shipped since `v1.2.0`: 0656 to 0663 (0664 is still ready, not shipped). Left out as nothing a user notices: 0657 (this repo's own quick test runner) and 0663 (a test fix). 0656 is in only for the smaller text in the Full suite fails view.\n  - Built with speck figures worked out from speck/tickets/done/ at 681d87c (the base commit's done tickets): 647 shipped, 16 cancelled, 14 min median, 2 rounds median, 309 first-round approvals.\n  - README: status line, a sentence in \"Your agents\" and a clever bit on levels and a ticket's own model, and the full-suite sentence now says speck raises a fix ticket itself once you've let it take calls.\n",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 173584,
+      "cached_input_tokens": 119168,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1242,
+      "reasoning_output_tokens": 54
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 54416,
+      "cached": 119168,
+      "write": 0,
+      "output": 1242
+    },
+    "cost_usd": 0.1331688,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T16:16:56.077Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 1.3.0. Both 0665 AC1 tests passed, including running speck init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 1.3.0 above 1.2.0 and describes the shipped 0656–0663 changes that users notice. Git comparison confirms the 1.2.0 and earlier sections are unchanged. All three AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines name 1.3.0. The README's Your agents paragraph explains default and custom levels and per-ticket models. Passing AC3 tests check status versions, the latest-release setup prompt and the price table date; scripts/prices.json is dated 2026-11-12 and contains refreshed rates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.3.0.md covers picking the crew, changes and benefits, installation in each project, blank ticket fields, precedence, default and custom levels, and automatic fix tickets under watch fix/decide. Claims match shipped tickets and the levels.mjs and full-fix.mjs implementations. It names no person. All three AC4 tests passed, including the changelog link check."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent calculation from speck/tickets/done gives 647 shipped, 16 cancelled, 14 minutes rounded median, 2 median review rounds and 309 first-round approvals, matching the README. AC5 tests passed, including package/changelog agreement. The relevant run recorded 1516 passes, zero failures and three skips; no unrelated changes or dishonest tests found."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release preparation is ready for merge. Version numbers, release notes, upgrade instructions, refreshed prices and README figures agree with the shipped work. The relevant tests passed, and no blocking concerns were found."
+  }
+}
+```
+
+</details>
