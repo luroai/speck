@@ -983,9 +983,8 @@ function levelFields(l, who, pick) {
   const entries = levelEntries(), picked = levelEntry(l.builder, l.builder_model);
   const builders = [{ value: '', label: `Default (${levelDefaultWords()})` },
     ...(picked !== '' && !entries.some(e => e.value === picked) ? [{ value: picked, label: levelEntryWords(picked) }] : []), ...entries];
-  const builder = picked === '' ? settingSaved('builder') || 'claude' : picked.slice(0, picked.indexOf('|'));
-  const model = picked === '' ? '' : picked.slice(picked.indexOf('|') + 1);
-  const efforts = [...new Set([...levelEfforts(builder, model), ...(l.builder_effort ? [l.builder_effort] : [])])];
+  // The efforts of the model the level runs, as saved: an agent's default named by name stays that model.
+  const efforts = [...new Set([...levelEfforts(levelBuilder(l), l.builder_model || ''), ...(l.builder_effort ? [l.builder_effort] : [])])];
   return [
     levelField('Builder', `${who} builder`, builders, picked, v => {
       const at = v.indexOf('|');

@@ -1,7 +1,7 @@
 ---
 id: "0666"
 title: "Pick each level's model from the builder's list"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-12T21:02:41.768Z"
 ---
 # 0666 · Pick each level's model from the builder's list
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The Build levels on the Builder's card (0661) are hard to use. Each level's model is a free-text box, where the Builder's own row above offers a list such as "Claude Code · Opus". "settings" fills every box and list and isn't explained, none of the boxes say what they're for, a line above each level repeats what its boxes already show, and each level's Remove button is as large as the page's main buttons.
@@ -60,3 +60,89 @@ Each level is set with the same choices as the Builder itself, labelled in words
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d1ceddd7215f3785c63af3c0daeb8d9daabbd7f9",
+    "session": "fresh",
+    "thread_id": "01a1d198-d44d-7310-b7c1-0f50305bea9a",
+    "builder_response": "- Tests run: test/settings-levels-0666.test.mjs test/settings-levels-0661.test.mjs, with `speck test --related`, which added test/panel-0430, 0432, 0433, 0472, 0473, 0474, 0555, 0603, test/pipeline-0415, 0470, 0479 and test/subscriptions-0646 (they name the changed files).\n- Round 1. Each level, and the Add a level form, now has a labelled Builder list built from the Builder's own entries (`roleEntries('builder')`) after \"Default (<the Builder's saved agent · model>)\". There's also a labelled Effort list: \"Default (<saved builder_effort, or the agent's own>)\", then `levelEfforts` for the picked builder and model. The summary line, the model text box and its datalist are gone, and Remove is a small text button (`.ltextbtn`). The add button now comes after the fields.\n- Picking an entry sends `builder` and `builder_model` in one `set` request, which the server already accepted. Default sends both blank. The server (scripts/levels-panel.mjs) is unchanged, so what is saved and what is refused are the same as before (AC5).\n- AC3 covers the panel's own words. Error text the server sends back is shown as before, and a few rare errors name speck/config.yml (for example uncommitted changes in it). AC5 asks for the same refusals, so I left them as they are.\n- test/settings-levels-0661.test.mjs: its page tests checked the summary line, the \"settings\" options and the model box, which this ticket replaces. They now check the same things (order, saving, efforts per model, add, refusals) through the new lists. Its server tests are untouched.\n- AC4: a real-browser test at 375 px checks for no sideways scroll and that each level's name and lists fit the Builder's card. Pictures in both looks are with the review pack.\n",
+    "seconds": 43,
+    "usage": {
+      "input_tokens": 165115,
+      "cached_input_tokens": 127360,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1062,
+      "reasoning_output_tokens": 262
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 37755,
+      "cached": 127360,
+      "write": 0,
+      "output": 1062
+    },
+    "cost_usd": 0.098866,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T21:10:59.591Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "levelEntries and levelFields reuse roleEntries('builder'), add Default, retain unlisted saved values and save both fields. The five AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "levelFields normalises the saved model through levelEntry/asEntry before passing it to levelEfforts. An explicit agent-default model becomes blank, so levelEfforts can substitute the Builder row's different saved model and offer the wrong efforts. Existing AC2 tests do not cover this combination."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "levelField and drawLevels provide visible labels and remove the summary and old explanatory wording. AC3 passed; existing server refusals remain unchanged as AC5 requires."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-settings.css defines the small text Remove button and responsive fields; drawLevels places Add after the fields. Both AC4 tests passed, including the real-browser check at 375 pixels."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "levelAction retains the existing endpoint and request handling; server implementation is unchanged. AC5 tests cover persisted values, defaults, refusals and adding; existing 0661 coverage includes removing. Reported run had no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "A saved explicit default model can display the wrong Effort choices. For example, with the Builder set to Codex model B and a level explicitly saved as Codex model A (Codex's default), levelEntry/asEntry changes A to a blank model for display. levelFields then passes that blank to levelEfforts, which substitutes B. The level still runs A, but its Effort list offers B's efforts.",
+        "suggested_fix": "Calculate the effective model for efforts from the level's original saved builder_model, preserving an explicitly named default model. Use normalisation only for the Builder list's selected entry. Add a regression test with distinct effort lists for default model A and saved Builder model B.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The new labelled model lists and compact layout are covered by passing tests. One edge case needs fixing: a level explicitly using an agent's default model can show effort choices for a different model."
+  }
+}
+```
+
+</details>

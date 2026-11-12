@@ -108,6 +108,17 @@ test('0666 AC2: each level\'s Effort has Default naming the Builder\'s effort, t
   assert.deepEqual(options(p, 'New level effort').map(o => o.value), ['', 'low', 'high']);
 });
 
+test('0666 AC2 (round 1 F1): a level naming its agent\'s default model by name offers that model\'s efforts, not the Builder\'s model\'s', async () => {
+  const r = repoWith('  graphics:\n    builder: codex\n    builder_model: gpt-6.1-sol');
+  const view = { ...panelSettings(r.dir), your_agents: YOURS_VIEW(), agent_models: structuredClone(AGENT_MODELS) };
+  view.agent_models[1].models.push({ slug: 'gpt-b', display_name: 'GPT-B', description: null, efforts: ['minimal', 'ultra'] });
+  for (const g of view.groups) for (const s of g.settings) { if (s.key === 'builder') s.value = 'codex'; if (s.key === 'builder_model') s.value = 'gpt-b'; }
+  const p = agentsPage(view, { 'GET /api/usage': { agents: [] } });
+  await openSettings(p);
+  assert.equal(controlIn(p, 'Graphics level builder').value, 'codex|', 'shown as Codex\'s default entry');
+  assert.deepEqual(options(p, 'Graphics level effort').map(o => o.value), ['', 'low', 'high'], 'gpt-6.1-sol\'s, not gpt-b\'s');
+});
+
 test('0666 AC2: Default blanks the level\'s effort', async () => {
   const r = repoWith('  quick:\n    builder_effort: low');
   const p = await opened(r.dir, { answers: { '/api/levels/quick/set?builder_effort=': ok([{ name: 'quick', builder: '', builder_model: '', builder_effort: '' }]) } });
