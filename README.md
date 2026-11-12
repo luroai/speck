@@ -17,7 +17,7 @@ You don't need to read the code to check the work. Every ticket comes with a one
 
 Use the agents you already have: Claude Code, Codex or Cursor, or a model provider you have an API key for, such as DeepSeek. speck doesn't let a model review its own work unless you allow it.
 
-> Status: 1.2.0. It works end to end on your own machine.
+> Status: 1.3.0. It works end to end on your own machine.
 
 ## Get started
 
@@ -80,6 +80,7 @@ The review pack is still there whenever you want to check the work.
 - **speck makes the obvious calls, and tells you.** With `watch: decide`, speck takes a build's recommendation on a low-risk ticket instead of stopping the line, and lists each call in Decided for you with what it didn't choose.
 - **speck looks into stops and slow builds.** When a build or a ship stops for a reason speck doesn't expect, or a build runs well past its usual time, speck has its own agent look into it and do one thing about it, or ask you.
 - **speck checks the running app itself.** When a build asks how something looks or works, speck starts your app, signs in with your test logins and looks, and keeps the screenshots in the review pack.
+- **speck picks the crew for each ticket.** Build a quick fix at low effort and a hard one at a deep level, or give a ticket a model of its own, without changing your settings in between.
 - **speck works round usage limits.** When Claude, Codex or Cursor hits its usage limit, speck hands the work to the next agent on your team's bench, or picks it up again once the limit resets, so a limit overnight doesn't leave the queue stuck until morning.
 - **speck holds back a ticket whose criteria changed.** If a ticket's acceptance criteria changed after you set it ready, it never ships by itself: it waits for you at Ship, showing what each criterion was and is now.
 - **speck raises its own fix tickets.** If `main` breaks, speck has the build that finds it write a priority-0 fix ticket and send it to the front of the queue, instead of patching it inside someone else's work.
@@ -94,7 +95,7 @@ The review pack is still there whenever you want to check the work.
 
 The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. `speck/config.yml` holds the project's settings, and your own choices, such as who builds and reviews, can be kept for this machine only.
 
-**Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them in the panel's Settings, and pick each team member's agent, model and bench on its card under Your team, where Your subscriptions shows how much of each you've used. API keys stay on this machine, out of git, and so do the test logins speck signs in to your app with, which you save with `speck logins set <name>`.
+**Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them in the panel's Settings, and pick each team member's agent, model and bench on its card under Your team, where Your subscriptions shows how much of each you've used. You can also build a ticket at a level, such as quick, deep or one of your own, each a builder, model and effort you set up on the Builder's card, or on a model of its own. Pick a ticket's level in the panel, beside its priority. API keys stay on this machine, out of git, and so do the test logins speck signs in to your app with, which you save with `speck logins set <name>`.
 
 **Your app.** To check a question in your app, speck starts it with `commands.start`, a command with `{port}` where the port goes. Leave it blank and speck works it out the first time it needs it, then saves it. `speck app <id>` starts the app from a ticket's copy of the code for you to look at, and `speck app <id> --stop` stops it.
 
@@ -104,7 +105,7 @@ The tickets, the reviews and every decision stay in your repo, as Markdown and Y
 - **Reviewer: Codex, with gpt-6.1-sol.** Codex has reviewed almost every speck ticket, usually in under a minute a round.
 - **Grok through Cursor** worked well as a builder in a short test, but is slow as a reviewer: it found the same problems as Codex but took 4 to 11 minutes a round.
 
-A build runs only the tests its change touches. The tests in `commands.test` run when a ticket ships, on the ticket merged with `main` as it is then, and one ship queue ships approved tickets one at a time, so ships never race each other. If your whole suite is slow, make `commands.test` the quick tests and set `commands.test_full` to the whole suite: ships then wait only for the quick tests, and `speck run` runs the whole suite on `main` after ships, without holding anything up. If it fails, speck counts it under Needs you, and `speck status` and the panel's Build lane name the failing tests. [`docs/brief.md`](docs/brief.md) has the full design.
+A build runs only the tests its change touches. The tests in `commands.test` run when a ticket ships, on the ticket merged with `main` as it is then, and one ship queue ships approved tickets one at a time, so ships never race each other. If your whole suite is slow, make `commands.test` the quick tests and set `commands.test_full` to the whole suite: ships then wait only for the quick tests, and `speck run` runs the whole suite on `main` after ships, without holding anything up. If it fails, `speck status` and the panel's Build lane name the failing tests. Once you've let speck take calls (see [Turning it on](#turning-it-on)), it raises a fix ticket for them itself and builds it next. Otherwise, or if that fix gets stuck, speck counts it under Needs you. [`docs/brief.md`](docs/brief.md) has the full design.
 
 ## Who it's for
 
@@ -174,9 +175,9 @@ Claude Code, Cursor and model providers such as DeepSeek need no setup: set `rev
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **638 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **647 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
 - **14 minutes** median from a build starting to its ticket shipping, leaving out time it waited for you or the machine was asleep.
-- **2 review rounds** median. 305 tickets were approved in the first round.
+- **2 review rounds** median. 309 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 
