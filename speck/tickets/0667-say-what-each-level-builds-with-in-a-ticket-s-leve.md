@@ -43,6 +43,7 @@ A ticket's Level menu says what each choice builds with and leads to where level
 ## Notes
 - The board gives the page `levels` as names only (`scripts/panel.mjs`), so it needs each level's resolved builder, model and effort too. `ticketBuilderModel` in `scripts/build-model.mjs` and 0660's level resolution already work them out.
 - Use the same "Default" word as 0666, and the Builder's agent and model names as the Builder's row shows them.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
