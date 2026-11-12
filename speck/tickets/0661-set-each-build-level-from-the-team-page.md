@@ -47,7 +47,7 @@ The team page shows the project's build levels, and you can change, add and remo
 - Self-check: saving the values a level already has now answers without an empty commit, and a level a ticket couldn't be built at (the reviewer sharing its model) is refused, each with a test.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Builder's card in Settings now lists the project's build levels, such as Quick, Balanced and Deep. Each one shows its builder, model and effort, or "settings" where it uses the builder's own settings. You can change any of them there, add a level of your own, such as one for graphics work, or remove one, and each change is saved to the project's settings straight away, without pressing Save. To see it, open Settings and scroll to the bottom of the Builder's card. Worth knowing: a level that a ticket still in progress uses can't be removed, and the page names those tickets. If the project hasn't listed its levels yet, your first change saves all three standard ones along with it. A level whose builder would run the same model as the reviewer is refused.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +57,10 @@ The team page shows the project's build levels, and you can change, add and remo
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Known limit: saving a level rewrites the whole `levels:` block in speck/config.yml, so comments inside that block aren't kept (comments above it and everywhere else are).
+  - Known limit: names already in speck/config.yml aren't checked against lowercase letters, digits and hyphens; only a level added from the page is (0660's follow-up, still open for hand-written ones).
+  - Known limit: a level can't be renamed from the page; add one under the new name and remove the old one.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +142,89 @@ The team page shows the project's build levels, and you can change, add and remo
     ],
     "escalation_question": "",
     "summary": "The team page can list, save, add and safely remove build levels, with relevant passing tests. One fix is needed: effort choices must follow the selected builder and model, so users can choose all supported efforts."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7d60885fea20541d005f769eaffecac123dffbc5",
+    "session": "continued",
+    "thread_id": "01a1cfb3-fb53-7103-9955-54843f015323",
+    "builder_response": "- Tests run: test/settings-levels-0661.test.mjs (with the repo's checks files, as speck test --files runs them).\n- F1: fixed. `levelEfforts(builder, model)` in templates/panel-settings.js offers a level's efforts by the same rules as `settingChoices` for builder_effort: the efforts the level's model lists, or every effort its builder's models list when the model is blank or unlisted, falling back to the builder_effort row's choices. A blank level model is the settings' builder_model while the level's builder is the settings' one. Used for existing levels and the add form, which now redraws when its builder or model changes. New test \"0661 AC2: a level's efforts are those its builder's model lists…\" covers a Codex model offering ultra, another model with different efforts, a blank model's union, and the add form following its picked model.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 287899,
+      "cached_input_tokens": 227584,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1658,
+      "reasoning_output_tokens": 102
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8651,
+      "cached": 106496,
+      "write": 0,
+      "output": 609
+    },
+    "cost_usd": 0.0340416,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T12:22:31.028Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/levels.mjs levelsShown and templates/panel-settings.js drawLevels display the configured levels and settings fallbacks. The passing AC1 test checks order and displayed values."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "levelEfforts now derives choices from the effective builder and model catalogue. The new passing AC2 test covers ultra, different model efforts, default choices and the add form. Existing passing AC2 tests exercise saving, page requests and subsequent build arguments."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelLevelRequest validates names and duplicates before saving. Passing AC3 tests exercise additions, invalid and duplicate names, unchanged files on refusal, and page messages."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelLevelRequest checks tickets before removing a level. Passing AC4 tests exercise deletion, refusal naming active tickets, exclusion of done and cancelled tickets, and page messages."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "levelsShown supplies the three defaults when levels is absent. Passing AC5 tests verify that the first change, addition or removal saves the defaults with that change."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "The level effort picker previously used static choices rather than the selected builder and model's supported efforts. This is fixed by levelEfforts and covered by the new passing catalogue-based test.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The team page supports viewing, editing, adding and removing build levels, with safeguards for levels used by active tickets. The effort picker now follows the selected builder and model. All five criteria pass, with no blocking findings remaining."
   }
 }
 ```
