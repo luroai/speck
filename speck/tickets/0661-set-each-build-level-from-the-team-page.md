@@ -1,7 +1,7 @@
 ---
 id: "0661"
 title: "Set each build level from the team page"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ source: "speck/ideas/done/2026-11-10-set-up-your-team-instead-of-settings.md"   
 after: ["0660"]                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T12:10:00.215Z"
+approved: "2026-11-12T12:22:40.703Z"
 
 ---
 # 0661 · Set each build level from the team page
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0660, changing what Quick, Balanced and Deep build with, or adding a level such as Graphics, means editing `speck/config.yml` by hand. The team page is where you set up the builder, so the levels belong there too, where you can change them from your phone.
@@ -53,9 +54,15 @@ The Builder's card in Settings now lists the project's build levels, such as Qui
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 levelControl builds effort options from the static settings row.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 289,557
+- Elapsed since build started: 13 min
+- Changed lines: 284 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Known limit: saving a level rewrites the whole `levels:` block in speck/config.yml, so comments inside that block aren't kept (comments above it and everywhere else are).
