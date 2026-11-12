@@ -229,3 +229,177 @@ Follow-ups (known limits, in this log only, no inbox notes):
 ```
 
 </details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "26b247a8bdfbe5c666f540c0d26b27ed9d9bc0af",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1d1b6-4826-79c1-a3d5-191b60009296",
+    "builder_response": "- Tests run: test/panel-level-0667.test.mjs test/panel-level-0662.test.mjs test/panel-0424.test.mjs test/panel-0462.test.mjs test/panel-0583.test.mjs test/panel-0612.test.mjs test/resume-0044.test.mjs test/status-json.test.mjs test/panel-0463.test.mjs test/panel-0465.test.mjs test/panel-0434.test.mjs test/panel-0624.test.mjs test/panel-0419.test.mjs test/panel-0427.test.mjs (all pass).\n- F1: fixed. levelBuilds() (scripts/level-builds.mjs) now gives `effort: null` when the builder isn't given one: only Claude Code is always, and Codex when speck starts it with its own command (codex-build.mjs passes model_reasoning_effort); Cursor, model providers and Codex under a hand-set build_command are not. levelBuildWords() (templates/panel.js) leaves a null effort out, so a Cursor level reads \"Cursor · composer-2\". Tests: \"0667 AC2 F1: a builder that isn't given an effort shows none…\" (server, including the build_command case) and \"…the menu leaves out an effort…\" (page).\n- F2: fixed. The board gives each level's `model_slug` beside `model`. When a Level menu opens, the page asks the panel's existing /api/agent-models (the one Settings uses) once a page for Codex's and Cursor's lists, where a level builds on one of their models, and names the model by its `display_name`, as Settings does. It keeps the slug while the list is read, or when it can't be (refused, offline, no models, or no entry for that slug). The open Plan card's key now includes how many lists have come back, so it is drawn again with the names; the full view redraws anyway. Tests: \"0667 AC2 F2: a Codex or Cursor model goes by the name its agent's list gives it, asked once\", \"…can't be read keeps the name the build is given\" (four failure shapes), \"…a queued ticket's full view names the model too\", and \"…the board gives the model as the build is given it\".\n- Ticket's In plain words and Delivery log updated: the two known limits they named are gone.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 584135,
+      "cached_input_tokens": 502656,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2480,
+      "reasoning_output_tokens": 190
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 9609,
+      "cached": 149504,
+      "write": 0,
+      "output": 641
+    },
+    "cost_usd": 0.0405784,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T22:01:50.153Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.js levelName() renders Default for an unset level. Passing AC1 tests cover the menu and ticket facts."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "levelBuilds() uses build resolution and omits inapplicable effort. levelBuildWords() uses agent model display names when available. Passing AC2 tests cover inheritance, defaults, providers, Cursor effort, model names and failed catalogue requests."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Change levels closes the menu and opens Settings at levelsBox. Passing AC3 tests verify the Builder's Build levels are targeted without changing the ticket."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Selection, refusal and finished-ticket guards remain intact. The 0662 and 0667 regression tests pass; this round reports 291 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/level-builds.mjs",
+        "issue": "Cursor choices previously advertised effort that builds do not receive.",
+        "suggested_fix": "Completed: inapplicable effort is null and omitted from the menu, with server and page regression tests.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "Codex and Cursor models previously used slugs instead of available Settings display names.",
+        "suggested_fix": "Completed: the menu reads the existing agent-models API and uses display names, with a slug fallback and tests for both ticket views and failure cases.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both requested fixes are complete. The menu now accurately describes each choice and opens the relevant Settings section without changing the ticket. All tests run this round pass, and no blocking findings remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "edac4c3c18824afc92cf2c5268b362b498524622",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1d1b6-4826-79c1-a3d5-191b60009296",
+    "builder_response": "- Tests run: test/panel-level-0667.test.mjs test/panel-level-0662.test.mjs test/panel-0424.test.mjs test/panel-0462.test.mjs test/panel-0583.test.mjs test/panel-0612.test.mjs test/resume-0044.test.mjs test/status-json.test.mjs test/panel-0463.test.mjs test/panel-0465.test.mjs test/panel-0434.test.mjs test/panel-0624.test.mjs test/panel-0419.test.mjs test/panel-0427.test.mjs test/panel-0417.test.mjs. Six real-browser tests in that run timed out with \"panel didn't start\" at load 49 on 16 cores. Their six files, rerun on their own with `node --test`, all pass (appended to the output after an `===` line).\n- Why another round after the approval: retaking the pictures showed that, now the builder line is at the menu's own 14 px (the round-2 fix for 0612 and 0427), the menu ran off the right edge of a 420 px panel, clipping \"medium\". The only change is CSS in templates/panel-cards.css. The menu now hangs from the Level cell's right edge (the cell is its positioning box, through `:has`), sized to its lines (`width: max-content`), no wider than the screen less 32 px, and a builder line too long for that wraps. Measured in Chrome at 420 px: the menu spans 183–404 px, with every line on one line. The new pictures show it in both looks.\n- No behaviour or wording changed; no test changed.\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 760620,
+      "cached_input_tokens": 669696,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3079,
+      "reasoning_output_tokens": 190
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 9445,
+      "cached": 167040,
+      "write": 0,
+      "output": 599
+    },
+    "cost_usd": 0.041584,
+    "tests": {
+      "failing": 6,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T22:06:05.971Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel.js levelName() still uses Default for an unset level. The AC1 menu and ticket-fact tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Build resolution, model display names and applicable effort remain covered by passing AC2 tests. panel-cards.css now anchors the menu to the Level cell, limits its width and permits builder lines to wrap."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The navigation code is unchanged. Passing AC3 tests verify that Change levels closes the menu, opens Settings at Build levels and leaves the ticket's level unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Selection and restriction paths are unchanged. The 0662 and 0667 regression tests pass. Browser tests that initially hit panel-start timeouts passed in the isolated rerun."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/level-builds.mjs",
+        "issue": "Cursor choices previously advertised effort that builds do not receive.",
+        "suggested_fix": "Completed: inapplicable effort is omitted, with server and page regression coverage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "Codex and Cursor models previously used slugs instead of available Settings display names.",
+        "suggested_fix": "Completed: model display names come from the existing agent-models API, with tested fallback behaviour.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The layout adjustment addresses the narrow-panel clipping without changing behaviour. Both earlier fixes remain intact, and the affected tests pass after rerunning the panel-start timeouts. No blocking findings remain."
+  }
+}
+```
+
+</details>
