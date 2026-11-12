@@ -54,7 +54,7 @@ Pictures: none, because nothing anyone sees changes (only tests changed)
 - speck (2026-11-12 21:55 UTC) told you: The build is slow because the machine is overloaded, not because anything hangs. Other work is competing with it: another build's tests, many balance and measure test helpers, a voice-generation script and a headless browser, with load between 50 and 70 on 16 cores. 0670's change is small and only touches tests. Its target tests pass when run on their own, and it is now waiting for the load to drop before it checks them again. Why: The build's log shows each failing test passing alone, a process list full of other builds' test runs and a voice script, and the builder waiting minute by minute for the load to fall.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in speck itself. Seven of speck's own tests had failed on main because the machine was extremely busy when they ran, not because anything was broken: they gave speck too little time to start, settle or answer. They now wait as long as a busy machine needs. The browser speed check still requires 50 ms, and now gets up to three tries before it fails. Worth keeping an eye on: when the machine is very busy, other timing tests can still fail by chance.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -64,6 +64,10 @@ Pictures: none, because nothing anyone sees changes (only tests changed)
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- 0319 AC1–AC4 failed once by chance in the related run: saved as speck/ideas/2026-11-12-steady-the-0319-outside-speck-run-test.md.
+- 0630 AC3 failed once by chance in the related run: already covered by speck/ideas/2026-11-11-steady-the-0630-full-run-turn-test-under-load.md (skipped).
+- At a load of 65–70, about 20 more tests with their own short limits failed (for example quick-run's 10 s launch wait in 0100 AC3, 0075 AC1 and 0232, and 0072 AC4's ps check). The other sessions on the machine drove the load; nothing here changes that.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +142,82 @@ Pictures: none, because nothing anyone sees changes (only tests changed)
     ],
     "escalation_question": "",
     "summary": "The changes make process waits more tolerant of a busy machine, and all seven target tests report passing. Two assertions now provide weaker protection: the browser test permits delays above the required 50 ms, and the stall test finishes before its timeout can be exercised. Both need fixing before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c8cae6fb92ee9b63bc092251b2ed82a4d22c9c35",
+    "session": "continued",
+    "thread_id": "01a1d1c6-518e-7af2-9f04-a58f9fe3c2db",
+    "builder_response": "- Tests run: `speck test --files test/panel-0517.test.mjs test/stall-0202.test.mjs test/run-0110.test.mjs test/run.test.mjs test/stop-0072.test.mjs` (209 pass, 0 fail).\n- F1: fixed. test/panel-0517.test.mjs keeps the 50 ms limit unchanged. The load scaling is gone (and the `os` import). Instead the slides are measured up to three times, each try on a freshly loaded page (`Page.reload`, then waiting for the new page's board, told apart from the old one by `window.work`), so each try's first change lays the cards out for the first time, as the criterion says (\"the first included\"). The test passes only if every slide of one whole try is within 50 ms, and the no-redraw-in-the-first-frame check runs on every slide of every try. A real slowdown (e.g. a redraw in the first frame) is slow on every try; a moment of load isn't. I checked the retry path with a copy whose limit was 0 ms: it ran three tries and failed with \"in one of 3 tries: 25, 15, 10, 35, 7, 18 ms; 23, 20, 8, 20, 13, 22 ms; 12, 6, 9, 19, 9, 5 ms\".\n- F2: fixed. test/stall-0202.test.mjs 0202 AC3 now ticks 25 times, 0.2 s apart (about 5 s), with a 2 s stall limit, and checks `tick 25`. The run lasts well past the limit, so it only ends by itself with exit 3 if each tick resets the stall timer; the limit is still 10 times the gap between ticks.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 206504,
+      "cached_input_tokens": 153600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1659,
+      "reasoning_output_tokens": 100
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7399,
+      "cached": 96000,
+      "write": 0,
+      "output": 632
+    },
+    "cost_usd": 0.030718,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T22:03:50.680Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "/tmp/speck-0670-tests.txt records all seven target tests passing. The browser test retains the 50 ms limit for every slide in a complete attempt, reloads before retries, and checks for premature redraws on every attempt. The stall test now runs for approximately 5 seconds against a 2-second stall limit."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The latest targeted run reports 209 passed, zero failed and three skipped. The earlier related run and successful retries provide broader coverage of test/support/run.mjs callers. No regression attributable to the changes was identified; the whole-suite check remains the shipping gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0517.test.mjs",
+        "issue": "The previous load-dependent threshold permitted delays above the required 50 ms.",
+        "suggested_fix": "Resolved: the fixed 50 ms threshold is restored, with bounded retries on freshly loaded pages and redraw assertions enforced throughout.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/stall-0202.test.mjs",
+        "issue": "The previous command finished before its stall threshold, leaving timer resets untested.",
+        "suggested_fix": "Resolved: 25 ticks run for approximately 5 seconds against a 2-second threshold, exercising timer resets before verifying exit code 3.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The tests now tolerate temporary machine load while retaining the timing and stall checks they were designed to enforce. All seven target tests pass, both review findings are resolved, and no blocking concerns remain."
   }
 }
 ```
