@@ -46,6 +46,7 @@ A ticket can name its own `builder_model` and `builder_effort`. Each build of th
 - The settings' `builder_model` reaches only the builder `speck/config.yml` names (0312). A ticket's value is written for the ticket's own builder, so it reaches that builder whichever it is. A build_command set by hand still gets `--model` only for Claude Code, as today.
 - Likely files: `scripts/build-model.mjs`, `scripts/ticket-builder.mjs` (`configFor`), `scripts/same-model.mjs`, `scripts/builder-stand-in.mjs`, `scripts/lint.mjs`, `templates/ticket.md`, `docs/brief.md`.
 - Checked 2026-11-12: Claude Code takes `--model <alias or name>` and `--effort <level>`; Codex takes `-m <model>` and `-c model_reasoning_effort="<e>"`; Cursor's agent takes `--model <name>` (as speck passes them today, `scripts/build-model.mjs`, `scripts/codex-build.mjs`, `scripts/cursor-build.mjs`).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
