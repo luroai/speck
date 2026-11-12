@@ -1,7 +1,7 @@
 ---
 id: "0663"
 title: "Fix the full suite failing on main at 0352dcf"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T12:42:26.455Z"
 approved: "2026-11-12T12:45:11.149Z"
+finished: "2026-11-12T12:51:14.502Z"
 
 ---
 # 0663 · Fix the full suite failing on main at 0352dcf
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full suite fails on main at commit 0352dcf (0352dcf8e6951e830369417c1b021781aa9e12ca). Failing tests:
