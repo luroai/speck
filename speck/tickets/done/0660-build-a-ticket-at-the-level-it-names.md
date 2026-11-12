@@ -1,7 +1,7 @@
 ---
 id: "0660"
 title: "Build a ticket at the level it names"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T11:56:01.061Z"
 approved: "2026-11-12T12:07:22.060Z"
+finished: "2026-11-12T12:09:49.432Z"
 
 ---
 # 0660 · Build a ticket at the level it names
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0659 a ticket can name its own builder model and effort, but you have to know and type the right model for each one. You think about tickets as "quick", "deep" or "graphics work", not in model names, and a project that uses the same few combinations over and over has to repeat them on every ticket.
