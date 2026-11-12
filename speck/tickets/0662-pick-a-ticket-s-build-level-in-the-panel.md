@@ -1,7 +1,7 @@
 ---
 id: "0662"
 title: "Pick a ticket's build level in the panel"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-10-set-up-your-team-instead-of-settings.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0660"]                # ticket ids that must be done first
 created: 2026-11-12
+started: "2026-11-12T12:09:58.743Z"
 
 ---
 # 0662 · Pick a ticket's build level in the panel
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 After 0660, giving a ticket a level means `speck set` or editing the ticket. From the panel on your phone you can already change a ticket's priority, but not the level it's built at.
