@@ -91,7 +91,7 @@ test('0465 AC1: the bars and facts follow where each ticket is (0583)', async ()
   }
   // 0583: its own four bars and six facts, for every ticket
   const none = ['step', 'step', 'step', 'step'];
-  const facts = (p1, size, risk) => [['Priority', p1], ['Level', 'Settings'], ['Size', size], ['Risk', risk]]; // 0662: and its level
+  const facts = (p1, size, risk) => [['Priority', p1], ['Level', 'Default'], ['Size', size], ['Risk', risk]]; // 0662: and its level
   assert.deepEqual(seen['0801'], ['track', ['step waits', ...none.slice(1)], [...facts('P3', 'M', 'high'), ['Ships by itself', '–'], ['Builder', '–'], ['Reviewer', '–']]]);
   assert.deepEqual(seen['0812'][1], ['step done', ...none.slice(1)]);
   assert.deepEqual(seen['0811'][1], ['step done', 'step now', 'step', 'step']);

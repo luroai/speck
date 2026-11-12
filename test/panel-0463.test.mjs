@@ -70,10 +70,10 @@ test('0463 AC2: the cells are Status, After, Lint, Priority, Level (0662), Size 
   await p.settle();
   await openAll(p);
   const want = {
-    '0801': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P3'], ['Level', 'Settings'], ['Size · risk', 'M · low'], ['Type', 'code']],
-    '0802': [['Status', 'Draft'], ['After', '1 left'], ['Ready check', '2 errors · 1 warning'], ['Priority', 'P1'], ['Level', 'Settings'], ['Size · risk', 'S · high'], ['Type', 'bug']],
-    '0803': [['Status', 'Draft'], ['After', '11 left of 27'], ['Ready check', '3 warnings'], ['Priority', 'P4'], ['Level', 'Settings'], ['Size · risk', `S · ${LONG}`], ['Type', 'task']],
-    '0804': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Level', 'Settings'], ['Size · risk', 'S · low'], ['Type', 'code']],
+    '0801': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P3'], ['Level', 'Default'], ['Size · risk', 'M · low'], ['Type', 'code']],
+    '0802': [['Status', 'Draft'], ['After', '1 left'], ['Ready check', '2 errors · 1 warning'], ['Priority', 'P1'], ['Level', 'Default'], ['Size · risk', 'S · high'], ['Type', 'bug']],
+    '0803': [['Status', 'Draft'], ['After', '11 left of 27'], ['Ready check', '3 warnings'], ['Priority', 'P4'], ['Level', 'Default'], ['Size · risk', `S · ${LONG}`], ['Type', 'task']],
+    '0804': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Level', 'Default'], ['Size · risk', 'S · low'], ['Type', 'code']],
   };
   for (const [id, rows] of Object.entries(want)) assert.deepEqual(cells(factsIn(card(p, id))), rows, id);
   // errors and warnings in their colours, and the kinds in their tags' colours

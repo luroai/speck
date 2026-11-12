@@ -318,7 +318,7 @@
   .level-menu button { white-space: nowrap; overflow-wrap: normal; text-align: left; }
   /* 0667: under each level's name, what it builds with */
   .level-menu .lname, .level-menu .lbuild { display: block; }
-  .level-menu .lbuild { font-size: 12px; line-height: 16px; color: var(--muted); }
+  .level-menu .lbuild { line-height: 18px; color: var(--muted); } /* the menu's own size: no 12 px text in a button (0612), nor 13 px outside rows (0427) */
   .level-menu button.on:has(.lname) { text-decoration: none; } /* the level chosen: only its name underlined */
   .level-menu button.on .lname { text-decoration: underline; text-underline-offset: 3px; }
   .facts .level-refused { margin-top: 4px; font-size: 12px; line-height: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }

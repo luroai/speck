@@ -77,13 +77,13 @@ test('0624 AC2: the last tile takes what\'s left of its row, and no other tile g
 test('0624 AC3: every fact is still shown with the same value, for a draft, a build and a shipped ticket', async () => {
   const p = await page();
   await open(p, '0801');
-  assert.deepEqual(facts(p), [['Priority', 'P3'], ['Level', 'Settings'], ['Size', 'M'], ['Risk', 'high'], ['Ships by itself', '–'], ['Builder', '–'], ['Reviewer', '–']]);
+  assert.deepEqual(facts(p), [['Priority', 'P3'], ['Level', 'Default'], ['Size', 'M'], ['Risk', 'high'], ['Ships by itself', '–'], ['Builder', '–'], ['Reviewer', '–']]);
   const b = await page();
   await open(b, '0811');
-  assert.deepEqual(facts(b), [['Priority', 'P1'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude · opus'], ['Reviewer', `Codex · ${LONG}`], ['Type', 'code']]);
+  assert.deepEqual(facts(b), [['Priority', 'P1'], ['Level', 'Default'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude · opus'], ['Reviewer', `Codex · ${LONG}`], ['Type', 'code']]);
   const s = await page();
   await open(s, '0901');
-  assert.deepEqual(facts(s), [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude · opus'], ['Reviewer', `Codex · ${LONG}`],
+  assert.deepEqual(facts(s), [['Priority', 'P2'], ['Level', 'Default'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude · opus'], ['Reviewer', `Codex · ${LONG}`],
     ['Builder cost', '$2.91'], ['Reviewer cost', '—'], ['Total cost', '—'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
 });
 

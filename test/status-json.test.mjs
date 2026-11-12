@@ -30,7 +30,7 @@ test('0030 AC1: speck status --json prints one JSON object with tickets and idea
   const res = r.run('status', '--json');
   assert.equal(res.status, 0);
   const out = JSON.parse(res.stdout);
-  assert.deepEqual(Object.keys(out).sort(), ['idea_counts', 'ideas', 'levels', 'resume_command', 'tickets']); // resume_command added by 0044, idea_counts by 0325, levels by 0662
+  assert.deepEqual(Object.keys(out).sort(), ['idea_counts', 'ideas', 'level_builds', 'levels', 'resume_command', 'tickets']); // resume_command added by 0044, idea_counts by 0325, levels by 0662, level_builds by 0667
   assert.ok(Array.isArray(out.tickets) && Array.isArray(out.ideas));
   assert.equal(out.tickets.length, 1);
   assert.equal(r.run('status').stdout, plain, 'text output still the same');
@@ -38,7 +38,10 @@ test('0030 AC1: speck status --json prints one JSON object with tickets and idea
   // No tickets and no ideas folder.
   fs.rmSync(path.join(r.dir, 'speck', 'tickets'), { recursive: true, force: true });
   fs.rmSync(path.join(r.dir, 'speck', 'ideas'), { recursive: true, force: true });
-  assert.deepEqual(statusJson(r.run), { tickets: [], ideas: [], idea_counts: { waiting: 0, inbox: 0, ticketed: 0 }, resume_command: 'claude --resume {session}', levels: ['quick', 'balanced', 'deep'] });
+  const empty = statusJson(r.run);
+  assert.deepEqual(empty.level_builds.map(b => b.name), ['quick', 'balanced', 'deep', ''], 'what each level builds with (0667), then Default');
+  delete empty.level_builds;
+  assert.deepEqual(empty, { tickets: [], ideas: [], idea_counts: { waiting: 0, inbox: 0, ticketed: 0 }, resume_command: 'claude --resume {session}', levels: ['quick', 'balanced', 'deep'] });
 });
 
 test('0030 AC2: each ticket has its frontmatter, path, worktree, acceptance criteria, blocked question and lint counts', () => {

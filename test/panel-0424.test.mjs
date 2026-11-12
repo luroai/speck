@@ -57,7 +57,7 @@ test('0424 AC1: the id and status come before the title, and the priority, size,
   assert.deepEqual(kids.map(n => n.textContent), ['0001', 'draft', 'A draft']);
   // 0465: in the table under the top row, in place of the tags
   const facts = pane(p).children[1].children[1].children.map(c => c.children[1].textContent);
-  assert.deepEqual(facts.slice(0, 4), ['P3', 'Settings', 'M', 'high'], 'its priority, level (0662), size and risk (0583)');
+  assert.deepEqual(facts.slice(0, 4), ['P3', 'Default', 'M', 'high'], 'its priority, level (0662, Default since 0667), size and risk (0583)');
 });
 
 test('0424 AC1: the title is the largest text, on a line of its own, and the id and status are in small type', () => {
