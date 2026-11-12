@@ -41,6 +41,9 @@ A ticket's facts in the panel show its level, and you can change it there, as yo
 ## Notes
 - Follow the priority picker: `POST /api/tickets/<id>/priority/<n>` in `scripts/panel.mjs` and `setPriority` in `templates/panel.js`.
 - Failing before this build: none
+- Self-check: a level from the URL that the project doesn't have, including `constructor` and `__proto__`, is refused before any write; the pane's Level got a 44 px tap area; the Level menu became a short vertical list so its names don't break in a narrow tile; a seventh cell in an open Plan card's table, Type, has its row to itself.
+- Pictures: the full view only. This branch's board has no drafts, so the open Plan card's Level isn't pictured; its tests cover it.
+- speck (2026-11-12 12:34 UTC) told you: The build is slow, not stuck. It ran the related tests twice, about 3 and 5.5 minutes each over roughly 2,700 tests. The first run failed 5 of them because its own menu CSS made some controls smaller than 44 px. It fixed that and the second run passed. It then checked the menu in a browser and is now re-running the tests after one more CSS change, before its first review. Why: The build log shows steady progress with no step stalling, and the base branch's tests passed at the start. Two full related-test runs on a machine with a load average of about 84 explain most of the extra time.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
