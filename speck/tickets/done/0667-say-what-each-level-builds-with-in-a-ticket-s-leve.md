@@ -1,7 +1,7 @@
 ---
 id: "0667"
 title: "Say what each level builds with in a ticket's Level menu"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0666"]                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T21:16:01.396Z"
 approved: "2026-11-12T22:06:11.482Z"
+finished: "2026-11-12T22:20:13.003Z"
 
 ---
 # 0667 · Say what each level builds with in a ticket's Level menu
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ticket's Level menu (0662) offers Quick, Balanced, Deep and "Settings" without saying what any of them builds with. "Settings" reads like a way to open the Settings page, but it takes the ticket's level off, and nothing in the menu leads to where levels are changed.
