@@ -40,6 +40,7 @@ A ticket's facts in the panel show its level, and you can change it there, as yo
 
 ## Notes
 - Follow the priority picker: `POST /api/tickets/<id>/priority/<n>` in `scripts/panel.mjs` and `setPriority` in `templates/panel.js`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
