@@ -204,11 +204,10 @@ test('0659 AC5: a new ticket has blank builder_model and builder_effort lines, e
   assert.match(raw, /^builder_effort: ""\s+# blank: \S/m);
 });
 
-test('0659 AC5: the brief\'s Builder model and Builder effort paragraphs say a ticket\'s own value overrides the settings\'', () => {
+test('0659 AC5: the brief\'s Builder model and Builder effort paragraphs give the command that sets a ticket\'s own value', () => {
   const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  for (const [name, key] of [['Builder model', 'builder_model'], ['Builder effort', 'builder_effort']]) {
-    const para = brief.split('\n').find(l => l.startsWith(`**${name}.**`)) ?? '';
-    assert.ok(para.includes(`ticket's own \`${key}\``), `${name}: names the ticket's own ${key}`);
-    assert.match(para, /overrides the settings'/, name);
+  for (const [name, set] of [['Builder model', '`speck set <id> builder_model <model>`'], ['Builder effort', '`speck set <id> builder_effort <effort>`']]) {
+    const para = brief.split('\n').find(l => l.includes(`**${name}.**`)) ?? '';
+    assert.ok(para.includes(set), `${name}: ${set}`);
   }
 });
