@@ -46,6 +46,8 @@ The full suite passes on main again.
 
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
+Failing before this build: the seven tests this ticket names (its own target, so they are the ones fixed here). Eighteen more failed in the full run at 4f9e526 but passed when their files ran again (0232 AC3, 0110 AC2, 0300 AC1 AC3, 0511 AC4, 0153 AC1 AC2, 0202 AC1 AC2, the other 0072 tests, 0217 AC3, 0233 AC1, 0271 AC3, 0109 AC1): chance failures, not changed here.
+Cause: the full run was on a machine at a load average of about 50 on 16 cores, and its retry ran all 13 failing files at once. Each of the seven waits a fixed or short time for a speck run to start, settle or exit, or measures a browser frame's timing. Run on their own, even with the load around 45, all seven pass.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
