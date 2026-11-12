@@ -50,7 +50,11 @@ Each level is set with the same choices as the Builder itself, labelled in words
 - 0661's page tests changed to the new lists: the summary line, the "settings" choices and the model box they checked are what this ticket replaces.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Each build level on the Builder's card is now set with two labelled lists, Builder and Effort. Builder offers the same choices as the Builder's own row, such as "Claude Code · Opus", and Effort offers the efforts the chosen model takes. The first choice in each is Default, which names what the Builder uses now, for example "Default (Claude Code · Opus)", and leaves that level to follow the Builder. There's no box to type a model name in any more, the line repeating each level's values is gone, and Remove is now a small link-style button.
+
+To see it, open Settings and scroll to Build levels on the Builder's card. Change a level's Builder or Effort, and it saves straight away as before.
+
+Worth a look: for a moment while Settings opens, before your agents' model lists have loaded, the lists may show a model by its short name, such as "opus", instead of "Opus".
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +64,8 @@ Each level is set with the same choices as the Builder itself, labelled in words
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up (known limit, no idea note): before your agents' models have loaded, a level's lists fall back to the Builder's agents with model names as saved ("Claude Code · opus"). They redraw with the proper names once the lists arrive.
+- Follow-up (known limit, no idea note): a few rare server refusals, such as uncommitted changes to the config file, still name speck/config.yml under Build levels. AC5 kept the refusals the same.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -141,6 +147,89 @@ Each level is set with the same choices as the Builder itself, labelled in words
     ],
     "escalation_question": "",
     "summary": "The new labelled model lists and compact layout are covered by passing tests. One edge case needs fixing: a level explicitly using an agent's default model can show effort choices for a different model."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4f20b1dbdb75e85b0caa571c542c681fe8b2ea62",
+    "session": "continued",
+    "thread_id": "01a1d198-d44d-7310-b7c1-0f50305bea9a",
+    "builder_response": "- Tests run: test/settings-levels-0666.test.mjs test/settings-levels-0661.test.mjs\n- F1: fixed. levelFields now works out the efforts from the level's saved builder and builder_model (`levelEfforts(levelBuilder(l), l.builder_model)`). asEntry's normalisation is used only to pick the Builder list's entry. New test \"0666 AC2 (round 1 F1)\": the Builder is Codex on gpt-b (efforts minimal and ultra), and the level is explicitly Codex on gpt-6.1-sol, Codex's default. The level shows Codex's default entry and offers gpt-6.1-sol's low and high.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 273731,
+      "cached_input_tokens": 229888,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1563,
+      "reasoning_output_tokens": 262
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6088,
+      "cached": 102528,
+      "write": 0,
+      "output": 501
+    },
+    "cost_usd": 0.0274388,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T21:11:47.086Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-settings.js: levelEntries reuses roleEntries('builder'); levelFields adds Default, preserves unlisted saved choices and saves builder/model together. All AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "levelFields now passes the original saved model to levelEfforts, preserving explicit default models. AC2 tests passed, including the new F1 regression with different efforts for the Builder's model and the level's model."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "levelField and drawLevels provide visible Builder, Effort and Name labels, remove the repeated summary and replace the old explanatory wording. AC3 passed. Server refusals remain unchanged as AC5 requires."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-settings.css supplies the compact text Remove control and responsive fields; drawLevels places Add after its fields. Both AC4 tests passed, including the real-browser check at 375 pixels."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "levelAction retains existing endpoints and response handling; server implementation remains unchanged. Passing AC5 and existing 0661 tests cover saving, adding, removing and refusals."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "An explicitly saved agent-default model previously received effort choices from the Builder row's different model.",
+        "suggested_fix": "Implemented: calculate efforts from the original saved builder/model and reserve normalisation for the Builder list's displayed selection. The new regression test exercises this case and passed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The labelled Builder and Effort lists meet all five criteria. The incorrect effort choices identified in round 1 are fixed and covered by a passing regression test. No blocking issues remain."
   }
 }
 ```
