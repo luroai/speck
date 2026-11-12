@@ -10,8 +10,8 @@ import { resumeFor } from '../scripts/hand-back.mjs';
 import { ticketBuilderModel } from '../scripts/build-model.mjs';
 import { ticketSameModelProblem } from '../scripts/same-model.mjs';
 import { lintTicket } from '../scripts/lint.mjs';
-import { standInFor } from '../scripts/builder-stand-in.mjs';
-import { buildTakeOver } from '../scripts/build-take-over.mjs';
+import { standInFor, recordBuilder } from '../scripts/builder-stand-in.mjs';
+import { buildTakeOver, recordTakeOver } from '../scripts/build-take-over.mjs';
 import { PROVIDERS } from '../scripts/providers.mjs';
 
 Object.assign(process.env, gitEnv);
@@ -135,10 +135,8 @@ test('0659 AC4: a stand-in on builder_bench gets neither the ticket\'s builder_m
 });
 
 test('0659 AC4: a build moved to builder_bench on a usage limit starts without the ticket\'s builder_model or builder_effort', () => {
-  const r = panelRepo();
-  fs.writeFileSync(r.file, fs.readFileSync(r.file, 'utf8').replace(/^builder_model: .*$/m, 'builder_model: "opus"').replace(/^builder_effort: .*$/m, 'builder_effort: "max"'));
-  r.g('commit', '-qam', 'ticket model');
-  assert.equal(parseTicket(fs.readFileSync(r.file, 'utf8')).fm.builder_model, 'opus');
+  const r = ownRepo();
+  assert.equal(fmOf(r).builder_model, 'opus');
   const starts = [];
   const takeOver = buildTakeOver({ repo: r.dir, runs: () => r.dir, startBuild: (id, argv, cwd, s, f, rec) => starts.push({ argv, rec: JSON.parse(rec(1)) }),
     heldAgent: a => a === 'claude', readyAgents: () => ['claude', 'codex'], speak: () => {}, providers: () => [], installed: yes, record: () => ({ at: r.dir, branch: 'main' }) });
@@ -152,6 +150,49 @@ test('0659 AC4: a build moved to builder_bench on a usage limit starts without t
   assert.equal(starts[0].rec.ticket_builder_model, undefined);
 });
 
+// A repo whose ticket 0001 names its own builder_model and builder_effort, committed.
+function ownRepo(o = {}) {
+  const r = panelRepo(o);
+  fs.writeFileSync(r.file, fs.readFileSync(r.file, 'utf8').replace(/^builder_model: ""/m, 'builder_model: "opus"').replace(/^builder_effort: ""/m, 'builder_effort: "max"'));
+  r.g('commit', '-qam', 'ticket model');
+  return r;
+}
+const fmOf = r => parseTicket(fs.readFileSync(r.file, 'utf8')).fm;
+
+test('0659 AC4: recording a stand-in as the ticket\'s builder clears its own model and effort, so no later build, resume or board gives them', () => {
+  const r = ownRepo();
+  const cfg = { ...loadConfig(r.dir), builder: 'claude', build_command: '' };
+  assert.equal(recordBuilder(r.dir, cfg, '0001', 'codex'), null);
+  const fm = fmOf(r);
+  assert.equal(fm.builder, 'codex');
+  assert.equal(fm.builder_model, '');
+  assert.equal(fm.builder_effort, '');
+  assert.equal(r.g('status', '--porcelain'), '', 'committed');
+  assert.equal(ticketBuilderModel(fm, cfg, PROVIDERS), null, 'the board gives Codex its own default');
+  const later = buildPlan(cfg, launchTicket({ id: '0001', builder: 'codex' }, false, () => fm), yes, { providers: PROVIDERS }).words;
+  assert.ok(!later.includes('-m') && effortOf(later) === null, `a later fresh build: ${later.join(' ')}`);
+});
+
+test('0659 AC4: recording a take-over clears the ticket\'s own model and effort too', () => {
+  const r = ownRepo();
+  fs.appendFileSync(r.file, '\n## Notes\n- Shaped by hand.\n');
+  r.g('commit', '-qam', 'notes');
+  const cfg = { ...loadConfig(r.dir), builder: 'claude' };
+  const done = recordTakeOver(r.dir, cfg, '0001', 'codex', '- Builder: Codex took over.');
+  assert.equal(done.why, undefined, done.why);
+  const fm = fmOf(r);
+  assert.deepEqual([fm.builder, fm.builder_model, fm.builder_effort], ['codex', '', '']);
+  assert.match(fs.readFileSync(r.file, 'utf8'), /^builder_model: ""\s+# blank:/m, 'its comment kept');
+});
+
+test('0659 AC4: a ticket without its own values is recorded as before, with no lines added', () => {
+  const r = panelRepo();
+  fs.writeFileSync(r.file, fs.readFileSync(r.file, 'utf8').replace(/^builder_(model|effort): .*\n/gm, ''));
+  r.g('commit', '-qam', 'old ticket');
+  assert.equal(recordBuilder(r.dir, loadConfig(r.dir), '0001', 'codex'), null);
+  assert.doesNotMatch(fs.readFileSync(r.file, 'utf8'), /^builder_(model|effort):/m);
+});
+
 // ---------- AC5 ----------
 
 test('0659 AC5: a new ticket has blank builder_model and builder_effort lines, each saying what blank means', () => {
@@ -161,4 +202,13 @@ test('0659 AC5: a new ticket has blank builder_model and builder_effort lines, e
   assert.equal(fm.builder_effort, '');
   assert.match(raw, /^builder_model: ""\s+# blank: \S/m);
   assert.match(raw, /^builder_effort: ""\s+# blank: \S/m);
+});
+
+test('0659 AC5: the brief\'s Builder model and Builder effort paragraphs say a ticket\'s own value overrides the settings\'', () => {
+  const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
+  for (const [name, key] of [['Builder model', 'builder_model'], ['Builder effort', 'builder_effort']]) {
+    const para = brief.split('\n').find(l => l.startsWith(`**${name}.**`)) ?? '';
+    assert.ok(para.includes(`ticket's own \`${key}\``), `${name}: names the ticket's own ${key}`);
+    assert.match(para, /overrides the settings'/, name);
+  }
 });

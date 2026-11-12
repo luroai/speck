@@ -6,11 +6,11 @@
 // or less, or no agent free, the build waits for the reset and carries on its own session, as 0622 does.
 import fs from 'node:fs';
 import path from 'node:path';
-import { sh, setField, syncHeader } from './core.mjs';
+import { sh, syncHeader } from './core.mjs';
 import { commitTicketOnly, replaceSection } from './close.mjs';
 import { buildTicket } from './build-records.mjs';
 import { standInFor } from './builder-stand-in.mjs';
-import { configBuilder, buildPlan, launchPlan, standInTicket } from './ticket-builder.mjs';
+import { configBuilder, buildPlan, launchPlan, standInTicket, standInText } from './ticket-builder.mjs';
 import { newBuildKeeps } from './go-with.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { knownProviders } from './custom-providers.mjs';
@@ -42,7 +42,7 @@ export function recordTakeOver(repo, cfg, id, agent, line) {
   const own = branch === cfg.base_branch && sh('git', ['branch', '--list', `${cfg.branch_prefix}${id}-*`], { cwd: at }).stdout.trim().replace(/^[*+]?\s*/, '');
   if (own) return { why: `its branch, ${own}, isn't checked out in any folder, so the new builder can't carry it on` };
   let text;
-  try { text = syncHeader(setField(replaceSection(t.raw, 'Notes', old => (old ? `${old}\n${line}` : line), path.relative(at, t.file)), 'builder', agent)); }
+  try { text = syncHeader(standInText(replaceSection(t.raw, 'Notes', old => (old ? `${old}\n${line}` : line), path.relative(at, t.file)), t.fm, agent)); } // 0659
   catch (e) { return { why: e.message.replace(/\.$/, '') }; }
   let commit;
   try { fs.writeFileSync(t.file, text); commit = commitTicketOnly(at, t.file, t.raw, `speck(${id}): ${agent} takes over the build`); }

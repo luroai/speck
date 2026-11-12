@@ -7,6 +7,7 @@
 // (provider-build.mjs), and isn't started without Claude Code or this machine's key for the provider.
 import crypto from 'node:crypto';
 import { splitCommand } from './speck.mjs';
+import { setField, blank } from './core.mjs';
 import { DEFAULT_BUILD_COMMAND, withBuilderModel, configBuilder, buildsEachTicket, buildConfig, modelOf, effortOf } from './build-model.mjs';
 import { codexStartWords } from './codex-build.mjs';
 import { cursorStartWords, cursorCli, createChat } from './cursor-build.mjs';
@@ -34,6 +35,14 @@ export const standInTicket = (t, agent) => ({ ...t, builder: agent, builder_mode
 
 // 0659: ticket `t`'s own builder_model and builder_effort, trimmed: '' for each it leaves blank.
 const ticketValues = t => ({ builder_model: modelOf(t ?? {}), builder_effort: effortOf(t) });
+
+// 0659: ticket text `text`, with frontmatter `fm`, recording stand-in `agent` as its builder: its own builder_model and
+// builder_effort, set for the builder it had, are cleared, so no later build, resume or board gives them to `agent`.
+export function standInText(text, fm, agent) {
+  let out = setField(text, 'builder', agent);
+  for (const k of ['builder_model', 'builder_effort']) if (!blank(fm?.[k])) out = setField(out, k, '');
+  return out;
+}
 
 // 0659: status ticket `t` as speck run launches it: with its own builder_model and builder_effort, read from its
 // frontmatter by `fmOf(id)`, as the board's builder_model is the model its builds run on, or a stand-in's, without them.
