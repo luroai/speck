@@ -80,9 +80,9 @@ test('0434 AC3: a Build row shows no priority, size or risk; its full view does'
   const tags = n => p.all(n).filter(x => /\btag\b/.test(x.className));
   for (const id of ['0901', '0903', '0905', '0906', '0426', '0910']) assert.deepEqual(tags(card(p, id)), [], `${id}: no tags on its row`);
   // 0462: an in-flight ticket's full view shows them in its facts' cells
-  assert.deepEqual(factsOf(await fullViewOf(p, '0901')).slice(0, 3), [['Priority', 'P3'], ['Size', 'M'], ['Risk', 'low']], '0901: its full view shows its priority, size and risk');
+  assert.deepEqual(factsOf(await fullViewOf(p, '0901')).slice(0, 4), [['Priority', 'P3'], ['Level', 'Settings'], ['Size', 'M'], ['Risk', 'low']], '0901: its full view shows its priority, size and risk');
   // 0463: and so does a queued one, as plain text
-  assert.deepEqual(factsOf(await fullViewOf(p, '0426')).slice(0, 3), [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'high']], '0426: its full view shows its priority, size and risk');
+  assert.deepEqual(factsOf(await fullViewOf(p, '0426')).slice(0, 4), [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'high']], '0426: its full view shows its priority, size and risk');
 });
 
 test('0434 AC4: a title keeps its whole text and tooltip; a closed Shipped, Build or Plan row\'s is cut off on one line (0599)', async () => {

@@ -472,7 +472,7 @@ if (lanesBox.addEventListener) {
 const TYPED = /^(INPUT|TEXTAREA|SELECT)$/i;
 function laneKey(e) {
   const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-  if (!step || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || pageHeld() || priorityMenu !== null) return;
+  if (!step || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || pageHeld() || priorityMenu !== null || levelMenu !== null) return;
   const n = e.target;
   if (n && (TYPED.test(n.tagName || '') || n.isContentEditable || (n.getAttribute && n.getAttribute('role') === 'tab'))) return;
   if (e.preventDefault) e.preventDefault();

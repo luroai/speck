@@ -38,7 +38,8 @@ test('0077 AC1: only a draft\'s priority tag in the Tickets list is clickable; n
   for (const id of ['0004', '0003']) {
     const facts = p.all(await fullViewOf(p, id)).filter(x => x.className === 'fact').map(c => [c.children[0].textContent, c.children[1].textContent]);
     assert.deepEqual(facts[0], ['Priority', 'P2'], id);
-    assert.equal(p.all(p.byId('full-ticket')).filter(x => /\b(pick|prio-menu)\b/.test(x.className || '')).length, 0, `${id}: not clickable`);
+    const level = p.all(p.byId('full-ticket')).find(x => x.className === 'fact' && x.children[0].textContent === 'Level'); // 0662: its level opens its own menu
+    assert.equal(p.all(p.byId('full-ticket')).filter(x => /\b(pick|prio-menu)\b/.test(x.className || '') && !p.all(level).includes(x)).length, 0, `${id}: not clickable`);
   }
   for (const row of [...queueRows(p), ...shippedRows(p)]) assert.equal(p.all(row).filter(x => /\b(pick|prio-menu)\b/.test(x.className || '')).length, 0);
   // The P1 tag keeps its own colour.

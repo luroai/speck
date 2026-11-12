@@ -176,6 +176,8 @@ const settingReady = new Set(); // ids whose Set ready request hasn't been answe
 const refused = new Map(); // id → why the server refused to set it ready
 let priorityMenu = null; // the id of the draft whose priority menu is open, or null
 const priorityRefused = new Map(); // id → why the server refused to set its priority, until the next click on its tag
+let levelMenu = null; // 0662: the id of the ticket whose Level menu is open, or null
+const levelRefused = new Map(); // 0662: id → why the server refused to set its level, until the next click on its Level
 const stopping = new Set(); // ids whose stop request hasn't been answered yet
 const stopRefused = new Map(); // id → why the server refused to stop its build, until the next click on its Stop build button
 const goingWith = new Set(); // 0284: ids whose Go with the recommendation request hasn't been answered yet
@@ -250,6 +252,43 @@ function priorityPicker(t, tag) {
     const b = el('button', String(t.priority) === String(n) ? 'on' : null, `P${n}`);
     b.type = 'button';
     b.addEventListener('click', e => { e.stopPropagation(); setPriority(id, n); });
+    menu.appendChild(b);
+  }
+  box.appendChild(menu);
+  return box;
+}
+// 0662: a ticket's build level as its facts show it: its name with a capital first letter, or Settings when it has none.
+const levelOf = t => (typeof t.level === 'string' || typeof t.level === 'number' ? String(t.level).trim() : '');
+const levelName = v => (v ? `${v[0].toUpperCase()}${v.slice(1)}` : 'Settings');
+// 0662: its Level fact, which opens a menu of the project's levels and Settings, as its priority does, unless it's done
+// or cancelled. A refusal shows in it until the next click on it.
+function levelFact(t) {
+  const id = String(t.id), shown = levelName(levelOf(t));
+  if (t.status === 'done' || t.status === 'cancelled') return factCell('Level', shown, null);
+  const why = levelRefused.has(id) ? el('div', 'bad level-refused', levelRefused.get(id)) : null;
+  return factCell('Level', shown, 'pick', shown, null, [levelPicker(t, el('span', 'set-level', shown)), why].filter(Boolean));
+}
+function levelPicker(t, tag) {
+  const id = String(t.id), box = el('span', 'prio', null, tag);
+  tag.className += ' pick';
+  tag.title = 'Set the level';
+  tag.tabIndex = 0;
+  tag.setAttribute('role', 'button');
+  tag.setAttribute('aria-label', `Level ${tag.textContent}. Opens the level menu`);
+  tag.addEventListener('keydown', pressWithKeys);
+  tag.addEventListener('click', e => {
+    e.stopPropagation(); // the click is for the level, not the ticket
+    levelRefused.delete(id);
+    priorityMenu = null;
+    levelMenu = id;
+    render();
+  });
+  if (levelMenu !== id) return box;
+  const menu = el('span', 'prio-menu level-menu'); // a prio-menu, so a click outside it only closes it
+  for (const name of [...list(state && state.levels).map(String), '']) {
+    const b = el('button', levelOf(t) === name ? 'on' : null, levelName(name));
+    b.type = 'button';
+    b.addEventListener('click', e => { e.stopPropagation(); setLevel(id, name); });
     menu.appendChild(b);
   }
   box.appendChild(menu);
@@ -443,7 +482,7 @@ document.addEventListener('keydown', e => {
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
   else if (settingsView !== null && settingTip !== null) { settingHoverWait++; showSettingTip(null, false); } // 0268: the explanation first, then the view. 0371: and no pause left to show it again
   else if (settingsView !== null) leaveSettings();
-  else if (priorityMenu !== null) closePriorityMenu();
+  else if (priorityMenu !== null || levelMenu !== null) closePriorityMenu();
   else if (fullId !== null) closeFull();
 });
 // While a priority menu is open, a click anywhere else only closes it: caught on its way down, before it reaches what
@@ -451,12 +490,12 @@ document.addEventListener('keydown', e => {
 const inPriorityMenu = n => { for (; n; n = n.parentNode) if (/\bprio-menu\b/.test(String(n.className || ''))) return true; return false; };
 document.addEventListener('click', e => {
   if (tipTag !== null && !within(e.target, tipTag) && !within(e.target, $('tag-tip'))) closeTip(); // 0165: a click anywhere else closes the tip
-  if (priorityMenu === null || inPriorityMenu(e.target)) return;
+  if ((priorityMenu === null && levelMenu === null) || inPriorityMenu(e.target)) return;
   e.stopPropagation();
   e.preventDefault();
   closePriorityMenu();
 }, true);
-function closePriorityMenu() { priorityMenu = null; render(); }
+function closePriorityMenu() { priorityMenu = null; levelMenu = null; render(); } // 0662: and a Level menu
 document.addEventListener('scroll', () => closeTip(), { capture: true, passive: true }); // 0165: a scroll anywhere closes the tip
 // The server sets the draft's priority and commits it, and the next refresh moves it to its place in the list.
 async function setPriority(id, n) {
@@ -471,6 +510,25 @@ async function setPriority(id, n) {
     }
   } catch {
     priorityRefused.set(id, "Couldn't reach the panel server, so the priority wasn't changed.");
+  }
+  render();
+}
+// 0662: the server sets the ticket's level and commits it. Its facts show the new level at once, before the next board.
+async function setLevel(id, name) {
+  levelMenu = null;
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/level/${encodeURIComponent(name)}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    if (!res.ok) {
+      let why = null;
+      try { why = (await res.json()).error; } catch { /* no JSON: say what we know */ }
+      levelRefused.set(id, typeof why === 'string' && why ? why : `The server refused (${res.status}).`);
+    } else {
+      const t = state && list(state.tickets).find(x => String(x.id) === id);
+      if (t) state = { ...state, tickets: state.tickets.map(x => (x === t ? { ...t, level: name } : x)) };
+    }
+  } catch {
+    levelRefused.set(id, "Couldn't reach the panel server, so the level wasn't changed.");
   }
   render();
 }
@@ -634,7 +692,7 @@ function lastFacts(t, pick) {
   const kind = kindOf(t);
   const priority = t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : '–';
   const set = pick && priority !== '–' ? priorityPicker(t, el('span', 'set-prio', priority)) : null; // plain text, not a tag
-  return [factCell('Priority', priority, set ? 'pick' : null, priority, null, set ? [set] : null),
+  return [factCell('Priority', priority, set ? 'pick' : null, priority, null, set ? [set] : null), levelFact(t), // 0662
     factCell('Size · risk', `${size} · ${risk}`, null),
     factCell('Type', kind, kind === 'code' ? null : kind)];
 }
@@ -1225,6 +1283,7 @@ function render() {
   const m = panelModel(state);
   // A menu whose ticket isn't showing any more is closed, so it can't catch the next click.
   if (priorityMenu !== null && !m.drafts.some(t => String(t.id) === priorityMenu)) priorityMenu = null;
+  if (levelMenu !== null && ![...m.drafts, ...m.queue].some(t => String(t.id) === levelMenu)) levelMenu = null; // 0662
   onPage = new Set([...m.drafts, ...m.queue].map(t => String(t.id)));
   // A refused stop's reason goes once its ticket has no Stop build button, so a later build of it doesn't show it.
   for (const id of stopRefused.keys()) if (!m.queue.some(t => String(t.id) === id && t.pausable)) stopRefused.delete(id);
@@ -1248,7 +1307,7 @@ function render() {
   $('capture-n').textContent = m.capture.length ? `${m.capture.length} note${m.capture.length === 1 ? '' : 's'}` : ''; // 0536
   $('capture-n').hidden = !m.capture.length;
   fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
-    t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null], ticketItem,
+    t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null, levelMenu === String(t.id), levelRefused.get(String(t.id)) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), asleepLane('shaping', 'Nothing to plan · Draft tickets wait here for you to set them ready.'));
   renderFull(m);
   renderDecided(m); // 0568

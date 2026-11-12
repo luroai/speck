@@ -478,7 +478,7 @@ function paneFacts(t) {
   const ships = t.auto_ship === true ? (t.run_waiting ? 'No · Auto-build is off' : 'Yes') : t.auto_ship === false ? (why ? `No · ${why}` : 'No') : '–';
   const named = s => (typeof s === 'string' && s.trim() ? `${s.trim()[0].toUpperCase()}${s.trim().slice(1)}` : '');
   const name = named(t.reviewer), model = typeof t.review_model === 'string' && t.review_model.trim() ? t.review_model.trim() : typeof t.reviewer_model === 'string' ? t.reviewer_model.trim() : '';
-  return el('dl', 'facts', null, factCell('Priority', priority, null), factCell('Size', t.size ? String(t.size) : '–', null), factCell('Risk', t.risk ? String(t.risk) : '–', null),
+  return el('dl', 'facts', null, factCell('Priority', priority, null), levelFact(t), factCell('Size', t.size ? String(t.size) : '–', null), factCell('Risk', t.risk ? String(t.risk) : '–', null),
     factCell('Ships by itself', ships, null), factCell('Builder', workerOf(t, { round: null }).value, null), factCell('Reviewer', name ? `${name}${model ? ` · ${model}` : ''}` : '–', null),
     ...paneFrom === 'queue' ? queueFacts(t) : paneFrom === 'shipped' ? shippedFacts(t) : []);
 }

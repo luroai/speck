@@ -48,7 +48,7 @@ test('0463 AC1: an open Plan ticket shows the grey track, then the table, under 
     assert.deepEqual(track.children.map(s => s.className), ['step build', 'step check', 'step review', 'step approve', 'step ship'], `${id}: five grey steps`);
     assert.deepEqual(track.children.map(s => s.textContent), ['Build', 'Self-check', 'Review', 'Approve', 'Ship'], `${id}: the steps' names`);
     assert.equal(f.tagName, 'dl', `${id}: a list of labels and values`);
-    assert.equal(f.children.length, 6, `${id}: six cells`);
+    assert.equal(f.children.length, 7, `${id}: seven cells (0662: with its level)`);
     for (const cell of f.children) {
       const v = cell.children[1];
       assert.match(v.className, /^value\b/, `${id}: a value`);
@@ -65,22 +65,22 @@ test('0463 AC1: an open Plan ticket shows the grey track, then the table, under 
   }
 });
 
-test('0463 AC2: the six cells are Status, After, Lint, Priority, Size · risk and Type', async () => {
+test('0463 AC2: the cells are Status, After, Lint, Priority, Level (0662), Size · risk and Type', async () => {
   const p = page();
   await p.settle();
   await openAll(p);
   const want = {
-    '0801': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P3'], ['Size · risk', 'M · low'], ['Type', 'code']],
-    '0802': [['Status', 'Draft'], ['After', '1 left'], ['Ready check', '2 errors · 1 warning'], ['Priority', 'P1'], ['Size · risk', 'S · high'], ['Type', 'bug']],
-    '0803': [['Status', 'Draft'], ['After', '11 left of 27'], ['Ready check', '3 warnings'], ['Priority', 'P4'], ['Size · risk', `S · ${LONG}`], ['Type', 'task']],
-    '0804': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Size · risk', 'S · low'], ['Type', 'code']],
+    '0801': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P3'], ['Level', 'Settings'], ['Size · risk', 'M · low'], ['Type', 'code']],
+    '0802': [['Status', 'Draft'], ['After', '1 left'], ['Ready check', '2 errors · 1 warning'], ['Priority', 'P1'], ['Level', 'Settings'], ['Size · risk', 'S · high'], ['Type', 'bug']],
+    '0803': [['Status', 'Draft'], ['After', '11 left of 27'], ['Ready check', '3 warnings'], ['Priority', 'P4'], ['Level', 'Settings'], ['Size · risk', `S · ${LONG}`], ['Type', 'task']],
+    '0804': [['Status', 'Draft'], ['After', '—'], ['Ready check', 'passes'], ['Priority', 'P2'], ['Level', 'Settings'], ['Size · risk', 'S · low'], ['Type', 'code']],
   };
   for (const [id, rows] of Object.entries(want)) assert.deepEqual(cells(factsIn(card(p, id))), rows, id);
   // errors and warnings in their colours, and the kinds in their tags' colours
   const lint = id => factsIn(card(p, id)).children[2].children[1].children.filter(n => n.tagName !== '#text').map(n => [n.className, n.textContent]);
   assert.deepEqual(lint('0802'), [['bad', '2 errors'], ['warn', '1 warning']]);
   assert.deepEqual(lint('0803'), [['warn', '3 warnings']]);
-  const kind = id => factsIn(card(p, id)).children[5].children[1].className;
+  const kind = id => factsIn(card(p, id)).children[6].children[1].className;
   assert.equal(kind('0802'), 'value bug');
   assert.equal(kind('0803'), 'value task');
   assert.equal(kind('0801'), 'value');
@@ -197,18 +197,19 @@ function checkCards(cards, width, ids) {
     assert.equal(new Set(c.steps.map(s => s.join())).size, 1, `${at}: every step the same grey`);
     const [first] = c.cells;
     for (const [i, cell] of c.cells.entries()) {
-      const rowFirst = c.cells[i < 3 ? 0 : 3];
+      const rowFirst = c.cells[i - (i % 3)], alone = i === c.cells.length - 1 && i % 3 === 0; // 0662: a seventh cell has its row to itself
       assert.ok(Math.abs(cell.top - rowFirst.top) < 0.5, `${at}: ${cell.label} is in its row`);
       assert.ok(Math.abs(cell.height - rowFirst.height) < 0.5, `${at}: ${cell.label} is as tall as its row`);
       assert.ok(Math.abs(cell.height - c.cells[0].height) < 0.5, `${at}: ${cell.label}'s row is as tall as the first`);
-      assert.ok(Math.abs(cell.width - first.width) < 1, `${at}: ${cell.label} is as wide as the others`);
+      if (!alone) assert.ok(Math.abs(cell.width - first.width) < 1, `${at}: ${cell.label} is as wide as the others`);
+      else assert.ok(Math.abs(cell.width - 3 * first.width) < 3, `${at}: ${cell.label} spans its row`);
       assert.ok(Math.abs(cell.labelAt[0] - first.labelAt[0]) < 0.5 && Math.abs(cell.labelAt[1] - first.labelAt[1]) < 0.5, `${at}: ${cell.label}'s label in the same place`);
       assert.ok(Math.abs(cell.valueAt[0] - first.valueAt[0]) < 0.5 && Math.abs(cell.valueAt[1] - first.valueAt[1]) < 0.5, `${at}: ${cell.label}'s value in the same place`);
       assert.ok(cell.valueHeight <= cell.lineHeight + 0.5, `${at}: ${cell.label}'s value is one line (${cell.valueHeight} px)`);
       assert.ok(cell.ellipsis, `${at}: ${cell.label} ends in … when it's too long`);
       assert.equal(cell.tip, cell.value, `${at}: ${cell.label}'s tooltip`);
     }
-    if (c.id === '0803' || c.id === '0813') assert.ok(c.cells[4].cut && c.cells[4].tip === `S · ${LONG}`, `${at}: the long risk is cut short, with all of it its tooltip`);
+    if (c.id === '0803' || c.id === '0813') assert.ok(c.cells[5].cut && c.cells[5].tip === `S · ${LONG}`, `${at}: the long risk is cut short, with all of it its tooltip`);
   }
 }
 
