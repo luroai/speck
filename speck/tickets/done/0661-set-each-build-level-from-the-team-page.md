@@ -1,7 +1,7 @@
 ---
 id: "0661"
 title: "Set each build level from the team page"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ after: ["0660"]                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T12:10:00.215Z"
 approved: "2026-11-12T12:22:40.703Z"
+finished: "2026-11-12T12:28:53.322Z"
 
 ---
 # 0661 · Set each build level from the team page
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 After 0660, changing what Quick, Balanced and Deep build with, or adding a level such as Graphics, means editing `speck/config.yml` by hand. The team page is where you set up the builder, so the levels belong there too, where you can change them from your phone.
