@@ -34,12 +34,12 @@ test('0462 AC1: an in-flight ticket\'s full view shows its priority, size, risk,
   const p = page();
   await p.settle();
   const want = {
-    '0901': [['Priority', 'P1'], ['Size', 'M'], ['Risk', 'high'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
-    '0902': [['Priority', 'P0'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', '–'], ['Reviewer', `Codex · ${LONG}`]],
-    '0903': [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', 'No'], ['Builder', 'Claude'], ['Reviewer', '–']],
-    '0904': [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Cursor'], ['Reviewer', '–']],
-    '0905': [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
-    '0906': [['Priority', 'P2'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
+    '0901': [['Priority', 'P1'], ['Level', 'Settings'], ['Size', 'M'], ['Risk', 'high'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
+    '0902': [['Priority', 'P0'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', '–'], ['Reviewer', `Codex · ${LONG}`]],
+    '0903': [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', 'No'], ['Builder', 'Claude'], ['Reviewer', '–']],
+    '0904': [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Cursor'], ['Reviewer', '–']],
+    '0905': [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
+    '0906': [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
   };
   const now = { '0901': ['Writing tests and code', 'Build'], '0902': [`${LONG} is reviewing · round 1`, 'Review 1'], '0903': ['Approved · waiting for you to ship it', 'Ship'],
     '0904': ['Cursor is fixing round 1\'s findings', 'Review 1'], '0905': ['Blocked · it has a question for you', 'Review 1'], '0906': ['Checking its own work', 'Self-check'] };
@@ -47,8 +47,8 @@ test('0462 AC1: an in-flight ticket\'s full view shows its priority, size, risk,
     const v = await view(p, id), f = factsOf(v);
     assert.ok(f, `${id}: a table of facts`);
     assert.equal(f.tagName, 'dl', `${id}: a list of labels and values`);
-    assert.deepEqual(cells(f).slice(0, 6), rows, `${id}: its cells`);
-    assert.equal(cells(f)[6][0], 'Type', `${id}: then its type (0585)`);
+    assert.deepEqual(cells(f).slice(0, 7), rows, `${id}: its cells`);
+    assert.equal(cells(f)[7][0], 'Type', `${id}: then its type (0585)`);
     assert.equal(v.children.find(n => n.className === 'steps').children[0].className, 'track', `${id}: the table is under the track`);
     assert.ok(!p.all(v).some(n => /^progress\b/.test(n.className || '')), `${id}: no dotted line`);
     assert.deepEqual([part(p, v, 'say'), part(p, v, 'stage')].map(n => n.textContent), now[id], `${id}: where it is`);
@@ -87,6 +87,7 @@ test('0462 AC4: a screen reader reads each cell as its label, then its value', a
     for (const c of factsOf(await view(p, id)).children) {
       assert.equal(c.tagName, 'div', `${id}: a cell is a group in the list`);
       assert.deepEqual(c.children.map(n => n.tagName), ['dt', 'dd'], `${id}: its label is a term, its value its description`);
+      if (c.children[0].textContent === 'Level') continue; // 0662: its level opens the menu that sets it, as a draft's priority does
       for (const n of p.all(c.children[1])) assert.notEqual(n.attrs?.role, 'button', `${id}: no control inside a value`);
     }
   }

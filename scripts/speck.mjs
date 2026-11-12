@@ -20,7 +20,7 @@ import { criteriaText, criteriaChange, criteriaChanges, shippedCriteriaChanged }
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdKeys } from './keys.mjs'; import { cmdLogins } from './logins.mjs'; // 0635
-import { boardBuilders } from './build-model.mjs';
+import { boardBuilders } from './build-model.mjs'; import { levelNames } from './levels.mjs'; // 0662
 import { cmdAgents } from './your-agents.mjs';
 import { cmdConfig } from './config.mjs'; import { cmdConfigShow } from './settings.mjs';
 import { cmdTest } from './turns.mjs';
@@ -487,7 +487,7 @@ export function statusData(repo) {
   // 0568: what speck decided in the last 7 days. A shipped ticket has no branch to compare, so its criteria come from history. Left out when there are none.
   // 0589: with each one's question and other options.
   const decided = withCalls(decidedFor(entries, e => (e.status === 'done' ? shippedCriteriaChanged(repo, cfg, e.id, tickets.find(t => t.fm.id === e.id)?.sections['acceptance criteria']) : e.criteria_changed)), id => callsOf(runs, id));
-  return { tickets: entries, ...(decided.length ? { decided } : {}), ideas, idea_counts: ideaCounts(repo), resume_command: resumeCommandOf(cfg) };
+  return { tickets: entries, ...(decided.length ? { decided } : {}), ideas, idea_counts: ideaCounts(repo), resume_command: resumeCommandOf(cfg), levels: levelNames(cfg) }; // 0662: the levels the panel's Level picker offers
 }
 
 function cmdStatus(args = []) {

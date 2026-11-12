@@ -308,6 +308,15 @@
   .item.ticket .facts .prio { vertical-align: top; }
   .item.ticket .facts .set-prio { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .item.ticket .facts .set-prio:hover { text-decoration-style: solid; }
+  /* 0662: its Level opens the menu that sets it, as its priority does, here and in the full view, with any refusal under it */
+  .item.ticket .facts .set-level, #full-ticket .facts .set-level { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px;
+    display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; margin: -14px 0; } /* a 44 px tap area, no taller than the value's line */
+  .item.ticket .facts .set-level:hover, #full-ticket .facts .set-level:hover { text-decoration-style: solid; }
+  #full-ticket .facts .value.pick { overflow: visible; }
+  .item.ticket .facts .fact:last-child:nth-child(3n+1) { grid-column: 1 / -1; } /* 0662: a seventh cell, Type, has its row to itself */
+  .prio-menu.level-menu { flex-direction: column; } /* a short list under the level, which fits under any column */
+  .level-menu button { white-space: nowrap; overflow-wrap: normal; text-align: left; }
+  .facts .level-refused { margin-top: 4px; font-size: 12px; line-height: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
   /* 0467: an open ticket's dependency box, under its table. Chain: five even slots on a line, each a circle over its
      id. Every slot keeps to its column, its id on one line. */
   .deps { margin: 6px 0 4px; padding: 6px; border: 1px solid var(--line); }

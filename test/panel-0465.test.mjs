@@ -91,13 +91,13 @@ test('0465 AC1: the bars and facts follow where each ticket is (0583)', async ()
   }
   // 0583: its own four bars and six facts, for every ticket
   const none = ['step', 'step', 'step', 'step'];
-  const facts = (p1, size, risk) => [['Priority', p1], ['Size', size], ['Risk', risk]];
+  const facts = (p1, size, risk) => [['Priority', p1], ['Level', 'Settings'], ['Size', size], ['Risk', risk]]; // 0662: and its level
   assert.deepEqual(seen['0801'], ['track', ['step waits', ...none.slice(1)], [...facts('P3', 'M', 'high'), ['Ships by itself', '–'], ['Builder', '–'], ['Reviewer', '–']]]);
   assert.deepEqual(seen['0812'][1], ['step done', ...none.slice(1)]);
   assert.deepEqual(seen['0811'][1], ['step done', 'step now', 'step', 'step']);
-  assert.deepEqual(seen['0811'][2].slice(0, 3), facts('P1', 'S', 'low'));
+  assert.deepEqual(seen['0811'][2].slice(0, 4), facts('P1', 'S', 'low'));
   assert.deepEqual(seen['0813'][1], ['step done', 'step done', 'step waits', 'step'], 'a blocked one waits for you where it stopped');
-  assert.deepEqual(seen['0814'][2][5], ['Reviewer', `Codex · ${LONG}`]);
+  assert.deepEqual(seen['0814'][2][6], ['Reviewer', `Codex · ${LONG}`]);
   assert.deepEqual(seen['0901'][1], Array(4).fill('step done'));
   assert.deepEqual(seen['0903'][1], Array(4).fill('step done'));
 });
@@ -142,7 +142,7 @@ test('0465 AC3: while it\'s open, the track and table move on with the ticket, a
   const now = paneSteps(p);
   assert.notEqual(now, first, 'drawn again');
   assert.deepEqual(now.children[0].children.map(s => s.className), ['step done', 'step done', 'step now', 'step']);
-  assert.deepEqual(cells(now.children[1])[5], ['Reviewer', 'Codex · gpt-x']);
+  assert.deepEqual(cells(now.children[1])[6], ['Reviewer', 'Codex · gpt-x']);
   assert.equal(pane(p).children[0].children[1].textContent, 'reviewing');
   assert.ok(pane(p).children[2].children.some(n => n.tagName === 'h4' && n.textContent === 'Problem'), 'its body still under it');
   p.timers.shift()();

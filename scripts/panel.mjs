@@ -25,10 +25,10 @@ import { goWith } from './go-with.mjs';
 import { panelAway } from './panel-background.mjs'; // 0509: --background and --stop
 import { panelProjects } from './panel-projects.mjs'; // 0516: the project menu, and showing another panel's project here
 import { projectSummary, speckMood } from './panel-summary.mjs'; // 0595: this panel's part of the bridge. 0579: speck's mood
-import { panelStarNote } from './panel-star.mjs'; // 0538: the star on a note in Capture
+import { panelStarNote } from './panel-star.mjs'; import { panelSetLevel } from './panel-level.mjs'; // 0538: the star on a note in Capture. 0662: a ticket's level
 import { panelUrl } from './panel-url.mjs'; import { subscriptionsAnswer } from './subscriptions.mjs'; // 0538: moved out, to keep this under 600 lines. 0646: Your subscriptions in Settings
 
-// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch, a setting and a note's star) ----------
+// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, a ticket's level, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch, a setting and a note's star) ----------
 
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -212,7 +212,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes, POST /api/keys/<provider> (0393), POST /api/agents/<agent>/add or /remove (0399), POST /api/providers (0401), POST /api/ideas/<file>/star or /unstar (0538) and POST /api/run/on or /off. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/level/<name> (0662), POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes, POST /api/keys/<provider> (0393), POST /api/agents/<agent>/add or /remove (0399), POST /api/providers (0401), POST /api/ideas/<file>/star or /unstar (0538) and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html, panel.css (0430, split into a file for each area of the panel by 0472), panel-model.js (0431), panel-settings.js (0432), panel.js (0433), panel-popups.js (0473) or panel-header.js (0474) shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -347,12 +347,12 @@ export async function panelServer() {
         return wrote(res, out);
       } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
-    const priority = where.match(/^\/api\/tickets\/(\d{1,4})\/priority\/([^/]*)$/);
+    const priority = where.match(/^\/api\/tickets\/(\d{1,4})\/(priority|level)\/([^/]*)$/); // 0662: and its level
     if (req.method === 'POST' && priority) {
       if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
-        const out = panelSetPriority(repo, priority[1], priority[2]);
+        const out = priority[2] === 'level' ? panelSetLevel(repo, priority[1], priority[3]) : panelSetPriority(repo, priority[1], priority[3]);
         return wrote(res, out);
       } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
