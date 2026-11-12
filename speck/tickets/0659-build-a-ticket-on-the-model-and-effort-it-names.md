@@ -1,7 +1,7 @@
 ---
 id: "0659"
 title: Build each ticket on the builder settings it names                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-11-12T11:07:53.378Z"
 ---
 # 0659 · Build each ticket on the builder settings it names
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `builder_model` and `builder_effort` in `speck/config.yml` apply to every build, so a project can't build one ticket on one model and the next on another. Someone whose tickets need different strengths, such as a game with graphics tickets for one model and logic tickets for another, has to change the setting by hand between builds.
@@ -50,7 +50,7 @@ A ticket can name its own `builder_model` and `builder_effort`. Each build of th
 - Self-check: narrowed the brief's claim to say a build_command you've written gives a ticket's model only to Claude Code; a hand-written command passes the ticket's values only when the ticket's builder is the configured one, as it builds every ticket with that builder.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Each ticket can now name the model and the effort its builds run on, so one ticket can build on one model and the next on another without changing your settings in between. Leave them blank and the ticket builds exactly as before, on your settings. To try it, give a ticket a model (for example `speck set <id> builder_model sonnet`) and let speck run build it: the build, any resume after it stops and any hand-back after a refused ship all run on that model. The ready check refuses an effort it doesn't know, and it also refuses a model that would make the builder and reviewer the same model. Worth knowing: when a usage limit moves a build to another agent on your builder bench, speck clears the ticket's own model and effort, because they were written for the agent the ticket started with.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,3 +60,191 @@ A ticket can name its own `builder_model` and `builder_effort`. Each build of th
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox notes):
+  - When a stand-in on builder_bench is recorded as the ticket's builder, the ticket's own builder_model and builder_effort are cleared rather than kept for when it goes back to its first builder, as `builder:` itself is overwritten. Restoring both after the limit resets would need its own ticket if wanted.
+  - A run record from before this change has no ticket values, so a build started before it resumes on the settings', as it did.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c98c2f17b79965f3e8562000e46da822c2715880",
+    "session": "fresh",
+    "thread_id": "01a1cf77-8a26-7290-989f-b8ed2a961c4d",
+    "builder_response": "- Tests run: `speck test --related test/ticket-builder-0659.test.mjs` (the ticket's own file plus every existing test file naming a changed file, and the repo checks): 1744 tests, 0 failures.\n- Design: `buildConfig(cfg, builder, t)` in build-model.mjs replaces ticket-builder's `configFor`: a ticket's own builder_model/builder_effort win for its builder whichever it is; blank falls back to the settings' only for the configured builder (0312, unchanged).\n- speck run reads the ticket's own values from its frontmatter at launch (`launchTicket`), because status tickets carry the board's resolved `builder_model`, not the ticket's own. It keeps them in the run record as `ticket_builder_model`/`ticket_builder_effort`, which `resumeFor` applies to every resume, hand-back, go-with and usage-limit resume.\n- Stand-ins (run.mjs's standIn launch, build-take-over and the stand-in's same-model check) use `standInTicket`, which blanks both values (AC4).\n- Hand-written build_command: only a Claude Code build gets the ticket's values, and only when the ticket's builder is the configured one, as that command builds every ticket.\n- AC5's docs part is checked by review (brief.md, Builder model and Builder effort paragraphs); no wording test added.\n",
+    "seconds": 52,
+    "usage": {
+      "input_tokens": 146952,
+      "cached_input_tokens": 90112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1116,
+      "reasoning_output_tokens": 292
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56840,
+      "cached": 90112,
+      "write": 0,
+      "output": 1116
+    },
+    "cost_usd": 0.1338512,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T11:15:32.275Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "buildConfig/buildPlan apply ticket models; launchPlan records them and resumeFor restores them. AC1 tests cover launch, fallback, Claude/Codex/provider resumes and custom commands. Cursor retains its initial model in its chat."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "buildConfig applies effort overrides; lintTicket validates ticket effort through knownEffort. AC2 tests cover supported builders, excluded builders and invalid-value messages; reported passing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "ticketSameModelProblem and ticketBuilderModel resolve ticket models. AC3 tests exercise opus rejection, sonnet acceptance and board model resolution; reported passing."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "standInTicket strips values for the initial launch, but recordBuilder and recordTakeOver persist the replacement builder while retaining the original builder_model/builder_effort. Later launches read those values again."
+      },
+      {
+        "id": 5,
+        "status": "unclear",
+        "evidence": "The template and both brief paragraphs contain the requested information. The AC5 test checks new-ticket fields and comments, but no test checks the brief's setting facts; this criterion is not marked '(checked by review)'."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/builder-stand-in.mjs",
+        "issue": "Stand-in suppression lasts only for the initial launch. recordBuilder and recordTakeOver permanently change the ticket's builder but retain its original model and effort. A subsequent fresh launch reads those fields through launchTicket and passes the original builder's settings to the replacement agent. The board also reports that retained model even though the stand-in did not use it.",
+        "suggested_fix": "Persist enough information to keep the original model and effort suppressed for the stand-in throughout its lifecycle, or clear/archive them when recording the replacement builder. Cover the persisted ticket, board resolution and a subsequent fresh launch in a regression test, including recordTakeOver.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/ticket-builder-0659.test.mjs",
+        "issue": "AC5's brief requirement has no automated coverage, although it states setting facts and is not marked as checked by review. The builder's response cannot independently grant that exception.",
+        "suggested_fix": "Add a fact-based check for the builder_model and builder_effort override documentation in the brief, without asserting exact prose or paragraph order.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Ticket-specific model and effort settings work on the main launch and resume paths, and the reported tests pass. A replacement builder can later receive settings intended for the original builder because those values remain on the ticket. That lifecycle bug and a missing documentation check need fixing before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "509819fa79b26054e572548afe001103e89dd025",
+    "session": "continued",
+    "thread_id": "01a1cf77-8a26-7290-989f-b8ed2a961c4d",
+    "builder_response": "- Tests run: `speck test --related test/ticket-builder-0659.test.mjs` (the ticket's own file, every existing test file naming a changed file, and the repo checks): 1748 tests, 0 failures.\n- F1: fixed. New `standInText` in scripts/ticket-builder.mjs sets the stand-in as `builder:` and clears the ticket's own non-blank `builder_model`/`builder_effort` (keeping their comments, adding no lines to tickets without them). `recordBuilder` (builder-stand-in.mjs) and `recordTakeOver` (build-take-over.mjs) use it, so a later fresh launch, resume or the board never gives them to the stand-in. Tests: \"recording a stand-in … clears its own model and effort\" (persisted ticket, board resolution, later fresh launch), \"recording a take-over clears …\", and \"a ticket without its own values is recorded as before\". The brief says speck clears them when it records the stand-in.\n- F2: fixed. The brief's Builder model and Builder effort paragraphs now give the commands that set a ticket's own value (`speck set <id> builder_model <model>`, `speck set <id> builder_effort <effort>`), and a test checks each paragraph names its command. A first version checking phrases failed the repo's 0267 rewording check, so the test checks the command, a fact that survives rewording.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 376207,
+      "cached_input_tokens": 295936,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1874,
+      "reasoning_output_tokens": 305
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 23431,
+      "cached": 205824,
+      "write": 0,
+      "output": 758
+    },
+    "cost_usd": 0.0750244,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-12T11:20:02.564Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "buildConfig and buildPlan apply ticket models across builders; launchPlan records overrides and resumeFor restores them. Passing AC1 tests cover launch, resume, fallback, alternate builders and custom commands. Cursor retains the initial model in its chat."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "buildConfig applies effort overrides, and lintTicket validates them using knownEffort with the ticket value in its error. Passing AC2 tests cover Claude/Codex overrides, Cursor/provider exclusions and invalid values."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "ticketSameModelProblem and ticketBuilderModel use the ticket model. Passing AC3 tests verify opus rejection, sonnet acceptance and board resolution."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "standInTicket suppresses overrides at launch. Both recordBuilder and recordTakeOver now use standInText to clear persisted overrides. Passing AC4 regression tests check persisted tickets, board resolution, subsequent launches and take-over recording."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "templates/ticket.md includes blank fields with explanatory comments. Both Builder paragraphs in docs/brief.md describe ticket overrides. Passing AC5 tests check new-ticket fields and the documented setting commands."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/builder-stand-in.mjs",
+        "issue": "Previously, persisted ticket overrides could reach a replacement builder on a later launch. Both recording paths now clear those overrides, with regression coverage.",
+        "suggested_fix": "Completed through standInText, used by recordBuilder and recordTakeOver.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/ticket-builder-0659.test.mjs",
+        "issue": "The brief previously lacked fact-based documentation coverage. The added AC5 test checks the setting commands in both relevant paragraphs without asserting explanatory prose or order.",
+        "suggested_fix": "Completed with the documentation command checks.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Tickets can choose their own builder model and effort while blank values preserve existing behaviour. Replacement builders now safely discard settings intended for the original builder. Both previous findings are resolved; the reported 1,748-test run has no failures. Ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
