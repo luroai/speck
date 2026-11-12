@@ -1,7 +1,7 @@
 ---
 id: "0670"
 title: "Fix the full suite failing on main at 4f9e526"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T21:32:13.757Z"
+approved: "2026-11-12T22:04:08.069Z"
 
 ---
 # 0670 · Fix the full suite failing on main at 4f9e526
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on main at commit 4f9e526 (4f9e526d61d67540d1c62dc7bb304411ba88a8ba). Failing tests:
@@ -60,9 +61,15 @@ Nothing changes in speck itself. Seven of speck's own tests had failed on main b
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The load-dependent threshold weakens the explicit 50 ms requirement.; F2 The new 5-second stall threshold exceeds the entire approximately 1.2-second command.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 208,163
+- Elapsed since build started: 32 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - 0319 AC1–AC4 failed once by chance in the related run: saved as speck/ideas/2026-11-12-steady-the-0319-outside-speck-run-test.md.
