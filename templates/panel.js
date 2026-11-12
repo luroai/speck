@@ -257,10 +257,41 @@ function priorityPicker(t, tag) {
   box.appendChild(menu);
   return box;
 }
-// 0662: a ticket's build level as its facts show it: its name with a capital first letter, or Settings when it has none.
+// 0662: a ticket's build level as its facts show it: its name with a capital first letter, or Default (0667) when it has none.
 const levelOf = t => (typeof t.level === 'string' || typeof t.level === 'number' ? String(t.level).trim() : '');
-const levelName = v => (v ? `${v[0].toUpperCase()}${v.slice(1)}` : 'Settings');
-// 0662: its Level fact, which opens a menu of the project's levels and Settings, as its priority does, unless it's done
+const levelName = v => (v ? `${v[0].toUpperCase()}${v.slice(1)}` : 'Default');
+// 0667: what level `name` builds with, as the board works it out, such as "Claude Code · Fable · high", or null when the
+// board doesn't say. A Codex or Cursor model goes by the name its agent's list gives it, once read; an effort the
+// builder isn't given (null) is left out.
+const levelModelNames = new Map(); // agent → Map of slug → name, or null while it's read or when it can't be
+let levelNamesRead = 0; // how many agents' names have come back, so a Plan card with its menu open is drawn again
+function levelBuildWords(name) {
+  const b = list(state && state.level_builds).find(x => x && x.name === name && typeof x.agent === 'string' && x.agent);
+  if (!b) return null;
+  const named = typeof b.model_slug === 'string' && b.model_slug ? levelModelNames.get(b.builder)?.get(b.model_slug) : undefined;
+  const effort = b.effort === null ? null : b.effort || 'default effort';
+  return [b.agent, named || b.model || 'default model', effort].filter(Boolean).join(' · ');
+}
+// Reads, once a page, the model names of Codex and Cursor where a level builds on one of their models, then draws again.
+function readLevelModelNames() {
+  const agents = new Set(list(state && state.level_builds).filter(b => b && typeof b.model_slug === 'string' && b.model_slug && ['codex', 'cursor'].includes(b.builder)).map(b => b.builder));
+  for (const agent of agents) {
+    if (levelModelNames.has(agent)) continue;
+    levelModelNames.set(agent, null);
+    (async () => {
+      try {
+        const res = await fetch(`/api/agent-models?agent=${encodeURIComponent(agent)}`, { cache: 'no-store' });
+        const body = res.ok ? await res.json() : null;
+        const named = list(body && body.models).filter(m => m && typeof m.slug === 'string' && typeof m.display_name === 'string' && m.display_name);
+        if (!named.length) return;
+        levelModelNames.set(agent, new Map(named.map(m => [m.slug, m.display_name])));
+        levelNamesRead++;
+        render();
+      } catch { /* not read: the menu keeps the model as the build is given it */ }
+    })();
+  }
+}
+// 0662: its Level fact, which opens a menu of the project's levels and Default, as its priority does, unless it's done
 // or cancelled. A refusal shows in it until the next click on it.
 function levelFact(t) {
   const id = String(t.id), shown = levelName(levelOf(t));
@@ -282,15 +313,22 @@ function levelPicker(t, tag) {
     priorityMenu = null;
     levelMenu = id;
     render();
+    readLevelModelNames(); // 0667
   });
   if (levelMenu !== id) return box;
   const menu = el('span', 'prio-menu level-menu'); // a prio-menu, so a click outside it only closes it
   for (const name of [...list(state && state.levels).map(String), '']) {
-    const b = el('button', levelOf(t) === name ? 'on' : null, levelName(name));
+    const words = levelBuildWords(name); // 0667: under its name, what it builds with
+    const b = el('button', levelOf(t) === name ? 'on' : null, null, el('span', 'lname', levelName(name)), words ? el('span', 'lbuild', words) : null);
     b.type = 'button';
     b.addEventListener('click', e => { e.stopPropagation(); setLevel(id, name); });
     menu.appendChild(b);
   }
+  // 0667: last, the way to where levels are set: Settings, at the Builder's Build levels. The ticket's level stays.
+  const change = el('button', 'level-change', 'Change levels');
+  change.type = 'button';
+  change.addEventListener('click', e => { e.stopPropagation(); levelMenu = null; render(); openSettings({ to: 'levels' }); });
+  menu.appendChild(change);
   box.appendChild(menu);
   return box;
 }
@@ -1307,7 +1345,7 @@ function render() {
   $('capture-n').textContent = m.capture.length ? `${m.capture.length} note${m.capture.length === 1 ? '' : 's'}` : ''; // 0536
   $('capture-n').hidden = !m.capture.length;
   fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
-    t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null, levelMenu === String(t.id), levelRefused.get(String(t.id)) ?? null], ticketItem,
+    t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null, levelMenu === String(t.id) ? levelNamesRead + 1 : 0, levelRefused.get(String(t.id)) ?? null], ticketItem, // 0667: and the model names its menu has read
     { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), asleepLane('shaping', 'Nothing to plan · Draft tickets wait here for you to set them ready.'));
   renderFull(m);
   renderDecided(m); // 0568

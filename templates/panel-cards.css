@@ -316,6 +316,17 @@
   .item.ticket .facts .fact:last-child:nth-child(3n+1) { grid-column: 1 / -1; } /* 0662: a seventh cell, Type, has its row to itself */
   .prio-menu.level-menu { flex-direction: column; } /* a short list under the level, which fits under any column */
   .level-menu button { white-space: nowrap; overflow-wrap: normal; text-align: left; }
+  /* 0667: under each level's name, what it builds with */
+  .level-menu .lname, .level-menu .lbuild { display: block; }
+  /* the lines make it wider than the level's cell: it hangs from the cell's right edge rather than the level's own, so
+     it stays on screen in a narrow panel, as wide as its lines, and a line too long for the screen wraps */
+  .fact:has(.level-menu) { position: relative; }
+  .prio:has(> .level-menu) { position: static; }
+  .prio-menu.level-menu { left: auto; right: 0; width: max-content; max-width: calc(100vw - 32px); }
+  .level-menu .lbuild { white-space: normal; overflow-wrap: anywhere; }
+  .level-menu .lbuild { line-height: 18px; color: var(--muted); } /* the menu's own size: no 12 px text in a button (0612), nor 13 px outside rows (0427) */
+  .level-menu button.on:has(.lname) { text-decoration: none; } /* the level chosen: only its name underlined */
+  .level-menu button.on .lname { text-decoration: underline; text-underline-offset: 3px; }
   .facts .level-refused { margin-top: 4px; font-size: 12px; line-height: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
   /* 0467: an open ticket's dependency box, under its table. Chain: five even slots on a line, each a circle over its
      id. Every slot keeps to its column, its id on one line. */

@@ -34,12 +34,12 @@ test('0462 AC1: an in-flight ticket\'s full view shows its priority, size, risk,
   const p = page();
   await p.settle();
   const want = {
-    '0901': [['Priority', 'P1'], ['Level', 'Settings'], ['Size', 'M'], ['Risk', 'high'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
-    '0902': [['Priority', 'P0'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', '–'], ['Reviewer', `Codex · ${LONG}`]],
-    '0903': [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', 'No'], ['Builder', 'Claude'], ['Reviewer', '–']],
-    '0904': [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Cursor'], ['Reviewer', '–']],
-    '0905': [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
-    '0906': [['Priority', 'P2'], ['Level', 'Settings'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
+    '0901': [['Priority', 'P1'], ['Level', 'Default'], ['Size', 'M'], ['Risk', 'high'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
+    '0902': [['Priority', 'P0'], ['Level', 'Default'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', '–'], ['Reviewer', `Codex · ${LONG}`]],
+    '0903': [['Priority', 'P2'], ['Level', 'Default'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', 'No'], ['Builder', 'Claude'], ['Reviewer', '–']],
+    '0904': [['Priority', 'P2'], ['Level', 'Default'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Cursor'], ['Reviewer', '–']],
+    '0905': [['Priority', 'P2'], ['Level', 'Default'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
+    '0906': [['Priority', 'P2'], ['Level', 'Default'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude'], ['Reviewer', '–']],
   };
   const now = { '0901': ['Writing tests and code', 'Build'], '0902': [`${LONG} is reviewing · round 1`, 'Review 1'], '0903': ['Approved · waiting for you to ship it', 'Ship'],
     '0904': ['Cursor is fixing round 1\'s findings', 'Review 1'], '0905': ['Blocked · it has a question for you', 'Review 1'], '0906': ['Checking its own work', 'Self-check'] };

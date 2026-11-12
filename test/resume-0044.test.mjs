@@ -76,7 +76,7 @@ test('0044 AC3: resume_command is in the config template and in status --json; b
   set('');
   assert.equal(statusJson(r.dir).resume_command, 'claude --resume {session}', 'an older config without the setting');
   const s = statusJson(r.dir);
-  assert.deepEqual(Object.keys(s).sort(), ['idea_counts', 'ideas', 'levels', 'resume_command', 'tickets']); // levels: 0662
+  assert.deepEqual(Object.keys(s).sort(), ['idea_counts', 'ideas', 'level_builds', 'levels', 'resume_command', 'tickets']); // levels: 0662. level_builds: 0667
 });
 
 // ---------- the panel ----------

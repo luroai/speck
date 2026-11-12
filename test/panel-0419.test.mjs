@@ -80,7 +80,7 @@ test('0419 AC3: the priority opens its menu, and size and risk explain themselve
     assert.equal(n.attrs.role, 'button');
   }
   // 0585: a Build ticket's priority, size and risk show in its full view, in its facts' cells, as plain values
-  assert.deepEqual(factsOf(await fullViewOf(p, '0501')).slice(0, 4), [['Priority', 'P3'], ['Level', 'Settings'], ['Size', 'M'], ['Risk', 'low']]); // 0662: its level
+  assert.deepEqual(factsOf(await fullViewOf(p, '0501')).slice(0, 4), [['Priority', 'P3'], ['Level', 'Default'], ['Size', 'M'], ['Risk', 'low']]); // 0662: its level
 });
 
 test('0419 AC4: a question, a recommendation, a Ship hint and a message still show, in the full view (0434, 0585)', async () => {

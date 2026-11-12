@@ -293,8 +293,8 @@ function defaultModelOf(id, provider, got, models) {
   if (id === 'codex') return models.length ? models[0].slug : null;
   return null;
 }
-// A provider's model by the name its list shows, without the provider's own: "V4 Pro" for deepseek-v4-pro.
-const providerModelName = (p, slug) => slug.replace(new RegExp(`^${p.name}-`), '').split('-').map(w => w && `${w[0].toUpperCase()}${w.slice(1)}`).join(' ');
+// A provider's model by the name its list shows, without the provider's own: "V4 Pro" for deepseek-v4-pro. 0667: and the Level menu's
+export const providerModelName = (p, slug) => slug.replace(new RegExp(`^${p.name}-`), '').split('-').map(w => w && `${w[0].toUpperCase()}${w.slice(1)}`).join(' ');
 // Why an agent's models can't be read, without telling you to type a model's name: its list has no box for one.
 const untyped = why => why.replace(/(?:,? (?:so|or) |: )type the model's name[^.]*\./i, '.').replace(/\s*Type the model's name instead\./i, '').trim();
 

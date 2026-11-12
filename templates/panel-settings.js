@@ -81,8 +81,12 @@ document.addEventListener('pointerdown', e => {
 renderSettings(); // closed
 renderLeaving(); // not asking
 // 0409: it opens once the config has come back, onto its groups and their values, with no loading line in their place.
-function openSettings() {
+// 0667: `to` 'levels' opens it scrolled to the Builder's Build levels, as a ticket's Level menu asks. A click on the
+// Settings button passes its event, which asks for nothing.
+let settingsTo = null;
+function openSettings(how) {
   if (settingsView !== null || settingsOpening) return;
+  settingsTo = how && how.to === 'levels' ? 'levels' : null;
   settingsOpening = true;
   $('settings-open').setAttribute('aria-busy', 'true');
   loadSettings();
@@ -105,6 +109,8 @@ async function loadSettings() {
   renderSettings();
   const pane = $('settings');
   if (opening && pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
+  if (opening && settingsTo === 'levels' && levelsBox !== null && levelsBox.scrollIntoView) levelsBox.scrollIntoView({ block: 'start' }); // 0667
+  if (opening) settingsTo = null;
   if (!quick) return;
   const asked = settingsView.your_agents, full = await readSettings('/api/settings');
   if (mine !== settingsSeq || settingsView === null) return;
