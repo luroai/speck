@@ -1,7 +1,7 @@
 ---
 id: "0660"
 title: "Build a ticket at the level it names"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ source: "speck/ideas/done/2026-11-10-set-up-your-team-instead-of-settings.md"   
 after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T11:56:01.061Z"
+approved: "2026-11-12T12:07:22.060Z"
 
 ---
 # 0660 · Build a ticket at the level it names
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0659 a ticket can name its own builder model and effort, but you have to know and type the right model for each one. You think about tickets as "quick", "deep" or "graphics work", not in model names, and a project that uses the same few combinations over and over has to repeat them on every ticket.
@@ -56,9 +57,15 @@ A ticket can now name a build level, such as quick, balanced or deep, instead of
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Invalid level efforts can pass speck check.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 406,630
+- Elapsed since build started: 11 min
+- Changed lines: 90 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Skipped, already captured: the flaky `0264 AC3` ship-queue test failed once in a related run and passed alone 3 times (speck/ideas/2026-11-11-steady-the-0264-ac3-ship-queue-test.md).
