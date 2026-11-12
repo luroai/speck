@@ -22,7 +22,7 @@ import { buildEnv } from './build-env.mjs';
 import { stopPanelsOfRun } from './build-panels.mjs';
 import { builderModelNote } from './build-model.mjs';
 import { builderSettings, liveSettings } from './run-settings.mjs';
-import { launchPlan, launchAgent, ignoredBuildersNote } from './ticket-builder.mjs'; import { builderStandIn } from './builder-stand-in.mjs'; import { buildTakeOver } from './build-take-over.mjs';
+import { launchPlan, launchAgent, ignoredBuildersNote, launchTicket } from './ticket-builder.mjs'; import { builderStandIn } from './builder-stand-in.mjs'; import { buildTakeOver } from './build-take-over.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
 import { recordedRun, keepsLock } from './run-lock.mjs';
@@ -305,8 +305,8 @@ function runOn(worker) {
   // ticket is built with the builder it records (launchPlan), marked with its agent, so it's resumed as one; a ticket
   // whose builder can't be started stays ready the same way.
   const failed = new Map();
-  const launch = (t, standIn = false) => { // 0647: a stand-in builds with its own command
-    const plan = launchPlan(now.cfg, t, { command: standIn ? '' : now.command, words: now.words, repo, failed });
+  const launch = (t, standIn = false) => { // 0647: a stand-in builds with its own command. 0659: on its ticket's own model and effort, or none for a stand-in
+    const plan = launchPlan(now.cfg, launchTicket(t, standIn, id => findTicket(repo, id).fm), { command: standIn ? '' : now.command, words: now.words, repo, failed });
     if (!plan) return;
     const id = t.id, tag = plan.tag;
     const session = plan.agent === 'codex' ? null : tag;
@@ -314,7 +314,7 @@ function runOn(worker) {
     const started = new Date().toISOString();
     const own = plan.agent === 'codex' ? { agent: 'codex', env_session: tag } : plan.agent ? { agent: plan.agent } : {};
     const kept = newBuildKeeps(runsDir(repo), id); // 0523, 0589: as this build's record and log replace theirs
-    const record = pid => `${JSON.stringify({ id, session, ...own, cwd: repo, started, pid, command: argv, ...kept }, null, 2)}\n`;
+    const record = pid => `${JSON.stringify({ id, session, ...own, ...plan.record, cwd: repo, started, pid, command: argv, ...kept }, null, 2)}\n`;
     startBuild(id, argv, repo, session, 'w', record, tag);
   };
 

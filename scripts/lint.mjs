@@ -36,6 +36,8 @@ export function lintTicket(ticket, cfg) {
   else if (top.status !== wantStatus) warnings.push(`The status line "${top.status}" doesn't match the frontmatter status. Run \`speck init\` again to fix it.`);
   for (const [where, v] of [['ticket', fm.reviewer_effort], ['config', cfg.reviewer_effort]])
     if (!blank(v) && !knownEffort(String(v).trim())) errors.push(`reviewer_effort "${v}" in ${where} must be blank or one of ${EFFORTS.join(', ')}, or an effort Codex lists for one of its models.`);
+  if (!blank(fm.builder_effort) && !knownEffort(String(fm.builder_effort).trim())) // 0659: as the settings' builder_effort is checked
+    errors.push(`builder_effort "${fm.builder_effort}" in ticket must be blank or one of ${EFFORTS.join(', ')}, or an effort Codex lists for one of its models.`);
   errors.push(...ticketRounds(ticket.raw).errors);
   for (const s of ['problem', 'outcome']) if (!contentLines(sections[s]).length) errors.push(`"${s}" section is empty.`);
   const ac = contentLines(sections['acceptance criteria']).filter(l => /^\d+\.\s+\S/.test(l));

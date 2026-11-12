@@ -4,7 +4,7 @@
 // as different.
 
 import { blank, modelFamily, ticketAgents } from './core.mjs';
-import { modelOf, codexBuilds, configBuilder } from './build-model.mjs';
+import { modelOf, codexBuilds, configBuilder, buildsEachTicket } from './build-model.mjs';
 
 // The model a `builder` build runs on, as far as speck can tell, or '' when it can't: builder_model, counted only when
 // speck gives it to the build. Always for Claude Code, which has it added to build_command, and for Codex and Cursor
@@ -47,7 +47,10 @@ export function sameModelProblem(builder, reviewer, cfg, reviewerModel, elsewher
 
 // The same, for a ticket: the builder, reviewer and reviewer model it would use, its own or else the settings' (0388).
 // 0312: builder_model counts only when the ticket's builder is the one in speck/config.yml, as only that builder is given it.
+// 0659: a ticket's own builder_model counts for its builder whichever it is, given to Codex and Cursor whenever speck
+// starts each ticket's build with its own builder's command.
 export function ticketSameModelProblem(fm, cfg) {
-  const own = configBuilder(cfg), use = ticketAgents(fm, cfg);
+  const own = configBuilder(cfg), use = ticketAgents(fm, cfg), model = modelOf(fm ?? {});
+  if (model) return sameModelProblem(use.builder, use.reviewer, { ...cfg, builder: use.builder, builder_model: model, ...(buildsEachTicket(cfg?.build_command ?? '') ? { build_command: '' } : {}) }, use.reviewer_model);
   return sameModelProblem(use.builder, use.reviewer, cfg, use.reviewer_model, use.builder !== own ? own : null);
 }

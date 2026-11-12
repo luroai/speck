@@ -32,7 +32,7 @@ const SIGN_IN = /^(ANTHROPIC_|CLAUDE_CODE_(?!DISABLE_BACKGROUND_TASKS$)|CLAUDE_C
 const NO_BACKGROUND = 'CLAUDE_CODE_DISABLE_BACKGROUND_TASKS'; // 0245, as buildEnv sets it for a Claude Code build
 
 // The words that start provider `p`'s build: Claude Code's own build command through this script, on builder_model or
-// else the provider's default model. `cfg` is speck/config.yml as the build reads it (configFor in ticket-builder.mjs).
+// else the provider's default model. `cfg` is speck/config.yml as the build reads it (buildConfig in build-model.mjs).
 export function providerStartWords(cfg, p) {
   const [claude, ...rest] = splitCommand(DEFAULT_BUILD_COMMAND);
   return [process.execPath, PROVIDER_SCRIPT, p.name, p.address, claude, ...CLAUDE_FLAGS, ...rest, '--model', modelOf(cfg) || p.defaultModel];

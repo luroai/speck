@@ -6,7 +6,8 @@ import { refsOf } from './ship-queue.mjs';
 import { shipState } from './ship.mjs';
 import { codexResumeArgv } from './codex-build.mjs';
 import { cursorResumeArgv } from './cursor-build.mjs';
-import { claudeStartWords, configBuilder } from './ticket-builder.mjs';
+import { claudeStartWords, recordTicket } from './ticket-builder.mjs';
+import { buildConfig, withBuilderModel } from './build-model.mjs';
 import { buildTicket } from './build-records.mjs';
 import { ticketRounds } from './core.mjs';
 import { changesPending } from './changes-asked.mjs';
@@ -59,20 +60,21 @@ export const resumedRecord = ({ seen: _, ...rec }) => rec;
 // --resume`; a Claude Code build speck run started with its own command (0312) with that command; any other with
 // build_command (resumeArgv). 0312: builder_model is passed only when the build's agent is the configured builder.
 // 0391: a model provider's build (`providers`), with the provider's own command, through the provider again.
+// 0659: on the ticket's own builder_model and builder_effort when its run record keeps them (ticketRecord).
 export function resumeFor(words, cfg, id, rec, message, providers = knownProviders()) {
-  const session = typeof rec?.session === 'string' && rec.session ? rec.session : null;
+  const session = typeof rec?.session === 'string' && rec.session ? rec.session : null, t = recordTicket(rec);
   if (rec?.agent === 'cursor') {
     const argv = cursorResumeArgv(session, message ?? resumeMessage(id));
     return argv ? { argv } : { argv: null, why: 'its run record has no session' };
   }
   if (rec?.agent === 'codex') {
-    const own = configBuilder(cfg) === 'codex' ? cfg : { ...cfg, builder_model: '', builder_effort: '' }; // 0402
-    const argv = codexResumeArgv(own, session, message ?? resumeMessage(id, '$speck-build'));
+    const argv = codexResumeArgv(buildConfig(cfg, 'codex', t), session, message ?? resumeMessage(id, '$speck-build'));
     return argv ? { argv } : { argv: null, why: 'no session id has been read from its log yet, as Codex stopped before writing one' };
   }
-  if (rec?.agent === 'claude') words = claudeStartWords(cfg);
+  if (rec?.agent === 'claude') words = claudeStartWords(cfg, t);
+  else if (!rec?.agent) words = withBuilderModel(words, { builder: cfg.builder, ...t }); // 0659: build_command you've written
   const p = typeof rec?.agent === 'string' ? providerNamed(rec.agent, providers) : null;
-  if (p) words = providerStartWords(configBuilder(cfg) === p.name ? cfg : { ...cfg, builder_model: '' }, p);
+  if (p) words = providerStartWords(buildConfig(cfg, p.name, t), p);
   const argv = resumeArgv(words, id, session, message ?? resumeMessage(id));
   return argv ? { argv } : { argv: null, why: session ? 'build_command needs --session-id {session} and one word with {id} in it' : 'its run record has no session' };
 }

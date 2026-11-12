@@ -24,6 +24,14 @@ export const modelOf = cfg => typeof cfg.builder_model === 'string' || typeof cf
 // 0402: builder_effort as speck/config.yml has it, trimmed: '' when it's blank or missing.
 export const effortOf = cfg => typeof cfg?.builder_effort === 'string' ? cfg.builder_effort.trim() : '';
 
+// 0659: speck/config.yml as a build of ticket `t` on `builder` reads it: the ticket's own builder_model and
+// builder_effort when it sets them, which reach its builder whichever it is, otherwise the settings', which reach only
+// the builder speck/config.yml names (0312).
+export function buildConfig(cfg, builder, t = {}) {
+  const mine = builder === configBuilder(cfg);
+  return { ...cfg, builder, builder_model: modelOf(t ?? {}) || (mine ? modelOf(cfg) : ''), builder_effort: effortOf(t) || (mine ? effortOf(cfg) : '') };
+}
+
 // 0289: true when speck run builds with its own Codex command: builder codex, and build_command set blank. A config
 // without build_command at all is refused by speck run, as before.
 export const codexBuilds = cfg => cfg?.builder === 'codex' && typeof cfg.build_command === 'string' && !cfg.build_command.trim();
@@ -41,8 +49,9 @@ export const providerBuilds = (cfg, providers = knownProviders()) => {
 // 0545: the model a ticket's builds run on, as far as speck knows it, for the board's builder_model: builder_model,
 // given only to the builder speck/config.yml names (0312), to Claude Code always and to Codex and Cursor when speck
 // starts their builds itself, or, for a model provider, the one speck uses from it. null when the agent picks its own.
+// 0659: the ticket's own builder_model when it sets one.
 export function ticketBuilderModel(fm, cfg, providers = knownProviders()) {
-  const builder = ticketAgents(fm, cfg).builder, mine = builder === configBuilder(cfg) ? modelOf(cfg) : '';
+  const builder = ticketAgents(fm, cfg).builder, mine = buildConfig(cfg, builder, fm).builder_model;
   const own = buildsEachTicket(cfg?.build_command ?? '');
   const p = findProvider(builder, providers);
   if (p && p.name === builder) return own ? mine || p.defaultModel || null : null;
