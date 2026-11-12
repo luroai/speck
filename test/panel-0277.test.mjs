@@ -12,7 +12,10 @@ const MEASURE = `(() => [...document.querySelectorAll('#settings .sgroup')].map(
   const controls = [...g.querySelectorAll('.setting .control > *')].filter(n => !n.matches('.default') && n.getClientRects().length)
     .map(n => n.getBoundingClientRect().height);
   return { title: g.querySelector('h4').textContent, controls, rows: [...g.querySelectorAll('.setting .row')].map(row => {
-    const info = row.querySelector('.info'), i = info.getBoundingClientRect(), c = row.querySelector('.control').getBoundingClientRect();
+    const info = row.querySelector('.info');
+    // 0663: hit-testing only reaches what's on screen, and the view grows taller than the window, so bring the row into view
+    info.scrollIntoView({ block: 'center' });
+    const i = info.getBoundingClientRect(), c = row.querySelector('.control').getBoundingClientRect();
     const name = row.querySelector('.name');
     const parts = [...name.querySelectorAll('span')];
     // the button's target: every point of a 24 by 24 px square around its middle reaches it
