@@ -10,7 +10,7 @@ import { sh, setField, syncHeader } from './core.mjs';
 import { commitTicketOnly, replaceSection } from './close.mjs';
 import { buildTicket } from './build-records.mjs';
 import { standInFor } from './builder-stand-in.mjs';
-import { configBuilder, buildPlan, launchPlan } from './ticket-builder.mjs';
+import { configBuilder, buildPlan, launchPlan, standInTicket } from './ticket-builder.mjs';
 import { newBuildKeeps } from './go-with.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { knownProviders } from './custom-providers.mjs';
@@ -72,7 +72,7 @@ export function buildTakeOver({ repo, runs, startBuild, heldAgent, readyAgents, 
       choice = standInFor(cfg, fm, { own: configBuilder(cfg), ready, held: heldAgent, providers: known, plan: a => buildPlan(cfg, { id, builder: a }, installed, { repo, providers: known }) });
     } catch (e) { once(id, `${id}: its build stopped on ${nameOf(agent, known)}'s usage limit, but it can't move to builder_bench: ${e.message}`); return null; }
     if (!choice.agent) return null; // it waits for the reset, as 0622's message has said
-    const to = choice.agent, from = nameOf(agent, known), plan = launchPlan(cfg, { ...fm, id, builder: to }, { command: '', words: [], repo, failed: new Map(), installed, ...(chat ? { chat } : {}) });
+    const to = choice.agent, from = nameOf(agent, known), plan = launchPlan(cfg, standInTicket({ ...fm, id }, to), { command: '', words: [], repo, failed: new Map(), installed, ...(chat ? { chat } : {}) });
     if (!plan) { once(id, `${id}: its build stopped on ${from}'s usage limit, but ${nameOf(to, known)} couldn't be started for it, so it waits for the reset.`); return null; }
     const done = record(repo, cfg, id, to, takeOverNote(from, nameOf(to, known), s, t0));
     if (done.why) { once(id, `${id}: its build stopped on ${from}'s usage limit, but ${nameOf(to, known)} can't take it over: ${done.why}. It waits for the reset.`); return null; }

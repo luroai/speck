@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import { sh, setField, syncHeader } from './core.mjs';
 import { commitTicketOnly } from './close.mjs';
 import { benchOf } from './bench.mjs';
-import { configBuilder, buildPlan, launchAgent } from './ticket-builder.mjs';
+import { configBuilder, buildPlan, launchAgent, standInTicket } from './ticket-builder.mjs';
 import { ticketSameModelProblem } from './same-model.mjs';
 import { buildTicket } from './build-records.mjs';
 import { providerNamed } from './provider-review.mjs';
@@ -23,7 +23,7 @@ const nameOf = (agent, providers) => providerNamed(agent, providers)?.label ?? (
 export function standInFor(cfg, fm, { own, ready, held, plan, providers = [] }) {
   const bench = benchOf(cfg, 'builder_bench', { yours: ready, own, providers });
   const to = bench.find(a => a !== own && ready.includes(a) && !held(a)
-    && (cfg?.allow_same_model_review === true || !ticketSameModelProblem({ ...fm, builder: a }, cfg)) && !plan(a).why);
+    && (cfg?.allow_same_model_review === true || !ticketSameModelProblem(standInTicket(fm, a), cfg)) && !plan(a).why); // 0659: on its own model
   return to ? { agent: to } : { why: 'no agent on builder_bench is ready, free of a usage limit and from another family than the reviewer' };
 }
 
@@ -64,7 +64,7 @@ export function builderStandIn({ repo, heldAgent, readyAgents, speak, fmOf, prov
     let fm, choice;
     try {
       fm = fmOf(t.id);
-      choice = standInFor(cfg, fm, { own, ready, held: heldAgent, providers: known, plan: a => buildPlan(cfg, { ...t, builder: a }, installed, { repo, providers: known }) });
+      choice = standInFor(cfg, fm, { own, ready, held: heldAgent, providers: known, plan: a => buildPlan(cfg, standInTicket(t, a), installed, { repo, providers: known }) });
     } catch (e) { once(t.id, `${nameOf(own, known)}'s usage limit is reached, but ${t.id} can't start on builder_bench: ${e.message}`); return false; }
     if (!choice.agent) return false;
     const why = record(repo, cfg, t.id, choice.agent);
