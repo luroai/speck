@@ -81,7 +81,8 @@ test('0202 AC1, AC2: a stalled run ends every process it started, in a group of 
 
 test('0202 AC3: a run that does not stall ends as before, with its own exit code', async () => {
   const dir = folder();
-  const r = stallRun(dir, 'for i in 1 2 3 4 5 6; do echo tick $i; sleep 0.2; done; exit 3', 600);
+  // 0670: a stall limit well above the 0.2 s between ticks, as on a busy machine one gap took over 0.6 s.
+  const r = stallRun(dir, 'for i in 1 2 3 4 5 6; do echo tick $i; sleep 0.2; done; exit 3', 5000);
   assert.equal(await r.exit, 3);
   assert.equal(r.ended(), '3');
   assert.doesNotMatch(r.out(), /stalled/);

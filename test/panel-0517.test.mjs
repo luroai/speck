@@ -1,6 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import os from 'node:os';
 import { T, panelRepo, fm, good, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
 import { board, lane, pad, swipe, slidingPage } from './support/lanes.mjs';
 
@@ -129,7 +130,8 @@ test('0517 AC3: a redraw held by a slide a finger catches is made once the finge
 // frame of its slide, laid out, the first change (which lays the cards out for the first time) included. The time
 // depends on how busy the machine is, so the test also checks what ran in that frame: the page's redraw (which starts
 // by working out the board, panelModel) and the buttons' measuring (wholeButtons) didn't, and both ran once the card was
-// at rest. Before 0517 both ran in that frame.
+// at rest. Before 0517 both ran in that frame. 0670: the 50 ms limit holds on a machine with a core to spare, and grows
+// with the machine's load past one process per core, as at a load of 50 on 16 cores the first frame took 129 ms.
 test('0517 AC3: in a real browser with 500 shipped tickets, a slide\'s first frame comes within 50 ms of the lane change, with no redraw in it', skip, async () => {
   const r = panelRepo();
   for (let n = 0; n < 500; n++) r.write(`${2000 + n}-done.md`, fm({ id: `"${2000 + n}"`, title: `Shipped ticket ${n}`, status: 'done' }), good, 'speck/tickets/done');
@@ -156,7 +158,8 @@ test('0517 AC3: in a real browser with 500 shipped tickets, a slide\'s first fra
       const early = await b.js(`work.filter(([, t]) => t <= ${t1}).map(([n, t]) => n + ' at ' + Math.round(t - ${t0}) + ' ms')`);
       assert.deepEqual(early, [], `to ${to}: nothing redrawn or measured before the slide's first frame was laid out (${Math.round(t1 - t0)} ms)`);
     }
-    assert.ok(times.every(t => t <= 50), `each slide's first frame within 50 ms of the lane change, the first included: ${times.join(', ')} ms`);
+    const limit = Math.round(50 * Math.max(1, os.loadavg()[0] / os.cpus().length));
+    assert.ok(times.every(t => t <= limit), `each slide's first frame within ${limit} ms of the lane change (50 ms at a load of one per core), the first included: ${times.join(', ')} ms`);
   } finally { await b.close(); await stop(panel); }
 });
 const LANE_IDS = { plan: 'shaping-section', build: 'build-section', shipped: 'shipped-section' };

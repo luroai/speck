@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { ROOT, CLI, env, UUID, runRepo, startRun, until, alive, killAll, stopRun, record, runOnce } from './support/run.mjs';
+import { ROOT, CLI, env, UUID, runRepo, startRun, until, BUSY_MS, alive, killAll, stopRun, record, runOnce } from './support/run.mjs';
 
 // ---------- 0043: build ready tickets automatically with speck run ----------
 
@@ -221,17 +221,20 @@ test('0043 AC4 (round 1 F1): a build that moved its ticket on in its own worktre
   }
 });
 
-// Starts several speck runs at the same moment and returns them once they've settled.
-async function race(dir, n, extraEnv = {}) {
+// Starts several speck runs at the same moment and returns them once they've settled: all but one have exited and the
+// one left has launched both tickets, or a busy machine's time limit has passed (0670: on one, 1.5 s wasn't enough for
+// the runs that lose to exit). The tests then check what was left.
+async function race(dir, n, calls, extraEnv = {}) {
   const runs = Array.from({ length: n }, () => startRun(dir, { FAKE_MS: '4000', ...extraEnv }));
-  await new Promise(res => setTimeout(res, 1500));
+  await until(() => runs.filter(x => x.child.exitCode !== null).length >= n - 1 && calls().length >= 2, BUSY_MS);
+  await new Promise(res => setTimeout(res, 300)); // a moment more, for a second runner that wrongly kept going to launch
   return runs;
 }
 
 test('0043 AC5 (round 1 F2): of several speck runs started at once, exactly one keeps running and launches', async () => {
   for (let round = 0; round < 3; round++) {
     const r = runRepo({ tickets: [['0001', {}], ['0002', {}]], max: 5 });
-    const runs = await race(r.dir, 6);
+    const runs = await race(r.dir, 6, r.calls);
     try {
       const live = runs.filter(x => x.child.exitCode === null);
       assert.equal(live.length, 1, runs.map(x => x.out()).join('\n---\n'));
@@ -248,7 +251,7 @@ test('0043 AC5 (round 1 F2): several speck runs taking over the same stale lock 
     const runs = path.join(r.dir, 'speck', '.cache', 'runs');
     fs.mkdirSync(runs, { recursive: true });
     fs.writeFileSync(path.join(runs, 'run.lock'), dead);
-    const racers = await race(r.dir, 6);
+    const racers = await race(r.dir, 6, r.calls);
     try {
       const live = racers.filter(x => x.child.exitCode === null);
       assert.equal(live.length, 1, racers.map(x => x.out()).join('\n---\n'));

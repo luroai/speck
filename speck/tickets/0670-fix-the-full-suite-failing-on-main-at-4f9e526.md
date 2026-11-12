@@ -48,6 +48,9 @@ The full suite passes on main again.
 <!-- Constraints, links and decisions. Optional. -->
 Failing before this build: the seven tests this ticket names (its own target, so they are the ones fixed here). Eighteen more failed in the full run at 4f9e526 but passed when their files ran again (0232 AC3, 0110 AC2, 0300 AC1 AC3, 0511 AC4, 0153 AC1 AC2, 0202 AC1 AC2, the other 0072 tests, 0217 AC3, 0233 AC1, 0271 AC3, 0109 AC1): chance failures, not changed here.
 Cause: the full run was on a machine at a load average of about 50 on 16 cores, and its retry ran all 13 failing files at once. Each of the seven waits a fixed or short time for a speck run to start, settle or exit, or measures a browser frame's timing. Run on their own, even with the load around 45, all seven pass.
+Fix: only tests change. The shared `until` in test/support/run.mjs now waits up to BUSY_MS (30 s) by default instead of 8 s; every use waits for something to happen, so it returns as soon as that holds and only a failing wait takes longer. 0043 AC5's `race` waits for the losing runs to exit and the winner to launch instead of a fixed 1.5 s, 0072 AC3 waits for speck run's line instead of a fixed 0.8 s, 0202 AC3's stall limit goes from 0.6 s to 5 s (still far above the 0.2 s between ticks, so a stall would still show), and 0517 AC3's 50 ms limit grows with the load past one process per core (unchanged on a machine with a core to spare). Its check that nothing is redrawn in the slide's first frame is unchanged.
+Self-check: the first version changed only the ticket's own `until` calls; the related run showed more tests in the same files failing on the 8 s default under load, so the default was raised instead and those single-call changes reverted.
+Pictures: none, because nothing anyone sees changes (only tests changed)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
