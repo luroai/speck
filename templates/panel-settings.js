@@ -932,7 +932,16 @@ function levelWords(l) {
 }
 // The choices the builder's own settings offer: its agents, and the efforts, each with blank as "settings".
 const rowChoices = key => { const r = settingRows().find(x => x.key === key); return r && Array.isArray(r.choices) ? r.choices.map(String).filter(c => c !== '') : []; };
-function levelControl(key, value, label, builder, save) {
+// The efforts a level running `builder` on `model` can take, as builder_effort offers them (settingChoices): those its
+// model lists, or every one its builder's models list when the model is blank or not listed, else speck's own. A level's
+// blank model is the settings' builder_model while its builder is the settings' builder.
+function levelEfforts(builder, model) {
+  const a = yourModels() !== null ? yourAgent(builder) : null, models = a === null ? [] : agentModelsOf(a).filter(m => Array.isArray(m.efforts));
+  const slug = model || (builder === (settingSaved('builder') || 'claude') ? settingSaved('builder_model') : ''), m = models.find(x => x.slug === slug);
+  const listed = [...new Set((m ? [m] : models).flatMap(x => x.efforts.filter(e => typeof e === 'string' && e)))];
+  return listed.length ? listed : rowChoices('builder_effort');
+}
+function levelControl(key, value, label, builder, save, model = '') {
   let c, list = null;
   if (key === 'builder_model') { // typed, with the level's builder's models offered
     c = el('input', 'edit');
@@ -949,7 +958,7 @@ function levelControl(key, value, label, builder, save) {
     }
   } else {
     c = el('select', 'edit');
-    const choices = [...new Set([...rowChoices(key), ...(value ? [value] : [])])];
+    const choices = [...new Set([...(key === 'builder_effort' ? levelEfforts(builder, model) : rowChoices(key)), ...(value ? [value] : [])])];
     for (const v of ['', ...choices]) { const o = el('option', null, v === '' ? 'settings' : key === 'builder' ? agentLabel(v) : v); o.value = v; c.appendChild(o); }
     c.value = value;
   }
@@ -980,7 +989,7 @@ function drawLevels() {
       const row = el('div', 'arow level', null,
         el('div', 'row', null, el('span', 'label', null, el('span', 'name', levelTitle(l.name))), el('div', 'control', null, remove)),
         el('p', 'lsum', levelWords(l)),
-        el('div', 'lvals', null, ...LEVEL_KEYS.flatMap(k => levelControl(k, String(l[k] ?? ''), `${l.name} ${k}`, levelBuilder(l), v => levelAction(l.name, 'set', { [k]: v })))));
+        el('div', 'lvals', null, ...LEVEL_KEYS.flatMap(k => levelControl(k, String(l[k] ?? ''), `${l.name} ${k}`, levelBuilder(l), v => levelAction(l.name, 'set', { [k]: v }), l.builder_model))));
       row.setAttribute('data-level', l.name);
       kids.push(row);
     }
@@ -996,7 +1005,7 @@ function drawLevels() {
     add.disabled = levelsBusy;
     const adding = el('div', 'arow level adding', null,
       el('div', 'row', null, el('span', 'label', null, el('span', 'name', 'Add a level')), el('div', 'control', null, add)),
-      el('div', 'lvals', null, name, ...LEVEL_KEYS.flatMap(k => levelControl(k, f[k], `new-level ${k}`, f.builder || settingSaved('builder') || 'claude', v => { f[k] = v; if (k === 'builder') drawLevels(); }))));
+      el('div', 'lvals', null, name, ...LEVEL_KEYS.flatMap(k => levelControl(k, f[k], `new-level ${k}`, f.builder || settingSaved('builder') || 'claude', v => { f[k] = v; if (k !== 'builder_effort') drawLevels(); }, f.builder_model))));
     kids.push(adding);
   }
   if (levelsSaid !== null) kids.push(el('div', 'arow note', null, el('p', levelsSaid.bad ? 'bad' : 'said', levelsSaid.text)));

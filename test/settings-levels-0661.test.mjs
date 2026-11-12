@@ -89,6 +89,24 @@ test('0661 AC2: a level\'s builder, model and effort offer the builder\'s own ch
   assert.deepEqual(p.all(list).filter(n => n.tagName === 'option').map(o => o.value), CLAUDE_MODELS.map(m => m.slug));
 });
 
+test('0661 AC2: a level\'s efforts are those its builder\'s model lists, as the builder\'s own effort offers them', async () => {
+  const r = repoWith('  graphics:\n    builder: codex\n    builder_model: gpt-x\n  wide:\n    builder: codex\n  quick:\n    builder_effort: low');
+  const models = structuredClone(AGENT_MODELS);
+  models[1].models.push({ slug: 'gpt-x', display_name: 'GPT-X', description: null, efforts: ['low', 'ultra'] });
+  const view = { ...panelSettings(r.dir), your_agents: YOURS_VIEW(), agent_models: models };
+  const p = agentsPage(view, { 'GET /api/usage': { agents: [] } });
+  await openSettings(p);
+  const options = label => p.all(controlIn(p, label)).filter(n => n.tagName === 'option').map(o => o.value);
+  assert.deepEqual(options('graphics builder_effort'), ['', 'low', 'ultra'], 'its model\'s, ultra included');
+  assert.deepEqual(options('wide builder_effort'), ['', 'low', 'high', 'ultra'], 'a blank model: every one its builder\'s models list');
+  // The add form follows the builder and model picked there.
+  pick(p, 'new-level builder', 'codex');
+  const model = controlIn(p, 'new-level builder_model');
+  model.value = 'gpt-6.1-sol';
+  model.listeners.change({ target: model });
+  assert.deepEqual(options('new-level builder_effort'), ['', 'low', 'high']);
+});
+
 test('0661 AC2: changing a level saves it to that level in speck/config.yml, and the next build at that level uses it', async () => {
   const r = repoWith('  quick:\n    builder_effort: low\n  deep:\n    builder_effort: max');
   const was = commits(r), before = cfgText(r.dir);
