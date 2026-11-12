@@ -1,7 +1,7 @@
 ---
 id: "0665"
 title: "Prepare release 1.3.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T16:12:50.872Z"
 approved: "2026-11-12T16:17:02.630Z"
+finished: "2026-11-12T16:19:31.898Z"
 
 ---
 # 0665 · Prepare release 1.3.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 1.3, "Picks the crew", lets each ticket build on its own model and effort, adds build levels you set on the team page and pick per ticket, and has speck fix main itself when the full suite fails (0656 to 0663). Anyone following the setup prompt, or updating speck in a project, still gets 1.2.0.
