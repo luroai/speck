@@ -1,7 +1,7 @@
 ---
 id: "0659"
 title: Build each ticket on the builder settings it names                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-11-choose-the-builder-s-model-per-ticket.md"  
 after: []                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T11:07:53.378Z"
+approved: "2026-11-12T11:20:13.006Z"
 
 ---
 # 0659 · Build each ticket on the builder settings it names
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `builder_model` and `builder_effort` in `speck/config.yml` apply to every build, so a project can't build one ticket on one model and the next on another. Someone whose tickets need different strengths, such as a game with graphics tickets for one model and logic tickets for another, has to change the setting by hand between builds.
@@ -56,9 +57,15 @@ Each ticket can now name the model and the effort its builds run on, so one tick
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Stand-in suppression lasts only for the initial launch.; F2 AC5's brief requirement has no automated coverage, although it states setting facts and is not marked as checked by review.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 378,081
+- Elapsed since build started: 12 min
+- Changed lines: 130 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox notes):
   - When a stand-in on builder_bench is recorded as the ticket's builder, the ticket's own builder_model and builder_effort are cleared rather than kept for when it goes back to its first builder, as `builder:` itself is overwritten. Restoring both after the limit resets would need its own ticket if wanted.
