@@ -5,6 +5,16 @@ branch_prefix: speck/
 
 builder: claude
 builder_model: ""                # blank: the builder's own default. Otherwise the model every build speck run starts runs on, passed to Claude Code as --model (fable, opus, sonnet, haiku or a full model name), or to Codex as -m or Cursor as --model when build_command is blank (Cursor: auto when this is blank)
+
+# Build levels: a ticket's level: names one. Each of builder, builder_model and builder_effort the ticket leaves blank
+# comes from its level, and each the level leaves out from the settings above.
+levels:
+  quick:
+    builder_effort: low
+  balanced: {}
+  deep:
+    builder_effort: max
+
 reviewer: codex                  # codex | claude | claude-subagent
 allow_same_model_review: false   # must be true for a builder and reviewer of the same family unless builder_model and reviewer_model are both set and differ
 reviewer_model: ""               # blank: the reviewer's own default. Otherwise a model name in the reviewer's own format

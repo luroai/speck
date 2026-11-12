@@ -6,6 +6,7 @@
 import { findProvider, providerLabel } from './providers.mjs';
 import { knownProviders } from './custom-providers.mjs';
 import { ticketAgents } from './core.mjs';
+import { levelled } from './levels.mjs';
 
 // The build_command that starts Claude Code builds, as speck/config.yml has it when speck sets it up.
 export const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
@@ -49,8 +50,9 @@ export const providerBuilds = (cfg, providers = knownProviders()) => {
 // 0545: the model a ticket's builds run on, as far as speck knows it, for the board's builder_model: builder_model,
 // given only to the builder speck/config.yml names (0312), to Claude Code always and to Codex and Cursor when speck
 // starts their builds itself, or, for a model provider, the one speck uses from it. null when the agent picks its own.
-// 0659: the ticket's own builder_model when it sets one.
+// 0659: the ticket's own builder_model when it sets one. 0660: or else its level's.
 export function ticketBuilderModel(fm, cfg, providers = knownProviders()) {
+  fm = levelled(fm, cfg);
   const builder = ticketAgents(fm, cfg).builder, mine = buildConfig(cfg, builder, fm).builder_model;
   const own = buildsEachTicket(cfg?.build_command ?? '');
   const p = findProvider(builder, providers);
