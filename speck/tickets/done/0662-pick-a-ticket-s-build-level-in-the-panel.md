@@ -1,7 +1,7 @@
 ---
 id: "0662"
 title: "Pick a ticket's build level in the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ after: ["0660"]                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-12T12:09:58.743Z"
 approved: "2026-11-12T12:49:07.710Z"
+finished: "2026-11-12T12:56:19.295Z"
 
 ---
 # 0662 · Pick a ticket's build level in the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 After 0660, giving a ticket a level means `speck set` or editing the ticket. From the panel on your phone you can already change a ticket's priority, but not the level it's built at.
