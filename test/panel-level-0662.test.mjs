@@ -46,10 +46,10 @@ const posts = p => p.calls.filter(c => c.opts && c.opts.method === 'POST').map(c
 const planCard = (p, id) => items(p).find(n => idOf(p, n) === id);
 async function openCard(p, id) { p.press(top(planCard(p, id))); await p.settle(); return planCard(p, id); }
 
-test('0662 AC1: an open Plan card shows Level beside Priority, "Settings" when the ticket has none', async () => {
+test('0662 AC1: an open Plan card shows Level beside Priority, "Default" (0667) when the ticket has none', async () => {
   const p = boardPage([board([T('0701', 'draft'), T('0702', 'draft', { level: 'deep' })])]);
   await p.settle();
-  for (const [id, shown] of [['0701', 'Settings'], ['0702', 'Deep']]) {
+  for (const [id, shown] of [['0701', 'Default'], ['0702', 'Deep']]) {
     const card = await openCard(p, id);
     const l = labels(p, card);
     assert.equal(l[l.indexOf('Priority') + 1], 'Level', l.join(', '));
@@ -60,7 +60,7 @@ test('0662 AC1: an open Plan card shows Level beside Priority, "Settings" when t
 test('0662 AC1: the full view shows Level beside Priority, for a ticket in the queue and one that has shipped', async () => {
   const p = boardPage([board([T('0802', 'ready', { level: 'quick' }), T('0901', 'done', { ...IN_FLIGHT, finished: new Date().toISOString(), rounds: [round(1, 10)], level: '' })])]);
   await p.settle();
-  for (const [id, shown] of [['0802', 'Quick'], ['0901', 'Settings']]) {
+  for (const [id, shown] of [['0802', 'Quick'], ['0901', 'Default']]) {
     await open(p, id);
     const l = labels(p, pane(p));
     assert.equal(l[l.indexOf('Priority') + 1], 'Level', `${id}: ${l.join(', ')}`);
@@ -69,7 +69,7 @@ test('0662 AC1: the full view shows Level beside Priority, for a ticket in the q
   }
 });
 
-test('0662 AC2: choosing Level offers each of the project\'s levels and Settings, and picking one sets it without a reload', async () => {
+test('0662 AC2: choosing Level offers each of the project\'s levels and Default (0667), and picking one sets it without a reload', async () => {
   const p = levelPage(board([T('0701', 'draft', { level: '' })], { levels: ['quick', 'balanced', 'deep', 'max-2'] }), { status: 200, body: { ok: true, id: '0701' } });
   await p.settle();
   let card = await openCard(p, '0701');
@@ -77,8 +77,8 @@ test('0662 AC2: choosing Level offers each of the project\'s levels and Settings
   await p.settle();
   card = planCard(p, '0701');
   const menu = levelMenu(p, card);
-  assert.deepEqual(menu.children.map(b => b.textContent), ['Quick', 'Balanced', 'Deep', 'Max-2', 'Settings']);
-  assert.match(menu.children[4].className, /\bon\b/, 'Settings is marked, as the ticket has no level');
+  assert.deepEqual(menu.children.map(b => b.textContent), ['Quick', 'Balanced', 'Deep', 'Max-2', 'Default', 'Change levels']); // 0667: and Change levels
+  assert.match(menu.children[4].className, /\bon\b/, 'Default is marked, as the ticket has no level');
   p.press(menu.children[2]);
   await p.settle();
   assert.ok(posts(p).some(u => /\/api\/tickets\/0701\/level\/deep$/.test(u)), posts(p).join(', '));
@@ -86,7 +86,7 @@ test('0662 AC2: choosing Level offers each of the project\'s levels and Settings
   assert.equal(levelMenu(p, planCard(p, '0701')), undefined, 'and the menu has closed');
 });
 
-test('0662 AC2: picking Settings blanks the level', async () => {
+test('0662 AC2: picking Default (0667) blanks the level', async () => {
   const p = levelPage(board([T('0802', 'ready', { level: 'deep' })]), { status: 200, body: { ok: true, id: '0802' } });
   await p.settle();
   await open(p, '0802');
@@ -94,10 +94,10 @@ test('0662 AC2: picking Settings blanks the level', async () => {
   await p.settle();
   const menu = levelMenu(p, pane(p));
   assert.match(menu.children[2].className, /\bon\b/, 'Deep is marked');
-  p.press(menu.children.find(b => b.textContent === 'Settings'));
+  p.press(menu.children.find(b => b.textContent === 'Default'));
   await p.settle();
   assert.ok(posts(p).some(u => /\/api\/tickets\/0802\/level\/$/.test(u)), posts(p).join(', '));
-  assert.equal(levelCell(p, pane(p)).children[1].textContent, 'Settings');
+  assert.equal(levelCell(p, pane(p)).children[1].textContent, 'Default');
 });
 
 test('0662 AC3: a refusal shows its message and the ticket keeps its level', async () => {
@@ -134,7 +134,7 @@ test('0662 AC2: the board lists the project\'s levels, in the order speck/config
   assert.deepEqual(statusData(r.dir).levels, LEVELS);
 });
 
-test('0662 AC2: the server sets the ticket\'s level, and Settings blanks it, each committed', () => {
+test('0662 AC2: the server sets the ticket\'s level, and Default blanks it, each committed', () => {
   const r = panelRepo({ prefix: 'speck-0662-' });
   const out = panelSetLevel(r.dir, '1', 'deep');
   assert.equal(out.status, 200, JSON.stringify(out.body));

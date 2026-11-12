@@ -58,6 +58,7 @@
   #settings .member p.limit { margin: 6px 0 0; color: var(--needs-you-text); }
   #settings .member p.limit[hidden] { display: none; }
   #settings .member .levels { margin-top: 8px; border-top: 1px solid var(--line); } /* 0661: the builder's build levels */
+  #settings .member .levels { scroll-margin-top: calc(72px + env(safe-area-inset-top)); } /* 0667: scrolled to from a ticket's Level menu, clear of the sticky top */
   #settings .levels p.lhead { color: var(--text); font-weight: 600; }
   #settings .levels .lvals { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; }
   /* 0666: each level's name over its labelled lists, Builder and Effort side by side where there's room, its Remove a

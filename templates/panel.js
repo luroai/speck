@@ -257,10 +257,16 @@ function priorityPicker(t, tag) {
   box.appendChild(menu);
   return box;
 }
-// 0662: a ticket's build level as its facts show it: its name with a capital first letter, or Settings when it has none.
+// 0662: a ticket's build level as its facts show it: its name with a capital first letter, or Default (0667) when it has none.
 const levelOf = t => (typeof t.level === 'string' || typeof t.level === 'number' ? String(t.level).trim() : '');
-const levelName = v => (v ? `${v[0].toUpperCase()}${v.slice(1)}` : 'Settings');
-// 0662: its Level fact, which opens a menu of the project's levels and Settings, as its priority does, unless it's done
+const levelName = v => (v ? `${v[0].toUpperCase()}${v.slice(1)}` : 'Default');
+// 0667: what level `name` builds with, as the board works it out, such as "Claude Code · Fable · high", or null when the
+// board doesn't say.
+function levelBuildWords(name) {
+  const b = list(state && state.level_builds).find(x => x && x.name === name && typeof x.agent === 'string' && x.agent);
+  return b ? `${b.agent} · ${b.model || 'default model'} · ${b.effort || 'default effort'}` : null;
+}
+// 0662: its Level fact, which opens a menu of the project's levels and Default, as its priority does, unless it's done
 // or cancelled. A refusal shows in it until the next click on it.
 function levelFact(t) {
   const id = String(t.id), shown = levelName(levelOf(t));
@@ -286,11 +292,17 @@ function levelPicker(t, tag) {
   if (levelMenu !== id) return box;
   const menu = el('span', 'prio-menu level-menu'); // a prio-menu, so a click outside it only closes it
   for (const name of [...list(state && state.levels).map(String), '']) {
-    const b = el('button', levelOf(t) === name ? 'on' : null, levelName(name));
+    const words = levelBuildWords(name); // 0667: under its name, what it builds with
+    const b = el('button', levelOf(t) === name ? 'on' : null, null, el('span', 'lname', levelName(name)), words ? el('span', 'lbuild', words) : null);
     b.type = 'button';
     b.addEventListener('click', e => { e.stopPropagation(); setLevel(id, name); });
     menu.appendChild(b);
   }
+  // 0667: last, the way to where levels are set: Settings, at the Builder's Build levels. The ticket's level stays.
+  const change = el('button', 'level-change', 'Change levels');
+  change.type = 'button';
+  change.addEventListener('click', e => { e.stopPropagation(); levelMenu = null; render(); openSettings({ to: 'levels' }); });
+  menu.appendChild(change);
   box.appendChild(menu);
   return box;
 }

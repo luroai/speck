@@ -44,6 +44,7 @@ A ticket's Level menu says what each choice builds with and leads to where level
 - The board gives the page `levels` as names only (`scripts/panel.mjs`), so it needs each level's resolved builder, model and effort too. `ticketBuilderModel` in `scripts/build-model.mjs` and 0660's level resolution already work them out.
 - Use the same "Default" word as 0666, and the Builder's agent and model names as the Builder's row shows them.
 - Failing before this build: none
+- Self-check: a board whose level_builds is missing or has odd entries now shows only each level's name (test added); taking pictures showed the chosen level's underline running under its builder line and Build levels landing under Settings' sticky top bar, both fixed in the CSS.
 - speck (2026-11-12 21:39 UTC) told you: The build is slow, not stuck. Most of the time went on the related tests: 183 test files, over 2,100 tests, took about 8.5 minutes on a machine with a load near 50. Nine tests that start real panels or builds timed out under that load, and the build reran them alone, where they passed, which took about 2.5 more minutes. It then took light and dark screenshots, made two small style fixes and is rerunning the affected tests, where two more panels timed out while starting. Nothing points to a broken test on main. Why: The build's test output shows the related run took 505 seconds with 9 timing failures that all passed when rerun alone, and the latest failures are panel-start timeouts, the kind a load average of 45 to 57 causes.
 
 ## In plain words
