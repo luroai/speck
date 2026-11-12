@@ -118,14 +118,16 @@ export function startRun(dir, extraEnv = {}, cli = CLI) {
   const exited = new Promise(res => child.on('exit', code => res(code)));
   return { child, out: () => out, exited };
 }
-export const until = async (cond, ms = 8000) => {
+// 0559: how long a test of speck run's switch waits for a process to start, ship, switch or stop. On a busy machine,
+// loading speck's code takes seconds and a ship took 16 (0541), so it counts on none of them happening quickly.
+export const BUSY_MS = 30000;
+// Waits up to `ms` for `cond`, and says whether it held. 0670: by default as long as a busy machine needs, as at a load of
+// 50 on 16 cores a speck run took over 8 s to resume a build and see it exit. It returns as soon as `cond` holds.
+export const until = async (cond, ms = BUSY_MS) => {
   const end = Date.now() + ms;
   while (Date.now() < end) { if (await cond()) return true; await new Promise(r => setTimeout(r, 50)); }
   return false;
 };
-// 0559: how long a test of speck run's switch waits for a process to start, ship, switch or stop. On a busy machine,
-// loading speck's code takes seconds and a ship took 16 (0541), so it counts on none of them happening quickly.
-export const BUSY_MS = 30000;
 // Waits up to `ms` for `cond`, and fails the test saying what it waited for, with `out()`'s output, if it never holds.
 export const waitFor = async (cond, what, out = () => '', ms = BUSY_MS) => {
   if (!(await until(cond, ms))) assert.fail(`waited ${ms / 1000} s for ${what}, and it didn't happen.\n${out()}`);

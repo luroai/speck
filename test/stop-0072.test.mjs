@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { CLI, env, startRun, until, alive, stopRun, record } from './support/run.mjs';
+import { CLI, env, startRun, until, waitFor, alive, stopRun, record } from './support/run.mjs';
 import { wait, runsPath, speck, size, json, state, tickerRepo, launched, growing, cleanup, failingPs, speckWith } from './support/ticker.mjs';
 import { hasStopped } from './support/stopped.mjs';
 
@@ -228,9 +228,10 @@ describe('0072: stop a running build from the CLI', { concurrency: true }, () =>
         assert.match(ticketIn(t.dir), /^status: ready\b/m, 'the ticket is still ready');
         await stopRun(run);
         run = startRun(t.dir);
+        // 0670: waits for it to say so, as on a busy machine it had printed nothing 0.8 s after starting.
+        await waitFor(() => /0001[^\n]*speck stop[^\n]*won't launch it again/.test(run.out()), 'speck run to say it won\'t launch 0001 again', run.out);
         await wait(800);
         assert.doesNotMatch(run.out(), /Launched 0001/, run.out());
-        assert.match(run.out(), /0001[^\n]*speck stop[^\n]*won't launch it again/);
         await stopRun(run);
         fs.rmSync(hook);
         // Committed again at once, within the same second as the stop, and dated earlier than the future commit.
