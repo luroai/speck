@@ -40,6 +40,10 @@ The full suite passes on main again.
 
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
+Failing before this build: 0182 AC3: Chromium has closed within 10 s of a test file finishing that ran out of time under --test-timeout; 0277 AC1–AC5 (this ticket's own target, so it is the one fixed here)
+Cause: 0661 added the build levels to the team section, which made the Settings view taller than the test's 2400 px window at 320 px. The Shipping group's info buttons then sat below the window, where `elementFromPoint` finds nothing, so the 24 by 24 px target check failed. The layout itself is unchanged and fine; the test now scrolls each row into view before hit-testing it.
+Self-check: no changes
+Pictures: none, because nothing anyone sees changes (only a test changed)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
