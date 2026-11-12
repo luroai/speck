@@ -60,6 +60,18 @@
   #settings .member .levels { margin-top: 8px; border-top: 1px solid var(--line); } /* 0661: the builder's build levels */
   #settings .levels p.lhead { color: var(--text); font-weight: 600; }
   #settings .levels .lvals { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; }
+  /* 0666: each level's name over its labelled lists, Builder and Effort side by side where there's room, its Remove a
+     small text button beside the name; Add a level's button after its fields */
+  #settings .levels .ltop { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+  #settings .levels .ltop .name { min-width: 0; overflow-wrap: anywhere; font-size: 14px; font-weight: 600; }
+  #settings .levels .lvals { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18ch), 1fr)); gap: 6px 12px; margin-top: 6px; }
+  #settings .levels .lfield { display: grid; gap: 2px; min-width: 0; color: var(--muted); }
+  #settings .levels .lfield .edit { box-sizing: border-box; width: 100%; }
+  #settings .levels .lfield .ltext { font-size: 12px; }
+  #settings .levels .ladd { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+  #settings .levels .ltextbtn { padding: 0; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  #settings .levels .ltextbtn:hover, #settings .levels .ltextbtn:focus-visible { color: var(--text); }
+  #settings .levels .ltextbtn:disabled { cursor: default; opacity: .6; }
   #settings .setting .setting { position: static; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; flex: 1 1 14ch; min-width: 0; max-width: 100%; }
   #settings .setting .setting .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; max-width: 100%; }
   #settings .setting .setting .list { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; } /* its info button kept beside it */

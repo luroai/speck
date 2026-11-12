@@ -919,55 +919,82 @@ function memberCard(m, rows) {
   return card;
 }
 // 0661: the builder's card's build levels, in the order speck/config.yml gives them, each with its builder, model and
-// effort, "settings" for one it leaves out. Each change, addition or removal is saved to speck/config.yml at once, by
-// itself, rather than with Save, and the server answers with the levels as they are then.
+// effort. Each change, addition or removal is saved to speck/config.yml at once, by itself, rather than with Save, and
+// the server answers with the levels as they are then. 0666: each level picks its builder and model from the Builder's
+// own list, and its effort from the efforts they offer, with Default first for the Builder's own.
 const LEVEL_KEYS = ['builder', 'builder_model', 'builder_effort'];
 const levelsNow = () => { const v = settingsView !== null ? settingsView.levels : null; return v && Array.isArray(v.levels) ? v : null; };
 const levelTitle = n => n.charAt(0).toUpperCase() + n.slice(1);
-// The builder a level runs on, as speck works it out: its own, or the settings' as saved.
+// The builder a level runs on, as speck works it out: its own, or the Builder's as saved.
 const levelBuilder = l => (l.builder || settingSaved('builder') || 'claude');
-function levelWords(l) {
-  const a = yourAgent(levelBuilder(l)), m = l.builder_model && a !== null ? agentModelsOf(a).find(x => x.slug === l.builder_model) : undefined;
-  return `Builder: ${l.builder ? agentLabel(l.builder) : 'settings'} · Model: ${l.builder_model ? (m ? modelLabel(m) : l.builder_model) : 'settings'} · Effort: ${l.builder_effort || 'settings'}`;
-}
-// The choices the builder's own settings offer: its agents, and the efforts, each with blank as "settings".
+// The choices the builder's own settings offer: its agents, or its efforts, leaving out blank.
 const rowChoices = key => { const r = settingRows().find(x => x.key === key); return r && Array.isArray(r.choices) ? r.choices.map(String).filter(c => c !== '') : []; };
 // The efforts a level running `builder` on `model` can take, as builder_effort offers them (settingChoices): those its
 // model lists, or every one its builder's models list when the model is blank or not listed, else speck's own. A level's
-// blank model is the settings' builder_model while its builder is the settings' builder.
+// blank model is the Builder's builder_model while its builder is the Builder's.
 function levelEfforts(builder, model) {
   const a = yourModels() !== null ? yourAgent(builder) : null, models = a === null ? [] : agentModelsOf(a).filter(m => Array.isArray(m.efforts));
   const slug = model || (builder === (settingSaved('builder') || 'claude') ? settingSaved('builder_model') : ''), m = models.find(x => x.slug === slug);
   const listed = [...new Set((m ? [m] : models).flatMap(x => x.efforts.filter(e => typeof e === 'string' && e)))];
   return listed.length ? listed : rowChoices('builder_effort');
 }
-function levelControl(key, value, label, builder, save, model = '') {
-  let c, list = null;
-  if (key === 'builder_model') { // typed, with the level's builder's models offered
-    c = el('input', 'edit');
-    c.type = 'text';
-    c.value = value;
-    c.placeholder = 'settings';
-    const a = yourAgent(builder), models = a !== null ? agentModelsOf(a) : [];
-    if (models.length) {
-      const id = `levels-${label.replace(/[^a-z0-9-]/gi, '-')}`;
-      list = el('datalist');
-      list.id = id;
-      for (const m of models) { const o = el('option', null, modelLabel(m)); o.value = m.slug; list.appendChild(o); }
-      c.setAttribute('list', id);
+// The Builder's own entries, "<agent>|<model>" each, as its list offers them; without your agents' models, each of its
+// agents on its own default.
+function levelEntries() {
+  if (yourModels() !== null) return roleEntries('builder');
+  return rowChoices('builder').map(b => ({ group: null, value: `${b}|`, label: builderName(b) }));
+}
+// The Builder's agent and model as saved, in its list's words, such as "Claude Code · Opus", without " (default)".
+const levelDefaultWords = () => levelEntryWords(levelEntry(settingSaved('builder') || 'claude', settingSaved('builder_model'))).replace(/ \(default\)$/, '');
+// An entry in the Builder's list's words, or, for one it doesn't offer, as it's saved.
+function levelEntryWords(v) {
+  const e = levelEntries().find(x => x.value === v), at = v.indexOf('|');
+  return e ? e.label : yourModels() !== null ? roleWords('builder', v) : `${builderName(v.slice(0, at))}${at < v.length - 1 ? ` · ${v.slice(at + 1)}` : ''}`;
+}
+// A level's builder and model as one entry: '' for Default, its builder blank but a model named being the Builder's agent.
+function levelEntry(builder, model) {
+  if (!builder && !model) return '';
+  const v = `${builder || settingSaved('builder') || 'claude'}|${model}`;
+  return yourModels() !== null ? asEntry(v) : v;
+}
+// One labelled list: its visible label, and the list, which calls `save` with the value picked.
+function levelField(text, label, options, value, save) {
+  const c = el('select', 'edit');
+  let group = null, into = c;
+  for (const o of options) {
+    if ((o.group ?? null) !== group) {
+      group = o.group ?? null;
+      into = c;
+      if (group !== null) { into = el('optgroup'); into.label = group; c.appendChild(into); }
     }
-  } else {
-    c = el('select', 'edit');
-    const choices = [...new Set([...(key === 'builder_effort' ? levelEfforts(builder, model) : rowChoices(key)), ...(value ? [value] : [])])];
-    for (const v of ['', ...choices]) { const o = el('option', null, v === '' ? 'settings' : key === 'builder' ? agentLabel(v) : v); o.value = v; c.appendChild(o); }
-    c.value = value;
+    const opt = el('option', null, o.label);
+    opt.value = o.value;
+    into.appendChild(opt);
   }
+  c.value = value;
   c.setAttribute('aria-label', label);
   focusable(c, label);
-  c.addEventListener('change', () => save(String(c.value ?? '').trim()));
-  return list ? [c, list] : [c];
+  c.addEventListener('change', () => save(String(c.value ?? '')));
+  return el('label', 'lfield', null, el('span', 'ltext', text), c);
 }
-let levelsBox = null, levelsSaid = null, levelsBusy = false, levelForm = null; // the box; the last change's { text, bad }; a change on its way; Add a level's typed values
+// A level's Builder and Effort lists, for `l`'s builder, builder_model and builder_effort, labelled `who`.
+// `pick` is called with the values a choice sets.
+function levelFields(l, who, pick) {
+  const entries = levelEntries(), picked = levelEntry(l.builder, l.builder_model);
+  const builders = [{ value: '', label: `Default (${levelDefaultWords()})` },
+    ...(picked !== '' && !entries.some(e => e.value === picked) ? [{ value: picked, label: levelEntryWords(picked) }] : []), ...entries];
+  // The efforts of the model the level runs, as saved: an agent's default named by name stays that model.
+  const efforts = [...new Set([...levelEfforts(levelBuilder(l), l.builder_model || ''), ...(l.builder_effort ? [l.builder_effort] : [])])];
+  return [
+    levelField('Builder', `${who} builder`, builders, picked, v => {
+      const at = v.indexOf('|');
+      pick(at < 0 ? { builder: '', builder_model: '' } : { builder: v.slice(0, at), builder_model: v.slice(at + 1) });
+    }),
+    levelField('Effort', `${who} effort`, [{ value: '', label: `Default (${settingSaved('builder_effort') || 'the agent\'s own'})` }, ...efforts.map(e => ({ value: e, label: e }))],
+      l.builder_effort || '', v => pick({ builder_effort: v })),
+  ];
+}
+let levelsBox = null, levelsSaid = null, levelsBusy = false, levelForm = null; // the box; the last change's { text, bad }; a change on its way; Add a level's picked values
 function levelsGroup() {
   levelsBox = el('div', 'levels');
   drawLevels();
@@ -978,18 +1005,18 @@ function drawLevels() {
   if (box === null) return;
   const had = document.activeElement, was = had && within(had, box) && typeof had.getAttribute === 'function' ? had.getAttribute('data-focus') : null;
   const kids = [el('div', 'arow note', null, el('p', 'lhead', 'Build levels'),
-    el('p', null, 'A ticket that names a level is built with its builder, model and effort. Settings: the builder\'s own settings above.'))];
-  if (now === null) kids.push(el('div', 'arow note', null, el('p', null, 'speck panel didn\'t list the build levels. Close Settings and open it again.')));
+    el('p', null, 'A ticket that names a level is built with that level\'s builder and effort. Default: the Builder\'s own, above.'))];
+  if (now === null) kids.push(el('div', 'arow note', null, el('p', null, 'speck panel didn\'t list the build levels. Close this page and open it again.')));
   else {
-    if (now.defaults === true) kids.push(el('div', 'arow note', null, el('p', null, 'speck/config.yml has no levels yet, so these are speck\'s three. Your first change saves all three there.')));
+    if (now.defaults === true) kids.push(el('div', 'arow note', null, el('p', null, 'This project has no levels of its own yet, so these are speck\'s three. Your first change saves all three.')));
     for (const l of now.levels.filter(l => l && typeof l.name === 'string')) {
       const remove = agentButton('Remove', `remove-level:${l.name}`, () => levelAction(l.name, 'remove'));
+      remove.className = 'ltextbtn';
       remove.setAttribute('aria-label', `Remove the ${l.name} level`);
       remove.disabled = levelsBusy;
       const row = el('div', 'arow level', null,
-        el('div', 'row', null, el('span', 'label', null, el('span', 'name', levelTitle(l.name))), el('div', 'control', null, remove)),
-        el('p', 'lsum', levelWords(l)),
-        el('div', 'lvals', null, ...LEVEL_KEYS.flatMap(k => levelControl(k, String(l[k] ?? ''), `${l.name} ${k}`, levelBuilder(l), v => levelAction(l.name, 'set', { [k]: v }), l.builder_model))));
+        el('div', 'ltop', null, el('span', 'name', levelTitle(l.name)), remove),
+        el('div', 'lvals', null, ...levelFields(l, `${levelTitle(l.name)} level`, v => levelAction(l.name, 'set', v))));
       row.setAttribute('data-level', l.name);
       kids.push(row);
     }
@@ -997,15 +1024,16 @@ function drawLevels() {
     const name = el('input', 'edit');
     name.type = 'text';
     name.value = f.name;
-    name.placeholder = 'name, such as graphics';
+    name.placeholder = 'such as graphics';
     name.setAttribute('aria-label', 'New level name');
     focusable(name, 'new-level name');
     name.addEventListener('input', () => { f.name = String(name.value ?? ''); });
     const add = agentButton(levelsBusy ? 'Saving…' : 'Add level', 'add-level', () => levelAction(f.name.trim(), 'add', { builder: f.builder, builder_model: f.builder_model, builder_effort: f.builder_effort }));
     add.disabled = levelsBusy;
     const adding = el('div', 'arow level adding', null,
-      el('div', 'row', null, el('span', 'label', null, el('span', 'name', 'Add a level')), el('div', 'control', null, add)),
-      el('div', 'lvals', null, name, ...LEVEL_KEYS.flatMap(k => levelControl(k, f[k], `new-level ${k}`, f.builder || settingSaved('builder') || 'claude', v => { f[k] = v; if (k !== 'builder_effort') drawLevels(); }, f.builder_model))));
+      el('div', 'ltop', null, el('span', 'name', 'Add a level')),
+      el('div', 'lvals', null, el('label', 'lfield', null, el('span', 'ltext', 'Name'), name),
+        ...levelFields(f, 'New level', v => { Object.assign(f, v); drawLevels(); }), el('div', 'ladd', null, add)));
     kids.push(adding);
   }
   if (levelsSaid !== null) kids.push(el('div', 'arow note', null, el('p', levelsSaid.bad ? 'bad' : 'said', levelsSaid.text)));
@@ -1013,7 +1041,7 @@ function drawLevels() {
   const to = was !== null ? focusKeyed(box, was) : null;
   if (to && to.focus) to.focus({ preventScroll: true });
 }
-// Changes, adds or removes level `name`, with `values` its builder, builder_model and builder_effort, blank for settings.
+// Changes, adds or removes level `name`, with `values` its builder, builder_model and builder_effort, blank for the Builder's own.
 async function levelAction(name, action, values = {}) {
   if (levelsBusy) return;
   if (action === 'add' && !name) { levelsSaid = { text: 'Type the new level\'s name first.', bad: true }; drawLevels(); return; }
