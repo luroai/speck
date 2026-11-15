@@ -42,6 +42,10 @@ The test gives the same result every time, whether the cause was in the test or 
 ## Notes
 - Seen in 0670's related run.
 - Failing before this build: none
+- Cause (AC1): speck run labelling the build wrongly in a race. On starting, speck run prints "watching for ready tickets" and then reads the run records it finds (adoptEarlierBuilds), which said "is already being built" of every running build, ignoring the record's `seen` mark; only later checks (adoptSeen) read it. Under load the test, which writes 0002's record as soon as it sees that line, wrote it before that first read had listed the folder, so 0002 got the start-up label. A build started in a conversation and running when speck run starts got the same wrong label.
+- Fix: the start-up read labels a running build by its record (`adoptedAs`), as later checks do. `test/seen-builds-0690.test.mjs` writes the records before speck run starts, so the start-up read always finds them, and fails without the fix.
+- AC3 checked by hand: `node --test test/seen-builds-0319.test.mjs` passed 10 runs out of 10 with 16 busy loops on 16 cores (load average about 36). Not a suite test, as it takes minutes.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
