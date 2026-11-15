@@ -42,6 +42,7 @@ Each of these tests waits for what it checks, so they pass on a busy machine.
 
 ## Notes
 - From `speck/ideas/2026-11-08-steady-six-speck-run-timing-tests-under-load.md` and `speck/ideas/done/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md`. 0670 raised `until`'s default to 30 s, which steadied some of them; the ones left all passed in main's latest full run, so check each under load before changing it, and leave alone any that already holds up, saying so in Notes.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
