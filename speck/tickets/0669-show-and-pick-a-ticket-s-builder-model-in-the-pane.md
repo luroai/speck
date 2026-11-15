@@ -1,7 +1,7 @@
 ---
 id: "0669"
 title: "Choose a ticket's builder model in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-10-11-choose-the-builder-s-model-per-ticket.md"  
 after: ["0667"]                # ticket ids that must be done first
 created: 2026-11-12
 started: "2026-11-15T12:53:56.455Z"
+approved: "2026-11-15T13:11:53.089Z"
 
 ---
 # 0669 · Choose a ticket's builder model in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0659 a ticket can name its own builder and model, but only in the ticket file or with `speck set`. A draft or ready ticket in the panel doesn't say which builder, model and effort it will be built with, so you can't see what a level or the ticket's own model will do, or change it from your phone.
@@ -53,9 +54,14 @@ A ticket's facts in the panel now include Builder: the agent, model and effort i
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 496,306
+- Elapsed since build started: 18 min
+- Changed lines: 223 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Idea: show what a shipped ticket was really built with, rather than working it out from today's settings (speck/ideas/2026-11-15-show-what-a-shipped-ticket-was-built-with.md).
