@@ -15,7 +15,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0664","0672","0673","0674","0675","0676","0677","0678","0679","0680","0681","0682"]                # ticket ids that must be done first
+after: ["0672","0673","0674","0675","0676","0677","0678","0679","0680","0681","0682"]                # ticket ids that must be done first
 created: 2026-11-15
 
 ---
@@ -24,7 +24,7 @@ created: 2026-11-15
 **Status:** 📋 ready
 
 ## Problem
-Since 1.3.1, speck chains tickets only when one needs the other's work, can build a ticket on an approved one it waits for, re-reviews and re-tests only what changed, shares test turns across projects, skips full runs for note-only commits, carries on when it can't do an app check itself or when you let a build past the review limit, and sets several tickets ready with one command (0664, 0672 to 0682). Anyone following the setup prompt, or updating speck in a project, still gets 1.3.1.
+Since 1.3.1, speck chains tickets only when one needs the other's work, can build a ticket on an approved one it waits for, re-reviews and re-tests only what changed, shares test turns across projects, carries on when it can't do an app check itself or when you let a build past the review limit, and sets several tickets ready with one command (0672 to 0682). Anyone following the setup prompt, or updating speck in a project, still gets 1.3.1.
 
 ## Outcome
 speck is ready to be released as 1.4.0.
@@ -43,7 +43,7 @@ speck is ready to be released as 1.4.0.
 
 ## Notes
 - Asked for 2026-11-15: "Create a release ticket after it all. And set it ready too". A minor release, as the tickets add features.
-- Covers every ticket shipped since `v1.3.1`: 0664 and 0672 to 0682, which it waits for, the fix ticket 0683, and any other that ships before this is built. Fix tickets that only make this repo's own tests pass are left out of the changelog unless someone using speck would notice them.
+- Covers every ticket shipped since `v1.3.1`: 0672 to 0682, which it waits for, the fix ticket 0683, and any other that ships before this is built. Fix tickets that only make this repo's own tests pass are left out of the changelog unless someone using speck would notice them.
 - If one of them is cancelled rather than shipped, it's taken out of `after:` so this isn't held up, and left out of the changelog.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - After it ships, check that the `v1.4.0` tag and its GitHub release page appeared. If not: `gh release create v1.4.0 --target main --title "speck 1.4.0" --notes-file docs/releases/v1.4.0.md`.
