@@ -1,7 +1,7 @@
 ---
 id: "0684"
 title: "Prepare release 1.4.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0672","0673","0674","0675","0676","0677","0678","0679","0680","0681","0
 created: 2026-11-15
 started: "2026-11-15T20:10:04.519Z"
 approved: "2026-11-15T20:16:35.909Z"
+finished: "2026-11-15T20:19:11.453Z"
 
 ---
 # 0684 · Prepare release 1.4.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 1.3.1, speck chains tickets only when one needs the other's work, can build a ticket on an approved one it waits for, re-reviews and re-tests only what changed, shares test turns across projects, carries on when it can't do an app check itself or when you let a build past the review limit, and sets several tickets ready with one command (0672 to 0682). Anyone following the setup prompt, or updating speck in a project, still gets 1.3.1.
