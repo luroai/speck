@@ -49,7 +49,7 @@ A check by `speck run` reads only the tickets that have changed since its last c
 - Self-check: no changes. Checked a file that can't be parsed (cached with its error until it changes, test added), a step changing the ticket it was given (each caller gets its own copy, test added), a rewrite of the same size straight after (nanosecond times and the change time, test added), and a ticket moved to done/.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck run no longer reads every ticket again each time it looks at the board. It reads a ticket only when its file has changed, so an idle speck run uses less of the machine as the project's history grows. Nothing it does has changed: a ticket you set ready still starts on the next look, and a change to the settings still takes effect straight away. To see it, watch speck run's processor use with `top` while nothing is building: it should be lower than before. Keep an eye on it: speck run still reads every build's log and asks git about each ticket on every look, which is now most of what an idle run costs.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +59,9 @@ A check by `speck run` reads only the tickets that have changed since its last c
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - To the inbox: speck/ideas/2026-11-15-keep-speck-run-s-checks-from-re-reading-build-logs.md (a board still costs about 1.7 s of processor time on this repo, mostly build logs and git).
+  - Known limit: a ticket rewritten so that its size, inode and both of its times to the nanosecond are unchanged would be missed until it next changes. Only a filesystem with coarse times could do that.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -135,6 +138,84 @@ A check by `speck run` reads only the tickets that have changed since its last c
     ],
     "escalation_question": "",
     "summary": "The change avoids repeated reads in ordinary repositories, and the reported tests pass. However, its cache limit makes large repositories repeatedly read all their tickets again. Fix that limit before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "31108e9be38f22005fa722237bf79fda6e6ff24b",
+    "session": "continued",
+    "thread_id": "01a1dfbb-11ac-7353-9ecb-e62c12be2b38",
+    "builder_response": "- Tests run: test/run-reads-0682.test.mjs (with commands.checks).\n- F1: fixed. readTicket in scripts/core.mjs no longer clears the cache. Only parses of files that have gone are dropped: listTickets drops those in the folders it lists (speck/tickets/ and speck/tickets/done/) that aren't there any more, readTicket drops one whose stat fails, and the rest (such as a removed worktree's) are swept, by checking each still exists, once the map has grown by 1000 entries since it was last swept, so live entries are never dropped. New test `0682 AC1 and AC2 (round 1 F1)`: 10,501 ticket files, listed four times, read once; then 1,500 moved to speck/tickets/ (read once each) and removed, after which repeated lists read nothing. It fails without the fix.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 234211,
+      "cached_input_tokens": 185600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1657,
+      "reasoning_output_tokens": 99
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4652,
+      "cached": 90240,
+      "write": 0,
+      "output": 584
+    },
+    "cost_usd": 0.024168,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T15:05:24.558Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/core.mjs readTicket retains unchanged parses using file metadata; listTickets discovers additions, removals and moves. Passing AC1 tests cover main-checkout and worktree changes, parse errors and unchanged files. The new 10,501-file regression confirms live entries survive cache maintenance."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "listTickets and findTicket share readTicket's cache. Passing AC2 tests exercise repeated statusData, ticketShown, listTickets and findTicket calls. The new large-repository regression verifies repeated lists cause no additional reads."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC3 integration test exercises starting newly ready tickets after idle checks and applying changed configuration. run.mjs scheduling remains unchanged; statusData still reloads configuration and recomputes runtime information. Existing run-0047 and run-0193 tests cover ended builds and shipping."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Round 2 reports 151 passed, zero failed and three skipped, including all eight ticket tests. Existing tests were not weakened. Previously reported failures passed on the round 1 rerun."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/core.mjs",
+        "issue": "The previous wholesale cache eviction caused unchanged tickets to be reread once the cache reached 10,000 entries.",
+        "suggested_fix": "Implemented: retain live entries and prune missing paths. A passing 10,501-file regression covers repeated reads, moves and removals.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Unchanged tickets now keep their cached results even in large repositories. Changed tickets are picked up promptly, and scheduling remains unchanged. The earlier cache-limit problem is fixed, all reported checks pass, and no blocking concerns remain."
   }
 }
 ```
