@@ -21,6 +21,8 @@ export const GRACE_MS = 60000; // how long after the reset time it carries on
 export const RETRY_MS = 30 * 60000; // how long it waits when the log gives no reset time it can use
 export const FURTHEST_MS = 31 * 864e5; // no limit lasts this long, so a reset time further off is misread
 const IN_HAND = ['ready', 'building', 'reviewing']; // a ticket whose build has more to do
+// 0691: or an approved one whose build speck run handed it back to, after a ship it started was refused.
+const inHand = (status, rec) => IN_HAND.includes(status) || (status === 'approved' && typeof rec?.handed_back === 'string' && Number.isFinite(Date.parse(rec.handed_back)));
 
 const LIMIT_WORDS = /hit your .*limit|usage limit/i;
 const refusedText = e => (e.type === 'assistant' && e.api_error === 'usage_limit_reached')
@@ -133,7 +135,7 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
     reached(agent, s, hit);
     let status = null;
     try { status = statusOf(id); } catch { /* unreadable: left as any other stop */ }
-    const waits = IN_HAND.includes(status);
+    const waits = inHand(status, rec);
     if (waits && !s.builds.includes(id)) s.builds = [...s.builds, id];
     if (!save(agent, s)) return false; // it can't wait without a record of it, so it's handled as any other stop
     if (waits) console.log(`${id} build stopped on ${agentName(agent)}'s usage limit, so speck run will carry it on once the limit has reset.`);
@@ -184,7 +186,7 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
     }
     for (const id of [...s.builds]) {
       const t = tickets.find(x => String(x.id) === id), rec = readRec(path.join(runs(), `${id}.json`));
-      const movedOn = !t || !IN_HAND.includes(t.status) || t.build_running || running.has(id) || !rec || !Object.hasOwn(rec, 'exited');
+      const movedOn = !t || !inHand(t.status, rec) || t.build_running || running.has(id) || !rec || !Object.hasOwn(rec, 'exited');
       const current = movedOn ? null : settings();
       if (!movedOn && (!current || running.size >= current.max)) return;
       s.builds = s.builds.filter(x => x !== id);

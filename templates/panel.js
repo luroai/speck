@@ -906,7 +906,8 @@ const withDeps = (t, inPane) => { const b = depsBox(t, inPane); if (b) b.sig = d
 function shippedFacts(t) {
   const tokens = (label, n, has) => (!has ? factCell(label, '—', null)
     : factCell(label, shortened(n) ?? n.toLocaleString('en-GB'), null, n.toLocaleString('en-GB')));
-  return [factCell('Builder cost', t.builderCost !== null ? dollars(t.builderCost) : '—', null),
+  const built = t.builtWith.length ? t.builtWith.join(', ') : 'Not recorded'; // 0694
+  return [factCell('Built with', built, null), factCell('Builder cost', t.builderCost !== null ? dollars(t.builderCost) : '—', null),
     factCell('Reviewer cost', atLeast(t.reviewerCost, t.totalUnknown.includes('reviewer')) ?? '—', null), totalCell(t),
     tokens('Builder tokens', t.builderTokens, t.builderTokens !== null), tokens('Reviewer tokens', t.tokens, t.tokens > 0)];
 }
@@ -1518,6 +1519,7 @@ function render() {
   more.hidden = m.shippedTotal === 0;
   more.textContent = moreStats ? 'Fewer figures' : 'All figures';
   more.setAttribute('aria-expanded', String(moreStats));
+  drawByModel(m);
 
   // 0285: the Foreman, speck run's one status for the whole pipeline, on the bar in the header.
   const stale = pageStale(state);
@@ -1534,6 +1536,25 @@ function render() {
   if (tipTag !== null && tipTag.isConnected === false) closeTip(); // 0165: its tag has left the page, so it goes too
   if (focusBack && fullId === null) returnFocus(); // 0326
   openAskedTicket(m); // 0596: the ticket pressed on the bridge, once its project's board is here
+}
+// 0694: under the figures, the By model table: a row for each builder model, with Shipped's figures for its tickets alone.
+// Its headings are short, each its full name as its tooltip, so it fits a phone's lane; a model with fewer than 5 tickets
+// says so beside its count.
+const BY_MODEL_HEADS = [['Model', 'Builder model'], ['Tickets', 'Tickets it built'], ['Min', 'Median minutes from start to approval'],
+  ['Rounds', 'Median review rounds'], ['1st', 'Share approved in the first review round'], ['Cost', 'Median builder cost per ticket']];
+function drawByModel(m) {
+  const box = $('shipped-models'), rows = m.shippedTotal ? m.stats.byModel : [];
+  box.hidden = rows.length === 0;
+  if (!rows.length) return box.replaceChildren();
+  const cell = (tag, text, cls = null, tip = null) => { const c = el(tag, cls, text); if (tip) c.title = tip; return c; };
+  const head = el('tr', null, null, ...BY_MODEL_HEADS.map(([short, full]) => cell('th', short, null, full)));
+  const body = rows.map(r => el('tr', null, null, cell('td', r.model ?? 'Unknown', 'model', r.model ?? 'No builder model recorded'),
+    el('td', 'n', null, document.createTextNode(String(r.count)), r.few ? el('span', 'few', 'few tickets') : null),
+    cell('td', r.minutes.median === null ? '–' : `${r.minutes.median.toLocaleString('en-GB')}`, 'n'),
+    cell('td', r.rounds.median === null ? '–' : r.rounds.median.toLocaleString('en-GB'), 'n'),
+    cell('td', r.firstRound.share === null ? '–' : `${r.firstRound.share}%`, 'n'),
+    cell('td', r.builderCost.median === null ? '–' : dollars(r.builderCost.median), 'n')));
+  box.replaceChildren(el('h3', 'by-model-head', 'By model'), el('table', null, null, el('thead', null, null, head), el('tbody', null, null, ...body)));
 }
 // 0285: the Foreman's status and detail, as the server worked them out from speck run's own record. A server without
 // it (older code) gets what the page can tell: on or off.

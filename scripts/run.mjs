@@ -7,7 +7,7 @@ import { logSpend, recordDelegatedSpend, ticketsElsewhere, ticketRounds, waitFie
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
 import { goWithQueue, newBuildKeeps } from './go-with.mjs';
-import { foremanFixQueue } from './foreman-fix.mjs'; import { afterWait } from './built-on.mjs'; // 0675
+import { foremanFixQueue } from './foreman-fix.mjs'; import { afterWait } from './built-on.mjs'; import { cancelledQueue } from './cancelled-build.mjs'; // 0675. 0686
 import { fullSuiteQueue } from './full-suite.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { readyAgentsEvery } from './your-agents.mjs';
@@ -175,7 +175,7 @@ function runOn(worker) {
   const endOf = (id, log, code, signal, failed, recordFile) => {
     running.delete(id);
     fill(id);
-    if (recordFile) stopPanelsOfRun(id, recordFile); // 0619
+    if (recordFile) stopPanelsOfRun(id, recordFile); if (!failed) cancels.ended(id); // 0619. 0686: a ticket its build cancelled on its branch, cancelled on the base branch too
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
     else if (stoppedBySpeck(recordFile)) {
       console.log(`${id} build ended by \`speck stop\`.`);
@@ -229,8 +229,8 @@ function runOn(worker) {
       try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
       const pid = rec.pid, valid = Number.isInteger(pid) && pid > 0 && pid !== process.pid, ran = carried.includes(id);
-      if (!(valid && (ran || pidAlive(pid)))) { stopPanelsOfRun(id, file); if (!killedInHand(id)) { recordExit(id, file, null); limits.keepUsage(path.join(dir, `${id}.log`), file); limits.ended(id, path.join(dir, `${id}.log`), file); } continue; } // 0619; 0622: one that stopped on Claude's usage limit while speck run was off
-      adopt(id, file, rec, ran ? 'carries on through the switch' : 'is already being built');
+      if (!(valid && (ran || pidAlive(pid)))) { stopPanelsOfRun(id, file); cancels.ended(id); if (!killedInHand(id)) { recordExit(id, file, null); limits.keepUsage(path.join(dir, `${id}.log`), file); limits.ended(id, path.join(dir, `${id}.log`), file); } continue; } // 0619; 0686: one its build cancelled on its branch; 0622: one that stopped on Claude's usage limit while speck run was off
+      adopt(id, file, rec, ran ? 'carries on through the switch' : adoptedAs(rec)); // 0690: one outside speck run is said to be, as on a later check
     }
   };
   const adopt = (id, file, rec, what) => {
@@ -286,7 +286,7 @@ function runOn(worker) {
       b.session = fill(id)?.session ?? b.session;
       adopted.delete(id);
       running.delete(id);
-      stopPanelsOfRun(id, b.file); // 0619
+      stopPanelsOfRun(id, b.file); cancels.ended(id); // 0619. 0686
       if (b.seen && b.fresh) launched.delete(id);
       const byStop = stoppedBySpeck(b.file), inHand = killedInHand(id);
       if (!inHand) recordExit(id, b.file, null);
@@ -376,7 +376,7 @@ function runOn(worker) {
   };
 
   const limits = limitQueues({ repo, runs: () => runsDir(repo), settings, running, startBuild, resumeHint, countStop, statusOf: id => statusData(repo).tickets.find(t => t.id === id)?.status ?? null, takeOver: buildTakeOver({ repo, runs: () => runsDir(repo), startBuild, countStop, heldAgent: agent => limits.holdsAgent(agent), readyAgents: readyAgentsEvery(repo), speak: text => console.log(speckSays(text)) }) }), heldBuild = id => limits.holdsBuild(id), standIns = builderStandIn({ repo, heldAgent: agent => limits.holdsAgent(agent), readyAgents: readyAgentsEvery(repo), speak: text => console.log(speckSays(text)), fmOf: id => findTicket(repo, id).fm }); // 0622: Claude's usage limit holds every start on Claude until it resets. 0623: and a reviewer's, each build that stopped on it. 0648: or moves it to builder_bench
-  const handBacks = handBackQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill, heldBuild });
+  const cancels = cancelledQueue({ repo, readConfig: () => loadConfig(repo) }), handBacks = handBackQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill, heldBuild }); // 0686: cancels, for a ticket its build cancelled on its branch
   const goWiths = goWithQueue({ repo, cfg, settings, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), heldBuild }); // 0284
   const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344
   const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }), fullRuns = fullSuiteQueue({ repo, readConfig: () => loadConfig(repo) }); // 0286. 0630: the full suite on the base branch
@@ -428,7 +428,7 @@ function runOn(worker) {
       const why = `speck run is switching to new code${ship ? ` once the ship of ${ship} ends` : ''}`;
       return foreman(tickets, switchingReady(tickets, running, ownWait), { builds, ship, why }); // 0299: each ticket's own reason first
     }
-    for (const id of running) fill(id);
+    for (const id of running) fill(id); cancels.check(); // 0686: each ticket not yet cancelled on the base branch as its build's branch has it
     now = live(); // 0549: null while the settings can't start a build, which starts none until they can
     if (now) last = now;
     checkAdopted();

@@ -15,7 +15,7 @@ import { keepReceipt } from './receipts.mjs';
 import { codexSpend } from './round-cost.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
 import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
-import { REVIEWER_LIMITED, stopOnLimit, holdOnLimit, clearLimit } from './reviewer-limit.mjs';
+import { REVIEWER_LIMITED, stopOnLimit, holdOnLimit, clearLimit, clearHeld } from './reviewer-limit.mjs';
 import { standInFor, standInRound, standInMeta, standInWords } from './review-stand-in.mjs';
 import { keepUsage } from './agent-usage.mjs';
 import { openBlocking, isMergeRound, mergeRun, ordinaryRounds, extraRound, nextAction, allowedRounds } from './review-limit.mjs';
@@ -404,7 +404,7 @@ export function cmdReview(args) {
     return waitForRound(repo, pad, started + reviewWaitMs(), limitMs());
   }
   keepExitCode(repo, pad, worker);
-  let rec;
+  let rec, sub = null;
   const held = s => { holdOnLimit(repo, pad, reviewer); return s; }; // 0623: inside the round, so the ticket is left as a refused round leaves it
   const runOn = (name, s) => {
     const own = reviewerOptions(s.cfg, name).command;
@@ -413,12 +413,12 @@ export function cmdReview(args) {
   if (!(typeof command === 'string' && command.trim()) && reviewer !== 'codex') unsupported(id, reviewer);
   try { rec = reviewRound(repo, id, opts, s => runOn(reviewer, held(s))); } catch (e) {
     // 0649: held by a recorded usage limit, the round runs on the first agent on reviewer_bench that can take it.
-    let sub = null;
     if (e.code === REVIEWER_LIMITED) try { sub = standInFor(repo, findTicket(repo, id).fm, cfg); } catch (why) { console.error(`No agent on reviewer_bench could stand in: ${why.message}`); }
     if (!sub) throw e;
     console.log(`The ${reviewer} reviewer's usage limit is reached, so this round runs on ${sub.name}, the first agent on reviewer_bench that can take it, in a fresh session with the full history.`);
     rec = reviewRound(repo, id, opts, s => runOn(sub.name, standInRound(s, sub)));
   }
+  if (!sub) clearHeld(repo, reviewer); // 0692: a stand-in's round leaves the reviewer's own limit on record
   clearLimit(repo, pad);
   const next = printRound(rec, cfg, rounds(repo, id), allowedRounds(findTicket(repo, id).raw));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];

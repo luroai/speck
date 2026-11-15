@@ -43,7 +43,7 @@ setInterval(() => {}, 1000);
 `);
   const p = spawn(process.execPath, [script, '-p', `/speck-build ${id}`, '--session-id', hand(id)], { cwd: dir, env: outside, detached: true, stdio: 'ignore' });
   p.unref();
-  assert.ok(await until(() => fs.existsSync(done), 15000), 'the speck command finished');
+  assert.ok(await until(() => fs.existsSync(done)), 'the speck command finished');
   assertFoundBySession(hand(id), p.pid);
   return p.pid;
 }

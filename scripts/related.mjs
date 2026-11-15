@@ -69,7 +69,9 @@ function supportImports(text, rel) {
 // `because` is the changed file that brought it in, `through` the support module that names it, when it's that. A
 // support module names a file when its text does or a support module it imports does. A test comes in through one
 // only for a changed file at most a quarter of the support modules name, and never for a SKILL.md (0447): the CLI
-// that nearly every one runs would otherwise bring in nearly the whole suite.
+// that nearly every one runs would otherwise bring in nearly the whole suite. A changed file at most one in twenty of
+// them name in their own text, such as a file test/support/panel.mjs loads into the page, also brings in each test that
+// imports one of those modules itself, however many others import it (0696). The CLI, which more of them name, doesn't.
 export function relatedTests(repo, base) {
   const changed = changedFiles(repo, base).map(f => ({ file: f, ...namer(f) }));
   if (!changed.length) return [];
@@ -98,6 +100,7 @@ export function relatedTests(repo, base) {
     return names.get(mod);
   };
   const viaSupport = new Set(changed.filter(c => !c.skill && modules.filter(m => namedBy(m).has(c.file)).length <= modules.length / 4).map(c => c.file));
+  const loaded = new Set(changed.filter(c => !(c.skill || modules.filter(m => ownOf(m).files.includes(c.file)).length > modules.length / 20)).map(c => c.file));
   const tests = walk(repo, TEST_DIR).filter(f => !f.startsWith(`${SUPPORT_DIR}/`) && isTestFile(path.posix.basename(f))).sort();
   const chosen = [];
   for (const test of tests) {
@@ -105,7 +108,7 @@ export function relatedTests(repo, base) {
     const because = firstNamed(text);
     if (because) { chosen.push({ test, because }); continue; }
     for (const through of supportImports(text, test)) {
-      const via = changed.find(c => viaSupport.has(c.file) && namedBy(through).has(c.file));
+      const via = changed.find(c => (viaSupport.has(c.file) && namedBy(through).has(c.file)) || (loaded.has(c.file) && ownOf(through).files.includes(c.file)));
       if (via) { chosen.push({ test, because: via.file, through }); break; }
     }
   }
