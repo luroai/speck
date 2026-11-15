@@ -1,7 +1,7 @@
 ---
 id: "0671"
 title: "Fix the full suite failing on main at 46099bc"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,12 +18,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T12:58:45.154Z"
-blocked_at: "2026-11-15T13:00:55.695Z"
+blocked_at: ""
+waited_seconds: 11
 
 ---
 # 0671 · Fix the full suite failing on main at 46099bc
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 The full suite fails on main at commit 46099bc (46099bc80d7e377f1c975967f91fb669336f41d2). Failing tests:
@@ -44,6 +45,7 @@ The full suite passes on main again.
 Failing before this build: 0643 AC1: speck agents opens Cursor with no prompt, shows /usage and closes it, and lists the plan, reset, rows and on-demand. This fix ticket exists to make it pass, so it's the one test this build changes.
 The cause: the test runs `speck agents` with the real clock, and its stand-in screen said `Resets 12 Nov` with no year. Since 12 November 2026 passed, speck rightly reads that as 2027-11-12. The fix is in the test only: the stand-in screen now shows tomorrow's day, and the test expects that date. No new test file: AC1 is the existing test, and AC2 is the full suite at ship.
 Self-check: no changes (checked month names such as `Sept`, and a run crossing midnight).
+- Went with the recommendation: yes, fix tickets may fix the tests they name (chosen by speck, as watch is decide, 2026-11-15 13:01 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
