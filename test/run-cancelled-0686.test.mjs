@@ -154,6 +154,26 @@ test('0686 AC4: with the ticket changed and uncommitted in the main checkout, it
   assert.equal(said.length, 2, 'done with it');
 });
 
+test('0686 AC4: with the ticket deleted, or in two places, in the main checkout, it says so once and tries again at the next check', () => {
+  for (const how of ['deleted', 'two copies']) {
+    const r = cancelledOnBranch();
+    const text = fs.readFileSync(liveFile(r.dir), 'utf8');
+    if (how === 'deleted') fs.rmSync(liveFile(r.dir));
+    else { fs.mkdirSync(path.dirname(doneFile(r.dir)), { recursive: true }); fs.writeFileSync(doneFile(r.dir), text); }
+    const head = gitIn(r.dir, 'rev-parse', 'HEAD');
+    const { said, q } = queue(r);
+    q.ended('0002');
+    q.check();
+    assert.equal(said.length, 1, `${how}: ${said.join('\n')}`);
+    assert.match(said[0], /0002.*next check/, how);
+    assert.equal(gitIn(r.dir, 'rev-parse', 'HEAD'), head, how);
+    if (how === 'deleted') fs.writeFileSync(liveFile(r.dir), text); else fs.rmSync(doneFile(r.dir));
+    q.check();
+    assert.equal(parseTicket(fs.readFileSync(doneFile(r.dir), 'utf8')).fm.status, 'cancelled', how);
+    assert.equal(fs.existsSync(liveFile(r.dir)), false, how);
+  }
+});
+
 test('0686 AC4: a commit that fails puts the ticket back where it was, and says so once', () => {
   const r = cancelledOnBranch();
   const hook = path.join(r.dir, '.git', 'hooks', 'pre-commit');

@@ -10,21 +10,21 @@ import { ticketAt } from './built-on.mjs';
 
 // Cancels ticket `id` in the main checkout `repo`, on the base branch, when its branch has it cancelled: with the
 // branch's cancel_reason and cancelled date, filed in speck/tickets/done/, committing only that ticket. Returns
-// 'cancelled', or null when there's nothing to do. Throws a SpeckError saying why when it can't, changing nothing.
+// 'cancelled', or null when there's nothing to do: its branch doesn't have it cancelled, or the base branch has no
+// copy or has it done or cancelled already. Throws a SpeckError saying why when it can't, changing nothing.
 export function cancelOnBase(repo, cfg, id) {
   if (!/^\d+$/.test(String(id ?? ''))) return null;
   const pad = padId(id);
   const branch = ticketBranches(repo, cfg, pad).find(b => ticketAt(repo, b, pad)?.fm.status === 'cancelled');
   if (!branch) return null;
-  const from = ticketAt(repo, branch, pad).fm;
-  let t;
-  try { t = findTicket(repo, pad); } catch { return null; }
-  if (['done', 'cancelled'].includes(t.fm.status)) return null;
+  const from = ticketAt(repo, branch, pad).fm, base = ticketAt(repo, cfg.base_branch, pad);
+  if (!base || ['done', 'cancelled'].includes(base.fm.status)) return null;
   const on = git(['branch', '--show-current'], repo).trim();
   if (on !== cfg.base_branch) throw new SpeckError(`the main checkout is on "${on}", not ${cfg.base_branch}`);
-  const rel = posix(path.relative(repo, t.file));
-  if (sh('git', ['status', '--porcelain', '--', rel], { cwd: repo }).stdout.trim())
-    throw new SpeckError(`${rel} has uncommitted changes in the main checkout. Commit or undo them`);
+  // Anything that stops it reading the base branch's copy as committed is said, and tried again: never a reason to give up.
+  const t = findTicket(repo, pad), rel = posix(path.relative(repo, t.file));
+  if (sh('git', ['status', '--porcelain', '--', base.file, rel], { cwd: repo }).stdout.trim())
+    throw new SpeckError(`${base.file} has uncommitted changes in the main checkout. Commit or undo them`);
   let text = setField(t.raw, 'cancel_reason', JSON.stringify(String(from.cancel_reason ?? '')));
   text = setField(text, 'cancelled', String(from.cancelled ?? new Date().toISOString().slice(0, 10)));
   const original = t.raw, was = t.file;

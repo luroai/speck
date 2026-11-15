@@ -1,7 +1,7 @@
 ---
 id: "0686"
 title: "Bring a ticket cancelled during its build onto the base branch"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-15T20:50:22.915Z"
 ---
 # 0686 · Bring a ticket cancelled during its build onto the base branch
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A ticket can be cancelled on its own branch while it's being built, for example when speck takes a blocked question's recommendation to cancel it. The cancel is committed only on the branch, so the base branch still says `ready`. Once the branch's worktree is gone, every ticket with it in `after:` waits for it to ship for ever, and nothing says why: release 0684 waited this way for 0664 on 15 November.
@@ -57,3 +57,84 @@ A ticket cancelled on its branch is cancelled on the base branch too, so nothing
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ec94e0fa8bcf6688b2510f0a3ae57abc2b957ad7",
+    "session": "fresh",
+    "thread_id": "01a1e105-9a8a-7752-aab5-20d6572d6244",
+    "builder_response": "- Tests run: test/run-cancelled-0686.test.mjs test/build-log-0176.test.mjs test/flaky-0207.test.mjs test/full-suite-0630.test.mjs test/split-0078.test.mjs test/split-0270.test.mjs\n- Before this round, `speck test --related` ran every test file naming a changed file. Its only failures from this change were the 600-line limit on scripts/run.mjs (now back at 600 lines); 0176, 0207 AC2 and 0630 AC3 are timing tests that failed under that run's load and pass in the run above.\n- AC2 is reported where speck run says why a ready ticket isn't building (afterWait, from a new `after_cancelled` field in `speck status --json`), with the same words as `speck start`'s refusal, which the startWaits refactor now shares.\n",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 149650,
+      "cached_input_tokens": 117504,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 844,
+      "reasoning_output_tokens": 74
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 32146,
+      "cached": 117504,
+      "write": 0,
+      "output": 844
+    },
+    "cost_usd": 0.0844824,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T21:03:58.168Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cancelOnBase copies cancellation metadata, moves and commits only the ticket. Passing AC1 tests cover metadata, unrelated staged changes and a real speck run build ending."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "statusData supplies after_cancelled; afterWait shares the cancellation message with startWaits. Both AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cancelOnBase preserves done/cancelled tickets and ignores branches in other statuses. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Passing AC4 tests cover modified files and failed commits, but cancelled-build.mjs:21 swallows ticket lookup errors; the queue then removes the pending retry at line 48."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/cancelled-build.mjs:21",
+        "issue": "Ticket lookup failures silently discard the cancellation. For example, locally deleting the base ticket without committing makes findTicket throw. cancelOnBase returns null, so the queue logs nothing and removes its pending entry. Restoring the file does not trigger cancellation at the next check. Duplicate copies or unreadable tickets have the same problem.",
+        "suggested_fix": "Propagate lookup failures into the queue's existing log-once and retry handling. Add a test that locally deletes the tracked base ticket, checks that the problem is logged once, restores it and verifies cancellation on the next check.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change handles normal cancellations and explains cancelled dependencies correctly. One recovery gap needs fixing: a locally deleted or unreadable ticket silently stops cancellation retries, leaving the base branch out of sync."
+  }
+}
+```
+
+</details>
