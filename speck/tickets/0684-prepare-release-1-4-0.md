@@ -50,6 +50,7 @@ speck is ready to be released as 1.4.0.
 - After it ships, check that the `v1.4.0` tag and its GitHub release page appeared. If not: `gh release create v1.4.0 --target main --title "speck 1.4.0" --notes-file docs/releases/v1.4.0.md`.
 - Checked 2026-11-15: `package.json` is `1.3.1`, `v1.3.1` is tagged, and `CHANGELOG.md`'s newest section is 1.3.1.
 - 0668's checks that name 1.3.1 as the current version should check the current version, as 0668 did for 0665's.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
