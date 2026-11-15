@@ -45,6 +45,7 @@ The ticket skill sets a level on each ticket it writes when one of the project's
 - Asked for 2026-11-15, as part of the 1.5.0 plan: "the ticket writer suggests a level".
 - `.claude/skills/speck-ticket/SKILL.md` is this repo's installed copy of `skills/speck-ticket/SKILL.md`; keep them the same, as other skill changes have.
 - Tests that read the skill: `test/ticket-0672.test.mjs`, `test/ticket-0475.test.mjs`, `test/triage-0037.test.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
