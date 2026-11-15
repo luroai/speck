@@ -47,6 +47,7 @@ With `watch: decide`, a check speck can't make is left for you at the end: the b
 - Checks in the app came in 0636 (`scripts/app-check.mjs`, whose `CHECK_ACTIONS` are `decide` and `ask`, and `scripts/foreman-agent.mjs`). QA (0651) makes the checks when it's set, and gets the same action.
 - `autoShipWhyNot` in `scripts/ship.mjs` gives auto-ship's reasons for leaving a ticket, which `speck status` and the panel already show.
 - Failing before this build: none
+- speck (2026-11-15 13:58 UTC) told you: The build is slow but healthy: it has made steady progress and is now re-running related tests ahead of review. The time went on several rounds of test fixes (the 600-line file cap, a note regex, a resume test and a docs test that rewords the brief) while the machine was very busy, with a load average of about 36 to 46. Why: The build log shows it moving forward step by step with no hung command, and the latest full test run on the base branch's newest commit passed, so nothing outside the ticket is broken.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
