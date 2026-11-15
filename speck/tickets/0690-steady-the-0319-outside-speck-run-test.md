@@ -1,7 +1,7 @@
 ---
 id: "0690"
 title: "Steady the 0319 outside-speck-run test"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-12-steady-the-0319-outside-speck-run-test.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
+started: "2026-11-15T21:03:25.487Z"
 
 ---
 # 0690 · Steady the 0319 outside-speck-run test
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 "0319 AC1–AC4" in `test/seen-builds-0319.test.mjs` once saw speck run call build 0002 "already being built" instead of "being built outside speck run", at a load of about 20, then passed alone. A chance failure like this can fail the full suite on main and hold up every ship.
