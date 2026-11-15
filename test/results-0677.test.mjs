@@ -27,7 +27,7 @@ function counted() {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0677-')));
   const out = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0677-count-')));
   gIn(dir, 'init', '-q', '-b', 'main');
-  const speck = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env: { ...env, COUNT_0677: path.join(out, 'count'), FAIL_0677: path.join(out, 'fail') }, timeout: 60_000 });
+  const speck = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env: { ...env, COUNT_0677: path.join(out, 'count'), FAIL_0677: path.join(out, 'fail') }, timeout: 60_000, maxBuffer: 64 * 1024 * 1024 });
   assert.equal(speck('init', '--skip-checks').status, 0);
   assert.equal(speck('config', 'set', 'commands.test_files', 'node --test {files}').status, 0);
   write(dir, 'scripts/code.mjs', 'export const a = 1;\n');
@@ -168,4 +168,16 @@ test('0677 AC2: --fresh may also come just after --files or --related; anywhere 
   assert.notEqual(bad.status, 0);
   assert.match(bad.stderr, /Usage: speck test .*with --fresh first/);
   assert.doesNotMatch(bad.stderr, /^\s+at /m);
+});
+
+test('0677 AC2 F1: a reused run prints all of a long run\'s output, its start as well as its end', () => {
+  const r = counted();
+  write(r.dir, 'test/long.test.mjs', `${COUNTED}console.log('START-0677');\nconsole.log('x'.repeat(1_200_000));\nconsole.log('END-0677');\n`);
+  const first = r.speck('test', '--files', 'test/long.test.mjs');
+  assert.equal(first.status, 0, first.stderr);
+  const again = r.speck('test', '--files', 'test/long.test.mjs');
+  assert.match(again.stdout, REUSED);
+  assert.equal(r.runs(), 1);
+  assert.ok(again.stdout.includes('START-0677') && again.stdout.includes('END-0677'));
+  assert.ok(again.stdout.length > first.stdout.length - 1000, 'nothing was cut');
 });

@@ -57,8 +57,8 @@ function record(repo, code, cmd, status, output, { files = false } = {}) {
     const file = path.join(dir, f);
     try { if (now - fs.statSync(file).mtimeMs > KEEP_MS) fs.rmSync(file, { force: true }); } catch { /* gone already */ }
   }
-  // 0677: a --files run keeps a pass's output too, to print it when it's reused.
-  const kept = status === 0 && !files ? '' : output.length > MAX_OUTPUT ? output.slice(-MAX_OUTPUT) : output;
+  // 0677: a --files run keeps a pass's output too, all of it, to print it as it was when it's reused.
+  const kept = files ? output : status === 0 ? '' : output.length > MAX_OUTPUT ? output.slice(-MAX_OUTPUT) : output;
   const text = JSON.stringify({ cmd, status, commit: code.commit || '', at: new Date(now).toISOString(), output: kept, root: realRoot(repo), ...(files ? { files } : {}) });
   const tmp = path.join(dir, `${code.key}.${process.pid}.${crypto.randomUUID()}.tmp`);
   fs.writeFileSync(tmp, text);
