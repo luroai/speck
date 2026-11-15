@@ -56,15 +56,19 @@ test('0643 AC1: a monthly on-demand limit, money with cents and a reset next yea
 });
 
 test('0643 AC1: speck agents opens Cursor with no prompt, shows /usage and closes it, and lists the plan, reset, rows and on-demand', async () => {
-  const r = panelRepo(), cursor = fakeCursor();
+  // speck agents reads the screen with the real clock, which gives the screen's yearless day a year: so the screen
+  // shows tomorrow, which is always this coming reset, rather than a fixed day that passes.
+  const tomorrow = new Date(Date.now() + 86_400_000), day = tomorrow.toISOString().slice(0, 10);
+  const said = `Resets ${tomorrow.getUTCDate()} ${tomorrow.toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' }).slice(0, 3)}`;
+  const r = panelRepo(), cursor = fakeCursor({ screen: usageScreen({ resets: said }) });
   const out = speck(r.dir, envWith(cursor), 'agents');
   assert.equal(out.status, 0, out.stderr);
   assert.deepEqual(cursor.opened(), ['[--trust]'], 'opened once, with no prompt, so no model runs');
   const lines = out.stdout.split('\n'), at = lines.findIndex(l => l.startsWith('Cursor (agent): '));
   assert.match(lines[at + 1], /^ {2}Usage, read just now, Premium plan:$/);
-  assert.equal(lines[at + 2], '    included: 1% used, resets 2026-11-12');
-  assert.equal(lines[at + 3], '    Auto: 1% used, resets 2026-11-12');
-  assert.equal(lines[at + 4], '    API: 0% used, resets 2026-11-12');
+  assert.equal(lines[at + 2], `    included: 1% used, resets ${day}`);
+  assert.equal(lines[at + 3], `    Auto: 1% used, resets ${day}`);
+  assert.equal(lines[at + 4], `    API: 0% used, resets ${day}`);
   assert.equal(lines[at + 5], '    on-demand: $0 spent, no monthly limit');
   assert.ok(await allStopped(cursor), 'everything it started is stopped');
 });
