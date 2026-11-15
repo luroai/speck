@@ -1,7 +1,7 @@
 ---
 id: "0699"
 title: "Fix the full suite failing on main at efde0c4"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T22:37:34.256Z"
 approved: "2026-11-15T22:43:27.685Z"
+finished: "2026-11-15T22:48:10.855Z"
 
 ---
 # 0699 · Fix the full suite failing on main at efde0c4
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full suite fails on main at commit efde0c4 (efde0c4030ec6432cdec87bac42191fddd58b5a1). Failing tests:
