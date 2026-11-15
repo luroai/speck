@@ -40,6 +40,7 @@ A handed-back build that stopped on a usage limit is carried on after the reset,
 - Moving the handed-back build to another agent on the bench while the limit holds.
 
 ## Notes
+- Failing before this build: none
 - From 0622, which leaves approved tickets alone so a ship can't race a resumed build. Whether the hand-back stays in the run record until the session has got past the limit is the builder's choice.
 
 ## In plain words
