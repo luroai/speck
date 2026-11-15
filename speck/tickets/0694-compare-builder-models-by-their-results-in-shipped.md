@@ -47,6 +47,7 @@ Shipped shows how each builder model does, and each shipped ticket says what bui
 - The board already gives each ticket `builder_models` (`scripts/speck.mjs`), and Shipped's figures are worked out in `templates/panel-model.js` (`stats`).
 - Checked 2026-11-15: `speck spend --by=model` since 1 November gives claude-opus-5-5 $355.98, claude-sonnet-5-5 $11.88 and gpt-6.1-sol $21.03.
 - Failing before this build: none
+- Self-check: the brief now describes the By model table and the Built with fact; the table's text kept to 12 and 14 px to meet the panel's text-size rules.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
