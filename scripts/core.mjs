@@ -288,6 +288,32 @@ export function ideasDir(repo) { return path.join(repo, 'speck', 'ideas'); }
 export function doneIdeasDir(repo) { return path.join(ideasDir(repo), 'done'); }
 export const repoPath = (repo, file) => path.relative(repo, file).split(path.sep).join('/');
 
+// 0682: each ticket file as last parsed, by its path, with what its stat said then. A file whose stat hasn't changed
+// since (its size, inode, and change and modification times to the nanosecond) isn't read or parsed again, so speck
+// run's checks read only the tickets that changed. Each caller gets its own copy of the top level; nothing changes the rest.
+// Only the parses of files that have gone are dropped: listTickets drops its folders' at once, and the rest (such as a
+// removed worktree's) go once the map has grown by 1000 since it was last swept.
+const parsedTickets = new Map();
+let swept = 0;
+const statKey = file => { const s = fs.statSync(file, { bigint: true }); return `${s.dev}:${s.ino}:${s.size}:${s.mtimeNs}:${s.ctimeNs}`; };
+function readTicket(file) {
+  let key;
+  try { key = statKey(file); } catch (e) { parsedTickets.delete(file); throw e; }
+  const had = parsedTickets.get(file);
+  if (had?.key !== key) {
+    if (parsedTickets.size >= swept + 1000) {
+      for (const f of parsedTickets.keys()) if (!fs.existsSync(f)) parsedTickets.delete(f);
+      swept = parsedTickets.size;
+    }
+    let parsed, error;
+    try { parsed = parseTicket(fs.readFileSync(file, 'utf8')); } catch (e) { error = e; }
+    parsedTickets.set(file, { key, parsed, error });
+  }
+  const { parsed, error } = parsedTickets.get(file);
+  if (error) throw error;
+  return { ...parsed };
+}
+
 export function listTickets(repo) {
   const seen = new Map();
   for (const dir of ticketDirs(repo)) {
@@ -299,7 +325,9 @@ export function listTickets(repo) {
       if (!seen.has(f)) seen.set(f, path.join(dir, f));
     }
   }
-  return [...seen.keys()].sort().map(f => ({ file: seen.get(f), ...parseTicket(fs.readFileSync(seen.get(f), 'utf8')) }));
+  const listed = new Set(ticketDirs(repo));
+  for (const f of parsedTickets.keys()) if (listed.has(path.dirname(f)) && seen.get(path.basename(f)) !== f) parsedTickets.delete(f);
+  return [...seen.keys()].sort().map(f => ({ file: seen.get(f), ...readTicket(seen.get(f)) }));
 }
 
 export function findTicket(repo, id) {
@@ -312,7 +340,7 @@ export function findTicket(repo, id) {
   if (found.length > 1)
     throw new SpeckError(`Ticket ${pad} is in two places: ${found.map(f => path.relative(repo, f)).join(' and ')}. Keep one copy, then run this again.`);
   if (!found.length) throw new SpeckError(`Ticket ${pad} not found in speck/tickets/ or speck/tickets/done/.`);
-  return { file: found[0], ...parseTicket(fs.readFileSync(found[0], 'utf8')) };
+  return { file: found[0], ...readTicket(found[0]) };
 }
 
 // A ticket lives in speck/tickets/, or in speck/tickets/done/ while it is closed. Closed means done or cancelled:

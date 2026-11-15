@@ -5,7 +5,9 @@
 // build's own session with it, or ships an approved ticket auto_ship covers again, once.
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, loadConfig, speckNameOf, worktreeList, findRepoRoot } from './core.mjs';
+import { SpeckError, loadConfig, speckNameOf, worktreeList, findRepoRoot, contentLines } from './core.mjs';
+import { questionFacts } from './question-facts.mjs';
+import { allowedLine } from './review.mjs';
 import { buildTicket } from './build-records.mjs';
 import { resumeFor } from './hand-back.mjs';
 import { runWords } from './go-with.mjs';
@@ -86,7 +88,9 @@ export function foremanReply(repo, action, rawId, text, { now = new Date(), env 
   catch (e) { if (e.code === 'EEXIST') throw already(); throw new SpeckError(`Couldn't write your reply in ${path.relative(main, runs)} (${e.message}), so nothing changed. Check you can write to that folder, then try again.`); }
   // A reply that finished between the check and the claim.
   if (fs.existsSync(done)) { fs.rmSync(claim, { force: true }); throw already(); }
-  const line = action === 'answer' ? `- You answered speck (${when(now)}): ${sentence(answer)} Its question: ${question}`
+  // 0680: an answer while the ticket is blocked at the review limit allows it more rounds.
+  const allows = action === 'answer' && t.fm.status === 'blocked' && questionFacts(contentLines(t.sections['blocked question'])).reviewLimit === true;
+  const line = action === 'answer' ? `- You answered speck (${when(now)}): ${sentence(answer)} Its question: ${question}${allows ? `\n${allowedLine('you', when(now))}` : ''}`
     : `- You dismissed speck's question (${when(now)}): ${question}`;
   try { noteInTicket(at, t, line, `${foremanSubject(id)} ${action}`); } catch (e) { fs.rmSync(claim, { force: true }); throw e; }
   try { fs.renameSync(claim, done); } catch (e) {

@@ -38,6 +38,7 @@ import { goWithResumable, goWithWaiting, callsOf } from './go-with.mjs';
 import { handedBack } from './hand-back.mjs'; import { buildSession } from './build-records.mjs'; import { noteThisBuild } from './seen-builds.mjs';
 import { changesPending } from './changes-asked.mjs'; import { cmdChanges } from './changes.mjs';
 import { cmdApp } from './app.mjs'; import { SET_USAGE, setSeveralReady } from './set-ready.mjs'; // 0634, 0681
+import { startWaits, startedOn, mergeBuiltOn, markBuiltOn, builtOnWaiting } from './built-on.mjs'; // 0674
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -243,7 +244,7 @@ function cmdStart(args) {
   }
   // 0219: a blocked ticket with no branch was stopped before its build started it, so it starts as a ready one does.
   if (t.fm.status !== 'ready' && t.fm.status !== 'blocked') throw new SpeckError(`Ticket ${pad} is "${t.fm.status}", not "ready". Only a ready ticket can be started.`);
-  const waits = startWaits(repo, cfg, t);
+  const { why: waits, on } = startWaits(repo, cfg, t, () => statusTickets(repo, cfg));
   if (waits) throw new SpeckError(waits);
   const rel = posix(path.relative(repo, t.file));
   if (git(['status', '--porcelain', '--', rel], repo).trim())
@@ -254,12 +255,12 @@ function cmdStart(args) {
     if (git(['status', '--porcelain'], repo).trim()) throw new SpeckError('You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.');
     const from = git(['branch', '--show-current'], repo).trim() || git(['rev-parse', 'HEAD'], repo).trim();
     git(['switch', '-q', '-c', branch, cfg.base_branch], repo);
-    try { finishStart(repo, pad); } catch (e) {
+    try { finishStart(repo, pad, on, cfg.base_branch); } catch (e) {
       sh('git', ['checkout', '-q', '-f', from], { cwd: repo }); // drops the half-made status change with the branch
       sh('git', ['branch', '-D', branch], { cwd: repo });
       throw e;
     }
-    console.log(`Started ${pad} on ${branch}, in this checkout:\n${fs.realpathSync(repo)}`);
+    console.log(`${startedOn(on)}Started ${pad} on ${branch}, in this checkout:\n${fs.realpathSync(repo)}`);
     return;
   }
   // A worktree only has what's in the base commit it's made from, so the CLI and every installed skill must be there.
@@ -288,31 +289,12 @@ function cmdStart(args) {
       throw new SpeckError(`worktree_setup (${setup}) failed with exit ${r.status}, so the worktree and branch were removed and ${pad} is still ready.${tail ? `\n${tail}` : ''}`);
     }
   }
-  try { finishStart(at, pad); } catch (e) { undo(); throw e; }
-  console.log(`Started ${pad} on ${branch}, in its own worktree. Do all of the build there:\n${at}`);
+  try { finishStart(at, pad, on, cfg.base_branch); } catch (e) { undo(); throw e; }
+  console.log(`${startedOn(on)}Started ${pad} on ${branch}, in its own worktree. Do all of the build there:\n${at}`);
 }
 
-// Why a ticket can't start yet because of its after: list, or null if every ticket there is done, as speck run waits for.
-// Statuses come from statusTickets, so a ticket being built in another worktree shows its real status.
-function startWaits(repo, cfg, t) {
-  const after = Array.isArray(t.fm.after) ? t.fm.after.map(padId) : [];
-  if (!after.length) return null;
-  const status = new Map(statusTickets(repo, cfg).map(x => [padId(x.fm.id), x.fm.status]));
-  const waiting = [], gone = [];
-  for (const id of [...new Set(after)]) {
-    const s = status.get(id);
-    if (s === 'done') continue;
-    if (s === undefined) gone.push(`${id}, which matches no ticket`);
-    else if (s === 'cancelled') gone.push(`${id}, which was cancelled`);
-    else waiting.push(`${id} (${s})`);
-  }
-  const why = [];
-  if (waiting.length) why.push(`Ticket ${t.fm.id} waits on ${waiting.join(', ')}. It can start once ${waiting.length > 1 ? 'they\'ve' : 'it\'s'} shipped.`);
-  if (gone.length) why.push(`Ticket ${t.fm.id}'s after: lists ${gone.join(', and ')}. Take ${gone.length > 1 ? 'them' : 'it'} out of after: before the ticket can start.`);
-  return why.length ? why.join('\n') : null;
-}
-
-function finishStart(dir, pad) {
+function finishStart(dir, pad, on = null, base = '') {
+  if (on) { mergeBuiltOn(dir, pad, on, base); markBuiltOn(findTicket(dir, pad), on); } // 0674
   writeField(findTicket(dir, pad), 'status', 'building');
   git(['add', '-A', '--', 'speck/tickets'], dir);
   git(['commit', '-q', '-m', `speck(${pad}): start`], dir);
@@ -415,7 +397,7 @@ export function statusData(repo) {
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
     const criteria_change = ['done', 'cancelled'].includes(t.fm.status) ? null : criteriaChange(t.at || repo, cfg, t.fm.id), criteria_changed = criteria_change !== null; // 0565
-    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, ['done', 'cancelled'].includes(t.fm.status) ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds), leftChecks(t.sections.notes)); // 0629. 0679
+    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, ['done', 'cancelled'].includes(t.fm.status) ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds), leftChecks(t.sections.notes), ['done', 'cancelled'].includes(t.fm.status) ? '' : builtOnWaiting(repo, cfg, t.fm)?.id); // 0629. 0679. 0674
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null, builder = builderSpent(runs, t.fm.id), watch = watchSpent(runs, t.fm.id), delegated = delegatedSpent(runs, t.fm.id);
     return withForeman(t, fixing, { // 0317
       ...t.fm,
@@ -433,7 +415,7 @@ export function statusData(repo) {
       blocked_recommendation: facts.recommendation,
       blocked_other_options: facts.otherOptions ?? null, // 0589
       blocked_noticeable: facts.noticeable,
-      blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, blocked_check_in_app: facts.checkInApp ?? null, // 0563: true on a block by the size guard. 0636: what to check in the running app
+      blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, blocked_check_in_app: facts.checkInApp ?? null, blocked_review_limit: facts.reviewLimit === true, // 0563: true on a block by the size guard. 0636: what to check in the running app. 0680: true at the review limit
       // 0284: whether speck run can resume its build, so the panel can offer to go with the recommendation
       blocked_resumable: t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg),
       lint: { errors: lint.errors.length, warnings: lint.warnings.length },
