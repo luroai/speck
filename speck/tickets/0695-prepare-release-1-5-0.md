@@ -52,6 +52,8 @@ speck is ready to be released as 1.5.0.
 - Checked 2026-11-15: `v1.4.0` is tagged on origin.
 - 0684's checks that name 1.4.0 as the current version should check the current version, as 0684 did for 0668's.
 - Failing before this build: not checked
+- Built from main at `speck(0694): Compare builder models by their results in Shipped`, with 0693's approved work under it (`speck start` started this on 0693, so 0693 ships first and is in the changelog). `npm run prices` ran on 2026-11-15 and found the same rates as the table 0684 took that morning, so `scripts/prices.json` is unchanged.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
