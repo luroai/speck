@@ -1,7 +1,7 @@
 ---
 id: "0689"
 title: "Steady speck run's timing tests under load"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-15
 ---
 # 0689 · Steady speck run's timing tests under load
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Several tests of speck run fail by chance at load averages of 20 to 60, so builds have to show their reviewers failures that aren't real, and one can fail the full suite on main: 0549 AC1, AC3, AC5 and AC4 in `test/run-settings-0549.test.mjs`, 0622 AC1–AC3 in `test/usage-limit-0622.test.mjs` (its limit resets three seconds ahead), the two 0166 AC2 tests in `test/waiting-0166.test.mjs` (a ±5 s tolerance), 0217 AC3, 0109 AC1 and 0300 AC1, AC3.
