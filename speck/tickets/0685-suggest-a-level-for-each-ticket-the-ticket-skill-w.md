@@ -1,7 +1,7 @@
 ---
 id: "0685"
 title: "Suggest a level for each ticket the ticket skill writes"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-15
 ---
 # 0685 · Suggest a level for each ticket the ticket skill writes
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 1.3 a ticket can be built at a level, such as quick, deep or one of your own, but every ticket the ticket skill writes leaves `level` blank, so each one builds on the settings unless you remember to pick one. The ticket writer has read the work and the code it changes, so it's well placed to say which level fits, and you'd only need to agree or change it at Gate 1.
