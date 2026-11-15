@@ -1,7 +1,7 @@
 ---
 id: "0677"
 title: "Reuse a build's test result when nothing has changed"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0676"]                # ticket ids that must be done first
 created: 2026-11-15
+started: "2026-11-15T14:01:02.658Z"
 
 ---
 # 0677 · Reuse a build's test result when nothing has changed
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A full `speck test` reuses a recorded result for the same code (0112), but `--files` and `--related` runs record nothing. A build that runs the same files twice with nothing changed between, for instance once to see them pass and again to keep the output for the review round, runs them twice. Of 803 such runs here since 29 Oct (10.9 hours), about 180 (2.8 hours) repeated a passing run with no change to the code.
