@@ -46,6 +46,7 @@ With `watch: decide`, a check speck can't make is left for you at the end: the b
 - This changes a rule the brief states today: "Such a question is never taken unchecked." Decision: the check still happens before anything ships, by you, at the end of the build and not in the middle of it.
 - Checks in the app came in 0636 (`scripts/app-check.mjs`, whose `CHECK_ACTIONS` are `decide` and `ask`, and `scripts/foreman-agent.mjs`). QA (0651) makes the checks when it's set, and gets the same action.
 - `autoShipWhyNot` in `scripts/ship.mjs` gives auto-ship's reasons for leaving a ticket, which `speck status` and the panel already show.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
