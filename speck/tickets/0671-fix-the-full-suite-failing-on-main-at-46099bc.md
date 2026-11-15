@@ -48,7 +48,7 @@ Self-check: no changes (checked month names such as `Sept`, and a run crossing m
 - Went with the recommendation: yes, fix tickets may fix the tests they name (chosen by speck, as watch is decide, 2026-11-15 13:01 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes for people using speck. One of speck's own checks of Cursor's usage screen started failing once 12 November had passed, because it pretended Cursor showed that date every time. It now pretends Cursor shows tomorrow's date, so it won't go stale again, and the full set of checks on main can pass once more. To see it, watch the full suite on main go green after this ships.
 
 ## Blocked question
 The reviewer found the fix correct (both criteria pass) but stopped on a rule clash: builds may never fix a test listed as failing before the build, yet this fix ticket exists to fix exactly that test. Should this fix ticket be allowed to fix the test it was made for? Options: (a) yes, fix tickets may fix the failing tests they name, so resume and let the reviewer approve; (b) no, leave the test broken and cancel this ticket. I recommend (a): the fix only changes the test's stand-in screen to show tomorrow's reset day instead of 12 November, which has now passed, and the rule is there to stop builds wandering into unrelated failures, not to stop a fix ticket. The builder and review instructions should probably say this, as a follow-up.
@@ -62,6 +62,8 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Let a fix ticket fix the failing tests it names, so its review doesn't stop on the failing-before rule: speck/ideas/2026-11-15-let-a-fix-ticket-fix-the-failing-tests-it-names.md
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -128,6 +130,74 @@ Clear winner: yes
     ],
     "escalation_question": "May ticket 0671 fix the explicitly listed pre-existing failure, as its acceptance criterion requires, despite the review prompt's prohibition?",
     "summary": "The test now uses tomorrow's date instead of a fixed date that expired. Its original checks remain intact, and the reported tests pass. Approval needs resolution of a conflict between the ticket's purpose and the review scope rule."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "dfa43c9bbf3b4bbb5c7580b79238556c86ab4a14",
+    "session": "continued",
+    "thread_id": "01a1df4b-503a-76c0-ada0-7a54bf45fd72",
+    "builder_response": "- Tests run: test/cursor-usage-0643.test.mjs test/run-cursor-0290.test.mjs (the repo's checks ran with them)\n- F1: resolved by the user's side. The blocked question was answered (recorded in the ticket's Notes, 2026-11-15 13:01 UTC): yes, a fix ticket may fix the failing tests it names. No code change since round 1.\n",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 149465,
+      "cached_input_tokens": 114432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1085,
+      "reasoning_output_tokens": 100
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 2700,
+      "cached": 65792,
+      "write": 0,
+      "output": 412
+    },
+    "cost_usd": 0.0160992,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T13:01:47.890Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/cursor-usage-0643.test.mjs supplies tomorrow's UTC reset date and checks the corresponding CLI output, retaining the launch and shutdown assertions. The exact previously failing test passes in /tmp/speck-0671-tests.txt."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The related test run reports 170 passes, zero failures and three skips. Only the affected test and ticket record changed; production code is unchanged. Ship will check the whole suite."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0671-fix-the-full-suite-failing-on-main-at-46099bc.md",
+        "issue": "The prohibition on fixing listed pre-existing failures conflicted with this fix ticket's explicit purpose.",
+        "suggested_fix": "Confirm that fix tickets may fix the failing tests they name.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The test now uses tomorrow's reset date, preventing its fixed date from expiring while preserving its original checks. The related tests pass, and the recorded scope decision resolves the previous blocker. Ready for approval; ship will run the whole suite."
   }
 }
 ```
