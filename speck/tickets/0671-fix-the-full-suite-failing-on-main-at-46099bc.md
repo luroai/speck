@@ -40,6 +40,7 @@ The full suite passes on main again.
 
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
+Failing before this build: 0643 AC1: speck agents opens Cursor with no prompt, shows /usage and closes it, and lists the plan, reset, rows and on-demand. This fix ticket exists to make it pass, so it's the one test this build changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
