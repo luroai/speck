@@ -1,7 +1,7 @@
 ---
 id: "0672"
 title: "Chain tickets only when one needs the other's work"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T13:36:04.847Z"
+approved: "2026-11-15T13:38:21.263Z"
 
 ---
 # 0672 · Chain tickets only when one needs the other's work
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The ticket skill chains a new ticket after every open ticket likely to change the same part of a file, and counts any doubt as an overlap. A chained ticket can't start until the other has shipped, so ready tickets wait while build slots stand free: in this repo's history, 587 of the 714 hours tickets spent between ready and starting were spent waiting on `after:`. What the waiting avoids is small: 11 of 268 ship attempts (4%) met a conflict, and a conflict costs one merge round, about 9 minutes.
@@ -57,9 +58,15 @@ When you turn an idea into tickets, speck now makes a ticket wait for another on
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new AC4 rule test pins exact prose, including 'Change only the new ticket', 'never edit the other' and 'lead back to the new ticket'.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 140,235
+- Elapsed since build started: 2 min
+- Changed lines: 6 (limit 5000)
 - Follow-ups: none. The older tests for 0205 still pin some of the step's wording (its title's start and "each overlap"); a later rewrite of the step may need to loosen them.
 
 ## Review rounds
