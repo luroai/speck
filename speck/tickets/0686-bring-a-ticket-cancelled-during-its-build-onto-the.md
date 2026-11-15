@@ -1,7 +1,7 @@
 ---
 id: "0686"
 title: "Bring a ticket cancelled during its build onto the base branch"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T20:50:22.915Z"
+approved: "2026-11-15T21:05:33.251Z"
 
 ---
 # 0686 · Bring a ticket cancelled during its build onto the base branch
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket can be cancelled on its own branch while it's being built, for example when speck takes a blocked question's recommendation to cancel it. The cancel is committed only on the branch, so the base branch still says `ready`. Once the branch's worktree is gone, every ticket with it in `after:` waits for it to ship for ever, and nothing says why: release 0684 waited this way for 0664 on 15 November.
@@ -53,9 +54,15 @@ When a ticket is cancelled partway through its build, for example when speck tak
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Ticket lookup failures silently discard the cancellation.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 247,670
+- Elapsed since build started: 15 min
+- Changed lines: 89 (limit 5000)
 Follow-ups:
 - Inbox: speck/ideas/2026-11-15-show-a-cancelled-after-ticket-as-cancelled-in-the-panel.md (the panel still shows a cancelled after: ticket as "Waiting on").
 - Known limit: a cancel that couldn't be made on the base branch yet is kept only in speck run's memory, so after speck run restarts it's retried only if that build's end is taken up again (a build with no exit recorded). Making the cancel by hand with `speck cancel` covers it.
