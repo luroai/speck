@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.3.1 · 15 November 2026
+
+What's new since 1.3.0. A bug-fix release that makes 1.3.0's build levels easier to set and to read: the Builder's card sets each level with labelled lists instead of a free-text model box, a ticket's Level menu says what each level builds with, and a ticket in the panel shows, and lets you change, the builder and model it will be built with. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.3.1 init`.
+- The README says a ticket's facts in the panel show what it will be built with, and that you can pick its builder and model there.
+
+### Build levels on the Builder's card
+
+- Each level, and the Add a level form, now has a Builder list offering the same agent and model choices as the Builder's own row, in the same words, such as "Claude Code · Opus". Its first choice, "Default", names what the Builder uses now, such as "Default (Claude Code · Opus)", and leaves the level's builder and model to it. Before, each level's model was a free-text box, and "settings" filled every box and list without saying what it meant. A level whose saved builder and model aren't among the choices still shows them as its choice.
+- Each level, and the Add a level form, has an Effort list, starting with "Default" and the Builder's effort now, such as "Default (medium)", then the efforts the picked builder and model offer.
+- Every list and box in Build levels has a label: Builder, Effort, and Name on the add form. The line above each level that repeated its builder, model and effort is gone, each level's Remove is a small text button, and the Add a level form's button comes after its fields. At phone width, Build levels fits without scrolling sideways.
+- What's saved to `speck/config.yml` is unchanged: picking a choice saves the level's `builder` and `builder_model`, "Default" blanks them, and the Effort list saves its `builder_effort`. Adding and removing levels, and the refusals, work as in 1.3.0.
+
+### A ticket's Level menu
+
+- The choice that takes a ticket's level off is now called "Default", in the menu and in the ticket's Level fact. In 1.3.0 it was called "Settings", which read like a way into the Settings page.
+- Under each choice, the menu shows the builder, model and effort it builds with, worked out as a build would, such as "Claude Code · Fable · high" or "Codex · default model · low". "Default" shows the Builder's own.
+- The menu ends with "Change levels", which opens Settings at Build levels on the Builder's card without changing the ticket's level.
+
+### A ticket's builder in the panel
+
+- A ticket's facts, in an open draft in Plan and in a ticket's full view, show a Builder fact: the agent, model and effort its next build would use, worked out as a build would, with "default model" or "default effort" for one nobody sets. A smaller line under it says where they come from: "This ticket", its level, such as "Deep level", or "Default". In 1.3.0 a ticket's own model could be set only in the ticket file or with `speck set`.
+- Pressing it opens a menu with "Default", then the same agent and model choices as the Builder's row in Settings. Picking one sets the ticket's `builder` and `builder_model` as `speck set` does, and "Default" blanks both, so its level or Settings decides. The menu scrolls when the list is long.
+- A ticket that's building, reviewing, blocked or waiting to ship refuses the change with the message `speck set` gives, and so does a pick the ready check would refuse, such as the same model as the ticket's reviewer. A done or cancelled ticket shows its builder without the menu.
+
+### Tests
+
+- Several of speck's own tests that failed on `main` when the machine was very busy now wait as long as a busy machine needs, and one check of Cursor's usage screen that started failing once its fixed date had passed no longer goes stale. Nothing changes in speck itself.
+
 ## 1.3.0 · 12 November 2026
 
 What's new since 1.2.0. A minor release in which speck picks the crew for each ticket: a ticket can be built on a model and effort of its own, or at a build level, such as quick, balanced, deep or one of your own, that you set up on the Builder's card in Settings and pick for each ticket in the panel. speck also fixes `main` itself when its full test suite fails there, instead of waiting for you. Costs speck works out itself are still estimates at API list prices.

@@ -17,7 +17,7 @@ You don't need to read the code to check the work. Every ticket comes with a one
 
 Use the agents you already have: Claude Code, Codex or Cursor, or a model provider you have an API key for, such as DeepSeek. speck doesn't let a model review its own work unless you allow it.
 
-> Status: 1.3.0. It works end to end on your own machine.
+> Status: 1.3.1. It works end to end on your own machine.
 
 ## Get started
 
@@ -95,7 +95,7 @@ The review pack is still there whenever you want to check the work.
 
 The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. `speck/config.yml` holds the project's settings, and your own choices, such as who builds and reviews, can be kept for this machine only.
 
-**Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them in the panel's Settings, and pick each team member's agent, model and bench on its card under Your team, where Your subscriptions shows how much of each you've used. You can also build a ticket at a level, such as quick, deep or one of your own, each a builder, model and effort you set up on the Builder's card, or on a model of its own. Pick a ticket's level in the panel, beside its priority. API keys stay on this machine, out of git, and so do the test logins speck signs in to your app with, which you save with `speck logins set <name>`.
+**Your agents.** speck builds and reviews with the agents you've set up: Claude Code, Codex, Cursor, or a model provider such as DeepSeek through your own API key. Add them in the panel's Settings, and pick each team member's agent, model and bench on its card under Your team, where Your subscriptions shows how much of each you've used. You can also build a ticket at a level, such as quick, deep or one of your own, each a builder, model and effort you set up on the Builder's card, or on a model of its own. In the panel, a ticket's facts show what it will be built with, and you can pick its level, or a builder and model of its own, there. API keys stay on this machine, out of git, and so do the test logins speck signs in to your app with, which you save with `speck logins set <name>`.
 
 **Your app.** To check a question in your app, speck starts it with `commands.start`, a command with `{port}` where the port goes. Leave it blank and speck works it out the first time it needs it, then saves it. `speck app <id>` starts the app from a ticket's copy of the code for you to look at, and `speck app <id> --stop` stops it.
 
@@ -175,9 +175,9 @@ Claude Code, Cursor and model providers such as DeepSeek need no setup: set `rev
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **647 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **653 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
 - **14 minutes** median from a build starting to its ticket shipping, leaving out time it waited for you or the machine was asleep.
-- **2 review rounds** median. 309 tickets were approved in the first round.
+- **2 review rounds** median. 311 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 
