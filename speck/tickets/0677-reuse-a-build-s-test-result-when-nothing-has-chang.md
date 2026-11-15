@@ -46,6 +46,7 @@ A `--files` or `--related` run with the same code, test command and test files a
 - Measured 2026-11-15 from this repo's build logs, and approximate: a run counts as a repeat when the build changed no file between it and the passing run before it. A further 148 runs (1.4 hours) repeated a failing run with no change, to see whether it failed by chance. Those still run.
 - A full run records only when nothing outside `speck/` is uncommitted. Builds test before they commit, so this record has to take uncommitted changes into account.
 - `cmdTest` in `scripts/turns.mjs` runs the tests and `scripts/results.mjs` keeps the recorded results.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
