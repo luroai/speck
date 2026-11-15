@@ -42,6 +42,7 @@ A round goes to the next agent on the bench that can take it, rather than waitin
 
 ## Notes
 - From 0649. Waits for 0692, which changes how the reviewer's limit is recorded.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
