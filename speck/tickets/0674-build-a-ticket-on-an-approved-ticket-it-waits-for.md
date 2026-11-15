@@ -48,6 +48,7 @@ A ticket can be started on the approved work of the one ticket it still waits fo
 - If the first ticket gets a merge round after the second has started, the second meets that at ship as any conflict.
 - Measured 2026-11-15: in this repo, with auto-ship on, a ticket goes from approved to shipped in a median 4 minutes, so the gain here is small. It's larger where approved tickets wait for you to ship them.
 - `cmdStart` in `scripts/speck.mjs` makes the branch, `reviewSince` in `scripts/review.mjs` and `scripts/diffstat.mjs` measure the change, and `autoShipWhyNot` in `scripts/ship.mjs` gives auto-ship's reasons.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
