@@ -32,7 +32,7 @@ function reviewLogLines(all) {
     const fresh = r.verdict.findings.filter(f => f.severity === 'blocking' && !seen.has(f.id));
     for (const f of r.verdict.findings) seen.add(f.id);
     const stood = standInWords(r.meta); // 0649
-    return `Round ${r.meta.round} (${r.meta.reviewer}${stood ? `, ${stood}` : ''}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''}): ${r.verdict.verdict.replace(/_/g, ' ')}${fresh.length ? `: ${fresh.map(f => `${f.id ?? '?'} ${firstSentence(f.issue ?? '')}`).join('; ')}` : ''}.`
+    return `Round ${r.meta.round} (${r.meta.reviewer}${stood ? `, ${stood}` : ''}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''}${r.meta.allowed ? ', a round you allowed' : ''}): ${r.verdict.verdict.replace(/_/g, ' ')}${fresh.length ? `: ${fresh.map(f => `${f.id ?? '?'} ${firstSentence(f.issue ?? '')}`).join('; ')}` : ''}.`
       .replace(/\.\.$/, '.');
   });
 }

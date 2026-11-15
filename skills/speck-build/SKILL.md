@@ -57,6 +57,7 @@ Follow the `speck-review` skill (in the folder next to this one) exactly. In sho
 - When `speck review` exits 12, the round is still running: run the command it prints, `speck review <id> --wait`, in the foreground, and again each time it exits 12, until it exits with any other code.
 - When `speck review` exits 18, the reviewer's usage limit is reached and no round was recorded. It prints when the limit resets. End your session there, saying you're waiting for the reviewer's limit, and leave the ticket `reviewing`: don't block it with a question, and don't wait or run the round again yourself. In a build `speck run` started, it resumes your session a minute after the reset, or after 30 minutes if the reviewer didn't say when, and tells you to run the round again. In one you're running by hand, the user runs `/speck-build <id>` once the limit has reset.
 - Take turns with it until `speck next <id>` returns `ship` or `block`. When the round at `max_review_rounds` leaves no more than one blocking finding open, `speck next` says `fix` and you get an extra round: take it like any other, without asking the user. Never change `limits.max_review_rounds` in `speck/config.yml` to get past a block.
+- When `speck next` says `block` because the rounds ran out (its reason starts `No approval after`), block the ticket (section 6) and add `Review limit: yes` on a line of its own below the four lines section 6 asks for. The user's answer to that question allows the ticket 2 more rounds: when you're resumed with it, `speck next` says `fix`, so carry on with the review loop. If neither of those rounds approves, `speck next` says `block` again: block it the same way. Never write the `Review limit: … allowed 2 more review rounds` line in the ticket's Notes yourself: only the user's answer adds it.
 - Fix or dispute each blocking finding, checking each fix with the ticket's own test files (`speck test --files`). Then, before the next review round, merge rounds included, run once the ticket's own test files, any existing test files it changed and the files of any test that failed in its last test run (`speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`), and commit. Never run the whole suite (`speck test` without `--files`): `speck ship` runs it. Say in the round's response file which test files you ran. If a test fails because of your change, fix it and run the files again: never start a round on a run that failed because of your change.
 
 ## 5. Approved
@@ -179,7 +180,7 @@ Use this when the review loop says `block`, the size guard trips, a product ques
    Clear winner: <yes or no>
    ```
 
-   A block by the size guard adds `Size guard: yes` on a fifth line (see section 3 step 3).
+   A block by the size guard adds `Size guard: yes` on a fifth line (see section 3 step 3), and a block at the review limit adds `Review limit: yes` (see section 4).
 
    Ask the user to check something in the running app, such as how a page looks or that signing in works, only this way: as a blocked question, never in your report or a review round's response file. Add `Check in the app: <what to look at>` on a line of its own beside the other four, saying where to go and what to look for. With `watch` fix or decide in `speck/config.yml`, speck may check a low-risk ticket's question in the app itself.
 

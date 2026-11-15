@@ -48,6 +48,8 @@ Your answer to a review-limit question lets the build take two more rounds, and 
 - Decision: 2 rounds for each answer, enough for one fix and the round that checks it, without an endless loop.
 - This repo has blocked at the review limit 5 times in its history (counted 2026-11-15), so this is about the stall each one causes, not how often it happens.
 - Failing before this build: none
+- Self-check: the review-limit rules moved from scripts/review.mjs into scripts/review-limit.mjs (re-exported) to keep every script under 600 lines; the test's allowance helper adds to an existing Notes section rather than adding a second one.
+- Pictures: none, because nothing anyone sees in the panel changed.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
