@@ -1,7 +1,7 @@
 ---
 id: "0693"
 title: "Try the next reviewer on the bench when a stand-in is limited too"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-11-try-the-next-on-the-bench-when-a-stand-in-is-limited-too.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0692"]                # ticket ids that must be done first
 created: 2026-11-15
+built_on: "0692"
+started: "2026-11-15T21:37:52.776Z"
 
 ---
 # 0693 · Try the next reviewer on the bench when a stand-in is limited too
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A review round gets one stand-in from `reviewer_bench` when the reviewer is limited. If that stand-in is limited too, the round ends and the build waits for the stand-in's reset, even with a third agent free on the bench, and the refusal overwrites the record of the reviewer's limit with the stand-in's.
