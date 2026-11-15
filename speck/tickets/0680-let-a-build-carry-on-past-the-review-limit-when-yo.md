@@ -52,7 +52,7 @@ Your answer to a review-limit question lets the build take two more rounds, and 
 - Pictures: none, because nothing anyone sees in the panel changed.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a build runs out of review rounds, it now marks its question as being at the review limit. If you answer it, with Go with the recommendation in the panel or by answering speck's question about it, the ticket gets 2 more review rounds and carries on, rather than blocking again straight away. If those 2 don't end in approval, it asks you again, and your next answer allows 2 more. The review limit in your settings stays as it is, and the ticket's review rounds and review pack say which rounds you allowed. speck never answers this kind of question by itself, even with watch set to fix or decide: it waits for you and says why once in speck run's log. One thing to watch: if you answer by editing the ticket and restarting the build by hand, no extra rounds are allowed yet (saved as an idea).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,6 +62,10 @@ Your answer to a review-limit question lets the build take two more rounds, and 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- An answer given by hand (written in the ticket, then /speck-build) allows no more rounds: only the button and `speck answer` add the allowance. Saved to the inbox: speck/ideas/2026-11-15-let-an-answer-given-by-hand-allow-more-review-rounds.md.
+- The panel's blocked question doesn't show that it's at the review limit (no chip beside Clear recommendation / Close call). Left as a known limit.
+- Answering speck's question and also pressing Go with the recommendation on the same block would allow 4 rounds, not 2. Unlikely, since speck's agent rarely asks about a blocked ticket; left as a known limit.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -159,6 +163,105 @@ Your answer to a review-limit question lets the build take two more rounds, and 
     ],
     "escalation_question": "",
     "summary": "The recommendation button enables two more rounds, and automatic recommendations correctly wait for you. Changes are needed to verify the Answer routes, keep merge-limit questions outside this feature, and remove a fragile documentation wording test."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d76328afe1f25284206b9e462d7b8d0983f6ddca",
+    "session": "continued",
+    "thread_id": "01a1dfa9-4525-7943-abb1-ae393db1fa10",
+    "builder_response": "- Tests run: `speck test --files test/review-limit-0680.test.mjs test/review-0242.test.mjs test/foreman-answer-0318.test.mjs`: 183 passed, 0 failed.\n- F1: fixed. New test \"0680 AC2: answering speck's question about a ticket blocked at the review limit, with speck answer or the panel's Answer, notes 2 more rounds\" calls foremanReply (what `speck answer` and the panel's Answer both run, via cmdForemanReply / panelForemanReply) on a ticket blocked with `Review limit: yes`: the Notes get the allowance line, allowedRounds is 2 and ticketNext says fix. Dismissing allows none, and answering at an ordinary question allows none. The 0318 test's agent-queue helpers (agents, asked) moved unchanged into test/support/foreman-asked.mjs so both tests share them; asked() takes an optional question.\n- F2: fixed. The build skill now names the reason in full: block with `Review limit: yes` only when it starts `No approval after <n> review rounds`, and says a block after merge rounds (`No approval after <n> merge rounds`), a repeated disagreement or an escalation never gets it. The review skill's block bullet says \"max review rounds reached, not merge rounds\". New test checks that the skill names both reasons, that the review-limit reason matches and the merge-limit reason doesn't, and that an allowance doesn't open merge rounds (nextAction with allowed 2 still blocks after max_merge_rounds). The reason strings themselves are unchanged, as older tests check them exactly.\n- F3: fixed. The watch-row wording assertion is gone; the brief test now checks only names: `Review limit: yes`, `blocked_review_limit` and the `Review limit: you allowed 2 more review rounds` Notes line on the Max rounds reached line.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 260120,
+      "cached_input_tokens": 196864,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1589,
+      "reasoning_output_tokens": 133
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 9772,
+      "cached": 112384,
+      "write": 0,
+      "output": 680
+    },
+    "cost_usd": 0.0375824,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T14:45:09.007Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "questionFacts parses Review limit: yes and statusData exposes blocked_review_limit. Passing AC1 test checks these facts and the build skill's instruction."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 tests now exercise foremanReply, shared by speck answer and panel Answer, including dismissal and ordinary-question controls. Other AC2 tests exercise goWith, repeated allowances, next, review and record. The skill explicitly excludes merge-limit blocks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 test verifies fix/decide exclusion, goWith refusal and one-time queue explanation. cantDecide independently refuses review-limit questions."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests verify roundsLine, reviewPack and close's review log mark allowed rounds. The integration test verifies config remains unchanged. docs/brief.md's Max rounds reached passage and watch row explain allowances and automatic-choice refusal."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported targeted run passed 183 tests, with zero failures and three skips, including the affected existing review-limit and answer tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/review-limit-0680.test.mjs",
+        "issue": "The answer allowance path previously lacked coverage.",
+        "suggested_fix": "Completed: the new foremanReply test verifies the allowance enables fix, while dismissal and ordinary questions grant none.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "skills/speck-build/SKILL.md",
+        "issue": "The previous instruction also matched exhausted merge rounds.",
+        "suggested_fix": "Completed: the instruction distinguishes review-round and merge-round reasons and explicitly excludes merge blocks. A passing regression test verifies allowances cannot open merge rounds.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/review-limit-0680.test.mjs",
+        "issue": "The brief test previously asserted ordinary prose wording.",
+        "suggested_fix": "Completed: the prose assertion was removed; remaining brief assertions check concrete marker and field names.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Your answer now allows two more review rounds, with each round clearly recorded. Automatic recommendations wait for you, and merge limits remain separate. All previous findings are resolved; the reported tests pass."
   }
 }
 ```
