@@ -27,17 +27,24 @@ export const heldWhy = (reviewer, s) => s.resets ? `the ${reviewer} reviewer's u
 // isn't held by a recorded limit or no agent on its bench can take the round. `ready` lists your ready agents and
 // `held(agent)` says whether a recorded limit holds one: both are read only when the reviewer is held.
 export function standInFor(repo, fm, cfg, { now = Date.now(), providers = knownProviders(repo), ready = () => readyAgents(repo), held = agent => agentHeld(repo, agent, now) } = {}) {
-  const { builder, reviewer } = ticketAgents(fm, cfg);
+  const { reviewer } = ticketAgents(fm, cfg);
   const limit = heldBy(repo, reviewer, now);
   if (!limit) return null;
+  const name = benchFor(fm, cfg, { providers, ready }).find(a => !held(a));
+  return name ? { name, for: reviewer, why: heldWhy(reviewer, limit) } : null;
+}
+
+// 0693: the agents on the ticket's reviewer_bench, in its order, that could take a round for its reviewer, limits aside:
+// ready, not the reviewer's own agent, and allowed to review this build under the same-model rule.
+export function benchFor(fm, cfg, { providers = knownProviders(), ready = () => [] } = {}) {
+  const { builder, reviewer } = ticketAgents(fm, cfg);
   const own = reviewer === 'claude-subagent' ? 'claude' : reviewer, configured = configBuilder(cfg);
   let yours = [];
   try { yours = ready(); } catch { /* none can be read: the round waits for the limit */ }
   yours = (Array.isArray(yours) ? yours : []).filter(a => typeof a === 'string');
   const allowed = a => cfg.allow_same_model_review || !sameModelProblem(builder, a, cfg, '', builder !== configured ? configured : null);
   // Not refused for naming `own`: the ticket's own reviewer can differ from the settings' one, which loadConfig checks.
-  const name = benchOf(cfg, 'reviewer_bench', { yours, providers }).find(a => a !== own && yours.includes(a) && !held(a) && allowed(a));
-  return name ? { name, for: reviewer, why: heldWhy(reviewer, limit) } : null;
+  return benchOf(cfg, 'reviewer_bench', { yours, providers }).filter(a => a !== own && yours.includes(a) && allowed(a));
 }
 
 // The round's state `s` for the stand-in `sub`: its own agent, on its default model and effort, as reviewer_model and

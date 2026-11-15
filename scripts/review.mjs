@@ -15,8 +15,8 @@ import { keepReceipt } from './receipts.mjs';
 import { codexSpend } from './round-cost.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
 import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
-import { REVIEWER_LIMITED, stopOnLimit, holdOnLimit, clearLimit, clearHeld } from './reviewer-limit.mjs';
-import { standInFor, standInRound, standInMeta, standInWords } from './review-stand-in.mjs';
+import { REVIEWER_LIMITED, stopOnLimit, holdOnLimit, clearLimit, clearHeld, heldBy, agentHeld, waitForFirst } from './reviewer-limit.mjs';
+import { standInFor, standInRound, standInMeta, standInWords, benchFor, readyAgents } from './review-stand-in.mjs';
 import { keepUsage } from './agent-usage.mjs';
 import { openBlocking, isMergeRound, mergeRun, ordinaryRounds, extraRound, nextAction, allowedRounds } from './review-limit.mjs';
 import { ownBase } from './built-on.mjs';
@@ -350,7 +350,7 @@ function runCodexReview(repo, id, s) {
   keepUsage(repo, 'codex', r.stdout, { thread: round > 1 ? lastThread : undefined }); // 0642: the thread it started, or the one it resumed
   if (r.timedOut) { fs.rmSync(out, { force: true }); throw new SpeckError(tookTooLong('codex', ms)); }
   if (r.error) throw new SpeckError(`codex failed: ${r.error.message}`);
-  if (r.status !== 0) { const why = codexFailure(r.status, r.stdout, r.stderr); stopOnLimit(repo, ticket.fm.id || id, 'codex', why); throw new SpeckError(why); }
+  if (r.status !== 0) { const why = codexFailure(r.status, r.stdout, r.stderr); stopOnLimit(repo, ticket.fm.id || id, 'codex', why, { standIn: !!s.standIn }); throw new SpeckError(why); }
   const events = r.stdout.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return {}; } });
   const thread = events.find(e => e.type === 'thread.started')?.thread_id || (round > 1 ? lastThread : undefined);
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
@@ -413,12 +413,29 @@ export function cmdReview(args) {
   if (!(typeof command === 'string' && command.trim()) && reviewer !== 'codex') unsupported(id, reviewer);
   try { rec = reviewRound(repo, id, opts, s => runOn(reviewer, held(s))); } catch (e) {
     // 0649: held by a recorded usage limit, the round runs on the first agent on reviewer_bench that can take it.
-    if (e.code === REVIEWER_LIMITED) try { sub = standInFor(repo, findTicket(repo, id).fm, cfg); } catch (why) { console.error(`No agent on reviewer_bench could stand in: ${why.message}`); }
-    if (!sub) throw e;
-    console.log(`The ${reviewer} reviewer's usage limit is reached, so this round runs on ${sub.name}, the first agent on reviewer_bench that can take it, in a fresh session with the full history.`);
-    rec = reviewRound(repo, id, opts, s => runOn(sub.name, standInRound(s, sub)));
+    // 0693: and, when that one is held by its own limit too, on the next, until one takes it or none is left.
+    if (e.code !== REVIEWER_LIMITED) throw e;
+    const refused = [];
+    let yours = null;
+    const ready = () => (yours ??= readyAgents(repo)), limited = a => refused.includes(a) || agentHeld(repo, a);
+    for (;;) {
+      try { sub = standInFor(repo, findTicket(repo, id).fm, cfg, { ready, held: limited }); } catch (why) { console.error(`No agent on reviewer_bench could stand in: ${why.message}`); sub = null; }
+      if (!sub) {
+        if (!heldBy(repo, reviewer)) throw e;
+        let bench = [];
+        try { bench = benchFor(findTicket(repo, id).fm, cfg, { ready }).filter(limited); } catch { /* the reviewer's own limit is the one to wait for */ }
+        if (!bench.length) throw e;
+        waitForFirst(repo, pad, reviewer, bench);
+      }
+      console.log(`The ${reviewer} reviewer's usage limit is reached${refused.length ? `, and so is that of ${refused.join(' and ')}` : ''}, so this round runs on ${sub.name}, the ${refused.length ? 'next' : 'first'} agent on reviewer_bench that can take it, in a fresh session with the full history.`);
+      try { rec = reviewRound(repo, id, opts, s => runOn(sub.name, standInRound(s, sub))); break; } catch (again) {
+        if (again.code !== REVIEWER_LIMITED) throw again;
+        refused.push(sub.name);
+      }
+    }
   }
   if (!sub) clearHeld(repo, reviewer); // 0692: a stand-in's round leaves the reviewer's own limit on record
+  else clearHeld(repo, sub.name); // 0693: a round on the stand-in's own agent ends any limit of its own on record
   clearLimit(repo, pad);
   const next = printRound(rec, cfg, rounds(repo, id), allowedRounds(findTicket(repo, id).raw));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
