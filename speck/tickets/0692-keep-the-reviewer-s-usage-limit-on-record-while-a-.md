@@ -1,7 +1,7 @@
 ---
 id: "0692"
 title: "Keep the reviewer's usage limit on record while a stand-in reviews"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-11-remember-the-reviewer-s-limit-while-a-stand
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:06:23.996Z"
+approved: "2026-11-15T21:37:11.544Z"
 
 ---
 # 0692 · Keep the reviewer's usage limit on record while a stand-in reviews
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the reviewer is held by a usage limit and a stand-in from `reviewer_bench` takes a round, the recorded round clears that build's record of the limit. Once every build's round has run on a stand-in, no record is left, so each later round asks the limited reviewer first, is refused and only then switches, and speck run's status no longer says the reviewer is waiting for its reset.
@@ -54,9 +55,14 @@ To see it, let speck run build while your reviewer is out of usage: after the fi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 207,710
+- Elapsed since build started: 31 min
+- Changed lines: 40 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
