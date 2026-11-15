@@ -1,7 +1,7 @@
 ---
 id: "0686"
 title: "Bring a ticket cancelled during its build onto the base branch"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-15
 ---
 # 0686 · Bring a ticket cancelled during its build onto the base branch
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A ticket can be cancelled on its own branch while it's being built, for example when speck takes a blocked question's recommendation to cancel it. The cancel is committed only on the branch, so the base branch still says `ready`. Once the branch's worktree is gone, every ticket with it in `after:` waits for it to ship for ever, and nothing says why: release 0684 waited this way for 0664 on 15 November.
