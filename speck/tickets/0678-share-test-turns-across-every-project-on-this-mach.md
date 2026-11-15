@@ -1,7 +1,7 @@
 ---
 id: "0678"
 title: "Share test turns across every project on this machine"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0677"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:40:15.115Z"
+approved: "2026-11-15T15:08:41.173Z"
 
 ---
 # 0678 · Share test turns across every project on this machine
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `max_parallel_tests` limits test runs within one repo, so each project building on a machine runs its tests at the same moment as the others'. Tests that depend on timing then fail by chance: this repo has needed 13 fix tickets for tests that fail only when the machine is busy, and its watch notes record load averages of 25 to 84 on 16 cores.
@@ -55,9 +56,15 @@ You can now cap how many test runs go at once across all your projects on this c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Repo-first acquisition creates a circular wait.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 327,008
+- Elapsed since build started: 28 min
+- Changed lines: 184 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Show and change `machine_parallel_tests` in the panel's Settings view (inbox: `speck/ideas/2026-11-15-show-machine-parallel-tests-in-the-settings-view.md`).
