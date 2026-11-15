@@ -79,7 +79,8 @@ test('0353 AC3: a code ticket\'s prompt is the template filled in, with nothing 
   const p = r.run('prompt', '1');
   assert.equal(p.status, 0, p.stderr);
   const values = { TICKET: stripRounds(fs.readFileSync(r.ticketFile, 'utf8')), BASE: 'main', DIFF: r.run('diff', '1').stdout, TESTS: testOutput(undefined, '0001') };
-  const tpl = fs.readFileSync(path.join(ROOT, 'templates', 'reviewer-prompt.md'), 'utf8');
+  // 0687: without the part only a fix ticket's prompt has.
+  const tpl = fs.readFileSync(path.join(ROOT, 'templates', 'reviewer-prompt.md'), 'utf8').replace(/\{\{#FIX\}\}[\s\S]*?\{\{\/FIX\}\}/g, '');
   const schema = fs.readFileSync(path.join(ROOT, 'templates', 'review-verdict.schema.json'), 'utf8');
   const expected = `${tpl.replace(/\{\{(TICKET|BASE|DIFF|TESTS)\}\}/g, (_, k) => values[k])}\n\nReturn ONLY a JSON object matching this schema:\n${schema}\n`;
   assert.equal(p.stdout, expected);
