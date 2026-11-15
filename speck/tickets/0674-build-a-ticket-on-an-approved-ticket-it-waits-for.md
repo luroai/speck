@@ -1,7 +1,7 @@
 ---
 id: "0674"
 title: "Build a ticket on an approved ticket it waits for"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0673", "0679"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:29:51.279Z"
+approved: "2026-11-15T15:02:27.750Z"
 
 ---
 # 0674 · Build a ticket on an approved ticket it waits for
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket with `after:` can't start until every ticket it names has shipped, even when the one it waits for is approved and only waiting to ship. Where you ship by hand, that wait lasts until you next look.
@@ -61,9 +62,15 @@ To see it, approve a ticket and leave it unshipped, then start a ticket that lis
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The baseline is reconstructed from moving merge bases and discarded whenever merge-tree reports a conflict.; F2 ownBase returns a tree object, but reviewSince passes it to cleanMerge as though it were a commit.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 451,769
+- Elapsed since build started: 33 min
+- Changed lines: 193 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - A ticket whose `built_on:` ticket is cancelled can never ship, and its refusal says to ship the cancelled one first: inbox `speck/ideas/2026-11-15-say-what-to-do-when-a-ticket-s-base-ticket-is-cancelled.md`.
