@@ -1,7 +1,7 @@
 ---
 id: "0675"
 title: "Start a waiting ticket once what it waits for is approved"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0674"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T15:15:19.904Z"
 approved: "2026-11-15T15:31:58.844Z"
+finished: "2026-11-15T15:34:34.756Z"
 
 ---
 # 0675 · Start a waiting ticket once what it waits for is approved
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Once `speck start` can build on an approved ticket (0674), `speck run` still skips a ready ticket until everything in its `after:` list has shipped, so the early start only happens by hand.
