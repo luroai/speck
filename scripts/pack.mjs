@@ -7,6 +7,7 @@ import { documentLines, panelDocuments } from './output.mjs';
 import { criteriaChange, criteriaChangedLines } from './criteria-changed.mjs';
 import { unreceiptedRounds } from './receipts.mjs';
 import { standInWords } from './review-stand-in.mjs';
+import { leftChecks } from './app-check.mjs';
 
 // Whether a round continued the reviewer's session or started fresh. Command rounds record it. Codex rounds resume
 // whenever an earlier round saved a session, so that rule gives theirs.
@@ -119,6 +120,7 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
     ...(blind.length ? ['', ...blind.map(r => `${NO_INSPECT} (round ${r.meta.round})`)] : []),
     ...receiptLines(repo, t, all, false),
     '', `**Summary:** ${v.summary}`,
+    ...leftLines(t),
     ...documentLines(repo, t, { links: documents }), // 0359: a task's result first, before the criteria
     ...criteriaChangedLines(criteriaChange(repo, cfg, t.fm.id)), // 0565
     '', '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
@@ -145,6 +147,12 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
   return lines.join('\n');
 }
 
+// 0679: each check in the app speck's agent left for you, above the ticket's changes.
+const leftLines = t => {
+  const left = leftChecks(t.sections.notes);
+  return left.length ? ['', '### Left for you to check in the app', 'speck went with the recommendation without making these checks. Shipping it is your word that each one passes.', ...left.map(c => `- ${c}`)] : [];
+};
+
 // The text of a ticket's section, without its comments, or '' when it's missing or holds only a comment.
 const sectionText = (t, name) => (t.sections[name] || []).join('\n').replace(/<!--[\s\S]*?-->/g, '').trim();
 
@@ -170,6 +178,7 @@ export function plainPack(repo, id) {
     // Any round the full pack marks with NO_INSPECT (0222).
     ...(all.some(r => r.meta.sandbox_ok === false) ? ['', 'In at least one review round, the reviewer could only see the change itself, not the rest of the code.'] : []),
     ...receiptLines(repo, t, all, true),
+    ...leftLines(t),
     '', '### What it should do', sectionText(t, 'outcome') || "The ticket doesn't say.",
     '', '### In plain words', sectionText(t, 'in plain words') || "The builder didn't write this change up in plain words.",
     '', '### Did it do what was asked?',

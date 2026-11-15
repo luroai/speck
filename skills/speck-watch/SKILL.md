@@ -56,6 +56,7 @@ Your brief says this when a low-risk ticket is blocked on a question with a `Che
 4. Stop the app with `speck app <id> --stop`. speck run stops it too once you've ended, whatever you did.
 5. Do exactly one thing, with `--saw="<what you checked and saw, in a sentence>"` and `--why="..."`. Both go in the ticket's Notes.
    - **Go with the recommendation**: `speck watch decide <id> "<the build's recommendation>" --saw="..." --why="..."`. With `watch: decide`, when what you saw agrees with the recommendation. With `watch: fix`, only when the check clearly passes. It takes only the build's own recommendation.
+   - **Leave the check for the user**, only with `watch: decide`, which your brief says by listing this action: `speck watch leave <id> --saw="<why you couldn't make the check>" --why="..."`. Use it only when what the check asks for is something you can't see or do, such as a sound, another device, or a browser or account you can't use. speck goes with the build's recommendation as `decide` does, resumes the build, and writes the check in the ticket's Notes as left for the user, so the approved ticket waits for them to make it and ship it. Never use it when what you saw disagrees with the recommendation, or for a check you could make: ask instead.
    - Otherwise, **ask the user**, saying what you saw: `speck watch ask <id> "<one question>" --saw="..." --why="..."`. Also ask when the app won't start, you can't sign in or you can't tell.
 
 `speck watch` refuses every other action on a check in the app.
