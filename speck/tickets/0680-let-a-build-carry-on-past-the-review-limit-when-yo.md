@@ -1,7 +1,7 @@
 ---
 id: "0680"
 title: "Let a build carry on past the review limit when you say so"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0679"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:29:50.734Z"
+approved: "2026-11-15T14:45:31.122Z"
 
 ---
 # 0680 · Let a build carry on past the review limit when you say so
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket that reaches `limits.max_review_rounds` without approval blocks with a question, and its recommendation can be to allow another round. Answering that changes nothing: the resumed build asks for a round, `speck review` refuses with "Max review rounds reached", and the ticket blocks again with the same question. With `watch: decide`, speck can take such a recommendation up to three times in a row, each one resuming a build that can only block again.
@@ -58,9 +59,15 @@ When a build runs out of review rounds, it now marks its question as being at th
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new speck answer / panel Answer allowance path has no test.; F2 The instruction identifies exhausted review rounds by a reason starting 'No approval after', but nextAction also uses that prefix when max_merge_rounds is exhausted.; F3 The brief test asserts the prose phrase 'review limit' in the watch row.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 261,709
+- Elapsed since build started: 16 min
+- Changed lines: 228 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - An answer given by hand (written in the ticket, then /speck-build) allows no more rounds: only the button and `speck answer` add the allowance. Saved to the inbox: speck/ideas/2026-11-15-let-an-answer-given-by-hand-allow-more-review-rounds.md.
