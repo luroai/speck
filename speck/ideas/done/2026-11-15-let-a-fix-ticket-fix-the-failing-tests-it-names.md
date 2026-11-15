@@ -1,6 +1,6 @@
 # Let a fix ticket fix the failing tests it names
 
-Captured: 2026-11-15 13:02 · Status: inbox
+Captured: 2026-11-15 13:02 · Status: ticketed (0687)
 From ticket: 0671
 Raised by: agent
 

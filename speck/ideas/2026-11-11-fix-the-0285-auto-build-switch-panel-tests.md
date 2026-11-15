@@ -1,6 +1,6 @@
 # Fix the 0285 Auto-build switch panel tests
 
-Captured: 2026-11-11 15:50 · Status: inbox
+Captured: 2026-11-11 15:50 · Status: dropped
 From ticket: 0654
 Raised by: agent
 

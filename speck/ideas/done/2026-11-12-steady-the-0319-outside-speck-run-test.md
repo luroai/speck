@@ -1,6 +1,6 @@
 # Steady the 0319 outside-speck-run test
 
-Captured: 2026-11-12 22:04 · Status: inbox
+Captured: 2026-11-12 22:04 · Status: ticketed (0690)
 From ticket: 0670
 Raised by: agent
 

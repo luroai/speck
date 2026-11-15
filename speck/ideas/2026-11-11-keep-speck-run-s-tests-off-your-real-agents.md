@@ -1,6 +1,6 @@
 # Keep speck run's tests off your real agents
 
-Captured: 2026-11-11 15:36 · Status: inbox
+Captured: 2026-11-11 15:36 · Status: dropped
 From ticket: 0648
 Raised by: agent
 

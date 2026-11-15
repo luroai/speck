@@ -1,6 +1,6 @@
 # Remember the reviewer's limit while a stand-in reviews
 
-Captured: 2026-11-11 15:04 · Status: inbox
+Captured: 2026-11-11 15:04 · Status: ticketed (0692)
 From ticket: 0649
 Raised by: agent
 

@@ -1,6 +1,6 @@
 # Try the next on the bench when a stand-in is limited too
 
-Captured: 2026-11-11 15:04 · Status: inbox
+Captured: 2026-11-11 15:04 · Status: ticketed (0693)
 From ticket: 0649
 Raised by: agent
 

@@ -1,6 +1,6 @@
 # Steady six speck run timing tests under load
 
-Captured: 2026-11-08 23:25 · Status: inbox
+Captured: 2026-11-08 23:25 · Status: ticketed (0689)
 From ticket: 0565
 Raised by: agent
 

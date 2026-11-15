@@ -1,6 +1,6 @@
 # Steady the 0622 and 0549 AC1 speck run tests under load
 
-Captured: 2026-11-10 23:29 · Status: inbox
+Captured: 2026-11-10 23:29 · Status: ticketed (0689)
 From ticket: 0625
 Raised by: agent
 

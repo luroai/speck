@@ -1,6 +1,6 @@
 # Fix the 0285 Settings switch tests on main
 
-Captured: 2026-11-11 15:50 · Status: inbox
+Captured: 2026-11-11 15:50 · Status: dropped
 From ticket: 0655
 Raised by: agent
 

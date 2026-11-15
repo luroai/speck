@@ -1,6 +1,6 @@
 # Show what a shipped ticket was built with
 
-Captured: 2026-11-15 13:11 · Status: inbox
+Captured: 2026-11-15 13:11 · Status: ticketed (0694)
 From ticket: 0669
 Raised by: agent
 

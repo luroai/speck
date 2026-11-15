@@ -1,6 +1,6 @@
 # Steady the 0630 full-run turn test under load
 
-Captured: 2026-11-11 11:12 · Status: inbox
+Captured: 2026-11-11 11:12 · Status: ticketed (0688)
 From ticket: 0632
 Raised by: agent
 

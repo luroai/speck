@@ -1,6 +1,6 @@
 # Steady the 0264 AC3 ship queue test
 
-Captured: 2026-11-11 14:36 · Status: inbox
+Captured: 2026-11-11 14:36 · Status: ticketed (0688)
 From ticket: 0645
 Raised by: agent
 

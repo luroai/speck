@@ -1,6 +1,6 @@
 # Line up an open shipped ticket's title
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: dropped
 From ticket: 0494
 
 ## What

@@ -1,6 +1,6 @@
 # Steady the 0517 AC3 frame-time test under load
 
-Captured: 2026-11-08 23:24 · Status: inbox
+Captured: 2026-11-08 23:24 · Status: dropped
 From ticket: 0571
 Raised by: agent
 
