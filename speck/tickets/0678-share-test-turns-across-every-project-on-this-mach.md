@@ -18,7 +18,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0677"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:40:15.115Z"
-approved: "2026-11-15T15:08:41.173Z"
+approved: "2026-11-15T15:20:12.890Z"
 
 ---
 # 0678 · Share test turns across every project on this machine
@@ -59,12 +59,13 @@ You can now cap how many test runs go at once across all your projects on this c
 ## Review log
 Round 1 (codex): changes requested: F1 Repo-first acquisition creates a circular wait.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 327,008
-- Elapsed since build started: 28 min
+- Reviewer tokens: 536,362
+- Elapsed since build started: 40 min
 - Changed lines: 184 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
@@ -235,6 +236,90 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The shared limit now coordinates test runs across projects while preserving project limits. The deadlock is fixed and covered by a regression test. All criteria pass, with no blocking concerns remaining."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d37a98449b64fa25fc043d09caf4e82d33c4b846",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1dfbd-5808-7010-bde7-9ad34a3a5668",
+    "builder_response": "- Merge round after merging main for the ship queue.\n- docs/brief.md (class logic, 1 conflict): main changed other rows in the same hunk (the `after:`/`built_on:` text, among others). I took main's side of the whole hunk, then added this ticket's sentence about `machine_parallel_tests` to the `speck test` row again, unchanged, after \"A turn held by a process that has died is freed.\". `git diff main -- docs/brief.md` now shows only this ticket's two rows (`speck config set` and `speck test`).\n- No code changed in the merge.\n- Tests run: test/machine-turns-0678.test.mjs (with commands.checks alongside): 157 passed, 0 failed.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 533961,
+      "cached_input_tokens": 428416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2401,
+      "reasoning_output_tokens": 426
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 22399,
+      "cached": 186368,
+      "write": 0,
+      "output": 587
+    },
+    "cost_usd": 0.0693048,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T15:20:10.233Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Home-setting storage, validation, removal and display code is unchanged from the approved commit. All AC1 tests passed after the merge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs is unchanged from the approved commit. AC2 tests passed for machine limits, waiting messages, release and full-suite lanes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "All AC3 tests passed, covering project limits, nested reuse, dead-holder recovery and F1's three-process regression."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md retains machine_parallel_tests in both required rows. Against merged main, only those two rows differ; main's speck start documentation is preserved. AC4 passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied post-merge run reports 157 passed, zero failed and three skipped. No implementation or test code changed since approval; whole-suite verification remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/turns.mjs",
+        "issue": "The circular-wait fix remains intact after the merge, and its regression test passed.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved behaviour and both sides' documentation changes. All ticket tests passed, and no new blocking concerns were found."
   }
 }
 ```
