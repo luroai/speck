@@ -50,7 +50,11 @@ A `--files` or `--related` run with the same code, test command and test files a
 - Self-check: added a test that `--fresh` just after `--files` runs the tests and that `--fresh` with anything else gives the usage message without a stack trace; checked that the reviewer's summary still reads a reused run's output. Running the tests in parallel showed the key could change between runs: the copied index got a newer time, so git took a file edited in the same second as unchanged. The copy now keeps the index's own time.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a build runs a few test files and they pass, speck now remembers that. If the build asks for the same tests again before anything has changed, speck shows the earlier result straight away, with a line saying it's reused and when it ran, instead of running them again or waiting for a turn. Builds spend less time waiting on tests they've already seen pass.
+
+To see it, run the same set of test files twice without changing anything: the second run answers at once. Any change to the project's files outside speck's own folder, a different set of test files or a failing run makes the next run test again, and adding `--fresh` always runs them.
+
+Worth keeping an eye on: speck only looks at the project's files. A test that depends on something else, such as a setting outside the project or a file git ignores, could be reused after that something changed; `--fresh` gets round it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,7 +63,10 @@ A `--files` or `--related` run with the same code, test command and test files a
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none went to the inbox):
+- Known limit: the reuse key covers files git tracks or doesn't ignore, and the test command. Environment variables and ignored files (such as `node_modules`) aren't part of it, so a test that depends on them can be reused after they change. `--fresh` runs it anyway.
+- Tidy-up: `speck help` doesn't yet mention `--fresh` with `--files` or `--related`. The usage message and the brief do.
+- Known limit: a `--files` record keeps all of its run's output, and records are cleared only after 30 days, when a new one is recorded, so a long-running repo's cache can grow.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -141,6 +148,89 @@ A `--files` or `--related` run with the same code, test command and test files a
     ],
     "escalation_question": "",
     "summary": "Repeated passing test runs are reused successfully in the covered cases, including across worktrees. One fix is needed: larger runs silently lose the beginning of their output when reused, potentially hiding results from review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "01368e3a4ad5c664583f08579fbf16e86be85cd0",
+    "session": "continued",
+    "thread_id": "01a1dfa0-165b-7580-bfea-609bae7c4cde",
+    "builder_response": "- Tests run: test/results-0677.test.mjs test/recorded-0238.test.mjs test/turns-0239.test.mjs\n- F1: fixed. `record` in scripts/results.mjs now keeps all of a `--files`/`--related` run's output, pass or fail; full runs keep their existing limit. New test \"0677 AC2 F1\" runs a test file writing over 1.2 MB, then checks the reused run prints its start and its end without running again.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 330390,
+      "cached_input_tokens": 265344,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1699,
+      "reasoning_output_tokens": 199
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6512,
+      "cached": 119040,
+      "write": 0,
+      "output": 662
+    },
+    "cost_usd": 0.031548,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T14:35:04.867Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/results.mjs checkoutCode hashes checkout contents and the expanded test command; filesRun records passing output. The AC1 tests cover uncommitted and untracked files. The brief's speck test row documents this behaviour."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "filesRun checks for reuse before acquiring a turn and prints the saved output with its timestamp. Passing AC2 tests cover --files, --related, cross-worktree reuse without waiting, and output exceeding the former truncation limit."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests cover changes outside speck/, changes to test contents and selected files, repeated failures, and invalidation of an earlier pass. filesRun records only passes and clears the matching cache entry after failure."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdTest passes freshFiles to filesRun, which bypasses both reuse checks. Passing AC4 tests verify that --fresh runs tests with both --files and --related."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied round output reports 169 passes, zero failures and three skips across 172 tests, including the ticket's tests and previously failing test files. Whole-suite verification remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/results.mjs:61",
+        "issue": "Passing file-run output was truncated above 1,048,576 characters. The current record implementation preserves it completely.",
+        "suggested_fix": "Implemented and covered by the passing '0677 AC2 F1' regression test, which verifies that a reused run retains the beginning and end of output exceeding 1.2 MB without running again.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Repeated passing test runs now reuse their complete output, including across worktrees, without waiting for a test slot. Changed code and failing runs trigger testing again, and --fresh forces a new run. The output-loss issue is fixed; no blocking findings remain."
   }
 }
 ```
