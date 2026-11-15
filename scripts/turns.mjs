@@ -152,54 +152,63 @@ function claimFile(dir, run, text) {
   return mine;
 }
 
-// Waits for one of the turns `slots` in `dir`, calling waiting() once if none is free, and returns its claim's file.
-function waitForTurn(dir, slots, mine, waiting) {
-  let said = false;
-  try {
-    for (;;) {
-      for (const n of slots) { const lock = takeTurn(dir, n, mine); if (lock) return lock; }
-      if (!said) { waiting(); said = true; }
-      sleep(POLL_MS * (0.5 + Math.random())); // spread out, so runs that backed off together don't clash again
-    }
-  } finally { fs.rmSync(mine, { force: true }); }
+// One of the turns `slots` in `dir` if one is free now, as its claim's file, or null.
+function freeTurn(dir, slots, mine) {
+  for (const n of slots) { const lock = takeTurn(dir, n, mine); if (lock) return lock; }
+  return null;
 }
 
 // Runs fn() once this process has a turn in `repo`, waiting for one if max_parallel_tests runs are already going, and
 // frees the turn afterwards, returning what fn returns. fn gets the run's files (see runFiles), for one run at a time.
 // In a turn this process already holds, fn runs straight away, in that turn, with the same files (0239). 0630: with
 // `lane` ('full'), it takes that one turn of its own instead, beside max_parallel_tests's, so no other run waits for it.
-// 0678: with machine_parallel_tests set, it then takes a turn on this machine too, shared by every project of yours,
-// lane or not, unless it already holds one or runs in a test run that does.
+// 0678: with machine_parallel_tests set, it takes a turn on this machine too, shared by every project of yours, lane or
+// not, unless it already holds one or runs in a test run that does. It takes the two together, never holding one while
+// it waits for the other, so a run waiting for the machine can't keep its repo's turn from a test run started in a turn
+// on the machine.
 export function inTurn(repo, cfg, fn, { lane = '' } = {}) {
   const max = maxParallelTests(cfg);
   const dir = turnsDir(repo);
   if (holding?.dir === dir) return fn(holding.files);
   const mdir = machineTurnsDir(), inMachineTurn = !mdir || machineHolding === mdir || process.env[MACHINE_TURN] === mdir;
   const mmax = inMachineTurn ? null : machineParallelTests();
+  if (mmax) {
+    try { fs.mkdirSync(mdir, { recursive: true }); }
+    catch (e) { throw new SpeckError(`Can't make ${mdir}, where the turns machine_parallel_tests shares are kept (${e.message}). Make it writable, or remove the limit with \`speck config set machine_parallel_tests ""\`, then run this again.`); }
+  }
   const run = crypto.randomUUID();
-  const text = JSON.stringify({ pid: process.pid, cwd: repo, run });
-  const lock = waitForTurn(dir, lane ? [lane] : [...Array(max).keys()], claimFile(dir, run, text), () => {
-    if (lane) { console.log(`Waiting for the ${lane} suite's own turn to run the tests: another run in it is already going. This run starts when it ends.`); return; }
-    const going = holders(dir, max);
-    console.log(`Waiting for a turn to run the tests: max_parallel_tests is ${max}, and ${going.length === 1 ? 'a run is' : `${going.length || max} runs are`} already going${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);
-  });
-  let mlock = null, mtext = '';
-  const saved = process.env[MACHINE_TURN];
+  const text = JSON.stringify({ pid: process.pid, cwd: repo, run }), mtext = JSON.stringify({ pid: process.pid, cwd: repo, run, runs: dir });
+  const slots = lane ? [lane] : [...Array(max).keys()], mslots = [...Array(mmax ?? 0).keys()];
+  const mine = claimFile(dir, run, text), mmine = mmax ? claimFile(mdir, run, mtext) : '';
+  let lock = null, mlock = null, saidRepo = false, saidMachine = false;
   try {
-    if (mmax) {
-      try { fs.mkdirSync(mdir, { recursive: true }); }
-      catch (e) { throw new SpeckError(`Can't make ${mdir}, where the turns machine_parallel_tests shares are kept (${e.message}). Make it writable, or remove the limit with \`speck config set machine_parallel_tests ""\`, then run this again.`); }
-      mtext = JSON.stringify({ pid: process.pid, cwd: repo, run, runs: dir });
-      mlock = waitForTurn(mdir, [...Array(mmax).keys()], claimFile(mdir, run, mtext), () => {
-        const going = holders(mdir, mmax);
-        console.log(`Waiting for a turn on this machine to run the tests: machine_parallel_tests is ${mmax}, and ${going.length === 1 ? 'a run is' : `${going.length || mmax} runs are`} already going across your projects${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);
-      });
-      machineHolding = mdir;
-      process.env[MACHINE_TURN] = mdir;
+    for (;;) {
+      lock = freeTurn(dir, slots, mine);
+      if (lock && !mmax) break;
+      if (lock) {
+        mlock = freeTurn(mdir, mslots, mmine);
+        if (mlock) break;
+        if (read(lock) === text) forget(lock, text); // not while it waits for the machine
+        lock = null;
+        if (!saidMachine) {
+          const going = holders(mdir, mmax);
+          console.log(`Waiting for a turn on this machine to run the tests: machine_parallel_tests is ${mmax}, and ${going.length === 1 ? 'a run is' : `${going.length || mmax} runs are`} already going across your projects${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);
+          saidMachine = true;
+        }
+      } else if (!saidRepo && lane) { console.log(`Waiting for the ${lane} suite's own turn to run the tests: another run in it is already going. This run starts when it ends.`); saidRepo = true; }
+      else if (!saidRepo) {
+        const going = holders(dir, max);
+        console.log(`Waiting for a turn to run the tests: max_parallel_tests is ${max}, and ${going.length === 1 ? 'a run is' : `${going.length || max} runs are`} already going${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);
+        saidRepo = true;
+      }
+      sleep(POLL_MS * (0.5 + Math.random())); // spread out, so runs that backed off together don't clash again
     }
-    holding = { dir, files: runFiles(dir, run) };
-    return fn(holding.files);
-  } finally {
+  } catch (e) { if (lock && read(lock) === text) forget(lock, text); throw e; }
+  finally { fs.rmSync(mine, { force: true }); if (mmine) fs.rmSync(mmine, { force: true }); }
+  const saved = process.env[MACHINE_TURN];
+  if (mlock) { machineHolding = mdir; process.env[MACHINE_TURN] = mdir; }
+  holding = { dir, files: runFiles(dir, run) };
+  try { return fn(holding.files); } finally {
     holding = null;
     if (mlock) {
       machineHolding = '';

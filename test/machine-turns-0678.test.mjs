@@ -241,3 +241,17 @@ test('0678: a home settings file that can\'t be read, or a turns folder that can
   assert.match(r.stderr, /where the turns machine_parallel_tests shares are kept/);
   assert.doesNotMatch(r.stdout, /IN TURN/);
 });
+
+test('0678 AC3: a run waiting for the machine doesn\'t keep its project\'s turn from a test run started in the turn it waits for', async () => {
+  const home = tmp('home'), env = envWith(home), gate = path.join(tmp('gate'), 'go'), b = tmp('b');
+  setLimit(home, 1);
+  // A holds the machine's turn, then its tests start a run in project B, where another run waits for the machine.
+  const a = start(env, tmp('a'), { release: gate, nested: b });
+  await waitFor(() => a.out.includes('IN TURN'), 'the first run to start');
+  const waiting = start(env, b);
+  await waitFor(() => waitsOnMachine(waiting.out), 'the run in project B to wait for the machine');
+  release(gate);
+  const out = await finished(a);
+  assert.ok(out.includes(`IN TURN ${b}`), `the nested run in B ran in A's turn: ${out}`);
+  assert.match(await finished(waiting), /IN TURN/);
+});
