@@ -14,6 +14,7 @@ import { changesPending } from './changes-asked.mjs';
 import { knownProviders } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { providerStartWords } from './provider-build.mjs';
+import { limitWaiting } from './usage-limit.mjs';
 
 // What a killed build is told when speck run resumes it.
 const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
@@ -81,7 +82,7 @@ export function resumeFor(words, cfg, id, rec, message, providers = knownProvide
 
 // speck run's hand-backs. keep(h) takes one from the ship queue (shipQueue's handBack), check(tickets), on each of
 // speck run's checks, resumes each waiting one while a build slot is free, and waiting(id) says whether one is waiting
-// for a ticket, so the queue doesn't ship it meanwhile (shipQueue's waiting). `running` is speck run's set of builds,
+// for a ticket, or its build is waiting out a usage limit (0691), so the queue doesn't ship it meanwhile (shipQueue's waiting). `running` is speck run's set of builds,
 // `startBuild` starts one as speck run does, and `runs()` is its runs folder.
 // 0549: settings() gives the builder settings ({ cfg, words, max }) as they are now, or null while they can't start a
 // build, so each hand-back starts with them.
@@ -150,7 +151,8 @@ export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, 
     }
   };
 
-  return { keep, check, waiting: id => !!pending(id)?.live };
+  // 0691: a ticket whose handed-back build stopped on a usage limit waits too, until speck run carries that build on.
+  return { keep, check, waiting: id => !!pending(id)?.live || limitWaiting(runs()).includes(String(id)) };
 }
 
 // 0338: when speck run last handed the ticket back to its build after a ship it started (above), from the
