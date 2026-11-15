@@ -1,7 +1,7 @@
 ---
 id: "0678"
 title: "Share test turns across every project on this machine"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0677"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:40:15.115Z"
 approved: "2026-11-15T15:20:12.890Z"
+finished: "2026-11-15T15:24:26.005Z"
 
 ---
 # 0678 · Share test turns across every project on this machine
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `max_parallel_tests` limits test runs within one repo, so each project building on a machine runs its tests at the same moment as the others'. Tests that depend on timing then fail by chance: this repo has needed 13 fix tickets for tests that fail only when the machine is busy, and its watch notes record load averages of 25 to 84 on 16 cores.
