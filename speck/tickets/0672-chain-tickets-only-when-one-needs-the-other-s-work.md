@@ -1,7 +1,7 @@
 ---
 id: "0672"
 title: "Chain tickets only when one needs the other's work"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-15T13:36:04.847Z"
 ---
 # 0672 · Chain tickets only when one needs the other's work
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The ticket skill chains a new ticket after every open ticket likely to change the same part of a file, and counts any doubt as an overlap. A chained ticket can't start until the other has shipped, so ready tickets wait while build slots stand free: in this repo's history, 587 of the 714 hours tickets spent between ready and starting were spent waiting on `after:`. What the waiting avoids is small: 11 of 268 ship attempts (4%) met a conflict, and a conflict costs one merge round, about 9 minutes.
@@ -61,3 +61,89 @@ Tickets wait for each other only when one can't be built without the other's wor
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9f26821265a21b9a57e0b81bc6725088051566b1",
+    "session": "fresh",
+    "thread_id": "01a1df6d-347a-7822-b546-f65766b597ba",
+    "builder_response": "- Tests run: test/ticket-0672.test.mjs, via `speck test --related`, which also ran every existing test file naming skills/speck-ticket/SKILL.md (including test/ticket-0205.test.mjs and test/ticket-0475.test.mjs). 259 pass, 0 fail.\n- The chaining step (step 6) of skills/speck-ticket/SKILL.md now chains in two cases only, says what builds side by side, and says to leave doubtful pairs unchained and name the shared file and part when presenting. The Present step and the triage \"Ticket it\" pointer were brought in line with the new rule. The step keeps the words 0205's tests pin (its title's start \"Chain tickets that change the same files\", \"each overlap\", the open statuses). .claude/skills/speck-ticket is a symlink to skills/, and speck init's copies are checked by the AC4 test.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 77701,
+      "cached_input_tokens": 49664,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 588,
+      "reasoning_output_tokens": 12
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 28037,
+      "cached": 49664,
+      "write": 0,
+      "output": 588
+    },
+    "cost_usd": 0.0669204,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T13:37:40.914Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 6 limits chaining to required prior work or rewriting the same lines, and explicitly allows the listed parallel changes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Step 6 says to leave doubtful pairs unchained and name the shared file and part when presenting them; step 8 reinforces this."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The prohibited phrase is absent from the skill; the reported passing AC3 test checks its absence."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Step 6 retains the new-ticket-only and loop rules; triage step 4 references step 6. The reported passing installation test compares both installed copies with the source."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied related-test run reports 259 passed, 0 failed and 3 skipped. No regression is evident in the scoped change; whole-suite verification remains the ship check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/ticket-0672.test.mjs",
+        "issue": "The new AC4 rule test pins exact prose, including 'Change only the new ticket', 'never edit the other' and 'lead back to the new ticket'. These are document wording assertions explicitly prohibited by the review rules: an equivalent rewrite would fail them.",
+        "suggested_fix": "Remove the exact-prose assertions and check these instructional rules by review. Retain tests of permitted facts, including the triage step reference, prohibited phrase and installed-copy equality.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The instructions implement the requested narrower chaining policy and the reported tests pass. Before approval, remove the new tests that freeze instructional wording, because harmless edits would break them."
+  }
+}
+```
+
+</details>

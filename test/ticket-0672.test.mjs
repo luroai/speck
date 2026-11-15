@@ -8,7 +8,7 @@ import { ROOT } from './support/panel.mjs';
 import { installTooling, SKILL_DIRS } from '../scripts/install.mjs';
 
 // ---------- 0672: chain tickets only when one needs the other's work ----------
-// AC1 and AC2 are about how the skill reads, so the reviewer checks them. AC5 is the whole suite, which ship runs.
+// AC1, AC2 and AC4's rules for the step are about how the skill reads, so the reviewer checks them. AC5 is the whole suite, which ship runs.
 
 const skill = () => fs.readFileSync(path.join(ROOT, 'skills/speck-ticket/SKILL.md'), 'utf8');
 const chainStep = md => {
@@ -20,14 +20,6 @@ const chainStep = md => {
 
 test('0672 AC3: the ticket skill never says "count it as an overlap"', () => {
   assert.doesNotMatch(skill(), /count it as an overlap/i);
-});
-
-test('0672 AC4: the chaining step still changes only the new ticket and never makes a loop', () => {
-  const { text } = chainStep(skill());
-  assert.match(text, /Change only the new ticket/);
-  assert.match(text, /never edit the other/);
-  assert.match(text, /[Nn]ever make a loop/);
-  assert.match(text, /lead back to the new ticket/);
 });
 
 test('0672 AC4: triage that makes tickets still points to the chaining step', () => {
