@@ -1,7 +1,7 @@
 ---
 id: "0677"
 title: "Reuse a build's test result when nothing has changed"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0676"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:01:02.658Z"
 approved: "2026-11-15T14:35:16.179Z"
+finished: "2026-11-15T14:39:49.017Z"
 
 ---
 # 0677 · Reuse a build's test result when nothing has changed
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A full `speck test` reuses a recorded result for the same code (0112), but `--files` and `--related` runs record nothing. A build that runs the same files twice with nothing changed between, for instance once to see them pass and again to keep the output for the review round, runs them twice. Of 803 such runs here since 29 Oct (10.9 hours), about 180 (2.8 hours) repeated a passing run with no change to the code.
