@@ -51,6 +51,7 @@ A merge round gives the reviewer only what changed since it approved: how each c
 - Changed tests: 0048 AC3 and 0048 round 1 F1 checked that a merge round after a merge gets the whole change (`+feature`); AC1 here replaces that, so they now check the resolved conflict, the new heading and the whole-change command instead.
 - Pictures: none, because nothing anyone sees in the panel changes.
 - What this gives up: a second read of the whole change sometimes finds what round 1 missed. 0667 had 4 review rounds, 3 of them merge rounds, and its first merge round raised two findings on the ticket's own change. After this, a merge round finds only what the merge and the changes after it got wrong.
+- speck (2026-11-15 13:58 UTC) told you: Nothing is stuck. The build is near its end and has run the related tests, about 2,600 of them, twice and is starting a third run so the reviewer gets clean output. A machine load of about 45 made each run slow. The second run hit a ship queue timing test (0264 AC3) that failed once in three runs on its own. It's flaky under load and unrelated to this change. Why: The build log shows each step finishing and both large test runs completing with only expected or unrelated failures, nothing hanging, while the load average stayed between 36 and 46 throughout.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
