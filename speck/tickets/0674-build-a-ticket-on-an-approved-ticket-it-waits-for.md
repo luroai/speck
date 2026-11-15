@@ -1,7 +1,7 @@
 ---
 id: "0674"
 title: "Build a ticket on an approved ticket it waits for"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-15T14:29:51.279Z"
 ---
 # 0674 · Build a ticket on an approved ticket it waits for
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A ticket with `after:` can't start until every ticket it names has shipped, even when the one it waits for is approved and only waiting to ship. Where you ship by hand, that wait lasts until you next look.
@@ -50,6 +50,7 @@ A ticket can be started on the approved work of the one ticket it still waits fo
 - `cmdStart` in `scripts/speck.mjs` makes the branch, `reviewSince` in `scripts/review.mjs` and `scripts/diffstat.mjs` measure the change, and `autoShipWhyNot` in `scripts/ship.mjs` gives auto-ship's reasons.
 - Failing before this build: none
 - Self-check: starting straight from the approved ticket's branch left the new branch with that branch's older copy of its own ticket, which would clash at ship, so `speck start` now makes the branch from the base branch and merges the approved ticket's branch into it (refusing, changing nothing, if that clashes), and diffs are measured from that merge. Also: the waiting ticket must be approved in its build as well as on its branch, and a `built_on:` that isn't a ticket id counts as none.
+- speck (2026-11-15 14:58 UTC) told you: Nothing is stuck: the build is on its second review round after fixing two findings from round one. The time went on a mid-build redesign to a merge-based start, a full test-suite run of nearly 5 minutes (3,285 tests) and several test reruns, all on a machine with a load average around 64. Why: The build log shows steady progress with no hung commands, and every test failure it hit was in its own new code and was fixed, so the base branch isn't broken.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -62,3 +63,97 @@ A ticket can be started on the approved work of the one ticket it still waits fo
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9af24cc9ac77f859ed808607056d94e310f7fe81",
+    "session": "fresh",
+    "thread_id": "01a1dfb2-1a32-77f1-9ece-b31004285f87",
+    "builder_response": "- Tests run: `speck test --related test/built-on-0674.test.mjs` once (3284 passed, 1 failed: test/cli-0231.test.mjs, because my new test helper started the CLI as a process). Fixed the helper to run speck in-process, then ran `speck test --files test/built-on-0674.test.mjs test/cli-0231.test.mjs` (attached output, all pass).\n- Design: `speck start` makes the new branch from the base branch as usual, then merges the approved after: ticket's branch into it (`speck(<id>): start on <other>`), refusing and undoing everything if that merge clashes, and writes `built_on: \"<other>\"` in the start commit. Starting straight from the other ticket's branch was tried first and dropped in self-check: that branch holds an older copy of this ticket's own file (often still a draft), so the build would work from stale criteria and the ship would clash on the ticket file.\n- AC2: `ownBase` (scripts/built-on.mjs) gives the tree of git's own merge of where HEAD meets the base branch and where it meets the other ticket's branch (or, once that has shipped, the two merge bases git then finds), so `speck diffstat`, `speck diff`, `speck prompt`, each review round's diff and the rebuilt round-1 prompt count only this ticket's change, before and after the other ships.\n- AC3: `speck ship` refuses via `builtOnCheck`, reading built_on: from the ticket on its branch, so editing after: changes nothing. `autoShipWhyNot` gives the reason first, so `speck status --json` has auto_ship false (the ship queue never tries it, so no hand-back) and `speck ship --auto` exits 12.\n- startWaits moved out of scripts/speck.mjs into scripts/built-on.mjs unchanged apart from the new case, and two lines in scripts/ship.mjs were joined, to keep both files within the 600-line check.\n",
+    "seconds": 68,
+    "usage": {
+      "input_tokens": 252223,
+      "cached_input_tokens": 207232,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1731,
+      "reasoning_output_tokens": 538
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 44991,
+      "cached": 207232,
+      "write": 0,
+      "output": 1731
+    },
+    "cost_usd": 0.1280152,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T14:53:41.057Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "startWaits and finishStart implement the approved dependency exception. Passing AC1 tests cover worktrees on/off, refusal states, multiple dependencies and merge rollback."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Initial diff tests pass, but ownBase in scripts/built-on.mjs:48 returns null when reconstructing the baseline conflicts. Review and diffstat then fall back to the ordinary merge base, including the dependency's changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests exercise manual refusal after removing after:, auto-ship exit 12 and status reason, and successful shipping after the dependency ships."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md describes the exception in the latest-base-branch passage and the speck start entry. The passing AC4 test checks the documented built_on: field."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The related run reported one failure, subsequently fixed through the new helper. The supplied final run reports 168 passed, zero failed and three skipped; no existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/built-on.mjs:38",
+        "issue": "The baseline is reconstructed from moving merge bases and discarded whenever merge-tree reports a conflict. If the dependent build merges newer main work that conflicts with its approved parent's work, ownBase returns null. Both diffstat and review then include the parent's changes again, violating AC2.",
+        "suggested_fix": "Retain a reliable baseline for the inherited work across subsequent base merges rather than silently falling back to a baseline that includes it. Add a regression test that merges conflicting newer base work into the dependent build before its parent ships.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/review.mjs:305",
+        "issue": "ownBase returns a tree object, but reviewSince passes it to cleanMerge as though it were a commit. git merge-tree --write-tree requires commits. After an approved dependent build merges newer base work and its reconstructed baseline changes, cleanMerge fails and the merge round falls back to showing the entire ticket change, losing the existing merge-review behaviour.",
+        "suggested_fix": "Keep commit ancestry separate from the tree used for diffing, and calculate the clean merge using commit inputs. Add a merge-round regression test for a ticket with built_on: that verifies previously approved changes are excluded.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Starting on approved work and holding shipping until that work ships are covered by passing tests. Changes are needed because later base updates can make reviews and size counts include inherited work, and can break the focused review of merge resolutions."
+  }
+}
+```
+
+</details>
