@@ -1,7 +1,7 @@
 ---
 id: "0695"
 title: "Prepare release 1.5.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -23,7 +23,7 @@ started: "2026-11-15T22:20:30.820Z"
 ---
 # 0695 · Prepare release 1.5.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 1.4.0, the ticket writer suggests a level for each ticket, Shipped compares builder models by their results, a ticket cancelled during its build no longer leaves others waiting, fix tickets may fix the tests they name, builds and reviews carry on through more usage limits, and the tests that failed by chance under load are steady (0685 to 0694). Anyone following the setup prompt, or updating speck in a project, still gets 1.4.0.
@@ -56,7 +56,7 @@ speck is ready to be released as 1.5.0.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 1.5.0. Once it lands, anyone who follows the setup prompt or runs the install command again in a project gets 1.5.0, with a changelog section and release notes covering what's new since 1.4.0: suggested build levels for tickets, the By model table in Shipped, reviews carrying on through more usage limits, cancelled and fix tickets no longer holding things up, and steadier tests. The README's "Built with speck" figures are brought up to date (677 tickets shipped). To see it, open the GitHub releases page after it ships: a 1.5.0 release should appear. If it doesn't, it needs creating by hand from the release notes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -66,3 +66,81 @@ speck is ready to be released as 1.5.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none. After it ships, check that the `v1.5.0` tag and its GitHub release page appeared (see Notes).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d37b26c0ebcdcc6d7d07bba0260d5d3773834da7",
+    "session": "fresh",
+    "thread_id": "01a1e157-d7bc-7162-b12f-7cbebcb779c8",
+    "builder_response": "- Tests run: test/release-0695.test.mjs test/release-0684.test.mjs test/docs-0491.test.mjs test/docs-0267.test.mjs\n- `speck test --related` ran first (2711 tests): only docs-0267's rewording check failed, on a heading check I'd put in 0695's AC4 test (a document's heading wording); I removed that check and re-ran the files above, all passing.\n- `speck start` started this on 0693's approved work (0693 ships first), so 0693 is in the changelog and release notes.\n- `npm run prices` ran on 2026-11-15 and found the same rates as the table 0684 took that morning, so `scripts/prices.json` is unchanged; its `taken` date is today.\n- Built with speck figures from `speck/tickets/done/` at `speck(0694): Compare builder models by their results in Shipped`: 677 shipped, 17 cancelled, 14 minutes, 2 rounds, 319 first-round.\n- 0684's tests that named 1.4.0 as current now check the current version, as 0684 did for 0668's.\n",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 258646,
+      "cached_input_tokens": 204416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1429,
+      "reasoning_output_tokens": 119
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 54230,
+      "cached": 204416,
+      "write": 0,
+      "output": 1429
+    },
+    "cost_usd": 0.1431916,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T22:34:00.286Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json specifies 1.5.0. Both AC1 tests in test/release-0695.test.mjs passed, including running speck init and checking its output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 1.5.0 above 1.4.0 and describes tickets 0685–0694 plus shipped ticket 0696. Review confirmed the 1.4.0 and earlier content is unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines name 1.5.0. AC3 tests passed for both versions, the latest-release setup prompt and scripts/prices.json dated 2026-11-15. The ticket records the price refresh returning unchanged rates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.5.0.md contains the overview, changes and benefits, per-project install command, upgrading guidance and changelog link, with no person's name. Claims match the corresponding tickets, including approved prerequisite 0693. All AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent recalculation from speck/tickets/done/ confirms 677 shipped, 17 cancelled, 14 median minutes, 2 median rounds and 319 first-round approvals, matching README.md. Version/changelog checks passed. Recorded run: 178 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release version, notes and published figures are consistent. The notes explain the new model comparisons, level suggestions and reliability improvements, with clear upgrade instructions. Relevant tests pass, older changelog entries are preserved, and no blocking issues were found."
+  }
+}
+```
+
+</details>
