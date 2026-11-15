@@ -1,7 +1,7 @@
 ---
 id: "0685"
 title: "Suggest a level for each ticket the ticket skill writes"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-15T21:23:22.387Z"
 ---
 # 0685 · Suggest a level for each ticket the ticket skill writes
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 1.3 a ticket can be built at a level, such as quick, deep or one of your own, but every ticket the ticket skill writes leaves `level` blank, so each one builds on the settings unless you remember to pick one. The ticket writer has read the work and the code it changes, so it's well placed to say which level fits, and you'd only need to agree or change it at Gate 1.
@@ -49,7 +49,7 @@ The ticket skill sets a level on each ticket it writes when one of the project's
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you ask for tickets, the ticket writer now suggests a build level for each one, such as quick for a small wording change or deep for a tricky or risky one, and gives a one-line reason, or says Default when the settings fit. To see it, ask for a ticket and look at the summary it gives you. You can change the level in the ticket's Level menu in the panel, or by asking, before you set it ready. Choosing a level never sets a ticket ready. Worth watching whether its suggestions match how you'd pick.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,3 +59,75 @@ The ticket skill sets a level on each ticket it writes when one of the project's
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d07bf7a835e5ad020656e26825a1c9c26204f2e2",
+    "session": "fresh",
+    "thread_id": "01a1e11b-943b-7453-bf1c-4c194bf7adc8",
+    "builder_response": "- Tests run: test/ticket-0685.test.mjs, plus the related files speck test --related chose\n- All four criteria are (checked by review): the change is a Level bullet in step 4, a sentence in step 8 and a phrase in step 9 of skills/speck-ticket/SKILL.md (.claude/skills/speck-ticket is a symlink to it). The tests check only the facts it names: the speck set command, level_builds fields, and that installed copies match.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 86194,
+      "cached_input_tokens": 52864,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 573,
+      "reasoning_output_tokens": 36
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 33330,
+      "cached": 52864,
+      "write": 0,
+      "output": 573
+    },
+    "cost_usd": 0.0776764,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T21:27:45.197Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 4, Level bullet, requires listing level_builds with builder, model and effort, using speck set <id> level <name>, and leaving level blank when no level improves on the settings. scripts/level-builds.mjs confirms the fields and blank-name default."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Step 4 gives concise guidance for small low-risk changes, M or high-risk tickets, criteria needing careful reasoning, and user-named levels for particular kinds of work."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Step 8 requires each ticket's level or Default, a one-line reason, and instructions for changing it through the panel's Level menu or by asking before setting the ticket ready."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Step 4 explicitly separates level selection from Gate 1; step 9 says agreeing to or changing a level does not authorise readiness. The supplied test log confirms 261 passed, 3 skipped and no failures. The installed .claude skill is a symlink to the source."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The ticket skill now selects a suitable project level, explains its choice and tells the user how to change it. Setting a ticket ready remains a separate user decision. The change stays within scope, and the reported tests pass."
+  }
+}
+```
+
+</details>
