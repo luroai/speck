@@ -44,6 +44,7 @@ A ticket in the panel says what it will be built with, and you can change its bu
 - Follow the Level fact and menu from 0662 (`levelFact` in `templates/panel.js`, `POST /api/tickets/<id>/level/<name>` in `scripts/panel.mjs`). The board already gives each ticket `builder`, `builder_label` and `builder_model`, worked out with its level (`ticketBuilderModel` in `scripts/build-model.mjs`). It needs the effort and where they come from too.
 - The full view already has a Builder fact (`paneFacts` in `templates/panel-popups.js`), showing only the agent and model. The open draft in Plan has none.
 - Failing before this build: none
+- Self-check: no changes. A done or cancelled ticket's Builder fact is worked out from its own builder, model and level, with the settings as they are now for anything it leaves blank, as speck keeps no other record of the settings a build ran with.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

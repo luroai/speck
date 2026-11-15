@@ -178,6 +178,8 @@ let priorityMenu = null; // the id of the draft whose priority menu is open, or 
 const priorityRefused = new Map(); // id → why the server refused to set its priority, until the next click on its tag
 let levelMenu = null; // 0662: the id of the ticket whose Level menu is open, or null
 const levelRefused = new Map(); // 0662: id → why the server refused to set its level, until the next click on its Level
+let builderMenu = null; // 0669: the id of the ticket whose Builder menu is open, or null
+const builderRefused = new Map(); // 0669: id → why the server refused to set its builder, until the next click on its Builder
 const stopping = new Set(); // ids whose stop request hasn't been answered yet
 const stopRefused = new Map(); // id → why the server refused to stop its build, until the next click on its Stop build button
 const goingWith = new Set(); // 0284: ids whose Go with the recommendation request hasn't been answered yet
@@ -266,15 +268,19 @@ const levelName = v => (v ? `${v[0].toUpperCase()}${v.slice(1)}` : 'Default');
 const levelModelNames = new Map(); // agent → Map of slug → name, or null while it's read or when it can't be
 let levelNamesRead = 0; // how many agents' names have come back, so a Plan card with its menu open is drawn again
 function levelBuildWords(name) {
-  const b = list(state && state.level_builds).find(x => x && x.name === name && typeof x.agent === 'string' && x.agent);
-  if (!b) return null;
+  return buildWords(list(state && state.level_builds).find(x => x && x.name === name));
+}
+// 0669: what `b` builds with, a level's or a ticket's as the board gives it, in those words, or null when it says nothing.
+function buildWords(b) {
+  if (!b || typeof b.agent !== 'string' || !b.agent) return null;
   const named = typeof b.model_slug === 'string' && b.model_slug ? levelModelNames.get(b.builder)?.get(b.model_slug) : undefined;
   const effort = b.effort === null ? null : b.effort || 'default effort';
   return [b.agent, named || b.model || 'default model', effort].filter(Boolean).join(' · ');
 }
 // Reads, once a page, the model names of Codex and Cursor where a level builds on one of their models, then draws again.
-function readLevelModelNames() {
-  const agents = new Set(list(state && state.level_builds).filter(b => b && typeof b.model_slug === 'string' && b.model_slug && ['codex', 'cursor'].includes(b.builder)).map(b => b.builder));
+// 0669: or where `builds` do, such as a ticket's.
+function readLevelModelNames(builds = list(state && state.level_builds)) {
+  const agents = new Set(builds.filter(b => b && typeof b.model_slug === 'string' && b.model_slug && ['codex', 'cursor'].includes(b.builder)).map(b => b.builder));
   for (const agent of agents) {
     if (levelModelNames.has(agent)) continue;
     levelModelNames.set(agent, null);
@@ -311,6 +317,7 @@ function levelPicker(t, tag) {
     e.stopPropagation(); // the click is for the level, not the ticket
     levelRefused.delete(id);
     priorityMenu = null;
+    builderMenu = null; // 0669
     levelMenu = id;
     render();
     readLevelModelNames(); // 0667
@@ -331,6 +338,85 @@ function levelPicker(t, tag) {
   menu.appendChild(change);
   box.appendChild(menu);
   return box;
+}
+// 0669: its Builder fact: the agent, model and effort its next build would use, and under it where they come from: the
+// ticket itself, its level or Default. Pressing it opens a menu of Default and the Builder's own list in Settings, unless
+// it's done or cancelled, when it shows what it was built with. Without the board's build_with, the builder it names.
+const BUILD_FROM = { ticket: 'This ticket', default: 'Default' };
+function builderFact(t) {
+  const id = String(t.id), b = t.build_with && typeof t.build_with === 'object' ? t.build_with : null;
+  const shown = buildWords(b) || workerOf(t, { round: null }).value;
+  if (b && typeof b.model_slug === 'string' && b.model_slug && ['codex', 'cursor'].includes(b.builder)) readLevelModelNames([b]);
+  const from = !b || typeof b.from !== 'string' || !b.from ? null : Object.hasOwn(BUILD_FROM, b.from) ? BUILD_FROM[b.from] : `${levelName(b.from)} level`;
+  const under = from ? el('span', 'bfrom', from) : null;
+  if (t.status === 'done' || t.status === 'cancelled' || !b) return factCell('Builder', shown, null, shown, null, [el('span', 'text', shown), under].filter(Boolean));
+  const why = builderRefused.has(id) ? el('div', 'bad level-refused', builderRefused.get(id)) : null;
+  return factCell('Builder', shown, 'pick', shown, null, [builderPicker(t, el('span', 'set-level set-builder', shown)), under, why].filter(Boolean));
+}
+let builderChoices = null, builderChoicesRead = 0; // 0669: the Builder's list in Settings, { view } once read, or 'loading'; how many times it's been read
+function builderPicker(t, tag) {
+  const id = String(t.id), box = el('span', 'prio', null, tag);
+  tag.className += ' pick';
+  tag.title = 'Set the builder';
+  tag.tabIndex = 0;
+  tag.setAttribute('role', 'button');
+  tag.setAttribute('aria-label', `Builder ${tag.textContent}. Opens the builder menu`);
+  tag.addEventListener('keydown', pressWithKeys);
+  tag.addEventListener('click', e => {
+    e.stopPropagation(); // the click is for the builder, not the ticket
+    builderRefused.delete(id);
+    priorityMenu = null;
+    levelMenu = null;
+    builderMenu = id;
+    render();
+    readBuilderChoices();
+  });
+  if (builderMenu !== id) return box;
+  const menu = el('span', 'prio-menu level-menu builder-menu'); // a prio-menu, so a click outside it only closes it
+  const own = t.build_with.own && typeof t.build_with.own === 'object' ? t.build_with.own : {};
+  const read = builderChoices !== null && builderChoices !== 'loading' ? builderEntries(builderChoices.view, own.builder || '', own.builder_model || '') : null;
+  const choices = [{ value: '', label: 'Default' }, ...(read ? read.entries : [])], on = read ? read.on : own.builder || own.builder_model ? null : '';
+  for (const c of choices) {
+    const b = el('button', c.value === on ? 'on' : null, null, el('span', 'lname', c.label));
+    b.type = 'button';
+    b.addEventListener('click', e => { e.stopPropagation(); setBuilder(id, c.value); });
+    menu.appendChild(b);
+  }
+  if (!read) menu.appendChild(el('span', 'lbuild', builderChoices === 'loading' ? 'Reading your agents\' models…' : 'Couldn\'t read your agents\' models. Close this and try again.'));
+  box.appendChild(menu);
+  return box;
+}
+// Reads the Builder's list as Settings shows it, each time a Builder menu opens, keeping the last one read meanwhile.
+async function readBuilderChoices() {
+  if (builderChoices === 'loading') return;
+  const had = builderChoices;
+  if (had === null) builderChoices = 'loading';
+  render();
+  const view = await readSettings('/api/settings');
+  builderChoices = view.state === 'ok' ? { view } : had;
+  builderChoicesRead++;
+  render();
+}
+// 0669: the server sets the ticket's builder and model and commits it, answering with its Builder fact as the board
+// gives it, so its facts show the change at once. `value` is "<agent>|<model>", or '' for Default.
+async function setBuilder(id, value) {
+  builderMenu = null;
+  render();
+  const at = value.indexOf('|'), q = at < 0 ? 'builder=&model=' : `builder=${encodeURIComponent(value.slice(0, at))}&model=${encodeURIComponent(value.slice(at + 1))}`;
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/builder?${q}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    if (!res.ok) builderRefused.set(id, body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`);
+    else if (body && body.build_with && typeof body.build_with === 'object') {
+      const t = state && list(state.tickets).find(x => String(x.id) === id);
+      const { builder, builder_label, builder_model, build_with } = body;
+      if (t) state = { ...state, tickets: state.tickets.map(x => (x === t ? { ...t, builder, builder_label, builder_model, build_with } : x)) };
+    }
+  } catch {
+    builderRefused.set(id, "Couldn't reach the panel server, so the builder wasn't changed.");
+  }
+  render();
 }
 // An open ticket, short: its problem and outcome, then its readiness list. The rest is in the side pane.
 function ticketDetail(t, criteria) {
@@ -520,7 +606,7 @@ document.addEventListener('keydown', e => {
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
   else if (settingsView !== null && settingTip !== null) { settingHoverWait++; showSettingTip(null, false); } // 0268: the explanation first, then the view. 0371: and no pause left to show it again
   else if (settingsView !== null) leaveSettings();
-  else if (priorityMenu !== null || levelMenu !== null) closePriorityMenu();
+  else if (priorityMenu !== null || levelMenu !== null || builderMenu !== null) closePriorityMenu();
   else if (fullId !== null) closeFull();
 });
 // While a priority menu is open, a click anywhere else only closes it: caught on its way down, before it reaches what
@@ -528,12 +614,12 @@ document.addEventListener('keydown', e => {
 const inPriorityMenu = n => { for (; n; n = n.parentNode) if (/\bprio-menu\b/.test(String(n.className || ''))) return true; return false; };
 document.addEventListener('click', e => {
   if (tipTag !== null && !within(e.target, tipTag) && !within(e.target, $('tag-tip'))) closeTip(); // 0165: a click anywhere else closes the tip
-  if ((priorityMenu === null && levelMenu === null) || inPriorityMenu(e.target)) return;
+  if ((priorityMenu === null && levelMenu === null && builderMenu === null) || inPriorityMenu(e.target)) return;
   e.stopPropagation();
   e.preventDefault();
   closePriorityMenu();
 }, true);
-function closePriorityMenu() { priorityMenu = null; levelMenu = null; render(); } // 0662: and a Level menu
+function closePriorityMenu() { priorityMenu = null; levelMenu = null; builderMenu = null; render(); } // 0662: and a Level menu. 0669: and a Builder menu
 document.addEventListener('scroll', () => closeTip(), { capture: true, passive: true }); // 0165: a scroll anywhere closes the tip
 // The server sets the draft's priority and commits it, and the next refresh moves it to its place in the list.
 async function setPriority(id, n) {
@@ -730,7 +816,7 @@ function lastFacts(t, pick) {
   const kind = kindOf(t);
   const priority = t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : '–';
   const set = pick && priority !== '–' ? priorityPicker(t, el('span', 'set-prio', priority)) : null; // plain text, not a tag
-  return [factCell('Priority', priority, set ? 'pick' : null, priority, null, set ? [set] : null), levelFact(t), // 0662
+  return [factCell('Priority', priority, set ? 'pick' : null, priority, null, set ? [set] : null), levelFact(t), builderFact(t), // 0662. 0669
     factCell('Size · risk', `${size} · ${risk}`, null),
     factCell('Type', kind, kind === 'code' ? null : kind)];
 }
@@ -1345,7 +1431,8 @@ function render() {
   $('capture-n').textContent = m.capture.length ? `${m.capture.length} note${m.capture.length === 1 ? '' : 's'}` : ''; // 0536
   $('capture-n').hidden = !m.capture.length;
   fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
-    t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null, levelMenu === String(t.id) ? levelNamesRead + 1 : 0, levelRefused.get(String(t.id)) ?? null], ticketItem, // 0667: and the model names its menu has read
+    t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null, levelMenu === String(t.id) ? levelNamesRead + 1 : 0, levelRefused.get(String(t.id)) ?? null,
+      builderMenu === String(t.id) ? [builderChoices === 'loading', builderChoicesRead] : null, builderRefused.get(String(t.id)) ?? null, levelNamesRead], ticketItem, // 0667: and the model names its menu has read. 0669: and its Builder menu
     { own: ownData, derived: t => [t.chain, t.unlocks, depsSig(t)], update: newHead }), asleepLane('shaping', 'Nothing to plan · Draft tickets wait here for you to set them ready.'));
   renderFull(m);
   renderDecided(m); // 0568

@@ -327,6 +327,8 @@
   .level-menu .lbuild { line-height: 18px; color: var(--muted); } /* the menu's own size: no 12 px text in a button (0612), nor 13 px outside rows (0427) */
   .level-menu button.on:has(.lname) { text-decoration: none; } /* the level chosen: only its name underlined */
   .level-menu button.on .lname { text-decoration: underline; text-underline-offset: 3px; }
+  /* 0669: under a ticket's Builder, in smaller words, where it comes from */
+  .facts .bfrom { display: block; margin-top: 2px; font-size: 12px; line-height: 16px; color: var(--muted); }
   .facts .level-refused { margin-top: 4px; font-size: 12px; line-height: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
   /* 0467: an open ticket's dependency box, under its table. Chain: five even slots on a line, each a circle over its
      id. Every slot keeps to its column, its id on one line. */
