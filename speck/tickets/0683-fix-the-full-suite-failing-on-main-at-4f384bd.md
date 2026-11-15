@@ -42,6 +42,7 @@ The full suite passes on main again.
 
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
+- Failing before this build: 0463 AC1, 0463 AC2 and 0463 AC3 (test/panel-0463.test.mjs), the tests this ticket fixes. The recorded full-suite output is cut short, so these were confirmed by running test/panel-0463.test.mjs, which fails only them.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
