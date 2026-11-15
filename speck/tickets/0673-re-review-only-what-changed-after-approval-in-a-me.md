@@ -1,7 +1,7 @@
 ---
 id: "0673"
 title: "Re-review only what changed after approval in a merge round"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T13:36:05.771Z"
+approved: "2026-11-15T14:10:20.542Z"
 
 ---
 # 0673 · Re-review only what changed after approval in a merge round
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a ship is refused for a conflict or for tests that fail on the change as it would land, the build merges the base branch in and the change is reviewed again. That merge round gives the reviewer the branch's whole change against the base branch, so it reads again everything it has already approved. This repo has had 155 merge rounds, and a ticket whose ship is refused takes 12.6 minutes from its first ship attempt to shipped, against 3.8 for one that ships cleanly.
@@ -61,9 +62,15 @@ When an approved ticket can't ship because other work landed on the same files, 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The AC4 test checks exact prose in docs/brief.md, including forbidden sentence fragments and the required phrase 'clean merge'.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 264,171
+- Elapsed since build started: 34 min
+- Changed lines: 69 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (known limit): a merge round's diff also shows the ticket file's own changes since the approval, such as `speck close` setting it approved and filling its logs, as any later round's diff does. Only the review rounds are left out.
 - Follow-up skipped, already captured: `0264 AC3` failed once in a related run and passes alone (speck/ideas/2026-11-11-steady-the-0264-ac3-ship-queue-test.md).
