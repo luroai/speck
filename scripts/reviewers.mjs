@@ -238,7 +238,7 @@ export function runCommandReview(repo, id, name, command, s, providers = knownPr
     else {
       const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged, afterMerge: s.afterMerge, base: s.base }), ms, env);
       if (!options.provider) keepUsage(repo, name, tried.stdout); // 0642
-      if (!tried.error && tried.status !== 0) stopOnLimit(repo, s.ticket.fm.id || id, name, failureWords(tried));
+      if (!tried.error && tried.status !== 0) stopOnLimit(repo, s.ticket.fm.id || id, name, failureWords(tried), { standIn: !!s.standIn });
       if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;
       else if (tried.status !== 0) why = `resuming session ${lastThread} exited ${tried.status}`;
       else { r = tried; session = 'continued'; }
@@ -254,10 +254,10 @@ export function runCommandReview(repo, id, name, command, s, providers = knownPr
   if (r.error) throw new SpeckError(`Couldn't run the ${name} reviewer: ${r.error}. ${options.provider ? `${options.provider.label} reviews need Claude Code installed.` : `Check reviewer_options.${name} in speck/config.yml.`}`);
   const tail = r.stderr.trim().split('\n').slice(-5).join('\n');
   const stderrNote = tail ? `\nLast lines of its error output:\n${tail}` : '';
-  if (r.status !== 0) stopOnLimit(repo, s.ticket.fm.id || id, name, failureWords(r));
+  if (r.status !== 0) stopOnLimit(repo, s.ticket.fm.id || id, name, failureWords(r), { standIn: !!s.standIn });
   if (r.status !== 0) throw new SpeckError(`The ${name} reviewer (${r.cmd}) exited ${r.status}, so no round was recorded.${stderrNote}`);
   const { verdict, envelope } = verdictFromOutput(r.stdout);
-  if (!verdict) stopOnLimit(repo, s.ticket.fm.id || id, name, failureWords(r));
+  if (!verdict) stopOnLimit(repo, s.ticket.fm.id || id, name, failureWords(r), { standIn: !!s.standIn });
   if (!verdict) throw new SpeckError(`The ${name} reviewer (${r.cmd}) didn't return a verdict: its output wasn't JSON, a \`\`\`json block or a JSON envelope with a "result". No round was recorded.${stderrNote}`);
   // An invalid verdict is the reviewer's failure too, so it gets the same stderr lines.
   try { validateVerdict(structuredClone(verdict)); } catch (e) { if (e instanceof SpeckError) throw new SpeckError(`${e.message} The ${name} reviewer's verdict wasn't recorded.${stderrNote}`); throw e; }
