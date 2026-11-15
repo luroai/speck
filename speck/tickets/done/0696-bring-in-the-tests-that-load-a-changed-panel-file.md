@@ -1,7 +1,7 @@
 ---
 id: "0696"
 title: "Bring in the tests that load a changed panel file"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:08:47.961Z"
 approved: "2026-11-15T21:22:43.736Z"
+finished: "2026-11-15T21:48:16.127Z"
 
 ---
 # 0696 · Bring in the tests that load a changed panel file
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck test --related` brings in a test file when its text names a changed file, or when it imports a support module that names one. `test/support/panel.mjs` loads the panel's page with paths built from parts, such as `path.join(ROOT, 'templates', 'panel.js')`, so a change to the panel's script or styles brings in almost none of the about 160 tests that load it. 0468's change broke 61 of them unseen, and 0495, 0502 and 0583 hit the same gap, each handed back at ship or running every panel test by hand.
