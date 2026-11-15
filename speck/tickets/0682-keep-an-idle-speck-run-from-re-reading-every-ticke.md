@@ -1,7 +1,7 @@
 ---
 id: "0682"
 title: "Keep an idle speck run from re-reading every ticket"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0680"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:50:32.767Z"
+approved: "2026-11-15T15:05:43.481Z"
 
 ---
 # 0682 · Keep an idle speck run from re-reading every ticket
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every 5 seconds `speck run` reads and checks every ticket in the project again, done ones included (about 680 here), and more than once within a check. Its cost grows with the project's history: this repo's run used 4 minutes 49 seconds of processor time in its first 14 minutes with two builds going, a third of one core, on a machine where tests already fail under load.
@@ -55,9 +56,15 @@ speck run no longer reads every ticket again each time it looks at the board. It
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 readTicket clears all cached parses when the cache reaches 10,000 entries.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 235,868
+- Elapsed since build started: 15 min
+- Changed lines: 32 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - To the inbox: speck/ideas/2026-11-15-keep-speck-run-s-checks-from-re-reading-build-logs.md (a board still costs about 1.7 s of processor time on this repo, mostly build logs and git).
