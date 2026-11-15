@@ -1,7 +1,7 @@
 ---
 id: "0691"
 title: "Carry on a handed-back build after the usage limit"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-10-carry-on-a-handed-back-build-after-the-usag
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:05:12.659Z"
+approved: "2026-11-15T21:40:16.707Z"
 
 ---
 # 0691 · Carry on a handed-back build after the usage limit
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build that was handed back on an approved ticket, for example to resolve a merge, stops on an agent's usage limit before it sets the ticket reviewing, speck run doesn't carry it on after the reset, as it does for a ticket that's ready, building or reviewing. The ticket then moves only when its next ship is refused, which spends another of its hand-backs, and while you're away it can sit for days.
@@ -52,9 +53,15 @@ When speck run hands an approved ticket back to its build, for example to sort o
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 On the reset tick, limits.check removes the approved ticket from limitWaiting and starts its build.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 266,790
+- Elapsed since build started: 35 min
+- Changed lines: 13 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Moving a handed-back build to another agent while its limit holds: speck/ideas/2026-11-15-move-a-handed-back-build-to-another-agent-while-its-limit-holds.md.
