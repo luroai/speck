@@ -1,6 +1,7 @@
 # Fix 0182 AC3 failing in the full suite
 
 Captured: 2026-11-12 12:45 · Status: inbox
+Triaged: 1
 From ticket: 0663
 Raised by: agent
 

@@ -1,6 +1,7 @@
 # Count a delegated Codex session's later turns
 
 Captured: 2026-10-27 · Status: inbox
+Triaged: 1
 From ticket: 0534
 Raised by: agent
 

@@ -1,6 +1,7 @@
 # Keep Shipped's figure labels whole at middle widths
 
 Captured: 2026-11-10 10:13 · Status: inbox
+Triaged: 1
 From ticket: 0606
 Raised by: agent
 

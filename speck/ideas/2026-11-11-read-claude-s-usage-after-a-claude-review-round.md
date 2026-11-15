@@ -1,6 +1,7 @@
 # Read Claude's usage after a Claude review round
 
 Captured: 2026-11-11 14:45 · Status: inbox
+Triaged: 1
 From ticket: 0642
 Raised by: agent
 

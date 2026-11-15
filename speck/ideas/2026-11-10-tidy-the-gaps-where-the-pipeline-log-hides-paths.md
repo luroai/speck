@@ -1,6 +1,7 @@
 # Tidy the gaps where the Pipeline log hides paths
 
 Captured: 2026-11-10 11:16 · Status: inbox
+Triaged: 1
 From ticket: 0620
 Raised by: agent
 

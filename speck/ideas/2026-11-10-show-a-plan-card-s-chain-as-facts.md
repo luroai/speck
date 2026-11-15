@@ -1,6 +1,7 @@
 # Show a Plan card's chain as facts
 
 Captured: 2026-11-10 11:18 · Status: inbox
+Triaged: 1
 From ticket: 0613
 Raised by: agent
 

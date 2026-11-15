@@ -4,6 +4,18 @@ base_branch: main
 branch_prefix: speck/
 
 builder: claude
+# Build levels: a ticket's level: names one. Each of builder, builder_model and builder_effort the ticket leaves blank
+# comes from its level, and each the level leaves out from the settings above.
+# quick runs on Sonnet as a trial from 2026-11-15: compare it with Opus in Shipped's By model table (0694).
+levels:
+  quick:
+    builder: claude
+    builder_model: sonnet
+    builder_effort: low
+  balanced: {}
+  deep:
+    builder_effort: max
+
 reviewer: codex                  # codex | claude | claude-subagent
 allow_same_model_review: false   # must be true for builder and reviewer to be the same agent
 reviewer_model: gpt-6.1-sol            # blank: the reviewer's own default. Otherwise a model name in the reviewer's own format

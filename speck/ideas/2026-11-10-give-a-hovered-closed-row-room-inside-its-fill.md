@@ -1,6 +1,7 @@
 # Give a hovered closed row room inside its fill
 
 Captured: 2026-11-10 11:20 · Status: inbox
+Triaged: 1
 From ticket: 0614
 Raised by: agent
 

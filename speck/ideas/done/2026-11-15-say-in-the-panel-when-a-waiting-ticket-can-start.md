@@ -1,6 +1,6 @@
 # Say in the panel when a waiting ticket can start
 
-Captured: 2026-11-15 15:31 · Status: inbox
+Captured: 2026-11-15 15:31 · Status: ticketed (0698)
 From ticket: 0675
 Raised by: agent
 

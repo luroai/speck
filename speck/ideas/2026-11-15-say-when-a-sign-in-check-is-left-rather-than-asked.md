@@ -1,6 +1,7 @@
 # Say when a sign-in check is left rather than asked
 
 Captured: 2026-11-15 14:15 · Status: inbox
+Triaged: 1
 From ticket: 0679
 Raised by: agent
 

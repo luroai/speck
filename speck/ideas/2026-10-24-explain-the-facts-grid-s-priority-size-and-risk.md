@@ -1,7 +1,7 @@
 # Explain the facts grid's priority, size and risk
 
-Captured: 2026-10-24 · Status: inbox
-Triaged: 1
+Captured: 2026-10-24 · Status: dropped
+Triaged: 2
 From ticket: 0462
 
 ## What

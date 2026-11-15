@@ -1,6 +1,7 @@
 # Check the redesign for low-vision readers
 
 Captured: 2026-11-09 18:20 · Status: inbox
+Triaged: 1
 From ticket: 0577
 Raised by: agent
 

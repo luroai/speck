@@ -1,6 +1,7 @@
 # Say QA checked it even with QA's settings blank
 
 Captured: 2026-11-11 14:52 · Status: inbox
+Triaged: 1
 From ticket: 0651
 Raised by: agent
 

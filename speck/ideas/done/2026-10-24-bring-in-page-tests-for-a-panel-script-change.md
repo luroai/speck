@@ -1,6 +1,6 @@
 # Bring in page tests for a panel script change
 
-Captured: 2026-10-24 · Status: inbox
+Captured: 2026-10-24 · Status: ticketed (0696)
 Triaged: 1
 From ticket: 0468
 

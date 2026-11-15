@@ -1,6 +1,7 @@
 # Show that speck is checking a question in the app
 
 Captured: 2026-11-11 11:50 · Status: inbox
+Triaged: 1
 From ticket: 0636
 Raised by: agent
 

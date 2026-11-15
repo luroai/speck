@@ -1,6 +1,7 @@
 # Let an answer given by hand allow more review rounds
 
 Captured: 2026-11-15 14:45 · Status: inbox
+Triaged: 1
 From ticket: 0680
 Raised by: agent
 

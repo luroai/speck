@@ -1,6 +1,7 @@
 # Let speck set blank a ticket's level
 
 Captured: 2026-11-12 12:42 · Status: inbox
+Triaged: 1
 From ticket: 0662
 Raised by: agent
 

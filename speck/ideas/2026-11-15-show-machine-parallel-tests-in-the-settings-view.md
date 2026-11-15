@@ -1,6 +1,7 @@
 # Show the machine-wide test limit in Settings
 
 Captured: 2026-11-15 15:08 · Status: inbox
+Triaged: 1
 From ticket: 0678
 Raised by: agent
 

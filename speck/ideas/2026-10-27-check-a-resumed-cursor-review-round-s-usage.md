@@ -1,6 +1,7 @@
 # Check a resumed Cursor review round's usage
 
 Captured: 2026-10-27 · Status: inbox
+Triaged: 1
 From ticket: 0529
 Raised by: agent
 

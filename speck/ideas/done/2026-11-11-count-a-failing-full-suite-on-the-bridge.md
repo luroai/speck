@@ -1,6 +1,6 @@
 # Count a failing full suite on the bridge
 
-Captured: 2026-11-11 10:31 · Status: inbox
+Captured: 2026-11-11 10:31 · Status: ticketed (0697)
 From ticket: 0630
 Raised by: agent
 

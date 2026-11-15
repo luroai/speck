@@ -1,6 +1,7 @@
 # Say what to do when the ticket a build started on is cancelled
 
 Captured: 2026-11-15 15:03 · Status: inbox
+Triaged: 1
 From ticket: 0674
 Raised by: agent
 

@@ -1,6 +1,7 @@
 # Warn when a saved test password is a common word
 
 Captured: 2026-11-11 11:34 · Status: inbox
+Triaged: 1
 From ticket: 0635
 Raised by: agent
 

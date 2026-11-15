@@ -1,6 +1,7 @@
 # Keep speck run's checks from re-reading build logs
 
 Captured: 2026-11-15 15:05 · Status: inbox
+Triaged: 1
 From ticket: 0682
 Raised by: agent
 

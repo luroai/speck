@@ -1,6 +1,6 @@
 # Count stopped builds on the bridge
 
-Captured: 2026-11-10 17:10 · Status: inbox
+Captured: 2026-11-10 17:10 · Status: ticketed (0697)
 From ticket: 0616
 Raised by: agent
 
