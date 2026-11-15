@@ -1,7 +1,7 @@
 ---
 id: "0695"
 title: "Prepare release 1.5.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0685","0686","0687","0688","0689","0690","0691","0692","0693","0694"]  
 created: 2026-11-15
 built_on: "0693"
 started: "2026-11-15T22:20:30.820Z"
+approved: "2026-11-15T22:34:09.288Z"
 
 ---
 # 0695 · Prepare release 1.5.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 1.4.0, the ticket writer suggests a level for each ticket, Shipped compares builder models by their results, a ticket cancelled during its build no longer leaves others waiting, fix tickets may fix the tests they name, builds and reviews carry on through more usage limits, and the tests that failed by chance under load are steady (0685 to 0694). Anyone following the setup prompt, or updating speck in a project, still gets 1.4.0.
@@ -62,9 +63,14 @@ speck is ready to go out as version 1.5.0. Once it lands, anyone who follows the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 260,075
+- Elapsed since build started: 14 min
+- Changed lines: 175 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. After it ships, check that the `v1.5.0` tag and its GitHub release page appeared (see Notes).
 
