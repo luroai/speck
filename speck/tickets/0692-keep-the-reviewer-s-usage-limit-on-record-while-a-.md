@@ -41,6 +41,7 @@ A reviewer's usage limit stays on record until it resets, whoever takes the roun
 
 ## Notes
 - From 0649. The per-build record also marks a build as waiting to be carried on (`reviewerWaiting`), so the limit may want a record of its own, apart from the per-build one.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
