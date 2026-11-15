@@ -43,6 +43,8 @@ The full suite passes on main again.
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
 - Failing before this build: 0463 AC1, 0463 AC2 and 0463 AC3 (test/panel-0463.test.mjs), the tests this ticket fixes. The recorded full-suite output is cut short, so these were confirmed by running test/panel-0463.test.mjs, which fails only them.
+- Cause: 0669 added a Builder fact to an open Plan ticket's facts, between Level and Size · risk, as its AC1 asks, so the table has eight cells. The 0463 tests still expected seven, with Size · risk and Type one place earlier. The fix updates those tests to the eighth cell; the panel itself is unchanged. No new test file: the ticket's criteria are the 0463 tests passing, and they check it.
+- Self-check: no changes. No other test expects the seven-cell table; with eight cells no cell spans a row, and the browser test's spanning check still covers a last cell alone on its row.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
