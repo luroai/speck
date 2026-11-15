@@ -1,7 +1,7 @@
 ---
 id: "0671"
 title: "Fix the full suite failing on main at 46099bc"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-15
 ---
 # 0671 · Fix the full suite failing on main at 46099bc
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The full suite fails on main at commit 46099bc (46099bc80d7e377f1c975967f91fb669336f41d2). Failing tests:
