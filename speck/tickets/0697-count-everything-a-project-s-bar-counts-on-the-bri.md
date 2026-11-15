@@ -18,7 +18,7 @@ source: "speck/ideas/done/2026-11-10-count-stopped-builds-on-the-bridge.md"     
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:28:31.481Z"
-approved: "2026-11-15T21:49:47.766Z"
+approved: "2026-11-15T22:31:20.541Z"
 
 ---
 # 0697 · Count everything a project's bar counts on the bridge
@@ -54,12 +54,13 @@ All projects now counts everything a project's own bar counts as needing you. A 
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 175,476
-- Elapsed since build started: 21 min
+- Reviewer tokens: 313,496
+- Elapsed since build started: 63 min
 - Changed lines: 20 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none to the inbox. Known limit: the bridge leaves out an engineering manager's question about a ticket that isn't on the board, which the bar's word would count; that has always been so and this ticket didn't change it.
@@ -130,6 +131,76 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The All projects view now counts stopped builds needing attention and failing full suites, and shows cards explaining each problem. Existing questions and Ship items retain their behaviour. The tests exercise the counts, card content and project navigation; no blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ee444b1f6f94b219fbf3c29f27d12a7f0755a938",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1e12f-8345-77f1-b6c6-8a1b2b10ab78",
+    "builder_response": "- Merge round after merging main into the ticket branch.\n- docs/brief.md (class: logic, 1 conflict, on the long `speck panel` line): main added the Shipped lane's By model table and Built with, and a sentence on `speck test --related`; this ticket changed the bridge's card sentence. They touch different parts of the line, so I took main's version and applied this ticket's change to the bridge's card sentence on it, unchanged. Nothing else changed in the merge.\n- Tests run: test/panel-0697.test.mjs test/panel-0596.test.mjs test/panel-summary-0595.test.mjs test/panel-0432.test.mjs test/panel-0433.test.mjs (205 passed, 0 failed).\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 312154,
+      "cached_input_tokens": 243072,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1342,
+      "reasoning_output_tokens": 57
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 18456,
+      "cached": 118912,
+      "write": 0,
+      "output": 652
+    },
+    "cost_usd": 0.0553232,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T22:31:17.064Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "projectSummary in scripts/panel-summary.mjs and stoppedForYou/foremanView in scripts/foreman.mjs are unchanged from the approved commit. The four passing 0697 AC1 tests compare bridge counts with the real bar rules, preserving the existing additional Ship count."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "bridgeParts in templates/panel-header.js and the 0697 tests are unchanged from the approved commit. Passing AC2 tests cover project and ticket identification, stopped-build wording, failing test names, exit-code fallback and full-suite project navigation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0697 AC3 test confirms existing question and Ship items and counts remain unchanged when neither new condition applies. The merge preserves that implementation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The fresh targeted run reports 205 passed, 0 failed and 3 skipped. No implementation or test changes occurred during the merge in the reviewed files. git diff --check passes; the whole-suite shipping check remains pending."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Approval stands after the merge. The bridge still shows stopped builds and failing full suites correctly. The documentation resolution preserves main’s additions and the approved bridge description exactly. The targeted tests pass, and no new issues were found."
   }
 }
 ```
