@@ -8,15 +8,16 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { shipRepo, CLI, env } from './support/ship.mjs';
+import { BUSY_MS } from './support/run.mjs';
 import { TEST_SHELL, claimTurn } from '../scripts/turns.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const noTrace = res => assert.doesNotMatch(res.stderr, /^\s+at /m, 'no stack trace');
 const delay = ms => new Promise(r => setTimeout(r, ms));
 const WAITING = /^Waiting for a turn to run the tests/m;
-// Waits until cond() is true, failing after 15 seconds rather than hanging.
+// Waits until cond() is true, failing after BUSY_MS (as long as a busy machine needs) rather than hanging.
 async function until(cond, what) {
-  for (const end = Date.now() + 15000; !cond();) {
+  for (const end = Date.now() + BUSY_MS; !cond();) {
     if (Date.now() > end) throw new Error(`gave up waiting until ${what}`);
     await delay(20);
   }
@@ -66,8 +67,11 @@ function deadPid() {
   return Number(String(r.stdout).trim());
 }
 
-// A test command that logs when it starts and ends, so overlapping runs show up.
-const logged = log => `echo start >> ${log}; sleep 1; echo end >> ${log}`;
+// A test command that logs when it starts and ends, so overlapping runs show up. 0689: between the two, it waits for
+// the file `gate` to exist, so a run lasts until the test has seen what it checks, however slowly the next one starts.
+// It gives up waiting after about 30 seconds, so it never hangs.
+const logged = (log, gate) => `echo start >> ${log}; i=0; while [ ! -e ${gate} ] && [ $i -lt 600 ]; do i=$((i+1)); sleep 0.05; done; echo end >> ${log}`;
+const gateFile = () => path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'gate-'))), 'open');
 const readLog = log => fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n') : [];
 
 test('0109 AC1: speck test runs the test command and exits with its exit code', () => {
@@ -94,12 +98,14 @@ test('0109 AC1: speck test without a test command set says what to do, with no s
 });
 
 test('0109 AC1: with a run already going in another worktree, speck test waits, says so once, and starts when it ends', async () => {
-  const log = path.join(fs.realpathSync(os.tmpdir()), 'log.txt');
-  const { dir, wt } = testRepo({ cmd: logged(log) });
+  const log = path.join(fs.realpathSync(os.tmpdir()), 'log.txt'), gate = gateFile();
+  const { dir, wt } = testRepo({ cmd: logged(log, gate) });
   const first = speckAsync(dir, 'test');
   await until(() => readLog(log).length, 'the first run started');
   // --fresh: on the same code, a plain run would reuse the result the first records while it waits (0237).
   const second = speckAsync(wt, 'test', '--fresh');
+  await until(() => WAITING.test(second.out.stdout), 'the second run said it was waiting');
+  fs.writeFileSync(gate, '');
   const [a, b] = await Promise.all([first.done, second.done]);
   assert.equal(a.status, 0, a.stderr);
   assert.equal(b.status, 0, b.stderr);
@@ -111,14 +117,17 @@ test('0109 AC1: with a run already going in another worktree, speck test waits, 
 });
 
 test('0109 AC1: max_parallel_tests defaults to 1 when the setting is missing', async () => {
-  const log = path.join(fs.realpathSync(os.tmpdir()), 'log.txt');
-  const { dir, wt } = testRepo({ cmd: logged(log) });
+  const log = path.join(fs.realpathSync(os.tmpdir()), 'log.txt'), gate = gateFile();
+  const { dir, wt } = testRepo({ cmd: logged(log, gate) });
   const file = path.join(dir, 'speck', 'config.yml');
   fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/^max_parallel_tests:.*\n/m, ''));
   fs.copyFileSync(file, path.join(wt, 'speck', 'config.yml'));
   const first = speckAsync(dir, 'test');
   await until(() => readLog(log).length, 'the first run started');
-  const b = await speckAsync(wt, 'test', '--fresh').done; // --fresh: see above
+  const second = speckAsync(wt, 'test', '--fresh'); // --fresh: see above
+  await until(() => WAITING.test(second.out.stdout), 'the second run said it was waiting');
+  fs.writeFileSync(gate, '');
+  const b = await second.done;
   await first.done;
   assert.equal(b.status, 0, b.stderr);
   assert.deepEqual(readLog(log), ['start', 'end', 'start', 'end']);
@@ -126,8 +135,8 @@ test('0109 AC1: max_parallel_tests defaults to 1 when the setting is missing', a
 
 test('0109 AC1: max_parallel_tests 2 lets two runs go at once', async () => {
   const marks = fs.mkdtempSync(path.join(os.tmpdir(), 'marks-'));
-  // Each run waits up to 10 seconds for the other to start, and fails if it never does.
-  const cmd = `touch ${marks}/$$; i=0; while [ $(ls ${marks} | wc -l) -lt 2 ]; do i=$((i+1)); [ $i -gt 100 ] && exit 1; sleep 0.1; done`;
+  // Each run waits about 30 seconds (as long as a busy machine needs) for the other to start, and fails if it never does.
+  const cmd = `touch ${marks}/$$; i=0; while [ $(ls ${marks} | wc -l) -lt 2 ]; do i=$((i+1)); [ $i -gt 300 ] && exit 1; sleep 0.1; done`;
   const { dir, wt } = testRepo({ cmd, max: 2 });
   const [a, b] = await Promise.all([speckAsync(dir, 'test').done, speckAsync(wt, 'test').done]);
   assert.equal(a.status, 0, a.stdout + a.stderr);

@@ -438,6 +438,14 @@ test('0622 AC5: a wait that can\'t be saved says so and leaves the build to be h
 
 // ---------- speck run itself ----------
 
+// 0689: the limits below reset an hour after the build stops, so however slowly speck run reads one, the reset is still
+// to come. Once the test has seen speck run wait, this moves its record of the wait to now, as if the hour had gone by.
+const HOUR = 3600;
+const hourPassed = dir => {
+  const file = path.join(dir, 'speck', '.cache', 'runs', 'run.usage-limit.json'), past = new Date(Date.now() - 1000).toISOString();
+  saveRecord(file, { ...JSON.parse(fs.readFileSync(file, 'utf8')), resets: past, carry_on: past });
+};
+
 // Writes the refusal on its first run, exiting 1 as Claude Code does, and just records itself on the next.
 const REFUSING = `
 const fs = require('fs'), path = require('path');
@@ -447,7 +455,7 @@ const calls = path.join(dir, 'fake-out');
 const n = fs.readdirSync(calls).length;
 fs.writeFileSync(path.join(calls, n + '.json'), JSON.stringify({ at: Date.now(), flag, session, prompt }));
 if (n === 0) {
-  console.log(JSON.stringify({ type: 'rate_limit_event', rate_limit_info: { status: 'rejected', resetsAt: Math.ceil(Date.now() / 1000) + 2, rateLimitType: 'five_hour' } }));
+  console.log(JSON.stringify({ type: 'rate_limit_event', rate_limit_info: { status: 'rejected', resetsAt: Math.ceil(Date.now() / 1000) + ${HOUR}, rateLimitType: 'five_hour' } }));
   console.log(JSON.stringify({ type: 'result', is_error: true, result: 'You have hit your session limit' }));
   process.exit(1);
 }
@@ -458,7 +466,10 @@ test('0622 AC1 AC2 AC3: speck run waits out a limit a build stopped on, then res
   const run = startRun(r.dir, { SPECK_RUN_LIMIT_GRACE_MS: '0' });
   try {
     await waitFor(() => /usage limit is reached until/.test(run.out()), 'the limit to be said', run.out);
+    await waitFor(() => readLimit(path.join(r.dir, 'speck', '.cache', 'runs'))?.builds.includes('0001'), 'the build to wait for the limit', run.out);
+    await new Promise(res => setTimeout(res, 500)); // a few of speck run's checks, each 100 ms apart
     assert.equal(r.calls().length, 1, 'nothing started while it waits');
+    hourPassed(r.dir);
     await waitFor(() => r.calls().length === 2, 'the build to be resumed', run.out);
     const [first, second] = r.calls();
     assert.equal(second.flag, '--resume');
@@ -475,19 +486,25 @@ const RECORDING = REFUSING.replace(/if \(n === 0\) \{[\s\S]*\}\n$/, '');
 
 test('0622 AC1 AC2 AC3: a build that hit the limit while speck run was off is waited out when it starts, and holds new work too', async () => {
   const r = runRepo({ tickets: [['0001', { status: 'building' }], ['0002', {}]], command: `"${process.execPath}" "${keptFile('fake-recording.cjs', RECORDING)}" @repo --session-id {session} "/speck-build {id}"` });
-  const runs = path.join(r.dir, 'speck', '.cache', 'runs'), resets = Math.ceil(Date.now() / 1000) + 3;
+  const runs = path.join(r.dir, 'speck', '.cache', 'runs'), resets = Math.ceil(Date.now() / 1000) + HOUR;
   fs.mkdirSync(runs, { recursive: true });
   fs.writeFileSync(path.join(runs, '0001.log'), log(event('rejected', resets), failedResult));
   saveRecord(path.join(runs, '0001.json'), { id: '0001', session: 'off-session', cwd: r.dir, pid: deadPid(), started: new Date().toISOString() });
   const run = startRun(r.dir, { SPECK_RUN_LIMIT_GRACE_MS: '0' });
   try {
+    await waitFor(() => /usage limit is reached until/.test(run.out()), 'the limit to be said', run.out);
+    await waitFor(() => readLimit(runs)?.builds.includes('0001'), 'the build to wait for the limit', run.out);
+    await waitFor(() => /watching for ready tickets/.test(run.out()), 'speck run to look for ready tickets', run.out);
+    await new Promise(res => setTimeout(res, 500)); // a few of speck run's checks, each 100 ms apart
+    assert.equal(r.calls().length, 0, 'nothing started while it waits, new work included');
+    const passed = Date.now();
+    hourPassed(r.dir);
     await waitFor(() => r.calls().length === 2, 'the build to be resumed and the next launched', run.out);
-    assert.match(run.out(), /usage limit is reached until/);
     const [first, second] = r.calls();
     assert.equal(first.flag, '--resume');
     assert.equal(first.session, 'off-session');
-    assert.ok(first.at >= resets * 1000, 'nothing started before the reset');
-    assert.ok(second.at >= resets * 1000, 'nor did new work');
+    assert.ok(first.at >= passed, 'nothing started before the reset');
+    assert.ok(second.at >= passed, 'nor did new work');
     assert.match(second.prompt, /speck-build 0002/);
   } finally { await stopRun(run); }
 });

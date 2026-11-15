@@ -7,6 +7,7 @@ import path from 'node:path';
 import { T, round, panelModel, panelRepo, fakePage, queueRows } from './support/panel.mjs';
 import { runsPath, speck, json, tickerRepo, launched, cleanup } from './support/ticker.mjs';
 import { parseTicket } from '../scripts/speck.mjs';
+import { assertCounted, assertWrittenSince } from './support/timing.mjs';
 
 const NOW = Date.parse('2026-10-14T12:00:00.000Z');
 const iso = ms => new Date(ms).toISOString();
@@ -79,22 +80,25 @@ test('0166 AC2: playing a paused build adds the time it spent paused to waited_s
   const run = await launched(t);
   try {
     const file = building(t);
+    const pausing = Date.now();
     assert.equal(speck(t.dir, 'pause', '0001').status, 0);
-    const since = json(t.dir).tickets.find(x => x.id === '0001').paused_at;
-    assert.ok(Math.abs(Date.parse(since) - Date.now()) < 10000, `status --json gives when it was paused: ${since}`);
+    assertWrittenSince(json(t.dir).tickets.find(x => x.id === '0001').paused_at, pausing, 'status --json gives when it was paused');
     const markFile = runsPath(t.dir, '0001.paused');
     const mark = JSON.parse(fs.readFileSync(markFile, 'utf8'));
+    let since = Date.now();
     fs.writeFileSync(markFile, JSON.stringify({ ...mark, paused: realAgo(120) }));
     const r = speck(t.dir, 'play', '0001');
     assert.equal(r.status, 0, r.stderr);
-    near(fmOf(file).waited_seconds, 120, 'the paused stretch');
+    const first = fmOf(file).waited_seconds;
+    assertCounted(first, 120, since, 'the paused stretch');
     assert.equal(t.g('status', '--porcelain', '--', 'speck/tickets'), '', 'the ticket is committed');
     assert.equal(json(t.dir).tickets.find(x => x.id === '0001').paused_at, null, 'no longer paused');
     // A second pause adds to the same total.
     assert.equal(speck(t.dir, 'pause', '0001').status, 0);
+    since = Date.now();
     fs.writeFileSync(markFile, JSON.stringify({ ...JSON.parse(fs.readFileSync(markFile, 'utf8')), paused: realAgo(60) }));
     assert.equal(speck(t.dir, 'play', '0001').status, 0);
-    near(fmOf(file).waited_seconds, 180, 'both pauses');
+    assertCounted(fmOf(file).waited_seconds, first + 60, since, 'both pauses');
   } finally { await cleanup(t, run)(); }
 });
 
@@ -105,13 +109,14 @@ test('0166 AC2: stopping a paused build adds the paused stretch and starts the b
     const file = building(t);
     assert.equal(speck(t.dir, 'pause', '0001').status, 0);
     const markFile = runsPath(t.dir, '0001.paused');
+    const since = Date.now();
     fs.writeFileSync(markFile, JSON.stringify({ ...JSON.parse(fs.readFileSync(markFile, 'utf8')), paused: realAgo(240) }));
     const r = speck(t.dir, 'stop', '0001');
     assert.equal(r.status, 0, r.stderr);
     const fm = fmOf(file);
     assert.equal(fm.status, 'blocked');
-    near(fm.waited_seconds, 240, 'the paused stretch');
-    assert.ok(Math.abs(Date.parse(fm.blocked_at) - Date.now()) < 10000, 'blocked from now');
+    assertCounted(fm.waited_seconds, 240, since, 'the paused stretch');
+    assertWrittenSince(fm.blocked_at, since, 'blocked from now');
   } finally { await cleanup(t, run)(); }
 });
 
