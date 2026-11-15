@@ -46,7 +46,7 @@ A handed-back build that stopped on a usage limit is carried on after the reset,
 - speck (2026-11-15 21:38 UTC) told you: The build is slow, not stuck. Its first test run hit the 10-minute limit while waiting behind two other builds' test runs. The retry passed all 217 tests, and the build is now fixing an ordering problem the reviewer found in the ship queue. Why: The log shows the timed-out test run and the passing retry, the machine's load average has stayed around 52 to 59 for the last 15 minutes, and no test failed or hung.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When speck run hands an approved ticket back to its build, for example to sort out a clash with other shipped work, and that build runs out of the agent's usage allowance partway, speck run now picks it up again by itself once the allowance resets, as it already does for other builds. It doesn't count as another hand-back, so the ticket keeps its remaining tries, and speck won't try to ship it while it waits or while the build is finishing. You'll see the ticket waiting on the usage limit on the board, then its build running again after the reset. One thing to watch: if a handed-back build hits the limit right after finishing its work, the ticket still waits for the reset before it ships.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +56,10 @@ A handed-back build that stopped on a usage limit is carried on after the reset,
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Moving a handed-back build to another agent while its limit holds: speck/ideas/2026-11-15-move-a-handed-back-build-to-another-agent-while-its-limit-holds.md.
+  - Known limit: an approved ticket counts as waiting whenever its run record has `handed_back`, so a handed-back build that re-approves the ticket and then hits the limit in its last reply holds the ticket's ship until the reset, then is resumed with nothing left to do.
+  - The `--related` run had 8 timing failures in slow tests (panel and speck run starting late) at load average ~90 from other builds; they passed when run again on their own.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -132,6 +136,84 @@ A handed-back build that stopped on a usage limit is carried on after the reset,
     ],
     "escalation_question": "",
     "summary": "The change resumes the original build after the usage limit resets and preserves its remaining hand-backs. Waiting tickets are protected from shipping, but shipping can race the build on the tick when it resumes. Fix that race before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ffeec868c03fc013deea4f24bf5ca189730bee17",
+    "session": "continued",
+    "thread_id": "01a1e122-3bdf-7181-945b-292a2313088d",
+    "builder_response": "- Tests run: test/usage-limit-0691.test.mjs test/usage-limit-0622.test.mjs test/run-0194.test.mjs test/changes-0356.test.mjs test/private-words-0506.test.mjs test/foreman-0285.test.mjs\n- F1: fixed. `handBackQueue`'s `waiting(id)` (scripts/hand-back.mjs) is now also true while speck run's `running` set has the ticket, so on the check that resumes the build, `ships.check` (and `prs.check`) skip it even though the tickets they're given were read before it started. New test \"0691 AC3: on the check that resumes it, the ship queue doesn't ship it from tickets read before the build started\" resumes the build, then runs a ship queue that has never tried the ticket (so it would ship it, as with moved refs) on the stale snapshot: nothing launches; once the build has ended, it ships. The earlier AC3 test now checks it still waits while the resumed build runs, and not after. It also fixes the test's `launch` stand-in, which took the repo as the id.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 265381,
+      "cached_input_tokens": 218496,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1409,
+      "reasoning_output_tokens": 54
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4376,
+      "cached": 87040,
+      "write": 0,
+      "output": 485
+    },
+    "cost_usd": 0.022306,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T21:39:57.359Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/usage-limit.mjs: inHand, ended and checkAgent accept approved handed-back builds and resume them after reset. Passing AC1 tests verify reset timing, original-session resumption and exclusion of finished or blocked tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/usage-limit.mjs: carryOn preserves the hand-back fields. Passing AC2 test verifies hand_backs and handed_back remain unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/hand-back.mjs: waiting now checks both limitWaiting and running. Both passing AC3 tests exercise the actual queues, including shipping with the stale ticket snapshot immediately after resumption."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reported round tests passed: 243 passed, 3 skipped, no failures. The regression test covers the previously identified shipping race; no further regression found in the reviewed changes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/hand-back.mjs:156",
+        "issue": "Shipping could race the resumed build because the runner passed a ticket snapshot read before resumption.",
+        "suggested_fix": "Completed: waiting checks the current running set, and a regression test verifies shipping stays paused until the resumed build ends.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Handed-back builds now resume in their original session after the usage limit resets, without spending another hand-back. Shipping stays paused while they wait and while the resumed build runs. The earlier race is fixed, and all reported tests pass."
   }
 }
 ```
