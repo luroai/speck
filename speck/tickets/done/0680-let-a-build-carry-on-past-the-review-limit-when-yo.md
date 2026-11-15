@@ -1,7 +1,7 @@
 ---
 id: "0680"
 title: "Let a build carry on past the review limit when you say so"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0679"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:29:50.734Z"
 approved: "2026-11-15T14:45:31.122Z"
+finished: "2026-11-15T14:50:17.923Z"
 
 ---
 # 0680 · Let a build carry on past the review limit when you say so
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ticket that reaches `limits.max_review_rounds` without approval blocks with a question, and its recommendation can be to allow another round. Answering that changes nothing: the resumed build asks for a round, `speck review` refuses with "Max review rounds reached", and the ticket blocks again with the same question. With `watch: decide`, speck can take such a recommendation up to three times in a row, each one resuming a build that can only block again.
