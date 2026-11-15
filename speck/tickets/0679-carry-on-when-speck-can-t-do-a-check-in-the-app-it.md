@@ -18,7 +18,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T13:36:06.042Z"
-approved: "2026-11-15T14:15:33.496Z"
+approved: "2026-11-15T14:27:11.621Z"
 
 ---
 # 0679 · Carry on when speck can't do a check in the app itself
@@ -61,12 +61,13 @@ When speck is asked to check something in the running app that it simply can't c
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 201,248
-- Elapsed since build started: 39 min
+- Reviewer tokens: 340,182
+- Elapsed since build started: 51 min
 - Changed lines: 107 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: the speck-watch skill still says to ask when the agent can't sign in, which overlaps with leaving a check that needs an account it can't use (reviewer's minor finding F1). Saved to the inbox: speck/ideas/2026-11-15-say-when-a-sign-in-check-is-left-rather-than-asked.md.
@@ -152,6 +153,90 @@ Round 1 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The build can continue when the agent cannot perform an app check, while keeping that check visible for you and preventing automatic shipping. Tests cover continuation, safeguards and manual shipping. One small clarification would make the sign-in instructions more consistent."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9cfb69123ad33cf407e21594e1f99390c1cab2fe",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1df8f-7355-77b2-9377-89bf15bf7273",
+    "builder_response": "Merge round: main merged into the ticket branch after speck ship hit a conflict.\n- docs/brief.md (class: logic, 1 conflict in the command table): main added a sentence to the `speck set` row (setting several tickets ready at once); this ticket added two sentences to the `speck watch` row (the `leave` action). Resolved by taking main's version of the block and adding this ticket's two sentences back into the `speck watch` row, unchanged. Both sides' text is kept, nothing else changed.\n- Tests run: test/app-check-0679.test.mjs test/docs-0267.test.mjs (the ticket's own tests, and the test that rewords and reorders the brief and checks no test depends on its wording), plus the commands.checks files that speck test runs with them. All pass.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 338721,
+      "cached_input_tokens": 267648,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1461,
+      "reasoning_output_tokens": 141
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 10445,
+      "cached": 127872,
+      "write": 0,
+      "output": 617
+    },
+    "cost_usd": 0.0398472,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T14:27:08.723Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/foreman-agent.mjs retains leave's recommendation selection, shared refusal checks, Notes entry and build resumption. All AC1 tests in test/app-check-0679.test.mjs pass after the merge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Reviewed checkBrief in scripts/app-check.mjs and skills/speck-watch/SKILL.md: both restrict leave to checks the agent cannot perform and forbid using it for contradictory observations or checks it could make."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs and scripts/speck.mjs retain the deferred-check auto-ship blocker; scripts/pack.mjs lists checks in both packs. Passing AC3 tests cover automatic refusal, retained approved status, pack output and manual shipping."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md retains leave in its app-check paragraph and watch command row, alongside main's new multiple-ticket set command description. The AC4 test and docs-0267 tests pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified the current test log: 160 tests, 157 passing, three skipped and no failures. The conflict resolution preserves both sides' documentation changes without changing runtime behaviour."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "skills/speck-watch/SKILL.md",
+        "issue": "The instruction to ask whenever the agent cannot sign in still overlaps with permission to leave a check requiring an unavailable account. This remains unchanged and is recorded as a follow-up idea.",
+        "suggested_fix": "Clarify when unavailable account access permits leave under watch: decide and when sign-in trouble requires asking.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both changes, and all checks run for this round pass. Builds can continue with unavailable app checks recorded for you, while automatic shipping remains blocked. The previously noted minor sign-in instruction ambiguity remains tracked for follow-up."
   }
 }
 ```
