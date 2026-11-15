@@ -145,9 +145,12 @@ export function saveRound(repo, id, verdict, meta, { receipt = false } = {}) {
 }
 
 export function reviewerPrompt(repo, ticket, cfg, round, extra) {
-  const tpl = fs.readFileSync(path.join(TEMPLATES, 'reviewer-prompt.md'), 'utf8');
+  const parsed = ticket.fm ? ticket : parseTicket(ticket.raw);
+  // 0687: a fix ticket may fix the failing tests its criteria name, so only its prompt says so.
+  const tpl = fs.readFileSync(path.join(TEMPLATES, 'reviewer-prompt.md'), 'utf8')
+    .replace(/\{\{#FIX\}\}([\s\S]*?)\{\{\/FIX\}\}/g, (_, s) => parsed.fm?.type === 'fix' ? s : '');
   // A task's result is outside the diff: where it is and how to judge it go before the diff (0353).
-  const doc = documentSection(repo, ticket.fm ? ticket : parseTicket(ticket.raw));
+  const doc = documentSection(repo, parsed);
   if (round === 1) {
     const values = { TICKET: stripRounds(ticket.raw), BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };
     // Round 1's response file, when the builder gives one, says which test files it ran (0235). It goes before the

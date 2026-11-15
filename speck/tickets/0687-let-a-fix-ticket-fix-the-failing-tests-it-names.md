@@ -42,6 +42,8 @@ A `type: fix` ticket may change or fix the failing tests it names, and other fai
 - From 0671's round 1 and 0683, which hit the same rule.
 - `.claude/skills/` is this repo's installed copy of `skills/`; keep them the same.
 - Failing before this build: none
+- AC1 is a wording criterion, checked by review. `.claude/skills/` holds symlinks to `skills/`, so editing `skills/` keeps them the same.
+- Self-check: no changes (checked quoted and commented `type: fix` values and that no `{{` marker reaches either prompt).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
