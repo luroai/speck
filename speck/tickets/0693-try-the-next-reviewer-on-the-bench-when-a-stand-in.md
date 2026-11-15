@@ -1,7 +1,7 @@
 ---
 id: "0693"
 title: "Try the next reviewer on the bench when a stand-in is limited too"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0692"]                # ticket ids that must be done first
 created: 2026-11-15
 built_on: "0692"
 started: "2026-11-15T21:37:52.776Z"
+approved: "2026-11-15T21:52:54.768Z"
 
 ---
 # 0693 · Try the next reviewer on the bench when a stand-in is limited too
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A review round gets one stand-in from `reviewer_bench` when the reviewer is limited. If that stand-in is limited too, the round ends and the build waits for the stand-in's reset, even with a third agent free on the bench, and the refusal overwrites the record of the reviewer's limit with the stand-in's.
@@ -54,9 +55,14 @@ To see it, put two or more agents on the reviewer's bench and let speck run buil
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 164,998
+- Elapsed since build started: 15 min
+- Changed lines: 131 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: speck run's status line (the queue's view) names the longest limit on record, so while a build waits for a stand-in's earlier reset it still names the reviewer's own limit and time. Only the announcement and the carry-on say it's the stand-in's.
 - Known limit: a stand-in's own limit is kept under its agent's name (for example `claude`), so a ticket whose reviewer is `claude-subagent` isn't held by it until it refuses itself, as before.
