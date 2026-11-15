@@ -204,6 +204,18 @@
   .more-stats { display: inline-flex; align-items: center; margin: 0 0 4px; padding: 0; border: 0; background: none; color: var(--run); font: inherit; font-size: 14px; cursor: pointer; }
   .more-stats:hover { text-decoration: underline; }
   .more-stats[hidden] { display: none; }
+  /* 0694: the By model table under the figures: the lane's width, each figure's column as wide as its widest figure and
+     the model's name taking what's left, wrapping anywhere when it's long, so the table never scrolls sideways on a
+     phone. Short headings, each its full name as its tooltip, and figures on the right. */
+  .by-model { margin: 4px 0 8px; }
+  .by-model[hidden] { display: none; }
+  .by-model-head { margin: 0 0 4px; font-family: var(--font-ui); font-size: 14px; font-weight: 600; color: var(--muted); }
+  section.shipped .by-model table { display: table; width: 100%; font-size: 14px; }
+  .by-model th, .by-model td { padding: 5px 0 5px 8px; border-bottom: 1px solid var(--line-soft); text-align: right; vertical-align: top; white-space: nowrap; }
+  .by-model th { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .by-model th:first-child, .by-model td.model { width: 100%; padding-left: 0; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+  .by-model td.n { font-family: var(--font-mono); }
+  .by-model .few { display: block; font-family: var(--font-ui); font-size: 12px; color: var(--muted); white-space: normal; }
   /* 0587: a shipped ticket is a row, as Capture's and Plan's are: a hairline under it, its title (one line since 0599), then one line
      of smaller type, each part whole so a line too long for a phone wraps between them. */
   #shipped .sum { display: block; margin-top: 2px; }

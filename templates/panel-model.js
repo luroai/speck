@@ -128,6 +128,32 @@ function median(values) {
   const v = [...values].sort((a, b) => a - b), mid = Math.floor(v.length / 2);
   return !v.length ? null : v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
 }
+// 0694: a ticket's builder models as the board gives them ([{model, cost_usd}]), leaving out anything malformed.
+const modelsOf = v => (Array.isArray(v) ? v : []).filter(m => m && typeof m === 'object' && (m.model === null || (typeof m.model === 'string' && m.model.trim())));
+// The named ones, each once, in the order recorded.
+const builtWith = v => [...new Set(modelsOf(v).filter(m => m.model !== null).map(m => m.model.trim()))];
+// The one that cost most across its builds, the first recorded on a tie, or null when none is recorded or that one has
+// no name: `speck spend --by=model` calls it unknown model.
+function costliestModel(v) {
+  const cost = m => (typeof m.cost_usd === 'number' && Number.isFinite(m.cost_usd) ? m.cost_usd : -1);
+  const top = modelsOf(v).reduce((a, m) => (a === null || cost(m) > cost(a) ? m : a), null);
+  return top && top.model !== null ? top.model.trim() : null;
+}
+// 0694: Shipped's figures again for each builder model's tickets, worked out as stats' are, a row each in name order and
+// Unknown last, when any ticket has no recorded model. `few`: fewer than 5 tickets, too few to judge it on.
+const FEW_TICKETS = 5;
+function byModel(done, stat) {
+  const groups = new Map();
+  for (const t of done) groups.set(t.builderModel, [...(groups.get(t.builderModel) ?? []), t]);
+  return [...groups.entries()].sort(([a], [b]) => (a === null) - (b === null) || (a !== null && b !== null ? a.localeCompare(b) : 0)).map(([model, ts]) => {
+    const reviewed = ts.filter(t => t.roundCount > 0);
+    return { model, count: ts.length, few: ts.length < FEW_TICKETS,
+      minutes: stat(ts.filter(t => t.exactMinutes !== null).map(t => t.exactMinutes), Math.round),
+      rounds: stat(reviewed.map(t => t.roundCount), n => Math.round(n * 10) / 10),
+      firstRound: { share: reviewed.length ? Math.round(reviewed.filter(t => t.firstApproved).length / reviewed.length * 100) : null, count: reviewed.length },
+      builderCost: stat(ts.filter(t => t.builderCost !== null).map(t => t.builderCost), n => Math.round(n * 100) / 100) };
+  });
+}
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 // When a ticket shipped, in the browser's time zone: HH:MM today, otherwise D Mon, HH:MM (0157), or a dash with no time.
@@ -313,6 +339,8 @@ function panelModel(state) {
       // 0526: its reviewer's cost and its total, with the parts the total leaves out because their cost is unknown.
       reviewerCost: spent(t.reviewer_cost_usd), totalCost: spent(t.total_cost_usd),
       totalUnknown: (Array.isArray(t.total_cost_unknown) ? t.total_cost_unknown : []).filter(x => ['builder', 'reviewer', 'watch'].includes(x)),
+      // 0694: the builder models its builds ran on, as recorded, and the one it counts under in By model: the one that cost most.
+      builtWith: builtWith(t.builder_models), builderModel: costliestModel(t.builder_models),
       exactMinutes: took !== null ? took / 60000 : null,
       minutes: took !== null ? Math.round(took / 60000) : null };
   });
@@ -404,6 +432,7 @@ function panelModel(state) {
       builderTokens: stat(done.filter(t => t.builderTokens !== null).map(t => t.builderTokens), Math.round),
       builderCost: stat(done.filter(t => t.builderCost !== null).map(t => t.builderCost), n => Math.round(n * 100) / 100),
       // 0526: the total cost of the shipped tickets shown with a known total, how many, and whether any of those leaves a part out.
+      byModel: byModel(done, stat),
       totalCost: (known => ({ sum: Math.round(known.reduce((n, t) => n + t.totalCost, 0) * 100) / 100, count: known.length,
         partial: known.some(t => t.totalUnknown.length > 0) }))(shipped.filter(t => t.totalCost !== null)),
     },
