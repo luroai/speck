@@ -43,6 +43,7 @@ Both tests wait for what they check, so they pass on a busy machine.
 ## Notes
 - From `speck/ideas/2026-11-11-steady-the-0264-ac3-ship-queue-test.md` and `speck/ideas/done/2026-11-11-steady-the-0630-full-run-turn-test-under-load.md`. Seen in 0632, 0640, 0642, 0645, 0649, 0660, 0670 and 0673.
 - `until` in the test support (0670 raised its default to 30 s) may be what to wait with.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
