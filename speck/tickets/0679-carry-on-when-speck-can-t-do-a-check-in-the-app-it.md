@@ -1,7 +1,7 @@
 ---
 id: "0679"
 title: "Carry on when speck can't do a check in the app itself"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
+started: "2026-11-15T13:36:06.042Z"
 
 ---
 # 0679 · Carry on when speck can't do a check in the app itself
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a build asks for a check in the running app that speck's agent can't make, such as how something sounds or how a page behaves in a browser it can't run, the agent asks you, and the build stops until you answer. The rest of the ticket, its remaining work and its review rounds, could be finished in that time, leaving you one look at the end.
