@@ -44,6 +44,7 @@ A ticket cancelled on its branch is cancelled on the base branch too, so nothing
 - Found 2026-11-15: 0664's cancel commit (0c473b3f) is only on its branch; `startWaits` in `scripts/built-on.mjs` saw it as ready.
 - `speck cancel` refuses while a ticket is being built (`checkNotBeingBuilt`), so this runs once the build has ended. Committing only the ticket on the base branch: `commitTicketOnly` in `scripts/close.mjs`, as the builder stand-in does.
 - Failing before this build: none
+- Self-check: no changes. A pending cancel is kept in memory, so one that couldn't be made before speck run restarts is only retried if its build is taken up again (noted as a follow-up).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -389,6 +389,7 @@ export function statusData(repo) {
   const cfg = loadConfig(repo);
   const tickets = statusTickets(repo, cfg);
   const done = new Set(tickets.filter(t => t.fm.status === 'done').map(t => padId(t.fm.id)));
+  const cancelled = new Set(tickets.filter(t => t.fm.status === 'cancelled').map(t => padId(t.fm.id))); // 0686
   const runs = runsOf(repo);
   const leads = groupLeader(), fixing = fixingOf(cfg), builderOf = boardBuilders(cfg, repo), providers = knownProviders(repo);
   const entries = tickets.map(t => {
@@ -442,7 +443,7 @@ export function statusData(repo) {
       })),
       // 0223: the review round being run now, or null: whether the reviewer or the builder is at work on a reviewing ticket.
       review_running: inHand(t) ? roundRunning(runs, t.fm.id, ticketRounds(t.raw).rounds.length) : null,
-      waiting_on, ships_after: shipsAfter || null, // 0675: and the ticket it was built on, until that one has shipped
+      waiting_on, after_cancelled: waiting_on.filter(id => cancelled.has(padId(id))), ships_after: shipsAfter || null, // 0675: and the ticket it was built on, until that one has shipped
       starts_on: t.fm.status === 'ready' && waiting_on.length === 1 ? startWaits(repo, cfg, t, () => tickets).on?.id ?? null : null, // 0675: the approved ticket it can start on
       // 0217: once a build of it has started again, a stopped build is no longer shown as stopped.
       // 0284: nor is one waiting for speck run to resume it with the recommendation you went with.
