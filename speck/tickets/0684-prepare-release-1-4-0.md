@@ -51,6 +51,10 @@ speck is ready to be released as 1.4.0.
 - Checked 2026-11-15: `package.json` is `1.3.1`, `v1.3.1` is tagged, and `CHANGELOG.md`'s newest section is 1.3.1.
 - 0668's checks that name 1.3.1 as the current version should check the current version, as 0668 did for 0665's.
 - Failing before this build: none
+- Covers 0672 to 0682 and the test-only fix 0683; 0664 was cancelled, so it's left out. The figures were worked out from main at "speck(0664): cancelled on main, and 0684 no longer waits for it": 666 shipped, 17 cancelled, 14 minutes, 2 rounds, 314 first-round. The price table was refreshed with `npm run prices` on 2026-11-15.
+- The README also says several ids can be set ready at once (0681) and that with `watch: decide` a check speck can't make is left for you (0679).
+- Self-check: the README's sentence on leaving a check now says it's only with `watch` set to decide; the 1.4.0 changelog test looks for `machine_parallel_tests` as a name, since it appears inside a longer command there.
+- Pictures: none, because nothing anyone sees in the panel changes; the README's wording changes but not how it renders.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.4.0 · 15 November 2026
+
+What's new since 1.3.1. A minor release that keeps work moving with less waiting: tickets wait for each other only when one needs the other's work, a ticket can start on the approved work of the one it waits for, and builds and merge rounds re-run and re-read less. With `watch: decide`, speck also carries on past a check in the app it can't make, and your answer at the review limit now lets a build take two more rounds. You can set several tickets ready with one command, and cap test runs across every project on your machine. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.4.0 init`.
+- The README says you can set several tickets ready at once, and that speck can leave a check in your app it can't make for you at the end.
+
+### Tickets that wait less
+
+- `/speck-ticket` now chains a new ticket after another with `after:` in two cases only: it can't be built or tested until something the other makes exists, such as a command, a setting or a part of a document it adds to, or both are likely to rewrite the same lines. Two tickets changing different lines of the same function, style rules or section, or adding lines in the same place, build side by side. When it isn't sure, it leaves them unchained and names the file and part they share when it presents the tickets, so you can chain them yourself.
+- `speck start <id>` starts a ticket whose `after:` tickets have all shipped but one that's approved. Its branch starts from that ticket's branch, so the work it needs is there, and its review rounds and `speck diffstat` count only its own change. With an `after:` ticket in any other state, or more than one not shipped, it refuses as before. If the approved work clashes with newer work on the base branch, it refuses and changes nothing.
+- `speck run` starts such a ticket by itself, as soon as the one ticket it still waits for is approved.
+- A ticket built on another ships after it. `speck ship <id>` refuses while the ticket it was built on hasn't shipped, naming it. Auto-ship leaves it approved, giving that as its reason, and ships it on `speck run`'s first check after the other has shipped. Until then `speck status --json` still names the other in its `waiting_on`, and `speck run` says once that it's approved and waiting to ship after it.
+
+### Less re-testing and re-reading
+
+- When an approved ticket's ship is refused and the build merges the base branch in, the merge round shows the reviewer only what changed since it approved: how each conflict was resolved, anything else changed by hand in the merge, and every change committed after. Its prompt names the commit the reviewer approved, says the base branch has been merged in since, and gives the command that prints the whole change. Every other round is given what it was in 1.3.1.
+- A failing `speck test --related` run ends with one line giving the command to run next: `speck test --files` with only the files it was given and the files of the failing tests. The build skill says to run that after fixing the failure, and to run `--related` once per build.
+- A passing `speck test --files` or `--related` run is recorded against the code as it stands, the test command and the test files. A later run in any worktree of the repo that would run the same files with the same command on the same code prints that result, saying it's reused and when it ran, instead of running them or waiting for a turn. A change to any file outside `speck/`, different test files or a failing run means the tests run again, and `--fresh` always runs them.
+- An idle `speck run` reads a ticket again only when its file has changed, in the main checkout or a build's worktree, rather than every ticket on every check, so it uses less of the machine as a project's history grows. Everything it does still happens on the same check as before.
+
+### Test turns across your projects
+
+- `speck config set machine_parallel_tests <n>`, run in any project, caps how many test runs speck starts go at once across every project of yours on this machine, the full suite's run included. It's saved in `~/.config/speck/config.yml`, not in the repo, `speck config show` shows it in any project, and `speck config set machine_parallel_tests ""` removes it. A run beyond the cap waits, saying once that it's waiting for a turn on this machine, and starts when one ends. Each project's own `max_parallel_tests` still holds within it. Without the setting, nothing changes.
+
+### Questions speck can't answer itself
+
+- With `watch: decide` and a low-risk ticket, when a build asks for a check in the app that speck's agent can't make, such as how something sounds, or a device, browser or account it can't use, the agent can now leave the check for you with `speck watch leave <id> --saw "<why>"`. speck goes with the build's recommendation, as it does when it decides, and the build and its reviews carry on. It counts towards the 3 recommendations speck may take for a ticket. The check is written in the ticket's Notes as left for you, auto-ship leaves the approved ticket for you, giving the check as its reason, and its review pack lists each check left for you above its changes. Make the check, then ship it. The agent still asks you when what it saw disagrees with the recommendation, or when it could have made the check.
+- A build that runs out of review rounds now adds `Review limit: yes` under its question, and `speck status --json` gives it as `blocked_review_limit`. Once you answer it, with the panel's Answer or Go with the recommendation, or with `speck answer`, the ticket may have 2 more review rounds instead of blocking again at once. If neither approves, it asks again, and your next answer allows 2 more. The ticket's review rounds, its review log and the review pack mark each round you allowed, and `limits.max_review_rounds` in `speck/config.yml` stays as it is. speck never takes the recommendation of such a question itself, even with `watch` set to fix or decide: it waits for you and says why once.
+
+### Setting tickets ready
+
+- `speck set <id> <id>… status ready` sets several tickets ready at once, checking and committing each as `speck set <id> status ready` does, in the order given. A ticket that fails the ready check, or that would be refused for any other reason, is left as it was while the others go ahead, and the command names each one it left, with the reason, and exits with a failing code. Several ids with any other field or value are refused. `speck help` shows the form.
+
+### Tests
+
+- Three of speck's own checks of an open draft's facts in Plan expected seven facts after 1.3.1 added the Builder fact, and failed on `main`. They now expect it. Nothing changes in speck itself.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 15 November 2026.
+
 ## 1.3.1 · 15 November 2026
 
 What's new since 1.3.0. A bug-fix release that makes 1.3.0's build levels easier to set and to read: the Builder's card sets each level with labelled lists instead of a free-text model box, a ticket's Level menu says what each level builds with, and a ticket in the panel shows, and lets you change, the builder and model it will be built with. Costs speck works out itself are still estimates at API list prices.

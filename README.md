@@ -17,7 +17,7 @@ You don't need to read the code to check the work. Every ticket comes with a one
 
 Use the agents you already have: Claude Code, Codex or Cursor, or a model provider you have an API key for, such as DeepSeek. speck doesn't let a model review its own work unless you allow it.
 
-> Status: 1.3.1. It works end to end on your own machine.
+> Status: 1.4.0. It works end to end on your own machine.
 
 ## Get started
 
@@ -42,7 +42,7 @@ idea → ticket → [you: ready] → builder builds → reviewer reviews, turn b
 
 ### Your decision: what gets built
 
-Talk ideas through with your agent. `/speck-capture` saves an idea to `speck/ideas/`, and `/speck-ticket` turns it into small draft tickets in `speck/tickets/`, each with a problem, an outcome and a short list of what done looks like. Read a draft, then set it ready in the panel, or with `speck set <id> status ready`. That's Gate 1: only a ready ticket gets built.
+Talk ideas through with your agent. `/speck-capture` saves an idea to `speck/ideas/`, and `/speck-ticket` turns it into small draft tickets in `speck/tickets/`, each with a problem, an outcome and a short list of what done looks like. Read a draft, then set it ready in the panel, or with `speck set <id> status ready`, naming several ids to set them all ready at once. That's Gate 1: only a ready ticket gets built.
 
 ### Everything in between: speck's job
 
@@ -52,7 +52,7 @@ When a build hits a question it can't answer from the ticket, it stops with one 
 
 speck also keeps work moving. Once it's on, when a build or a ship stops for a reason it has no steps for, or a build runs far longer than usual, it has its own agent look into it and do one thing about it: resume the build with an instruction, try the ship again, raise a fix ticket, tell you what it found or ask you.
 
-Some questions need someone to look at the app itself, such as how a page looks or whether signing in works. Once it's on, speck checks those on a low-risk ticket itself: it starts your app from that ticket's copy of the code, signs in with a test login you've saved on your machine if it needs to, takes screenshots, then carries on or asks you, saying what it saw. The screenshots show in the ticket's review pack. You don't have to tell speck how to start your app first: the first time it needs to, it works out how from your project, tries it and remembers what worked. If nothing works, it asks you.
+Some questions need someone to look at the app itself, such as how a page looks or whether signing in works. Once it's on, speck checks those on a low-risk ticket itself: it starts your app from that ticket's copy of the code, signs in with a test login you've saved on your machine if it needs to, takes screenshots, then carries on or asks you, saying what it saw. With `watch` set to decide, a check it can't make itself, such as how something sounds, it leaves for you: the build carries on, and the approved ticket waits for you to make the check before it ships. The screenshots show in the ticket's review pack. You don't have to tell speck how to start your app first: the first time it needs to, it works out how from your project, tries it and remembers what worked. If nothing works, it asks you.
 
 Usage limits don't stop the line either. You set up your team once, in Settings: who builds, who reviews, who checks the app, and for each, the agents that take over when its own runs out of usage, such as Codex when Claude is used up. Settings also shows how much of each subscription you've used. When an agent runs out, speck moves new builds, review rounds and app checks to the next free agent on that member's bench, and hands a stopped build on too when the limit won't reset for more than an hour. Once the limit resets, new work goes back to your own choice. If nobody on the bench is free, speck waits for the reset and carries on by itself, without you answering anything.
 
@@ -175,9 +175,9 @@ Claude Code, Cursor and model providers such as DeepSeek need no setup: set `rev
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **653 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **666 tickets shipped** and 17 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
 - **14 minutes** median from a build starting to its ticket shipping, leaving out time it waited for you or the machine was asleep.
-- **2 review rounds** median. 311 tickets were approved in the first round.
+- **2 review rounds** median. 314 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 
