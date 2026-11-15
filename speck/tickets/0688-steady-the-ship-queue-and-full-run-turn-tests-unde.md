@@ -1,7 +1,7 @@
 ---
 id: "0688"
 title: Steady two ship-side tests that fail under load                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-11-steady-the-0264-ac3-ship-queue-test.md"    
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T20:50:21.824Z"
+approved: "2026-11-15T21:02:59.275Z"
 
 ---
 # 0688 · Steady two ship-side tests that fail under load
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Two tests fail by chance when the machine is busy, so a build's related run or the full suite on main can fail for a ticket that didn't touch them: "0264 AC3: speck run doesn't put shipping on hold, and hands the ticket back to its build" in `test/ship-0264.test.mjs` reads the ship queue's launch before it has happened, and "0630 AC3: a full run doesn't wait for the max_parallel_tests turns" in `test/full-suite-0630.test.mjs` asserts a fixed timing.
@@ -57,9 +58,15 @@ Nothing changes in how speck works. Two of speck's own checks used to fail now a
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new holder check replaces the 900 ms deadline with an implicit 30-second deadline.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 248,404
+- Elapsed since build started: 13 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none to the inbox. The script used to check AC1 (one busy loop per core, then the one test 10 times) lived in /tmp; 0689 and 0690 may want the same.
 
