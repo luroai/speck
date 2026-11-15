@@ -230,7 +230,7 @@ function runOn(worker) {
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
       const pid = rec.pid, valid = Number.isInteger(pid) && pid > 0 && pid !== process.pid, ran = carried.includes(id);
       if (!(valid && (ran || pidAlive(pid)))) { stopPanelsOfRun(id, file); cancels.ended(id); if (!killedInHand(id)) { recordExit(id, file, null); limits.keepUsage(path.join(dir, `${id}.log`), file); limits.ended(id, path.join(dir, `${id}.log`), file); } continue; } // 0619; 0686: one its build cancelled on its branch; 0622: one that stopped on Claude's usage limit while speck run was off
-      adopt(id, file, rec, ran ? 'carries on through the switch' : 'is already being built');
+      adopt(id, file, rec, ran ? 'carries on through the switch' : adoptedAs(rec)); // 0690: one outside speck run is said to be, as on a later check
     }
   };
   const adopt = (id, file, rec, what) => {
