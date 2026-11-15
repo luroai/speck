@@ -41,6 +41,8 @@ The full suite passes on main again.
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
 Failing before this build: 0643 AC1: speck agents opens Cursor with no prompt, shows /usage and closes it, and lists the plan, reset, rows and on-demand. This fix ticket exists to make it pass, so it's the one test this build changes.
+The cause: the test runs `speck agents` with the real clock, and its stand-in screen said `Resets 12 Nov` with no year. Since 12 November 2026 passed, speck rightly reads that as 2027-11-12. The fix is in the test only: the stand-in screen now shows tomorrow's day, and the test expects that date. No new test file: AC1 is the existing test, and AC2 is the full suite at ship.
+Self-check: no changes (checked month names such as `Sept`, and a run crossing midnight).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
