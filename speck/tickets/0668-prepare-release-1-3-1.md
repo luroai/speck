@@ -1,7 +1,7 @@
 ---
 id: "0668"
 title: "Prepare release 1.3.1"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0666","0667","0669"]                # ticket ids that must be done first
 created: 2026-11-12
+started: "2026-11-15T13:14:36.232Z"
 
 ---
 # 0668 · Prepare release 1.3.1
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 1.3.0's build levels are hard to set: the Builder's card asks for each level's model as free text and says "settings" everywhere without explaining it, and a ticket's Level menu doesn't say what each level builds with. 0666 and 0667 fix that, and 0669 shows and lets you pick a ticket's builder model in the panel, which 0659 only made possible in the ticket file. Anyone following the setup prompt, or updating speck in a project, still gets 1.3.0 without the fixes.
