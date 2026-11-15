@@ -44,6 +44,7 @@ Once `speck start` can build on an approved ticket (0674), `speck run` still ski
 ## Notes
 - `ownWait` in `scripts/run.mjs` holds back a ticket with anything in `waiting_on`, which `statusData` in `scripts/speck.mjs` works out.
 - 0193 already has `speck run` ship approved tickets whose auto-ship didn't finish. This follows it.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
