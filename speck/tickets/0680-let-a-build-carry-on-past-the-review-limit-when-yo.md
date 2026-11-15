@@ -47,6 +47,7 @@ Your answer to a review-limit question lets the build take two more rounds, and 
 - The build skill forbids a build to change `limits.max_review_rounds`, which stays. The build needs a way your answer opens instead.
 - Decision: 2 rounds for each answer, enough for one fix and the round that checks it, without an endless loop.
 - This repo has blocked at the review limit 5 times in its history (counted 2026-11-15), so this is about the stall each one causes, not how often it happens.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
