@@ -50,15 +50,16 @@ export const recordedAt = (repo, cmd, rev) => { const code = codeAt(repo, cmd, r
 // The checkout's root as a test's location names it: its real path, or as given when that can't be read.
 const realRoot = repo => { try { return fs.realpathSync(repo); } catch { return path.resolve(repo); } };
 
-function record(repo, code, cmd, status, output) {
+function record(repo, code, cmd, status, output, { files = false } = {}) {
   const dir = resultsDir(repo);
   const now = Date.now();
   for (const f of fs.readdirSync(dir)) {
     const file = path.join(dir, f);
     try { if (now - fs.statSync(file).mtimeMs > KEEP_MS) fs.rmSync(file, { force: true }); } catch { /* gone already */ }
   }
-  const kept = status === 0 ? '' : output.length > MAX_OUTPUT ? output.slice(-MAX_OUTPUT) : output;
-  const text = JSON.stringify({ cmd, status, commit: code.commit, at: new Date(now).toISOString(), output: kept, root: realRoot(repo) });
+  // 0677: a --files run keeps a pass's output too, to print it when it's reused.
+  const kept = status === 0 && !files ? '' : output.length > MAX_OUTPUT ? output.slice(-MAX_OUTPUT) : output;
+  const text = JSON.stringify({ cmd, status, commit: code.commit || '', at: new Date(now).toISOString(), output: kept, root: realRoot(repo), ...(files ? { files } : {}) });
   const tmp = path.join(dir, `${code.key}.${process.pid}.${crypto.randomUUID()}.tmp`);
   fs.writeFileSync(tmp, text);
   fs.renameSync(tmp, path.join(dir, `${code.key}.json`)); // whole, so a reader never sees half a result
@@ -145,6 +146,66 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
   } finally {
     fs.rmSync(output, { force: true });
   }
+}
+
+// 0677: the code in `repo` as it stands, uncommitted changes and new files git doesn't ignore included, apart from
+// speck/, with the test command `cmd`, which names the test files: { key }, or null when git can't give it. It's read
+// through a copy of the checkout's index, so the checkout's own is left as it is.
+export function checkoutCode(repo, cmd) {
+  const index = path.join(resultsDir(repo), `index.${process.pid}.${crypto.randomUUID()}.tmp`);
+  try {
+    const real = sh('git', ['rev-parse', '--git-path', 'index'], { cwd: repo });
+    if (real.status !== 0) return null;
+    // The copy keeps the index's own time, no later, so git still reads a file changed in the same second as the index
+    // was written, rather than taking it as unchanged.
+    try {
+      const from = path.resolve(repo, real.stdout.trim());
+      const { atimeMs, mtimeMs } = fs.statSync(from);
+      fs.copyFileSync(from, index);
+      fs.utimesSync(index, new Date(Math.floor(atimeMs)), new Date(Math.floor(mtimeMs)));
+    } catch (e) { if (e.code !== 'ENOENT') return null; }
+    const env = { ...process.env, GIT_INDEX_FILE: index };
+    if (sh('git', ['add', '-A', '--', ':(top)', ':(top,exclude)speck'], { cwd: repo, env }).status !== 0) return null;
+    const tree = sh('git', ['write-tree'], { cwd: repo, env });
+    if (tree.status !== 0) return null;
+    const list = sh('git', ['ls-tree', '-z', tree.stdout.trim()], { cwd: repo });
+    if (list.status !== 0) return null;
+    const entries = list.stdout.split('\0').filter(e => e && e.slice(e.indexOf('\t') + 1) !== 'speck');
+    return { key: crypto.createHash('sha256').update(JSON.stringify(['files', cmd, entries])).digest('hex') };
+  } finally { fs.rmSync(index, { force: true }); }
+}
+
+// 0677: runs `cmd`, a `speck test --files` or `--related` run's command, in a turn, copying its output to `output`, or
+// prints the passing result recorded for the same code (see checkoutCode) without running it or waiting for a turn,
+// unless `fresh`. Asked again once the run has a turn, as testRun does (0237). A pass is recorded with its output when
+// the code is the same after the run; a failure is never recorded, and clears any pass recorded for that code. Returns
+// runTestsInTurn's result, or { reused } once it has printed one.
+export function filesRun(repo, cfg, cmd, output, fresh = false) {
+  testStallMs(cfg);
+  const code = checkoutCode(repo, cmd);
+  const reusable = (again = false) => {
+    if (!code || fresh || (again && checkoutCode(repo, cmd)?.key !== code.key)) return null;
+    const kept = recorded(repo, code, cmd);
+    return kept && kept.files === true && kept.status === 0 ? kept : null;
+  };
+  const show = kept => {
+    console.log(`Reusing the passing test result from ${when(kept.at)}: nothing outside speck/ has changed since, nor have the test files or the test command. Run \`speck test --fresh\` with them to run them anyway.`);
+    if (kept.output) process.stdout.write(kept.output.endsWith('\n') ? kept.output : `${kept.output}\n`);
+    return { reused: kept };
+  };
+  const kept = reusable();
+  if (kept) return show(kept);
+  const r = runTestsInTurn(repo, cfg, cmd, undefined, output, () => reusable(true));
+  if (r.reused) return show(r.reused);
+  if (!code) return r;
+  if (r.ended === '0') {
+    if (checkoutCode(repo, cmd)?.key === code.key) {
+      let text = '';
+      try { text = fs.readFileSync(output, 'utf8'); } catch { /* it wrote nothing */ }
+      record(repo, code, cmd, 0, text, { files: true });
+    }
+  } else if (/^\d+$/.test(r.ended) || r.ended === 'stalled') fs.rmSync(path.join(resultsDir(repo), `${code.key}.json`), { force: true });
+  return r;
 }
 
 // The tests that failed in the result recorded for the base branch's latest commit and the test command `cmd`, each

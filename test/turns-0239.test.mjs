@@ -50,7 +50,7 @@ const recordedResults = dir => {
   return fs.existsSync(d) ? fs.readdirSync(d).filter(f => f.endsWith('.json')) : [];
 };
 
-test('0239 AC1: speck test --files waits for a turn held by another run, says so once, then runs and records nothing', () => {
+test('0239 AC1: speck test --files waits for a turn held by another run, says so once, then runs and records no full run\'s result', () => {
   const dir = testRepo({ files: 'echo ran {files}' });
   holdTurnFor(dir, 1.5);
   const started = Date.now();
@@ -61,7 +61,9 @@ test('0239 AC1: speck test --files waits for a turn held by another run, says so
   assert.match(res.stdout, /max_parallel_tests is 1/);
   assert.match(res.stdout, /ran a\.test\.mjs/, 'then ran the files');
   assert.ok(res.stdout.indexOf('ran a.test.mjs') > res.stdout.search(WAITING), 'after the wait');
-  assert.deepEqual(recordedResults(dir), [], 'no result is recorded');
+  // 0677: a passing --files run is recorded, but only for --files runs, never as the suite's result.
+  const results = recordedResults(dir).map(f => JSON.parse(fs.readFileSync(path.join(dir, 'speck', '.cache', 'results', f), 'utf8')));
+  assert.ok(results.every(r => r.files === true), 'no full run\'s result is recorded');
 });
 
 test('0239 AC1: speck test --files shares max_parallel_tests: with a free turn left, it doesn\'t wait', () => {

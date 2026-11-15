@@ -47,6 +47,7 @@ A `--files` or `--related` run with the same code, test command and test files a
 - A full run records only when nothing outside `speck/` is uncommitted. Builds test before they commit, so this record has to take uncommitted changes into account.
 - `cmdTest` in `scripts/turns.mjs` runs the tests and `scripts/results.mjs` keeps the recorded results.
 - Failing before this build: none
+- Self-check: added a test that `--fresh` just after `--files` runs the tests and that `--fresh` with anything else gives the usage message without a stack trace; checked that the reviewer's summary still reads a reused run's output. Running the tests in parallel showed the key could change between runs: the copied index got a newer time, so git took a file edited in the same second as unchanged. The copy now keeps the index's own time.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
