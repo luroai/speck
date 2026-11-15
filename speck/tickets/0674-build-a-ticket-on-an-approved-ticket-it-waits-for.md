@@ -18,7 +18,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0673", "0679"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:29:51.279Z"
-approved: "2026-11-15T15:02:27.750Z"
+approved: "2026-11-15T15:06:48.962Z"
 
 ---
 # 0674 · Build a ticket on an approved ticket it waits for
@@ -64,12 +64,13 @@ To see it, approve a ticket and leave it unshipped, then start a ticket that lis
 ## Review log
 Round 1 (codex): changes requested: F1 The baseline is reconstructed from moving merge bases and discarded whenever merge-tree reports a conflict.; F2 ownBase returns a tree object, but reviewSince passes it to cleanMerge as though it were a commit.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 451,769
-- Elapsed since build started: 33 min
+- Reviewer tokens: 724,179
+- Elapsed since build started: 37 min
 - Changed lines: 193 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
@@ -256,6 +257,98 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "A ticket can now start using one approved dependency’s work while waiting for that dependency to ship. Reviews and size counts exclude inherited work, including after later base updates. Both earlier findings are resolved, and all acceptance criteria pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bda59ede6afbccccd55a8ea30eb39e13f22f44a7",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1dfb2-1a32-77f1-9ece-b31004285f87",
+    "builder_response": "Merge round: main merged into the ticket branch after speck ship hit a conflict.\n- scripts/review.mjs (added-lines): main moved the round-limit helpers into review-limit.mjs and imports them where this branch added `import { ownBase } from './built-on.mjs';`. Kept both import lines; the `export … from './review-limit.mjs'` line from main is unchanged. reviewSince still uses isMergeRound, now from review-limit.mjs.\n- docs/brief.md (logic, but two separate rows): main changed the `speck test` row and this branch changed the `speck start` row next to it. Kept this branch's `speck start` row and main's `speck test` row word for word, so the brief differs from main only in this ticket's two passages.\n- Tests run: test/built-on-0674.test.mjs test/cli-0231.test.mjs test/start-0094.test.mjs (179 passed, 0 failed).\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 720668,
+      "cached_input_tokens": 640640,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3511,
+      "reasoning_output_tokens": 588
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 23833,
+      "cached": 247680,
+      "write": 0,
+      "output": 897
+    },
+    "cost_usd": 0.081404,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T15:06:45.311Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "startWaits and finishStart retain the approved-dependency exception. Passing AC1 tests cover starting, refusal states, multiple dependencies and rollback; test/start-0094.test.mjs also passed after the merge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ownBase and its diff integrations remain intact. review.mjs preserves both the new review-limit imports and ownBase. All AC2 tests passed, including the F1 and F2 merge regressions."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "builtOnCheck, builtOnWaiting and autoShipWhyNot are unchanged since approval. Passing AC3 tests cover refusal without after:, automatic waiting and shipping after the dependency."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The resolved docs/brief.md retains both required dependency passages. Its diff against the merged main contains only those two passages, preserving main's updated speck test documentation. AC4 passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded post-merge run reports 179 passed, zero failed and three skipped. No tests were weakened by the conflict resolutions."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/built-on.mjs",
+        "issue": "The fix retaining conflict trees remains intact after the merge. The AC2 F1 regression test passed.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/review.mjs",
+        "issue": "reviewSince still supplies a commit to cleanMerge, and isMergeRound is correctly imported from review-limit.mjs. The AC2 F2 regression test passed.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The conflict resolutions preserve this ticket's behaviour and the newer changes from main. Both earlier fixes remain covered by passing tests. All acceptance criteria pass, with no new blocking findings."
   }
 }
 ```
