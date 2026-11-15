@@ -18,6 +18,8 @@ for (const k of ['TMPDIR', 'TMP', 'TEMP']) process.env[k] = RUN_TMP;
 process.env.SPECK_PANELS_DIR = path.join(RUN_TMP, 'speck-keep-panels');
 // 0619: and those of the panels a build started, which speck run stops once the build ends.
 process.env.SPECK_BUILD_PANELS_DIR = path.join(RUN_TMP, 'speck-keep-build-panels');
+// 0678: and your own settings for every project on this machine, with its test turns, so the tests never read or write yours.
+process.env.SPECK_HOME_SETTINGS_DIR = path.join(RUN_TMP, 'speck-keep-home-settings');
 
 const remove = p => { try { fs.rmSync(p, { recursive: true, force: true, maxRetries: 3 }); } catch {} };
 export const emptyRunTmp = () => {
