@@ -1,7 +1,7 @@
 ---
 id: "0694"
 title: "Compare builder models by their results in Shipped"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-15-show-what-a-shipped-ticket-was-built-with.m
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:26:35.853Z"
+approved: "2026-11-15T21:48:43.866Z"
 
 ---
 # 0694 · Compare builder models by their results in Shipped
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 1.3 tickets can build on different models and levels, but nothing compares how they do. Shipped gives one set of figures for every ticket, and a shipped ticket doesn't say which model built it, so you can't tell whether a cheaper model holds up or only looks cheaper, for example after a few days of quick tickets on Sonnet.
@@ -58,9 +59,14 @@ To see it, open the Shipped lane and look under the figures, or open any shipped
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 185,406
+- Elapsed since build started: 22 min
+- Changed lines: 73 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: most tickets shipped before builder models were recorded count under Unknown, so the table compares only recent tickets for now.
 - Follow-ups: none.
