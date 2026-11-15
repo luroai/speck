@@ -16,6 +16,8 @@ import { goWith } from '../scripts/go-with.mjs';
 import { fixable, decidable } from '../scripts/foreman.mjs';
 import { foremanFixQueue } from '../scripts/foreman-fix.mjs';
 import { foremanBoard } from '../scripts/foreman-took.mjs';
+import { foremanReply } from '../scripts/foreman-answer.mjs';
+import { asked } from './support/foreman-asked.mjs';
 import { reviewPack, roundsLine } from '../scripts/pack.mjs';
 import { findTicket } from '../scripts/core.mjs';
 
@@ -89,6 +91,32 @@ test('0680 AC2: going with the recommendation of a review-limit question notes 2
   const other = blockedRepo();
   assert.equal(goWith(other.dir, '0001', new Date('2026-11-15T10:00:00Z')).status, 200);
   assert.equal(allowedRounds(other.ticket()), 0);
+});
+
+test('0680 AC2: answering speck\'s question about a ticket blocked at the review limit, with speck answer or the panel\'s Answer, notes 2 more rounds', () => {
+  const reply = (r, action) => foremanReply(r.dir, action, '0001', 'Keep going', { now: new Date('2026-11-15T10:00:00Z'), env: {} });
+  const { r } = asked('blocked', LIMIT_Q);
+  assert.match(reply(r, 'answer'), /resumes its build with your answer/);
+  assert.match(r.ticket(), /^- Review limit: you allowed 2 more review rounds \(2026-11-15 10:00 UTC\)\.$/m);
+  assert.equal(allowedRounds(r.ticket()), 2);
+  assert.deepEqual(ticketNext(r.ticket(), three(), cfg), { action: 'fix' });
+  const dismissed = asked('blocked', LIMIT_Q).r;
+  reply(dismissed, 'dismiss');
+  assert.equal(allowedRounds(dismissed.ticket()), 0, 'dismissing allows none');
+  const other = asked('blocked').r;
+  reply(other, 'answer');
+  assert.equal(allowedRounds(other.ticket()), 0, 'an answer at any other question allows none');
+});
+
+test('0680 AC2: a block after merge rounds isn\'t a review-limit block, as the build skill tells them apart', () => {
+  const skill = fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
+  assert.ok(skill.includes('`No approval after <n> review rounds`') && skill.includes('`No approval after <n> merge rounds`'));
+  const reviewLimit = /^No approval after \d+ review rounds/;
+  assert.match(nextAction(three(), cfg).reason, reviewLimit);
+  const merges = [round(1, 'approve'), round(2, 'changes_requested', [finding('M1'), finding('M2')], { merge: true }), round(3, 'changes_requested', [finding('M1'), finding('M2')], { merge: true })];
+  const merged = nextAction(merges, cfg, 2);
+  assert.equal(merged.action, 'block', 'an allowance doesn\'t open merge rounds');
+  assert.doesNotMatch(merged.reason, reviewLimit);
 });
 
 test('0680 AC2: speck review accepts the 2 rounds you allowed, marks them, and blocks again after them', () => {
@@ -178,10 +206,9 @@ test('0680 AC4: the review log, the review pack and the rounds line mark each ro
   assert.doesNotMatch(log, /Round 1 \([^)]*allowed/);
 });
 
-test('0680 AC4: the brief\'s Max rounds reached line and speck watch row name the review limit', () => {
+test('0680 AC4: the brief\'s Max rounds reached line names the review limit\'s facts', () => {
   const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
   const max = brief.split('\n').find(l => l.includes('**Max rounds reached**'));
   assert.ok(max.includes('`Review limit: yes`') && max.includes('`blocked_review_limit`'));
-  const watch = brief.split('\n').find(l => l.startsWith('| `speck watch <action>'));
-  assert.match(watch, /review limit/);
+  assert.ok(max.includes('`Review limit: you allowed 2 more review rounds`'), 'the Notes line your answer adds');
 });

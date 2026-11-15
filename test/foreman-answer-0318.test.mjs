@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fakePage, fullViewOf, T, gitEnv, CLI, click, startPanel, stop, freePort, request, post, tokenOf } from './support/panel.mjs';
 import { blockedRepo } from './support/blocked.mjs';
+import { WORDS, CFG, ASKED, agents, asked } from './support/foreman-asked.mjs';
 import { loadConfig } from '../scripts/speck.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
 import { foremanAgentQueue, foremanAction, agentView } from '../scripts/foreman-agent.mjs';
@@ -15,33 +16,10 @@ Object.assign(process.env, gitEnv); // speck foreman commits in this process
 
 // ---------- 0318: answer or dismiss a question the Foreman asked ----------
 
-const WORDS = ['claude', '-p', '/speck-build {id}', '--session-id', '{session}'];
-const CFG = { base_branch: 'main', branch_prefix: 'speck/' };
 const ON = { on: true, pid: process.pid };
-const QUESTION = 'Should it keep the old test?';
+const QUESTION = ASKED;
 const NOW = new Date('2026-10-19T09:30:00Z');
 
-// The Foreman agent's queue, as 0287's tests have it: starts and resumed builds are kept, and an agent runs until end().
-function agents(r) {
-  const starts = [], resumed = [], said = [], again = [], running = new Set(), live = new Set();
-  const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), watch: 'fix' }),
-    words: WORDS, cfg: CFG, max: 1, running, ships: { again: id => again.push(id) }, say: m => said.push(m),
-    startBuild: (id, argv) => { resumed.push({ id, argv }); running.add(id); },
-    start: (argv, cwd, log, env) => { const pid = 90000 + starts.length; starts.push({ token: env.SPECK_FOREMAN_RUN, pid }); live.add(pid); return { pid, exited: () => !live.has(pid) }; },
-    alive: pid => live.has(pid), withToken: () => [] });
-  return { q, starts, resumed, said, again, running, end: s => live.delete(s.pid) };
-}
-
-// A repo whose ticket 0001 (at `status`) the Foreman agent has asked you about, with the agent ended.
-function asked(status = 'building') {
-  const r = blockedRepo({ status }), a = agents(r);
-  a.q.stuck({ id: '0001', what: 'its build ended', log: '' });
-  a.q.check([T('0001', status)]);
-  foremanAction(r.dir, ['ask', '0001', QUESTION, '--why=the build stopped on a choice'], { token: a.starts[0].token, now: new Date('2026-10-18T14:00:00Z') });
-  a.end(a.starts[0]);
-  a.q.check([T('0001', status)]);
-  return { r, a, check: (s = status) => a.q.check([T('0001', s)]) };
-}
 const reply = (r, action, text, o = {}) => foremanReply(r.dir, action, '0001', text, { now: NOW, env: {}, ...o });
 const asks = (r, status = 'building') => agentView(r.runs, [T('0001', status)]).asks;
 
