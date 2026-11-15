@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.5.0 · 15 November 2026
+
+What's new since 1.4.0. A minor release that finishes "picks the crew" and makes the line steadier. The ticket writer now suggests a build level for each ticket, and Shipped compares builder models by their results, so you can see whether a cheaper model holds up. Review rounds carry on through more usage limits, a handed-back build carries on after one, a ticket cancelled during its build no longer leaves others waiting, and fix tickets may fix the tests they were made for. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.5.0 init`.
+
+### Picking the crew
+
+- `/speck-ticket` now suggests a level for each ticket it writes. It lists the project's levels with the builder, model and effort each gives, and sets one with `speck set <id> level <name>` when it fits the work better than the settings: less effort or a cheaper model for small, low-risk changes such as wording, docs or a test fix, more for M tickets, high-risk ones or ones that need careful reasoning, and a level you've named for a kind of work for tickets of that kind. Otherwise it leaves `level` blank. When it presents the tickets, it gives each one's level, or "Default", with a one-line reason, and says you can change it in the panel's Level menu or by asking. Setting a level never sets a ticket ready.
+- Shipped has a By model table under its figures, for the same tickets they count: one row per builder model, with how many tickets it built, the median minutes from start to approval, the median review rounds, the share approved in the first round and the median builder cost per ticket. A ticket counts under the builder model that cost most across its builds, and tickets with no recorded model count in an Unknown row at the bottom. A row with fewer than 5 tickets says "few tickets" beside its count. At phone width the table fits the lane without scrolling sideways.
+- A shipped ticket's full view has a Built with fact naming the builder model or models its builds ran on, or "Not recorded". Most tickets built before this release show "Not recorded" and sit in the Unknown row.
+
+### Usage limits
+
+- When the reviewer is held by a usage limit and a stand-in from `reviewer_bench` takes a round, the limit stays on record until it resets. Every round meanwhile, on any ticket, goes straight to the stand-in without asking the limited reviewer first, and `speck run`'s status and the panel keep saying the reviewer is waiting for its reset, and when. Once it resets, rounds go back to the reviewer.
+- When the stand-in is limited too, the round goes to the next agent on `reviewer_bench`, in bench order, that's ready, free of a usage limit and of another family from the ticket's builder. Only when none can take it does the build wait, and it carries on after the earliest reset among the reviewer and its bench. Each agent's limit is recorded as its own, so a stand-in's limit no longer replaces the reviewer's.
+- When `speck run` hands an approved ticket back to its build, for example to resolve a clash at ship, and that build stops on a usage limit before its review round, `speck run` carries it on after the reset in the same session, as it does other builds. It doesn't count as another hand-back, and the ship queue leaves the ticket alone while it waits.
+
+### Tickets that don't get stuck
+
+- A ticket cancelled on its own branch during its build, for example when speck takes a recommendation to cancel it, is now cancelled on the base branch too when `speck run` takes up the build's end, with the same reason and date, moved to `speck/tickets/done/` and committed. A ticket with it in `after:` is then reported as waiting on a cancelled ticket that should be taken out of `after:`, rather than waiting for it for ever. If the main checkout has uncommitted changes to that ticket, `speck run` says so once in its log and tries again at its next check.
+- A `type: fix` ticket, the kind speck makes when the base branch's tests fail, may now change or fix the failing tests its acceptance criteria name, even though they're listed as failing before its build. The build skill, the review skill and the reviewer's prompt say so, and every other test failing before a build stays off limits, as before. So the reviewer no longer escalates a fix ticket for doing its job.
+
+### Tests
+
+- `speck test --related` now brings in every test that loads the panel's page when a branch changes a file the page loads, such as the panel's script or styles, so breakages that used to surface only at ship show up before review. A support module that names a file by joining its parts now counts as naming it. Such a run is longer, as about 400 test files load the panel.
+- Several of speck's own tests that failed now and then on a busy machine, around `speck run`'s ship queue, its timing and starting builds outside `speck run`, are steady.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 15 November 2026.
+
 ## 1.4.0 · 15 November 2026
 
 What's new since 1.3.1. A minor release that keeps work moving with less waiting: tickets wait for each other only when one needs the other's work, a ticket can start on the approved work of the one it waits for, and builds and merge rounds re-run and re-read less. With `watch: decide`, speck also carries on past a check in the app it can't make, and your answer at the review limit now lets a build take two more rounds. You can set several tickets ready with one command, and cap test runs across every project on your machine. Costs speck works out itself are still estimates at API list prices.
