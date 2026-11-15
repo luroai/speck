@@ -49,6 +49,7 @@ A ticket can be started on the approved work of the one ticket it still waits fo
 - Measured 2026-11-15: in this repo, with auto-ship on, a ticket goes from approved to shipped in a median 4 minutes, so the gain here is small. It's larger where approved tickets wait for you to ship them.
 - `cmdStart` in `scripts/speck.mjs` makes the branch, `reviewSince` in `scripts/review.mjs` and `scripts/diffstat.mjs` measure the change, and `autoShipWhyNot` in `scripts/ship.mjs` gives auto-ship's reasons.
 - Failing before this build: none
+- Self-check: starting straight from the approved ticket's branch left the new branch with that branch's older copy of its own ticket, which would clash at ship, so `speck start` now makes the branch from the base branch and merges the approved ticket's branch into it (refusing, changing nothing, if that clashes), and diffs are measured from that merge. Also: the waiting ticket must be approved in its build as well as on its branch, and a `built_on:` that isn't a ticket id counts as none.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

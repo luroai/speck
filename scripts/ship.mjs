@@ -16,9 +16,8 @@ import { remoteBaseCatchUp } from './ship-remote.mjs';
 import { prMode } from './pull-request.mjs';
 import { shipPrTicket } from './pr-ship.mjs';
 import { privateLinesInSpeck, privateSaid } from './private-words.mjs';
-import { receiptWhyNot } from './receipts.mjs';
-import { leftChecks } from './app-check.mjs'; // 0679
-export { receiptWhyNot }; // for speck status --json (0629)
+import { receiptWhyNot } from './receipts.mjs'; export { receiptWhyNot }; // for speck status --json (0629)
+import { leftChecks } from './app-check.mjs'; import { builtOnWaiting, builtOnCheck } from './built-on.mjs'; // 0679, 0674
 import { notPushed } from './not-pushed.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
@@ -401,7 +400,7 @@ export function autoShipBlocker(repo, cfg, id) {
   const pad = String(id).padStart(4, '0');
   const t = findTicket(repo, pad);
   const all = rounds(repo, pad);
-  return autoShipWhyNot(cfg, pad, t.fm.risk, all, ticketKind(t), changesPending(t.raw, all).length > 0, criteriaChange(repo, cfg, pad) !== null, () => receiptWhyNot(repo, pad, all), leftChecks(t.sections.notes));
+  return autoShipWhyNot(cfg, pad, t.fm.risk, all, ticketKind(t), changesPending(t.raw, all).length > 0, criteriaChange(repo, cfg, pad) !== null, () => receiptWhyNot(repo, pad, all), leftChecks(t.sections.notes), builtOnWaiting(repo, cfg, t.fm)?.id);
 }
 
 // The same, from a ticket's risk and its review rounds as already read, as `speck status --json` has them (0167).
@@ -409,8 +408,9 @@ export function autoShipBlocker(repo, cfg, id) {
 // asked for (`changed`) that no round has reviewed yet. 0565: nor does one whose criteria changed since it was set ready.
 // 0629: nor does one whose latest round has no matching receipt (`receipt`: receiptWhyNot's reason, or a function
 // giving it, read only when nothing else stops it). 0679: nor does one with a check in the app left for you (`left`,
-// each check as its Notes give it).
-export function autoShipWhyNot(cfg, pad, risk, roundList, kind = 'code', changed = false, criteria = false, receipt = '', left = []) {
+// each check as its Notes give it). 0674: nor does one built on a ticket that hasn't shipped (`builtOn`, its id).
+export function autoShipWhyNot(cfg, pad, risk, roundList, kind = 'code', changed = false, criteria = false, receipt = '', left = [], builtOn = '') {
+  if (builtOn) return `ticket ${pad} was built on ticket ${builtOn}, which hasn't shipped yet`;
   if (changed) return `the user asked for changes to ticket ${pad}, and it waits for its build to make them and the reviewer to approve them`;
   if (criteria) return `ticket ${pad}'s acceptance criteria changed since it was set ready`;
   if (left.length) return `ticket ${pad} waits for you to check in the app: ${left.join('; ')}`;
@@ -585,8 +585,8 @@ export function cmdShip(args) {
     const why = autoShipBlocker(folder, cfg, id);
     if (why) throw new SpeckError(`Not shipping automatically: ${why}. The ticket stays approved, waiting for you to run /speck-ship ${String(id).padStart(4, '0')}.`, 12);
   }
-  // Only a ticket id gets a record: anything else is refused by shipTicket, naming it.
-  const took = /^\d{1,4}$/.test(id) ? takeShip(repo, id.padStart(4, '0'), auto) : null;
+  if (/^\d{1,4}$/.test(id)) builtOnCheck(repo, loadConfig(repo), id.padStart(4, '0'));
+  const took = /^\d{1,4}$/.test(id) ? takeShip(repo, id.padStart(4, '0'), auto) : null; // only a ticket id gets a record: shipTicket refuses anything else, naming it
   let lock = null;
   try { lock = took && takeShipLock(path.dirname(took.file), id.padStart(4, '0'), alone); } catch (e) { endShip(took, false, null); throw new SpeckError(`speck ship couldn't take the repo's ship lock (${e.message}), so nothing was shipped. Try again.`); }
   if (took && !lock) {
