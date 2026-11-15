@@ -1,7 +1,7 @@
 ---
 id: "0693"
 title: "Try the next reviewer on the bench when a stand-in is limited too"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-15
 built_on: "0692"
 started: "2026-11-15T21:37:52.776Z"
 approved: "2026-11-15T21:52:54.768Z"
+finished: "2026-11-15T22:33:39.438Z"
 
 ---
 # 0693 · Try the next reviewer on the bench when a stand-in is limited too
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A review round gets one stand-in from `reviewer_bench` when the reviewer is limited. If that stand-in is limited too, the round ends and the build waits for the stand-in's reset, even with a third agent free on the bench, and the refusal overwrites the record of the reviewer's limit with the stand-in's.
