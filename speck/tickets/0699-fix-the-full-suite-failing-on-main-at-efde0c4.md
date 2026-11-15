@@ -42,6 +42,11 @@ The full suite passes on main again.
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
 Failing before this build: not checked (the recorded result, from f049820, is the quick suite's and passed; the full suite's failures are the two tests this ticket names)
+Causes found:
+- 0624 AC3: 0694 (AC4) added a Built with fact to a shipped ticket's full view, so the list of facts the test expects was out of date. The fix adds Built with, Not recorded (the fixture has no recorded build models), in the place the panel shows it.
+- 0476 AC2: passes on its own; in full-suite runs it failed on and off since 2026-11-09 with "the slide ends within 120 ms (120.001 to 120.05 ms)". The slide lasts exactly 120 ms, and one that has only just started can read a fraction of a millisecond over, so the check now allows under 121 ms. A slide taking longer than 120 ms still fails it.
+No code outside the tests changes: no test is written for this ticket beyond the two it names, which check it.
+Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
