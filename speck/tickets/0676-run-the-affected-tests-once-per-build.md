@@ -50,7 +50,11 @@ After a failing `--related` run, a build re-runs only the files that failed and 
 - Decision: the reminder sits in the command's output, where the build reads it at the moment the run fails. If builds still run the whole set again, a later ticket can make a second `--related` run narrow itself.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a build checks its change against the related tests and some fail, speck now ends that run's output with one line saying exactly what to run next: only the build's own test files and the files where tests failed. The build's instructions say to run that rather than the whole related set again, and to run the related set only once per build. Builds should spend less time waiting for test turns, so tickets move through faster.
+
+To see it, break a test on a ticket branch and run the related tests: the last line reads "Once the failure is fixed, run only the files that failed and your own:" followed by the command.
+
+Worth watching: whether builds actually follow the line. If they still rerun the whole related set, a later ticket can make a second related run narrow itself.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,7 +63,7 @@ After a failing `--related` run, a build re-runs only the files that failed and 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none new. The ticket's own note already covers the next step if builds ignore the line.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -149,6 +153,97 @@ After a failing `--related` run, a build re-runs only the files that failed and 
     ],
     "escalation_question": "",
     "summary": "The usual configured test run now gives a useful command for rerunning failures, and the build instructions explain how to use it. Two fixes remain: support the existing whole-suite fallback and replace a test that unnecessarily freezes the brief's wording."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "94af0782c7a8250b53e2fae65574e903f4179b98",
+    "session": "continued",
+    "thread_id": "01a1df72-4083-7b61-b160-a19b5c6f3008",
+    "builder_response": "- Tests run: test/related-0676.test.mjs test/build-0197.test.mjs (with commands.checks alongside)\n- F1: fixed. The AC4 test no longer checks the reminder's wording: it checks only that the brief's --related text gives the line's command (a backticked `… speck test --files <file>…`) and that the files are read from TAP `location:`.\n- F2: fixed. scripts/turns.mjs cmdTest: when commands.test_files is blank and --related falls back to the whole suite through testRun, a failing run (not stalled, not stopped by a signal) reads its output with nextRunFiles and ends with the same line (shared printNext helper). New test \"0676 AC1: with commands.test_files blank, a failing --related run of the whole suite ends with the line too\". The brief's row now says so, and that a run that stalls or is stopped gets no line.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 377867,
+      "cached_input_tokens": 297600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1742,
+      "reasoning_output_tokens": 64
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 23109,
+      "cached": 209408,
+      "write": 0,
+      "output": 826
+    },
+    "cost_usd": 0.0754188,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T13:54:47.854Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs cmdTest prints the final command through printNext for both configured file runs and whole-suite fallback runs. scripts/tap.mjs nextRunFiles deduplicates given and failing files. Passing AC1 tests cover both paths, duplicates and leading hyphens."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdTest limits the reminder to failed related runs; nextRunFiles rejects unreadable failing locations. Passing AC2 tests cover passing runs, --files, missing locations, non-TAP output and stalls."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md section 3 step 5 says to run --related once per build, never in later rounds, and fix the failure before running the command on the final line."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md's speck test row describes the reminder, included files, fallback behaviour and exclusions. The passing AC4 test now checks command and location facts rather than prose wording."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0676-tests.txt confirms 164 tests: 161 passed, zero failed and three skipped. Existing tests were not weakened or changed. Whole-suite verification remains with ship."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/related-0676.test.mjs",
+        "issue": "The document test previously required the reminder's exact prose. It now checks only the command and TAP location field.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/turns.mjs",
+        "issue": "The whole-suite fallback previously omitted the reminder. cmdTest now prints it for eligible failures, with a passing integration test covering this configuration.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both requested fixes are complete. Failed related runs now provide the narrower rerun command, including when file-specific testing is unavailable. The instructions match the behaviour, and all tests run for this review passed."
   }
 }
 ```
