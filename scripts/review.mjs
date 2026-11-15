@@ -19,6 +19,7 @@ import { REVIEWER_LIMITED, stopOnLimit, holdOnLimit, clearLimit } from './review
 import { standInFor, standInRound, standInMeta, standInWords } from './review-stand-in.mjs';
 import { keepUsage } from './agent-usage.mjs';
 import { openBlocking, isMergeRound, mergeRun, ordinaryRounds, extraRound, nextAction, allowedRounds } from './review-limit.mjs';
+import { ownBase } from './built-on.mjs';
 
 export { openBlocking, isMergeRound, mergeRun, ordinaryRounds, extraRoundDue, nextAction, ROUNDS_ALLOWED, allowedLine, allowedRounds } from './review-limit.mjs';
 
@@ -236,15 +237,18 @@ function shipBase(repo, base) {
 // 0673: except in a merge round, which starts at git's own clean merge of the last reviewed commit with the base
 // branch as merged in, so the reviewer sees only how each conflict was resolved, anything else changed by hand in the
 // merge and every change committed since. `afterMerge` names the commits it needs to say so.
-export function reviewSince(repo, cfg, prior) {
+// 0674: a ticket built on another (`fm`'s built_on) is measured from where its own change starts, not its merge base.
+export function reviewSince(repo, cfg, prior, fm = null) {
   const target = shipBase(repo, cfg.base_branch);
-  const base = git(['merge-base', target, 'HEAD'], repo).trim();
+  const own = c => ownBase(repo, cfg, fm, c);
+  const meets = git(['merge-base', target, 'HEAD'], repo).trim(), base = own('HEAD') ?? meets;
   const last = prior[prior.length - 1]?.meta?.reviewed_sha;
   if (!last) return { base, sinceSha: base, merged: false };
-  const was = sh('git', ['merge-base', target, last], { cwd: repo });
+  const ownWas = own(last);
+  const was = ownWas ? { status: 0, stdout: ownWas } : sh('git', ['merge-base', target, last], { cwd: repo });
   const merged = was.status === 0 && was.stdout.trim() !== base;
   if (!merged) return { base, sinceSha: last, merged };
-  const clean = isMergeRound(prior) && cleanMerge(repo, last, base);
+  const clean = isMergeRound(prior) && cleanMerge(repo, last, meets); // commits: `base` may be ownBase's tree
   if (!clean) return { base, sinceSha: base, merged };
   const approved = prior.findLast(r => r.verdict.verdict === 'approve')?.meta?.reviewed_sha || last;
   return { base, sinceSha: clean, merged, afterMerge: { last, approved } };
@@ -272,7 +276,7 @@ function reviewSetup(repo, id, opts) {
   const ticket = findTicket(repo, id);
   const prior = rounds(repo, id);
   const round = prior.length + 1;
-  const { base, sinceSha, merged, afterMerge } = reviewSince(repo, cfg, prior);
+  const { base, sinceSha, merged, afterMerge } = reviewSince(repo, cfg, prior, ticket.fm);
   const merge = isMergeRound(prior);
   // A merge round after an approval starts a new run, so only a run that hasn't approved yet can use up the limit.
   const used = prior.at(-1)?.verdict.verdict === 'approve' ? 0 : mergeRun(prior);
@@ -517,7 +521,7 @@ export function cmdPrompt(args) {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const t = findTicket(repo, args[0]);
-  const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
+  const base = ownBase(repo, cfg, t.fm) ?? git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim(); // 0674
   const diff = reviewDiff(repo, base);
   const testsArg = args.find(a => a.startsWith('--tests='));
   const tests = testOutput(testsArg?.slice(8), t.fm.id || args[0]);
@@ -530,7 +534,7 @@ export function cmdDiff(args) {
   if (!args[0]) throw new SpeckError('Usage: speck diff <id>');
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
-  const s = reviewSince(repo, cfg, rounds(repo, args[0]));
+  const s = reviewSince(repo, cfg, rounds(repo, args[0]), findTicket(repo, args[0]).fm);
   const diff = reviewDiff(repo, s.sinceSha);
   // 0673: in a merge round after a merge, with what it holds and the command for the whole change, as speck review gives it.
   process.stdout.write(s.afterMerge ? `${diffSection(cfg, { ...s, diff }).join('\n\n')}\n` : diff);
