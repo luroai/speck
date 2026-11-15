@@ -57,7 +57,9 @@ speck is ready to be released as 1.4.0.
 - Pictures: none, because nothing anyone sees in the panel changes; the README's wording changes but not how it renders.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as 1.4.0, a release about less waiting. Its changelog and release notes describe what's new since 1.3.1: tickets wait for each other only when one needs the other's work, a ticket can start on the approved work of the one it waits for, builds re-run fewer tests and merge rounds re-read less, a cap on test runs across all your projects, checks in the app speck can't make left for you at the end, two more review rounds when you answer at the review limit, and setting several tickets ready with one command. The README and the design brief now say 1.4.0, the README's "Built with speck" figures are up to date (666 tickets shipped), and the price table speck works out costs from was refreshed today.
+
+Once this ships, the release workflow should tag 1.4.0 and publish its release page; check the page appeared on GitHub.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -66,6 +68,7 @@ speck is ready to be released as 1.4.0.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+- Follow-ups: none.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -148,6 +151,89 @@ speck is ready to be released as 1.4.0.
     ],
     "escalation_question": "",
     "summary": "The version, release notes, refreshed prices and published figures check out, and the reported tests pass. Remove the internal test-fix entry from the changelog to meet the ticket's explicit scope."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "897b8458b97ea5c4e24198900a877d89f826a5f3",
+    "session": "continued",
+    "thread_id": "01a1e0d9-0ee8-7a33-a370-a210adf60734",
+    "builder_response": "- Tests run: speck test --files test/release-0684.test.mjs test/release-0668.test.mjs test/docs-0491.test.mjs test/docs-0267.test.mjs: 177 pass, 0 fail, 3 skipped (0078's split checks).\n- F1: fixed. Removed the 1.4.0 section's Tests subsection on 0683 from CHANGELOG.md; the release notes never mentioned it. The ticket's Notes now say 0683 is left out of the changelog as a test-only fix nobody using speck would notice.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 296026,
+      "cached_input_tokens": 232192,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1861,
+      "reasoning_output_tokens": 47
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 11438,
+      "cached": 107392,
+      "write": 0,
+      "output": 608
+    },
+    "cost_usd": 0.0396952,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T20:16:28.545Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json is 1.4.0. Both AC1 tests passed, including running init and checking it prints speck 1.4.0."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 1.4.0 above 1.3.1, describes shipped tickets 0672–0682, and now excludes the internal test-only fix. The diff confirms older sections remain unchanged. AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines say 1.4.0; the setup prompt still installs semver:*. scripts/prices.json records 2026-11-15 with refreshed entries. All AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.4.0.md covers the release's purpose, shipped changes and benefits, per-project update command, upgrade differences and correct changelog link. No person's name appears. AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README figures remain consistent with the independently verified done-ticket totals: 666 shipped, 17 cancelled, 14 minutes median, 2 review rounds median and 314 first-round approvals. Figure and version/changelog tests passed; this round reports 177 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "CHANGELOG.md",
+        "issue": "The previous Tests subsection included an internal test-only fix that the ticket explicitly excluded.",
+        "suggested_fix": "Remove the 1.4.0 Tests subsection describing 0683.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Release 1.4.0 preparation meets all five criteria. The internal test-fix entry has been removed, the release documents and figures check out, and the reported tests pass. No blocking concerns remain."
   }
 }
 ```
