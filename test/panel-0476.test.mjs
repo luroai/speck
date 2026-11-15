@@ -57,11 +57,12 @@ async function finger(b, points, { gap = 0, lift = true } = {}) {
 // read as the lane before it. A lane that never opens fails here, naming it.
 const opens = (b, lane, what) => b.until(`document.querySelector('#tab-${lane}').getAttribute('aria-selected') === 'true'`, `${what}: ${lane}'s tab to open`, 3000);
 // The open card comes to rest: once its tab has opened (0542), the slide under way ends within 120 ms (0517: 250 ms
-// before), by its own timing, and then the card is at rest.
+// before), by its own timing, and then the card is at rest. 0699: a slide that has only just started can have its start
+// set to the next frame, a hair ahead of the page's clock, so it reads a fraction of a millisecond over 120 ms.
 async function settles(b, lane, what) {
   await opens(b, lane, what);
   const left = await b.js(`Math.max(0, ...document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.parentElement === document.querySelector('main')).map(a => a.effect.getComputedTiming().endTime - (a.currentTime || 0)))`);
-  assert.ok(left <= 120, `${what}: the slide ends within 120 ms (${left} ms)`);
+  assert.ok(left < 121, `${what}: the slide ends within 120 ms (${left} ms)`);
   await b.until(`!document.querySelector('main').dataset.slide`, `${what}: the slide to end`, 3000);
   await atRest(b, lane, what);
 }

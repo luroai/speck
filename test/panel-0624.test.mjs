@@ -84,7 +84,7 @@ test('0624 AC3: every fact is still shown with the same value, for a draft, a bu
   const s = await page();
   await open(s, '0901');
   assert.deepEqual(facts(s), [['Priority', 'P2'], ['Level', 'Default'], ['Size', 'S'], ['Risk', 'low'], ['Ships by itself', '–'], ['Builder', 'Claude · opus'], ['Reviewer', `Codex · ${LONG}`],
-    ['Builder cost', '$2.91'], ['Reviewer cost', '—'], ['Total cost', '—'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
+    ['Built with', 'Not recorded'], ['Builder cost', '$2.91'], ['Reviewer cost', '—'], ['Total cost', '—'], ['Builder tokens', '2.4M'], ['Reviewer tokens', '108k']]);
 });
 
 test('0624 AC3: a long value wraps within its tile, and a long Waits on line isn\'t cut off', () => {
