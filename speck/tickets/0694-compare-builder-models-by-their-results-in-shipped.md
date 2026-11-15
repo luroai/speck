@@ -1,7 +1,7 @@
 ---
 id: "0694"
 title: "Compare builder models by their results in Shipped"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-15
 ---
 # 0694 · Compare builder models by their results in Shipped
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 1.3 tickets can build on different models and levels, but nothing compares how they do. Shipped gives one set of figures for every ticket, and a shipped ticket doesn't say which model built it, so you can't tell whether a cheaper model holds up or only looks cheaper, for example after a few days of quick tickets on Sonnet.
