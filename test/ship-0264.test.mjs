@@ -66,15 +66,22 @@ test('0264 AC2: shipped by hand, it refuses with the same message and exits 1', 
 
 test('0264 AC3: speck run doesn\'t put shipping on hold, and hands the ticket back to its build', () => {
   const r = autoRepo(tap(['not ok - readme names it'], ['not ok - readme names it', 'not ok - widget adds up']));
-  const code = runIn(r.dir, 'ship', '1', '--auto').status;
-  assert.equal(code, 16);
-  const said = [], launches = [], handed = [];
+  const said = [], launches = [], handed = [], codes = [];
   const T = id => ({ id, status: 'approved', auto_ship: true, type: '', approved: '2026-10-17T10:00:00.000Z', build_running: false });
+  // 0688: the queue's own launch runs the ship, so no earlier ship of 0001 is there for the queue to count as its last
+  // try, which on a busy machine it did when that ship started more than a second after the last commit.
   const q = shipQueue(r.dir, { base_branch: 'main', branch_prefix: 'speck/' }, {
-    say: s => said.push(s), launch: (repo, id, log, done) => launches.push({ id, done }), handBack: h => handed.push(h),
+    say: s => said.push(s), handBack: h => handed.push(h),
+    launch: (repo, id, log, done) => {
+      launches.push({ id });
+      if (id !== '0001') return;
+      const code = runIn(repo, 'ship', id, '--auto').status;
+      codes.push(code);
+      done(code);
+    },
   });
   q.check([T('0001')]);
-  launches[0].done(code);
+  assert.deepEqual(codes, [16]);
   assert.doesNotMatch(said.join('\n'), /on hold/);
   assert.deepEqual(handed.map(h => [h.id, h.kind]), [['0001', 'tests']]);
   q.check([T('0001'), T('0002')]);
