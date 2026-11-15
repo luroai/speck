@@ -1,7 +1,7 @@
 ---
 id: "0690"
 title: "Steady the 0319 outside-speck-run test"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-12-steady-the-0319-outside-speck-run-test.md" 
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:03:25.487Z"
+approved: "2026-11-15T21:08:06.258Z"
 
 ---
 # 0690 · Steady the 0319 outside-speck-run test
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 "0319 AC1–AC4" in `test/seen-builds-0319.test.mjs` once saw speck run call build 0002 "already being built" instead of "being built outside speck run", at a load of about 20, then passed alone. A chance failure like this can fail the full suite on main and hold up every ship.
@@ -54,9 +55,14 @@ When speck run starts while a build you started yourself (for example with /spec
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 173,290
+- Elapsed since build started: 5 min
+- Changed lines: 2 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
