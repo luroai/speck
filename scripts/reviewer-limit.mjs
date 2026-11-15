@@ -18,6 +18,12 @@ const IN_HAND = ['building', 'reviewing']; // a ticket whose build has more to d
 
 const limitsDir = runs => path.join(runs, FOLDER);
 const mainLimits = repo => limitsDir(path.join(mainCheckout(repo), 'speck', '.cache', 'runs'));
+// 0692: each reviewer's own limit, apart from the builds', so a round a stand-in takes, which clears its build's
+// record, leaves the limit on record until it resets.
+const HELD = 'reviewer-held';
+const heldDir = runs => path.join(runs, HELD);
+const mainHeld = repo => heldDir(path.join(mainCheckout(repo), 'speck', '.cache', 'runs'));
+const heldName = reviewer => `${reviewer.replace(/[^\w-]/g, '_')}.json`;
 const fileName = /^[\w-]+\.json$/;
 const parsed = (name, text) => {
   let s;
@@ -32,16 +38,31 @@ const inDir = dir => names(dir).filter(n => fileName.test(n)).flatMap(n => { try
 
 // The limits on record, each { id, reviewer, resets, carry_on, session }. carry_on is when speck run resumes the build.
 export const readLimits = runs => inDir(limitsDir(runs));
+// 0692: the reviewers' own limits on record, each { reviewer, resets, carry_on }.
+export const readHeld = runs => names(heldDir(runs)).filter(n => fileName.test(n)).flatMap(n => {
+  let s;
+  try { s = JSON.parse(fs.readFileSync(path.join(heldDir(runs), n), 'utf8')); } catch { return []; }
+  if (!s || typeof s !== 'object' || Array.isArray(s) || typeof s.reviewer !== 'string' || n !== heldName(s.reviewer) || !Number.isFinite(Date.parse(s.carry_on))) return [];
+  if (s.resets !== null && !Number.isFinite(Date.parse(s.resets))) return [];
+  return [{ reviewer: s.reviewer, resets: s.resets, carry_on: s.carry_on }];
+});
+// The limits on record in `runs` that hold a reviewer now: the builds' and the reviewers' own.
+const holding = (runs, now) => [...readLimits(runs), ...readHeld(runs)].filter(s => now < Date.parse(s.carry_on));
 // The tickets waiting to be carried on, for what says a stopped build needs you.
 export const reviewerWaiting = runs => readLimits(runs).map(s => s.id);
 
 // Ends a refused round: keeps the limit for speck run when a build it started ran the round, and says when it resets.
-function refuse(repo, id, reviewer, { resets, carry_on }, why, session) {
+// 0692: a refusal the reviewer itself gave (`found`) also keeps the reviewer's own limit, which no round clears.
+function refuse(repo, id, reviewer, { resets, carry_on }, why, session, found = false) {
   const dir = mainLimits(repo);
   let kept = !!session;
   if (session) {
     try { fs.mkdirSync(dir, { recursive: true }); saveRecord(path.join(dir, `${id}.json`), { reviewer, resets, carry_on, session }); }
     catch (e) { kept = false; console.error(`Couldn't save the record of the limit for speck run (${e.message}).`); }
+    if (found) {
+      try { fs.mkdirSync(mainHeld(repo), { recursive: true }); saveRecord(path.join(mainHeld(repo), heldName(reviewer)), { reviewer, resets, carry_on }); }
+      catch (e) { console.error(`Couldn't save the record of the ${reviewer} reviewer's limit (${e.message}).`); }
+    }
   }
   const until = resets ? `is reached until ${resets.slice(0, 16).replace('T', ' ')} UTC` : 'is reached, and its message doesn\'t say when it resets';
   throw new SpeckError(`The ${reviewer} reviewer's usage limit ${until}, so no round was recorded.${why ? `\n${why}` : ''}\n${kept ? `End your session here and leave the ticket as it is: speck run resumes this build ${resets ? 'a minute after the reset' : 'after 30 minutes'}.` : 'Run the round again once the limit has reset.'}`, REVIEWER_LIMITED);
@@ -51,7 +72,7 @@ function refuse(repo, id, reviewer, { resets, carry_on }, why, session) {
 export function stopOnLimit(repo, id, reviewer, said, { session = process.env[BUILD_ENV], now = Date.now() } = {}) {
   if (!reviewerRefused(said)) return;
   const read = resetIn(said, now), usable = read !== null && read + GRACE_MS > now && read <= now + FURTHEST_MS ? read : null;
-  refuse(repo, id, reviewer, { resets: usable === null ? null : new Date(usable).toISOString(), carry_on: new Date(usable === null ? now + RETRY_MS : usable + GRACE_MS).toISOString() }, said, session);
+  refuse(repo, id, reviewer, { resets: usable === null ? null : new Date(usable).toISOString(), carry_on: new Date(usable === null ? now + RETRY_MS : usable + GRACE_MS).toISOString() }, said, session, true);
 }
 
 // Before a round of a build speck run started: while another build has found `reviewer` at its limit, it isn't run.
@@ -63,7 +84,8 @@ export function holdOnLimit(repo, id, reviewer, { session = process.env[BUILD_EN
 }
 
 // 0649: the limit on record that holds `reviewer` now, the one lasting longest, or null.
-export const heldBy = (repo, reviewer, now = Date.now()) => inDir(mainLimits(repo)).filter(s => s.reviewer === reviewer && Date.parse(s.carry_on) > now).sort((a, b) => Date.parse(b.carry_on) - Date.parse(a.carry_on))[0] ?? null;
+// 0692: a build's or the reviewer's own.
+export const heldBy = (repo, reviewer, now = Date.now()) => holding(path.join(mainCheckout(repo), 'speck', '.cache', 'runs'), now).filter(s => s.reviewer === reviewer).map(({ id, session, ...s }) => s).sort((a, b) => Date.parse(b.carry_on) - Date.parse(a.carry_on))[0] ?? null;
 // 0649: whether a recorded usage limit holds `agent` now: a reviewer's, or its own as a builder (0622, 0644).
 export const agentHeld = (repo, agent, now = Date.now()) => {
   const runs = path.join(mainCheckout(repo), 'speck', '.cache', 'runs'), built = readLimit(runs, agent);
@@ -72,6 +94,8 @@ export const agentHeld = (repo, agent, now = Date.now()) => {
 
 // A round was recorded, so the build got past the limit.
 export const clearLimit = (repo, id) => { try { fs.rmSync(path.join(mainLimits(repo), `${id}.json`), { force: true }); } catch { /* left to speck run */ } };
+// 0692: a round was recorded on the reviewer's own agent, so its own limit is over.
+export const clearHeld = (repo, reviewer) => { try { fs.rmSync(path.join(mainHeld(repo), heldName(reviewer)), { force: true }); } catch { /* it lapses at its carry-on time */ } };
 
 // speck run's side. ended(id, file) reads a build that has ended, true when it stopped on the reviewer's limit and speck
 // run will carry it on; check(tickets), on each of its checks, says each new limit and resumes each build whose limit is
@@ -132,7 +156,7 @@ export function reviewerLimitQueue({ repo, runs, settings, running, startBuild, 
   };
 
   const view = () => {
-    const t = now(), s = readLimits(runs()).filter(held).sort((a, b) => Date.parse(b.carry_on) - Date.parse(a.carry_on))[0];
+    const t = now(), s = holding(runs(), t).sort((a, b) => Date.parse(b.carry_on) - Date.parse(a.carry_on))[0];
     if (!s) return null;
     const at = s.resets ? clock(Date.parse(s.resets), t) : null;
     return { until: at, reviewer: true, why: at ? `The ${s.reviewer} reviewer's usage limit is reached until ${at} UTC, so no review starts on it until then.`
@@ -143,7 +167,7 @@ export function reviewerLimitQueue({ repo, runs, settings, running, startBuild, 
 }
 
 // 0637: whether a reviewer's limit on record holds `agent` now (a Claude subagent's is Claude's).
-const reviewerHolds = (runs, agent, now) => readLimits(runs).some(s => (s.reviewer === 'claude-subagent' ? 'claude' : s.reviewer) === agent && now < Date.parse(s.carry_on));
+const reviewerHolds = (runs, agent, now) => holding(runs, now).some(s => (s.reviewer === 'claude-subagent' ? 'claude' : s.reviewer) === agent && now < Date.parse(s.carry_on));
 
 // speck run's usage limits together: Claude's as a builder (0622), which holds new builds, and each reviewer's. 0637:
 // holdsAgent(agent) says whether any of them holds an agent, for the watch agent. 0642: keepUsage(log, file) keeps the

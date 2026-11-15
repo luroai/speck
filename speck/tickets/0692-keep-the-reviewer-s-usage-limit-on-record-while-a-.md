@@ -42,6 +42,8 @@ A reviewer's usage limit stays on record until it resets, whoever takes the roun
 ## Notes
 - From 0649. The per-build record also marks a build as waiting to be carried on (`reviewerWaiting`), so the limit may want a record of its own, apart from the per-build one.
 - Failing before this build: none
+- The reviewer's own limit is kept in `speck/.cache/runs/reviewer-held/<reviewer>.json`, written only when the reviewer itself refuses a round of a build speck run started, read with the builds' records wherever a limit holds a reviewer, and cleared when a round on the reviewer's own agent is recorded. It lapses at its carry-on time.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
