@@ -1,7 +1,7 @@
 ---
 id: "0669"
 title: "Choose a ticket's builder model in the panel"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-11-choose-the-builder-s-model-per-ticket.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0667"]                # ticket ids that must be done first
 created: 2026-11-12
+started: "2026-11-15T12:53:56.455Z"
 
 ---
 # 0669 · Choose a ticket's builder model in the panel
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0659 a ticket can name its own builder and model, but only in the ticket file or with `speck set`. A draft or ready ticket in the panel doesn't say which builder, model and effort it will be built with, so you can't see what a level or the ticket's own model will do, or change it from your phone.
