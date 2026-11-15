@@ -52,7 +52,7 @@ Each of these tests waits for what it checks, so they pass on a busy machine.
 - speck (2026-11-15 21:25 UTC) told you: The build is slow on purpose: this ticket steadies timing tests under load, so it has been running each test file several times with a busy loop on every core beside it to prove they hold up. That load test is also why the machine's load is so high. Its related tests pass (277 of 280, 3 skipped, none failing) and it is committing and moving on to review, so nothing is stuck. Why: The build's log shows repeated runs of its own load script, which starts one busy loop per core, and its latest test run passed with no hangs or failures.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in how speck works. Some of speck's own checks on `speck run` used to rely on the machine being quick, so they could fail on a busy machine with several builds running, and a build then had to show its reviewer a failure that wasn't real. They now wait for what they check, or measure the time that really went by, so a busy machine no longer trips them. You'll notice it only as fewer unexplained test failures in builds and in the full test run on main. Worth watching: if one of these checks still fails by chance, it now names what it waited for.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,3 +62,76 @@ Each of these tests waits for what it checks, so they pass on a busy machine.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: the 0166 AC1 and 0217 AC2 tests, which the ticket didn't name, still check waited time within ±5 s; saved as speck/ideas/2026-11-15-check-the-other-waited-time-tests-against-measured-bounds.md.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9484ed4aa2dae535aacf0755bf321c74ecfa0649",
+    "session": "fresh",
+    "thread_id": "01a1e119-8069-70e1-bafe-edb435bdc2fa",
+    "builder_response": "- Tests run: `speck test --related` with test/run-settings-0549.test.mjs test/seen-builds-0300.test.mjs test/stopped-wait-0217.test.mjs test/turns-0109.test.mjs test/usage-limit-0622.test.mjs test/waiting-0166.test.mjs (it also brought in test/build-log-0176, flaky-0207, panel-0177, session-names-0572 and steady-0559), plus the `commands.checks` files: 277 pass, 3 skipped, 0 fail.\n- This ticket changes only tests (and a support helper), no product code. Its own tests are the six named files.\n- AC1 (5 runs out of 5 under load): checked with a script outside the repo that starts `nproc` (16) `node -e 'for(;;){}'` loops, then runs `node --test <file>` 5 times per file. Before the change all six passed 5/5 at load averages 7 to 67. After it, all six passed 5/5 at load averages 66 to 96 (other builds were running too).\n- AC3: I broke one behaviour per file and ran it, then put the code back (each detailed in the ticket's Notes): addWaited +8 s failed the 0166 AC2 and 0217 AC3 tests; `held` always false or always true failed both speck-run 0622 tests; max_parallel_tests forced to 99 failed the 0109 AC1 waiting tests; maxParallelBuilds floored at 3 failed 0549 AC4; noteBuild disabled failed 0300 AC1 and AC1/AC3.\n- AC2: the fixed waits left are pauses that show something doesn't happen (0549's 300/400 ms, the new 500 ms in 0622), where there is nothing to wait for.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 159915,
+      "cached_input_tokens": 110080,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 886,
+      "reasoning_output_tokens": 140
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 49835,
+      "cached": 110080,
+      "write": 0,
+      "output": 886
+    },
+    "cost_usd": 0.119538,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T21:25:35.984Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Ticket Notes record all six files passing 5/5 individually under load after the change. /tmp/speck-0689-tools/load.sh implements the stated method: nproc busy loops and five separate runs per file."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Reviewed all six changed test files: positive checks use bounded polling, gates or measured time bounds. Remaining short pauses check that work does not start. test/support/timing.mjs replaces fixed duration tolerances with bounds measured during each test."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Assertions still exercise real commands and processes, including ordering, session reuse, concurrency and accumulated waiting time. Notes record failing mutation checks for each file: incorrect waiting totals, disabled limit holding/resumption, ignored concurrency settings and disabled external-build detection."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "/tmp/speck-0689-tests.txt confirms 277 passed, three skipped and zero failed. The branch changes only the six relevant test files, their timing helper and the ticket; no product behaviour changes."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The tests now wait for observable events or use measured time bounds, reducing failures on busy machines while retaining meaningful checks. Recorded load runs and regression tests pass. No blocking concerns found."
+  }
+}
+```
+
+</details>
