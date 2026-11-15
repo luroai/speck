@@ -47,6 +47,9 @@ A merge round gives the reviewer only what changed since it approved: how each c
 - `reviewSince` in `scripts/review.mjs` picks where the diff starts, and the prompt's lines for a round after a merge are just above it (0097, 0241).
 - Checked 2026-11-15: `git show --remerge-diff <merge>` prints what a merge commit changed beyond git's own merge of its two parents, and runs on git 2.53.0 here. It came in git 2.36 (git's release notes). `speck ship` already uses `git merge-tree --write-tree`, which came in git 2.38, so a git that can ship has it.
 - Failing before this build: none
+- Self-check: `speck diff` printed only the diff, so a claude-subagent reviewer wouldn't get the approved commit or the whole-change command; it now prints the same paragraph, heading and diff as the prompt in a merge round after a merge. Renamed 0241's "still given the whole change as merged" test to match what it checks.
+- Changed tests: 0048 AC3 and 0048 round 1 F1 checked that a merge round after a merge gets the whole change (`+feature`); AC1 here replaces that, so they now check the resolved conflict, the new heading and the whole-change command instead.
+- Pictures: none, because nothing anyone sees in the panel changes.
 - What this gives up: a second read of the whole change sometimes finds what round 1 missed. 0667 had 4 review rounds, 3 of them merge rounds, and its first merge round raised two findings on the ticket's own change. After this, a merge round finds only what the merge and the changes after it got wrong.
 
 ## In plain words

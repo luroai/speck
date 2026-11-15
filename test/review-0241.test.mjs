@@ -85,7 +85,7 @@ test('0241 AC3: with no merge, the reviewer gets the changes since its last revi
   assert.doesNotMatch(p, /follows a merge|The whole change against main as merged/);
 });
 
-test('0241 AC3: after a merge, the reviewer is still given the whole change as merged', () => {
+test('0241 AC3: after a merge, the reviewer is told the round follows a merge of main (0673: only what changed beyond a clean merge)', () => {
   const r = mergeRepo();
   r.mergeMain();
   const prompt = path.join(r.bin, 'prompt.txt');

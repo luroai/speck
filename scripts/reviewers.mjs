@@ -177,7 +177,7 @@ export function historyPrompt(repo, s, id) {
     if (r.meta.builder_response && r.meta.round > 1) parts.push(`## Builder response before round ${r.meta.round}`, r.meta.builder_response);
     parts.push(`## Your round ${r.meta.round} verdict`, '```json', JSON.stringify(r.verdict, null, 2), '```');
   }
-  parts.push(reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }));
+  parts.push(reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged, afterMerge: s.afterMerge, base: s.base }));
   return parts.join('\n\n');
 }
 
@@ -235,7 +235,7 @@ export function runCommandReview(repo, id, name, command, s, providers = knownPr
     if (!resume) why = 'no resume_command with {session} is set for it';
     else if (!lastThread) why = last.why;
     else {
-      const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }), ms, env);
+      const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged, afterMerge: s.afterMerge, base: s.base }), ms, env);
       if (!options.provider) keepUsage(repo, name, tried.stdout); // 0642
       if (!tried.error && tried.status !== 0) stopOnLimit(repo, s.ticket.fm.id || id, name, failureWords(tried));
       if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;
