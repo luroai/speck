@@ -53,7 +53,9 @@ A ticket can be started on the approved work of the one ticket it still waits fo
 - speck (2026-11-15 14:58 UTC) told you: Nothing is stuck: the build is on its second review round after fixing two findings from round one. The time went on a mid-build redesign to a merge-based start, a full test-suite run of nearly 5 minutes (3,285 tests) and several test reruns, all on a machine with a load average around 64. Why: The build log shows steady progress with no hung commands, and every test failure it hit was in its own new code and was fixed, so the base branch isn't broken.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket that waits for another one no longer has to sit idle while that other ticket is approved but not yet shipped: it can now be started straight away, with the approved work already in place. Its review and its size count still look only at its own change. It won't ship until the ticket it was built on has shipped, and if you try, speck says which ticket to ship first; auto-ship simply leaves it waiting, saying why.
+
+To see it, approve a ticket and leave it unshipped, then start a ticket that lists it under after:. Starting it now works, and it says it started on the approved work. If the approved work clashes with newer work on the main branch, the start is refused and nothing changes. `speck run` doesn't yet start such tickets by itself: that's ticket 0675.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -63,6 +65,10 @@ A ticket can be started on the approved work of the one ticket it still waits fo
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - A ticket whose `built_on:` ticket is cancelled can never ship, and its refusal says to ship the cancelled one first: inbox `speck/ideas/2026-11-15-say-what-to-do-when-a-ticket-s-base-ticket-is-cancelled.md`.
+  - Known limit: `speck test --related`, ship's check for uncommitted files in the way and its private-words check read the branch against the base branch with git's three-dot diff, so while the ticket it was built on hasn't shipped they also see that ticket's files. Harmless (they check more, not less), so left as it is.
+  - Known limit: if the approved ticket's branch is deleted before it ships, the diff falls back to the base branch's merge base and counts its work too.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -152,6 +158,97 @@ A ticket can be started on the approved work of the one ticket it still waits fo
     ],
     "escalation_question": "",
     "summary": "Starting on approved work and holding shipping until that work ships are covered by passing tests. Changes are needed because later base updates can make reviews and size counts include inherited work, and can break the focused review of merge resolutions."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d18cf63438e2838d2800c579da3457b164d72410",
+    "session": "continued",
+    "thread_id": "01a1dfb2-1a32-77f1-9ece-b31004285f87",
+    "builder_response": "- Tests run: test/built-on-0674.test.mjs test/cli-0231.test.mjs\n- F1: fixed. `ownBase` (scripts/built-on.mjs) now keeps git's merge tree when the base branch's newer work clashes with the unshipped ticket's (merge-tree exit 1, conflict markers kept, as 0673's merge rounds already do with `cleanMerge`), instead of falling back to the plain merge base. So diffstat and the review diff count this ticket's change plus how the clash was resolved, never the other ticket's work. New test `0674 AC2 F1` merges a clashing a.txt from main into the build before 0002 ships and checks 0002's z.txt isn't counted by diffstat or the diff, and b.txt is. It fails without the fix.\n- F2: fixed. `reviewSince` (scripts/review.mjs) keeps the commit merge base (`meets`) apart from the diff start (`base`, which may be ownBase's tree), and gives `cleanMerge` the commit. New test `0674 AC2 F2` approves 0001, merges clashing main work in, and checks `speck diff` gives the merge round's diff (follows a merge) with a.txt's resolution and neither b.txt nor z.txt. It fails with only the F1 fix in place.\n- Note: in speck's own flows a build merges the base branch in only when a ship hands it back, and `speck ship` refuses a ticket whose built_on ticket hasn't shipped before it merges anything, so this case comes from a build merging the base branch by hand. It's covered anyway.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 449155,
+      "cached_input_tokens": 392960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2614,
+      "reasoning_output_tokens": 561
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 11204,
+      "cached": 185728,
+      "write": 0,
+      "output": 883
+    },
+    "cost_usd": 0.0498108,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T15:02:02.341Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "startWaits and finishStart allow one approved dependency and merge its work into the new branch. Passing AC1 tests cover both worktree modes, refusal states, multiple dependencies and rollback."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ownBase retains conflict trees, and reviewSince separates commit ancestry from the diff tree. Passing AC2 tests cover diffstat, review diffs, prompts, subsequent conflicting base merges and focused merge rounds."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "builtOnCheck reads built_on from the ticket branch; autoShipWhyNot supplies the waiting reason. Passing AC3 tests cover refusal without after:, auto-ship exit 12, status reporting and successful shipping after the dependency."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md documents the exception in the latest-base-branch passage and the speck start entry describing after:. The AC4 test checks the built_on: field."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded final test output confirms 170 passed, zero failed and three skipped. The earlier related-run failure was rechecked successfully; existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/built-on.mjs:38",
+        "issue": "Conflicting baseline reconstruction previously fell back to including inherited work. ownBase now retains the conflict tree, and the passing AC2 F1 regression test checks that inherited z.txt remains excluded.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/review.mjs:305",
+        "issue": "The merge-review calculation previously passed a tree where a commit was required. It now passes the commit merge base; the passing AC2 F2 regression test verifies the resolution appears without previously approved or inherited files.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "A ticket can now start using one approved dependency’s work while waiting for that dependency to ship. Reviews and size counts exclude inherited work, including after later base updates. Both earlier findings are resolved, and all acceptance criteria pass."
   }
 }
 ```
