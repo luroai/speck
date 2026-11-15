@@ -1,7 +1,7 @@
 ---
 id: "0676"
 title: Re-run only the failing files after a related test run fails                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T13:36:04.862Z"
+approved: "2026-11-15T13:54:57.320Z"
 
 ---
 # 0676 · Re-run only the failing files after a related test run fails
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Before its first review round a build runs `speck test --related`: its own test files and every existing test file that names a file it changed. The build skill says to run it once, but the 41 builds here since 11 Nov ran it 125 times, about 3 each, 3.1 hours in all (a median 53 seconds a run, 225 at the 90th percentile). After a failing run, builds run the whole set again rather than the files that failed, and each run holds a test turn other builds wait for.
@@ -60,9 +61,15 @@ Worth watching: whether builds actually follow the line. If they still rerun the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new brief test requires the entire prose reminder NEXT_RUN verbatim.; F2 cmdTest omits the required final command when --related falls back to commands.test because commands.test_files is blank.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 379,609
+- Elapsed since build started: 19 min
+- Changed lines: 45 (limit 5000)
 Follow-ups: none new. The ticket's own note already covers the next step if builds ignore the line.
 
 ## Review rounds
