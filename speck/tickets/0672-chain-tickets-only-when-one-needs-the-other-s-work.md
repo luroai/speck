@@ -1,7 +1,7 @@
 ---
 id: "0672"
 title: "Chain tickets only when one needs the other's work"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
+started: "2026-11-15T13:36:04.847Z"
 
 ---
 # 0672 · Chain tickets only when one needs the other's work
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The ticket skill chains a new ticket after every open ticket likely to change the same part of a file, and counts any doubt as an overlap. A chained ticket can't start until the other has shipped, so ready tickets wait while build slots stand free: in this repo's history, 587 of the 714 hours tickets spent between ready and starting were spent waiting on `after:`. What the waiting avoids is small: 11 of 268 ship attempts (4%) met a conflict, and a conflict costs one merge round, about 9 minutes.
