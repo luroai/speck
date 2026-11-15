@@ -1,7 +1,7 @@
 ---
 id: "0696"
 title: "Bring in the tests that load a changed panel file"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-10-24-bring-in-page-tests-for-a-panel-script-chan
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:08:47.961Z"
+approved: "2026-11-15T21:22:43.736Z"
 
 ---
 # 0696 · Bring in the tests that load a changed panel file
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck test --related` brings in a test file when its text names a changed file, or when it imports a support module that names one. `test/support/panel.mjs` loads the panel's page with paths built from parts, such as `path.join(ROOT, 'templates', 'panel.js')`, so a change to the panel's script or styles brings in almost none of the about 160 tests that load it. 0468's change broke 61 of them unseen, and 0495, 0502 and 0583 hit the same gap, each handed back at ship or running every panel test by hand.
@@ -52,9 +53,14 @@ When a build changes the panel's script, styles or page, its pre-review test run
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 134,856
+- Elapsed since build started: 14 min
+- Changed lines: 9 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox note):
 - A test that loads the page only through another support module that imports `test/support/panel.mjs` (such as `stream.mjs` or `lanes.mjs`) still isn't brought in; nearly all such tests import `panel.mjs` themselves too.
