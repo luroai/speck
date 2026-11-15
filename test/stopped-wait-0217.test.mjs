@@ -12,6 +12,7 @@ import { T, round, panelModel, panelRepo, fakePage, queueRows, fullViewOf } from
 import { runsPath, speck, json } from './support/ticker.mjs';
 import { runRepo, startRun, until, stopRun, record, killAll } from './support/run.mjs';
 import { parseTicket, statusData } from '../scripts/speck.mjs';
+import { assertCounted, assertWrittenSince } from './support/timing.mjs';
 
 const NOW = Date.parse('2026-10-15T12:00:00.000Z');
 const iso = ms => new Date(ms).toISOString();
@@ -103,12 +104,14 @@ test('0217 AC2: a ticket shown as "Build stopped unexpectedly" has its timer sto
 // ---------- AC3: the build starting again ----------
 
 test('0217 AC3: starting a stopped build again by hand adds the stretch since its exit to waited_seconds, once, committed', () => {
+  const since = Date.now();
   const r = stoppedRepo({ exited: realAgo(600), exit_code: 1 });
   assert.equal(ticketOf(r.dir).build_exit !== null, true, 'stopped before finishing');
   const s = r.run('start', '1');
   assert.notEqual(s.status, 0, 'a building ticket isn\'t started again');
   assert.doesNotMatch(s.stdout + s.stderr, /\n\s+at /, 'no stack trace');
-  near(fmOf(r.file).waited_seconds, 600, 'the stopped stretch');
+  const counted = fmOf(r.file).waited_seconds;
+  assertCounted(counted, 600, since, 'the stopped stretch');
   assert.equal(r.g('status', '--porcelain', '--', 'speck/tickets'), '', 'the ticket is committed');
   const t = ticketOf(r.dir);
   assert.equal(t.build_exit, null, 'no longer shown as stopped');
@@ -116,15 +119,16 @@ test('0217 AC3: starting a stopped build again by hand adds the stretch since it
   const m = panelModel()({ tickets: [t], ideas: [] });
   assert.equal(m.queue[0].held_at, null, 'its timer counts on');
   r.run('start', '1');
-  near(fmOf(r.file).waited_seconds, 600, 'added once');
+  assert.equal(fmOf(r.file).waited_seconds, counted, 'added once');
 });
 
 test('0217 AC3: starting a killed build again by hand adds the stretch since speck noticed it', () => {
   const r = stoppedRepo();
   ticketOf(r.dir);
+  const since = Date.now();
   backdateMark(r.dir, 300);
   r.run('start', '1');
-  near(fmOf(r.file).waited_seconds, 300, 'the stopped stretch');
+  assertCounted(fmOf(r.file).waited_seconds, 300, since, 'the stopped stretch');
   const t = ticketOf(r.dir);
   assert.equal(t.build_stopped, false);
   assert.equal(t.build_stopped_at, null);
@@ -142,12 +146,13 @@ test('0217 AC3: speck run resuming a killed build adds the stretch since speck n
   fs.mkdirSync(runsPath(r.dir, ''), { recursive: true });
   const session = crypto.randomUUID(), pid = deadPid();
   fs.writeFileSync(runsPath(r.dir, '0001.json'), JSON.stringify({ id: '0001', session, cwd: r.dir, started: realAgo(1200), pid, command: ['claude'] }));
+  const since = Date.now();
   fs.writeFileSync(runsPath(r.dir, '0001.waiting'), JSON.stringify({ session, pid, since: realAgo(240) }));
   const run = startRun(r.dir);
   try {
     assert.ok(await until(() => { try { return !!record(r.dir, '0001').resumed; } catch { return false; } }), run.out());
   } finally { await stopRun(run); }
-  near(fmOf(file).waited_seconds, 240, 'the stopped stretch');
+  assertCounted(fmOf(file).waited_seconds, 240, since, 'the stopped stretch');
   assert.equal(r.g('status', '--porcelain', '--', 'speck/tickets'), '', 'the ticket is committed');
 });
 
@@ -200,6 +205,7 @@ test('0217 AC4: a blocked or approved ticket with a killed build notices nothing
 // ---------- self-check ----------
 
 test('0217 AC3: a stopped time that can\'t be written to the ticket says so, changes nothing and stays stopped', () => {
+  const since = Date.now();
   const r = stoppedRepo({ exited: realAgo(600), exit_code: 1 });
   fs.chmodSync(r.file, 0o444);
   try {
@@ -210,7 +216,7 @@ test('0217 AC3: a stopped time that can\'t be written to the ticket says so, cha
     assert.notEqual(ticketOf(r.dir).build_exit, null, 'still shown as stopped');
   } finally { fs.chmodSync(r.file, 0o644); }
   r.run('start', '1');
-  near(fmOf(r.file).waited_seconds, 600, 'counted once it can be written');
+  assertCounted(fmOf(r.file).waited_seconds, 600, since, 'counted once it can be written');
 });
 
 // ---------- review round 1 ----------
@@ -218,20 +224,24 @@ test('0217 AC3: a stopped time that can\'t be written to the ticket says so, cha
 test('0217 AC3: a killed build resumed by hand in its own session counts the stretch once, and its next stop is noticed afresh', () => {
   const r = stoppedRepo();
   ticketOf(r.dir);
+  const since = Date.now();
   backdateMark(r.dir, 300);
   const resumed = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 30000)', r.rec.session], { detached: true, stdio: 'ignore' });
   resumed.unref();
   try {
     r.run('start', '1');
-    near(fmOf(r.file).waited_seconds, 300, 'the stopped stretch');
+    const counted = fmOf(r.file).waited_seconds;
+    assertCounted(counted, 300, since, 'the stopped stretch');
     r.run('start', '1');
-    near(fmOf(r.file).waited_seconds, 300, 'added once');
+    assert.equal(fmOf(r.file).waited_seconds, counted, 'added once');
     assert.equal(r.g('status', '--porcelain', '--', 'speck/tickets'), '', 'the ticket is committed');
   } finally { killAll([resumed.pid]); }
-  assert.ok(Math.abs(Date.parse(ticketOf(r.dir).build_stopped_at) - Date.now()) < 10000, 'the resumed session stopping is noticed now');
+  const noticing = Date.now();
+  assertWrittenSince(ticketOf(r.dir).build_stopped_at, noticing, 'the resumed session stopping is noticed now');
 });
 
 test('0217 AC3: a stop that can\'t be marked counted adds nothing, and is counted once when it can be', () => {
+  const since = Date.now();
   const r = stoppedRepo({ exited: realAgo(600), exit_code: 1 });
   const runs = runsPath(r.dir, '');
   fs.chmodSync(runs, 0o555);
@@ -244,5 +254,5 @@ test('0217 AC3: a stop that can\'t be marked counted adds nothing, and is counte
   } finally { fs.chmodSync(runs, 0o755); }
   r.run('start', '1');
   r.run('start', '1');
-  near(fmOf(r.file).waited_seconds, 600, 'counted once');
+  assertCounted(fmOf(r.file).waited_seconds, 600, since, 'counted once');
 });

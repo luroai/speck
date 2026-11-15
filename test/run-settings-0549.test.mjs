@@ -102,19 +102,22 @@ test('0549 AC1, AC3, AC5: speck run starts each build with the settings as they 
 
 test('0549 AC4: a change to max_parallel_builds applies from the next check, without stopping a build already running', async () => {
   const r = runRepo({ tickets: [['0001', {}], ['0002', {}], ['0003', {}]], max: 1 });
-  const run = startRun(r.dir, { ...POLL, FAKE_MS: '4000' });
+  // 0689: the builds run until the test opens the gate, however slowly speck run starts them.
+  const gate = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gate-')), 'open');
+  const run = startRun(r.dir, { ...POLL, FAKE_GATE: gate });
   try {
     assert.ok(await until(() => r.calls().length === 1), run.out());
     await wait(300);
     assert.equal(r.calls().length, 1, 'one at a time');
     assert.equal(speck(r.dir, 'config', 'set', 'max_parallel_builds', '3').status, 0);
-    assert.ok(await until(() => r.calls().length === 3, 2000), `up to the new limit: ${run.out()}`);
+    assert.ok(await until(() => r.calls().length === 3), `up to the new limit: ${run.out()}`);
     assert.equal(speck(r.dir, 'config', 'set', 'max_parallel_builds', '1').status, 0);
     addReady(r, '0004');
     await wait(400);
     assert.equal(r.calls().length, 3, 'none started while more than the new limit run');
     assert.ok(r.calls().every(c => alive(c.pid)), 'none of the running builds stopped');
-    assert.ok(await until(() => r.calls().length === 4, 8000), `started once fewer run: ${run.out()}`);
+    fs.writeFileSync(gate, '');
+    assert.ok(await until(() => r.calls().length === 4), `started once fewer run: ${run.out()}`);
   } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
 });
 

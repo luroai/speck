@@ -1,5 +1,6 @@
 // 0207: timing checks that give the same result however busy the machine is, because each compares against a
 // measurement made in the same test under the same conditions rather than a fixed number of milliseconds.
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
@@ -25,4 +26,18 @@ export function costMs(f) {
   const cpu = childCpuMs(), t = process.hrtime.bigint();
   f();
   return cpu === null ? Number(process.hrtime.bigint() - t) / 1e6 : childCpuMs() - cpu;
+}
+
+// 0689: a stretch speck counted, in whole seconds, checked against the time that really went by rather than a fixed
+// tolerance. `expected` seconds were set back by the test at `sinceMs` (Date.now() just before it did), so speck counts at
+// least those, less a second for rounding, and at most those plus the seconds gone by since, however slowly it ran.
+export function assertCounted(actual, expected, sinceMs, msg) {
+  const most = expected + Math.ceil((Date.now() - sinceMs) / 1000) + 1;
+  assert.ok(actual >= expected - 1 && actual <= most, `${msg}: ${actual} isn't between ${expected - 1} and ${most}`);
+}
+// 0689: a time speck wrote while the test waited, checked to fall between `beforeMs` (Date.now() just before the test
+// started what writes it) and now, with a second either side for a time written to the second.
+export function assertWrittenSince(iso, beforeMs, msg) {
+  const t = Date.parse(iso), now = Date.now();
+  assert.ok(t >= beforeMs - 1000 && t <= now + 1000, `${msg}: ${iso} isn't between ${new Date(beforeMs).toISOString()} and ${new Date(now).toISOString()}`);
 }
