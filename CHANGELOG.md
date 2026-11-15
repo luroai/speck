@@ -36,10 +36,6 @@ What's new since 1.3.1. A minor release that keeps work moving with less waiting
 
 - `speck set <id> <id>… status ready` sets several tickets ready at once, checking and committing each as `speck set <id> status ready` does, in the order given. A ticket that fails the ready check, or that would be refused for any other reason, is left as it was while the others go ahead, and the command names each one it left, with the reason, and exits with a failing code. Several ids with any other field or value are refused. `speck help` shows the form.
 
-### Tests
-
-- Three of speck's own checks of an open draft's facts in Plan expected seven facts after 1.3.1 added the Builder fact, and failed on `main`. They now expect it. Nothing changes in speck itself.
-
 ### Prices
 
 - The shipped price table has been refreshed with this release's rates, taken on 15 November 2026.
