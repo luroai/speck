@@ -97,12 +97,14 @@ test('0630 AC1: no full run starts while one is running', () => {
   assert.deepEqual(launches, [r.head(), r.head()], 'it is started again on the same commit once RETRY_MS has passed');
 });
 
-// Holds test turn `slot` in r's repo for about a second, with a process that isn't this one's child.
-function holdTurn(r, slot) {
-  const sh = spawnSync('sh', ['-c', 'sleep 1 >/dev/null 2>&1 & echo $!'], { encoding: 'utf8' });
+// Holds test turn `slot` in r's repo for `seconds`, with a process that isn't this one's child. Returns its pid.
+function holdTurn(r, slot, seconds = 1) {
+  const sh = spawnSync('sh', ['-c', `sleep ${seconds} >/dev/null 2>&1 & echo $!`], { encoding: 'utf8' });
   const pid = Number(sh.stdout.trim());
   fs.writeFileSync(path.join(sharedCacheDir(r.dir, 'tests'), `slot-${slot}.g0.lock`), JSON.stringify({ pid, cwd: '/somewhere/else' }));
+  return pid;
 }
+const running = pid => { try { process.kill(pid, 0); return true; } catch { return false; } };
 const logged = fn => {
   const lines = [], log = console.log;
   console.log = (...a) => lines.push(a.join(' '));
@@ -120,12 +122,14 @@ test('0630 AC1: a full run takes a test turn, its own, waiting while another run
 
 test('0630 AC3: a full run doesn\'t wait for the max_parallel_tests turns, so it takes none a ship or build waits for', () => {
   const r = repo();
-  holdTurn(r, 0);
-  const start = Date.now();
-  const { out, lines } = logged(() => runFull(r.dir, r.head()));
-  assert.equal(out, 0);
-  assert.doesNotMatch(lines, /Waiting/);
-  assert.ok(Date.now() - start < 900, 'it didn\'t wait for the held turn');
+  // 0688: held for 30 s, so a run that waited for the turn ends only after its holder has, however busy the machine.
+  const holder = holdTurn(r, 0, 30);
+  try {
+    const { out, lines } = logged(() => runFull(r.dir, r.head()));
+    assert.equal(out, 0);
+    assert.doesNotMatch(lines, /Waiting/);
+    assert.ok(running(holder), 'it didn\'t wait for the held turn');
+  } finally { try { process.kill(holder); } catch { /* already gone */ } }
 });
 
 test('0630 AC3: while a slow full run is going, a ship\'s or build\'s tests run without waiting for it', async () => {

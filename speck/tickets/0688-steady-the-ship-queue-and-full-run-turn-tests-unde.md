@@ -44,6 +44,11 @@ Both tests wait for what they check, so they pass on a busy machine.
 - From `speck/ideas/2026-11-11-steady-the-0264-ac3-ship-queue-test.md` and `speck/ideas/done/2026-11-11-steady-the-0630-full-run-turn-test-under-load.md`. Seen in 0632, 0640, 0642, 0645, 0649, 0660, 0670 and 0673.
 - `until` in the test support (0670 raised its default to 30 s) may be what to wait with.
 - Failing before this build: none
+- Cause of the 0264 AC3 flake: the test ran the ship first and the queue afterwards. When that ship started more than a second after the repo's last commit (a busy machine), the queue rightly counted it as 0001's last try and launched nothing, so `launches[0]` was undefined. Reproduced at a load of ~36: the old test failed 1 run in 10 with `Cannot read properties of undefined (reading 'done')`. Now the queue's own launch runs the ship, so there's no earlier try for it to find, and nothing to wait for.
+- 0630 AC3: the held turn is now held for 30 s rather than 1 s, and the test checks its holder is still running when the full run ends, in place of asserting under 900 ms.
+- AC1 isn't a suite test: 16 busy loops for a minute would slow every other test in the full suite. Checked by hand with a script that starts one `node -e 'for(;;);'` per core (16) and runs the one test 10 times: 0264 AC3 10 of 10 (load ~31), 0630 AC3 10 of 10 (load ~33).
+- AC3 checked by breaking each: with code 16 setting the hold in `scripts/ship-queue.mjs`, 0264 AC3 fails; with the full run's `lane: 'full'` taken out of `scripts/full-suite.mjs`, 0630 AC3 fails after waiting the 30 s for the turn. Both restored.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
