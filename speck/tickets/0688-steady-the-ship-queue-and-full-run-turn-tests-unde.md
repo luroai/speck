@@ -51,7 +51,7 @@ Both tests wait for what they check, so they pass on a busy machine.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in how speck works. Two of speck's own checks used to fail now and then when the computer was busy, which could stop a ticket from shipping even though it hadn't touched them. They now wait for what they check, and both passed every time when run with the computer kept fully busy. One thing to watch: if speck itself ever breaks what the second check covers, that check now takes up to a minute to fail, not a second.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,6 +61,7 @@ Both tests wait for what they check, so they pass on a busy machine.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none to the inbox. The script used to check AC1 (one busy loop per core, then the one test 10 times) lived in /tmp; 0689 and 0690 may want the same.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -137,6 +138,84 @@ Both tests wait for what they check, so they pass on a busy machine.
     ],
     "escalation_question": "",
     "summary": "The ship queue test fixes the underlying setup race and preserves its regression checks. The full-run test passed the reported load checks, but still depends on finishing before a fixed sleep expires. Replace that remaining timing assumption before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "034d1de5c6e055e0c2e29ff229b2dbf777f83410",
+    "session": "continued",
+    "thread_id": "01a1e0ff-c828-7003-9746-30f32940e26e",
+    "builder_response": "- Tests run: `speck test --files test/ship-0264.test.mjs test/full-suite-0630.test.mjs` (with commands.checks).\n- F1: fixed. In test/full-suite-0630.test.mjs, the 0630 AC3 test now holds turn 0 with a `sleep 600` it kills in `finally`, runs `runFull` in a separate node process, and waits up to 60 s (`until(..., 60000)`) for that process to exit, then checks exit 0 and no \"Waiting\" line. There's no deadline left on a correct run: its holder outlives any wait. Re-checked: 10/10 alone with 16 busy loops (load ~70). With `lane: 'full'` removed from runFull's testRun in scripts/full-suite.mjs it fails with \"timed out waiting for the full run to end without waiting for the held turn\"; restored. The child is killed in `finally` if it's still running.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 246809,
+      "cached_input_tokens": 195584,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1595,
+      "reasoning_output_tokens": 125
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7380,
+      "cached": 142208,
+      "write": 0,
+      "output": 683
+    },
+    "cost_usd": 0.0358108,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T21:02:51.961Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The builder reports 10/10 isolated loaded runs for 0264 and a fresh 10/10 for the revised 0630 test with 16 busy loops. Both tests also pass in the supplied test run."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/ship-0264.test.mjs runs the ship synchronously from the queue's launch callback. test/full-suite-0630.test.mjs now waits for a separate runFull process to exit using until(..., 60000); the occupied turn's holder lasts beyond that timeout and is explicitly killed in finally."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The 0264 test asserts exit 16, hand-back and another ticket's launch. The revised 0630 test requires successful completion while the ordinary turn remains occupied. The builder reports both specified mutations fail, including a fresh timeout failure with the full lane removed. Mutation runs were not independently repeated during this read-only review."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "/tmp/speck-0688-tests.txt confirms 165 passed, zero failed and three skipped. The branch changes only the two target test files and its ticket; production behaviour is unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/full-suite-0630.test.mjs",
+        "issue": "The previous revision required the full run to finish before a fixed-duration holder expired.",
+        "suggested_fix": "Implemented: runFull runs in a separate process, completion is awaited for up to 60 seconds, and the turn remains occupied throughout that wait with explicit cleanup.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both tests now check the intended behaviour without the original short timing assumptions. The reported load runs and regression checks pass, and the latest test run has no failures. The previous blocking finding is resolved."
   }
 }
 ```
