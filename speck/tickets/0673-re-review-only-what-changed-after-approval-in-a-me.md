@@ -46,6 +46,7 @@ A merge round gives the reviewer only what changed since it approved: how each c
 - Decision: what the base branch brought in was reviewed in its own tickets, and `speck ship` tests the two together as they would land (0192), so the merge round's job is the resolution and any fix.
 - `reviewSince` in `scripts/review.mjs` picks where the diff starts, and the prompt's lines for a round after a merge are just above it (0097, 0241).
 - Checked 2026-11-15: `git show --remerge-diff <merge>` prints what a merge commit changed beyond git's own merge of its two parents, and runs on git 2.53.0 here. It came in git 2.36 (git's release notes). `speck ship` already uses `git merge-tree --write-tree`, which came in git 2.38, so a git that can ship has it.
+- Failing before this build: none
 - What this gives up: a second read of the whole change sometimes finds what round 1 missed. 0667 had 4 review rounds, 3 of them merge rounds, and its first merge round raised two findings on the ticket's own change. After this, a merge round finds only what the merge and the changes after it got wrong.
 
 ## In plain words
