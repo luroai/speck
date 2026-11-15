@@ -9,6 +9,7 @@ import { SpeckError, sh, findRepoRoot, loadConfig, worktreeList } from './core.m
 import { testRun, showRecordedRun } from './results.mjs';
 import { fullCommand } from './full-suite.mjs';
 import { relatedTests, relatedReport } from './related.mjs';
+import { nextRunFiles } from './tap.mjs';
 import { checkFiles } from './checks.mjs';
 
 export { checkFiles }; // 0657: in its own module, so the test runner reads it without naming this one
@@ -194,6 +195,10 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '', 
 // A word the shell reads back as exactly `s`.
 export const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
 
+// The start of the line a failing `speck test --related` run ends with, giving the command to run next (0676).
+export const NEXT_RUN = 'Once the failure is fixed, run only the files that failed and your own: ';
+const printNext = files => console.log(`${NEXT_RUN}speck test --files ${files.map(f => f.startsWith('-') ? `./${f}` : f).map(f => /^[\w./@%+=:,-]+$/.test(f) ? f : shellWord(f)).join(' ')}`);
+
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
 // for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just
 // those files (0113), from the repo root, taking a turn as a full run does (0239) but without a recorded result, as it
@@ -201,7 +206,9 @@ export const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
 // --recorded` runs no tests: it prints the result recorded for the same code, if any, and exits with its exit code (0238),
 // the full suite's when there's one (0632).
 // `speck test --related [<file>…]` runs, as --files does, the test files the branch's change affects (0437), with any
-// files it's given, after printing each one it chose and why. With none chosen and none given, it runs nothing.
+// files it's given, after printing each one it chose and why. With none chosen and none given, it runs nothing. When it
+// fails with an exit code, it ends with a line giving the `speck test --files` command to run next (0676), unless its
+// output doesn't say which file each failing test is in. A run that stalled or was stopped gets no line.
 export function cmdTest(args) {
   const related = args[0] === '--related';
   let files = args[0] === '--files' || related ? args.slice(1) : null;
@@ -213,11 +220,12 @@ export function cmdTest(args) {
   if (option) throw new SpeckError(`Usage: speck test --related [<file>…] (got ${option}, which isn't a test file: name the files on their own). No tests were run.`);
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
+  const given = files ? files.map(f => path.resolve(f)) : [];
   if (related) {
     const chosen = relatedTests(repo, cfg.base_branch);
     console.log(relatedReport(chosen, cfg.base_branch));
     if (!chosen.length && !files.length) return;
-    files = [...new Set([...files.map(f => path.resolve(f)), ...chosen.map(c => path.join(repo, c.test))])];
+    files = [...new Set([...given, ...chosen.map(c => path.join(repo, c.test))])];
   }
   const only = files && String(cfg.commands?.test_files || '').trim();
   const checks = files ? checkFiles(repo, cfg) : [];
@@ -226,7 +234,13 @@ export function cmdTest(args) {
     // Relative to the repo root, where the command runs. One starting with - gets ./ so it isn't read as an option.
     const rels = files.map(f => path.relative(repo, path.resolve(f)) || '.');
     const words = [...new Set([...rels, ...checks])].map(rel => shellWord(rel.startsWith('-') ? `./${rel}` : rel));
-    const r = runTestsInTurn(repo, cfg, only.replaceAll('{files}', () => words.join(' ')));
+    const output = related ? path.join(sharedCacheDir(repo, 'results'), `run.${crypto.randomUUID()}.out`) : '';
+    let r, next = null;
+    try {
+      r = runTestsInTurn(repo, cfg, only.replaceAll('{files}', () => words.join(' ')), undefined, output);
+      if (output && /^\d+$/.test(r.ended) && r.ended !== '0') { let text = ''; try { text = fs.readFileSync(output, 'utf8'); } catch { /* it wrote nothing */ } next = nextRunFiles(text, given, repo, process.cwd()); }
+    } finally { if (output) fs.rmSync(output, { force: true }); }
+    if (next) printNext(next);
     const signal = r.signal || r.ended.match(/^signal (\w+)$/)?.[1];
     if (r.status !== 0) throw new SpeckError(signal ? `The tests were stopped by ${signal}.` : '', r.status ?? 1);
     return;
@@ -241,5 +255,8 @@ export function cmdTest(args) {
     return;
   }
   const r = testRun(repo, cfg, cmd, { reuse: fresh ? 'none' : 'any', hint: ' Run `speck test --fresh` to run the suite anyway.' });
+  // --related with commands.test_files blank runs the whole suite, and ends with the same line when it fails (0676).
+  const next = related && r.status !== 0 && !r.signal && !r.stalled ? nextRunFiles(r.output || '', given, repo, process.cwd()) : null;
+  if (next) printNext(next);
   if (r.status !== 0) throw new SpeckError(r.signal ? `The tests were stopped by ${r.signal}.` : '', r.status ?? 1);
 }
