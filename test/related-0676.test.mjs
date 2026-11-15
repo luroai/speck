@@ -100,6 +100,14 @@ test('0676 AC2: no line when a failing --related run\'s failing tests\' files ca
   assert.equal(nextRunFiles(tap('/elsewhere/x.test.mjs'), [], there, there), null, 'a file outside the repo');
 });
 
+test('0676 AC1: with commands.test_files blank, a failing --related run of the whole suite ends with the line too', () => {
+  const dir = speckRepo({ testFiles: '' });
+  assert.equal(speck(dir, 'config', 'set', 'commands.test', 'node --test').status, 0);
+  const res = speck(dir, 'test', '--related', 'test/ticket.test.mjs');
+  assert.notEqual(res.status, 0, res.stdout);
+  assert.equal(lastLine(res.stdout), `${NEXT_RUN}speck test --files test/ticket.test.mjs test/by-import.test.mjs test/other.test.mjs`);
+});
+
 test('0676 AC2: no line from a --related run that stalled', () => {
   const dir = speckRepo({ byImport: `${FAIL}test('hangs', () => new Promise(r => setTimeout(r, 60000)));\n` });
   const res = spawnSync(process.execPath, [CLI, 'test', '--related'], { cwd: dir, encoding: 'utf8', env: { ...env, SPECK_STALL_MS: '1500' } });
@@ -119,5 +127,7 @@ test('0676 AC1: a file whose name starts with - is given as ./ so it isn\'t read
 
 test('0676 AC4: the brief\'s speck test row describes the line', () => {
   const row = BRIEF.split('\n').find(l => l.startsWith('| `speck test` |'));
-  assert.ok(row.includes(NEXT_RUN.trim()), 'names the line');
+  const said = row.slice(row.indexOf('`speck test --related'));
+  assert.match(said, /`[^`]*speck test --files <file>…`/, 'gives the line\'s command');
+  assert.match(said, /`location:`/, 'reads the files from TAP locations');
 });

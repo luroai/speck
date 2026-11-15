@@ -197,6 +197,7 @@ export const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
 
 // The start of the line a failing `speck test --related` run ends with, giving the command to run next (0676).
 export const NEXT_RUN = 'Once the failure is fixed, run only the files that failed and your own: ';
+const printNext = files => console.log(`${NEXT_RUN}speck test --files ${files.map(f => f.startsWith('-') ? `./${f}` : f).map(f => /^[\w./@%+=:,-]+$/.test(f) ? f : shellWord(f)).join(' ')}`);
 
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
 // for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just
@@ -239,7 +240,7 @@ export function cmdTest(args) {
       r = runTestsInTurn(repo, cfg, only.replaceAll('{files}', () => words.join(' ')), undefined, output);
       if (output && /^\d+$/.test(r.ended) && r.ended !== '0') { let text = ''; try { text = fs.readFileSync(output, 'utf8'); } catch { /* it wrote nothing */ } next = nextRunFiles(text, given, repo, process.cwd()); }
     } finally { if (output) fs.rmSync(output, { force: true }); }
-    if (next) console.log(`${NEXT_RUN}speck test --files ${next.map(f => f.startsWith('-') ? `./${f}` : f).map(f => /^[\w./@%+=:,-]+$/.test(f) ? f : shellWord(f)).join(' ')}`);
+    if (next) printNext(next);
     const signal = r.signal || r.ended.match(/^signal (\w+)$/)?.[1];
     if (r.status !== 0) throw new SpeckError(signal ? `The tests were stopped by ${signal}.` : '', r.status ?? 1);
     return;
@@ -254,5 +255,8 @@ export function cmdTest(args) {
     return;
   }
   const r = testRun(repo, cfg, cmd, { reuse: fresh ? 'none' : 'any', hint: ' Run `speck test --fresh` to run the suite anyway.' });
+  // --related with commands.test_files blank runs the whole suite, and ends with the same line when it fails (0676).
+  const next = related && r.status !== 0 && !r.signal && !r.stalled ? nextRunFiles(r.output || '', given, repo, process.cwd()) : null;
+  if (next) printNext(next);
   if (r.status !== 0) throw new SpeckError(r.signal ? `The tests were stopped by ${r.signal}.` : '', r.status ?? 1);
 }
