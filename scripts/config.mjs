@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SpeckError, findRepoRoot, parseYaml, parseConfig, stripComment, EFFORTS, loadConfig, yamlValue, RENAMED, settingName, SPECK_NAME } from './core.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValues } from './machine.mjs';
+import { HOME_SETTINGS, setHomeSetting } from './home-settings.mjs';
 import { knownEffort } from './codex-models.mjs';
 import { ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
 import { offeredModels } from './agents.mjs';
@@ -215,6 +216,8 @@ export function cmdConfig(args) {
   const [sub, given, ...rest] = [args[0], ...words.filter(a => !(replace && a === '--replace'))];
   const key = given && settingName(given); // 0487: an old name sets the new one
   if (sub !== 'set' || !key || !rest.length || (machine && repoFlag)) throw new SpeckError(USAGE);
+  // 0678: saved in your home folder, for every project of yours on this machine.
+  if (HOME_SETTINGS.includes(key)) return setHomeSetting(key, rest.join(' '), machine || repoFlag);
   // 0386: your own settings are saved for this machine, unless --repo asks for speck/config.yml's.
   if (machine || (!repoFlag && MACHINE_SETTINGS.includes(key))) return setMachine(key, rest.join(' '), machine && rest.join(' ') === '', replace);
   if (key === 'builder') return setBuilder(rest.join(' '), replace);

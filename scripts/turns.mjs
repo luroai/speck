@@ -11,6 +11,7 @@ import { fullCommand } from './full-suite.mjs';
 import { relatedTests, relatedReport } from './related.mjs';
 import { nextRunFiles } from './tap.mjs';
 import { checkFiles } from './checks.mjs';
+import { homeSettingsDir, machineParallelTests } from './home-settings.mjs';
 
 export { checkFiles }; // 0657: in its own module, so the test runner reads it without naming this one
 
@@ -70,11 +71,11 @@ export function testStallMs(cfg) {
 // free. When the speck process has gone and its tests haven't started, this makes the started folder itself, so they
 // never can: either that or the shell's mkdir comes first, never both.
 function held(dir, text) {
-  const { pid, run } = parse(text);
+  const { pid, run, runs } = parse(text);
   if (alive(pid)) return true;
-  const files = runFiles(dir, run);
+  const files = runFiles(typeof runs === 'string' && runs ? runs : dir, run); // 0678: a turn on this machine names its repo's folder
   if (!files) return false;
-  try { fs.mkdirSync(files.started); return false; } catch (e) { if (e.code !== 'EEXIST') throw e; }
+  try { fs.mkdirSync(files.started); return false; } catch (e) { if (e.code === 'ENOENT') return false; if (e.code !== 'EEXIST') throw e; } // 0678: ENOENT, its repo's gone
   return alive(Number(read(files.pid)));
 }
 
@@ -128,20 +129,18 @@ function holders(dir, max) {
 }
 
 // The turn this process holds now, if any, as its folder and its run's files: a run started while it holds one runs
-// in it (0239).
-let holding = null;
+// in it (0239). 0678: and the folder of the turn it holds on this machine, if any.
+let holding = null, machineHolding = '';
 
-// Runs fn() once this process has a turn in `repo`, waiting for one if max_parallel_tests runs are already going, and
-// frees the turn afterwards, returning what fn returns. fn gets the run's files (see runFiles), for one run at a time.
-// In a turn this process already holds, fn runs straight away, in that turn, with the same files (0239). 0630: with
-// `lane` ('full'), it takes that one turn of its own instead, beside max_parallel_tests's, so no other run waits for it.
-export function inTurn(repo, cfg, fn, { lane = '' } = {}) {
-  const max = maxParallelTests(cfg);
-  const dir = turnsDir(repo);
-  if (holding?.dir === dir) return fn(holding.files);
-  const run = crypto.randomUUID();
-  const text = JSON.stringify({ pid: process.pid, cwd: repo, run });
-  // Files left by speck processes that were killed: claim files made while waiting, and old files of killed runs.
+// 0678: the turns on this machine are kept in the home folder, beside machine_parallel_tests. While a process holds one,
+// its tests run with MACHINE_TURN naming that folder, so a test run they start runs in their turn.
+const MACHINE_TURN = 'SPECK_MACHINE_TURN';
+const machineTurnsDir = () => { const d = homeSettingsDir(); return d ? path.join(d, 'test-turns') : ''; };
+
+// Clears what speck processes that were killed left in the queue's folder `dir`: claim files made while waiting, and old
+// files of killed runs. Then writes this run's claim file, to be linked as its turn, and returns it.
+function claimFile(dir, run, text) {
+  fs.mkdirSync(dir, { recursive: true });
   const named = new Set(fs.readdirSync(dir).filter(f => f.endsWith('.lock')).map(f => parse(read(path.join(dir, f))).run));
   for (const f of fs.readdirSync(dir)) {
     const m = f.match(/^turn\.(\d+)\..*\.tmp$/), r = f.match(/^run\.([0-9a-f-]+)\.(pid|started|ended)$/);
@@ -150,24 +149,63 @@ export function inTurn(repo, cfg, fn, { lane = '' } = {}) {
   }
   const mine = path.join(dir, `turn.${process.pid}.${run}.tmp`);
   fs.writeFileSync(mine, text);
-  let lock = null, said = false;
+  return mine;
+}
+
+// Waits for one of the turns `slots` in `dir`, calling waiting() once if none is free, and returns its claim's file.
+function waitForTurn(dir, slots, mine, waiting) {
+  let said = false;
   try {
     for (;;) {
-      if (lane) lock = takeTurn(dir, lane, mine);
-      else for (let n = 0; n < max && !lock; n++) lock = takeTurn(dir, n, mine);
-      if (lock) break;
-      if (!said && lane) { console.log(`Waiting for the ${lane} suite's own turn to run the tests: another run in it is already going. This run starts when it ends.`); said = true; }
-      if (!said) {
-        const going = holders(dir, max);
-        console.log(`Waiting for a turn to run the tests: max_parallel_tests is ${max}, and ${going.length === 1 ? 'a run is' : `${going.length || max} runs are`} already going${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);
-        said = true;
-      }
+      for (const n of slots) { const lock = takeTurn(dir, n, mine); if (lock) return lock; }
+      if (!said) { waiting(); said = true; }
       sleep(POLL_MS * (0.5 + Math.random())); // spread out, so runs that backed off together don't clash again
     }
   } finally { fs.rmSync(mine, { force: true }); }
-  holding = { dir, files: runFiles(dir, run) };
-  try { return fn(holding.files); } finally {
+}
+
+// Runs fn() once this process has a turn in `repo`, waiting for one if max_parallel_tests runs are already going, and
+// frees the turn afterwards, returning what fn returns. fn gets the run's files (see runFiles), for one run at a time.
+// In a turn this process already holds, fn runs straight away, in that turn, with the same files (0239). 0630: with
+// `lane` ('full'), it takes that one turn of its own instead, beside max_parallel_tests's, so no other run waits for it.
+// 0678: with machine_parallel_tests set, it then takes a turn on this machine too, shared by every project of yours,
+// lane or not, unless it already holds one or runs in a test run that does.
+export function inTurn(repo, cfg, fn, { lane = '' } = {}) {
+  const max = maxParallelTests(cfg);
+  const dir = turnsDir(repo);
+  if (holding?.dir === dir) return fn(holding.files);
+  const mdir = machineTurnsDir(), inMachineTurn = !mdir || machineHolding === mdir || process.env[MACHINE_TURN] === mdir;
+  const mmax = inMachineTurn ? null : machineParallelTests();
+  const run = crypto.randomUUID();
+  const text = JSON.stringify({ pid: process.pid, cwd: repo, run });
+  const lock = waitForTurn(dir, lane ? [lane] : [...Array(max).keys()], claimFile(dir, run, text), () => {
+    if (lane) { console.log(`Waiting for the ${lane} suite's own turn to run the tests: another run in it is already going. This run starts when it ends.`); return; }
+    const going = holders(dir, max);
+    console.log(`Waiting for a turn to run the tests: max_parallel_tests is ${max}, and ${going.length === 1 ? 'a run is' : `${going.length || max} runs are`} already going${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);
+  });
+  let mlock = null, mtext = '';
+  const saved = process.env[MACHINE_TURN];
+  try {
+    if (mmax) {
+      try { fs.mkdirSync(mdir, { recursive: true }); }
+      catch (e) { throw new SpeckError(`Can't make ${mdir}, where the turns machine_parallel_tests shares are kept (${e.message}). Make it writable, or remove the limit with \`speck config set machine_parallel_tests ""\`, then run this again.`); }
+      mtext = JSON.stringify({ pid: process.pid, cwd: repo, run, runs: dir });
+      mlock = waitForTurn(mdir, [...Array(mmax).keys()], claimFile(mdir, run, mtext), () => {
+        const going = holders(mdir, mmax);
+        console.log(`Waiting for a turn on this machine to run the tests: machine_parallel_tests is ${mmax}, and ${going.length === 1 ? 'a run is' : `${going.length || mmax} runs are`} already going across your projects${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);
+      });
+      machineHolding = mdir;
+      process.env[MACHINE_TURN] = mdir;
+    }
+    holding = { dir, files: runFiles(dir, run) };
+    return fn(holding.files);
+  } finally {
     holding = null;
+    if (mlock) {
+      machineHolding = '';
+      if (saved === undefined) delete process.env[MACHINE_TURN]; else process.env[MACHINE_TURN] = saved;
+      if (read(mlock) === mtext) forget(mlock, mtext);
+    }
     if (read(lock) === text) forget(lock, text, true);
   }
 }

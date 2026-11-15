@@ -46,6 +46,7 @@ One setting limits how many test runs go at once across every project on the mac
 - Turns are lock files under the main checkout's `speck/.cache/tests` (`turnsDir` and `inTurn` in `scripts/turns.mjs`). `~/.config/speck/` already holds this machine's private words and panels.
 - The suite's own tests mustn't read or write the real home folder's settings (as 0654 did for agents).
 - Failing before this build: none
+- Self-check: a home settings file that can't be read or saved, and a turns folder that can't be made, now stop with a plain message rather than a stack trace; a dead turn whose project folder has gone is freed rather than failing every waiter. Tests added for each.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
