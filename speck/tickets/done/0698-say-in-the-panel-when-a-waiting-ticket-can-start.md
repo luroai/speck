@@ -1,7 +1,7 @@
 ---
 id: "0698"
 title: "Say in the panel when a waiting ticket can start"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:46:13.582Z"
 approved: "2026-11-15T21:58:28.145Z"
+finished: "2026-11-15T22:37:32.108Z"
 
 ---
 # 0698 · Say in the panel when a waiting ticket can start
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 1.4.0, speck run starts a ready ticket on the approved work of the ticket it waits for (0675), and ships the two in order. The panel still shows such a ticket as waiting, and an approved one as an ordinary approved ticket, so the board reads as stuck while speck is getting on with it.
