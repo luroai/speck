@@ -1,7 +1,7 @@
 ---
 id: "0675"
 title: "Start a waiting ticket once what it waits for is approved"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0674"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T15:15:19.904Z"
+approved: "2026-11-15T15:31:58.844Z"
 
 ---
 # 0675 · Start a waiting ticket once what it waits for is approved
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once `speck start` can build on an approved ticket (0674), `speck run` still skips a ready ticket until everything in its `after:` list has shipped, so the early start only happens by hand.
@@ -57,9 +58,14 @@ To see it, have speck run going, approve a ticket and leave it unshipped, and se
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 175,932
+- Elapsed since build started: 17 min
+- Changed lines: 23 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The panel still says a ready ticket that can start on approved work is waiting: inbox `speck/ideas/2026-11-15-say-in-the-panel-when-a-waiting-ticket-can-start.md`.
