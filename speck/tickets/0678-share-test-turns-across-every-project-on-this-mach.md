@@ -49,7 +49,7 @@ One setting limits how many test runs go at once across every project on the mac
 - Self-check: a home settings file that can't be read or saved, and a turns folder that can't be made, now stop with a plain message rather than a stack trace; a dead turn whose project folder has gone is freed rather than failing every waiter. Tests added for each.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now cap how many test runs go at once across all your projects on this computer, not just within one. Set it once from any project, for example to 2, and it applies to every project: a test run beyond the cap waits, says once that it's waiting for a turn on this machine and which runs it's waiting for, and starts as soon as one ends. The full suite that runs after each ship counts too. Each project's own limit still applies inside it, and nothing changes until you set the cap. To see it, set it, run tests in two projects at once and watch the second one wait; `speck config show` shows it in any project. Worth watching: a lower cap means fewer tests failing by chance on a busy machine, but builds wait longer for their turn.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +59,10 @@ One setting limits how many test runs go at once across every project on the mac
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Show and change `machine_parallel_tests` in the panel's Settings view (inbox: `speck/ideas/2026-11-15-show-machine-parallel-tests-in-the-settings-view.md`).
+  - Known limit: turns on the machine have no queue order. A waiting run retries every half-second or so, so under heavy contention one run could wait longer than another that started later.
+  - Known limit: timing tests failed under a load average of 35 to 43 during this build's related run (0630 AC3, 0657 AC3, 0517 AC3) and passed on re-run; this setting is meant to help with that once it's set.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -140,6 +144,89 @@ One setting limits how many test runs go at once across every project on the mac
     ],
     "escalation_question": "",
     "summary": "The shared setting and ordinary queueing work, and the reported tests pass. However, nested test runs can deadlock when another project is already waiting. Fix that locking interaction before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "05a96cb603f3475768018ce307e2a0d992551b49",
+    "session": "continued",
+    "thread_id": "01a1dfbd-5808-7010-bde7-9ad34a3a5668",
+    "builder_response": "- Tests run: test/machine-turns-0678.test.mjs test/turns-0239.test.mjs test/full-suite-0630.test.mjs (with commands.checks alongside). turns-0239 and full-suite-0630 are the existing tests of the turn code changed.\n- F1: fixed. inTurn (scripts/turns.mjs) now takes the repo turn and the machine turn together: it takes a free repo turn, then tries for a free machine turn, and if there's none it frees the repo turn before sleeping, so it never holds one while it waits for the other. Each waiting message is still said once. A failure while taking them frees the repo turn. The brief's speck test row says so. New test \"0678 AC3: a run waiting for the machine doesn't keep its project's turn from a test run started in the turn it waits for\" runs your three-process sequence (A holds the machine turn with limit 1, a run in B waits for the machine, A's tests then start a run in B) with bounded waits; it fails on the previous commit's turns.mjs (the nested run times out) and passes now.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 325194,
+      "cached_input_tokens": 242048,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1814,
+      "reasoning_output_tokens": 426
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 23370,
+      "cached": 138368,
+      "write": 0,
+      "output": 639
+    },
+    "cost_usd": 0.0669668,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T15:08:19.735Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/home-settings.mjs validates, saves, removes and displays the home-folder setting. Passing AC1 tests verify visibility across projects, invalid-input rejection and no repo configuration changes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs inTurn requires both turns before starting and releases the repo turn before waiting for machine capacity. Passing AC2 tests cover limits of one and two, full-suite lanes, waiting once and subsequent progress."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests cover project limits, nested turn reuse, dead processes and deleted project folders. The new three-process regression test exercises F1's circular-wait scenario; inTurn now releases the contested repo turn."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md describes machine_parallel_tests in both required command rows and reflects the revised acquisition behaviour. The AC4 fact test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied round-two results show 180 passed, zero failed and three skipped, including existing turn and full-suite tests. Whole-suite verification remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/turns.mjs",
+        "issue": "The previous repo-first acquisition could deadlock a nested run against another project's machine waiter. The revised loop releases its repo claim before sleeping when machine capacity is unavailable.",
+        "suggested_fix": "Completed; the added three-process regression test covers the reported sequence and passed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The shared limit now coordinates test runs across projects while preserving project limits. The deadlock is fixed and covered by a regression test. All criteria pass, with no blocking concerns remaining."
   }
 }
 ```
