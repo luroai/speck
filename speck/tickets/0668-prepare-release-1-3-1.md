@@ -48,6 +48,10 @@ speck is ready to be released as 1.3.1.
 - After it ships, check that the `v1.3.1` tag and its GitHub release page appeared. If not: `gh release create v1.3.1 --target main --title "speck 1.3.1" --notes-file docs/releases/v1.3.1.md`.
 - Checked 2026-11-12: `package.json` is `1.3.0`, `v1.3.0` is tagged on origin, and `CHANGELOG.md`'s newest section is 1.3.0.
 - 0665's checks that name 1.3.0 as the current version should check the current version, as 0665 did for 0653's.
+- Failing before this build: none
+- Covers 0666, 0667 and 0669, and the test-only fixes 0670 and 0671: nothing else shipped since `v1.3.0`. The figures were worked out from main at "speck(0669): Choose a ticket's builder model in the panel": 653 shipped, 16 cancelled, 14 minutes, 2 rounds, 311 first-round. The price table isn't refreshed: no criterion asks for it.
+- Self-check: no changes. A first related run had one timing failure in 0630 AC3, which passed alone and on the re-run; nothing in this change touches it.
+- Pictures: none, because nothing anyone sees in the panel changes; the README's wording changes but not how it renders.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
