@@ -45,6 +45,7 @@ One command sets several named tickets ready.
 ## Notes
 - `cmdSet` in `scripts/speck.mjs`. Each ticket keeps its own `speck(<id>): ready` commit, which `speck run` and `speck start` look for.
 - The ticket skill's rule stands: an agent sets a ticket ready only when you've named that ticket.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
