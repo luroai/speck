@@ -41,6 +41,7 @@ The panel says when a waiting ticket can start on another's approved work, and w
 
 ## Notes
 - From 0675's own note. The fields are `starts_on` and `ships_after` (`scripts/built-on.mjs`, `afterWait`).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
