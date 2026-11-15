@@ -1,7 +1,7 @@
 ---
 id: "0697"
 title: "Count everything a project's bar counts on the bridge"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-10-count-stopped-builds-on-the-bridge.md"     
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:28:31.481Z"
+approved: "2026-11-15T21:49:47.766Z"
 
 ---
 # 0697 · Count everything a project's bar counts on the bridge
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The bridge (All projects) counts a project's questions, the engineering manager's questions and tickets waiting at Ship under Needs you, but not a build that stopped with nothing to carry it on (0616) or a failing full suite (0630), which a project's own bar counts. So the bar can say "Needs you 1" while the bridge says "Nothing needs you" for the same project, and someone watching every project from the bridge misses it.
@@ -52,9 +53,14 @@ All projects now counts everything a project's own bar counts as needing you. A 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 175,476
+- Elapsed since build started: 21 min
+- Changed lines: 20 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none to the inbox. Known limit: the bridge leaves out an engineering manager's question about a ticket that isn't on the board, which the bar's word would count; that has always been so and this ticket didn't change it.
 
