@@ -1,7 +1,7 @@
 ---
 id: "0679"
 title: "Carry on when speck can't do a check in the app itself"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T13:36:06.042Z"
+approved: "2026-11-15T14:15:33.496Z"
 
 ---
 # 0679 · Carry on when speck can't do a check in the app itself
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build asks for a check in the running app that speck's agent can't make, such as how something sounds or how a page behaves in a browser it can't run, the agent asks you, and the build stops until you answer. The rest of the ticket, its remaining work and its review rounds, could be finished in that time, leaving you one look at the end.
@@ -59,9 +60,14 @@ When speck is asked to check something in the running app that it simply can't c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 201,248
+- Elapsed since build started: 39 min
+- Changed lines: 107 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: the speck-watch skill still says to ask when the agent can't sign in, which overlaps with leaving a check that needs an account it can't use (reviewer's minor finding F1). Saved to the inbox: speck/ideas/2026-11-15-say-when-a-sign-in-check-is-left-rather-than-asked.md.
 - Note: test/full-suite-0630.test.mjs's "a full run doesn't wait for the max_parallel_tests turns" failed once under the load of a 245-file related run and passed alone three times; it's timing-sensitive, unrelated to this change.
