@@ -1,7 +1,7 @@
 ---
 id: "0697"
 title: "Count everything a project's bar counts on the bridge"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-15
 ---
 # 0697 · Count everything a project's bar counts on the bridge
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The bridge (All projects) counts a project's questions, the engineering manager's questions and tickets waiting at Ship under Needs you, but not a build that stopped with nothing to carry it on (0616) or a failing full suite (0630), which a project's own bar counts. So the bar can say "Needs you 1" while the bridge says "Nothing needs you" for the same project, and someone watching every project from the bridge misses it.
