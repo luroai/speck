@@ -42,6 +42,8 @@ The bridge counts and shows everything a project's bar counts under Needs you.
 ## Notes
 - From `speck/ideas/done/2026-11-10-count-stopped-builds-on-the-bridge.md` and `speck/ideas/done/2026-11-11-count-a-failing-full-suite-on-the-bridge.md`. The bridge's count comes from `projectSummary` in `scripts/panel-summary.mjs`; the full suite's failure is the foreman view's `full`.
 - Failing before this build: none
+- AC1 read with AC3: the bar's word doesn't count tickets waiting at Ship, which the bridge counts as well, as today. So the bridge's count is the bar's number plus the tickets at Ship; the tests check that the items other than those at Ship add up to the bar's number.
+- Self-check: the brief said every bridge card opens a ticket; it now says a failing full suite's card names its failing tests or exit code and opens its project.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

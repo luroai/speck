@@ -2,6 +2,7 @@
 // word, how many tickets are building, queued and need you, what needs you, and what it shipped and spent in the last 7 days.
 import { sumParts } from './spend.mjs';
 import { buildTimes, LAST_SHIPPED } from './long-build.mjs';
+import { stoppedForYou } from './foreman.mjs';
 
 const WEEK_MS = 7 * 864e5;
 const list = v => (Array.isArray(v) ? v : []);
@@ -26,6 +27,8 @@ function atShip(t, tickets, runOn) {
 // `board` is speck status --json's data, `foreman` foremanView's and `run` panelRunState's. Each thing that needs you is
 // { id, title, why, detail }, why being 'question', 'manager' (the engineering manager's question), 'ship' or 'high_risk'
 // (waiting at Ship, and high risk), and detail the question's words. Blocked questions count as the status word counts them.
+// 0697: so do 'stopped' (a build stopped that nothing will carry on, 0616) and 'full_suite' (the full suite failing on the
+// base branch with no fix ticket on its way, 0630), its id '', and detail its failing tests or its exit code.
 export function projectSummary({ board, foreman, run, now = Date.now() }) {
   const tickets = list(board && board.tickets).filter(t => t && typeof t === 'object');
   const f = foreman && typeof foreman === 'object' ? foreman : {}, runOn = !!(run && run.on), since = now - WEEK_MS;
@@ -34,7 +37,13 @@ export function projectSummary({ board, foreman, run, now = Date.now() }) {
   const manager = list(f.agent && f.agent.asks).filter(a => a && byId.has(String(a.id)) && !blocked.some(b => String(b.id) === String(a.id)))
     .map(a => ({ id: String(a.id), title: text(byId.get(String(a.id)).title), why: 'manager', detail: text(a.question) }));
   const ship = tickets.filter(t => atShip(t, tickets, runOn)).map(t => ({ id: String(t.id), title: text(t.title), why: t.risk === 'high' ? 'high_risk' : 'ship', detail: '' }));
-  const needs = [...questions, ...manager, ...ship];
+  const asks = list(f.agent && f.agent.asks).filter(a => a && typeof a === 'object').map(a => String(a.id));
+  const stopped = tickets.filter(t => stoppedForYou(t, { on: runOn, fixing: f.fixing, agent: f.agent }) && !asks.includes(String(t.id)))
+    .map(t => ({ id: String(t.id), title: text(t.title), why: 'stopped', detail: '' }));
+  const full = f.full && typeof f.full === 'object' && typeof f.full.commit === 'string' && !f.full.fixing ? f.full : null, failing = full ? list(full.tests).map(String) : [];
+  const suite = full ? [{ id: '', title: `Full suite fails on ${text(full.base) || text(f.base) || 'the base branch'}`, why: 'full_suite',
+    detail: `${full.commit.slice(0, 7)} · ${failing.length ? failing.join('; ') : `exit code ${Number.isInteger(full.status) ? full.status : 1}, and its output names no failing tests`}` }] : [];
+  const needs = [...questions, ...manager, ...stopped, ...suite, ...ship];
   const building = tickets.filter(t => t.status === 'building' || t.status === 'reviewing').length;
   // 0579: speck's mood from the board, for its face: asleep while speck run is off, asking while anything needs you,
   // focused while a build is building or reviewing or a ticket is shipping, otherwise watching.
