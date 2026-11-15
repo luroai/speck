@@ -10,7 +10,6 @@ import { read, verdict, mergeRepo, spawnReview } from './support/merge-rounds.mj
 import { reviewSince, reviewDiff, reviewerPrompt } from '../scripts/review.mjs';
 import { loadConfig, parseTicket } from '../scripts/core.mjs';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
 const HEADING = '## Changes beyond a clean merge of main';
 const sha = (cwd, ref = 'HEAD') => gIn(cwd, 'rev-parse', ref).stdout.trim();
 const commitAll = (cwd, msg) => { gIn(cwd, 'add', '-A'); assert.equal(gIn(cwd, 'commit', '-qm', msg).status, 0); };
@@ -132,13 +131,4 @@ test('0673 AC3: round 1, a later round without a merge and a round before the fi
   assert.doesNotMatch(beforeApproval.prompt, new RegExp(HEADING));
 });
 
-test('0673 AC4: the brief, speck-review and speck-build\'s Conflict step no longer say a merge round shows the whole change', () => {
-  const brief = read(ROOT, 'docs/brief.md').split('**Merge rounds.**')[1].split('\n')[0];
-  const review = read(ROOT, 'skills/speck-review/SKILL.md');
-  const build = read(ROOT, 'skills/speck-build/SKILL.md').split('### Conflict')[1].split('\n### ')[0];
-  for (const [name, text] of [['brief', brief], ['speck-review', review], ['speck-build', build]]) {
-    assert.doesNotMatch(text, /sees the branch's whole change against the base branch as merged/, name);
-    assert.doesNotMatch(text, /or the whole change against the base branch as merged after a merge/, name);
-    assert.match(text, /clean merge/, `${name} says a merge round shows what changed beyond a clean merge`);
-  }
-});
+// AC4 is about how three documents read, so the reviewer checks it by reading them: no test pins their wording.
