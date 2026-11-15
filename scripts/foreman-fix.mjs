@@ -3,8 +3,9 @@
 // the panel's Go with the recommendation button does (0284), so the same check's goWithQueue resumes its build. It
 // does so at most once per ticket: goWith refuses a second time, leaving the question for you.
 // 0564: with watch: decide, every recommendation of a low-risk ticket, whatever its facts, up to 3 per ticket.
+// 0680: never one asked at the review limit: that waits for you, and it says why once.
 import { speckSays } from './core.mjs';
-import { fixingOf, speckActs, speckTakes } from './foreman.mjs';
+import { fixingOf, speckActs, speckTakes, atReviewLimit } from './foreman.mjs';
 import { goWith as goWithDefault } from './go-with.mjs';
 
 // `readConfig()` gives speck/config.yml as it is now, so a change to watch counts from the next check.
@@ -18,6 +19,12 @@ export function foremanFixQueue({ repo, readConfig, running = new Set(), goWith 
     const watch = fixingOf(cfg);
     if (!speckActs(watch)) return;
     for (const t of tickets) {
+      if (atReviewLimit(t)) {
+        const why = `Ticket ${t.id} is blocked at the review limit, so its question waits for you: only your answer allows it more review rounds.`;
+        if (told.get(t.id) !== why) say(speckSays(`${t.id}: I didn't take its recommendation: ${why}`));
+        told.set(t.id, why);
+        continue;
+      }
       if (!speckTakes(watch, t)) { told.delete(t.id); continue; }
       if (running.has(t.id)) continue;
       let out;

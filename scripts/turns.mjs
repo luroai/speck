@@ -6,7 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { SpeckError, sh, findRepoRoot, loadConfig, worktreeList } from './core.mjs';
-import { testRun, showRecordedRun } from './results.mjs';
+import { testRun, showRecordedRun, filesRun } from './results.mjs';
 import { fullCommand } from './full-suite.mjs';
 import { relatedTests, relatedReport } from './related.mjs';
 import { nextRunFiles } from './tap.mjs';
@@ -201,8 +201,8 @@ const printNext = files => console.log(`${NEXT_RUN}speck test --files ${files.ma
 
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
 // for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just
-// those files (0113), from the repo root, taking a turn as a full run does (0239) but without a recorded result, as it
-// isn't a full run. `speck test
+// those files (0113), from the repo root, taking a turn as a full run does (0239). 0677: it and --related reuse a pass
+// recorded for the same code as it stands, test command and files (see filesRun), unless --fresh comes first. `speck test
 // --recorded` runs no tests: it prints the result recorded for the same code, if any, and exits with its exit code (0238),
 // the full suite's when there's one (0632).
 // `speck test --related [<file>…]` runs, as --files does, the test files the branch's change affects (0437), with any
@@ -210,12 +210,17 @@ const printNext = files => console.log(`${NEXT_RUN}speck test --files ${files.ma
 // fails with an exit code, it ends with a line giving the `speck test --files` command to run next (0676), unless its
 // output doesn't say which file each failing test is in. A run that stalled or was stopped gets no line.
 export function cmdTest(args) {
+  // 0677: --fresh comes first, or just after --files or --related.
+  const listed = a => a === '--files' || a === '--related';
+  const at = args[0] === '--fresh' && listed(args[1]) ? 0 : listed(args[0]) && args[1] === '--fresh' ? 1 : -1;
+  const freshFiles = at >= 0;
+  if (freshFiles) args = args.filter((_, i) => i !== at);
   const related = args[0] === '--related';
   let files = args[0] === '--files' || related ? args.slice(1) : null;
   const fresh = args.length === 1 && args[0] === '--fresh';
   const recordedOnly = args.length === 1 && args[0] === '--recorded';
   if (files && !files.length && !related) throw new SpeckError('Usage: speck test --files <file>… (name at least one test file)');
-  if (args.length && !fresh && !recordedOnly && !files) throw new SpeckError('Usage: speck test [--fresh], speck test --recorded, or speck test --files <file>… (or --related [<file>…])');
+  if (args.length && !fresh && !recordedOnly && !files) throw new SpeckError('Usage: speck test [--fresh], speck test --recorded, or speck test --files <file>… (or --related [<file>…]), with --fresh first to run them even when a passing result is recorded');
   const option = related && files.find(f => f.startsWith('--'));
   if (option) throw new SpeckError(`Usage: speck test --related [<file>…] (got ${option}, which isn't a test file: name the files on their own). No tests were run.`);
   const repo = findRepoRoot();
@@ -234,12 +239,13 @@ export function cmdTest(args) {
     // Relative to the repo root, where the command runs. One starting with - gets ./ so it isn't read as an option.
     const rels = files.map(f => path.relative(repo, path.resolve(f)) || '.');
     const words = [...new Set([...rels, ...checks])].map(rel => shellWord(rel.startsWith('-') ? `./${rel}` : rel));
-    const output = related ? path.join(sharedCacheDir(repo, 'results'), `run.${crypto.randomUUID()}.out`) : '';
+    const output = path.join(sharedCacheDir(repo, 'results'), `run.${crypto.randomUUID()}.out`);
     let r, next = null;
     try {
-      r = runTestsInTurn(repo, cfg, only.replaceAll('{files}', () => words.join(' ')), undefined, output);
-      if (output && /^\d+$/.test(r.ended) && r.ended !== '0') { let text = ''; try { text = fs.readFileSync(output, 'utf8'); } catch { /* it wrote nothing */ } next = nextRunFiles(text, given, repo, process.cwd()); }
-    } finally { if (output) fs.rmSync(output, { force: true }); }
+      r = filesRun(repo, cfg, only.replaceAll('{files}', () => words.join(' ')), output, freshFiles);
+      if (r.reused) return;
+      if (related && /^\d+$/.test(r.ended) && r.ended !== '0') { let text = ''; try { text = fs.readFileSync(output, 'utf8'); } catch { /* it wrote nothing */ } next = nextRunFiles(text, given, repo, process.cwd()); }
+    } finally { fs.rmSync(output, { force: true }); }
     if (next) printNext(next);
     const signal = r.signal || r.ended.match(/^signal (\w+)$/)?.[1];
     if (r.status !== 0) throw new SpeckError(signal ? `The tests were stopped by ${signal}.` : '', r.status ?? 1);
@@ -254,7 +260,7 @@ export function cmdTest(args) {
     if (kept.status !== 0) throw new SpeckError('', kept.status);
     return;
   }
-  const r = testRun(repo, cfg, cmd, { reuse: fresh ? 'none' : 'any', hint: ' Run `speck test --fresh` to run the suite anyway.' });
+  const r = testRun(repo, cfg, cmd, { reuse: fresh || freshFiles ? 'none' : 'any', hint: ' Run `speck test --fresh` to run the suite anyway.' });
   // --related with commands.test_files blank runs the whole suite, and ends with the same line when it fails (0676).
   const next = related && r.status !== 0 && !r.signal && !r.stalled ? nextRunFiles(r.output || '', given, repo, process.cwd()) : null;
   if (next) printNext(next);
