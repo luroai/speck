@@ -46,7 +46,7 @@ A `type: fix` ticket may change or fix the failing tests it names, and other fai
 - Self-check: no changes (checked quoted and commented `type: fix` values and that no `{{` marker reaches either prompt).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When the full suite fails and speck makes a fix ticket for it, that ticket may now repair the failing tests it was made to fix, without the reviewer holding it up for touching them. Every other test that was already failing stays off limits, as before, and other tickets get no such leeway. You'll notice it as fix tickets going through review without being escalated over this rule. Worth watching: a fix ticket's criteria should name its tests clearly, since those are the only ones it may change.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +56,8 @@ A `type: fix` ticket may change or fix the failing tests it names, and other fai
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none. The reviewer's one minor finding (a sentence repeated in the build skill) was fixed in round 2.
+- During the `--related` run, 0630 AC3, 0657 AC3, 0148 AC4 and 0177 AC3 failed on timing under a 176-file load and passed when run on their own.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -127,6 +129,80 @@ A `type: fix` ticket may change or fix the failing tests it names, and other fai
     ],
     "escalation_question": "",
     "summary": "The change lets fix tickets repair the failing tests their criteria name, while keeping other existing failures off limits. Generated prompts apply the exception only to fix tickets, and the reported tests pass. One duplicated instruction is a minor tidy-up."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "89e54b7565f5e6da8248c4c0cf02307f38d0bb25",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1e105-6158-7142-b3fb-0d7c26fd5810",
+    "builder_response": "- Tests run: test/fix-0687.test.mjs test/prompt-0353.test.mjs\n- F1: fixed. Section 1 step 6 of skills/speck-build/SKILL.md now states the fix-ticket exception once (the edit had gone through the `.claude/skills` symlink a second time).\n",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 170850,
+      "cached_input_tokens": 131712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 992,
+      "reasoning_output_tokens": 48
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 3468,
+      "cached": 73088,
+      "write": 0,
+      "output": 410
+    },
+    "cost_usd": 0.0183448,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T21:04:29.825Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md:19, skills/speck-review/SKILL.md:17 and templates/reviewer-prompt.md:12 each permit fix tickets to repair tests named by their acceptance criteria while keeping every other failing-before test unchanged."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/review.mjs reviewerPrompt retains the exception only for parsed.fm.type === 'fix'. Both 0687 AC2 prompt-generation tests passed, covering fix, bug and blank ticket types."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The reported round-2 run has 154 passes, zero failures and three skips. The only instruction change since round 1 removes duplicated text; no regression is evident."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "skills/speck-build/SKILL.md",
+        "issue": "Section 1 step 6 previously repeated the fix-ticket exception twice.",
+        "suggested_fix": "Remove the second copy of the exception and its following sentence.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Fix tickets may repair the failing tests their criteria name, while other existing failures remain off limits. The prompts apply this exception only to fix tickets, the reported tests pass, and the duplicated instruction is fixed. No outstanding concerns."
   }
 }
 ```
