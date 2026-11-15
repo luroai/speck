@@ -1,7 +1,7 @@
 ---
 id: "0683"
 title: "Fix the full suite failing on main at 4f384bd"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,12 +18,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T13:21:13.432Z"
-blocked_at: "2026-11-15T13:23:57.121Z"
+blocked_at: ""
+waited_seconds: 11
 
 ---
 # 0683 · Fix the full suite failing on main at 4f384bd
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 The full suite fails on main at commit 4f384bd (4f384bddf1e74d7dcaa2978a1f1912f7afb664e6). Failing tests:
@@ -46,6 +47,7 @@ The full suite passes on main again.
 - Failing before this build: 0463 AC1, 0463 AC2 and 0463 AC3 (test/panel-0463.test.mjs), the tests this ticket fixes. The recorded full-suite output is cut short, so these were confirmed by running test/panel-0463.test.mjs, which fails only them.
 - Cause: 0669 added a Builder fact to an open Plan ticket's facts, between Level and Size · risk, as its AC1 asks, so the table has eight cells. The 0463 tests still expected seven, with Size · risk and Type one place earlier. The fix updates those tests to the eighth cell; the panel itself is unchanged. No new test file: the ticket's criteria are the 0463 tests passing, and they check it.
 - Self-check: no changes. No other test expects the seven-cell table; with eight cells no cell spans a row, and the browser test's spanning check still covers a last cell alone on its row.
+- Went with the recommendation: Yes, a fix ticket may fix the tests it names (chosen by speck, as watch is decide, 2026-11-15 13:24 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
