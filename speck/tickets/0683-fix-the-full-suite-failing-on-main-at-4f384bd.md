@@ -1,7 +1,7 @@
 ---
 id: "0683"
 title: "Fix the full suite failing on main at 4f384bd"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-15
 started: "2026-11-15T13:21:13.432Z"
 blocked_at: ""
 waited_seconds: 11
+approved: "2026-11-15T13:24:47.669Z"
 
 ---
 # 0683 · Fix the full suite failing on main at 4f384bd
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on main at commit 4f384bd (4f384bddf1e74d7dcaa2978a1f1912f7afb664e6). Failing tests:
@@ -60,9 +61,15 @@ Changes what you'd notice: yes
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): escalate: F1 The review instructions prohibit fixing any test listed under 'Failing before this build', but this ticket explicitly requires fixing precisely those three listed tests.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 213,460
+- Elapsed since build started: 4 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Let a fix ticket fix the failing tests it names: skipped as a duplicate of speck/ideas/2026-11-15-let-a-fix-ticket-fix-the-failing-tests-it-names.md (round 1 escalated on this clash).
