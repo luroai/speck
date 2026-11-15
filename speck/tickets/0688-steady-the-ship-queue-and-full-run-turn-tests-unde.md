@@ -1,7 +1,7 @@
 ---
 id: "0688"
 title: Steady two ship-side tests that fail under load                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-15T20:50:21.824Z"
 ---
 # 0688 · Steady two ship-side tests that fail under load
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Two tests fail by chance when the machine is busy, so a build's related run or the full suite on main can fail for a ticket that didn't touch them: "0264 AC3: speck run doesn't put shipping on hold, and hands the ticket back to its build" in `test/ship-0264.test.mjs` reads the ship queue's launch before it has happened, and "0630 AC3: a full run doesn't wait for the max_parallel_tests turns" in `test/full-suite-0630.test.mjs` asserts a fixed timing.
@@ -45,9 +45,9 @@ Both tests wait for what they check, so they pass on a busy machine.
 - `until` in the test support (0670 raised its default to 30 s) may be what to wait with.
 - Failing before this build: none
 - Cause of the 0264 AC3 flake: the test ran the ship first and the queue afterwards. When that ship started more than a second after the repo's last commit (a busy machine), the queue rightly counted it as 0001's last try and launched nothing, so `launches[0]` was undefined. Reproduced at a load of ~36: the old test failed 1 run in 10 with `Cannot read properties of undefined (reading 'done')`. Now the queue's own launch runs the ship, so there's no earlier try for it to find, and nothing to wait for.
-- 0630 AC3: the held turn is now held for 30 s rather than 1 s, and the test checks its holder is still running when the full run ends, in place of asserting under 900 ms.
+- 0630 AC3: the turn is now held until the test ends, and the full run runs in a process of its own, which the test waits up to 60 s to end, in place of asserting it took under 900 ms. A run that waited for the turn never ends, so the wait runs out. Under load: 10 of 10 at a load of ~70.
 - AC1 isn't a suite test: 16 busy loops for a minute would slow every other test in the full suite. Checked by hand with a script that starts one `node -e 'for(;;);'` per core (16) and runs the one test 10 times: 0264 AC3 10 of 10 (load ~31), 0630 AC3 10 of 10 (load ~33).
-- AC3 checked by breaking each: with code 16 setting the hold in `scripts/ship-queue.mjs`, 0264 AC3 fails; with the full run's `lane: 'full'` taken out of `scripts/full-suite.mjs`, 0630 AC3 fails after waiting the 30 s for the turn. Both restored.
+- AC3 checked by breaking each: with code 16 setting the hold in `scripts/ship-queue.mjs`, 0264 AC3 fails; with the full run's `lane: 'full'` taken out of `scripts/full-suite.mjs`, 0630 AC3 fails when its 60 s wait runs out. Both restored.
 - Self-check: no changes
 
 ## In plain words
@@ -61,3 +61,84 @@ Both tests wait for what they check, so they pass on a busy machine.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6cd99168c5db36dfb438b5e3a9738bc11b343859",
+    "session": "fresh",
+    "thread_id": "01a1e0ff-c828-7003-9746-30f32940e26e",
+    "builder_response": "- Tests run: `speck test --related test/ship-0264.test.mjs test/full-suite-0630.test.mjs` (the two changed files plus every file that names a changed file): 165 passed, 0 failed.\n- This ticket changes only those two test files. No code under scripts/ changed.\n- AC1 is checked by hand rather than in the suite, since 16 busy loops for a minute would slow every other test in the full suite: a script starting one `node -e 'for(;;);'` per core (16 here) ran each test alone 10 times: 0264 AC3 10/10 at load ~31, 0630 AC3 10/10 at load ~33. The old 0264 test under the same load failed 1 in 10 with \"Cannot read properties of undefined (reading 'done')\", confirming the cause in the ticket's Notes.\n- AC3: breaking `scripts/ship-queue.mjs` so exit 16 also sets the hold makes 0264 AC3 fail; removing `lane: 'full'` from runFull's testRun in `scripts/full-suite.mjs` makes 0630 AC3 fail (after waiting 30 s for the held turn). Both restored.\n",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 97221,
+      "cached_input_tokens": 53376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 912,
+      "reasoning_output_tokens": 109
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 43845,
+      "cached": 53376,
+      "write": 0,
+      "output": 912
+    },
+    "cost_usd": 0.1021476,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T20:57:33.645Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The builder reports 10/10 isolated runs of each target test with one busy loop per core. Both target tests also passed in /tmp/speck-0688-tests.txt."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "test/full-suite-0630.test.mjs still imposes a timing requirement: holdTurn(r, 0, 30) starts sleep 30, and running(holder) requires runFull to finish before that fixed duration expires."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The 0264 test checks the real ship's exit code, hand-back and subsequent queue launch. The 0630 test rejects a logged wait for the occupied turn. The builder reports that both specified mutations caused failures and were restored; mutation runs were not independently repeated because this review is read-only."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "/tmp/speck-0688-tests.txt records 165 passed, zero failed and three skipped. The diff changes only the two target test files and the ticket."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/full-suite-0630.test.mjs",
+        "issue": "The new holder check replaces the 900 ms deadline with an implicit 30-second deadline. A correct full run delayed beyond the holder's sleep can still fail on a busy machine. This does not meet criterion 2's requirement to replace timing assumptions with waiting for behaviour.",
+        "suggested_fix": "Keep the ordinary turn occupied until explicit cleanup, run the full suite in a separate process, and wait for its completion with a timeout of at least 30 seconds. Release the holder in finally. Verify that removing the full lane causes the test to fail within that timeout.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The ship queue test fixes the underlying setup race and preserves its regression checks. The full-run test passed the reported load checks, but still depends on finishing before a fixed sleep expires. Replace that remaining timing assumption before merge."
+  }
+}
+```
+
+</details>

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { gIn, env } from './support/ship.mjs';
 import { speck } from './support/cli.mjs';
@@ -104,7 +104,6 @@ function holdTurn(r, slot, seconds = 1) {
   fs.writeFileSync(path.join(sharedCacheDir(r.dir, 'tests'), `slot-${slot}.g0.lock`), JSON.stringify({ pid, cwd: '/somewhere/else' }));
   return pid;
 }
-const running = pid => { try { process.kill(pid, 0); return true; } catch { return false; } };
 const logged = fn => {
   const lines = [], log = console.log;
   console.log = (...a) => lines.push(a.join(' '));
@@ -120,16 +119,26 @@ test('0630 AC1: a full run takes a test turn, its own, waiting while another run
   assert.equal(recordedAt(r.dir, r.cmd, r.head()).status, 0);
 });
 
-test('0630 AC3: a full run doesn\'t wait for the max_parallel_tests turns, so it takes none a ship or build waits for', () => {
+test('0630 AC3: a full run doesn\'t wait for the max_parallel_tests turns, so it takes none a ship or build waits for', async () => {
   const r = repo();
-  // 0688: held for 30 s, so a run that waited for the turn ends only after its holder has, however busy the machine.
-  const holder = holdTurn(r, 0, 30);
+  // 0688: the turn stays held until the test ends, and the full run runs in a process of its own, so a run that waited
+  // for the turn never ends, however busy the machine, rather than ending after a fixed time.
+  const holder = holdTurn(r, 0, 600);
+  const run = { out: '', code: undefined };
+  const child = spawn(process.execPath, ['--input-type=module', '-e',
+    `import { runFull } from ${JSON.stringify(path.join(SCRIPTS, 'full-suite.mjs'))}; process.exitCode = runFull(${JSON.stringify(r.dir)}, ${JSON.stringify(r.head())});`],
+  { stdio: ['ignore', 'pipe', 'pipe'] });
+  child.stdout.on('data', d => { run.out += d; });
+  child.stderr.on('data', d => { run.out += d; });
+  child.on('exit', code => { run.code = code; });
   try {
-    const { out, lines } = logged(() => runFull(r.dir, r.head()));
-    assert.equal(out, 0);
-    assert.doesNotMatch(lines, /Waiting/);
-    assert.ok(running(holder), 'it didn\'t wait for the held turn');
-  } finally { try { process.kill(holder); } catch { /* already gone */ } }
+    await until(() => run.code !== undefined, 'the full run to end without waiting for the held turn', 60000);
+    assert.equal(run.code, 0, run.out);
+    assert.doesNotMatch(run.out, /Waiting/);
+  } finally {
+    try { process.kill(holder); } catch { /* already gone */ }
+    if (run.code === undefined) child.kill();
+  }
 });
 
 test('0630 AC3: while a slow full run is going, a ship\'s or build\'s tests run without waiting for it', async () => {
