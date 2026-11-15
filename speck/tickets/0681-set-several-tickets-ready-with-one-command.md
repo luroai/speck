@@ -1,7 +1,7 @@
 ---
 id: "0681"
 title: "Set several tickets ready with one command"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T13:38:42.344Z"
+approved: "2026-11-15T13:58:29.367Z"
 
 ---
 # 0681 · Set several tickets ready with one command
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Gate 1 takes one command per ticket: `speck set <id> status ready`. After a round of ticket writing leaves several drafts, setting them ready means running it once for each and reading each result.
@@ -55,9 +56,14 @@ You can now set several tickets ready in one go by naming them all, for example 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 173,041
+- Elapsed since build started: 20 min
+- Changed lines: 35 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
