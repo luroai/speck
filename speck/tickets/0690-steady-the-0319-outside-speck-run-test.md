@@ -1,7 +1,7 @@
 ---
 id: "0690"
 title: "Steady the 0319 outside-speck-run test"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-15T21:03:25.487Z"
 ---
 # 0690 · Steady the 0319 outside-speck-run test
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 "0319 AC1–AC4" in `test/seen-builds-0319.test.mjs` once saw speck run call build 0002 "already being built" instead of "being built outside speck run", at a load of about 20, then passed alone. A chance failure like this can fail the full suite on main and hold up every ship.
@@ -48,7 +48,7 @@ The test gives the same result every time, whether the cause was in the test or 
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When speck run starts while a build you started yourself (for example with /speck-build in a conversation) is already going, it now says that build "is being built outside speck run", as it already did for one it noticed later. Before, it could call it "already being built", as though another speck run had started it. That mix-up also made one of speck's own tests fail now and then on a busy machine, which could hold up shipping. To see it, start a build by hand, then start speck run: its first lines name the build as outside speck run.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +58,75 @@ The test gives the same result every time, whether the cause was in the test or 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4089a3110534289637f9047600ea486df0ff570c",
+    "session": "fresh",
+    "thread_id": "01a1e109-64d8-72b1-a3bd-a635208ebda0",
+    "builder_response": "- Tests run: `speck test --related test/seen-builds-0690.test.mjs test/seen-builds-0319.test.mjs` (the ticket's own file, the 0319 file and every test file naming scripts/run.mjs, plus the checks).\n- AC1: the cause was in speck run. adoptEarlierBuilds, the read speck run makes right after printing \"watching for ready tickets\", hard-coded \"is already being built\" for any running build, ignoring `seen`. The 0319 test writes its records as soon as it sees that line, so under load they were sometimes there for that first read. Written in Notes.\n- AC2: adoptEarlierBuilds now labels with adoptedAs(rec), as adoptSeen does. test/seen-builds-0690.test.mjs writes the records before speck run starts (the race's losing order, made certain) and failed before the fix (\"0002 is already being built\").\n- AC3: checked by hand, not a suite test: 10/10 runs of test/seen-builds-0319.test.mjs with 16 busy loops on 16 cores (load ~36). Noted in the ticket.\n- AC4: related run passes, 358 tests, 0 failing.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 172535,
+      "cached_input_tokens": 130560,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 755,
+      "reasoning_output_tokens": 17
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 41975,
+      "cached": 130560,
+      "write": 0,
+      "output": 755
+    },
+    "cost_usd": 0.104556,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T21:07:58.805Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Ticket Notes identify the startup labelling race. scripts/run.mjs prints its watching message before adoptEarlierBuilds reads records; the previous startup label ignored seen. The 0690 regression test exercises this ordering deterministically."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "adoptEarlierBuilds now uses adoptedAs(rec), matching adoptSeen while preserving the switch label. Passing test '0690 AC2' creates both records before startup and checks that each receives the correct label."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "All ten /tmp/speck-0690-load-*.txt logs show the 0319 file passing seven tests with zero failures. Ticket Notes record 16 busy loops on 16 cores during these runs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "/tmp/speck-0690-tests.txt reports 358 passes, zero failures and three skips, including the existing 0319 tests and new regression test. The branch's change is limited to the startup label, regression test and ticket."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The fix makes startup consistently identify builds started outside speck run. The new test reliably exercises the previously failing ordering, and all ten recorded load runs passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
