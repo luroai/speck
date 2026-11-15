@@ -55,7 +55,7 @@ A merge round gives the reviewer only what changed since it approved: how each c
 - speck (2026-11-15 13:58 UTC) told you: Nothing is stuck. The build is near its end and has run the related tests, about 2,600 of them, twice and is starting a third run so the reviewer gets clean output. A machine load of about 45 made each run slow. The second run hit a ship queue timing test (0264 AC3) that failed once in three runs on its own. It's flaky under load and unrelated to this change. Why: The build log shows each step finishing and both large test runs completing with only expected or unrelated failures, nothing hanging, while the load average stayed between 36 and 46 throughout.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When an approved ticket can't ship because other work landed on the same files, the build merges that work in and asks the reviewer to look again. The reviewer used to reread the whole ticket every time. Now it's shown only how the clash was settled and anything changed afterwards, with a note saying which version it approved and how to see the whole change if it needs to. Tickets that bump into other work should get back to shipping faster. You can see it in a ticket's review pack: a merge round's summary talks about the merge rather than the whole ticket. Keep an eye out for anything a merge round now misses that a second full read would have caught.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -65,6 +65,9 @@ A merge round gives the reviewer only what changed since it approved: how each c
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up (known limit): a merge round's diff also shows the ticket file's own changes since the approval, such as `speck close` setting it approved and filling its logs, as any later round's diff does. Only the review rounds are left out.
+- Follow-up skipped, already captured: `0264 AC3` failed once in a related run and passes alone (speck/ideas/2026-11-11-steady-the-0264-ac3-ship-queue-test.md).
+- Follow-up skipped, already captured: `0109 AC1` failed once in a related run and passes alone (speck/ideas/2026-11-08-steady-six-speck-run-timing-tests-under-load.md).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -146,6 +149,89 @@ A merge round gives the reviewer only what changed since it approved: how each c
     ],
     "escalation_question": "",
     "summary": "The implementation and reported tests support the intended narrower merge review, including empty diffs and access to the whole change. One test must change before approval: it locks the design document to particular wording, which the review rules prohibit."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7cf4a1e57d1a03fbc90b7b4b44fb0d68f758129a",
+    "session": "continued",
+    "thread_id": "01a1df85-9fed-7282-8cc3-c48bdc3e7c59",
+    "builder_response": "- Tests run: test/review-0673.test.mjs test/review-0241.test.mjs test/ship-0048.test.mjs, with commands.checks (166 pass, 3 skipped, 0 fail).\n- F1: fixed. Removed the AC4 test from test/review-0673.test.mjs (and the ROOT path it used). I haven't edited the ticket's acceptance criteria, because changing them after ready would take the ticket out of auto_ship. Its Notes say instead that AC4 has no test and is checked by reading docs/brief.md (Merge rounds), skills/speck-review/SKILL.md (claude-subagent round 2) and skills/speck-build/SKILL.md (Conflict step 5).\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 262590,
+      "cached_input_tokens": 211200,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1581,
+      "reasoning_output_tokens": 149
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4289,
+      "cached": 96512,
+      "write": 0,
+      "output": 586
+    },
+    "cost_usd": 0.0240892,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T14:10:02.199Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "reviewSince and cleanMerge in scripts/review.mjs retain the reduced merge-tree diff. Passing 0673 AC1 tests cover conflicts, hand edits, later commits, excluded files and an empty diff that still runs."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "diffSection names the approved commit and supplies the whole-change command. Passing 0673 AC2 exercises the reviewer prompt and speck diff and executes that command."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0673 AC3 verifies round 1, later rounds without a merge and merges before first approval retain their previous diff behaviour."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Checked by reading, as clarified in the ticket's Notes: docs/brief.md:122 describes resolutions and subsequent changes; skills/speck-review/SKILL.md:91 describes the reduced diff and whole-change command; skills/speck-build/SKILL.md:118 gives the same guidance for conflict reviews."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The latest reported run of the three affected test files and commands.checks has 166 passes, three skips and no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/review-0673.test.mjs",
+        "issue": "The documentation wording test identified in round 1 has been removed, along with its unused ROOT constant.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change narrows merge reviews to conflict resolutions and subsequent edits while preserving access to the whole change. The problematic documentation test is removed, the guidance is consistent, and the latest tests pass. Ready for merge consideration."
   }
 }
 ```
