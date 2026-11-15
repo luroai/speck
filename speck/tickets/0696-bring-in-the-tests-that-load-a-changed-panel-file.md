@@ -42,6 +42,8 @@ A change to a file the panel's page loads brings in the tests that load the page
 ## Notes
 - From the inbox note. `scripts/related.mjs` (0437, 0447); 0447 kept it from picking too many by counting only modules few support files name, so keep that rule.
 - Failing before this build: none
+- The namer already counted `path.join(ROOT, 'templates', 'panel.js')` as naming `templates/panel.js` (by its file name): the gap was 0447's quarter rule, as nearly every support module imports `test/support/panel.mjs`. The new rule counts only the modules that name a file in their own text (one in twenty at most) and brings in the tests that import those modules directly. The CLI, named by 9 of 72 in their own text, stays out, as does 0447's four-module fixture.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
