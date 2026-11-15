@@ -41,6 +41,7 @@ The test gives the same result every time, whether the cause was in the test or 
 
 ## Notes
 - Seen in 0670's related run.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
