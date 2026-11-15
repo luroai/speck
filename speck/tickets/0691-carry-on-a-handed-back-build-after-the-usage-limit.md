@@ -1,7 +1,7 @@
 ---
 id: "0691"
 title: "Carry on a handed-back build after the usage limit"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-10-carry-on-a-handed-back-build-after-the-usage-limit.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
+started: "2026-11-15T21:05:12.659Z"
 
 ---
 # 0691 · Carry on a handed-back build after the usage limit
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a build that was handed back on an approved ticket, for example to resolve a merge, stops on an agent's usage limit before it sets the ticket reviewing, speck run doesn't carry it on after the reset, as it does for a ticket that's ready, building or reviewing. The ticket then moves only when its next ship is refused, which spends another of its hand-backs, and while you're away it can sit for days.
