@@ -1,7 +1,7 @@
 ---
 id: "0673"
 title: "Re-review only what changed after approval in a merge round"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-15
+started: "2026-11-15T13:36:05.771Z"
 
 ---
 # 0673 · Re-review only what changed after approval in a merge round
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a ship is refused for a conflict or for tests that fail on the change as it would land, the build merges the base branch in and the change is reviewed again. That merge round gives the reviewer the branch's whole change against the base branch, so it reads again everything it has already approved. This repo has had 155 merge rounds, and a ticket whose ship is refused takes 12.6 minutes from its first ship attempt to shipped, against 3.8 for one that ships cleanly.
