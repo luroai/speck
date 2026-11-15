@@ -15,17 +15,21 @@ import { commitBySubject } from './support/commits.mjs';
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const notes = () => read('docs/releases/v1.3.1.md');
 const INSTALL = /npx github:luroai\/speck#v1\.3\.1 init/;
+// 0684 (release 1.4.0) made the checks below that named 1.3.1 as the current version check the current version instead.
+const version = () => JSON.parse(read('package.json')).version;
+const esc = v => v.replace(/\./g, '\\.');
 
-test('0668 AC1: package.json is version 1.3.1', () => {
-  assert.equal(JSON.parse(read('package.json')).version, '1.3.1');
+test('0668 AC1: package.json has the current release version', () => {
+  assert.match(version(), /^\d+\.\d+\.\d+$/);
+  assert.ok(changelogSection(read('CHANGELOG.md'), version()), 'with a changelog section of its own');
 });
 
-test('0668 AC1: speck init prints speck 1.3.1', () => {
+test('0668 AC1: speck init prints speck and the current version', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   const r = spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^speck 1\.3\.1: /m);
+  assert.match(r.stdout, new RegExp(`^speck ${esc(version())}: `, 'm'));
 });
 
 // Where the section sits, that it describes each change and that the older sections are unchanged are about how the
@@ -47,8 +51,8 @@ test('0668 AC2: the 1.3.0 section is still there beside the 1.3.1 one', () => {
 });
 
 // Only the version is a fact in the README's status line (0491): the rest of its wording is checked by review.
-test('0668 AC3: the README\'s and the brief\'s status lines name 1.3.1', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), /Status: 1\.3\.1\b/, f);
+test('0668 AC3: the README\'s and the brief\'s status lines name the current version', () => {
+  for (const f of ['README.md', 'docs/brief.md']) assert.match(read(f), new RegExp(`Status: ${esc(version())}\\b`), f);
 });
 
 test('0668 AC3: the setup prompt still installs the latest release', () => {
@@ -87,7 +91,6 @@ test('0668 AC5: the Built with speck figures 1.3.1 was built from match the done
   assert.deepEqual(builtWithSpeckFigures(doneTicketsAt(commit)), { shipped: 653, cancelled: 16, medianMinutes: 14, medianRounds: 2, firstRound: 311 });
 });
 
-test('0668 AC5: package.json and the newest changelog section name 1.3.1', () => {
+test('0668 AC5: package.json and the newest changelog section name the same version', () => {
   assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md') }), []);
-  assert.equal(JSON.parse(read('package.json')).version, '1.3.1');
 });
