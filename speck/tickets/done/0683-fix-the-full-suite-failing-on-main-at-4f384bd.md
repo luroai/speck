@@ -1,7 +1,7 @@
 ---
 id: "0683"
 title: "Fix the full suite failing on main at 4f384bd"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,11 +21,12 @@ started: "2026-11-15T13:21:13.432Z"
 blocked_at: ""
 waited_seconds: 11
 approved: "2026-11-15T13:24:47.669Z"
+finished: "2026-11-15T13:30:13.741Z"
 
 ---
 # 0683 · Fix the full suite failing on main at 4f384bd
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full suite fails on main at commit 4f384bd (4f384bddf1e74d7dcaa2978a1f1912f7afb664e6). Failing tests:
