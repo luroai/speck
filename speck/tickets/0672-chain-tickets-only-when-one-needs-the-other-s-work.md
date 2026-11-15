@@ -47,6 +47,7 @@ Tickets wait for each other only when one can't be built without the other's wor
 - The line comparison can't see a ticket that needs another's work without touching its lines, which is why the first case stays.
 - The step's wording today is what 0205 and 0475 wrote. `test/ticket-0475.test.mjs` pins the loop rule, the triage pointer and the installed copies, not the overlap wording.
 - A conflict costs more while a merge round re-reviews the whole change: 0673 shortens that, and matters more once fewer tickets are chained.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
