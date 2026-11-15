@@ -47,6 +47,9 @@ With `watch: decide`, a check speck can't make is left for you at the end: the b
 - Checks in the app came in 0636 (`scripts/app-check.mjs`, whose `CHECK_ACTIONS` are `decide` and `ask`, and `scripts/foreman-agent.mjs`). QA (0651) makes the checks when it's set, and gets the same action.
 - `autoShipWhyNot` in `scripts/ship.mjs` gives auto-ship's reasons for leaving a ticket, which `speck status` and the panel already show.
 - Failing before this build: none
+- Self-check: leave named "speck watch decide" in its refusal with watch: fix, so the refusal now names the action run; `wentWithLines` didn't read a leave's Notes line as a call speck made, so its pattern now takes it; the brief test no longer finds the paragraph by its wording.
+- Pictures: none, because nothing changes how anything looks: the review pack gains a plain text section, which the tests check.
+- `--saw "<text>"` (with a space, as criterion 1 writes it) and `--why "<text>"` are read as `--saw=` and `--why=` for every `speck watch` action. A leave with no `--why` takes its `--saw` as the reason.
 - speck (2026-11-15 13:58 UTC) told you: The build is slow but healthy: it has made steady progress and is now re-running related tests ahead of review. The time went on several rounds of test fixes (the 600-line file cap, a note regex, a resume test and a docs test that rewords the brief) while the machine was very busy, with a load average of about 36 to 46. Why: The build log shows it moving forward step by step with no hung command, and the latest full test run on the base branch's newest commit passed, so nothing outside the ticket is broken.
 
 ## In plain words

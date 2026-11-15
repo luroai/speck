@@ -3,10 +3,8 @@
 // speck run starts an agent with a short brief to look into it. The agent follows the speck-watch skill and does one
 // thing, through `speck watch <action>` (0486: was `speck foreman`): resume the build with an instruction, re-run the
 // ship once, make a draft fix ticket or ask the user one question. Each is noted in the ticket's Notes and shown in the Foreman's status detail.
-// 0567: with watch: decide, it can also go with its own recommendation instead of asking.
-// 0569: speck run also starts it for a build still running far past the usual time, when it can only tell you what it
-// found or make a draft fix ticket.
-// 0636: and, with watch fix or decide, to check a blocked question in the running app (app-check.mjs). 0637: and on another agent of yours while its own is held by a usage limit (watch-stand-in.mjs). 0651: on QA's settings, saying QA, once they're set.
+// 0567: with watch: decide, it can also go with its own recommendation instead of asking. 0569: speck run also starts it for a build still running far past the usual time, when it can only tell you what it found or make a draft fix ticket.
+// 0636: and, with watch fix or decide, to check a blocked question in the running app (app-check.mjs). 0679: with decide, it may leave a check it can't make for you. 0637: and on another agent of yours while its own is held by a usage limit (watch-stand-in.mjs). 0651: on QA's settings, saying QA, once they're set.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -36,8 +34,8 @@ import { providerKey } from './keys.mjs';
 import { usualBuild, runningLong, canRunLong } from './long-build.mjs';
 import { limitWaiting, keepUsageOfLog } from './usage-limit.mjs';
 import { reviewerWaiting } from './reviewer-limit.mjs';
-import { takeAt, resumeTime, resumeClock, resumeWhy } from './resume-at.mjs';
-import { appCheckable, appStartSet, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS, qaOn, qaConfig } from './app-check.mjs';
+import { takeAt, spaced, resumeTime, resumeClock, resumeWhy } from './resume-at.mjs';
+import { appCheckable, appStartSet, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS, qaOn, qaConfig, leftSays } from './app-check.mjs';
 import { stopApp } from './app.mjs';
 import { standIn, movedOf } from './watch-stand-in.mjs';
 
@@ -55,7 +53,7 @@ export const ACTIONS = Object.freeze({
   reship: 'asked speck run to ship it again, once',
   fix: 'made a draft fix ticket',
   ask: 'asked you',
-  decide: 'went with the recommendation', // 0567
+  decide: 'went with the recommendation', leave: 'went with the recommendation and left the check in the app for you', // 0567. 0679: leave
   tell: 'told you what it found', // 0569
 });
 const LONG_ACTIONS = Object.freeze(['fix', 'tell']); // 0569: what it may do about a build that's still running
@@ -329,8 +327,8 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     for (const a of mine) {
       if (a.action === 'reship') { ships.again(a.id); speak(`${a.id}: I asked for its ship to be tried again: ${a.why}`); }
       // 0618: a resume keeps what it was asked against too, as a decide does, unless it was asked before speck kept it.
-      else if (a.action === 'resume' || a.action === 'decide') {
-        s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text, ...(a.action === 'decide' ? { by: 'decide', head: a.head, session: a.session, status: a.status, ...(a.watch ? { watch: a.watch } : {}) } : a.head ? { by: 'watch', head: a.head, session: a.session, status: a.status } : {}), ...(a.resume_at ? { at: a.resume_at, why: a.why } : {}) }];
+      else if (a.action === 'resume' || a.action === 'decide' || a.action === 'leave') { // 0679: a leave resumes as a decide does
+        s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text, ...(a.action !== 'resume' ? { by: 'decide', head: a.head, session: a.session, status: a.status, ...(a.watch ? { watch: a.watch } : {}), ...(a.action === 'leave' ? { left: true } : {}) } : a.head ? { by: 'watch', head: a.head, session: a.session, status: a.status } : {}), ...(a.resume_at ? { at: a.resume_at, why: a.why } : {}) }];
         if (a.resume_at || r.qa) speak(a.resume_at ? `${a.id}: I'll resume it at ${resumeClock(Date.parse(a.resume_at), now())}: ${resumeWhy(a.why)}` : `${a.id}: QA checked it in the app and ${ACTIONS[a.action]}: ${a.text} (${a.why})`); // 0625. 0651: and QA's decide
       }
       else speak(`${a.id}: ${r.qa ? 'QA checked it in the app and' : 'I'} ${ACTIONS[a.action].replace('what it found', 'what I found')}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
@@ -375,7 +373,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     const message = r.by === 'user'
       ? `speck looked into why ticket ${t.id}'s work stopped and asked the user: "${r.question}" Their answer: ${r.message} Carry on with ${skill} ${t.id} from where you left off, as they said.`
       : r.by === 'decide' // 0567
-      ? `speck (watch: ${r.watch === 'fix' ? 'fix' : 'decide'}) looked into why ticket ${t.id}'s work stopped and went with its recommendation: ${r.message}. It's recorded in the ticket's Notes. Carry on with ${skill} ${t.id} from where you left off, going with that option.`
+      ? `speck (watch: ${r.watch === 'fix' ? 'fix' : 'decide'}) looked into why ticket ${t.id}'s work stopped and went with its recommendation: ${r.message}. It's recorded in the ticket's Notes${r.left ? ', with the check in the app left for the user, who makes it before shipping' : ''}. Carry on with ${skill} ${t.id} from where you left off, going with that option.`
       : `speck looked into why ticket ${t.id}'s work stopped, and asks the build to carry on: ${r.message} Carry on with ${skill} ${t.id} from where you left off.`;
     const { argv, why } = rec ? resumeFor(words, cfg, t.id, rec, message) : { argv: null, why: 'it has no run record' };
     if (!argv) return speak(`${t.id}: I asked for its build to be resumed, but speck run can't: ${why}.`);
@@ -468,7 +466,7 @@ export function buildStuck(status) {
 
 // ---------- speck watch <action> <id> [text] --why=<why>: what the agent looking into a stop may do ----------
 
-const USAGE = 'Usage: speck watch resume <id> "<instruction>" [--at <time>] | reship <id> | fix <id> "<title>" | ask <id> "<question>" | decide <id> "<option>" | tell <id> "<what you found>", each with --why="<why>", and on a check in the app --saw="<what you saw>". Only the agent speck run starts to look into a stop may run these. You answer or dismiss its question with speck answer <id> "<your answer>" or speck dismiss <id>.';
+const USAGE = 'Usage: speck watch resume <id> "<instruction>" [--at <time>] | reship <id> | fix <id> "<title>" | ask <id> "<question>" | decide <id> "<option>" | leave <id> | tell <id> "<what you found>", each with --why="<why>", and on a check in the app --saw="<what you saw>", or with leave why you couldn\'t make the check. Only the agent speck run starts to look into a stop may run these. You answer or dismiss its question with speck answer <id> "<your answer>" or speck dismiss <id>.';
 
 // Writes `line` at the end of the ticket's Notes and commits only the ticket where its build keeps it. Returns nothing,
 // or throws a SpeckError saying why, changing nothing. 0567: `then` makes any other change to the ticket's text.
@@ -515,12 +513,12 @@ function cantDecide(cfg, t, at, rec, checking = false) {
 // out a resume or a reship once the agent has ended. `token` is the agent's run (SPECK_FOREMAN_RUN). One action a run.
 // Returns what it says.
 export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RUN, now = new Date(), tickets = null } = {}) {
-  const { at: atText, left } = takeAt(args); // 0625
+  const { at: atText, left } = takeAt(spaced(args)); // 0625
   const words = left.filter(a => !a.startsWith('--'));
   const [action, rawId, ...rest] = words;
   const oneLine = v => textOf(v).replace(/\s+/g, ' '); // kept to one line in the Notes
-  const why = oneLine((args.find(a => a.startsWith('--why=')) || '').slice('--why='.length));
-  const saw = oneLine((args.find(a => a.startsWith('--saw=')) || '').slice('--saw='.length)); // 0636
+  const saw = oneLine((left.find(a => a.startsWith('--saw=')) || '').slice('--saw='.length)); // 0636
+  const why = oneLine((left.find(a => a.startsWith('--why=')) || '').slice('--why='.length)) || (action === 'leave' ? saw : ''); // 0679: a leave's --saw says why
   if (!Object.hasOwn(ACTIONS, action || '') || !rawId) throw new SpeckError(USAGE);
   const cfg = loadConfig(repo);
   let main = repo;
@@ -535,24 +533,26 @@ export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RU
   if (s.running.long && !LONG_ACTIONS.includes(action)) throw new SpeckError(`Ticket ${id}'s build is still running, so speck watch ${action} can't be used on it. Use fix or tell.`);
   if (!s.running.long && action === 'tell') throw new SpeckError(`speck watch tell is for a build that runs long, and ticket ${id} stopped. Choose another action.`);
   if (readActions(runs).some(a => a.run === token)) throw new SpeckError(`This run has already taken its one action for ${id}. Stop here.`);
-  const text = oneLine(rest.join(' ')), check = checkOf(s.running); // 0636: a check in the app may only decide or ask, saying what it saw
-  if (check && !CHECK_ACTIONS.includes(action)) throw new SpeckError(`This run is checking ticket ${id}'s question in the app, so speck watch ${action} can't be used. Use decide or ask.`);
-  if (check && !saw) throw new SpeckError(`Say what you checked and saw in the app with --saw="<what you saw, in a sentence>". ${USAGE}`);
+  const said = oneLine(rest.join(' ')), check = checkOf(s.running); // 0636: a check in the app may only decide or ask, saying what it saw
+  if (check ? !CHECK_ACTIONS.includes(action) : action === 'leave') throw new SpeckError(check ? `This run is checking ticket ${id}'s question in the app, so speck watch ${action} can't be used. Use decide or ask, or leave when you can't make the check.`
+    : `speck watch leave is only for a check in the app you can't make, and this run isn't checking one for ${id}, so nothing was changed. Choose another action.`); // 0679
+  if (check && !saw) throw new SpeckError(action === 'leave' ? `Say why you couldn't make the check with --saw="<why, in a sentence>", so nothing was changed. ${USAGE}` : `Say what you checked and saw in the app with --saw="<what you saw, in a sentence>". ${USAGE}`);
   if (!check && saw) throw new SpeckError(`--saw is only for checking a question in the app, so nothing was changed. ${USAGE}`);
   if (check && checkStale(t, s.running)) throw new SpeckError(`${checkStale(t, s.running)}, so nothing was changed. Stop here: speck run checks a new question by itself.`);
-  const rec = check && action === 'decide' ? String(questionFacts(contentLines(t.sections['blocked question'])).recommendation || '') : '';
-  if (check && action === 'decide' && (!rec || rec.trim().toLowerCase() !== text.trim().toLowerCase()))
+  const going = action === 'decide' || action === 'leave', rec = check && going ? String(questionFacts(contentLines(t.sections['blocked question'])).recommendation || '') : '';
+  const text = action === 'leave' && !said && rec ? rec.trim() : said; // 0679: a leave goes with the recommendation as a decide does
+  if (check && going && (!rec || rec.trim().toLowerCase() !== text.trim().toLowerCase()))
     throw new SpeckError(`A check in the app goes only with the build's recommendation${rec ? `, "${rec}"` : ', and it has none'}, so nothing was changed. Ask the user instead.`);
   if (!why) throw new SpeckError(`Say why with --why="<why, in a sentence>". ${USAGE}`);
   if (action !== 'reship' && !text) throw new SpeckError(`speck watch ${action} needs ${action === 'resume' ? 'the instruction for the build' : action === 'fix' ? 'the fix ticket\'s title' : action === 'decide' ? 'the option you recommend' : action === 'tell' ? 'what you found' : 'the question'}. ${USAGE}`);
   if (atText !== undefined && action !== 'resume') throw new SpeckError(`--at works only with speck watch resume, so nothing was changed. ${USAGE}`);
   const resumeAt = atText === undefined ? null : resumeTime(atText, now); // 0625
   if (['done', 'cancelled'].includes(t.fm.status)) throw new SpeckError(`Ticket ${id} is ${t.fm.status}, so there's nothing to do for it.`);
-  if (action === 'decide') { // 0567
-    const no = cantDecide(cfg, t, at, readObject(path.join(runs, `${id}.json`)), !!check);
-    if (no) throw new SpeckError(`${no}, so nothing was changed. Choose another action.`);
+  if (going) { // 0567. 0679: a leave only with watch: decide
+    const no = cantDecide(cfg, t, at, readObject(path.join(runs, `${id}.json`)), !!check && action === 'decide');
+    if (no) throw new SpeckError(`${no.replace('speck watch decide', `speck watch ${action}`)}, so nothing was changed. Choose another action.`);
   }
-  if (action === 'resume' || action === 'decide') {
+  if (action === 'resume' || going) {
     const rec = readObject(path.join(runs, `${id}.json`));
     const cant = !rec ? 'it has no run record from speck run' : resumeFor(runWords(cfg), cfg, id, rec, '').why;
     if (cant) throw new SpeckError(`Ticket ${id}'s build can't be resumed by speck run: ${cant}. Choose another action.`);
@@ -570,24 +570,24 @@ export function foremanAction(repo, args, { token = process.env.SPECK_FOREMAN_RU
     : action === 'fix' ? `made draft fix ticket ${fixId}: ${text}` : action === 'tell' ? `told you: ${text.replace(/\.$/, '')}` : `asked you: ${text}`;
   // 0567: decide says it as the button does, which is how the board reads it, and sets a blocked ticket building as it does.
   const checked = check ? checkedSays(check.line, saw, s.running.qa === true) : ''; // 0636: what it checked in the app and saw
-  if (action === 'decide') noteInTicket(at, t, `- Went with the recommendation: ${text} (${FOREMAN_CHOSE}, as watch is ${fixingOf(cfg)}, ${when}).${checked}`, `${foremanSubject(id)} decide`,
+  if (going) noteInTicket(at, t, `- Went with the recommendation: ${text} (${FOREMAN_CHOSE}, as watch is ${fixingOf(cfg)}, ${when}).${action === 'leave' ? leftSays(check.line, saw) : checked}`, `${foremanSubject(id)} ${action}`,
     raw => (t.fm.status === 'blocked' ? syncHeader(waitFields(setField(raw, 'status', 'building'), 'blocked', 'building', now.getTime())) : raw));
   else if (resumeAt !== null) noteInTicket(at, t, `- speck (${when}) I'll resume ${id} at ${resumeClock(resumeAt, now.getTime())}: ${resumeWhy(why)} Its instruction: ${text}`, `${foremanSubject(id)} ${action}`); // 0625
   else noteInTicket(at, t, `- speck (${when}) ${checked ? did.replace(/\.$/, '') : did}.${checked} Why: ${why}`, `${foremanSubject(id)} ${action}`);
   // 0567: a decide keeps what its resume checks the ticket against: its commit, its build's session and its status now. 0618: so does a resume.
-  const decided = action === 'decide' || action === 'resume' ? { status: action === 'decide' && t.fm.status === 'blocked' ? 'building' : t.fm.status, head: sh('git', ['rev-parse', 'HEAD'], { cwd: at }).stdout.trim(), session: readObject(path.join(runs, `${id}.json`))?.session } : {};
-  if (action === 'decide') { // 0589: a run record that can't be saved loses only the call's question and other options, as the choice stands
+  const decided = going || action === 'resume' ? { status: going && t.fm.status === 'blocked' ? 'building' : t.fm.status, head: sh('git', ['rev-parse', 'HEAD'], { cwd: at }).stdout.trim(), session: readObject(path.join(runs, `${id}.json`))?.session } : {};
+  if (going) { // 0589: a run record that can't be saved loses only the call's question and other options, as the choice stands
     const file = path.join(runs, `${id}.json`), facts = t.fm.status === 'blocked' ? questionFacts(contentLines(t.sections['blocked question'])) : {}; // any other ticket's section is an old question
     try { saveRecord(file, withCall(runs, id, readObject(file), callOf(facts, text, now))); } catch { /* the Notes still list it */ }
   }
-  const entry = { run: token, id, action, text, why, at: now.toISOString(), status: t.fm.status, ...decided, ...(action === 'decide' ? { watch: fixingOf(cfg) } : {}), ...(fixId ? { fix_id: fixId } : {}), ...(resumeAt !== null ? { resume_at: new Date(resumeAt).toISOString() } : {}) };
+  const entry = { run: token, id, action, text, why, at: now.toISOString(), status: t.fm.status, ...decided, ...(going ? { watch: fixingOf(cfg) } : {}), ...(fixId ? { fix_id: fixId } : {}), ...(resumeAt !== null ? { resume_at: new Date(resumeAt).toISOString() } : {}) };
   fs.appendFileSync(path.join(runs, DID), `${JSON.stringify(entry)}\n`);
   return {
     resume: resumeAt !== null ? `Noted in ${id}'s Notes. speck run resumes its build at ${resumeClock(resumeAt, now.getTime())} with your instruction, unless the ticket has moved on by then. Stop here.` : `Noted in ${id}'s Notes. speck run resumes its build with your instruction once you've ended. Stop here.`,
     reship: `Noted in ${id}'s Notes. speck run ships it again once you've ended. Stop here.`,
     fix: `Made draft fix ticket ${fixId}, which waits for the user to shape it and set it ready, and noted it in ${id}'s Notes. Stop here.`,
     ask: `Noted in ${id}'s Notes. speck's status shows your question to the user. Stop here.`,
-    decide: `Noted in ${id}'s Notes. speck run resumes its build with your recommendation once you've ended. Stop here.`,
+    decide: `Noted in ${id}'s Notes. speck run resumes its build with your recommendation once you've ended. Stop here.`, leave: `Noted in ${id}'s Notes, with the check left for the user, who makes it before the ticket ships. speck run resumes its build with the recommendation once you've ended. Stop here.`,
     tell: `Noted in ${id}'s Notes. speck run says it in its log once you've ended, and it needs no answer. Stop here.`,
   }[action];
 }

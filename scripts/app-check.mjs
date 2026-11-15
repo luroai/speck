@@ -2,9 +2,11 @@
 // with a `Check in the app: <what to look at>` line among its question's facts (question-facts.mjs). With watch fix or
 // decide and commands.start set, speck run starts its watch agent for each low-risk ticket blocked on one, once per
 // question, with a brief to start the app, sign in when it needs to, keep a screenshot of each thing it checks, stop the
-// app and then go with the recommendation or ask you. Such a question is never taken unchecked: otherwise it waits for you.
+// app and then go with the recommendation or ask you. speck run's own check never takes such a question: otherwise it waits for you.
 // 0638: with commands.start blank too, with a brief to first work out how to start the app and try it with speck app --start.
 // 0651: on QA's agent, model and effort once any of QA's settings is set, and its lines then say QA checked it.
+// 0679: with watch decide, a check the agent can't make (a sound, another device, a browser or account it can't use) may
+// be left for you: speck goes with the recommendation as decide does, and the approved ticket waits for you to ship it.
 import crypto from 'node:crypto';
 import { fixingOf, speckActs, checksInApp } from './foreman.mjs';
 import { contentLines } from './core.mjs';
@@ -12,8 +14,8 @@ import { questionFacts } from './question-facts.mjs';
 import { benchOwnAgent } from './bench.mjs';
 
 const CLI = 'node .speck/scripts/speck.mjs';
-// What a check run may do: go with the build's recommendation, or ask you.
-export const CHECK_ACTIONS = Object.freeze(['decide', 'ask']);
+// What a check run may do: go with the build's recommendation, go with it and leave the check for you (0679), or ask you.
+export const CHECK_ACTIONS = Object.freeze(['decide', 'leave', 'ask']);
 
 // 0651: QA's settings, your own. With all of them blank, a check runs as the watch agent's looks do, and says so as before.
 export const QA_SETTINGS = Object.freeze(['qa_agent', 'qa_model', 'qa_effort', 'qa_bench']);
@@ -81,6 +83,7 @@ export function checkBrief({ id, check, skill, watch, startSet = true }) {
     '5. Then do exactly one of these, with --saw saying what you checked and saw, and --why why, each in a sentence:',
     ...(!rec ? [] : watch === 'decide' ? [`${dec}   when what you saw agrees with the recommendation: speck goes with it and resumes the build`]
       : [`${dec}   only when the check clearly passes: speck goes with the recommendation and resumes the build`]),
+    ...(rec && watch === 'decide' ? [`- ${CLI} watch leave ${id} --saw="<why you couldn't make the check>" --why="..."   only when what the check asks for is something you can't see or do, such as a sound, another device, or a browser or account you can't use: speck goes with the recommendation, resumes the build and leaves the check for the user, and the ticket waits for them to ship it. Never use it when what you saw disagrees with the recommendation, or for a check you could make`] : []),
     `- ${CLI} watch ask ${id} "<one question for the user>" --saw="..." --why="..."   ${rec ? 'otherwise' : 'as the build recommends nothing'}, saying what you saw`,
     'Never set a ticket ready, approve work, ship anything yourself, merge, push or change any code or file in the repo by hand.',
   ].join('\n');
@@ -89,3 +92,12 @@ export function checkBrief({ id, check, skill, watch, startSet = true }) {
 // What a check run's line in the Notes adds: what it checked and what it saw.
 // 0651: `qa` when QA checked it.
 export const checkedSays = (line, saw, qa = false) => ` ${qa ? 'QA checked' : 'Checked'} in the app: ${String(line).replace(/\.$/, '')}. Saw: ${String(saw).replace(/\.$/, '')}.`;
+
+// 0679: what a leave's line in the Notes adds: the check, in the build's own words, left for you, and why it couldn't be made.
+export const LEFT_FOR_YOU = 'Left for you to check in the app';
+export const leftSays = (line, saw) => ` ${LEFT_FOR_YOU}: ${String(line).replace(/\.$/, '')}. Couldn't check it: ${String(saw).replace(/\.$/, '')}.`;
+// Each check left for you in a ticket's Notes `lines`, in order.
+export const leftChecks = lines => (lines || []).flatMap(line => {
+  const m = /^\s*[-*]\s+Went with the recommendation:.*? Left for you to check in the app: (.*?)\. Couldn't check it: /.exec(line);
+  return m ? [m[1]] : [];
+});

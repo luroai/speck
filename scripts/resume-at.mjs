@@ -19,6 +19,10 @@ export function takeAt(args) {
   return { at: has ? next : '', left: args.toSpliced(i, has ? 2 : 1) };
 }
 
+// 0679: `--saw "<text>"` and `--why "<text>"` read as `--saw=<text>` and `--why=<text>`.
+export const spaced = args => args.flatMap((a, i) => (['--saw', '--why'].includes(a) && args[i + 1] !== undefined && !String(args[i + 1]).startsWith('--') ? [`${a}=${args[i + 1]}`]
+  : i > 0 && ['--saw', '--why'].includes(args[i - 1]) && args[i - 1] !== a && !String(a).startsWith('--') ? [] : [a]));
+
 // The time `text` means at `now` (a Date), in ms, or throws a SpeckError saying why not.
 export function resumeTime(text, now) {
   const t = String(text ?? '').trim(), ms = now.getTime(), c = t.match(CLOCK);
