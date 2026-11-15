@@ -1,7 +1,7 @@
 ---
 id: "0688"
 title: Steady two ship-side tests that fail under load                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-15
 ---
 # 0688 · Steady two ship-side tests that fail under load
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Two tests fail by chance when the machine is busy, so a build's related run or the full suite on main can fail for a ticket that didn't touch them: "0264 AC3: speck run doesn't put shipping on hold, and hands the ticket back to its build" in `test/ship-0264.test.mjs` reads the ship queue's launch before it has happened, and "0630 AC3: a full run doesn't wait for the max_parallel_tests turns" in `test/full-suite-0630.test.mjs` asserts a fixed timing.
