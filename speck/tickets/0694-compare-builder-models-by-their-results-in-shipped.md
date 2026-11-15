@@ -46,6 +46,7 @@ Shipped shows how each builder model does, and each shipped ticket says what bui
 - Asked for 2026-11-15, as part of the 1.5.0 plan: "results per model". From `speck/ideas/2026-11-15-show-what-a-shipped-ticket-was-built-with.md`.
 - The board already gives each ticket `builder_models` (`scripts/speck.mjs`), and Shipped's figures are worked out in `templates/panel-model.js` (`stats`).
 - Checked 2026-11-15: `speck spend --by=model` since 1 November gives claude-opus-5-5 $355.98, claude-sonnet-5-5 $11.88 and gpt-6.1-sol $21.03.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
