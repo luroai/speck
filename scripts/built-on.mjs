@@ -81,6 +81,10 @@ export function startWaits(repo, cfg, t, tickets) {
   return { why: why.length ? why.join('\n') : null };
 }
 
+// 0675: why speck run doesn't start a ready ticket because of its after: list, or null when nothing there holds it
+// back: a row of `speck status --json` with starts_on can start on that approved ticket's work, as speck start allows.
+export const afterWait = t => (Array.isArray(t.waiting_on) && t.waiting_on.length && !t.starts_on ? `waiting for ${t.waiting_on.join(', ')}` : null);
+
 // Writes the ticket it starts on to `t`'s built_on:, as a quoted id, so it reads back as text, not a number.
 export const markBuiltOn = (t, on) => fs.writeFileSync(t.file, setField(t.raw, 'built_on', JSON.stringify(on.id)));
 

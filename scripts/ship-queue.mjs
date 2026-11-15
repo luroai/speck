@@ -86,6 +86,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
   const said = new Map(); // 0285: each ticket's message from its last try that didn't ship, and why the hold started
   let holdWhy = '';
   const forced = new Set(); // 0287: tickets the Foreman asked to ship once more
+  const after = new Set(); // 0675: approved tickets it has said wait to ship after the ticket they were built on
   const same = (id, prev, refs) => prev.base === refs.base && (prev.head === refs.head || foremanOnly(repo, id, prev.head, refs.head));
 
   const ended = (id, prev, refs, log, since, code, error) => {
@@ -118,6 +119,11 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
   };
 
   const check = tickets => {
+    for (const t of list(tickets)) {
+      if (t.status !== 'approved' || !t.ships_after || after.has(t.id)) continue;
+      after.add(t.id);
+      say(`${t.id} is approved and waits to ship after ${t.ships_after}, which it was built on and which hasn't shipped yet.`);
+    }
     if (current) return;
     if (hold !== null && headOf(repo, base) !== hold) {
       hold = null;
