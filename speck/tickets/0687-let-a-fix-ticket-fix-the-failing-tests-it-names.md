@@ -1,7 +1,7 @@
 ---
 id: "0687"
 title: "Let a fix ticket fix the failing tests it names"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-15
 ---
 # 0687 · Let a fix ticket fix the failing tests it names
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A fix ticket that speck makes when the full suite fails names the tests it must fix, and those tests are listed as failing before its build. The build and review rules say a test failing before the build is never changed or fixed, so the reviewer escalates a fix ticket for doing exactly its job: 0671 blocked on this and went on only because speck took the recommendation.
