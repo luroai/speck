@@ -1,7 +1,7 @@
 ---
 id: "0671"
 title: "Fix the full suite failing on main at 46099bc"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-15
 started: "2026-11-15T12:58:45.154Z"
 blocked_at: ""
 waited_seconds: 11
+approved: "2026-11-15T13:02:04.331Z"
 
 ---
 # 0671 · Fix the full suite failing on main at 46099bc
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on main at commit 46099bc (46099bc80d7e377f1c975967f91fb669336f41d2). Failing tests:
@@ -58,9 +59,15 @@ Changes what you'd notice: no
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): escalate: F1 The review instructions explicitly prohibit fixing any test listed under 'Failing before this build', while this ticket explicitly requires fixing that listed test.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 150,550
+- Elapsed since build started: 3 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Let a fix ticket fix the failing tests it names, so its review doesn't stop on the failing-before rule: speck/ideas/2026-11-15-let-a-fix-ticket-fix-the-failing-tests-it-names.md
