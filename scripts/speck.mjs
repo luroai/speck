@@ -30,16 +30,14 @@ import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs'
 import { withForeman, foremanBoard, foremanTicketLines, decidedFor, withCalls } from './foreman-took.mjs';
 import { agentView, cmdForeman, cmdWatch } from './foreman-agent.mjs';
 import { logTail } from './build-log.mjs';
-import { buildStop, countStop, wontResume } from './stop-wait.mjs';
-import { removeScratch } from './scratch.mjs';
+import { buildStop, countStop, wontResume } from './stop-wait.mjs'; import { removeScratch } from './scratch.mjs';
 import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
 import { questionFacts } from './question-facts.mjs'; import { cmdSplitOff } from './split-off.mjs'; // 0563
 import { goWithResumable, goWithWaiting, callsOf } from './go-with.mjs';
-import { handedBack } from './hand-back.mjs'; import { buildSession } from './build-records.mjs';
-import { noteThisBuild } from './seen-builds.mjs';
+import { handedBack } from './hand-back.mjs'; import { buildSession } from './build-records.mjs'; import { noteThisBuild } from './seen-builds.mjs';
 import { changesPending } from './changes-asked.mjs'; import { cmdChanges } from './changes.mjs';
-import { cmdApp } from './app.mjs'; // 0634
+import { cmdApp } from './app.mjs'; import { SET_USAGE, setSeveralReady } from './set-ready.mjs'; // 0634, 0681
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -121,10 +119,11 @@ function cmdCheck(args) {
 }
 
 function cmdSet(args) {
+  if (/^\d+$/.test(args[1] ?? '')) return setSeveralReady(args, cmdSet); // 0681: `speck set <id> <id>… status ready`
   const [id, key, ...rest] = args;
   const value = rest.join(' ');
   // priority is the one field that can be cleared, with `speck set <id> priority ""`.
-  if (!id || !key || (!value && !(key === 'priority' && rest.length))) throw new SpeckError('Usage: speck set <id> <field> <value>');
+  if (!id || !key || (!value && !(key === 'priority' && rest.length))) throw new SpeckError(SET_USAGE);
   checkSetValue(key, value);
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
@@ -527,6 +526,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck check <id>                    the ready check: check a ticket against the size rules
   speck lint <id>                     another name for speck check, which still works
   speck set <id> <field> <value>      update a ticket field (status ready runs the ready check first and commits the ticket; priority "" clears it)
+  speck set <id> <id>… status ready   set several tickets ready, one commit each; names any it left, and why
   speck config set <key> <value>      change one setting, checked first: your own (builder, reviewer, auto_ship...) for this machine only, the rest in speck/config.yml
   speck config set --repo <key> <value>     change speck/config.yml's value instead; --machine <key> "" removes this machine's own value
   speck config show [--json]          the main settings by group, with each one's value, whether it's the default and
