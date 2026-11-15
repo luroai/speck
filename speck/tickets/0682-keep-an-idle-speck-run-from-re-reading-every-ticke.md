@@ -45,6 +45,7 @@ A check by `speck run` reads only the tickets that have changed since its last c
 - `tick` and `readTickets` in `scripts/run.mjs` call `statusData` in `scripts/speck.mjs`, which reads and parses every ticket and runs the ready check on each. Other steps of the same check call it again for one ticket's status.
 - Test it by counting reads, not by timing: timing tests in this suite have failed under load before.
 - What a ticket's status entry says can also depend on its run record, its branch and the time, which aren't ticket files. Those are still worked out on each check.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
