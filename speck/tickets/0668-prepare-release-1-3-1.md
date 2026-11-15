@@ -1,7 +1,7 @@
 ---
 id: "0668"
 title: "Prepare release 1.3.1"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-15T13:14:36.232Z"
 ---
 # 0668 · Prepare release 1.3.1
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 1.3.0's build levels are hard to set: the Builder's card asks for each level's model as free text and says "settings" everywhere without explaining it, and a ticket's Level menu doesn't say what each level builds with. 0666 and 0667 fix that, and 0669 shows and lets you pick a ticket's builder model in the panel, which 0659 only made possible in the ticket file. Anyone following the setup prompt, or updating speck in a project, still gets 1.3.0 without the fixes.
@@ -54,7 +54,9 @@ speck is ready to be released as 1.3.1.
 - Pictures: none, because nothing anyone sees in the panel changes; the README's wording changes but not how it renders.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as 1.3.1, a bug-fix release of the build levels 1.3.0 added. Its changelog and release notes describe the three fixes: levels set from labelled lists on the Builder's card, a Level menu that says what each level builds with, and a ticket's builder shown and picked in the panel. The README and the design brief now say 1.3.1, the README's "Built with speck" figures are up to date (653 tickets shipped), and its paragraph on your agents mentions picking a ticket's builder in the panel.
+
+Once this ships, the release workflow should tag 1.3.1 and publish its release page; check the page appeared on GitHub.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -64,3 +66,80 @@ speck is ready to be released as 1.3.1.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "786aa6920163acd4fb207713bf38a7946fb279b8",
+    "session": "fresh",
+    "thread_id": "01a1df5e-2e29-78e1-a02f-752e84ea2e18",
+    "builder_response": "- Tests run: speck test --related test/release-0668.test.mjs test/release-0665.test.mjs test/docs-0491.test.mjs (the ticket's own test file, the existing test files it changed, and every test file naming a file this branch changed). 1519 pass, 0 fail.\n- Shipped since v1.3.0: 0666, 0667, 0669 (user-facing) and 0670, 0671 (test-only fixes).\n- Built with speck figures worked out from main at \"speck(0669): Choose a ticket's builder model in the panel\" with test/support/figures.mjs: 653 shipped, 16 cancelled, 14 min, 2 rounds, 311 first-round.\n- As the ticket's Notes ask, 0665's checks that named 1.3.0 as the current version now check the current version, as 0665 did for 0653's.\n- The README's \"Your agents\" paragraph also says a ticket's facts show what it will be built with and that its builder and model can be picked in the panel (0669).\n",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 198689,
+      "cached_input_tokens": 147712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1056,
+      "reasoning_output_tokens": 62
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 50977,
+      "cached": 147712,
+      "write": 0,
+      "output": 1056
+    },
+    "cost_usd": 0.1272852,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T13:21:33.643Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json sets 1.3.1. Both 0668 AC1 tests passed, including running speck init and checking its output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds 1.3.1 above 1.3.0 and leaves all older sections unchanged. Its descriptions match shipped tickets 0666, 0667, 0669, 0670 and 0671."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines say 1.3.1. Both AC3 tests passed, including setupPromptProblems checking installation of the latest release."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.3.1.md explains the bug-fix release, each shipped fix, updating in each project and upgrade behaviour without naming anyone. AC4 tests passed for installation details, settings and the changelog anchor; the remaining prose matches the shipped tickets."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recalculated figures from speck/tickets/done/: 653 shipped, 16 cancelled, 14 minutes median, 2 review rounds median and 311 first-round approvals, matching README.md. The figures and version/changelog tests passed. Reported related run: 1519 passed, zero failed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change prepares version 1.3.1 with accurate release notes, update instructions and refreshed project figures. The tests cover the release checks and report no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
