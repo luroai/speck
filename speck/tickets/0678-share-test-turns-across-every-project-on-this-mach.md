@@ -42,7 +42,7 @@ One setting limits how many test runs go at once across every project on the mac
 - One speck service for every project on a machine (`speck/ideas/2026-11-10-run-a-software-factory-from-one-speck-service.md`), where this limit would live later.
 
 ## Notes
-- Unverified: how much of that load came from other projects' test runs. This repo loads the machine by itself: with only its own builds and full suite running, the load average was 26 on 16 cores (checked 2026-11-15 with `uptime`). The limit counts the full suite's run for that reason, and helps a single project too.
+- Checked 2026-11-15: how much of that load came from other projects' test runs can't be measured after the fact. At 14:40 the load average was 35 on 16 cores and every busy process was this repo's own (its full suite and two builds), so this repo loads the machine by itself. The limit counts the full suite's run for that reason, and helps a single project too.
 - Turns are lock files under the main checkout's `speck/.cache/tests` (`turnsDir` and `inTurn` in `scripts/turns.mjs`). `~/.config/speck/` already holds this machine's private words and panels.
 - The suite's own tests mustn't read or write the real home folder's settings (as 0654 did for agents).
 
