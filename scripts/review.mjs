@@ -219,11 +219,31 @@ export function reviewerPrompt(repo, ticket, cfg, round, extra) {
     '## Builder response', extra.response || '(none provided)',
     ...changesSection(ticket.raw),
     ...(doc ? [doc] : []),
-    ...(extra.merged ? [`This round follows a merge of ${cfg.base_branch} into the ticket branch, made to resolve a conflict when shipping. So the diff below is the branch's whole change against ${cfg.base_branch} as merged, which is what would ship, not only the changes since your last review. Check that each resolved file keeps the intent of both sides.`] : []),
-    `## ${extra.merged ? `The whole change against ${cfg.base_branch} as merged` : 'Changes since your last review'} (${extra.sinceSha.slice(0, 8)}..HEAD)`, '```diff', extra.diff, '```',
+    ...diffSection(cfg, extra),
     '## Test output', '```', extra.tests, '```',
     'Re-check every acceptance criterion against the code as it is now and return the full verdict JSON.',
   ].join('\n\n');
+}
+
+// The diff a later round is given, with what it holds. 0673: after a merge of the base branch in a merge round, only
+// what changed beyond git's own clean merge, with the command for the whole change.
+function diffSection(cfg, extra) {
+  const b = cfg.base_branch;
+  const block = ['```diff', extra.diff, '```'];
+  if (extra.afterMerge) {
+    const { last, approved } = extra.afterMerge;
+    const short = sha => sha.slice(0, 8);
+    const since = last === approved ? 'since you approved it' : `since your last review, at ${short(last)}`;
+    return [
+      `This round follows a merge of ${b} into the ticket branch, made after you approved commit ${short(approved)}. What ${b} brought in was reviewed in its own tickets, and \`speck ship\` tests the two together as they would land. So the diff below holds only what changed beyond git's own clean merge of ${short(last)} with ${b}: how each conflict was resolved (the conflict markers on its minus side are git's merge), anything else changed by hand in the merge, and every change committed ${since}. A file only ${b} changed isn't in it, nor is any part of the ticket's change that the merge left as it was. Check that each resolved file keeps the intent of both sides. To see the branch's whole change against ${b} as merged, run \`git diff ${extra.base} HEAD\`.`,
+      `## Changes beyond a clean merge of ${b} (${short(last)} merged with ${b}..HEAD)`,
+      ...(extra.diff.trim() ? block : [`Nothing: the merge changed nothing beyond git's own clean merge, and nothing has been committed ${since}. Check the merge as the builder's response describes it, and run the command above if you need the whole change.`]),
+    ];
+  }
+  return [
+    ...(extra.merged ? [`This round follows a merge of ${b} into the ticket branch, made to resolve a conflict when shipping. So the diff below is the branch's whole change against ${b} as merged, which is what would ship, not only the changes since your last review. Check that each resolved file keeps the intent of both sides.`] : []),
+    `## ${extra.merged ? `The whole change against ${b} as merged` : 'Changes since your last review'} (${extra.sinceSha.slice(0, 8)}..HEAD)`, ...block,
+  ];
 }
 
 // 0356: the changes the user asked for after the last approval, for the reviewer to check until a round approves them.
@@ -267,14 +287,28 @@ function shipBase(repo, base) {
 // Where the reviewer's diff starts: the base branch's merge base in round 1, otherwise the commit the last round
 // reviewed. If the branch has merged the base branch in since then (its merge base moved), it starts at the new merge
 // base instead, so the reviewer sees the branch's whole change against the base as merged: what would ship.
-function reviewSince(repo, cfg, prior) {
+// 0673: except in a merge round, which starts at git's own clean merge of the last reviewed commit with the base
+// branch as merged in, so the reviewer sees only how each conflict was resolved, anything else changed by hand in the
+// merge and every change committed since. `afterMerge` names the commits it needs to say so.
+export function reviewSince(repo, cfg, prior) {
   const target = shipBase(repo, cfg.base_branch);
   const base = git(['merge-base', target, 'HEAD'], repo).trim();
   const last = prior[prior.length - 1]?.meta?.reviewed_sha;
   if (!last) return { base, sinceSha: base, merged: false };
   const was = sh('git', ['merge-base', target, last], { cwd: repo });
   const merged = was.status === 0 && was.stdout.trim() !== base;
-  return { base, sinceSha: merged ? base : last, merged };
+  if (!merged) return { base, sinceSha: last, merged };
+  const clean = isMergeRound(prior) && cleanMerge(repo, last, base);
+  if (!clean) return { base, sinceSha: base, merged };
+  const approved = prior.findLast(r => r.verdict.verdict === 'approve')?.meta?.reviewed_sha || last;
+  return { base, sinceSha: clean, merged, afterMerge: { last, approved } };
+}
+
+// The tree git's own merge of `a` and `b` gives, conflict markers and all, or null if git can't work it out.
+function cleanMerge(repo, a, b) {
+  const r = sh('git', ['merge-tree', '--write-tree', a, b], { cwd: repo });
+  const tree = r.stdout.split('\n')[0].trim();
+  return (r.status === 0 || r.status === 1) && /^[0-9a-f]{40,64}$/.test(tree) ? tree : null;
 }
 
 // The builder's response file given with --response, or '' without one.
@@ -292,7 +326,7 @@ function reviewSetup(repo, id, opts) {
   const ticket = findTicket(repo, id);
   const prior = rounds(repo, id);
   const round = prior.length + 1;
-  const { base, sinceSha, merged } = reviewSince(repo, cfg, prior);
+  const { base, sinceSha, merged, afterMerge } = reviewSince(repo, cfg, prior);
   const merge = isMergeRound(prior);
   // A merge round after an approval starts a new run, so only a run that hasn't approved yet can use up the limit.
   const used = prior.at(-1)?.verdict.verdict === 'approve' ? 0 : mergeRun(prior);
@@ -304,7 +338,7 @@ function reviewSetup(repo, id, opts) {
   const tests = testOutput(opts.tests, ticket.fm.id || id);
   const testsSeen = testsMeta(opts.tests);
   const response = readResponse(opts.response);
-  return { cfg, ticket, prior, round, head, base, sinceSha, merged, merge, extra, diff, tests, testsSeen, response };
+  return { cfg, ticket, prior, round, head, base, sinceSha, merged, afterMerge, merge, extra, diff, tests, testsSeen, response };
 }
 
 // Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
@@ -335,7 +369,7 @@ export function codexFailure(status, stdout, stderr) {
 }
 
 function runCodexReview(repo, id, s) {
-  const { cfg, ticket, prior, round, head, sinceSha, merged, merge, extra, diff, tests, testsSeen, response } = s;
+  const { cfg, ticket, prior, round, head, sinceSha, merged, afterMerge, merge, extra, diff, tests, testsSeen, response } = s;
   const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
   const schema = path.join(TEMPLATES, 'review-verdict.schema.json');
   const sandbox = cfg.reviewer_options?.codex?.sandbox || 'read-only';
@@ -346,7 +380,7 @@ function runCodexReview(repo, id, s) {
   const fresh = round > 1 ? (s.standIn ? `it stands in for ${s.standIn.for}` : reviewerChanged(prior, 'codex', settings)) : null;
   const lastThread = round > 1 && !fresh ? [...prior].reverse().find(r => r.meta?.thread_id)?.meta.thread_id : undefined;
   if (fresh && prior.some(r => r.meta?.thread_id)) console.log(`Started a fresh codex session with the full history, because ${fresh}.`);
-  const prompt = round > 1 && !lastThread ? historyPrompt(repo, s, id) : reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged });
+  const prompt = round > 1 && !lastThread ? historyPrompt(repo, s, id) : reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged, afterMerge, base: s.base });
   // 0388: kept, with each round's response, so a later fresh session can be given the full history.
   if (round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
 
@@ -546,9 +580,12 @@ export function cmdPrompt(args) {
 }
 
 export function cmdDiff(args) {
-  // The changes since the reviewer last looked (or since the base branch, or the whole change after a merge), as a reviewer sees them.
+  // The changes since the reviewer last looked (or since the base branch, or after a merge what changed beyond a clean merge in a merge round and the whole change before one), as a reviewer sees them.
   if (!args[0]) throw new SpeckError('Usage: speck diff <id>');
   const repo = findRepoRoot();
-  const { sinceSha } = reviewSince(repo, loadConfig(repo), rounds(repo, args[0]));
-  process.stdout.write(reviewDiff(repo, sinceSha));
+  const cfg = loadConfig(repo);
+  const s = reviewSince(repo, cfg, rounds(repo, args[0]));
+  const diff = reviewDiff(repo, s.sinceSha);
+  // 0673: in a merge round after a merge, with what it holds and the command for the whole change, as speck review gives it.
+  process.stdout.write(s.afterMerge ? `${diffSection(cfg, { ...s, diff }).join('\n\n')}\n` : diff);
 }

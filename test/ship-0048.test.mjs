@@ -139,14 +139,14 @@ test('0048 AC2: speck record also moves an approved ticket to reviewing', () => 
   assert.equal(r.statusOf(), 'reviewing');
 });
 
-test('0048 AC3: after merging the base branch, the reviewer gets the whole change against the base as merged, and is told about the merge', () => {
+test('0048 AC3: after merging the base branch, the reviewer gets what changed beyond a clean merge (0673), and is told about the merge', () => {
   const r = conflictRepo();
   assert.equal(runIn(r.dir, 'ship', '1').status, 13);
   r.mergeMain();
   // speck diff shows the same diff the reviewer is about to get.
   const diff = r.wtRun({}, 'diff', '1');
   assert.equal(diff.status, 0, diff.stderr);
-  assert.match(diff.stdout, /^\+feature$/m);
+  assert.match(diff.stdout, /^-=======$/m, 'the resolved conflict');
   assert.doesNotMatch(diff.stdout, /mainonly\.txt/);
   const res = r.wtRun({}, 'review', '1');
   assert.equal(res.status, 0, res.stderr + res.stdout);
@@ -154,14 +154,14 @@ test('0048 AC3: after merging the base branch, the reviewer gets the whole chang
   // The round's own part comes after the earlier rounds.
   const round = prompt.slice(prompt.lastIndexOf('# Review round 2'));
   assert.match(round, /follows a merge of main/);
-  assert.match(round, /whole change against main as merged/);
+  assert.match(round, /## Changes beyond a clean merge of main/);
   assert.doesNotMatch(round, /Changes since your last review/);
   assert.match(round, /diff --git a\/shared\.txt/);
-  assert.match(round, /^\+feature$/m, "the ticket's own change is in the diff");
+  assert.match(round, /^ feature$/m, "the resolution keeps the ticket's own change");
   assert.doesNotMatch(prompt, /mainonly\.txt/, "main's own changes aren't shown as the ticket's, in this round or the rebuilt round 1");
   const mb = gIn(r.wt, 'merge-base', 'main', 'HEAD').stdout.trim();
   assert.equal(mb, r.sha('main'));
-  assert.ok(round.includes(`(${mb.slice(0, 8)}..HEAD)`));
+  assert.ok(round.includes(`run \`git diff ${mb} HEAD\``), 'the command for the whole change against main as merged');
   assert.ok(round.includes(diff.stdout.trim()), 'the same diff as speck diff');
 });
 
@@ -214,7 +214,7 @@ test('0048 round 1 F1: a conflict with commits only on the remote names the remo
   assert.match(gIn(r.wt, 'merge', 'main').stdout, /Already up to date/);
   r.mergeMain('origin/main');
   const diff = r.wtRun({}, 'diff', '1');
-  assert.match(diff.stdout, /^\+feature$/m);
+  assert.match(diff.stdout, /^-=======$/m, 'the resolved conflict (0673)');
   assert.doesNotMatch(diff.stdout, /^-main side$/m, "the remote's change isn't shown as reverted");
   assert.equal(r.wtRun({}, 'review', '1').status, 0);
   const prompt = r.prompts()[0];
