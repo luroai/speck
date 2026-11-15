@@ -47,7 +47,7 @@ A ticket cancelled on its branch is cancelled on the base branch too, so nothing
 - Self-check: no changes. A pending cancel is kept in memory, so one that couldn't be made before speck run restarts is only retried if its build is taken up again (noted as a follow-up).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a ticket is cancelled partway through its build, for example when speck takes a recommendation to drop it, speck run now records the cancel on the main line of work too, as soon as that build ends. Tickets that were waiting for it no longer wait for ever: speck run says the ticket was cancelled and that it should be taken out of their "after" list. To see it, cancel a ticket while it's being built and watch speck run's log once the build stops. If the main checkout has unsaved edits to that ticket, speck run says so once and tries again on each check, so keep an eye out for that line. The panel's card still shows such tickets as waiting: that's a separate idea in the inbox.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,7 +56,10 @@ A ticket cancelled on its branch is cancelled on the base branch too, so nothing
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-11-15-show-a-cancelled-after-ticket-as-cancelled-in-the-panel.md (the panel still shows a cancelled after: ticket as "Waiting on").
+- Known limit: a cancel that couldn't be made on the base branch yet is kept only in speck run's memory, so after speck run restarts it's retried only if that build's end is taken up again (a build with no exit recorded). Making the cancel by hand with `speck cancel` covers it.
+- Known limit: only builds that end are checked, so a ticket already cancelled on a branch before this change (such as 0664) needs `speck cancel` on the base branch by hand.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -133,6 +136,84 @@ A ticket cancelled on its branch is cancelled on the base branch too, so nothing
     ],
     "escalation_question": "",
     "summary": "The change handles normal cancellations and explains cancelled dependencies correctly. One recovery gap needs fixing: a locally deleted or unreadable ticket silently stops cancellation retries, leaving the base branch out of sync."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "12aa864802d7b7efc1636da5093b8a7827067353",
+    "session": "continued",
+    "thread_id": "01a1e105-9a8a-7752-aab5-20d6572d6244",
+    "builder_response": "- Tests run: test/run-cancelled-0686.test.mjs\n- F1: fixed. cancelOnBase now decides \"nothing to do\" from the base branch's committed copy (ticketAt on base_branch): none there, or done or cancelled. It no longer swallows findTicket's errors, so a ticket deleted, unreadable or in two places in the main checkout throws a SpeckError, which the queue says once and retries at each check. The uncommitted-changes check now covers both the committed path and the one found. New test \"0686 AC4: with the ticket deleted, or in two places…\" deletes it (and, separately, adds a second copy), checks one message naming 0002 and no commit, puts it right and checks the next check cancels it.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 246365,
+      "cached_input_tokens": 209024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1305,
+      "reasoning_output_tokens": 74
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5195,
+      "cached": 91520,
+      "write": 0,
+      "output": 461
+    },
+    "cost_usd": 0.024152,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T21:05:06.134Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/cancelled-build.mjs cancelOnBase preserves cancellation metadata, files the ticket in done/ and uses commitTicketOnly. Passing AC1 tests cover metadata, ticket-only commits and real build-end handling in speck run."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs statusData supplies after_cancelled; scripts/built-on.mjs afterWait uses the shared cancellation explanation. Both AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cancelOnBase checks the committed base copy and leaves done/cancelled tickets unchanged, ignoring branches without a cancelled ticket. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Lookup errors now reach cancelledQueue's log-once and retry handling. Passing AC4 tests cover modified, deleted and duplicate tickets, recovery at the next check, and rollback after commit failure."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/cancelled-build.mjs:24",
+        "issue": "Ticket lookup failures previously discarded pending cancellations silently. These errors now propagate to the queue, which logs once and retains the retry.",
+        "suggested_fix": "Implemented and covered by the new deletion and duplicate-copy recovery test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change meets all four criteria. Cancelled builds now update the base ticket and explain blocked dependencies correctly. The retry gap is fixed, with passing tests covering recovery from local ticket problems."
   }
 }
 ```
