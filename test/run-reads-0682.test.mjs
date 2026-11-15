@@ -132,3 +132,23 @@ test('0682 AC3: speck run still starts a ticket set ready on a check after idle 
     await stopRun(run);
   }
 });
+
+test('0682 AC1 and AC2 (round 1 F1): with more than 10,000 tickets, unchanged ones still aren\'t read again, however often they\'re asked for', () => {
+  const { dir } = runRepo({ tickets: [['0001', { status: 'draft' }]] });
+  const tickets = path.join(dir, 'speck', 'tickets'), done = path.join(tickets, 'done');
+  fs.mkdirSync(done, { recursive: true });
+  // A ticket file's name need only start with four digits and a dash, so 10,500 of them can share the one folder.
+  const name = i => `${String(i % 10000).padStart(4, '0')}-n${i}.md`;
+  for (let i = 10000; i < 20500; i++) fs.writeFileSync(path.join(done, name(i)), `---\nid: "${i}"\nstatus: done\n---\n`);
+  assert.equal(reads(() => listTickets(dir)).seen.length, 10501);
+  const again = reads(() => { listTickets(dir); listTickets(dir); return listTickets(dir); });
+  assert.deepEqual(again.seen, [], 'nothing changed, so nothing is read');
+  assert.equal(again.result.length, 10501);
+  // Those that went, and those moved elsewhere, leave nothing behind that makes the rest read again.
+  for (let i = 10000; i < 11500; i++) fs.renameSync(path.join(done, name(i)), path.join(tickets, name(i)));
+  assert.equal(reads(() => listTickets(dir)).seen.length, 1500);
+  for (let i = 10000; i < 11500; i++) fs.rmSync(path.join(tickets, name(i)));
+  const after = reads(() => { listTickets(dir); return listTickets(dir); });
+  assert.deepEqual(after.seen, []);
+  assert.equal(after.result.length, 9001);
+});

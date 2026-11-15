@@ -291,12 +291,20 @@ export const repoPath = (repo, file) => path.relative(repo, file).split(path.sep
 // 0682: each ticket file as last parsed, by its path, with what its stat said then. A file whose stat hasn't changed
 // since (its size, inode, and change and modification times to the nanosecond) isn't read or parsed again, so speck
 // run's checks read only the tickets that changed. Each caller gets its own copy of the top level; nothing changes the rest.
+// Only the parses of files that have gone are dropped: listTickets drops its folders' at once, and the rest (such as a
+// removed worktree's) go once the map has grown by 1000 since it was last swept.
 const parsedTickets = new Map();
+let swept = 0;
 const statKey = file => { const s = fs.statSync(file, { bigint: true }); return `${s.dev}:${s.ino}:${s.size}:${s.mtimeNs}:${s.ctimeNs}`; };
 function readTicket(file) {
-  const key = statKey(file), had = parsedTickets.get(file);
+  let key;
+  try { key = statKey(file); } catch (e) { parsedTickets.delete(file); throw e; }
+  const had = parsedTickets.get(file);
   if (had?.key !== key) {
-    if (parsedTickets.size >= 10000) parsedTickets.clear(); // tickets moved or gone leave theirs behind
+    if (parsedTickets.size >= swept + 1000) {
+      for (const f of parsedTickets.keys()) if (!fs.existsSync(f)) parsedTickets.delete(f);
+      swept = parsedTickets.size;
+    }
     let parsed, error;
     try { parsed = parseTicket(fs.readFileSync(file, 'utf8')); } catch (e) { error = e; }
     parsedTickets.set(file, { key, parsed, error });
@@ -317,6 +325,8 @@ export function listTickets(repo) {
       if (!seen.has(f)) seen.set(f, path.join(dir, f));
     }
   }
+  const listed = new Set(ticketDirs(repo));
+  for (const f of parsedTickets.keys()) if (listed.has(path.dirname(f)) && seen.get(path.basename(f)) !== f) parsedTickets.delete(f);
   return [...seen.keys()].sort().map(f => ({ file: seen.get(f), ...readTicket(seen.get(f)) }));
 }
 
