@@ -192,3 +192,39 @@ test('0674 AC3 self-check: a built_on: that isn\'t a ticket id counts as none', 
   for (const v of ['', 'constructor', '__proto__', [], {}, null, undefined])
     assert.equal(builtOnWaiting('/nowhere', cfg, { built_on: v }), null, String(v));
 });
+
+// 0001 started on 0002, then the base branch gets its own a.txt, which clashes with 0002's, and 0001 merges it in,
+// keeping both, before 0002 has shipped.
+function mergedClash(r) {
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'main\'s own a.txt\n');
+  gitIn(r.dir, 'add', 'a.txt');
+  gitIn(r.dir, 'commit', '-qm', 'a.txt on main');
+  gitIn(r.first, 'merge', '-q', '--no-edit', 'main');
+  fs.writeFileSync(path.join(r.first, 'a.txt'), 'main\'s own a.txt\nand 0002\'s\n');
+  gitIn(r.first, 'add', 'a.txt');
+  gitIn(r.first, 'commit', '-qm', 'speck(0001): merge main');
+  assert.equal(gitIn(r.first, 'status', '--porcelain'), '');
+}
+
+test('0674 AC2 F1: after merging base branch work that clashes with the unshipped ticket\'s, its work still isn\'t counted', () => {
+  const r = startedOn();
+  mergedClash(r);
+  const d = speckIn(r.first, 'diffstat');
+  assert.equal(d.status, 0, d.stderr);
+  assert.match(d.stdout, /b\.txt/);
+  assert.doesNotMatch(d.stdout, /z\.txt/, 'the other ticket\'s work isn\'t counted');
+  const diff = speckIn(r.first, 'diff', '0001');
+  assert.match(diff.stdout, /b\.txt/);
+  assert.doesNotMatch(diff.stdout, /z\.txt/);
+});
+
+test('0674 AC2 F2: a merge round after an approval shows only what the merge changed, not the other ticket\'s work', () => {
+  const r = startedOn();
+  approve(r.first, '0001');
+  mergedClash(r);
+  const diff = speckIn(r.first, 'diff', '0001');
+  assert.equal(diff.status, 0, diff.stderr);
+  assert.match(diff.stdout, /follows a merge/, 'the merge round\'s own diff');
+  assert.match(diff.stdout, /a\.txt/, 'how the clash was resolved');
+  assert.doesNotMatch(diff.stdout, /\+\+\+ b\/(b|z)\.txt/, 'neither the approved change nor the other ticket\'s work');
+});

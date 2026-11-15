@@ -32,7 +32,7 @@ export function approve(dir, id) {
   gitIn(dir, 'commit', '-qm', `speck(${id}): approved`);
 }
 
-// 0002 started in its worktree with a.txt (`aLines` lines) committed and approved, unless `status` says otherwise.
+// 0002 started in its worktree with a.txt (`aLines` lines) and z.txt committed and approved, unless `status` says otherwise.
 // `tickets` replaces the default 0001 (after 0002) and 0002 pair. 0001 starts as a draft, and is set ready with a
 // new outcome on the base branch only once 0002 has started, so 0002's branch has an older copy of it.
 export const READY_OUTCOME = 'Users can export CSV, as set ready.';
@@ -50,6 +50,7 @@ export function builtOnRepo({ status = 'approved', tickets, aLines = 3 } = {}) {
     gitIn(r.dir, 'commit', '-qam', 'speck(0001): ready');
   }
   commitFile(second, 'a.txt', aLines);
+  commitFile(second, 'z.txt', 3);
   if (status === 'approved') approve(second, '0002');
   else if (status !== 'building') {
     assert.equal(speckIn(second, 'set', '0002', 'status', status).status, 0);

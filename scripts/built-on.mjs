@@ -34,7 +34,7 @@ export function builtOnWaiting(repo, cfg, fm) {
 // Where the own change of a ticket built on another starts, as of `ref`: git's own merge of where `ref` meets the base
 // branch and where it meets that ticket's branch, which is what speck start's merge made. Once that ticket has shipped,
 // the base branch has both, so they're where `ref` meets it. null when `ref` meets them at one commit, for the usual
-// merge base, as for any ticket not built on another.
+// merge base, as for any ticket not built on another. A tree, not a commit: use it only to diff from.
 export function ownBase(repo, cfg, fm, ref = 'HEAD') {
   if (!builtOnId(fm)) return null;
   const lines = r => r.status === 0 ? r.stdout.split('\n').filter(Boolean) : [];
@@ -43,9 +43,10 @@ export function ownBase(repo, cfg, fm, ref = 'HEAD') {
   if (on) meets.push(...lines(sh('git', ['merge-base', on, ref], { cwd: repo })));
   const tips = meets.length > 1 ? lines(sh('git', ['merge-base', '--independent', ...meets], { cwd: repo })) : meets;
   if (tips.length !== 2) return null;
+  // A merge with conflicts keeps git's conflict markers, as a merge round's diff does, so how they were resolved shows.
   const r = sh('git', ['merge-tree', '--write-tree', ...tips], { cwd: repo });
   const tree = r.stdout.split('\n')[0].trim();
-  return r.status === 0 && /^[0-9a-f]{40,64}$/.test(tree) ? tree : null;
+  return (r.status === 0 || r.status === 1) && /^[0-9a-f]{40,64}$/.test(tree) ? tree : null;
 }
 
 // Merges the approved ticket `on`'s branch into the new branch checked out in `dir`, or refuses, putting it back.

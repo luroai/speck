@@ -295,14 +295,14 @@ function shipBase(repo, base) {
 export function reviewSince(repo, cfg, prior, fm = null) {
   const target = shipBase(repo, cfg.base_branch);
   const own = c => ownBase(repo, cfg, fm, c);
-  const base = own('HEAD') ?? git(['merge-base', target, 'HEAD'], repo).trim();
+  const meets = git(['merge-base', target, 'HEAD'], repo).trim(), base = own('HEAD') ?? meets;
   const last = prior[prior.length - 1]?.meta?.reviewed_sha;
   if (!last) return { base, sinceSha: base, merged: false };
   const ownWas = own(last);
   const was = ownWas ? { status: 0, stdout: ownWas } : sh('git', ['merge-base', target, last], { cwd: repo });
   const merged = was.status === 0 && was.stdout.trim() !== base;
   if (!merged) return { base, sinceSha: last, merged };
-  const clean = isMergeRound(prior) && cleanMerge(repo, last, base);
+  const clean = isMergeRound(prior) && cleanMerge(repo, last, meets); // commits: `base` may be ownBase's tree
   if (!clean) return { base, sinceSha: base, merged };
   const approved = prior.findLast(r => r.verdict.verdict === 'approve')?.meta?.reviewed_sha || last;
   return { base, sinceSha: clean, merged, afterMerge: { last, approved } };
