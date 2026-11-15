@@ -45,6 +45,7 @@ After a failing `--related` run, a build re-runs only the files that failed and 
 - Measured 2026-11-15 from this repo's build logs.
 - A full run already reads each failing test's file from `location:` in TAP output for its second try. The same reading serves here.
 - Builds keep the run's output with `tee` for the review round, so the line comes last and mustn't read as a test's own output.
+- Failing before this build: none
 - Decision: the reminder sits in the command's output, where the build reads it at the moment the run fails. If builds still run the whole set again, a later ticket can make a second `--related` run narrow itself.
 
 ## In plain words
