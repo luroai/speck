@@ -151,8 +151,9 @@ export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, 
     }
   };
 
-  // 0691: a ticket whose handed-back build stopped on a usage limit waits too, until speck run carries that build on.
-  return { keep, check, waiting: id => !!pending(id)?.live || limitWaiting(runs()).includes(String(id)) };
+  // 0691: a ticket whose handed-back build stopped on a usage limit waits too, until speck run carries that build on, and
+  // while that build runs, as the tickets the ship queue is given may have been read before it started.
+  return { keep, check, waiting: id => !!pending(id)?.live || running.has(String(id)) || limitWaiting(runs()).includes(String(id)) };
 }
 
 // 0338: when speck run last handed the ticket back to its build after a ship it started (above), from the

@@ -88,13 +88,32 @@ test('0691 AC3: while it waits for the reset, the ship queue neither ships it no
   s.stop('0001');
   assert.equal(s.hb.waiting('0001'), true, 'counted as waiting for its build');
   const launched = [];
-  const ships = shipQueue(s.dir, { base_branch: 'main' }, { say: () => {}, launch: id => launched.push(id), handBack: h => s.hb.keep(h), waiting: id => s.hb.waiting(id) });
+  const ships = shipQueue(s.dir, { base_branch: 'main' }, { say: () => {}, launch: (repo, id) => launched.push(id), handBack: h => s.hb.keep(h), waiting: id => s.hb.waiting(id) });
   ships.check([{ ...T('0001', 'approved'), auto_ship: true }]);
   assert.deepEqual(launched, [], 'not shipped');
   s.hb.check([T('0001', 'approved')]);
   assert.equal(s.starts.length, 0, 'not handed back');
-  // Once the reset has passed and its build is resumed, it's no longer waiting on the limit.
+  // Once the reset has passed and its resumed build has ended, it no longer waits.
   s.clock.now = RESET + GRACE_MS;
   s.q.check([T('0001', 'approved')]);
+  assert.equal(s.hb.waiting('0001'), true, 'its resumed build is running');
+  s.running.clear();
   assert.equal(s.hb.waiting('0001'), false);
+});
+
+test('0691 AC3: on the check that resumes it, the ship queue doesn\'t ship it from tickets read before the build started', () => {
+  const s = setup();
+  s.stop('0001');
+  const stale = [{ ...T('0001', 'approved'), auto_ship: true, build_running: false }]; // read before the resume, as speck run's check reads them
+  const launched = [];
+  // A queue that hasn't tried it yet, so nothing but the wait stops it shipping, as when its branch has moved since.
+  const ships = shipQueue(s.dir, { base_branch: 'main' }, { say: () => {}, launch: (repo, id) => launched.push(id), handBack: h => s.hb.keep(h), waiting: id => s.hb.waiting(id) });
+  s.clock.now = RESET + GRACE_MS;
+  s.q.check(stale);
+  assert.equal(s.starts.length, 1, 'resumed');
+  ships.check(stale);
+  assert.deepEqual(launched, [], 'not shipped while its resumed build runs');
+  s.running.clear(); // the resumed build has ended
+  ships.check(stale);
+  assert.deepEqual(launched, ['0001'], 'shipped once it has');
 });
