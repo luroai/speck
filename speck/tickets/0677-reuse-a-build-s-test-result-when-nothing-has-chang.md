@@ -1,7 +1,7 @@
 ---
 id: "0677"
 title: "Reuse a build's test result when nothing has changed"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0676"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:01:02.658Z"
+approved: "2026-11-15T14:35:16.179Z"
 
 ---
 # 0677 · Reuse a build's test result when nothing has changed
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A full `speck test` reuses a recorded result for the same code (0112), but `--files` and `--related` runs record nothing. A build that runs the same files twice with nothing changed between, for instance once to see them pass and again to keep the output for the review round, runs them twice. Of 803 such runs here since 29 Oct (10.9 hours), about 180 (2.8 hours) repeated a passing run with no change to the code.
@@ -60,9 +61,15 @@ Worth keeping an eye on: speck only looks at the project's files. A test that de
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 record applies the existing failure-output limit to passing file runs too.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 332,089
+- Elapsed since build started: 34 min
+- Changed lines: 93 (limit 5000)
 Follow-ups (Delivery log only, none went to the inbox):
 - Known limit: the reuse key covers files git tracks or doesn't ignore, and the test command. Environment variables and ignored files (such as `node_modules`) aren't part of it, so a test that depends on them can be reused after they change. `--fresh` runs it anyway.
 - Tidy-up: `speck help` doesn't yet mention `--fresh` with `--files` or `--related`. The usage message and the brief do.
