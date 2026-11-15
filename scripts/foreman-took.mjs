@@ -48,7 +48,7 @@ export const whoWent = (w, name = 'speck') => (w && w.by === 'foreman' ? `${name
 export function foremanBoard(tickets, cfg, runs) {
   return tickets.map(t => {
     const facts = questionFacts(contentLines(t.sections['blocked question']));
-    const entry = { id: t.fm.id, status: t.fm.status, title: t.fm.title, risk: t.fm.risk, blocked_question: null, blocked_recommendation: facts.recommendation, blocked_noticeable: facts.noticeable, blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, blocked_check_in_app: facts.checkInApp ?? null };
+    const entry = { id: t.fm.id, status: t.fm.status, title: t.fm.title, risk: t.fm.risk, blocked_question: null, blocked_recommendation: facts.recommendation, blocked_noticeable: facts.noticeable, blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, blocked_check_in_app: facts.checkInApp ?? null, blocked_review_limit: facts.reviewLimit === true };
     return { ...entry, ...foremanFacts(t, entry, fixingOf(cfg), t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg)) };
   });
 }

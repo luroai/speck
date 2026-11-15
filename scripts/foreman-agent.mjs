@@ -503,7 +503,7 @@ function cantDecide(cfg, t, at, rec, checking = false) {
   if (watch !== 'decide' && !(checking && watch === 'fix')) return `speck watch decide works only with watch: decide${checking ? ' or fix' : ''}, and watch is ${watch} here`;
   if (t.fm.risk !== 'low') return `Ticket ${pad} is ${t.fm.risk === 'high' ? 'high risk' : 'of unknown risk'}, so its question waits for the user`;
   if (choseCount(t.sections.notes) >= MAX_DECIDED) return `${speckNameOf(cfg)} has already taken ${MAX_DECIDED} recommendations for ticket ${pad}, so its question waits for the user`;
-  if (t.fm.status === 'blocked' && questionFacts(contentLines(t.sections['blocked question'])).sizeGuard === true) return `Ticket ${pad} is blocked by the size guard, so its question waits for the user`;
+  for (const [fact, why] of [['sizeGuard', 'by the size guard'], ['reviewLimit', 'at the review limit, as only their answer allows it more review rounds']]) if (t.fm.status === 'blocked' && questionFacts(contentLines(t.sections['blocked question']))[fact] === true) return `Ticket ${pad} is blocked ${why}, so its question waits for the user`; // 0680
   if (!Object.hasOwn(rec || {}, 'exited') && Number.isInteger(rec?.pid) && rec.pid > 0 && pidAlive(rec.pid)) return `Ticket ${pad}'s build is still running`;
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: at }).stdout.trim();
   return branch.startsWith(`${cfg.branch_prefix}${pad}-`) ? null : `Ticket ${pad}'s branch isn't checked out where its build left it, so the choice can't be committed there`;

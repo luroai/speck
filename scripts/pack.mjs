@@ -19,11 +19,13 @@ function sessionLabel(r, earlier) {
 }
 
 // How many rounds there were, how many of them re-reviewed a merge of the base branch and which was an extra round
-// past max_review_rounds (0242), for the pack and the delivery log.
+// past max_review_rounds (0242), and which you allowed past it (0680), for the pack and the delivery log.
 export function roundsLine(all) {
   const merges = all.length - ordinaryRounds(all);
   const extra = all.find(r => r.meta.extra);
-  return `Review rounds: ${all.length}${merges ? `, ${merges} of them ${merges === 1 ? 'a merge round' : 'merge rounds'}` : ''}${extra ? `, round ${extra.meta.round} an extra round` : ''}`;
+  const allowed = all.filter(r => r.meta.allowed).map(r => r.meta.round);
+  const yours = allowed.length ? `, ${allowed.length === 1 ? `round ${allowed[0]} a round` : `rounds ${allowed.slice(0, -1).join(', ')} and ${allowed.at(-1)} rounds`} you allowed` : '';
+  return `Review rounds: ${all.length}${merges ? `, ${merges} of them ${merges === 1 ? 'a merge round' : 'merge rounds'}` : ''}${extra ? `, round ${extra.meta.round} an extra round` : ''}${yours}`;
 }
 
 export const who = m => `${m.reviewer}, model ${m.reviewer_model || 'default'}, effort ${m.reviewer_effort || 'default'}`;
@@ -116,7 +118,7 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
   const blind = all.filter(r => r.meta.sandbox_ok === false);
   const lines = [
     `## ${t.fm.id} · ${t.fm.title}`,
-    `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${ranOn(last.meta)}, ${last.meta.merge ? `merge round ${mergeRun(all)} of ${cfg.limits.max_merge_rounds}` : `round ${ordinaryRounds(all)} of ${cfg.limits.max_review_rounds}${last.meta.extra ? ', an extra round' : ''}`})`,
+    `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${ranOn(last.meta)}, ${last.meta.merge ? `merge round ${mergeRun(all)} of ${cfg.limits.max_merge_rounds}` : `round ${ordinaryRounds(all)} of ${cfg.limits.max_review_rounds}${last.meta.extra ? ', an extra round' : ''}${last.meta.allowed ? ', a round you allowed' : ''}`})`,
     ...(blind.length ? ['', ...blind.map(r => `${NO_INSPECT} (round ${r.meta.round})`)] : []),
     ...receiptLines(repo, t, all, false),
     '', `**Summary:** ${v.summary}`,
@@ -134,7 +136,7 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
       const f = r.verdict.findings;
       const open = f.filter(x => x.severity === 'blocking' && ['open', 'dispute_rejected'].includes(x.state)).length;
       const closed = f.filter(x => x.severity === 'blocking').length - open;
-      return `- Round ${r.meta.round}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''} (${ranOn(r.meta)}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor; ${sessionLabel(r, all.slice(0, i))}`;
+      return `- Round ${r.meta.round}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''}${r.meta.allowed ? ', a round you allowed' : ''} (${ranOn(r.meta)}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor; ${sessionLabel(r, all.slice(0, i))}`;
     }),
     ...(latest.size ? ['', '<details><summary>Findings</summary>', '',
       ...[...latest.values()].map(f => `- **${f.id}** (${f.severity}, ${f.state}) \`${f.file}\`: ${f.issue}`), '', '</details>'] : []),

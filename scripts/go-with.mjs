@@ -14,6 +14,7 @@ import { sessionInUse } from './build-procs.mjs';
 import { splitCommand } from './reviewers.mjs';
 import { codexBuilds, codexStartWords } from './codex-build.mjs';
 import { MAX_DECIDED, fixingOf } from './foreman.mjs';
+import { allowedLine } from './review.mjs';
 import { cursorBuilds, cursorStartWords } from './cursor-build.mjs';
 
 // What the build's session is told when speck run resumes it. `skill` is how its agent names /speck-build. 0286: `by`
@@ -98,6 +99,8 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   if (t.fm.status !== 'blocked') return refuse(`Ticket ${pad} is "${t.fm.status}", not blocked, so it has no question waiting for you.`);
   const facts = questionFacts(contentLines(t.sections['blocked question'])), option = facts.recommendation;
   if (!option) return refuse(`Ticket ${pad}'s question has no recommendation to go with. ${byHand}`);
+  // 0680: only your answer allows a ticket at the review limit more rounds.
+  if (by === 'foreman' && facts.reviewLimit === true) return refuse(`Ticket ${pad} is blocked at the review limit, so its question waits for you: only your answer allows it more review rounds. ${byHand}`);
   if (by === 'foreman' && watch === 'decide') {
     if (t.fm.risk !== 'low') return refuse(`Ticket ${pad} is ${t.fm.risk === 'high' ? 'high risk' : 'of unknown risk'}, so this question waits for you. ${byHand}`);
     if (choseCount(t.sections.notes) >= MAX_DECIDED) return refuse(`${speckNameOf(cfg)} has already taken ${MAX_DECIDED} recommendations for ticket ${pad}, so this question waits for you. ${byHand}`);
@@ -113,7 +116,8 @@ export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
   const when = `${now.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
   const line = `- Went with the recommendation: ${option} (${by === 'foreman' ? `${FOREMAN_CHOSE}, as watch is ${watch}` : 'chosen by the user in the panel'}, ${when}).`;
   let text;
-  try { text = replaceSection(t.raw, 'Notes', old => (old ? `${old}\n${line}` : line), path.relative(at, t.file)); }
+  const lines = [line, ...(facts.reviewLimit === true ? [allowedLine('you', when)] : [])].join('\n'); // 0680
+  try { text = replaceSection(t.raw, 'Notes', old => (old ? `${old}\n${lines}` : lines), path.relative(at, t.file)); }
   catch (e) { if (e instanceof SpeckError) return refuse(e.message); throw e; }
   text = syncHeader(waitFields(setField(text, 'status', 'building'), 'blocked', 'building', now.getTime()));
   let commit;
