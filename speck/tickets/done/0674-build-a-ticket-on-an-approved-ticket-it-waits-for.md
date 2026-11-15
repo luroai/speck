@@ -1,7 +1,7 @@
 ---
 id: "0674"
 title: "Build a ticket on an approved ticket it waits for"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0673", "0679"]                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T14:29:51.279Z"
 approved: "2026-11-15T15:06:48.962Z"
+finished: "2026-11-15T15:14:23.114Z"
 
 ---
 # 0674 · Build a ticket on an approved ticket it waits for
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ticket with `after:` can't start until every ticket it names has shipped, even when the one it waits for is approved and only waiting to ship. Where you ship by hand, that wait lasts until you next look.
