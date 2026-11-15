@@ -1,7 +1,7 @@
 ---
 id: "0689"
 title: "Steady speck run's timing tests under load"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-15T20:50:21.021Z"
 ---
 # 0689 · Steady speck run's timing tests under load
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Several tests of speck run fail by chance at load averages of 20 to 60, so builds have to show their reviewers failures that aren't real, and one can fail the full suite on main: 0549 AC1, AC3, AC5 and AC4 in `test/run-settings-0549.test.mjs`, 0622 AC1–AC3 in `test/usage-limit-0622.test.mjs` (its limit resets three seconds ahead), the two 0166 AC2 tests in `test/waiting-0166.test.mjs` (a ±5 s tolerance), 0217 AC3, 0109 AC1 and 0300 AC1, AC3.
@@ -49,6 +49,7 @@ Each of these tests waits for what it checks, so they pass on a busy machine.
 - After the change, 2026-11-15: each file passed 5 runs out of 5 under the same load, at load averages of 66 to 96. Breaking one behaviour per file failed its tests: waited time counted 8 s high (0166 AC2, 0217 AC3), the usage limit never held and held for ever (0622), max_parallel_tests ignored (0109 AC1), max_parallel_builds never lowered below 3 (0549 AC4), builds outside speck run never noted (0300 AC1, AC3).
 - Self-check: the second 0622 test now waits for speck run's record of the wait before moving it, since speck run says the limit is reached just before it saves that record.
 - Pictures: none, because nothing anyone sees changes.
+- speck (2026-11-15 21:25 UTC) told you: The build is slow on purpose: this ticket steadies timing tests under load, so it has been running each test file several times with a busy loop on every core beside it to prove they hold up. That load test is also why the machine's load is so high. Its related tests pass (277 of 280, 3 skipped, none failing) and it is committing and moving on to review, so nothing is stuck. Why: The build's log shows repeated runs of its own load script, which starts one busy loop per core, and its latest test run passed with no hangs or failures.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
