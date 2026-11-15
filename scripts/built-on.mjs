@@ -77,13 +77,23 @@ export function startWaits(repo, cfg, t, tickets) {
   if (branch && ticketAt(repo, branch, waiting[0].id)?.fm.status === 'approved') return { on: { id: waiting[0].id, branch } };
   const why = [];
   if (waiting.length) why.push(`Ticket ${t.fm.id} waits on ${waiting.map(w => `${w.id} (${w.s})`).join(', ')}. It can start once ${waiting.length > 1 ? 'they\'ve' : 'it\'s'} shipped.`);
-  if (gone.length) why.push(`Ticket ${t.fm.id}'s after: lists ${gone.join(', and ')}. Take ${gone.length > 1 ? 'them' : 'it'} out of after: before the ticket can start.`);
+  if (gone.length) why.push(goneWhy(t.fm.id, gone));
   return { why: why.length ? why.join('\n') : null };
 }
 
 // 0675: why speck run doesn't start a ready ticket because of its after: list, or null when nothing there holds it
 // back: a row of `speck status --json` with starts_on can start on that approved ticket's work, as speck start allows.
-export const afterWait = t => (Array.isArray(t.waiting_on) && t.waiting_on.length && !t.starts_on ? `waiting for ${t.waiting_on.join(', ')}` : null);
+// 0686: a cancelled ticket there (after_cancelled) is never waited for: it's said as speck start says it.
+export function afterWait(t) {
+  if (!(Array.isArray(t.waiting_on) && t.waiting_on.length) || t.starts_on) return null;
+  const cancelled = Array.isArray(t.after_cancelled) ? t.after_cancelled : [];
+  const waiting = t.waiting_on.filter(id => !cancelled.includes(id)), gone = t.waiting_on.filter(id => cancelled.includes(id));
+  const wait = waiting.length ? `waiting for ${waiting.join(', ')}` : '';
+  return gone.length ? `${wait ? `${wait}. ` : ''}${goneWhy(t.id, gone.map(id => `${id}, which was cancelled`))}` : wait;
+}
+
+// Why a ticket can't start while its after: lists tickets it will never get: each in `gone`, saying why.
+const goneWhy = (id, gone) => `Ticket ${id}'s after: lists ${gone.join(', and ')}. Take ${gone.length > 1 ? 'them' : 'it'} out of after: before the ticket can start.`;
 
 // Writes the ticket it starts on to `t`'s built_on:, as a quoted id, so it reads back as text, not a number.
 export const markBuiltOn = (t, on) => fs.writeFileSync(t.file, setField(t.raw, 'built_on', JSON.stringify(on.id)));
