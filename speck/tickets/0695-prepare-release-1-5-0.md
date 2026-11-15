@@ -1,7 +1,7 @@
 ---
 id: "0695"
 title: "Prepare release 1.5.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0685","0686","0687","0688","0689","0690","0691","0692","0693","0694"]                # ticket ids that must be done first
 created: 2026-11-15
+built_on: "0693"
+started: "2026-11-15T22:20:30.820Z"
 
 ---
 # 0695 · Prepare release 1.5.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 1.4.0, the ticket writer suggests a level for each ticket, Shipped compares builder models by their results, a ticket cancelled during its build no longer leaves others waiting, fix tickets may fix the tests they name, builds and reviews carry on through more usage limits, and the tests that failed by chance under load are steady (0685 to 0694). Anyone following the setup prompt, or updating speck in a project, still gets 1.4.0.
