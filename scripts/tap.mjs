@@ -189,3 +189,21 @@ export function passingTests(text) {
   if (header < 0) return [];
   return results(lines, header + 1).filter(t => t.ok && !t.directive).map(t => t.path).filter(Boolean);
 }
+
+// The files to run after a failing `speck test --related` run (0676): `given`, the files it was given, then the file of
+// each test that failed in `text`, its output, each once, as paths from `cwd`. Null when a failing test's file can't be
+// read from it: the output isn't TAP, names no failing test, or a failing test has no `location:` in a file in `repo`.
+export function nextRunFiles(text, given, repo, cwd) {
+  const failing = failingTestFiles(text);
+  if (!failing.length) return null;
+  const files = [];
+  for (const t of failing) {
+    const abs = t.file && path.resolve(repo, t.file);
+    const rel = abs && path.relative(repo, abs);
+    let isFile = false;
+    try { isFile = !!rel && !rel.startsWith('..') && !path.isAbsolute(rel) && fs.statSync(abs).isFile(); } catch { /* not there */ }
+    if (!isFile) return null;
+    files.push(abs);
+  }
+  return [...new Set([...given.map(f => path.resolve(cwd, f)), ...files])].map(f => path.relative(cwd, f) || '.');
+}
