@@ -46,6 +46,7 @@ A check by `speck run` reads only the tickets that have changed since its last c
 - Test it by counting reads, not by timing: timing tests in this suite have failed under load before.
 - What a ticket's status entry says can also depend on its run record, its branch and the time, which aren't ticket files. Those are still worked out on each check.
 - Failing before this build: none
+- Self-check: no changes. Checked a file that can't be parsed (cached with its error until it changes, test added), a step changing the ticket it was given (each caller gets its own copy, test added), a rewrite of the same size straight after (nanosecond times and the change time, test added), and a ticket moved to done/.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
