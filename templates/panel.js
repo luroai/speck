@@ -753,11 +753,19 @@ const noteOf = i => el('div', 'note md', null, ...mdBlocks(markdown(typeof i.bod
 function whereLine(t) {
   const id = String(t.id), d = rowDoing(t), asked = !!foremanAskOf(id);
   const said = asked ? `${speckCalled()} has a question` : !t.inFlight ? 'Ready' : d.round !== null && d.round !== undefined ? `Reviewing · round ${d.round}` : d.word;
-  const waits = !t.inFlight ? list(t.waiting_on).map(String) : [];
-  const line = detailsLine(`where ${rowDot(buildGroup(t, d, asked), d)}`, [el('span', 'said', said), waits.length ? el('span', 'after', `after ${waits.join(', ')}`) : null,
+  const waits = !t.inFlight ? list(t.waiting_on).map(String) : [], on = startsOn(t), after = shipsAfter(t);
+  // 0698: one that can start on another's approved work says so in place of what it waits on, and an approved one built
+  // on another says it ships after that one.
+  const line = detailsLine(`where ${rowDot(buildGroup(t, d, asked), d)}`, [el('span', 'said', said),
+    on ? el('span', 'after', `can start on ${on}'s approved work`) : waits.length ? el('span', 'after', `after ${waits.join(', ')}`) : null,
+    after ? el('span', 'after', `ships after ${after}, which it was built on`) : null,
     t.counter !== null ? el('span', 'sub', rowTime((t.held_at ?? Date.now()) - t.since)) : null]);
   return wholeTip(line, d && d.sentence !== said ? d.sentence : null);
 }
+// 0698: the ticket a ready one can start on the approved work of, and the one an approved one was built on and ships
+// after, from speck status --json's starts_on and ships_after, or null.
+const startsOn = t => (t.status === 'ready' && typeof t.starts_on === 'string' && t.starts_on ? t.starts_on : null);
+const shipsAfter = t => (t.status === 'approved' && typeof t.ships_after === 'string' && t.ships_after ? t.ships_after : null);
 const rowDoing = t => (t.inFlight ? doing(t, t.shipping || shippingId === String(t.id), speckCalled()) : null);
 function queueRow(t) {
   const id = String(t.id), top = el('div', 'top', null, el('div', 'line', null, el('span', 'id', t.id), titled(el('span', 'title', t.title))), whereLine(t));
@@ -784,6 +792,7 @@ function buildNotes(t) {
     t.exit_label && t.carried_by ? el('div', 'act carried', t.carried_by) : null, // 0338
     t.exit_label && t.exit_message ? el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message) : null,
     t.ship_hint ? el('div', 'act', t.ship_hint) : null,
+    shipsAfter(t) ? el('div', 'act ships-after', `Ships after ${shipsAfter(t)}, which it was built on.`) : null, // 0698
     t.status !== 'blocked' ? null : t.foreman_will === true ? el('div', 'act foreman-will', `${speckCalled()} will take its recommendation: ${t.blocked_recommendation}`)
       : el('div', 'act', `Waiting for you. Answer the question, then run /speck-build ${t.id}`), // the bar already shows the status
     went ? el('div', 'act went-with', `${went.by === 'foreman' ? `${speckCalled()} went with the recommendation` : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`) : null,
@@ -859,36 +868,42 @@ function depNode(cls, id, state, kids, inPane) {
 function depsBox(t, inPane = false) {
   const d = t.deps;
   if (!d) return null;
-  if (d.kind === 'waits') return waitsFacts(d, inPane);
-  if (inPane) return chainFacts(d);
+  if (d.kind === 'waits') return waitsFacts(d, inPane, startsOn(t));
+  if (inPane) return chainFacts(d, startsOn(t));
   const slots = d.slots.map(s => (!s ? el('span', 'slot')
     : s.more ? el('span', 'slot more', null, el('span', 'dot'), el('span', 'sid', `+${s.more}`))
       : depNode(`slot ${s.state}`, s.id, s.state, [el('span', 'dot'), el('span', 'sid', s.id)], inPane)));
   return el('div', 'deps deps-chain', null, el('div', 'deps-head', null, el('b', null, 'Chain'), el('span', null, `${d.before} before · ${d.after} after`)), el('div', 'deps-slots', null, ...slots));
 }
 // 0613: the tickets a ticket waits on as one fact in the facts' style, in the full view and an open Plan card alike:
-// one line for each, in id order, its id and title as a link to it, then its state.
-function waitsFacts(d, inPane) {
-  const words = d.items.map(i => [i.id, i.title, DEP_WORDS[i.state]].filter(Boolean).join(' '));
+// one line for each, in id order, its id and title as a link to it, then its state. 0698: when it can start on the
+// approved work of one of them (`on`), that one's state says so, and the fact is After rather than Waits on.
+function waitsFacts(d, inPane, on = null) {
+  const word = i => (on !== null && String(i.id) === on ? ON_WORDS : DEP_WORDS[i.state]);
+  const words = d.items.map(i => [i.id, i.title, word(i)].filter(Boolean).join(' '));
   const lines = d.items.map(i => el('span', 'waits-item', null,
     depNode(`waits-link ${i.state}`, i.id, i.state, [el('span', 'sid', i.id), ...i.title ? [document.createTextNode(' '), el('span', 'waits-title', i.title)] : []], inPane),
-    document.createTextNode(' '), el('span', 'waits-state', DEP_WORDS[i.state])));
-  return el('dl', 'facts waits-facts', null, factCell('Waits on', '—', null, words.join(', '), null, lines));
+    document.createTextNode(' '), el('span', 'waits-state', word(i))));
+  return el('dl', 'facts waits-facts', null, factCell(on !== null ? 'After' : 'Waits on', '—', null, words.join(', '), null, lines));
 }
 // 0603: in the full view, a chain is two facts in the facts' style: the tickets it waits for, nearest first, and those
-// waiting on it, each id with its state, and "+n more" for the ones the model's slots leave out.
-function chainFacts(d) {
-  const at = d.slots.findIndex(s => s && s.state === 'self');
+// waiting on it, each id with its state, and "+n more" for the ones the model's slots leave out. 0698: when it can start
+// on the approved work of the one it waits for (`on`), the first fact is Starts on, and that one's state says so.
+const ON_WORDS = 'approved work';
+function chainFacts(d, on = null) {
+  const at = d.slots.findIndex(s => s && s.state === 'self'), nearest = at > 0 ? d.slots[at - 1] : null;
+  const starts = on !== null && !!nearest && String(nearest.id) === on;
+  const word = s => (starts && s === nearest ? ON_WORDS : DEP_WORDS[s.state]);
   const cell = (label, slots) => {
-    const ss = slots.filter(Boolean), words = ss.map(s => (s.more ? `+${s.more} more` : `${s.id} ${DEP_WORDS[s.state]}`));
+    const ss = slots.filter(Boolean), words = ss.map(s => (s.more ? `+${s.more} more` : `${s.id} ${word(s)}`));
     const names = ss.map((s, i) => (s.more ? el('span', 'chain-more', words[i])
-      : el('span', 'chain-item', null, depNode(`chain-id ${s.state}`, s.id, s.state, [el('span', 'sid', s.id)], true), document.createTextNode(' '), el('span', 'chain-state', DEP_WORDS[s.state]))));
+      : el('span', 'chain-item', null, depNode(`chain-id ${s.state}`, s.id, s.state, [el('span', 'sid', s.id)], true), document.createTextNode(' '), el('span', 'chain-state', word(s)))));
     return factCell(label, '—', null, words.join(', ') || '—', null, names.length ? names.flatMap((n, i) => (i ? [document.createTextNode(', '), n] : [n])) : null);
   };
-  return el('dl', 'facts chain-facts', null, cell('Waits for', d.slots.slice(0, at).reverse()), cell('Waiting on it', d.slots.slice(at + 1)));
+  return el('dl', 'facts chain-facts', null, cell(starts ? 'Starts on' : 'Waits for', d.slots.slice(0, at).reverse()), cell('Waiting on it', d.slots.slice(at + 1)));
 }
 // What a dependency box shows, to tell when it needs drawing again.
-const depsSig = t => signature([t.deps || null, depsLinks(t)]);
+const depsSig = t => signature([t.deps || null, depsLinks(t), startsOn(t)]);
 const isDeps = n => /^deps\b|\bwaits-facts\b/.test(n.className || '');
 // Puts an open card's dependency box right in `card`, straight after `top`, or first in it when `top` is null: a new
 // one in place of the old when what it shows has changed, or none when it has none now.
