@@ -45,6 +45,8 @@ Once `speck start` can build on an approved ticket (0674), `speck run` still ski
 - `ownWait` in `scripts/run.mjs` holds back a ticket with anything in `waiting_on`, which `statusData` in `scripts/speck.mjs` works out.
 - 0193 already has `speck run` ship approved tickets whose auto-ship didn't finish. This follows it.
 - Failing before this build: none
+- AC4 is about how the brief reads, so no test checks its wording: read the `speck run` row (and the workflow diagram's speck run line) in `docs/brief.md`.
+- Self-check: no changes. Checked: a ready ticket whose one approved after: ticket's branch doesn't have it approved committed gets no starts_on (startWaits decides, as speck start does); odd waiting_on values read as nothing to wait for; the line about waiting to ship is said once per ticket per speck run.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

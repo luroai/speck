@@ -396,8 +396,9 @@ export function statusData(repo) {
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+    const shipsAfter = ['done', 'cancelled'].includes(t.fm.status) ? '' : builtOnWaiting(repo, cfg, t.fm)?.id, waiting_on = after.filter(id => !done.has(padId(id))); // 0674
     const criteria_change = ['done', 'cancelled'].includes(t.fm.status) ? null : criteriaChange(t.at || repo, cfg, t.fm.id), criteria_changed = criteria_change !== null; // 0565
-    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, ['done', 'cancelled'].includes(t.fm.status) ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds), leftChecks(t.sections.notes), ['done', 'cancelled'].includes(t.fm.status) ? '' : builtOnWaiting(repo, cfg, t.fm)?.id); // 0629. 0679. 0674
+    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, ['done', 'cancelled'].includes(t.fm.status) ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds), leftChecks(t.sections.notes), shipsAfter); // 0629. 0679. 0674
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null, builder = builderSpent(runs, t.fm.id), watch = watchSpent(runs, t.fm.id), delegated = delegatedSpent(runs, t.fm.id);
     return withForeman(t, fixing, { // 0317
       ...t.fm,
@@ -441,7 +442,8 @@ export function statusData(repo) {
       })),
       // 0223: the review round being run now, or null: whether the reviewer or the builder is at work on a reviewing ticket.
       review_running: inHand(t) ? roundRunning(runs, t.fm.id, ticketRounds(t.raw).rounds.length) : null,
-      waiting_on: after.filter(id => !done.has(padId(id))),
+      waiting_on, ships_after: shipsAfter || null, // 0675: and the ticket it was built on, until that one has shipped
+      starts_on: t.fm.status === 'ready' && waiting_on.length === 1 ? startWaits(repo, cfg, t, () => tickets).on?.id ?? null : null, // 0675: the approved ticket it can start on
       // 0217: once a build of it has started again, a stopped build is no longer shown as stopped.
       // 0284: nor is one waiting for speck run to resume it with the recommendation you went with.
       build_exit: stop?.counted || (inHand(t) && goWithWaiting(runs, t.fm.id)) ? null : buildExit(runs, t.fm.id),

@@ -7,7 +7,7 @@ import { logSpend, recordDelegatedSpend, ticketsElsewhere, ticketRounds, waitFie
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
 import { goWithQueue, newBuildKeeps } from './go-with.mjs';
-import { foremanFixQueue } from './foreman-fix.mjs';
+import { foremanFixQueue } from './foreman-fix.mjs'; import { afterWait } from './built-on.mjs'; // 0675
 import { fullSuiteQueue } from './full-suite.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { readyAgentsEvery } from './your-agents.mjs';
@@ -394,7 +394,7 @@ function runOn(worker) {
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
     if (limits.waiting(t.id)) return { kind: 'limit', why: 'its build stopped on its agent\'s usage limit, and speck run will carry it on' }; // 0622; 0644: Claude's, Codex's or Cursor's
-    if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
+    if (afterWait(t)) return { kind: 'after', why: afterWait(t) }; // 0675: not one that can start on the approved ticket it waits for
     const runs = runsDir(repo);
     // 0327: committed since its build ended still ready. 0376: or committed ready since `speck stop` ended its build.
     if (launched.has(t.id) && (readyAgain(repo, runs, t) || readyAfterStop(repo, runs, t))) launched.delete(t.id);
