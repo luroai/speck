@@ -18,7 +18,7 @@ source: "speck/ideas/done/2026-11-12-steady-the-0319-outside-speck-run-test.md" 
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T21:03:25.487Z"
-approved: "2026-11-15T21:08:06.258Z"
+approved: "2026-11-15T21:45:48.955Z"
 
 ---
 # 0690 · Steady the 0319 outside-speck-run test
@@ -56,12 +56,13 @@ When speck run starts while a build you started yourself (for example with /spec
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 173,290
-- Elapsed since build started: 5 min
+- Reviewer tokens: 264,155
+- Elapsed since build started: 42 min
 - Changed lines: 2 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -131,6 +132,76 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The fix makes startup consistently identify builds started outside speck run. The new test reliably exercises the previously failing ordering, and all ten recorded load runs passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fb31e067b1ea5d79825db7d2e1e64a92d9b8cb3d",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a1e109-64d8-72b1-a3bd-a635208ebda0",
+    "builder_response": "- Merge round after merging main.\n- scripts/run.mjs (class: logic, 1 conflict in adoptEarlierBuilds): main (0686) added `cancels.ended(id)` to the stopped-build line; this ticket changed the adopt label to `adoptedAs(rec)`. Kept main's line as it is and this ticket's label on the adopt line, so both hold.\n- Nothing else changed in the merge.\n- Tests run: test/seen-builds-0690.test.mjs test/seen-builds-0319.test.mjs (151 pass, 0 fail).\n",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 262897,
+      "cached_input_tokens": 215808,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1258,
+      "reasoning_output_tokens": 17
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5114,
+      "cached": 85248,
+      "write": 0,
+      "output": 503
+    },
+    "cost_usd": 0.0237828,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T21:45:45.902Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Ticket Notes retain the verified startup race diagnosis. The deterministic startup test in test/seen-builds-0690.test.mjs exercises the problematic ordering."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/run.mjs adoptEarlierBuilds still uses adoptedAs(rec), preserving the switch label. The merge also retains main's cancels.ended(id) handling. The 0690 regression test and all 0319 tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Previously inspected ten load-run logs each showed seven passes and zero failures; Notes record one busy loop per core. The merge preserves the label fix and test."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Fresh /tmp/speck-0690-tests.txt reports 151 passes, zero failures and three skips. Conflict resolution preserves both sides' intended behaviour."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves both the label fix and main's cancellation handling. The regression tests still pass, and no new concerns were found."
   }
 }
 ```
