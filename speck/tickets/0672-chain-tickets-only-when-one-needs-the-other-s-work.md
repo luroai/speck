@@ -51,7 +51,7 @@ Tickets wait for each other only when one can't be built without the other's wor
 - Self-check: no changes. The step keeps the words older tests pin (its title's start, "each overlap", the open statuses), and the Present step and the triage pointer now match the new rule.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you turn an idea into tickets, speck now makes a ticket wait for another only when it really needs that other ticket's work first, or when both would rewrite the very same lines. Tickets that merely touch the same file or the same part of it are left free to build at the same time, so more of your ready tickets build at once instead of queueing. When speck isn't sure, it leaves them unchained and tells you which file and part they share, so you can chain them yourself. To see it, make a few tickets that touch the same area and look at the one-line summary speck gives for each when presenting them. Keep an eye on whether two tickets building side by side now clash more often when they ship; each clash costs one extra review round.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,7 +60,7 @@ Tickets wait for each other only when one can't be built without the other's wor
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none. The older tests for 0205 still pin some of the step's wording (its title's start and "each overlap"); a later rewrite of the step may need to loosen them.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -142,6 +142,89 @@ Tickets wait for each other only when one can't be built without the other's wor
     ],
     "escalation_question": "",
     "summary": "The instructions implement the requested narrower chaining policy and the reported tests pass. Before approval, remove the new tests that freeze instructional wording, because harmless edits would break them."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d8b759f13fe3e93bcc1b33da89258ea7dda5d254",
+    "session": "continued",
+    "thread_id": "01a1df6d-347a-7822-b546-f65766b597ba",
+    "builder_response": "- Tests run: test/ticket-0672.test.mjs (with the commands.checks files speck test adds). All pass.\n- F1: fixed. Removed the AC4 test that pinned the step's wording; the step's new-ticket-only and loop rules are now checked by review. Kept the tests for the triage step's number, the absent phrase and the installed copies.\n",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 139168,
+      "cached_input_tokens": 106752,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1067,
+      "reasoning_output_tokens": 12
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4379,
+      "cached": 57088,
+      "write": 0,
+      "output": 479
+    },
+    "cost_usd": 0.0192568,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T13:38:13.872Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Reviewed skills/speck-ticket/SKILL.md step 6: chaining is limited to required prior work or likely rewrites of the same lines. It explicitly allows changes to different lines within the same function, style rules or document section, and additions in the same place."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Step 6 says to leave doubtful pairs unchained and name the shared file and part so the user can chain them. Step 8 also requires presenting uncertain shared parts."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The prohibited phrase is absent from the current skill. The AC3 absence test passed in the supplied output."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reviewed step 6 retains changing only the new ticket and following dependency links to prevent loops. Triage step 4 points to step 6. The triage-reference and installed-copy tests both passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Round 2 reports 146 passed, 0 failed and 3 skipped; the earlier related-test run also had no failures. The only substantive revision removes the prohibited prose assertions. Whole-suite verification remains the ship check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/ticket-0672.test.mjs",
+        "issue": "The exact-prose AC4 assertions identified in round 1 have been removed.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The instructions now chain tickets only for required prior work or overlapping line rewrites, leaving doubtful cases available to build side by side. The brittle wording test has been removed, the reported tests pass, and no blocking concerns remain."
   }
 }
 ```
